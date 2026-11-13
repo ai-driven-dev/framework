@@ -5,6 +5,7 @@ import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/pl
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
 const DOC = ".claude/rules/doc.md";
@@ -21,9 +22,9 @@ function brokenIn(relativePath: string, ref: string) {
 
 function manifestWithPluginDoc(content: string): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "1.0.0", []);
+  manifest.addTool(TOOL.claude, "1.0.0", []);
   manifest.addPlugin(
-    "claude",
+    TOOL.claude,
     InstalledPlugin.fromJSON({
       name: "sample",
       source: { kind: "local", path: "/some/path" },
@@ -58,7 +59,7 @@ async function issuesFor(
   });
 }
 
-const TRACKED_DOC = [{ relativePath: DOC, toolId: "claude" as const }];
+const TRACKED_DOC = [{ relativePath: DOC, toolId: TOOL.claude }];
 
 describe("DoctorReferencesUseCase", () => {
   describe("references in a tracked markdown file", () => {
@@ -121,7 +122,7 @@ describe("DoctorReferencesUseCase", () => {
       const settings = ".claude/settings.json";
       const issues = await issuesFor(
         { [settings]: "@docs/missing.md" },
-        { trackedFiles: [{ relativePath: settings, toolId: "claude" }] }
+        { trackedFiles: [{ relativePath: settings, toolId: TOOL.claude }] }
       );
 
       expect(issues).toStrictEqual([]);
@@ -131,7 +132,7 @@ describe("DoctorReferencesUseCase", () => {
       const backup = ".claude/rules/doc.md.bak";
       const issues = await issuesFor(
         { [backup]: "@docs/missing.md" },
-        { trackedFiles: [{ relativePath: backup, toolId: "claude" }] }
+        { trackedFiles: [{ relativePath: backup, toolId: TOOL.claude }] }
       );
 
       expect(issues).toStrictEqual([]);

@@ -1,3 +1,4 @@
+import { TOOL } from "../contexts/tools/testing/catalog-of.js";
 /**
  * TTY scenarios use /usr/bin/expect: only a real terminal proves the banner and the menu.
  */
@@ -85,7 +86,7 @@ exit 0
           version: 8,
           tools: {
             claude: {
-              toolId: "claude",
+              toolId: TOOL.claude,
               version: "4.1.0-beta.18",
               files: [],
               mergeFiles: [],

@@ -1,9 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InitUseCase } from "../../../../src/contexts/framework/application/init-use-case.js";
-import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -171,7 +170,7 @@ describe("init", () => {
     it("preserves existing manifest tools when --force reinitializes", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "claude" as ToolId);
+      await installTool(deps, PROJECT_ROOT, TOOL.claude);
 
       const manifestBefore = await deps.manifestRepo.load();
       const toolsBefore = manifestBefore?.getInstalledToolIds() ?? [];

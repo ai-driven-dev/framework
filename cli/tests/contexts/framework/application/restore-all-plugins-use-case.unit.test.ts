@@ -9,7 +9,7 @@ import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Hasher } from "../../../../src/shared/ports/hasher.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const noopFs: FileReader & FileWriter = {
   fileExists: async () => false,
@@ -38,7 +38,7 @@ const emptyDistributionReader: PluginDistributionReader = {
   read: async () =>
     new PluginDistribution({
       manifest: { name: "aidd-test", version: "1.0.0" },
-      format: "claude",
+      format: TOOL.claude,
       files: [],
       components: { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] },
     }),
@@ -61,8 +61,8 @@ function nativePlugin(
 describe("RestoreAllPluginsUseCase — native-activation tools", () => {
   it("names claude in nativeOnlyToolIds when its only installed plugin tracks zero files", async () => {
     const manifest = Manifest.create();
-    manifest.addTool("claude", "1.0.0", []);
-    manifest.addPlugin("claude", nativePlugin({}));
+    manifest.addTool(TOOL.claude, "1.0.0", []);
+    manifest.addPlugin(TOOL.claude, nativePlugin({}));
     const useCase = new RestoreAllPluginsUseCase(
       noopFs,
       noopHasher,
@@ -83,9 +83,9 @@ describe("RestoreAllPluginsUseCase — native-activation tools", () => {
 
   it("does not name a tool whose plugin files are actually tracked", async () => {
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "1.0.0", []);
+    manifest.addTool(TOOL.cursor, "1.0.0", []);
     manifest.addPlugin(
-      "cursor",
+      TOOL.cursor,
       nativePlugin({ "a/one.md": "00000000000000000000000000000000" }, "user")
     );
     const useCase = new RestoreAllPluginsUseCase(
@@ -107,7 +107,7 @@ describe("RestoreAllPluginsUseCase — native-activation tools", () => {
 
   it("does not name a tool that has no plugin installed at all", async () => {
     const manifest = Manifest.create();
-    manifest.addTool("claude", "1.0.0", []);
+    manifest.addTool(TOOL.claude, "1.0.0", []);
     const useCase = new RestoreAllPluginsUseCase(
       noopFs,
       noopHasher,
@@ -140,9 +140,9 @@ function trackedPlugin(name: string): InstalledPlugin {
 describe("RestoreAllPluginsUseCase — restricting to one plugin", () => {
   function claudeWithMixedPlugins(): Manifest {
     const manifest = Manifest.create();
-    manifest.addTool("claude", "1.0.0", []);
-    manifest.addPlugin("claude", nativePlugin({}));
-    manifest.addPlugin("claude", trackedPlugin("tracked-plugin"));
+    manifest.addTool(TOOL.claude, "1.0.0", []);
+    manifest.addPlugin(TOOL.claude, nativePlugin({}));
+    manifest.addPlugin(TOOL.claude, trackedPlugin("tracked-plugin"));
     return manifest;
   }
 

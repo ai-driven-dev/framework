@@ -5,11 +5,12 @@ import { PluginAddUseCase } from "../../../../../src/contexts/framework/applicat
 import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { PluginUpdateUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-update-use-case.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -66,7 +67,7 @@ function makeUpdateUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): P
 async function installStaleGithubPlugin(
   deps: Deps,
   registry: InMemoryMarketplaceRegistry,
-  toolId: "claude" | "codex" | "copilot" | "opencode"
+  toolId: AiToolId
 ): Promise<void> {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
@@ -104,24 +105,24 @@ async function installStaleGithubPlugin(
 describe("PluginUpdateUseCase — Mode A marketplace tools (claude/codex/copilot)", () => {
   it("updates a github-sourced marketplace plugin on claude without materializing any files", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
-    await installStaleGithubPlugin(deps, registry, "claude");
+    await installStaleGithubPlugin(deps, registry, TOOL.claude);
 
     const beforeManifest = await deps.manifestRepo.load();
-    const before = beforeManifest?.getPlugins("claude").find((p) => p.name === "sample-plugin");
+    const before = beforeManifest?.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
     expect(before?.files.size).toBe(0);
     expect(deps.fs.listAll().some((p) => p.includes(".claude/plugins/"))).toBe(false);
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
     expect(updated).toContain("sample-plugin");
     const manifest = await deps.manifestRepo.load();
-    const plugin = manifest?.getPlugins("claude").find((p) => p.name === "sample-plugin");
+    const plugin = manifest?.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
     expect(plugin?.version).toBe("1.0.0");
     // Mode A's whole contract: register the reference, materialize nothing. Update must
     // not write plugin files that install never wrote, nor record them in the manifest.
@@ -131,18 +132,19 @@ describe("PluginUpdateUseCase — Mode A marketplace tools (claude/codex/copilot
 
   it("keeps the manifest's single entry for the plugin after update (no duplicate registration)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
-    await installStaleGithubPlugin(deps, registry, "claude");
+    await installStaleGithubPlugin(deps, registry, TOOL.claude);
 
     await makeUpdateUseCase(deps, registry).execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
     const manifest = await deps.manifestRepo.load();
-    const plugins = manifest?.getPlugins("claude").filter((p) => p.name === "sample-plugin") ?? [];
+    const plugins =
+      manifest?.getPlugins(TOOL.claude).filter((p) => p.name === "sample-plugin") ?? [];
     expect(plugins).toHaveLength(1);
     expect(plugins[0]?.marketplace).toBe("aidd-framework");
     expect(plugins[0]?.source.kind).toBe("git-subdir");
@@ -152,20 +154,20 @@ describe("PluginUpdateUseCase — Mode A marketplace tools (claude/codex/copilot
 describe("PluginUpdateUseCase — flat-mode tools are unaffected (regression guard)", () => {
   it("still re-materializes opencode's flat files from the built tree on update", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "opencode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
     const registry = await makeGithubRegistry();
-    await installStaleGithubPlugin(deps, registry, "opencode");
+    await installStaleGithubPlugin(deps, registry, TOOL.opencode);
     deps.fs.setFile(BUILT_OPENCODE_SKILL, "# Demo skill v2");
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
       tools: catalogOf(),
-      toolIds: ["opencode"],
+      toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
     });
 
     expect(updated).toContain("sample-plugin");
     const manifest = await deps.manifestRepo.load();
-    const plugin = manifest?.getPlugins("opencode").find((p) => p.name === "sample-plugin");
+    const plugin = manifest?.getPlugins(TOOL.opencode).find((p) => p.name === "sample-plugin");
     expect(plugin?.version).toBe("1.0.0");
     expect(plugin?.files.size).toBeGreaterThan(0);
     expect(

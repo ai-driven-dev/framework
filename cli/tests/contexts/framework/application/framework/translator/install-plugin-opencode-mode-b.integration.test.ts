@@ -6,7 +6,7 @@ import { Manifest } from "../../../../../../src/contexts/framework/domain/manife
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const STUB_HOME = "/tmp/test-home";
@@ -14,7 +14,7 @@ const STUB_HOME = "/tmp/test-home";
 function buildDist(name = "aidd-context"): PluginDistribution {
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [
       {
         relativePath: "commands/hello.md",
@@ -44,11 +44,11 @@ describe("install opencode plugin via Mode B (integration)", () => {
     const hasher = new DeterministicHasher();
     const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -67,11 +67,11 @@ describe("install opencode plugin via Mode B (integration)", () => {
     const hasher = new DeterministicHasher();
     const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -86,18 +86,18 @@ describe("install opencode plugin via Mode B (integration)", () => {
     const hasher = new DeterministicHasher();
     const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
       undefined
     );
 
-    const installed = manifest.getPlugins("opencode").find((p) => p.name === "aidd-context");
+    const installed = manifest.getPlugins(TOOL.opencode).find((p) => p.name === "aidd-context");
     expect(installed).toBeDefined();
     expect(installed?.files.size).toBeGreaterThan(0);
   });

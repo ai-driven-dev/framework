@@ -18,6 +18,7 @@ import {
   userBuiltMarketplaceDir,
 } from "../../../../../src/shared/domain/paths.js";
 import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -27,7 +28,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const ROOT = "/project";
 const ALIAS = "team-tools";
@@ -86,7 +87,7 @@ async function recovery(options: RecoveryOptions = {}) {
   const manifest = Manifest.create();
   const hasher = new DeterministicHasher();
   const settings = options.settings ?? "{}";
-  manifest.addTool("claude", "1.0.0", [
+  manifest.addTool(TOOL.claude, "1.0.0", [
     new InstallationFile({
       relativePath: ".claude/settings.json",
       content: settings,
@@ -94,7 +95,7 @@ async function recovery(options: RecoveryOptions = {}) {
     }),
   ]);
   manifest.addPlugin(
-    "claude",
+    TOOL.claude,
     InstalledPlugin.fromMetadata(
       "review",
       "1.0.0",
@@ -104,7 +105,7 @@ async function recovery(options: RecoveryOptions = {}) {
       ALIAS
     )
   );
-  manifest.setNativeRegistrations("claude", {
+  manifest.setNativeRegistrations(TOOL.claude, {
     binary: "claude",
     marketplaces: [{ alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source } }],
     pluginRefs: options.ownRefs ?? [],
@@ -179,11 +180,11 @@ async function recovery(options: RecoveryOptions = {}) {
     registry,
     hasher,
     logger,
-    new Map([["claude", activator]]),
+    new Map([[TOOL.claude, activator]]),
     fakeEnsureBuiltMarketplace(),
     new Map([
       [
-        "claude",
+        TOOL.claude,
         options.host ??
           new FakeHostMarketplaceRegistry({
             location: "host marketplaces",
@@ -197,7 +198,7 @@ async function recovery(options: RecoveryOptions = {}) {
     undefined,
     new Map([
       [
-        "claude",
+        TOOL.claude,
         {
           read: async () => {
             const reading = pluginReadings[0];
@@ -208,7 +209,7 @@ async function recovery(options: RecoveryOptions = {}) {
       ],
     ]),
     undefined,
-    new Map([["claude", native]])
+    new Map([[TOOL.claude, native]])
   );
   const result = await useCase.execute({ tools: registeredCatalog(), projectRoot: ROOT });
   return { activator, manifest, repo, logger, fs, result, useCase };
@@ -235,7 +236,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
         errors: [],
       });
       expect(logger.warnMessages).toEqual([RECLAIM]);
-      expect(manifest.getNativeRegistrations("claude")).toEqual({
+      expect(manifest.getNativeRegistrations(TOOL.claude)).toEqual({
         binary: "claude",
         marketplaces: [
           { alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source: BUILT } },
@@ -294,7 +295,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       expect(result.warnings).toEqual([
         `Native plugin activation — catalogue '${HOST}' host catalogue source is unproven; host registration left untouched. ${ADD_ERROR}`,
       ]);
-      expect(manifest.getNativeRegistrations("claude")?.marketplaces[0]?.provenance).toEqual({
+      expect(manifest.getNativeRegistrations(TOOL.claude)?.marketplaces[0]?.provenance).toEqual({
         kind: "registry",
         source,
       });
@@ -311,7 +312,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     ]);
     expect(logger.warnMessages).toEqual(result.warnings);
     expect(result.errors).toEqual([]);
-    expect(manifest.getNativeRegistrations("claude")?.marketplaces[0]?.provenance).toEqual({
+    expect(manifest.getNativeRegistrations(TOOL.claude)?.marketplaces[0]?.provenance).toEqual({
       kind: "registry",
       source: OLD,
     });
@@ -340,7 +341,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       warnings: [RECLAIM],
       errors: [{ scope: "claude", message: "retry crashed" }],
     });
-    expect(manifest.getNativeRegistrations("claude")?.marketplaces[0]?.provenance).toEqual({
+    expect(manifest.getNativeRegistrations(TOOL.claude)?.marketplaces[0]?.provenance).toEqual({
       kind: "registry",
       source: OLD,
     });
@@ -355,7 +356,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       expect(result.warnings).toEqual([
         `Native plugin activation — catalogue '${HOST}' collides with unproven AIDD ownership; host registration left untouched. ${ADD_ERROR}`,
       ]);
-      expect(manifest.getNativeRegistrations("claude")?.marketplaces).toEqual([
+      expect(manifest.getNativeRegistrations(TOOL.claude)?.marketplaces).toEqual([
         { alias: ALIAS, hostName: HOST, provenance: { kind: "registry", source: OLD } },
       ]);
       expect(result.errors).toEqual([]);
@@ -400,7 +401,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     });
     expect(activator.removedMarketplaces).toEqual([HOST]);
     expect(activator.enabledPlugins).toEqual([]);
-    expect(manifest.getNativeRegistrations("claude")?.pluginRefs).toEqual([REF]);
+    expect(manifest.getNativeRegistrations(TOOL.claude)?.pluginRefs).toEqual([REF]);
     expect(result.errors).toEqual([]);
   });
 
@@ -417,7 +418,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     expect(second).toEqual({ activated: ["claude"], binaryMissing: [], warnings: [], errors: [] });
     expect(repo.saveCount).toBe(saveCount);
     expect(activator.addedMarketplaces).toEqual([BUILT]);
-    expect(manifest.getToolFiles("claude")[0]?.hash.value).toBe(
+    expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(
       new DeterministicHasher().hash(await fs.readFile(resolve(ROOT, ".claude/settings.json")))
         .value
     );
@@ -429,7 +430,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       const { fs, manifest, result, logger } = await recovery({ settings });
       const content = await fs.readFile(resolve(ROOT, ".claude/settings.json"));
       expect(JSON.parse(content)).toEqual({ enabledPlugins: { [`review@${ALIAS}`]: true } });
-      expect(manifest.getToolFiles("claude")[0]?.hash.value).toBe(
+      expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(
         new DeterministicHasher().hash(content).value
       );
       expect(logger.warnMessages).toEqual([RECLAIM]);
@@ -450,7 +451,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       permissions: { allow: ["Read"] },
       enabledPlugins: { [`review@${ALIAS}`]: false, "personal@external": true },
     });
-    expect(manifest.getToolFiles("claude")[0]?.hash.value).toBe(
+    expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(
       new DeterministicHasher().hash(content).value
     );
     expect(result.errors).toEqual([]);
@@ -459,7 +460,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
 
 async function ownedNativeSettings(
   options: {
-    toolId?: "codex" | "copilot";
+    toolId?: AiToolId;
     names?: readonly string[];
     settings?: string;
     withPlugins?: boolean;
@@ -467,7 +468,7 @@ async function ownedNativeSettings(
     cachedCatalogue?: string;
   } = {}
 ) {
-  const toolId = options.toolId ?? "copilot";
+  const toolId = options.toolId ?? TOOL.copilot;
   const names = options.names ?? ["first"];
   const settings = options.settings ?? JSON.stringify({ permissions: { allow: ["Read"] } });
   const settingsPath = ".github/copilot/settings.json";
@@ -624,10 +625,10 @@ describe("proven native catalogues update declarative settings only when require
       permissions: { allow: ["Read"] },
       enabledPlugins: { "review-first@first-catalog": true, "review-second@second-catalog": true },
     });
-    expect(f.projectRepo.getCurrent()?.getToolFiles("copilot")[0]?.hash.value).toBe(
+    expect(f.projectRepo.getCurrent()?.getToolFiles(TOOL.copilot)[0]?.hash.value).toBe(
       f.hasher.hash(content).value
     );
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations("copilot")).toEqual({
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(TOOL.copilot)).toEqual({
       binary: "copilot",
       marketplaces: f.registrations,
       pluginRefs: f.refs,
@@ -643,7 +644,7 @@ describe("proven native catalogues update declarative settings only when require
     await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
     const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
     expect(JSON.parse(content).enabledPlugins).toEqual({ "review-first@first-catalog": true });
-    expect(f.projectRepo.getCurrent()?.getToolFiles("copilot")[0]?.hash.value).toBe(
+    expect(f.projectRepo.getCurrent()?.getToolFiles(TOOL.copilot)[0]?.hash.value).toBe(
       f.hasher.hash(content).value
     );
     expect(f.projectRepo.saveCount).toBe(1);
@@ -666,7 +667,7 @@ describe("proven native catalogues update declarative settings only when require
 
   it("re-registers an owned Codex local source whose cached root differs from its original build path", async () => {
     const f = await ownedNativeSettings({
-      toolId: "codex",
+      toolId: TOOL.codex,
       cachedRoot: "/host/cache/copied-marketplace",
     });
     const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
@@ -675,7 +676,7 @@ describe("proven native catalogues update declarative settings only when require
     expect(f.activator.removedMarketplaces).toEqual([]);
     expect(f.activator.enabledPlugins).toEqual([]);
     expect(
-      f.projectRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces[0]?.provenance
+      f.projectRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces[0]?.provenance
     ).toEqual({
       kind: "effective-list",
       root: "/built/codex/first",
@@ -683,7 +684,7 @@ describe("proven native catalogues update declarative settings only when require
       source: "/built/codex/first",
     });
     expect(
-      f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces[0]?.provenance
+      f.machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces[0]?.provenance
     ).toEqual({
       kind: "effective-list",
       root: "/built/codex/first",
@@ -695,7 +696,7 @@ describe("proven native catalogues update declarative settings only when require
 
   it("persists a second catalogue's updated source while retaining an already identical first catalogue", async () => {
     const f = await ownedNativeSettings({
-      toolId: "codex",
+      toolId: TOOL.codex,
       names: ["first", "second"],
       cachedCatalogue: "second",
       cachedRoot: "/host/cache/second-copy",
@@ -707,10 +708,10 @@ describe("proven native catalogues update declarative settings only when require
       ...registration,
       provenance: { ...registration.provenance, root: registration.provenance.source },
     }));
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toEqual(
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces).toEqual(
       expected
     );
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toEqual(
+    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces).toEqual(
       expected
     );
     expect(f.projectRepo.saveCount).toBe(1);
@@ -723,8 +724,8 @@ describe("shared framework references follow any successful native tool outcome"
     "records references according to the requested %s activation scope despite another tool's refusal",
     async (scope) => {
       const project = Manifest.create();
-      project.addTool("claude", "1.0.0", []);
-      project.addTool("codex", "1.0.0", []);
+      project.addTool(TOOL.claude, "1.0.0", []);
+      project.addTool(TOOL.codex, "1.0.0", []);
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(
         ROOT,
@@ -763,8 +764,8 @@ describe("shared framework references follow any successful native tool outcome"
         new DeterministicHasher(),
         new CapturingLogger(),
         new Map([
-          ["claude", claude],
-          ["codex", codex],
+          [TOOL.claude, claude],
+          [TOOL.codex, codex],
         ]),
         fakeEnsureBuiltMarketplace(),
         new Map(),
@@ -773,17 +774,17 @@ describe("shared framework references follow any successful native tool outcome"
         references,
         { get: () => "2.0.0" },
         new Map([
-          ["claude", { read: async () => ({ location: "host plugins", refs: new Map() }) }],
-          ["codex", { read: async () => ({ location: "host plugins", refs: new Map() }) }],
+          [TOOL.claude, { read: async () => ({ location: "host plugins", refs: new Map() }) }],
+          [TOOL.codex, { read: async () => ({ location: "host plugins", refs: new Map() }) }],
         ]),
         undefined,
-        new Map<"claude" | "codex", HostMarketplaceSources>([
+        new Map<AiToolId, HostMarketplaceSources>([
           [
-            "claude",
+            TOOL.claude,
             new FakeHostMarketplaceSources(claude, "registry", () => "aidd-framework", new Map()),
           ],
           [
-            "codex",
+            TOOL.codex,
             {
               read: async () => ({
                 location: "host sources",

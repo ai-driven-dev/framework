@@ -7,7 +7,7 @@ import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const HOME = "/home/u";
@@ -16,7 +16,7 @@ const BUILT = "/built/cursor";
 function dist(): PluginDistribution {
   return new PluginDistribution({
     manifest: { name: "sample-plugin", version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [],
     components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
   });
@@ -49,10 +49,10 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     );
     const install = () => {
       const restored = Manifest.create();
-      restored.addTool("cursor", "test", []);
+      restored.addTool(TOOL.cursor, "test", []);
       return translator.addPlugin(
         dist(),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         { kind: "local", path: "/source" },
         PROJECT_ROOT,
         restored,
@@ -87,7 +87,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     );
 
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -98,7 +98,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
 
     await translator.addPlugin(
       dist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -111,7 +111,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     expect(fs.getFile(`${base}/rules/r.mdc`)).toBe("rule body");
     // .mcp.json keeps its dotted name (came from build, not remapped to mcp.json).
     expect(fs.getFile(`${base}/.mcp.json`)).toBe("{}");
-    const installed = manifest.getPlugins("cursor").find((p) => p.name === "sample-plugin");
+    const installed = manifest.getPlugins(TOOL.cursor).find((p) => p.name === "sample-plugin");
     expect(installed?.files.size).toBe(4);
   });
 
@@ -121,7 +121,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     const occupied = `${HOME}/.cursor/plugins/local/sample-plugin/skills/demo/SKILL.md`;
     fs.setFile(occupied, "foreign bytes");
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -132,7 +132,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
 
     const result = await translator.addPlugin(
       dist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -142,13 +142,13 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     );
     expect(result.written).toBe(0);
     expect(fs.getFile(occupied)).toBe("foreign bytes");
-    expect(manifest.getPlugins("cursor")[0]?.files.size).toBe(0);
+    expect(manifest.getPlugins(TOOL.cursor)[0]?.files.size).toBe(0);
   });
 
   it("falls back to flat materialization when no marketplace is given (raw local install)", async () => {
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -158,7 +158,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     );
     const result = await translator.addPlugin(
       dist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -174,7 +174,7 @@ describe("BuiltTreeMaterializationTranslator — when no built tree applies (int
   function distWithCommand(): PluginDistribution {
     return new PluginDistribution({
       manifest: { name: "sample-plugin", version: "1.0.0" },
-      format: "claude",
+      format: TOOL.claude,
       files: [{ relativePath: "commands/hello.md", content: COMMAND }],
       components: {
         commands: [{ relativePath: "commands/hello.md", content: COMMAND }],
@@ -191,7 +191,7 @@ describe("BuiltTreeMaterializationTranslator — when no built tree applies (int
     const fs = new InMemoryFileAdapter();
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -201,7 +201,7 @@ describe("BuiltTreeMaterializationTranslator — when no built tree applies (int
     );
     await translator.addPlugin(
       distWithCommand(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

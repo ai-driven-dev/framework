@@ -14,7 +14,7 @@ import {
   FaultingFileAdapter,
 } from "../../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_NAME = "aidd-context";
@@ -40,7 +40,7 @@ function hooksManifest(event: string): PluginComponentFile {
 function distWithHooks(hooks: readonly PluginComponentFile[]): PluginDistribution {
   return new PluginDistribution({
     manifest: { name: PLUGIN_NAME, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [...hooks, { relativePath: "commands/hello.md", content: "# Hello" }],
     components: {
       commands: [{ relativePath: "commands/hello.md", content: "# Hello" }],
@@ -60,7 +60,7 @@ describe("ProjectHooksMaterializer", () => {
     const materializer = new ProjectHooksMaterializer(fs);
     const first = await materializer.materializeWithProvenance(
       distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT
     );
     const originalHooks = fs.getFile(HOOKS_PATH);
@@ -73,7 +73,7 @@ describe("ProjectHooksMaterializer", () => {
           SCRIPT,
           { relativePath: "hooks/extra.js", content: "new owned script" },
         ]),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         PROJECT_ROOT,
         first.projectHooks
       )
@@ -100,7 +100,7 @@ describe("ProjectHooksMaterializer", () => {
           SCRIPT,
           { relativePath: "hooks/old.js", content: "old script" },
         ]),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         PROJECT_ROOT
       );
       fs.setFile(userPath, "user notes");
@@ -113,7 +113,7 @@ describe("ProjectHooksMaterializer", () => {
           hooksManifest("PreToolUse"),
           { ...SCRIPT, content: "updated owned script" },
         ]),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         PROJECT_ROOT,
         first.projectHooks
       );
@@ -143,7 +143,7 @@ describe("ProjectHooksMaterializer", () => {
         SCRIPT,
         { relativePath: "hooks/old.js", content: "old script" },
       ]),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT
     );
     const writeFile = fs.writeFile.bind(fs);
@@ -159,7 +159,7 @@ describe("ProjectHooksMaterializer", () => {
           hooksManifest("PreToolUse"),
           { ...SCRIPT, content: "updated owned script" },
         ]),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         PROJECT_ROOT,
         first.projectHooks
       )
@@ -179,14 +179,14 @@ describe("ProjectHooksMaterializer", () => {
         SCRIPT,
         { relativePath: "hooks/old.js", content: "old script" },
       ]),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT
     );
     fs.setFile(oldPath, "user edit");
 
     const second = await materializer.materializeWithProvenance(
       distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT,
       first.projectHooks,
       { overwriteEdited: true }
@@ -205,7 +205,7 @@ describe("ProjectHooksMaterializer", () => {
     const scriptPath = join(PROJECT_ROOT, ".cursor/hooks", PLUGIN_NAME, "pre.js");
     const first = await materializer.materializeWithProvenance(
       dist,
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT
     );
     const installedHooks = fs.getFile(HOOKS_PATH);
@@ -215,14 +215,14 @@ describe("ProjectHooksMaterializer", () => {
     await expect(
       materializer.materializeWithProvenance(
         dist,
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         PROJECT_ROOT,
         first.projectHooks
       )
     ).rejects.toThrow(/edited after install; detach refused\. Rerun aidd sync --force/);
     await materializer.materializeWithProvenance(
       dist,
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT,
       first.projectHooks,
       {
@@ -239,7 +239,7 @@ describe("ProjectHooksMaterializer", () => {
 
     const skips = await new ProjectHooksMaterializer(fs).materialize(
       distWithHooks([SCRIPT, hooksManifest("PreToolUse")]),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT
     );
 
@@ -259,7 +259,7 @@ describe("ProjectHooksMaterializer", () => {
     const materializer = new ProjectHooksMaterializer(fs);
     const first = await materializer.materializeWithProvenance(
       distWithHooks([SCRIPT, hooksManifest("PostToolUse")]),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT
     );
     expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null").hooks.postToolUse).toStrictEqual([
@@ -282,7 +282,7 @@ describe("ProjectHooksMaterializer", () => {
 
     await materializer.materializeWithProvenance(
       distWithHooks([SCRIPT, matched]),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT,
       first.projectHooks
     );
@@ -298,7 +298,7 @@ describe("ProjectHooksMaterializer", () => {
 
     const skips = await new ProjectHooksMaterializer(fs).materialize(
       distWithHooks([hooksManifest("Notification"), SCRIPT]),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT
     );
 
@@ -306,7 +306,7 @@ describe("ProjectHooksMaterializer", () => {
       {
         pluginName: PLUGIN_NAME,
         component: "hooks",
-        toolId: "cursor",
+        toolId: TOOL.cursor,
         reason: "cursor: unmapped event 'Notification' skipped",
       },
     ]);
@@ -317,7 +317,7 @@ describe("ProjectHooksMaterializer", () => {
 
     await new ProjectHooksMaterializer(fs).materialize(
       distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT_ROOT
     );
 
@@ -333,7 +333,7 @@ describe("ProjectHooksMaterializer", () => {
     await expect(
       new ProjectHooksMaterializer(fs).materialize(
         distWithHooks([hooksManifest("PreToolUse"), SCRIPT]),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         PROJECT_ROOT
       )
     ).rejects.toThrow("EACCES: planted by the test");
@@ -352,13 +352,13 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
 
     const first = await materializer.materializeWithProvenance(
       dist,
-      registeredAiProfile("antigravity"),
+      registeredAiProfile(TOOL.antigravity),
       PROJECT_ROOT
     );
     const afterFirst = fs.getFile(AGENTS_HOOKS);
     const second = await materializer.materializeWithProvenance(
       dist,
-      registeredAiProfile("antigravity"),
+      registeredAiProfile(TOOL.antigravity),
       PROJECT_ROOT,
       first.projectHooks
     );
@@ -385,7 +385,7 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
       fs,
       PLUGIN_NAME,
       second.projectHooks,
-      registeredAiProfile("antigravity"),
+      registeredAiProfile(TOOL.antigravity),
       PROJECT_ROOT
     );
 
@@ -398,7 +398,7 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
     const materializer = new ProjectHooksMaterializer(fs);
     const { projectHooks } = await materializer.materializeWithProvenance(
       distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
-      registeredAiProfile("antigravity"),
+      registeredAiProfile(TOOL.antigravity),
       PROJECT_ROOT
     );
 
@@ -406,7 +406,7 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
       fs,
       PLUGIN_NAME,
       projectHooks,
-      registeredAiProfile("antigravity"),
+      registeredAiProfile(TOOL.antigravity),
       PROJECT_ROOT
     );
 
@@ -420,7 +420,7 @@ describe("ProjectHooksMaterializer for a flat tool merging into .agents/hooks.js
     await expect(
       new ProjectHooksMaterializer(fs).materializeWithProvenance(
         distWithHooks([hooksManifest("SessionStart"), SCRIPT]),
-        registeredAiProfile("antigravity"),
+        registeredAiProfile(TOOL.antigravity),
         PROJECT_ROOT
       )
     ).rejects.toThrow(/^\.agents\/hooks\.json is not valid JSON/);

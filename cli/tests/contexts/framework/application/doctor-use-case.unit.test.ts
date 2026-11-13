@@ -12,7 +12,7 @@ import {
   initAndInstall,
   installTool,
 } from "../../../helpers/ports/build-unit-deps.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -87,7 +87,7 @@ describe("extractMarkdownLinkTargets", () => {
 describe("doctor", () => {
   it("reports healthy when all files are in sync", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({
@@ -101,7 +101,7 @@ describe("doctor", () => {
 
   it("fails when manifest is corrupted", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     // The doctor reads through `manifestRepo.load()`, so a corrupt manifest is a load that
     // throws — the in-memory double never does on its own.
@@ -126,7 +126,7 @@ describe("doctor", () => {
 
   it("warns about tool directory not registered in manifest", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     // Orphaned: cursor is not installed.
     await deps.fs.writeFile(
@@ -148,7 +148,7 @@ describe("doctor", () => {
 
   it("does not report broken reference for directory-only @path (trailing slash, no extension)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const firstFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
     await deps.fs.writeFile(
@@ -168,7 +168,7 @@ describe("doctor", () => {
 
   it("does not report broken @path reference inside non-markdown fenced code block", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const firstFile = { relativePath: ".claude/plugins/aidd-test/agents/code-reviewer.md" };
     await deps.fs.writeFile(
@@ -188,7 +188,7 @@ describe("doctor", () => {
   describe("orphan and missing file checks", () => {
     it("does not warn about standard GitHub directories when Copilot is not installed", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       await deps.fs.writeFile(
         join(PROJECT_ROOT, ".github", "workflows", "ci.yml"),
@@ -209,7 +209,7 @@ describe("doctor", () => {
 
     it("warns when Copilot files are present on disk but not tracked in the manifest", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       // An aidd-named prompt file the manifest does not track.
       await deps.fs.writeFile(
@@ -232,7 +232,7 @@ describe("doctor", () => {
 
     it("does not warn about non-aidd files found in Copilot directories", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude" as ToolId);
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       await deps.fs.writeFile(
         join(PROJECT_ROOT, ".github", "prompts", "custom.prompt.md"),
@@ -255,7 +255,7 @@ describe("doctor", () => {
   describe("merge file key checks", () => {
     it("is healthy when merge file keys match the manifest", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "vscode" as ToolId);
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
       const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({
@@ -273,8 +273,8 @@ describe("doctor", () => {
   describe("tool health", () => {
     async function installedBothCategories() {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
       const manifest = await deps.manifestRepo.load();
       if (manifest === null) throw new Error("manifest missing");
       return { deps, manifest };
@@ -297,8 +297,8 @@ describe("doctor", () => {
       });
 
       expect(report.toolHealth).toStrictEqual([
-        healthOf(manifest, "claude"),
-        healthOf(manifest, "vscode"),
+        healthOf(manifest, TOOL.claude),
+        healthOf(manifest, TOOL.vscode),
       ]);
     });
 
@@ -311,14 +311,14 @@ describe("doctor", () => {
         category: "ide",
       });
 
-      expect(report.toolHealth).toStrictEqual([healthOf(manifest, "vscode")]);
+      expect(report.toolHealth).toStrictEqual([healthOf(manifest, TOOL.vscode)]);
     });
   });
 
   describe("narrowed to a category", () => {
     it("does not look for orphaned directories", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await deps.fs.writeFile(
         join(PROJECT_ROOT, ".cursor", "commands", "plan.md"),
         "---\nname: aidd:03:plan\ndescription: Plan feature\n---\nContent here.\n"

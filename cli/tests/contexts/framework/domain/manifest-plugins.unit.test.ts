@@ -7,11 +7,10 @@ import {
   ToolNotInManifestError,
 } from "../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
-import type { ToolId } from "../../../../src/shared/domain/tool.js";
-import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
+import { resolveRegisteredToolId, TOOL } from "../../tools/testing/catalog-of.js";
 
-const CLAUDE = "claude" as ToolId;
-const CURSOR = "cursor" as ToolId;
+const CLAUDE = TOOL.claude;
+const CURSOR = TOOL.cursor;
 
 const makeFile = (relativePath: string, hashHex: string): InstallationFile =>
   new InstallationFile({ relativePath, content: "content", hash: new FileHash(hashHex) });
@@ -127,7 +126,7 @@ describe("updatePlugin()", () => {
 });
 
 describe("a tool that is not installed", () => {
-  const ABSENT = "codex" as ToolId;
+  const ABSENT = TOOL.codex;
 
   it("has no plugins", () => {
     expect(makeManifest().getPlugins(ABSENT)).toStrictEqual([]);

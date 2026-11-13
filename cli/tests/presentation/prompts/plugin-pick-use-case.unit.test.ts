@@ -14,7 +14,7 @@ import {
   NoMarketplacesRegisteredError,
 } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -54,7 +54,7 @@ function registerMarketplace(
 
 async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   const deps = await buildUnitDeps(PROJECT_ROOT);
-  await initAndInstall(deps, PROJECT_ROOT, "claude");
+  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const pluginAdd = new PluginAddUseCase(
@@ -85,7 +85,7 @@ describe("PluginPickUseCase", () => {
     await expect(
       useCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       })
@@ -97,7 +97,7 @@ describe("PluginPickUseCase", () => {
     await expect(
       useCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: true,
       })
@@ -126,7 +126,7 @@ describe("PluginPickUseCase", () => {
 
     const result = await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -134,7 +134,7 @@ describe("PluginPickUseCase", () => {
     expect(result.marketplace.name).toBe("local");
     expect(result.installed).toEqual(["sample-plugin"]);
     const manifest = await deps.manifestRepo.load();
-    const plugins = manifest?.getPlugins("claude") ?? [];
+    const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
     const installed = plugins.find((p) => p.name === "sample-plugin");
     expect(installed?.marketplace).toBe("local");
   });
@@ -148,7 +148,7 @@ describe("PluginPickUseCase", () => {
 
     const result = await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -164,7 +164,7 @@ describe("PluginPickUseCase", () => {
     await expect(
       useCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: true,
       })
@@ -178,7 +178,7 @@ describe("PluginPickUseCase", () => {
 
     const result = await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -202,7 +202,7 @@ describe("PluginPickUseCase", () => {
 
     const result = await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -218,7 +218,7 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
     await expect(
       useCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       })
@@ -234,7 +234,7 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
 
     await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -253,7 +253,7 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
 
     await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -273,7 +273,7 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
 
     await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -299,7 +299,7 @@ describe("PluginPickUseCase — what it asks, and when it asks nothing", () => {
 
     await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -332,7 +332,7 @@ describe("PluginPickUseCase — what it hands the installer", () => {
 
     await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });
@@ -367,7 +367,7 @@ describe("PluginPickUseCase — what it hands the installer", () => {
 
     await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: true,
     });

@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const pluginRemove = vi.fn();
@@ -283,19 +283,22 @@ describe("aidd plugin search", () => {
 });
 
 describe("aidd plugin update", () => {
-  it.each(["copilot", "cursor"])("routes %s --scope user to machine ownership", async (toolId) => {
-    expect(await run("update", "aidd-vcs", "--tool", toolId, "--scope", "user")).toEqual([
-      "Updated: aidd-vcs@aidd-framework.",
-    ]);
-    expect(userPluginUpdate).toHaveBeenCalledWith({
-      pluginNames: ["aidd-vcs"],
-      toolIds: [toolId],
-      projectRoot: PROJECT_ROOT,
-      scope: "user",
-      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
-    });
-    expect(pluginUpdate).not.toHaveBeenCalled();
-  });
+  it.each([TOOL.copilot, TOOL.cursor])(
+    "routes %s --scope user to machine ownership",
+    async (toolId) => {
+      expect(await run("update", "aidd-vcs", "--tool", toolId, "--scope", "user")).toEqual([
+        "Updated: aidd-vcs@aidd-framework.",
+      ]);
+      expect(userPluginUpdate).toHaveBeenCalledWith({
+        pluginNames: ["aidd-vcs"],
+        toolIds: [toolId],
+        projectRoot: PROJECT_ROOT,
+        scope: "user",
+        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
+      });
+      expect(pluginUpdate).not.toHaveBeenCalled();
+    }
+  );
 
   it("sweeps every plugin when none was named, and lists what moved", async () => {
     expect(await run("update")).toEqual(["Updated: aidd-dev."]);

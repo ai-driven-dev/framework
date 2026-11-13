@@ -6,6 +6,7 @@ import {
   parseInstallScope,
 } from "../../../../src/contexts/framework/domain/install-scope.js";
 import { InvalidPluginScopeError } from "../../../../src/shared/domain/errors.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 
 describe("install-scope value object", () => {
   describe("isInstallScope", () => {
@@ -48,15 +49,15 @@ describe("install-scope value object", () => {
 
   describe("assertToolSupportsScope", () => {
     it("does not throw when the requested scope is the supported one", () => {
-      expect(() => assertToolSupportsScope("cursor", "user", "user")).not.toThrow();
-      expect(() => assertToolSupportsScope("claude", "project", "project")).not.toThrow();
+      expect(() => assertToolSupportsScope(TOOL.cursor, "user", "user")).not.toThrow();
+      expect(() => assertToolSupportsScope(TOOL.claude, "project", "project")).not.toThrow();
     });
 
     it("throws InvalidPluginScopeError on mismatch", () => {
-      expect(() => assertToolSupportsScope("cursor", "project", "user")).toThrow(
+      expect(() => assertToolSupportsScope(TOOL.cursor, "project", "user")).toThrow(
         InvalidPluginScopeError
       );
-      expect(() => assertToolSupportsScope("claude", "user", "project")).toThrow(
+      expect(() => assertToolSupportsScope(TOOL.claude, "user", "project")).toThrow(
         InvalidPluginScopeError
       );
     });

@@ -11,14 +11,15 @@ import {
   InvalidPluginScopeError,
   TrustDeniedError,
 } from "../../../../../src/shared/domain/errors.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
 
-function manifestWith(toolId: "claude" | "cursor"): InMemoryManifestRepository {
+function manifestWith(toolId: AiToolId): InMemoryManifestRepository {
   const manifest = Manifest.create();
   manifest.addTool(toolId, "1.0.0", []);
   return new InMemoryManifestRepository(manifest, PROJECT_ROOT);
@@ -132,7 +133,7 @@ describe("PluginInstallUseCase", () => {
         makeUseCase().execute({
           pluginArg: "my-plugin",
           tools: catalogOf(),
-          toolIds: ["claude"],
+          toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           interactive: false,
           scope: "user",
@@ -145,7 +146,7 @@ describe("PluginInstallUseCase", () => {
         makeUseCase().execute({
           pluginArg: "my-plugin",
           tools: catalogOf(),
-          toolIds: ["cursor"],
+          toolIds: [TOOL.cursor],
           projectRoot: PROJECT_ROOT,
           interactive: false,
           scope: "project",
@@ -158,7 +159,7 @@ describe("PluginInstallUseCase", () => {
       const result = await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin",
         tools: catalogOf(),
-        toolIds: ["cursor"],
+        toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
         interactive: false,
         scope: "user",
@@ -171,7 +172,7 @@ describe("PluginInstallUseCase", () => {
       const result = await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin",
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
         scope: "project",
@@ -316,7 +317,7 @@ describe("PluginInstallUseCase", () => {
     it("checks only the installed tools when a manifest exists", async () => {
       const result = await makeUseCase({
         marketplaceExecute: marketplaceExecute(),
-        manifestRepo: manifestWith("claude"),
+        manifestRepo: manifestWith(TOOL.claude),
       }).execute({
         pluginArg: "my-plugin",
         tools: catalogOf(),
@@ -333,7 +334,7 @@ describe("PluginInstallUseCase", () => {
       await expect(
         makeUseCase({
           marketplaceExecute: marketplaceExecute(),
-          manifestRepo: manifestWith("claude"),
+          manifestRepo: manifestWith(TOOL.claude),
         }).execute({
           pluginArg: "my-plugin",
           tools: catalogOf(),
@@ -395,7 +396,7 @@ describe("PluginInstallUseCase", () => {
       await makeUseCase({ pickExecute }).execute({
         pluginArg: undefined,
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: true,
       });
@@ -414,7 +415,7 @@ describe("PluginInstallUseCase", () => {
       const result = await makeUseCase({ addExecute }).execute({
         pluginArg: PLUGIN_FIXTURE,
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -435,7 +436,7 @@ describe("PluginInstallUseCase", () => {
       await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin@1.2.3",
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
         fromMarketplace: "mkt",
@@ -460,7 +461,7 @@ describe("PluginInstallUseCase", () => {
       await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin",
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });

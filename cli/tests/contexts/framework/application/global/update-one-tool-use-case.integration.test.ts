@@ -15,7 +15,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -64,13 +64,13 @@ describe("UpdateOneToolUseCase integration", () => {
     it("writes the file without prompting", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       const prompter = buildFakePrompter("keep");
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const manifest = await loadManifest(deps);
       const errors: Parameters<typeof UpdateOneToolUseCase.prototype.execute>[4] = [];
 
       const result = await buildUseCase(deps, prompter).execute(
-        "claude",
+        TOOL.claude,
         manifest,
         PROJECT_ROOT,
         "test",
@@ -93,17 +93,17 @@ describe("UpdateOneToolUseCase integration", () => {
     it("overwrites without prompting", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       const prompter = buildFakePrompter("keep");
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const manifest = await loadManifest(deps);
-      const firstFile = manifest.getToolFiles("claude")[0];
+      const firstFile = manifest.getToolFiles(TOOL.claude)[0];
       expect(firstFile).toBeDefined();
       if (!firstFile) return;
       await modifyFile(deps, firstFile.relativePath, PROJECT_ROOT);
 
       const useCase = buildUseCase(deps, prompter);
       const errors: Parameters<typeof useCase.execute>[4] = [];
-      const result = await useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
+      const result = await useCase.execute(TOOL.claude, manifest, PROJECT_ROOT, "test", errors, {
         tools: catalogOf(),
         userForce: true,
         interactive: false,
@@ -120,10 +120,10 @@ describe("UpdateOneToolUseCase integration", () => {
     it("throws InputRequiredError (not caught by aggregation)", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       const prompter = buildFakePrompter("keep");
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const manifest = await loadManifest(deps);
-      const firstFile = manifest.getToolFiles("claude")[0];
+      const firstFile = manifest.getToolFiles(TOOL.claude)[0];
       expect(firstFile).toBeDefined();
       if (!firstFile) return;
       await modifyFile(deps, firstFile.relativePath, PROJECT_ROOT);
@@ -132,7 +132,7 @@ describe("UpdateOneToolUseCase integration", () => {
       const errors: Parameters<typeof useCase.execute>[4] = [];
 
       await expect(
-        useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
+        useCase.execute(TOOL.claude, manifest, PROJECT_ROOT, "test", errors, {
           tools: catalogOf(),
           userForce: false,
           interactive: false,
@@ -147,9 +147,9 @@ describe("UpdateOneToolUseCase integration", () => {
   describe("installer skipped the tool", () => {
     it("answers null with no error recorded", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       vi.spyOn(deps.installRuntimeConfigUseCase, "execute").mockResolvedValue({
-        toolId: "claude",
+        toolId: TOOL.claude,
         fileCount: 0,
         files: [],
         skipped: true,
@@ -160,7 +160,7 @@ describe("UpdateOneToolUseCase integration", () => {
       const errors: Parameters<typeof useCase.execute>[4] = [];
 
       const result = await useCase.execute(
-        "claude",
+        TOOL.claude,
         await loadManifest(deps),
         PROJECT_ROOT,
         "test",
@@ -181,7 +181,7 @@ describe("UpdateOneToolUseCase integration", () => {
   describe("install failure", () => {
     it("reports the failure and returns null instead of throwing", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       vi.spyOn(deps.installRuntimeConfigUseCase, "execute").mockRejectedValue(
         new Error("disk full")
       );
@@ -190,7 +190,7 @@ describe("UpdateOneToolUseCase integration", () => {
       const errors: Parameters<typeof useCase.execute>[4] = [];
 
       const result = await useCase.execute(
-        "claude",
+        TOOL.claude,
         await loadManifest(deps),
         PROJECT_ROOT,
         "test",
@@ -209,14 +209,14 @@ describe("UpdateOneToolUseCase integration", () => {
 
     it("reports a non-Error rejection as a string", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       vi.spyOn(deps.installRuntimeConfigUseCase, "execute").mockRejectedValue("plain string");
 
       const useCase = buildUseCase(deps, buildFakePrompter("keep"));
       const errors: Parameters<typeof useCase.execute>[4] = [];
 
       const result = await useCase.execute(
-        "claude",
+        TOOL.claude,
         await loadManifest(deps),
         PROJECT_ROOT,
         "test",
@@ -238,10 +238,10 @@ describe("UpdateOneToolUseCase integration", () => {
     it("skips the file and preserves user edit when prompter returns keep", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       const prompter = buildFakePrompter("keep");
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const manifest = await loadManifest(deps);
-      const firstFile = manifest.getToolFiles("claude")[0];
+      const firstFile = manifest.getToolFiles(TOOL.claude)[0];
       expect(firstFile).toBeDefined();
       if (!firstFile) return;
       const userContent = "user-modified content";
@@ -249,7 +249,7 @@ describe("UpdateOneToolUseCase integration", () => {
 
       const useCase = buildUseCase(deps, prompter);
       const errors: Parameters<typeof useCase.execute>[4] = [];
-      await useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
+      await useCase.execute(TOOL.claude, manifest, PROJECT_ROOT, "test", errors, {
         tools: catalogOf(),
         userForce: false,
         interactive: true,
@@ -266,17 +266,17 @@ describe("UpdateOneToolUseCase integration", () => {
     it("writes the file and prompter was called", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       const prompter = buildFakePrompter("overwrite");
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const manifest = await loadManifest(deps);
-      const firstFile = manifest.getToolFiles("claude")[0];
+      const firstFile = manifest.getToolFiles(TOOL.claude)[0];
       expect(firstFile).toBeDefined();
       if (!firstFile) return;
       await modifyFile(deps, firstFile.relativePath, PROJECT_ROOT);
 
       const useCase = buildUseCase(deps, prompter);
       const errors: Parameters<typeof useCase.execute>[4] = [];
-      const result = await useCase.execute("claude", manifest, PROJECT_ROOT, "test", errors, {
+      const result = await useCase.execute(TOOL.claude, manifest, PROJECT_ROOT, "test", errors, {
         tools: catalogOf(),
         userForce: false,
         interactive: true,
@@ -293,7 +293,7 @@ describe("UpdateOneToolUseCase integration", () => {
     it("UpdateOneToolUseCase has no plugin or marketplace update method", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "claude");
+      await installTool(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = buildUseCase(deps, buildFakePrompter("keep"));
       expect(typeof useCase.execute).toBe("function");
       expect("updatePlugins" in useCase).toBe(false);

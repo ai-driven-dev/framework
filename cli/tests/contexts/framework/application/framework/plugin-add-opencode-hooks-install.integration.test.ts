@@ -1,5 +1,5 @@
 import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 /** Installing a plugin carrying hooks/ against OpenCode delivers the script, namespaced under
  * .opencode/hooks/<plugin>/ like .claude/ and .cursor/ already are. Never .opencode/plugin/,
  * which OpenCode's own loader imports in-process, where a plain hook script kills the host. */
@@ -20,7 +20,7 @@ const PROJECT_ROOT = "/test-project";
 
 async function installSamplePlugin() {
   const deps = await buildUnitDeps(PROJECT_ROOT);
-  await initAndInstall(deps, PROJECT_ROOT, "opencode");
+  await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const capturingLogger = new CapturingLogger();
   const registry = new InMemoryMarketplaceRegistry();
@@ -40,7 +40,7 @@ async function installSamplePlugin() {
   await useCase.execute({
     tools: catalogOf(),
     source: { kind: "local", path: PLUGIN_FIXTURE },
-    toolIds: ["opencode"],
+    toolIds: [TOOL.opencode],
     projectRoot: PROJECT_ROOT,
     interactive: false,
   });

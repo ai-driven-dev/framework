@@ -2,6 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { TOOL } from "../contexts/tools/testing/catalog-of.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
 const AIDD_DIR = ".aidd";
@@ -17,7 +18,7 @@ async function seedManifestWithClaudeNativeRegistrations(projectDir: string): Pr
       version: 8,
       tools: {
         claude: {
-          toolId: "claude",
+          toolId: TOOL.claude,
           version: "1.0.0",
           files: [],
           nativeRegistrations: {

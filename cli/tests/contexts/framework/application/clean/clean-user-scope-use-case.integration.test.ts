@@ -13,7 +13,7 @@ import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framewo
 import type { HostActions } from "../../../../../src/contexts/host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
-import type { ToolId } from "../../../../../src/shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -22,7 +22,7 @@ import { RecordingPrompter } from "../../../../helpers/ports/recording-prompter.
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const USER_CONFIG_DIR = "/fake-home/.config/aidd";
 const HOME = "/fake-home";
@@ -126,8 +126,8 @@ class StrictListingFileAdapter extends InMemoryFileAdapter {
 
 function manifestWithClaude(): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "1.0.0", []);
-  manifest.setNativeRegistrations("claude", {
+  manifest.addTool(TOOL.claude, "1.0.0", []);
+  manifest.setNativeRegistrations(TOOL.claude, {
     binary: "claude",
     marketplaces: [
       {
@@ -144,10 +144,10 @@ function manifestWithClaude(): Manifest {
 
 function provenClaudeSources(
   source = "/built/claude"
-): ReadonlyMap<"claude", HostMarketplaceSources> {
+): ReadonlyMap<AiToolId, HostMarketplaceSources> {
   return new Map([
     [
-      "claude",
+      TOOL.claude,
       {
         read: async () => ({
           location: "known_marketplaces.json",
@@ -158,11 +158,9 @@ function provenClaudeSources(
   ]);
 }
 
-function provenHostPlugins(
-  manifest: Manifest
-): ReadonlyMap<"claude" | "codex", FakeHostPluginRegistry> {
-  const readers = new Map<"claude" | "codex", FakeHostPluginRegistry>();
-  for (const toolId of ["claude", "codex"] as const) {
+function provenHostPlugins(manifest: Manifest): ReadonlyMap<AiToolId, FakeHostPluginRegistry> {
+  const readers = new Map<AiToolId, FakeHostPluginRegistry>();
+  for (const toolId of [TOOL.claude, TOOL.codex]) {
     const registrations = manifest.getNativeRegistrations(toolId);
     if (registrations === undefined) continue;
     readers.set(
@@ -191,14 +189,14 @@ describe("clean --scope user", () => {
     "Copilot cleans past an unclaimed uninstall tombstone, but protects a foreign enabled=%s ref",
     async (foreignEnabled) => {
       const manifest = Manifest.create();
-      manifest.addTool("copilot", "1.0.0", []);
+      manifest.addTool(TOOL.copilot, "1.0.0", []);
       const source = {
         kind: "effective-list" as const,
         root: "/built/copilot",
         sourceType: "local",
         source: "/built/copilot",
       };
-      manifest.setNativeRegistrations("copilot", {
+      manifest.setNativeRegistrations(TOOL.copilot, {
         binary: "copilot",
         marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework", provenance: source }],
         pluginRefs: ["aidd-dev@aidd-framework"],
@@ -216,14 +214,14 @@ describe("clean --scope user", () => {
         new CapturingLogger(),
         new InMemoryMarketplaceRegistry(),
         () => USER_CONFIG_DIR,
-        new Map([["copilot", activator]]),
+        new Map([[TOOL.copilot, activator]]),
         new Map(),
         () => HOME,
         undefined,
         undefined,
         new Map([
           [
-            "copilot",
+            TOOL.copilot,
             {
               read: async () => ({
                 location: "marketplace list",
@@ -232,7 +230,9 @@ describe("clean --scope user", () => {
             },
           ],
         ]),
-        new Map([["copilot", new FakeHostPluginRegistry({ location: "plugins", refs: hostRefs })]])
+        new Map([
+          [TOOL.copilot, new FakeHostPluginRegistry({ location: "plugins", refs: hostRefs })],
+        ])
       );
 
       const result = clean.execute({
@@ -260,9 +260,9 @@ describe("clean --scope user", () => {
     class LockedRepository extends InMemoryManifestRepository {
       async withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
         // A concurrent install completed while clean was waiting for the lock.
-        const registration = machine.getNativeRegistrations("claude");
+        const registration = machine.getNativeRegistrations(TOOL.claude);
         if (registration === undefined) throw new Error("fixture missing native registration");
-        machine.setNativeRegistrations("claude", {
+        machine.setNativeRegistrations(TOOL.claude, {
           ...registration,
           pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: ["/project-b"] }],
         });
@@ -291,7 +291,7 @@ describe("clean --scope user", () => {
       new CapturingLogger(),
       new InMemoryMarketplaceRegistry(),
       () => USER_CONFIG_DIR,
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       new Map(),
       () => HOME,
       undefined,
@@ -310,7 +310,7 @@ describe("clean --scope user", () => {
     expect(fs.getFile(cacheMarker)).toBe("{}");
     expect(fs.getFile(fetched)).toBe("framework clone");
     expect(fs.getFile(plugins)).toBe("plugin clone");
-    expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual([
+    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginClaims).toEqual([
       { ref: "aidd-context@aidd-framework", dependents: ["/project-b"] },
     ]);
   });
@@ -335,13 +335,13 @@ describe("clean --scope user", () => {
       new CapturingLogger(),
       new InMemoryMarketplaceRegistry(),
       () => USER_CONFIG_DIR,
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       new Map(),
       () => HOME,
       undefined,
       undefined,
       provenClaudeSources(),
-      new Map([["claude", hostPlugins]])
+      new Map([[TOOL.claude, hostPlugins]])
     );
     await expect(
       useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
@@ -349,12 +349,12 @@ describe("clean --scope user", () => {
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(await fs.readFile(foreignCache)).toBe("foreign bytes");
-    expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toHaveLength(1);
+    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginClaims).toHaveLength(1);
   });
   it("preflights every native source before uninstalling any other catalogue", async () => {
     const machine = manifestWithClaude();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(TOOL.codex, "1.0.0", []);
+    machine.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [
         {
@@ -370,12 +370,12 @@ describe("clean --scope user", () => {
     const codex = new RecordingActivator([]);
     const repo = new InMemoryManifestRepository(machine);
     const fs = new RecordingFileAdapter();
-    const claudeSource = provenClaudeSources().get("claude");
+    const claudeSource = provenClaudeSources().get(TOOL.claude);
     if (claudeSource === undefined) throw new Error("fixture missing Claude source reader");
-    const sources = new Map<"claude" | "codex", HostMarketplaceSources>([
-      ["claude", claudeSource],
+    const sources = new Map<AiToolId, HostMarketplaceSources>([
+      [TOOL.claude, claudeSource],
       [
-        "codex",
+        TOOL.codex,
         {
           read: async () => ({
             location: "host",
@@ -401,8 +401,8 @@ describe("clean --scope user", () => {
       new InMemoryMarketplaceRegistry(),
       () => USER_CONFIG_DIR,
       new Map([
-        ["claude", claude],
-        ["codex", codex],
+        [TOOL.claude, claude],
+        [TOOL.codex, codex],
       ]),
       new Map(),
       () => HOME,
@@ -418,12 +418,12 @@ describe("clean --scope user", () => {
     expect(claude.removedMarketplaces).toEqual([]);
     expect(codex.uninstalledPlugins).toEqual([]);
     expect(codex.removedMarketplaces).toEqual([]);
-    expect(repo.getCurrent()?.getNativeRegistrations("claude")).toBeDefined();
+    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)).toBeDefined();
   });
   it("refuses all native host mutations when a stale canonical source points at a foreign Codex catalogue", async () => {
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(TOOL.codex, "1.0.0", []);
+    machine.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [
         {
@@ -455,25 +455,25 @@ describe("clean --scope user", () => {
       new CapturingLogger(),
       new InMemoryMarketplaceRegistry(),
       () => USER_CONFIG_DIR,
-      new Map([["codex", activator]]),
+      new Map([[TOOL.codex, activator]]),
       new Map(),
       () => HOME,
       undefined,
       undefined,
-      new Map([["codex", source]])
+      new Map([[TOOL.codex, source]])
     );
     await expect(
       useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/current host source differs.*reconcile manually/);
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
-    expect(repo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toHaveLength(1);
+    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces).toHaveLength(1);
   });
   it("refuses an active B native ref even with force, then succeeds only after B detaches", async () => {
     const machine = manifestWithClaude();
-    const registrations = machine.getNativeRegistrations("claude");
+    const registrations = machine.getNativeRegistrations(TOOL.claude);
     if (registrations === undefined) throw new Error("fixture missing native registration");
-    machine.setNativeRegistrations("claude", {
+    machine.setNativeRegistrations(TOOL.claude, {
       ...registrations,
       pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: ["/B"] }],
     });
@@ -486,10 +486,10 @@ describe("clean --scope user", () => {
       new CapturingLogger(),
       new InMemoryMarketplaceRegistry(),
       () => USER_CONFIG_DIR,
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       new Map([
         [
-          "claude",
+          TOOL.claude,
           new FakeHostMarketplaceRegistry({
             location: "known_marketplaces.json",
             entries: new Map(),
@@ -507,10 +507,10 @@ describe("clean --scope user", () => {
     ).rejects.toThrow(/active projects.*\/B/);
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
-    expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual([
+    expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginClaims).toEqual([
       { ref: "aidd-context@aidd-framework", dependents: ["/B"] },
     ]);
-    machine.setNativeRegistrations("claude", {
+    machine.setNativeRegistrations(TOOL.claude, {
       ...registrations,
       pluginClaims: [{ ref: "aidd-context@aidd-framework", dependents: [] }],
     });
@@ -527,7 +527,7 @@ describe("clean --scope user", () => {
     fs.setFile(userFile, "shared bytes");
     fs.setFile(projectFile, "project bytes");
     const machine = Manifest.create();
-    machine.addTool("cursor", "1.0.0", []);
+    machine.addTool(TOOL.cursor, "1.0.0", []);
     const shared = InstalledPlugin.fromMetadata(
       "shared",
       "1.0.0",
@@ -539,9 +539,9 @@ describe("clean --scope user", () => {
         new Map([["shared/skills/x.md", createHash("md5").update("shared bytes").digest("hex")]])
       )
       .withDependents(["/B"]);
-    machine.addPlugin("cursor", shared);
+    machine.addPlugin(TOOL.cursor, shared);
     machine.addPlugin(
-      "cursor",
+      TOOL.cursor,
       InstalledPlugin.fromMetadata(
         "local",
         "1.0.0",
@@ -576,11 +576,11 @@ describe("clean --scope user", () => {
     expect(
       repo
         .getCurrent()
-        ?.getPlugins("cursor")
+        ?.getPlugins(TOOL.cursor)
         .find((plugin) => plugin.name === "shared")?.dependents
     ).toEqual(["/B"]);
 
-    machine.updatePlugin("cursor", shared.withDependents([]));
+    machine.updatePlugin(TOOL.cursor, shared.withDependents([]));
     await useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true });
     expect(repo.getCurrent()).toBeNull();
     expect(fs.has(userFile)).toBe(false);
@@ -637,7 +637,7 @@ describe("clean --scope user", () => {
         logger,
         registry,
         () => USER_CONFIG_DIR,
-        new Map([["claude", activator]]),
+        new Map([[TOOL.claude, activator]]),
         new Map(),
         () => HOME,
         userSourceReferences
@@ -677,10 +677,10 @@ describe("clean --scope user", () => {
         new CapturingLogger(),
         new InMemoryMarketplaceRegistry(),
         () => USER_CONFIG_DIR,
-        new Map([["claude", activator]]),
+        new Map([[TOOL.claude, activator]]),
         new Map([
           [
-            "claude",
+            TOOL.claude,
             new FakeHostMarketplaceRegistry({
               location: "known_marketplaces.json",
               entries: new Map(),
@@ -939,9 +939,9 @@ describe("clean --scope user", () => {
       // symlink escaping the declared user-scope boundary.
       fs.setSymlink(join(boundary, "rogue-plugin"), escapeTarget);
       const manifest = Manifest.create();
-      manifest.addTool("cursor", "1.0.0", []);
+      manifest.addTool(TOOL.cursor, "1.0.0", []);
       manifest.addPlugin(
-        "cursor",
+        TOOL.cursor,
         InstalledPlugin.fromMetadata(
           "rogue-plugin",
           "1.0.0",
@@ -1214,10 +1214,10 @@ describe("clean --scope user", () => {
         logger,
         new InMemoryMarketplaceRegistry(),
         () => USER_CONFIG_DIR,
-        new Map([["claude", new FakeHostActions({ available: true })]]),
+        new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
         new Map([
           [
-            "claude",
+            TOOL.claude,
             new FakeHostMarketplaceRegistry({
               location: "known_marketplaces.json",
               entries: new Map(),
@@ -1425,8 +1425,8 @@ describe("clean --scope user", () => {
       manifest?: Manifest;
       repo?: InMemoryManifestRepository;
       binary?: string;
-      nativeSources?: ReadonlyMap<"claude" | "codex", HostMarketplaceSources>;
-      hostPlugins?: ReadonlyMap<"claude" | "codex", FakeHostPluginRegistry>;
+      nativeSources?: ReadonlyMap<AiToolId, HostMarketplaceSources>;
+      hostPlugins?: ReadonlyMap<AiToolId, FakeHostPluginRegistry>;
       activator: HostActions;
     }) {
       return new CleanUserScopeUseCase(
@@ -1435,7 +1435,7 @@ describe("clean --scope user", () => {
         deps.logger,
         new InMemoryMarketplaceRegistry(),
         () => USER_CONFIG_DIR,
-        new Map([[deps.binary ?? "claude", deps.activator]]),
+        new Map([[deps.binary ?? TOOL.claude, deps.activator]]),
         new Map(),
         () => HOME,
         undefined,
@@ -1465,8 +1465,8 @@ describe("clean --scope user", () => {
 
     it("cleans an empty native registration without inventing any plugin uninstall", async () => {
       const manifest = Manifest.create();
-      manifest.addTool("claude", "1.0.0", []);
-      manifest.setNativeRegistrations("claude", {
+      manifest.addTool(TOOL.claude, "1.0.0", []);
+      manifest.setNativeRegistrations(TOOL.claude, {
         binary: "claude",
         marketplaces: [],
         pluginRefs: [],
@@ -1520,7 +1520,7 @@ describe("clean --scope user", () => {
           repo,
           activator,
           logger: new CapturingLogger(),
-          nativeSources: new Map([["claude", source]]),
+          nativeSources: new Map([[TOOL.claude, source]]),
         }).execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow("claude: catalogue source unproven.");
 
@@ -1562,7 +1562,7 @@ describe("clean --scope user", () => {
           repo,
           activator,
           logger: new CapturingLogger(),
-          nativeSources: new Map([["claude", source]]),
+          nativeSources: new Map([[TOOL.claude, source]]),
         }).execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
       ).rejects.toThrow(
         `claude: registration left in place, the claude CLI is not on the PATH. It would have unregistered 1 marketplace(s) and 1 plugin ref(s). Its cache survives at: ${join(CLAUDE_CACHE, "aidd-framework")}. User clean refused; canonical claims retained.`
@@ -1579,12 +1579,12 @@ describe("clean --scope user", () => {
       "refuses %s before native or cache cleanup and retains the canonical manifest",
       async (fault) => {
         const manifest = manifestWithClaude();
-        const registration = manifest.getNativeRegistrations("claude");
+        const registration = manifest.getNativeRegistrations(TOOL.claude);
         if (registration === undefined) throw new Error("fixture missing registration");
         if (fault === "missing catalogue")
-          manifest.setNativeRegistrations("claude", { ...registration, marketplaces: [] });
+          manifest.setNativeRegistrations(TOOL.claude, { ...registration, marketplaces: [] });
         if (fault === "duplicate claim")
-          manifest.setNativeRegistrations("claude", {
+          manifest.setNativeRegistrations(TOOL.claude, {
             ...registration,
             pluginClaims: [
               ...(registration.pluginClaims ?? []),
@@ -1602,7 +1602,7 @@ describe("clean --scope user", () => {
         const activator = new FakeHostActions({ available: true });
         const hostPlugins = new Map([
           [
-            "claude" as const,
+            TOOL.claude,
             new FakeHostPluginRegistry({
               location: "literal host plugin registry",
               refs: new Map(
@@ -1635,8 +1635,8 @@ describe("clean --scope user", () => {
 
     it("refuses a second missing native binary before uninstalling the first tool", async () => {
       const manifest = manifestWithClaude();
-      manifest.addTool("copilot", "1.0.0", []);
-      manifest.setNativeRegistrations("copilot", {
+      manifest.addTool(TOOL.copilot, "1.0.0", []);
+      manifest.setNativeRegistrations(TOOL.copilot, {
         binary: "copilot",
         marketplaces: [
           {
@@ -1671,8 +1671,8 @@ describe("clean --scope user", () => {
       expect(claude.uninstalledPlugins).toEqual([]);
       expect(claude.removedMarketplaces).toEqual([]);
       expect(await fs.readFile(cacheMarker)).toBe(before);
-      expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual(
-        manifest.getNativeRegistrations("claude")?.pluginClaims
+      expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginClaims).toEqual(
+        manifest.getNativeRegistrations(TOOL.claude)?.pluginClaims
       );
     });
 
@@ -1680,9 +1680,9 @@ describe("clean --scope user", () => {
       "refuses an orphan machine %s before uninstalling a proven catalogue's own ref",
       async (placement) => {
         const manifest = manifestWithClaude();
-        const registrations = manifest.getNativeRegistrations("claude");
+        const registrations = manifest.getNativeRegistrations(TOOL.claude);
         if (registrations === undefined) throw new Error("fixture missing native registration");
-        manifest.setNativeRegistrations("claude", {
+        manifest.setNativeRegistrations(TOOL.claude, {
           ...registrations,
           pluginRefs: [...registrations.pluginRefs, "x@B"],
           pluginClaims:
@@ -1713,17 +1713,17 @@ describe("clean --scope user", () => {
         expect(activator.uninstalledPlugins).toEqual([]);
         expect(activator.removedMarketplaces).toEqual([]);
         expect(await fs.readFile(cacheMarker)).toBe(before);
-        expect(repo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual(
-          manifest.getNativeRegistrations("claude")?.pluginClaims
+        expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.pluginClaims).toEqual(
+          manifest.getNativeRegistrations(TOOL.claude)?.pluginClaims
         );
       }
     );
 
     it("refuses duplicate host catalogue registrations before uninstall or cache purge", async () => {
       const manifest = manifestWithClaude();
-      const registrations = manifest.getNativeRegistrations("claude");
+      const registrations = manifest.getNativeRegistrations(TOOL.claude);
       if (registrations === undefined) throw new Error("fixture missing native registration");
-      manifest.setNativeRegistrations("claude", {
+      manifest.setNativeRegistrations(TOOL.claude, {
         ...registrations,
         marketplaces: [
           ...registrations.marketplaces,
@@ -1749,8 +1749,8 @@ describe("clean --scope user", () => {
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(activator.removedMarketplaces).toEqual([]);
       expect(await fs.readFile(cacheMarker)).toBe(before);
-      expect(repo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual(
-        manifest.getNativeRegistrations("claude")?.marketplaces
+      expect(repo.getCurrent()?.getNativeRegistrations(TOOL.claude)?.marketplaces).toEqual(
+        manifest.getNativeRegistrations(TOOL.claude)?.marketplaces
       );
     });
 
@@ -1809,8 +1809,8 @@ describe("clean --scope user", () => {
 
     it("never treats a refused removal as one the host confirmed, so codex's cache stays", async () => {
       const manifest = Manifest.create();
-      manifest.addTool("codex", "1.0.0", []);
-      manifest.setNativeRegistrations("codex", {
+      manifest.addTool(TOOL.codex, "1.0.0", []);
+      manifest.setNativeRegistrations(TOOL.codex, {
         binary: "codex",
         marketplaces: [
           {
@@ -1837,7 +1837,7 @@ describe("clean --scope user", () => {
         binary: "codex",
         nativeSources: new Map([
           [
-            "codex",
+            TOOL.codex,
             {
               read: async () => ({
                 location: "host",
@@ -1914,7 +1914,7 @@ describe("clean --scope user", () => {
     it("names no cache for a host whose profile declares no cache directory (copilot)", async () => {
       const warnings = await errorsFor(
         seedRegistrations(
-          "copilot",
+          TOOL.copilot,
           [{ alias: "aidd-framework", hostName: "aidd-framework" }],
           ["aidd-context@aidd-framework"]
         )
@@ -1927,7 +1927,11 @@ describe("clean --scope user", () => {
 
     it("names no cache for a tool that drives no native CLI (cursor)", async () => {
       const warnings = await errorsFor(
-        seedRegistrations("cursor", [{ alias: "aidd-framework", hostName: "aidd-framework" }], [])
+        seedRegistrations(
+          TOOL.cursor,
+          [{ alias: "aidd-framework", hostName: "aidd-framework" }],
+          []
+        )
       );
 
       expect(warnings).toStrictEqual([
@@ -1937,7 +1941,7 @@ describe("clean --scope user", () => {
 
     it("names no cache when the binary registered no marketplace", async () => {
       const warnings = await errorsFor(
-        seedRegistrations("codex", [], ["aidd-context@aidd-framework"])
+        seedRegistrations(TOOL.codex, [], ["aidd-context@aidd-framework"])
       );
 
       expect(warnings).toStrictEqual([
@@ -1948,7 +1952,7 @@ describe("clean --scope user", () => {
     it("names every surviving cache, one path per marketplace", async () => {
       const warnings = await errorsFor(
         seedRegistrations(
-          "codex",
+          TOOL.codex,
           [
             { alias: "mkt-a", hostName: "mkt-a" },
             { alias: "mkt-b", hostName: "mkt-b" },
@@ -1969,9 +1973,9 @@ describe("clean --scope user", () => {
       const projectFile = join("/wherever", "skills", "x.md");
       fs.setFile(projectFile, "x");
       const manifest = Manifest.create();
-      manifest.addTool("cursor", "1.0.0", []);
+      manifest.addTool(TOOL.cursor, "1.0.0", []);
       manifest.addPlugin(
-        "cursor",
+        TOOL.cursor,
         InstalledPlugin.fromMetadata(
           "aidd-context",
           "1.0.0",

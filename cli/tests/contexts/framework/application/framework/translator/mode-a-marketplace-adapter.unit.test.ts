@@ -5,12 +5,12 @@ import { ModeAMarketplaceTranslator } from "../../../../../../src/contexts/frame
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
 
 function buildDist(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
     components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
   });
@@ -33,17 +33,17 @@ describe("ModeAMarketplaceTranslator", () => {
     it("registers plugin in manifest with empty files (no materialization)", async () => {
       const { adapter } = buildAdapter();
       const manifest = Manifest.create();
-      manifest.addTool("claude", "test", []);
+      manifest.addTool(TOOL.claude, "test", []);
       const dist = buildDist("aidd-context");
       await adapter.addPlugin(
         dist,
-        registeredAiProfile("claude"),
+        registeredAiProfile(TOOL.claude),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
         "aidd-framework"
       );
-      const plugins = manifest.getPlugins("claude");
+      const plugins = manifest.getPlugins(TOOL.claude);
       const installed = plugins.find((p) => p.name === "aidd-context");
       expect(installed).toBeDefined();
       expect(installed?.files.size).toBe(0);
@@ -53,11 +53,11 @@ describe("ModeAMarketplaceTranslator", () => {
     it("reports nothing skipped, since nothing was translated", async () => {
       const { adapter } = buildAdapter();
       const manifest = Manifest.create();
-      manifest.addTool("claude", "test", []);
+      manifest.addTool(TOOL.claude, "test", []);
 
       const result = await adapter.addPlugin(
         buildDist("aidd-context"),
-        registeredAiProfile("claude"),
+        registeredAiProfile(TOOL.claude),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
@@ -72,17 +72,17 @@ describe("ModeAMarketplaceTranslator", () => {
     it("registers plugin in manifest with undefined marketplace", async () => {
       const { adapter } = buildAdapter();
       const manifest = Manifest.create();
-      manifest.addTool("claude", "test", []);
+      manifest.addTool(TOOL.claude, "test", []);
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        registeredAiProfile("claude"),
+        registeredAiProfile(TOOL.claude),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
         undefined
       );
-      const plugins = manifest.getPlugins("claude");
+      const plugins = manifest.getPlugins(TOOL.claude);
       const installed = plugins.find((p) => p.name === "test-plugin");
       expect(installed).toBeDefined();
       expect(installed?.marketplace).toBeUndefined();
@@ -94,11 +94,11 @@ describe("ModeAMarketplaceTranslator", () => {
     it("does not write any files to the filesystem", async () => {
       const { adapter, fs } = buildAdapter();
       const manifest = Manifest.create();
-      manifest.addTool("claude", "test", []);
+      manifest.addTool(TOOL.claude, "test", []);
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        registeredAiProfile("claude"),
+        registeredAiProfile(TOOL.claude),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,

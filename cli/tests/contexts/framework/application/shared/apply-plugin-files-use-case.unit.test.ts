@@ -6,7 +6,7 @@ import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/pl
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -36,8 +36,8 @@ async function makeUseCase(): Promise<{
 
 function manifestWith(plugin: InstalledPlugin): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
-  manifest.addPlugin("claude", plugin);
+  manifest.addTool(TOOL.claude, "test", []);
+  manifest.addPlugin(TOOL.claude, plugin);
   return manifest;
 }
 
@@ -55,15 +55,15 @@ describe("ApplyPluginFilesUseCase — without built-tree materialization wired i
     const manifest = manifestWith(plugin);
 
     const restored = await useCase.execute({
-      toolId: "claude",
+      toolId: TOOL.claude,
       plugin,
-      tool: registeredAiProfile("claude"),
+      tool: registeredAiProfile(TOOL.claude),
       projectRoot: PROJECT_ROOT,
       cacheDir: CACHE_DIR,
       manifest,
     });
 
-    const tracked = [...manifest.getPlugins("claude")[0].files.keys()].sort();
+    const tracked = [...manifest.getPlugins(TOOL.claude)[0].files.keys()].sort();
     expect(tracked.length).toBeGreaterThan(0);
     expect(restored).toBe(tracked.length);
     expect(tracked.every((relativePath) => fs.has(join(PROJECT_ROOT, relativePath)))).toBe(true);

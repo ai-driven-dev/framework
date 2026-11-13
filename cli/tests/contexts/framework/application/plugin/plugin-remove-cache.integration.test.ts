@@ -14,7 +14,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const ALIAS = "my-local-alias";
@@ -28,7 +28,7 @@ const CLAUDE_CACHE_ROOT = join(homedir(), ".claude", "plugins", "cache");
 function buildDist(): PluginDistribution {
   return new PluginDistribution({
     manifest: { name: PLUGIN_NAME, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
     components: {
       commands: [{ relativePath: "commands/hello.md", content: "# Hello" }],
@@ -43,10 +43,10 @@ function buildDist(): PluginDistribution {
 
 async function seedManifest(): Promise<Manifest> {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
+  manifest.addTool(TOOL.claude, "test", []);
   await new ModeAMarketplaceTranslator().addPlugin(
     buildDist(),
-    registeredAiProfile("claude"),
+    registeredAiProfile(TOOL.claude),
     { kind: "local", path: "/plugin-source" },
     PROJECT_ROOT,
     manifest,
@@ -54,7 +54,7 @@ async function seedManifest(): Promise<Manifest> {
   );
   // hostName differs from this project's own local alias — the same divergence
   // `clean`'s own marketplace cache purge already addresses by hostName, never alias.
-  manifest.setNativeRegistrations("claude", {
+  manifest.setNativeRegistrations(TOOL.claude, {
     binary: "claude",
     marketplaces: [
       {
@@ -78,10 +78,10 @@ function verifiedClaudeRemoval(
     fs,
     repo,
     logger,
-    new Map([["claude", activator]]),
+    new Map([[TOOL.claude, activator]]),
     new Map([
       [
-        "claude",
+        TOOL.claude,
         new FakeHostPluginRegistry({
           location: "/host/plugin-registry",
           refs: new Map([
@@ -97,7 +97,7 @@ function verifiedClaudeRemoval(
     undefined,
     new Map([
       [
-        "claude",
+        TOOL.claude,
         {
           read: async () => ({
             location: "/host/catalogue",
@@ -133,7 +133,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     await removeUseCase.execute({
       tools: catalogOf(),
       pluginName: PLUGIN_NAME,
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
@@ -154,7 +154,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     await removeUseCase.execute({
       tools: catalogOf(),
       pluginName: PLUGIN_NAME,
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
@@ -176,7 +176,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     await removeUseCase.execute({
       tools: catalogOf(),
       pluginName: PLUGIN_NAME,
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
@@ -189,16 +189,16 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     const witness = join(CLAUDE_CACHE_ROOT, evilHostName, PLUGIN_NAME, "keep-me.txt");
     await fs.writeFile(witness, "still here");
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile("claude"),
+      registeredAiProfile(TOOL.claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
       ALIAS
     );
-    manifest.setNativeRegistrations("claude", {
+    manifest.setNativeRegistrations(TOOL.claude, {
       binary: "claude",
       marketplaces: [
         {
@@ -217,7 +217,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     await removeUseCase.execute({
       tools: catalogOf(),
       pluginName: PLUGIN_NAME,
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
@@ -243,7 +243,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     await removeUseCase.execute({
       tools: catalogOf(),
       pluginName: PLUGIN_NAME,
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
@@ -263,7 +263,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     await removeUseCase.execute({
       tools: catalogOf(),
       pluginName: PLUGIN_NAME,
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
@@ -274,16 +274,16 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
   it("refuses Copilot removal without current source proof, preserving its manifest and files", async () => {
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();
-    manifest.addTool("copilot", "test", []);
+    manifest.addTool(TOOL.copilot, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile("copilot"),
+      registeredAiProfile(TOOL.copilot),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
       ALIAS
     );
-    manifest.setNativeRegistrations("copilot", {
+    manifest.setNativeRegistrations(TOOL.copilot, {
       binary: "copilot",
       marketplaces: [
         {
@@ -301,20 +301,22 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
       fs,
       manifestRepo,
       logger,
-      new Map([["copilot", activator]])
+      new Map([[TOOL.copilot, activator]])
     );
 
     await expect(
       removeUseCase.execute({
         tools: catalogOf(),
         pluginName: PLUGIN_NAME,
-        toolIds: ["copilot"],
+        toolIds: [TOOL.copilot],
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow(/unclaimed machine-global host ref/);
 
     expect(activator.uninstalledPlugins).toStrictEqual([]);
-    expect(manifestRepo.getCurrent()?.getPlugins("copilot")).toHaveLength(1);
-    expect(manifestRepo.getCurrent()?.getNativeRegistrations("copilot")?.pluginRefs).toEqual([REF]);
+    expect(manifestRepo.getCurrent()?.getPlugins(TOOL.copilot)).toHaveLength(1);
+    expect(manifestRepo.getCurrent()?.getNativeRegistrations(TOOL.copilot)?.pluginRefs).toEqual([
+      REF,
+    ]);
   });
 });

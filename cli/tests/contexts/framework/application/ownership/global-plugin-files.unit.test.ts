@@ -9,7 +9,7 @@ import { PluginDistribution } from "../../../../../src/contexts/translate/domain
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const BUILT = "/cache/built/opencode";
 
@@ -17,7 +17,7 @@ function distribution(name: string, agents: string[]): PluginDistribution {
   const files = agents.map((relativePath) => ({ relativePath, content: "agent" }));
   return new PluginDistribution({
     manifest: { name, version: "1.0.0", strict: true },
-    format: "claude",
+    format: TOOL.claude,
     files,
     components: { skills: [], commands: [], agents: files, rules: [], hooks: [], mcp: [] },
   });
@@ -37,7 +37,7 @@ describe("readGlobalPluginFiles", () => {
       tree,
       new DeterministicHasher(),
       BUILT,
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       distribution("aidd-dev", ["agents/reviewer.md", "agents/nested/ignored.md", "skills/x.md"])
     );
 
@@ -52,7 +52,7 @@ describe("readGlobalPluginFiles", () => {
       tree,
       new DeterministicHasher(),
       BUILT,
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       distribution("aidd-qa", [])
     );
 
@@ -63,7 +63,7 @@ describe("readGlobalPluginFiles", () => {
     await expect(
       assertGlobalFilesWritable(
         new InMemoryFileAdapter(),
-        registeredAiProfile("claude"),
+        registeredAiProfile(TOOL.claude),
         undefined,
         "aidd-dev",
         [],
@@ -77,7 +77,7 @@ describe("readGlobalPluginFiles", () => {
       tree,
       new DeterministicHasher(),
       BUILT,
-      registeredAiProfile("claude"),
+      registeredAiProfile(TOOL.claude),
       distribution("aidd-dev", ["agents/reviewer.md"])
     );
 
@@ -99,7 +99,7 @@ describe("assertGlobalFilesWritable", () => {
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile("opencode"),
+        registeredAiProfile(TOOL.opencode),
         undefined,
         "aidd-dev",
         [file("agents/a.md")],
@@ -116,7 +116,7 @@ describe("assertGlobalFilesWritable", () => {
       await expect(
         assertGlobalFilesWritable(
           fs,
-          registeredAiProfile("opencode"),
+          registeredAiProfile(TOOL.opencode),
           undefined,
           "aidd-dev",
           [file(path)],
@@ -133,7 +133,7 @@ describe("assertGlobalFilesWritable", () => {
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile("opencode"),
+        registeredAiProfile(TOOL.opencode),
         undefined,
         "aidd-dev",
         [file("agents/a.md")],
@@ -148,7 +148,7 @@ describe("assertGlobalFilesWritable", () => {
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile("opencode"),
+        registeredAiProfile(TOOL.opencode),
         undefined,
         "aidd-dev",
         [file("agents/a.md")],
@@ -172,7 +172,7 @@ describe("assertGlobalFilesWritable", () => {
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile("opencode"),
+        registeredAiProfile(TOOL.opencode),
         owned,
         "aidd-dev",
         [file("agents/owned.md")],
@@ -194,7 +194,7 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile("opencode"),
+        registeredAiProfile(TOOL.opencode),
         undefined,
         "aidd-dev",
         [file("agents/deep/a.md")],
@@ -210,7 +210,7 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile("opencode"),
+        registeredAiProfile(TOOL.opencode),
         undefined,
         "aidd-dev",
         [file("agents/deep/a.md")],

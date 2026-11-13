@@ -10,7 +10,7 @@ import {
   FaultingFileAdapter,
 } from "../../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
 import { unsupportedPlugins } from "../../../../tools/testing/plugin-mode.js";
 import { aProfile } from "../../../../tools/testing/profiles.js";
 
@@ -19,7 +19,7 @@ const PROJECT_ROOT = "/test-project";
 function buildDist(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [
       { relativePath: "commands/hello.md", content: "---\nname: aidd:01:hello\n---\n# Hello" },
     ],
@@ -54,11 +54,11 @@ describe("ModeBFlatMaterializationTranslator", () => {
     it("materializes plugin files in the correct output directory", async () => {
       const { adapter, fs } = buildAdapter();
       const manifest = Manifest.create();
-      manifest.addTool("opencode", "test", []);
+      manifest.addTool(TOOL.opencode, "test", []);
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        registeredAiProfile("opencode"),
+        registeredAiProfile(TOOL.opencode),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
@@ -71,17 +71,17 @@ describe("ModeBFlatMaterializationTranslator", () => {
     it("registers plugin in manifest with non-empty files", async () => {
       const { adapter } = buildAdapter();
       const manifest = Manifest.create();
-      manifest.addTool("opencode", "test", []);
+      manifest.addTool(TOOL.opencode, "test", []);
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        registeredAiProfile("opencode"),
+        registeredAiProfile(TOOL.opencode),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
         undefined
       );
-      const plugins = manifest.getPlugins("opencode");
+      const plugins = manifest.getPlugins(TOOL.opencode);
       const installed = plugins.find((p) => p.name === "test-plugin");
       expect(installed).toBeDefined();
       expect(installed?.files.size).toBeGreaterThan(0);
@@ -92,23 +92,23 @@ describe("ModeBFlatMaterializationTranslator", () => {
     it("writes no files and does not add plugin to manifest", async () => {
       const { adapter, fs } = buildAdapter();
       const manifest = Manifest.create();
-      manifest.addTool("opencode", "test", []);
+      manifest.addTool(TOOL.opencode, "test", []);
       const emptyDist = new PluginDistribution({
         manifest: { name: "empty-plugin", version: "1.0.0" },
-        format: "claude",
+        format: TOOL.claude,
         files: [],
         components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
       });
       await adapter.addPlugin(
         emptyDist,
-        registeredAiProfile("opencode"),
+        registeredAiProfile(TOOL.opencode),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
         undefined
       );
       expect(fs.listAll().length).toBe(0);
-      const plugins = manifest.getPlugins("opencode");
+      const plugins = manifest.getPlugins(TOOL.opencode);
       expect(plugins.find((p) => p.name === "empty-plugin")).toBeUndefined();
     });
   });
@@ -117,12 +117,12 @@ describe("ModeBFlatMaterializationTranslator", () => {
     it("throws CursorProjectScopeUnsupportedError", async () => {
       const { adapter } = buildAdapter();
       const manifest = Manifest.create();
-      manifest.addTool("claude", "test", []);
+      manifest.addTool(TOOL.claude, "test", []);
       const dist = buildDist("test-plugin");
       await expect(
         adapter.addPlugin(
           dist,
-          registeredAiProfile("claude"),
+          registeredAiProfile(TOOL.claude),
           { kind: "local", path: "/plugin-source" },
           PROJECT_ROOT,
           manifest,
@@ -136,8 +136,8 @@ describe("ModeBFlatMaterializationTranslator", () => {
     it("does not refuse the project scope the way a native tool does", async () => {
       const { adapter } = buildAdapter();
       const manifest = Manifest.create();
-      manifest.addTool("antigravity", "test", []);
-      const profile = aProfile("antigravity").withPlugins(unsupportedPlugins()).build();
+      manifest.addTool(TOOL.antigravity, "test", []);
+      const profile = aProfile(TOOL.antigravity).withPlugins(unsupportedPlugins()).build();
 
       const added = adapter.addPlugin(
         buildDist("test-plugin"),
@@ -156,11 +156,11 @@ describe("ModeBFlatMaterializationTranslator", () => {
     it("does nothing for a tool that does not translate any files", async () => {
       const { adapter, fs } = buildAdapter();
       const manifest = Manifest.create();
-      manifest.addTool("opencode", "test", []);
+      manifest.addTool(TOOL.opencode, "test", []);
       // A distribution with mcp-only content which flat mode doesn't translate
       const mcpOnlyDist = new PluginDistribution({
         manifest: { name: "mcp-plugin", version: "1.0.0" },
-        format: "claude",
+        format: TOOL.claude,
         files: [{ relativePath: ".mcp.json", content: "{}" }],
         components: {
           commands: [],
@@ -173,14 +173,14 @@ describe("ModeBFlatMaterializationTranslator", () => {
       });
       await adapter.addPlugin(
         mcpOnlyDist,
-        registeredAiProfile("opencode"),
+        registeredAiProfile(TOOL.opencode),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
         undefined
       );
       expect(fs.listAll().length).toBe(0);
-      const plugins = manifest.getPlugins("opencode");
+      const plugins = manifest.getPlugins(TOOL.opencode);
       expect(plugins.find((p) => p.name === "mcp-plugin")).toBeUndefined();
     });
   });
@@ -206,7 +206,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       ];
       return new PluginDistribution({
         manifest: { name: "hooks-plugin", version: "1.0.0" },
-        format: "claude",
+        format: TOOL.claude,
         files: hooks,
         components: { commands: [], agents: [], rules: [], skills: [], hooks, mcp: [] },
       });
@@ -216,7 +216,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const { adapter, fs } = buildAdapter();
       const cursorManifest = () => {
         const manifest = Manifest.create();
-        manifest.addTool("cursor", "test", []);
+        manifest.addTool(TOOL.cursor, "test", []);
         return manifest;
       };
       const manifest = cursorManifest();
@@ -224,18 +224,18 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const scriptPath = join(PROJECT_ROOT, ".cursor/hooks/hooks-plugin/pre.js");
       await adapter.addPlugin(
         hooksDist(),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         source,
         PROJECT_ROOT,
         manifest,
         undefined
       );
-      const installed = manifest.getPlugins("cursor").find((p) => p.name === "hooks-plugin");
+      const installed = manifest.getPlugins(TOOL.cursor).find((p) => p.name === "hooks-plugin");
       fs.setFile(scriptPath, "user edit");
       const reinstall = (guard?: { overwriteEdited: boolean }) =>
         adapter.addPlugin(
           hooksDist(),
-          registeredAiProfile("cursor"),
+          registeredAiProfile(TOOL.cursor),
           source,
           PROJECT_ROOT,
           cursorManifest(),
@@ -259,7 +259,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const content = JSON.stringify({ mcpServers });
       return new PluginDistribution({
         manifest: { name: "mcp-plugin", version: "1.0.0" },
-        format: "claude",
+        format: TOOL.claude,
         files: [{ relativePath: ".mcp.json", content }],
         components: {
           commands: [],
@@ -278,12 +278,12 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const userContent = JSON.stringify({ mcp: { "old-tool": { type: "local" } } });
       fs.setFile(configPath, userContent);
       const manifest = Manifest.create();
-      manifest.addTool("opencode", "test", []);
+      manifest.addTool(TOOL.opencode, "test", []);
 
       await expect(
         adapter.addPlugin(
           mcpDist({}),
-          registeredAiProfile("opencode"),
+          registeredAiProfile(TOOL.opencode),
           { kind: "local", path: "/plugin-source" },
           PROJECT_ROOT,
           manifest,
@@ -293,7 +293,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       ).rejects.toThrow(/edited after install/);
 
       expect(fs.getFile(configPath)).toBe(userContent);
-      expect(manifest.getPlugins("opencode")).toEqual([]);
+      expect(manifest.getPlugins(TOOL.opencode)).toEqual([]);
     });
 
     it("propagates a failure to read the MCP config other than the file being absent", async () => {
@@ -305,12 +305,12 @@ describe("ModeBFlatMaterializationTranslator", () => {
         () => "/stub-home"
       );
       const manifest = Manifest.create();
-      manifest.addTool("opencode", "test", []);
+      manifest.addTool(TOOL.opencode, "test", []);
 
       await expect(
         adapter.addPlugin(
           mcpDist({ "local-tool": { command: "node", args: ["./server.js"] } }),
-          registeredAiProfile("opencode"),
+          registeredAiProfile(TOOL.opencode),
           { kind: "local", path: "/plugin-source" },
           PROJECT_ROOT,
           manifest,

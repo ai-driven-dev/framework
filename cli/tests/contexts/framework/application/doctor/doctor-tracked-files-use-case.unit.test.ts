@@ -5,6 +5,7 @@ import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
 const FILE = ".claude/rules/one.md";
@@ -33,7 +34,7 @@ function manifestTracking(toolId: ToolId): Manifest {
 async function issuesFor(
   onDisk: string | null,
   allowedIds: Set<string> | null = null,
-  toolId: ToolId = "claude"
+  toolId: ToolId = TOOL.claude
 ) {
   const fs = new InMemoryFileAdapter(
     onDisk === null ? {} : { [`${PROJECT_ROOT}/${FILE}`]: onDisk },
@@ -83,7 +84,7 @@ describe("DoctorTrackedFilesUseCase", () => {
     it("pairs every tracked file with the tool that owns it", () => {
       const collected = new DoctorTrackedFilesUseCase(
         new InMemoryFileAdapter()
-      ).collectTrackedFiles(manifestTracking("claude"), null);
+      ).collectTrackedFiles(manifestTracking(TOOL.claude), null);
 
       expect(collected.map((f) => [f.relativePath, f.toolId])).toStrictEqual([[FILE, "claude"]]);
     });

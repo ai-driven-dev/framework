@@ -5,7 +5,7 @@ import type {
   StatusQuery,
   StatusReport,
 } from "../../../../src/contexts/framework/application/status-use-case.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -14,7 +14,7 @@ type Options = StatusOptions;
 
 const DRIFT = [
   {
-    toolId: "claude" as const,
+    toolId: TOOL.claude,
     pluginName: "sample",
     driftedFiles: ["a.md"],
     notInstalledOnMachine: false,
@@ -73,8 +73,8 @@ describe("StatusAllUseCase", () => {
   });
 
   it("returns each scope's own report", async () => {
-    const aiReport = report({ tools: [{ toolId: "claude", version: "1", drifted: [] }] });
-    const ideReport = report({ tools: [{ toolId: "vscode", version: "1", drifted: [] }] });
+    const aiReport = report({ tools: [{ toolId: TOOL.claude, version: "1", drifted: [] }] });
+    const ideReport = report({ tools: [{ toolId: TOOL.vscode, version: "1", drifted: [] }] });
     const { useCase } = fakeStatus((o) => (o.category === "ai" ? aiReport : ideReport));
 
     const result = await new StatusAllUseCase(useCase).execute(PROJECT_ROOT, catalogOf());

@@ -13,6 +13,7 @@ import { PluginContentTranslator } from "../../../../src/contexts/translate/doma
 import { rewritePluginRootToken } from "../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 import { hooksAcceptanceOf, nativeOf } from "../../tools/testing/plugin-mode.js";
 
 /**
@@ -47,7 +48,7 @@ function distribution(): PluginDistribution {
   ];
   return new PluginDistribution({
     manifest: { name: PLUGIN, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: hooks,
     components: { commands: [], agents: [], rules: [], skills: [], hooks, mcp: [] },
   });

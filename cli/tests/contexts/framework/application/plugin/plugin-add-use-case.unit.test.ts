@@ -13,6 +13,7 @@ import {
   DuplicatePluginError,
   MissingPluginMetadataError,
 } from "../../../../../src/shared/domain/errors.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { Logger } from "../../../../../src/shared/ports/logger.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -20,8 +21,10 @@ import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensur
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+
+const { cursor, copilot, opencode, codex } = TOOL;
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -80,7 +83,7 @@ async function saveMarketplace(
   );
 }
 
-function localAdd(toolId: "claude" | "opencode", path = PLUGIN_FIXTURE, replace?: boolean) {
+function localAdd(toolId: AiToolId, path = PLUGIN_FIXTURE, replace?: boolean) {
   return {
     source: { kind: "local" as const, path },
     toolIds: [toolId],
@@ -91,7 +94,7 @@ function localAdd(toolId: "claude" | "opencode", path = PLUGIN_FIXTURE, replace?
   };
 }
 
-function pluginNames(deps: Deps, toolId: "claude" | "opencode" | "codex" | "cursor"): string[] {
+function pluginNames(deps: Deps, toolId: AiToolId): string[] {
   return (deps.manifestRepo.getCurrent()?.getPlugins(toolId) ?? []).map((p) => p.name).sort();
 }
 
@@ -99,12 +102,12 @@ describe("PluginAddUseCase", () => {
   describe("add local plugin for claude", () => {
     it("writes plugin files and updates manifest", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await useCase.execute({
         tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -112,7 +115,7 @@ describe("PluginAddUseCase", () => {
         deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md"))
       ).toBe(true);
       const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins("claude") ?? [];
+      const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
       expect(plugins.some((p) => p.name === "sample-plugin")).toBe(true);
     });
   });
@@ -120,12 +123,12 @@ describe("PluginAddUseCase", () => {
   describe("duplicate plugin add", () => {
     it("throws DuplicatePluginError on second add of same plugin", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await useCase.execute({
         tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -133,7 +136,7 @@ describe("PluginAddUseCase", () => {
         useCase.execute({
           tools: catalogOf(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
-          toolIds: ["claude"],
+          toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           interactive: false,
         })
@@ -144,7 +147,7 @@ describe("PluginAddUseCase", () => {
   describe("github marketplace plugin", () => {
     it("skips fetch and registers plugin reference without materializing files", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(
         PROJECT_ROOT,
@@ -176,7 +179,7 @@ describe("PluginAddUseCase", () => {
           url: "https://github.com/ai-driven-dev/framework.git",
           path: "plugins/aidd-context",
         },
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         marketplace: "aidd-framework",
         interactive: false,
@@ -184,7 +187,7 @@ describe("PluginAddUseCase", () => {
       });
       expect(fetchSpy).not.toHaveBeenCalled();
       const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins("claude") ?? [];
+      const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
       const installed = plugins.find((p) => p.name === "aidd-context");
       expect(installed?.marketplace).toBe("aidd-framework");
       expect(installed?.files.size).toBe(0);
@@ -192,7 +195,7 @@ describe("PluginAddUseCase", () => {
 
     it("throws MissingPluginMetadataError when pluginMetadata is absent for github marketplace", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(
         PROJECT_ROOT,
@@ -224,7 +227,7 @@ describe("PluginAddUseCase", () => {
             url: "https://github.com/ai-driven-dev/framework.git",
             path: "plugins/aidd-context",
           },
-          toolIds: ["claude"],
+          toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
           interactive: false,
@@ -234,7 +237,7 @@ describe("PluginAddUseCase", () => {
 
     it("preserves fetch behavior for local marketplace plugin", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(
         PROJECT_ROOT,
@@ -263,14 +266,14 @@ describe("PluginAddUseCase", () => {
       await useCase.execute({
         tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         marketplace: "local-mkt",
         interactive: false,
       });
       expect(fetchSpy).toHaveBeenCalled();
       const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins("claude") ?? [];
+      const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
       expect(plugins.some((p) => p.name === "sample-plugin")).toBe(true);
     });
   });
@@ -301,7 +304,7 @@ describe("PluginAddUseCase", () => {
     describe("the catalog's strict", () => {
       it("lands on every installed entry, whatever the plugin's own manifest says", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        await initAndInstall(deps, PROJECT_ROOT, opencode);
         deps.fs.setFile(
           "/built/opencode/.opencode/skills/sample-plugin/demo/SKILL.md",
           "# Demo skill"
@@ -324,14 +327,14 @@ describe("PluginAddUseCase", () => {
         await useCase.execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
-          toolIds: ["opencode"],
+          toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
           interactive: false,
           pluginMetadata: { ...PLUGIN_METADATA, strict: true },
         });
         const manifest = await deps.manifestRepo.load();
-        const installed = manifest?.getPlugins("opencode").find((p) => p.name === "sample-plugin");
+        const installed = manifest?.getPlugins(opencode).find((p) => p.name === "sample-plugin");
         expect(installed?.strict).toBe(true);
       });
     });
@@ -339,7 +342,7 @@ describe("PluginAddUseCase", () => {
     describe("opencode", () => {
       it("fetches and materializes flat files", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        await initAndInstall(deps, PROJECT_ROOT, opencode);
         // OpenCode copies its per-target flat BUILT tree (skills nested under
         // <plugin>/, agents namespaced <plugin>-<name>).
         deps.fs.setFile(
@@ -366,7 +369,7 @@ describe("PluginAddUseCase", () => {
         await useCase.execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
-          toolIds: ["opencode"],
+          toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
           interactive: false,
@@ -374,7 +377,7 @@ describe("PluginAddUseCase", () => {
         });
         expect(fetchSpy).toHaveBeenCalled();
         const manifest = await deps.manifestRepo.load();
-        const plugins = manifest?.getPlugins("opencode") ?? [];
+        const plugins = manifest?.getPlugins(opencode) ?? [];
         const installed = plugins.find((p) => p.name === "sample-plugin");
         expect(installed).toBeDefined();
         expect(installed?.files.size).toBeGreaterThan(0);
@@ -384,7 +387,7 @@ describe("PluginAddUseCase", () => {
     describe("cursor", () => {
       it("fetches and materializes files in Mode B user-scope", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initAndInstall(deps, PROJECT_ROOT, "cursor");
+        await initAndInstall(deps, PROJECT_ROOT, cursor);
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
@@ -407,7 +410,7 @@ describe("PluginAddUseCase", () => {
         await useCase.execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
-          toolIds: ["cursor"],
+          toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
           interactive: false,
@@ -415,13 +418,13 @@ describe("PluginAddUseCase", () => {
         });
         expect(fetchSpy).toHaveBeenCalled();
         const manifest = await deps.manifestRepo.load();
-        const plugins = manifest?.getPlugins("cursor") ?? [];
+        const plugins = manifest?.getPlugins(cursor) ?? [];
         const installed = plugins.find((p) => p.name === "sample-plugin");
         expect(installed).toBeDefined();
         expect(installed?.files.size).toBe(0);
         const machine = deps.userManifestRepo
           .getCurrent()
-          ?.getPlugins("cursor")
+          ?.getPlugins(cursor)
           .find((p) => p.name === "sample-plugin");
         expect(machine?.files.size).toBeGreaterThan(0);
         expect(machine?.dependents).toEqual([PROJECT_ROOT]);
@@ -437,7 +440,7 @@ describe("PluginAddUseCase", () => {
         await buildAddUseCase(deps, await makeGithubRegistry(PROJECT_ROOT), logger).execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
-          toolIds: ["cursor"],
+          toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
           interactive: false,
@@ -448,7 +451,7 @@ describe("PluginAddUseCase", () => {
 
       async function cursorDeps(): Promise<Deps> {
         const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initAndInstall(deps, PROJECT_ROOT, "cursor");
+        await initAndInstall(deps, PROJECT_ROOT, cursor);
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         deps.fs.setFile(`/built/cursor/plugins/${CURSOR_SKILL}`, "# Demo skill");
@@ -464,11 +467,11 @@ describe("PluginAddUseCase", () => {
         await addForCursor(deps, logger);
 
         expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
-        const entry = deps.manifestRepo.getCurrent()?.getPlugins("cursor")[0];
+        const entry = deps.manifestRepo.getCurrent()?.getPlugins(cursor)[0];
         expect(entry?.name).toBe("sample-plugin");
         expect(entry?.files.size).toBe(0);
         expect(deps.userManifestRepo.saveCount).toBe(machineWritesBefore);
-        expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor") ?? []).toEqual([]);
+        expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor) ?? []).toEqual([]);
         expect(logger.warnMessages.join("\n")).toContain(
           join(homedir(), ".cursor/plugins/local", "sample-plugin")
         );
@@ -478,7 +481,7 @@ describe("PluginAddUseCase", () => {
         const deps = await cursorDeps();
         const manifest = await deps.manifestRepo.load();
         manifest?.addPlugin(
-          "cursor",
+          cursor,
           InstalledPlugin.fromMetadata(
             "other-plugin",
             "1.0.0",
@@ -494,10 +497,10 @@ describe("PluginAddUseCase", () => {
         await addForCursor(deps, deps.logger);
 
         expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
-        expect(pluginNames(deps, "cursor")).toEqual(["other-plugin", "sample-plugin"]);
-        expect(deps.manifestRepo.getCurrent()?.getPlugins("cursor")[0]?.files.size).toBe(1);
+        expect(pluginNames(deps, cursor)).toEqual(["other-plugin", "sample-plugin"]);
+        expect(deps.manifestRepo.getCurrent()?.getPlugins(cursor)[0]?.files.size).toBe(1);
         expect(deps.userManifestRepo.saveCount).toBe(machineWritesBefore);
-        expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor") ?? []).toEqual([]);
+        expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor) ?? []).toEqual([]);
       });
 
       it("still delivers the plugin's project hooks when its user-scope dir is someone else's", async () => {
@@ -518,13 +521,13 @@ describe("PluginAddUseCase", () => {
         await buildAddUseCase(deps).execute({
           tools: catalogOf(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
-          toolIds: ["cursor"],
+          toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
           interactive: false,
         });
 
         expect(deps.fs.getFile(cursorSkillAt())).toBe("# Their own skill");
-        expect(deps.manifestRepo.getCurrent()?.getPlugins("cursor")[0]?.files.size).toBe(0);
+        expect(deps.manifestRepo.getCurrent()?.getPlugins(cursor)[0]?.files.size).toBe(0);
       });
 
       it("project replace refuses legacy hooks without an install digest and preserves shared files", async () => {
@@ -543,8 +546,8 @@ describe("PluginAddUseCase", () => {
         expect(deps.fs.getFile(join(PROJECT_ROOT, ".cursor/hooks.json"))).toBe(hooksBefore);
         expect(deps.manifestRepo.saveCount).toBe(savesBefore);
         expect(deps.userManifestRepo.saveCount).toBe(machineSavesBefore);
-        expect(pluginNames(deps, "cursor")).toEqual(["sample-plugin"]);
-        expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual([
+        expect(pluginNames(deps, cursor)).toEqual(["sample-plugin"]);
+        expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0]?.dependents).toEqual([
           PROJECT_ROOT,
         ]);
       });
@@ -557,7 +560,7 @@ describe("PluginAddUseCase", () => {
         const ownedPath = cursorSkillAt();
         deps.fs.setFile(ownedPath, "A's own bytes");
         const projectB = Manifest.create();
-        projectB.addTool("cursor", "1.0.0", []);
+        projectB.addTool(cursor, "1.0.0", []);
         const projectBRepo = new InMemoryManifestRepository(projectB, "/B");
         const registryB = await makeGithubRegistry("/B");
         await new PluginAddUseCase(
@@ -575,15 +578,15 @@ describe("PluginAddUseCase", () => {
         ).execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
-          toolIds: ["cursor"],
+          toolIds: [cursor],
           projectRoot: "/B",
           marketplace: "aidd-framework",
           interactive: false,
           pluginMetadata: PLUGIN_METADATA,
         });
         expect(deps.fs.getFile(ownedPath)).toBe("A's own bytes");
-        expect(projectBRepo.getCurrent()?.getPlugins("cursor")[0]?.files.size).toBe(0);
-        expect(deps.userManifestRepo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual([
+        expect(projectBRepo.getCurrent()?.getPlugins(cursor)[0]?.files.size).toBe(0);
+        expect(deps.userManifestRepo.getCurrent()?.getPlugins(cursor)[0]?.dependents).toEqual([
           PROJECT_ROOT,
           "/B",
         ]);
@@ -596,7 +599,7 @@ describe("PluginAddUseCase", () => {
     describe("codex", () => {
       it("reads version from plugin.json when catalog omits it", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initAndInstall(deps, PROJECT_ROOT, "codex");
+        await initAndInstall(deps, PROJECT_ROOT, codex);
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
@@ -617,7 +620,7 @@ describe("PluginAddUseCase", () => {
         await useCase.execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
-          toolIds: ["codex"],
+          toolIds: [codex],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
           interactive: false,
@@ -625,7 +628,7 @@ describe("PluginAddUseCase", () => {
         });
         expect(fetchSpy).toHaveBeenCalled();
         const manifest = await deps.manifestRepo.load();
-        const installed = (manifest?.getPlugins("codex") ?? []).find(
+        const installed = (manifest?.getPlugins(codex) ?? []).find(
           (p) => p.name === "sample-plugin"
         );
         expect(installed?.version).toBe("1.0.0");
@@ -634,7 +637,7 @@ describe("PluginAddUseCase", () => {
 
       it("registers only without writing files", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initAndInstall(deps, PROJECT_ROOT, "codex");
+        await initAndInstall(deps, PROJECT_ROOT, codex);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new PluginAddUseCase(
@@ -653,7 +656,7 @@ describe("PluginAddUseCase", () => {
         await useCase.execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
-          toolIds: ["codex"],
+          toolIds: [codex],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
           interactive: false,
@@ -661,7 +664,7 @@ describe("PluginAddUseCase", () => {
         });
         expect(fetchSpy).not.toHaveBeenCalled();
         const manifest = await deps.manifestRepo.load();
-        const plugins = manifest?.getPlugins("codex") ?? [];
+        const plugins = manifest?.getPlugins(codex) ?? [];
         const installed = plugins.find((p) => p.name === "sample-plugin");
         expect(installed).toBeDefined();
         expect(installed?.files.size).toBe(0);
@@ -671,7 +674,7 @@ describe("PluginAddUseCase", () => {
     describe("claude", () => {
       it("reads version from plugin.json when catalog omits it", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initAndInstall(deps, PROJECT_ROOT, "claude");
+        await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
@@ -691,14 +694,14 @@ describe("PluginAddUseCase", () => {
         await useCase.execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
-          toolIds: ["claude"],
+          toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
           interactive: false,
           pluginMetadata: { name: "sample-plugin", strict: false },
         });
         const manifest = await deps.manifestRepo.load();
-        const installed = (manifest?.getPlugins("claude") ?? []).find(
+        const installed = (manifest?.getPlugins(TOOL.claude) ?? []).find(
           (p) => p.name === "sample-plugin"
         );
         expect(installed?.version).toBe("1.0.0");
@@ -707,7 +710,7 @@ describe("PluginAddUseCase", () => {
 
       it("registers only without writing files", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initAndInstall(deps, PROJECT_ROOT, "claude");
+        await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new PluginAddUseCase(
@@ -726,7 +729,7 @@ describe("PluginAddUseCase", () => {
         await useCase.execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
-          toolIds: ["claude"],
+          toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
           interactive: false,
@@ -734,7 +737,7 @@ describe("PluginAddUseCase", () => {
         });
         expect(fetchSpy).not.toHaveBeenCalled();
         const manifest = await deps.manifestRepo.load();
-        const plugins = manifest?.getPlugins("claude") ?? [];
+        const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
         const installed = plugins.find((p) => p.name === "sample-plugin");
         expect(installed).toBeDefined();
         expect(installed?.files.size).toBe(0);
@@ -744,7 +747,7 @@ describe("PluginAddUseCase", () => {
     describe("copilot", () => {
       it("reads version from plugin.json when catalog omits it", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initAndInstall(deps, PROJECT_ROOT, "copilot");
+        await initAndInstall(deps, PROJECT_ROOT, copilot);
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
@@ -764,14 +767,14 @@ describe("PluginAddUseCase", () => {
         await useCase.execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
-          toolIds: ["copilot"],
+          toolIds: [copilot],
           projectRoot: PROJECT_ROOT,
           marketplace: "aidd-framework",
           interactive: false,
           pluginMetadata: { name: "sample-plugin", strict: false },
         });
         const manifest = await deps.manifestRepo.load();
-        const installed = (manifest?.getPlugins("copilot") ?? []).find(
+        const installed = (manifest?.getPlugins(copilot) ?? []).find(
           (p) => p.name === "sample-plugin"
         );
         expect(installed?.version).toBe("1.0.0");
@@ -784,7 +787,7 @@ describe("PluginAddUseCase", () => {
     describe("opencode", () => {
       it("materializes flat files even when source is local marketplace", async () => {
         const deps = await buildUnitDeps(PROJECT_ROOT);
-        await initAndInstall(deps, PROJECT_ROOT, "opencode");
+        await initAndInstall(deps, PROJECT_ROOT, opencode);
         // OpenCode copies its per-target flat BUILT tree (skills nested under
         // <plugin>/, agents namespaced <plugin>-<name>).
         deps.fs.setFile(
@@ -819,14 +822,14 @@ describe("PluginAddUseCase", () => {
         await useCase.execute({
           tools: catalogOf(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
-          toolIds: ["opencode"],
+          toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
           marketplace: "local-mkt",
           interactive: false,
         });
         expect(fetchSpy).toHaveBeenCalled();
         const manifest = await deps.manifestRepo.load();
-        const plugins = manifest?.getPlugins("opencode") ?? [];
+        const plugins = manifest?.getPlugins(opencode) ?? [];
         const installed = plugins.find((p) => p.name === "sample-plugin");
         expect(installed).toBeDefined();
         expect(installed?.files.size).toBeGreaterThan(0);
@@ -839,12 +842,12 @@ describe("PluginAddUseCase", () => {
       // A distribution with no recognized manifest path produces zero translated files for a
       // native tool, and a plugin with zero files is never added to the manifest.
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const zeroFilesReader: PluginDistributionReader = {
         read: async () =>
           new PluginDistribution({
             manifest: { name: "zero-plugin", version: "1.0.0" },
-            format: "claude",
+            format: TOOL.claude,
             files: [],
             components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
           }),
@@ -872,13 +875,13 @@ describe("PluginAddUseCase", () => {
       await useCase.execute({
         tools: catalogOf(),
         source: { kind: "local", path: "/some-plugin" },
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         marketplace: "local-mkt",
         interactive: false,
       });
       const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins("claude") ?? [];
+      const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
       expect(plugins.find((p) => p.name === "zero-plugin")).toBeUndefined();
     });
   });
@@ -886,7 +889,7 @@ describe("PluginAddUseCase", () => {
   describe("marketplace resolution", () => {
     it("resolves the named marketplace rather than the first registered one", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const registry = new InMemoryMarketplaceRegistry();
       await saveMarketplace(registry, "aidd-framework", {
@@ -896,40 +899,40 @@ describe("PluginAddUseCase", () => {
       await saveMarketplace(registry, "local-mkt", { kind: "local", path: "/mkt-source" });
 
       await buildAddUseCase(deps, registry).execute({
-        ...localAdd("claude"),
+        ...localAdd(TOOL.claude),
         marketplace: "local-mkt",
       });
 
       const installed = deps.manifestRepo
         .getCurrent()
-        ?.getPlugins("claude")
+        ?.getPlugins(TOOL.claude)
         .find((p) => p.name === "sample-plugin");
       expect(installed?.marketplace).toBe("local-mkt");
     });
 
     it("treats a marketplace name the registry does not list as a local marketplace", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
 
       await useCase.execute({
-        ...localAdd("claude"),
+        ...localAdd(TOOL.claude),
         marketplace: "ghost",
       });
 
       const installed = deps.manifestRepo
         .getCurrent()
-        ?.getPlugins("claude")
+        ?.getPlugins(TOOL.claude)
         .find((p) => p.name === "sample-plugin");
       expect(installed?.marketplace).toBe("ghost");
     });
 
     it("never consults the registry for a local add without a marketplace", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
 
-      await buildAddUseCase(deps, new RefusingMarketplaceRegistry()).execute(localAdd("claude"));
+      await buildAddUseCase(deps, new RefusingMarketplaceRegistry()).execute(localAdd(TOOL.claude));
 
       expect(deps.fs.has(GREET_PATH)).toBe(true);
     });
@@ -945,7 +948,7 @@ describe("PluginAddUseCase", () => {
       const useCase = buildAddUseCase(deps, registry);
       const options = {
         source: GITHUB_SOURCE,
-        toolIds: ["codex" as const],
+        toolIds: [codex],
         projectRoot: PROJECT_ROOT,
         marketplace: "aidd-framework",
         interactive: false,
@@ -958,23 +961,23 @@ describe("PluginAddUseCase", () => {
 
     it("re-registers the plugin when replace is requested", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "codex");
+      await initAndInstall(deps, PROJECT_ROOT, codex);
 
       await registerTwice(deps, true);
 
-      expect(pluginNames(deps, "codex")).toStrictEqual(["sample-plugin"]);
+      expect(pluginNames(deps, codex)).toStrictEqual(["sample-plugin"]);
     });
 
     it("refuses a second registration without replace", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "codex");
+      await initAndInstall(deps, PROJECT_ROOT, codex);
 
       await expect(registerTwice(deps, undefined)).rejects.toThrow(DuplicatePluginError);
     });
 
     it("fetches the distribution once for a flat tool when the catalog omits the version", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "opencode");
+      await initAndInstall(deps, PROJECT_ROOT, opencode);
       deps.fs.setFile("/built/opencode/.opencode/skills/sample-plugin/demo/SKILL.md", "# Demo");
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       deps.pluginFetcher.register(GITHUB_SOURCE, PLUGIN_FIXTURE);
@@ -988,7 +991,7 @@ describe("PluginAddUseCase", () => {
       await buildAddUseCase(deps, registry).execute({
         tools: catalogOf(),
         source: GITHUB_SOURCE,
-        toolIds: ["opencode"],
+        toolIds: [opencode],
         projectRoot: PROJECT_ROOT,
         marketplace: "aidd-framework",
         interactive: false,
@@ -1002,44 +1005,44 @@ describe("PluginAddUseCase", () => {
   describe("duplicate and replace for a local add", () => {
     it("re-adds an installed plugin in place when replace is requested", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
-      await useCase.execute(localAdd("claude"));
+      await useCase.execute(localAdd(TOOL.claude));
 
-      await useCase.execute(localAdd("claude", PLUGIN_FIXTURE, true));
+      await useCase.execute(localAdd(TOOL.claude, PLUGIN_FIXTURE, true));
 
-      expect(pluginNames(deps, "claude")).toStrictEqual(["sample-plugin"]);
+      expect(pluginNames(deps, TOOL.claude)).toStrictEqual(["sample-plugin"]);
     });
 
     it("leaves another installed plugin registered when replacing", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await seedFromDirectory(deps.fs, EXTRA_PLUGIN_FIXTURE, { useAbsolutePaths: true });
-      await useCase.execute(localAdd("claude"));
+      await useCase.execute(localAdd(TOOL.claude));
 
-      await useCase.execute(localAdd("claude", EXTRA_PLUGIN_FIXTURE, true));
+      await useCase.execute(localAdd(TOOL.claude, EXTRA_PLUGIN_FIXTURE, true));
 
-      expect(pluginNames(deps, "claude")).toStrictEqual(["extra-plugin", "sample-plugin"]);
+      expect(pluginNames(deps, TOOL.claude)).toStrictEqual(["extra-plugin", "sample-plugin"]);
     });
 
     it("accepts a second plugin with a different name", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await seedFromDirectory(deps.fs, EXTRA_PLUGIN_FIXTURE, { useAbsolutePaths: true });
-      await useCase.execute(localAdd("claude"));
+      await useCase.execute(localAdd(TOOL.claude));
 
-      await useCase.execute(localAdd("claude", EXTRA_PLUGIN_FIXTURE));
+      await useCase.execute(localAdd(TOOL.claude, EXTRA_PLUGIN_FIXTURE));
 
-      expect(pluginNames(deps, "claude")).toStrictEqual(["extra-plugin", "sample-plugin"]);
+      expect(pluginNames(deps, TOOL.claude)).toStrictEqual(["extra-plugin", "sample-plugin"]);
     });
 
     it("leaves the installed files untouched when refusing a duplicate", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
-      await useCase.execute(localAdd("claude"));
+      await useCase.execute(localAdd(TOOL.claude));
       const installedContent = deps.fs.getFile(GREET_PATH);
       deps.fs.setFile(
         "/alt/sample-plugin/.claude-plugin/plugin.json",
@@ -1047,7 +1050,7 @@ describe("PluginAddUseCase", () => {
       );
       deps.fs.setFile("/alt/sample-plugin/commands/greet.md", "# Changed greeting");
 
-      await expect(useCase.execute(localAdd("claude", "/alt/sample-plugin"))).rejects.toThrow(
+      await expect(useCase.execute(localAdd(TOOL.claude, "/alt/sample-plugin"))).rejects.toThrow(
         DuplicatePluginError
       );
 
@@ -1058,34 +1061,34 @@ describe("PluginAddUseCase", () => {
   describe("required version", () => {
     it("accepts a required version equal to the plugin's own", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
 
       await useCase.execute({
-        ...localAdd("claude"),
+        ...localAdd(TOOL.claude),
         requiredVersion: "1.0.0",
       });
 
-      expect(pluginNames(deps, "claude")).toStrictEqual(["sample-plugin"]);
+      expect(pluginNames(deps, TOOL.claude)).toStrictEqual(["sample-plugin"]);
     });
   });
 
   describe("native tool from a local marketplace", () => {
     it("registers a claude plugin from a local marketplace without writing its files", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const registry = new InMemoryMarketplaceRegistry();
       await saveMarketplace(registry, "local-mkt", { kind: "local", path: "/mkt-source" });
 
       await buildAddUseCase(deps, registry).execute({
-        ...localAdd("claude"),
+        ...localAdd(TOOL.claude),
         marketplace: "local-mkt",
       });
 
       const installed = deps.manifestRepo
         .getCurrent()
-        ?.getPlugins("claude")
+        ?.getPlugins(TOOL.claude)
         .find((p) => p.name === "sample-plugin");
       expect([
         installed?.marketplace,
@@ -1096,7 +1099,7 @@ describe("PluginAddUseCase", () => {
 
     it("materializes a plugin a local marketplace catalogs from github", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       deps.pluginFetcher.register(GITHUB_SOURCE, PLUGIN_FIXTURE);
       const registry = new InMemoryMarketplaceRegistry();
@@ -1105,7 +1108,7 @@ describe("PluginAddUseCase", () => {
       await buildAddUseCase(deps, registry).execute({
         tools: catalogOf(),
         source: GITHUB_SOURCE,
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         marketplace: "local-mkt",
         interactive: false,
@@ -1113,7 +1116,7 @@ describe("PluginAddUseCase", () => {
 
       const installed = deps.manifestRepo
         .getCurrent()
-        ?.getPlugins("claude")
+        ?.getPlugins(TOOL.claude)
         .find((p) => p.name === "sample-plugin");
       expect([
         installed?.marketplace,
@@ -1126,11 +1129,11 @@ describe("PluginAddUseCase", () => {
   describe("install notices", () => {
     it("logs no install notice for a flat add", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "opencode");
+      await initAndInstall(deps, PROJECT_ROOT, opencode);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const logger = new CapturingLogger();
 
-      await buildAddUseCase(deps, deps.marketplaceRegistry, logger).execute(localAdd("opencode"));
+      await buildAddUseCase(deps, deps.marketplaceRegistry, logger).execute(localAdd(opencode));
 
       expect(logger.infoMessages).toStrictEqual([]);
     });

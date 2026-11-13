@@ -25,7 +25,7 @@ import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-ma
 import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 // Resolve once for this in-memory fixture, then inject it into CleanUseCase: Stryker reuses
@@ -151,7 +151,7 @@ class RegistryMirroringActivatorState implements HostMarketplaceRegistry {
   }
 }
 
-function seedManifest(toolId: "claude" | "codex", hostName: string, alias: string): Manifest {
+function seedManifest(toolId: AiToolId, hostName: string, alias: string): Manifest {
   const manifest = Manifest.create();
   manifest.addTool(toolId, "1.0.0", []);
   manifest.setNativeRegistrations(toolId, {
@@ -205,7 +205,7 @@ function buildUseCase(deps: {
   userManifestRepo?: InMemoryManifestRepository;
 }): CleanUseCase {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
-  const claudeHostRegistry = deps.hostMarketplaceRegistries?.get("claude");
+  const claudeHostRegistry = deps.hostMarketplaceRegistries?.get(TOOL.claude);
   const nativeReader: HostMarketplaceSources | undefined =
     deps.binary === "codex"
       ? codexHostSource()
@@ -253,8 +253,8 @@ describe("clean purges a host's own plugin cache", () => {
       })
     );
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(TOOL.codex, "1.0.0", []);
+    machine.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
       pluginRefs: [REF],
@@ -265,9 +265,9 @@ describe("clean purges a host's own plugin cache", () => {
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger,
       aiddMarketplaceRegistry: registry,
       userManifestRepo: userRepo,
@@ -282,7 +282,7 @@ describe("clean purges a host's own plugin cache", () => {
     expect(fs.getFile(cacheEntry)).toBe("B still uses these bytes");
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/project-b"] },
     ]);
     expect(logger.warnMessages.join("\n")).toContain("Still needed by /project-b");
@@ -299,8 +299,8 @@ describe("clean purges a host's own plugin cache", () => {
       })
     );
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(TOOL.codex, "1.0.0", []);
+    machine.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [{ alias: "other-alias", hostName: "other-catalog" }],
       pluginRefs: ["other-plugin@other-catalog"],
@@ -310,9 +310,9 @@ describe("clean purges a host's own plugin cache", () => {
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
       fs: new RecordingFileAdapter(),
-      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: registry,
       userManifestRepo: userRepo,
@@ -324,14 +324,14 @@ describe("clean purges a host's own plugin cache", () => {
       force: true,
     });
     expect(activator.removedMarketplaces).toEqual([MARKETPLACE]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
       { ref: "other-plugin@other-catalog", dependents: ["/project-b"] },
     ]);
   });
   it("holds the machine lock through native catalogue removal after checking its claims", async () => {
     const project = Manifest.create();
-    project.addTool("codex", "1.0.0", []);
-    project.setNativeRegistrations("codex", {
+    project.addTool(TOOL.codex, "1.0.0", []);
+    project.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [
         {
@@ -348,14 +348,14 @@ describe("clean purges a host's own plugin cache", () => {
       pluginRefs: [],
     });
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
+    machine.addTool(TOOL.codex, "1.0.0", []);
     const userRepo = new LockTrackingManifestRepository(machine);
     const activator = new LockAwareActivator(userRepo);
     const useCase = buildUseCase({
       fs: new RecordingFileAdapter(),
       manifest: project,
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
       userManifestRepo: userRepo,
@@ -388,9 +388,9 @@ describe("clean purges a host's own plugin cache", () => {
     const fs = new EmptyNativeCacheFileAdapter(emptyCache);
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger,
       aiddMarketplaceRegistry: registry,
       userManifestRepo: new InMemoryManifestRepository(),
@@ -412,9 +412,9 @@ describe("clean purges a host's own plugin cache", () => {
     const noRepoFs = new EmptyNativeCacheFileAdapter(emptyCache);
     const noRepoUseCase = buildUseCase({
       fs: noRepoFs,
-      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator: noRepoActivator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger: noRepoLogger,
       aiddMarketplaceRegistry: registry,
     });
@@ -432,13 +432,13 @@ describe("clean purges a host's own plugin cache", () => {
   it("keeps a project-labelled framework catalogue when B still has an exact native machine claim", async () => {
     const framework = "aidd-framework";
     const ref = `plugin-a@${framework}`;
-    const project = seedManifest("codex", framework, framework);
-    const projectRegistrations = project.getNativeRegistrations("codex");
+    const project = seedManifest(TOOL.codex, framework, framework);
+    const projectRegistrations = project.getNativeRegistrations(TOOL.codex);
     if (projectRegistrations === undefined) throw new Error("fixture missing project native state");
-    project.setNativeRegistrations("codex", { ...projectRegistrations, pluginRefs: [ref] });
+    project.setNativeRegistrations(TOOL.codex, { ...projectRegistrations, pluginRefs: [ref] });
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(TOOL.codex, "1.0.0", []);
+    machine.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [{ alias: framework, hostName: framework }],
       pluginRefs: [ref],
@@ -450,7 +450,7 @@ describe("clean purges a host's own plugin cache", () => {
       fs: new RecordingFileAdapter(),
       manifest: project,
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(framework),
       userManifestRepo: userRepo,
@@ -463,7 +463,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
       { ref, dependents: ["/project-b"] },
     ]);
   });
@@ -482,8 +482,8 @@ describe("clean purges a host's own plugin cache", () => {
       })
     );
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(TOOL.codex, "1.0.0", []);
+    machine.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [],
       pluginRefs: [REF],
@@ -494,9 +494,9 @@ describe("clean purges a host's own plugin cache", () => {
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger,
       aiddMarketplaceRegistry: registry,
       userManifestRepo: userRepo,
@@ -509,7 +509,7 @@ describe("clean purges a host's own plugin cache", () => {
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(fs.getFile(cacheEntry)).toBe("B still uses these bytes");
-    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/project-b"] },
     ]);
     expect(logger.warnMessages.join("\n")).toContain("Still needed by /project-b");
@@ -518,8 +518,8 @@ describe("clean purges a host's own plugin cache", () => {
     const emptyCache = join(CODEX_CACHE_ROOT, MARKETPLACE);
     const fs = new EmptyNativeCacheFileAdapter(emptyCache);
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(TOOL.codex, "1.0.0", []);
+    machine.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [],
       pluginRefs: [REF],
@@ -529,9 +529,9 @@ describe("clean purges a host's own plugin cache", () => {
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
       userManifestRepo: userRepo,
@@ -544,7 +544,7 @@ describe("clean purges a host's own plugin cache", () => {
     });
     expect(activator.removedMarketplaces).toEqual([]);
     expect(fs.deletedDirectories).not.toContain(emptyCache);
-    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/project-b"] },
     ]);
   });
@@ -565,12 +565,12 @@ describe("clean purges a host's own plugin cache", () => {
     );
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("claude", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.claude, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
-      hostMarketplaceRegistries: new Map([["claude", reader]]),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
     });
 
     await useCase.execute({
@@ -599,12 +599,12 @@ describe("clean purges a host's own plugin cache", () => {
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("claude", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.claude, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger,
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
-      hostMarketplaceRegistries: new Map([["claude", reader]]),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
     });
 
     await useCase.execute({
@@ -640,12 +640,12 @@ describe("clean purges a host's own plugin cache", () => {
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("claude", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.claude, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger,
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
-      hostMarketplaceRegistries: new Map([["claude", reader]]),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
     });
 
     await useCase.execute({
@@ -672,12 +672,12 @@ describe("clean purges a host's own plugin cache", () => {
     });
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("claude", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.claude, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
-      hostMarketplaceRegistries: new Map([["claude", reader]]),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
     });
 
     await expect(
@@ -702,12 +702,12 @@ describe("clean purges a host's own plugin cache", () => {
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("claude", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.claude, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger,
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
-      hostMarketplaceRegistries: new Map([["claude", reader]]),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
     });
 
     await expect(
@@ -741,18 +741,18 @@ describe("clean purges a host's own plugin cache", () => {
     // The real adapter, resolved from the same sentinel the cache root is composed from — a
     // fake reader built independently of `homeDir` could never catch the two halves drifting.
     const reader = wireHostRegistration(catalogOf(), SENTINEL_HOME).marketplaceRegistries.get(
-      "claude"
+      TOOL.claude
     );
     if (reader === undefined) throw new Error("claude must declare marketplaceRegistry");
 
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("claude", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.claude, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
-      hostMarketplaceRegistries: new Map([["claude", reader]]),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
       homeDir: () => SENTINEL_HOME,
     });
 
@@ -783,12 +783,12 @@ describe("clean purges a host's own plugin cache", () => {
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("claude", hostName, "safe-alias"),
+      manifest: seedManifest(TOOL.claude, hostName, "safe-alias"),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger,
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry("safe-alias"),
-      hostMarketplaceRegistries: new Map([["claude", reader]]),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
     });
 
     await useCase.execute({
@@ -817,12 +817,12 @@ describe("clean purges a host's own plugin cache", () => {
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("claude", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.claude, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger,
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
-      hostMarketplaceRegistries: new Map([["claude", reader]]),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
     });
 
     await useCase.execute({
@@ -850,12 +850,12 @@ describe("clean purges a host's own plugin cache", () => {
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("claude", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.claude, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger,
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
-      hostMarketplaceRegistries: new Map([["claude", reader]]),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
     });
 
     await useCase.execute({
@@ -875,8 +875,8 @@ describe("clean purges a host's own plugin cache", () => {
     const fs = new RecordingFileAdapter();
     const activator = new FakeHostActions({ available: true });
     const manifest = Manifest.create();
-    manifest.addTool("copilot", "1.0.0", []);
-    manifest.setNativeRegistrations("copilot", {
+    manifest.addTool(TOOL.copilot, "1.0.0", []);
+    manifest.setNativeRegistrations(TOOL.copilot, {
       binary: "copilot",
       marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }],
       pluginRefs: [REF],
@@ -885,7 +885,7 @@ describe("clean purges a host's own plugin cache", () => {
       fs,
       manifest,
       activator,
-      binary: "copilot",
+      binary: TOOL.copilot,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE, "user"),
     });
@@ -916,12 +916,12 @@ describe("clean purges a host's own plugin cache", () => {
     );
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("claude", hostName, alias),
+      manifest: seedManifest(TOOL.claude, hostName, alias),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(alias),
-      hostMarketplaceRegistries: new Map([["claude", reader]]),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, reader]]),
     });
 
     await useCase.execute({
@@ -942,9 +942,9 @@ describe("clean purges a host's own plugin cache", () => {
     const activator = new FakeHostActions({ available: true });
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
       userManifestRepo: new InMemoryManifestRepository(Manifest.create()),
@@ -968,9 +968,9 @@ describe("clean purges a host's own plugin cache", () => {
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger,
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
       userManifestRepo: new InMemoryManifestRepository(Manifest.create()),
@@ -997,9 +997,9 @@ describe("clean purges a host's own plugin cache", () => {
     const logger = new CapturingLogger();
     const useCase = buildUseCase({
       fs,
-      manifest: seedManifest("codex", MARKETPLACE, MARKETPLACE),
+      manifest: seedManifest(TOOL.codex, MARKETPLACE, MARKETPLACE),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger,
       aiddMarketplaceRegistry: seedAiddMarketplaceRegistry(MARKETPLACE),
       userManifestRepo: new InMemoryManifestRepository(Manifest.create()),

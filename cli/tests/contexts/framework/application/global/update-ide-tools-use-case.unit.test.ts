@@ -7,7 +7,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -42,14 +42,14 @@ describe("UpdateIdeToolsUseCase", () => {
     it("updates only the specified tool when toolArg is provided", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const updateOneTool = buildUpdateOneToolUseCase(deps);
       const useCase = buildUseCase(deps, updateOneTool);
 
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolArg: "vscode",
+        toolArg: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
       });
@@ -64,7 +64,7 @@ describe("UpdateIdeToolsUseCase", () => {
     it("captures failing tool in errors and succeeds for others", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const updateOneTool = buildUpdateOneToolUseCase(deps);
       const executeSpy = vi.spyOn(updateOneTool, "execute");

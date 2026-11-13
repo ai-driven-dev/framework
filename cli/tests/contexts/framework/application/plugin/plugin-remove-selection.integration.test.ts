@@ -14,7 +14,9 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+
+const { claude, cursor, codex } = TOOL;
 
 const ROOT = "/test-project";
 const OTHER = "/another-project";
@@ -34,8 +36,8 @@ function plugin(overrides: Partial<PluginEntryData> = {}): InstalledPlugin {
 
 function manifest(): Manifest {
   const result = Manifest.create();
-  result.addTool("cursor", "1.0.0", []);
-  result.addTool("claude", "1.0.0", []);
+  result.addTool(cursor, "1.0.0", []);
+  result.addTool(claude, "1.0.0", []);
   return result;
 }
 
@@ -43,7 +45,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
   it("detaches only the selected user plugin's project claim while preserving global files", async () => {
     const project = manifest();
     const machine = manifest();
-    for (const toolId of ["cursor", "claude"] as const) {
+    for (const toolId of [cursor, claude]) {
       for (const name of ["other-plugin", NAME]) {
         project.addPlugin(toolId, plugin({ name, files: { [`${name}/keep.md`]: "digest" } }));
         machine.addPlugin(toolId, plugin({ name, dependents: [ROOT, OTHER] }));
@@ -68,17 +70,17 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     await remove.execute({
       tools: catalogOf(),
       pluginName: NAME,
-      toolIds: ["cursor"],
+      toolIds: [cursor],
       projectRoot: ROOT,
     });
 
-    expect(project.getPlugins("cursor").map((entry) => entry.name)).toEqual(["other-plugin"]);
-    expect(project.getPlugins("claude").map((entry) => entry.name)).toEqual(["other-plugin", NAME]);
-    expect(machine.getPlugins("cursor").map((entry) => [entry.name, entry.dependents])).toEqual([
+    expect(project.getPlugins(cursor).map((entry) => entry.name)).toEqual(["other-plugin"]);
+    expect(project.getPlugins(claude).map((entry) => entry.name)).toEqual(["other-plugin", NAME]);
+    expect(machine.getPlugins(cursor).map((entry) => [entry.name, entry.dependents])).toEqual([
       ["other-plugin", [ROOT, OTHER]],
       [NAME, [OTHER]],
     ]);
-    expect(machine.getPlugins("claude").map((entry) => entry.dependents)).toEqual([
+    expect(machine.getPlugins(claude).map((entry) => entry.dependents)).toEqual([
       [ROOT, OTHER],
       [ROOT, OTHER],
     ]);
@@ -90,10 +92,10 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
   it("removing a project entry does not detach the same name's machine claim", async () => {
     const project = manifest();
     const machine = manifest();
-    project.addPlugin("cursor", plugin({ scope: "project", files: { "owned.md": "digest" } }));
-    project.addPlugin("cursor", plugin({ name: "other-plugin", scope: "user" }));
-    machine.addPlugin("cursor", plugin({ dependents: [ROOT, OTHER] }));
-    machine.addPlugin("cursor", plugin({ name: "other-plugin", dependents: [ROOT, OTHER] }));
+    project.addPlugin(cursor, plugin({ scope: "project", files: { "owned.md": "digest" } }));
+    project.addPlugin(cursor, plugin({ name: "other-plugin", scope: "user" }));
+    machine.addPlugin(cursor, plugin({ dependents: [ROOT, OTHER] }));
+    machine.addPlugin(cursor, plugin({ name: "other-plugin", dependents: [ROOT, OTHER] }));
     const before = machine.toJSON();
     const fs = new InMemoryFileAdapter({
       [join(ROOT, "owned.md")]: "owned",
@@ -114,7 +116,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     await remove.execute({
       tools: catalogOf(),
       pluginName: NAME,
-      toolIds: ["cursor"],
+      toolIds: [cursor],
       projectRoot: ROOT,
     });
 
@@ -122,19 +124,19 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     expect(fs.getFile(join(ROOT, "foreign.md"))).toBe("foreign");
     expect(machine.toJSON()).toEqual(before);
     expect(userRepo.saveCount).toBe(0);
-    expect(project.getPlugins("cursor").map((entry) => entry.name)).toEqual(["other-plugin"]);
+    expect(project.getPlugins(cursor).map((entry) => entry.name)).toEqual(["other-plugin"]);
   });
 
   it("user removal skips a project-scoped copy and other names with active dependents", async () => {
     const project = manifest();
-    project.addPlugin("cursor", plugin({ scope: "project" }));
+    project.addPlugin(cursor, plugin({ scope: "project" }));
     const machine = manifest();
-    machine.addPlugin("cursor", plugin({ name: "other-plugin", dependents: [OTHER] }));
-    machine.addPlugin("cursor", plugin());
-    machine.addPlugin("claude", plugin({ scope: "project", dependents: [OTHER] }));
+    machine.addPlugin(cursor, plugin({ name: "other-plugin", dependents: [OTHER] }));
+    machine.addPlugin(cursor, plugin());
+    machine.addPlugin(claude, plugin({ scope: "project", dependents: [OTHER] }));
     const projectBefore = project.toJSON();
-    const otherBefore = machine.getPlugins("cursor")[0].toJSON();
-    const claudeBefore = machine.getPlugins("claude")[0].toJSON();
+    const otherBefore = machine.getPlugins(cursor)[0].toJSON();
+    const claudeBefore = machine.getPlugins(claude)[0].toJSON();
     const userRepo = new InMemoryManifestRepository(machine);
     const projectRepo = new InMemoryManifestRepository(project, ROOT);
     const remove = new PluginRemoveUseCase(
@@ -156,8 +158,8 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       scope: "user",
     });
 
-    expect(machine.getPlugins("cursor").map((entry) => entry.toJSON())).toEqual([otherBefore]);
-    expect(machine.getPlugins("claude").map((entry) => entry.toJSON())).toEqual([claudeBefore]);
+    expect(machine.getPlugins(cursor).map((entry) => entry.toJSON())).toEqual([otherBefore]);
+    expect(machine.getPlugins(claude).map((entry) => entry.toJSON())).toEqual([claudeBefore]);
     expect(project.toJSON()).toEqual(projectBefore);
     expect(projectRepo.saveCount).toBe(0);
     expect(userRepo.saveCount).toBe(1);
@@ -165,7 +167,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
   it("user removal reports a project-only match as absent without saving either manifest", async () => {
     const machine = manifest();
-    machine.addPlugin("cursor", plugin({ scope: "project" }));
+    machine.addPlugin(cursor, plugin({ scope: "project" }));
     const before = machine.toJSON();
     const userRepo = new InMemoryManifestRepository(machine);
     const projectRepo = new InMemoryManifestRepository(manifest(), ROOT);
@@ -184,7 +186,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       remove.execute({
         tools: catalogOf(),
         pluginName: NAME,
-        toolIds: ["cursor"],
+        toolIds: [cursor],
         projectRoot: ROOT,
         scope: "user",
       })
@@ -208,7 +210,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       remove.execute({
         tools: catalogOf(),
         pluginName: NAME,
-        toolIds: ["cursor"],
+        toolIds: [cursor],
         projectRoot: ROOT,
         scope: "user",
       })
@@ -221,7 +223,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const content = "installed machine bytes";
     const machine = manifest();
     machine.addPlugin(
-      "cursor",
+      cursor,
       plugin({ files: { [relative]: createHash("md5").update(content).digest("hex") } })
     );
     const fs = new InMemoryFileAdapter();
@@ -244,14 +246,14 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     await remove.execute({
       tools: catalogOf(),
       pluginName: NAME,
-      toolIds: ["cursor"],
+      toolIds: [cursor],
       projectRoot: ROOT,
       scope: "user",
     });
 
     expect(await fs.fileExists(userPath)).toBe(false);
     expect(fs.getFile(projectPath)).toBe("project bytes");
-    expect(machine.getPlugins("cursor")).toEqual([]);
+    expect(machine.getPlugins(cursor)).toEqual([]);
     expect(userRepo.saveCount).toBe(1);
   });
 
@@ -260,7 +262,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const hash = createHash("md5").update(content).digest("hex");
     const relative = `${NAME}/owned.md`;
     const machine = manifest();
-    machine.addPlugin("cursor", plugin({ files: { [relative]: hash, "../outside.md": hash } }));
+    machine.addPlugin(cursor, plugin({ files: { [relative]: hash, "../outside.md": hash } }));
     const before = machine.toJSON();
     const base = join(homedir(), ".cursor", "plugins", "local");
     const fs = new InMemoryFileAdapter({
@@ -283,7 +285,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       remove.execute({
         tools: catalogOf(),
         pluginName: NAME,
-        toolIds: ["cursor"],
+        toolIds: [cursor],
         projectRoot: ROOT,
         scope: "user",
       })
@@ -299,7 +301,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
   it("refuses unproven project hooks before deleting any tracked plugin file", async () => {
     const project = manifest();
-    project.addPlugin("cursor", plugin({ scope: "project", files: { "owned.md": "digest" } }));
+    project.addPlugin(cursor, plugin({ scope: "project", files: { "owned.md": "digest" } }));
     const before = project.toJSON();
     const script = join(ROOT, ".cursor", "hooks", NAME, "edited.sh");
     const file = join(ROOT, "owned.md");
@@ -314,7 +316,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       remove.execute({
         tools: catalogOf(),
         pluginName: NAME,
-        toolIds: ["cursor"],
+        toolIds: [cursor],
         projectRoot: ROOT,
       })
     ).rejects.toThrow(/unproven legacy install digest/);
@@ -327,7 +329,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
   it("preserves a scope-aware host ref when no activator confirmed its removal", async () => {
     const project = manifest();
-    project.addPlugin("claude", plugin({ scope: "project", marketplace: "local-alias" }));
+    project.addPlugin(claude, plugin({ scope: "project", marketplace: "local-alias" }));
     const ref = `${NAME}@host-catalogue`;
     const registrations = {
       binary: "claude",
@@ -335,9 +337,9 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       pluginRefs: [ref, "other-plugin@host-catalogue"],
       pluginClaims: [{ ref, dependents: [ROOT, OTHER] }],
     };
-    project.setNativeRegistrations("claude", registrations);
+    project.setNativeRegistrations(claude, registrations);
     const machine = manifest();
-    machine.setNativeRegistrations("claude", registrations);
+    machine.setNativeRegistrations(claude, registrations);
     const repo = new InMemoryManifestRepository(project, ROOT);
     const userRepo = new InMemoryManifestRepository(machine);
     const remove = new PluginRemoveUseCase(
@@ -354,22 +356,22 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     await remove.execute({
       tools: catalogOf(),
       pluginName: NAME,
-      toolIds: ["claude"],
+      toolIds: [claude],
       projectRoot: ROOT,
     });
 
-    expect(project.getNativeRegistrations("claude")?.pluginRefs).toEqual([
+    expect(project.getNativeRegistrations(claude)?.pluginRefs).toEqual([
       ref,
       "other-plugin@host-catalogue",
     ]);
-    expect(machine.getNativeRegistrations("claude")?.pluginRefs).toEqual([
+    expect(machine.getNativeRegistrations(claude)?.pluginRefs).toEqual([
       ref,
       "other-plugin@host-catalogue",
     ]);
-    expect(machine.getNativeRegistrations("claude")?.pluginClaims).toEqual([
+    expect(machine.getNativeRegistrations(claude)?.pluginClaims).toEqual([
       { ref, dependents: [OTHER] },
     ]);
-    expect(project.getPlugins("claude")).toEqual([]);
+    expect(project.getPlugins(claude)).toEqual([]);
     expect(userRepo.saveCount).toBe(1);
     expect(repo.saveCount).toBe(1);
   });
@@ -392,15 +394,15 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
   ) {
     const record = manifest();
     record.addPlugin(
-      "claude",
+      claude,
       plugin({ scope: "project", marketplace: ALIAS, files: { "owned.md": "digest" } })
     );
     record.addPlugin(
-      "claude",
+      claude,
       plugin({ name: "other-plugin", scope: "project", marketplace: "other-alias" })
     );
     if (options.registrations !== false)
-      record.setNativeRegistrations("claude", {
+      record.setNativeRegistrations(claude, {
         binary: "claude",
         marketplaces: [
           { alias: "other-alias", hostName: "other-host", provenance },
@@ -441,10 +443,10 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       fs,
       repo,
       logger,
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       new Map([
         [
-          "claude",
+          claude,
           new FakeHostPluginRegistry({
             location: "/host/registry",
             refs: new Map([[REF, { enabled: true, scope: "project" }]]),
@@ -456,7 +458,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       undefined,
       new Map([
         [
-          "claude",
+          claude,
           {
             read: async () => ({
               location: "/host/catalogues",
@@ -471,20 +473,20 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
 
   it("removes the exact confirmed ref and cache while preserving sibling registrations", async () => {
     const f = fixture();
-    const marketplaces = f.record.getNativeRegistrations("claude")?.marketplaces;
+    const marketplaces = f.record.getNativeRegistrations(claude)?.marketplaces;
 
     await f.remove.execute({
       tools: catalogOf(),
       pluginName: NAME,
-      toolIds: ["claude"],
+      toolIds: [claude],
       projectRoot: ROOT,
     });
 
     expect(f.activator.uninstalledPlugins).toEqual([REF]);
     expect(f.activator.uninstalledPluginScopes).toEqual(["project"]);
-    expect(f.record.getNativeRegistrations("claude")?.pluginRefs).toEqual([FOREIGN]);
-    expect(f.record.getNativeRegistrations("claude")?.marketplaces).toEqual(marketplaces);
-    expect(f.record.getPlugins("claude").map((entry) => entry.name)).toEqual(["other-plugin"]);
+    expect(f.record.getNativeRegistrations(claude)?.pluginRefs).toEqual([FOREIGN]);
+    expect(f.record.getNativeRegistrations(claude)?.marketplaces).toEqual(marketplaces);
+    expect(f.record.getPlugins(claude).map((entry) => entry.name)).toEqual(["other-plugin"]);
     expect(await f.fs.fileExists(f.cache)).toBe(false);
     expect(f.fs.getFile(f.foreignCache)).toBe("foreign cache");
     expect(await f.fs.fileExists(join(ROOT, "owned.md"))).toBe(false);
@@ -503,11 +505,11 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       await f.remove.execute({
         tools: catalogOf(),
         pluginName: NAME,
-        toolIds: ["claude"],
+        toolIds: [claude],
         projectRoot: ROOT,
       });
 
-      expect(f.record.getNativeRegistrations("claude")?.pluginRefs).toEqual([FOREIGN, REF]);
+      expect(f.record.getNativeRegistrations(claude)?.pluginRefs).toEqual([FOREIGN, REF]);
       expect(f.fs.getFile(f.cache)).toBe("target cache");
       expect(f.fs.getFile(f.foreignCache)).toBe("foreign cache");
       expect(f.activator.uninstalledPlugins).toEqual([]);
@@ -515,7 +517,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
         `claude: cache for '${NAME}' left in place, its own removal was not confirmed: ${join(homedir(), ".claude", "plugins", "cache", HOST, NAME)}`
       );
       expect(f.logger.infoMessages).toEqual([]);
-      expect(f.record.getPlugins("claude").map((entry) => entry.name)).toEqual(["other-plugin"]);
+      expect(f.record.getPlugins(claude).map((entry) => entry.name)).toEqual(["other-plugin"]);
     }
   );
 
@@ -525,12 +527,12 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     await f.remove.execute({
       tools: catalogOf(),
       pluginName: NAME,
-      toolIds: ["claude"],
+      toolIds: [claude],
       projectRoot: ROOT,
     });
 
     expect(f.activator.uninstalledPlugins).toEqual([]);
-    expect(f.record.getNativeRegistrations("claude")?.pluginRefs).toEqual([FOREIGN]);
+    expect(f.record.getNativeRegistrations(claude)?.pluginRefs).toEqual([FOREIGN]);
     expect(f.fs.getFile(f.cache)).toBe("target cache");
     expect(f.logger.warnMessages).toEqual([
       `claude: '${REF}' is not a ref this project enabled — left enabled.`,
@@ -545,12 +547,12 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     await f.remove.execute({
       tools: catalogOf(),
       pluginName: NAME,
-      toolIds: ["claude"],
+      toolIds: [claude],
       projectRoot: ROOT,
     });
 
     expect(f.activator.uninstalledPlugins).toEqual([]);
-    expect(f.record.getNativeRegistrations("claude")).toBeUndefined();
+    expect(f.record.getNativeRegistrations(claude)).toBeUndefined();
     expect(f.fs.getFile(f.cache)).toBe("target cache");
     expect(f.logger.warnMessages).toEqual([
       `claude CLI not found on PATH — '${NAME}@${ALIAS}' was not uninstalled from the host; its ref may remain enabled after local removal.`,
@@ -560,9 +562,9 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
 
   it("detaches only this project's exact machine-owned native claim without disabling the shared ref", async () => {
     const project = Manifest.create();
-    project.addTool("codex", "1.0.0", []);
-    project.addTool("cursor", "1.0.0", []);
-    project.addPlugin("codex", plugin({ scope: "project", marketplace: ALIAS }));
+    project.addTool(codex, "1.0.0", []);
+    project.addTool(cursor, "1.0.0", []);
+    project.addPlugin(codex, plugin({ scope: "project", marketplace: ALIAS }));
     const provenance = {
       kind: "effective-list" as const,
       root: "/host/root",
@@ -578,10 +580,10 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
         { ref: REF, dependents: [ROOT, OTHER] },
       ],
     };
-    project.setNativeRegistrations("codex", registrations);
+    project.setNativeRegistrations(codex, registrations);
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", registrations);
+    machine.addTool(codex, "1.0.0", []);
+    machine.setNativeRegistrations(codex, registrations);
     const userRepo = new InMemoryManifestRepository(machine);
     const projectRepo = new InMemoryManifestRepository(project, ROOT);
     const activator = new FakeHostActions({ available: true });
@@ -590,14 +592,14 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       new InMemoryFileAdapter(),
       projectRepo,
       logger,
-      new Map([["codex", activator]]),
+      new Map([[codex, activator]]),
       new Map(),
       undefined,
       undefined,
       userRepo,
       new Map([
         [
-          "codex",
+          codex,
           {
             read: async () => ({
               location: "/host/catalogues",
@@ -616,14 +618,14 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     });
 
     expect(activator.uninstalledPlugins).toEqual([]);
-    expect(machine.getNativeRegistrations("codex")?.pluginRefs).toEqual([FOREIGN, REF]);
-    expect(machine.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(machine.getNativeRegistrations(codex)?.pluginRefs).toEqual([FOREIGN, REF]);
+    expect(machine.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: FOREIGN, dependents: [ROOT, OTHER] },
       { ref: REF, dependents: [OTHER] },
     ]);
-    expect(project.getNativeRegistrations("codex")?.pluginRefs).toEqual([FOREIGN]);
-    expect(project.getPlugins("codex")).toEqual([]);
-    expect(project.getPlugins("cursor")).toEqual([]);
+    expect(project.getNativeRegistrations(codex)?.pluginRefs).toEqual([FOREIGN]);
+    expect(project.getPlugins(codex)).toEqual([]);
+    expect(project.getPlugins(cursor)).toEqual([]);
     expect(userRepo.saveCount).toBe(1);
     expect(projectRepo.saveCount).toBe(1);
     expect(logger.warnMessages).toEqual([

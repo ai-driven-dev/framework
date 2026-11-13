@@ -8,9 +8,10 @@ import {
 } from "../../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
 import type { HooksInvariant } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { TOOL } from "../../testing/catalog-of.js";
 
 const UNSTAMPED = 'const HOST = "unstamped";';
-const OWNER = ["claude", ".claude/", UNSTAMPED] as const;
+const OWNER = [TOOL.claude, ".claude/", UNSTAMPED] as const;
 const ROUTE: HookEventRoute = { native: ["SessionStart"], relay: "native" };
 const FILE = { wrapper: {}, entries: { shape: "matchers", itemsKept: "all" } } as const;
 
@@ -97,7 +98,7 @@ const BROKEN: readonly {
     invariant: "adapter-not-stamped",
     detail: "the adapter does not name codex as its host",
     case: "an adapter naming another tool as its host",
-    owner: ["codex", ".codex/", 'const HOST = "claude";'],
+    owner: [TOOL.codex, ".codex/", 'const HOST = "claude";'],
     broken: () => declaration(),
   },
 ];

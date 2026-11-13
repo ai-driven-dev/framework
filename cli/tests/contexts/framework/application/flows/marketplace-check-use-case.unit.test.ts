@@ -13,7 +13,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
 const PROJECT_ROOT = "/test-project";
@@ -72,9 +72,9 @@ describe("MarketplaceCheckUseCase", () => {
   it("reports upstream-removed plugins", async () => {
     const { useCase, registry, manifestRepo } = await buildUseCase();
     const manifest = Manifest.create();
-    manifest.addTool("claude", "1.0.0", []);
+    manifest.addTool(TOOL.claude, "1.0.0", []);
     manifest.addPlugin(
-      "claude",
+      TOOL.claude,
       InstalledPlugin.fromJSON({
         name: "ghost-plugin",
         source: { kind: "github", repo: "owner/ghost" },
@@ -101,7 +101,7 @@ describe("MarketplaceCheckUseCase", () => {
     expect(result.upstreamRemoved).toContainEqual({
       marketplace: "awesome",
       plugin: "ghost-plugin",
-      toolId: "claude",
+      toolId: TOOL.claude,
     });
   });
 
@@ -169,8 +169,8 @@ async function manifestWith(
   ...plugins: readonly InstalledPlugin[]
 ): Promise<void> {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "1.0.0", []);
-  for (const plugin of plugins) manifest.addPlugin("claude", plugin);
+  manifest.addTool(TOOL.claude, "1.0.0", []);
+  for (const plugin of plugins) manifest.addPlugin(TOOL.claude, plugin);
   await manifestRepo.save(manifest);
 }
 
@@ -220,7 +220,7 @@ describe("what counts as removed upstream", () => {
     const result = await useCase.execute({ projectRoot: PROJECT_ROOT, tools: registeredCatalog() });
 
     expect(result.upstreamRemoved).toStrictEqual([
-      { marketplace: "awesome", plugin: "ghost", toolId: "claude" },
+      { marketplace: "awesome", plugin: "ghost", toolId: TOOL.claude },
     ]);
   });
 

@@ -9,7 +9,7 @@ import {
 } from "../../src/composition/translate.js";
 import { BundledAssetProviderAdapter } from "../../src/contexts/framework/infrastructure/assets/asset-loader.js";
 import { FlatTargetExistsError } from "../../src/shared/domain/errors.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../helpers/ports/seed-from-directory.js";
@@ -53,7 +53,7 @@ describe("createFrameworkBuildUseCase threads the caller's --force through to th
       force,
     });
     if (useCase === undefined) throw new Error("copilot:flat must be wired in the registry");
-    return useCase.execute({ sourceDir: FIXTURE_DIR, outDir, target: "copilot" });
+    return useCase.execute({ sourceDir: FIXTURE_DIR, outDir, target: TOOL.copilot });
   }
 
   it("force: false throws FlatTargetExistsError when the canonical destination already exists", async () => {

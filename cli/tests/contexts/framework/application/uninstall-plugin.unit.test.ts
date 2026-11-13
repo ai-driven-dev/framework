@@ -14,7 +14,7 @@ import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-b
 import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -26,7 +26,7 @@ describe("UninstallUseCase — plugin scope", () => {
     const { seedFromDirectory } = await import("../../../helpers/ports/seed-from-directory.js");
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
 
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const reader = new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes());
     await new PluginAddUseCase(
@@ -41,7 +41,7 @@ describe("UninstallUseCase — plugin scope", () => {
     ).execute({
       tools: catalogOf(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: false,
     });
@@ -58,12 +58,14 @@ describe("UninstallUseCase — plugin scope", () => {
 
     expect(deps.fs.has(pluginFile)).toBe(false);
     const manifest = await deps.manifestRepo.load();
-    expect(manifest?.getPlugins("claude").find((p) => p.name === "sample-plugin")).toBeUndefined();
+    expect(
+      manifest?.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin")
+    ).toBeUndefined();
   });
 
   it("throws PluginNotFoundError when the plugin is not installed on any tool", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
@@ -82,9 +84,9 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     { name: "unreadable", error: errnoError("EACCES") },
   ])("handles an $name OpenCode MCP config without losing the project record", async (scenario) => {
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addTool(TOOL.opencode, "1.0.0", []);
     manifest.addPlugin(
-      "opencode",
+      TOOL.opencode,
       InstalledPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/some/path" },
@@ -106,18 +108,18 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     const operation = new UninstallPluginUseCase(fs, repo).execute({
       tools: catalogOf(),
       pluginName: "sample",
-      toolIds: ["opencode"],
+      toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
     });
 
     if (scenario.error === null) {
       await expect(operation).resolves.toEqual([
-        { toolId: "opencode", fileCount: 0, deletedFiles: [] },
+        { toolId: TOOL.opencode, fileCount: 0, deletedFiles: [] },
       ]);
-      expect(repo.getCurrent()?.getPlugins("opencode")).toEqual([]);
+      expect(repo.getCurrent()?.getPlugins(TOOL.opencode)).toEqual([]);
     } else {
       await expect(operation).rejects.toThrow(/EACCES/);
-      expect(repo.getCurrent()?.getPlugins("opencode")).toHaveLength(1);
+      expect(repo.getCurrent()?.getPlugins(TOOL.opencode)).toHaveLength(1);
       expect(repo.saveCount).toBe(0);
     }
   });
@@ -133,9 +135,9 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     }
     const fs = new RefusingMcpWriteAdapter({ [mcpPath]: content });
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addTool(TOOL.opencode, "1.0.0", []);
     manifest.addPlugin(
-      "opencode",
+      TOOL.opencode,
       InstalledPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/some/path" },
@@ -156,21 +158,21 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
       new UninstallPluginUseCase(fs, repo).execute({
         tools: catalogOf(),
         pluginName: "sample",
-        toolIds: ["opencode"],
+        toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow(/MCP write refused/);
 
     expect(repo.saveCount).toBe(0);
-    expect(repo.getCurrent()?.getPlugins("opencode")).toHaveLength(1);
+    expect(repo.getCurrent()?.getPlugins(TOOL.opencode)).toHaveLength(1);
     expect(fs.getFile(mcpPath)).toBe(content);
   });
 
   it("unmerges only the installed plugin's OpenCode MCP contribution", async () => {
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addTool(TOOL.opencode, "1.0.0", []);
     manifest.addPlugin(
-      "opencode",
+      TOOL.opencode,
       InstalledPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/some/path" },
@@ -199,11 +201,11 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
       new UninstallPluginUseCase(fs, repo).execute({
         tools: catalogOf(),
         pluginName: "sample",
-        toolIds: ["opencode"],
+        toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow(/edited/);
-    expect(repo.getCurrent()?.getPlugins("opencode")).toHaveLength(1);
+    expect(repo.getCurrent()?.getPlugins(TOOL.opencode)).toHaveLength(1);
     fs.setFile(
       mcpPath,
       JSON.stringify({ mcp: { mine: { type: "local" }, theirs: { type: "remote" } } })
@@ -212,14 +214,14 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     await new UninstallPluginUseCase(fs, repo).execute({
       tools: catalogOf(),
       pluginName: "sample",
-      toolIds: ["opencode"],
+      toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
     });
 
     expect(JSON.parse(fs.getFile(mcpPath) ?? "null")).toEqual({
       mcp: { theirs: { type: "remote" } },
     });
-    expect((await repo.load())?.getPlugins("opencode")).toEqual([]);
+    expect((await repo.load())?.getPlugins(TOOL.opencode)).toEqual([]);
   });
 
   const HASH = "abc123abc123abc123abc123abc123ab";
@@ -255,29 +257,29 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
 
   it("removes the plugin only from the tools it was asked about", async () => {
     const manifest = Manifest.create();
-    manifest.addTool("claude", "1.0.0", []);
-    manifest.addTool("codex", "1.0.0", []);
-    manifest.addPlugin("claude", pluginNamed("sample"));
-    manifest.addPlugin("codex", pluginNamed("sample"));
+    manifest.addTool(TOOL.claude, "1.0.0", []);
+    manifest.addTool(TOOL.codex, "1.0.0", []);
+    manifest.addPlugin(TOOL.claude, pluginNamed("sample"));
+    manifest.addPlugin(TOOL.codex, pluginNamed("sample"));
 
     const results = await uninstallOver(manifest).execute({
       tools: catalogOf(),
       pluginName: "sample",
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
     expect(results).toStrictEqual([
-      { toolId: "claude", fileCount: 1, deletedFiles: ["commands/sample.md"] },
+      { toolId: TOOL.claude, fileCount: 1, deletedFiles: ["commands/sample.md"] },
     ]);
-    expect(manifest.getPlugins("codex").map((p) => p.name)).toStrictEqual(["sample"]);
+    expect(manifest.getPlugins(TOOL.codex).map((p) => p.name)).toStrictEqual(["sample"]);
   });
 
   it("removes only the plugin bearing the name asked for", async () => {
     const manifest = Manifest.create();
-    manifest.addTool("claude", "1.0.0", []);
-    manifest.addPlugin("claude", pluginNamed("sample"));
-    manifest.addPlugin("claude", pluginNamed("other"));
+    manifest.addTool(TOOL.claude, "1.0.0", []);
+    manifest.addPlugin(TOOL.claude, pluginNamed("sample"));
+    manifest.addPlugin(TOOL.claude, pluginNamed("other"));
 
     const results = await uninstallOver(manifest).execute({
       tools: catalogOf(),
@@ -287,8 +289,8 @@ describe("UninstallPluginUseCase — which plugin, on which tools", () => {
     });
 
     expect(results).toStrictEqual([
-      { toolId: "claude", fileCount: 1, deletedFiles: ["commands/other.md"] },
+      { toolId: TOOL.claude, fileCount: 1, deletedFiles: ["commands/other.md"] },
     ]);
-    expect(manifest.getPlugins("claude").map((p) => p.name)).toStrictEqual(["sample"]);
+    expect(manifest.getPlugins(TOOL.claude).map((p) => p.name)).toStrictEqual(["sample"]);
   });
 });

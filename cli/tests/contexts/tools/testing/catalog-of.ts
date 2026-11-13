@@ -63,3 +63,27 @@ export const resolveRegisteredToolId: ToolIdResolver = (raw) => catalogOf().tool
 
 /** The ids a setup is told are registered, in the order a refusal names them. */
 export const registeredToolIds = (): readonly string[] => catalogOf().idsInCanonicalOrder();
+
+function named<T extends ToolId>(ids: readonly T[], name: string): T {
+  const found = ids.find((id) => id === name);
+  if (found === undefined) throw new UnregisteredToolError(name);
+  return found;
+}
+
+const catalog = catalogOf();
+const ai = (name: string) => named(catalog.idsInCanonicalOrder("ai"), name);
+const ide = (name: string) => named(catalog.idsInCanonicalOrder("ide"), name);
+
+/** The registered ids, minted by the catalog: a test names a tool as `TOOL.claude`, never as a
+ * written string, so an id stays something only a registered profile can bear. The catalog read
+ * here yields immutable ids only, the one value a module may hold, since no test mutates it. */
+export const TOOL = {
+  claude: ai("claude"),
+  cursor: ai("cursor"),
+  copilot: ai("copilot"),
+  opencode: ai("opencode"),
+  kilo: ai("kilo"),
+  codex: ai("codex"),
+  antigravity: ai("antigravity"),
+  vscode: ide("vscode"),
+} as const;

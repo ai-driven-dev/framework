@@ -4,6 +4,7 @@ import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/fram
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import type { HostPluginRegistryEntry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -14,11 +15,11 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const REF = "test-plugin@aidd-framework";
 
-async function globalActivation(toolId: "claude" | "copilot") {
+async function globalActivation(toolId: AiToolId) {
   const refs = new Map<string, HostPluginRegistryEntry>();
   class StatefulActivator extends FakeHostActions {
     override enablePlugin(ref: string, scope: MarketplaceScope = "project"): void {
@@ -57,7 +58,10 @@ async function globalActivation(toolId: "claude" | "copilot") {
     new Map([[toolId, activator]]),
     fakeEnsureBuiltMarketplace(),
     new Map([
-      ["claude", new FakeHostMarketplaceRegistry({ location: "catalogues", entries: new Map() })],
+      [
+        TOOL.claude,
+        new FakeHostMarketplaceRegistry({ location: "catalogues", entries: new Map() }),
+      ],
     ]),
     () => "",
     undefined,
@@ -90,7 +94,7 @@ async function globalActivation(toolId: "claude" | "copilot") {
   return { refs, activator, userRepo, sync, options };
 }
 
-describe.each(["claude", "copilot"] as const)("global %s native plugins", (toolId) => {
+describe.each([TOOL.claude, TOOL.copilot] as const)("global %s native plugins", (toolId) => {
   it.each(["enabled", "missing", "disabled", "claims only"] as const)(
     "sync retains and restores a successful selection when the ref is %s",
     async (state) => {

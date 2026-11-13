@@ -6,6 +6,7 @@ import { RestoreUseCase } from "../../../../src/contexts/framework/application/r
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { InstallationFile } from "../../../../src/shared/domain/file.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import {
   buildUnitDeps,
   FIXTURE_DIR,
@@ -21,7 +22,7 @@ import {
   ScriptedPrompter,
 } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
+import { catalogOf, resolveRegisteredToolId, TOOL } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -29,7 +30,7 @@ const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format
 
 async function installPlugin(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
-  toolId: "claude" | "codex"
+  toolId: AiToolId
 ): Promise<void> {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const pluginReader = new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes());
@@ -102,7 +103,7 @@ describe("restore", () => {
 
   it("reports nothing to restore when files are unmodified", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const result = await makeRestoreUseCase(deps).execute({
       tools: catalogOf(),
@@ -116,7 +117,7 @@ describe("restore", () => {
 
   it("restores a modified file with --force", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
     await deps.fs.writeFile(settingsPath, '{"modified": true}');
@@ -137,7 +138,7 @@ describe("restore", () => {
 
   it("restores a deleted file", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
     await deps.fs.deleteFile(settingsPath);
@@ -156,7 +157,7 @@ describe("restore", () => {
 
   it("keeps file when prompter returns keep", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
     await deps.fs.writeFile(settingsPath, '{"modified": true}');
@@ -176,8 +177,8 @@ describe("restore", () => {
   it("toolIds filter limits restore to specific tool", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, "vscode");
-    await installTool(deps, PROJECT_ROOT, "cursor");
+    await installTool(deps, PROJECT_ROOT, TOOL.vscode);
+    await installTool(deps, PROJECT_ROOT, TOOL.cursor);
 
     const vscodePath = join(PROJECT_ROOT, ".vscode/settings.json");
     const cursorPath = join(PROJECT_ROOT, ".cursor/settings.json");
@@ -189,7 +190,7 @@ describe("restore", () => {
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
-      toolIds: ["vscode"],
+      toolIds: [TOOL.vscode],
       force: true,
     });
 
@@ -203,10 +204,10 @@ describe("restore", () => {
   it("toolIds filter also scopes plugin restore — does not leak to other AI tools", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, "claude");
-    await installTool(deps, PROJECT_ROOT, "codex");
-    await installPlugin(deps, "claude");
-    await installPlugin(deps, "codex");
+    await installTool(deps, PROJECT_ROOT, TOOL.claude);
+    await installTool(deps, PROJECT_ROOT, TOOL.codex);
+    await installPlugin(deps, TOOL.claude);
+    await installPlugin(deps, TOOL.codex);
 
     const claudePluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
     const codexPluginFile = join(PROJECT_ROOT, ".codex/plugins/sample-plugin/commands/greet.md");
@@ -218,7 +219,7 @@ describe("restore", () => {
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       force: true,
     });
 
@@ -229,9 +230,9 @@ describe("restore", () => {
   it("ide restore never touches AI plugin files, scoped or unscoped", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, "vscode");
-    await installTool(deps, PROJECT_ROOT, "claude");
-    await installPlugin(deps, "claude");
+    await installTool(deps, PROJECT_ROOT, TOOL.vscode);
+    await installTool(deps, PROJECT_ROOT, TOOL.claude);
+    await installPlugin(deps, TOOL.claude);
 
     const claudePluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
     await deps.fs.writeFile(claudePluginFile, "CORRUPTED CLAUDE");
@@ -241,7 +242,7 @@ describe("restore", () => {
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
-      toolIds: ["vscode"],
+      toolIds: [TOOL.vscode],
       force: true,
     });
 
@@ -251,10 +252,10 @@ describe("restore", () => {
   it("unscoped restore still restores every installed AI tool's plugins (no regression)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, "claude");
-    await installTool(deps, PROJECT_ROOT, "codex");
-    await installPlugin(deps, "claude");
-    await installPlugin(deps, "codex");
+    await installTool(deps, PROJECT_ROOT, TOOL.claude);
+    await installTool(deps, PROJECT_ROOT, TOOL.codex);
+    await installPlugin(deps, TOOL.claude);
+    await installPlugin(deps, TOOL.codex);
 
     const claudePluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
     const codexPluginFile = join(PROJECT_ROOT, ".codex/plugins/sample-plugin/commands/greet.md");
@@ -275,7 +276,7 @@ describe("restore", () => {
 
   it("does not remove untracked files in tool directory", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const untrackedPath = join(PROJECT_ROOT, ".claude/rules/user-added-rule.md");
     await deps.fs.writeFile(untrackedPath, "user added content");
@@ -293,7 +294,7 @@ describe("restore", () => {
 
   it("restores deleted files in non-interactive mode without --force", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
     await deps.fs.deleteFile(settingsPath);
@@ -313,7 +314,7 @@ describe("restore", () => {
 
   it("aborts in non-interactive mode when modified files exist and --force is not set", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
     await deps.fs.writeFile(settingsPath, '{"modified": true}');
@@ -332,7 +333,7 @@ describe("restore", () => {
 
   it("restores deleted files without prompting the user", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
     await deps.fs.deleteFile(settingsPath);
@@ -352,7 +353,7 @@ describe("restore", () => {
 
   it("passes reason 'modified' to prompter when file is changed on disk", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
 
     const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
     await deps.fs.writeFile(settingsPath, '{"modified": true}');
@@ -375,7 +376,7 @@ describe("restore", () => {
     it("reports nothing to restore when merge file keys are unmodified", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const result = await makeRestoreUseCase(deps).execute({
         tools: catalogOf(),
@@ -391,7 +392,7 @@ describe("restore", () => {
     it("restores merge file when a tracked key has drifted", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
       await deps.fs.writeFile(
@@ -414,7 +415,7 @@ describe("restore", () => {
     it("recreates deleted merge file", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
       await deps.fs.deleteFile(settingsPath);
@@ -435,7 +436,7 @@ describe("restore", () => {
     it("keeps merge file when prompter returns keep", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
       await deps.fs.writeFile(
@@ -461,7 +462,7 @@ describe("restore", () => {
     it("throws in non-interactive mode without --force when merge file is modified", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
       await deps.fs.writeFile(
@@ -484,7 +485,7 @@ describe("restore", () => {
     it("file filter skips merge files not matching the filter", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
       await deps.fs.writeFile(
@@ -539,7 +540,7 @@ async function loadedManifest(deps: Awaited<ReturnType<typeof buildUnitDeps>>): 
 describe("restore — consent to overwrite", () => {
   it("refuses to overwrite a modified file when neither force nor a TTY was given", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/keybindings.json"), "[]");
 
     await expect(
@@ -558,8 +559,8 @@ describe("restore — plugin sources", () => {
 
   async function claudeWithCorruptedPlugin() {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
-    await installPlugin(deps, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    await installPlugin(deps, TOOL.claude);
     await deps.fs.writeFile(PLUGIN_FILE, "CORRUPTED");
     return deps;
   }
@@ -601,8 +602,8 @@ describe("restore — persisting the manifest", () => {
   it("persists the manifest it was handed once one tool restored a file, even when another had nothing to restore", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, "vscode");
-    await installTool(deps, PROJECT_ROOT, "cursor");
+    await installTool(deps, PROJECT_ROOT, TOOL.vscode);
+    await installTool(deps, PROJECT_ROOT, TOOL.cursor);
     const handed = Manifest.fromJSON(
       (await loadedManifest(deps)).toJSON(),
       resolveRegisteredToolId
@@ -623,7 +624,7 @@ describe("restore — persisting the manifest", () => {
 
   it("does not persist anything when no file drifted", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     const stored = await loadedManifest(deps);
     const handed = Manifest.fromJSON(stored.toJSON(), resolveRegisteredToolId);
 
@@ -641,8 +642,8 @@ describe("restore — persisting the manifest", () => {
 
   it("persists the manifest when only a plugin file was restored", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
-    await installPlugin(deps, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    await installPlugin(deps, TOOL.claude);
     const handed = Manifest.fromJSON(
       (await loadedManifest(deps)).toJSON(),
       resolveRegisteredToolId
@@ -668,7 +669,7 @@ describe("restore — persisting the manifest", () => {
 describe("restore — totals", () => {
   it("counts the files restored and kept across a tool's sections", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/keybindings.json"), "[]");
     await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/settings.json"), '{"editor.tabSize": 3}');
     const prompter = new ScriptedPrompter([
@@ -693,7 +694,7 @@ describe("restore — totals", () => {
 describe("restore — the framework path", () => {
   it("reads only the config files the framework path actually holds", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     const keybindings = join(PROJECT_ROOT, ".vscode/keybindings.json");
     await deps.fs.writeFile("/partial-framework/config/vscode/keybindings.json", "[]");
     await deps.fs.deleteFile(keybindings);
@@ -716,13 +717,13 @@ describe("restore — the file selection", () => {
 
   async function claudeTrackingGhosts() {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await loadedManifest(deps);
     const ghosts = [RUN, OTHER].map(
       (relativePath) =>
         new InstallationFile({ relativePath, content: "", hash: deps.hasher.hash(relativePath) })
     );
-    manifest.addTool("claude", "test", ghosts, [...manifest.getMergeFiles("claude")]);
+    manifest.addTool(TOOL.claude, "test", ghosts, [...manifest.getMergeFiles(TOOL.claude)]);
     return deps;
   }
 

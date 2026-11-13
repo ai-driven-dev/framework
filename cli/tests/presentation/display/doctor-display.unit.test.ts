@@ -8,6 +8,7 @@ import {
   printToolDrift,
   printUserScopeTools,
 } from "../../../src/presentation/display/doctor-display.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 describe("printPluginIssues", () => {
@@ -23,8 +24,8 @@ describe("printPluginIssues", () => {
     const output = new CapturingOutput(false);
 
     printPluginIssues(output, [
-      { toolId: "cursor", pluginName: "aidd-context", issue: "not-installed-on-machine" },
-      { toolId: "cursor", pluginName: "aidd-test", issue: "not-installed-on-machine" },
+      { toolId: TOOL.cursor, pluginName: "aidd-context", issue: "not-installed-on-machine" },
+      { toolId: TOOL.cursor, pluginName: "aidd-test", issue: "not-installed-on-machine" },
     ]);
 
     expect(output.lines).toEqual([
@@ -37,7 +38,12 @@ describe("printPluginIssues", () => {
     const output = new CapturingOutput(false);
 
     printPluginIssues(output, [
-      { toolId: "claude", pluginName: "my-plugin", issue: "missing", filePath: "commands/cmd.md" },
+      {
+        toolId: TOOL.claude,
+        pluginName: "my-plugin",
+        issue: "missing",
+        filePath: "commands/cmd.md",
+      },
     ]);
 
     expect(output.lines).toEqual([
@@ -110,7 +116,7 @@ describe("printInventory", () => {
   it("prints nothing when the category was never reported on", () => {
     const output = new CapturingOutput(false);
 
-    printInventory(output, "AI", null, [{ toolId: "claude", version: "7.0.0" }]);
+    printInventory(output, "AI", null, [{ toolId: TOOL.claude, version: "7.0.0" }]);
 
     expect(output.lines).toEqual([]);
   });
@@ -121,10 +127,10 @@ describe("printInventory", () => {
     printInventory(
       output,
       "AI",
-      { toolHealth: [{ toolId: "claude", fileCount: 12, mergeFileCount: 2 }] },
+      { toolHealth: [{ toolId: TOOL.claude, fileCount: 12, mergeFileCount: 2 }] },
       [
-        { toolId: "cursor", version: "6.0.0" },
-        { toolId: "claude", version: "7.0.0" },
+        { toolId: TOOL.cursor, version: "6.0.0" },
+        { toolId: TOOL.claude, version: "7.0.0" },
       ]
     );
 
@@ -137,7 +143,7 @@ describe("printInventory", () => {
     printInventory(
       output,
       "IDE",
-      { toolHealth: [{ toolId: "vscode", fileCount: 1, mergeFileCount: 0 }] },
+      { toolHealth: [{ toolId: TOOL.vscode, fileCount: 1, mergeFileCount: 0 }] },
       []
     );
 
@@ -168,7 +174,7 @@ describe("printAllToolsDrift", () => {
     const output = new CapturingOutput(false);
 
     printAllToolsDrift(output, {
-      aiTools: { tools: [{ toolId: "claude", version: "7.0.0", drifted: [] }] },
+      aiTools: { tools: [{ toolId: TOOL.claude, version: "7.0.0", drifted: [] }] },
       ideTools: { tools: [] },
       pluginDrift: [],
     });
@@ -190,7 +196,7 @@ describe("printToolDrift", () => {
     const output = new CapturingOutput(false);
 
     printToolDrift(output, {
-      tools: [{ toolId: "claude", version: "7.0.0", drifted: [] }],
+      tools: [{ toolId: TOOL.claude, version: "7.0.0", drifted: [] }],
       pluginDrift: [],
     });
 
@@ -216,8 +222,8 @@ describe("printUserScopeTools", () => {
     const output = new CapturingOutput(false);
 
     printUserScopeTools(output, [
-      { toolId: "claude", version: "7.0.0", settings: "/home/me/.claude/settings.json" },
-      { toolId: "codex", version: "unknown", settings: "no user-scope settings file" },
+      { toolId: TOOL.claude, version: "7.0.0", settings: "/home/me/.claude/settings.json" },
+      { toolId: TOOL.codex, version: "unknown", settings: "no user-scope settings file" },
     ]);
 
     expect(output.lines).toEqual([

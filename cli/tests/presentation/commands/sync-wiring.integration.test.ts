@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const restoreAll = vi.fn();
@@ -152,7 +152,7 @@ describe("aidd sync — the whole project", () => {
 
   it("warns about a binary off PATH without failing the run", async () => {
     activation.mockResolvedValue({
-      binaryMissing: [{ toolId: "claude", binary: "claude" }],
+      binaryMissing: [{ toolId: TOOL.claude, binary: "claude" }],
       errors: [],
       activated: [],
     });

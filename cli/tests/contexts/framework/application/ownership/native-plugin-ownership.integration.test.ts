@@ -6,14 +6,17 @@ import {
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
+
+const { codex } = TOOL;
 
 const TARGET = "sample-plugin@real-catalog";
 const OTHER = "sample-plugin@other-catalog";
 
 function fixture() {
   const machine = Manifest.create();
-  machine.addTool("codex", "1.0.0", []);
-  machine.setNativeRegistrations("codex", {
+  machine.addTool(codex, "1.0.0", []);
+  machine.setNativeRegistrations(codex, {
     binary: "codex",
     marketplaces: [
       { alias: "real-catalog", hostName: "real-catalog" },
@@ -31,27 +34,24 @@ function fixture() {
 describe("one project's exact native host ref claim", () => {
   it("recognizes only canonical machine claims, not another catalogue or missing manifests", async () => {
     const f = fixture();
-    expect(await isMachineOwnedNativeRef(f.repo, "codex", TARGET)).toBe(true);
-    expect(await isMachineOwnedNativeRef(f.repo, "codex", "foreign@real-catalog")).toBe(false);
-    expect(await isMachineOwnedNativeRef(f.repo, "copilot", TARGET)).toBe(false);
-    expect(await isMachineOwnedNativeRef(new InMemoryManifestRepository(), "codex", TARGET)).toBe(
+    expect(await isMachineOwnedNativeRef(f.repo, codex, TARGET)).toBe(true);
+    expect(await isMachineOwnedNativeRef(f.repo, codex, "foreign@real-catalog")).toBe(false);
+    expect(await isMachineOwnedNativeRef(f.repo, TOOL.copilot, TARGET)).toBe(false);
+    expect(await isMachineOwnedNativeRef(new InMemoryManifestRepository(), codex, TARGET)).toBe(
       false
     );
-    expect(await isMachineOwnedNativeRef(undefined, "codex", TARGET)).toBe(false);
+    expect(await isMachineOwnedNativeRef(undefined, codex, TARGET)).toBe(false);
   });
 
   it("detaches A's realpath only from the exact ref, preserving B and other catalogue claims", async () => {
     const f = fixture();
     f.fs.setSymlink("/link-to-A", "/A");
-    await detachNativePluginRefs(f.repo, f.fs, "/link-to-A", new Map([["codex", [TARGET]]]));
-    expect(f.repo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    await detachNativePluginRefs(f.repo, f.fs, "/link-to-A", new Map([[codex, [TARGET]]]));
+    expect(f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: TARGET, dependents: ["/B"] },
       { ref: OTHER, dependents: ["/A", "/C"] },
     ]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([
-      TARGET,
-      OTHER,
-    ]);
+    expect(f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([TARGET, OTHER]);
     expect(f.repo.saveCount).toBe(1);
   });
 
@@ -61,8 +61,8 @@ describe("one project's exact native host ref claim", () => {
       ["/A", "foreign@real-catalog"],
     ] as const) {
       const f = fixture();
-      await detachNativePluginRefs(f.repo, f.fs, root, new Map([["codex", [ref]]]));
-      expect(f.repo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+      await detachNativePluginRefs(f.repo, f.fs, root, new Map([[codex, [ref]]]));
+      expect(f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
         { ref: TARGET, dependents: ["/A", "/B"] },
         { ref: OTHER, dependents: ["/A", "/C"] },
       ]);
@@ -72,16 +72,16 @@ describe("one project's exact native host ref claim", () => {
 
   it("does not act with no repo, no refs, no manifest, or no host claim record", async () => {
     const fs = new InMemoryFileAdapter();
-    await detachNativePluginRefs(undefined, fs, "/A", new Map([["codex", [TARGET]]]));
+    await detachNativePluginRefs(undefined, fs, "/A", new Map([[codex, [TARGET]]]));
     const f = fixture();
     await detachNativePluginRefs(f.repo, fs, "/A", new Map());
     await detachNativePluginRefs(
       new InMemoryManifestRepository(),
       fs,
       "/A",
-      new Map([["codex", [TARGET]]])
+      new Map([[codex, [TARGET]]])
     );
-    await detachNativePluginRefs(f.repo, fs, "/A", new Map([["copilot", [TARGET]]]));
+    await detachNativePluginRefs(f.repo, fs, "/A", new Map([[TOOL.copilot, [TARGET]]]));
     expect(f.repo.saveCount).toBe(0);
   });
 
@@ -105,9 +105,9 @@ describe("one project's exact native host ref claim", () => {
         }
       },
     };
-    await detachNativePluginRefs(repo, f.fs, "/A", new Map([["codex", [TARGET]]]));
+    await detachNativePluginRefs(repo, f.fs, "/A", new Map([[codex, [TARGET]]]));
     expect(
-      f.repo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims?.[0]?.dependents
+      f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims?.[0]?.dependents
     ).toEqual(["/B"]);
   });
 });

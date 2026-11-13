@@ -11,7 +11,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -21,7 +21,7 @@ describe("PluginAddUseCase skip warnings", () => {
   describe("when a plugin's hooks are now accepted (no skip entry)", () => {
     it("emits no logger.warn — OpenCode delivers sample-plugin's hooks instead of skipping them", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "opencode");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const capturingLogger = new CapturingLogger();
       const registry = new InMemoryMarketplaceRegistry();
@@ -41,7 +41,7 @@ describe("PluginAddUseCase skip warnings", () => {
       await useCase.execute({
         tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
-        toolIds: ["opencode"],
+        toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -56,7 +56,7 @@ describe("PluginAddUseCase skip warnings", () => {
         {
           pluginName: "aidd-pm",
           component: "hooks",
-          toolId: "opencode",
+          toolId: TOOL.opencode,
           reason: "OpenCode plugin runtime is JS modules; declarative hooks.json is not supported.",
         },
       ];

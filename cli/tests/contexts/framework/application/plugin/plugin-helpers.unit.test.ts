@@ -7,7 +7,7 @@ import {
 import { NoManifestError } from "../../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -32,7 +32,7 @@ describe("deletePluginFilesForTool()", () => {
     const deleted = await deletePluginFilesForTool(
       files,
       "project",
-      registeredAiProfile("claude"),
+      registeredAiProfile(TOOL.claude),
       PROJECT_ROOT,
       fs
     );

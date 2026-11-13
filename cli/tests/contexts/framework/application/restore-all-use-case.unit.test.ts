@@ -9,6 +9,7 @@ import { DetectPluginDriftUseCase } from "../../../../src/contexts/framework/app
 import { StatusUseCase } from "../../../../src/contexts/framework/application/status-use-case.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { NoManifestError } from "../../../../src/shared/domain/errors.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../../src/shared/ports/prompter.js";
 import {
   buildUnitDeps,
@@ -21,7 +22,7 @@ import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-b
 import { FakePlatform } from "../../../helpers/ports/fake-platform.js";
 import { OverwritePrompter, ScriptedPrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -39,7 +40,7 @@ function builtDeps(deps: Deps) {
 
 async function installPlugin(
   deps: Deps,
-  toolId: "claude" | "cursor",
+  toolId: AiToolId,
   pluginReader: PluginDistributionReaderAdapter
 ): Promise<void> {
   await new PluginAddUseCase(
@@ -112,10 +113,10 @@ describe("RestoreAllUseCase — the --force flag", () => {
     trackedPath: string;
   }> {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const manifest = await deps.manifestRepo.load();
-    const tracked = manifest?.getToolFiles("claude") ?? [];
+    const tracked = manifest?.getToolFiles(TOOL.claude) ?? [];
     expect(tracked.length, "the fixture must track at least one file").toBeGreaterThan(0);
 
     const trackedPath = join(PROJECT_ROOT, tracked[0].relativePath);
@@ -162,9 +163,9 @@ describe("RestoreAllUseCase — the --force flag", () => {
 describe("RestoreAllUseCase — an interactive run that ticks nothing", () => {
   it("restores nothing: an empty selection is a decision, not the absence of one", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await deps.manifestRepo.load();
-    const tracked = manifest?.getToolFiles("claude") ?? [];
+    const tracked = manifest?.getToolFiles(TOOL.claude) ?? [];
     const trackedPath = join(PROJECT_ROOT, tracked[0].relativePath);
     await deps.fs.writeFile(trackedPath, "EDITED OUTSIDE THE CLI");
     const prompter = new ScriptedPrompter([ScriptedPrompter.answer.checkbox([])]);
@@ -190,11 +191,11 @@ describe("RestoreAllUseCase — an interactive run that ticks nothing", () => {
 describe("RestoreAllUseCase — plugin materialization", () => {
   it("restores a corrupted plugin file with exactly one materialization call (translate-mode: claude)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     await installPlugin(
       deps,
-      "claude",
+      TOOL.claude,
       new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
     );
 
@@ -213,17 +214,17 @@ describe("RestoreAllUseCase — plugin materialization", () => {
 
   it("leaves a corrupted shared user plugin to explicit user-scope repair (cursor)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     await installPlugin(
       deps,
-      "cursor",
+      TOOL.cursor,
       new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
     );
 
     const manifestAfterInstall = deps.userManifestRepo.getCurrent();
     const plugin = manifestAfterInstall
-      ?.getPlugins("cursor")
+      ?.getPlugins(TOOL.cursor)
       .find((p) => p.name === "sample-plugin");
     const trackedRelativePath = [...(plugin?.files.keys() ?? [])][0];
     expect(trackedRelativePath).toBeDefined();
@@ -240,10 +241,10 @@ describe("RestoreAllUseCase — plugin materialization", () => {
 
   it("result.pluginNamesRestored lists the restored plugin exactly once", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
-    await installPlugin(deps, "claude", reader);
+    await installPlugin(deps, TOOL.claude, reader);
 
     const pluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
     await deps.fs.writeFile(pluginFile, "CORRUPTED CONTENT");
@@ -261,15 +262,15 @@ describe("RestoreAllUseCase — plugin materialization", () => {
 
   it("a plugin already up to date is not listed as restored and produces no error", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
-    await installPlugin(deps, "claude", reader);
+    await installPlugin(deps, TOOL.claude, reader);
 
     // Nothing corrupted — plugin files are already at their installed state.
     const manifestBefore = await deps.manifestRepo.load();
     const pluginBefore = manifestBefore
-      ?.getPlugins("claude")
+      ?.getPlugins(TOOL.claude)
       .find((p) => p.name === "sample-plugin");
 
     const result = await makeRestoreAllUseCase(deps, reader).execute(
@@ -282,7 +283,9 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     expect(result.pluginNamesRestored).toEqual([]);
     expect(result.errors).toHaveLength(0);
     const manifestAfter = await deps.manifestRepo.load();
-    const pluginAfter = manifestAfter?.getPlugins("claude").find((p) => p.name === "sample-plugin");
+    const pluginAfter = manifestAfter
+      ?.getPlugins(TOOL.claude)
+      .find((p) => p.name === "sample-plugin");
     expect(pluginAfter?.files).toEqual(pluginBefore?.files);
   });
 
@@ -290,11 +293,11 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     // The interactive picker never offers plugin drift, so once the user picks any specific
     // regular file ctx.fileFilter is active and no plugin path can match it.
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
-    await installTool(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    await installTool(deps, PROJECT_ROOT, TOOL.vscode);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
-    await installPlugin(deps, "claude", reader);
+    await installPlugin(deps, TOOL.claude, reader);
 
     const pluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
     await deps.fs.writeFile(pluginFile, "CORRUPTED CONTENT");
@@ -316,11 +319,11 @@ describe("RestoreAllUseCase — plugin materialization", () => {
 
   it("unscoped restore still restores every installed AI tool's plugins (no regression)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
-    await installTool(deps, PROJECT_ROOT, "codex");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    await installTool(deps, PROJECT_ROOT, TOOL.codex);
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
-    await installPlugin(deps, "claude", reader);
+    await installPlugin(deps, TOOL.claude, reader);
     await new PluginAddUseCase(
       deps.fs,
       deps.manifestRepo,
@@ -333,7 +336,7 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     ).execute({
       tools: catalogOf(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
-      toolIds: ["codex"],
+      toolIds: [TOOL.codex],
       projectRoot: PROJECT_ROOT,
       interactive: false,
     });
@@ -373,7 +376,7 @@ describe("RestoreAllUseCase — consent to overwrite", () => {
 
   async function askedWith(interactive: boolean, force: boolean): Promise<RestoreOptions> {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
     const statusUseCase = new StatusUseCase(
       deps.fs,
@@ -417,7 +420,7 @@ describe("RestoreAllUseCase — consent to overwrite", () => {
 describe("RestoreAllUseCase — native-only tools", () => {
   it("forwards the native-only tool ids the restore it delegates to found", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
     const statusUseCase = new StatusUseCase(
       deps.fs,
@@ -440,7 +443,7 @@ describe("RestoreAllUseCase — native-only tools", () => {
       totalPluginFilesRestored: 0,
       restoredPluginNames: [],
       unrestorable: [],
-      nativeOnlyToolIds: ["claude"],
+      nativeOnlyToolIds: [TOOL.claude],
     });
 
     const result = await new RestoreAllUseCase(
@@ -520,7 +523,7 @@ describe("RestoreAllUseCase — before delegating", () => {
 
   it("hands the restore the version of the first installed tool", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const { asked, delegate } = recordingDelegate();
 
     await restoreAllDelegatingTo(deps, new OverwritePrompter(), delegate).execute(
@@ -550,7 +553,7 @@ describe("RestoreAllUseCase — before delegating", () => {
 
   it("reports a failing restore as a config-restore error with nothing restored", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const useCase = restoreAllDelegatingTo(deps, new OverwritePrompter(), async () => {
       throw new Error("disk on fire");
     });
@@ -574,7 +577,7 @@ describe("RestoreAllUseCase — the interactive file picker", () => {
 
   async function vscodeProject(): Promise<Deps> {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "vscode");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.vscode);
     return deps;
   }
 

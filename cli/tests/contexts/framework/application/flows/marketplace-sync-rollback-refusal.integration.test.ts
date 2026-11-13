@@ -21,7 +21,7 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -47,10 +47,10 @@ async function sync(options: {
   const registry = new InMemoryMarketplaceRegistry();
   const logger = new CapturingLogger();
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
+  manifest.addTool(TOOL.claude, "test", []);
   const machine = Manifest.create();
-  machine.addTool("claude", "test", []);
-  machine.setNativeRegistrations("claude", {
+  machine.addTool(TOOL.claude, "test", []);
+  machine.setNativeRegistrations(TOOL.claude, {
     binary: "claude",
     marketplaces: [
       {
@@ -98,16 +98,16 @@ async function sync(options: {
     registry,
     new DeterministicHasher(),
     logger,
-    new Map([["claude", activator]]),
+    new Map([[TOOL.claude, activator]]),
     fakeEnsureBuiltMarketplace(() => builtDir),
-    new Map([["claude", hostReader]]),
+    new Map([[TOOL.claude, hostReader]]),
     () => USER_CACHE_ROOT,
     undefined,
     undefined,
     undefined,
     new Map([
       [
-        "claude",
+        TOOL.claude,
         new FakeHostPluginRegistry({
           location: "/home/.claude/plugins/installed_plugins.json",
           refs: new Map(),
@@ -117,7 +117,7 @@ async function sync(options: {
     new InMemoryManifestRepository(machine),
     new Map([
       [
-        "claude",
+        TOOL.claude,
         new FakeHostMarketplaceSources(
           activator,
           "registry",
@@ -212,7 +212,7 @@ describe("the sync write path refuses to roll a host back to an older aidd-frame
       registeredVersion: "2.0.0",
     });
 
-    expect((await manifestRepo.load())?.getNativeRegistrations("claude")).toStrictEqual({
+    expect((await manifestRepo.load())?.getNativeRegistrations(TOOL.claude)).toStrictEqual({
       binary: "claude",
       marketplaces: [
         {

@@ -12,7 +12,7 @@ import type { VersionReader } from "../../../../src/shared/ports/version-reader.
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 function fakeVersion(value: string): VersionReader {
   return { get: () => value };
@@ -105,13 +105,13 @@ async function issuesFor(
     })
   );
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
+  manifest.addTool(TOOL.claude, "test", []);
   const useCase = new DoctorRegistrationUseCase(
     fs,
     registry,
     new Map(),
     new Map(),
-    new Map([["claude", hostReader]]),
+    new Map([[TOOL.claude, hostReader]]),
     () => "/user-cache",
     fakeVersion("1.0.0")
   );
@@ -278,7 +278,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
     const useCase = new DoctorRegistrationUseCase(
       fs,
       registry,
@@ -320,7 +320,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool("codex", "test", []);
+    manifest.addTool(TOOL.codex, "test", []);
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/other/src"]]),
@@ -330,7 +330,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       registry,
       new Map(),
       new Map(),
-      new Map([["codex", hostReader]]),
+      new Map([[TOOL.codex, hostReader]]),
       () => "/user-cache",
       fakeVersion("1.0.0")
     );
@@ -379,13 +379,13 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
     const useCase = new DoctorRegistrationUseCase(
       fs,
       registry,
       new Map(),
       new Map(),
-      new Map([["claude", hostReader]]),
+      new Map([[TOOL.claude, hostReader]]),
       () => "/user-cache",
       fakeVersion("1.0.0")
     );
@@ -429,13 +429,13 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
       })
     );
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
     const useCase = new DoctorRegistrationUseCase(
       fs,
       registry,
       new Map(),
       new Map(),
-      new Map([["claude", hostReader]]),
+      new Map([[TOOL.claude, hostReader]]),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION)
     );

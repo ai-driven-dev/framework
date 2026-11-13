@@ -20,6 +20,7 @@ import type { AssetProvider } from "../../../../../src/shared/ports/asset-provid
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // resolve(): on Windows a leading "/" gets the current drive, as production's resolve(outDir) does.
@@ -122,14 +123,14 @@ describe("FlatOutputStrategy integration", () => {
   describe("happy path", () => {
     it("writes agent under .github/agents/<plugin>-<name>.agent.md (plugin-prefixed)", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const agentPath = `${ABS_OUT}/.github/agents/${PLUGIN}-code-reviewer.agent.md`;
       expect(memFs.has(agentPath)).toBe(true);
     });
 
     it("strips frontmatter to Copilot allowlist in agent file and uses plugin-prefixed name", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const content = memFs.getFile(`${ABS_OUT}/.github/agents/${PLUGIN}-code-reviewer.agent.md`);
       expect(content).toContain(`${PLUGIN}-code-reviewer`);
       expect(content).toContain("description");
@@ -137,35 +138,35 @@ describe("FlatOutputStrategy integration", () => {
 
     it("writes skill files under .github/skills/<plugin>-<skill>/ (plugin-prefixed)", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const skillPath = `${ABS_OUT}/.github/skills/${PLUGIN}-commit/SKILL.md`;
       expect(memFs.has(skillPath)).toBe(true);
     });
 
     it("rewrites @./ references in skill files", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const content = memFs.getFile(`${ABS_OUT}/.github/skills/${PLUGIN}-hello.md`);
       expect(content).toContain("[SKILL.md](./SKILL.md)");
     });
 
     it("rewrites @CLAUDE_ROOT/skills/<X> in skill files to relative flat path", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const content = memFs.getFile(`${ABS_OUT}/.github/skills/${PLUGIN}-hello.md`);
       expect(content).not.toContain(`@${CLAUDE_ROOT_VAR}`);
     });
 
     it("writes per-plugin hooks file under .github/hooks/<plugin>.hooks.json", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const hooksPath = `${ABS_OUT}/.github/hooks/${PLUGIN}.hooks.json`;
       expect(memFs.has(hooksPath)).toBe(true);
     });
 
     it("rewrites CLAUDE_ROOT/hooks/<X> in hooks JSON to per-plugin workspace-relative path", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const content = memFs.getFile(`${ABS_OUT}/.github/hooks/${PLUGIN}.hooks.json`);
       expect(content).not.toContain("CLAUDE_PLUGIN_ROOT");
       expect(content).toContain(`./.github/hooks/${PLUGIN}/check.sh`);
@@ -173,14 +174,14 @@ describe("FlatOutputStrategy integration", () => {
 
     it("copies sibling hook scripts to .github/hooks/<plugin>/ alongside the JSON", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const scriptPath = `${ABS_OUT}/.github/hooks/${PLUGIN}/check.sh`;
       expect(memFs.has(scriptPath)).toBe(true);
     });
 
     it("merges MCP servers into .vscode/mcp.json under servers key with plugin prefix", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const mcpPath = `${ABS_OUT}/.vscode/mcp.json`;
       expect(memFs.has(mcpPath)).toBe(true);
       const raw = memFs.getFile(mcpPath) ?? "";
@@ -190,7 +191,7 @@ describe("FlatOutputStrategy integration", () => {
 
     it("rewrites CLAUDE_ROOT in MCP to absolute path under absOut", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const content = memFs.getFile(`${ABS_OUT}/.vscode/mcp.json`) ?? "";
       expect(content).not.toContain("CLAUDE_PLUGIN_ROOT");
       expect(content).toContain(ABS_OUT_IN_CONTENT);
@@ -198,7 +199,7 @@ describe("FlatOutputStrategy integration", () => {
 
     it("does NOT write a marketplace.json", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       expect(memFs.has(`${ABS_OUT}/.plugin/marketplace.json`)).toBe(false);
       expect(memFs.has(`${ABS_OUT}/.github/plugin/marketplace.json`)).toBe(false);
     });
@@ -207,12 +208,12 @@ describe("FlatOutputStrategy integration", () => {
   describe("idempotency with --force", () => {
     it("re-run with force produces byte-identical files", async () => {
       const useCase1 = makeUseCase(memFs, false);
-      await useCase1.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase1.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const agentPath = `${ABS_OUT}/.github/agents/${PLUGIN}-code-reviewer.agent.md`;
       const snapshot = memFs.getFile(agentPath);
 
       const useCase2 = makeUseCase(memFs, true);
-      await useCase2.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase2.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       expect(memFs.getFile(agentPath)).toBe(snapshot);
     });
   });
@@ -220,11 +221,11 @@ describe("FlatOutputStrategy integration", () => {
   describe("collision detection without --force", () => {
     it("halts with FlatTargetExistsError when agent file already exists", async () => {
       const useCase1 = makeUseCase(memFs, false);
-      await useCase1.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase1.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
 
       const useCase2 = makeUseCase(memFs, false);
       await expect(
-        useCase2.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" })
+        useCase2.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot })
       ).rejects.toBeInstanceOf(FlatTargetExistsError);
     });
   });
@@ -245,7 +246,7 @@ describe("FlatOutputStrategy integration", () => {
       );
       const useCase = new FrameworkBuildUseCase(emptyFs, v, ap, new CapturingLogger(), strategy);
       await expect(
-        useCase.execute({ sourceDir: FIXTURE_DIR, outDir: "/nonexistent", target: "copilot" })
+        useCase.execute({ sourceDir: FIXTURE_DIR, outDir: "/nonexistent", target: TOOL.copilot })
       ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
     });
 
@@ -265,7 +266,7 @@ describe("FlatOutputStrategy integration", () => {
       );
       const useCase = new FrameworkBuildUseCase(fileFs, v2, ap2, new CapturingLogger(), strategy);
       await expect(
-        useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" })
+        useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot })
       ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
     });
   });
@@ -274,7 +275,7 @@ describe("FlatOutputStrategy integration", () => {
     it("throws JsonSchemaValidationError for invalid plugin.json (orchestrator-side)", async () => {
       const useCase = makeUseCase(memFs, false, makeValidator(true));
       await expect(
-        useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" })
+        useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot })
       ).rejects.toBeInstanceOf(JsonSchemaValidationError);
     });
   });
@@ -292,7 +293,7 @@ describe("FlatOutputStrategy integration", () => {
           },
         })
       );
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const content = memFs.getFile(`${ABS_OUT}/.github/hooks/${PLUGIN}.hooks.json`) ?? "";
       expect(content).toContain(`./.github/skills/${PLUGIN}-commit/SKILL.md`);
     });
@@ -301,7 +302,7 @@ describe("FlatOutputStrategy integration", () => {
   describe("MCP path resolution for CLAUDE_ROOT", () => {
     it("rewrites CLAUDE_ROOT/bin/server.js to absolute path under absOut", async () => {
       const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
       const content = memFs.getFile(`${ABS_OUT}/.vscode/mcp.json`) ?? "";
       expect(content).toContain(ABS_OUT_IN_CONTENT);
     });
@@ -344,7 +345,7 @@ describe("FlatOutputStrategy integration", () => {
       await makeOpencodeUseCase(memFs).execute({
         sourceDir: FIXTURE_DIR,
         outDir: ABS_OUT,
-        target: "opencode",
+        target: TOOL.opencode,
       });
       const raw = memFs.getFile(`${ABS_OUT}/opencode.json`);
       expect(raw, "opencode.json must be emitted even with zero MCP servers").toBeDefined();
@@ -358,7 +359,7 @@ describe("FlatOutputStrategy integration", () => {
       await makeOpencodeUseCase(memFs).execute({
         sourceDir: FIXTURE_DIR,
         outDir: ABS_OUT,
-        target: "opencode",
+        target: TOOL.opencode,
       });
       const config = JSON.parse(memFs.getFile(`${ABS_OUT}/opencode.json`) ?? "{}") as {
         $schema: string;
@@ -777,7 +778,7 @@ describe("what a flat layout writes once every plugin is built", () => {
       configArtifact: {
         reads: (names) => ["kept.json", ...names.map((name) => `${name}.absent`)],
         probes: () => ["probed.js", "missing.js"],
-        assets: { tool: "opencode", names: ["opencode-events.js"] },
+        assets: { tool: TOOL.opencode, names: ["opencode-events.js"] },
         emit: (input) => {
           seen.push(input);
           return [

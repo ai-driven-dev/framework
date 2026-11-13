@@ -2,27 +2,33 @@ import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
 import { parseToml } from "../../../../../src/contexts/tools/domain/formats/toml.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
+
+const { vscode } = TOOL;
 
 const provider = new BundledAssetProviderAdapter(wireTools());
 
 describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
   describe("claude", () => {
     it("returns parsed settings.json with permissions", () => {
-      const asset = provider.loadConfigAsset("claude", "settings.json") as Record<string, unknown>;
+      const asset = provider.loadConfigAsset(TOOL.claude, "settings.json") as Record<
+        string,
+        unknown
+      >;
       expect(asset).toHaveProperty("permissions");
     });
   });
 
   describe("opencode", () => {
     it("bundles the shared event adapter as executable source text", () => {
-      const asset = provider.loadConfigAsset("opencode", "opencode-events.js");
+      const asset = provider.loadConfigAsset(TOOL.opencode, "opencode-events.js");
 
       expect(typeof asset).toBe("string");
       expect(asset).toContain("export async function setupOpencodeEvents");
     });
 
     it("returns parsed opencode.json with instructions array", () => {
-      const asset = provider.loadConfigAsset("opencode", "opencode.json") as Record<
+      const asset = provider.loadConfigAsset(TOOL.opencode, "opencode.json") as Record<
         string,
         unknown
       >;
@@ -32,7 +38,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
 
   describe("kilo", () => {
     it("returns parsed kilo.json with its schema", () => {
-      const asset = provider.loadConfigAsset("kilo", "kilo.json") as Record<string, unknown>;
+      const asset = provider.loadConfigAsset(TOOL.kilo, "kilo.json") as Record<string, unknown>;
       expect(asset).toMatchObject({
         $schema: "https://app.kilo.ai/config.json",
       });
@@ -42,14 +48,14 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
 
   describe("codex", () => {
     it("returns config.toml as raw string", () => {
-      const asset = provider.loadConfigAsset("codex", "config.toml");
+      const asset = provider.loadConfigAsset(TOOL.codex, "config.toml");
       expect(typeof asset).toBe("string");
     });
 
     // Model choice is owned by the account, not this repo: a pinned "gpt-5" is rejected by
     // ChatGPT-account Codex sessions, so Codex's own default applies.
     it("writes no model — the account decides which one it can use", () => {
-      const asset = provider.loadConfigAsset("codex", "config.toml") as string;
+      const asset = provider.loadConfigAsset(TOOL.codex, "config.toml") as string;
       const parsed = parseToml(asset);
       expect(parsed).not.toHaveProperty("model");
     });
@@ -57,7 +63,7 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
 
   describe("copilot", () => {
     it("returns merged vscode-settings.json with ≥26 keys including both asset origins", () => {
-      const asset = provider.loadConfigAsset("copilot", "vscode-settings.json") as Record<
+      const asset = provider.loadConfigAsset(TOOL.copilot, "vscode-settings.json") as Record<
         string,
         unknown
       >;
@@ -71,26 +77,23 @@ describe("BundledAssetProviderAdapter.loadConfigAsset", () => {
 
   describe("vscode", () => {
     it("returns settings.json as object", () => {
-      const asset = provider.loadConfigAsset("vscode", "settings.json") as Record<string, unknown>;
+      const asset = provider.loadConfigAsset(vscode, "settings.json") as Record<string, unknown>;
       expect(asset).toHaveProperty("editor.formatOnSave");
     });
 
     it("returns keybindings.json as array", () => {
-      const asset = provider.loadConfigAsset("vscode", "keybindings.json");
+      const asset = provider.loadConfigAsset(vscode, "keybindings.json");
       expect(Array.isArray(asset)).toBe(true);
     });
 
     it("returns extensions.json with recommendations", () => {
-      const asset = provider.loadConfigAsset("vscode", "extensions.json") as Record<
-        string,
-        unknown
-      >;
+      const asset = provider.loadConfigAsset(vscode, "extensions.json") as Record<string, unknown>;
       expect(asset).toHaveProperty("recommendations");
     });
   });
 
   it("throws for an unknown file name", () => {
-    expect(() => provider.loadConfigAsset("claude", "missing.json")).toThrow(
+    expect(() => provider.loadConfigAsset(TOOL.claude, "missing.json")).toThrow(
       "Bundled asset not found: 'claude/missing.json'"
     );
   });

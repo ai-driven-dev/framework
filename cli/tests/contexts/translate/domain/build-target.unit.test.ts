@@ -3,17 +3,17 @@ import {
   buildTargetModesOf,
   supportedBuildTargets,
 } from "../../../../src/contexts/translate/domain/build-target.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 import { anEmptyContract, aProfile } from "../../tools/testing/profiles.js";
 
 describe("buildTargetModesOf", () => {
   it("gives a tool one pair per contract it declares, and none for what it omits", () => {
     const catalog = catalogOf([
-      aProfile("claude")
+      aProfile(TOOL.claude)
         .withBuildContract("marketplace", anEmptyContract())
         .withBuildContract("flat", anEmptyContract())
         .build(),
-      aProfile("opencode").withBuildContract("flat", anEmptyContract()).build(),
+      aProfile(TOOL.opencode).withBuildContract("flat", anEmptyContract()).build(),
     ]);
 
     expect(buildTargetModesOf(catalog)).toEqual([

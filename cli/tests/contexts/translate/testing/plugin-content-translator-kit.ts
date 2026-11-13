@@ -6,6 +6,7 @@ import {
   PluginDistribution,
 } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 
 export const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 export const translator = new PluginContentTranslator(stubHasher);
@@ -63,7 +64,7 @@ export function makeDist(
   const manifest = makeFile(".claude-plugin/plugin.json", claudeManifestContent);
   return new PluginDistribution({
     manifest: { name: "sample-plugin", version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [...skills, ...commands, ...agents, ...rules, ...hooks, ...mcp, manifest],
     components: { skills, commands, agents, rules, hooks, mcp },
     ...overrides,
@@ -109,7 +110,7 @@ export function hooksManifestFor(token: string): string {
 export function distOf(files: PluginComponentFile[], components: Partial<PluginComponents>) {
   return new PluginDistribution({
     manifest: { name: "sample-plugin", version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [...files, makeFile(".claude-plugin/plugin.json", claudeManifestContent)],
     components: {
       skills: [],

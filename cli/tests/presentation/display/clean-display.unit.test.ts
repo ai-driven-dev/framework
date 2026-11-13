@@ -3,6 +3,7 @@ import {
   printProjectCleanOutcome,
   printUserScopeCleanOutcome,
 } from "../../../src/presentation/display/clean-display.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 const NO_PREVIEW = { tools: [], nativeRegistrations: [], totalFileCount: 0 };
@@ -42,12 +43,12 @@ describe("printProjectCleanOutcome", () => {
         dryRun: true,
         preview: {
           tools: [
-            { toolId: "claude", fileCount: 3 },
-            { toolId: "cursor", fileCount: 1 },
+            { toolId: TOOL.claude, fileCount: 3 },
+            { toolId: TOOL.cursor, fileCount: 1 },
           ],
           nativeRegistrations: [
             {
-              toolId: "claude",
+              toolId: TOOL.claude,
               binary: "claude",
               pluginRefCount: 2,
               marketplaceCount: 1,
@@ -122,7 +123,7 @@ describe("printProjectCleanOutcome", () => {
         manifestFound: true,
         dryRun: true,
         preview: {
-          tools: [{ toolId: "claude", fileCount: 1 }],
+          tools: [{ toolId: TOOL.claude, fileCount: 1 }],
           nativeRegistrations: [],
           totalFileCount: 1,
         },
@@ -146,8 +147,8 @@ describe("printProjectCleanOutcome", () => {
         dryRun: true,
         preview: {
           tools: [
-            { toolId: "claude", fileCount: 1 },
-            { toolId: "cursor", fileCount: 1 },
+            { toolId: TOOL.claude, fileCount: 1 },
+            { toolId: TOOL.cursor, fileCount: 1 },
           ],
           nativeRegistrations: [],
           totalFileCount: 2,

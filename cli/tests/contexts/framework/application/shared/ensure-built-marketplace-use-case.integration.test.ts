@@ -23,6 +23,7 @@ import type { VersionReader } from "../../../../../src/shared/ports/version-read
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT = "/proj";
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
@@ -140,7 +141,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const r = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
     expect(r.rebuilt).toBe(true);
@@ -163,7 +164,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const r = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeRemoteMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
     expect(r.rebuilt).toBe(false);
@@ -185,7 +186,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const r = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
     expect(r.rebuilt).toBe(true);
@@ -207,7 +208,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const r = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeRemoteMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
       forceRefresh: true,
     });
@@ -227,7 +228,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const r = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
     expect(r.rebuilt).toBe(true);
@@ -247,7 +248,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const r = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
     expect(r.rebuilt).toBe(true);
@@ -266,7 +267,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const r = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
     expect(r.builtDir).toBe(resolve(builtMarketplaceDir(PROJECT, "aidd-framework", "codex")));
@@ -285,7 +286,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const opts = {
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "codex" as const,
+      target: TOOL.codex,
       mode: "marketplace" as const,
     };
     await uc.execute(opts);
@@ -304,13 +305,13 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const codex = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
     const cursor = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "cursor",
+      target: TOOL.cursor,
       mode: "marketplace",
     });
     expect(builds).toBe(2);
@@ -328,7 +329,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const r = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
     expect(r.version).toBe("1.0.0");
@@ -345,7 +346,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     const r = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
     expect(r.version).toBe("unversioned");
@@ -367,7 +368,12 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
       () => "/user-cache"
     );
     const marketplace = makeMarketplace();
-    await uc.execute({ projectRoot: PROJECT, marketplace, target: "codex", mode: "marketplace" });
+    await uc.execute({
+      projectRoot: PROJECT,
+      marketplace,
+      target: TOOL.codex,
+      mode: "marketplace",
+    });
     expect(asked).toStrictEqual([{ marketplace, projectRoot: PROJECT, forceRefresh: undefined }]);
   });
 
@@ -383,7 +389,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
       uc.execute({
         projectRoot: PROJECT,
         marketplace: makeMarketplace(),
-        target: "codex",
+        target: TOOL.codex,
         mode: "marketplace",
       })
     ).rejects.toThrow("No framework build for target 'codex' mode 'marketplace'.");
@@ -420,7 +426,7 @@ describe("EnsureBuiltMarketplaceUseCase — when a published source's sentinel c
     const r = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeRemoteMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
     return r.rebuilt;
@@ -489,7 +495,7 @@ describe("force behavior at the cache-rebuild path", () => {
     const result = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "copilot",
+      target: TOOL.copilot,
       mode: "flat",
     });
 
@@ -525,7 +531,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
     await direct.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "codex",
+      target: TOOL.codex,
       mode: "marketplace",
     });
 
@@ -541,7 +547,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
     await dogfood.execute({
       projectRoot: PROJECT,
       marketplace: makeMarketplace(),
-      target: "cursor",
+      target: TOOL.cursor,
       mode: "marketplace",
     });
 
@@ -583,7 +589,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
     const result = await uc.execute({
       projectRoot: PROJECT,
       marketplace: makeUserMarketplace(),
-      target: "claude",
+      target: TOOL.claude,
       mode: "marketplace",
     });
 
@@ -617,7 +623,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
       return uc.execute({
         projectRoot: PROJECT,
         marketplace: makeUserMarketplace(),
-        target: "claude",
+        target: TOOL.claude,
         mode: "marketplace",
       });
     };

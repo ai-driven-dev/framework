@@ -14,7 +14,7 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -60,7 +60,7 @@ class RealpathRefusingFileAdapter extends InMemoryFileAdapter {
 }
 
 async function sync(setup: Setup = {}) {
-  const toolId = setup.toolId ?? "claude";
+  const toolId = setup.toolId ?? TOOL.claude;
   const aiddName = setup.aiddName ?? "probe-mkt";
   const catalogName = setup.catalogName ?? aiddName;
   const fs = setup.fs ?? new InMemoryFileAdapter();
@@ -310,7 +310,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
 
     expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
     expect(result.errors).toEqual([]);
-    const registrations = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    const registrations = (await manifestRepo.load())?.getNativeRegistrations(TOOL.claude);
     expect(registrations?.marketplaces).toEqual([
       expect.objectContaining({ alias: "mon-nom", hostName: "upstream" }),
     ]);
@@ -324,7 +324,7 @@ describe("the sync guard against a marketplace name a host already holds", () =>
       entries: new Map([["probe-mkt", "/anything-else"]]),
     });
 
-    const { result, activator } = await sync({ toolId: "codex", hostReader });
+    const { result, activator } = await sync({ toolId: TOOL.codex, hostReader });
 
     expect(hostReader.reads).toBe(0);
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
@@ -385,6 +385,6 @@ describe("when the catalog this project just built cannot be read back", () => {
     // Never written as `hostName` — a manifest that guessed the alias would go on
     // claiming a registration the host was never asked to hold.
     const reloaded = await manifestRepo.load();
-    expect(reloaded?.getNativeRegistrations("claude")).toBeUndefined();
+    expect(reloaded?.getNativeRegistrations(TOOL.claude)).toBeUndefined();
   });
 });

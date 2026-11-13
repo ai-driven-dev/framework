@@ -12,6 +12,7 @@ import {
   InvalidPluginVersionError,
   MalformedPluginScopeError,
 } from "../../../../../src/shared/domain/errors.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 it("round-trips exact Cursor project hook provenance through the plugin manifest", () => {
   const data = makePluginData({
@@ -36,7 +37,7 @@ it("round-trips exact Cursor project hook provenance through the plugin manifest
 const makeDistribution = (strict?: boolean): PluginDistribution =>
   new PluginDistribution({
     manifest: { name: "my-plugin", version: "1.0.0", ...(strict === undefined ? {} : { strict }) },
-    format: "claude",
+    format: TOOL.claude,
     files: [],
     components: { skills: [], commands: [], agents: [], rules: [], hooks: [], mcp: [] },
   });

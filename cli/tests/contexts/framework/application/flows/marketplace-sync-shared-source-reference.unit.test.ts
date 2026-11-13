@@ -21,7 +21,9 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+
+const { claude } = TOOL;
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -30,7 +32,7 @@ const VERSION = "1.0.0";
 async function manifestRepoWithClaudeInstalled(): Promise<InMemoryManifestRepository> {
   const manifestRepo = new InMemoryManifestRepository();
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
+  manifest.addTool(claude, "test", []);
   await manifestRepo.save(manifest);
   return manifestRepo;
 }
@@ -45,14 +47,11 @@ function seedFrameworkCatalog(fs: InMemoryFileAdapter): void {
 function freshHostProof(activator: FakeHostActions) {
   return {
     pluginRegistries: new Map([
-      [
-        "claude" as const,
-        new FakeHostPluginRegistry({ location: "/host/plugins.json", refs: new Map() }),
-      ],
+      [claude, new FakeHostPluginRegistry({ location: "/host/plugins.json", refs: new Map() })],
     ]),
     sources: new Map([
       [
-        "claude" as const,
+        claude,
         new FakeHostMarketplaceSources(
           activator,
           "registry",
@@ -94,7 +93,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -135,7 +134,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       registry,
       new DeterministicHasher(),
       logger,
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -224,7 +223,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -346,7 +345,7 @@ describe("a project with no manifest to sync", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace()
     );
 
@@ -368,7 +367,7 @@ describe("a project with no manifest to sync", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", new FakeHostActions({ available: true })]]),
+      new Map([[claude, new FakeHostActions({ available: true })]]),
       fakeEnsureBuiltMarketplace()
     );
 

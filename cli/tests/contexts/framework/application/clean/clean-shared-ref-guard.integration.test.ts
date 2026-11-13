@@ -12,6 +12,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -19,7 +20,7 @@ import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";
@@ -27,7 +28,7 @@ const USER_CONFIG_DIR = "/fake-home/.config/aidd";
 const OTHER_PROJECT_BYTES = "B still uses these bytes";
 
 function provenRegistration(
-  toolId: "codex" | "claude",
+  toolId: AiToolId,
   alias: string,
   hostName: string
 ): NativeMarketplaceRegistration {
@@ -43,7 +44,7 @@ function provenRegistration(
 }
 
 /** A separate, literal host snapshot: not assembled from the machine claim. */
-function currentHostSource(toolId: "codex" | "claude"): HostMarketplaceSources {
+function currentHostSource(toolId: AiToolId): HostMarketplaceSources {
   return {
     read: async () => ({
       location: "fixture native host",
@@ -74,7 +75,7 @@ function currentHostSource(toolId: "codex" | "claude"): HostMarketplaceSources {
 }
 
 function seedManifest(
-  toolId: "codex" | "claude",
+  toolId: AiToolId,
   marketplaces: readonly NativeMarketplaceRegistration[],
   pluginRefs: readonly string[]
 ): Manifest {
@@ -130,7 +131,7 @@ function buildUseCase(deps: {
   fs: InMemoryFileAdapter;
   manifest: Manifest;
   activator: FakeHostActions;
-  binary: "codex" | "claude";
+  binary: AiToolId;
   logger: CapturingLogger;
   aiddMarketplaceRegistry: InMemoryMarketplaceRegistry;
   userManifestRepo?: InMemoryManifestRepository;
@@ -174,9 +175,9 @@ describe("clean guards a ref another project on this machine still needs", () =>
       seedReferences(fs, [OTHER_PROJECT]);
       const ref = "aidd-vcs@aidd-framework";
       const otherRef = "plugin-b@other-mkt";
-      const registration = provenRegistration("codex", "aidd-framework", "aidd-framework");
-      const project = seedManifest("codex", [registration], [ref]);
-      project.addTool("cursor", "1.0.0", []);
+      const registration = provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework");
+      const project = seedManifest(TOOL.codex, [registration], [ref]);
+      project.addTool(TOOL.cursor, "1.0.0", []);
       const record = (name: string, scope: "project" | "user" = "user") =>
         InstalledPlugin.fromJSON({
           name,
@@ -187,22 +188,22 @@ describe("clean guards a ref another project on this machine still needs", () =>
           files: {},
           dependents: [PROJECT_ROOT, OTHER_PROJECT],
         });
-      project.addPlugin("cursor", record("shared").withDependents([]));
-      project.addPlugin("cursor", record("local-only", "project").withDependents([]));
+      project.addPlugin(TOOL.cursor, record("shared").withDependents([]));
+      project.addPlugin(TOOL.cursor, record("local-only", "project").withDependents([]));
       const machine = Manifest.create();
-      machine.addTool("codex", "1.0.0", []);
-      machine.setNativeRegistrations("codex", {
-        binary: "codex",
-        marketplaces: [registration, provenRegistration("codex", "other-mkt", "other-mkt")],
+      machine.addTool(TOOL.codex, "1.0.0", []);
+      machine.setNativeRegistrations(TOOL.codex, {
+        binary: TOOL.codex,
+        marketplaces: [registration, provenRegistration(TOOL.codex, "other-mkt", "other-mkt")],
         pluginRefs: [ref, otherRef],
         pluginClaims: [ref, otherRef].map((ref) => ({
           ref,
           dependents: [PROJECT_ROOT, OTHER_PROJECT],
         })),
       });
-      machine.addTool("cursor", "1.0.0", []);
+      machine.addTool(TOOL.cursor, "1.0.0", []);
       for (const name of ["shared", "local-only", "unrelated"])
-        machine.addPlugin("cursor", record(name));
+        machine.addPlugin(TOOL.cursor, record(name));
       const machineRepo = new InMemoryManifestRepository(machine);
       const gitignore = new GitignoreUseCase(fs);
       if (outcome === "fails")
@@ -217,7 +218,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
         fs,
         manifest: project,
         activator,
-        binary: "codex",
+        binary: TOOL.codex,
         logger: new CapturingLogger(),
         aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
         userManifestRepo: machineRepo,
@@ -240,18 +241,18 @@ describe("clean guards a ref another project on this machine still needs", () =>
         });
 
       const dependents = outcome === "succeeds" ? [OTHER_PROJECT] : [PROJECT_ROOT, OTHER_PROJECT];
-      expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+      expect(machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
         { ref, dependents },
         { ref: otherRef, dependents: [PROJECT_ROOT, OTHER_PROJECT] },
       ]);
-      expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([
+      expect(machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginRefs).toEqual([
         ref,
         otherRef,
       ]);
       expect(
         machineRepo
           .getCurrent()
-          ?.getPlugins("cursor")
+          ?.getPlugins(TOOL.cursor)
           .map((plugin) => ({
             name: plugin.name,
             dependents: plugin.dependents,
@@ -283,12 +284,12 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       fs,
       manifest: seedManifest(
-        "codex",
-        [provenRegistration("codex", "aidd-framework", "aidd-framework")],
+        TOOL.codex,
+        [provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger,
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
@@ -315,12 +316,12 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       fs,
       manifest: seedManifest(
-        "codex",
-        [provenRegistration("codex", "aidd-framework", "aidd-framework")],
+        TOOL.codex,
+        [provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
@@ -346,12 +347,12 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       fs,
       manifest: seedManifest(
-        "claude",
-        [provenRegistration("claude", "aidd-framework", "aidd-framework")],
+        TOOL.claude,
+        [provenRegistration(TOOL.claude, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: "claude",
+      binary: TOOL.claude,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
@@ -374,15 +375,15 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       fs,
       manifest: seedManifest(
-        "codex",
+        TOOL.codex,
         [
-          provenRegistration("codex", "aidd-framework", "aidd-framework"),
-          provenRegistration("codex", "other-mkt", "other-mkt"),
+          provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework"),
+          provenRegistration(TOOL.codex, "other-mkt", "other-mkt"),
         ],
         ["aidd-vcs@aidd-framework", "plugin-b@other-mkt"]
       ),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(true),
     });
@@ -407,15 +408,15 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       fs,
       manifest: seedManifest(
-        "codex",
+        TOOL.codex,
         [
-          provenRegistration("codex", "other-mkt", "other-mkt"),
-          provenRegistration("codex", "aidd-framework", "aidd-framework"),
+          provenRegistration(TOOL.codex, "other-mkt", "other-mkt"),
+          provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework"),
         ],
         ["plugin-b@other-mkt", "aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(true),
     });
@@ -441,12 +442,12 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       fs,
       manifest: seedManifest(
-        "codex",
-        [provenRegistration("codex", "aidd-framework", "aidd-framework")],
+        TOOL.codex,
+        [provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger: new CapturingLogger(),
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
@@ -473,12 +474,12 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const useCase = buildUseCase({
       fs,
       manifest: seedManifest(
-        "codex",
-        [provenRegistration("codex", "aidd-framework", "aidd-framework")],
+        TOOL.codex,
+        [provenRegistration(TOOL.codex, "aidd-framework", "aidd-framework")],
         ["aidd-vcs@aidd-framework"]
       ),
       activator,
-      binary: "codex",
+      binary: TOOL.codex,
       logger,
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });

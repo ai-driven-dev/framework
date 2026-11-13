@@ -12,6 +12,7 @@ import type { AssetProvider } from "../../../../../src/shared/ports/asset-provid
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative, so
@@ -86,7 +87,7 @@ describe("claude flat hooks", () => {
 
   it("merges hooks into .claude/settings.json (not standalone .hooks.json)", async () => {
     const useCase = makeStrategy(memFs, buildClaudeFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "claude" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.claude });
 
     const settingsPath = `${ABS_OUT}/.claude/settings.json`;
     expect(memFs.has(settingsPath)).toBe(true);
@@ -97,7 +98,7 @@ describe("claude flat hooks", () => {
 
   it("settings.json contains hooks key with PreToolUse from fixture", async () => {
     const useCase = makeStrategy(memFs, buildClaudeFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "claude" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.claude });
 
     const raw = memFs.getFile(`${ABS_OUT}/.claude/settings.json`) ?? "";
     const parsed = JSON.parse(raw) as { hooks?: Record<string, unknown[]> };
@@ -108,7 +109,7 @@ describe("claude flat hooks", () => {
   it("preserves existing settings keys when merging hooks", async () => {
     memFs.setFile(`${ABS_OUT}/.claude/settings.json`, JSON.stringify({ model: "claude-opus-4-5" }));
     const useCase = makeStrategy(memFs, buildClaudeFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "claude" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.claude });
 
     const raw = memFs.getFile(`${ABS_OUT}/.claude/settings.json`) ?? "";
     const parsed = JSON.parse(raw) as { model?: string; hooks?: unknown };
@@ -118,7 +119,7 @@ describe("claude flat hooks", () => {
 
   it("copies hook scripts to .claude/hooks/<plugin>/", async () => {
     const useCase = makeStrategy(memFs, buildClaudeFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "claude" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.claude });
 
     const scriptPath = `${ABS_OUT}/.claude/hooks/${PLUGIN}/check.sh`;
     expect(memFs.has(scriptPath)).toBe(true);
@@ -126,7 +127,7 @@ describe("claude flat hooks", () => {
 
   it("settings.json has no unresolved CLAUDE_PLUGIN_ROOT", async () => {
     const useCase = makeStrategy(memFs, buildClaudeFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "claude" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.claude });
 
     const raw = memFs.getFile(`${ABS_OUT}/.claude/settings.json`) ?? "";
     expect(raw).not.toContain("CLAUDE_PLUGIN_ROOT");
@@ -143,7 +144,7 @@ describe("cursor flat hooks", () => {
 
   it("writes single .cursor/hooks.json (not per-plugin .hooks.json)", async () => {
     const useCase = makeStrategy(memFs, buildCursorFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "cursor" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.cursor });
 
     const singlePath = `${ABS_OUT}/.cursor/hooks.json`;
     expect(memFs.has(singlePath)).toBe(true);
@@ -154,7 +155,7 @@ describe("cursor flat hooks", () => {
 
   it("cursor hooks.json has version:1", async () => {
     const useCase = makeStrategy(memFs, buildCursorFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "cursor" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.cursor });
 
     const raw = memFs.getFile(`${ABS_OUT}/.cursor/hooks.json`) ?? "";
     const parsed = JSON.parse(raw) as { version?: number };
@@ -163,7 +164,7 @@ describe("cursor flat hooks", () => {
 
   it("installs the common tool lifecycle event in Cursor's native name", async () => {
     const useCase = makeStrategy(memFs, buildCursorFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "cursor" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.cursor });
 
     const raw = memFs.getFile(`${ABS_OUT}/.cursor/hooks.json`) ?? "";
     const parsed = JSON.parse(raw) as { hooks?: Record<string, unknown> };
@@ -197,13 +198,13 @@ describe("cursor flat hooks", () => {
       logger,
       strategy
     );
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "cursor" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.cursor });
     expect(logger.warnMessages.some((w) => w.includes("UnknownEvent"))).toBe(true);
   });
 
   it("copies hook scripts to .cursor/hooks/<plugin>/", async () => {
     const useCase = makeStrategy(memFs, buildCursorFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "cursor" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.cursor });
 
     const scriptPath = `${ABS_OUT}/.cursor/hooks/${PLUGIN}/check.sh`;
     expect(memFs.has(scriptPath)).toBe(true);
@@ -223,7 +224,7 @@ describe("cursor flat hooks", () => {
       })
     );
     const useCase = makeStrategy(memFs, buildCursorFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "cursor" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.cursor });
 
     const raw = memFs.getFile(`${ABS_OUT}/.cursor/hooks.json`) ?? "";
     expect(raw).not.toContain("CLAUDE_PLUGIN_ROOT");
@@ -240,7 +241,7 @@ describe("copilot flat hooks shape", () => {
 
   it("copilot hooks file has flat shape (no nested hooks[] matcher-group)", async () => {
     const useCase = makeStrategy(memFs, buildCopilotFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "copilot" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
 
     const raw = memFs.getFile(`${ABS_OUT}/.github/hooks/${PLUGIN}.hooks.json`) ?? "";
     const parsed = JSON.parse(raw) as {
@@ -266,7 +267,7 @@ describe("codex flat hooks (no install-hook leak)", () => {
 
   it("codex .codex/hooks.json has top-level hooks wrapper", async () => {
     const useCase = makeStrategy(memFs, buildCodexFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "codex" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.codex });
 
     const raw = memFs.getFile(`${ABS_OUT}/.codex/hooks.json`) ?? "";
     const parsed = JSON.parse(raw) as { hooks?: unknown };
@@ -275,7 +276,7 @@ describe("codex flat hooks (no install-hook leak)", () => {
 
   it("codex hooks.json does NOT contain install-mode .aidd/scripts/update_memory.cjs", async () => {
     const useCase = makeStrategy(memFs, buildCodexFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "codex" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.codex });
 
     const raw = memFs.getFile(`${ABS_OUT}/.codex/hooks.json`) ?? "";
     expect(raw).not.toContain("update_memory.cjs");
@@ -284,7 +285,7 @@ describe("codex flat hooks (no install-hook leak)", () => {
 
   it("codex hooks.json contains framework plugin hook commands (no install-mode leak)", async () => {
     const useCase = makeStrategy(memFs, buildCodexFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "codex" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.codex });
 
     const raw = memFs.getFile(`${ABS_OUT}/.codex/hooks.json`) ?? "";
     expect(raw).toContain(`./.codex/hooks/${PLUGIN}/check.sh`);
@@ -293,7 +294,7 @@ describe("codex flat hooks (no install-hook leak)", () => {
 
   it("copies hook scripts to .codex/hooks/<plugin>/", async () => {
     const useCase = makeStrategy(memFs, buildCodexFlatContract);
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "codex" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.codex });
 
     const scriptPath = `${ABS_OUT}/.codex/hooks/${PLUGIN}/check.sh`;
     expect(memFs.has(scriptPath)).toBe(true);
@@ -326,7 +327,7 @@ describe("opencode flat hooks", () => {
       logger,
       strategy
     );
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: "opencode" });
+    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.opencode });
   }
 
   it("delivers the hook script into .opencode/hooks/<plugin>/, namespaced", async () => {

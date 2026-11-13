@@ -5,6 +5,7 @@ import {
   printToolRestoreOutcome,
   printUserScopeSyncOutcome,
 } from "../../../src/presentation/display/sync-display.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 describe("printRestoreOutcome", () => {
@@ -152,7 +153,7 @@ describe("printActivationOutcome", () => {
     const output = new CapturingOutput(false);
 
     printActivationOutcome(output, {
-      binaryMissing: [{ toolId: "claude", binary: "claude" }],
+      binaryMissing: [{ toolId: TOOL.claude, binary: "claude" }],
       errors: [{ scope: "codex", message: "add refused" }],
     });
 

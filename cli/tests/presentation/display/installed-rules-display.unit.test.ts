@@ -3,6 +3,7 @@ import {
   printInstalledRules,
   printInstalledRulesJson,
 } from "../../../src/presentation/display/installed-rules-display.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 describe("printInstalledRulesJson", () => {
@@ -19,7 +20,7 @@ describe("printInstalledRulesJson", () => {
 
     printInstalledRulesJson(output, [
       {
-        tool: "claude",
+        tool: TOOL.claude,
         path: ".claude/rules/a.md",
         name: "a",
         description: "a rule",
@@ -49,7 +50,7 @@ describe("printInstalledRules", () => {
 
     printInstalledRules(output, [
       {
-        tool: "claude",
+        tool: TOOL.claude,
         path: ".claude/rules/a.md",
         name: "a",
         description: "a rule",
@@ -68,7 +69,7 @@ describe("printInstalledRules", () => {
     const output = new CapturingOutput(false);
 
     printInstalledRules(output, [
-      { tool: "cursor", path: ".cursor/rules/a.mdc", name: "a", description: "a rule" },
+      { tool: TOOL.cursor, path: ".cursor/rules/a.mdc", name: "a", description: "a rule" },
     ]);
 
     expect(output.at("print")).toEqual([
@@ -82,7 +83,7 @@ describe("printInstalledRules", () => {
     const output = new CapturingOutput(false);
 
     printInstalledRules(output, [
-      { tool: "claude", path: ".claude/rules/a.md", name: "a", description: "", paths: [] },
+      { tool: TOOL.claude, path: ".claude/rules/a.md", name: "a", description: "", paths: [] },
     ]);
 
     expect(output.at("print")).toEqual([

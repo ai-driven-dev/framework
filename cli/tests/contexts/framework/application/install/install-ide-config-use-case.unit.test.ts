@@ -5,7 +5,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit-deps.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";
@@ -31,7 +31,7 @@ describe("InstallIdeConfigUseCase", () => {
 
     const result = await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -44,7 +44,7 @@ describe("InstallIdeConfigUseCase", () => {
     expect(deps.fs.has(join(PROJECT_ROOT, ".vscode/settings.json"))).toBe(true);
 
     const saved = await deps.manifestRepo.load();
-    expect(saved?.hasTool("vscode")).toBe(true);
+    expect(saved?.hasTool(TOOL.vscode)).toBe(true);
   });
 
   it("answers an empty skipped result for an installed IDE", async () => {
@@ -53,7 +53,7 @@ describe("InstallIdeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -62,7 +62,7 @@ describe("InstallIdeConfigUseCase", () => {
 
     const result = await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -70,7 +70,7 @@ describe("InstallIdeConfigUseCase", () => {
     });
 
     expect(result).toStrictEqual({
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       fileCount: 0,
       files: [],
       skipped: true,
@@ -84,7 +84,7 @@ describe("InstallIdeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -95,7 +95,7 @@ describe("InstallIdeConfigUseCase", () => {
 
     await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: true,
@@ -104,7 +104,7 @@ describe("InstallIdeConfigUseCase", () => {
     });
 
     expect(deps.fs.getFile(join(PROJECT_ROOT, KEYBINDINGS))).toBe(userContent);
-    expect(manifest.getToolFiles("vscode")).toStrictEqual([
+    expect(manifest.getToolFiles(TOOL.vscode)).toStrictEqual([
       { relativePath: KEYBINDINGS, hash: deps.hasher.hash(userContent) },
     ]);
   });
@@ -118,7 +118,7 @@ describe("InstallIdeConfigUseCase", () => {
 
     await buildUseCase(deps, assets).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -135,7 +135,7 @@ describe("InstallIdeConfigUseCase", () => {
 
     await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -145,7 +145,7 @@ describe("InstallIdeConfigUseCase", () => {
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
       force: false,
@@ -163,7 +163,7 @@ describe("InstallIdeConfigUseCase", () => {
 
     await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -176,7 +176,7 @@ describe("InstallIdeConfigUseCase", () => {
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
       force: true,
@@ -199,7 +199,7 @@ describe("InstallIdeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,

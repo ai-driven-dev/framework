@@ -10,7 +10,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -45,8 +45,8 @@ describe("UpdateAiToolsUseCase", () => {
     it("updates the installed AI tools and leaves an installed IDE alone", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "claude");
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.claude);
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const useCase = buildUseCase(deps, buildUpdateOneToolUseCase(deps));
       const result = await useCase.execute({
@@ -64,15 +64,15 @@ describe("UpdateAiToolsUseCase", () => {
     it("updates only the specified tool when toolArg is provided", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "claude");
-      await installTool(deps, PROJECT_ROOT, "cursor");
+      await installTool(deps, PROJECT_ROOT, TOOL.claude);
+      await installTool(deps, PROJECT_ROOT, TOOL.cursor);
 
       const updateOneTool = buildUpdateOneToolUseCase(deps);
       const useCase = buildUseCase(deps, updateOneTool);
 
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolArg: "claude",
+        toolArg: TOOL.claude,
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_TTY,
       });
@@ -87,8 +87,8 @@ describe("UpdateAiToolsUseCase", () => {
     it("captures failing tool in errors and succeeds for others", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "claude");
-      await installTool(deps, PROJECT_ROOT, "cursor");
+      await installTool(deps, PROJECT_ROOT, TOOL.claude);
+      await installTool(deps, PROJECT_ROOT, TOOL.cursor);
 
       const updateOneTool = buildUpdateOneToolUseCase(deps);
       const executeSpy = vi.spyOn(updateOneTool, "execute");
@@ -121,8 +121,8 @@ describe("UpdateAiToolsUseCase", () => {
     it("resolveConflictBulk called once for overwrite-all then not again for second tool", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "claude");
-      await installTool(deps, PROJECT_ROOT, "cursor");
+      await installTool(deps, PROJECT_ROOT, TOOL.claude);
+      await installTool(deps, PROJECT_ROOT, TOOL.cursor);
 
       const resolveConflictBulkMock = vi.fn().mockResolvedValueOnce("overwrite-all");
       const fakePrompter: Prompter = {
@@ -151,7 +151,7 @@ describe("UpdateAiToolsUseCase", () => {
 
       const loadedManifest = await deps.manifestRepo.load();
       if (!loadedManifest) throw new Error("Manifest not found");
-      for (const toolId of ["claude", "cursor"] as const) {
+      for (const toolId of [TOOL.claude, TOOL.cursor]) {
         const files = loadedManifest.getToolFiles(toolId);
         if (files.length > 0 && files[0]) {
           await deps.fs.writeFile(`${PROJECT_ROOT}/${files[0].relativePath}`, "user-modified");

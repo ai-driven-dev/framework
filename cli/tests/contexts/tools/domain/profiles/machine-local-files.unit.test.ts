@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { registeredAiProfile, registeredProfile } from "../../testing/catalog-of.js";
+import { registeredAiProfile, registeredProfile, TOOL } from "../../testing/catalog-of.js";
 
 describe("ToolProfile.machineLocalFiles()", () => {
   it("answers none for an editor", () => {
-    expect(registeredProfile("vscode").machineLocalFiles()).toEqual([]);
+    expect(registeredProfile(TOOL.vscode).machineLocalFiles()).toEqual([]);
   });
 
   it("answers the file its marketplace registration keeps", () => {
-    const claude = registeredAiProfile("claude");
+    const claude = registeredAiProfile(TOOL.claude);
     expect(claude.machineLocalFiles()).toEqual(
       claude.marketplaceRegistration()?.machineLocalFiles()
     );
@@ -15,6 +15,6 @@ describe("ToolProfile.machineLocalFiles()", () => {
   });
 
   it("answers none for a tool with no marketplace registration", () => {
-    expect(registeredAiProfile("cursor").machineLocalFiles()).toEqual([]);
+    expect(registeredAiProfile(TOOL.cursor).machineLocalFiles()).toEqual([]);
   });
 });

@@ -18,7 +18,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -72,7 +72,7 @@ function buildPerMarketplace(failing: readonly string[]): EnsureBuiltMarketplace
 async function build(setup: Setup = {}) {
   const hasher = new DeterministicHasher();
   const names = setup.marketplaceNames ?? [MARKETPLACE];
-  const toolIds = setup.toolIds ?? ["claude"];
+  const toolIds = setup.toolIds ?? [TOOL.claude];
   const fs = new InMemoryFileAdapter({}, hasher);
   for (const name of names) {
     for (const toolId of toolIds) {
@@ -101,7 +101,7 @@ async function build(setup: Setup = {}) {
     manifest.addTool(toolId, "test", toolId === "claude" ? tracked : []);
   if (setup.withPlugin === true) {
     manifest.addPlugin(
-      "claude",
+      TOOL.claude,
       InstalledPlugin.fromMetadata(
         PLUGIN,
         "1.0.0",
@@ -113,7 +113,7 @@ async function build(setup: Setup = {}) {
     );
   }
   if (setup.existingRegistrations !== undefined) {
-    manifest.setNativeRegistrations("claude", setup.existingRegistrations);
+    manifest.setNativeRegistrations(TOOL.claude, setup.existingRegistrations);
   }
   const manifestRepo = new SaveCountingManifestRepository(manifest);
   const registry = new InMemoryMarketplaceRegistry();
@@ -133,8 +133,8 @@ async function build(setup: Setup = {}) {
   const machineRegistrations = setup.existingMachineRegistrations;
   const machine = machineRegistrations === undefined ? undefined : Manifest.create();
   if (machine !== undefined && machineRegistrations !== undefined) {
-    machine.addTool("claude", "test", []);
-    machine.setNativeRegistrations("claude", machineRegistrations);
+    machine.addTool(TOOL.claude, "test", []);
+    machine.setNativeRegistrations(TOOL.claude, machineRegistrations);
   }
   const machineRepo =
     machine === undefined ? undefined : new SaveCountingManifestRepository(machine);
@@ -150,7 +150,7 @@ async function build(setup: Setup = {}) {
       ? new Map()
       : new Map([
           [
-            "claude",
+            TOOL.claude,
             {
               read: async () => ({
                 location: "/home/.claude/plugins/known_marketplaces.json",
@@ -165,7 +165,7 @@ async function build(setup: Setup = {}) {
     undefined,
     new Map([
       [
-        "claude",
+        TOOL.claude,
         new FakeHostPluginRegistry({
           location: "/home/.claude/plugins/installed_plugins.json",
           refs: new Map(),
@@ -175,7 +175,7 @@ async function build(setup: Setup = {}) {
     machineRepo,
     new Map([
       [
-        "claude",
+        TOOL.claude,
         new FakeHostMarketplaceSources(
           activator,
           "registry",
@@ -191,12 +191,12 @@ async function build(setup: Setup = {}) {
 }
 
 function recorded(manifest: Manifest | null | undefined): NativeRegistrations | undefined {
-  return manifest?.getNativeRegistrations("claude");
+  return manifest?.getNativeRegistrations(TOOL.claude);
 }
 
 function trackedSettingsHash(manifest: Manifest): string | undefined {
-  return manifest.getToolFiles("claude").find((file) => file.relativePath === SETTINGS_PATH)?.hash
-    .value;
+  return manifest.getToolFiles(TOOL.claude).find((file) => file.relativePath === SETTINGS_PATH)
+    ?.hash.value;
 }
 
 const FRAMEWORK_ONLY: NativeRegistrations = {
@@ -229,7 +229,10 @@ function ownedMachineEntry(alias: string, hostName: string, source?: string): Na
 describe("how many times the manifest is written back", () => {
   it("zero times when a run changed nothing, writing no project file either", async () => {
     const activator = new FakeHostActions({ available: false });
-    const { useCase, manifestRepo, fs } = await build({ toolIds: ["claude", "codex"], activator });
+    const { useCase, manifestRepo, fs } = await build({
+      toolIds: [TOOL.claude, TOOL.codex],
+      activator,
+    });
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
@@ -338,7 +341,7 @@ describe("what the tracked settings hash follows", () => {
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
-    expect(manifest.getToolFiles("claude").map((file) => file.relativePath)).toStrictEqual([
+    expect(manifest.getToolFiles(TOOL.claude).map((file) => file.relativePath)).toStrictEqual([
       "CLAUDE.md",
     ]);
   });

@@ -17,7 +17,7 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { KeepPrompter, OverwritePrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";
@@ -60,7 +60,7 @@ function installedVscode(extraTracked: string[] = []): Installed {
   );
   const manifest = Manifest.create();
   manifest.addTool(
-    "vscode",
+    TOOL.vscode,
     "test",
     [KEYBINDINGS, ...extraTracked].map(
       (relativePath) =>
@@ -94,7 +94,7 @@ function restore(
     new FakePlatform("linux"),
     prompter
   ).execute({
-    toolId: "vscode",
+    toolId: TOOL.vscode,
     manifest: installed.manifest,
     descriptor,
     contentFiles: contentFiles(),
@@ -122,7 +122,7 @@ describe("RestoreToolFilesUseCase — what it reports", () => {
     const result = await restore(installedVscode());
 
     expect(result).toStrictEqual({
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       nothingToRestore: true,
       restored: [],
       kept: [],
@@ -138,7 +138,7 @@ describe("RestoreToolFilesUseCase — what it reports", () => {
     const result = await restore(installed);
 
     expect(result).toStrictEqual({
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       nothingToRestore: false,
       restored: [KEYBINDINGS, EXTENSIONS],
       kept: [],
@@ -157,7 +157,7 @@ describe("RestoreToolFilesUseCase — what it reports", () => {
     );
 
     expect(result).toStrictEqual({
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       nothingToRestore: false,
       restored: [],
       kept: [KEYBINDINGS],
@@ -173,27 +173,27 @@ describe("RestoreToolFilesUseCase — what it records", () => {
 
     await restore(installed, { version: "9.9.9" });
 
-    expect(installed.manifest.getToolVersion("vscode")).toBe("test");
+    expect(installed.manifest.getToolVersion(TOOL.vscode)).toBe("test");
   });
 
   it("keeps tracking the merge files when only a regular file was restored", async () => {
     const installed = installedVscode();
-    const before = [...installed.manifest.getMergeFiles("vscode")];
+    const before = [...installed.manifest.getMergeFiles(TOOL.vscode)];
     await installed.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), "[]");
 
     await restore(installed);
 
-    expect(installed.manifest.getMergeFiles("vscode")).toStrictEqual(before);
+    expect(installed.manifest.getMergeFiles(TOOL.vscode)).toStrictEqual(before);
   });
 
   it("keeps tracking the regular files when only a merge file was restored", async () => {
     const installed = installedVscode();
-    const before = [...installed.manifest.getToolFiles("vscode")];
+    const before = [...installed.manifest.getToolFiles(TOOL.vscode)];
     await installed.fs.deleteFile(join(PROJECT_ROOT, EXTENSIONS));
 
     await restore(installed);
 
-    expect(installed.manifest.getToolFiles("vscode")).toStrictEqual(before);
+    expect(installed.manifest.getToolFiles(TOOL.vscode)).toStrictEqual(before);
   });
 
   it("tracks every key the distribution now writes into a restored merge file", async () => {
@@ -206,7 +206,7 @@ describe("RestoreToolFilesUseCase — what it records", () => {
       ),
     });
 
-    expect(installed.manifest.getMergeFiles("vscode")).toStrictEqual([
+    expect(installed.manifest.getMergeFiles(TOOL.vscode)).toStrictEqual([
       {
         relativePath: EXTENSIONS,
         sectionKey: null,

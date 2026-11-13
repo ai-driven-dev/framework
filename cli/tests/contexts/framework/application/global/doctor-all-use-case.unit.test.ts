@@ -9,7 +9,7 @@ import {
   initAndInstall,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const NO_MANIFEST = "No AIDD manifest found. Run `aidd setup` to initialize your project.";
@@ -17,8 +17,8 @@ const PLUGIN_FILE = ".claude/plugins/sample/agents/reviewer.md";
 
 async function depsWithBothCategories() {
   const deps = await buildUnitDeps(PROJECT_ROOT);
-  await initAndInstall(deps, PROJECT_ROOT, "claude");
-  await installTool(deps, PROJECT_ROOT, "vscode");
+  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+  await installTool(deps, PROJECT_ROOT, TOOL.vscode);
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("manifest missing");
   return { deps, manifest };
@@ -74,13 +74,13 @@ describe("DoctorAllUseCase", () => {
     expect(result).toStrictEqual({
       ai: {
         healthy: true,
-        toolHealth: [healthOf(manifest, "claude")],
+        toolHealth: [healthOf(manifest, TOOL.claude)],
         issues: [],
         pluginIssues: [],
       },
       ide: {
         healthy: true,
-        toolHealth: [healthOf(manifest, "vscode")],
+        toolHealth: [healthOf(manifest, TOOL.vscode)],
         issues: [],
         pluginIssues: [],
       },
@@ -92,7 +92,7 @@ describe("DoctorAllUseCase", () => {
 
   it("is not healthy when the ai scope alone found a fault", async () => {
     const { deps, manifest } = await depsWithBothCategories();
-    await deleteOneTrackedFile(deps, manifest, "claude");
+    await deleteOneTrackedFile(deps, manifest, TOOL.claude);
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
     const result = await useCase.execute(PROJECT_ROOT, catalogOf());
@@ -102,7 +102,7 @@ describe("DoctorAllUseCase", () => {
 
   it("is not healthy when the ide scope alone found a fault", async () => {
     const { deps, manifest } = await depsWithBothCategories();
-    await deleteOneTrackedFile(deps, manifest, "vscode");
+    await deleteOneTrackedFile(deps, manifest, TOOL.vscode);
     const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
 
     const result = await useCase.execute(PROJECT_ROOT, catalogOf());
@@ -113,7 +113,7 @@ describe("DoctorAllUseCase", () => {
   it("carries the ai scope's plugin issues", async () => {
     const { deps, manifest } = await depsWithBothCategories();
     manifest.addPlugin(
-      "claude",
+      TOOL.claude,
       InstalledPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/some/path" },
@@ -129,7 +129,7 @@ describe("DoctorAllUseCase", () => {
     const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 
     const missing = {
-      toolId: "claude",
+      toolId: TOOL.claude,
       pluginName: "sample",
       issue: "missing",
       filePath: PLUGIN_FILE,

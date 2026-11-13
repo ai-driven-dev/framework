@@ -7,20 +7,23 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+
+const { copilot } = TOOL;
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
 
 function fixture(
-  toolId: "codex" | "copilot",
+  toolId: AiToolId,
   options: {
     refs?: readonly string[];
     dependents?: readonly string[];
@@ -88,10 +91,10 @@ function fixture(
 
 describe("targeted machine native plugin update", () => {
   it("Copilot retains exact AIDD claims when its installed binary cannot prove the source", async () => {
-    const f = fixture("copilot", { refs: [REF, OTHER], dependents: ["/A", "/B"] });
+    const f = fixture(copilot, { refs: [REF, OTHER], dependents: ["/A", "/B"] });
     await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations("copilot")?.pluginClaims).toEqual([
+    expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/A", "/B"] },
       { ref: OTHER, dependents: ["/A", "/B"] },
     ]);
@@ -99,28 +102,28 @@ describe("targeted machine native plugin update", () => {
   });
 
   it("refuses ambiguous catalogue names before updating any ref", async () => {
-    const f = fixture("copilot", { refs: [REF, OTHER] });
+    const f = fixture(copilot, { refs: [REF, OTHER] });
     await expect(f.execute("test-plugin")).rejects.toThrow(/Multiple native catalogues.*exact/);
     expect(f.activator.updatedPlugins).toEqual([]);
   });
 
   it("resolves a bare native plugin name but refuses update without current source proof", async () => {
-    const f = fixture("copilot", { refs: [REF], dependents: ["/B"] });
+    const f = fixture(copilot, { refs: [REF], dependents: ["/B"] });
     await expect(f.execute("test-plugin")).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations("copilot")?.pluginClaims).toEqual([
+    expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
       { ref: REF, dependents: ["/B"] },
     ]);
   });
 
   it("does not adopt a foreign enabled host ref without a machine claim", async () => {
-    const f = fixture("copilot", { refs: [], hostRefs: new Map([[REF, { enabled: true }]]) });
+    const f = fixture(copilot, { refs: [], hostRefs: new Map([[REF, { enabled: true }]]) });
     await expect(f.execute(REF)).rejects.toThrow(/not installed/);
     expect(f.activator.updatedPlugins).toEqual([]);
   });
 
   it("all-target update is a no-op when this machine owns no plugins or native refs", async () => {
-    const f = fixture("copilot", { refs: [] });
+    const f = fixture(copilot, { refs: [] });
     expect(await f.executeAll()).toEqual([]);
     expect(f.activator.updatedPlugins).toEqual([]);
     expect(f.repo.saveCount).toBe(0);
@@ -131,32 +134,32 @@ describe("targeted machine native plugin update", () => {
       { available: false },
       { hostRefs: new Map([[REF, { enabled: false }]]) },
     ]) {
-      const f = fixture("copilot", options);
+      const f = fixture(copilot, options);
       await expect(f.execute(REF)).rejects.toThrow(
         /CLI and readable host registry|not provably enabled/
       );
       expect(f.activator.updatedPlugins).toEqual([]);
-      expect(f.repo.getCurrent()?.getNativeRegistrations("copilot")?.pluginClaims).toEqual([
+      expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
         { ref: REF, dependents: [] },
       ]);
     }
   });
 
   it("Codex refuses targeted update because its verified binary has no update verb", async () => {
-    const f = fixture("codex");
+    const f = fixture(TOOL.codex);
     await expect(f.execute(REF)).rejects.toThrow(/does not support targeted native plugin update/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(f.repo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: [] },
     ]);
   });
 
   it("does not touch a project-scope record when selected Copilot source is unproved", async () => {
-    const f = fixture("copilot", { refs: [REF, OTHER] });
+    const f = fixture(copilot, { refs: [REF, OTHER] });
     const machine = f.repo.getCurrent();
     if (machine === null) throw new Error("fixture missing machine manifest");
     machine.addPlugin(
-      "copilot",
+      copilot,
       InstalledPlugin.fromMetadata(
         "project-plugin",
         "0.0.1",
@@ -167,17 +170,17 @@ describe("targeted machine native plugin update", () => {
     );
     await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(machine.getPlugins("copilot").map((plugin) => plugin.name)).toEqual(["project-plugin"]);
+    expect(machine.getPlugins(copilot).map((plugin) => plugin.name)).toEqual(["project-plugin"]);
   });
 
   it("refuses two selected Copilot refs before updating either without current source proof", async () => {
-    const f = fixture("copilot", { refs: [REF, OTHER] });
+    const f = fixture(copilot, { refs: [REF, OTHER] });
     await expect(f.execute([REF, OTHER])).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
   });
 
   it("preflights every selected host ref before the first update", async () => {
-    const f = fixture("copilot", {
+    const f = fixture(copilot, {
       refs: [REF, OTHER],
       hostRefs: new Map([
         [REF, { enabled: true, scope: "user" }],
@@ -190,11 +193,11 @@ describe("targeted machine native plugin update", () => {
   });
 
   it("all-target Copilot update refuses an unproved catalogue and preserves project records", async () => {
-    const f = fixture("copilot");
+    const f = fixture(copilot);
     const machine = f.repo.getCurrent();
     if (machine === null) throw new Error("fixture missing machine manifest");
     machine.addPlugin(
-      "copilot",
+      copilot,
       InstalledPlugin.fromMetadata(
         "project-plugin",
         "0.0.1",
@@ -205,15 +208,15 @@ describe("targeted machine native plugin update", () => {
     );
     await expect(f.executeAll()).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(machine.getPlugins("copilot").map((plugin) => plugin.name)).toEqual(["project-plugin"]);
+    expect(machine.getPlugins(copilot).map((plugin) => plugin.name)).toEqual(["project-plugin"]);
   });
 
   it("does not reach Copilot's update verb when its current source cannot be proven", async () => {
-    const f = fixture("copilot", { failOnUpdate: true });
+    const f = fixture(copilot, { failOnUpdate: true });
     await expect(f.execute(REF)).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
     expect(f.repo.saveCount).toBe(0);
-    expect(f.repo.getCurrent()?.getNativeRegistrations("copilot")?.pluginClaims).toEqual([
+    expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
       { ref: REF, dependents: [] },
     ]);
   });

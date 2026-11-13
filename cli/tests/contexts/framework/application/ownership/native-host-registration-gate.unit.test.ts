@@ -5,7 +5,9 @@ import type { HostActions } from "../../../../../src/contexts/host-registration/
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+
+const { copilot, codex } = TOOL;
 
 const REF = "test-plugin@real-catalog";
 const HOST = "real-catalog";
@@ -23,10 +25,10 @@ describe("native host registration gate", () => {
     async (recorded) => {
       const activator = new FakeHostActions({ available: true });
       const gate = new NativeHostRegistrationGate(
-        new Map([["copilot", activator]]),
+        new Map([[copilot, activator]]),
         new Map([
           [
-            "copilot",
+            copilot,
             {
               read: async () => ({
                 location: "/registry",
@@ -37,7 +39,7 @@ describe("native host registration gate", () => {
         ])
       );
       await expect(
-        gate.requireTargetedUpdate(registeredAiProfile("copilot"), claim, "/A", recorded)
+        gate.requireTargetedUpdate(registeredAiProfile(copilot), claim, "/A", recorded)
       ).rejects.toThrow(
         `copilot: ref '${REF}' has no canonical catalogue source proof; update refused.`
       );
@@ -50,10 +52,10 @@ describe("native host registration gate", () => {
     async (operation) => {
       const activator = new FakeHostActions({ available: true });
       const gate = new NativeHostRegistrationGate(
-        new Map([["copilot", activator]]),
+        new Map([[copilot, activator]]),
         new Map([
           [
-            "copilot",
+            copilot,
             {
               read: async () => ({
                 location: "/registry",
@@ -62,15 +64,13 @@ describe("native host registration gate", () => {
             },
           ],
         ]),
-        new Map([
-          ["copilot", { read: async () => ({ location: "/catalogue", entries: new Map() }) }],
-        ])
+        new Map([[copilot, { read: async () => ({ location: "/catalogue", entries: new Map() }) }]])
       );
       const promise =
         operation === "update"
-          ? gate.requireTargetedUpdate(registeredAiProfile("copilot"), claim, "/A", registrations)
+          ? gate.requireTargetedUpdate(registeredAiProfile(copilot), claim, "/A", registrations)
           : gate.planMarketplaceRemoval(
-              registeredAiProfile("copilot"),
+              registeredAiProfile(copilot),
               registrations,
               registrations.marketplaces[0],
               "/A"
@@ -89,11 +89,11 @@ describe("native host registration gate", () => {
     };
     const activator = new FakeHostActions({ available: true });
     const gate = new NativeHostRegistrationGate(
-      new Map([["copilot", activator]]),
-      new Map([["copilot", { read: async () => ({ location: "/registry", refs: new Map() }) }]]),
+      new Map([[copilot, activator]]),
+      new Map([[copilot, { read: async () => ({ location: "/registry", refs: new Map() }) }]]),
       new Map([
         [
-          "copilot",
+          copilot,
           {
             read: async () => ({
               location: "/catalogue",
@@ -104,7 +104,7 @@ describe("native host registration gate", () => {
       ])
     );
     const plan = await gate.planMarketplaceRemoval(
-      registeredAiProfile("copilot"),
+      registeredAiProfile(copilot),
       { binary: "copilot", marketplaces: [registration], pluginRefs: [] },
       registration,
       "/A"
@@ -146,14 +146,14 @@ describe("native host registration gate", () => {
   it("refuses a Codex removal when a stale canonical claim points at a foreign current source", async () => {
     const activator = new FakeHostActions({ available: true });
     const gate = new NativeHostRegistrationGate(
-      new Map([["codex", activator]]),
-      new Map([["codex", reader(enabled())]]),
-      new Map([["codex", hostSource("/foreign/catalog")]])
+      new Map([[codex, activator]]),
+      new Map([[codex, reader(enabled())]]),
+      new Map([[codex, hostSource("/foreign/catalog")]])
     );
 
     await expect(
       gate.planMarketplaceRemoval(
-        registeredAiProfile("codex"),
+        registeredAiProfile(codex),
         provenCodex,
         provenCodex.marketplaces[0],
         "/project-b"
@@ -166,14 +166,14 @@ describe("native host registration gate", () => {
   it("refuses a legacy Codex claim without exact source even if refs are enabled", async () => {
     const activator = new FakeHostActions({ available: true });
     const gate = new NativeHostRegistrationGate(
-      new Map([["codex", activator]]),
-      new Map([["codex", reader(enabled())]]),
-      new Map([["codex", hostSource(provenCodex.marketplaces[0].provenance.source)]])
+      new Map([[codex, activator]]),
+      new Map([[codex, reader(enabled())]]),
+      new Map([[codex, hostSource(provenCodex.marketplaces[0].provenance.source)]])
     );
 
     await expect(
       gate.planMarketplaceRemoval(
-        registeredAiProfile("codex"),
+        registeredAiProfile(codex),
         { ...provenCodex, marketplaces: [{ alias: "alias", hostName: HOST }] },
         { alias: "alias", hostName: HOST },
         "/project-b"
@@ -185,11 +185,11 @@ describe("native host registration gate", () => {
   it("requires the verified target-update verb before contacting a Codex host", async () => {
     const activator = new FakeHostActions({ available: true });
     const gate = new NativeHostRegistrationGate(
-      new Map([["codex", activator]]),
-      new Map([["codex", reader(enabled())]])
+      new Map([[codex, activator]]),
+      new Map([[codex, reader(enabled())]])
     );
     await expect(
-      gate.requireTargetedUpdate(registeredAiProfile("codex"), claim, "/A")
+      gate.requireTargetedUpdate(registeredAiProfile(codex), claim, "/A")
     ).rejects.toThrow(/does not support targeted native plugin update/);
     expect(activator.updatedPlugins).toEqual([]);
   });
@@ -207,19 +207,19 @@ describe("native host registration gate", () => {
       uninstallPlugin: (ref, scope) => activator.uninstallPlugin(ref, scope),
     };
     for (const gate of [
-      new NativeHostRegistrationGate(new Map(), new Map([["copilot", reader(enabled())]])),
+      new NativeHostRegistrationGate(new Map(), new Map([[copilot, reader(enabled())]])),
       new NativeHostRegistrationGate(
-        new Map([["copilot", new FakeHostActions({ available: false })]]),
-        new Map([["copilot", reader(enabled())]])
+        new Map([[copilot, new FakeHostActions({ available: false })]]),
+        new Map([[copilot, reader(enabled())]])
       ),
       new NativeHostRegistrationGate(
-        new Map([["copilot", withoutUpdate]]),
-        new Map([["copilot", reader(enabled())]])
+        new Map([[copilot, withoutUpdate]]),
+        new Map([[copilot, reader(enabled())]])
       ),
-      new NativeHostRegistrationGate(new Map([["copilot", activator]]), new Map()),
+      new NativeHostRegistrationGate(new Map([[copilot, activator]]), new Map()),
     ]) {
       await expect(
-        gate.requireTargetedUpdate(registeredAiProfile("copilot"), claim, "/A")
+        gate.requireTargetedUpdate(registeredAiProfile(copilot), claim, "/A")
       ).rejects.toThrow(/without its CLI and readable host registry/);
     }
     for (const registry of [
@@ -228,19 +228,19 @@ describe("native host registration gate", () => {
       reader(new Map([[REF, { enabled: false }]])),
     ]) {
       const gate = new NativeHostRegistrationGate(
-        new Map([["copilot", activator]]),
-        new Map([["copilot", registry]])
+        new Map([[copilot, activator]]),
+        new Map([[copilot, registry]])
       );
       await expect(
-        gate.requireTargetedUpdate(registeredAiProfile("copilot"), claim, "/A")
+        gate.requireTargetedUpdate(registeredAiProfile(copilot), claim, "/A")
       ).rejects.toThrow(/not provably enabled/);
     }
     const gate = new NativeHostRegistrationGate(
-      new Map([["copilot", activator]]),
-      new Map([["copilot", reader(enabled())]])
+      new Map([[copilot, activator]]),
+      new Map([[copilot, reader(enabled())]])
     );
     await expect(
-      gate.requireTargetedUpdate(registeredAiProfile("copilot"), claim, "/A", registrations)
+      gate.requireTargetedUpdate(registeredAiProfile(copilot), claim, "/A", registrations)
     ).rejects.toThrow(/legacy claim has no source proof|source reader unavailable/);
     expect(activator.updatedPlugins).toEqual([]);
   });
@@ -249,20 +249,15 @@ describe("native host registration gate", () => {
     const activator = new FakeHostActions({ available: true });
     const registration = registrations.marketplaces[0];
     for (const gate of [
-      new NativeHostRegistrationGate(new Map(), new Map([["copilot", reader(enabled())]])),
+      new NativeHostRegistrationGate(new Map(), new Map([[copilot, reader(enabled())]])),
       new NativeHostRegistrationGate(
-        new Map([["copilot", new FakeHostActions({ available: false })]]),
-        new Map([["copilot", reader(enabled())]])
+        new Map([[copilot, new FakeHostActions({ available: false })]]),
+        new Map([[copilot, reader(enabled())]])
       ),
-      new NativeHostRegistrationGate(new Map([["copilot", activator]]), new Map()),
+      new NativeHostRegistrationGate(new Map([[copilot, activator]]), new Map()),
     ]) {
       await expect(
-        gate.planMarketplaceRemoval(
-          registeredAiProfile("copilot"),
-          registrations,
-          registration,
-          "/A"
-        )
+        gate.planMarketplaceRemoval(registeredAiProfile(copilot), registrations, registration, "/A")
       ).rejects.toThrow(/CLI or host registry unavailable/);
     }
     for (const registry of [
@@ -271,13 +266,13 @@ describe("native host registration gate", () => {
       reader(new Map([[REF, { enabled: false }]])),
     ]) {
       const gate = new NativeHostRegistrationGate(
-        new Map([["codex", activator]]),
-        new Map([["codex", registry]]),
-        new Map([["codex", hostSource(provenCodex.marketplaces[0].provenance.source)]])
+        new Map([[codex, activator]]),
+        new Map([[codex, registry]]),
+        new Map([[codex, hostSource(provenCodex.marketplaces[0].provenance.source)]])
       );
       await expect(
         gate.planMarketplaceRemoval(
-          registeredAiProfile("codex"),
+          registeredAiProfile(codex),
           provenCodex,
           provenCodex.marketplaces[0],
           "/A"
@@ -291,33 +286,33 @@ describe("native host registration gate", () => {
     const host = new Map<string, { enabled: boolean; scope?: "project" | "user" }>(enabled());
     host.set("foreign@real-catalog", { enabled: true, scope: "project" });
     const gate = new NativeHostRegistrationGate(
-      new Map([["codex", activator]]),
-      new Map([["codex", reader(host)]]),
-      new Map([["codex", hostSource(provenCodex.marketplaces[0].provenance.source)]])
+      new Map([[codex, activator]]),
+      new Map([[codex, reader(host)]]),
+      new Map([[codex, hostSource(provenCodex.marketplaces[0].provenance.source)]])
     );
     await expect(
       gate.planMarketplaceRemoval(
-        registeredAiProfile("codex"),
+        registeredAiProfile(codex),
         provenCodex,
         provenCodex.marketplaces[0],
         "/A"
       )
     ).rejects.toThrow(/foreign host ref 'foreign@real-catalog'/);
     const safe = new NativeHostRegistrationGate(
-      new Map([["codex", activator]]),
-      new Map([["codex", reader(enabled())]]),
-      new Map([["codex", hostSource(provenCodex.marketplaces[0].provenance.source)]])
+      new Map([[codex, activator]]),
+      new Map([[codex, reader(enabled())]]),
+      new Map([[codex, hostSource(provenCodex.marketplaces[0].provenance.source)]])
     );
     expect(
       await safe.planMarketplaceRemoval(
-        registeredAiProfile("codex"),
+        registeredAiProfile(codex),
         provenCodex,
         provenCodex.marketplaces[0],
         "/A"
       )
     ).toMatchObject({ activator, refs: [claim] });
     const plan = await safe.planMarketplaceRemoval(
-      registeredAiProfile("codex"),
+      registeredAiProfile(codex),
       provenCodex,
       provenCodex.marketplaces[0],
       "/A"

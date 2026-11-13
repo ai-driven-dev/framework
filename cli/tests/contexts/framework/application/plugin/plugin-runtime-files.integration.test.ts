@@ -9,7 +9,7 @@ import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const ROOT = "/test-project";
 const FIXTURE = join(REPOSITORY_ROOT, "cli/tests/fixtures/plugins/claude-format/sample-plugin");
@@ -19,7 +19,7 @@ const USER_CONFIG = '{"model":"user/model","permission":{"bash":"ask"}}';
 async function legacyProject() {
   const deps = await buildUnitDeps(ROOT);
   const manifest = Manifest.create();
-  manifest.addTool("opencode", "legacy", [
+  manifest.addTool(TOOL.opencode, "legacy", [
     new InstallationFile({
       relativePath: "opencode.json",
       content: USER_CONFIG,
@@ -52,7 +52,7 @@ async function legacyProject() {
     add.execute({
       tools: catalogOf(),
       source: { kind: "local", path: FIXTURE },
-      toolIds: ["opencode"],
+      toolIds: [TOOL.opencode],
       projectRoot: ROOT,
       interactive: false,
     });
@@ -66,12 +66,12 @@ describe("plugin runtime files on an existing tool", () => {
     expect(await deps.fs.readFile(join(ROOT, HELPER))).toContain("setupOpencodeEvents");
     expect(await deps.fs.readFile(join(ROOT, "opencode.json"))).toBe(USER_CONFIG);
     const manifest = deps.manifestRepo.getCurrent();
-    expect(manifest?.getToolVersion("opencode")).toBe("legacy");
-    expect(manifest?.getToolFiles("opencode").map((file) => file.relativePath)).toEqual([
+    expect(manifest?.getToolVersion(TOOL.opencode)).toBe("legacy");
+    expect(manifest?.getToolFiles(TOOL.opencode).map((file) => file.relativePath)).toEqual([
       "opencode.json",
       HELPER,
     ]);
-    expect(manifest?.getPlugins("opencode")[0]?.files.has(HELPER)).toBe(false);
+    expect(manifest?.getPlugins(TOOL.opencode)[0]?.files.has(HELPER)).toBe(false);
   });
 
   it("backfills during plugin update and retains tool ownership after plugin replacement", async () => {
@@ -79,12 +79,12 @@ describe("plugin runtime files on an existing tool", () => {
     await addPlugin();
     await deps.fs.deleteFile(join(ROOT, HELPER));
     const manifest = deps.manifestRepo.getCurrent();
-    const plugin = manifest?.getPlugins("opencode")[0];
+    const plugin = manifest?.getPlugins(TOOL.opencode)[0];
     if (!manifest || !plugin) throw new Error("fixture plugin was not installed");
-    manifest.updatePlugin("opencode", plugin.withVersion("0.0.0"));
+    manifest.updatePlugin(TOOL.opencode, plugin.withVersion("0.0.0"));
     await update.execute({
       tools: catalogOf(),
-      toolIds: ["opencode"],
+      toolIds: [TOOL.opencode],
       projectRoot: ROOT,
     });
     expect(await deps.fs.readFile(join(ROOT, HELPER))).toContain("setupOpencodeEvents");
@@ -92,7 +92,7 @@ describe("plugin runtime files on an existing tool", () => {
     expect(
       deps.manifestRepo
         .getCurrent()
-        ?.getToolFiles("opencode")
+        ?.getToolFiles(TOOL.opencode)
         .filter((file) => file.relativePath === HELPER)
     ).toHaveLength(1);
   });
@@ -100,23 +100,23 @@ describe("plugin runtime files on an existing tool", () => {
   it("restores a missing helper when the plugin version is already current", async () => {
     const { deps, addPlugin, update } = await legacyProject();
     await addPlugin();
-    const plugin = deps.manifestRepo.getCurrent()?.getPlugins("opencode")[0];
+    const plugin = deps.manifestRepo.getCurrent()?.getPlugins(TOOL.opencode)[0];
     await deps.fs.deleteFile(join(ROOT, HELPER));
 
     expect(
       await update.execute({
         tools: catalogOf(),
-        toolIds: ["opencode"],
+        toolIds: [TOOL.opencode],
         projectRoot: ROOT,
       })
     ).toEqual([]);
     expect(await deps.fs.readFile(join(ROOT, HELPER))).toContain("setupOpencodeEvents");
     expect(await deps.fs.readFile(join(ROOT, "opencode.json"))).toBe(USER_CONFIG);
-    expect(deps.manifestRepo.getCurrent()?.getPlugins("opencode")[0]).toEqual(plugin);
+    expect(deps.manifestRepo.getCurrent()?.getPlugins(TOOL.opencode)[0]).toEqual(plugin);
     expect(
       deps.manifestRepo
         .getCurrent()
-        ?.getToolFiles("opencode")
+        ?.getToolFiles(TOOL.opencode)
         .filter((file) => file.relativePath === HELPER)
     ).toHaveLength(1);
   });
@@ -129,7 +129,7 @@ describe("plugin runtime files on an existing tool", () => {
     expect(
       deps.manifestRepo
         .getCurrent()
-        ?.getToolFiles("opencode")
+        ?.getToolFiles(TOOL.opencode)
         .some((file) => file.relativePath === HELPER)
     ).toBe(false);
   });
@@ -139,13 +139,13 @@ describe("plugin runtime files on an existing tool", () => {
     await deps.fs.writeFile(join(ROOT, HELPER), "// user's edit");
     const manifest = deps.manifestRepo.getCurrent();
     const originalHash = deps.hasher.hash("// original helper");
-    manifest?.updateTrackedFileHash("opencode", HELPER, originalHash);
+    manifest?.updateTrackedFileHash(TOOL.opencode, HELPER, originalHash);
     await addPlugin();
     expect(await deps.fs.readFile(join(ROOT, HELPER))).toBe("// user's edit");
     expect(
       deps.manifestRepo
         .getCurrent()
-        ?.getToolFiles("opencode")
+        ?.getToolFiles(TOOL.opencode)
         .find((file) => file.relativePath === HELPER)?.hash
     ).toEqual(originalHash);
   });

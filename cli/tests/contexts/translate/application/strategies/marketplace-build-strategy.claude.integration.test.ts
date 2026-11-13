@@ -16,6 +16,7 @@ import type { AssetProvider } from "../../../../../src/shared/ports/asset-provid
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const REAL_FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework-real");
 // resolve(), never the bare literal: on Windows path.resolve prepends the current drive to a
@@ -60,19 +61,19 @@ describe("ClaudeOutputStrategy", () => {
 
     it("emits .claude-plugin/marketplace.json in output root", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       expect(fs.has(`${OUT_DIR}/.claude-plugin/marketplace.json`)).toBe(true);
     });
 
     it("emits .claude-plugin/plugin.json for each plugin", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-dev/.claude-plugin/plugin.json`)).toBe(true);
     });
 
     it("emits agents/*.md for plugins with agents", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const agentFiles = fs.listUnder(`${OUT_DIR}/plugins/aidd-dev/agents`);
       expect(agentFiles.length).toBeGreaterThan(0);
       expect(agentFiles.every((f) => f.endsWith(".md"))).toBe(true);
@@ -80,20 +81,20 @@ describe("ClaudeOutputStrategy", () => {
 
     it("emits skills tree for plugins with skills", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const skillFiles = fs.listUnder(`${OUT_DIR}/plugins/aidd-context/skills`);
       expect(skillFiles.length).toBeGreaterThan(0);
     });
 
     it("emits hooks files for plugins with hooks", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`)).toBe(true);
     });
 
     it("emits .mcp.json for plugins with MCP", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-dev/.mcp.json`)).toBe(true);
     });
   });
@@ -102,7 +103,7 @@ describe("ClaudeOutputStrategy", () => {
     it("synthesized plugin.json validates against bundled claude-code-plugin-manifest.json schema", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.claude-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
@@ -115,7 +116,7 @@ describe("ClaudeOutputStrategy", () => {
     it("emitted marketplace.json validates against bundled claude-marketplace-manifest.json schema", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const raw = fs.getFile(`${OUT_DIR}/.claude-plugin/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
@@ -126,7 +127,7 @@ describe("ClaudeOutputStrategy", () => {
     it("emitted marketplace.json has Claude-shape plugins with source: ./plugins/<name>", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const raw = fs.getFile(`${OUT_DIR}/.claude-plugin/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as { plugins: { name: string; source: string }[] };
       const devPlugin = parsed.plugins.find((p) => p.name === "aidd-dev");
@@ -138,7 +139,7 @@ describe("ClaudeOutputStrategy", () => {
     it("synthesized plugin.json lists ./agents/*.md file paths when source has agents", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.claude-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       expect(parsed.agents).toEqual([
@@ -154,7 +155,7 @@ describe("ClaudeOutputStrategy", () => {
         fs.deleteFile(p);
       }
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-pm/.claude-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       expect(parsed.agents).toBeUndefined();
@@ -169,7 +170,7 @@ describe("ClaudeOutputStrategy", () => {
         "---\nname: full-agent\ndescription: Full agent\nmodel: claude-sonnet\ntools:\n  - Read\n  - Write\ncolor: '#ff0000'\n---\n\nBody with @./foo.md ref."
       );
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const out = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/agents/full-agent.md`) ?? "";
       expect(out).toBe(`---
 name: 'full-agent'
@@ -187,7 +188,7 @@ Body with [foo.md](./foo.md) ref.`);
         "---\nname: link-agent\ndescription: test\n---\n\n@./foo.md\n@../bar.md"
       );
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const out = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/agents/link-agent.md`) ?? "";
       expect(out).toContain("[foo.md](./foo.md)");
       expect(out).toContain("[bar.md](../bar.md)");
@@ -198,7 +199,7 @@ Body with [foo.md](./foo.md) ref.`);
     it("hooks.json output matches source SHA-256 hash", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const srcHooks =
         fs.getFile(`${REAL_FIXTURE_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
@@ -208,7 +209,7 @@ Body with [foo.md](./foo.md) ref.`);
     it("hooks.json output preserves CLAUDE_PLUGIN_ROOT (not rewritten)", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       expect(destHooks).toContain(CLAUDE_ROOT_VAR);
     });
@@ -218,7 +219,7 @@ Body with [foo.md](./foo.md) ref.`);
     it(".mcp.json output matches source SHA-256 hash", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       const srcMcp = fs.getFile(`${REAL_FIXTURE_DIR}/plugins/aidd-dev/.mcp.json`) ?? "";
       const destMcp = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.mcp.json`) ?? "";
       expect(sha256(destMcp)).toBe(sha256(srcMcp));
@@ -229,7 +230,7 @@ Body with [foo.md](./foo.md) ref.`);
     it("produces byte-identical output on two consecutive runs", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      const opts = { sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" as const };
+      const opts = { sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude };
       await uc.execute(opts);
       const firstRunFiles = Object.fromEntries(
         fs.listUnder(OUT_DIR).map((p) => [p, fs.getFile(p)])
@@ -256,7 +257,7 @@ Body with [foo.md](./foo.md) ref.`);
       const result = await uc.execute({
         sourceDir: REAL_FIXTURE_DIR,
         outDir: OUT_DIR,
-        target: "claude",
+        target: TOOL.claude,
       });
       const devPlugin = result.plugins.find((p) => p.name === "aidd-dev");
       expect(devPlugin?.skippedSections).toContain("commands");
@@ -268,7 +269,7 @@ Body with [foo.md](./foo.md) ref.`);
       const fs = await makeSeededFsFromReal();
       fs.setFile(`${REAL_FIXTURE_DIR}/plugins/aidd-dev/commands/foo.md`, "# Foo");
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-dev/commands/foo.md`)).toBe(false);
     });
   });
@@ -278,7 +279,7 @@ Body with [foo.md](./foo.md) ref.`);
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await expect(
-        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: REAL_FIXTURE_DIR, target: "claude" })
+        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: REAL_FIXTURE_DIR, target: TOOL.claude })
       ).rejects.toThrow(InvalidBuildPathsError);
     });
 
@@ -293,7 +294,7 @@ Body with [foo.md](./foo.md) ref.`);
       const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildClaudeContract());
       const uc = new FrameworkBuildUseCase(fs, av, ap, new CapturingLogger(), strategy);
       await expect(
-        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" })
+        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude })
       ).rejects.toThrow(JsonSchemaValidationError);
     });
 
@@ -305,7 +306,7 @@ Body with [foo.md](./foo.md) ref.`);
       );
       const uc = makeUseCase(fs);
       await expect(
-        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "claude" })
+        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude })
       ).rejects.toThrow(FrameworkPlaceholderInPluginError);
     });
   });

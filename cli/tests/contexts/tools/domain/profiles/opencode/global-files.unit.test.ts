@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { opencodeGlobalFilePath } from "../../../../../../src/contexts/tools/domain/profiles/opencode/opencode-paths.js";
-import { registeredAiConfig } from "../../../testing/catalog-of.js";
+import { registeredAiConfig, TOOL } from "../../../testing/catalog-of.js";
 
 const AIDD_DEV = { name: "aidd-dev", agents: new Set(["reviewer"]) };
 
@@ -36,7 +36,7 @@ describe("opencodeGlobalFilePath — what a machine-scope install copies into Op
 
 describe("the opencode profile's machine-scope directory", () => {
   it("is ~/.config/opencode under the home directory", () => {
-    expect(registeredAiConfig("opencode").plugins()?.globalFiles()?.dir("/home/me")).toBe(
+    expect(registeredAiConfig(TOOL.opencode).plugins()?.globalFiles()?.dir("/home/me")).toBe(
       join("/home/me", ".config/opencode")
     );
   });

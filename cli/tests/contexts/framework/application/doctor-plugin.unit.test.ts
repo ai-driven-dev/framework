@@ -16,7 +16,7 @@ import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { Hasher } from "../../../../src/shared/ports/hasher.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";
@@ -24,9 +24,9 @@ const PLUGIN_FILE = ".claude/plugins/my-plugin/commands/cmd.md";
 
 function makeManifest(pluginFileHash: string): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "1.0.0", []);
+  manifest.addTool(TOOL.claude, "1.0.0", []);
   manifest.addPlugin(
-    "claude",
+    TOOL.claude,
     InstalledPlugin.fromJSON({
       name: "my-plugin",
       source: { kind: "local", path: "/some/path" },
@@ -179,7 +179,7 @@ describe("DoctorUseCase — plugin integrity", () => {
       });
 
       expect(issues).toStrictEqual([
-        { toolId: "claude", pluginName: "my-plugin", issue: "missing", filePath: PLUGIN_FILE },
+        { toolId: TOOL.claude, pluginName: "my-plugin", issue: "missing", filePath: PLUGIN_FILE },
       ]);
     });
   });
@@ -187,9 +187,9 @@ describe("DoctorUseCase — plugin integrity", () => {
   describe("when a user-scope plugin was never installed on this machine", () => {
     it("reports one not-installed-on-machine issue, not one 'missing' issue per file", async () => {
       const manifest = Manifest.create();
-      manifest.addTool("cursor", "1.0.0", []);
+      manifest.addTool(TOOL.cursor, "1.0.0", []);
       manifest.addPlugin(
-        "cursor",
+        TOOL.cursor,
         InstalledPlugin.fromJSON({
           name: "aidd-test",
           source: { kind: "local", path: "/some/path" },
@@ -219,11 +219,11 @@ describe("DoctorUseCase — plugin integrity", () => {
   describe("when plugin is installed under user-scope (Cursor Mode B)", () => {
     it("checks files under the resolved user-scope base dir, not projectRoot", async () => {
       const manifest = Manifest.create();
-      manifest.addTool("cursor", "1.0.0", []);
+      manifest.addTool(TOOL.cursor, "1.0.0", []);
       const cursorBaseDir = join(homedir(), ".cursor", "plugins", "local");
       const userScopeRelPath = "aidd-context/skills/06-discovery/SKILL.md";
       manifest.addPlugin(
-        "cursor",
+        TOOL.cursor,
         InstalledPlugin.fromJSON({
           name: "aidd-context",
           source: { kind: "local", path: "/some/path" },

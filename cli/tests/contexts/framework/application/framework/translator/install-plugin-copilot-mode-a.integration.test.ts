@@ -14,15 +14,19 @@ import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-mem
 import { FakeHostActions } from "../../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, registeredCatalog } from "../../../../tools/testing/catalog-of.js";
+import {
+  registeredAiProfile,
+  registeredCatalog,
+  TOOL,
+} from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
 
 function ownedMachineCatalog(): InMemoryManifestRepository {
   const machine = Manifest.create();
-  machine.addTool("copilot", "test", []);
-  machine.setNativeRegistrations("copilot", {
+  machine.addTool(TOOL.copilot, "test", []);
+  machine.setNativeRegistrations(TOOL.copilot, {
     binary: "copilot",
     marketplaces: [{ alias: MARKETPLACE_NAME, hostName: MARKETPLACE_NAME }],
     pluginRefs: [],
@@ -34,7 +38,7 @@ function ownedMachineCatalog(): InMemoryManifestRepository {
 function readableHostPlugins() {
   return new Map([
     [
-      "copilot" as const,
+      TOOL.copilot,
       new FakeHostPluginRegistry({
         location: "/home/.copilot/plugins",
         refs: new Map(),
@@ -57,10 +61,10 @@ async function seedCopilotPlugin(
   registry: InMemoryMarketplaceRegistry
 ): Promise<void> {
   const manifest = Manifest.create();
-  manifest.addTool("copilot", "test", []);
+  manifest.addTool(TOOL.copilot, "test", []);
   await new ModeAMarketplaceTranslator().addPlugin(
     buildDist(),
-    registeredAiProfile("copilot"),
+    registeredAiProfile(TOOL.copilot),
     { kind: "github", repo: "ai-driven-dev/framework" },
     PROJECT_ROOT,
     manifest,
@@ -81,7 +85,7 @@ async function seedCopilotPlugin(
 function buildDist(name = "aidd-context"): PluginDistribution {
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
     components: {
       commands: [{ relativePath: "commands/hello.md", content: "# Hello" }],
@@ -136,7 +140,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["copilot", activator]]),
+      new Map([[TOOL.copilot, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -147,7 +151,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       undefined,
       new Map([
         [
-          "copilot",
+          TOOL.copilot,
           new FakeHostMarketplaceSources(
             activator,
             "effective-list",
@@ -184,7 +188,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["copilot", activator]]),
+      new Map([[TOOL.copilot, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -223,7 +227,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["copilot", activator]]),
+      new Map([[TOOL.copilot, activator]]),
       fakeEnsureBuiltMarketplace()
     ).execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
@@ -255,7 +259,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       registry,
       new DeterministicHasher(),
       logger,
-      new Map([["copilot", activator]]),
+      new Map([[TOOL.copilot, activator]]),
       fakeEnsureBuiltMarketplace()
     ).execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
@@ -286,7 +290,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       registry,
       new DeterministicHasher(),
       logger,
-      new Map([["copilot", activator]]),
+      new Map([[TOOL.copilot, activator]]),
       fakeEnsureBuiltMarketplace()
     );
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });

@@ -21,7 +21,7 @@ import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-ma
 import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
-import { catalogOf, registeredToolIds } from "../../tools/testing/catalog-of.js";
+import { catalogOf, registeredToolIds, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -98,7 +98,7 @@ async function buildUseCaseWithConflict() {
     deps.logger,
     new Map([["claude", activator]]),
     fakeEnsureBuiltMarketplace((target) => `/built/${target}`),
-    new Map([["claude", hostReader]])
+    new Map([[TOOL.claude, hostReader]])
   );
 
   const setupMarketplaceRegistration = new SetupMarketplaceRegistrationUseCase(
@@ -139,7 +139,7 @@ describe("setup surfaces a marketplace source conflict instead of exiting clean"
   it("reports the conflict in its own activation result rather than discarding it", async () => {
     const { useCase, activator } = await buildUseCaseWithConflict();
 
-    const result = await useCase.execute(remoteFlow(["claude" as ToolId]), catalogOf());
+    const result = await useCase.execute(remoteFlow([TOOL.claude]), catalogOf());
 
     expect(activator.addedMarketplaces).toHaveLength(0);
     expect(result.activation.errors).toHaveLength(1);

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
@@ -168,7 +168,7 @@ describe("aidd setup — a person at a terminal", () => {
   it("greets, names what it detected, and ends with what to do next", async () => {
     pretendTerminal(true);
     setupTools.mockResolvedValue({
-      results: [{ toolId: "claude", fileCount: 9, files: [], skipped: false, warnings: [] }],
+      results: [{ toolId: TOOL.claude, fileCount: 9, files: [], skipped: false, warnings: [] }],
     });
 
     expect(await run()).toEqual([
@@ -205,7 +205,7 @@ describe("aidd setup — a person at a terminal", () => {
     setupTools.mockResolvedValue({
       results: [
         {
-          toolId: "claude",
+          toolId: TOOL.claude,
           fileCount: 1,
           files: [{ relativePath: "CLAUDE.md" }],
           skipped: false,

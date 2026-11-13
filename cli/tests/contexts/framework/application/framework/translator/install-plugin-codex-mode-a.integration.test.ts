@@ -17,7 +17,11 @@ import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-mem
 import { FakeHostActions } from "../../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, registeredCatalog } from "../../../../tools/testing/catalog-of.js";
+import {
+  registeredAiProfile,
+  registeredCatalog,
+  TOOL,
+} from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -36,18 +40,20 @@ function syncWithProvenFreshHost(
     registry,
     hasher,
     logger,
-    new Map([["codex", activator]]),
+    new Map([[TOOL.codex, activator]]),
     fakeEnsureBuiltMarketplace(),
     new Map(),
     () => "",
     undefined,
     undefined,
     undefined,
-    new Map([["codex", new FakeHostPluginRegistry({ location: "fake codex", refs: new Map() })]]),
+    new Map([
+      [TOOL.codex, new FakeHostPluginRegistry({ location: "fake codex", refs: new Map() })],
+    ]),
     undefined,
     new Map([
       [
-        "codex",
+        TOOL.codex,
         new FakeHostMarketplaceSources(
           activator,
           "effective-list",
@@ -72,7 +78,7 @@ async function seedBuiltCatalog(fs: InMemoryFileAdapter, name = MARKETPLACE_NAME
 function buildDist(name = "aidd-context"): PluginDistribution {
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
     components: {
       commands: [{ relativePath: "commands/hello.md", content: "# Hello" }],
@@ -91,10 +97,10 @@ async function seedCodexPlugin(
   source: PluginSource = { kind: "local", path: "/marketplace-source" }
 ): Promise<void> {
   const manifest = Manifest.create();
-  manifest.addTool("codex", "test", []);
+  manifest.addTool(TOOL.codex, "test", []);
   await new ModeAMarketplaceTranslator().addPlugin(
     buildDist(),
-    registeredAiProfile("codex"),
+    registeredAiProfile(TOOL.codex),
     { kind: "local", path: "/plugin-source" },
     PROJECT_ROOT,
     manifest,
@@ -117,12 +123,12 @@ async function seedTwoCodexPlugins(
   registry: InMemoryMarketplaceRegistry
 ): Promise<void> {
   const manifest = Manifest.create();
-  manifest.addTool("codex", "test", []);
+  manifest.addTool(TOOL.codex, "test", []);
   const translator = new ModeAMarketplaceTranslator();
   for (const name of ["aidd-context", "aidd-vcs"]) {
     await translator.addPlugin(
       buildDist(name),
-      registeredAiProfile("codex"),
+      registeredAiProfile(TOOL.codex),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -234,7 +240,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]]),
+      new Map([[TOOL.codex, activator]]),
       fakeEnsureBuiltMarketplace()
     );
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });

@@ -15,6 +15,7 @@ import type { AssetProvider } from "../../../../../src/shared/ports/asset-provid
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const REAL_FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework-real");
 // resolve(), not the bare literal: on Windows path.resolve treats a leading "/" as drive-
@@ -56,19 +57,19 @@ describe("CursorOutputStrategy", () => {
 
     it("emits .cursor-plugin/marketplace.json in output root", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       expect(fs.has(`${OUT_DIR}/.cursor-plugin/marketplace.json`)).toBe(true);
     });
 
     it("emits .cursor-plugin/plugin.json for each plugin", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-dev/.cursor-plugin/plugin.json`)).toBe(true);
     });
 
     it("emits agents/*.md for plugins with agents", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const agentFiles = fs.listUnder(`${OUT_DIR}/plugins/aidd-dev/agents`);
       expect(agentFiles.length).toBeGreaterThan(0);
       expect(agentFiles.every((f) => f.endsWith(".md"))).toBe(true);
@@ -76,14 +77,14 @@ describe("CursorOutputStrategy", () => {
 
     it("emits skills tree for plugins with skills", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const skillFiles = fs.listUnder(`${OUT_DIR}/plugins/aidd-context/skills`);
       expect(skillFiles.length).toBeGreaterThan(0);
     });
 
     it("emits hooks files for plugins with hooks", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`)).toBe(true);
     });
   });
@@ -92,7 +93,7 @@ describe("CursorOutputStrategy", () => {
     it("synthesized plugin.json validates against bundled claude-code-plugin-manifest.json schema", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.cursor-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
@@ -105,7 +106,7 @@ describe("CursorOutputStrategy", () => {
     it("emitted marketplace.json validates against claude-clone schema", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const raw = fs.getFile(`${OUT_DIR}/.cursor-plugin/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
@@ -116,7 +117,7 @@ describe("CursorOutputStrategy", () => {
     it("emitted marketplace.json has source: ./plugins/<name>", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const raw = fs.getFile(`${OUT_DIR}/.cursor-plugin/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as { plugins: { name: string; source: string }[] };
       const devPlugin = parsed.plugins.find((p) => p.name === "aidd-dev");
@@ -132,7 +133,7 @@ describe("CursorOutputStrategy", () => {
         "---\nname: cursor-agent\ndescription: Cursor agent\nmodel: claude-sonnet\ntools:\n  - Read\n  - Write\ncolor: '#ff0000'\nargument-hint: '[file]'\n---\n\nBody."
       );
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const out = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/agents/cursor-agent.md`) ?? "";
       expect(out).toContain("name:");
       expect(out).toContain("description:");
@@ -149,7 +150,7 @@ describe("CursorOutputStrategy", () => {
         "---\nname: full\ndescription: desc\nmodel: sonnet\ntools:\n  - Bash\ncolor: '#abc'\n---\n\nContent."
       );
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       for (const agentPath of fs.listUnder(`${OUT_DIR}/plugins/aidd-dev/agents`)) {
         const content = fs.getFile(agentPath) ?? "";
         expect(content).not.toMatch(/^tools:/m);
@@ -164,7 +165,7 @@ describe("CursorOutputStrategy", () => {
         "---\nname: link-agent\ndescription: test\n---\n\n@./foo.md\n@../bar.md"
       );
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const out = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/agents/link-agent.md`) ?? "";
       expect(out).toContain("[foo.md](./foo.md)");
       expect(out).toContain("[bar.md](../bar.md)");
@@ -177,7 +178,7 @@ describe("CursorOutputStrategy", () => {
         `---\nname: root-agent\ndescription: test\n---\n\nSee ${CLAUDE_ROOT_VAR}/file.md`
       );
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const out = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/agents/root-agent.md`) ?? "";
       expect(out).toContain(CLAUDE_ROOT_VAR);
     });
@@ -187,7 +188,7 @@ describe("CursorOutputStrategy", () => {
     it("SKILL.md is copied with @./ rewrites", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const skillFiles = fs.listUnder(`${OUT_DIR}/plugins`).filter((f) => f.endsWith("SKILL.md"));
       expect(skillFiles.length).toBeGreaterThan(0);
     });
@@ -197,7 +198,7 @@ describe("CursorOutputStrategy", () => {
     it("hooks.json rewrites claude token to cursor native token", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       expect(destHooks).toContain(CURSOR_ROOT_VAR);
       expect(destHooks).not.toContain(CLAUDE_ROOT_VAR);
@@ -206,7 +207,7 @@ describe("CursorOutputStrategy", () => {
     it("hooks.json path separator preserved after token rewrite", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor });
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       expect(destHooks).toContain(`${CURSOR_ROOT_VAR}/hooks/`);
     });
@@ -216,7 +217,7 @@ describe("CursorOutputStrategy", () => {
     it("produces byte-identical output on two consecutive runs", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      const opts = { sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" as const };
+      const opts = { sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor };
       await uc.execute(opts);
       const firstRunFiles = Object.fromEntries(
         fs.listUnder(OUT_DIR).map((p) => [p, fs.getFile(p)])
@@ -243,7 +244,7 @@ describe("CursorOutputStrategy", () => {
       const result = await uc.execute({
         sourceDir: REAL_FIXTURE_DIR,
         outDir: OUT_DIR,
-        target: "cursor",
+        target: TOOL.cursor,
       });
       const devPlugin = result.plugins.find((p) => p.name === "aidd-dev");
       expect(devPlugin?.skippedSections).toContain("commands");
@@ -256,7 +257,7 @@ describe("CursorOutputStrategy", () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await expect(
-        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: REAL_FIXTURE_DIR, target: "cursor" })
+        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: REAL_FIXTURE_DIR, target: TOOL.cursor })
       ).rejects.toThrow(InvalidBuildPathsError);
     });
 
@@ -271,7 +272,7 @@ describe("CursorOutputStrategy", () => {
       const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildCursorContract());
       const uc = new FrameworkBuildUseCase(fs, av, ap, new CapturingLogger(), strategy);
       await expect(
-        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" })
+        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor })
       ).rejects.toThrow(JsonSchemaValidationError);
     });
 
@@ -283,7 +284,7 @@ describe("CursorOutputStrategy", () => {
       );
       const uc = makeUseCase(fs);
       await expect(
-        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "cursor" })
+        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.cursor })
       ).rejects.toThrow(FrameworkPlaceholderInPluginError);
     });
   });

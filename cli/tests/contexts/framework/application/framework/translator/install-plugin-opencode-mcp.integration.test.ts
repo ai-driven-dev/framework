@@ -5,7 +5,7 @@ import { Manifest } from "../../../../../../src/contexts/framework/domain/manife
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const STUB_HOME = "/tmp/test-home";
@@ -23,7 +23,7 @@ const MCP_CONTENT = JSON.stringify({
 function buildDist(name = PLUGIN_NAME, mcpContent = MCP_CONTENT): PluginDistribution {
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [{ relativePath: ".mcp.json", content: mcpContent }],
     components: {
       commands: [],
@@ -50,11 +50,11 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
   it("writes opencode.json with transformed mcp section", async () => {
     const { adapter, fs } = buildAdapter();
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -72,11 +72,11 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
   it("preserves disabled: true → enabled: false in opencode.json", async () => {
     const { adapter, fs } = buildAdapter();
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -94,18 +94,18 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
   it("populates Plugin.mcpEntries in the manifest", async () => {
     const { adapter } = buildAdapter();
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
       undefined
     );
 
-    const installed = manifest.getPlugins("opencode").find((p) => p.name === PLUGIN_NAME);
+    const installed = manifest.getPlugins(TOOL.opencode).find((p) => p.name === PLUGIN_NAME);
     expect(installed).toBeDefined();
     expect(installed?.mcpEntries.size).toBe(3);
     expect(installed?.mcpEntries.has("local-tool")).toBe(true);
@@ -116,25 +116,25 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
   it("is idempotent: second add produces byte-equal opencode.json", async () => {
     const { adapter, fs } = buildAdapter();
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
       undefined
     );
     const firstContent = await fs.readFile(OPENCODE_JSON);
-    const firstPlugin = manifest.getPlugins("opencode").find((p) => p.name === PLUGIN_NAME);
+    const firstPlugin = manifest.getPlugins(TOOL.opencode).find((p) => p.name === PLUGIN_NAME);
     const firstMcpEntries = firstPlugin?.mcpEntries ?? new Map();
 
     // The replace path: the previous install is removed, then re-added.
-    manifest.removePlugin("opencode", PLUGIN_NAME);
+    manifest.removePlugin(TOOL.opencode, PLUGIN_NAME);
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -149,7 +149,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
   it("replace path: v1 {a,b} → v2 {a,c} leaves {a(v2),c}, drops b", async () => {
     const { adapter, fs } = buildAdapter();
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     const mcpV1 = JSON.stringify({
       mcpServers: {
@@ -159,16 +159,16 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     });
     await adapter.addPlugin(
       buildDist(PLUGIN_NAME, mcpV1),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
       undefined
     );
 
-    const v1Plugin = manifest.getPlugins("opencode").find((p) => p.name === PLUGIN_NAME);
+    const v1Plugin = manifest.getPlugins(TOOL.opencode).find((p) => p.name === PLUGIN_NAME);
     const v1McpEntries = v1Plugin?.mcpEntries ?? new Map();
-    manifest.removePlugin("opencode", PLUGIN_NAME);
+    manifest.removePlugin(TOOL.opencode, PLUGIN_NAME);
 
     const mcpV2 = JSON.stringify({
       mcpServers: {
@@ -178,7 +178,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     });
     await adapter.addPlugin(
       buildDist(PLUGIN_NAME, mcpV2),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -193,7 +193,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     expect(final.mcp).toHaveProperty("server-c");
     expect(final.mcp).not.toHaveProperty("server-b");
 
-    const v2Plugin = manifest.getPlugins("opencode").find((p) => p.name === PLUGIN_NAME);
+    const v2Plugin = manifest.getPlugins(TOOL.opencode).find((p) => p.name === PLUGIN_NAME);
     expect(v2Plugin?.mcpEntries.has("server-a")).toBe(true);
     expect(v2Plugin?.mcpEntries.has("server-c")).toBe(true);
     expect(v2Plugin?.mcpEntries.has("server-b")).toBe(false);
@@ -205,11 +205,11 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
       [OPENCODE_JSON]: JSON.stringify({ mcp: { "user-server": userServer } }, null, 2),
     });
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -227,11 +227,11 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     const emptyMcp = JSON.stringify({ mcpServers: {} });
     const { adapter, fs } = buildAdapter();
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     await adapter.addPlugin(
       buildDist(PLUGIN_NAME, emptyMcp),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -239,7 +239,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     );
 
     expect(fs.has(OPENCODE_JSON)).toBe(false);
-    const plugins = manifest.getPlugins("opencode");
+    const plugins = manifest.getPlugins(TOOL.opencode);
     expect(plugins.find((p) => p.name === PLUGIN_NAME)).toBeUndefined();
   });
 
@@ -251,11 +251,11 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     );
     const { adapter, fs } = buildAdapter({ [OPENCODE_JSON]: frameworkDefault });
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -276,11 +276,11 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
       [OPENCODE_JSON]: JSON.stringify({ mcp: { "local-tool": userServer } }, null, 2),
     });
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
 
     const { skipped } = await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -298,7 +298,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     };
     expect(parsed.mcp["local-tool"]).toEqual(userServer);
 
-    const installed = manifest.getPlugins("opencode").find((p) => p.name === PLUGIN_NAME);
+    const installed = manifest.getPlugins(TOOL.opencode).find((p) => p.name === PLUGIN_NAME);
     expect(installed?.mcpEntries.has("local-tool")).toBe(false);
     expect(installed?.mcpEntries.has("remote-tool")).toBe(true);
   });

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { GitignoreUseCase } from "../../../../../src/contexts/framework/application/gitignore-use-case.js";
 import { PostInstallPipelineUseCase } from "../../../../../src/contexts/framework/application/install/post-install-pipeline-use-case.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -21,7 +21,7 @@ class RecordingGitignoreUseCase extends GitignoreUseCase {
 describe("post-install pipeline", () => {
   it("saves manifest and updates gitignore after file write", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
@@ -43,7 +43,7 @@ describe("post-install pipeline", () => {
 
   it("calls gitignore exactly once, with all three families of entries", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
 
@@ -62,7 +62,7 @@ describe("post-install pipeline", () => {
 
   it("ignores the cache, and nothing wider than aidd_docs", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
 

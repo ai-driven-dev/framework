@@ -18,6 +18,7 @@ import type { AssetProvider } from "../../../../../src/shared/ports/asset-provid
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const REAL_FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework-real");
 const CODEX_FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework-codex");
@@ -70,19 +71,19 @@ describe("CodexOutputStrategy", () => {
 
     it("emits .agents/plugins/marketplace.json in output root", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       expect(fs.has(`${OUT_DIR}/.agents/plugins/marketplace.json`)).toBe(true);
     });
 
     it("emits .codex-plugin/plugin.json for each plugin", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-dev/.codex-plugin/plugin.json`)).toBe(true);
     });
 
     it("emits codex-agents/ TOML files for plugins with agents", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-dev/codex-agents/planner.toml`)).toBe(true);
       expect(fs.has(`${OUT_DIR}/plugins/aidd-dev/codex-agents/implementer.toml`)).toBe(true);
       expect(fs.has(`${OUT_DIR}/plugins/aidd-dev/codex-agents/reviewer.toml`)).toBe(true);
@@ -90,20 +91,20 @@ describe("CodexOutputStrategy", () => {
 
     it("emits skills tree for plugins with skills", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const skillFiles = fs.listUnder(`${OUT_DIR}/plugins/aidd-context/skills`);
       expect(skillFiles.length).toBeGreaterThan(0);
     });
 
     it("emits hooks files for plugins with hooks", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`)).toBe(true);
     });
 
     it("emits .mcp.json for plugins with MCP", async () => {
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-dev/.mcp.json`)).toBe(true);
     });
   });
@@ -112,7 +113,7 @@ describe("CodexOutputStrategy", () => {
     it("produces byte-identical output on two consecutive runs", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      const opts = { sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" as const };
+      const opts = { sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex };
       await uc.execute(opts);
       const firstRunFiles = Object.fromEntries(
         fs.listUnder(OUT_DIR).map((p) => [p, fs.getFile(p)])
@@ -133,7 +134,7 @@ describe("CodexOutputStrategy", () => {
     it("emitted plugin.json validates against bundled codex-plugin-manifest.json schema", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.codex-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
@@ -146,7 +147,7 @@ describe("CodexOutputStrategy", () => {
     it("synthesized plugin.json has no agents field (D-8)", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.codex-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       expect(parsed.agents).toBeUndefined();
@@ -157,7 +158,7 @@ describe("CodexOutputStrategy", () => {
     it("emitted marketplace.json validates against bundled codex-marketplace-manifest.json schema", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const raw = fs.getFile(`${OUT_DIR}/.agents/plugins/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as unknown;
       const av = new AjvSchemaValidatorAdapter();
@@ -168,7 +169,7 @@ describe("CodexOutputStrategy", () => {
     it("emitted marketplace.json has Codex-native root: name + interface.displayName", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const raw = fs.getFile(`${OUT_DIR}/.agents/plugins/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as {
         name: string;
@@ -181,7 +182,7 @@ describe("CodexOutputStrategy", () => {
     it("emitted marketplace.json has Codex-native plugin entries (source object + policy + category)", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const raw = fs.getFile(`${OUT_DIR}/.agents/plugins/marketplace.json`) ?? "{}";
       const parsed = JSON.parse(raw) as {
         plugins: {
@@ -203,7 +204,7 @@ describe("CodexOutputStrategy", () => {
     it("all codex-agents/*.toml files parse successfully", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const tomlFiles = fs.listUnder(OUT_DIR).filter((p) => p.endsWith(".toml"));
       expect(tomlFiles.length).toBeGreaterThan(0);
       for (const tomlPath of tomlFiles) {
@@ -223,7 +224,7 @@ describe("CodexOutputStrategy", () => {
       const sourceBefore = await fs.readFile(sourcePath);
       const uc = makeUseCase(fs);
 
-      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
 
       const output =
         fs.getFile(`${OUT_DIR}/plugins/aidd-codex-fixture/skills/sample/SKILL.md`) ?? "";
@@ -242,7 +243,7 @@ describe("CodexOutputStrategy", () => {
       const source = await fs.readFile(sourcePath);
       const uc = makeUseCase(fs);
 
-      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
 
       const output = fs.getFile(
         `${OUT_DIR}/plugins/aidd-codex-fixture/skills/sample/assets/template.md`
@@ -258,7 +259,7 @@ describe("CodexOutputStrategy", () => {
     it("rewrites @./ references in skill SKILL.md to markdown links", async () => {
       const fs = await makeSeededFsFromCodex();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const skillOut =
         fs.getFile(`${OUT_DIR}/plugins/aidd-codex-fixture/skills/sample/SKILL.md`) ?? "";
       expect(skillOut).toContain("[neighbor.md](./neighbor.md)");
@@ -267,7 +268,7 @@ describe("CodexOutputStrategy", () => {
     it("rewrites @../ references in skill SKILL.md to markdown links", async () => {
       const fs = await makeSeededFsFromCodex();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const skillOut =
         fs.getFile(`${OUT_DIR}/plugins/aidd-codex-fixture/skills/sample/SKILL.md`) ?? "";
       expect(skillOut).toContain("[up.md](../up.md)");
@@ -276,7 +277,7 @@ describe("CodexOutputStrategy", () => {
     it("rewrites @CLAUDE_PLUGIN_ROOT references in skill to file-relative markdown links", async () => {
       const fs = await makeSeededFsFromCodex();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const skillOut =
         fs.getFile(`${OUT_DIR}/plugins/aidd-codex-fixture/skills/sample/SKILL.md`) ?? "";
       expect(skillOut).not.toContain(CLAUDE_ROOT_VAR);
@@ -288,7 +289,7 @@ describe("CodexOutputStrategy", () => {
     it("hooks.json rewrites claude token to codex native token", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       expect(destHooks).toContain(CODEX_ROOT_VAR);
       expect(destHooks).not.toContain(CLAUDE_ROOT_VAR);
@@ -297,7 +298,7 @@ describe("CodexOutputStrategy", () => {
     it("hooks.json path separator preserved after token rewrite", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       expect(destHooks).toContain(`${CODEX_ROOT_VAR}/hooks/`);
     });
@@ -320,7 +321,7 @@ describe("CodexOutputStrategy", () => {
         })
       );
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       const events = Object.keys((JSON.parse(destHooks) as { hooks: object }).hooks);
 
@@ -332,7 +333,7 @@ describe("CodexOutputStrategy", () => {
     it("leaves the events Codex does share with Claude under their own names", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const destHooks = fs.getFile(`${OUT_DIR}/plugins/aidd-context/hooks/hooks.json`) ?? "";
       const events = Object.keys((JSON.parse(destHooks) as { hooks: object }).hooks);
 
@@ -344,7 +345,7 @@ describe("CodexOutputStrategy", () => {
     it(".mcp.json output matches source SHA-256 hash", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const srcMcp = fs.getFile(`${REAL_FIXTURE_DIR}/plugins/aidd-dev/.mcp.json`) ?? "";
       const destMcp = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.mcp.json`) ?? "";
       expect(sha256(destMcp)).toBe(sha256(srcMcp));
@@ -355,7 +356,7 @@ describe("CodexOutputStrategy", () => {
     it("synthesized plugin.json never has agents field even when source has agents", async () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const raw = fs.getFile(`${OUT_DIR}/plugins/aidd-dev/.codex-plugin/plugin.json`) ?? "{}";
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       expect(parsed.agents).toBeUndefined();
@@ -370,7 +371,7 @@ describe("CodexOutputStrategy", () => {
       const result = await uc.execute({
         sourceDir: REAL_FIXTURE_DIR,
         outDir: OUT_DIR,
-        target: "codex",
+        target: TOOL.codex,
       });
       const devPlugin = result.plugins.find((p) => p.name === "aidd-dev");
       expect(devPlugin?.skippedSections).toContain("commands");
@@ -382,7 +383,7 @@ describe("CodexOutputStrategy", () => {
       const fs = await makeSeededFsFromReal();
       fs.setFile(`${REAL_FIXTURE_DIR}/plugins/aidd-dev/commands/foo.md`, "# Foo");
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       expect(fs.has(`${OUT_DIR}/plugins/aidd-dev/commands/foo.md`)).toBe(false);
     });
   });
@@ -392,7 +393,7 @@ describe("CodexOutputStrategy", () => {
       const fs = await makeSeededFsFromReal();
       const uc = makeUseCase(fs);
       await expect(
-        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: REAL_FIXTURE_DIR, target: "codex" })
+        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: REAL_FIXTURE_DIR, target: TOOL.codex })
       ).rejects.toThrow(InvalidBuildPathsError);
     });
 
@@ -407,7 +408,7 @@ describe("CodexOutputStrategy", () => {
       const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildCodexContract());
       const uc = new FrameworkBuildUseCase(fs, av, ap, new CapturingLogger(), strategy);
       await expect(
-        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" })
+        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex })
       ).rejects.toThrow(JsonSchemaValidationError);
     });
 
@@ -419,7 +420,7 @@ describe("CodexOutputStrategy", () => {
       );
       const uc = makeUseCase(fs);
       await expect(
-        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" })
+        uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex })
       ).rejects.toThrow(FrameworkPlaceholderInPluginError);
     });
   });
@@ -428,7 +429,7 @@ describe("CodexOutputStrategy", () => {
     it("preserves all three reference forms in developer_instructions", async () => {
       const fs = await makeSeededFsFromCodex();
       const uc = makeUseCase(fs);
-      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: "codex" });
+      await uc.execute({ sourceDir: CODEX_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex });
       const tomlContent =
         fs.getFile(`${OUT_DIR}/plugins/aidd-codex-fixture/codex-agents/test-agent.toml`) ?? "";
       const parsed = parseToml(tomlContent) as Record<string, unknown>;

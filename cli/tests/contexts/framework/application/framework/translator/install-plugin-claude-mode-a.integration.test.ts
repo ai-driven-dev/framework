@@ -14,7 +14,11 @@ import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-mem
 import { FakeHostActions } from "../../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, registeredCatalog } from "../../../../tools/testing/catalog-of.js";
+import {
+  registeredAiProfile,
+  registeredCatalog,
+  TOOL,
+} from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -32,18 +36,20 @@ function syncWithProvenFreshHost(
     registry,
     hasher,
     new CapturingLogger(),
-    new Map([["claude", activator]]),
+    new Map([[TOOL.claude, activator]]),
     fakeEnsureBuiltMarketplace(),
     new Map(),
     () => "",
     undefined,
     undefined,
     undefined,
-    new Map([["claude", new FakeHostPluginRegistry({ location: "fake claude", refs: new Map() })]]),
+    new Map([
+      [TOOL.claude, new FakeHostPluginRegistry({ location: "fake claude", refs: new Map() })],
+    ]),
     undefined,
     new Map([
       [
-        "claude",
+        TOOL.claude,
         new FakeHostMarketplaceSources(
           activator,
           "registry",
@@ -67,7 +73,7 @@ async function seedBuiltCatalog(fs: InMemoryFileAdapter, name = MARKETPLACE_NAME
 function buildDist(name = "aidd-context"): PluginDistribution {
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
     components: {
       commands: [{ relativePath: "commands/hello.md", content: "# Hello" }],
@@ -90,11 +96,11 @@ describe("install claude plugin via Mode A (integration)", () => {
     // Claude drives its own registration; it does not enable plugins that way.
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
 
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile("claude"),
+      registeredAiProfile(TOOL.claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -135,10 +141,10 @@ describe("install claude plugin via Mode A (integration)", () => {
   it("does not materialize plugin files on disk for Mode A", async () => {
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile("claude"),
+      registeredAiProfile(TOOL.claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -146,7 +152,7 @@ describe("install claude plugin via Mode A (integration)", () => {
     );
     const pluginFiles = fs.listAll().filter((p) => p.includes(".claude/plugins/"));
     expect(pluginFiles).toEqual([]);
-    const installed = manifest.getPlugins("claude").find((p) => p.name === "aidd-context");
+    const installed = manifest.getPlugins(TOOL.claude).find((p) => p.name === "aidd-context");
     expect(installed?.files.size).toBe(0);
   });
 
@@ -159,11 +165,11 @@ describe("install claude plugin via Mode A (integration)", () => {
     // Claude drives its own registration; it does not enable plugins that way.
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
 
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile("claude"),
+      registeredAiProfile(TOOL.claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

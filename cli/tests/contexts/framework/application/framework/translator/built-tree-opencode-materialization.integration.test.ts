@@ -8,7 +8,7 @@ import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const BUILT = "/built/opencode";
@@ -17,7 +17,7 @@ const KILO_BUILT = "/built/kilo";
 function dist(): PluginDistribution {
   return new PluginDistribution({
     manifest: { name: "aidd-vcs", version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [],
     components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
   });
@@ -26,7 +26,7 @@ function dist(): PluginDistribution {
 function distWithHooks(): PluginDistribution {
   return new PluginDistribution({
     manifest: { name: "aidd-vcs", version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [],
     components: {
       commands: [],
@@ -70,7 +70,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
     fs.setFile(`${BUILT}/.build-version`, "5.0.0:1.0.0");
 
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -81,7 +81,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     await translator.addPlugin(
       dist(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -92,7 +92,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
     expect(fs.getFile(`${PROJECT_ROOT}/.opencode/agents/aidd-vcs-helper.md`)).toBe("agent body");
     expect(fs.has(`${PROJECT_ROOT}/.opencode/skills/aidd-dev/00-sdlc/SKILL.md`)).toBe(false);
     expect(fs.has(`${PROJECT_ROOT}/.build-version`)).toBe(false);
-    const installed = manifest.getPlugins("opencode").find((p) => p.name === "aidd-vcs");
+    const installed = manifest.getPlugins(TOOL.opencode).find((p) => p.name === "aidd-vcs");
     expect(installed?.files.size).toBe(2);
   });
 
@@ -107,7 +107,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
     fs.setFile(`${BUILT}/.opencode/plugin/other-plugin.js`, "OTHER PLUGIN");
 
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -118,7 +118,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     await translator.addPlugin(
       distWithHooks(),
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -142,7 +142,7 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
     distribution: PluginDistribution
   ): Promise<{ skipped: readonly unknown[] }> {
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "test", []);
+    manifest.addTool(TOOL.opencode, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -152,7 +152,7 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
     );
     return translator.addPlugin(
       distribution,
-      registeredAiProfile("opencode"),
+      registeredAiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -209,7 +209,7 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
     fs.setFile(`${KILO_BUILT}/.kilo/agents/aidd-dev-helper.md`, "other");
 
     const manifest = Manifest.create();
-    manifest.addTool("kilo", "test", [
+    manifest.addTool(TOOL.kilo, "test", [
       new InstallationFile({
         relativePath: ".kilo/kilo.jsonc",
         content: baseConfig,
@@ -225,7 +225,7 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
     );
     const distribution = new PluginDistribution({
       manifest: { name: "aidd-vcs", version: "1.0.0" },
-      format: "claude",
+      format: TOOL.claude,
       files: [],
       components: {
         commands: [],
@@ -249,7 +249,7 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
 
     await translator.addPlugin(
       distribution,
-      registeredAiProfile("kilo"),
+      registeredAiProfile(TOOL.kilo),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -267,11 +267,11 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
     expect(config.mcp.context.type).toBe("local");
     expect(
       manifest
-        .getPlugins("kilo")
+        .getPlugins(TOOL.kilo)
         .find((p) => p.name === "aidd-vcs")
         ?.mcpEntries.get("context")
     ).toBeTruthy();
-    expect(manifest.getToolFiles("kilo")[0]?.hash).toEqual(
+    expect(manifest.getToolFiles(TOOL.kilo)[0]?.hash).toEqual(
       hasher.hash(await fs.readFile(configPath))
     );
   });

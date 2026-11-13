@@ -15,7 +15,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project-a";
 const CATALOG = "aidd-framework";
@@ -35,7 +35,7 @@ class NamedActivator extends FakeHostActions {
 }
 
 function makeSync(
-  toolId: "codex" | "copilot",
+  toolId: AiToolId,
   options: {
     machine?: Manifest;
     hostRefs?: ReadonlyMap<string, { enabled: boolean }>;
@@ -157,7 +157,7 @@ function makeSync(
   return { useCase, fs, projectRepo, machineRepo, registry, activator, logger, hostCatalogBytes };
 }
 
-function canonicallyOwned(toolId: "codex" | "copilot"): Manifest {
+function canonicallyOwned(toolId: AiToolId): Manifest {
   const machine = Manifest.create();
   machine.addTool(toolId, "1.0.0", []);
   machine.setNativeRegistrations(toolId, {
@@ -180,7 +180,7 @@ function canonicallyOwned(toolId: "codex" | "copilot"): Manifest {
   return machine;
 }
 
-describe.each(["codex", "copilot"] as const)("%s native marketplace provenance", (toolId) => {
+describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace provenance", (toolId) => {
   it.each([
     "recovered proof",
     "recovered proof with a shared host alias",

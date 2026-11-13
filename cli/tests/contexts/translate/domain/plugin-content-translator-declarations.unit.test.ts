@@ -6,6 +6,7 @@ import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencod
 import { vscode } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 import {
   flatPlugins,
   nativeOf,
@@ -64,7 +65,7 @@ describe("what a person still has to do before a hook runs", () => {
       {
         pluginName: "sample-plugin",
         component: "hooks",
-        toolId: "codex",
+        toolId: TOOL.codex,
         message: nativeOf(codex.plugins()).trustNotice(),
       },
     ]);
@@ -90,7 +91,7 @@ describe("a target that runs no hook a plugin ships", () => {
       {
         pluginName: "sample-plugin",
         component: "hooks",
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         reason: "OpenCode runs no hook a plugin ships.",
       },
     ]);

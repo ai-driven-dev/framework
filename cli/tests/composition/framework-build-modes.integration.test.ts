@@ -6,7 +6,7 @@ import { wireTools } from "../../src/composition/tools.js";
 import { createFrameworkBuildUseCase } from "../../src/composition/translate.js";
 import { BundledAssetProviderAdapter } from "../../src/contexts/framework/infrastructure/assets/asset-loader.js";
 import { OutDirNotDirectoryError } from "../../src/shared/domain/errors.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../helpers/ports/seed-from-directory.js";
@@ -47,7 +47,7 @@ describe("createFrameworkBuildUseCase, by mode", () => {
     await useCaseFor("claude", "marketplace").execute({
       sourceDir: FIXTURE_DIR,
       outDir,
-      target: "claude",
+      target: TOOL.claude,
     });
 
     expect(fs.has(`${outDir}/.claude-plugin/marketplace.json`)).toBe(true);
@@ -58,7 +58,7 @@ describe("createFrameworkBuildUseCase, by mode", () => {
     await useCaseFor("copilot", "flat").execute({
       sourceDir: FIXTURE_DIR,
       outDir,
-      target: "copilot",
+      target: TOOL.copilot,
     });
 
     expect(fs.has(`${outDir}/.claude-plugin/marketplace.json`)).toBe(false);
@@ -73,7 +73,7 @@ describe("createFrameworkBuildUseCase, by mode", () => {
       useCaseFor("copilot", "flat", gone).execute({
         sourceDir: FIXTURE_DIR,
         outDir: gone,
-        target: "copilot",
+        target: TOOL.copilot,
       })
     ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
   });

@@ -17,7 +17,7 @@ import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensur
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 class RecordingFileAdapter extends InMemoryFileAdapter {
@@ -79,7 +79,7 @@ async function installPlugin(
   await addUseCase.execute({
     tools: catalogOf(),
     source: { kind: "local", path: fixture },
-    toolIds: ["claude"],
+    toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,
     interactive: false,
   });
@@ -116,7 +116,7 @@ describe("PluginRemoveUseCase", () => {
   describe("remove installed plugin", () => {
     it("deletes plugin files and updates manifest", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await installPlugin(deps);
 
       const removeUseCase = new PluginRemoveUseCase(
@@ -128,7 +128,7 @@ describe("PluginRemoveUseCase", () => {
       await removeUseCase.execute({
         tools: catalogOf(),
         pluginName: "sample-plugin",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -136,7 +136,7 @@ describe("PluginRemoveUseCase", () => {
         deps.fs.has(join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md"))
       ).toBe(false);
       const manifest = await deps.manifestRepo.load();
-      const plugins = manifest?.getPlugins("claude") ?? [];
+      const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
       expect(plugins.some((p) => p.name === "sample-plugin")).toBe(false);
     });
   });
@@ -144,7 +144,7 @@ describe("PluginRemoveUseCase", () => {
   describe("remove missing plugin", () => {
     it("throws PluginNotFoundError", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const removeUseCase = new PluginRemoveUseCase(
         deps.fs,
@@ -156,7 +156,7 @@ describe("PluginRemoveUseCase", () => {
         removeUseCase.execute({
           tools: catalogOf(),
           pluginName: "nonexistent-plugin",
-          toolIds: ["claude"],
+          toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
         })
       ).rejects.toThrow(PluginNotFoundError);
@@ -166,10 +166,10 @@ describe("PluginRemoveUseCase", () => {
   describe("scope from the manifest wins over the tool's current profile", () => {
     it("deletes a cursor plugin's files under projectRoot when the manifest says scope: project, never under ~/.cursor/plugins/local", async () => {
       const manifest = Manifest.create();
-      manifest.addTool("cursor", "1.0.0", []);
+      manifest.addTool(TOOL.cursor, "1.0.0", []);
       const pluginKey = "aidd-context/commands/hello.md";
       manifest.addPlugin(
-        "cursor",
+        TOOL.cursor,
         InstalledPlugin.fromJSON({
           name: "aidd-context",
           source: { kind: "local", path: "/some/path" },
@@ -192,7 +192,7 @@ describe("PluginRemoveUseCase", () => {
       await removeUseCase.execute({
         tools: catalogOf(),
         pluginName: "aidd-context",
-        toolIds: ["cursor"],
+        toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -206,7 +206,7 @@ describe("PluginRemoveUseCase", () => {
   describe("only the named plugin", () => {
     it("deletes only the named plugin's files when another plugin is installed", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await installPlugin(deps);
       await installPlugin(deps, EXTRA_PLUGIN_FIXTURE);
       const greet = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
@@ -220,7 +220,7 @@ describe("PluginRemoveUseCase", () => {
       ).execute({
         tools: catalogOf(),
         pluginName: "extra-plugin",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -228,7 +228,7 @@ describe("PluginRemoveUseCase", () => {
       expect(
         deps.manifestRepo
           .getCurrent()
-          ?.getPlugins("claude")
+          ?.getPlugins(TOOL.claude)
           .map((p) => p.name)
       ).toStrictEqual(["sample-plugin"]);
     });
@@ -236,16 +236,19 @@ describe("PluginRemoveUseCase", () => {
 
   describe("a tool without native activation", () => {
     it("removes a cursor plugin recorded with a marketplace without driving any host CLI", async () => {
-      const manifestRepo = manifestHolding("cursor", { name: "aidd-context", marketplace: "mkt" });
+      const manifestRepo = manifestHolding(TOOL.cursor, {
+        name: "aidd-context",
+        marketplace: "mkt",
+      });
 
       await removeUseCaseOver(new InMemoryFileAdapter(), manifestRepo).execute({
         tools: catalogOf(),
         pluginName: "aidd-context",
-        toolIds: ["cursor"],
+        toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       });
 
-      expect(manifestRepo.getCurrent()?.getPlugins("cursor")).toStrictEqual([]);
+      expect(manifestRepo.getCurrent()?.getPlugins(TOOL.cursor)).toStrictEqual([]);
     });
   });
 
@@ -253,12 +256,12 @@ describe("PluginRemoveUseCase", () => {
     it("does not rewrite opencode's config when the plugin carries no MCP entries", async () => {
       const fs = new RecordingFileAdapter();
       fs.setFile(OPENCODE_JSON, JSON.stringify({ mcp: { mine: { type: "local" } } }));
-      const manifestRepo = manifestHolding("opencode", { name: "aidd-context" });
+      const manifestRepo = manifestHolding(TOOL.opencode, { name: "aidd-context" });
 
       await removeUseCaseOver(fs, manifestRepo).execute({
         tools: catalogOf(),
         pluginName: "aidd-context",
-        toolIds: ["opencode"],
+        toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -270,7 +273,7 @@ describe("PluginRemoveUseCase", () => {
       const mcpFile = join(PROJECT_ROOT, ".mcp.json");
       const content = JSON.stringify({ mcpServers: { srv: { command: "node" } } });
       fs.setFile(mcpFile, content);
-      const manifestRepo = manifestHolding("claude", {
+      const manifestRepo = manifestHolding(TOOL.claude, {
         name: "aidd-context",
         mcpEntries: { srv: "abc123" },
       });
@@ -278,7 +281,7 @@ describe("PluginRemoveUseCase", () => {
       await removeUseCaseOver(fs, manifestRepo).execute({
         tools: catalogOf(),
         pluginName: "aidd-context",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -288,7 +291,7 @@ describe("PluginRemoveUseCase", () => {
     it("propagates a read failure of opencode's config that is not an absence", async () => {
       const fs = new UnreadableFileAdapter(OPENCODE_JSON);
       fs.setFile(OPENCODE_JSON, "{}");
-      const manifestRepo = manifestHolding("opencode", {
+      const manifestRepo = manifestHolding(TOOL.opencode, {
         name: "aidd-context",
         mcpEntries: { srv: "abc123" },
       });
@@ -297,7 +300,7 @@ describe("PluginRemoveUseCase", () => {
         removeUseCaseOver(fs, manifestRepo).execute({
           tools: catalogOf(),
           pluginName: "aidd-context",
-          toolIds: ["opencode"],
+          toolIds: [TOOL.opencode],
           projectRoot: PROJECT_ROOT,
         })
       ).rejects.toThrow("EACCES: permission denied");

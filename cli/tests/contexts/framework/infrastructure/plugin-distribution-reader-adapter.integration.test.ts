@@ -14,6 +14,7 @@ import {
 } from "../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
@@ -54,7 +55,7 @@ describe("PluginDistributionReaderAdapter", () => {
     });
 
     const dist = await new PluginDistributionReaderAdapter(fs, [
-      { format: "cursor", relativePath: "custom/plugin.json" },
+      { format: TOOL.cursor, relativePath: "custom/plugin.json" },
     ]).read(IN_MEMORY_ROOT);
 
     expect(dist.format).toBe("cursor");

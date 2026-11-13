@@ -4,11 +4,12 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/framework/
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../../src/shared/domain/paths.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const source = { kind: "local" as const, path: "/source" };
 const dist = new PluginDistribution({
   manifest: { name: "sample", version: "1.0.0" },
-  format: "claude",
+  format: TOOL.claude,
   files: [],
   components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
 });

@@ -10,7 +10,7 @@ import {
   UnregisteredToolError,
 } from "../../../../src/shared/domain/errors.js";
 import type { AiToolId, IdeToolId } from "../../../../src/shared/domain/tool.js";
-import { catalogOf } from "../testing/catalog-of.js";
+import { catalogOf, TOOL } from "../testing/catalog-of.js";
 
 describe("the registered tool catalog", () => {
   it("follows the order its profiles were registered in, not the id order", () => {
@@ -30,14 +30,14 @@ describe("the registered tool catalog", () => {
     it("is the order the shared vocabulary names the AI tools in, which is neither the help order nor the id order", () => {
       const ids = catalogOf().idsInCanonicalOrder("ai");
 
-      expect(ids.indexOf("opencode")).toBeLessThan(ids.indexOf("codex"));
+      expect(ids.indexOf(TOOL.opencode)).toBeLessThan(ids.indexOf(TOOL.codex));
       expect(ids).not.toEqual(catalogOf().inHelpOrder("ai"));
     });
   });
 
   it("answers the profile of a registered id, and refuses an unregistered one", () => {
-    expect(catalogOf().profile("claude").toolId).toBe("claude");
-    expect(() => catalogOf([]).profile("claude")).toThrow(UnregisteredToolError);
+    expect(catalogOf().profile(TOOL.claude).toolId).toBe("claude");
+    expect(() => catalogOf([]).profile(TOOL.claude)).toThrow(UnregisteredToolError);
   });
 
   it("refuses a canonical order that is not the registration's own set", () => {
@@ -60,12 +60,12 @@ describe("the registered tool catalog", () => {
   });
 
   it("tells an editor from an AI tool, and neither for an unregistered tool", () => {
-    expect(catalogOf().isIdeTool("vscode")).toBe(true);
-    expect(catalogOf().isIdeTool("claude")).toBe(false);
-    expect(catalogOf([]).isIdeTool("vscode")).toBe(false);
-    expect(catalogOf().isAiTool("claude")).toBe(true);
-    expect(catalogOf().isAiTool("vscode")).toBe(false);
-    expect(catalogOf([]).isAiTool("claude")).toBe(false);
+    expect(catalogOf().isIdeTool(TOOL.vscode)).toBe(true);
+    expect(catalogOf().isIdeTool(TOOL.claude)).toBe(false);
+    expect(catalogOf([]).isIdeTool(TOOL.vscode)).toBe(false);
+    expect(catalogOf().isAiTool(TOOL.claude)).toBe(true);
+    expect(catalogOf().isAiTool(TOOL.vscode)).toBe(false);
+    expect(catalogOf([]).isAiTool(TOOL.claude)).toBe(false);
   });
 
   it("refuses two profiles declaring the same id", () => {
@@ -78,21 +78,21 @@ describe("the registered tool catalog", () => {
     const ai: string = "claude";
 
     it("answers the AI profile of an AI id, and refuses an editor or an unregistered id", () => {
-      expect(catalogOf().aiProfile("claude").toolId).toBe("claude");
+      expect(catalogOf().aiProfile(TOOL.claude).toolId).toBe("claude");
       expect(() => catalogOf().aiProfile(ide as AiToolId)).toThrow(UnregisteredToolError);
-      expect(() => catalogOf([]).aiProfile("claude")).toThrow(UnregisteredToolError);
+      expect(() => catalogOf([]).aiProfile(TOOL.claude)).toThrow(UnregisteredToolError);
     });
 
     it("answers the IDE profile of an editor id, and refuses an AI tool or an unregistered id", () => {
-      expect(catalogOf().ideProfile("vscode").toolId).toBe("vscode");
+      expect(catalogOf().ideProfile(TOOL.vscode).toolId).toBe("vscode");
       expect(() => catalogOf().ideProfile(ai as IdeToolId)).toThrow(UnregisteredToolError);
-      expect(() => catalogOf([]).ideProfile("vscode")).toThrow(UnregisteredToolError);
+      expect(() => catalogOf([]).ideProfile(TOOL.vscode)).toThrow(UnregisteredToolError);
     });
 
     it("answers the AI profile of an id, or null for an editor, and refuses an unregistered id", () => {
-      expect(catalogOf().aiProfileIfAny("claude")?.toolId).toBe("claude");
-      expect(catalogOf().aiProfileIfAny("vscode")).toBeNull();
-      expect(() => catalogOf([]).aiProfileIfAny("claude")).toThrow(UnregisteredToolError);
+      expect(catalogOf().aiProfileIfAny(TOOL.claude)?.toolId).toBe("claude");
+      expect(catalogOf().aiProfileIfAny(TOOL.vscode)).toBeNull();
+      expect(() => catalogOf([]).aiProfileIfAny(TOOL.claude)).toThrow(UnregisteredToolError);
     });
   });
 });

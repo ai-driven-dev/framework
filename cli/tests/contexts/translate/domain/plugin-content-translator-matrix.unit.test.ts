@@ -5,6 +5,7 @@ import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 import { nativeOf } from "../../tools/testing/plugin-mode.js";
 import {
   agentContent,
@@ -18,10 +19,10 @@ import {
 
 describe("cross-format matrix (source × target)", () => {
   const sourceFormats = [
-    { format: "claude" as const, manifestPath: ".claude-plugin/plugin.json" },
-    { format: "cursor" as const, manifestPath: ".cursor-plugin/plugin.json" },
-    { format: "codex" as const, manifestPath: ".codex-plugin/plugin.json" },
-    { format: "copilot" as const, manifestPath: "plugin.json" },
+    { format: TOOL.claude, manifestPath: ".claude-plugin/plugin.json" },
+    { format: TOOL.cursor, manifestPath: ".cursor-plugin/plugin.json" },
+    { format: TOOL.codex, manifestPath: ".codex-plugin/plugin.json" },
+    { format: TOOL.copilot, manifestPath: "plugin.json" },
   ];
 
   const targets = [

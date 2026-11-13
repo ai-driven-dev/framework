@@ -15,7 +15,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";
@@ -51,9 +51,9 @@ function seedManifest(
   recordNativeRegistration = true
 ): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("codex", "1.0.0", []);
+  manifest.addTool(TOOL.codex, "1.0.0", []);
   manifest.addPlugin(
-    "codex",
+    TOOL.codex,
     InstalledPlugin.fromJSON({
       name: PLUGIN_NAME,
       source: { kind: "local", path: "/plugin-source" },
@@ -65,7 +65,7 @@ function seedManifest(
     })
   );
   if (recordNativeRegistration)
-    manifest.setNativeRegistrations("codex", {
+    manifest.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [{ alias: marketplaceAlias, hostName: marketplaceAlias, provenance: proof() }],
       pluginRefs: [`${PLUGIN_NAME}@${marketplaceAlias}`],
@@ -122,7 +122,7 @@ function buildUseCase(
     userSourceReferences,
     marketplaceRegistry,
     userManifestRepo,
-    new Map([["codex", sourceReader()]])
+    new Map([[TOOL.codex, sourceReader()]])
   );
   return { removeUseCase, manifestRepo };
 }
@@ -140,15 +140,17 @@ describe("plugin remove guards a ref another project on this machine still needs
       removeUseCase.execute({
         tools: catalogOf(),
         pluginName: PLUGIN_NAME,
-        toolIds: ["codex"],
+        toolIds: [TOOL.codex],
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow(/canonical machine claim|unclaimed machine-global/);
 
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(manifestRepo.saveCount).toBe(savesBefore);
-    expect(manifestRepo.getCurrent()?.getPlugins("codex")).toHaveLength(1);
-    expect(manifestRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([REF]);
+    expect(manifestRepo.getCurrent()?.getPlugins(TOOL.codex)).toHaveLength(1);
+    expect(manifestRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginRefs).toEqual([
+      REF,
+    ]);
     expect(fs.getFile(`${PROJECT_ROOT}/user-note.md`)).toBe("user bytes");
   });
 
@@ -160,7 +162,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     const untouchedRefs = [siblingRef, otherCatalogueRef];
     const project = seedManifest();
     project.addPlugin(
-      "codex",
+      TOOL.codex,
       InstalledPlugin.fromJSON({
         name: "aidd-dev",
         source: { kind: "local", path: "/plugin-source" },
@@ -179,7 +181,7 @@ describe("plugin remove guards a ref another project on this machine still needs
         provenance: proof(),
       },
     ];
-    project.setNativeRegistrations("codex", {
+    project.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces,
       pluginRefs: [REF, ...untouchedRefs],
@@ -187,8 +189,8 @@ describe("plugin remove guards a ref another project on this machine still needs
     fs.setFile(`${OTHER_PROJECT}/plugin-content.md`, "B's plugin bytes");
     fs.setFile(`${PROJECT_ROOT}/user-note.md`, "user bytes");
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(TOOL.codex, "1.0.0", []);
+    machine.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces,
       pluginRefs: [REF, ...untouchedRefs],
@@ -211,7 +213,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     await removeUseCase.execute({
       tools: catalogOf(),
       pluginName: PLUGIN_NAME,
-      toolIds: ["codex"],
+      toolIds: [TOOL.codex],
       projectRoot: PROJECT_ROOT,
     });
 
@@ -219,24 +221,24 @@ describe("plugin remove guards a ref another project on this machine still needs
     expect(
       manifestRepo
         .getCurrent()
-        ?.getPlugins("codex")
+        ?.getPlugins(TOOL.codex)
         .map((plugin) => plugin.name)
     ).toEqual(["aidd-dev"]);
-    expect(manifestRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual(
+    expect(manifestRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginRefs).toEqual(
       untouchedRefs
     );
-    expect(manifestRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toEqual(
+    expect(manifestRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces).toEqual(
       marketplaces
     );
-    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
       { ref: REF, dependents: [OTHER_PROJECT] },
       ...untouchedRefs.map((ref) => ({ ref, dependents: [PROJECT_ROOT, OTHER_PROJECT] })),
     ]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginRefs).toEqual([
       REF,
       ...untouchedRefs,
     ]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toEqual(
+    expect(userRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces).toEqual(
       marketplaces
     );
     expect(fs.getFile(`${OTHER_PROJECT}/plugin-content.md`)).toBe("B's plugin bytes");
@@ -250,7 +252,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     seedReferences(fs, [OTHER_PROJECT]);
     const activator = new FakeHostActions({ available: true });
     const manifest = seedManifest();
-    manifest.setNativeRegistrations("codex", {
+    manifest.setNativeRegistrations(TOOL.codex, {
       binary: "codex",
       marketplaces: [
         { alias: FRAMEWORK_MARKETPLACE_NAME, hostName: HOST_NAME, provenance: proof() },
@@ -268,13 +270,13 @@ describe("plugin remove guards a ref another project on this machine still needs
       removeUseCase.execute({
         tools: catalogOf(),
         pluginName: PLUGIN_NAME,
-        toolIds: ["codex"],
+        toolIds: [TOOL.codex],
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow(new RegExp(`${HOST_REF}.*unclaimed machine-global`));
 
     expect(activator.uninstalledPlugins).toEqual([]);
-    expect(manifestRepo.getCurrent()?.getPlugins("codex")).toHaveLength(1);
+    expect(manifestRepo.getCurrent()?.getPlugins(TOOL.codex)).toHaveLength(1);
   });
 
   it("refuses legacy removal without native registrations before any host or local mutation", async () => {
@@ -293,13 +295,13 @@ describe("plugin remove guards a ref another project on this machine still needs
       removeUseCase.execute({
         tools: catalogOf(),
         pluginName: PLUGIN_NAME,
-        toolIds: ["codex"],
+        toolIds: [TOOL.codex],
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow(/no recorded native catalogue source/);
 
     expect(activator.uninstalledPlugins).toEqual([]);
-    expect(manifestRepo.getCurrent()?.getPlugins("codex")).toHaveLength(1);
+    expect(manifestRepo.getCurrent()?.getPlugins(TOOL.codex)).toHaveLength(1);
     expect(logger.warnMessages).toEqual([]);
   });
 
@@ -331,13 +333,13 @@ describe("plugin remove guards a ref another project on this machine still needs
         removeUseCase.execute({
           tools: catalogOf(),
           pluginName: PLUGIN_NAME,
-          toolIds: ["codex"],
+          toolIds: [TOOL.codex],
           projectRoot: PROJECT_ROOT,
         })
       ).rejects.toThrow(/unclaimed machine-global/);
 
       expect(activator.uninstalledPlugins).toStrictEqual([]);
-      expect(manifestRepo.getCurrent()?.getPlugins("codex")).toHaveLength(1);
+      expect(manifestRepo.getCurrent()?.getPlugins(TOOL.codex)).toHaveLength(1);
     });
 
     it("refuses an unclaimed ref whose marketplace the project's local registry no longer lists", async () => {
@@ -356,13 +358,13 @@ describe("plugin remove guards a ref another project on this machine still needs
         removeUseCase.execute({
           tools: catalogOf(),
           pluginName: PLUGIN_NAME,
-          toolIds: ["codex"],
+          toolIds: [TOOL.codex],
           projectRoot: PROJECT_ROOT,
         })
       ).rejects.toThrow(/unclaimed machine-global/);
 
       expect(activator.uninstalledPlugins).toStrictEqual([]);
-      expect(manifestRepo.getCurrent()?.getPlugins("codex")).toHaveLength(1);
+      expect(manifestRepo.getCurrent()?.getPlugins(TOOL.codex)).toHaveLength(1);
     });
   });
 
@@ -380,14 +382,14 @@ describe("plugin remove guards a ref another project on this machine still needs
         undefined,
         seedSharedMarketplaceRegistry(),
         undefined,
-        new Map([["codex", sourceReader()]])
+        new Map([[TOOL.codex, sourceReader()]])
       );
 
       await expect(
         removeUseCase.execute({
           tools: catalogOf(),
           pluginName: PLUGIN_NAME,
-          toolIds: ["codex"],
+          toolIds: [TOOL.codex],
           projectRoot: PROJECT_ROOT,
         })
       ).rejects.toThrow(/unclaimed machine-global/);
@@ -408,14 +410,14 @@ describe("plugin remove guards a ref another project on this machine still needs
         new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR),
         undefined,
         undefined,
-        new Map([["codex", sourceReader()]])
+        new Map([[TOOL.codex, sourceReader()]])
       );
 
       await expect(
         removeUseCase.execute({
           tools: catalogOf(),
           pluginName: PLUGIN_NAME,
-          toolIds: ["codex"],
+          toolIds: [TOOL.codex],
           projectRoot: PROJECT_ROOT,
         })
       ).rejects.toThrow(/unclaimed machine-global/);

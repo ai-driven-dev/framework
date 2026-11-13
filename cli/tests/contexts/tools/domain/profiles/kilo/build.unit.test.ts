@@ -6,6 +6,7 @@ import type {
 import { buildKiloFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
 import { KiloDualConfigError } from "../../../../../../src/shared/domain/errors.js";
 import { supported } from "../../../testing/build-artifacts.js";
+import { TOOL } from "../../../testing/catalog-of.js";
 
 function configArtifactOf(): ConfigArtifact {
   const step = buildKiloFlatContract().configArtifact;
@@ -59,7 +60,7 @@ describe("buildKiloFlatContract", () => {
       "kilo.json",
       "kilo.jsonc",
     ]);
-    expect(configArtifactOf().assets).toStrictEqual({ tool: "kilo", names: ["kilo.json"] });
+    expect(configArtifactOf().assets).toStrictEqual({ tool: TOOL.kilo, names: ["kilo.json"] });
     expect(configArtifactOf().probes(["aidd-dev"])).toStrictEqual([]);
   });
 

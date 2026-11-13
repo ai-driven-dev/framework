@@ -18,7 +18,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter, ScriptedPrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -62,8 +62,8 @@ function pluginFrom(marketplace: string, name: string): InstalledPlugin {
 
 function manifestWithPlugins(...plugins: readonly InstalledPlugin[]): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "1.0.0", []);
-  for (const plugin of plugins) manifest.addPlugin("claude", plugin);
+  manifest.addTool(TOOL.claude, "1.0.0", []);
+  for (const plugin of plugins) manifest.addPlugin(TOOL.claude, plugin);
   return manifest;
 }
 
@@ -131,7 +131,7 @@ describe("MarketplaceRemoveUseCase", () => {
   it("removes orphan plugins and their files when autoConfirm is true", async () => {
     const { useCase, registry, manifestRepo, fs } = buildUseCase();
     const manifest = Manifest.create();
-    manifest.addTool("claude", "1.0.0", []);
+    manifest.addTool(TOOL.claude, "1.0.0", []);
     const plugin = InstalledPlugin.fromJSON({
       name: "sample",
       source: { kind: "github", repo: "owner/sample" },
@@ -141,7 +141,7 @@ describe("MarketplaceRemoveUseCase", () => {
       scope: "project",
       marketplace: "awesome",
     });
-    manifest.addPlugin("claude", plugin);
+    manifest.addPlugin(TOOL.claude, plugin);
     await manifestRepo.save(manifest);
 
     const filePath = join(PROJECT_ROOT, ".claude/plugins/sample/CLAUDE.md");
@@ -167,7 +167,7 @@ describe("MarketplaceRemoveUseCase", () => {
     expect(result.removedPluginCount).toBe(1);
     expect(fs.has(filePath)).toBe(false);
     const reloaded = await manifestRepo.load();
-    expect(reloaded?.getPlugins("claude")).toHaveLength(0);
+    expect(reloaded?.getPlugins(TOOL.claude)).toHaveLength(0);
   });
 
   it("removes a project marketplace's orphan projection without deleting shared Cursor files", async () => {
@@ -179,10 +179,10 @@ describe("MarketplaceRemoveUseCase", () => {
       new KeepPrompter()
     );
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "1.0.0", []);
+    manifest.addTool(TOOL.cursor, "1.0.0", []);
     const pluginKey = "aidd-context/commands/hello.md";
     manifest.addPlugin(
-      "cursor",
+      TOOL.cursor,
       InstalledPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "github", repo: "owner/aidd-context" },
@@ -228,10 +228,10 @@ describe("MarketplaceRemoveUseCase", () => {
       new KeepPrompter()
     );
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "1.0.0", []);
+    manifest.addTool(TOOL.cursor, "1.0.0", []);
     const pluginKey = "aidd-context/commands/hello.md";
     manifest.addPlugin(
-      "cursor",
+      TOOL.cursor,
       InstalledPlugin.fromJSON({
         name: "aidd-context",
         source: { kind: "github", repo: "owner/aidd-context" },
@@ -378,12 +378,12 @@ describe("which plugins a removal orphans", () => {
       },
     });
     const project = Manifest.create();
-    project.addTool("cursor", "1.0.0", []);
-    project.addPlugin("cursor", plugin);
+    project.addTool(TOOL.cursor, "1.0.0", []);
+    project.addPlugin(TOOL.cursor, plugin);
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = Manifest.create();
-    machine.addTool("cursor", "1.0.0", []);
-    machine.addPlugin("cursor", plugin.withDependents([PROJECT_ROOT, "/B"]));
+    machine.addTool(TOOL.cursor, "1.0.0", []);
+    machine.addPlugin(TOOL.cursor, plugin.withDependents([PROJECT_ROOT, "/B"]));
     const machineRepo = new InMemoryManifestRepository(machine);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
@@ -403,8 +403,8 @@ describe("which plugins a removal orphans", () => {
       })
     ).rejects.toThrow(/outside.*project/);
 
-    expect(projectRepo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
-    expect(machineRepo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual([
+    expect(projectRepo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
+    expect(machineRepo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual([
       PROJECT_ROOT,
       "/B",
     ]);
@@ -423,9 +423,9 @@ describe("which plugins a removal orphans", () => {
     const fs = new InMemoryFileAdapter({ [mcpPath]: content, [foreignPath]: content });
     fs.setSymlink(mcpPath, foreignPath);
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addTool(TOOL.opencode, "1.0.0", []);
     manifest.addPlugin(
-      "opencode",
+      TOOL.opencode,
       InstalledPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/fixture" },
@@ -459,7 +459,7 @@ describe("which plugins a removal orphans", () => {
     ).rejects.toThrow(/outside.*project|escapes.*project/);
 
     expect(manifestRepo.saveCount).toBe(0);
-    expect(manifestRepo.getCurrent()?.getPlugins("opencode")).toHaveLength(1);
+    expect(manifestRepo.getCurrent()?.getPlugins(TOOL.opencode)).toHaveLength(1);
     expect(fs.getFile(foreignPath)).toBe(content);
     expect(fs.getFile(mcpPath)).toBe(content);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
@@ -480,9 +480,9 @@ describe("which plugins a removal orphans", () => {
     }
     const fs = new RefusingMcpWriteAdapter({ [mcpPath]: content });
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addTool(TOOL.opencode, "1.0.0", []);
     manifest.addPlugin(
-      "opencode",
+      TOOL.opencode,
       InstalledPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/fixture" },
@@ -516,7 +516,7 @@ describe("which plugins a removal orphans", () => {
     ).rejects.toThrow(/MCP write refused/);
 
     expect(manifestRepo.saveCount).toBe(0);
-    expect(manifestRepo.getCurrent()?.getPlugins("opencode")).toHaveLength(1);
+    expect(manifestRepo.getCurrent()?.getPlugins(TOOL.opencode)).toHaveLength(1);
     expect(fs.getFile(mcpPath)).toBe(content);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
       true
@@ -526,9 +526,9 @@ describe("which plugins a removal orphans", () => {
   it("unmerges only the orphan's contributed OpenCode MCP server from the project", async () => {
     const { useCase, registry, manifestRepo, fs } = buildUseCase();
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addTool(TOOL.opencode, "1.0.0", []);
     manifest.addPlugin(
-      "opencode",
+      TOOL.opencode,
       InstalledPlugin.fromJSON({
         name: "sample",
         source: { kind: "local", path: "/fixture" },
@@ -562,7 +562,7 @@ describe("which plugins a removal orphans", () => {
         autoConfirm: true,
       })
     ).rejects.toThrow(/edited/);
-    expect((await manifestRepo.load())?.getPlugins("opencode")).toHaveLength(1);
+    expect((await manifestRepo.load())?.getPlugins(TOOL.opencode)).toHaveLength(1);
     expect((await registry.list(PROJECT_ROOT)).some((entry) => entry.name === "awesome")).toBe(
       true
     );
@@ -581,16 +581,16 @@ describe("which plugins a removal orphans", () => {
     expect(JSON.parse(fs.getFile(mcpPath) ?? "null")).toEqual({
       mcp: { theirs: { type: "remote" } },
     });
-    expect((await manifestRepo.load())?.getPlugins("opencode")).toEqual([]);
+    expect((await manifestRepo.load())?.getPlugins(TOOL.opencode)).toEqual([]);
   });
 
   it("preflights every orphan before touching A when B's MCP contribution was edited", async () => {
     const { useCase, registry, manifestRepo, fs } = buildUseCase();
     const manifest = Manifest.create();
-    manifest.addTool("opencode", "1.0.0", []);
+    manifest.addTool(TOOL.opencode, "1.0.0", []);
     for (const name of ["alpha", "beta"]) {
       manifest.addPlugin(
-        "opencode",
+        TOOL.opencode,
         InstalledPlugin.fromJSON({
           name,
           source: { kind: "local", path: "/fixture" },
@@ -621,7 +621,7 @@ describe("which plugins a removal orphans", () => {
       })
     ).rejects.toThrow(/edited.*beta|beta.*edited/);
     expect(fs.getFile(path)).toBe(edited);
-    expect((await manifestRepo.load())?.getPlugins("opencode").map((p) => p.name)).toEqual([
+    expect((await manifestRepo.load())?.getPlugins(TOOL.opencode).map((p) => p.name)).toEqual([
       "alpha",
       "beta",
     ]);
@@ -644,7 +644,7 @@ describe("which plugins a removal orphans", () => {
     });
 
     expect(result).toStrictEqual({ marketplace: awesome, removedPluginCount: 1, orphanCount: 1 });
-    expect((await manifestRepo.load())?.getPlugins("claude").map((p) => p.name)).toStrictEqual([
+    expect((await manifestRepo.load())?.getPlugins(TOOL.claude).map((p) => p.name)).toStrictEqual([
       "other",
     ]);
   });
@@ -670,7 +670,7 @@ describe("which plugins a removal orphans", () => {
     });
 
     expect(result).toStrictEqual({ marketplace: awesome, removedPluginCount: 0, orphanCount: 1 });
-    expect((await manifestRepo.load())?.getPlugins("claude").map((p) => p.name)).toStrictEqual([
+    expect((await manifestRepo.load())?.getPlugins(TOOL.claude).map((p) => p.name)).toStrictEqual([
       "sample",
     ]);
     expect(await registry.list(PROJECT_ROOT)).toStrictEqual([]);

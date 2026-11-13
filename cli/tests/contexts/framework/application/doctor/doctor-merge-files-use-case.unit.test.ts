@@ -4,6 +4,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
 const MERGE_PATH = ".vscode/settings.json";
@@ -40,7 +41,7 @@ function manifestMerging(toolId: ToolId): Manifest {
 async function issuesFor(
   onDisk: string | null,
   allowedIds: Set<string> | null = null,
-  toolId: ToolId = "vscode"
+  toolId: ToolId = TOOL.vscode
 ) {
   const fs = new InMemoryFileAdapter(
     onDisk === null ? {} : { [`${PROJECT_ROOT}/${MERGE_PATH}`]: onDisk },

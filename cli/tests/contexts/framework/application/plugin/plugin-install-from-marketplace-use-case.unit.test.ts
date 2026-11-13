@@ -23,7 +23,7 @@ import type { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-fi
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter } from "../../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -45,7 +45,7 @@ function seedMarketplaceFile(
 
 async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompter } = {}) {
   const deps = await buildUnitDeps(PROJECT_ROOT);
-  await initAndInstall(deps, PROJECT_ROOT, "claude");
+  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const catalogRepo = new PluginCatalogRepositoryAdapter(deps.fs);
@@ -93,7 +93,7 @@ async function saveLocalMarketplace(
 function installedSamplePlugin(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
   return deps.manifestRepo
     .getCurrent()
-    ?.getPlugins("claude")
+    ?.getPlugins(TOOL.claude)
     .find((p) => p.name === "sample-plugin");
 }
 
@@ -116,14 +116,14 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     const result = await useCase.execute({
       tools: catalogOf(),
       pluginName: "sample-plugin",
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: false,
     });
 
     expect(result.marketplace.name).toBe("mkt1");
     const manifest = await deps.manifestRepo.load();
-    const plugins = manifest?.getPlugins("claude") ?? [];
+    const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
     const installed = plugins.find((p) => p.name === "sample-plugin");
     expect(installed?.marketplace).toBe("mkt1");
   });
@@ -145,7 +145,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
       useCase.execute({
         tools: catalogOf(),
         pluginName: "missing",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       })
@@ -184,7 +184,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
       useCase.execute({
         tools: catalogOf(),
         pluginName: "sample-plugin",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       })
@@ -223,7 +223,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
       tools: catalogOf(),
       pluginName: "sample-plugin",
       fromMarketplace: "mkt2",
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: false,
     });
@@ -251,7 +251,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
         tools: catalogOf(),
         pluginName: "sample-plugin",
         version: "1.0.0",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       })
@@ -278,7 +278,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
         tools: catalogOf(),
         pluginName: "sample-plugin",
         version: "9.9.9",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       })
@@ -317,7 +317,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     await useCase.execute({
       tools: catalogOf(),
       pluginName: "sample-plugin",
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: false,
       autoSelect: true,
@@ -325,7 +325,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     });
 
     const manifest = await deps.manifestRepo.load();
-    const installed = (manifest?.getPlugins("claude") ?? []).find(
+    const installed = (manifest?.getPlugins(TOOL.claude) ?? []).find(
       (p) => p.name === "sample-plugin"
     );
     expect(installed?.marketplace).toBe("aidd-framework");
@@ -358,7 +358,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
           tools: catalogOf(),
           pluginName: "sample-plugin",
           version: "1.0.0",
-          toolIds: ["claude"],
+          toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           interactive: false,
         })
@@ -391,7 +391,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
           pluginName: "sample-plugin",
           version: "1.0.0",
           requestedVersionPolicy: "prefer-catalog",
-          toolIds: ["claude"],
+          toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           interactive: false,
         })
@@ -425,7 +425,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
         pluginName: "sample-plugin",
         version: "1.0.0",
         requestedVersionPolicy: "prefer-catalog",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -468,7 +468,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
     const result = await useCase.execute({
       tools: catalogOf(),
       pluginName: "sample-plugin",
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
       interactive: false,
       autoSelect: true,
@@ -495,7 +495,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
       const result = await useCase.execute({
         tools: catalogOf(),
         pluginName: "sample-plugin",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: true,
       });
@@ -520,7 +520,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
         useCase.execute({
           tools: catalogOf(),
           pluginName: "sample-plugin",
-          toolIds: ["claude"],
+          toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
           interactive: false,
         })
@@ -540,7 +540,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
       const result = await useCase.execute({
         tools: catalogOf(),
         pluginName: "sample-plugin",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -557,7 +557,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
       const result = await useCase.execute({
         tools: catalogOf(),
         pluginName: "sample-plugin",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -582,7 +582,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
         tools: catalogOf(),
         pluginName: "sample-plugin",
         version: "1.0.0",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -606,7 +606,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
         tools: catalogOf(),
         pluginName: "sample-plugin",
         requestedVersionPolicy: "prefer-catalog",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -630,7 +630,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
         pluginName: "sample-plugin",
         version: "1.0.0",
         requestedVersionPolicy: "prefer-catalog",
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });

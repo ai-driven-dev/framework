@@ -5,6 +5,7 @@ import { wireTools } from "../../../../../src/composition/tools.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
 import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { AssetNotFoundError } from "../../../../../src/shared/domain/errors.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const CONFIGS = fileURLToPath(new URL("../../../assets/configs/", import.meta.url));
 const catalog = wireTools();
@@ -33,8 +34,8 @@ describe("config assets per tool", () => {
   );
 
   it("serves the asset the profile declares, by identity", () => {
-    expect(provider.loadConfigAsset("claude", "settings.json")).toBe(
-      catalog.profile("claude").configAsset("settings.json")?.content
+    expect(provider.loadConfigAsset(TOOL.claude, "settings.json")).toBe(
+      catalog.profile(TOOL.claude).configAsset("settings.json")?.content
     );
   });
 });

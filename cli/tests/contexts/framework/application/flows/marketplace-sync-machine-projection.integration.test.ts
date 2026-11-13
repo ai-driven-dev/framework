@@ -5,6 +5,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -15,11 +16,13 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+
+const { claude, codex } = TOOL;
 
 describe("native plugin ownership follows the host's activation scope", () => {
   const freshNativeSources = (
-    toolId: "claude" | "codex",
+    toolId: AiToolId,
     activator: FakeHostActions,
     identities: ReadonlyMap<string, string>,
     initial: ReadonlyMap<string, NativeMarketplaceSource> = new Map()
@@ -35,7 +38,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         ),
       ],
     ]);
-  const readablePlugins = (toolId: "claude" | "codex") =>
+  const readablePlugins = (toolId: AiToolId) =>
     new Map([
       [
         toolId,
@@ -48,7 +51,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
   const freshHostCatalogs = () =>
     new Map([
       [
-        "claude" as const,
+        claude,
         new FakeHostMarketplaceRegistry({
           location: "/home/.claude/plugins/known_marketplaces.json",
           entries: new Map(),
@@ -58,7 +61,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
   const readableHostPlugins = () =>
     new Map([
       [
-        "claude" as const,
+        claude,
         new FakeHostPluginRegistry({
           location: "/home/.claude/plugins/installed_plugins.json",
           refs: new Map(),
@@ -84,9 +87,9 @@ describe("native plugin ownership follows the host's activation scope", () => {
         provenance: { kind: "registry" as const, source: "/built/claude" },
       };
       const project = Manifest.create();
-      project.addTool("claude", "1.0.0", []);
+      project.addTool(claude, "1.0.0", []);
       project.addPlugin(
-        "claude",
+        claude,
         InstalledPlugin.fromMetadata(
           "test-plugin",
           "1.0.0",
@@ -98,13 +101,13 @@ describe("native plugin ownership follows the host's activation scope", () => {
       );
       const machine = Manifest.create();
       if (mode !== "fresh") {
-        project.setNativeRegistrations("claude", {
+        project.setNativeRegistrations(claude, {
           binary: "claude",
           marketplaces: mode === "existing project proof" ? [otherRegistration, registration] : [],
           pluginRefs: [ref],
         });
-        machine.addTool("claude", "1.0.0", []);
-        machine.setNativeRegistrations("claude", {
+        machine.addTool(claude, "1.0.0", []);
+        machine.setNativeRegistrations(claude, {
           binary: "claude",
           marketplaces:
             mode === "existing machine proof"
@@ -140,13 +143,13 @@ describe("native plugin ownership follows the host's activation scope", () => {
         registry,
         new DeterministicHasher(),
         new CapturingLogger(),
-        new Map([["claude", activator]]),
+        new Map([[claude, activator]]),
         fakeEnsureBuiltMarketplace(),
         mode === "fresh"
           ? freshHostCatalogs()
           : new Map([
               [
-                "claude",
+                claude,
                 new FakeHostMarketplaceRegistry({
                   location: "/home/.claude/plugins/known_marketplaces.json",
                   entries: new Map([
@@ -164,7 +167,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
           ? readableHostPlugins()
           : new Map([
               [
-                "claude",
+                claude,
                 new FakeHostPluginRegistry({
                   location: "/home/.claude/plugins/installed_plugins.json",
                   refs: new Map([
@@ -177,7 +180,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
             ]),
         machineRepo,
         freshNativeSources(
-          "claude",
+          claude,
           activator,
           new Map([["/built/claude", hostName]]),
           mode === "fresh"
@@ -198,17 +201,17 @@ describe("native plugin ownership follows the host's activation scope", () => {
       expect(activator.enabledPluginScopes).toEqual(mode === "fresh" ? ["project"] : []);
       expect(activator.addedMarketplaces).toStrictEqual(mode === "fresh" ? ["/built/claude"] : []);
       expect(activator.removedMarketplaces).toStrictEqual([]);
-      expect(projectRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginRefs).toEqual([ref]);
-      expect(machineRepo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual(
+      expect(projectRepo.getCurrent()?.getNativeRegistrations(claude)?.pluginRefs).toEqual([ref]);
+      expect(machineRepo.getCurrent()?.getNativeRegistrations(claude)?.marketplaces).toEqual(
         mode === "fresh" ? [registration] : [otherRegistration, registration]
       );
-      expect(
-        machineRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims ?? []
-      ).toEqual(mode === "fresh" ? [] : [{ ref: otherRef, dependents: ["/B"] }]);
+      expect(machineRepo.getCurrent()?.getNativeRegistrations(claude)?.pluginClaims ?? []).toEqual(
+        mode === "fresh" ? [] : [{ ref: otherRef, dependents: ["/B"] }]
+      );
       if (mode !== "fresh")
-        expect(
-          machineRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginRefs
-        ).toStrictEqual([otherRef]);
+        expect(machineRepo.getCurrent()?.getNativeRegistrations(claude)?.pluginRefs).toStrictEqual([
+          otherRef,
+        ]);
     }
   );
 
@@ -217,9 +220,9 @@ describe("native plugin ownership follows the host's activation scope", () => {
     const alias = "user-catalog";
     const ref = "test-plugin@real-catalog";
     const user = Manifest.create();
-    user.addTool("claude", "1.0.0", []);
+    user.addTool(claude, "1.0.0", []);
     user.addPlugin(
-      "claude",
+      claude,
       InstalledPlugin.fromMetadata(
         "test-plugin",
         "1.0.0",
@@ -255,16 +258,16 @@ describe("native plugin ownership follows the host's activation scope", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       freshHostCatalogs(),
       () => "",
       undefined,
       undefined,
       undefined,
-      readablePlugins("claude"),
+      readablePlugins(claude),
       userRepo,
-      freshNativeSources("claude", activator, new Map([["/built/claude", "real-catalog"]]))
+      freshNativeSources(claude, activator, new Map([["/built/claude", "real-catalog"]]))
     );
 
     const result = await sync.execute({
@@ -277,23 +280,23 @@ describe("native plugin ownership follows the host's activation scope", () => {
     expect(result.errors).toEqual([]);
     expect(activator.enabledPlugins).toEqual([ref]);
     expect(activator.enabledPluginScopes).toEqual(["user"]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(claude)?.marketplaces).toEqual([
       {
         alias,
         hostName: "real-catalog",
         provenance: { kind: "registry", source: "/built/claude" },
       },
     ]);
-    expect(userRepo.getCurrent()?.getNativeRegistrations("claude")?.pluginClaims).toEqual([
+    expect(userRepo.getCurrent()?.getNativeRegistrations(claude)?.pluginClaims).toEqual([
       { ref, dependents: [] },
     ]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations("claude")).toBeUndefined();
+    expect(projectRepo.getCurrent()?.getNativeRegistrations(claude)).toBeUndefined();
   });
 
   it("records only the user-scope marketplace in the machine manifest when a project syncs both scopes", async () => {
     const projectRoot = "/project";
     const project = Manifest.create();
-    project.addTool("claude", "1.0.0", []);
+    project.addTool(claude, "1.0.0", []);
     const projectRepo = new InMemoryManifestRepository(project);
     const machineRepo = new InMemoryManifestRepository(Manifest.create());
     const registry = new InMemoryMarketplaceRegistry();
@@ -330,7 +333,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       {
         execute: async ({ marketplace }) => ({
           builtDir: `/built/${marketplace.name}`,
@@ -346,7 +349,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       readableHostPlugins(),
       machineRepo,
       freshNativeSources(
-        "claude",
+        claude,
         activator,
         new Map([
           ["/built/user-alias", "real-user"],
@@ -360,7 +363,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
     expect(result.errors).toEqual([]);
     const projectMarketplaces = projectRepo
       .getCurrent()
-      ?.getNativeRegistrations("claude")?.marketplaces;
+      ?.getNativeRegistrations(claude)?.marketplaces;
     expect(projectMarketplaces).toHaveLength(2);
     expect(projectMarketplaces).toEqual(
       expect.arrayContaining([
@@ -376,7 +379,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         },
       ])
     );
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual([
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(claude)?.marketplaces).toEqual([
       {
         alias: "user-alias",
         hostName: "real-user",
@@ -390,9 +393,9 @@ describe("native plugin ownership follows the host's activation scope", () => {
     const marketplaceName = "local-catalog";
     const ref = "test-plugin@real-catalog";
     const project = Manifest.create();
-    project.addTool("codex", "1.0.0", []);
+    project.addTool(codex, "1.0.0", []);
     project.addPlugin(
-      "codex",
+      codex,
       InstalledPlugin.fromMetadata(
         "test-plugin",
         "1.0.0",
@@ -404,7 +407,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
     );
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
+    machine.addTool(codex, "1.0.0", []);
     const older = {
       alias: marketplaceName,
       hostName: "older-catalog",
@@ -416,7 +419,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       },
     };
     const otherRef = "unrelated-plugin@older-catalog";
-    machine.setNativeRegistrations("codex", {
+    machine.setNativeRegistrations(codex, {
       binary: "codex",
       marketplaces: [older],
       pluginRefs: [otherRef],
@@ -451,31 +454,29 @@ describe("native plugin ownership follows the host's activation scope", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]]),
+      new Map([[codex, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
       undefined,
       undefined,
       undefined,
-      readablePlugins("codex"),
+      readablePlugins(codex),
       machineRepo,
-      freshNativeSources("codex", activator, new Map([["/built/codex", "real-catalog"]]))
+      freshNativeSources(codex, activator, new Map([["/built/codex", "real-catalog"]]))
     );
 
     const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
 
     expect(result.activated).toEqual(["codex"]);
     expect(activator.enabledPlugins).toEqual([ref]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([ref]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([ref]);
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: otherRef, dependents: ["/B"] },
       { ref, dependents: ["/B", "/resolved-codex-project"] },
     ]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([
-      otherRef,
-    ]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toEqual([
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([otherRef]);
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.marketplaces).toEqual([
       older,
       {
         alias: marketplaceName,
@@ -490,7 +491,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
     ]);
 
     await sync.execute({ tools: registeredCatalog(), projectRoot });
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: otherRef, dependents: ["/B"] },
       { ref, dependents: ["/B", "/resolved-codex-project"] },
     ]);
@@ -499,10 +500,10 @@ describe("native plugin ownership follows the host's activation scope", () => {
   it("preserves another machine-owned marketplace claim during a narrowed sync", async () => {
     const projectRoot = "/codex-project";
     const project = Manifest.create();
-    project.addTool("codex", "1.0.0", []);
+    project.addTool(codex, "1.0.0", []);
     for (const alias of ["market-a", "market-b"]) {
       project.addPlugin(
-        "codex",
+        codex,
         InstalledPlugin.fromMetadata(
           `plugin-${alias.at(-1)}`,
           "1.0.0",
@@ -546,7 +547,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]]),
+      new Map([[codex, activator]]),
       {
         execute: async ({ marketplace }) => ({
           builtDir: `/built/${marketplace.name}`,
@@ -559,10 +560,10 @@ describe("native plugin ownership follows the host's activation scope", () => {
       undefined,
       undefined,
       undefined,
-      readablePlugins("codex"),
+      readablePlugins(codex),
       machineRepo,
       freshNativeSources(
-        "codex",
+        codex,
         activator,
         new Map([
           ["/built/market-a", "real-a"],
@@ -583,11 +584,11 @@ describe("native plugin ownership follows the host's activation scope", () => {
     });
 
     expect(activator.enabledPlugins).toEqual(["plugin-b@real-b", "plugin-a@real-a"]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([
+    expect(projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([
       "plugin-b@real-b",
       "plugin-a@real-a",
     ]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: "plugin-b@real-b", dependents: [projectRoot] },
       { ref: "plugin-a@real-a", dependents: [projectRoot] },
     ]);
@@ -601,9 +602,9 @@ describe("native plugin ownership follows the host's activation scope", () => {
     const alias = "local-catalog";
     const ref = "test-plugin@real-catalog";
     const project = Manifest.create();
-    project.addTool("codex", "1.0.0", []);
+    project.addTool(codex, "1.0.0", []);
     project.addPlugin(
-      "codex",
+      codex,
       InstalledPlugin.fromMetadata(
         "test-plugin",
         "1.0.0",
@@ -615,8 +616,8 @@ describe("native plugin ownership follows the host's activation scope", () => {
     );
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(codex, "1.0.0", []);
+    machine.setNativeRegistrations(codex, {
       binary: "codex",
       marketplaces: [{ alias, hostName: "real-catalog" }],
       pluginRefs: [],
@@ -647,30 +648,30 @@ describe("native plugin ownership follows the host's activation scope", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]]),
+      new Map([[codex, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
       undefined,
       undefined,
       undefined,
-      readablePlugins("codex"),
+      readablePlugins(codex),
       machineRepo,
-      freshNativeSources("codex", activator, new Map([["/built/codex", "real-catalog"]]))
+      freshNativeSources(codex, activator, new Map([["/built/codex", "real-catalog"]]))
     );
 
     const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
 
     expect(result.errors).toEqual([]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs ?? []).toEqual([]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs ?? []).toEqual([]);
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref, dependents: ["/A"] },
     ]);
     if (failure.available) {
       expect(result.warnings).toEqual([expect.stringContaining("enable plugin")]);
       expect(activator.enabledPlugins).toEqual([]);
     } else {
-      expect(result.binaryMissing).toEqual([{ toolId: "codex", binary: "codex" }]);
+      expect(result.binaryMissing).toEqual([{ toolId: codex, binary: "codex" }]);
       expect(activator.addedMarketplaces).toEqual([]);
     }
   });
@@ -679,9 +680,9 @@ describe("native plugin ownership follows the host's activation scope", () => {
     const projectRoot = "/B";
     const alias = "local-catalog";
     const project = Manifest.create();
-    project.addTool("codex", "1.0.0", []);
+    project.addTool(codex, "1.0.0", []);
     project.addPlugin(
-      "codex",
+      codex,
       InstalledPlugin.fromMetadata(
         "test-plugin",
         "1.0.0",
@@ -722,14 +723,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]]),
+      new Map([[codex, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
       undefined,
       undefined,
       undefined,
-      new Map([["codex", hostReader]]),
+      new Map([[codex, hostReader]]),
       machineRepo
     );
 
@@ -737,10 +738,8 @@ describe("native plugin ownership follows the host's activation scope", () => {
 
     expect(result.errors).toEqual([{ scope: "codex", message: "host plugin registry unreadable" }]);
     expect(activator.enabledPlugins).toEqual([]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs ?? []).toEqual([]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims ?? []).toEqual(
-      []
-    );
+    expect(projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs ?? []).toEqual([]);
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims ?? []).toEqual([]);
   });
 
   it("does not attach to a foreign enabled host ref just because another catalog has the same plugin name", async () => {
@@ -749,9 +748,9 @@ describe("native plugin ownership follows the host's activation scope", () => {
     const requestedRef = "test-plugin@real-catalog";
     const otherRef = "test-plugin@other-catalog";
     const project = Manifest.create();
-    project.addTool("codex", "1.0.0", []);
+    project.addTool(codex, "1.0.0", []);
     project.addPlugin(
-      "codex",
+      codex,
       InstalledPlugin.fromMetadata(
         "test-plugin",
         "1.0.0",
@@ -763,8 +762,8 @@ describe("native plugin ownership follows the host's activation scope", () => {
     );
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(codex, "1.0.0", []);
+    machine.setNativeRegistrations(codex, {
       binary: "codex",
       marketplaces: [{ alias: "other", hostName: "other-catalog" }],
       pluginRefs: [],
@@ -801,14 +800,14 @@ describe("native plugin ownership follows the host's activation scope", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]]),
+      new Map([[codex, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
       undefined,
       undefined,
       undefined,
-      new Map([["codex", hostReader]]),
+      new Map([[codex, hostReader]]),
       machineRepo
     );
 
@@ -816,8 +815,8 @@ describe("native plugin ownership follows the host's activation scope", () => {
 
     expect(result.errors).toEqual([]);
     expect(activator.enabledPlugins).toEqual([]);
-    expect(projectRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs).toEqual([]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs).toEqual([]);
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: otherRef, dependents: ["/A"] },
     ]);
   });

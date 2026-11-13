@@ -10,6 +10,7 @@ import {
 } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../../../src/shared/domain/file.js";
 import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
+import { TOOL } from "../../../../tools/testing/catalog-of.js";
 
 const PLUGINS_DIR = join(REPOSITORY_ROOT, "plugins");
 
@@ -34,7 +35,7 @@ function makeTelemetryLikeDist(): PluginDistribution {
   ];
   return new PluginDistribution({
     manifest: { name: PLUGIN_NAME, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: skills,
     components: { commands: [], agents: [], rules: [], skills, hooks: [], mcp: [] },
   });

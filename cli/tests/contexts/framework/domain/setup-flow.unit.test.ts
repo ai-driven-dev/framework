@@ -8,7 +8,7 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../../../src/shared/domain/errors.js";
-import { registeredToolIds } from "../../tools/testing/catalog-of.js";
+import { registeredToolIds, TOOL } from "../../tools/testing/catalog-of.js";
 
 const ROOT = "/project";
 
@@ -24,17 +24,18 @@ function makeFlow(overrides: Partial<ConstructorParameters<typeof SetupFlow>[0]>
 describe("SetupFlow", () => {
   describe("constructor validation", () => {
     it("throws InvalidSetupToolIdError for unknown AI tool IDs, naming every valid one", () => {
-      expect(() => makeFlow({ aiTools: ["unknown-tool" as "claude"] })).toThrow(
-        InvalidSetupToolIdError
-      );
-      expect(() => makeFlow({ aiTools: ["unknown-tool" as "claude"] })).toThrow(
+      // @ts-expect-error an unregistered name is not an AI tool id
+      expect(() => makeFlow({ aiTools: ["unknown-tool"] })).toThrow(InvalidSetupToolIdError);
+      // @ts-expect-error an unregistered name is not an AI tool id
+      expect(() => makeFlow({ aiTools: ["unknown-tool"] })).toThrow(
         'Invalid tool ID: "unknown-tool". Valid IDs: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode'
       );
     });
 
     it("refuses an unknown tool ID before it looks at the plugin mode", () => {
       expect(() =>
-        makeFlow({ ideTools: ["nope" as "vscode"], pluginMode: "named", pluginNames: [] })
+        // @ts-expect-error an unregistered name is not an IDE tool id
+        makeFlow({ ideTools: ["nope"], pluginMode: "named", pluginNames: [] })
       ).toThrow(InvalidSetupToolIdError);
     });
 
@@ -51,7 +52,7 @@ describe("SetupFlow", () => {
     });
 
     it("constructs successfully with valid params", () => {
-      const flow = makeFlow({ aiTools: ["claude"], pluginMode: "none" });
+      const flow = makeFlow({ aiTools: [TOOL.claude], pluginMode: "none" });
       expect(flow.projectRoot).toBe(ROOT);
       expect(flow.aiTools).toEqual(["claude"]);
     });
@@ -108,17 +109,17 @@ describe("SetupFlow", () => {
     });
 
     it("carries user through when asked", () => {
-      expect(makeFlow({ scope: "user", aiTools: ["claude"] }).scope).toBe("user");
+      expect(makeFlow({ scope: "user", aiTools: [TOOL.claude] }).scope).toBe("user");
     });
 
     it("refuses an IDE tool at user scope — an IDE tool has no user scope to install at", () => {
-      expect(() => makeFlow({ scope: "user", ideTools: ["vscode"] })).toThrow(
+      expect(() => makeFlow({ scope: "user", ideTools: [TOOL.vscode] })).toThrow(
         UserScopeIdeToolsError
       );
     });
 
     it("accepts an IDE tool at project scope, unaffected", () => {
-      expect(() => makeFlow({ scope: "project", ideTools: ["vscode"] })).not.toThrow();
+      expect(() => makeFlow({ scope: "project", ideTools: [TOOL.vscode] })).not.toThrow();
     });
 
     it("refuses --scope user with no --ai — nothing would be registered for any tool", () => {
@@ -133,26 +134,28 @@ describe("SetupFlow", () => {
       expect(() =>
         makeFlow({
           scope: "user",
-          aiTools: ["kilo", "claude"],
+          aiTools: [TOOL.kilo, TOOL.claude],
           supportsUserScopeActivation: (id) => id !== "kilo",
         })
       ).toThrow(UserScopeUnsupportedAiToolsError);
     });
 
     it("accepts AI tools the answer says have a user-scope activation", () => {
-      expect(() => makeFlow({ scope: "user", aiTools: ["kilo", "claude"] })).not.toThrow();
+      expect(() => makeFlow({ scope: "user", aiTools: [TOOL.kilo, TOOL.claude] })).not.toThrow();
     });
 
     it("refuses an interactive plugin pick at --scope user — there is no project to ask in", () => {
       expect(() =>
-        makeFlow({ scope: "user", aiTools: ["claude"], pluginMode: "interactive" })
+        makeFlow({ scope: "user", aiTools: [TOOL.claude], pluginMode: "interactive" })
       ).toThrow(UserScopePluginModeError);
     });
 
     it.each(["all", "recommended", "none"] as const)(
       "accepts --plugins %s at --scope user",
       (pluginMode) => {
-        expect(() => makeFlow({ scope: "user", aiTools: ["opencode"], pluginMode })).not.toThrow();
+        expect(() =>
+          makeFlow({ scope: "user", aiTools: [TOOL.opencode], pluginMode })
+        ).not.toThrow();
       }
     );
   });

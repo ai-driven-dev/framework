@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { printNativeActivation } from "../../../src/presentation/display/restore-display.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 describe("printNativeActivation", () => {
@@ -15,8 +16,8 @@ describe("printNativeActivation", () => {
     const output = new CapturingOutput(false);
 
     printNativeActivation(output, [
-      { toolId: "claude", binary: "claude" },
-      { toolId: "codex", binary: "codex" },
+      { toolId: TOOL.claude, binary: "claude" },
+      { toolId: TOOL.codex, binary: "codex" },
     ]);
 
     expect(output.lines).toEqual([
