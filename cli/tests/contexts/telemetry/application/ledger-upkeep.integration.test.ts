@@ -10,8 +10,8 @@ import {
   partitionByDay,
   type StoredUsage,
 } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
+import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/filesystem/private-storage-adapter.js";
 
 let root: string;
 

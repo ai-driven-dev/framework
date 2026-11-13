@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { readTextIfPresent } from "../../../../kernel/reading/text-file.js";
-import type { PrivateStorage } from "../../../../shared/ports/private-storage.js";
 import {
   type ConsentEvent,
   type ConsentRecords,
@@ -8,6 +7,7 @@ import {
   renderConsentEvent,
 } from "../../domain/consent/consent-history.js";
 import type { ConsentHistory } from "../../domain/ports/consent-history.js";
+import type { PrivateStorage } from "../../domain/ports/private-storage.js";
 
 /** `consents.jsonl`, in the ledger directory: append-only, one event a line, written by the CLI
  * and, to close an interval, by the plugin's hooks. It is not kept in the clone, so it outlives

@@ -41,6 +41,7 @@ import { GitUserSourceAdapter } from "../../contexts/telemetry/infrastructure/id
 import { PersonIdentityAdapter } from "../../contexts/telemetry/infrastructure/identity/person-identity-adapter.js";
 import { RepositoryAliasStoreAdapter } from "../../contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
 import { ResolutionStoreAdapter } from "../../contexts/telemetry/infrastructure/resolution-store-adapter.js";
+import { PrivateStorageAdapter } from "../../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { ClaudeSettingsAdapter } from "../../contexts/telemetry/infrastructure/switch/claude-settings-adapter.js";
 import { LegacyHookAdapter } from "../../contexts/telemetry/infrastructure/switch/legacy-hook-adapter.js";
 import { ProjectConfigAdapter } from "../../contexts/telemetry/infrastructure/switch/project-config-adapter.js";
@@ -50,7 +51,6 @@ import {
   codexSessionRoots,
 } from "../../contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
 import { UsageLedgerAdapter } from "../../contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../shared/infrastructure/filesystem/private-storage-adapter.js";
 import { userConfigDirOf } from "../../shared/infrastructure/user-config-dir.js";
 
 export interface TelemetryDeps {

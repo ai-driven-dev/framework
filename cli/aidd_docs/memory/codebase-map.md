@@ -40,6 +40,7 @@ src/
 │   │   │   ├── plugins/
 │   │   │   └── ports/
 │   │   └── infrastructure/
+│   │       └── assets/    # configs inlined at build time, schemas copied beside the binary
 │   ├── recipes/    # checking a recipe's structure, examples and local links
 │   │   ├── application/
 │   │   ├── domain/
@@ -96,6 +97,7 @@ src/
 │   │       ├── identity/    # the identity file in the telemetry dir
 │   │       ├── legacy/    # the table of ids an earlier version gave repositories, beside the ledger
 │   │       ├── left-out/    # what ingests measured and could not store, by hash, beside the ledger
+│   │       ├── storage/    # the owner-only private storage under the telemetry dir
 │   │       ├── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings; the clone's consent in git config is `git-consent-adapter.ts`, beside this folder
 │   │       └── transcripts/    # reading each tool's session files a block at a time; the Codex source
 │   ├── translate/    # canonical source to target-native content
@@ -116,7 +118,6 @@ src/
 │   └── reading/    # getting at a file's location and its content safely
 ├── shared/    # technology ports and their adapters. Imports no context
 │   ├── infrastructure/    # adapters of the shared ports, imported by the composition root only
-│   │   └── filesystem/    # reading and writing files: the file adapter, its hasher, the atomic write, the owner-only storage
 │   └── ports/    # a technology port two or more contexts need
 ├── presentation/    # everything that talks to a human — depends on contexts, never the reverse
 │   ├── commands/    # one file per command, wiring only

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { InstallConfigUseCase } from "../../../../../src/contexts/framework/application/install/install-config-use-case.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";

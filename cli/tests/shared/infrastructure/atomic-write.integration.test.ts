@@ -2,9 +2,9 @@ import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { atomicWriteFile } from "../../../../src/shared/infrastructure/filesystem/atomic-write.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/filesystem/hasher-adapter.js";
-import { PlatformAdapter } from "../../../../src/shared/infrastructure/platform-adapter.js";
+import { HasherAdapter } from "../../../src/contexts/framework/infrastructure/hasher-adapter.js";
+import { PlatformAdapter } from "../../../src/contexts/framework/infrastructure/platform-adapter.js";
+import { atomicWriteFile } from "../../../src/shared/infrastructure/atomic-write.js";
 
 describe("atomicWriteFile", () => {
   let tempDir: string;

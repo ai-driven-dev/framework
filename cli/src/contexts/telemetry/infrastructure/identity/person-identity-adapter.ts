@@ -1,12 +1,12 @@
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import { readTextIfPresent } from "../../../../kernel/reading/text-file.js";
-import type { PrivateStorage } from "../../../../shared/ports/private-storage.js";
 import {
   parsePersonIdentity,
   renderPersonIdentity,
 } from "../../domain/identity/person-identity.js";
 import type { PersonIdentityStore } from "../../domain/ports/identity/person-identity-store.js";
+import type { PrivateStorage } from "../../domain/ports/private-storage.js";
 
 /** `identity.json` in the telemetry directory, owner-only. It is looked for nowhere else:
  * the previous version kept its own beside the user configuration and none of it is read. */

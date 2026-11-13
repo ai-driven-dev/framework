@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   PrivateStorageAdapter,
   type PrivateStorageHost,
-} from "../../../../src/shared/infrastructure/filesystem/private-storage-adapter.js";
+} from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 
 const posix = process.platform === "win32" ? it.skip : it;
 let dir: string;

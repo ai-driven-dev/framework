@@ -3,12 +3,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
+import { HasherAdapter } from "../../../../src/contexts/framework/infrastructure/hasher-adapter.js";
 import {
   InvalidPluginManifestError,
   MalformedMarketplaceCatalogError,
 } from "../../../../src/kernel/errors.js";
-import { FileAdapter } from "../../../../src/shared/infrastructure/filesystem/file-adapter.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/filesystem/hasher-adapter.js";
+import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
 const COPILOT_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/copilot-format");

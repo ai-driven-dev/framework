@@ -10,6 +10,9 @@ import { InstallIdeConfigUseCase } from "../../../../src/contexts/framework/appl
 import { InstallRuntimeConfigUseCase } from "../../../../src/contexts/framework/application/install/install-runtime-config-use-case.js";
 import { PostInstallPipelineUseCase } from "../../../../src/contexts/framework/application/install/post-install-pipeline-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
+import type { Platform } from "../../../../src/contexts/framework/domain/ports/platform.js";
+import { BundledAssetProviderAdapter } from "../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
+import { HasherAdapter } from "../../../../src/contexts/framework/infrastructure/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import type { Prompter } from "../../../../src/kernel/ports/prompter.js";
@@ -17,11 +20,8 @@ import type { VersionReader } from "../../../../src/kernel/ports/version-reader.
 import { isIdeToolId, type ToolId } from "../../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../../../src/presentation/terminal/prompter-adapter.js";
-import { BundledAssetProviderAdapter } from "../../../../src/shared/infrastructure/asset-loader.js";
 import { CurrentVersionAdapter } from "../../../../src/shared/infrastructure/current-version-adapter.js";
-import { FileAdapter } from "../../../../src/shared/infrastructure/filesystem/file-adapter.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/filesystem/hasher-adapter.js";
-import type { Platform } from "../../../../src/shared/ports/platform.js";
+import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 export const linuxPlatform: Platform = { current: () => "linux" };

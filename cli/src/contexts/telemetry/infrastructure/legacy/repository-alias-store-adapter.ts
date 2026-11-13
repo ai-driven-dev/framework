@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { readTextIfPresent } from "../../../../kernel/reading/text-file.js";
-import type { PrivateStorage } from "../../../../shared/ports/private-storage.js";
 import {
   parseRepositoryAliases,
   type RepositoryAliases,
   renderRepositoryAliases,
 } from "../../domain/legacy/repository-aliases.js";
+import type { PrivateStorage } from "../../domain/ports/private-storage.js";
 import type { RepositoryAliasStore } from "../../domain/ports/repository-alias-store.js";
 
 /** `repository-ids.json`, beside the ledger. */

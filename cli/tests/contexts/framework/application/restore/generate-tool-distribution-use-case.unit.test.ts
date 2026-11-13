@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { GenerateToolDistributionUseCase } from "../../../../../src/contexts/framework/application/restore/generate-tool-distribution-use-case.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
 import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";

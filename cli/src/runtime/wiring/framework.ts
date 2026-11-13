@@ -69,7 +69,10 @@ import { UninstallToolsUseCase } from "../../contexts/framework/application/unin
 import { UninstallUseCase } from "../../contexts/framework/application/uninstall/uninstall-use-case.js";
 import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../contexts/framework/domain/ports/user-source-references.js";
+import { BundledAssetProviderAdapter } from "../../contexts/framework/infrastructure/assets/asset-loader.js";
+import { HasherAdapter } from "../../contexts/framework/infrastructure/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/manifest-repository-adapter.js";
+import { PlatformAdapter } from "../../contexts/framework/infrastructure/platform-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
@@ -90,14 +93,11 @@ import {
   InquirerPrompterAdapter,
   SilentPrompterAdapter,
 } from "../../presentation/terminal/prompter-adapter.js";
-import { BundledAssetProviderAdapter } from "../../shared/infrastructure/asset-loader.js";
+import { atomicWriteFile } from "../../shared/infrastructure/atomic-write.js";
 import { CurrentVersionAdapter } from "../../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
-import { atomicWriteFile } from "../../shared/infrastructure/filesystem/atomic-write.js";
-import { FileAdapter } from "../../shared/infrastructure/filesystem/file-adapter.js";
-import { HasherAdapter } from "../../shared/infrastructure/filesystem/hasher-adapter.js";
+import { FileAdapter } from "../../shared/infrastructure/file-adapter.js";
 import { HttpClient } from "../../shared/infrastructure/http-client.js";
-import { PlatformAdapter } from "../../shared/infrastructure/platform-adapter.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Environment } from "../../shared/ports/environment.js";
 import type { FileMerger } from "../../shared/ports/file-merger.js";

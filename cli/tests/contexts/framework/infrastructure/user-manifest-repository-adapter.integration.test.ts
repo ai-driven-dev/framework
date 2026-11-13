@@ -6,7 +6,7 @@ import { setTimeout as pause } from "node:timers/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { UserManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/user-manifest-repository-adapter.js";
-import { atomicWriteFile } from "../../../../src/shared/infrastructure/filesystem/atomic-write.js";
+import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
 
 describe("UserManifestRepositoryAdapter", () => {
   let userConfigDir: string;

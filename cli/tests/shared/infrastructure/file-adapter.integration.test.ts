@@ -8,9 +8,9 @@ vi.mock("node:fs/promises", async (importOriginal) => {
   return { ...actual, rename: vi.fn(actual.rename) };
 });
 
-import { FileAdapter } from "../../../../src/shared/infrastructure/filesystem/file-adapter.js";
-import { HasherAdapter } from "../../../../src/shared/infrastructure/filesystem/hasher-adapter.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
+import { HasherAdapter } from "../../../src/contexts/framework/infrastructure/hasher-adapter.js";
+import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 
 // What the file port contract cannot observe stays here: the rename step, the stop at a
 // directory the filesystem refuses to remove, and what the adapter tells its logger.

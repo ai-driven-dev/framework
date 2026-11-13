@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
+import { BundledAssetProviderAdapter } from "../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
 import type { FrameworkBuildMode } from "../../../src/contexts/tools/contract/tool-profile.js";
 import {
   buildTargetModesOf,
@@ -7,7 +8,6 @@ import {
 } from "../../../src/contexts/translate/domain/build-target.js";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { createFrameworkBuildUseCase } from "../../../src/runtime/wiring/translate.js";
-import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";

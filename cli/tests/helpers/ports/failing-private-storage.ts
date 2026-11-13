@@ -1,5 +1,5 @@
-import { PrivateStorageAdapter } from "../../../src/shared/infrastructure/filesystem/private-storage-adapter.js";
-import type { PrivateStorage } from "../../../src/shared/ports/private-storage.js";
+import type { PrivateStorage } from "../../../src/contexts/telemetry/domain/ports/private-storage.js";
+import { PrivateStorageAdapter } from "../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 
 /** Storage whose `n`-th replace fails, as a crash between two writes would leave it. */
 export class FailingStorage implements PrivateStorage {

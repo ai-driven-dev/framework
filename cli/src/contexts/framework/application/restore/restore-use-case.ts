@@ -8,7 +8,6 @@ import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
-import type { Platform } from "../../../../shared/ports/platform.js";
 import type { PluginFetcher } from "../../../distribution/ports/plugin-fetcher.js";
 import {
   CONFIG_MCP,
@@ -22,6 +21,7 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { FRAMEWORK_CONFIG_PREFIX, FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import type { Platform } from "../../domain/ports/platform.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
 import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
 import {

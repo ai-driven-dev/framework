@@ -4,9 +4,9 @@ import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { Platform } from "../../../../shared/ports/platform.js";
 import { CONFIG_MCP, type ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ConfigWrite, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
+import type { Platform } from "../../domain/ports/platform.js";
 
 interface InstallConfigOptions {
   writes: readonly ConfigWrite[];

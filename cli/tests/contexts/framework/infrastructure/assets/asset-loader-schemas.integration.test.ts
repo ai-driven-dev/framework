@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { wireTools } from "../../../src/composition/tools.js";
-import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
-import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
+import { wireTools } from "../../../../../src/composition/tools.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
+import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 
 const SCHEMAS = join(REPOSITORY_ROOT, "cli", "assets", "schemas");
 

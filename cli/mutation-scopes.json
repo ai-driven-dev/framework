@@ -44,7 +44,8 @@
       "mutate": [
         "src/contexts/telemetry/**/*.ts",
         "src/presentation/display/telemetry/**/*.ts",
-        "!src/contexts/telemetry/infrastructure/git/**/*.ts"
+        "!src/contexts/telemetry/infrastructure/git/**/*.ts",
+        "!src/contexts/telemetry/infrastructure/storage/**/*.ts"
       ],
       "break": 96,
       "shards": 3
@@ -59,7 +60,12 @@
       "break": 82
     },
     "framework": {
-      "mutate": "src/contexts/framework/**/*.ts",
+      "mutate": [
+        "src/contexts/framework/**/*.ts",
+        "!src/contexts/framework/infrastructure/hasher-adapter.ts",
+        "!src/contexts/framework/infrastructure/platform-adapter.ts",
+        "!src/contexts/framework/infrastructure/assets/**/*.ts"
+      ],
       "break": 92,
       "shards": 4
     },
@@ -77,20 +83,22 @@
         "src/runtime/**/*.ts",
         "src/presentation/terminal/prompter-adapter.ts",
         "src/presentation/project-root.ts",
-        "src/shared/infrastructure/filesystem/**/*.ts",
-        "src/shared/infrastructure/asset-loader.ts",
-        "src/shared/infrastructure/platform-adapter.ts",
+        "src/shared/infrastructure/atomic-write.ts",
+        "src/shared/infrastructure/file-adapter.ts",
         "src/shared/infrastructure/user-config-dir.ts",
-        "src/contexts/telemetry/infrastructure/git/**/*.ts"
+        "src/contexts/framework/infrastructure/hasher-adapter.ts",
+        "src/contexts/framework/infrastructure/platform-adapter.ts",
+        "src/contexts/framework/infrastructure/assets/**/*.ts",
+        "src/contexts/telemetry/infrastructure/git/**/*.ts",
+        "src/contexts/telemetry/infrastructure/storage/**/*.ts"
       ],
       "break": 90
     },
     "shared": {
       "mutate": [
         "src/shared/**/*.ts",
-        "!src/shared/infrastructure/filesystem/**/*.ts",
-        "!src/shared/infrastructure/asset-loader.ts",
-        "!src/shared/infrastructure/platform-adapter.ts",
+        "!src/shared/infrastructure/atomic-write.ts",
+        "!src/shared/infrastructure/file-adapter.ts",
         "!src/shared/infrastructure/user-config-dir.ts"
       ],
       "break": 95

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { isErrnoException, tryParseJson } from "../../../kernel/reading/json-file.js";
 import { asPlainObject } from "../../../kernel/reading/plain-object.js";
 import { modifiedAtIfPresent, readTextIfPresent } from "../../../kernel/reading/text-file.js";
-import type { PrivateStorage } from "../../../shared/ports/private-storage.js";
+import type { PrivateStorage } from "../domain/ports/private-storage.js";
 
 export interface LockOptions {
   readonly pid: number;
