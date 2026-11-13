@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.5.1](https://github.com/ai-driven-dev/framework/compare/aidd-vcs-v2.5.0...aidd-vcs-v2.5.1) (2026-11-13)
+
+
+### Bug Fixes
+
+* **aidd-vcs:** name the resolve-conflict skill after its folder ([#1148](https://github.com/ai-driven-dev/framework/issues/1148)) ([ef2dae4](https://github.com/ai-driven-dev/framework/commit/ef2dae421c89aeb7c52461539b78c6b53bfdf988))
+
+
+### Documentation
+
+* rewrite the documentation set by audience ([#1131](https://github.com/ai-driven-dev/framework/issues/1131)) ([b90bffa](https://github.com/ai-driven-dev/framework/commit/b90bffada166c69f4e3952dd5e56abfcad540264))
+
 ## [2.5.0](https://github.com/ai-driven-dev/framework/compare/aidd-vcs-v2.4.0...aidd-vcs-v2.5.0) (2026-10-16)
 
 
