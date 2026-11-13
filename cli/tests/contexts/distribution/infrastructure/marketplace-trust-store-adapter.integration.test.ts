@@ -36,7 +36,7 @@ describe("MarketplaceTrustStoreAdapter", () => {
     expect(parsed.trusted).toHaveLength(1);
   });
 
-  it("is idempotent — calling twice does not duplicate", async () => {
+  it("is idempotent: calling twice does not duplicate", async () => {
     await store.trust(projectRoot, githubSource);
     await store.trust(projectRoot, githubSource);
 

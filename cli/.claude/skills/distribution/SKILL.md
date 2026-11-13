@@ -24,7 +24,7 @@ plugin's own content and how it gets translated are someone else's job once it h
 | A cached catalog fetch | `ports/marketplace-cache.ts` |
 | The plugin catalog shape | `domain/catalog.ts` (the Claude-shaped parser lives here too) |
 | A reader for a non-Claude catalog shape | `domain/catalog-parsers/` |
-| A port this context's callers hold | `ports/` — registry, cache, trust-store, catalog-repository, fetcher, raw-catalog-fetcher, marketplace-remover, release-lister, repository-visibility |
+| A port this context's callers hold | `ports/`: registry, cache, trust-store, catalog-repository, fetcher, raw-catalog-fetcher, marketplace-remover, release-lister, repository-visibility |
 | Add / list / refresh / register / resolve / fetch a marketplace source | `application/` |
 | The concrete adapter behind a port | `infrastructure/` |
 

@@ -173,7 +173,7 @@ export const BASELINE: readonly {
   // Three framework orchestrators still name the prompt classes they are handed, type-only.
   // Inverting them into a port is a design change, so the edge is measured rather than moved.
   { edge: "framework->presentation", imports: 4, files: 3 },
-  // Platform: an interface a context may depend on, sitting in the wrong place — a port two
+  // Platform: an interface a context may depend on, sitting in the wrong place, a port two
   // contexts need belongs in the kernel. Nothing concrete crosses here.
   { edge: "framework->runtime", imports: 4, files: 4 },
 ];

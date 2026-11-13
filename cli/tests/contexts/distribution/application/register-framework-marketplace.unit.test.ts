@@ -41,7 +41,7 @@ describe("RegisterFrameworkMarketplace", () => {
     expect(list[0]?.source).toEqual({ kind: "local", path: "." });
   });
 
-  it("is idempotent — does not duplicate when called twice", async () => {
+  it("is idempotent: does not duplicate when called twice", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     const useCase = new RegisterFrameworkMarketplace(registry);
 

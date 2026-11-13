@@ -155,9 +155,10 @@ describe("biome carries the exit and default-export rules", () => {
 });
 
 /** What distribution's layers must not import, and the layers that try it. */
+const DISTRIBUTION_LAYERS = ["domain", "ports", "application", "infrastructure"] as const;
 const DISTRIBUTION_REACHES = [
-  ["framework", ["domain", "application", "infrastructure"]],
-  ["runtime", ["application", "infrastructure"]],
+  ["framework", DISTRIBUTION_LAYERS],
+  ["runtime", DISTRIBUTION_LAYERS],
 ] as const;
 const distributionReaches = (): string[] =>
   DISTRIBUTION_REACHES.flatMap(([target, layers]) =>
@@ -197,6 +198,7 @@ describe("the guard itself", () => {
       "src/contexts/recipes/application",
       "src/contexts/recipes/infrastructure",
       "src/contexts/distribution/domain",
+      "src/contexts/distribution/ports",
       "src/contexts/distribution/application",
       "src/contexts/distribution/infrastructure",
       "src/composition",

@@ -40,7 +40,7 @@ async function buildUseCase() {
   return { useCase, registry, cache };
 }
 
-describe("RefreshMarketplace — force", () => {
+describe("RefreshMarketplace: force", () => {
   async function withRegistered(name: string) {
     const built = await buildUseCase();
     await built.registry.save(

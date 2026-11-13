@@ -139,7 +139,7 @@ src/
 - `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
 - `src/contexts/`: the nine bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
-- `src/runtime/`: services that are not a context — git, assets, filesystem — and the wiring that composes everything.
+- `src/runtime/`: services that are not a context: git, assets, filesystem, and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.
 - `assets/`: configs inlined at build time, schemas copied beside the binary.
 - `scripts/`: bundle budget, mutation runner, smoke harness, the copy check between tool profiles.

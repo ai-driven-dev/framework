@@ -34,5 +34,5 @@ paths:
 
 ## Limits
 
-- `updateVersion` is held by no contract case and the adapter's own lines are not reached by any test; the in-memory fake is the only arm. A case would be new behaviour, not a move.
+- `updateVersion` is held by no contract case and the adapter's own lines are not reached by any test; the in-memory fake is the only arm. A case would be new behaviour, not a move. Vanishes when a caller relies on it, then one adapter-arm contract case.
 - The registry case "keeps one user entry for every project" has no one-line break to plant in the adapter arm: `userPath()` takes no project argument, so there is nothing to bend. It is proven on the fake only.

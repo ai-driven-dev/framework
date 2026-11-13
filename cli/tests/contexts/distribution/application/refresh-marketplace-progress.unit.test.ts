@@ -40,7 +40,7 @@ async function buildUseCase() {
   return { useCase, registry, logger };
 }
 
-describe("RefreshMarketplace — progress output", () => {
+describe("RefreshMarketplace: progress output", () => {
   it("emits a fetching message for each marketplace being refreshed", async () => {
     const { useCase, registry, logger } = await buildUseCase();
     await registry.save(
