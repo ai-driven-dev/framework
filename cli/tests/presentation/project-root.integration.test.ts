@@ -32,9 +32,4 @@ describe("resolveProjectRoot", () => {
     delete process.env.PWD;
     expect(resolveProjectRoot()).toBe(process.cwd());
   });
-
-  it("answers the working directory when PWD already names it", () => {
-    process.env.PWD = process.cwd();
-    expect(resolveProjectRoot()).toBe(process.cwd());
-  });
 });

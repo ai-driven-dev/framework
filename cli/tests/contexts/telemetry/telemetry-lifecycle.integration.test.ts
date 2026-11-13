@@ -351,6 +351,46 @@ describe("the identifier offered at on", () => {
   });
 });
 
+describe("what AIDD_TELEMETRY=0 refuses, whichever command asks", () => {
+  it("refuses a declaration, a status and a report", async () => {
+    vi.stubEnv("AIDD_TELEMETRY", "0");
+    deps = wireTelemetry(() => box.home);
+    const refused = { status: "refused", reason: "environment" };
+
+    expect(
+      await deps.declareTaskUseCase.execute({
+        cwd: repo,
+        request: { kind: "task", task: "t", ticket: null },
+        by: "command",
+      })
+    ).toEqual(refused);
+    expect(await deps.telemetryStatusUseCase.execute(repo)).toEqual(refused);
+    expect(
+      await deps.reportUsageUseCase.execute({ axis: "day", period: { from: null, to: null } })
+    ).toEqual({ status: "refused" });
+  });
+});
+
+describe("a task declared in a session", () => {
+  it("binds that session from the moment it is declared", async () => {
+    vi.stubEnv("CLAUDE_CODE_SESSION_ID", SESSION);
+    deps = wireTelemetry(() => box.home);
+    await deps.telemetryOnUseCase.execute(repo, "keep");
+
+    await deps.declareTaskUseCase.execute({
+      cwd: repo,
+      request: { kind: "task", task: "t1", ticket: null },
+      by: "command",
+    });
+
+    expect(await deps.telemetryStatusUseCase.execute(repo)).toMatchObject({
+      status: "shown",
+      sessionId: SESSION,
+      binding: { state: "bound", source: "session-declared", task: "t1" },
+    });
+  });
+});
+
 describe("measurement starts at on", () => {
   it("does not read back what was said before opting in, though ingest had not read past it", async () => {
     await configure(BARE);

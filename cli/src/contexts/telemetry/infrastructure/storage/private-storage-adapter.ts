@@ -65,7 +65,7 @@ export class PrivateStorageAdapter implements PrivateStorage {
   async replace(path: string, content: string): Promise<void> {
     const temporary = `${path}.${process.pid}-${randomBytes(6).toString("hex")}.tmp`;
     try {
-      await writeFile(temporary, content, { encoding: "utf8", mode: 0o600 });
+      await writeFile(temporary, content, { mode: 0o600 });
       await rename(temporary, path);
     } catch (error) {
       await rm(temporary, { force: true });

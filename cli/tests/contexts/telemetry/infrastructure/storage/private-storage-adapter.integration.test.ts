@@ -1,7 +1,7 @@
 import { chmod, mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, toNamespacedPath } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   PrivateStorageAdapter,
   type PrivateStorageHost,
@@ -118,6 +118,36 @@ describe("a private directory on Windows", () => {
     await chmod(target, 0o755);
     await onWindows.ensureDirectory(target);
     expect(await mode(target)).toBe(0o755);
+  });
+});
+
+describe("a private directory on the machine itself, as Windows", () => {
+  const realPlatform = Object.getOwnPropertyDescriptor(process, "platform") as PropertyDescriptor;
+
+  afterEach(() => {
+    Object.defineProperty(process, "platform", realPlatform);
+    vi.doUnmock("node:child_process");
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it("runs icacls with its output kept off the terminal", async () => {
+    const execFileSync = vi.fn();
+    vi.resetModules();
+    vi.doMock("node:child_process", () => ({ execFileSync }));
+    vi.stubEnv("USERNAME", "someone");
+    Object.defineProperty(process, "platform", { value: "win32" });
+    const { PrivateStorageAdapter: Fresh } = await import(
+      "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js"
+    );
+
+    await new Fresh().ensureDirectory(join(dir, "ledger"));
+
+    expect(execFileSync).toHaveBeenCalledWith(
+      "icacls",
+      [toNamespacedPath(join(dir, "ledger")), "/inheritance:r", "/grant:r", "someone:(OI)(CI)F"],
+      { stdio: ["ignore", "ignore", "pipe"] }
+    );
   });
 });
 

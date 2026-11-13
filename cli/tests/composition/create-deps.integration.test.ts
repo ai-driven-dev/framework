@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -125,6 +125,21 @@ describe("createDeps", () => {
         "Cannot prove AIDD ownership of user-scope marketplace 'awesome'"
       );
     });
+  });
+
+  it("builds a flat distribution through the graph's own files and assets", async () => {
+    const fixture = join(process.cwd(), "tests/fixtures/framework");
+    const { frameworkBuild } = await createDeps(root, { verbose: false }, undefined, tools);
+
+    await frameworkBuild({ target: "copilot", mode: "flat", outDir: root, force: false })?.execute({
+      sourceDir: fixture,
+      outDir: root,
+      target: "copilot",
+    });
+
+    expect(
+      await readFile(join(root, ".github", "agents", "aidd-test-code-reviewer.agent.md"), "utf8")
+    ).toContain("aidd-test-code-reviewer");
   });
 
   it("hands the menu a manifest repository rooted at the project", () => {

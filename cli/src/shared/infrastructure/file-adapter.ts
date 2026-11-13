@@ -33,10 +33,10 @@ export class FileAdapter implements FileReader, FileWriter, FileMerger {
 
   async deleteFile(path: string): Promise<void> {
     try {
-      await rm(path, { force: true });
+      await rm(path);
     } catch {
-      // `force` already covers absence; what is swallowed here is a refusal to delete
-      // something that is there, which must not fail an uninstall midway.
+      // Absence and a refusal to delete something that is there are both swallowed: neither
+      // may fail an uninstall midway.
     }
   }
 
@@ -47,22 +47,11 @@ export class FileAdapter implements FileReader, FileWriter, FileMerger {
   async deleteEmptyDirectories(path: string): Promise<void> {
     let current = path;
     while (true) {
-      let entries: string[];
-      try {
-        const dirents = await readdir(current);
-        entries = dirents;
-      } catch {
-        break;
-      }
-
-      if (entries.length > 0) break;
-
       try {
         await rmdir(current);
       } catch {
         break;
       }
-
       current = dirname(current);
     }
   }

@@ -7,6 +7,6 @@ import { rename, writeFile } from "node:fs/promises";
  * concurrent writers to the same `path` off each other's temporary file. */
 export async function atomicWriteFile(path: string, content: string): Promise<void> {
   const tmpPath = `${path}.${process.pid}-${randomBytes(6).toString("hex")}.tmp`;
-  await writeFile(tmpPath, content, "utf-8");
+  await writeFile(tmpPath, content);
   await rename(tmpPath, path);
 }
