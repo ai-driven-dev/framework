@@ -519,8 +519,8 @@ describe("every error in the catalog", () => {
       message: "Unknown AI tool: zed. Valid AI tools: claude, cursor",
     },
     {
-      build: () => new errors.ToolOrderMismatchError(["a", "b"]),
-      name: "ToolOrderMismatchError",
+      build: () => new errors.ToolListMismatchError(["a", "b"]),
+      name: "ToolListMismatchError",
       message: "Tool lists differ on: a, b.",
     },
     {

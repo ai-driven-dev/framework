@@ -6,7 +6,7 @@ import {
 } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import {
   DuplicateToolIdError,
-  ToolOrderMismatchError,
+  ToolListMismatchError,
   UnregisteredToolError,
 } from "../../../../src/shared/domain/errors.js";
 import type { AiToolId, IdeToolId } from "../../../../src/shared/domain/tool.js";
@@ -45,7 +45,7 @@ describe("the registered tool catalog", () => {
     const missing = () => new RegisteredToolCatalog(registered, CANONICAL_PROFILES);
     const extra = () => new RegisteredToolCatalog(REGISTERED_PROFILES, CANONICAL_PROFILES.slice(1));
 
-    expect(missing).toThrow(ToolOrderMismatchError);
+    expect(missing).toThrow(ToolListMismatchError);
     expect(missing).toThrow("Tool lists differ on: claude.");
     expect(extra).toThrow("Tool lists differ on: claude.");
   });

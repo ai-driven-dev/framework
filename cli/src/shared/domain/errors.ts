@@ -109,10 +109,10 @@ export class DuplicateToolIdError extends Error {
   }
 }
 
-export class ToolOrderMismatchError extends Error {
+export class ToolListMismatchError extends Error {
   constructor(toolIds: readonly string[]) {
     super(`Tool lists differ on: ${toolIds.join(", ")}.`);
-    this.name = "ToolOrderMismatchError";
+    this.name = "ToolListMismatchError";
   }
 }
 

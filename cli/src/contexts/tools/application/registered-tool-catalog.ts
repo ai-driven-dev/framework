@@ -1,6 +1,6 @@
 import {
   DuplicateToolIdError,
-  ToolOrderMismatchError,
+  ToolListMismatchError,
   UnregisteredToolError,
 } from "../../../shared/domain/errors.js";
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
@@ -26,7 +26,7 @@ export class RegisteredToolCatalog implements ToolCatalog {
       ...[...ordered].filter((id) => !this.#byId.has(id)),
     ];
     if (differing.length > 0) {
-      throw new ToolOrderMismatchError(differing);
+      throw new ToolListMismatchError(differing);
     }
     this.#canonical = canonical;
   }
