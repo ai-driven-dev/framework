@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { createDeps, createMenuDeps } from "../../../src/runtime/wiring/framework.js";
@@ -86,6 +86,42 @@ describe("createDeps", () => {
     await createDeps(root, { verbose: false }, undefined, handed);
 
     expect(walked).toBeGreaterThan(0);
+  });
+
+  describe("marketplace add --overwrite", () => {
+    const source = {
+      kind: "local" as const,
+      path: join(process.cwd(), "tests/fixtures/framework/marketplace-sample"),
+    };
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    async function registerThenOverwrite(scope: "project" | "user") {
+      vi.stubEnv("AIDD_USER_CONFIG_DIR", join(root, "user-config"));
+      const { marketplaceAddUseCase } = await createDeps(
+        root,
+        { verbose: false },
+        undefined,
+        tools
+      );
+      const command = { source, name: "awesome", scope, projectRoot: root, autoTrust: true };
+      await marketplaceAddUseCase.execute(command);
+      return marketplaceAddUseCase.execute({ ...command, overwrite: true });
+    }
+
+    it("removes a project entry through the project remover", async () => {
+      await expect(registerThenOverwrite("project")).resolves.toMatchObject({
+        marketplace: { name: "awesome", scope: "project" },
+      });
+    });
+
+    it("removes a user entry through the user remover, which proves ownership first", async () => {
+      await expect(registerThenOverwrite("user")).rejects.toThrow(
+        "Cannot prove AIDD ownership of user-scope marketplace 'awesome'"
+      );
+    });
   });
 
   it("hands the menu a manifest repository rooted at the project", () => {

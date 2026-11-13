@@ -157,6 +157,24 @@ describe("MarketplaceAddUseCase", () => {
       expect(list[0]?.name).toBe("awesome");
     });
 
+    it("with overwrite, a fetch failure leaves the previous entry removed", async () => {
+      const { useCase, registry } = await buildUseCase();
+      const source = { kind: "local" as const, path: MARKETPLACE_FIXTURE };
+      const command = { name: "awesome", scope: "project" as const, projectRoot: PROJECT_ROOT };
+      await useCase.execute({ ...command, source, autoTrust: true });
+
+      await expect(
+        useCase.execute({
+          ...command,
+          source: { kind: "local", path: "/empty-marketplace-dir" },
+          autoTrust: true,
+          overwrite: true,
+        })
+      ).rejects.toThrow(InvalidPluginManifestError);
+
+      expect(await registry.list(PROJECT_ROOT)).toHaveLength(0);
+    });
+
     it("throws InvalidPluginManifestError when marketplace.json is missing at the source", async () => {
       const { useCase } = await buildUseCase();
       const source = { kind: "local" as const, path: "/empty-marketplace-dir" };

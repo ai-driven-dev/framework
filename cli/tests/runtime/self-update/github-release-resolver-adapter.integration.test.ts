@@ -70,12 +70,6 @@ describe("GitHubReleaseResolverAdapter", () => {
       const adapter = new GitHubReleaseResolverAdapter(http);
       await expect(adapter.resolveLatest(REPO)).rejects.toThrow(CatalogFetchAuthError);
     });
-
-    it("throws CatalogFetchError on network error", async () => {
-      const http = makeHttpThrowing(new Error("ECONNREFUSED"));
-      const adapter = new GitHubReleaseResolverAdapter(http);
-      await expect(adapter.resolveLatest(REPO)).rejects.toThrow(CatalogFetchError);
-    });
   });
 
   describe("listRootReleases", () => {
@@ -122,6 +116,12 @@ describe("GitHubReleaseResolverAdapter", () => {
       const http = makeHttpThrowing(new AuthenticationError("HTTP 401"));
       const adapter = new GitHubReleaseResolverAdapter(http);
       await expect(adapter.listRootReleases(REPO)).rejects.toThrow(CatalogFetchAuthError);
+    });
+
+    it("throws CatalogFetchError on network error", async () => {
+      const http = makeHttpThrowing(new Error("ECONNREFUSED"));
+      const adapter = new GitHubReleaseResolverAdapter(http);
+      await expect(adapter.listRootReleases(REPO)).rejects.toThrow(CatalogFetchError);
     });
   });
 
