@@ -107,15 +107,17 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-write.md](skills/04-skill-generate/actions/03-write.md) | - |
 | `actions` | [04-validate.md](skills/04-skill-generate/actions/04-validate.md) | - |
 | `assets` | [action-template.md](skills/04-skill-generate/assets/action-template.md) | - |
-| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<what it produces>. Use when the user wants to <intents>. <Not for X when needed.>` |
+| `assets` | [scope-frame.md](skills/04-skill-generate/assets/scope-frame.md) | - |
+| `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<description>` |
 | `references` | [naming.md](skills/04-skill-generate/references/naming.md) | - |
-| `references` | [review-protocol.md](skills/04-skill-generate/references/review-protocol.md) | - |
-| `references` | [scope-frame.md](skills/04-skill-generate/references/scope-frame.md) | - |
+| `references` | [runtime-validation.md](skills/04-skill-generate/references/runtime-validation.md) | - |
 | `references` | [skill-authoring.md](skills/04-skill-generate/references/skill-authoring.md) | - |
 | `references` | [skill-tree.md](skills/04-skill-generate/references/skill-tree.md) | - |
 | `references` | [tool-detect.md](skills/04-skill-generate/references/tool-detect.md) | - |
 | `references` | [tool-write.md](skills/04-skill-generate/references/tool-write.md) | - |
-| `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Generate a router-based skill across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a skill, or turn a workflow into one. Not for other artifacts like rules, agents, commands, hooks.` |
+| `scripts` | [check-skill.cjs](skills/04-skill-generate/scripts/check-skill.cjs) | - |
+| `scripts` | [scaffold-skill.cjs](skills/04-skill-generate/scripts/scaffold-skill.cjs) | - |
+| `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Creates or updates a skill across the host AI tools, when the user wants to create a skill, or to refactor, rewrite or reformat an existing one.` |
 
 #### `skills/05-rule-generate`
 

@@ -1,24 +1,23 @@
-# <NN - Action title>
+# <NN> - <title>
 
-<One sentence: what this action does.>
+<result sentence>
 
 ## Input
 
-<OPTIONAL. The values this action consumes. Omit when none.>
-
-## Output
-
-<MANDATORY. One line naming what is produced.>
+<input>
 
 ## Process
 
-1. **<Label>.** <Imperative step. Sub-bullet for a branch or a loop back.>
-2. **<Label>.** <Next step.>
+1. <step>
+2. <check step>
+3. <read-next step>
 
-## Test
+## Output
 
-| Case | Pass |
-| --- | --- |
-| <what is run> | <the observable result it gives> |
+<done condition>
 
-> Fill every `<...>` and delete this line. An angle bracket left in the written file is a bug.
+## Rules
+
+- <rule>
+
+> Fill every `<...>` and delete this line. Omit Input, the check step, the read-next step at a terminal action, and Rules when empty.

@@ -2,33 +2,22 @@
 
 Where a skill tree is written, per tool.
 
-## Root
+## Targets
 
-| Tool           | Root                             |
-| -------------- | -------------------------------- |
-| Claude Code    | `.claude/skills/<name>/`         |
-| Cursor         | `.cursor/skills/<name>/`         |
-| OpenCode       | `.opencode/skills/<name>/`       |
-| GitHub Copilot | `.github/skills/<name>/`         |
-| Codex CLI      | `.agents/skills/<name>/`         |
-| Antigravity CLI | `.agents/skills/<name>/`        |
-| Kilo native    | `.kilo/skills/<name>/`           |
-| Kilo portable  | `.agents/skills/<name>/`         |
-| Plugin source  | `plugins/<plugin>/skills/<name>/` |
+| Tool | Root | Official source |
+| --- | --- | --- |
+| Claude Code | `.claude/skills/<name>/` | [Skills](https://code.claude.com/docs/en/skills) |
+| Cursor | `.cursor/skills/<name>/` | [Skills](https://cursor.com/docs/skills) |
+| OpenCode | `.opencode/skills/<name>/` | [Skills](https://opencode.ai/docs/skills) |
+| GitHub Copilot | `.github/skills/<name>/` | [CLI](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#skill-frontmatter-fields), [VS Code](https://code.visualstudio.com/docs/agent-customization/agent-skills) |
+| Codex | `.agents/skills/<name>/` | [Skills](https://learn.chatgpt.com/docs/build-skills) |
+| Kilo Code, native | `.kilo/skills/<name>/` | [Skills](https://kilo.ai/docs/customize/skills) |
+| Kilo Code, portable by explicit choice | `.agents/skills/<name>/` | [Skills](https://kilo.ai/docs/customize/skills) |
+| Antigravity | `.agents/skills/<name>/` | [Skills](https://antigravity.google/docs/skills) |
+| Plugin source | where the target tool's plugin format puts skills | the target tool's plugin docs |
 
 ## Frontmatter
 
-Emit `description` always, `name` only where listed, drop the rest.
+Emit `name` and `description`, the two fields of the [Agent Skills](https://agentskills.io/specification) standard every tool reads. For any other field, read the target's source above.
 
-| Tool                   | Fields                                                                 |
-| ---------------------- | --------------------------------------------------------------------- |
-| Claude Code            | `name`, `description`, opt `allowed-tools`, `disable-model-invocation` |
-| Cursor, GitHub Copilot | `name`, `description`, opt `allowed-tools`                             |
-| OpenCode               | `description`, opt `permission` map                                   |
-| Codex CLI              | `name`, `description` (strips the rest)                                |
-| Antigravity CLI        | `name`, `description`                                                  |
-| Kilo                  | `name`, `description`, optional `license`, `compatibility`, `metadata` |
-
-For Kilo, the skill name must match its parent directory, use lowercase letters, digits and single hyphens, and contain at most 64 characters. The description must be nonempty and at most 1024 characters. Omit `argument-hint` and Claude-only fields. Native and portable paths are both loader-compatible; compatibility does not authorize copying. Require explicit user agreement before choosing `.agents/skills/`, and never write the same skill to both locations.
-
-Kilo source: [Skills](https://kilo.ai/docs/customize/skills).
+For Kilo, the skill name must match its parent directory, use lowercase letters, digits and single hyphens, and contain at most 64 characters. Kilo allows descriptions up to 1,024 characters, while the shared AIDD generator validator limits them to 150; generated skills must satisfy the stricter AIDD limit. Kilo also accepts optional `license`, `compatibility` and `metadata` fields. Ask for explicit user agreement before using the portable `.agents/skills/` target, and never write the same skill to both locations.

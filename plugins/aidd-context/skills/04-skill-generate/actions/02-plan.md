@@ -1,27 +1,24 @@
 # 02 - Plan
 
-Break the skill into atomic, testable actions: one action, one job.
+Break the skill into actions, one job each.
 
 ## Input
 
-- From scope, the create frame.
-- For a modify, the existing skill, read in place.
-
-## Output
-
-A plan table, one row per action: slug, input to output, test, and any dependency.
+The request and its source: the confirmed frame, or the existing skill.
 
 ## Process
 
-1. **List.** List every distinct job the output needs. Modify: start from the existing actions, touch only the jobs the user named.
-2. **Atomize.** Prefer few actions, a job each, not a step. Merge two that share most logic.
-3. **Number.** Name, number, and give each an observable test, per [skill-authoring.md](../references/skill-authoring.md).
-4. **Confirm.** Present the table, validate each test with the user.
+1. List each file to write, with the breaches of [skill-authoring.md](../references/skill-authoring.md) it fixes and the requested changes it makes.
+   - Nothing to change: say so and stop.
+2. List as content to keep each rule, step, branch, wait, loop and stop of the source, with its file.
+   - Changed by the request: list it as a change instead.
+3. List each fact of the source the rules leave no home, and each addition beyond the source and the request.
+4. Merge two actions that share most logic, so few remain.
+5. Number each action and fill its row: slug, input to output, rules, the cases that enter it, its next actions and outcomes with their condition, check step.
+   - Other file: give its path, kind and change.
+6. For each confirmed target, read its source in [tool-write.md](../references/tool-write.md) and ask the user one question per frontmatter field it lists beyond `name` and `description`.
+7. Confirm the table with the user, then read [write](03-write.md).
 
-## Test
+## Output
 
-| Case | Pass |
-| --- | --- |
-| The table is presented | every row is one job carrying a checkable test |
-| A row consumes an output | that output comes from an earlier row, never a later one |
-| The run is a modify | only the jobs the user named have a row |
+A confirmed table, one row per file, with each target's frontmatter, the content to keep, the changes, and the facts dropped or added.

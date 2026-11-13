@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// R4 of the skill contract: argument-hint names what the user brings, never the action
-// slugs, and is always present.
+// This repository's convention for its plugin skills: argument-hint names what the user
+// brings, one or two words per item, never the action slugs, and is always present.
 
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
@@ -97,8 +97,7 @@ for (const dir of await skillDirs()) {
 }
 
 if (breaches.length > 0) {
-  console.error(`argument-hint breaches R4 of the skill contract:\n${breaches.join("\n")}`);
-  console.error("Contract: plugins/aidd-context/skills/04-skill-generate/references/skill-authoring.md");
+  console.error(`argument-hint breaches this repository's convention:\n${breaches.join("\n")}`);
   process.exit(1);
 }
 
