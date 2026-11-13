@@ -21,7 +21,7 @@ function template(name, slots) {
   return text;
 }
 
-/** Every reason the plan cannot be drawn as R8 asks, one per line. */
+/** Every reason the plan cannot be drawn as R5 asks, one per line. */
 function refusals(plan) {
   const slugs = new Set((plan.actions ?? []).map((action) => action.slug));
   const found = [];

@@ -104,70 +104,76 @@ describe("skill check", () => {
     assert.equal(result.status, 2);
   });
 
-  it("R2: a description over 150 characters", () => {
-    mutate("SKILL.md", "wants a demo.", `wants a demo${" and more".repeat(20)}.`);
-    expectError("R2");
-  });
-
-  it("R2: a colon in the description", () => {
-    mutate("SKILL.md", "Demonstrates a skill,", "Demonstrates: a skill,");
-    expectError("R2");
-  });
-
-  it("R2: a dash separator in the description", () => {
-    mutate("SKILL.md", "Demonstrates a skill,", "Demonstrates a skill -");
-    expectError("R2");
-  });
-
-  it("R2: two sentences in the description", () => {
+  it("heads its findings with the skill it checked, never a plugin of its own", () => {
     mutate("SKILL.md", "wants a demo.", "wants a demo. Not for prod.");
-    expectError("R2");
+    const { out } = run();
+    assert.equal(out.split("\n")[0], `${path.basename(root)}: 1 error`);
   });
 
-  it("R6: a heading besides the transversal rules", () => {
+  it("description: a description over 150 characters", () => {
+    mutate("SKILL.md", "wants a demo.", `wants a demo${" and more".repeat(20)}.`);
+    expectError("description");
+  });
+
+  it("description: a colon in the description", () => {
+    mutate("SKILL.md", "Demonstrates a skill,", "Demonstrates: a skill,");
+    expectError("description");
+  });
+
+  it("description: a dash separator in the description", () => {
+    mutate("SKILL.md", "Demonstrates a skill,", "Demonstrates a skill -");
+    expectError("description");
+  });
+
+  it("description: two sentences in the description", () => {
+    mutate("SKILL.md", "wants a demo.", "wants a demo. Not for prod.");
+    expectError("description");
+  });
+
+  it("router: a heading besides the transversal rules", () => {
     mutate("SKILL.md", "## Transversal rules", "## Actions\n\n## Transversal rules");
-    expectError("R6");
+    expectError("router");
   });
 
-  it("R7: an action file the diagram does not draw", () => {
+  it("diagram: an action file the diagram does not draw", () => {
     write({ "actions/03-third.md": "# 03 - Third\n\nEnd.\n\n## Process\n\n1. End.\n" });
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric.\n2. Read [third](03-third.md).");
-    expectError("R7");
+    expectError("diagram");
   });
 
-  it("R7: a diagram that is not flowchart LR", () => {
+  it("diagram: a diagram that is not flowchart LR", () => {
     mutate("SKILL.md", "flowchart LR", "flowchart TD");
-    expectError("R7");
+    expectError("diagram");
   });
 
-  it("R7: a reference drawn as a box", () => {
+  it("diagram: a reference drawn as a box", () => {
     mutate("SKILL.md", "second --> done((done))", 'second --> persist["persistence"] --> done((done))');
-    expectError("R7");
+    expectError("diagram");
   });
 
-  it("R7: a file path drawn as a bare node", () => {
+  it("diagram: a file path drawn as a bare node", () => {
     mutate("SKILL.md", "second --> done((done))", "second --> references/rubric.md --> done((done))");
-    expectError("R7");
+    expectError("diagram");
   });
 
-  it("R8: a node leaving by two edges without a condition", () => {
+  it("edge: a node leaving by two edges without a condition", () => {
     mutate("SKILL.md", "second --> done((done))", "second --> done((done))\n  second --> stopped((stopped))");
-    expectError("R8");
+    expectError("edge");
   });
 
-  it("R8: an edge between actions that the source action never takes", () => {
+  it("edge: an edge between actions that the source action never takes", () => {
     mutate("actions/01-first.md", "2. Read [second](02-second.md).", "2. Stop.");
-    expectError("R8");
+    expectError("edge");
   });
 
-  it("R8: an edge drawn in a grouped source passes when each source links its target", () => {
+  it("edge: an edge drawn in a grouped source passes when each source links its target", () => {
     write({ "actions/02-second.md": "# 02 - Second\n\nAnswer.\n\n## Process\n\n1. Answer, or read [third](03-third.md).\n", "actions/03-third.md": "# 03 - Third\n\nEnd.\n\n## Process\n\n1. End.\n" });
     mutate("actions/01-first.md", "2. Read [second](02-second.md).", "2. Read [second](02-second.md), or [third](03-third.md).");
     mutate("SKILL.md", "second --> done((done))", 'first & second -->|"skip"| third["actions/03-third.md"]\n  second --> done((done))');
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("R8: an edge a transversal rule takes passes without a link in the source action", () => {
+  it("edge: an edge a transversal rule takes passes without a link in the source action", () => {
     write({ "actions/03-third.md": "# 03 - Third\n\nEnd.\n\n## Process\n\n1. End.\n" });
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric.\n2. Read [third](03-third.md).");
     mutate("SKILL.md", "second --> done((done))", 'second --> third["actions/03-third.md"] --> done((done))\n  first -->|"user stops"| third');
@@ -175,106 +181,106 @@ describe("skill check", () => {
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("R8: a self-loop needs no link", () => {
+  it("edge: a self-loop needs no link", () => {
     mutate("SKILL.md", "second --> done((done))", 'second -->|"again"| second\n  second --> done((done))');
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("R11: a section outside the fixed set", () => {
+  it("heading: a section outside the fixed set", () => {
     mutate("actions/02-second.md", "## Output", "## Test\n\nIt works.\n\n## Output");
-    expectError("R11");
+    expectError("heading");
   });
 
-  it("R11: sections out of order", () => {
+  it("heading: sections out of order", () => {
     mutate("actions/01-first.md", "## Input\n\nThe request.\n\n", "");
     mutate("actions/01-first.md", "## Output\n\nThe gathered request.\n", "## Output\n\nThe gathered request.\n\n## Input\n\nThe request.\n");
-    expectError("R11");
+    expectError("heading");
   });
 
-  it("R11: a title without its number", () => {
+  it("heading: a title without its number", () => {
     mutate("actions/01-first.md", "# 01 - First", "# First");
-    expectError("R11");
+    expectError("heading");
   });
 
-  it("R12: a non-terminal action whose last step does not read the next", () => {
+  it("read-next: a non-terminal action whose last step does not read the next", () => {
     mutate("actions/01-first.md", "2. Read [second](02-second.md).", "2. Stop here.");
-    expectError("R12");
+    expectError("read-next");
   });
 
-  it("R20: an action of 100 lines or more", () => {
+  it("length: an action of 100 lines or more", () => {
     mutate("actions/02-second.md", "The answer.", `The answer.${"\n".repeat(100)}`);
-    expectError("R20");
+    expectError("length");
   });
 
-  it("R20: a reference of 100 lines or more", () => {
+  it("length: a reference of 100 lines or more", () => {
     mutate("references/rubric.md", "| any | yes |", Array.from({ length: 100 }, (_, i) => `| c${i} | yes |`).join("\n"));
-    expectError("R20");
+    expectError("length");
   });
 
-  it("R21: a link to a file that does not exist", () => {
+  it("citation: a link to a file that does not exist", () => {
     mutate("actions/01-first.md", "../references/rubric.md", "../references/missing.md");
-    expectError("R21");
+    expectError("citation");
   });
 
-  it("R21: a second link to the same file", () => {
+  it("citation: a second link to the same file", () => {
     mutate("actions/01-first.md", "1. Read", "1. Check [the rubric](../references/rubric.md).\n2. Read");
-    expectError("R21");
+    expectError("citation");
   });
 
-  it("R27: a date", () => {
+  it("date: a date", () => {
     mutate("references/rubric.md", "| any | yes |", "| any | yes, since 2026-11 |");
-    expectError("R27");
+    expectError("date");
   });
 
-  it("R27: a ticket id", () => {
+  it("date: a ticket id", () => {
     mutate("references/rubric.md", "| any | yes |", "| any | yes, see #1234 |");
-    expectError("R27");
+    expectError("date");
   });
 
-  it("R27: a link to a numbered heading is no ticket id", () => {
+  it("date: a link to a numbered heading is no ticket id", () => {
     mutate("references/rubric.md", "| any | yes |", "| any | [ten](#10-plan) |");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("R12: a last step linking the next action with a ./ prefix passes", () => {
+  it("read-next: a last step linking the next action with a ./ prefix passes", () => {
     mutate("actions/01-first.md", "(02-second.md)", "(./02-second.md)");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("R17: a comment outside an asset", () => {
+  it("slot: a comment outside an asset", () => {
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric.\n<!-- answer briefly -->");
-    expectError("R17");
+    expectError("slot");
   });
 
-  it("R17: a template slot left unfilled outside an asset", () => {
+  it("slot: a template slot left unfilled outside an asset", () => {
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. <step>");
-    expectError("R17");
+    expectError("slot");
   });
 
-  it("R12: an action the diagram only ends needs no read-next step, wherever it sorts", () => {
+  it("read-next: an action the diagram only ends needs no read-next step, wherever it sorts", () => {
     mutate("SKILL.md", '  entry([request]) --> first["actions/01-first.md"] --> second["actions/02-second.md"]\n  second --> done((done))', '  entry([request]) -->|"one"| first["actions/01-first.md"] --> done((done))\n  entry -->|"two"| second["actions/02-second.md"] --> done');
     mutate("actions/01-first.md", "2. Read [second](02-second.md).", "2. Answer.");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("R17: a comment shown inside a code block passes", () => {
+  it("slot: a comment shown inside a code block passes", () => {
     mutate("references/rubric.md", "| any | yes |", "| any | yes |\n\n```\n<!-- example -->\n```");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("R17: a comment inside an asset passes", () => {
+  it("slot: a comment inside an asset passes", () => {
     write({ "assets/answer.md": "# Answer\n\n<!-- one line per finding -->\n" });
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("R25: a boundary kept with never is no finding", () => {
+  it("a boundary kept with never is no finding", () => {
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Never answer outside the rubric.");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("R28: bold", () => {
+  it("bold: bold", () => {
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. **Answer** per the rubric.");
-    expectError("R28");
+    expectError("bold");
   });
 
   it("a long sentence is no finding", () => {

@@ -13,8 +13,8 @@ Where a skill tree is written, per tool.
 | Codex | `.agents/skills/<name>/` | [Skills](https://learn.chatgpt.com/docs/build-skills) |
 | Kilo Code | `.kilo/skills/<name>/` | [Skills](https://kilo.ai/docs/customize/skills) |
 | Antigravity | `.agents/skills/<name>/` | [Skills](https://antigravity.google/docs/skills) |
-| Plugin source | `plugins/<plugin>/skills/<name>/` | R3 of `skill-authoring.md` |
+| Plugin source | where the target tool's plugin format puts skills | the target tool's plugin docs |
 
 ## Frontmatter
 
-Emit `name` and `description`, the two fields of the [Agent Skills](https://agentskills.io/specification) standard every tool reads. A plugin source also keeps `argument-hint`. For any other field, read the target's source above.
+Emit `name` and `description`, the two fields of the [Agent Skills](https://agentskills.io/specification) standard every tool reads. For any other field, read the target's source above.

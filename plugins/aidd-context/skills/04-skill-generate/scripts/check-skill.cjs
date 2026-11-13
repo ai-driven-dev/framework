@@ -7,7 +7,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const PLUGIN = "aidd-context";
 const EXIT_OK = 0;
 const EXIT_ERRORS = 1;
 const EXIT_USAGE = 2;
@@ -77,27 +76,27 @@ function checkRouter(skill, text, report) {
   const description = fields.description ?? "";
   const lineOf = (needle) => text.split("\n").findIndex((line) => line.includes(needle)) + 1 || 1;
   const at = lineOf("description:");
-  if (description.length > DESCRIPTION_LIMIT) report.error(file, at, "R2", description, `cut the description to ${DESCRIPTION_LIMIT} characters, it has ${description.length}`);
-  if (description.includes(":")) report.error(file, at, "R2", description, "remove the colon from the description");
-  if (/\s[-–—]\s/u.test(description)) report.error(file, at, "R2", description, "remove the dash separator from the description");
-  if (/[.!?]\s+\S/u.test(description)) report.error(file, at, "R2", description, "make the description one sentence");
+  if (description.length > DESCRIPTION_LIMIT) report.error(file, at, "description", description, `cut the description to ${DESCRIPTION_LIMIT} characters, it has ${description.length}`);
+  if (description.includes(":")) report.error(file, at, "description", description, "remove the colon from the description");
+  if (/\s[-–—]\s/u.test(description)) report.error(file, at, "description", description, "remove the dash separator from the description");
+  if (/[.!?]\s+\S/u.test(description)) report.error(file, at, "description", description, "make the description one sentence");
 
   const prose = proseLines(text);
   prose.forEach((line, index) => {
     const heading = /^##\s+(.+?)\s*$/u.exec(line);
-    if (heading && heading[1] !== ROUTER_SECTION) report.error(file, index + 1, "R6", line, "keep only the diagram and the transversal rules after the title");
+    if (heading && heading[1] !== ROUTER_SECTION) report.error(file, index + 1, "router", line, "keep only the diagram and the transversal rules after the title");
   });
 
   const flow = /```mermaid\n([\s\S]*?)```/u.exec(text);
   if (!flow) {
-    report.error(file, 1, "R7", undefined, "draw the actions as a flowchart LR diagram");
+    report.error(file, 1, "diagram", undefined, "draw the actions as a flowchart LR diagram");
   } else {
-    if (!/^\s*flowchart LR\b/mu.test(flow[1])) report.error(file, lineOf("```mermaid") + 1, "R7", flow[1].split("\n")[0], "start the diagram with flowchart LR");
+    if (!/^\s*flowchart LR\b/mu.test(flow[1])) report.error(file, lineOf("```mermaid") + 1, "diagram", flow[1].split("\n")[0], "start the diagram with flowchart LR");
     const drawn = new Set([...flow[1].matchAll(ACTION_NODE)].map((match) => match[1]));
     const actionsDir = path.join(skill, "actions");
     const present = fs.existsSync(actionsDir) ? fs.readdirSync(actionsDir).filter((name) => name.endsWith(".md")).map((name) => `actions/${name}`) : [];
-    for (const action of present) if (!drawn.has(action)) report.error(file, lineOf("```mermaid"), "R7", action, `draw a node labeled ${action}`);
-    for (const action of drawn) if (!present.includes(action)) report.error(file, lineOf(action), "R7", action, "remove the node or write its action file");
+    for (const action of present) if (!drawn.has(action)) report.error(file, lineOf("```mermaid"), "diagram", action, `draw a node labeled ${action}`);
+    for (const action of drawn) if (!present.includes(action)) report.error(file, lineOf(action), "diagram", action, "remove the node or write its action file");
     checkEdges(skill, flow[1], text.split(`## ${ROUTER_SECTION}`)[1] ?? "", lineOf, report);
   }
 }
@@ -108,14 +107,14 @@ function checkEdges(skill, flow, rules, lineOf, report) {
   const actions = new Map();
   for (const [box, id, label] of flow.matchAll(BOX)) {
     if (/^actions\/[^"]+\.md$/u.test(label)) actions.set(id, label);
-    else report.error(file, lineOf(box), "R7", box, "draw only action files as boxes; cite a reference from the step that uses it");
+    else report.error(file, lineOf(box), "diagram", box, "draw only action files as boxes; cite a reference from the step that uses it");
   }
   const ids = (segment) => segment.split("&").map((part) => /^\s*([^\s[({]+)/u.exec(part)?.[1]).filter(Boolean);
   const unlabeled = new Map();
   for (const line of flow.split("\n")) {
     const parts = line.trim().split(ARROW);
     const segments = parts.filter((_, index) => index % 2 === 0);
-    for (const id of segments.flatMap(ids)) if (!/^[\w-]+$/u.test(id)) report.error(file, lineOf(line.trim()), "R7", id, "name the node with a plain id; cite a file from the step that uses it");
+    for (const id of segments.flatMap(ids)) if (!/^[\w-]+$/u.test(id)) report.error(file, lineOf(line.trim()), "diagram", id, "name the node with a plain id; cite a file from the step that uses it");
     for (let index = 0; index + 1 < segments.length; index += 1) {
       const arrow = parts[index * 2 + 1];
       for (const from of ids(segments[index])) {
@@ -131,12 +130,12 @@ function checkEdges(skill, flow, rules, lineOf, report) {
           const name = path.basename(target);
           if (new RegExp(`\\b${name.replace(/^\d\d-|\.md$/gu, "")}\\b`, "iu").test(rules)) continue;
           const linked = [...text.matchAll(LINK)].some((match) => path.basename(match[1]) === name);
-          if (!linked) report.error(file, lineOf(line.trim()), "R8", `${from} --> ${to}`, `link ${name} from the step of ${source} that takes this edge`);
+          if (!linked) report.error(file, lineOf(line.trim()), "edge", `${from} --> ${to}`, `link ${name} from the step of ${source} that takes this edge`);
         }
       }
     }
   }
-  for (const [from, { line, targets }] of unlabeled) if (targets.size > 1) report.error(file, lineOf(line), "R8", `${from} --> ${[...targets].join(", ")}`, "label the condition of each edge but the default one");
+  for (const [from, { line, targets }] of unlabeled) if (targets.size > 1) report.error(file, lineOf(line), "edge", `${from} --> ${[...targets].join(", ")}`, "label the condition of each edge but the default one");
 }
 
 /** The action files the diagram draws an edge from to another action: only those end by reading the next. */
@@ -158,7 +157,7 @@ function chainedActions(router) {
 
 function checkAction(file, text, chains, report) {
   const lines = text.split("\n");
-  if (!/^# \d\d - \S/u.test(lines[0] ?? "")) report.error(file, 1, "R11", lines[0] ?? "", "start with `# <NN> - <Title>`");
+  if (!/^# \d\d - \S/u.test(lines[0] ?? "")) report.error(file, 1, "heading", lines[0] ?? "", "start with `# <NN> - <Title>`");
   const sections = [];
   proseLines(text).forEach((line, index) => {
     const heading = /^##\s+(.+?)\s*$/u.exec(line);
@@ -167,8 +166,8 @@ function checkAction(file, text, chains, report) {
   let last = -1;
   for (const section of sections) {
     const rank = SECTION_ORDER.indexOf(section.name);
-    if (rank < 0) report.error(file, section.line, "R11", `## ${section.name}`, `use only ${SECTION_ORDER.join(", ")} sections`);
-    else if (rank < last) report.error(file, section.line, "R11", `## ${section.name}`, `order the sections ${SECTION_ORDER.join(", ")}`);
+    if (rank < 0) report.error(file, section.line, "heading", `## ${section.name}`, `use only ${SECTION_ORDER.join(", ")} sections`);
+    else if (rank < last) report.error(file, section.line, "heading", `## ${section.name}`, `order the sections ${SECTION_ORDER.join(", ")}`);
     else last = rank;
   }
   if (!chains) return;
@@ -177,7 +176,7 @@ function checkAction(file, text, chains, report) {
   const end = sections.find((section) => section.line > process.line)?.line ?? lines.length + 1;
   let step;
   for (let index = process.line; index < end - 1; index += 1) if (/^\d+\.\s/u.test(lines[index])) step = index;
-  if (step !== undefined && !ACTION_LINK.test(lines[step])) report.error(file, step + 1, "R12", lines[step], "end with a step that reads the next action, as a link");
+  if (step !== undefined && !ACTION_LINK.test(lines[step])) report.error(file, step + 1, "read-next", lines[step], "end with a step that reads the next action, as a link");
 }
 
 /** Lexical rules every file obeys: length, bold, dates, citations. */
@@ -185,7 +184,7 @@ function checkFile(skill, file, text, report) {
   const lines = text.split("\n");
   const markdown = file.endsWith(".md");
   if (markdown && LIMITED_DIRS.includes(file.split("/")[0]) && lines.length > FILE_LINE_LIMIT) {
-    report.error(file, FILE_LINE_LIMIT + 1, "R20", undefined, `split the file, it has ${lines.length} lines`);
+    report.error(file, FILE_LINE_LIMIT + 1, "length", undefined, `split the file, it has ${lines.length} lines`);
   }
   const skip = markdown && file === "SKILL.md" ? frontmatter(text).length : 0;
   if (markdown && !file.startsWith("assets/")) {
@@ -197,23 +196,23 @@ function checkFile(skill, file, text, report) {
     for (const match of text.matchAll(COMMENT)) {
       const line = text.slice(0, match.index).split("\n").length;
       if (inFence[line - 1]) continue;
-      report.error(file, line, "R17", match[0], "state it in the prose, or move it to an asset");
+      report.error(file, line, "slot", match[0], "state it in the prose, or move it to an asset");
     }
   }
   const linked = new Map();
   proseLines(text).forEach((line, index) => {
     if (index < skip) return;
     const number = index + 1;
-    if (DATE.test(line) || TICKET.test(line)) report.error(file, number, "R27", line, "remove the date or ticket id");
+    if (DATE.test(line) || TICKET.test(line)) report.error(file, number, "date", line, "remove the date or ticket id");
     if (!markdown) return;
-    if (!file.startsWith("assets/") && SLOT.test(line)) report.error(file, number, "R17", line, "fill the template slot, or move it to an asset");
-    if (line.includes("**")) report.error(file, number, "R28", line, "write the sentence without bold");
+    if (!file.startsWith("assets/") && SLOT.test(line)) report.error(file, number, "slot", line, "fill the template slot, or move it to an asset");
+    if (line.includes("**")) report.error(file, number, "bold", line, "write the sentence without bold");
     for (const match of line.matchAll(LINK)) {
       const target = match[1];
       if (/^[a-z]+:/iu.test(target)) continue;
       const resolved = path.resolve(path.dirname(path.join(skill, file)), target);
-      if (!fs.existsSync(resolved)) report.error(file, number, "R21", match[0], `fix the link, ${target} does not exist`);
-      if (linked.has(resolved)) report.error(file, number, "R21", match[0], `name it in backticks; it is linked at line ${linked.get(resolved)}`);
+      if (!fs.existsSync(resolved)) report.error(file, number, "citation", match[0], `fix the link, ${target} does not exist`);
+      if (linked.has(resolved)) report.error(file, number, "citation", match[0], `name it in backticks; it is linked at line ${linked.get(resolved)}`);
       else linked.set(resolved, number);
     }
   });
@@ -240,7 +239,7 @@ function format(skill, errors) {
   const quoted = (finding) => (finding.excerpt === undefined ? "" : ` "${finding.excerpt.replace(/"/gu, '\\"')}"`);
   const counted = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
   return [
-    `${PLUGIN}: ${counted(errors.length, "error")}`,
+    `${path.basename(path.resolve(skill))}: ${counted(errors.length, "error")}`,
     ...errors.map((finding) => `${where(finding)} ${finding.rule}${quoted(finding)} => ${finding.fix}`),
   ].join("\n");
 }
