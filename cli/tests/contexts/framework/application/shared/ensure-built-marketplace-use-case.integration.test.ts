@@ -10,13 +10,13 @@ import {
   EnsureBuiltMarketplaceUseCase,
   type FrameworkBuildFor,
 } from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
-import type { JsonSchemaValidator } from "../../../../../src/contexts/tools/domain/ports/schema-validator.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import {
   type FrameworkBuild,
   FrameworkBuildUseCase,
 } from "../../../../../src/contexts/translate/application/translate-source.js";
+import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/domain/ports/schema-validator.js";
 import { BUILT_CACHE_SUBDIR, builtMarketplaceDir } from "../../../../../src/kernel/paths.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import type { VersionReader } from "../../../../../src/kernel/ports/version-reader.js";

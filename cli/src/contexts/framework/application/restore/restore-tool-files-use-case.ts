@@ -8,7 +8,7 @@ import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
 import type { ToolId } from "../../../../kernel/tool.js";
 import type { Platform } from "../../../../runtime/platform/platform.js";
-import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
+import type { FileMerger } from "../../../../shared/ports/file-merger.js";
 import { getToolConfig } from "../../../tools/domain/registry.js";
 import type { FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";

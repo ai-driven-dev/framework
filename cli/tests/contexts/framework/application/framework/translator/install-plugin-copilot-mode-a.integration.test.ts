@@ -8,12 +8,12 @@ import { PluginDistribution } from "../../../../../../src/contexts/translate/dom
 import { CapturingLogger } from "../../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostPluginRegistryReader } from "../../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -34,7 +34,7 @@ function readableHostPlugins() {
   return new Map([
     [
       "copilot" as const,
-      new FakeHostPluginRegistryReader({
+      new FakeHostPluginRegistry({
         location: "/home/.copilot/plugins",
         refs: new Map(),
       }),
@@ -126,7 +126,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     await seedCopilotPlugin(manifestRepo, registry);
 
     const useCase = new MarketplaceSyncSettingsUseCase(
@@ -147,7 +147,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       new Map([
         [
           "copilot",
-          new FakeNativeMarketplaceSourceReader(
+          new FakeHostMarketplaceSources(
             activator,
             "effective-list",
             (path) => (path === "/built/copilot" ? MARKETPLACE_NAME : undefined),
@@ -170,7 +170,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     // A missing source does not by itself prove who owns the host registration.
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState: "dead",
@@ -208,7 +208,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     await seedCopilotPlugin(manifestRepo, registry);
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState: "dead",
@@ -237,7 +237,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const registry = new InMemoryMarketplaceRegistry();
     // Held, and the source resolves: another project is alive behind it. Taking the
     // name would break that project, and both would then steal it back on every sync.
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState: "live",
@@ -268,7 +268,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const registry = new InMemoryMarketplaceRegistry();
     // The tool offers no way to tell a dead registration from a live one, which must
     // read as "leave it alone" rather than as permission.
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState: "unknown",

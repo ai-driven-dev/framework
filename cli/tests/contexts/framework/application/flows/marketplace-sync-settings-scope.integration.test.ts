@@ -8,12 +8,12 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -43,12 +43,12 @@ function seededBuiltCatalog(): InMemoryFileAdapter {
   });
 }
 
-function freshHostProof(activator: FakeNativePluginActivator) {
+function freshHostProof(activator: FakeHostActions) {
   return {
     plugins: new Map([
       [
         "claude" as const,
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: "/host/installed_plugins.json",
           refs: new Map(),
         }),
@@ -57,7 +57,7 @@ function freshHostProof(activator: FakeNativePluginActivator) {
     sources: new Map([
       [
         "claude" as const,
-        new FakeNativeMarketplaceSourceReader(
+        new FakeHostMarketplaceSources(
           activator,
           "registry",
           (path) => (path === "/built/claude" ? MARKETPLACE : undefined),
@@ -75,7 +75,7 @@ describe("settings synchronization under the machine ownership lock", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const fs = seededBuiltCatalog();
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const proof = freshHostProof(activator);
     let locked = false;
     const accesses: boolean[] = [];
@@ -163,7 +163,7 @@ describe("settings synchronization under the machine ownership lock", () => {
 
 describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks for", () => {
   it("enables at project scope by default, never claude's own implicit default", async () => {
-    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const proof = freshHostProof(activator);
@@ -193,7 +193,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
   });
 
   it("passes the user scope down to enablePlugin when the caller asks for it", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const manifest = Manifest.create();
@@ -276,7 +276,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
   }
 
   it("writes no project file at all when the caller asks for user scope — the full project delta, not one named path", async () => {
-    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const { fs, manifestRepo } = await pluginFixture();
@@ -298,7 +298,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
   });
 
   it("writes .claude/settings.json for that same fixture at project scope — proof the fixture is not inert", async () => {
-    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const { fs, manifestRepo } = await pluginFixture();
@@ -321,7 +321,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
   });
 
   it("loads and saves the manifest passed as an override, never the one it was constructed with", async () => {
-    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const constructedRepo = manifestWithTool();
@@ -348,7 +348,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
   });
 
   it("records no shared-source reference at user scope — no project-scope manifest exists for a later clean to ever decrement it from", async () => {
-    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const added: Array<{ version: string; projectRoot: string }> = [];
@@ -380,7 +380,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
   });
 
   it("still records a shared-source reference at project scope, unaffected", async () => {
-    const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const proof = freshHostProof(activator);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());

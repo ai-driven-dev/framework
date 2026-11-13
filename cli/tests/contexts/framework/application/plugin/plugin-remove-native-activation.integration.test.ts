@@ -8,17 +8,17 @@ import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/framewor
 import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import type {
-  HostPluginRegistryReader,
+  HostPluginRegistry,
   HostPluginRegistryReading,
-} from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+} from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/kernel/errors.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -76,7 +76,7 @@ function verifiedSourceReader() {
 }
 
 function buildRemoveUseCase(
-  activator: FakeNativePluginActivator,
+  activator: FakeHostActions,
   logger: CapturingLogger,
   hostScope: "project" | "user" = "project"
 ): { removeUseCase: PluginRemoveUseCase; manifestRepo: InMemoryManifestRepository } {
@@ -90,7 +90,7 @@ function buildRemoveUseCase(
     new Map([
       [
         "claude",
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: "/host/plugin-registry",
           refs: new Map([
             [REF, { enabled: true, scope: hostScope }],
@@ -120,7 +120,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
         manifest.setNativeRegistrations("claude", { ...registrations, pluginRefs: [] });
       }
       const before = manifest.toJSON();
-      const activator = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+      const activator = new FakeHostActions({ available: true, enablesPlugins: false });
       const repo = new InMemoryManifestRepository(manifest);
       const remove = new PluginRemoveUseCase(
         new InMemoryFileAdapter(),
@@ -154,7 +154,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     manifest.addTool("claude", "test", []);
     await installViaModeA(manifest);
     const repo = new InMemoryManifestRepository(manifest);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const source = verifiedSourceReader();
     let reads = 0;
@@ -174,7 +174,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       new Map([
         [
           "claude",
-          new FakeHostPluginRegistryReader({
+          new FakeHostPluginRegistry({
             location: "/host/registry",
             refs: new Map([[REF, { enabled: true, scope: "project" }]]),
           }),
@@ -222,7 +222,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       manifest.addTool("claude", "test", []);
       await installViaModeA(manifest);
       const repo = new InMemoryManifestRepository(manifest);
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const logger = new CapturingLogger();
       const registry = new InMemoryMarketplaceRegistry();
       await registry.save(
@@ -249,7 +249,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
         new Map([
           [
             "claude",
-            new FakeHostPluginRegistryReader({
+            new FakeHostPluginRegistry({
               location: "/host/registry",
               refs: new Map([[REF, { enabled: true, scope: "project" }]]),
             }),
@@ -314,27 +314,26 @@ describe("PluginRemoveUseCase undoes native activation", () => {
         diagnostic: "/host/registry",
       },
     ];
-    const registryFailures: { name: string; reader?: HostPluginRegistryReader; message: string }[] =
-      [
-        {
-          name: "no reader",
-          message: `claude: '${REF}' has no readable host plugin registry; uninstall refused before project changes.`,
-        },
-        ...[new Error("registry unavailable"), "registry unavailable"].map((error, index) => ({
-          name: `reader throws ${index === 0 ? "Error" : "string"}`,
-          reader: {
-            read: async (): Promise<HostPluginRegistryReading> => {
-              throw error;
-            },
+    const registryFailures: { name: string; reader?: HostPluginRegistry; message: string }[] = [
+      {
+        name: "no reader",
+        message: `claude: '${REF}' has no readable host plugin registry; uninstall refused before project changes.`,
+      },
+      ...[new Error("registry unavailable"), "registry unavailable"].map((error, index) => ({
+        name: `reader throws ${index === 0 ? "Error" : "string"}`,
+        reader: {
+          read: async (): Promise<HostPluginRegistryReading> => {
+            throw error;
           },
-          message: `claude: '${REF}' host plugin registry read failed (registry unavailable); uninstall refused.`,
-        })),
-        ...invalidReadings.map(({ name, reading, diagnostic }) => ({
-          name,
-          reader: new FakeHostPluginRegistryReader(reading),
-          message: `claude: '${REF}' is not provably enabled with an exact host scope (${diagnostic}); uninstall refused.`,
-        })),
-      ];
+        },
+        message: `claude: '${REF}' host plugin registry read failed (registry unavailable); uninstall refused.`,
+      })),
+      ...invalidReadings.map(({ name, reading, diagnostic }) => ({
+        name,
+        reader: new FakeHostPluginRegistry(reading),
+        message: `claude: '${REF}' is not provably enabled with an exact host scope (${diagnostic}); uninstall refused.`,
+      })),
+    ];
 
     it.each(registryFailures)(
       "refuses $name before native or local changes",
@@ -353,7 +352,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
           "1.0.0/plugin.json"
         );
         await fs.writeFile(cacheFile, "cached plugin");
-        const activator = new FakeNativePluginActivator({ available: true });
+        const activator = new FakeHostActions({ available: true });
         const remove = new PluginRemoveUseCase(
           fs,
           manifestRepo,
@@ -395,7 +394,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       MARKETPLACE_NAME
     );
     const repo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-    const activator = new FakeNativePluginActivator({ available: false });
+    const activator = new FakeHostActions({ available: false });
     const logger = new CapturingLogger();
     const removeUseCase = new PluginRemoveUseCase(
       fs,
@@ -440,7 +439,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       pluginRefs: [REF],
     });
     const repo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const removeUseCase = new PluginRemoveUseCase(
       fs,
       repo,
@@ -478,7 +477,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("refuses an old AIDD catalogue claim when the current host source is foreign under the same name and ref", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const fs = new InMemoryFileAdapter();
     const manifestRepo = new InMemoryManifestRepository();
@@ -556,7 +555,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("uninstalls via the host CLI using the same <plugin>@<marketplace> ref install used", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
@@ -575,7 +574,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("warns naming the host and leaves the removal complete when the CLI is not on PATH", async () => {
-    const activator = new FakeNativePluginActivator({ available: false });
+    const activator = new FakeHostActions({ available: false });
     const logger = new CapturingLogger();
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
@@ -599,7 +598,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("warns naming the host and message when the host CLI reports the plugin already absent", async () => {
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       failOnUninstall: [REF],
     });
@@ -624,7 +623,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("never calls the host CLI for a plugin installed without a recorded marketplace", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
@@ -652,7 +651,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   // A real `claude` binary registers at its own implicit `"user"` default whatever scope the
   // manifest records for the plugin's files, and refuses an uninstall aimed at another scope.
   it("uses the host registry's exact user scope when the project manifest differs", async () => {
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       installedAtScope: new Map([[REF, "user"]]),
     });
@@ -677,7 +676,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   // The host call must address the host by `hostName`, read from this tool's own
   // `nativeRegistrations` — never by `plugin.marketplace`, a local alias a host never learns.
   it("uses the host's own name for the marketplace, read from this tool's own native registrations", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
@@ -714,7 +713,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
 
   it("resolves the host's own registry by the hostName-keyed ref, not the alias", async () => {
     const hostRef = `${PLUGIN_NAME}@upstream`;
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       installedAtScope: new Map([[hostRef, "user"]]),
     });
@@ -729,7 +728,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       new Map([
         [
           "claude",
-          new FakeHostPluginRegistryReader({
+          new FakeHostPluginRegistry({
             location: "/registry",
             refs: new Map([[hostRef, { enabled: true, scope: "user" }]]),
           }),
@@ -774,7 +773,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("refuses a legacy alias with no recorded native source before changing the project", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
@@ -800,7 +799,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("reads an unproved native registration only for preflight, not for uninstall or cache", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
@@ -828,7 +827,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("uninstalls at the scope the host's own registry names directly, one attempt", async () => {
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       installedAtScope: new Map([[REF, "user"]]),
     });
@@ -843,7 +842,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       new Map([
         [
           "claude",
-          new FakeHostPluginRegistryReader({
+          new FakeHostPluginRegistry({
             location: "/registry",
             refs: new Map([[REF, { enabled: true, scope: "user" }]]),
           }),
@@ -870,7 +869,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("logs nothing when this tool's own native registrations name the alias", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
@@ -900,7 +899,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("names the host, the ref and the host's answer when the host CLI refuses the uninstall", async () => {
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       failOnUninstall: [REF],
     });
@@ -923,7 +922,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 
   it("propagates a failure that is not the host CLI refusing", async () => {
-    const activator = new FakeNativePluginActivator({ available: true, crashOnUninstall: true });
+    const activator = new FakeHostActions({ available: true, crashOnUninstall: true });
     const logger = new CapturingLogger();
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();
@@ -943,7 +942,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
 
 describe("PluginRemoveUseCase undoes only the activation this project made", () => {
   async function removeWithRecordedRefs(pluginRefs: readonly string[]) {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const { removeUseCase, manifestRepo } = buildRemoveUseCase(activator, logger);
     const manifest = Manifest.create();

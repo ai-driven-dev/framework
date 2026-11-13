@@ -11,15 +11,15 @@ import { NativeHostRegistrationGate } from "../../../../../src/contexts/framewor
 import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { HostPluginRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
 import type {
+  HostMarketplaceSources,
   NativeMarketplaceSource,
-  NativeMarketplaceSourceReader,
-} from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
+} from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 
 const ALIAS = "project-alias";
 const HOST = "real-catalog";
@@ -35,7 +35,7 @@ function proofFor(): NativeMarketplaceSource {
   };
 }
 
-function sourceReader(): NativeMarketplaceSourceReader {
+function sourceReader(): HostMarketplaceSources {
   return {
     read: async () => ({
       location: "/host/catalogues",
@@ -74,12 +74,12 @@ for (const toolId of ["codex"] as const) {
           addedAt: "2026-09-01T00:00:00.000Z",
         })
       );
-      const activator = new FakeNativePluginActivator({
+      const activator = new FakeHostActions({
         available: options.available ?? true,
         failOnUninstall: options.failOnUninstall ? [REF] : [],
         throwOnRemove: options.throwOnRemove ?? false,
       });
-      const reader: HostPluginRegistryReader = {
+      const reader: HostPluginRegistry = {
         read: async () => ({ location: "/host/registry", refs }),
       };
       const useCase = new UserMarketplaceRemoveUseCase(
@@ -455,7 +455,7 @@ describe("Copilot 1.0.83 targeted user marketplace removal", () => {
     await registry.save("/A", marketplace);
     const fs = new InMemoryFileAdapter();
     fs.setFile("/A/copilot-user-note.md", "user bytes");
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const gate = new NativeHostRegistrationGate(
       new Map([["copilot", activator]]),
       new Map([

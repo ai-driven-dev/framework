@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import { isAiToolId, type ToolId } from "../../../../kernel/tool.js";
-import type { MarketplaceCatalogIdentity } from "../../../tools/domain/marketplace-source-conflict.js";
+import type { MarketplaceCatalogIdentity } from "../../../host-registration/contract/marketplace-source-conflict.js";
 import { getAiToolConfig } from "../../../tools/domain/registry.js";
 
 /**

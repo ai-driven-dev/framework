@@ -72,7 +72,7 @@ The brand is a private symbol: a literal cannot pass for a profile.
 | `domain/formats/` | agent-format, command, mcp-format, opencode-mcp-merge, vscode-mcp-merge, portable-agent, plugin-root-token, mcp-launch-command, `toml.ts`, `base64.ts` |
 | `domain/profiles/<id>/` | per tool, minus `native-marketplace-source.ts`; `registered-profiles.ts` at `profiles/` |
 | `application/` | `detect-tool-signals.ts`, `resolve-mcp-output-path.ts` |
-| `ports/` | empty after the moves: native ports to host-registration (D2); `file-merger`, `schema-validator` to `shared/ports` |
+| `ports/` | empty after the moves: native ports to host-registration (D2); `file-merger` to `shared/ports`, `schema-validator` to `translate/domain/ports` |
 | `infrastructure/` | empty after host-registration leaves |
 
 ## 2. Ports and adapters
@@ -85,8 +85,13 @@ The brand is a private symbol: a literal cannot pass for a profile.
 | File signals | `hasToolSignals(fs, ...)` | `application/detect-tool-signals.ts` over the kernel `FileReader`; domain keeps `signalPattern`, `signalDir` |
 | MCP output path | `resolveOutputPath(root, fs)`, kilo `resolveKiloConfigPath(fs)` | domain `outputPathCandidates()`; `application/resolve-mcp-output-path.ts` picks the first that exists |
 | Native host CLIs and registries | `domain/ports`, `infrastructure/` | `host-registration` (D2) |
-| `FileMerger`, `SchemaValidator` | `domain/ports` | `shared/ports` |
+| `FileMerger` | `domain/ports` | `shared/ports/file-merger.ts` |
+| `SchemaValidator` | `domain/ports` | `translate/domain/ports/schema-validator.ts` |
 | Hooks host adapters (`.cjs`) | E-T3 `EVENTS` tables | unchanged (D6) |
+
+Deviation from §1.4 and the line above, decided at P8.
+- `SchemaValidator` has one consumer, translate; codebase-map places a port used by one context in its own `ports/`, so it does not go to `shared/ports`.
+- `FileMerger` goes to `shared/ports` while its only consumer is framework, whose `domain/ports` is blocked: `old-layout-count` holds `src/contexts/framework/` at 125, so one more file there is red. Limit: single consumer, an adapter in `runtime/filesystem/`.
 
 ## 3. Public surface: answers, not fields
 
@@ -113,6 +118,17 @@ The brand is a private symbol: a literal cannot pass for a profile.
 | `supportsUserScopeActivation()` | registry function |
 | `copiesFilesGlobally()`, `globalFiles()` | `copiesPluginFilesGlobally`, `globalFilesOf` |
 | `projectHooksDelivery()` | `projectHooksDeliveryOf`, `projectHooksFileOf` |
+
+Declared values approved as stored answers, outside the table above. Each is a value the caller needs as written, kept in the arch guard's allowlist (`tests/architecture/plugins-are-asked-not-read.arch.test.ts`) with its reason, shrink-only:
+
+| Member | Why it stays a stored answer |
+| --- | --- |
+| `HooksCapability.outputPath`, `McpCapability.outputPath`, `SettingsCapability.outputPath` | the declared destination, written into the manifest by the framework install use cases |
+| `HooksCapability.mergeStrategy`, `McpCapability.mergeStrategy`, `SettingsCapability.mergeStrategy` | the declared merge mode, recorded on each installed file or handed to the file merge |
+| `McpCapability.outputPathCandidates` | the declared places probed in order by `resolve-mcp-output-path.ts` |
+| `SettingsCapability.requiredTool` | the declared tool a section applies to, matched against the installed one |
+| `NativePlugins.hooksFilePath` | the declared hooks file, placed by `translate/domain/content-translator.ts` |
+| `NativeActivation.cliShape` | the whole declared shape configures the host CLI adapter once in the composition root |
 
 `ToolCatalog`: `get(id)`, `aiProfile(id)`, `inHelpOrder()`, `sortedById()`, `ids(category)`, `assertIdsMatch(category, ids)`.
 
@@ -168,6 +184,12 @@ Rejected: visitor (one switch site), strategy registry (the catalog is the regis
 | kilo MCP transform | `formats/opencode-mcp-merge.ts` after P6 |
 | shared kilo and opencode bridge behaviour | `domain/hooks/event-bridge.ts` (E-T5) |
 
+Written limits:
+
+- A new host-registry layout is one union member, one reader in `host-registration/infrastructure/` and one table line in `src/composition/host-registration.ts`; `tsc` forces all three.
+- A config asset a tool needs at runtime is one entry in `src/runtime/assets/asset-loader.ts`; nothing else finds it.
+- The codex plugin registry is read from `~/.codex/config.toml` and ignores `CODEX_HOME`, frozen on purpose in `profiles/codex/profile.ts`; the user settings file follows `CODEX_HOME`.
+
 ## 6. Phases
 
 Each phase: green commits, no behaviour change, an inverted proof.
@@ -198,7 +220,7 @@ Order: P0; P1 to P3 in any order; P4; P5a to P5d; P6; P7; P8 and P9.
 | Characterization | P0 table, kept as the regression net |
 | Conformance | `tests/testing/profile-conformance.ts` walks `REGISTERED_PROFILES`; adds the new refusals |
 | Integration | the 4 `hooks-*.integration` files, unchanged |
-| Contract suites | none left in tools after P7 and P8; native-port suites move with host-registration; `FileMerger`, `SchemaValidator` to `shared` |
+| Contract suites | none left in tools after P7 and P8; native-port suites move with host-registration; `FileMerger` to `shared`, `SchemaValidator` to `translate` |
 | Architecture | no plugins field reads, no cross-profile import, no deep import, purity by Biome |
 | Goldens and e2e | byte-identical, never regenerated |
 

@@ -342,8 +342,8 @@ describe("PluginsCapability native construction", () => {
       nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },
     });
     expect([
-      nativeOf(cap).marketplaceRegistration()?.settingsPath,
-      nativeOf(cap).activation()?.binary,
+      nativeOf(cap).marketplaceRegistration()?.sharedSettingsFile(),
+      nativeOf(cap).activation()?.hostBinary(),
     ]).toEqual([".claude/settings.json", "claude"]);
   });
 });

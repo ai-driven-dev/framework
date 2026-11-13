@@ -93,7 +93,17 @@ export const claude = defineAiTool({
         // Root of claude's own marketplace registry, read by the sync guard that refuses a
         // name-stealing re-add before driving `marketplace add` at all. Declared here alone,
         // which is what keeps that guard claude-only by declaration.
-        marketplaceRegistry: (h) => join(h, ".claude", "plugins", "known_marketplaces.json"),
+        marketplaceRegistry: {
+          location: (h) => join(h, ".claude", "plugins", "known_marketplaces.json"),
+          layout: "install-locations-by-name",
+        },
+        marketplaceSources: { from: "marketplace-registry" },
+        // Claude's own plugin registry, read by `doctor`: one entry per scope a ref was
+        // installed at, an entry installed at a project scope also naming its project.
+        pluginRegistry: {
+          location: (h) => join(h, ".claude", "plugins", "installed_plugins.json"),
+          layout: "plugin-entries-by-scope",
+        },
         // Root of claude's own plugin cache. `clean` composes `<root>/<hostName>` and purges
         // only once a fresh read of `marketplaceRegistry` above no longer names it — claude
         // marks an orphaned tree `.orphaned_at` but never deletes it itself.

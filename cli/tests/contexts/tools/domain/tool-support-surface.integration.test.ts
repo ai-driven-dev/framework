@@ -60,7 +60,7 @@ function capture(): ToolSupport[] {
       name: tool.displayName,
       directory: tool.directory,
       pluginMode: plugins === null ? null : pluginModeOf(plugins),
-      nativeCli: nativeActivationOf(id)?.binary ?? null,
+      nativeCli: nativeActivationOf(id)?.hostBinary() ?? null,
       builds,
     };
   });

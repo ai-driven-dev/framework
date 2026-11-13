@@ -41,16 +41,17 @@ describe("copilot declarations the rest of the CLI reads", () => {
   });
 
   it("drives its own CLI with the verbs it answers to", () => {
-    expect(nativeActivationOf("copilot")).toMatchObject({
-      binary: "copilot",
+    const activation = nativeActivationOf("copilot");
+    expect(activation?.hostBinary()).toBe("copilot");
+    expect(activation?.cliShape()).toMatchObject({
       upgradeVerb: "update",
       updateVerb: "update",
       enableVerb: "install",
       disableVerb: "uninstall",
       sourceCheckVerb: "update",
       forceRemoveArgs: ["--force"],
-      uninstallLeavesRefDisabled: true,
     });
+    expect(activation?.takesRefForInUse(false)).toBe(false);
   });
 
   it.each<[InstallKind, string, string | null]>([

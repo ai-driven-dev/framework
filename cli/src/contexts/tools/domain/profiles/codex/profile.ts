@@ -105,6 +105,21 @@ export const codex = defineAiTool({
         // reread — which is why `clean` proves this leftover safe to remove by its own
         // emptiness instead.
         pluginCacheDir: (h) => join(h, ".codex", "plugins", "cache"),
+        // The registry is read from `~/.codex/config.toml` whatever `CODEX_HOME` says, unlike
+        // `userSettingsPath` below: a measured behaviour kept as it is, not an oversight.
+        pluginRegistry: {
+          location: (h) => join(h, ".codex", "config.toml"),
+          layout: "toml-plugin-tables",
+        },
+        marketplaceSources: {
+          from: "list-command",
+          args: ["plugin", "marketplace", "list", "--json"],
+          layout: "marketplaces-with-source",
+          hostLabel: "Codex",
+          unavailableMessage:
+            "Codex marketplace list --json unavailable; inspect the host CLI and retry",
+          unverifiedMessage: "Codex marketplace list --json output shape is not verified",
+        },
         // `$CODEX_HOME/config.toml` when set — a real codex binary reads there whatever `HOME`
         // says — else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
         userSettingsPath: (h, env) => join(env("CODEX_HOME") || join(h, ".codex"), "config.toml"),

@@ -1,7 +1,7 @@
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
-import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
+import type { HostActions } from "../../../host-registration/contract/host-actions.js";
+import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
 import { nativeActivationOf } from "../../../tools/domain/registry.js";
 import type {
   NativeMarketplaceRegistration,
@@ -15,9 +15,9 @@ import {
 
 export class NativeHostRegistrationGate {
   constructor(
-    private readonly activators: ReadonlyMap<string, NativePluginActivator>,
-    private readonly registries: ReadonlyMap<AiToolId, HostPluginRegistryReader>,
-    private readonly sources: ReadonlyMap<AiToolId, NativeMarketplaceSourceReader> = new Map()
+    private readonly activators: ReadonlyMap<string, HostActions>,
+    private readonly registries: ReadonlyMap<AiToolId, HostPluginRegistry>,
+    private readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map()
   ) {}
 
   async requireTargetedUpdate(
@@ -25,14 +25,14 @@ export class NativeHostRegistrationGate {
     claim: NativePluginClaim,
     projectRoot: string,
     registrations?: NativeRegistrations
-  ): Promise<NativePluginActivator> {
+  ): Promise<HostActions> {
     const activation = nativeActivationOf(toolId);
-    if (activation?.updateVerb === undefined) {
+    if (activation?.refreshesOnePlugin() !== true) {
       throw new Error(
         `${toolId} does not support targeted native plugin update for '${claim.ref}'; use marketplace refresh or framework update instead.`
       );
     }
-    const activator = this.activators.get(activation.binary);
+    const activator = this.activators.get(activation.hostBinary());
     const reader = this.registries.get(toolId);
     if (
       activator === undefined ||
@@ -72,7 +72,7 @@ export class NativeHostRegistrationGate {
     registration: NativeMarketplaceRegistration,
     projectRoot: string
   ): Promise<{
-    activator: NativePluginActivator;
+    activator: HostActions;
     refs: readonly NativePluginClaim[];
     scopes: ReadonlyMap<string, "project" | "user" | undefined>;
   }> {

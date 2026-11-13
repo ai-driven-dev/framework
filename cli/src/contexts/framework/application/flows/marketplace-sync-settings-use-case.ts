@@ -24,19 +24,19 @@ import {
   type Marketplace,
 } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import type { MarketplaceSettings } from "../../../tools/domain/marketplace-settings.js";
+import type { HostActions } from "../../../host-registration/contract/host-actions.js";
+import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
+import type {
+  HostMarketplaceSources,
+  NativeMarketplaceSource,
+} from "../../../host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
 import {
   describePluginDiff,
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
-} from "../../../tools/domain/marketplace-source-conflict.js";
-import type { HostMarketplaceRegistryReader } from "../../../tools/domain/ports/host-marketplace-registry-reader.js";
-import type { HostPluginRegistryReader } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
-import type {
-  NativeMarketplaceSource,
-  NativeMarketplaceSourceReader,
-} from "../../../tools/domain/ports/native-marketplace-source-reader.js";
-import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
+} from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { MarketplaceRegistration } from "../../../tools/domain/plugins/marketplace-registration.js";
 import {
   hostRefInUse,
   nativeActivationOf,
@@ -164,14 +164,14 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     /** Native plugin CLI activators, keyed by the `binary` each profile declares. */
-    private readonly activators: ReadonlyMap<string, NativePluginActivator>,
+    private readonly activators: ReadonlyMap<string, HostActions>,
     private readonly ensureBuilt: EnsureBuiltMarketplace,
     /** Readers of a host's own marketplace registry, keyed by `AiToolId` — only a tool whose
      * profile declares `NativeActivation.marketplaceRegistry` is ever looked up here, so a tool
      * absent from this map still syncs. */
     private readonly hostMarketplaceRegistries: ReadonlyMap<
       AiToolId,
-      HostMarketplaceRegistryReader
+      HostMarketplaceRegistry
     > = new Map(),
     /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplaceUseCase`'s
      * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
@@ -182,12 +182,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     private readonly marketplaceRegisterFrameworkUseCase?: MarketplaceRegisterFramework,
     private readonly userSourceReferences?: UserSourceReferences,
     private readonly currentVersionProvider?: VersionReader,
-    private readonly hostPluginRegistries: ReadonlyMap<
-      AiToolId,
-      HostPluginRegistryReader
-    > = new Map(),
+    private readonly hostPluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
     private readonly userManifestRepo?: ManifestRepository,
-    private readonly nativeSources: ReadonlyMap<AiToolId, NativeMarketplaceSourceReader> = new Map()
+    private readonly nativeSources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map()
   ) {}
 
   async execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
@@ -224,10 +221,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     // A user-scope run lands nothing under `projectRoot`, so no project settings file mirrors it.
     if (scope === "project") {
       for (const toolId of toolIds) {
-        if (
-          resolveNativePlugins(toolId)?.marketplaceRegistration()
-            ?.declarativePluginActivationRequiresNativeProof === true
-        )
+        if (resolveNativePlugins(toolId)?.marketplaceRegistration()?.requiresNativeProof())
           continue;
         if (await this.syncTool(toolId, projectRoot, manifest, marketplaces)) anyToolUpdated = true;
       }
@@ -245,7 +239,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     if (scope === "project") {
       for (const [toolId, outcome] of activation.outcomes) {
         const settings = resolveNativePlugins(toolId)?.marketplaceRegistration();
-        if (settings?.declarativePluginActivationRequiresNativeProof !== true) continue;
+        if (settings?.requiresNativeProof() !== true) continue;
         const hostNames = new Set(outcome.marketplaces.map((entry) => entry.hostName));
         const provenRefs = outcome.pluginRefs.filter((ref) =>
           [...hostNames].some((hostName) => ref.endsWith(`@${hostName}`))
@@ -509,7 +503,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   ): Promise<boolean> {
     let changed = false;
     for (const toolId of activated) {
-      const settingsPath = this.marketplaceSettingsOf(toolId)?.settingsPath;
+      const settingsPath = this.marketplaceSettingsOf(toolId)?.sharedSettingsFile();
       if (settingsPath === undefined) continue;
       const tracked = manifest
         .getToolFiles(toolId)
@@ -525,12 +519,12 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     return changed;
   }
 
-  private marketplaceSettingsOf(toolId: ToolId): MarketplaceSettings | undefined {
+  private marketplaceSettingsOf(toolId: ToolId): MarketplaceRegistration | undefined {
     return resolveNativePlugins(toolId)?.marketplaceRegistration() ?? undefined;
   }
 
   private nativeActivationBinary(toolId: ToolId): string | undefined {
-    return nativeActivationOf(toolId)?.binary;
+    return nativeActivationOf(toolId)?.hostBinary();
   }
 
   /** The caller has already checked `isAvailable()`, so every failure reaching here is either a
@@ -538,7 +532,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
    * bug in the activator, which propagates. */
   private async activateTool(
     toolId: ToolId,
-    activator: NativePluginActivator,
+    activator: HostActions,
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
@@ -868,7 +862,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   // Returns the host's own catalog name, never this project's local alias: a catalog this
   // project just built and cannot read back is not registered at all (see the throw below).
   private async registerMarketplace(
-    activator: NativePluginActivator,
+    activator: HostActions,
     toolId: ToolId,
     marketplace: Marketplace,
     projectRoot: string,
@@ -901,7 +895,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       proof.sourceStatus === "unproven" ||
       (proof.sourceStatus === "owned" && proof.source === undefined)
     ) {
-      if (isAiToolId(toolId) && nativeActivationOf(toolId)?.marketplaceRegistry !== undefined) {
+      if (isAiToolId(toolId) && nativeActivationOf(toolId)?.keepsMarketplaceRegistry() === true) {
         const existing = await this.hostMarketplaceRegistries.get(toolId)?.read();
         if (existing?.entries?.has(hostName) === true)
           await this.guardAgainstConflict(
@@ -919,7 +913,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       return { hostName, outcome: "refused", claimable: false };
     }
     const hostMarketplaceReading =
-      isAiToolId(toolId) && nativeActivationOf(toolId)?.marketplaceRegistry !== undefined
+      isAiToolId(toolId) && nativeActivationOf(toolId)?.keepsMarketplaceRegistry() === true
         ? await this.hostMarketplaceRegistries.get(toolId)?.read()
         : undefined;
     if (hostMarketplaceReading?.entries?.has(hostName) === true && !proof.canonical) {
@@ -1064,7 +1058,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     warnings: string[]
   ): Promise<"proceed" | "skip"> {
     if (!isAiToolId(toolId)) return "proceed";
-    if (nativeActivationOf(toolId)?.marketplaceRegistry === undefined) return "proceed";
+    if (nativeActivationOf(toolId)?.keepsMarketplaceRegistry() !== true) return "proceed";
     const reader = this.hostMarketplaceRegistries.get(toolId);
     if (reader === undefined) return "proceed";
     const requestedSource = await this.fs.realpath(builtDir).catch(() => builtDir);
@@ -1121,7 +1115,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   // `hostName`, never the project's alias, names every host-facing call.
   private async reclaimOrReport(
     toolId: ToolId,
-    activator: NativePluginActivator,
+    activator: HostActions,
     marketplace: Marketplace,
     hostName: string,
     builtDir: string,
@@ -1253,7 +1247,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
-    settings: MarketplaceSettings
+    settings: MarketplaceRegistration
   ): Promise<boolean> {
     const marketplaceChanged = await this.syncMarketplacesFile(
       toolId,
@@ -1262,10 +1256,9 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       settings,
       marketplaces
     );
-    const pluginsChanged =
-      settings.enabledPluginsKey != null
-        ? await this.syncEnabledPluginsFile(toolId, projectRoot, manifest, marketplaces, settings)
-        : false;
+    const pluginsChanged = settings.writesEnabledPlugins()
+      ? await this.syncEnabledPluginsFile(toolId, projectRoot, manifest, marketplaces, settings)
+      : false;
     return marketplaceChanged || pluginsChanged;
   }
 
@@ -1276,7 +1269,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     toolId: ToolId,
     projectRoot: string,
     manifest: Manifest,
-    settings: MarketplaceSettings,
+    settings: MarketplaceRegistration,
     marketplaces: readonly Marketplace[]
   ): Promise<boolean> {
     // Building the tree is this CLI's job whoever registers it: a tool that is not installed
@@ -1291,15 +1284,18 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     toolId: ToolId,
     projectRoot: string,
     manifest: Manifest,
-    settings: MarketplaceSettings
+    settings: MarketplaceRegistration
   ): Promise<boolean> {
-    const sharedPath = resolve(projectRoot, settings.settingsPath);
+    const sharedPath = resolve(projectRoot, settings.sharedSettingsFile());
     const shared = await this.loadSettings(sharedPath);
-    if (!(settings.settingsKey in shared)) return false;
-    delete shared[settings.settingsKey];
+    if (!settings.dropMarketplaces(shared)) return false;
     const content = JSON.stringify(shared, null, 2);
     await this.fs.writeFile(sharedPath, content);
-    manifest.updateTrackedFileHash(toolId, settings.settingsPath, this.hasher.hash(content));
+    manifest.updateTrackedFileHash(
+      toolId,
+      settings.sharedSettingsFile(),
+      this.hasher.hash(content)
+    );
     return true;
   }
 
@@ -1308,35 +1304,38 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
-    settings: MarketplaceSettings,
+    settings: MarketplaceRegistration,
     provenRefs?: readonly string[]
   ): Promise<boolean> {
-    const pluginsPath = resolve(projectRoot, settings.settingsPath);
+    const pluginsPath = resolve(projectRoot, settings.sharedSettingsFile());
     const json = await this.loadSettings(pluginsPath);
     if (!this.mergeEnabledPlugins(json, settings, toolId, manifest, marketplaces, provenRefs))
       return false;
     const content = JSON.stringify(json, null, 2);
     await this.fs.writeFile(pluginsPath, content);
-    manifest.updateTrackedFileHash(toolId, settings.settingsPath, this.hasher.hash(content));
+    manifest.updateTrackedFileHash(
+      toolId,
+      settings.sharedSettingsFile(),
+      this.hasher.hash(content)
+    );
     return true;
   }
 
   private mergeEnabledPlugins(
     json: Record<string, unknown>,
-    settings: MarketplaceSettings,
+    settings: MarketplaceRegistration,
     toolId: ToolId,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
     provenRefs?: readonly string[]
   ): boolean {
-    const pluginsKey = settings.enabledPluginsKey;
-    if (pluginsKey == null) return false;
-    const existing = this.existingRecord(json, pluginsKey);
+    if (!settings.writesEnabledPlugins()) return false;
+    const existing = settings.enabledPluginsIn(json);
     const toAdd: Record<string, boolean> = {};
     if (provenRefs !== undefined) {
       for (const ref of provenRefs) if (!(ref in existing)) toAdd[ref] = true;
       if (Object.keys(toAdd).length === 0) return false;
-      json[pluginsKey] = { ...existing, ...toAdd };
+      settings.recordEnabledPlugins(json, { ...existing, ...toAdd });
       return true;
     }
     const marketplaceByName = new Map(marketplaces.map((m) => [m.name, m]));
@@ -1344,7 +1343,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       if (plugin.marketplace == null) continue;
       const marketplace = marketplaceByName.get(plugin.marketplace);
       if (marketplace == null) continue;
-      const entryKey = settings.toEntryKey({
+      const entryKey = settings.entryKeyFor({
         name: marketplace.name,
         source: marketplace.source,
       });
@@ -1353,19 +1352,8 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       if (!(key in existing)) toAdd[key] = true;
     }
     if (Object.keys(toAdd).length === 0) return false;
-    json[pluginsKey] = { ...existing, ...toAdd };
+    settings.recordEnabledPlugins(json, { ...existing, ...toAdd });
     return true;
-  }
-
-  private existingRecord(
-    json: Record<string, unknown>,
-    settingsKey: string
-  ): Record<string, unknown> {
-    const raw = json[settingsKey];
-    if (raw !== null && typeof raw === "object" && !Array.isArray(raw)) {
-      return raw as Record<string, unknown>;
-    }
-    return {};
   }
 
   // These files are co-owned and the machine-local one is untracked and gitignored, which is

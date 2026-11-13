@@ -12,14 +12,14 @@ import { resolveHomeDir } from "../../../../kernel/reading/home-dir.js";
 import type { MarketplaceScope } from "../../../../kernel/scope.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { HostActions } from "../../../host-registration/contract/host-actions.js";
+import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
+import type {
+  HostPluginRegistry,
+  HostPluginRegistryReading,
+} from "../../../host-registration/contract/host-plugin-registry.js";
 import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
 import { unmergeOpencodeMcp } from "../../../tools/domain/formats/opencode-mcp-merge.js";
-import type {
-  HostPluginRegistryReader,
-  HostPluginRegistryReading,
-} from "../../../tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../tools/domain/ports/native-marketplace-source-reader.js";
-import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
 import {
   nativeActivationOf,
   pluginEnablementIsMachineGlobal,
@@ -69,14 +69,11 @@ export class PluginRemoveUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly logger: Logger,
     /** Native plugin CLI activators keyed by `NativeActivation.binary`. */
-    private readonly activators: ReadonlyMap<string, NativePluginActivator>,
+    private readonly activators: ReadonlyMap<string, HostActions>,
     /** Host plugin registry readers keyed by `AiToolId`, consulted before uninstalling a ref so
      * the scope asked for is the one the host actually registered it at. Absent falls back to the
      * manifest's own recorded scope. */
-    private readonly hostPluginRegistries: ReadonlyMap<
-      AiToolId,
-      HostPluginRegistryReader
-    > = new Map(),
+    private readonly hostPluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
     /** The registry of projects referencing the shared machine-scope source, needed for the
      * guard: uninstalling a ref a host enables machine-wide (codex, copilot) would disable it for
      * another project on this machine too. Absent skips the guard entirely. */
@@ -88,7 +85,7 @@ export class PluginRemoveUseCase {
     private readonly userManifestRepo?: ManifestRepository,
     private readonly nativeMarketplaceSources: ReadonlyMap<
       AiToolId,
-      NativeMarketplaceSourceReader
+      HostMarketplaceSources
     > = new Map()
   ) {}
 
@@ -146,7 +143,7 @@ export class PluginRemoveUseCase {
   ): Promise<void> {
     const activation = nativeActivationOf(toolId);
     if (activation == null || plugin.marketplace === undefined) return;
-    const activator = this.activators.get(activation.binary);
+    const activator = this.activators.get(activation.hostBinary());
     if (activator === undefined || !activator.isAvailable()) return;
     const registration = registrations?.marketplaces.find(
       (entry) => entry.alias === plugin.marketplace
@@ -165,7 +162,7 @@ export class PluginRemoveUseCase {
       );
     if (
       registrations?.pluginRefs.includes(ref) !== true &&
-      this.activators.get(activation.binary)?.enablesPlugins() !== true
+      this.activators.get(activation.hostBinary())?.enablesPlugins() !== true
     )
       throw new Error(
         `${toolId}: '${ref}' is not a ref this project enabled; reconcile manually before removal.`
@@ -373,12 +370,12 @@ export class PluginRemoveUseCase {
   ): Promise<boolean | undefined> {
     const nativeActivation = nativeActivationOf(toolId);
     if (nativeActivation == null || plugin.marketplace === undefined) return undefined;
-    const activator = this.activators.get(nativeActivation.binary);
+    const activator = this.activators.get(nativeActivation.hostBinary());
     if (activator === undefined) return undefined;
     if (!activator.isAvailable()) {
       const hostName = this.hostNameFor(registrations, plugin.marketplace) ?? plugin.marketplace;
       this.logger.warn(
-        `${nativeActivation.binary} CLI not found on PATH — '${plugin.name}@${hostName}' was not uninstalled from the host; its ref may remain enabled after local removal.`
+        `${nativeActivation.hostBinary()} CLI not found on PATH — '${plugin.name}@${hostName}' was not uninstalled from the host; its ref may remain enabled after local removal.`
       );
       return false;
     }
@@ -407,7 +404,7 @@ export class PluginRemoveUseCase {
       return undefined;
     }
     const guardMessage = await this.describeGuardedPluginRef(
-      nativeActivation.binary,
+      nativeActivation.hostBinary(),
       toolId,
       ref,
       alias,
@@ -420,7 +417,7 @@ export class PluginRemoveUseCase {
     }
     return this.uninstallViaActivator(
       activator,
-      nativeActivation.binary,
+      nativeActivation.hostBinary(),
       ref,
       toolId,
       plugin.scope,
@@ -498,7 +495,7 @@ export class PluginRemoveUseCase {
    * attempt rather than silently leaving the entry behind.
    */
   private async uninstallViaActivator(
-    activator: NativePluginActivator,
+    activator: HostActions,
     binary: string,
     ref: string,
     toolId: AiToolId,
@@ -543,7 +540,7 @@ export class PluginRemoveUseCase {
     confirmed: boolean
   ): Promise<void> {
     if (plugin.marketplace === undefined) return;
-    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheDir?.(resolveHomeDir());
+    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(resolveHomeDir());
     if (cacheRoot === undefined) return;
     const hostName = this.hostNameFor(registrations, plugin.marketplace);
     if (hostName === undefined) return;

@@ -44,23 +44,24 @@ src/
 │   │   └── infrastructure/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── application/
-│   │   ├── domain/
-│   │   │   ├── capabilities/
-│   │   │   ├── formats/
-│   │   │   ├── hooks/
-│   │   │   ├── models/
-│   │   │   ├── plugins/
-│   │   │   ├── ports/
-│   │   │   ├── profile/
-│   │   │   └── profiles/    # one directory per tool
-│   │   │       ├── antigravity/
-│   │   │       ├── claude/
-│   │   │       ├── codex/
-│   │   │       ├── copilot/
-│   │   │       ├── cursor/
-│   │   │       ├── kilo/
-│   │   │       ├── opencode/
-│   │   │       └── vscode/
+│   │   └── domain/
+│   │       ├── capabilities/
+│   │       ├── formats/
+│   │       ├── hooks/
+│   │       ├── models/
+│   │       ├── plugins/
+│   │       ├── profile/
+│   │       └── profiles/    # one directory per tool
+│   │           ├── antigravity/
+│   │           ├── claude/
+│   │           ├── codex/
+│   │           ├── copilot/
+│   │           ├── cursor/
+│   │           ├── kilo/
+│   │           ├── opencode/
+│   │           └── vscode/
+│   ├── host-registration/    # what a host's own registry says about plugins and marketplaces, and the driving of its CLI
+│   │   ├── contract/
 │   │   └── infrastructure/
 │   ├── telemetry/    # what each billed model call consumed, read from a tool's own transcripts
 │   │   ├── application/
@@ -95,7 +96,8 @@ src/
 │       ├── application/
 │       │   └── strategies/
 │       ├── domain/
-│       │   └── formats/
+│       │   ├── formats/
+│       │   └── ports/
 │       └── infrastructure/
 ├── kernel/    # old home of the shared vocabulary, receives no new file. Imports no context
 │   ├── materialization/    # where content lands and how its links follow
@@ -125,7 +127,7 @@ src/
 - `src/composition/`: the wiring module of each migrated context. Only the composition root and `cli.ts` import it.
 - `src/shared/`: technology ports and their adapters that two or more contexts need. No context import.
 - `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
-- `src/contexts/`: the six bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
+- `src/contexts/`: the seven bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
 - `src/runtime/`: services that are not a context — git, assets, filesystem, self-update — and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.

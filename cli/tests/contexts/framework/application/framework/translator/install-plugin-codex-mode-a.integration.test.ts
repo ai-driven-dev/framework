@@ -11,12 +11,12 @@ import type { PluginSource } from "../../../../../../src/kernel/source.js";
 import { CapturingLogger } from "../../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostPluginRegistryReader } from "../../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -27,7 +27,7 @@ function syncWithProvenFreshHost(
   registry: InMemoryMarketplaceRegistry,
   hasher: DeterministicHasher,
   logger: CapturingLogger,
-  activator: FakeNativePluginActivator
+  activator: FakeHostActions
 ): MarketplaceSyncSettingsUseCase {
   return new MarketplaceSyncSettingsUseCase(
     fs,
@@ -42,14 +42,12 @@ function syncWithProvenFreshHost(
     undefined,
     undefined,
     undefined,
-    new Map([
-      ["codex", new FakeHostPluginRegistryReader({ location: "fake codex", refs: new Map() })],
-    ]),
+    new Map([["codex", new FakeHostPluginRegistry({ location: "fake codex", refs: new Map() })]]),
     undefined,
     new Map([
       [
         "codex",
-        new FakeNativeMarketplaceSourceReader(
+        new FakeHostMarketplaceSources(
           activator,
           "effective-list",
           (path) => (path === "/built/codex" ? MARKETPLACE_NAME : undefined),
@@ -149,7 +147,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     const hasher = new DeterministicHasher();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     await seedCodexPlugin(manifestRepo, registry);
 
     const useCase = syncWithProvenFreshHost(
@@ -176,7 +174,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     await seedCodexPlugin(manifestRepo, registry, {
       kind: "github",
       repo: "ai-driven-dev/framework",
@@ -202,7 +200,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     const logger = new CapturingLogger();
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       failOnPlugins: [`aidd-context@${MARKETPLACE_NAME}`],
     });
@@ -226,7 +224,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
-    const activator = new FakeNativePluginActivator({ available: false });
+    const activator = new FakeHostActions({ available: false });
     await seedCodexPlugin(manifestRepo, registry);
 
     const useCase = new MarketplaceSyncSettingsUseCase(

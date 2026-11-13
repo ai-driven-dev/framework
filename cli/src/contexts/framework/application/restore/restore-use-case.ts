@@ -8,6 +8,7 @@ import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import type { Platform } from "../../../../runtime/platform/platform.js";
+import type { FileMerger } from "../../../../shared/ports/file-merger.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
 import {
   CONFIG_MCP,
@@ -17,7 +18,6 @@ import {
   CONFIG_VSCODE_SETTINGS,
   type ConfigRef,
 } from "../../../tools/domain/capabilities/config-refs.js";
-import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
 import { FRAMEWORK_CONFIG_PREFIX, FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";

@@ -7,8 +7,8 @@ import {
 } from "../../../../../src/contexts/framework/application/shared/purge-native-marketplace-cache.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 
 const HOME = "/home/u";
 const CACHE_ROOT = "/cache";
@@ -50,7 +50,7 @@ describe("purgeNativeMarketplaceCache", () => {
     const fs = new InMemoryFileAdapter({ [path]: "still registered" });
     const logger = new CapturingLogger();
     const location = "/host/known_marketplaces.json";
-    const reader = new FakeHostMarketplaceRegistryReader({
+    const reader = new FakeHostMarketplaceRegistry({
       location,
       entries: new Map([[HOST_NAME, "/another-project/marketplace"]]),
     });
@@ -72,7 +72,7 @@ describe("purgeNativeMarketplaceCache", () => {
       [neighborPath]: "other tenant",
     });
     const logger = new CapturingLogger();
-    const reader = new FakeHostMarketplaceRegistryReader({
+    const reader = new FakeHostMarketplaceRegistry({
       location: "/host/known_marketplaces.json",
       entries: new Map([["another-marketplace", "/other-project/marketplace"]]),
     });
@@ -93,7 +93,7 @@ describe("purgeNativeMarketplaceCache", () => {
     const fs = new InMemoryFileAdapter({ [path]: "unproven ownership" });
     const logger = new CapturingLogger();
     const location = "/host/known_marketplaces.json";
-    const reader = new FakeHostMarketplaceRegistryReader({ location, unreadable: "EACCES" });
+    const reader = new FakeHostMarketplaceRegistry({ location, unreadable: "EACCES" });
 
     await purgeNativeMarketplaceCache(fs, logger, reader, CACHE_ROOT, "claude", HOST_NAME, true);
 
@@ -109,7 +109,7 @@ describe("purgeNativeMarketplaceCache", () => {
     const path = join(CANDIDATE, "plugin.json");
     const fs = new InMemoryFileAdapter({ [path]: "B still needs these bytes" });
     const logger = new CapturingLogger();
-    const reader = new FakeHostMarketplaceRegistryReader({
+    const reader = new FakeHostMarketplaceRegistry({
       location: "/host/registry",
       absent: true,
     });
@@ -149,7 +149,7 @@ describe("purgeNativeMarketplaceCache", () => {
   it("purges the cache and says so once the host's registry is gone", async () => {
     const fs = new InMemoryFileAdapter({ [join(CANDIDATE, "plugin.json")]: "{}" });
     const logger = new CapturingLogger();
-    const reader = new FakeHostMarketplaceRegistryReader({
+    const reader = new FakeHostMarketplaceRegistry({
       location: "/home/u/.claude/plugins/known_marketplaces.json",
       absent: true,
     });

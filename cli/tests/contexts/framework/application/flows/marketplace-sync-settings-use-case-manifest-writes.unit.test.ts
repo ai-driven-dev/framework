@@ -12,12 +12,12 @@ import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -39,7 +39,7 @@ interface Setup {
   readonly marketplaceNames?: readonly string[];
   readonly marketplaceScope?: MarketplaceScope;
   readonly failingBuilds?: readonly string[];
-  readonly activator?: FakeNativePluginActivator;
+  readonly activator?: FakeHostActions;
   readonly withPlugin?: boolean;
   readonly trackedSettings?: string;
   readonly settingsOnDisk?: string;
@@ -128,7 +128,7 @@ async function build(setup: Setup = {}) {
     );
   }
   const activator =
-    setup.activator ?? new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+    setup.activator ?? new FakeHostActions({ available: true, enablesPlugins: false });
   const machineRegistrations = setup.existingMachineRegistrations;
   const machine = machineRegistrations === undefined ? undefined : Manifest.create();
   if (machine !== undefined && machineRegistrations !== undefined) {
@@ -165,7 +165,7 @@ async function build(setup: Setup = {}) {
     new Map([
       [
         "claude",
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: "/home/.claude/plugins/installed_plugins.json",
           refs: new Map(),
         }),
@@ -175,7 +175,7 @@ async function build(setup: Setup = {}) {
     new Map([
       [
         "claude",
-        new FakeNativeMarketplaceSourceReader(
+        new FakeHostMarketplaceSources(
           activator,
           "registry",
           (path) => names.find((name) => path === `/built/${name}/claude`),
@@ -227,7 +227,7 @@ function ownedMachineEntry(alias: string, hostName: string, source?: string): Na
 
 describe("how many times the manifest is written back", () => {
   it("zero times when a run changed nothing, writing no project file either", async () => {
-    const activator = new FakeNativePluginActivator({ available: false });
+    const activator = new FakeHostActions({ available: false });
     const { useCase, manifestRepo, fs } = await build({ toolIds: ["claude", "codex"], activator });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
@@ -237,7 +237,7 @@ describe("how many times the manifest is written back", () => {
   });
 
   it("once when only the settings file changed", async () => {
-    const activator = new FakeNativePluginActivator({ available: false });
+    const activator = new FakeHostActions({ available: false });
     const { useCase, manifestRepo, fs } = await build({ withPlugin: true, activator });
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
@@ -270,7 +270,7 @@ describe("how many times the manifest is written back", () => {
   });
 
   it("never on a second run that enables the same plugin ref again", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, manifestRepo, manifest } = await build({ withPlugin: true, activator });
     await useCase.execute({ projectRoot: PROJECT_ROOT });
     const afterFirstRun = manifestRepo.saves;
@@ -296,7 +296,7 @@ describe("how many times the manifest is written back", () => {
   });
 
   it("once when the marketplaces key is evicted from the shared settings file", async () => {
-    const activator = new FakeNativePluginActivator({ available: false });
+    const activator = new FakeHostActions({ available: false });
     const onDisk = JSON.stringify({
       extraKnownMarketplaces: { x: { source: "/p" } },
       model: "opus",
@@ -370,7 +370,7 @@ describe("when a recorded registration is replaced", () => {
   });
 
   it("once a plugin ref appears where none was recorded", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, manifest } = await build({
       withPlugin: true,
       activator,
@@ -456,8 +456,8 @@ describe("when a recorded registration is replaced", () => {
 });
 
 describe("a marketplace the host refused is not this project's to remove", () => {
-  function refusingHost(registrationState: "live" | "dead"): FakeNativePluginActivator {
-    return new FakeNativePluginActivator({
+  function refusingHost(registrationState: "live" | "dead"): FakeHostActions {
+    return new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState,
@@ -491,7 +491,7 @@ describe("a marketplace the host refused is not this project's to remove", () =>
   });
 
   it("records no marketplace it failed to take back from a dead registration", async () => {
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState: "dead",
@@ -615,7 +615,7 @@ describe("machine ownership recorded by a user-scope sync", () => {
     };
     const { useCase, machineRepo, activator, fs } = await build({
       withPlugin: true,
-      activator: new FakeNativePluginActivator({ available: true }),
+      activator: new FakeHostActions({ available: true }),
       existingMachineRegistrations: previous,
       marketplaceScope: "user",
     });
@@ -648,7 +648,7 @@ describe("machine ownership recorded by a user-scope sync", () => {
     };
     const { useCase, machineRepo } = await build({
       withPlugin: true,
-      activator: new FakeNativePluginActivator({ available: true }),
+      activator: new FakeHostActions({ available: true }),
       existingMachineRegistrations: previous,
       marketplaceScope: "user",
     });

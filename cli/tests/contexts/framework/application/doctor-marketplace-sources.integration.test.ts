@@ -6,9 +6,9 @@ import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js"
 import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../../src/kernel/paths.js";
 import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";
 import type { VersionReader } from "../../../../src/kernel/ports/version-reader.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../helpers/ports/fake-host-marketplace-registry-reader.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
 
 function fakeVersion(value: string): VersionReader {
   return { get: () => value };
@@ -75,7 +75,7 @@ function catalogFile(catalog: CatalogAt): [string, string] {
 }
 
 async function issuesFor(
-  hostReader: FakeHostMarketplaceRegistryReader,
+  hostReader: FakeHostMarketplaceRegistry,
   options: { fs?: FileReader; requested?: CatalogAt; registered?: CatalogAt } = {}
 ) {
   let fs = options.fs ?? new InMemoryFileAdapter();
@@ -119,7 +119,7 @@ async function issuesFor(
 
 describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
   it("reports a conflict when a different catalog is registered under the same name", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/other/src"]]),
     });
@@ -138,7 +138,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
   });
 
   it("does not report a conflict when only the version differs under the same name and plugin set — an upgrade, not a conflict", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/other/src"]]),
     });
@@ -153,7 +153,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
 
   it("reports a conflict keyed by the catalog's own declared name even when this project's local alias would have missed it entirely — the alias never held the entry to begin with", async () => {
     const HOST_NAME = "upstream";
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       // Nothing is registered under this project's local alias, only under the catalog's
       // declared name: a pass keyed by `marketplace.name` would find nothing and stay silent.
@@ -171,7 +171,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
   });
 
   it("reports nothing when the host's registry already holds the same resolved source", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, expectedBuiltDir()]]),
     });
@@ -180,7 +180,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
   });
 
   it("reports nothing when the same catalog is registered from a different, resolved path — two projects sharing one build", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/other-project/built/claude"]]),
     });
@@ -198,7 +198,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
   });
 
   it("reports nothing when the registered source no longer resolves to a readable catalog — a dead entry a re-add repairs", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/gone"]]),
     });
@@ -208,7 +208,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
   });
 
   it("reports nothing when the host's registry cannot be read", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       unreadable: "ENOENT",
     });
@@ -217,7 +217,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
   });
 
   it("reports nothing when this project's build was never made, or no longer resolves", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/other/src"]]),
     });
@@ -227,7 +227,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
 
   it("reports nothing when this project's local alias differs from its catalog's own name, even when the alias coincidentally names a different registered entry", async () => {
     const CATALOG_NAME = "probe-mkt-catalog";
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([
         // Some unrelated catalog happens to be registered under this project's local alias, a fact
@@ -307,7 +307,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
     );
     const manifest = Manifest.create();
     manifest.addTool("codex", "test", []);
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/other/src"]]),
     });
@@ -328,7 +328,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
 
   it("reads the host registry once per marketplace, the same cadence the sync-time guard uses — not once per tool, reused across every marketplace that tool has", async () => {
     const SECOND_NAME = "probe-mkt-2";
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map(),
     });
@@ -387,7 +387,7 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
     return resolve(userBuiltMarketplaceDir(USER_CACHE_ROOT, version, NAME, "claude"));
   }
 
-  async function driftIssuesFor(hostReader: FakeHostMarketplaceRegistryReader) {
+  async function driftIssuesFor(hostReader: FakeHostMarketplaceRegistry) {
     const fs = new InMemoryFileAdapter({
       [`${sharedPath(CURRENT_VERSION)}/${CATALOG_RELATIVE}`]: JSON.stringify({
         name: NAME,
@@ -419,7 +419,7 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
   }
 
   it("warns naming both versions when the host already follows a newer aidd version than this run", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, sharedPath("3.0.0")]]),
     });
@@ -435,7 +435,7 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
 
   it("warns naming `aidd sync` when the host still points at this project's own pre-migration cache", async () => {
     const projectCache = resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, "claude"));
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, projectCache]]),
     });
@@ -453,7 +453,7 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
 
   it("warns naming `aidd sync` when the host still points at another project's pre-migration cache", async () => {
     const foreignProjectCache = resolve(builtMarketplaceDir("/other-project", NAME, "claude"));
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, foreignProjectCache]]),
     });
@@ -471,7 +471,7 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
   });
 
   it("says nothing when the host already follows this exact shared version", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, sharedPath(CURRENT_VERSION)]]),
     });
@@ -480,7 +480,7 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
   });
 
   it("says nothing when this project's own version is ahead of the host's — the host follows on the next sync", async () => {
-    const hostReader = new FakeHostMarketplaceRegistryReader({
+    const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, sharedPath("1.0.0")]]),
     });

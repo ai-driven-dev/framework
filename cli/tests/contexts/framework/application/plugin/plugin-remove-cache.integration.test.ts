@@ -10,10 +10,10 @@ import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/appli
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const ALIAS = "my-local-alias";
@@ -71,7 +71,7 @@ function verifiedClaudeRemoval(
   fs: InMemoryFileAdapter,
   repo: InMemoryManifestRepository,
   logger: CapturingLogger,
-  activator: FakeNativePluginActivator
+  activator: FakeHostActions
 ): PluginRemoveUseCase {
   return new PluginRemoveUseCase(
     fs,
@@ -81,7 +81,7 @@ function verifiedClaudeRemoval(
     new Map([
       [
         "claude",
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: "/host/plugin-registry",
           refs: new Map([
             [REF, { enabled: true, scope: "project" }],
@@ -125,7 +125,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     await fs.writeFile(cacheEntry, "{}");
     await fs.writeFile(foreignCacheEntry, "foreign bytes");
     const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
@@ -145,7 +145,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     const cacheEntry = join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
     const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
-    const activator = new FakeNativePluginActivator({ available: false });
+    const activator = new FakeHostActions({ available: false });
     const logger = new CapturingLogger();
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
@@ -166,7 +166,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     const cacheEntry = join(CLAUDE_CACHE_ROOT, HOST_NAME, PLUGIN_NAME, "1.0.0", "plugin.json");
     await fs.writeFile(cacheEntry, "{}");
     const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
-    const activator = new FakeNativePluginActivator({ available: true, failOnUninstall: [REF] });
+    const activator = new FakeHostActions({ available: true, failOnUninstall: [REF] });
     const logger = new CapturingLogger();
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
@@ -206,7 +206,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
       pluginRefs: [`${PLUGIN_NAME}@${evilHostName}`],
     });
     const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
@@ -232,7 +232,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
       fs,
       manifestRepo,
       logger,
-      new FakeNativePluginActivator({ available: true })
+      new FakeHostActions({ available: true })
     );
 
     await removeUseCase.execute({
@@ -288,7 +288,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
       pluginRefs: [REF],
     });
     const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
     const removeUseCase = new PluginRemoveUseCase(
       fs,

@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { wireAuth } from "../../composition/auth.js";
+import { wireHostRegistration } from "../../composition/host-registration.js";
 import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
 import type { LogIn } from "../../contexts/auth/application/log-in.js";
 import type { LogOut } from "../../contexts/auth/application/log-out.js";
@@ -71,22 +72,12 @@ import { PluginDistributionReaderAdapter } from "../../contexts/framework/infras
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
-import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
-import type { NativeMarketplaceSourceReader } from "../../contexts/tools/domain/ports/native-marketplace-source-reader.js";
-import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/codex/native-marketplace-source.js";
-import { copilotMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/copilot/native-marketplace-source.js";
-import { hostPluginRegistryReaders } from "../../contexts/tools/infrastructure/host-plugin-registry-reader-adapter.js";
-import {
-  HostRegistryMarketplaceSourceReaderAdapter,
-  NativeMarketplaceSourceReaderAdapter,
-} from "../../contexts/tools/infrastructure/native-marketplace-source-reader-adapter.js";
 import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
 import type { VersionReader } from "../../kernel/ports/version-reader.js";
-import type { AiToolId } from "../../kernel/tool.js";
 import { CLIOutput } from "../../presentation/output.js";
 import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plugins-prompt-use-case.js";
@@ -95,6 +86,7 @@ import { SyncConflictResolverUseCase } from "../../presentation/prompts/sync-con
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
 import { HttpClient } from "../../shared/infrastructure/http-client.js";
 import type { Environment } from "../../shared/ports/environment.js";
+import type { FileMerger } from "../../shared/ports/file-merger.js";
 import { BundledAssetProviderAdapter } from "../assets/asset-loader.js";
 import { atomicWriteFile } from "../filesystem/atomic-write.js";
 import { FileAdapter } from "../filesystem/file-adapter.js";
@@ -110,7 +102,6 @@ import { SelfUpdaterAdapter } from "../self-update/self-updater-adapter.js";
 import { userConfigDir } from "../user-config-dir.js";
 import { wireDistribution } from "./distribution.js";
 import { type TelemetryDeps, wireTelemetry } from "./telemetry.js";
-import { wireTools } from "./tools.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 
 interface GlobalOptions {
@@ -228,21 +219,14 @@ export async function createDeps(
   const prompter = process.stdout.isTTY
     ? new InquirerPrompterAdapter()
     : new SilentPrompterAdapter();
-  const { nativePluginActivators, hostMarketplaceRegistries } = wireTools();
-  const nativeSources = new Map<AiToolId, NativeMarketplaceSourceReader>([
-    ["codex", new NativeMarketplaceSourceReaderAdapter(codexMarketplaceSourceListContract)],
-    ["copilot", new NativeMarketplaceSourceReaderAdapter(copilotMarketplaceSourceListContract)],
-  ]);
-  const claudeMarketplaceRegistry = hostMarketplaceRegistries.get("claude");
-  if (claudeMarketplaceRegistry !== undefined) {
-    nativeSources.set(
-      "claude",
-      new HostRegistryMarketplaceSourceReaderAdapter(claudeMarketplaceRegistry)
-    );
-  }
   // Read once, reused wherever a use case needs the scope a plugin is actually registered
   // at: removal, clean, and doctor's own registration check.
-  const hostPluginRegistries = hostPluginRegistryReaders();
+  const {
+    hostActions: nativePluginActivators,
+    marketplaceRegistries: hostMarketplaceRegistries,
+    marketplaceSources: nativeSources,
+    pluginRegistries: hostPluginRegistries,
+  } = wireHostRegistration();
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
   const userSourceReferences = new UserSourceReferencesAdapter(fs, userConfigDir);

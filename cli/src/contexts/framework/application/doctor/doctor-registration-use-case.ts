@@ -8,18 +8,18 @@ import {
   type Marketplace,
 } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import { answeredRegistry } from "../../../tools/domain/host-plugin-registration.js";
-import type { MarketplaceSettings } from "../../../tools/domain/marketplace-settings.js";
+import type { HostActions } from "../../../host-registration/contract/host-actions.js";
+import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
+import type {
+  HostPluginRegistry,
+  HostPluginRegistryReading,
+} from "../../../host-registration/contract/host-plugin-registry.js";
+import { answeredRegistry } from "../../../host-registration/contract/host-registration-answers.js";
 import {
   describePluginDiff,
   pluginSetDifference,
-} from "../../../tools/domain/marketplace-source-conflict.js";
-import type { HostMarketplaceRegistryReader } from "../../../tools/domain/ports/host-marketplace-registry-reader.js";
-import type {
-  HostPluginRegistryReader,
-  HostPluginRegistryReading,
-} from "../../../tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
+} from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { MarketplaceRegistration } from "../../../tools/domain/plugins/marketplace-registration.js";
 import { nativeActivationOf, resolveNativePlugins } from "../../../tools/domain/registry.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -62,15 +62,15 @@ export class DoctorRegistrationUseCase {
     private readonly fs: FileReader,
     private readonly registry: MarketplaceRegistry,
     /** Native plugin CLI activators keyed by `NativeActivation.binary`. */
-    private readonly activators: ReadonlyMap<string, NativePluginActivator> = new Map(),
+    private readonly activators: ReadonlyMap<string, HostActions> = new Map(),
     /** Host plugin registry readers keyed by `AiToolId`, one per tool whose own CLI
      * activates plugins. */
-    private readonly hostRegistries: ReadonlyMap<AiToolId, HostPluginRegistryReader> = new Map(),
+    private readonly hostRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
     /** Host marketplace registry readers keyed by `AiToolId`. Only a tool whose profile declares
      * `NativeActivation.marketplaceRegistry` is ever looked up here. */
     private readonly hostMarketplaceRegistries: ReadonlyMap<
       AiToolId,
-      HostMarketplaceRegistryReader
+      HostMarketplaceRegistry
     > = new Map(),
     /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplaceUseCase`'s
      * own `userCacheRoot` — needed to recompute the same path that use case would build, without
@@ -110,7 +110,7 @@ export class DoctorRegistrationUseCase {
     const issues: DoctorIssue[] = [];
     for await (const { toolId, expected } of this.retainedToolsWithExpectedMarketplaces(options)) {
       if (!isAiToolId(toolId)) continue;
-      if (nativeActivationOf(toolId)?.marketplaceRegistry === undefined) continue;
+      if (nativeActivationOf(toolId)?.keepsMarketplaceRegistry() !== true) continue;
       const reader = this.hostMarketplaceRegistries.get(toolId);
       if (reader === undefined) continue;
       for (const marketplace of expected) {
@@ -232,7 +232,7 @@ export class DoctorRegistrationUseCase {
         issues.push({
           severity: "warning",
           message: `${toolId} no longer declares marketplace '${marketplace.name}'`,
-          fix: `Run \`aidd marketplace refresh\` to write it back to ${settings.marketplacesSettingsPath}.`,
+          fix: `Run \`aidd marketplace refresh\` to write it back to ${settings.file}.`,
         });
       }
     }
@@ -318,19 +318,20 @@ export class DoctorRegistrationUseCase {
 
   private untrackedSettingsOf(
     toolId: ToolId
-  ): (MarketplaceSettings & { marketplacesSettingsPath: string }) | undefined {
-    const settings = resolveNativePlugins(toolId)?.marketplaceRegistration();
-    // `null` means the tool writes no machine-local registration at all, so there is
-    // nothing here to check — only a declared path leaves a file worth looking at.
-    if (typeof settings?.marketplacesSettingsPath !== "string") return undefined;
-    return settings as MarketplaceSettings & { marketplacesSettingsPath: string };
+  ): { file: string; registration: MarketplaceRegistration } | undefined {
+    const registration = resolveNativePlugins(toolId)?.marketplaceRegistration();
+    // No machine-local file means the tool writes no machine-local registration at all, so
+    // there is nothing here to check.
+    const file = registration?.machineLocalFiles()[0];
+    if (registration == null || file === undefined) return undefined;
+    return { file, registration };
   }
 
   private async registeredNames(
     projectRoot: string,
-    settings: MarketplaceSettings & { marketplacesSettingsPath: string }
+    settings: { file: string; registration: MarketplaceRegistration }
   ): Promise<Set<string>> {
-    const path = join(projectRoot, settings.marketplacesSettingsPath);
+    const path = join(projectRoot, settings.file);
     if (!(await this.fs.fileExists(path))) return new Set();
     let parsed: unknown;
     try {
@@ -338,17 +339,13 @@ export class DoctorRegistrationUseCase {
     } catch {
       return new Set();
     }
-    if (parsed === null || typeof parsed !== "object") return new Set();
-    const value = (parsed as Record<string, unknown>)[settings.settingsKey];
-    if (Array.isArray(value)) return new Set(value.map(String));
-    if (value !== null && typeof value === "object") return new Set(Object.keys(value));
-    return new Set();
+    return settings.registration.declaredMarketplaceNames(parsed);
   }
 
   private canRegisterItself(toolId: ToolId): boolean {
     const activation = nativeActivationOf(toolId);
     if (activation === undefined) return true;
-    return this.activators.get(activation.binary)?.isAvailable() ?? false;
+    return this.activators.get(activation.hostBinary())?.isAvailable() ?? false;
   }
 
   /** The one preamble all three passes open with, so `--tool <id>` narrows every one of them the

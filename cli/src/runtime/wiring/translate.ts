@@ -1,6 +1,5 @@
 import { stat } from "node:fs/promises";
 import type { ToolBuildContract } from "../../contexts/tools/domain/build-contract.js";
-import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import { buildContractFor } from "../../contexts/tools/domain/registry.js";
 import { FlatBuildStrategy } from "../../contexts/translate/application/strategies/flat-build-strategy.js";
 import { MarketplaceBuildStrategy } from "../../contexts/translate/application/strategies/marketplace-build-strategy.js";
@@ -11,6 +10,7 @@ import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Logger } from "../../kernel/ports/logger.js";
+import type { FileMerger } from "../../shared/ports/file-merger.js";
 
 export interface FrameworkBuildDeps {
   fs: FileReader & FileWriter & FileMerger;

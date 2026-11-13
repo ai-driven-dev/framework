@@ -144,7 +144,7 @@ export class ToolCatalog {
     homedir: string,
     env: EnvironmentReader
   ): readonly string[] {
-    const path = this.nativeActivationOf(toolId)?.userSettingsPath?.(homedir, env);
+    const path = this.nativeActivationOf(toolId)?.userSettingsFile(homedir, env);
     return path === undefined ? [] : [path];
   }
 

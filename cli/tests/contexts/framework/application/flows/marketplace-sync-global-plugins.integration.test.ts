@@ -2,24 +2,24 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import type { HostPluginRegistryEntry } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import type { HostPluginRegistryEntry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const REF = "test-plugin@aidd-framework";
 
 async function globalActivation(toolId: "claude" | "copilot") {
   const refs = new Map<string, HostPluginRegistryEntry>();
-  class StatefulActivator extends FakeNativePluginActivator {
+  class StatefulActivator extends FakeHostActions {
     override enablePlugin(ref: string, scope: MarketplaceScope = "project"): void {
       super.enablePlugin(ref, scope);
       refs.set(ref, { enabled: true, scope });
@@ -56,21 +56,18 @@ async function globalActivation(toolId: "claude" | "copilot") {
     new Map([[toolId, activator]]),
     fakeEnsureBuiltMarketplace(),
     new Map([
-      [
-        "claude",
-        new FakeHostMarketplaceRegistryReader({ location: "catalogues", entries: new Map() }),
-      ],
+      ["claude", new FakeHostMarketplaceRegistry({ location: "catalogues", entries: new Map() })],
     ]),
     () => "",
     undefined,
     undefined,
     undefined,
-    new Map([[toolId, new FakeHostPluginRegistryReader({ location: "plugins", refs })]]),
+    new Map([[toolId, new FakeHostPluginRegistry({ location: "plugins", refs })]]),
     userRepo,
     new Map([
       [
         toolId,
-        new FakeNativeMarketplaceSourceReader(
+        new FakeHostMarketplaceSources(
           activator,
           toolId === "claude" ? "registry" : "effective-list",
           (path) => (path === builtDir ? "aidd-framework" : undefined),

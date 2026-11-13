@@ -1,6 +1,5 @@
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { JsonSchemaValidator } from "../../../../../src/contexts/tools/domain/ports/schema-validator.js";
 import { buildClaudeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { buildCodexFlatContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
@@ -8,6 +7,7 @@ import { buildCursorFlatContract } from "../../../../../src/contexts/tools/domai
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
+import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/domain/ports/schema-validator.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";

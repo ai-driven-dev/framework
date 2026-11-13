@@ -1,11 +1,11 @@
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
+import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import {
   type MarketplaceCatalogIdentity,
   type MarketplaceSourceConflict,
   marketplaceSourceConflict,
-} from "../../../tools/domain/marketplace-source-conflict.js";
-import type { HostMarketplaceRegistryReader } from "../../../tools/domain/ports/host-marketplace-registry-reader.js";
+} from "../../../host-registration/contract/marketplace-source-conflict.js";
 import {
   type MarketplaceSourceDrift,
   type MarketplaceSourceDriftContext,
@@ -59,7 +59,7 @@ async function resolvedOrSelf(fs: FileReader, path: string): Promise<string> {
 export async function hostMarketplaceSourceConflict(
   fs: FileReader,
   toolId: AiToolId,
-  reader: HostMarketplaceRegistryReader,
+  reader: HostMarketplaceRegistry,
   requestedSource: string,
   requestedIdentity: MarketplaceCatalogIdentity,
   /** Present only for a caller that wants the version/migration drift decided before falling back

@@ -2,7 +2,7 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import { type AiToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
-import type { HostMarketplaceRegistryReader } from "../../../tools/domain/ports/host-marketplace-registry-reader.js";
+import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import { nativeActivationOf } from "../../../tools/domain/registry.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import { purgeCacheIfEmptyAndConfirmed, resolveCacheCandidate } from "./purge-declared-cache.js";
@@ -19,12 +19,12 @@ export async function purgeAllNativeCaches(
   fs: FileReader & FileWriter,
   logger: Logger,
   home: string,
-  hostMarketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistryReader>,
+  hostMarketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>,
   undone: ReadonlyMap<ToolId, UndoneToolRegistrations>
 ): Promise<void> {
   for (const [toolId, { registrations, removedHostNames }] of undone) {
     if (!isAiToolId(toolId)) continue;
-    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheDir?.(home);
+    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(home);
     if (cacheRoot === undefined) continue;
     for (const { hostName } of registrations.marketplaces) {
       await purgeNativeMarketplaceCache(
@@ -58,7 +58,7 @@ export async function purgeAllNativeCaches(
 export async function purgeNativeMarketplaceCache(
   fs: FileReader & FileWriter,
   logger: Logger,
-  reader: HostMarketplaceRegistryReader | undefined,
+  reader: HostMarketplaceRegistry | undefined,
   cacheRoot: string,
   binary: string,
   hostName: string,
@@ -99,7 +99,7 @@ export async function purgeNativeMarketplaceCache(
 async function purgeOnceRegistryClears(
   fs: FileReader & FileWriter,
   logger: Logger,
-  reader: HostMarketplaceRegistryReader,
+  reader: HostMarketplaceRegistry,
   candidate: string,
   binary: string,
   hostName: string

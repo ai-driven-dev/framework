@@ -5,12 +5,12 @@ import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/fram
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/framework/domain/ports/user-source-references.js";
-import type { HostMarketplaceRegistryReader } from "../../../../../src/contexts/tools/domain/ports/host-marketplace-registry-reader.js";
-import type { HostPluginRegistryReading } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+import type { HostMarketplaceRegistry } from "../../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
 import type {
+  HostMarketplaceSources,
   NativeMarketplaceSource,
-  NativeMarketplaceSourceReader,
-} from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+} from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { NativePluginCliError } from "../../../../../src/kernel/errors.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../../../src/kernel/paths.js";
@@ -18,12 +18,12 @@ import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 
 const ROOT = "/project";
 const ALIAS = "team-tools";
@@ -34,7 +34,7 @@ const OLD = builtMarketplaceDir(ROOT, ALIAS, "claude");
 const ADD_ERROR = "catalogue already exists";
 const RECLAIM = `Marketplace '${HOST}' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.`;
 
-class RecoveringActivator extends FakeNativePluginActivator {
+class RecoveringActivator extends FakeHostActions {
   readonly adds: Array<{ source: string; scope: MarketplaceScope | undefined }> = [];
   readonly removals: Array<{ name: string; scope: MarketplaceScope | undefined; force: boolean }> =
     [];
@@ -69,7 +69,7 @@ interface RecoveryOptions {
   failure?: "remove" | "retry" | "crash";
   state?: "live" | "unknown";
   realpathFails?: readonly string[];
-  host?: HostMarketplaceRegistryReader;
+  host?: HostMarketplaceRegistry;
   plugins?: readonly HostPluginRegistryReading[];
   sourceAfterCollision?: "absent" | "foreign";
   settings?: string;
@@ -136,18 +136,18 @@ async function recovery(options: RecoveryOptions = {}) {
   const activator =
     options.state === undefined
       ? new RecoveringActivator(options.failure)
-      : new FakeNativePluginActivator({
+      : new FakeHostActions({
           available: true,
           conflictOnAdd: true,
           registrationState: options.state,
         });
-  const delegate = new FakeNativeMarketplaceSourceReader(
+  const delegate = new FakeHostMarketplaceSources(
     activator,
     "registry",
     () => HOST,
     new Map([[HOST, { kind: "registry", source }]])
   );
-  const native: NativeMarketplaceSourceReader = {
+  const native: HostMarketplaceSources = {
     read: async (root) => {
       if (activator.removedMarketplaces.length > 0 && activator.addedMarketplaces.length === 0) {
         return { location: "host source after removal", entries: new Map() };
@@ -181,7 +181,7 @@ async function recovery(options: RecoveryOptions = {}) {
       [
         "claude",
         options.host ??
-          new FakeHostMarketplaceRegistryReader({
+          new FakeHostMarketplaceRegistry({
             location: "host marketplaces",
             entries: new Map([[HOST, source]]),
           }),
@@ -377,7 +377,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
   it("refuses recovery when the host marketplace registry disappears after the failed add", async () => {
     const owned = { location: "host marketplaces", entries: new Map([[HOST, OLD]]) };
     const { activator, result } = await recovery({
-      host: new FakeHostMarketplaceRegistryReader(owned, owned, {
+      host: new FakeHostMarketplaceRegistry(owned, owned, {
         location: "host marketplaces",
         absent: true,
       }),
@@ -551,7 +551,7 @@ async function ownedNativeSettings(
         )
       );
   }
-  const activator = new FakeNativePluginActivator({ available: true });
+  const activator = new FakeHostActions({ available: true });
   const logger = new CapturingLogger();
   const sync = new MarketplaceSyncSettingsUseCase(
     fs,
@@ -587,7 +587,7 @@ async function ownedNativeSettings(
     new Map([
       [
         toolId,
-        new FakeNativeMarketplaceSourceReader(
+        new FakeHostMarketplaceSources(
           activator,
           "effective-list",
           (path) => identities.get(path),
@@ -742,8 +742,8 @@ describe("shared framework references follow any successful native tool outcome"
         }),
       });
       fs.setSymlink(ROOT, "/real/project");
-      const claude = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
-      const codex = new FakeNativePluginActivator({ available: true, enablesPlugins: false });
+      const claude = new FakeHostActions({ available: true, enablesPlugins: false });
+      const codex = new FakeHostActions({ available: true, enablesPlugins: false });
       const recorded: Array<{ version: string; projectRoot: string }> = [];
       const references: UserSourceReferences = {
         addReference: async (version, projectRoot) => {
@@ -773,15 +773,10 @@ describe("shared framework references follow any successful native tool outcome"
           ["codex", { read: async () => ({ location: "host plugins", refs: new Map() }) }],
         ]),
         undefined,
-        new Map<"claude" | "codex", NativeMarketplaceSourceReader>([
+        new Map<"claude" | "codex", HostMarketplaceSources>([
           [
             "claude",
-            new FakeNativeMarketplaceSourceReader(
-              claude,
-              "registry",
-              () => "aidd-framework",
-              new Map()
-            ),
+            new FakeHostMarketplaceSources(claude, "registry", () => "aidd-framework", new Map()),
           ],
           [
             "codex",

@@ -8,7 +8,7 @@ import {
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
-import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
+import type { FileMerger } from "../../../../shared/ports/file-merger.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries-use-case.js";
 import { RestoreDriftEntriesUseCase } from "./restore-drift-entries-use-case.js";
 

@@ -10,12 +10,12 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -83,7 +83,7 @@ function manifestWithTwoPlugins(): Manifest {
   return manifest;
 }
 
-function build(activator: FakeNativePluginActivator) {
+function build(activator: FakeHostActions) {
   const registry = new InMemoryMarketplaceRegistry();
   const fs = seededCatalogs();
   const manifest = manifestWithTwoPlugins();
@@ -110,7 +110,7 @@ function build(activator: FakeNativePluginActivator) {
       new Map([
         [
           "claude",
-          new FakeHostPluginRegistryReader({
+          new FakeHostPluginRegistry({
             location: "/host/installed_plugins.json",
             refs: new Map(),
           }),
@@ -120,7 +120,7 @@ function build(activator: FakeNativePluginActivator) {
       new Map([
         [
           "claude",
-          new FakeNativeMarketplaceSourceReader(
+          new FakeHostMarketplaceSources(
             activator,
             "registry",
             (path) =>
@@ -139,7 +139,7 @@ function build(activator: FakeNativePluginActivator) {
 
 describe("marketplaceNames narrows a sync run to the marketplaces named", () => {
   it("registers and enables only the named marketplace's own plugin", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry } = build(activator);
     await registry.save(PROJECT_ROOT, marketplace("market-a"));
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
@@ -151,7 +151,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
   });
 
   it("keeps the untouched marketplace's own nativeRegistrations entry, never replacing it", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo } = build(activator);
     await registry.save(PROJECT_ROOT, marketplace("market-a"));
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
@@ -175,7 +175,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
   });
 
   it("drops a stale ref for the touched marketplace by its hostName suffix, keeping the untouched marketplace's own refs", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifest, manifestRepo } = build(activator);
     manifest.setNativeRegistrations("claude", {
       binary: "claude",
@@ -199,7 +199,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
   });
 
   it("returns the empty result and calls no activator at all for a name matching no registered marketplace", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry } = build(activator);
     await registry.save(PROJECT_ROOT, marketplace("market-a"));
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
@@ -212,7 +212,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
   });
 
   it("activates every registered marketplace when marketplaceNames is not given at all", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry } = build(activator);
     await registry.save(PROJECT_ROOT, marketplace("market-a"));
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
@@ -224,7 +224,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
   });
 
   it("records exactly the named marketplace and its ref on a first narrowed run", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo } = build(activator);
     await registry.save(PROJECT_ROOT, marketplace("market-a"));
     await registry.save(PROJECT_ROOT, marketplace("market-b"));
@@ -245,7 +245,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
   });
 
   it("drops a stale ref of either touched marketplace when narrowed to both", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifest, manifestRepo } = build(activator);
     manifest.setNativeRegistrations("claude", {
       binary: "claude",

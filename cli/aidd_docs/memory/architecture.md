@@ -26,6 +26,7 @@ flowchart LR
     Framework --> Distribution
     Framework --> Tools
     Framework --> Auth["auth"]
+    Framework --> HostRegistration["host-registration"]
     Distribution --> Auth
     Translate --> Tools
     Distribution --> Kernel["kernel"]
@@ -34,6 +35,7 @@ flowchart LR
     Framework --> Kernel
     Tools --> Kernel
     Auth --> Kernel
+    HostRegistration --> Kernel
     Auth --> Shared
     Translate --> Kernel
 ```

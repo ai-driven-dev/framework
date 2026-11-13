@@ -1,14 +1,14 @@
 import type { ToolId } from "../../../../kernel/tool.js";
 import type {
-  HostPluginRegistryEntry,
-  HostPluginRegistryReader,
-  HostPluginRegistryReading,
-} from "../../../tools/domain/ports/host-plugin-registry-reader.js";
-import type {
+  HostMarketplaceSources,
   NativeMarketplaceSource,
-  NativeMarketplaceSourceReader,
   NativeMarketplaceSourceReading,
-} from "../../../tools/domain/ports/native-marketplace-source-reader.js";
+} from "../../../host-registration/contract/host-marketplace-sources.js";
+import type {
+  HostPluginRegistry,
+  HostPluginRegistryEntry,
+  HostPluginRegistryReading,
+} from "../../../host-registration/contract/host-plugin-registry.js";
 import { hostRefInUse } from "../../../tools/domain/registry.js";
 import type { NativeMarketplaceRegistration } from "../../domain/manifest/native-registrations.js";
 
@@ -33,7 +33,7 @@ export function sameNativeMarketplaceSource(
 }
 
 export async function inspectNativeMarketplaceSource(
-  reader: NativeMarketplaceSourceReader | undefined,
+  reader: HostMarketplaceSources | undefined,
   projectRoot: string,
   registration: NativeMarketplaceRegistration
 ): Promise<NativeMarketplaceSourceInspection> {
@@ -79,7 +79,7 @@ export async function inspectNativeMarketplaceSource(
 
 /** A source may be AIDD-owned while the host still carries somebody else's plugin from it. */
 export async function assertNoForeignNativeRefs(
-  reader: HostPluginRegistryReader | undefined,
+  reader: HostPluginRegistry | undefined,
   hostName: string,
   ownedRefs: ReadonlySet<string>,
   projectRoot: string,

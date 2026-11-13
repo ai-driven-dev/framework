@@ -6,21 +6,21 @@ import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/fram
 import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import { buildHostRegistration } from "../../../../../src/contexts/tools/domain/host-plugin-registration.js";
 import type {
-  HostPluginRegistryReader,
+  HostPluginRegistry,
   HostPluginRegistryReading,
-} from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
+} from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import { answeredRegistry } from "../../../../../src/contexts/host-registration/contract/host-registration-answers.js";
 import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../../../src/kernel/paths.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -69,7 +69,7 @@ function readableHostPlugins(refs: readonly string[] = []) {
   return new Map([
     [
       "claude" as const,
-      new FakeHostPluginRegistryReader({
+      new FakeHostPluginRegistry({
         location: "/home/dev/.claude/plugins/installed_plugins.json",
         refs: new Map(refs.map((ref) => [ref, { enabled: true }])),
       }),
@@ -78,14 +78,14 @@ function readableHostPlugins(refs: readonly string[] = []) {
 }
 
 function nativeSource(
-  activator: FakeNativePluginActivator,
+  activator: FakeHostActions,
   name = MARKETPLACE,
   initial: ReadonlyMap<string, { kind: "registry"; source: string } | null> = new Map()
 ) {
   return new Map([
     [
       "claude" as const,
-      new FakeNativeMarketplaceSourceReader(
+      new FakeHostMarketplaceSources(
         activator,
         "registry",
         (path) => (path === "/built/claude" ? name : undefined),
@@ -107,7 +107,7 @@ function ownedMachineCatalog(hostName: string, source: string): InMemoryManifest
   return new InMemoryManifestRepository(machine);
 }
 
-function buildSync(activator: FakeNativePluginActivator, pluginMarketplace?: string) {
+function buildSync(activator: FakeHostActions, pluginMarketplace?: string) {
   const registry = new InMemoryMarketplaceRegistry();
   const fs = seededBuiltCatalog();
   const manifestRepo = manifestWithPlugin(pluginMarketplace);
@@ -147,7 +147,7 @@ function settingsPathIn(projectRoot: string): string {
 
 /** The host's own CLI writes its `marketplace add` and `plugin enable` results into the very
  * file `syncTool` just hashed. The fake shells out to nothing, so it stands in for that write. */
-class ActivatorThatWritesSettings extends FakeNativePluginActivator {
+class ActivatorThatWritesSettings extends FakeHostActions {
   constructor(
     private readonly fs: InMemoryFileAdapter,
     private readonly settingsAbsolutePath: string
@@ -182,25 +182,18 @@ class ActivatorThatWritesSettings extends FakeNativePluginActivator {
 
 describe("syncing settings registers the plugin with the host's own CLI", () => {
   it("drives the host CLI with the same ref the diagnostic looks up", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry } = buildSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.enabledPlugins).toContain(REF);
-    const asked = buildHostRegistration([
-      {
-        tool: "claude",
-        plugins: [{ name: PLUGIN, marketplace: MARKETPLACE }],
-        reading: { location: "/registry", refs: new Map([[REF, { enabled: true }]]) },
-      },
-    ]);
-    expect(asked.entries[0]?.ref).toBe(activator.enabledPlugins[0]);
+    expect(activator.enabledPlugins[0]).toBe(REF);
   });
 
   it("registers nothing when the host CLI is not available, and does not fail the sync", async () => {
-    const activator = new FakeNativePluginActivator({ available: false });
+    const activator = new FakeHostActions({ available: false });
     const { useCase, registry } = buildSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
 
@@ -212,28 +205,24 @@ describe("syncing settings registers the plugin with the host's own CLI", () => 
   // `mergeEnabledPlugins` skips a plugin whose marketplace does not resolve with a bare
   // `continue`, so it reaches neither a settings file nor the host CLI.
   it("registers nothing for a plugin whose marketplace does not resolve, and says nothing about it", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry } = buildSync(activator, "a-marketplace-nobody-added");
     await registry.save(PROJECT_ROOT, marketplace());
 
     await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.enabledPlugins).toEqual([]);
-    const entry = buildHostRegistration([
-      {
-        tool: "claude",
-        plugins: [{ name: PLUGIN, marketplace: "a-marketplace-nobody-added" }],
-        reading: { location: "/registry", refs: new Map() },
-      },
-    ]).entries[0];
+    const answered = answeredRegistry("claude", { location: "/registry", refs: new Map() }, true);
 
-    expect(entry?.answer).toBe("not-registered");
+    expect("refs" in answered && answered.refs.has(`${PLUGIN}@a-marketplace-nobody-added`)).toBe(
+      false
+    );
   });
 });
 
 describe("nativeRegistrations reflects what the host's own CLI was asked to register", () => {
   it("records binary, marketplaces and pluginRefs after a successful activation", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo } = buildSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
 
@@ -254,7 +243,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
   });
 
   it("records nothing when the host CLI is not available", async () => {
-    const activator = new FakeNativePluginActivator({ available: false });
+    const activator = new FakeHostActions({ available: false });
     const { useCase, registry, manifestRepo } = buildSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
 
@@ -265,7 +254,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
   });
 
   it("re-registers through the host CLI when the manifest's record has gone stale", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo } = buildSync(activator);
     const staleManifest = await manifestRepo.load();
     staleManifest?.setNativeRegistrations("claude", {
@@ -303,7 +292,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
   // declares, and `claude` only ever knows the marketplace by the catalog's own name.
   it("drives the host CLI and records the catalog's own name when this project's local alias differs from it", async () => {
     const CATALOG_NAME = "aidd-framework-catalog";
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     const fs = new InMemoryFileAdapter({
       "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
@@ -356,7 +345,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
 // top of `activateTool` would still pass every other test in this file.
 describe("registering a marketplace does not wait for a plugin to point at it", () => {
   it("registers every known marketplace even when the manifest declares no plugin", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     const fs = seededBuiltCatalog();
     const manifest = Manifest.create();
@@ -445,7 +434,7 @@ describe("what native activation leaves behind is not reported as the user's dri
       hasher,
       new CapturingLogger(),
       // Not available: the binary is not on the PATH, so nothing of the host's is written.
-      new Map([["claude", new FakeNativePluginActivator({ available: false })]]),
+      new Map([["claude", new FakeHostActions({ available: false })]]),
       fakeEnsureBuiltMarketplace()
     );
     await registry.save(PROJECT_ROOT, marketplace());
@@ -472,7 +461,7 @@ describe("what native activation leaves behind is not reported as the user's dri
 describe("reclaiming a dead registration asks and acts on the host's own name", () => {
   it("checks and removes the catalog's own name, not this project's local alias, before re-adding", async () => {
     const CATALOG_NAME = "aidd-framework-catalog";
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState: "dead",
@@ -542,8 +531,8 @@ describe("reclaiming a dead registration asks and acts on the host's own name", 
 describe("what doctor tells a person to run becomes true once sync has run", () => {
   /** Answers `read()` from the activator's own recorded state, so a registry reading
    * always reflects exactly what the last `execute()` asked the host CLI to enable. */
-  class RegistryBoundToActivator implements HostPluginRegistryReader {
-    constructor(private readonly activator: FakeNativePluginActivator) {}
+  class RegistryBoundToActivator implements HostPluginRegistry {
+    constructor(private readonly activator: FakeHostActions) {}
 
     async read(): Promise<HostPluginRegistryReading> {
       return {
@@ -554,7 +543,7 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
   }
 
   it("goes from `aidd sync` to healthy after sync re-registers", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo, fs } = buildSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
     const doctorRegistration = new DoctorRegistrationUseCase(
@@ -607,7 +596,7 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
     });
   }
 
-  function buildLiveSync(activator: FakeNativePluginActivator) {
+  function buildLiveSync(activator: FakeHostActions) {
     const registry = new InMemoryMarketplaceRegistry();
     const fs = new InMemoryFileAdapter({
       "/built/claude/.claude-plugin/marketplace.json": JSON.stringify({
@@ -652,7 +641,7 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
   }
 
   it("drops a recorded ref whose hostName the registry no longer carries", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo } = buildLiveSync(activator);
     await registry.save(PROJECT_ROOT, liveMarketplace());
     const staleManifest = await manifestRepo.load();
@@ -704,7 +693,7 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
   }
 
   it("keeps the retained alias's own refs after a run narrowed to the other one", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const registry = new InMemoryMarketplaceRegistry();
     const fs = new InMemoryFileAdapter({
       "/built/by-alias/shared/.claude-plugin/marketplace.json": JSON.stringify({
@@ -757,7 +746,7 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
       new Map([
         [
           "claude",
-          new FakeNativeMarketplaceSourceReader(
+          new FakeHostMarketplaceSources(
             activator,
             "registry",
             (path) => (path === "/built/by-alias/shared" ? SHARED_HOST_NAME : undefined),
@@ -793,7 +782,7 @@ describe("what reclaiming a dead registration says", () => {
     "Marketplace 'aidd-framework-catalog' was registered to a directory that no longer exists; re-registering it for this project. Plugins installed from it are removed and the ones this CLI manages are put back.";
 
   function reclaimSync(
-    activator: FakeNativePluginActivator,
+    activator: FakeHostActions,
     hostSource = builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude"),
     userRoot = ""
   ) {
@@ -853,7 +842,7 @@ describe("what reclaiming a dead registration says", () => {
   }
 
   it("leaves a foreign host source and its cache untouched even with a past AIDD claim", async () => {
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState: "dead",
@@ -873,7 +862,7 @@ describe("what reclaiming a dead registration says", () => {
   });
 
   it("does not force-remove a live registration even when its source is proven", async () => {
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState: "live",
@@ -889,7 +878,7 @@ describe("what reclaiming a dead registration says", () => {
   });
 
   it("reclaims a dead registration from an exact AIDD shared user-cache source", async () => {
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState: "dead",
@@ -907,7 +896,7 @@ describe("what reclaiming a dead registration says", () => {
   });
 
   it("names the vanished directory's own registration in the one warning it gives", async () => {
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       registrationState: "dead",
@@ -922,7 +911,7 @@ describe("what reclaiming a dead registration says", () => {
   });
 
   it("warns for each reclaim step the host's CLI refused, naming the step and the reason", async () => {
-    const activator = new FakeNativePluginActivator({
+    const activator = new FakeHostActions({
       available: true,
       conflictOnAdd: true,
       throwOnRemove: true,
@@ -950,8 +939,8 @@ function hostReadingOf(refs: readonly string[], enabled = true): HostPluginRegis
 }
 
 function buildSyncReadingHost(
-  activator: FakeNativePluginActivator,
-  hostRegistry: HostPluginRegistryReader,
+  activator: FakeHostActions,
+  hostRegistry: HostPluginRegistry,
   catalogOwned = false
 ) {
   const registry = new InMemoryMarketplaceRegistry();
@@ -1001,7 +990,7 @@ function buildSyncReadingHost(
 
 describe("a ref the host had enabled before this project asked belongs to the person", () => {
   it("is neither enabled again nor recorded, so clean has nothing of it to undo", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo, logger } = buildSyncReadingHost(activator, {
       read: async () => hostReadingOf([REF]),
     });
@@ -1018,7 +1007,7 @@ describe("a ref the host had enabled before this project asked belongs to the pe
   });
 
   it("stays this project's own on the next sync, once the host reports the enable it made", async () => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo } = buildSyncReadingHost(
       activator,
       {
@@ -1042,7 +1031,7 @@ describe("a ref the host had enabled before this project asked belongs to the pe
     ],
     ["lists it disabled", hostReadingOf([REF], false)],
   ])("refuses to claim a ref when the host registry %s", async (_case, reading) => {
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo } = buildSyncReadingHost(activator, {
       read: async () => reading,
     });

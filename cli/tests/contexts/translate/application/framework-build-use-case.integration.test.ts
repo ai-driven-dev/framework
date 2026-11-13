@@ -1,10 +1,10 @@
 import { join, resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { JsonSchemaValidator } from "../../../../src/contexts/tools/domain/ports/schema-validator.js";
 import { buildCopilotMarketplaceContract } from "../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import type { BuildOutputStrategy } from "../../../../src/contexts/translate/application/strategies/build-output-strategy.js";
 import { MarketplaceBuildStrategy } from "../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../src/contexts/translate/application/translate-source.js";
+import type { JsonSchemaValidator } from "../../../../src/contexts/translate/domain/ports/schema-validator.js";
 import {
   FrameworkPlaceholderInPluginError,
   InvalidBuildPathsError,

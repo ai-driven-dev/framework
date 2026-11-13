@@ -3,19 +3,19 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/tools/domain/ports/host-marketplace-registry-reader.js";
-import type { HostPluginRegistryReading } from "../../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
-import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
+import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakeHostMarketplaceRegistryReader } from "../../../../helpers/ports/fake-host-marketplace-registry-reader.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativeMarketplaceSourceReader } from "../../../../helpers/ports/fake-native-marketplace-source-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 describe("native catalogue source provenance", () => {
   async function hostPluginProofFixture(
@@ -63,7 +63,7 @@ describe("native catalogue source provenance", () => {
         }),
     });
     fs.setFile("/foreign/cache/marker.json", "foreign bytes");
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const sync = new MarketplaceSyncSettingsUseCase(
       fs,
       projectRepo,
@@ -74,19 +74,17 @@ describe("native catalogue source provenance", () => {
       fakeEnsureBuiltMarketplace(),
       options.catalogue === undefined
         ? new Map()
-        : new Map([[toolId, new FakeHostMarketplaceRegistryReader(options.catalogue)]]),
+        : new Map([[toolId, new FakeHostMarketplaceRegistry(options.catalogue)]]),
       () => "",
       undefined,
       undefined,
       undefined,
-      reading === undefined
-        ? new Map()
-        : new Map([[toolId, new FakeHostPluginRegistryReader(reading)]]),
+      reading === undefined ? new Map() : new Map([[toolId, new FakeHostPluginRegistry(reading)]]),
       machineRepo,
       new Map([
         [
           toolId,
-          new FakeNativeMarketplaceSourceReader(
+          new FakeHostMarketplaceSources(
             activator,
             toolId === "codex" ? "effective-list" : "registry",
             (path) => (path === builtDir ? "same-name" : undefined),
@@ -402,8 +400,8 @@ describe("native catalogue source provenance", () => {
         }),
       });
       fs.setFile("/foreign/cache/marker.json", "foreign bytes");
-      const activator = new FakeNativePluginActivator({ available: true });
-      const source: NativeMarketplaceSourceReader = {
+      const activator = new FakeHostActions({ available: true });
+      const source: HostMarketplaceSources = {
         read: async () => {
           if (activator.addedMarketplaces.length === 0)
             return { location: "host", entries: new Map() };
@@ -445,10 +443,7 @@ describe("native catalogue source provenance", () => {
         undefined,
         undefined,
         new Map([
-          [
-            "codex",
-            new FakeHostPluginRegistryReader({ location: "host-plugins", refs: new Map() }),
-          ],
+          ["codex", new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
         ]),
         machineRepo,
         new Map([["codex", source]])
@@ -540,8 +535,8 @@ describe("native catalogue source provenance", () => {
         extraKnownMarketplaces: { "foreign-catalog": { source: "github" } },
       });
       fs.setFile(settingsPath, foreignSettings);
-      const activator = new FakeNativePluginActivator({ available: true });
-      const source: NativeMarketplaceSourceReader = {
+      const activator = new FakeHostActions({ available: true });
+      const source: HostMarketplaceSources = {
         read: async () => reading,
       };
       const sync = new MarketplaceSyncSettingsUseCase(
@@ -558,10 +553,7 @@ describe("native catalogue source provenance", () => {
         undefined,
         undefined,
         new Map([
-          [
-            "copilot",
-            new FakeHostPluginRegistryReader({ location: "host-plugins", refs: new Map() }),
-          ],
+          ["copilot", new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
         ]),
         machineRepo,
         new Map([["copilot", source]])
@@ -608,8 +600,8 @@ describe("native catalogue source provenance", () => {
         plugins: [{ name: "test-plugin" }],
       }),
     });
-    const activator = new FakeNativePluginActivator({ available: true });
-    const source: NativeMarketplaceSourceReader = {
+    const activator = new FakeHostActions({ available: true });
+    const source: HostMarketplaceSources = {
       read: async () => ({
         location: "host",
         entries:
@@ -642,7 +634,7 @@ describe("native catalogue source provenance", () => {
       undefined,
       undefined,
       new Map([
-        ["codex", new FakeHostPluginRegistryReader({ location: "host-plugins", refs: new Map() })],
+        ["codex", new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
       ]),
       machineRepo,
       new Map([["codex", source]])
@@ -698,7 +690,7 @@ describe("native catalogue source provenance", () => {
       new Map([
         [
           "codex",
-          new FakeHostPluginRegistryReader({
+          new FakeHostPluginRegistry({
             location: "host-plugins",
             refs: new Map([["test-plugin@same-name", { enabled: true }]]),
           }),
@@ -761,8 +753,8 @@ describe("native catalogue source provenance", () => {
       }),
     });
     fs.setFile("/foreign/marker.json", "foreign bytes");
-    const activator = new FakeNativePluginActivator({ available: true });
-    const source: NativeMarketplaceSourceReader = {
+    const activator = new FakeHostActions({ available: true });
+    const source: HostMarketplaceSources = {
       read: async () => ({
         location: "host",
         entries: new Map([
@@ -787,7 +779,7 @@ describe("native catalogue source provenance", () => {
       undefined,
       undefined,
       new Map([
-        ["codex", new FakeHostPluginRegistryReader({ location: "host-plugins", refs: new Map() })],
+        ["codex", new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
       ]),
       machineRepo,
       new Map([["codex", source]])

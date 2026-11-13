@@ -11,14 +11,14 @@ import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
-import type { NativeMarketplaceSourceReader } from "../../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
+import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakeHostPluginRegistryReader } from "../../../../helpers/ports/fake-host-plugin-registry-reader.js";
-import { FakeNativePluginActivator } from "../../../../helpers/ports/fake-native-plugin-activator.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";
@@ -42,7 +42,7 @@ function provenRegistration(
 }
 
 /** A separate, literal host snapshot: not assembled from the machine claim. */
-function currentHostSource(toolId: "codex" | "claude"): NativeMarketplaceSourceReader {
+function currentHostSource(toolId: "codex" | "claude"): HostMarketplaceSources {
   return {
     read: async () => ({
       location: "fixture native host",
@@ -128,7 +128,7 @@ function seedReferences(fs: InMemoryFileAdapter, roots: readonly string[]): void
 function buildUseCase(deps: {
   fs: InMemoryFileAdapter;
   manifest: Manifest;
-  activator: FakeNativePluginActivator;
+  activator: FakeHostActions;
   binary: "codex" | "claude";
   logger: CapturingLogger;
   aiddMarketplaceRegistry: InMemoryMarketplaceRegistry;
@@ -151,7 +151,7 @@ function buildUseCase(deps: {
     new Map([
       [
         deps.binary,
-        new FakeHostPluginRegistryReader({
+        new FakeHostPluginRegistry({
           location: "fixture host installed-plugin registry",
           refs: new Map([
             ["aidd-vcs@aidd-framework", { enabled: true }],
@@ -211,7 +211,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
       fs.setFile(`${OTHER_PROJECT}/plugin-content.md`, OTHER_PROJECT_BYTES);
       const sharedPath = "/fake-home/.cursor/plugins/local/shared/skills/demo.md";
       fs.setFile(sharedPath, "shared plugin bytes");
-      const activator = new FakeNativePluginActivator({ available: true });
+      const activator = new FakeHostActions({ available: true });
       const useCase = buildUseCase({
         fs,
         manifest: project,
@@ -267,7 +267,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   it("keeps codex's ref enabled and names the other project still referencing the shared source", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, [OTHER_PROJECT]);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
 
     const useCase = buildUseCase({
@@ -296,7 +296,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   it("leaves an unclaimed machine-global Codex ref enabled after the last local reference", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, []);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
       fs,
@@ -323,7 +323,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   it("still disables claude's ref even with another project referencing the shared source", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, [OTHER_PROJECT]);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
       fs,
@@ -347,7 +347,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   it("leaves both unclaimed Codex refs enabled despite a distinct project catalogue", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, [OTHER_PROJECT]);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
       fs,
@@ -376,7 +376,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   it("leaves both unclaimed Codex refs enabled when the project catalogue is listed first", async () => {
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, [OTHER_PROJECT]);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
       fs,
@@ -406,7 +406,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     // No references.json at all: no claim of this project's own to drop, and nothing else
     // referencing the source to guard on either.
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
 
     const useCase = buildUseCase({
       fs,
@@ -433,7 +433,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     fs.setFile(`${USER_CONFIG_DIR}/references.json`, JSON.stringify({ "1.0.0": [OTHER_PROJECT] }));
     fs.setFile(`${OTHER_PROJECT}/marker`, OTHER_PROJECT_BYTES);
-    const activator = new FakeNativePluginActivator({ available: true });
+    const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
 
     const useCase = buildUseCase({

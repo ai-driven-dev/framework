@@ -14,12 +14,12 @@ import { MarketplaceRegistryAdapter } from "../../contexts/distribution/infrastr
 import { MarketplaceTrustStoreAdapter } from "../../contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
 import { PluginCatalogRepositoryAdapter } from "../../contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginFetcherAdapter } from "../../contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../kernel/ports/hasher.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import type { HttpClient } from "../../shared/infrastructure/http-client.js";
+import type { FileMerger } from "../../shared/ports/file-merger.js";
 import { userConfigDir } from "../user-config-dir.js";
 
 export interface DistributionWiringShared {
