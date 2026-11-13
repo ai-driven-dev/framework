@@ -24,7 +24,7 @@ export function installed(tool: AiTool<WithSections<"agents">>, content: string)
 }
 
 /** Where and what a marketplace build writes for the plugin's `planner.md`. The flat build
- * is checked against the shipped agents in `tests/runtime/wiring/shipped-agents.integration.test.ts`. */
+ * is checked against the shipped agents in `tests/composition/shipped-agents.integration.test.ts`. */
 export function inMarketplace(
   tool: AiTool<WithSections<"agents">>,
   content: string

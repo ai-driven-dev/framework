@@ -49,7 +49,7 @@ transform that is *aware* of which target it is producing for.
   `BuildOutputStrategy` and iterate the six artifact kinds generically, with zero per-tool or
   per-kind branching. Adding a build target means the target tool declares a contract in `tools`;
   it never means adding a case here. See the `tools` skill's `references/build-contract.md`.
-- `runtime/wiring/translate.ts` derives the `"<target>:<mode>"` build registry by iterating every
+- `composition/translate.ts` derives the `"<target>:<mode>"` build registry by iterating every
   registered tool and reading its contract — there is no hand-maintained per-tool row.
 - Follow the use-case and orchestration rules in `.claude/rules/00-architecture/` for the
   application layer's shape, and the shared-module rule there before promoting a helper used by

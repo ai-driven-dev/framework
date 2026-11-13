@@ -10,7 +10,7 @@ import type { FileReader } from "../kernel/ports/file-reader.js";
 import type { FileWriter } from "../kernel/ports/file-writer.js";
 import type { Logger } from "../kernel/ports/logger.js";
 import type { VersionReader } from "../kernel/ports/version-reader.js";
-import { userConfigDir } from "../runtime/user-config-dir.js";
+import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { HttpGet } from "../shared/ports/http-get.js";
 

@@ -41,16 +41,19 @@ export class SetupUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
-    private readonly setupMarketplaceRegistration: SetupMarketplaceRegistrationUseCase,
+    private readonly setupMarketplaceRegistration: Pick<
+      SetupMarketplaceRegistrationUseCase,
+      "resolveSourceIfNeeded" | "registerIfPresent"
+    >,
     private readonly marketplaceSyncSettingsUseCase: MarketplaceSyncSettings,
-    private readonly setupToolsUseCase: SetupToolsUseCase,
-    private readonly setupPluginsPromptUseCase: SetupPluginsPromptUseCase,
+    private readonly setupToolsUseCase: Pick<SetupToolsUseCase, "execute">,
+    private readonly setupPluginsPromptUseCase: Pick<SetupPluginsPromptUseCase, "execute">,
     private readonly currentVersionProvider: VersionReader,
-    private readonly setupToolsPromptUseCase?: SetupToolsPromptUseCase,
-    private readonly projectContextDetector?: ProjectContextDetectorUseCase,
+    private readonly setupToolsPromptUseCase?: Pick<SetupToolsPromptUseCase, "execute">,
+    private readonly projectContextDetector?: Pick<ProjectContextDetectorUseCase, "execute">,
     /** Handles `flow.scope === "user"` entirely. Absent, `execute` refuses a request it has
      * nothing to serve. */
-    private readonly setupMachineScopeUseCase?: SetupMachineScopeUseCase
+    private readonly setupMachineScopeUseCase?: Pick<SetupMachineScopeUseCase, "execute">
   ) {}
 
   async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {

@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../same-instance.js";
+import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const restoreAll = vi.fn();
 const restoreOne = vi.fn();
@@ -9,23 +9,20 @@ const activation = vi.fn();
 const loadManifest = vi.fn();
 const getToolVersion = vi.fn();
 const currentVersion = vi.fn();
-const userManifestRepo = { load: vi.fn() };
+const loadUserManifest = vi.fn();
+const userManifestRepo = manifestRepositoryLoading(loadUserManifest);
 const userPluginUpdate = vi.fn();
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({
-    restoreAllUseCase: { execute: restoreAll },
-    restoreUseCase: { execute: restoreOne },
-    marketplaceSyncSettingsUseCase: { execute: activation },
-    manifestRepo: { load: loadManifest },
-    userManifestRepo,
-    userPluginUpdateUseCase: { execute: userPluginUpdate },
-    currentVersionProvider: { get: currentVersion },
-  })),
-  createMenuDeps: vi.fn(),
+const createDeps = vi.fn(async () => ({
+  restoreAllUseCase: { execute: restoreAll },
+  restoreUseCase: { execute: restoreOne },
+  marketplaceSyncSettingsUseCase: { execute: activation },
+  manifestRepo: manifestRepositoryLoading(loadManifest),
+  userManifestRepo,
+  userPluginUpdateUseCase: { execute: userPluginUpdate },
+  currentVersionProvider: { get: currentVersion },
 }));
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerSyncCommand } = await import("../../../src/presentation/commands/sync.js");
 
 const PROJECT_ROOT = process.cwd();
@@ -70,7 +67,7 @@ beforeEach(() => {
   getToolVersion.mockReturnValue("5.1.0");
   loadManifest.mockResolvedValue({ getToolVersion });
   currentVersion.mockReturnValue("5.2.2");
-  userManifestRepo.load.mockResolvedValue({
+  loadUserManifest.mockResolvedValue({
     getInstalledToolIds: () => ["claude"],
     getPlugins: () => [],
   });
@@ -85,7 +82,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerSyncCommand(program, CATALOG);
+  registerSyncCommand(program, CATALOG, createDeps);
   await program.parseAsync(["node", "aidd", "sync", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -270,7 +267,7 @@ describe("aidd sync --scope user", () => {
   });
 
   it("rebuilds the global files a tool owns before driving activation, under --global", async () => {
-    userManifestRepo.load.mockResolvedValue({
+    loadUserManifest.mockResolvedValue({
       getInstalledToolIds: () => ["claude", "opencode"],
       getPlugins: (toolId: string) => (toolId === "opencode" ? [{ scope: "user" }] : []),
     });
@@ -355,8 +352,7 @@ describe("aidd sync — how it builds its graph", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 });

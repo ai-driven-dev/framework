@@ -6,7 +6,7 @@ import {
   UserScopeFilterUnsupportedError,
 } from "../../kernel/errors.js";
 import type { AiToolId, ToolId } from "../../kernel/tool.js";
-import { createDeps } from "../../runtime/wiring/framework.js";
+import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printActivationOutcome,
   printRestoreOutcome,
@@ -16,6 +16,16 @@ import {
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
+
+/** What this command reads of the graph. */
+type SyncKeys =
+  | "userManifestRepo"
+  | "userPluginUpdateUseCase"
+  | "marketplaceSyncSettingsUseCase"
+  | "restoreAllUseCase"
+  | "manifestRepo"
+  | "currentVersionProvider"
+  | "restoreUseCase";
 
 interface SyncCmdOptions {
   force: boolean;
@@ -30,7 +40,7 @@ interface SyncCmdOptions {
  * source, then drives native activation, through `deps.userManifestRepo` and never this
  * project's own manifest. */
 async function runUserScopeSync(
-  deps: Awaited<ReturnType<typeof createDeps>>,
+  deps: Pick<Deps, SyncKeys>,
   output: CLIOutput,
   projectRoot: string,
   fileArgs: string[],
@@ -76,13 +86,14 @@ async function runUserScopeSync(
 async function runSyncAction(
   program: Command,
   tools: ToolCatalog,
+  createDeps: DepsSliceFactory<SyncKeys>,
   fileArgs: string[],
   cmdOptions: SyncCmdOptions
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   const errorHandler = new ErrorHandler(output);
   try {
-    const deps = await createDeps(projectRoot, { verbose }, output, tools);
+    const deps = await createDeps(projectRoot, { verbose }, output);
     const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
     if (scope === "user") {
@@ -123,7 +134,7 @@ async function runSyncAction(
 }
 
 async function runScopedSync(
-  deps: Awaited<ReturnType<typeof createDeps>>,
+  deps: Pick<Deps, SyncKeys>,
   output: CLIOutput,
   projectRoot: string,
   fileArgs: string[],
@@ -159,7 +170,11 @@ async function runScopedSync(
   if (activation.errors.length > 0) throw new SyncFailedError(activation.errors);
 }
 
-export function registerSyncCommand(program: Command, tools: ToolCatalog): void {
+export function registerSyncCommand(
+  program: Command,
+  tools: ToolCatalog,
+  createDeps: DepsSliceFactory<SyncKeys>
+): void {
   program
     .command("sync")
     .description(
@@ -176,6 +191,6 @@ export function registerSyncCommand(program: Command, tools: ToolCatalog): void 
     )
     .option("--global", `${GLOBAL_FLAG_HELP}, rebuilding its files from the framework source`)
     .action(async (fileArgs: string[], cmdOptions: SyncCmdOptions) => {
-      await runSyncAction(program, tools, fileArgs, cmdOptions);
+      await runSyncAction(program, tools, createDeps, fileArgs, cmdOptions);
     });
 }

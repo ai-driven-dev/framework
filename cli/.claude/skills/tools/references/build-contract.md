@@ -69,7 +69,7 @@ declares which modes it supports via `buildContracts: { marketplace?, flat? }` i
 `defineAiTool` call — a tool with no native marketplace omits `marketplace`. A caller asks the
 profile `buildContract(mode)`, which answers the contract or `null`.
 
-`createFrameworkBuildUseCase` in `runtime/wiring/translate.ts` asks the `ToolCatalog` it is handed
+`createFrameworkBuildUseCase` in `composition/translate.ts` asks the `ToolCatalog` it is handed
 for the target's profile and its `buildContract(mode)`, then picks the mode-generic orchestrator
 for it — there is no per-tool row to hand-add. A tool with no contract for the mode answers
 `null`, and `presentation/commands/translate.ts` reports "Unsupported target/mode combination".

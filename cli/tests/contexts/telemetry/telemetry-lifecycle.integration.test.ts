@@ -16,7 +16,8 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type TelemetryDeps, wireTelemetry } from "../../../src/runtime/wiring/telemetry.js";
+import { wireTelemetry } from "../../../src/composition/telemetry.js";
+import type { TelemetryDeps } from "../../../src/presentation/deps.js";
 import { git } from "../../helpers/git-sandbox.js";
 import {
   assertUnderTemporaryDirectory,
@@ -347,6 +348,37 @@ describe("the identifier offered at on", () => {
     vi.stubEnv("AIDD_TELEMETRY", "0");
     deps = wireTelemetry(() => box.home);
     expect(await deps.proposeIdentityUseCase.execute(repo)).toBeNull();
+  });
+});
+
+describe("the wiring of a declaration", () => {
+  const declare = {
+    cwd: "",
+    request: { kind: "task", task: "t1", ticket: null },
+    by: "command",
+  } as const;
+
+  it("refuses a declaration, a status and a report under AIDD_TELEMETRY=0", async () => {
+    vi.stubEnv("AIDD_TELEMETRY", "0");
+    deps = wireTelemetry(() => box.home);
+    const refused = { status: "refused", reason: "environment" };
+
+    expect(await deps.declareTaskUseCase.execute({ ...declare, cwd: repo })).toEqual(refused);
+    expect(await deps.telemetryStatusUseCase.execute(repo)).toEqual(refused);
+    expect(
+      await deps.reportUsageUseCase.execute({ axis: "day", period: { from: null, to: null } })
+    ).toEqual({ status: "refused" });
+  });
+
+  it("binds the session it was declared in, from the moment it is declared", async () => {
+    vi.stubEnv("CLAUDE_CODE_SESSION_ID", SESSION);
+    deps = wireTelemetry(() => box.home);
+    await deps.telemetryOnUseCase.execute(repo, "keep");
+    await deps.declareTaskUseCase.execute({ ...declare, cwd: repo });
+
+    expect(await deps.telemetryStatusUseCase.execute(repo)).toMatchObject({
+      binding: { state: "bound", source: "session-declared", task: "t1" },
+    });
   });
 });
 

@@ -4,7 +4,7 @@
  * The list is the fence, not a description of what happens to be used.
  */
 import { describe, expect, it } from "vitest";
-import { expectRatchet, HELD_BY_BIOME, importersByFile, sourceFiles } from "./helpers.js";
+import { expectRatchet, HELD_BY_BIOME, importersByFile, read, sourceFiles } from "./helpers.js";
 
 /** Each context's declared public surface, one entry per context. */
 const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
@@ -23,7 +23,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // file's own context, so a `tools` file is only ever checked against `tools`.
   ],
   // Measured with the composition root excluded, and not one entry is an adapter: the
-  // adapters are wired from `composition/` and `runtime/wiring/` alone, so they stay internal.
+  // adapters are wired from `composition/` alone, so they stay internal.
   distribution: [
     // what a marketplace is, and where it can be read from
     "src/contexts/distribution/domain/marketplace.ts",
@@ -64,7 +64,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // marketplace and this context forgets the plugins that came from it
     "src/contexts/framework/application/flows/marketplace-remove-use-case.ts",
   ],
-  // Measured with the composition root excluded: the adapter is wired from `runtime/wiring/`
+  // Measured with the composition root excluded: the adapter is wired from `composition/`
   // alone, so it stays internal.
   telemetry: [
     // the common record every tool's reader produces
@@ -78,8 +78,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/telemetry/application/ingest-usage-use-case.ts",
     // why a call was not stored, which the result names and a display words
     "src/contexts/telemetry/domain/repository-resolution.ts",
-    // the owner-only storage the runtime implements for the context
-    "src/contexts/telemetry/domain/ports/private-storage.ts",
     // the declaration a person makes: what `task` validates and sends, and the two results it
     // prints, with the reasons a declaration is refused
     "src/contexts/telemetry/domain/declaration/task-declaration.ts",
@@ -123,13 +121,34 @@ function contextOf(file: string): string | null {
 }
 
 /**
- * The composition root wires every context by construction — a profile registers itself
- * through a side-effect import, an adapter must be named to be instantiated — so the whole
- * `runtime/wiring/` directory, and `composition/` beside it, are exempt rather than callers
- * this rule tries to catch.
+ * The composition root wires every context by construction (a profile registers itself
+ * through a side-effect import, an adapter must be named to be instantiated), so the whole
+ * `composition/` directory is exempt rather than a caller this rule tries to catch.
  */
 function isCompositionRoot(file: string): boolean {
-  return file.startsWith("src/runtime/wiring/") || file.startsWith("src/composition/");
+  return file.startsWith("src/composition/");
+}
+
+/** The driving port names the type of each member the commands read, and nothing else. */
+const DRIVING_PORT = "src/presentation/deps.ts";
+
+/** What the driving port may name from a context: an application or contract type, or a port. */
+const DRIVING_PORT_TARGET = /\/(application|contract|ports)\//;
+
+function isDrivingPortEdge(importer: string, target: string): boolean {
+  return importer === DRIVING_PORT && DRIVING_PORT_TARGET.test(target);
+}
+
+/** The context imports of the driving port that are not an `import type` of an allowed target. */
+function drivingPortViolations(source: string): string[] {
+  const found: string[] = [];
+  for (const match of source.matchAll(/^import\s+(type\s+)?[^;]*?from\s+"([^"]+)"/gms)) {
+    const [, typeOnly, specifier] = match;
+    if (!(specifier as string).startsWith("../contexts/")) continue;
+    if (typeOnly === undefined) found.push(`${specifier} is a value import`);
+    else if (!DRIVING_PORT_TARGET.test(specifier as string)) found.push(`${specifier} is no port`);
+  }
+  return found;
 }
 
 function reachesIntoInterior(
@@ -143,7 +162,7 @@ function reachesIntoInterior(
     if (owner === null || !(owner in publicModules)) continue;
     if (publicModules[owner].includes(file)) continue;
     for (const importer of importers.get(file) ?? []) {
-      if (isCompositionRoot(importer)) continue;
+      if (isCompositionRoot(importer) || isDrivingPortEdge(importer, file)) continue;
       if (contextOf(importer) === owner) continue;
       violations.push(`${importer} -> ${file}`);
     }
@@ -156,7 +175,7 @@ const BASELINE: string[] = [];
 
 /**
  * What a context publishes in `contract/` exists for a reader outside it: another context,
- * `presentation/`, `orchestration/` or a runtime service. The composition root does not
+ * `presentation/` or `orchestration/`. The composition root and the driving port do not
  * count, it wires everything. A contract file nobody outside reads is an interior file in the
  * wrong folder, or a surface nobody asked for.
  */
@@ -169,7 +188,8 @@ function orphanContractFiles(
     .filter((file) => {
       const owner = contextOf(file);
       return ![...(importers.get(file) ?? [])].some(
-        (importer) => !isCompositionRoot(importer) && contextOf(importer) !== owner
+        (importer) =>
+          !isCompositionRoot(importer) && importer !== DRIVING_PORT && contextOf(importer) !== owner
       );
     })
     .sort();
@@ -210,6 +230,12 @@ describe("nothing imports a context's interior", () => {
       contextsOnDisk(sourceFiles()),
       "a context with no entry above is skipped entirely by the rule, not held by it"
     ).toEqual(declared);
+  });
+});
+
+describe("the driving port", () => {
+  it("names context types only, by import type, from application, contract or a port", () => {
+    expect(drivingPortViolations(read(DRIVING_PORT))).toEqual([]);
   });
 });
 
@@ -255,7 +281,7 @@ describe("the guard itself", () => {
     ];
     const importers = new Map([
       ["src/contexts/acme/contract/orphan.ts", new Set(["src/contexts/acme/application/use.ts"])],
-      ["src/contexts/acme/contract/wired.ts", new Set(["src/runtime/wiring/framework.ts"])],
+      ["src/contexts/acme/contract/wired.ts", new Set(["src/composition/framework.ts"])],
       ["src/contexts/acme/contract/shown.ts", new Set(["src/presentation/display/x.ts"])],
       ["src/contexts/acme/contract/shared.ts", new Set(["src/contexts/other/domain/y.ts"])],
     ]);
@@ -269,7 +295,7 @@ describe("the guard itself", () => {
   it("names a public module only its own context imports, and clears one read from outside", () => {
     const importers = new Map([
       ["src/contexts/acme/domain/stale.ts", new Set(["src/contexts/acme/application/use.ts"])],
-      ["src/contexts/acme/domain/wired.ts", new Set(["src/runtime/wiring/framework.ts"])],
+      ["src/contexts/acme/domain/wired.ts", new Set(["src/composition/framework.ts"])],
       ["src/contexts/acme/domain/shown.ts", new Set(["src/presentation/commands/x.ts"])],
     ]);
     const publicModules = {
@@ -316,12 +342,26 @@ describe("the guard itself", () => {
     ]);
   });
 
+  it("reports a value import and a non-port target in the driving port, and clears an import type of a use case", () => {
+    const source = [
+      'import type { A } from "../contexts/acme/application/a.js";',
+      'import { B } from "../contexts/acme/application/b.js";',
+      'import type { C } from "../contexts/acme/domain/c.js";',
+      'import type { D } from "../kernel/d.js";',
+    ].join("\n");
+
+    expect(drivingPortViolations(source)).toEqual([
+      "../contexts/acme/application/b.js is a value import",
+      "../contexts/acme/domain/c.js is no port",
+    ]);
+  });
+
   it("lets a context import its own interior freely, and exempts the composition root", () => {
     const files = ["src/contexts/acme/domain/internal.ts"];
     const importers = new Map([
       [
         "src/contexts/acme/domain/internal.ts",
-        new Set(["src/contexts/acme/application/sibling.ts", "src/runtime/wiring/framework.ts"]),
+        new Set(["src/contexts/acme/application/sibling.ts", "src/composition/framework.ts"]),
       ],
     ]);
     const publicModules = { acme: [] };

@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { assertValidAiToolId, parseToolOption } from "../../kernel/tool.js";
-import { createDeps, createMenuDeps } from "../../runtime/wiring/framework.js";
+import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
 import {
   printInstalledPlugins,
   printPluginInstallOutcome,
@@ -15,7 +15,22 @@ import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
 import { syncNativeActivation } from "./sync-native-activation.js";
 
-export function registerPluginCommand(program: Command, catalog: ToolCatalog): void {
+/** What this command reads of the graph. */
+type PluginKeys =
+  | "pluginRemoveUseCase"
+  | "pluginListUseCase"
+  | "pluginInstallUseCase"
+  | "pluginSearchUseCase"
+  | "userPluginUpdateUseCase"
+  | "pluginUpdateUseCase"
+  | "marketplaceSyncSettingsUseCase";
+
+export function registerPluginCommand(
+  program: Command,
+  catalog: ToolCatalog,
+  createDeps: DepsSliceFactory<PluginKeys>,
+  createMenuDeps: MenuDepsSliceFactory<"prompter">
+): void {
   const plugin = program.command("plugin").description("Manage plugins for AI tools");
 
   plugin.action(async () => {
@@ -45,7 +60,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
       try {
         assertValidAiToolId(cmdOptions.tool);
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         await deps.pluginRemoveUseCase.execute({
           pluginName: name,
           toolIds: parseToolOption(cmdOptions.tool),
@@ -69,7 +84,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
       const errorHandler = new ErrorHandler(output);
       try {
         assertValidAiToolId(cmdOptions.tool);
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await deps.pluginListUseCase.execute({
           toolIds: parseToolOption(cmdOptions.tool),
           tools: catalog,
@@ -104,12 +119,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
         try {
           assertValidAiToolId(cmdOptions.tool);
           const scope = parseInstallScope(cmdOptions.scope);
-          const deps = await createDeps(
-            projectRoot,
-            { verbose, token: cmdOptions.token },
-            output,
-            catalog
-          );
+          const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
           const result = await deps.pluginInstallUseCase.execute({
             pluginArg,
             toolIds: parseToolOption(cmdOptions.tool),
@@ -143,7 +153,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { hits } = await deps.pluginSearchUseCase.execute({
           query,
           recommendedOnly: cmdOptions.recommended ?? false,
@@ -167,7 +177,7 @@ export function registerPluginCommand(program: Command, catalog: ToolCatalog): v
       try {
         assertValidAiToolId(cmdOptions.tool);
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const updated = await (scope === "user"
           ? deps.userPluginUpdateUseCase
           : deps.pluginUpdateUseCase

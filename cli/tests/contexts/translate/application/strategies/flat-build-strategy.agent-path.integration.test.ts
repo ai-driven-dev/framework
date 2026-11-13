@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../../src/runtime/wiring/translate.js";
+import "../../../../../src/composition/translate.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";

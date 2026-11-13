@@ -12,7 +12,7 @@ const BASELINE: string[] = [];
 function areaOf(file: string): string {
   // The composition root constructs every use case by definition: counting it as an area
   // would let any module satisfy the rule by being wired rather than needed twice.
-  if (file.startsWith("src/runtime/wiring/") || file.startsWith("src/composition/")) {
+  if (file.startsWith("src/composition/")) {
     return "composition-root";
   }
   // A context's application layer is where the areas live.
@@ -26,7 +26,6 @@ function areaOf(file: string): string {
   if (file.startsWith("src/presentation/prompts/")) return "prompts";
   if (file.startsWith("src/presentation/")) return "presentation";
   if (file.startsWith("src/kernel/")) return "kernel";
-  if (file.startsWith("src/runtime/")) return "runtime";
   return "other";
 }
 
@@ -93,9 +92,6 @@ describe("the guard itself", () => {
     expect(areaOf("src/presentation/commands/doctor.ts")).toBe("commands");
     expect(areaOf("src/presentation/display/a.ts")).toBe("presentation");
     expect(areaOf("src/kernel/tool.ts")).toBe("kernel");
-    expect(areaOf("src/runtime/wiring/telemetry.ts"), "wired, not needed twice").toBe(
-      "composition-root"
-    );
     expect(areaOf("src/composition/auth.ts"), "the composition of a migrated context").toBe(
       "composition-root"
     );

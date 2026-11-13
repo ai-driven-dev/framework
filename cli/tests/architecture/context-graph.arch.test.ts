@@ -1,7 +1,7 @@
 /**
  * The context chain as a graph rather than a paragraph. A per-file biome override cannot see
  * it: an override matches the text of a specifier, not the path it resolves to, and answers
- * one file at a time. `presentation` and `runtime` may depend on anything below them, so a
+ * one file at a time. `presentation` and `composition` may depend on anything below them, so a
  * context reaching back into either is an edge recorded here. Data lives in `helpers.ts`.
  */
 import { describe, expect, it } from "vitest";

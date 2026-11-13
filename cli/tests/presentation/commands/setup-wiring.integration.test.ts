@@ -6,7 +6,8 @@ import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain
 import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../same-instance.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const resolveSourceIfNeeded = vi.fn();
 const registerIfPresent = vi.fn();
@@ -18,23 +19,19 @@ const detectContext = vi.fn();
 const setupMachineScope = vi.fn();
 const loadManifest = vi.fn();
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({
-    fs: {},
-    manifestRepo: { load: loadManifest },
-    setupMarketplaceRegistration: { resolveSourceIfNeeded, registerIfPresent },
-    marketplaceSyncSettingsUseCase: { execute: activation },
-    setupToolsUseCase: { execute: setupTools },
-    setupPluginsPromptUseCase: { execute: setupPluginsPrompt },
-    currentVersionProvider: { get: () => "5.2.2" },
-    setupToolsPromptUseCase: { execute: setupToolsPrompt },
-    projectContextDetector: { execute: detectContext },
-    setupMachineScopeUseCase: { execute: setupMachineScope },
-  })),
-  createMenuDeps: vi.fn(),
+const createDeps = vi.fn(async () => ({
+  fs: new InMemoryFileAdapter(),
+  manifestRepo: manifestRepositoryLoading(loadManifest),
+  setupMarketplaceRegistration: { resolveSourceIfNeeded, registerIfPresent },
+  marketplaceSyncSettingsUseCase: { execute: activation },
+  setupToolsUseCase: { execute: setupTools },
+  setupPluginsPromptUseCase: { execute: setupPluginsPrompt },
+  currentVersionProvider: { get: () => "5.2.2" },
+  setupToolsPromptUseCase: { execute: setupToolsPrompt },
+  projectContextDetector: { execute: detectContext },
+  setupMachineScopeUseCase: { execute: setupMachineScope },
 }));
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { globalSetupHelp, registerSetupCommand } = await import(
   "../../../src/presentation/commands/setup.js"
 );
@@ -90,7 +87,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerSetupCommand(program, CATALOG);
+  registerSetupCommand(program, CATALOG, createDeps);
   await program.parseAsync(["node", "aidd", "setup", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -350,8 +347,7 @@ describe("aidd setup — what it refuses and what it reports", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 });
@@ -359,7 +355,7 @@ describe("aidd setup — what it refuses and what it reports", () => {
 describe("aidd setup — the help surface", () => {
   function setupCommand(): Command {
     const program = new Command();
-    registerSetupCommand(program, CATALOG);
+    registerSetupCommand(program, CATALOG, createDeps);
     const setup = program.commands.find((command) => command.name() === "setup");
     if (setup === undefined) throw new Error("setup command was not registered");
     return setup;

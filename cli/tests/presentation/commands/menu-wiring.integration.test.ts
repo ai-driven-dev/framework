@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
+import { manifestRepositoryLoading, prompterAnswering } from "../../helpers/ports/index.js";
 
 const loadManifest = vi.fn();
 const promptSelect = vi.fn();
@@ -9,12 +10,9 @@ const spawn = vi.fn();
 const question = vi.fn();
 const close = vi.fn();
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(),
-  createMenuDeps: vi.fn(() => ({
-    manifestRepo: { load: loadManifest },
-    prompter: { select: promptSelect, confirm: promptConfirm, input: promptInput },
-  })),
+const createMenuDeps = vi.fn(() => ({
+  manifestRepo: manifestRepositoryLoading(loadManifest),
+  prompter: prompterAnswering({ select: promptSelect, confirm: promptConfirm, input: promptInput }),
 }));
 
 vi.mock("../../../src/presentation/commands/spawn-cli-command.js", () => ({
@@ -25,9 +23,8 @@ vi.mock("node:readline", () => ({
   default: { createInterface: vi.fn(() => ({ question, close })) },
 }));
 
-const { createMenuDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { runMenuLoop } = await import("../../../src/presentation/commands/menu.js");
-const { resolveProjectRoot } = await import("../../../src/runtime/project-root/project-root.js");
+const { resolveProjectRoot } = await import("../../../src/presentation/project-root.js");
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -65,7 +62,7 @@ function exiting(): MockInstance<typeof process.exit> {
 }
 
 async function loopUntilExit(): Promise<void> {
-  await expect(runMenuLoop(wireTools())).rejects.toThrow(/^exit /);
+  await expect(runMenuLoop(wireTools(), createMenuDeps)).rejects.toThrow(/^exit /);
 }
 
 describe("aidd with no argument — the menu loop", () => {

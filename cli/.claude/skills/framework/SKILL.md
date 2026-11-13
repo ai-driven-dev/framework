@@ -63,7 +63,7 @@ Nothing outside `contexts/framework/` may import a module this context has not d
 `translate`, or `distribution` may import from `framework` at all — the arrow only runs the other
 way. Check `tests/architecture/context-graph.arch.test.ts` before adding an edge; check
 `context-boundary.arch.test.ts`'s `PUBLIC_MODULES` before assuming a module framework itself
-exposes is reachable from `presentation` or `runtime`.
+exposes is reachable from `presentation`.
 
 ## How it's tested
 

@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import { environmentWithoutGitVariables } from "../../src/runtime/git/git-environment.js";
+import { environmentWithoutGitVariables } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
 
 const execFileAsync = promisify(execFile);
 

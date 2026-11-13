@@ -162,7 +162,7 @@ describe("running a command in process", () => {
     vi.doMock("../../src/presentation/commands/clean.js", () => ({
       registerCleanCommand: (program: import("commander").Command) => {
         program.command("clean").action(async () => {
-          const { createDeps } = await import("../../src/runtime/wiring/framework.js");
+          const { createDeps } = await import("../../src/composition/framework.js");
           const { CLIOutput } = await import("../../src/presentation/output.js");
           const { catalogOf } = await import("../contexts/tools/testing/catalog-of.js");
           built.push(

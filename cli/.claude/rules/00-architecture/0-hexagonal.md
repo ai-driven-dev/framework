@@ -2,7 +2,6 @@
 description: Apply inside a context; four layers, dependencies pointing inward, one adapter per port.
 paths:
   - "src/contexts/**/*.ts"
-  - "src/runtime/**/*.ts"
   - "src/shared/**/*.ts"
 ---
 

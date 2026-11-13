@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { declarationOf } from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { SessionBindingStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/declaration/session-binding-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 
 let root: string;
 let dir: string;

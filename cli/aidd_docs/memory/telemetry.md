@@ -8,7 +8,7 @@
 | --- | --- |
 | its line format, made once per file read when a line needs what came before it | `contexts/telemetry/domain/formats/` |
 | its transcript source, on the block reader in `infrastructure/transcripts/transcript-files.ts` | `contexts/telemetry/infrastructure/` |
-| one reader in the ingest list | `runtime/wiring/telemetry.ts` |
+| one reader in the ingest list | `composition/telemetry.ts` |
 | its name | `USAGE_TOOLS` in `domain/usage-record.ts` |
 | its home relocated in every sandbox that runs the CLI | `tests/e2e/helpers.ts`, `tests/helpers/telemetry-sandbox.ts`, `scripts/check-claude-tokens-end-to-end.cjs`, `scripts/probe-identifier-join.cjs` |
 
@@ -41,7 +41,7 @@ flowchart LR
 | Layer | Path under `cli/src/` | Holds |
 | --- | --- | --- |
 | Presentation | `presentation/commands/telemetry.ts`, `presentation/display/telemetry*` | the command group: `on`, `off`, `forget`, `ingest`, `task`, `status`, `report`, `identity` |
-| Composition | `runtime/wiring/telemetry.ts` | the telemetry directory, the environment variables, every use case wired |
+| Composition | `composition/telemetry.ts` | the telemetry directory, the environment variables, every use case wired |
 | Application | `contexts/telemetry/application/` | one use case per command, the directory resolver, `report/` |
 | Domain | `contexts/telemetry/domain/` | the usage record and its fold, the declaration and attribution rules, consent, the report axes |
 | Infrastructure | `contexts/telemetry/infrastructure/` | the ledger, locks, git config and file stores, the transcript source |

@@ -21,9 +21,9 @@ import type { FileReader } from "../kernel/ports/file-reader.js";
 import type { FileWriter } from "../kernel/ports/file-writer.js";
 import type { Hasher } from "../kernel/ports/hasher.js";
 import type { Logger } from "../kernel/ports/logger.js";
-import { atomicWriteFile } from "../runtime/filesystem/atomic-write.js";
-import { userConfigDir } from "../runtime/user-config-dir.js";
+import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import type { HttpClient } from "../shared/infrastructure/http-client.js";
+import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { FileMerger } from "../shared/ports/file-merger.js";
 
 export interface DistributionWiringShared {
@@ -42,13 +42,13 @@ export interface DistributionDeps {
   marketplaceTrustStore: MarketplaceTrustStore;
   releaseResolver: ReleaseLister & RepositoryVisibility;
   resolveMarketplaceUseCase: ResolveMarketplace;
-  marketplaceListUseCase: ListMarketplaces;
-  marketplaceRefreshUseCase: RefreshMarketplace;
-  marketplaceRegisterFrameworkUseCase: RegisterFrameworkMarketplace;
+  listMarketplaces: ListMarketplaces;
+  refreshMarketplace: RefreshMarketplace;
+  registerFrameworkMarketplace: RegisterFrameworkMarketplace;
 }
 
-/** `marketplaceAddUseCase` is deliberately absent: it takes framework's
- * `marketplaceRemoveUseCase`, so it is composed in `runtime/wiring/framework.ts` rather than pulling
+/** `addMarketplace` is deliberately absent: it takes framework's
+ * `marketplaceRemoveUseCase`, so it is composed in `composition/framework.ts` rather than pulling
  * framework in here. */
 export function wireDistribution(shared: DistributionWiringShared): DistributionDeps {
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(shared.fs);
@@ -69,19 +69,19 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
     pluginCatalogRepository,
     userConfigDir
   );
-  const marketplaceListUseCase = new ListMarketplaces(
+  const listMarketplaces = new ListMarketplaces(
     marketplaceRegistry,
     resolveMarketplaceUseCase,
     shared.logger
   );
-  const marketplaceRefreshUseCase = new RefreshMarketplace(
+  const refreshMarketplace = new RefreshMarketplace(
     marketplaceRegistry,
     resolveMarketplaceUseCase,
     marketplaceCache,
     shared.logger,
     shared.fs
   );
-  const marketplaceRegisterFrameworkUseCase = new RegisterFrameworkMarketplace(marketplaceRegistry);
+  const registerFrameworkMarketplace = new RegisterFrameworkMarketplace(marketplaceRegistry);
   return {
     pluginCatalogRepository,
     pluginFetcher,
@@ -89,8 +89,8 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
     marketplaceTrustStore,
     releaseResolver,
     resolveMarketplaceUseCase,
-    marketplaceListUseCase,
-    marketplaceRefreshUseCase,
-    marketplaceRegisterFrameworkUseCase,
+    listMarketplaces,
+    refreshMarketplace,
+    registerFrameworkMarketplace,
   };
 }

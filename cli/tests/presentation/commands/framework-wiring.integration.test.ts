@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VALID_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../same-instance.js";
+import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const installAiTool = vi.fn();
 const installIdeTool = vi.fn();
@@ -15,23 +15,19 @@ const validateRecipes = vi.fn();
 const loadManifest = vi.fn();
 const currentVersion = vi.fn(() => "5.2.2");
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({
-    installAiToolUseCase: { execute: installAiTool },
-    installIdeToolUseCase: { execute: installIdeTool },
-    uninstallUseCase: { execute: uninstallAiTools },
-    uninstallIdeUseCase: { execute: uninstallIdeTool },
-    updateAiToolsUseCase: { execute: updateAiTools },
-    updateIdeToolsUseCase: { execute: updateIdeTools },
-    listInstalledRulesUseCase: { execute: listInstalledRules },
-    validateRecipes: { execute: validateRecipes },
-    manifestRepo: { load: loadManifest },
-    currentVersionProvider: { get: currentVersion },
-  })),
-  createMenuDeps: vi.fn(),
+const createDeps = vi.fn(async () => ({
+  installAiToolUseCase: { execute: installAiTool },
+  installIdeToolUseCase: { execute: installIdeTool },
+  uninstallUseCase: { execute: uninstallAiTools },
+  uninstallIdeUseCase: { execute: uninstallIdeTool },
+  updateAiToolsUseCase: { execute: updateAiTools },
+  updateIdeToolsUseCase: { execute: updateIdeTools },
+  listInstalledRulesUseCase: { execute: listInstalledRules },
+  validateRecipes: { execute: validateRecipes },
+  manifestRepo: manifestRepositoryLoading(loadManifest),
+  currentVersionProvider: { get: currentVersion },
 }));
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerFrameworkCommand } = await import(
   "../../../src/presentation/commands/framework.js"
 );
@@ -89,7 +85,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerFrameworkCommand(program, CATALOG);
+  registerFrameworkCommand(program, CATALOG, createDeps);
   await program.parseAsync(["node", "aidd", "framework", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -383,8 +379,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 
@@ -404,7 +399,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
 describe("aidd framework — the help surface", () => {
   function frameworkCommand(): Command {
     const program = new Command();
-    registerFrameworkCommand(program, CATALOG);
+    registerFrameworkCommand(program, CATALOG, createDeps);
     const framework = program.commands.find((command) => command.name() === "framework");
     if (framework === undefined) throw new Error("framework command was not registered");
     return framework;

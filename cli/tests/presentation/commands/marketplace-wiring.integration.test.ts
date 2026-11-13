@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parsePluginSourceShorthand } from "../../../src/kernel/source.js";
 import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../same-instance.js";
+import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const marketplaceAdd = vi.fn();
 const marketplaceList = vi.fn();
@@ -15,25 +15,22 @@ const promptInput = vi.fn();
 const menuSelect = vi.fn();
 const spawn = vi.fn();
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({
-    marketplaceAddUseCase: { execute: marketplaceAdd },
-    marketplaceListUseCase: { execute: marketplaceList },
-    marketplaceRemoveUseCase: { execute: marketplaceRemove },
-    userMarketplaceRemoveUseCase: { execute: userMarketplaceRemove },
-    marketplaceRefreshUseCase: { execute: marketplaceRefresh },
-    marketplaceCheckUseCase: { execute: marketplaceCheck },
-    marketplaceSyncSettingsUseCase: { execute: activation },
-    prompter: { input: promptInput },
-  })),
-  createMenuDeps: vi.fn(() => ({ prompter: { select: menuSelect } })),
+const createDeps = vi.fn(async () => ({
+  addMarketplace: { execute: marketplaceAdd },
+  listMarketplaces: { execute: marketplaceList },
+  marketplaceRemoveUseCase: { execute: marketplaceRemove },
+  userMarketplaceRemoveUseCase: { execute: userMarketplaceRemove },
+  refreshMarketplace: { execute: marketplaceRefresh },
+  marketplaceCheckUseCase: { execute: marketplaceCheck },
+  marketplaceSyncSettingsUseCase: { execute: activation },
+  prompter: prompterAnswering({ input: promptInput }),
 }));
+const createMenuDeps = vi.fn(() => ({ prompter: prompterAnswering({ select: menuSelect }) }));
 
 vi.mock("../../../src/presentation/commands/spawn-cli-command.js", () => ({
   spawnCliCommand: spawn,
 }));
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerMarketplaceCommand } = await import(
   "../../../src/presentation/commands/marketplace.js"
 );
@@ -91,7 +88,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerMarketplaceCommand(program, CATALOG);
+  registerMarketplaceCommand(program, CATALOG, createDeps, createMenuDeps);
   await program.parseAsync(["node", "aidd", "marketplace", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -160,8 +157,7 @@ describe("aidd marketplace add", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false, token: "ghp_x" },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
     expect(process.env.AIDD_TOKEN).not.toBe("ghp_x");
   });
@@ -210,8 +206,7 @@ it("hands no token when none was given", async () => {
   expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
     PROJECT_ROOT,
     { verbose: false, token: undefined },
-    expect.anything(),
-    sameInstance(CATALOG)
+    expect.anything()
   );
 });
 
@@ -384,8 +379,7 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 
@@ -405,7 +399,7 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
 describe("aidd marketplace — the help surface", () => {
   function marketplaceCommand(): Command {
     const program = new Command();
-    registerMarketplaceCommand(program, CATALOG);
+    registerMarketplaceCommand(program, CATALOG, createDeps, createMenuDeps);
     const marketplace = program.commands.find((command) => command.name() === "marketplace");
     if (marketplace === undefined) throw new Error("marketplace command was not registered");
     return marketplace;

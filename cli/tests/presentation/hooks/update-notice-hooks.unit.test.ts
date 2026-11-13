@@ -1,27 +1,23 @@
 import { Command } from "commander";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 const printNotice = vi.fn(async () => ({ lines: ["CLI update available"] }));
-const refresh = vi.fn(async () => ({}));
+const refresh = vi.fn(async () => ({ checkedAt: 0, latest: "0.0.0" }));
 const warn = vi.fn();
 const debug = vi.fn();
-const createDeps = vi.fn();
-
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: (...args: unknown[]) => createDeps(...args),
-}));
+const info = vi.fn();
 
 const { registerUpdateNoticeHooks } = await import(
   "../../../src/presentation/hooks/update-notice-hooks.js"
 );
+const createDeps = vi.fn<Parameters<typeof registerUpdateNoticeHooks>[1]>();
 
 /** Runs `path` as nested commands (`marketplace list` is a `list` under `marketplace`). */
 async function run(path: string, extraArgs: string[] = []): Promise<void> {
   const program = new Command("aidd");
   program.option("--verbose");
   program.exitOverride();
-  registerUpdateNoticeHooks(program, catalogOf());
+  registerUpdateNoticeHooks(program, createDeps);
   let parent = program;
   const names = path.split(" ");
   for (const name of names.slice(0, -1)) parent = parent.command(name);
@@ -35,7 +31,7 @@ beforeEach(() => {
   createDeps.mockImplementation(async () => ({
     printUpdateNotice: { execute: printNotice },
     refreshUpdateCheck: { execute: refresh },
-    logger: { warn, debug },
+    logger: { warn, debug, info },
   }));
 });
 
@@ -72,8 +68,7 @@ describe("the update notice hook", () => {
     expect(createDeps).toHaveBeenCalledWith(
       process.cwd(),
       { verbose: true },
-      expect.objectContaining({ verbose: true }),
-      expect.anything()
+      expect.objectContaining({ verbose: true })
     );
   });
 
@@ -82,8 +77,7 @@ describe("the update notice hook", () => {
     expect(createDeps).toHaveBeenCalledWith(
       process.cwd(),
       { verbose: false },
-      expect.objectContaining({ verbose: false }),
-      expect.anything()
+      expect.objectContaining({ verbose: false })
     );
   });
 
@@ -139,8 +133,7 @@ describe("the update refresh hook", () => {
     expect(createDeps).toHaveBeenLastCalledWith(
       process.cwd(),
       { verbose: true },
-      expect.objectContaining({ verbose: true }),
-      expect.anything()
+      expect.objectContaining({ verbose: true })
     );
   });
 

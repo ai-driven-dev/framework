@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../same-instance.js";
+import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const pluginRemove = vi.fn();
 const pluginList = vi.fn();
@@ -14,24 +14,21 @@ const activation = vi.fn();
 const menuSelect = vi.fn();
 const spawn = vi.fn();
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({
-    pluginRemoveUseCase: { execute: pluginRemove },
-    pluginListUseCase: { execute: pluginList },
-    pluginInstallUseCase: { execute: pluginInstall },
-    pluginSearchUseCase: { execute: pluginSearch },
-    pluginUpdateUseCase: { execute: pluginUpdate },
-    userPluginUpdateUseCase: { execute: userPluginUpdate },
-    marketplaceSyncSettingsUseCase: { execute: activation },
-  })),
-  createMenuDeps: vi.fn(() => ({ prompter: { select: menuSelect } })),
+const createDeps = vi.fn(async () => ({
+  pluginRemoveUseCase: { execute: pluginRemove },
+  pluginListUseCase: { execute: pluginList },
+  pluginInstallUseCase: { execute: pluginInstall },
+  pluginSearchUseCase: { execute: pluginSearch },
+  pluginUpdateUseCase: { execute: pluginUpdate },
+  userPluginUpdateUseCase: { execute: userPluginUpdate },
+  marketplaceSyncSettingsUseCase: { execute: activation },
 }));
+const createMenuDeps = vi.fn(() => ({ prompter: prompterAnswering({ select: menuSelect }) }));
 
 vi.mock("../../../src/presentation/commands/spawn-cli-command.js", () => ({
   spawnCliCommand: spawn,
 }));
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerPluginCommand } = await import("../../../src/presentation/commands/plugin.js");
 
 const PROJECT_ROOT = process.cwd();
@@ -77,7 +74,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerPluginCommand(program, CATALOG);
+  registerPluginCommand(program, CATALOG, createDeps, createMenuDeps);
   await program.parseAsync(["node", "aidd", "plugin", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -203,8 +200,7 @@ describe("aidd plugin install", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false, token: "ghp_x" },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
     expect(pluginInstall.mock.calls[0][0]).not.toHaveProperty("token");
   });
@@ -352,8 +348,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 });
@@ -361,7 +356,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
 describe("aidd plugin — the help surface", () => {
   function pluginCommand(): Command {
     const program = new Command();
-    registerPluginCommand(program, CATALOG);
+    registerPluginCommand(program, CATALOG, createDeps, createMenuDeps);
     const plugin = program.commands.find((command) => command.name() === "plugin");
     if (plugin === undefined) throw new Error("plugin command was not registered");
     return plugin;

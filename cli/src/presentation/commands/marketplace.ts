@@ -3,7 +3,7 @@ import { parseInstallScope } from "../../contexts/framework/domain/install-scope
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceScope } from "../../kernel/scope.js";
 import { parsePluginSourceShorthand } from "../../kernel/source.js";
-import { createDeps, createMenuDeps } from "../../runtime/wiring/framework.js";
+import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
 import {
   printMarketplaceCheck,
   printMarketplaceRegistered,
@@ -16,7 +16,23 @@ import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
 import { syncNativeActivation } from "./sync-native-activation.js";
 
-export function registerMarketplaceCommand(program: Command, tools: ToolCatalog): void {
+/** What this command reads of the graph. */
+type MarketplaceKeys =
+  | "prompter"
+  | "addMarketplace"
+  | "listMarketplaces"
+  | "userMarketplaceRemoveUseCase"
+  | "marketplaceRemoveUseCase"
+  | "refreshMarketplace"
+  | "marketplaceCheckUseCase"
+  | "marketplaceSyncSettingsUseCase";
+
+export function registerMarketplaceCommand(
+  program: Command,
+  tools: ToolCatalog,
+  createDeps: DepsSliceFactory<MarketplaceKeys>,
+  createMenuDeps: MenuDepsSliceFactory<"prompter">
+): void {
   const marketplace = program.command("marketplace").description("Manage plugin marketplaces");
 
   marketplace.action(async () => {
@@ -70,16 +86,11 @@ export function registerMarketplaceCommand(program: Command, tools: ToolCatalog)
         }
         try {
           const scope: MarketplaceScope = cmdOptions.scope === "user" ? "user" : "project";
-          const deps = await createDeps(
-            projectRoot,
-            { verbose, token: cmdOptions.token },
-            output,
-            tools
-          );
+          const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
           const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
           const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));
           const source = parsePluginSourceShorthand(rawSource);
-          const result = await deps.marketplaceAddUseCase.execute({
+          const result = await deps.addMarketplace.execute({
             source,
             name,
             scope,
@@ -103,8 +114,8 @@ export function registerMarketplaceCommand(program: Command, tools: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, tools);
-        const { marketplaces, catalogs } = await deps.marketplaceListUseCase.execute({
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const { marketplaces, catalogs } = await deps.listMarketplaces.execute({
           projectRoot,
           withCatalogs: cmdOptions.plugins ?? false,
         });
@@ -124,7 +135,7 @@ export function registerMarketplaceCommand(program: Command, tools: ToolCatalog)
       const errorHandler = new ErrorHandler(output);
       try {
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output, tools);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await (scope === "user"
           ? deps.userMarketplaceRemoveUseCase
           : deps.marketplaceRemoveUseCase
@@ -152,8 +163,8 @@ export function registerMarketplaceCommand(program: Command, tools: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, tools);
-        const { results, failedCount } = await deps.marketplaceRefreshUseCase.execute({
+        const deps = await createDeps(projectRoot, { verbose }, output);
+        const { results, failedCount } = await deps.refreshMarketplace.execute({
           projectRoot,
           name,
           force: cmdOptions.force,
@@ -173,7 +184,7 @@ export function registerMarketplaceCommand(program: Command, tools: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, tools);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await deps.marketplaceCheckUseCase.execute({ projectRoot, tools });
         printMarketplaceCheck(output, result);
       } catch (error) {

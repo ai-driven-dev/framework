@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
 import { buildClaudeContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
@@ -12,7 +13,6 @@ import {
   JsonSchemaValidationError,
 } from "../../../../../src/kernel/errors.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";

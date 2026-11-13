@@ -1,14 +1,16 @@
 import type { Command } from "commander";
 import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { InputRequiredError } from "../../kernel/errors.js";
 import { AIDD_DIR } from "../../kernel/paths.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
-import { createDeps } from "../../runtime/wiring/framework.js";
+import type { Deps, DepsSliceFactory } from "../deps.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
+
+/** What this command reads of the graph. */
+type AuthKeys = "prompter" | "logIn" | "logOut" | "checkStatus";
 
 interface LoginOptions {
   gh: boolean;
@@ -52,26 +54,27 @@ async function askCredential(prompter: Prompter, options: LoginOptions): Promise
   return { method: "stored", token };
 }
 
-type Deps = Awaited<ReturnType<typeof createDeps>>;
-
 /** An action that builds the dependencies, runs, and hands any failure to the error handler. */
 function reportingErrors(
   program: Command,
-  tools: ToolCatalog,
-  run: (deps: Deps, output: CLIOutput) => Promise<void>
+  createDeps: DepsSliceFactory<AuthKeys>,
+  run: (deps: Pick<Deps, AuthKeys>, output: CLIOutput) => Promise<void>
 ): () => Promise<void> {
   return async () => {
     const { verbose, output, projectRoot } = parseGlobalOptions(program);
     const errorHandler = new ErrorHandler(output);
     try {
-      await run(await createDeps(projectRoot, { verbose }, output, tools), output);
+      await run(await createDeps(projectRoot, { verbose }, output), output);
     } catch (error) {
       errorHandler.handle(error);
     }
   };
 }
 
-export function registerAuthCommand(program: Command, tools: ToolCatalog): void {
+export function registerAuthCommand(
+  program: Command,
+  createDeps: DepsSliceFactory<AuthKeys>
+): void {
   const authCmd = program.command("auth").description("Manage authentication");
   authCmd.action(() => authCmd.help());
 
@@ -88,7 +91,7 @@ export function registerAuthCommand(program: Command, tools: ToolCatalog): void 
       refuseInvalidOptions(cmdOptions, output);
 
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, tools);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const level = await askLevel(deps.prompter, cmdOptions.level);
         const credential = await askCredential(deps.prompter, cmdOptions);
         const result = await deps.logIn.execute({ credential, level });
@@ -102,7 +105,7 @@ export function registerAuthCommand(program: Command, tools: ToolCatalog): void 
     .command("logout")
     .description("Remove stored authentication")
     .action(
-      reportingErrors(program, tools, async (deps, output) => {
+      reportingErrors(program, createDeps, async (deps, output) => {
         printLogoutResult(output, await deps.logOut.execute());
       })
     );
@@ -111,7 +114,7 @@ export function registerAuthCommand(program: Command, tools: ToolCatalog): void 
     .command("status")
     .description("Show authentication status")
     .action(
-      reportingErrors(program, tools, async (deps, output) => {
+      reportingErrors(program, createDeps, async (deps, output) => {
         printAuthStatus(output, await deps.checkStatus.execute());
       })
     );

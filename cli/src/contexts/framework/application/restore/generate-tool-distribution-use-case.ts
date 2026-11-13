@@ -2,9 +2,9 @@ import { InstallationFile, removeRedundantGitkeeps } from "../../../../kernel/fi
 import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { Platform } from "../../../../runtime/platform/platform.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../translate/domain/canon.js";
+import type { Platform } from "../../domain/ports/platform.js";
 import { InstallAgentsUseCase } from "../install/content/install-agents-use-case.js";
 import { InstallCommandsUseCase } from "../install/content/install-commands-use-case.js";
 import { InstallRulesUseCase } from "../install/content/install-rules-use-case.js";

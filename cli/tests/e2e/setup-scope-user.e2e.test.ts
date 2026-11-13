@@ -3,7 +3,7 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
-import { environmentWithoutGitVariables } from "../../src/runtime/git/git-environment.js";
+import { environmentWithoutGitVariables } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
 import { gitStatusPorcelain } from "../helpers/project-state.js";
 import { createTestEnv, gitInit, runCli } from "./helpers.js";
 

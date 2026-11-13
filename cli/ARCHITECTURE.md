@@ -5,7 +5,7 @@
 ```mermaid
 flowchart LR
   presentation["presentation"] --> contexts
-  runtime["runtime"] -.->|wiring only| contexts
+  composition["composition"] -.->|wiring only| contexts
   subgraph contexts["contexts"]
     direction LR
     framework["framework"] --> translate["translate"] --> tools["tools"]
@@ -15,7 +15,7 @@ flowchart LR
   contexts --> shared["shared"]
   classDef layer fill:#e9ddff,stroke:#8250df,color:#3b1d78
   classDef base fill:#ddf4ff,stroke:#0969da,color:#0a3069
-  class presentation,runtime,framework,translate,tools,distribution layer
+  class presentation,composition,framework,translate,tools,distribution layer
   class kernel,shared base
   style contexts fill:none,stroke:#8c959f
 ```
@@ -29,7 +29,7 @@ flowchart LR
 | `src/contexts/distribution/` | Where content comes from and how it is fetched. A leaf: knows no tool and no installation record. |
 | `src/contexts/framework/` | The installation record and everything done to a project. The only context allowed to reach the others. |
 | `src/presentation/` | What speaks to a human: commands, display, prompts, output. |
-| `src/runtime/` | Technical services and wiring: auth, http, git, platform, project root, the latest-release resolver, one wiring module per context. |
+| `src/composition/` | The wiring: one module per context, composed by `framework.ts`. Only `src/cli.ts` imports it; commands receive its factories typed by `presentation/deps.ts`. |
 
 ## Invariants
 
