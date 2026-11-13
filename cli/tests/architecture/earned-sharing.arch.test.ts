@@ -164,37 +164,25 @@ describe("the guard itself", () => {
   });
 
   it("flags a shared file one context imports and clears one an earned adapter or two compositions reach", () => {
+    const [A, B] = ["src/contexts/framework/domain/x.ts", "src/contexts/tools/domain/x.ts"];
+    const [C1, C2] = ["src/composition/framework.ts", "src/composition/tools.ts"];
+    const port = "src/shared/ports/port.ts";
+    const adapter = "src/shared/infrastructure/adapter.ts";
+    const helper = "src/shared/infrastructure/helper.ts";
+    const wired = "src/shared/infrastructure/wired.ts";
     const text: Record<string, string> = {
-      "src/shared/ports/reader.ts": "export interface Reader {}",
-      "src/shared/infrastructure/adapter.ts": "class A implements Reader {}",
-      "src/shared/infrastructure/helper.ts": "",
-      "src/shared/infrastructure/wired.ts": "",
-      "src/shared/infrastructure/lonely.ts": "class B implements Other {}",
+      [port]: "export interface Reader {}",
+      [adapter]: "class A implements Reader {}",
     };
-    const from = (...files: string[]): Set<string> => new Set(files);
-    const twoContexts = from(
-      "src/contexts/framework/domain/a.ts",
-      "src/contexts/tools/domain/b.ts"
-    );
     const importers = new Map([
-      [
-        "src/shared/domain/lonely.ts",
-        from(
-          "src/contexts/framework/domain/a.ts",
-          "src/contexts/framework/application/b.ts",
-          "src/presentation/commands/doctor.ts"
-        ),
-      ],
-      ["src/shared/domain/earned.ts", twoContexts],
-      ["src/shared/ports/reader.ts", twoContexts],
-      ["src/shared/infrastructure/helper.ts", from("src/shared/infrastructure/adapter.ts")],
-      [
-        "src/shared/infrastructure/wired.ts",
-        from("src/composition/framework.ts", "src/composition/tools.ts"),
-      ],
-      ["src/shared/infrastructure/lonely.ts", from("src/composition/framework.ts")],
+      ["src/shared/domain/lonely.ts", new Set([A, "src/presentation/commands/doctor.ts"])],
+      ["src/shared/domain/earned.ts", new Set([A, B])],
+      [port, new Set([A, B])],
+      [helper, new Set([adapter])],
+      [wired, new Set([C1, C2])],
+      ["src/shared/infrastructure/lonely.ts", new Set([C1])],
     ]);
-    const files = [...new Set([...importers.keys(), ...Object.keys(text)])];
+    const files = [...new Set([...importers.keys(), adapter])];
 
     expect(unearnedShared(files, importers, (f) => text[f] ?? "")).toEqual([
       "src/shared/domain/lonely.ts",
