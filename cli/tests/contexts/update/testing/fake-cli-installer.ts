@@ -1,6 +1,5 @@
 import {
   INSTALL_COMMANDS,
-  isPermissionFailure,
   packageManagerOf,
 } from "../../../../src/contexts/update/domain/package-manager.js";
 import type { CliInstaller } from "../../../../src/contexts/update/ports/cli-installer.js";
@@ -38,7 +37,7 @@ export class FakeCliInstaller implements CliInstaller {
     const command = INSTALL_COMMANDS[packageManagerOf(binaryPath)];
     this.ran.push(command);
     if (scenario.kind === "fails") {
-      throw isPermissionFailure(scenario.stderr)
+      throw /EPERM|EACCES/.test(scenario.stderr)
         ? new ElevatedPermissionUpdateError(command)
         : new UpdateError();
     }

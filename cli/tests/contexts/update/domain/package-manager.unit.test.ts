@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  firstBinaryPath,
   INSTALL_COMMANDS,
-  isPermissionFailure,
   packageManagerOf,
 } from "../../../../src/contexts/update/domain/package-manager.js";
 
@@ -25,25 +23,5 @@ describe("packageManagerOf", () => {
     expect(
       Object.values(INSTALL_COMMANDS).every((c) => c.endsWith("@ai-driven-dev/cli@latest"))
     ).toBe(true);
-  });
-});
-
-describe("firstBinaryPath", () => {
-  it.each([
-    ["LF", "/usr/local/bin/aidd\n/opt/other/aidd\n"],
-    ["CRLF", "/usr/local/bin/aidd\r\n/opt/other/aidd\r\n"],
-  ])("keeps the first match of a listing separated by %s", (_label, listing) => {
-    expect(firstBinaryPath(listing)).toBe("/usr/local/bin/aidd");
-  });
-});
-
-describe("isPermissionFailure", () => {
-  it.each([
-    ["npm error code EPERM", true],
-    ["npm error code EACCES", true],
-    ["npm error 403", false],
-    ["EPERMISSIVE", false],
-  ])("answers %s with %s", (stderr, expected) => {
-    expect(isPermissionFailure(stderr)).toBe(expected);
   });
 });

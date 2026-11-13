@@ -4,12 +4,7 @@ import {
   PackageManagerDetectionError,
   UpdateError,
 } from "../../../kernel/errors.js";
-import {
-  firstBinaryPath,
-  INSTALL_COMMANDS,
-  isPermissionFailure,
-  packageManagerOf,
-} from "../domain/package-manager.js";
+import { INSTALL_COMMANDS, packageManagerOf } from "../domain/package-manager.js";
 import type { CliInstaller } from "../ports/cli-installer.js";
 
 /** Runs the package manager that owns the `aidd` found on the path. Everything it spawns
@@ -52,4 +47,15 @@ function extractStderr(err: unknown): string {
   const stderr =
     typeof err === "object" && err !== null ? (err as { stderr?: unknown }).stderr : null;
   return stderr instanceof Buffer ? stderr.toString("utf8") : "";
+}
+
+/** The first match a `which` or a `where` printed: `where` lists one per line, CRLF on Windows. */
+function firstBinaryPath(output: string): string {
+  return (output.trim().split(/\r?\n/)[0] as string).trim();
+}
+
+/** Whether what a failed install wrote to stderr says the process had no right to write where
+ * it installs. */
+function isPermissionFailure(stderr: string): boolean {
+  return /\bEPERM\b|\bEACCES\b/.test(stderr);
 }

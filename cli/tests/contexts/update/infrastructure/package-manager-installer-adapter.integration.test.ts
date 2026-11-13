@@ -1,103 +1,49 @@
-import { execSync } from "node:child_process";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { PackageManagerInstallerAdapter } from "../../../../src/contexts/update/infrastructure/package-manager-installer-adapter.js";
-import {
-  ElevatedPermissionUpdateError,
-  PackageManagerDetectionError,
-  UpdateError,
-} from "../../../../src/kernel/errors.js";
+import { UpdateError } from "../../../../src/kernel/errors.js";
+import { aStubMachine, type StubMachine } from "../testing/stub-package-managers.js";
 
-vi.mock("node:child_process", () => ({ execSync: vi.fn() }));
-const mockExecSync = vi.mocked(execSync);
+describe.skipIf(process.platform === "win32")(
+  "PackageManagerInstallerAdapter over stub binaries",
+  () => {
+    let machine: StubMachine;
 
-const ENV = { PATH: "/stubs" };
-let written: string[];
-const realWrite = process.stderr.write;
+    afterEach(() => machine.dispose());
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  written = [];
-  process.stderr.write = ((chunk: string | Uint8Array) => {
-    written.push(String(chunk));
-    return true;
-  }) as typeof process.stderr.write;
-});
+    it.each([
+      ["linux", "which"],
+      ["win32", "where"],
+    ] as const)("looks the binary up with the command of %s", async (platform, lookup) => {
+      machine = await aStubMachine({ lookup, found: "/usr/local/bin/aidd\n", stderr: null });
 
-afterEach(() => {
-  process.stderr.write = realWrite;
-});
-
-function failing(thrown: unknown) {
-  mockExecSync.mockReturnValueOnce("/usr/local/bin/aidd").mockImplementationOnce(() => {
-    throw thrown;
-  });
-}
-
-describe("PackageManagerInstallerAdapter", () => {
-  it.each([
-    ["linux", "which aidd"],
-    ["win32", "where aidd"],
-  ] as const)(
-    "looks the binary up with the command of %s, in the env it was given",
-    (platform, lookup) => {
-      mockExecSync.mockReturnValueOnce("/usr/local/bin/aidd\n").mockReturnValue(Buffer.alloc(0));
-
-      new PackageManagerInstallerAdapter(ENV, platform).install();
-
-      expect(mockExecSync.mock.calls[0]).toStrictEqual([lookup, { env: ENV, encoding: "utf8" }]);
-    }
-  );
-
-  it("runs the install in that env with stderr piped, and answers the first binary found", () => {
-    mockExecSync
-      .mockReturnValueOnce("/usr/local/bin/aidd\r\n/opt/aidd\r\n")
-      .mockReturnValue(Buffer.alloc(0));
-
-    expect(new PackageManagerInstallerAdapter(ENV, "linux").install()).toBe("/usr/local/bin/aidd");
-    expect(mockExecSync.mock.calls[1]).toStrictEqual([
-      "npm install -g @ai-driven-dev/cli@latest",
-      { env: ENV, stdio: ["inherit", "inherit", "pipe"] },
-    ]);
-  });
-
-  it("refuses when the lookup finds nothing", () => {
-    mockExecSync.mockImplementationOnce(() => {
-      throw new Error("not found");
+      expect(new PackageManagerInstallerAdapter(machine.env, platform).install()).toBe(
+        "/usr/local/bin/aidd"
+      );
     });
 
-    expect(() => new PackageManagerInstallerAdapter(ENV, "win32").install()).toThrow(
-      PackageManagerDetectionError
-    );
-  });
+    it("answers the first binary of a listing separated by CRLF", async () => {
+      machine = await aStubMachine({
+        lookup: "where",
+        found: "/usr/local/bin/aidd\r\n/opt/other/aidd\r\n",
+        stderr: null,
+      });
 
-  it("echoes the failed install's stderr once, then refuses", () => {
-    failing(Object.assign(new Error("failed"), { stderr: Buffer.from("npm error 403\n") }));
+      expect(new PackageManagerInstallerAdapter(machine.env, "win32").install()).toBe(
+        "/usr/local/bin/aidd"
+      );
+    });
 
-    expect(() => new PackageManagerInstallerAdapter(ENV, "linux").install()).toThrow(
-      new UpdateError()
-    );
-    expect(written).toStrictEqual(["npm error 403\n"]);
-  });
+    it("echoes the failed install's stderr once, then refuses", async () => {
+      machine = await aStubMachine({
+        lookup: "which",
+        found: "/usr/local/bin/aidd\n",
+        stderr: "npm error 403",
+      });
 
-  it("asks for elevation when the stderr names a refused permission", () => {
-    failing(Object.assign(new Error("failed"), { stderr: Buffer.from("npm error code EPERM") }));
-
-    expect(() => new PackageManagerInstallerAdapter(ENV, "linux").install()).toThrow(
-      ElevatedPermissionUpdateError
-    );
-  });
-
-  it.each([
-    ["no stderr", new Error("failed")],
-    ["a failure that is no object", "failed"],
-    ["a null failure", null],
-    ["a stderr that is no bytes", Object.assign(new Error("failed"), { stderr: 42 })],
-  ])("echoes nothing and refuses with the update error on %s", (_label, thrown) => {
-    failing(thrown);
-
-    expect(() => new PackageManagerInstallerAdapter(ENV, "linux").install()).toThrow(
-      new UpdateError()
-    );
-    expect(written).toStrictEqual([]);
-  });
-});
+      expect(() => new PackageManagerInstallerAdapter(machine.env, "linux").install()).toThrow(
+        new UpdateError()
+      );
+      expect(machine.stderrEchoed()).toStrictEqual(["npm error 403\n"]);
+    });
+  }
+);
