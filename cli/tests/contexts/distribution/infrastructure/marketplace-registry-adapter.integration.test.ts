@@ -17,197 +17,67 @@ const baseData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => 
   ...overrides,
 });
 
+// What the registry promises whatever holds it is in `ports/marketplace-registry.contract`;
+// what stays here is what only a real file can show.
 describe("MarketplaceRegistryAdapter", () => {
   let projectRoot: string;
-  let homeDir: string;
-  let originalHome: string | undefined;
-  let originalConfigDir: string | undefined;
-  let originalUserProfile: string | undefined;
+  let configDir: string;
+  let userFile: string;
   let adapter: MarketplaceRegistryAdapter;
 
   beforeEach(async () => {
     projectRoot = await mkdtemp(join(tmpdir(), "marketplace-registry-project-"));
-    homeDir = await mkdtemp(join(tmpdir(), "marketplace-registry-home-"));
-    originalHome = process.env.HOME;
-    originalUserProfile = process.env.USERPROFILE;
-    originalConfigDir = process.env.AIDD_USER_CONFIG_DIR;
-    process.env.HOME = homeDir;
-    process.env.USERPROFILE = homeDir;
-    // Faking the home alone is not enough: the CLI falls back to `homedir()` only when
-    // `AIDD_USER_CONFIG_DIR` is unset, so a leaked value sends this test at a real registry.
-    process.env.AIDD_USER_CONFIG_DIR = join(homeDir, ".config", "aidd");
-    adapter = makeRegistryAdapter();
+    configDir = await mkdtemp(join(tmpdir(), "marketplace-registry-config-"));
+    userFile = join(configDir, "marketplaces.json");
+    adapter = makeRegistryAdapter(configDir);
   });
 
   afterEach(async () => {
-    process.env.HOME = originalHome;
-    if (originalConfigDir === undefined) delete process.env.AIDD_USER_CONFIG_DIR;
-    else process.env.AIDD_USER_CONFIG_DIR = originalConfigDir;
-    process.env.USERPROFILE = originalUserProfile;
     await rm(projectRoot, { recursive: true, force: true });
-    await rm(homeDir, { recursive: true, force: true });
+    await rm(configDir, { recursive: true, force: true });
   });
 
-  describe("list()", () => {
-    it("returns empty when neither layer exists", async () => {
-      const result = await adapter.list(projectRoot);
-      expect(result).toEqual([]);
-    });
+  // A registry file that exists but holds no list is not an empty registry: `save()` reads
+  // that same list, appends and writes the file back, so one silent empty read loses all.
+  it("refuses a registry file that carries no list, naming the file rather than crashing", async () => {
+    await writeFile(userFile, '{"version":1}', "utf-8");
 
-    // A registry file that exists but holds no list is not an empty registry: `save()` reads
-    // that same list, appends and writes the file back, so one silent empty read loses all.
-    it("refuses a registry file that carries no list, naming the file rather than crashing", async () => {
-      const userFile = join(homeDir, ".config", "aidd", "marketplaces.json");
-      await mkdir(join(homeDir, ".config", "aidd"), { recursive: true });
-      await writeFile(userFile, '{"version":1}', "utf-8");
-
-      await expect(adapter.list(projectRoot)).rejects.toThrow(userFile);
-    });
-
-    it("refuses a registry file that is not JSON at all, naming the file", async () => {
-      const userFile = join(homeDir, ".config", "aidd", "marketplaces.json");
-      await mkdir(join(homeDir, ".config", "aidd"), { recursive: true });
-      await writeFile(userFile, "not json", "utf-8");
-
-      await expect(adapter.list(projectRoot)).rejects.toThrow(userFile);
-    });
-
-    it("reads a registry file whose list is present and empty as an empty registry", async () => {
-      const userFile = join(homeDir, ".config", "aidd", "marketplaces.json");
-      await mkdir(join(homeDir, ".config", "aidd"), { recursive: true });
-      await writeFile(userFile, '{"version":1,"marketplaces":[]}', "utf-8");
-
-      await expect(adapter.list(projectRoot)).resolves.toEqual([]);
-    });
-
-    it("returns project entries first, user entries after", async () => {
-      const project = Marketplace.fromJSON(baseData({ name: "p1" }));
-      const user = Marketplace.fromJSON(baseData({ name: "u1", scope: "user" }));
-      await adapter.save(projectRoot, project);
-      await adapter.save(projectRoot, user);
-
-      const result = await adapter.list(projectRoot);
-
-      expect(result.map((m) => m.name)).toEqual(["p1", "u1"]);
-      expect(result[0]?.scope).toBe("project");
-      expect(result[1]?.scope).toBe("user");
-    });
-
-    it("project entry shadows user entry with the same name", async () => {
-      const project = Marketplace.fromJSON(
-        baseData({ name: "shared", source: { kind: "github", repo: "owner/project" } })
-      );
-      const user = Marketplace.fromJSON(
-        baseData({
-          name: "shared",
-          scope: "user",
-          source: { kind: "github", repo: "owner/user" },
-        })
-      );
-      await adapter.save(projectRoot, project);
-      await adapter.save(projectRoot, user);
-
-      const result = await adapter.list(projectRoot);
-
-      expect(result).toHaveLength(1);
-      expect(result[0]?.scope).toBe("project");
-      if (result[0]?.source.kind === "github") {
-        expect(result[0]?.source.repo).toBe("owner/project");
-      }
-    });
+    await expect(adapter.list(projectRoot)).rejects.toThrow(userFile);
   });
 
-  describe("save()", () => {
-    it("persists project entries to .aidd/marketplaces.json", async () => {
-      const m = Marketplace.fromJSON(baseData());
-      await adapter.save(projectRoot, m);
+  it("refuses a registry file that is not JSON at all, naming the file", async () => {
+    await writeFile(userFile, "not json", "utf-8");
 
-      const raw = await readFile(join(projectRoot, ".aidd", "marketplaces.json"), "utf-8");
-      expect(JSON.parse(raw)).toEqual({
-        version: 1,
-        marketplaces: [m.toJSON()],
-      });
-    });
-
-    it("persists user entries to ~/.config/aidd/marketplaces.json", async () => {
-      const m = Marketplace.fromJSON(baseData({ scope: "user" }));
-      await adapter.save(projectRoot, m);
-
-      const raw = await readFile(join(homeDir, ".config", "aidd", "marketplaces.json"), "utf-8");
-      expect(JSON.parse(raw).marketplaces).toHaveLength(1);
-    });
-
-    it("overwrites entry with same name in same scope", async () => {
-      const first = Marketplace.fromJSON(baseData());
-      await adapter.save(projectRoot, first);
-      const second = first.withLastFetched("2026-04-28T11:00:00.000Z");
-      await adapter.save(projectRoot, second);
-
-      const result = await adapter.list(projectRoot);
-      expect(result).toHaveLength(1);
-      expect(result[0]?.lastFetched).toBe("2026-04-28T11:00:00.000Z");
-    });
+    await expect(adapter.list(projectRoot)).rejects.toThrow(userFile);
   });
 
-  describe("delete()", () => {
-    it("removes the entry from the given scope only", async () => {
-      const project = Marketplace.fromJSON(baseData({ name: "shared" }));
-      const user = Marketplace.fromJSON(baseData({ name: "shared", scope: "user" }));
-      await adapter.save(projectRoot, project);
-      await adapter.save(projectRoot, user);
+  it("reads a registry file whose list is present and empty as an empty registry", async () => {
+    await writeFile(userFile, '{"version":1,"marketplaces":[]}', "utf-8");
 
-      await adapter.delete(projectRoot, "shared", "project");
-
-      const result = await adapter.list(projectRoot);
-      expect(result).toHaveLength(1);
-      expect(result[0]?.scope).toBe("user");
-    });
-
-    it("silently succeeds when entry is missing", async () => {
-      await expect(adapter.delete(projectRoot, "missing", "project")).resolves.toBeUndefined();
-    });
+    await expect(adapter.list(projectRoot)).resolves.toEqual([]);
   });
 
-  describe("updateLastFetched()", () => {
-    it("updates timestamp on the named entry", async () => {
-      const m = Marketplace.fromJSON(baseData());
-      await adapter.save(projectRoot, m);
+  it("persists project entries to .aidd/marketplaces.json", async () => {
+    const m = Marketplace.fromJSON(baseData());
+    await adapter.save(projectRoot, m);
 
-      await adapter.updateLastFetched(projectRoot, m.name, "project", "2026-04-28T12:00:00.000Z");
-
-      const result = await adapter.list(projectRoot);
-      expect(result[0]?.lastFetched).toBe("2026-04-28T12:00:00.000Z");
-    });
-
-    it("leaves other entries untouched", async () => {
-      const a = Marketplace.fromJSON(baseData({ name: "a" }));
-      const b = Marketplace.fromJSON(baseData({ name: "b" }));
-      await adapter.save(projectRoot, a);
-      await adapter.save(projectRoot, b);
-
-      await adapter.updateLastFetched(projectRoot, "a", "project", "2026-04-28T12:00:00.000Z");
-
-      const result = await adapter.list(projectRoot);
-      const bEntry = result.find((m) => m.name === "b");
-      expect(bEntry?.lastFetched).toBeUndefined();
-    });
+    const raw = await readFile(join(projectRoot, ".aidd", "marketplaces.json"), "utf-8");
+    expect(JSON.parse(raw)).toEqual({ version: 1, marketplaces: [m.toJSON()] });
   });
 
-  describe("schema versioning", () => {
-    it("loads files written under the current version", async () => {
-      const dir = join(projectRoot, ".aidd");
-      await mkdir(dir, { recursive: true });
-      await writeFile(
-        join(dir, "marketplaces.json"),
-        JSON.stringify({
-          version: 1,
-          marketplaces: [baseData()],
-        })
-      );
+  it("persists user entries to the user config directory", async () => {
+    await adapter.save(projectRoot, Marketplace.fromJSON(baseData({ scope: "user" })));
 
-      const result = await adapter.list(projectRoot);
-      expect(result).toHaveLength(1);
-      expect(result[0]?.name).toBe("awesome");
-    });
+    expect(JSON.parse(await readFile(userFile, "utf-8")).marketplaces).toHaveLength(1);
+  });
+
+  it("loads files written under the current version", async () => {
+    await mkdir(join(projectRoot, ".aidd"), { recursive: true });
+    await writeFile(
+      join(projectRoot, ".aidd", "marketplaces.json"),
+      JSON.stringify({ version: 1, marketplaces: [baseData()] })
+    );
+
+    expect((await adapter.list(projectRoot)).map((m) => m.name)).toEqual(["awesome"]);
   });
 });

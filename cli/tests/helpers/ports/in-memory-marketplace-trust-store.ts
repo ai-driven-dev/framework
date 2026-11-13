@@ -3,26 +3,22 @@ import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/p
 import type { PluginSource } from "../../../src/kernel/source.js";
 import { serializePluginSource } from "../../../src/kernel/source.js";
 
-/** Pure in-memory MarketplaceTrustStore, keyed by MD5 of the canonical serialized source. */
+/** Pure in-memory MarketplaceTrustStore, one set per project, keyed by MD5 of the canonical serialized source. */
 export class InMemoryMarketplaceTrustStore implements MarketplaceTrustStore {
   private readonly trusted = new Set<string>();
 
-  async isTrusted(_projectRoot: string, source: PluginSource): Promise<boolean> {
-    return this.trusted.has(this.key(source));
+  async isTrusted(projectRoot: string, source: PluginSource): Promise<boolean> {
+    return this.trusted.has(this.key(projectRoot, source));
   }
 
-  async trust(_projectRoot: string, source: PluginSource): Promise<void> {
-    this.trusted.add(this.key(source));
+  async trust(projectRoot: string, source: PluginSource): Promise<void> {
+    this.trusted.add(this.key(projectRoot, source));
   }
 
-  isTrustedSync(source: PluginSource): boolean {
-    return this.trusted.has(this.key(source));
-  }
-
-  private key(source: PluginSource): string {
+  private key(projectRoot: string, source: PluginSource): string {
     const serialized = serializePluginSource(source);
     const sortedKeys = Object.keys(serialized).sort();
     const canonical = JSON.stringify(serialized, sortedKeys);
-    return createHash("md5").update(canonical, "utf-8").digest("hex");
+    return `${projectRoot}:${createHash("md5").update(canonical, "utf-8").digest("hex")}`;
   }
 }

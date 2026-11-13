@@ -22,4 +22,12 @@ export class InMemoryMarketplaceCache implements MarketplaceCachePort {
   has(name: string): boolean {
     return this.names.has(name);
   }
+
+  add(...names: string[]): void {
+    for (const name of names) this.names.add(name);
+  }
+
+  list(): string[] {
+    return [...this.names].sort();
+  }
 }
