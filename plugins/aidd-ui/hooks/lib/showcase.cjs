@@ -31,7 +31,8 @@ const LABELS = {
   en: {
     title: "Design system showcase",
     choose: "Variants",
-    picks: "Axes picked",
+    decided: "chosen",
+    picks: "axes picked",
     round: "Round {round}",
     changed: "Changed from {parent}",
     desktop: "Desktop",
@@ -85,7 +86,8 @@ const LABELS = {
   fr: {
     title: "Vitrine du système de design",
     choose: "Variantes",
-    picks: "Axes choisis",
+    decided: "choisies",
+    picks: "axes pris",
     round: "Tour {round}",
     changed: "Changé depuis {parent}",
     desktop: "Ordinateur",
@@ -594,9 +596,12 @@ function paint() {
       field.hidden = verdict !== "revise";
       if (document.activeElement !== field) field.value = (choice && choice.comment) || "";
     }
-    set.querySelector(".done").textContent = decided + "/" + variantsOf(set).length;
+    const total = set.querySelector(".done");
+    total.textContent = decided + "/" + variantsOf(set).length + " " + total.dataset.label;
     const count = set.querySelector(".picked");
-    count.textContent = Object.keys(picksOf(set)).length + "/" + count.dataset.axes;
+    const taken = Object.keys(picksOf(set)).length;
+    count.hidden = !taken;
+    count.textContent = taken + "/" + count.dataset.axes + " " + count.dataset.label;
   }
   for (const holder of pickers) {
     const own = picksOf(holder);
@@ -1045,7 +1050,7 @@ function drawerOf({ project, reviewable, rows, labels, current, sets = [] }) {
   const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
   const choice = (set) => {
     const row = (variant) => `<li class="pvariant" data-variant="${escaped(variant.name)}"><span class="pick">${escaped(variant.name)}</span><span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(vote).join("")}</span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></li>`;
-    return `<details class="choice" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.id)}</span><span class="picked" title="${escaped(labels.picks)}" data-axes="${set.axes.length}">0/${set.axes.length}</span><span class="done">0/${variants.latestOf(set.variants).length}</span></summary><ol>${variants.latestOf(set.variants).map(row).join("")}</ol></details>`;
+    return `<details class="choice" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.id)}</span><span class="picked" data-axes="${set.axes.length}" data-label="${escaped(labels.picks)}" hidden></span><span class="done" data-label="${escaped(labels.decided)}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span></summary><ol>${variants.latestOf(set.variants).map(row).join("")}</ol></details>`;
   };
   const open = sets.filter((set) => !set.problems.length);
   const choices = open.length ? `<section class="choices" data-group="choose"><h3>${labels.choose}</h3>${open.map(choice).join("")}</section>` : "";

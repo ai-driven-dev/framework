@@ -330,9 +330,11 @@ describe("aidd-ui showcase sets", () => {
       assert.match(a.html, /<th>Tone<\/th><td><button type="button" class="take" data-axis="Tone" data-variant="a" aria-pressed="false">calm<\/button><\/td>/);
     });
 
-    it("counts the picks in the drawer against the axes of the set", () => {
+    it("names the counts of a set in the drawer, and shows the picks only once one is made", () => {
       const row = pagesOf([SET()])["index.html"].match(/<details class="choice"[\s\S]*?<\/summary>/)[0];
-      assert.match(row, /<span class="picked" title="Axes picked" data-axes="2">0\/2<\/span>/);
+      assert.match(row, /<span class="picked" data-axes="2" data-label="axes picked" hidden><\/span>/);
+      assert.match(row, /<span class="done" data-label="chosen">0\/2 chosen<\/span>/);
+      assert.match(pagesOf([SET()], { lang: "fr" })["index.html"], /data-label="axes pris" hidden><\/span><span class="done" data-label="choisies">0\/2 choisies<\/span>/);
     });
   });
 
@@ -348,7 +350,7 @@ describe("aidd-ui showcase sets", () => {
     it("lists in the drawer the variants of the latest round only, so a copy holds no verdict of a folded round", () => {
       const group = pagesOf([rounds()])["index.html"].match(/<section class="choices" data-group="choose">[\s\S]*?<\/section>/)[0];
       assert.deepEqual([...group.matchAll(/<li class="pvariant" data-variant="([^"]+)"/g)].map((match) => match[1]), ["c"]);
-      assert.match(group, /<span class="done">0\/1<\/span>/);
+      assert.match(group, /<span class="done" data-label="chosen">0\/1 chosen<\/span>/);
     });
 
     it("shows a set of a single round as it was, with no fold", () => {
