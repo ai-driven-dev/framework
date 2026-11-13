@@ -158,6 +158,11 @@ describe("aidd-ui showcase sets", () => {
       }
     });
 
+    it("gives the background to the page of the wireframe as well as to its body, so no strip of white shows in a narrow frame", () => {
+      const [frame] = framesOf(dressed([["Palette", "#0b0f14 #e8eef3 #7fd4f2"]]));
+      assert.match(frame, /html, body \{[^}]*background: #0b0f14/);
+    });
+
     it("keeps the structure of the wireframe as written", () => {
       const [frame] = framesOf(dressed([["Palette", "#0b0f14 #e8eef3 #7fd4f2"]]));
       assert.match(frame, /<div data-zone="query">Query<\/div>/);

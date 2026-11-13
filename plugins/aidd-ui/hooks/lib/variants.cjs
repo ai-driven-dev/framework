@@ -72,7 +72,7 @@ function lookOf(variant) {
 
 /** A wireframe dressed in a look by element styles alone: its structure stays as written. */
 function dressedOf(html, { background, text, accent, font }) {
-  const style = `<style>body { background: ${background}; color: ${text};${font ? ` font-family: ${font};` : ""} } button { background: ${accent}; color: ${background}; border: 0; padding: 8px 16px; border-radius: 8px; font: inherit; } textarea, input { background: transparent; color: inherit; border: 1px solid ${accent}; }</style>`;
+  const style = `<style>html, body { background: ${background}; } body { color: ${text};${font ? ` font-family: ${font};` : ""} } button { background: ${accent}; color: ${background}; border: 0; padding: 8px 16px; border-radius: 8px; font: inherit; } textarea, input { background: transparent; color: inherit; border: 1px solid ${accent}; }</style>`;
   return html.includes("</head>") ? html.replace("</head>", () => `${style}</head>`) : style + html;
 }
 
