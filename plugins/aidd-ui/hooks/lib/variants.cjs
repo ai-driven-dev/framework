@@ -70,9 +70,9 @@ const FAMILIES = { "sans-serif": "system-ui, sans-serif", serif: "Georgia, serif
 function lookOf(variant) {
   const colours = variant.axes.filter(([axis]) => PALETTE_AXIS.test(axis)).flatMap(([, value]) => String(value ?? "").match(COLOUR) ?? []);
   if (colours.length < 2) return null;
-  const family = variant.axes.filter(([axis]) => !PALETTE_AXIS.test(axis)).map(([, value]) => FAMILY.exec(String(value ?? ""))?.[1]?.toLowerCase()).find(Boolean);
+  const font = variant.axes.filter(([axis]) => !PALETTE_AXIS.test(axis)).map(([, value]) => fontOf(value)).find(Boolean) ?? null;
   const sizes = sizesOf(variant);
-  return { background: colours[0], text: colours[1], accent: colours[2] ?? colours[1], font: family ? FAMILIES[family] : null, sizes };
+  return { background: colours[0], text: colours[1], accent: colours[2] ?? colours[1], font, sizes };
 }
 
 const STATE_ATTRIBUTE = /data-state="([^"]*)"/g;
@@ -83,8 +83,18 @@ function firstStateOf(html) {
   return states.includes("default") ? "default" : (states[0] ?? null);
 }
 
-/** The generic font family a cell names, or null. */
-const familyOf = (value) => FAMILY.exec(String(value ?? ""))?.[1]?.toLowerCase() ?? null;
+const NAMED_FONT = /([A-Z][\w-]*(?: [A-Z0-9][\w-]*)*)\s*,?\s*$/;
+
+/** The font stack a cell names: the font written just before its generic family, then that family's fallbacks.
+ * Null when it names no generic family. */
+function fontOf(value) {
+  const text = String(value ?? "");
+  const found = FAMILY.exec(text);
+  if (!found) return null;
+  const generic = FAMILIES[found[1].toLowerCase()];
+  const named = NAMED_FONT.exec(text.slice(0, found.index))?.[1];
+  return named ? `'${named}', ${generic}` : generic;
+}
 
 /** The sizes in `px` of the first cell that gives two or more, or null. */
 const sizesOf = (variant) => variant.axes.map(([, value]) => [...String(value ?? "").matchAll(PIXELS)].map((match) => match[1])).find((found) => found.length >= 2) ?? null;
@@ -100,10 +110,10 @@ function cellOf(value, { variant, labels, sampled }) {
     .join("");
   const look = text.split(COLOUR).length > 1 ? lookOf(variant) : null;
   const sample = look && !sampled.done ? ((sampled.done = true), `<span class="sample" style="background: ${look.accent}; color: ${look.background}">${escaped(labels.sample)}</span>`) : "";
-  const family = familyOf(text);
+  const font = fontOf(text);
   const [body, heading] = sizesOf(variant) ?? [];
   const size = (px) => (px ? ` style="font-size: ${px}px"` : "");
-  const specimen = family ? `<span class="specimen" style="font-family: ${FAMILIES[family]}"><b${size(heading)}>${escaped(labels.specimenHeading)}</b><span${size(body)}>${escaped(labels.specimenBody)}</span></span>` : "";
+  const specimen = font ? `<span class="specimen" style="font-family: ${font}"><b${size(heading)}>${escaped(labels.specimenHeading)}</b><span${size(body)}>${escaped(labels.specimenBody)}</span></span>` : "";
   return tones + sample + specimen;
 }
 
@@ -169,7 +179,7 @@ const largeOf = (labels) => {
 /** The body of a set's page: its name, then the problems that keep it from being shown, else the paths the
  * variants share and one column per variant. */
 function setBodyOf({ set, tokens, labels, wireframes = [] }) {
-  const head = `<header class="head"><p class="crumb">${labels.choose}</p><h1>${escaped(set.id)}</h1></header>`;
+  const head = `<header class="head"><p class="crumb">${labels.choose}</p><h1>${escaped(titleOf(set.id))}</h1></header>`;
   if (set.problems.length) {
     const items = set.problems.map((each) => `<li data-rule="${escaped(each.rule)}"><b>${escaped(each.rule)}</b> ${escaped(each.message)} <span class="fix">${escaped(each.fix)}</span></li>`);
     return `${head}\n<section class="checks"><h2>${labels.checks}</h2><ul>${items.join("")}</ul></section>`;
@@ -198,6 +208,9 @@ const STYLE = `
 .variant h3 { margin: 0; font-size: var(--t-sm); font-weight: 500; color: var(--muted); }
 .variant .intent { margin: 0; color: var(--muted); }
 .axes { border-collapse: collapse; width: 100%; font-size: 13px; }
+.axes, .axes tbody, .axes tr { display: block; }
+.axes th, .axes td { display: block; }
+main.wide { padding-bottom: 72px; }
 .axes th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px var(--s2) 4px 0; white-space: nowrap; vertical-align: top; }
 .axes td { padding: 4px 0; overflow-wrap: anywhere; }
 .round > summary { cursor: pointer; font-weight: 600; margin: var(--s3) 0; }
@@ -262,6 +275,22 @@ function fitFrames() {
 }
 fitFrames();
 window.addEventListener("resize", fitFrames);
+function alignRows() {
+  for (const round of document.querySelectorAll(".variants")) {
+    const columns = [...round.querySelectorAll(".variant")];
+    const groups = [columns.map((column) => column.querySelector(".column-head"))];
+    columns.forEach((column) => [...column.querySelectorAll(".axes tr")].forEach((row, at) => (groups[at + 1] = groups[at + 1] || []).push(row)));
+    for (const group of groups) {
+      const parts = group.filter(Boolean);
+      parts.forEach((part) => (part.style.minHeight = ""));
+      const tallest = Math.max(...parts.map((part) => part.offsetHeight));
+      parts.forEach((part) => (part.style.minHeight = tallest + "px"));
+    }
+  }
+}
+alignRows();
+window.addEventListener("resize", alignRows);
+document.querySelectorAll("details.round").forEach((round) => round.addEventListener("toggle", alignRows));
 const large = document.getElementById("large");
 if (large) {
   const frame = large.querySelector("iframe");

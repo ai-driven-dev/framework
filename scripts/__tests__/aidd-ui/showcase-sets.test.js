@@ -111,11 +111,33 @@ describe("aidd-ui showcase sets", () => {
       assert.doesNotMatch(same[0], /Voice|Tone/);
     });
 
+    it("gives each row of a round the height of its tallest twin, the heads and each axis row alike", () => {
+      const { SCRIPT } = require(path.join(LIB, "variants.cjs"));
+      const part = (height) => ({ offsetHeight: height, style: {} });
+      const column = (head, rows) => ({ querySelector: () => head, querySelectorAll: () => rows });
+      const heads = [part(80), part(120)];
+      const rows = [[part(20), part(60)], [part(50), part(30)]];
+      const round = { querySelectorAll: () => [column(heads[0], rows[0]), column(heads[1], rows[1])] };
+      const all = (selector) => (selector === ".variants" ? [round] : []);
+      new Function("document", "window", SCRIPT)({ querySelectorAll: all, querySelector: () => null, getElementById: () => null }, { addEventListener() {} });
+      assert.deepEqual(heads.map((each) => each.style.minHeight), ["120px", "120px"]);
+      assert.deepEqual(rows.map((each) => each.map((row) => row.style.minHeight)), [["50px", "60px"], ["50px", "60px"]]);
+    });
+
+    it("titles the set page with its name as words", () => {
+      assert.match(pagesOf([SET({ id: "brand-colours" })])["_set-brand-colours.html"], /<h1>Brand colours<\/h1>/);
+    });
+
+    it("leaves room under the content for the floating review button on a set page", () => {
+      const style = require(path.join(LIB, "variants.cjs")).STYLE;
+      assert.match(style, /main\.wide \{[^}]*padding-bottom/);
+    });
+
     it("sizes the frame to the render it holds and centres it in a column wider than the render", () => {
       const { SCRIPT } = require(path.join(LIB, "variants.cjs"));
       const box = (width, height) => ({ dataset: { width: String(width), height: String(height) }, parentElement: { clientWidth: 500 }, clientWidth: 500, firstElementChild: { style: {} }, style: {} });
       const frames = [box(390, 844), box(1280, 800)];
-      new Function("document", "window", SCRIPT)({ querySelectorAll: () => frames, querySelector: () => ({}), getElementById: () => null }, { addEventListener() {} });
+      new Function("document", "window", SCRIPT)({ querySelectorAll: (selector) => (selector === ".fit" ? frames : []), querySelector: () => ({}), getElementById: () => null }, { addEventListener() {} });
       assert.equal(frames[0].style.width, "392px", "the mobile frame is its own width, not the column's");
       assert.equal(frames[0].firstElementChild.style.transform, "scale(1)");
       assert.equal(frames[1].firstElementChild.style.transform, "scale(0.390625)");
@@ -417,7 +439,7 @@ describe("aidd-ui showcase sets", () => {
 
     it("shows a type cell as a heading and a body line in its font, at the sizes of the size cell", () => {
       const [, type] = rowsOf([["Palette", "#0b0f14 #e8eef3 #7fd4f2"], ["Lettres", "Mono, monospace"], ["Taille", "texte 17 px, titres 31 px"]]);
-      assert.match(type, /<span class="specimen" style="font-family: ui-monospace, monospace">/);
+      assert.match(type, /<span class="specimen" style="font-family: 'Mono', ui-monospace, monospace">/);
       assert.match(type, /<b style="font-size: 31px">Heading<\/b>/);
       assert.match(type, /<span style="font-size: 17px">[^<]+<\/span>/);
       assert.match(rowsOf([["Lettres", "serif"]], "fr")[0], /<b>Titre<\/b>/);
@@ -428,6 +450,22 @@ describe("aidd-ui showcase sets", () => {
       assert.match(type, /<span class="specimen" style="font-family: system-ui, sans-serif"><b>Heading<\/b><span>/);
       assert.match(text, />calme<\/button>$/);
       assert.doesNotMatch(text, /specimen/);
+    });
+
+    it("names the font a cell gives before its generic family, first in the specimen and the dressed screens", () => {
+      const fonts = (cell) => rowsOf([["Lettres", cell]])[0].match(/class="specimen" style="font-family: ([^"]*)"/)[1];
+      assert.equal(fonts("Nunito, sans-serif"), "'Nunito', system-ui, sans-serif");
+      assert.equal(fonts("Bitter serif"), "'Bitter', Georgia, serif");
+      assert.equal(fonts("Source Sans 3, sans-serif"), "'Source Sans 3', system-ui, sans-serif");
+      assert.equal(fonts("lettres rondes, sans-serif"), "system-ui, sans-serif");
+      const set = SET({ variants: [{ ...variant("a", "calm", []), axes: [["Palette", "#0b0f14 #e8eef3 #7fd4f2"], ["Lettres", "Nunito, sans-serif"]] }, variant("b", "bold", [])] });
+      const [frame] = [...columnsOf(pagesOf([set])["_set-layout.html"])[0].html.matchAll(/srcdoc="([^"]*)"/g)].map((match) => unescaped(match[1]));
+      assert.match(frame, /font-family: 'Nunito', system-ui, sans-serif;/);
+    });
+
+    it("puts each axis name above its value, so the value takes the column's width", () => {
+      const style = require(path.join(LIB, "variants.cjs")).STYLE;
+      assert.match(style, /\.axes th, \.axes td \{[^}]*display: block/);
     });
 
     it("shows the colours as large swatches with their code under, and a sample button in the accent", () => {
