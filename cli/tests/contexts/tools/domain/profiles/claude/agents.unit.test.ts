@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { AgentsCapability } from "../../../../../../src/contexts/tools/domain/capabilities/agents-capability.js";
+import { claudeAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude-agent.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.js";
 
@@ -20,6 +22,19 @@ Plan before building.
         path: "agents/planner.md",
         content: installed(claude, NAMED_AGENT),
       });
+    });
+  });
+
+  describe("format", () => {
+    it("writes markdown, the same as a capability declared with that format", () => {
+      const markdown = new AgentsCapability({
+        directory: claude.directory,
+        toolSuffix: claude.toolSuffix,
+        format: "markdown",
+        frontmatter: claudeAgentFrontmatter,
+      });
+
+      expect(claude.section("agents").equals(markdown)).toBe(true);
     });
   });
 });

@@ -155,4 +155,12 @@ describe("buildClaudeFlatContract()", () => {
       ].join("\n")
     );
   });
+
+  it("keeps an inner .md in a flat agent's declared name and removes only the extension", () => {
+    const transform = supported(buildClaudeFlatContract().artifacts.agents).transform;
+
+    expect(transform?.(AGENT_SOURCE, "aidd-dev", "notes.md-helper.md")).toContain(
+      "name: 'aidd-dev-notes.md-helper'"
+    );
+  });
 });
