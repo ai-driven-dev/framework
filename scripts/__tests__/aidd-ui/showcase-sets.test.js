@@ -325,6 +325,38 @@ describe("aidd-ui showcase sets", () => {
     });
   });
 
+  describe("the rounds of a set", () => {
+    const round = (name, tone, at, parent) => ({ ...variant(name, tone, [file("preview.html", `<html><body><p>${name}</p></body></html>`)]), round: at, parent: parent ?? null });
+    const rounds = () => SET({ variants: [round("a", "calm", 1), round("b", "bold", 1), { ...round("c", "bold", 2, "a"), axes: [["Tone", "bold"], ["Density", "roomy"]] }] });
+    const roundsOf = (html) => [...html.matchAll(/<details class="round" data-round="(\d+)"( open)?>/g)].map((match) => [match[1], Boolean(match[2])]);
+
+    it("shows the latest round open and the earlier ones folded", () => {
+      assert.deepEqual(roundsOf(pagesOf([rounds()])["_set-layout.html"]), [["1", false], ["2", true]]);
+    });
+
+    it("shows a set of a single round as it was, with no fold", () => {
+      assert.deepEqual(roundsOf(pagesOf([SET()])["_set-layout.html"]), []);
+    });
+
+    it("keeps the variants of each round in the fold of their round", () => {
+      const html = pagesOf([rounds()])["_set-layout.html"];
+      const [first, second] = html.split('<details class="round"').slice(1);
+      assert.deepEqual([...first.matchAll(/data-variant="([^"]+)">/g)].map((match) => match[1]).filter((name, at, all) => all.indexOf(name) === at), ["a", "b"]);
+      assert.match(second, /<section class="variant" data-variant="c">/);
+      assert.doesNotMatch(second, /<section class="variant" data-variant="[ab]">/);
+    });
+
+    it("marks the cells that differ from the parent, and only those", () => {
+      const [c] = columnsOf(pagesOf([rounds()])["_set-layout.html"]).filter((column) => column.name === "c");
+      assert.match(c.html, /<th>Tone<\/th><td data-changed="a"/);
+      assert.match(c.html, /<th>Density<\/th><td><button/);
+    });
+
+    it("marks nothing on a variant with no parent", () => {
+      for (const column of columnsOf(pagesOf([rounds()])["_set-layout.html"]).filter((each) => each.name !== "c")) assert.doesNotMatch(column.html, /data-changed/);
+    });
+  });
+
   describe("the command", () => {
     const writeSet = (rows) => {
       put(tmp, `${UI}/drafts/layout/variants.md`, `# Variants\n\n${rows.join("\n")}\n`);

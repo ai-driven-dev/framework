@@ -77,10 +77,12 @@ function framesOf({ variant, file, tokens, labels }) {
 }
 
 /** One variant as a column: its name, its intent, its axes, then each of its files. */
-function columnOf({ variant, at, shared, tokens, labels, wireframes }) {
+function columnOf({ variant, at, shared, tokens, labels, wireframes, parent }) {
   const look = lookOf(variant);
   const screens = look && wireframes.length ? wireframes.map((wireframe) => framesOf({ variant, file: { path: wireframe.path, text: dressedOf(wireframe.text, look) }, tokens, labels })) : null;
-  const axes = variant.axes.map(([axis, value]) => `<tr><th>${escaped(axis)}</th><td><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value)}</button></td></tr>`).join("");
+  const before = new Map(parent?.axes ?? []);
+  const changed = (axis, value) => (parent && String(before.get(axis) ?? "").trim() !== String(value ?? "").trim() ? ` data-changed="${escaped(parent.name)}" title="${escaped(filled(labels.changed, { parent: parent.name }))}"` : "");
+  const axes = variant.axes.map(([axis, value]) => `<tr><th>${escaped(axis)}</th><td${changed(axis, value)}><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value)}</button></td></tr>`).join("");
   const files = variant.files.flatMap((file) => {
     if (RENDER_FILE.test(file.path)) return screens ? [] : [framesOf({ variant, file, tokens, labels })];
     if (!MARKDOWN_FILE.test(file.path)) return [];
@@ -98,10 +100,16 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
     const items = set.problems.map((each) => `<li data-rule="${escaped(each.rule)}"><b>${escaped(each.rule)}</b> ${escaped(each.message)} <span class="fix">${escaped(each.fix)}</span></li>`);
     return `${head}\n<section class="checks"><h2>${labels.checks}</h2><ul>${items.join("")}</ul></section>`;
   }
-  const shared = sharedOf(set.variants);
-  const same = [...shared].filter(([, own]) => own.same.length).map(([path, own]) => `<p class="same" data-path="${escaped(path)}"><code>${escaped(path)}</code> ${escaped(filled(labels.same, { sections: own.same.join(JOINER) }))}</p>`);
-  const columns = set.variants.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes }));
-  return [head, same.join("\n"), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
+  const rounds = [...new Set(set.variants.map((variant) => variant.round ?? 1))].sort((a, b) => a - b);
+  const roundBody = (round) => {
+    const own = set.variants.filter((variant) => (variant.round ?? 1) === round);
+    const shared = sharedOf(own);
+    const same = [...shared].filter(([, each]) => each.same.length).map(([path, each]) => `<p class="same" data-path="${escaped(path)}"><code>${escaped(path)}</code> ${escaped(filled(labels.same, { sections: each.same.join(JOINER) }))}</p>`);
+    const columns = own.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes, parent: set.variants.find((each) => each.name === variant.parent && (each.round ?? 1) < round) }));
+    const body = [same.join("\n"), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
+    return rounds.length > 1 ? `<details class="round" data-round="${round}"${round === rounds.at(-1) ? " open" : ""}><summary>${escaped(filled(labels.round, { round }))}</summary>${body}</details>` : body;
+  };
+  return [head, ...rounds.map(roundBody)].join("\n");
 }
 
 /** The look of a set's page, added to the shell's. */
@@ -114,6 +122,8 @@ const STYLE = `
 .axes { border-collapse: collapse; width: 100%; font-size: 13px; }
 .axes th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px var(--s2) 4px 0; white-space: nowrap; vertical-align: top; }
 .axes td { padding: 4px 0; overflow-wrap: anywhere; }
+.round > summary { cursor: pointer; font-weight: 600; margin: var(--s3) 0; }
+.axes td[data-changed] { box-shadow: inset 3px 0 0 var(--revise); }
 .take { display: block; inline-size: 100%; padding: 2px var(--s2); border: 1px solid transparent; border-radius: var(--r1); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .take:hover { border-color: var(--line-strong); }
 .take[aria-pressed="true"] { border-color: var(--ok); background: var(--surface); }

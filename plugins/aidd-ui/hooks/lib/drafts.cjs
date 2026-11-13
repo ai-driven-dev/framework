@@ -11,6 +11,8 @@ const IGNORE_FILE = ".gitignore";
 const IGNORE_ALL = "*\n";
 const VARIANT_COLUMN = "Variant";
 const INTENT_COLUMN = "Intent";
+const ROUND_COLUMN = "Round"; // the round a variant belongs to, 1 when the column is absent
+const PARENT_COLUMN = "Parent"; // the variant of an earlier round a variant is drawn from
 // A set's name is a folder of its own, never a path out of the drafts.
 const SET_NAME = /^[a-z0-9][a-z0-9-]*$/;
 const WHITESPACE = /\s+/g;
@@ -24,7 +26,7 @@ function setOf(root, id) {
   const file = `${UI_DIR}/${DRAFTS_DIR}/${id}/${VARIANTS_FILE}`;
   if (!fs.existsSync(path.join(root, file))) throw new Refusal(`no ${file}. Write it, then run showcase.`);
   const rows = table({ lines: clean(fs.readFileSync(path.join(root, file), "utf8")).split(LINE_BREAK) });
-  const axes = rows.length ? Object.keys(rows[0]).filter((column) => column !== VARIANT_COLUMN && column !== INTENT_COLUMN) : [];
+  const axes = rows.length ? Object.keys(rows[0]).filter((column) => ![VARIANT_COLUMN, INTENT_COLUMN, ROUND_COLUMN, PARENT_COLUMN].includes(column)) : [];
   return { id, dir, file, rows, axes };
 }
 
@@ -56,6 +58,9 @@ function check({ dir, file, rows, axes }) {
   return found;
 }
 
+/** The round of a row, and the variant it is drawn from or null. */
+const roundOf = (row) => ({ round: Number.parseInt(row[ROUND_COLUMN], 10) || 1, parent: row[PARENT_COLUMN] || null });
+
 /** What the page shows of a variant: its row, and its records and renders as text. */
 function shownOf({ dir, axes }, row) {
   const from = path.join(dir, row[VARIANT_COLUMN]);
@@ -63,7 +68,7 @@ function shownOf({ dir, axes }, row) {
     .map((file) => relative(from, file))
     .filter((file) => SHOWN_FILE.test(file))
     .map((file) => ({ path: file, text: fs.readFileSync(path.join(from, file), "utf8") }));
-  return { name: row[VARIANT_COLUMN], intent: row[INTENT_COLUMN], axes: axes.map((axis) => [axis, row[axis]]), files };
+  return { name: row[VARIANT_COLUMN], intent: row[INTENT_COLUMN], ...roundOf(row), axes: axes.map((axis) => [axis, row[axis]]), files };
 }
 
 /** Every set under the drafts: its rows and axes, what each variant shows, its problems and a fingerprint of what it shows.
@@ -78,7 +83,7 @@ function setsOf(root) {
     .sort()
     .map((id) => {
       const set = setOf(root, id);
-      const variants = set.rows.map((row) => (isName(row[VARIANT_COLUMN]) ? shownOf(set, row) : { name: row[VARIANT_COLUMN], intent: row[INTENT_COLUMN], axes: set.axes.map((axis) => [axis, row[axis]]), files: [] }));
+      const variants = set.rows.map((row) => (isName(row[VARIANT_COLUMN]) ? shownOf(set, row) : { name: row[VARIANT_COLUMN], intent: row[INTENT_COLUMN], ...roundOf(row), axes: set.axes.map((axis) => [axis, row[axis]]), files: [] }));
       return { id, rows: set.rows, axes: set.axes, variants, problems: check(set), fingerprint: fingerprintOf(variants) };
     });
 }

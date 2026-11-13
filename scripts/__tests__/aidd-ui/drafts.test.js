@@ -145,6 +145,14 @@ describe("aidd-ui drafts", () => {
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
+    it("removes every round of the set with the kept variant", () => {
+      writeSet("brand", { header: [...HEADER, "Round", "Parent"], rows: [[...ROWS[0], "1", ""], [...ROWS[1], "1", ""], [...ROWS[2], "2", "a"]] });
+      const run = keep("brand", "c");
+      assert.deepEqual([run.code, run.err], [0, ""]);
+      assert.equal(read(PATHS.BRAND), brandOf("Tone of c"));
+      assert.equal(exists(`${DRAFTS}/brand`), false);
+    });
+
     it("lands each file where the variant's folder mirrors it", () => {
       writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": `md ${name}\n`, "components/x.html": `<p>${name}</p>\n`, "preview.html": "<p>p</p>\n" }) });
       const run = keep("button", "b");
@@ -223,6 +231,20 @@ describe("aidd-ui drafts", () => {
       assert.equal(setsOf(tmp)[0].fingerprint, before);
       put(`${DRAFTS}/brand/a/preview.html`, "<p>changed</p>\n");
       assert.notEqual(setsOf(tmp)[0].fingerprint, before);
+    });
+
+    it("reads a Round and a Parent column as the rounds of a set, never as axes", () => {
+      writeSet("brand", { header: [...HEADER, "Round", "Parent"], rows: [[...ROWS[0], "1", ""], [...ROWS[1], "1", ""], [...ROWS[2], "2", "a"]] });
+      const [set] = setsOf(tmp);
+      assert.deepEqual(set.axes, ["Tone", "Density"]);
+      assert.deepEqual(set.variants.map((variant) => [variant.name, variant.round, variant.parent]), [["a", 1, null], ["b", 1, null], ["c", 2, "a"]]);
+      assert.deepEqual(set.variants[2].axes.map(([axis]) => axis), ["Tone", "Density"]);
+      assert.deepEqual(set.problems, []);
+    });
+
+    it("puts every variant of a set without a Round column in round 1", () => {
+      writeSet("brand");
+      assert.deepEqual(setsOf(tmp)[0].variants.map((variant) => [variant.round, variant.parent]), [[1, null], [1, null], [1, null]]);
     });
 
     it("keeps a set whose variant is named like a path, with its problem and no files", () => {
