@@ -1,5 +1,5 @@
-import type { ConfigAsset, SchemaName } from "../../../kernel/file.js";
-import type { ToolId } from "../../../kernel/tool.js";
+import type { ConfigAsset, SchemaName } from "../../../shared/domain/file.js";
+import type { ToolId } from "../../../shared/domain/tool.js";
 
 /** All a marketplace builder reads of the output tree. */
 export interface BuildFileReader {

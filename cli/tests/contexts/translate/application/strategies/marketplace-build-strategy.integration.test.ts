@@ -11,8 +11,8 @@ import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/
 import {
   JsonSchemaValidationError,
   MarketplaceOutDirNotEmptyError,
-} from "../../../../../src/kernel/errors.js";
-import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
+} from "../../../../../src/shared/domain/errors.js";
+import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 
 const PLUGIN = "aidd-test";

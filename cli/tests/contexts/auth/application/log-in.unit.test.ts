@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AuthenticationError } from "../../../../src/kernel/errors.js";
+import { AuthenticationError } from "../../../../src/shared/domain/errors.js";
 import { aLogIn } from "../testing/auth-builders.js";
 import { FakeCliAuthProvider } from "../testing/fake-cli-auth-provider.js";
 import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.js";

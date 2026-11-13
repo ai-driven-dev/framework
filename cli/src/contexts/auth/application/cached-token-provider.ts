@@ -1,4 +1,4 @@
-import type { Logger } from "../../../kernel/ports/logger.js";
+import type { Logger } from "../../../shared/ports/logger.js";
 import type { TokenProvider } from "../contract/token-provider.js";
 import {
   type CredentialSource,

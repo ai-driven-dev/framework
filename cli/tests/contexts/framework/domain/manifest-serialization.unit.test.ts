@@ -3,7 +3,7 @@ import { parseManifestTools } from "../../../../src/contexts/framework/domain/ma
 import {
   InvalidManifestDataError,
   InvalidManifestToolIdError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/errors.js";
 
 describe("parseManifestTools — the tools section of a manifest document", () => {
   it("reads no tool from a document without a tools section", () => {

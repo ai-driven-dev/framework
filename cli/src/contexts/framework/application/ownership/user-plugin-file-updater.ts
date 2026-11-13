@@ -1,11 +1,11 @@
 import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
-import type { InstallationFile } from "../../../../kernel/file.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
-import { compareSemver } from "../../../../kernel/semver.js";
+import type { InstallationFile } from "../../../../shared/domain/file.js";
+import { compareSemver } from "../../../../shared/domain/semver.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";

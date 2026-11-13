@@ -5,8 +5,8 @@ import { SetupUseCase } from "../../contexts/framework/application/setup-use-cas
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
-import type { ToolId } from "../../kernel/tool.js";
-import { assertToolIdsMatchCategory, IDE_TOOL_IDS, isIdeToolId } from "../../kernel/tool.js";
+import type { ToolId } from "../../shared/domain/tool.js";
+import { assertToolIdsMatchCategory, IDE_TOOL_IDS, isIdeToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory } from "../deps.js";
 import {
   printDetectedContext,

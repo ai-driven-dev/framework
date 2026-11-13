@@ -24,7 +24,7 @@ import {
   type ReportAxis,
 } from "../../contexts/telemetry/domain/report/usage-report.js";
 import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/domain/usage-record.js";
-import type { Prompter } from "../../kernel/ports/prompter.js";
+import type { Prompter } from "../../shared/ports/prompter.js";
 import type { Deps, DepsSliceFactory, TelemetryDeps } from "../deps.js";
 import {
   printForgetResult,

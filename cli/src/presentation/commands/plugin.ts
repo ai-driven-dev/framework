@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { assertValidAiToolId, parseToolOption } from "../../kernel/tool.js";
+import { assertValidAiToolId, parseToolOption } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
 import {
   printInstalledPlugins,

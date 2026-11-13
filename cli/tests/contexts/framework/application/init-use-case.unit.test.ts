@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InitUseCase } from "../../../../src/contexts/framework/application/init-use-case.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
+import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 

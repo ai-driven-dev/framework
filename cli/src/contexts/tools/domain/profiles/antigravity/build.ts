@@ -1,8 +1,8 @@
 /** Flat only. A skill sits one level under `.agents/skills/`: `agy` expands none nested deeper. */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
-import { genericFlatSkillPath } from "../../../../../kernel/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
+import { genericFlatSkillPath } from "../../../../../shared/domain/materialization/flat-paths.js";
+import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { portableAgentFrontmatter } from "../../formats/portable-agent.js";

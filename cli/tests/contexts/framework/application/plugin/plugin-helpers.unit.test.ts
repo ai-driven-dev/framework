@@ -4,7 +4,7 @@ import {
   deletePluginFilesForTool,
   loadPluginManifest,
 } from "../../../../../src/contexts/framework/application/plugin/plugin-helpers.js";
-import { NoManifestError } from "../../../../../src/kernel/errors.js";
+import { NoManifestError } from "../../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";

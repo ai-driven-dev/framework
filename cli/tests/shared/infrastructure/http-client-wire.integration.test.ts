@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { describe, expect, it } from "vitest";
-import { HttpError, HttpRedirectError } from "../../../src/kernel/errors.js";
+import { HttpError, HttpRedirectError } from "../../../src/shared/domain/errors.js";
 import { HttpClient } from "../../../src/shared/infrastructure/http-client.js";
 
 function startServer(handler: (req: IncomingMessage, res: ServerResponse) => void) {

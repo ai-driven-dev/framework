@@ -1,11 +1,11 @@
 import { rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { modifiedAtIfPresent, readTextIfPresent } from "../../../../kernel/reading/text-file.js";
 import { RUNS_DIR, RUNS_ENTRY, withoutRunsEntry } from "../../domain/legacy/run-journal.js";
 import type {
   JournalCleanup,
   RunJournalCleaner,
 } from "../../domain/ports/switch/run-journal-cleaner.js";
+import { modifiedAtIfPresent, readTextIfPresent } from "../reading/text-file.js";
 import { runGit } from "../run-git.js";
 
 export class RunJournalAdapter implements RunJournalCleaner {

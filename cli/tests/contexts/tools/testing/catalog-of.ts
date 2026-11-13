@@ -8,8 +8,8 @@ import type {
 import type { BuiltToolConfig } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
 import { REGISTERED_PROFILES } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { UnregisteredToolError } from "../../../../src/kernel/errors.js";
-import type { AiToolId, ToolId } from "../../../../src/kernel/tool.js";
+import { UnregisteredToolError } from "../../../../src/shared/domain/errors.js";
+import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 
 /** A catalog over the given profiles, the registered ones when none is given. Built inside the
  * `it` that reads it: a catalog is a value, never shared state. */

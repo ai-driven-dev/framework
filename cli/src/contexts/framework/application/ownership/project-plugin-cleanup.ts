@@ -1,7 +1,7 @@
 import { join } from "node:path";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";

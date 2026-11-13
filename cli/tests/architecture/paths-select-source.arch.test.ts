@@ -12,7 +12,7 @@ import {
 describe("architecture paths select the same files on every platform", () => {
   it.each([
     ["src\\contexts\\tools\\domain\\tool.ts", "tools", "src/contexts/**/*.ts"],
-    ["src\\kernel\\errors.ts", "kernel", "src/kernel/**/*.ts"],
+    ["src\\shared\\domain\\errors.ts", "shared", "src/shared/**/*.ts"],
     ["src\\presentation\\commands\\setup.ts", "presentation", "src/presentation/commands/**"],
   ])("selects the explicit backslash path %s", (nativePath, context, glob) => {
     const file = canonicalPath(nativePath);
@@ -22,11 +22,11 @@ describe("architecture paths select the same files on every platform", () => {
   });
 
   it.each([
-    ["src\\kernel\\ports\\file-reader.ts", "../file.js"],
-    ["src/kernel/ports/file-reader.ts", "..\\file.js"],
-    ["src\\runtime\\caller.ts", "@/kernel/file.js"],
+    ["src\\shared\\ports\\file-reader.ts", "../file.js"],
+    ["src/shared/ports/file-reader.ts", "..\\file.js"],
+    ["src\\runtime\\caller.ts", "@/shared/file.js"],
   ])("resolves %s importing %s to the canonical source key", (file, specifier) => {
-    const known = new Set(["src/kernel/file.ts"]);
+    const known = new Set(["src/shared/file.ts"]);
     expect(known.has(resolveImportTarget(file, specifier))).toBe(true);
   });
 
@@ -40,8 +40,8 @@ describe("architecture paths select the same files on every platform", () => {
   });
 
   it("keeps relative-import lookups connected to the source-file keys", () => {
-    expect(importersByFile().get("src/kernel/file.ts")).toContain(
-      "src/kernel/ports/file-reader.ts"
+    expect(importersByFile().get("src/shared/domain/file.ts")).toContain(
+      "src/shared/ports/file-reader.ts"
     );
   });
 });

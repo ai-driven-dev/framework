@@ -1,6 +1,6 @@
 import { readFile, realpath } from "node:fs/promises";
-import { describeError } from "../../../kernel/describe-error.js";
-import type { MarketplaceScope } from "../../../kernel/scope.js";
+import { describeError } from "../../../shared/domain/describe-error.js";
+import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type {
   HostPluginRegistry,
   HostPluginRegistryEntry,

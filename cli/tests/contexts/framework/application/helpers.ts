@@ -15,13 +15,13 @@ import { BundledAssetProviderAdapter } from "../../../../src/contexts/framework/
 import { HasherAdapter } from "../../../../src/contexts/framework/infrastructure/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import type { Prompter } from "../../../../src/kernel/ports/prompter.js";
-import type { VersionReader } from "../../../../src/kernel/ports/version-reader.js";
-import { isIdeToolId, type ToolId } from "../../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../../../src/presentation/terminal/prompter-adapter.js";
+import { isIdeToolId, type ToolId } from "../../../../src/shared/domain/tool.js";
 import { CurrentVersionAdapter } from "../../../../src/shared/infrastructure/current-version-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
+import type { Prompter } from "../../../../src/shared/ports/prompter.js";
+import type { VersionReader } from "../../../../src/shared/ports/version-reader.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 export const linuxPlatform: Platform = { current: () => "linux" };

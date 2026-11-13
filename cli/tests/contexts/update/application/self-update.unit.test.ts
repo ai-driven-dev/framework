@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ElevatedPermissionUpdateError } from "../../../../src/kernel/errors.js";
+import { ElevatedPermissionUpdateError } from "../../../../src/shared/domain/errors.js";
 import { FakeCliInstaller } from "../testing/fake-cli-installer.js";
 import { FakeCliReleaseSource } from "../testing/fake-cli-release-source.js";
 import { aSelfUpdate } from "../testing/update-builders.js";

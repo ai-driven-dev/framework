@@ -6,7 +6,7 @@ import {
   resolveScopeForInstall,
 } from "../../../../../src/contexts/framework/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { UnresolvableUserScopeError } from "../../../../../src/kernel/errors.js";
+import { UnresolvableUserScopeError } from "../../../../../src/shared/domain/errors.js";
 import { registeredAiProfile, registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const HOME = "/home/u";

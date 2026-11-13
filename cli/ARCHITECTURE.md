@@ -11,19 +11,17 @@ flowchart LR
     framework["framework"] --> translate["translate"] --> tools["tools"]
     framework --> distribution["distribution"]
   end
-  contexts --> kernel["kernel"]
   contexts --> shared["shared"]
   classDef layer fill:#e9ddff,stroke:#8250df,color:#3b1d78
   classDef base fill:#ddf4ff,stroke:#0969da,color:#0a3069
   class presentation,composition,framework,translate,tools,distribution layer
-  class kernel,shared base
+  class shared base
   style contexts fill:none,stroke:#8c959f
 ```
 
 | Where | Holds |
 | --- | --- |
-| `src/kernel/` | The vocabulary every context speaks: tool identity, source location, paths, files, fingerprints, merge strategies, errors. Imports no context. No business logic. Old home, receives no new file. |
-| `src/shared/` | Technology ports two contexts need (`ports/`) and their adapters (`infrastructure/`, imported by the composition root only). Imports no context. |
+| `src/shared/` | What two or more contexts need: the vocabulary (`domain/`: tool identity, source location, paths, files, merge strategies, errors), technology ports (`ports/`) and their adapters (`infrastructure/`, imported by the composition root only). Imports no context. No business logic. |
 | `src/contexts/tools/` | What the project targets and how each target is configured. One directory per tool: its profile beside its build contracts. |
 | `src/contexts/translate/` | Canonical source into target-native content, at every level. |
 | `src/contexts/distribution/` | Where content comes from and how it is fetched. A leaf: knows no tool and no installation record. |
@@ -40,7 +38,7 @@ None is enforced by this document.
 | Which contexts may see each other | `tests/architecture/context-graph.arch.test.ts` allows exactly the edges above. The forbidden edges the tree still has are listed in that file |
 | What of a context is visible | `tests/architecture/context-boundary.arch.test.ts` refuses an import into a context's interior. There is no barrel file |
 | Which way the layers point | Biome overrides. `application` calls `domain`, never the reverse. `application` takes a port and never calls `infrastructure` |
-| What the kernel may hold | A biome override refuses a kernel import from any context. `tests/architecture/old-layout-count.arch.test.ts` holds its path set: no new file enters |
+| What shared may hold | Biome overrides refuse a context, a layer above it and any adapter inside `shared/domain/` and `shared/ports/`. `tests/architecture/earned-sharing.arch.test.ts` fails a file under `shared/` that fewer than two contexts import |
 | The layer rules still bite | `tests/architecture/import-rules-bite.arch.test.ts` checks each override names a path that exists |
 
 - Every context on disk must appear in the boundary list, or it is skipped instead of held.

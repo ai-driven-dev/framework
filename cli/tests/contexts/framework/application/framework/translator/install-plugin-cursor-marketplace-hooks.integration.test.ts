@@ -8,7 +8,7 @@ import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contex
 import type { PluginTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/plugin-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import type { AiToolId } from "../../../../../../src/kernel/tool.js";
+import type { AiToolId } from "../../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";

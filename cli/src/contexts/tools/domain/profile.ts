@@ -1,4 +1,4 @@
-import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
+import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { ToolBuildContract } from "../contract/build-contract.js";
 import type { AiToolProfile, IdeToolProfile, PluginAnswers } from "../contract/tool-profile.js";
 import type { NativeActivation } from "./native-registration/native-activation.js";

@@ -6,9 +6,9 @@ import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/appli
 import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/framework/application/shared/user-scope-plugin-files.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
-import { resolveHomeDir } from "../../../../../src/kernel/reading/home-dir.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";

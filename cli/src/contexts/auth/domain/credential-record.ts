@@ -1,4 +1,4 @@
-import { AuthenticationError } from "../../../kernel/errors.js";
+import { AuthenticationError } from "../../../shared/domain/errors.js";
 import type { AuthLevel, AuthMethod, Credential } from "../contract/credential.js";
 
 /** The document one level keeps: what `auth.json` holds, once read and accepted. */

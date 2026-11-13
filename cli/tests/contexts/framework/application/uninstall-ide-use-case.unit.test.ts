@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { UninstallIdeUseCase } from "../../../../src/contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import { UninstallToolsUseCase } from "../../../../src/contexts/framework/application/uninstall/uninstall-tools-use-case.js";
-import { NoManifestError, ToolNotInstalledError } from "../../../../src/kernel/errors.js";
+import { NoManifestError, ToolNotInstalledError } from "../../../../src/shared/domain/errors.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 

@@ -32,7 +32,7 @@ export class WidgetsSection {
 
 - The constructor takes exactly one params object, never positional arguments.
 - State is private (`#params`) and read through methods: a field is not part of the surface.
-- Throw `CapabilityConfigError` (from `kernel/errors.ts`) on an invalid param combination.
+- Throw `CapabilityConfigError` (from `shared/domain/errors.ts`) on an invalid param combination.
 - The class models what the tool declares, not decisions: a method is a path builder, a resolver or a predicate, short and without side effects.
-- It imports only `kernel/` and sibling folders of `domain/` (`formats/`, `profile/`).
+- It imports only `shared/domain/` and sibling folders of `domain/` (`formats/`, `profile/`).
 - A profile declares a section only when the tool has it. A missing section is a missing declaration.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MarketplaceRegistration } from "../../../../../src/contexts/tools/domain/native-registration/marketplace-registration.js";
 import { NativeActivation } from "../../../../../src/contexts/tools/domain/native-registration/native-activation.js";
-import { CapabilityConfigError } from "../../../../../src/kernel/errors.js";
+import { CapabilityConfigError } from "../../../../../src/shared/domain/errors.js";
 import { keyAskedOf } from "../../../../helpers/settings-key-probe.js";
 
 const settings = {

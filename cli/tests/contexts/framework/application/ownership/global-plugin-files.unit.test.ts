@@ -6,7 +6,7 @@ import {
 } from "../../../../../src/contexts/framework/application/ownership/global-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { InstallationFile } from "../../../../../src/kernel/file.js";
+import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";

@@ -7,7 +7,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { PluginInstallMode } from "../../../../../src/contexts/framework/domain/setup-flow.js";
 import type { AiToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
-import { FileHash, InstallationFile } from "../../../../../src/kernel/file.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { catalogOf } from "../../../tools/testing/catalog-of.js";
 

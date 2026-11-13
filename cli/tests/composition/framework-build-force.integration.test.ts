@@ -8,7 +8,7 @@ import {
   type FrameworkBuildDeps,
 } from "../../src/composition/translate.js";
 import { BundledAssetProviderAdapter } from "../../src/contexts/framework/infrastructure/assets/asset-loader.js";
-import { FlatTargetExistsError } from "../../src/kernel/errors.js";
+import { FlatTargetExistsError } from "../../src/shared/domain/errors.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";

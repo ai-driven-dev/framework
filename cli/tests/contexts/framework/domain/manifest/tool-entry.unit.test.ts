@@ -9,8 +9,8 @@ import {
   updatePluginInEntry,
 } from "../../../../../src/contexts/framework/domain/manifest/tool-entry.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import { PluginNotFoundError } from "../../../../../src/kernel/errors.js";
-import { FileHash, InstallationFile } from "../../../../../src/kernel/file.js";
+import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 
 const makePlugin = (name: string, version = "1.0.0"): InstalledPlugin =>
   InstalledPlugin.fromJSON({

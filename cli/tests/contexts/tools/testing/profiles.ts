@@ -14,7 +14,7 @@ import type {
 import type { LayoutSection } from "../../../../src/contexts/tools/domain/sections/layout-section.js";
 import type { ManifestSection } from "../../../../src/contexts/tools/domain/sections/manifest-section.js";
 import type { McpSection } from "../../../../src/contexts/tools/domain/sections/mcp-section.js";
-import type { AiToolId } from "../../../../src/kernel/tool.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { flatPlugins, type PluginSet } from "./plugin-mode.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */

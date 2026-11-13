@@ -1,4 +1,4 @@
-import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../kernel/tool.js";
+import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { AiToolProfile, IdeToolProfile, ToolProfile } from "./tool-profile.js";
 
 /** The registered tools, asked by id or walked in one of three orders that must never be mixed. */

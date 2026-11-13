@@ -1,7 +1,7 @@
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { ValidateRecipes } from "../../../../src/contexts/recipes/application/validate-recipes.js";
-import { InputRequiredError } from "../../../../src/kernel/errors.js";
+import { InputRequiredError } from "../../../../src/shared/domain/errors.js";
 import { InMemoryRecipeFiles } from "../testing/in-memory-recipe-files.js";
 import { categorized, markdown, validDirect, withLines } from "../testing/recipe-builders.js";
 

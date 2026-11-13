@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ForeignSuffixFilter } from "../../../../../src/contexts/tools/domain/profile/foreign-suffix-filter.js";
-import { AI_TOOL_IDS } from "../../../../../src/kernel/tool.js";
+import { AI_TOOL_IDS } from "../../../../../src/shared/domain/tool.js";
 
 describe("ForeignSuffixFilter", () => {
   const claude = ForeignSuffixFilter.keeping(".claude.md");

@@ -1,4 +1,4 @@
-import type { ToolId } from "../../kernel/tool.js";
+import type { ToolId } from "../../shared/domain/tool.js";
 import type { CLIOutput } from "../output.js";
 
 export function printUnrestorable(output: CLIOutput, unrestorable: readonly string[]): void {

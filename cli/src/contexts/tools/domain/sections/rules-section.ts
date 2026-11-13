@@ -1,4 +1,4 @@
-import { serializeFrontmatter } from "../../../../kernel/markdown.js";
+import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
 type RulesSectionParams = {

@@ -6,8 +6,8 @@ import {
   CatalogFetchError,
   CatalogFetchNotFoundError,
   HttpNotFoundError,
-} from "../../../kernel/errors.js";
-import type { PluginSourceGitHub } from "../../../kernel/source.js";
+} from "../../../shared/domain/errors.js";
+import type { PluginSourceGitHub } from "../../../shared/domain/source.js";
 import type { HttpGet } from "../../../shared/ports/http-get.js";
 import type { TokenProvider } from "../../auth/contract/token-provider.js";
 import type { RawCatalogFetcher } from "../ports/raw-catalog-fetcher.js";

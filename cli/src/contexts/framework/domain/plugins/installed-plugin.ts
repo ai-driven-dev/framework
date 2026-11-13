@@ -2,14 +2,14 @@ import {
   InvalidPluginNameError,
   InvalidPluginVersionError,
   MalformedPluginScopeError,
-} from "../../../../kernel/errors.js";
-import type { InstallationFile } from "../../../../kernel/file.js";
-import { isSemver } from "../../../../kernel/semver.js";
+} from "../../../../shared/domain/errors.js";
+import type { InstallationFile } from "../../../../shared/domain/file.js";
+import { isSemver } from "../../../../shared/domain/semver.js";
 import {
   type PluginSource,
   parsePluginSource,
   serializePluginSource,
-} from "../../../../kernel/source.js";
+} from "../../../../shared/domain/source.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import { type InstallScope, isInstallScope } from "../install-scope.js";
 

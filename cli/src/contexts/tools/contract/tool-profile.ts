@@ -1,7 +1,7 @@
-import type { ConfigAsset, FileHash } from "../../../kernel/file.js";
-import type { FlatHooksLoaderEntry } from "../../../kernel/materialization/flat-paths.js";
-import type { MergeStrategy } from "../../../kernel/merge.js";
-import type { AiToolId, IdeToolId, ToolId } from "../../../kernel/tool.js";
+import type { ConfigAsset, FileHash } from "../../../shared/domain/file.js";
+import type { FlatHooksLoaderEntry } from "../../../shared/domain/materialization/flat-paths.js";
+import type { MergeStrategy } from "../../../shared/domain/merge.js";
+import type { AiToolId, IdeToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
 import type {
   GlobalFiles,

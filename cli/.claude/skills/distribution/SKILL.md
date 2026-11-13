@@ -11,7 +11,7 @@ description: >
 
 # Distribution
 
-`distribution` is a leaf: it depends on `kernel` and `shared/ports` only, and knows no tool and no manifest. It
+`distribution` is a leaf: it depends on `shared` only, and knows no tool and no manifest. It
 answers exactly one question — where does content come from, and how is it fetched — for
 whoever asks. `framework` is the only context that reaches it (`framework → distribution`); a
 plugin's own content and how it gets translated are someone else's job once it has arrived here.
@@ -32,7 +32,7 @@ plugin's own content and how it gets translated are someone else's job once it h
 
 - This context is a leaf by construction: it must never gain an edge to `tools`, `translate`, or
   `framework` — `tests/architecture/context-graph.arch.test.ts` enforces the chain
-  (`framework → distribution`, plus everything to `kernel`) and fails the build the moment a new
+  (`framework → distribution`, plus everything to `shared`) and fails the build the moment a new
   edge appears. If a change seems to need one, the orchestration belongs to the caller
   (`framework`), not here. `marketplace add --overwrite` removes the old entry before it fetches
   the new one; that is pinned, not fixed (`aidd_docs/memory/internal/distribution.md`).
@@ -42,7 +42,7 @@ plugin's own content and how it gets translated are someone else's job once it h
 - An adapter owns every technical constant for its integration (API base URLs, cache TTLs,
   error-pattern regexes for classifying a third-party failure) — none of that belongs in a port,
   a use-case, or a domain model. `try/catch` inside an adapter exists only to translate a raw
-  error into a typed one from `kernel/errors.ts`.
+  error into a typed one from `shared/domain/errors.ts`.
 - A new foreign catalog shape gets its own parser in `domain/catalog-parsers/`, producing the
   same `PluginCatalog`/`PluginCatalogEntry` shape the Claude parser produces — callers above this
   context never branch on which format a catalog came from.

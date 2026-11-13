@@ -1,12 +1,14 @@
 import { join } from "node:path";
-import { ActiveMachineDependentsError } from "../../../../kernel/errors.js";
-import { USER_SOURCE_REFERENCES_FILENAME, userBuiltCacheRoot } from "../../../../kernel/paths.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { Prompter } from "../../../../kernel/ports/prompter.js";
-import { resolveHomeDir } from "../../../../kernel/reading/home-dir.js";
-import { type AiToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
+import { ActiveMachineDependentsError } from "../../../../shared/domain/errors.js";
+import {
+  USER_SOURCE_REFERENCES_FILENAME,
+  userBuiltCacheRoot,
+} from "../../../../shared/domain/paths.js";
+import { type AiToolId, isAiToolId, type ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
+import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
@@ -18,6 +20,7 @@ import type { NativeRegistrations } from "../../domain/manifest/native-registrat
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
+import { resolveHomeDir } from "../../domain/reading/home-dir.js";
 import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,

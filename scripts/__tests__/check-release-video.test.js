@@ -37,7 +37,7 @@ test("surfacesOf ignores files that are not a user-facing surface", () => {
       "plugins/aidd-dev/CATALOG.md",
       "plugins/aidd-dev/.claude-plugin/plugin.json",
       "cli/src/presentation/commands/global-options.ts",
-      "cli/src/kernel/paths.ts",
+      "cli/src/shared/domain/paths.ts",
       "scripts/check-release-video.js",
     ]),
     []

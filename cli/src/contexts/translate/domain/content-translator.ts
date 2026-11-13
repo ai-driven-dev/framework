@@ -1,6 +1,6 @@
-import { InstallationFile } from "../../../kernel/file.js";
-import { parseFrontmatter, serializeFrontmatter } from "../../../kernel/markdown.js";
-import type { Hasher } from "../../../kernel/ports/hasher.js";
+import { InstallationFile } from "../../../shared/domain/file.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../shared/domain/markdown.js";
+import type { Hasher } from "../../../shared/ports/hasher.js";
 import type { FlatHooksBridge } from "../../tools/contract/build-contract.js";
 import type {
   PluginInstallNotice,

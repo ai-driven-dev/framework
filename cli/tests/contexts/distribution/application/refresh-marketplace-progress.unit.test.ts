@@ -5,7 +5,7 @@ import { RefreshMarketplace } from "../../../../src/contexts/distribution/applic
 import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { serializePluginSource } from "../../../../src/kernel/source.js";
+import { serializePluginSource } from "../../../../src/shared/domain/source.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";

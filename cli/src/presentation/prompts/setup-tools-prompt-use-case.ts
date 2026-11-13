@@ -4,8 +4,8 @@ import {
   recommendIdeTools,
 } from "../../contexts/framework/domain/tool-recommendations.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { Prompter } from "../../kernel/ports/prompter.js";
-import { type AiToolId, IDE_TOOL_IDS, type IdeToolId } from "../../kernel/tool.js";
+import { type AiToolId, IDE_TOOL_IDS, type IdeToolId } from "../../shared/domain/tool.js";
+import type { Prompter } from "../../shared/ports/prompter.js";
 
 export interface SetupToolsPromptOptions {
   interactive: boolean;

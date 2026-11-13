@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { stripCodexSkillFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { serializeFrontmatter } from "../../../../../../src/kernel/markdown.js";
+import { serializeFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
 
 /**
  * Codex is the only target that re-serialises skill frontmatter instead of passing the file

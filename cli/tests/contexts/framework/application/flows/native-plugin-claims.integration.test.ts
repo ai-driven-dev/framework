@@ -11,11 +11,11 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/framework/
 import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
-import { resolveHomeDir } from "../../../../../src/kernel/reading/home-dir.js";
-import type { AiToolId } from "../../../../../src/kernel/tool.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";

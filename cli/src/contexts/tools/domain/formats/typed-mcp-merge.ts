@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { InvalidMcpServerConfigError, McpConfigError } from "../../../../kernel/errors.js";
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import { stripJsonComments } from "../../../../kernel/reading/jsonc.js";
+import { InvalidMcpServerConfigError, McpConfigError } from "../../../../shared/domain/errors.js";
+import { stripJsonComments } from "../../../../shared/domain/reading/jsonc.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
 
 type RawServer =
   | { command: string; args?: string[]; env?: Record<string, string>; disabled?: boolean }

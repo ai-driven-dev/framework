@@ -1,6 +1,6 @@
 import { isAbsolute } from "node:path";
-import { InvalidPluginManifestError } from "../../../kernel/errors.js";
-import { type PluginSource, parsePluginSource } from "../../../kernel/source.js";
+import { InvalidPluginManifestError } from "../../../shared/domain/errors.js";
+import { type PluginSource, parsePluginSource } from "../../../shared/domain/source.js";
 
 export interface PluginCatalogEntry {
   name: string;

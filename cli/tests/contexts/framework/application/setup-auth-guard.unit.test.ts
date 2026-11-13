@@ -17,9 +17,9 @@ import { SetupToolsUseCase } from "../../../../src/contexts/framework/applicatio
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
-import { CatalogFetchAuthError } from "../../../../src/kernel/errors.js";
 import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
+import { CatalogFetchAuthError } from "../../../../src/shared/domain/errors.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";

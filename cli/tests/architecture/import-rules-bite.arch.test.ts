@@ -43,6 +43,7 @@ function restrictedPatterns(): RestrictedPattern[] {
  */
 function literalCore(pattern: string): string {
   const core = pattern
+    .replace(/^!/, "")
     .replace(/^(\.\.\/)+/, "")
     .replace(/^\*\*\//, "")
     .replace(/\/\*\*$/, "/");

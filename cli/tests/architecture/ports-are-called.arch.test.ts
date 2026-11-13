@@ -310,7 +310,7 @@ describe("the guard itself", () => {
   });
 
   it("names the port method nothing spells as a call, and clears the one a caller spells", () => {
-    const port = "src/kernel/ports/thing.ts";
+    const port = "src/shared/ports/thing.ts";
     const bodies = new Map([
       [
         port,
@@ -323,7 +323,7 @@ describe("the guard itself", () => {
   });
 
   it("does not read an adapter implementing a method as a caller of it", () => {
-    const port = "src/kernel/ports/thing.ts";
+    const port = "src/shared/ports/thing.ts";
     const bodies = new Map([
       [port, ["export interface Thing {", "  doIt(x: number): void;", "}"].join("\n")],
       [
@@ -353,8 +353,8 @@ describe("the guard itself", () => {
       "}",
     ].join("\n");
 
-    expect(declaredMethods("src/kernel/ports/thing.ts", source)).toEqual([
-      "src/kernel/ports/thing.ts :: Thing.doIt",
+    expect(declaredMethods("src/shared/ports/thing.ts", source)).toEqual([
+      "src/shared/ports/thing.ts :: Thing.doIt",
     ]);
   });
 });

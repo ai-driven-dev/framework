@@ -1,8 +1,8 @@
 import { join } from "node:path";
-import { describeError } from "../../../../kernel/describe-error.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
+import { describeError } from "../../../../shared/domain/describe-error.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-containment.js";
 
 /**

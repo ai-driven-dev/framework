@@ -1,5 +1,5 @@
-import { PluginNotFoundError } from "../../../../kernel/errors.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
+import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";

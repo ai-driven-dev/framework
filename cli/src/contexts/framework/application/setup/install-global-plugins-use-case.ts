@@ -1,5 +1,5 @@
-import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { ToolId } from "../../../../kernel/tool.js";
+import type { ToolId } from "../../../../shared/domain/tool.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";

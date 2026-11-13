@@ -1,4 +1,4 @@
-import type { Prompter } from "../../../src/kernel/ports/prompter.js";
+import type { Prompter } from "../../../src/shared/ports/prompter.js";
 
 export interface CheckboxAsk {
   message: string;

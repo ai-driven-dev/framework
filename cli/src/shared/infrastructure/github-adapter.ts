@@ -1,4 +1,4 @@
-import { AuthenticationError } from "../../kernel/errors.js";
+import { AuthenticationError } from "../domain/errors.js";
 import type { HttpGet } from "../ports/http-get.js";
 
 export class GitHubAdapter {

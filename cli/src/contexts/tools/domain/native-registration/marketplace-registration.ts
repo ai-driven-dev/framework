@@ -1,4 +1,4 @@
-import { CapabilityConfigError } from "../../../../kernel/errors.js";
+import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import type { MarketplaceSettingsInput } from "../../contract/tool-vocabulary.js";
 import type { MarketplaceSettings } from "./marketplace-settings.js";
 import type { NativeActivation } from "./native-activation.js";

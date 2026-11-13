@@ -6,7 +6,7 @@ import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/p
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
-import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
+import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import {
   buildUnitDeps,
   initAndInstall,

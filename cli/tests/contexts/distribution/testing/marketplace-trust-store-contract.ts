@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { MarketplaceTrustStore } from "../../../../src/contexts/distribution/ports/marketplace-trust-store.js";
-import type { PluginSource } from "../../../../src/kernel/source.js";
+import type { PluginSource } from "../../../../src/shared/domain/source.js";
 
 export interface MarketplaceTrustStoreSubject {
   readonly store: MarketplaceTrustStore;

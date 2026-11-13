@@ -1,4 +1,4 @@
-import { fetchedMarketplaceDir } from "../../../kernel/paths.js";
+import { fetchedMarketplaceDir } from "../../../shared/domain/paths.js";
 import type { PluginCatalog } from "../domain/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
 import type { PluginCatalogRepository } from "../ports/plugin-catalog-repository.js";

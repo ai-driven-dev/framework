@@ -1,6 +1,6 @@
 import { marketplaceListContract } from "../../src/composition/host-registration.js";
 import type { NativeMarketplaceSourceListContract } from "../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { AiToolId } from "../../src/kernel/tool.js";
+import type { AiToolId } from "../../src/shared/domain/tool.js";
 import { registeredAiConfig } from "../contexts/tools/testing/catalog-of.js";
 
 /** The list contract a tool's own declaration yields, as the composition builds it. */

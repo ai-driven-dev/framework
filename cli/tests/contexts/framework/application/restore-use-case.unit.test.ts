@@ -5,7 +5,7 @@ import { PluginDistributionLoader } from "../../../../src/contexts/framework/app
 import { RestoreUseCase } from "../../../../src/contexts/framework/application/restore/restore-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import { InstallationFile } from "../../../../src/kernel/file.js";
+import { InstallationFile } from "../../../../src/shared/domain/file.js";
 import {
   buildUnitDeps,
   FIXTURE_DIR,

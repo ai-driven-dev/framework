@@ -1,13 +1,13 @@
 import { join } from "node:path";
-import { NoManifestError } from "../../../../kernel/errors.js";
-import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { Prompter } from "../../../../kernel/ports/prompter.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+import { NoManifestError } from "../../../../shared/domain/errors.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
+import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { PluginFetcher } from "../../../distribution/ports/plugin-fetcher.js";
 import {
   CONFIG_MCP,

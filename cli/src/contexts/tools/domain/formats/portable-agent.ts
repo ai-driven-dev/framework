@@ -1,4 +1,4 @@
-import { InvalidAgentFrontmatterError } from "../../../../kernel/errors.js";
+import { InvalidAgentFrontmatterError } from "../../../../shared/domain/errors.js";
 
 /** Rebuilt, never copied: a host silently drops an agent with an unknown `model` or list-less `tools`. */
 export function portableAgentFrontmatter(

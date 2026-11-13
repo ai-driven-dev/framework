@@ -1,5 +1,5 @@
-import { tryParseJson } from "../../../../kernel/reading/json-file.js";
-import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
+import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import { compareText } from "../text-order.js";
 
 /** Which id an earlier version gave a repository that now has another, and whether every store

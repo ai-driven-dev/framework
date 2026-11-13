@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { ToolId } from "../../../../kernel/tool.js";
+import type { ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
 

@@ -1,4 +1,4 @@
-import type { AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";

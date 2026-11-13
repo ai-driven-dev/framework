@@ -2,8 +2,8 @@ import type {
   PluginFetcher,
   PluginFetchOptions,
 } from "../../../src/contexts/distribution/ports/plugin-fetcher.js";
-import type { PluginSource } from "../../../src/kernel/source.js";
-import { serializePluginSource } from "../../../src/kernel/source.js";
+import type { PluginSource } from "../../../src/shared/domain/source.js";
+import { serializePluginSource } from "../../../src/shared/domain/source.js";
 
 /** In-memory `PluginFetcher` over a fixture map keyed by serialized `PluginSource`. */
 export class FixturePluginFetcher implements PluginFetcher {

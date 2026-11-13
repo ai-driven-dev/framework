@@ -9,7 +9,7 @@ import {
   InvalidMarketplaceNameError,
   InvalidMarketplaceScopeError,
   InvalidPluginSourceError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/errors.js";
 
 const makeData = (overrides: Partial<MarketplaceData> = {}): MarketplaceData => ({
   name: "awesome-plugins",

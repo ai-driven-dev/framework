@@ -42,8 +42,8 @@ vi.mock("node:child_process", () => ({
 
 import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { PluginFetchError } from "../../../../src/kernel/errors.js";
-import type { PluginSource } from "../../../../src/kernel/source.js";
+import { PluginFetchError } from "../../../../src/shared/domain/errors.js";
+import type { PluginSource } from "../../../../src/shared/domain/source.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 

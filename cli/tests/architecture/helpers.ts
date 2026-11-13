@@ -95,7 +95,7 @@ export function expectRatchet(
 
 /**
  * The subset of glob syntax this suite declares: a literal prefix, `/**\/` for any number of
- * directories *including none* — `src/kernel/**\/*.ts` must match `src/kernel/errors.ts` too,
+ * directories *including none* — `src/shared/**\/*.ts` must match `src/shared/errors.ts` too,
  * or a scope silently covers only its subdirectories — and `*` within one segment.
  */
 export function matchesGlob(glob: string, path: string): boolean {
@@ -113,7 +113,7 @@ export function contextNames(): string[] {
     .sort();
 }
 
-/** Exactly these edges between contexts, plus every context to the kernel. `framework → tools`
+/** Exactly these edges between contexts, plus every context to shared. `framework → tools`
  * is among them because framework installs for a tool and must name it. */
 export const ALLOWED = new Set([
   "framework->translate",
@@ -178,19 +178,18 @@ export const BASELINE: readonly {
 export function contextOf(file: string): string {
   const inContext = /^src\/contexts\/([^/]+)\//.exec(file);
   if (inContext) return inContext[1] as string;
-  if (file.startsWith("src/kernel/")) return "kernel";
   if (file.startsWith("src/shared/")) return "shared";
   if (file.startsWith("src/presentation/")) return "presentation";
   if (file.startsWith("src/composition/")) return "composition";
   return "outside";
 }
 
-/** A layer a context may not depend on: the arrows run towards the kernel, never back. The
+/** A layer a context may not depend on: the arrows run towards shared, never back. The
  * composition wires every context and is imported by the composition root alone. */
 export const BELOW_NOTHING = new Set(["presentation", "composition"]);
 
 export function isContext(name: string): boolean {
-  return !BELOW_NOTHING.has(name) && !["kernel", "shared", "outside"].includes(name);
+  return !BELOW_NOTHING.has(name) && !["shared", "outside"].includes(name);
 }
 
 interface Crossing {
@@ -198,7 +197,7 @@ interface Crossing {
   readonly from: string;
   readonly to: string;
   /** `domain`, `application`, `infrastructure`, or a migrated context's `ports` or `contract`
-   * or null when `file` is not itself under a context's own layer split (kernel, shared,
+   * or null when `file` is not itself under a context's own layer split (shared,
    * presentation). */
   readonly layer: "domain" | "application" | "infrastructure" | "ports" | "contract" | null;
 }
@@ -208,7 +207,7 @@ const LAYER_OF_FILE = /^src\/contexts\/[^/]+\/(domain|application|infrastructure
 /** Whether an import from one layer to another is an edge worth naming. Presentation may
  * reach down, so only the reverse is one. */
 export function isCrossing(from: string, to: string): boolean {
-  if (from === to || to === "kernel" || to === "shared") return false;
+  if (from === to || to === "shared") return false;
   if (from === "outside" || to === "outside") return false;
   return !BELOW_NOTHING.has(from);
 }

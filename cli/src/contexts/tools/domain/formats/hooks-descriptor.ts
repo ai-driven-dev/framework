@@ -9,13 +9,13 @@ import {
   CapabilityConfigError,
   type HooksInvariant,
   InvalidHooksDescriptorError,
-} from "../../../../kernel/errors.js";
+} from "../../../../shared/domain/errors.js";
 import {
   type FlatHooksLoaderEntry,
   flatHooksPathWithLoaderEntry,
   genericFlatHooksFile,
-} from "../../../../kernel/materialization/flat-paths.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
+} from "../../../../shared/domain/materialization/flat-paths.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ArtifactContract, FlatHooksBridge } from "../../contract/build-contract.js";
 import type { HookScript, ProjectHooksFormat } from "../../contract/tool-vocabulary.js";
 import {

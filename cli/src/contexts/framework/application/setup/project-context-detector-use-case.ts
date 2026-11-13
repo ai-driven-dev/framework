@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import { ProjectContext, type Stack } from "../../domain/project-context.js";
 
 const TS_SIGNALS = ["tsconfig.json", "package.json"];

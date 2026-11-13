@@ -1,7 +1,7 @@
-import { CapabilityConfigError } from "../../../../kernel/errors.js";
-import type { ConfigAsset } from "../../../../kernel/file.js";
-import type { MergeStrategy } from "../../../../kernel/merge.js";
-import type { ToolId } from "../../../../kernel/tool.js";
+import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import type { ConfigAsset } from "../../../../shared/domain/file.js";
+import type { MergeStrategy } from "../../../../shared/domain/merge.js";
+import type { ToolId } from "../../../../shared/domain/tool.js";
 
 type ConfigSectionParams = {
   outputPath: string;

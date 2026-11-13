@@ -1,4 +1,4 @@
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
 import { mcpJsonToToml, mergeJsonUserPrime } from "../formats/mcp-format.js";
 import {
   buildTypedMcpFlatConfig,

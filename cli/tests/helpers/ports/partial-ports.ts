@@ -1,6 +1,6 @@
 import type { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/framework/domain/ports/manifest-repository.js";
-import type { Prompter } from "../../../src/kernel/ports/prompter.js";
+import type { Prompter } from "../../../src/shared/ports/prompter.js";
 
 function refuse(what: string): () => never {
   return () => {

@@ -4,10 +4,10 @@ import {
   builtMarketplaceDir,
   pathsOverlap,
   userBuiltMarketplaceDir,
-} from "../../../../kernel/paths.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
+} from "../../../../shared/domain/paths.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";

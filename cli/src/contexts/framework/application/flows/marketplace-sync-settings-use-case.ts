@@ -3,21 +3,21 @@ import {
   MarketplaceSourceConflictError,
   NativePluginCliError,
   UnreadableBuiltCatalogError,
-} from "../../../../kernel/errors.js";
+} from "../../../../shared/domain/errors.js";
 import {
   BUILT_CACHE_SUBDIR,
   parseBuiltMarketplaceDir,
   parseUserBuiltMarketplaceDir,
   samePath,
   samePathSegment,
-} from "../../../../kernel/paths.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
-import type { MarketplaceScope } from "../../../../kernel/scope.js";
-import { type AiToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
+} from "../../../../shared/domain/paths.js";
+import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import { type AiToolId, isAiToolId, type ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
+import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { RegisterFrameworkMarketplace } from "../../../distribution/application/register-framework-marketplace.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,

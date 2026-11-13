@@ -12,7 +12,7 @@ const FENCED_BLOCK = /```[\s\S]*?```/g;
 
 /**
  * A citation is rooted at the package (`src/…`, `tests/…`) or written relative to `src/`,
- * naming a top-level area directly (`kernel/…`, `shared/…`, `contexts/…`). A bare
+ * naming a top-level area directly (`shared/…`, `contexts/…`). A bare
  * `application/` or `domain/` prefix is deliberately not matched: `application/json` is a
  * media type and `domain/ports` names a fragment, so a wider regex reports more noise than
  * drift. A name that continues a longer path (`application/shared/x.ts`) is that path's own
@@ -85,8 +85,8 @@ function citedInProse(text: string): string[] {
   const prose = text.replace(FENCED_BLOCK, "");
   return (
     [...new Set(prose.match(CITED_PATH) ?? [])]
-      // Trailing punctuation belongs to the sentence, not the path: `src/kernel/.` and
-      // `src/kernel/` both name the directory.
+      // Trailing punctuation belongs to the sentence, not the path: `src/shared/.` and
+      // `src/shared/` both name the directory.
       .map((cited) => cited.replace(/[./]+$/, ""))
       .filter((cited) => cited.includes("/"))
   );
@@ -114,19 +114,23 @@ describe("the guard itself", () => {
   });
 
   it("catches a dead path written the way the skills write it, without the src/ prefix", () => {
-    const cited = citedInProse("The primitives live in `kernel/gone.ts`.");
+    const cited = citedInProse("The primitives live in `contexts/gone.ts`.");
 
-    expect(cited, "a bare top-level area is a citation too").toEqual(["kernel/gone.ts"]);
-    expect(resolveCitation("kernel/gone.ts")).toBe("src/kernel/gone.ts");
-    expect(exists(resolveCitation("kernel/gone.ts")), "and it is checked, not skipped").toBe(false);
-    expect(exists(resolveCitation("kernel/errors.ts")), "a live one still passes").toBe(true);
+    expect(cited, "a bare top-level area is a citation too").toEqual(["contexts/gone.ts"]);
+    expect(resolveCitation("contexts/gone.ts")).toBe("src/contexts/gone.ts");
+    expect(exists(resolveCitation("contexts/gone.ts")), "and it is checked, not skipped").toBe(
+      false
+    );
+    expect(exists(resolveCitation("shared/domain/errors.ts")), "a live one still passes").toBe(
+      true
+    );
   });
 
   it("reads a shared/ segment of a longer path as part of it, not as an area", () => {
     expect(citedInProse("Through `application/shared/remove-project-hooks.ts`.")).toEqual([]);
   });
 
-  it("checks a path under shared/ like one under kernel/", () => {
+  it("checks a path under shared/ like one under contexts/", () => {
     const cited = citedInProse("The port lives in `shared/gone.ts`.");
 
     expect(cited).toEqual(["shared/gone.ts"]);

@@ -3,10 +3,10 @@ import { InitUseCase } from "../../../../src/contexts/framework/application/init
 import { DetectPluginDriftUseCase } from "../../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
 import { StatusUseCase } from "../../../../src/contexts/framework/application/status-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { NoManifestError, ToolNotInstalledError } from "../../../../src/kernel/errors.js";
-import { InstallationFile } from "../../../../src/kernel/file.js";
-import { compareSemver } from "../../../../src/kernel/semver.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
+import { NoManifestError, ToolNotInstalledError } from "../../../../src/shared/domain/errors.js";
+import { InstallationFile } from "../../../../src/shared/domain/file.js";
+import { compareSemver } from "../../../../src/shared/domain/semver.js";
+import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";

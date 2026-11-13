@@ -1,5 +1,5 @@
-import { InputRequiredError } from "../../../../kernel/errors.js";
-import type { Prompter } from "../../../../kernel/ports/prompter.js";
+import { InputRequiredError } from "../../../../shared/domain/errors.js";
+import type { Prompter } from "../../../../shared/ports/prompter.js";
 
 type BulkDecision = "overwrite-all" | "skip-all";
 

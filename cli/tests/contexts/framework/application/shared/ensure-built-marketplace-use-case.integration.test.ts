@@ -17,9 +17,9 @@ import {
   FrameworkBuildUseCase,
 } from "../../../../../src/contexts/translate/application/translate-source.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/domain/ports/schema-validator.js";
-import { BUILT_CACHE_SUBDIR, builtMarketplaceDir } from "../../../../../src/kernel/paths.js";
-import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
-import type { VersionReader } from "../../../../../src/kernel/ports/version-reader.js";
+import { BUILT_CACHE_SUBDIR, builtMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
+import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
+import type { VersionReader } from "../../../../../src/shared/ports/version-reader.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";

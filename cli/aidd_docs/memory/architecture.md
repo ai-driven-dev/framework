@@ -30,19 +30,15 @@ flowchart LR
     Framework --> HostRegistration["host-registration"]
     Distribution --> Auth
     Translate --> Tools
-    Distribution --> Kernel["kernel"]
     Distribution --> Shared["shared"]
     Framework --> Shared
-    Framework --> Kernel
-    Tools --> Kernel
-    Auth --> Kernel
-    HostRegistration --> Kernel
+    Tools --> Shared
     Auth --> Shared
+    HostRegistration --> Shared
     Update --> Auth
-    Recipes --> Kernel
-    Update --> Kernel
+    Recipes --> Shared
     Update --> Shared
-    Translate --> Kernel
+    Translate --> Shared
 ```
 
 ## Key decisions

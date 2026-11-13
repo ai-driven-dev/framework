@@ -3,7 +3,7 @@ import {
   ElevatedPermissionUpdateError,
   PackageManagerDetectionError,
   UpdateError,
-} from "../../../kernel/errors.js";
+} from "../../../shared/domain/errors.js";
 import { INSTALL_COMMANDS, packageManagerOf } from "../domain/package-manager.js";
 import type { CliInstaller } from "../ports/cli-installer.js";
 

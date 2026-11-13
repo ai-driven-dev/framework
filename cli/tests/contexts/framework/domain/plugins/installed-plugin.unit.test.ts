@@ -11,7 +11,7 @@ import {
   InvalidPluginNameError,
   InvalidPluginVersionError,
   MalformedPluginScopeError,
-} from "../../../../../src/kernel/errors.js";
+} from "../../../../../src/shared/domain/errors.js";
 
 it("round-trips exact Cursor project hook provenance through the plugin manifest", () => {
   const data = makePluginData({

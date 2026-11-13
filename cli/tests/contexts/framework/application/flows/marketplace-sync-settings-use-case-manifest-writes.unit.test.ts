@@ -6,10 +6,10 @@ import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/framewo
 import type { NativeRegistrations } from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import { InstallationFile } from "../../../../../src/kernel/file.js";
-import { builtMarketplaceDir } from "../../../../../src/kernel/paths.js";
-import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
-import type { ToolId } from "../../../../../src/kernel/tool.js";
+import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { builtMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
+import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
+import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";

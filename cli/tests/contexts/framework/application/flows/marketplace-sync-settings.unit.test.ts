@@ -6,8 +6,8 @@ import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/framewor
 import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { NativePluginCliError } from "../../../../../src/kernel/errors.js";
-import type { PluginSource } from "../../../../../src/kernel/source.js";
+import { NativePluginCliError } from "../../../../../src/shared/domain/errors.js";
+import type { PluginSource } from "../../../../../src/shared/domain/source.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";

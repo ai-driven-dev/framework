@@ -24,7 +24,7 @@ paths:
 
 ## Suppliers
 
-- `kernel/`: errors, scope, tool id.
+- `shared/`: errors, scope, tool id.
 - `src/composition/host-registration.ts`: the only reader of `tools`' declarations.
 
 ## Never

@@ -1,4 +1,4 @@
-import { CapabilityConfigError } from "../../../../kernel/errors.js";
+import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import type { EnvironmentReader, NativeActivationAnswers } from "../../contract/tool-profile.js";
 
 /** How a host's own plugin registry is laid out. The names describe the file's shape, never

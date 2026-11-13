@@ -5,7 +5,7 @@ import {
   extractMarkdownLinkTargets,
 } from "../../../../src/contexts/framework/domain/formats/markdown-references.js";
 import type { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
+import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import {
   buildDoctorUseCase,
   buildUnitDeps,

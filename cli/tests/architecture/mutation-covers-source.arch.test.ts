@@ -136,14 +136,14 @@ describe("the guard itself", () => {
   });
 
   const scopes = {
-    kernel: { mutate: "src/kernel/**/*.ts", break: 70 },
+    shared: { mutate: "src/shared/**/*.ts", break: 70 },
     tools: { mutate: "src/contexts/tools/**/*.ts", break: 60 },
   };
 
   it("matches a path inside a glob and rejects one outside it", () => {
-    expect(matchesGlob("src/kernel/**/*.ts", "src/kernel/ports/logger.ts")).toBe(true);
-    expect(matchesGlob("src/kernel/**/*.ts", "src/kernel/tool.ts")).toBe(true);
-    expect(matchesGlob("src/kernel/**/*.ts", "src/contexts/tools/domain/registry.ts")).toBe(false);
+    expect(matchesGlob("src/shared/**/*.ts", "src/shared/ports/logger.ts")).toBe(true);
+    expect(matchesGlob("src/shared/**/*.ts", "src/shared/domain/tool.ts")).toBe(true);
+    expect(matchesGlob("src/shared/**/*.ts", "src/contexts/tools/domain/registry.ts")).toBe(false);
     expect(matchesGlob("src/cli.ts", "src/cli.ts")).toBe(true);
     expect(matchesGlob("src/cli.ts", "src/clints.ts")).toBe(false);
   });
@@ -173,19 +173,19 @@ describe("the guard itself", () => {
 
   it("reports a file no scope and no exclusion names, and clears one a scope covers", () => {
     const declared = { scopes, excluded: { "src/cli.ts": "the entry point" } };
-    expect(isCovered("src/kernel/paths.ts", declared)).toBe(true);
+    expect(isCovered("src/shared/domain/paths.ts", declared)).toBe(true);
     expect(isCovered("src/cli.ts", declared)).toBe(true);
     expect(isCovered("src/contexts/framework/domain/manifest.ts", declared)).toBe(false);
   });
 
   it("gives each scope its own glob and incremental file, and refuses a scope nobody declared", () => {
-    expect(strykerArgs("kernel", scopes)).toEqual([
+    expect(strykerArgs("shared", scopes)).toEqual([
       "run",
       "--mutate",
-      "src/kernel/**/*.ts",
+      "src/shared/**/*.ts",
       "--incremental",
       "--incrementalFile",
-      "reports/mutation/kernel/incremental.json",
+      "reports/mutation/shared/incremental.json",
     ]);
     expect(strykerArgs("tools", scopes, { force: true })).toContain("--force");
     expect(() => strykerArgs("nowhere", scopes)).toThrow('Unknown scope "nowhere"');
@@ -212,17 +212,17 @@ describe("the guard itself", () => {
   });
 
   it("runs the scopes a change touches, through source or mirrored tests, and all of them for the harness or a helper", () => {
-    expect(scopesToRun(["cli/src/kernel/paths.ts"], scopes)).toEqual(["kernel"]);
+    expect(scopesToRun(["cli/src/shared/domain/paths.ts"], scopes)).toEqual(["shared"]);
     expect(
       scopesToRun(["cli/tests/contexts/tools/domain/catalog-registered.unit.test.ts"], scopes)
     ).toEqual(["tools"]);
     expect(scopesToRun(["README.md"], scopes)).toEqual([]);
     expect(scopesToRun(["cli/tests/helpers/repository-root.ts"], scopes)).toEqual([
-      "kernel",
+      "shared",
       "tools",
     ]);
-    expect(scopesToRun([HARNESS[0]], scopes)).toEqual(["kernel", "tools"]);
-    expect(scopesToRun([], scopes, { all: true })).toEqual(["kernel", "tools"]);
+    expect(scopesToRun([HARNESS[0]], scopes)).toEqual(["shared", "tools"]);
+    expect(scopesToRun([], scopes, { all: true })).toEqual(["shared", "tools"]);
   });
 
   it("names every harness file the tree holds, so a renamed one cannot silently stop counting", () => {
@@ -298,7 +298,7 @@ describe("the guard itself", () => {
   });
 
   it("fails a score under the floor and passes one on it", () => {
-    expect(breakVerdict(69.9, scopes.kernel)).toMatch(/below the 70/);
-    expect(breakVerdict(70, scopes.kernel)).toBeNull();
+    expect(breakVerdict(69.9, scopes.shared)).toMatch(/below the 70/);
+    expect(breakVerdict(70, scopes.shared)).toBeNull();
   });
 });

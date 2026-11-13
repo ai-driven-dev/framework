@@ -66,7 +66,6 @@ describe("biome carries the exit and default-export rules", () => {
     };
     const carrier = (config.overrides ?? []).find((o) => o.plugins?.includes(`./${PLUGIN}`));
     expect(carrier?.includes, `no override applies ${PLUGIN}`).toEqual([
-      "src/kernel/**",
       "src/shared/**",
       "src/contexts/**",
       "src/presentation/terminal/prompter-adapter.ts",
@@ -171,9 +170,9 @@ describe("the guard itself", () => {
     cpSync(join(CLI_ROOT, "biome.json"), join(planted, "biome.json"));
     cpSync(join(CLI_ROOT, "biome-plugins"), join(planted, "biome-plugins"), { recursive: true });
     for (const dir of [
-      "src/kernel",
+      "src/shared/domain",
       "src/presentation",
-      "tests/kernel",
+      "tests/shared/domain",
       "src/contexts/framework/domain",
       "src/contexts/framework/application",
       "src/contexts/framework/infrastructure",
@@ -203,7 +202,7 @@ describe("the guard itself", () => {
       mkdirSync(join(planted, dir), { recursive: true });
     }
     writeFileSync(
-      join(planted, "src/kernel/exit.ts"),
+      join(planted, "src/shared/domain/exit.ts"),
       "export const stop = (): never => process.exit(1);\n"
     );
     writeFileSync(
@@ -217,28 +216,28 @@ describe("the guard itself", () => {
       writeFileSync(join(planted, file), "export const stop = (): never => process.exit(1);\n");
     }
     writeFileSync(
-      join(planted, "src/kernel/default.ts"),
+      join(planted, "src/shared/domain/default.ts"),
       "const value = 1;\nexport default value;\n"
     );
     writeFileSync(
-      join(planted, "tests/kernel/default.ts"),
+      join(planted, "tests/shared/domain/default.ts"),
       "const value = 1;\nexport default value;\n"
     );
-    writeFileSync(join(planted, "src/kernel/clean.ts"), "export const one = 1;\n");
+    writeFileSync(join(planted, "src/shared/domain/clean.ts"), "export const one = 1;\n");
     writeFileSync(
-      join(planted, "tests/kernel/reads.unit.test.ts"),
+      join(planted, "tests/shared/domain/reads.unit.test.ts"),
       'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'
     );
     writeFileSync(
-      join(planted, "tests/kernel/awaits.unit.test.ts"),
+      join(planted, "tests/shared/domain/awaits.unit.test.ts"),
       'import { readFile } from "node:fs/promises";\nexport const read = readFile;\n'
     );
     writeFileSync(
-      join(planted, "tests/kernel/spawns.unit.test.ts"),
+      join(planted, "tests/shared/domain/spawns.unit.test.ts"),
       'export const load = () => import("node:child_process");\n'
     );
     writeFileSync(
-      join(planted, "tests/kernel/reads.integration.test.ts"),
+      join(planted, "tests/shared/domain/reads.integration.test.ts"),
       'import { readFileSync } from "node:fs";\nexport const read = readFileSync;\n'
     );
     writeFileSync(
@@ -368,7 +367,7 @@ describe("the guard itself", () => {
       `import type { AuthDeps } from "${up}composition/auth.js";\nexport type Wired = AuthDeps;\n`;
     for (const [file, up] of [
       ["src/contexts/tools/domain/reaches-composition.ts", "../../../"],
-      ["src/kernel/reaches-composition.ts", "../"],
+      ["src/shared/domain/reaches-composition.ts", "../../"],
       ["src/shared/infrastructure/reaches-composition.ts", "../../"],
       ["src/presentation/display/reaches-composition.ts", "../../"],
       ["src/composition/reaches-composition.ts", "../"],
@@ -393,8 +392,8 @@ describe("the guard itself", () => {
       'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
     );
     writeFileSync(
-      join(planted, "src/kernel/reaches-shared.ts"),
-      'import type { Home } from "../shared/ports/env.js";\nexport type Reached = Home;\n'
+      join(planted, "src/shared/domain/reaches-context.ts"),
+      'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
     );
     writeFileSync(
       join(planted, "src/shared/ports/env.ts"),
@@ -417,9 +416,9 @@ describe("the guard itself", () => {
     rmSync(planted, { recursive: true, force: true });
   });
 
-  it("flags process.exit under kernel/, contexts/ and the two moved presentation files, and leaves the command edge alone", () => {
+  it("flags process.exit under shared/, contexts/ and the two moved presentation files, and leaves the command edge alone", () => {
     const findings = biomeFindings(planted);
-    expect(findings, findings.join(", ")).toContain("src/kernel/exit.ts:plugin");
+    expect(findings, findings.join(", ")).toContain("src/shared/domain/exit.ts:plugin");
     expect(
       findings.filter((f) => f.startsWith("src/presentation/") && f.endsWith(":plugin")).sort()
     ).toEqual([
@@ -442,14 +441,14 @@ describe("the guard itself", () => {
     );
   });
 
-  it("flags shared/ports and shared/infrastructure reaching a context, and kernel reaching shared", () => {
+  it("flags shared/ports and shared/infrastructure reaching a context, and shared/domain reaching a context", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
 
     for (const file of [
       "src/shared/ports/reaches-context.ts",
       "src/shared/infrastructure/reaches-context.ts",
-      "src/kernel/reaches-shared.ts",
+      "src/shared/domain/reaches-context.ts",
     ]) {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
     }
@@ -550,13 +549,13 @@ describe("the guard itself", () => {
     }
   });
 
-  it("flags a context, the kernel, shared and presentation reaching the composition, and not the composition root", () => {
+  it("flags a context, shared and presentation reaching the composition, and not the composition root", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
 
     for (const file of [
       "src/contexts/tools/domain/reaches-composition.ts",
-      "src/kernel/reaches-composition.ts",
+      "src/shared/domain/reaches-composition.ts",
       "src/shared/infrastructure/reaches-composition.ts",
       "src/presentation/display/reaches-composition.ts",
     ]) {
@@ -622,20 +621,26 @@ describe("the guard itself", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
 
-    expect(findings, findings.join(", ")).toContain(`tests/kernel/reads.unit.test.ts:${rule}`);
-    expect(findings, findings.join(", ")).toContain(`tests/kernel/awaits.unit.test.ts:${rule}`);
-    expect(findings, findings.join(", ")).toContain(`tests/kernel/spawns.unit.test.ts:${rule}`);
-    expect(findings).not.toContain(`tests/kernel/reads.integration.test.ts:${rule}`);
+    expect(findings, findings.join(", ")).toContain(
+      `tests/shared/domain/reads.unit.test.ts:${rule}`
+    );
+    expect(findings, findings.join(", ")).toContain(
+      `tests/shared/domain/awaits.unit.test.ts:${rule}`
+    );
+    expect(findings, findings.join(", ")).toContain(
+      `tests/shared/domain/spawns.unit.test.ts:${rule}`
+    );
+    expect(findings).not.toContain(`tests/shared/domain/reads.integration.test.ts:${rule}`);
   });
 
   it("flags a default export under src/ and tests/ alike, and a clean module not at all", () => {
     const findings = biomeFindings(planted);
     expect(findings, findings.join(", ")).toContain(
-      "src/kernel/default.ts:lint/style/noDefaultExport"
+      "src/shared/domain/default.ts:lint/style/noDefaultExport"
     );
     expect(findings, findings.join(", ")).toContain(
-      "tests/kernel/default.ts:lint/style/noDefaultExport"
+      "tests/shared/domain/default.ts:lint/style/noDefaultExport"
     );
-    expect(findings.filter((f) => f.startsWith("src/kernel/clean.ts"))).toEqual([]);
+    expect(findings.filter((f) => f.startsWith("src/shared/domain/clean.ts"))).toEqual([]);
   });
 });

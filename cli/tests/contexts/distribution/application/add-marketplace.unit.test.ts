@@ -13,8 +13,8 @@ import {
   InvalidPluginManifestError,
   MarketplaceAlreadyRegisteredError,
   TrustDeniedError,
-} from "../../../../src/kernel/errors.js";
-import type { Prompter } from "../../../../src/kernel/ports/prompter.js";
+} from "../../../../src/shared/domain/errors.js";
+import type { Prompter } from "../../../../src/shared/ports/prompter.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";

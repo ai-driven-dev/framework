@@ -6,11 +6,11 @@ import type { TokenProvider } from "../contexts/auth/contract/token-provider.js"
 import { CredentialRecordFileAdapter } from "../contexts/auth/infrastructure/credential-record-file-adapter.js";
 import { GhCliAdapter } from "../contexts/auth/infrastructure/gh-cli-adapter.js";
 import type { CliAuthProvider } from "../contexts/auth/ports/cli-auth-provider.js";
-import type { Logger } from "../kernel/ports/logger.js";
 import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { HttpGet } from "../shared/ports/http-get.js";
+import type { Logger } from "../shared/ports/logger.js";
 
 export interface AuthWiring {
   projectRoot: string;

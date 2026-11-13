@@ -14,8 +14,8 @@ import type { HostMarketplaceSources } from "../../../../src/contexts/host-regis
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { pluginScriptDir } from "../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
 import { CURSOR_HOOKS } from "../../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
-import { FileHash, InstallationFile } from "../../../../src/kernel/file.js";
-import type { AiToolId, ToolId } from "../../../../src/kernel/tool.js";
+import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";

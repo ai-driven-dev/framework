@@ -11,9 +11,9 @@ import {
   InteractiveOnlyError,
   InvalidPluginManifestError,
   NoMarketplacesRegisteredError,
-} from "../../kernel/errors.js";
-import type { Prompter } from "../../kernel/ports/prompter.js";
-import type { AiToolId } from "../../kernel/tool.js";
+} from "../../shared/domain/errors.js";
+import type { AiToolId } from "../../shared/domain/tool.js";
+import type { Prompter } from "../../shared/ports/prompter.js";
 
 export interface PluginPickOptions {
   toolIds: AiToolId[] | "all";

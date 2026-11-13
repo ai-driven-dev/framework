@@ -1,8 +1,8 @@
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { AIDD_DIR } from "../../../kernel/paths.js";
-import type { Hasher } from "../../../kernel/ports/hasher.js";
-import { type PluginSource, serializePluginSource } from "../../../kernel/source.js";
+import { AIDD_DIR } from "../../../shared/domain/paths.js";
+import { type PluginSource, serializePluginSource } from "../../../shared/domain/source.js";
+import type { Hasher } from "../../../shared/ports/hasher.js";
 import type { MarketplaceTrustStore } from "../ports/marketplace-trust-store.js";
 
 const TRUST_STORE_FILENAME = "trusted-marketplaces.json";

@@ -7,7 +7,7 @@
  * reach this instead.
  */
 import { join } from "node:path";
-import { InvalidSourceMarketplaceError } from "../../../kernel/errors.js";
+import { InvalidSourceMarketplaceError } from "../../../shared/domain/errors.js";
 import type { BuildFileReader, PluginPresence } from "../contract/build-contract.js";
 
 type SrcEntry =

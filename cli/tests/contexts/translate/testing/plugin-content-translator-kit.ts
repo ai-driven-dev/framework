@@ -5,7 +5,7 @@ import {
   type PluginComponents,
   PluginDistribution,
 } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/kernel/file.js";
+import { FileHash } from "../../../../src/shared/domain/file.js";
 
 export const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 export const translator = new PluginContentTranslator(stubHasher);

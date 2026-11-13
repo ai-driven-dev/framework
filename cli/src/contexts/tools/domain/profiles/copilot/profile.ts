@@ -2,8 +2,8 @@ import { join } from "node:path";
 import copilotVscodeSettings from "../../../../../../assets/configs/copilot/vscode-settings.json" with {
   type: "json",
 };
-import { GITKEEP_FILE } from "../../../../../kernel/file.js";
-import { DOCS_DIR } from "../../../../../kernel/paths.js";
+import { GITKEEP_FILE } from "../../../../../shared/domain/file.js";
+import { DOCS_DIR } from "../../../../../shared/domain/paths.js";
 import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";

@@ -1,5 +1,5 @@
-import { AIDD_DIR } from "../../../kernel/paths.js";
-import type { ToolId } from "../../../kernel/tool.js";
+import { AIDD_DIR } from "../../../shared/domain/paths.js";
+import type { ToolId } from "../../../shared/domain/tool.js";
 import type { Manifest } from "./manifest.js";
 
 /**

@@ -1,4 +1,4 @@
-import type { PluginSource } from "../../../kernel/source.js";
+import type { PluginSource } from "../../../shared/domain/source.js";
 
 export interface MarketplaceTrustStore {
   isTrusted(projectRoot: string, source: PluginSource): Promise<boolean>;

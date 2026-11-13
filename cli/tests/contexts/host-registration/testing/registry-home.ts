@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach } from "vitest";
 import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
-import type { AiToolId } from "../../../../src/kernel/tool.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 import { scratchDirectory } from "./scratch-directory.js";
 

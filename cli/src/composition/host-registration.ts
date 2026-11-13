@@ -1,3 +1,4 @@
+import { resolveHomeDir } from "../contexts/framework/domain/reading/home-dir.js";
 import type { HostActions } from "../contexts/host-registration/contract/host-actions.js";
 import type { HostMarketplaceRegistry } from "../contexts/host-registration/contract/host-marketplace-registry.js";
 import type {
@@ -30,9 +31,8 @@ import type {
   PluginRegistryLayout,
 } from "../contexts/tools/domain/native-registration/native-activation.js";
 import { REGISTERED_PROFILES } from "../contexts/tools/domain/profiles/registered-profiles.js";
-import { UnregisteredToolError } from "../kernel/errors.js";
-import { resolveHomeDir } from "../kernel/reading/home-dir.js";
-import type { AiToolId, ToolId } from "../kernel/tool.js";
+import { UnregisteredToolError } from "../shared/domain/errors.js";
+import type { AiToolId, ToolId } from "../shared/domain/tool.js";
 import { nativeRegistrationsOf } from "./native-registrations.js";
 
 /** One line per layout: a layout declared in a profile with no line here fails to compile. */

@@ -17,14 +17,14 @@ import type { PluginCatalogRepository } from "../contexts/distribution/ports/plu
 import type { PluginFetcher } from "../contexts/distribution/ports/plugin-fetcher.js";
 import type { ReleaseLister } from "../contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../contexts/distribution/ports/repository-visibility.js";
-import type { FileReader } from "../kernel/ports/file-reader.js";
-import type { FileWriter } from "../kernel/ports/file-writer.js";
-import type { Hasher } from "../kernel/ports/hasher.js";
-import type { Logger } from "../kernel/ports/logger.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import type { HttpClient } from "../shared/infrastructure/http-client.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { FileMerger } from "../shared/ports/file-merger.js";
+import type { FileReader } from "../shared/ports/file-reader.js";
+import type { FileWriter } from "../shared/ports/file-writer.js";
+import type { Hasher } from "../shared/ports/hasher.js";
+import type { Logger } from "../shared/ports/logger.js";
 
 export interface DistributionWiringShared {
   fs: FileReader & FileWriter & FileMerger;

@@ -347,7 +347,7 @@ describe("the guard itself", () => {
       'import type { A } from "../contexts/acme/application/a.js";',
       'import { B } from "../contexts/acme/application/b.js";',
       'import type { C } from "../contexts/acme/domain/c.js";',
-      'import type { D } from "../kernel/d.js";',
+      'import type { D } from "../shared/d.js";',
     ].join("\n");
 
     expect(drivingPortViolations(source)).toEqual([

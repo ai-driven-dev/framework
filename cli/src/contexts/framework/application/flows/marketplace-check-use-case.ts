@@ -1,4 +1,4 @@
-import type { AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
 import {
   isMarketplaceStale,

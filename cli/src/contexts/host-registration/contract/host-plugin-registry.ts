@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../kernel/scope.js";
+import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 
 /**
  * What a host's own plugin registry says, read from the file that host maintains itself.

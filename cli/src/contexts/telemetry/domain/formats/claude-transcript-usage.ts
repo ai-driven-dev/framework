@@ -1,4 +1,4 @@
-import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import type { LineNames, UsageRecord } from "../usage-record.js";
 import { counter, expected, type Json, text } from "./line-values.js";
 

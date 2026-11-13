@@ -1,14 +1,14 @@
 import { join } from "node:path";
-import type { InstallationFile } from "../../../../kernel/file.js";
+import type { InstallationFile } from "../../../../shared/domain/file.js";
 import {
   extractMergeEntries,
   type MergeFileEntry,
   type MergeStrategy,
-} from "../../../../kernel/merge.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { Prompter } from "../../../../kernel/ports/prompter.js";
+} from "../../../../shared/domain/merge.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
+import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries-use-case.js";
 import { RestoreDriftEntriesUseCase } from "./restore-drift-entries-use-case.js";
 

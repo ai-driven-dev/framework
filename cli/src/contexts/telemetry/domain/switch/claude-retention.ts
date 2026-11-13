@@ -1,6 +1,6 @@
-import { tryParseJson } from "../../../../kernel/reading/json-file.js";
-import { stripJsonComments } from "../../../../kernel/reading/jsonc.js";
-import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
+import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
+import { stripJsonComments } from "../../../../shared/domain/reading/jsonc.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 
 /** How long Claude Code keeps a transcript before deleting it, which is how far back a report
  * can read. */

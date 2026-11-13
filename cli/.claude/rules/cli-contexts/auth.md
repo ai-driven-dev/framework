@@ -26,7 +26,7 @@ paths:
 
 - `shared/ports/environment.ts`: a token handed to the run in a variable.
 - `shared/infrastructure/github-adapter.ts`: the `/user` check, an `IdentityVerifier` by shape, handed in by `src/composition/auth.ts`.
-- `kernel/`: errors, `Logger`, `AIDD_DIR` (migration state M3 of the reference).
+- `shared/`: errors, `Logger`, `AIDD_DIR`.
 
 ## Never
 

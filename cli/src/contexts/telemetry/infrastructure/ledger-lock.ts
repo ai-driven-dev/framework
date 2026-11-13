@@ -1,9 +1,9 @@
 import { rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { isErrnoException, tryParseJson } from "../../../kernel/reading/json-file.js";
-import { asPlainObject } from "../../../kernel/reading/plain-object.js";
-import { modifiedAtIfPresent, readTextIfPresent } from "../../../kernel/reading/text-file.js";
+import { isErrnoException, tryParseJson } from "../../../shared/domain/reading/json-file.js";
+import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
+import { modifiedAtIfPresent, readTextIfPresent } from "./reading/text-file.js";
 
 export interface LockOptions {
   readonly pid: number;

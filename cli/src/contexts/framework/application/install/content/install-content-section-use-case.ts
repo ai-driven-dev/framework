@@ -1,6 +1,6 @@
-import { GITKEEP_FILE, InstallationFile } from "../../../../../kernel/file.js";
-import { parseFrontmatter } from "../../../../../kernel/markdown.js";
-import type { Hasher } from "../../../../../kernel/ports/hasher.js";
+import { GITKEEP_FILE, InstallationFile } from "../../../../../shared/domain/file.js";
+import { parseFrontmatter } from "../../../../../shared/domain/markdown.js";
+import type { Hasher } from "../../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { ContentSection } from "../../../../translate/domain/canon.js";
 

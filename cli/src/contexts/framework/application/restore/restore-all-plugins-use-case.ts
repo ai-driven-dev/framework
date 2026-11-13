@@ -1,9 +1,9 @@
 import { join } from "node:path";
-import { PLUGIN_CACHE_SUBDIR } from "../../../../kernel/paths.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { PluginFetcher } from "../../../distribution/ports/plugin-fetcher.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";

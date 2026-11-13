@@ -1,13 +1,13 @@
 import {
   InvalidMarketplaceNameError,
   InvalidMarketplaceScopeError,
-} from "../../../kernel/errors.js";
-import type { MarketplaceScope } from "../../../kernel/scope.js";
+} from "../../../shared/domain/errors.js";
+import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import {
   type PluginSource,
   parsePluginSource,
   serializePluginSource,
-} from "../../../kernel/source.js";
+} from "../../../shared/domain/source.js";
 
 export const MARKETPLACE_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 export const FRAMEWORK_MARKETPLACE_NAME = "aidd-framework";

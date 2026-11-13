@@ -1,13 +1,13 @@
 /** Kilo's project distribution is flat. Its config and MCP format follow the OpenCode runtime,
  * but Kilo has its own .kilo/ discovery paths and bundled base configuration. */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import {
   flatMcpKeyPrefix,
   genericFlatAgentPath,
   genericFlatSkillTreePath,
-} from "../../../../../kernel/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
+} from "../../../../../shared/domain/materialization/flat-paths.js";
+import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { buildTypedMcpFlatConfig, toTypedMcpSection } from "../../formats/typed-mcp-merge.js";

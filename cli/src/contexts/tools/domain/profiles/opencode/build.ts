@@ -2,13 +2,13 @@
  * Opencode's build contract: flat only — opencode has no marketplace mode.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import {
   flatMcpKeyPrefix,
   genericFlatAgentPath,
   genericFlatSkillTreePath,
-} from "../../../../../kernel/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
+} from "../../../../../shared/domain/materialization/flat-paths.js";
+import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type {
   ConfigArtifactFile,
   ConfigArtifactInput,

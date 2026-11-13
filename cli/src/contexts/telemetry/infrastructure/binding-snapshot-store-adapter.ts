@@ -1,9 +1,9 @@
 import { join } from "node:path";
-import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
 import { type BranchSnapshot, parseBranchSnapshot, snapshotKey } from "../domain/branch-binding.js";
 import type { BindingSnapshotStore } from "../domain/ports/bindings/binding-snapshot-store.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import type { RepositoryAliasStore } from "../domain/ports/repository-alias-store.js";
+import { readTextIfPresent } from "./reading/text-file.js";
 
 /** `branches.jsonl`: append-only, one snapshot per line, the latest line of a branch being its
  * current one. It is appended to, never rewritten, because a snapshot is a fact about a moment

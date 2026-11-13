@@ -1,13 +1,13 @@
 import { isAbsolute } from "node:path";
-import { InteractiveOnlyError, TrustDeniedError } from "../../../../kernel/errors.js";
-import type { Prompter } from "../../../../kernel/ports/prompter.js";
+import type { PluginPick } from "../../../../presentation/prompts/plugin-pick-use-case.js";
+import { InteractiveOnlyError, TrustDeniedError } from "../../../../shared/domain/errors.js";
 import {
   describePluginSource,
   type PluginSource,
   parsePluginSourceShorthand,
-} from "../../../../kernel/source.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
-import type { PluginPick } from "../../../../presentation/prompts/plugin-pick-use-case.js";
+} from "../../../../shared/domain/source.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { MarketplaceTrustStore } from "../../../distribution/ports/marketplace-trust-store.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import {

@@ -25,7 +25,7 @@ paths:
 - `shared/ports/http-get.ts`: the two reads of a release, handed in by `src/composition/update.ts`.
 - `auth/contract/token-provider.ts`: the token the changelog read may carry (edge `update -> auth`).
 - `shared/ports/environment.ts`: the two bases that point the reads elsewhere for tests.
-- `kernel/`: errors, `Logger`, `VersionReader`, semver (migration state M3 of the reference).
+- `shared/`: errors, `Logger`, `VersionReader`, semver.
 
 ## Never
 

@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { readTextIfPresent } from "../../../../kernel/reading/text-file.js";
 import {
   parseRepositoryAliases,
   type RepositoryAliases,
@@ -7,6 +6,7 @@ import {
 } from "../../domain/legacy/repository-aliases.js";
 import type { PrivateStorage } from "../../domain/ports/private-storage.js";
 import type { RepositoryAliasStore } from "../../domain/ports/repository-alias-store.js";
+import { readTextIfPresent } from "../reading/text-file.js";
 
 /** `repository-ids.json`, beside the ledger. */
 export class RepositoryAliasStoreAdapter implements RepositoryAliasStore {

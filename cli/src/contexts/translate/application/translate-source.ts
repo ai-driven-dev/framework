@@ -1,10 +1,13 @@
 import { join, resolve } from "node:path";
-import { InvalidBuildPathsError, InvalidSourceMarketplaceError } from "../../../kernel/errors.js";
-import { pathsOverlap } from "../../../kernel/paths.js";
-import type { AssetProvider } from "../../../kernel/ports/asset-provider.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
-import type { Logger } from "../../../kernel/ports/logger.js";
+import {
+  InvalidBuildPathsError,
+  InvalidSourceMarketplaceError,
+} from "../../../shared/domain/errors.js";
+import { pathsOverlap } from "../../../shared/domain/paths.js";
+import type { AssetProvider } from "../../../shared/ports/asset-provider.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../shared/ports/file-writer.js";
+import type { Logger } from "../../../shared/ports/logger.js";
 import {
   type BuildPluginResult,
   type FrameworkBuildOptions,

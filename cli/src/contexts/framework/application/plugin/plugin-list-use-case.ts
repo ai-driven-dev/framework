@@ -1,4 +1,4 @@
-import type { AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";

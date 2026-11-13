@@ -1,5 +1,5 @@
-import { CapabilityConfigError } from "../../../../kernel/errors.js";
-import type { FlatHooksLoaderEntry } from "../../../../kernel/materialization/flat-paths.js";
+import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
 import type { FlatHooksBridge } from "../../contract/build-contract.js";
 import type { HookScript, ProjectHooksFormat } from "../../contract/tool-vocabulary.js";
 

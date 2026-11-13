@@ -1,9 +1,9 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { FileHash, InstallationFile } from "../../../../src/kernel/file.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
-import { VALID_TOOL_IDS } from "../../../../src/kernel/tool.js";
+import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+import type { ToolId } from "../../../../src/shared/domain/tool.js";
+import { VALID_TOOL_IDS } from "../../../../src/shared/domain/tool.js";
 
 /** 32-char lowercase hex → valid MD5. fast-check v4 removed hexaString; use stringMatching. */
 const md5Arb = fc.stringMatching(/^[0-9a-f]{32}$/);

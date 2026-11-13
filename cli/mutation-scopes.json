@@ -1,8 +1,18 @@
 {
-  "$comment": "The one declaration of what mutation testing covers and the floor each scope must hold. scripts/run-mutation.mjs runs a scope by name and fails below its break; tests/architecture/mutation-covers-source.arch.test.ts checks no source file falls outside both maps, that every scope declares a floor, and that package.json has a script per scope. framework's floor was 93; it measured 92.7 at this branch's head with --force, so its floor is 92. Globs, never file lists: a list goes stale the day a file is added, and the score does not drop, because the mutants that would have died were never generated. update measured 100 at this branch's head with --force, so its floor is 100. recipes mutates its domain and its application: ValidateRecipes holds the ordering and dedupe of files, the read-error mapping, the extension check, the link cache and every link finding, so it is mutated as it was when it sat in the framework scope. It measured 93.7 at this branch's head with --force, so its floor is 93. A floor is raised to the measured score after a run, never lowered without the reason here. A scope's mutate is one glob or a list where a leading ! excludes; tools is split one scope per tool profile: a profile is a static declaration whose every mutant reruns each test that loads it, and the five together outlasted every other scope on a two-core runner; vscode's single file stays with the rest. distribution held a floor of 77 before its adapters moved in and its use cases were renamed; it measured 82.1 at this branch's head with --force, so its floor is 82. The runtime and framework scores come from CI, not from this run. canary mutates a fixture, not the product: its static mutant stops a module from loading, which Stryker's vitest runner scores as survived on its own; its dynamic mutants check exact selection through nested suites, repeated spaces, and regex characters. The scope requires 100 and exactly each dynamic mutant's covering test, so a Stryker or Vitest upgrade cannot quietly bypass tests/helpers/unloadable-file-as-failed-test.ts or widen or lose mutation test selection.",
+  "$comment": "The one declaration of what mutation testing covers and the floor each scope must hold. scripts/run-mutation.mjs runs a scope by name and fails below its break; tests/architecture/mutation-covers-source.arch.test.ts checks no source file falls outside both maps, that every scope declares a floor, and that package.json has a script per scope. framework's floor was 93; it measured 92.7 at this branch's head with --force, so its floor is 92. Globs, never file lists: a list goes stale the day a file is added, and the score does not drop, because the mutants that would have died were never generated. update measured 100 at this branch's head with --force, so its floor is 100. recipes mutates its domain and its application: ValidateRecipes holds the ordering and dedupe of files, the read-error mapping, the extension check, the link cache and every link finding, so it is mutated as it was when it sat in the framework scope. It measured 93.7 at this branch's head with --force, so its floor is 93. A floor is raised to the measured score after a run, never lowered without the reason here. A scope's mutate is one glob or a list where a leading ! excludes; tools is split one scope per tool profile: a profile is a static declaration whose every mutant reruns each test that loads it, and the five together outlasted every other scope on a two-core runner; vscode's single file stays with the rest. distribution held a floor of 77 before its adapters moved in and its use cases were renamed; it measured 82.1 at this branch's head with --force, so its floor is 82. The runtime and framework scores come from CI, not from this run. canary mutates a fixture, not the product: its static mutant stops a module from loading, which Stryker's vitest runner scores as survived on its own; its dynamic mutants check exact selection through nested suites, repeated spaces, and regex characters. The scope requires 100 and exactly each dynamic mutant's covering test, so a Stryker or Vitest upgrade cannot quietly bypass tests/helpers/unloadable-file-as-failed-test.ts or widen or lose mutation test selection. kernel is the name of the floor of 96 that shared/domain, the seven ports that left the old kernel and framework's home-dir keep: they stay in it rather than join a scope with a lower floor.",
   "scopes": {
     "kernel": {
-      "mutate": "src/kernel/**/*.ts",
+      "mutate": [
+        "src/shared/domain/**/*.ts",
+        "src/shared/ports/asset-provider.ts",
+        "src/shared/ports/file-reader.ts",
+        "src/shared/ports/file-writer.ts",
+        "src/shared/ports/hasher.ts",
+        "src/shared/ports/logger.ts",
+        "src/shared/ports/prompter.ts",
+        "src/shared/ports/version-reader.ts",
+        "src/contexts/framework/domain/reading/home-dir.ts"
+      ],
       "break": 96,
       "shards": 4
     },
@@ -64,7 +74,8 @@
         "src/contexts/framework/**/*.ts",
         "!src/contexts/framework/infrastructure/hasher-adapter.ts",
         "!src/contexts/framework/infrastructure/platform-adapter.ts",
-        "!src/contexts/framework/infrastructure/assets/**/*.ts"
+        "!src/contexts/framework/infrastructure/assets/**/*.ts",
+        "!src/contexts/framework/domain/reading/home-dir.ts"
       ],
       "break": 92,
       "shards": 4
@@ -99,6 +110,14 @@
     "shared": {
       "mutate": [
         "src/shared/**/*.ts",
+        "!src/shared/domain/**/*.ts",
+        "!src/shared/ports/asset-provider.ts",
+        "!src/shared/ports/file-reader.ts",
+        "!src/shared/ports/file-writer.ts",
+        "!src/shared/ports/hasher.ts",
+        "!src/shared/ports/logger.ts",
+        "!src/shared/ports/prompter.ts",
+        "!src/shared/ports/version-reader.ts",
         "!src/shared/infrastructure/atomic-write.ts",
         "!src/shared/infrastructure/file-adapter.ts",
         "!src/shared/infrastructure/user-config-dir.ts"

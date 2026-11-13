@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DoctorReferencesUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-references-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { ToolId } from "../../../../../src/kernel/tool.js";
+import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 

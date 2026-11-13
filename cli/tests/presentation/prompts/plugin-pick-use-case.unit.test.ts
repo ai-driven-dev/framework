@@ -7,13 +7,13 @@ import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distributi
 import { PluginAddUseCase } from "../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginDistributionLoader } from "../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
+import { PluginPickUseCase } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
 import {
   InteractiveOnlyError,
   InvalidPluginManifestError,
   NoMarketplacesRegisteredError,
-} from "../../../src/kernel/errors.js";
-import type { Prompter } from "../../../src/kernel/ports/prompter.js";
-import { PluginPickUseCase } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
+} from "../../../src/shared/domain/errors.js";
+import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";

@@ -65,7 +65,6 @@ import { UserManifestRepositoryAdapter } from "../contexts/framework/infrastruct
 import { UserSourceReferencesAdapter } from "../contexts/framework/infrastructure/user-source-references-adapter.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
-import type { Logger } from "../kernel/ports/logger.js";
 import type { Deps, DepsFactory, FactoryOptions, MenuDeps } from "../presentation/deps.js";
 import { CLIOutput } from "../presentation/output.js";
 import { PluginPickUseCase } from "../presentation/prompts/plugin-pick-use-case.js";
@@ -82,6 +81,7 @@ import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter
 import { FileAdapter } from "../shared/infrastructure/file-adapter.js";
 import { HttpClient } from "../shared/infrastructure/http-client.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
+import type { Logger } from "../shared/ports/logger.js";
 import { wireAuth } from "./auth.js";
 import { wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";

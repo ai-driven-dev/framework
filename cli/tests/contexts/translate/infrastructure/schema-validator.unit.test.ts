@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AjvSchemaValidatorAdapter } from "../../../../src/contexts/translate/infrastructure/schema-validator.js";
-import { JsonSchemaValidationError } from "../../../../src/kernel/errors.js";
+import { JsonSchemaValidationError } from "../../../../src/shared/domain/errors.js";
 
 const STRING_SCHEMA = { type: "string" };
 const OBJECT_SCHEMA = {

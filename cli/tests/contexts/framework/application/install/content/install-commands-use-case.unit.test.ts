@@ -4,7 +4,7 @@ import { antigravity } from "../../../../../../src/contexts/tools/domain/profile
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import type { ContentSection } from "../../../../../../src/contexts/translate/domain/canon.js";
-import { GITKEEP_FILE } from "../../../../../../src/kernel/file.js";
+import { GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 
 const _DOCS_DIR = "aidd_docs";

@@ -26,7 +26,7 @@ const NOT_A_REPOSITORY_FILE = Object.freeze({
   // what the probe is for — a guard that only ever sees real paths never proves it can see a
   // dead one.
   "cli/tests/architecture/referenced-paths.arch.test.ts": [
-    "kernel/gone.ts",
+    "contexts/gone.ts",
     "shared/gone.ts",
     "application/shared/x.ts",
   ],

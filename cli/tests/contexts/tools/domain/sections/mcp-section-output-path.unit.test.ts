@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
-import { KiloDualConfigError, OpencodeDualConfigError } from "../../../../../src/kernel/errors.js";
+import {
+  KiloDualConfigError,
+  OpencodeDualConfigError,
+} from "../../../../../src/shared/domain/errors.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 
 const withFiles =

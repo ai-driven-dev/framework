@@ -5,7 +5,7 @@ import {
   InvalidPluginManifestError,
   InvalidPluginNameError,
   InvalidPluginVersionError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 

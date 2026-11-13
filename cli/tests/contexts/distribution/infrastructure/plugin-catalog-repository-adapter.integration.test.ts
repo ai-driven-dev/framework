@@ -7,7 +7,7 @@ import { HasherAdapter } from "../../../../src/contexts/framework/infrastructure
 import {
   InvalidPluginManifestError,
   MalformedMarketplaceCatalogError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");

@@ -1,5 +1,5 @@
-import { genericFlatHooksScriptPath } from "../../../../kernel/materialization/flat-paths.js";
-import { rewritePluginRootInJson } from "../../../../kernel/materialization/plugin-root-path-rewrite.js";
+import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
+import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { ProjectHookEntry } from "../../contract/tool-vocabulary.js";
 import { toBase64 } from "../formats/base64.js";
 import { PLUGIN_HOOKS_SOURCE } from "../formats/hooks-descriptor.js";

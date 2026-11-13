@@ -4,8 +4,8 @@
  * caller reads and writes.
  */
 
-import { genericFlatHooksScriptPath } from "../../../../kernel/materialization/flat-paths.js";
-import { rewritePluginRootInJson } from "../../../../kernel/materialization/plugin-root-path-rewrite.js";
+import { genericFlatHooksScriptPath } from "../../../../shared/domain/materialization/flat-paths.js";
+import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
 import type { PluginHooksShape, PluginMatcherGroup } from "./plugin-hooks-shape.js";
 
 /** A field a flat entry can carry, each read from the plugin's item or its matcher group. */

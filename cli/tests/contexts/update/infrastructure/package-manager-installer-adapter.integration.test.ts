@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { PackageManagerInstallerAdapter } from "../../../../src/contexts/update/infrastructure/package-manager-installer-adapter.js";
-import { UpdateError } from "../../../../src/kernel/errors.js";
+import { UpdateError } from "../../../../src/shared/domain/errors.js";
 import { aStubMachine, type StubMachine } from "../testing/stub-package-managers.js";
 
 describe.skipIf(process.platform === "win32")(

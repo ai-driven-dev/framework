@@ -12,7 +12,7 @@ import type {
   HostPluginRegistryReading,
 } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { UnreadableUserSourceReferencesError } from "../../../../../src/kernel/errors.js";
+import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/errors.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";

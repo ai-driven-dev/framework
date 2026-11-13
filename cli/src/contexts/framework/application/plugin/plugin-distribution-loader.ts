@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import { PLUGIN_CACHE_SUBDIR } from "../../../../kernel/paths.js";
-import type { PluginSource } from "../../../../kernel/source.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
+import type { PluginSource } from "../../../../shared/domain/source.js";
 import type {
   PluginFetcher,
   PluginFetchOptions,

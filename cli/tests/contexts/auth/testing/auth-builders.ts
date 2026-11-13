@@ -4,7 +4,7 @@ import { LogIn } from "../../../../src/contexts/auth/application/log-in.js";
 import { LogOut } from "../../../../src/contexts/auth/application/log-out.js";
 import type { CliAuthProvider } from "../../../../src/contexts/auth/ports/cli-auth-provider.js";
 import type { ExternalTokenSource } from "../../../../src/contexts/auth/ports/external-token-source.js";
-import type { Logger } from "../../../../src/kernel/ports/logger.js";
+import type { Logger } from "../../../../src/shared/ports/logger.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
 import { FakeCliAuthProvider } from "./fake-cli-auth-provider.js";

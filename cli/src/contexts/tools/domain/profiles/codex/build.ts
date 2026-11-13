@@ -5,11 +5,11 @@
  * imports them back from here.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import {
   flatMcpKeyPrefix,
   genericFlatSkillPath,
-} from "../../../../../kernel/materialization/flat-paths.js";
+} from "../../../../../shared/domain/materialization/flat-paths.js";
 import type { PluginPresence, ToolBuildContract } from "../../../contract/build-contract.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { parseToml, stringifyToml } from "../../formats/toml.js";

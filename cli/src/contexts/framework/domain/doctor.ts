@@ -1,4 +1,4 @@
-import type { AiToolId, ToolId } from "../../../kernel/tool.js";
+import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 
 export type IssueSeverity = "info" | "warning" | "error";
 

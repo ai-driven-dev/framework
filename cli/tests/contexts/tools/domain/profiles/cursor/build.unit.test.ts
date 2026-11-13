@@ -3,7 +3,7 @@ import {
   buildCursorContract,
   buildCursorFlatContract,
 } from "../../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
-import { parseFrontmatter } from "../../../../../../src/kernel/markdown.js";
+import { parseFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
 import { supported } from "../../../testing/build-artifacts.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.

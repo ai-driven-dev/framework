@@ -8,8 +8,8 @@ import { RestoreUseCase } from "../../../../src/contexts/framework/application/r
 import { DetectPluginDriftUseCase } from "../../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
 import { StatusUseCase } from "../../../../src/contexts/framework/application/status-use-case.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import { NoManifestError } from "../../../../src/kernel/errors.js";
-import type { Prompter } from "../../../../src/kernel/ports/prompter.js";
+import { NoManifestError } from "../../../../src/shared/domain/errors.js";
+import type { Prompter } from "../../../../src/shared/ports/prompter.js";
 import {
   buildUnitDeps,
   initAndInstall,

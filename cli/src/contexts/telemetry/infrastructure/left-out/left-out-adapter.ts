@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
-import { readTextIfPresent } from "../../../../kernel/reading/text-file.js";
 import type { PrivateStorage } from "../../domain/ports/private-storage.js";
 import type { LeftOutEntry, LeftOutReason, LeftOutStore } from "../../domain/ports/usage-ledger.js";
 import { compareText } from "../../domain/text-order.js";
+import { readTextIfPresent } from "../reading/text-file.js";
 
 /** What ingests measured and could not store, in one file beside the ledger: `<reason> <hash>`
  * per line, the hash of the reason and of what the thing is, in text order, each once. A line

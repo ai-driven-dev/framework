@@ -1,6 +1,6 @@
-import { CategoryMismatchError } from "../../../../kernel/errors.js";
-import type { AiToolId, IdeToolId, ToolId } from "../../../../kernel/tool.js";
-import { isAiToolId } from "../../../../kernel/tool.js";
+import { CategoryMismatchError } from "../../../../shared/domain/errors.js";
+import type { AiToolId, IdeToolId, ToolId } from "../../../../shared/domain/tool.js";
+import { isAiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";

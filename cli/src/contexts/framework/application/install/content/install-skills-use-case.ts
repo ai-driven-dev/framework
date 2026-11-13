@@ -1,5 +1,5 @@
-import type { InstallationFile } from "../../../../../kernel/file.js";
-import type { Hasher } from "../../../../../kernel/ports/hasher.js";
+import type { InstallationFile } from "../../../../../shared/domain/file.js";
+import type { Hasher } from "../../../../../shared/ports/hasher.js";
 import type {
   AiToolProfile,
   SkillsSectionAnswers,

@@ -7,7 +7,7 @@ import {
   ElevatedPermissionUpdateError,
   PackageManagerDetectionError,
   UpdateError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/errors.js";
 
 /** What one scenario asks of an installer: the machine it runs on. */
 export type InstallScenario =

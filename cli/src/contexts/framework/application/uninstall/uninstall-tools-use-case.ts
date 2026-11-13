@@ -3,12 +3,12 @@ import {
   isMergeContentEmpty,
   type MergeFileEntry,
   removeEntriesFromJson,
-} from "../../../../kernel/merge.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
-import { isAiToolId } from "../../../../kernel/tool.js";
+} from "../../../../shared/domain/merge.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import { isAiToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";

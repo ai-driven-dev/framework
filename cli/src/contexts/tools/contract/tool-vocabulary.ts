@@ -1,4 +1,4 @@
-import type { PluginSource } from "../../../kernel/source.js";
+import type { PluginSource } from "../../../shared/domain/source.js";
 
 /** A hook script as the tool runs it, given its path in the plugin and its shipped content. */
 export type HookScript = (pluginPath: string, content: string) => string;

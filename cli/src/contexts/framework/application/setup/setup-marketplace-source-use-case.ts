@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
-import { InputRequiredError } from "../../../../kernel/errors.js";
-import type { Prompter } from "../../../../kernel/ports/prompter.js";
+import { InputRequiredError } from "../../../../shared/domain/errors.js";
+import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { MarketplaceSourceMode } from "../../../distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../distribution/ports/release-lister.js";
 

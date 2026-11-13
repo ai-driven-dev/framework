@@ -1,5 +1,5 @@
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { ToolId } from "../../../../kernel/tool.js";
+import type { ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { NativePluginClaim } from "../../domain/manifest/native-registrations.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 

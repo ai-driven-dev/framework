@@ -23,7 +23,7 @@ paths:
 ## Suppliers
 
 - `auth`: the `TokenProvider` contract, for the adapters that read a private source.
-- `kernel/`: errors, `Logger`, paths and the source value.
+- `shared/`: errors, `Logger`, paths and the source value.
 - Nothing from `framework/`: biome denies it, and `biome-guards-bite.arch.test.ts` plants it.
 
 ## Never

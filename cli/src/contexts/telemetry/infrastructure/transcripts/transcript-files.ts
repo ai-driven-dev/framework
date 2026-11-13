@@ -1,14 +1,14 @@
 import { constants, type Stats } from "node:fs";
 import { type FileHandle, open, readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { isErrnoException } from "../../../../kernel/reading/json-file.js";
-import { modifiedAtIfPresent } from "../../../../kernel/reading/text-file.js";
+import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { TranscriptRead } from "../../domain/ports/transcript-source.js";
 import {
   resumeOffset,
   type TranscriptPosition,
   type TranscriptStat,
 } from "../../domain/transcript-position.js";
+import { modifiedAtIfPresent } from "../reading/text-file.js";
 
 const NEWLINE = 0x0a;
 /** How far back from its end a skipped file is searched for its last complete line. */

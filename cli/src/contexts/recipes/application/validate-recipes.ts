@@ -1,5 +1,5 @@
 import path from "node:path";
-import { InputRequiredError } from "../../../kernel/errors.js";
+import { InputRequiredError } from "../../../shared/domain/errors.js";
 import { headingAnchors, normalizedAnchor, type RecipeFinding } from "../domain/markdown-scan.js";
 import { inspectRecipe, type RecipeInspection } from "../domain/recipe-rules.js";
 import type { RecipeDirectory, RecipeFiles } from "../ports/recipe-files.js";

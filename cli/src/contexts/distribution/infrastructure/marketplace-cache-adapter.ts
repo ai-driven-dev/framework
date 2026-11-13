@@ -1,6 +1,6 @@
 import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { MARKETPLACE_CACHE_SUBDIR } from "../../../kernel/paths.js";
+import { MARKETPLACE_CACHE_SUBDIR } from "../../../shared/domain/paths.js";
 import type { MarketplaceCachePort } from "../ports/marketplace-cache.js";
 
 export class MarketplaceCacheAdapter implements MarketplaceCachePort {

@@ -5,9 +5,9 @@ import {
   DuplicatePluginError,
   PluginNotFoundError,
   ToolNotInManifestError,
-} from "../../../../src/kernel/errors.js";
-import { FileHash, InstallationFile } from "../../../../src/kernel/file.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
+} from "../../../../src/shared/domain/errors.js";
+import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+import type { ToolId } from "../../../../src/shared/domain/tool.js";
 
 const CLAUDE = "claude" as ToolId;
 const CURSOR = "cursor" as ToolId;

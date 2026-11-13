@@ -1,7 +1,7 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { NpmRegistryReleaseAdapter } from "../../../../src/contexts/update/infrastructure/npm-registry-release-adapter.js";
-import { FrameworkResolutionError } from "../../../../src/kernel/errors.js";
+import { FrameworkResolutionError } from "../../../../src/shared/domain/errors.js";
 import { HttpClient } from "../../../../src/shared/infrastructure/http-client.js";
 import {
   describeCliReleaseSourceContract,

@@ -1,11 +1,11 @@
-import { DuplicateToolIdError, UnregisteredToolError } from "../../../kernel/errors.js";
+import { DuplicateToolIdError, UnregisteredToolError } from "../../../shared/domain/errors.js";
 import {
   AI_TOOL_IDS,
   type AiToolId,
   type IdeToolId,
   type ToolCategory,
   type ToolId,
-} from "../../../kernel/tool.js";
+} from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, ToolProfile } from "../contract/tool-profile.js";
 import type { BuiltToolConfig } from "../domain/profile/define-tool.js";

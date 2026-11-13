@@ -1,5 +1,5 @@
 import { isAbsolute, relative } from "node:path";
-import type { PluginSource, PluginSourceGitSubdir } from "../../../../kernel/source.js";
+import type { PluginSource, PluginSourceGitSubdir } from "../../../../shared/domain/source.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 export function resolvePluginSourceFromMarketplace(
   entrySource: PluginSource,

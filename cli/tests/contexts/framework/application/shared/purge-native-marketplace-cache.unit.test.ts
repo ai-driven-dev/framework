@@ -5,7 +5,7 @@ import {
   purgeNativeMarketplaceCache,
   type UndoneToolRegistrations,
 } from "../../../../../src/contexts/framework/application/shared/purge-native-marketplace-cache.js";
-import type { ToolId } from "../../../../../src/kernel/tool.js";
+import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";

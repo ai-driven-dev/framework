@@ -3,8 +3,8 @@ import {
   parseBuiltMarketplaceDirAtAnyRoot,
   parseUserBuiltMarketplaceDir,
   samePathSegment,
-} from "../../../kernel/paths.js";
-import { compareSemver, isSemver } from "../../../kernel/semver.js";
+} from "../../../shared/domain/paths.js";
+import { compareSemver, isSemver } from "../../../shared/domain/semver.js";
 
 /** Every path a caller hands `marketplaceSourceDrift` — `userCacheRoot`, `projectRoot` and the two
  * sources compared against them — is expected already `realpath`'d: this decides a migration story

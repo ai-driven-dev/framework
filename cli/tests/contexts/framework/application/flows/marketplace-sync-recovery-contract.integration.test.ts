@@ -11,10 +11,13 @@ import type {
   NativeMarketplaceSource,
 } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
-import { NativePluginCliError } from "../../../../../src/kernel/errors.js";
-import { InstallationFile } from "../../../../../src/kernel/file.js";
-import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../../../src/kernel/paths.js";
-import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
+import { NativePluginCliError } from "../../../../../src/shared/domain/errors.js";
+import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import {
+  builtMarketplaceDir,
+  userBuiltMarketplaceDir,
+} from "../../../../../src/shared/domain/paths.js";
+import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HostCliAdapter } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
-import { NativePluginCliError } from "../../../../src/kernel/errors.js";
+import { NativePluginCliError } from "../../../../src/shared/domain/errors.js";
 
 function pathWithExecutable(name: string): { dir: string; restore: () => void } {
   const dir = mkdtempSync(join(tmpdir(), "aidd-bin-"));

@@ -7,7 +7,7 @@ import { MarketplaceSyncSettingsUseCase } from "../../../../../../src/contexts/f
 import { ModeAMarketplaceTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import type { PluginSource } from "../../../../../../src/kernel/source.js";
+import type { PluginSource } from "../../../../../../src/shared/domain/source.js";
 import { CapturingLogger } from "../../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";

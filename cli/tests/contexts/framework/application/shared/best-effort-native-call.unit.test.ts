@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bestEffortNativeCall } from "../../../../../src/contexts/framework/application/shared/best-effort-native-call.js";
-import { NativePluginCliError } from "../../../../../src/kernel/errors.js";
+import { NativePluginCliError } from "../../../../../src/shared/domain/errors.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 
 describe("bestEffortNativeCall", () => {

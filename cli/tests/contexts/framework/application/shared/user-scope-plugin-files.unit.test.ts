@@ -6,7 +6,7 @@ import {
   userScopeFilesSafeToDelete,
 } from "../../../../../src/contexts/framework/application/shared/user-scope-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import { FileHash, InstallationFile } from "../../../../../src/kernel/file.js";
+import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import {
   errnoError,

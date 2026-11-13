@@ -12,7 +12,7 @@ import {
   userBuiltCacheRoot,
   userBuiltMarketplaceDir,
   userManifestPath,
-} from "../../../../src/kernel/paths.js";
+} from "../../../../src/shared/domain/paths.js";
 
 // Asked with backslash-spelled paths, which is what a Windows run passes and what a
 // hardcoded "/" comparison never recognises.

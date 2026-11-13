@@ -5,9 +5,9 @@ import {
   UserScopeNoToolsError,
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
-} from "../../../kernel/errors.js";
-import type { MarketplaceScope } from "../../../kernel/scope.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../../kernel/tool.js";
+} from "../../../shared/domain/errors.js";
+import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import { type ToolId, VALID_TOOL_IDS } from "../../../shared/domain/tool.js";
 import type { MarketplaceSourceMode } from "../../distribution/domain/marketplace-source-mode.js";
 
 export type PluginInstallMode = "interactive" | "all" | "recommended" | "named" | "none";

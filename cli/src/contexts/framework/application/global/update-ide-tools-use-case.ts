@@ -1,5 +1,5 @@
-import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
-import { type IdeToolId, isIdeToolId } from "../../../../kernel/tool.js";
+import { type IdeToolId, isIdeToolId } from "../../../../shared/domain/tool.js";
+import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UpdateOneToolUseCase } from "./update-one-tool-use-case.js";
 import { UpdateToolsUseCase } from "./update-tools-use-case.js";

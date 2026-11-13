@@ -10,7 +10,8 @@ paths:
 ## `src/shared/`
 
 - A module enters when two contexts consume it, by import or by being handed its adapter by the composition root.
-- No computed check exists yet: the PR that admits a module names its consumers, and registers a module short of two as a migration-state deviation.
+- `earned-sharing.arch.test.ts` counts the importing contexts of every file under `src/shared/` and fails on fewer than two. Presentation and composition are consumers, not contexts. A file short of two moves into its one context, or is deleted when nobody imports it.
+- `SHARED_BASELINE` in that test lists the files that cannot move yet, each with the condition that removes it; it only shrinks.
 
 ## A `shared/` directory inside a context
 
@@ -23,4 +24,4 @@ paths:
 - A file nested under a shared module is its private step.
 - A promoted module follows `0-hexagonal.md`.
 - Crossing a context: declare the module public (`0-contexts.md`); a migrated context publishes through `contract/` (`reference-context.md`).
-- Move to `shared/` only once it stops being business logic; `kernel/` receives no new file.
+- Move to `shared/` only once it stops being business logic; the old `kernel` area no longer exists: `old-layout-count.arch.test.ts` fails if it comes back.

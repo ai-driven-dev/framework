@@ -1,6 +1,6 @@
-import { NoManifestError } from "../../../../kernel/errors.js";
-import type { Prompter } from "../../../../kernel/ports/prompter.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
+import { NoManifestError } from "../../../../shared/domain/errors.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { marketplaceSourceDrift } from "../../../../src/contexts/framework/domain/marketplace-source-drift.js";
-import { userBuiltMarketplaceDir } from "../../../../src/kernel/paths.js";
+import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/paths.js";
 
 const DRIFT_CONTEXT = {
   userCacheRoot: "/user-cache",

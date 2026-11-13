@@ -6,7 +6,7 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/framework/
 import { PluginUpdateUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-update-use-case.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/framework/application/shared/apply-plugin-files-use-case.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import type { PluginSource } from "../../../../../src/kernel/source.js";
+import type { PluginSource } from "../../../../../src/shared/domain/source.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";

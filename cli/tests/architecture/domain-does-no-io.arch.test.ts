@@ -1,6 +1,6 @@
 /**
  * A context's domain does no I/O (`0-hexagonal.md`), and the file ports are how I/O reaches
- * it: a domain file that names `kernel/ports/file-reader` or `file-writer` is handed the disk.
+ * it: a domain file that names `shared/ports/file-reader` or `file-writer` is handed the disk.
  * `domain/ports/` declares interfaces and may name them.
  *
  * Measured: biome's `noRestrictedImports` refuses `import type` and `import { type }`, but not
@@ -17,7 +17,7 @@ import {
   sourceFiles,
 } from "./helpers.js";
 
-const FILE_PORTS = new Set(["src/kernel/ports/file-reader.ts", "src/kernel/ports/file-writer.ts"]);
+const FILE_PORTS = new Set(["src/shared/ports/file-reader.ts", "src/shared/ports/file-writer.ts"]);
 
 const DOMAIN = /^src\/contexts\/[^/]+\/domain\//;
 const DOMAIN_PORTS = /^src\/contexts\/[^/]+\/domain\/ports\//;
@@ -53,7 +53,7 @@ describe("a context's domain does no I/O", () => {
 
     expect(
       added,
-      "a domain file imports kernel/ports/file-reader or file-writer — take the data, or move the I/O to infrastructure"
+      "a domain file imports shared/ports/file-reader or file-writer — take the data, or move the I/O to infrastructure"
     ).toEqual([]);
     expect(fixed, "fixed or changed — update BASELINE").toEqual([]);
   });
@@ -67,18 +67,18 @@ describe("a context's domain does no I/O", () => {
 });
 
 describe("the guard itself", () => {
-  const writer = 'import type { FileWriter } from "../../../kernel/ports/file-writer.js";';
+  const writer = 'import type { FileWriter } from "../../../shared/ports/file-writer.js";';
 
   it("names a domain file importing file-writer, whatever the import form", () => {
     const bodies = new Map([
       ["src/contexts/framework/domain/a.ts", writer],
       [
         "src/contexts/framework/domain/b.ts",
-        'import { type FileReader } from "../../../kernel/ports/file-reader.js";',
+        'import { type FileReader } from "../../../shared/ports/file-reader.js";',
       ],
       [
         "src/contexts/framework/domain/nested/c.ts",
-        'export type R = import("../../../../kernel/ports/file-reader.js").FileReader;',
+        'export type R = import("../../../../shared/ports/file-reader.js").FileReader;',
       ],
     ]);
 
@@ -103,7 +103,7 @@ describe("the guard itself", () => {
     const bodies = new Map([
       [
         "src/contexts/tools/domain/x.ts",
-        `${writer}\nimport type { FileReader } from "../../../kernel/ports/file-reader.js";`,
+        `${writer}\nimport type { FileReader } from "../../../shared/ports/file-reader.js";`,
       ],
     ]);
 

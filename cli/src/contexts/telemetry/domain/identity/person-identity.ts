@@ -1,5 +1,5 @@
-import { tryParseJson } from "../../../../kernel/reading/json-file.js";
-import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
+import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 
 const MAX_LENGTH = 128;
 // biome-ignore lint/suspicious/noControlCharactersInRegex: a control character is what is refused

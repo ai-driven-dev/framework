@@ -10,8 +10,8 @@ import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copil
 import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
 import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
 import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
-import type { AiToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { pathWithoutAidd } from "../../e2e/helpers.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 import { catalogOf } from "./testing/catalog-of.js";
