@@ -4,6 +4,7 @@ const path = require("node:path");
 const { Refusal, NO_UI_FOLDER, walk, clean, relative, UI_DIR, SYSTEM_FILE, CSS_FILE, DRAFTS_DIR, ERROR } = require("./project.cjs");
 const { table, list, parseRecord, LINE_BREAK } = require("./markdown.cjs");
 const { pageOf } = require("./page.cjs");
+const { fingerprintOf } = require("./html.cjs");
 
 const VARIANTS_FILE = "variants.md";
 const PREVIEW_FILE = "preview.html"; // a variant's own look, shown while comparing and never kept
@@ -67,6 +68,23 @@ function shownOf({ dir, axes }, row) {
   return { name: row[VARIANT_COLUMN], intent: row[INTENT_COLUMN], axes: axes.map((axis) => [axis, row[axis]]), files };
 }
 
+/** Every set under the drafts: its rows and axes, what each variant shows, its problems and a fingerprint of what it shows.
+ * A variant named like a path shows no files, and a folder without `variants.md` is no set. */
+function setsOf(root) {
+  const draftsDir = path.join(root, UI_DIR, DRAFTS_DIR);
+  if (!fs.existsSync(draftsDir)) return [];
+  return fs
+    .readdirSync(draftsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && SET_NAME.test(entry.name) && fs.existsSync(path.join(draftsDir, entry.name, VARIANTS_FILE)))
+    .map((entry) => entry.name)
+    .sort()
+    .map((id) => {
+      const set = setOf(root, id);
+      const variants = set.rows.map((row) => (isName(row[VARIANT_COLUMN]) ? shownOf(set, row) : { name: row[VARIANT_COLUMN], intent: row[INTENT_COLUMN], axes: set.axes.map((axis) => [axis, row[axis]]), files: [] }));
+      return { id, rows: set.rows, axes: set.axes, variants, problems: check(set), fingerprint: fingerprintOf(variants) };
+    });
+}
+
 /** A project file's text, or null when the project has none. */
 const readIfThere = (root, name) => (fs.existsSync(path.join(root, UI_DIR, name)) ? clean(fs.readFileSync(path.join(root, UI_DIR, name), "utf8")) : null);
 
@@ -104,4 +122,4 @@ function keep(root, id, variant) {
   return { kept: variant, written };
 }
 
-module.exports = { compare, keep };
+module.exports = { compare, keep, setsOf, IGNORE_FILE, IGNORE_ALL };

@@ -237,12 +237,14 @@ function writeShowcase(args) {
     const project = required(root);
     const lang = languageOf(values[LANG_FLAG]);
     const stylesheet = path.join(root, tokens.cssFileOf(project));
-    const pages = showcaseOf({ project, problems: problemsOf(project), tokens: fs.existsSync(stylesheet) ? fs.readFileSync(stylesheet, "utf8") : null, captures: capturesOf(root), lang });
+    const sets = drafts.setsOf(root);
+    const pages = showcaseOf({ project, problems: problemsOf(project), tokens: fs.existsSync(stylesheet) ? fs.readFileSync(stylesheet, "utf8") : null, captures: capturesOf(root), lang, sets });
     const dir = path.join(root, UI_DIR, SHOWCASE_DIR);
     fs.rmSync(dir, { recursive: true, force: true });
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, ".gitignore"), "*\n");
     for (const [name, html] of Object.entries(pages)) fs.writeFileSync(path.join(dir, name), html);
+    if (fs.existsSync(path.join(root, UI_DIR, DRAFTS_DIR))) fs.writeFileSync(path.join(root, UI_DIR, DRAFTS_DIR, drafts.IGNORE_FILE), drafts.IGNORE_ALL);
     console.log(JSON.stringify({ page: `${UI_DIR}/${SHOWCASE_DIR}/index.html`, pages: Object.keys(pages).length, lang }, null, 2));
     return EXIT_VALID;
   });

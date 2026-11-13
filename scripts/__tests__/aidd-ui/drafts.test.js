@@ -561,4 +561,63 @@ describe("aidd-ui drafts", () => {
       assert.doesNotMatch(page(), /fetch|XMLHttpRequest|WebSocket/);
     });
   });
+
+  describe("setsOf", () => {
+    const { setsOf } = require(path.join(LIB, "drafts.cjs"));
+
+    it("lists no set when the project has no drafts", () => {
+      assert.deepEqual(setsOf(tmp), []);
+    });
+
+    it("lists each set with its rows, axes, shown variants, problems and a fingerprint of what it shows", () => {
+      writeSet("brand");
+      writeSet("layout", { rows: ROWS.slice(0, 1) });
+      const sets = setsOf(tmp);
+      assert.deepEqual(sets.map((set) => set.id), ["brand", "layout"]);
+      const [brand, layout] = sets;
+      assert.deepEqual(brand.axes, ["Tone", "Density"]);
+      assert.deepEqual(brand.rows.map((row) => row.Variant), ["a", "b", "c"]);
+      assert.deepEqual(brand.variants.map(({ name, intent, axes }) => [name, intent, axes]), ROWS.map(([name, intent, tone, density]) => [name, intent, [["Tone", tone], ["Density", density]]]));
+      assert.deepEqual(brand.variants[0].files.map((file) => file.path), ["brand.md", "preview.html"]);
+      assert.deepEqual(brand.problems, []);
+      assert.match(brand.fingerprint, /^[0-9a-f]{64}$/);
+      assert.deepEqual(layout.problems.map((problem) => problem.rule), ["D1"]);
+    });
+
+    it("changes the fingerprint when a variant's file changes, and only then", () => {
+      writeSet("brand");
+      const before = setsOf(tmp)[0].fingerprint;
+      assert.equal(setsOf(tmp)[0].fingerprint, before);
+      put(`${DRAFTS}/brand/a/preview.html`, "<p>changed</p>\n");
+      assert.notEqual(setsOf(tmp)[0].fingerprint, before);
+    });
+
+    it("keeps a set whose variant is named like a path, with its problem and no files", () => {
+      writeSet("brand", { rows: [ROWS[0], ["../x", ROWS[1][1], "bold", "roomy"], ROWS[2]] });
+      const [set] = setsOf(tmp);
+      assert.ok(set.problems.some((problem) => problem.rule === "D5"));
+      assert.deepEqual(set.variants[1].files, []);
+    });
+
+    it("skips a folder that holds no variants.md and a folder that is no set name", () => {
+      put(`${DRAFTS}/empty/a/preview.html`, "<p>a</p>");
+      put(`${DRAFTS}/Not A Name/variants.md`, "# x\n");
+      assert.deepEqual(setsOf(tmp), []);
+    });
+  });
+
+  describe("showcase and the drafts folder", () => {
+    const showcase = () => engine("showcase", "--root", tmp);
+
+    it("writes drafts/.gitignore when drafts exist, so a draft never reaches the history", () => {
+      writeSet("brand");
+      assert.equal(showcase().status, 0);
+      assert.equal(read(`${DRAFTS}/.gitignore`), "*\n");
+    });
+
+    it("writes no drafts folder when the project holds none", () => {
+      assert.equal(showcase().status, 0);
+      assert.equal(exists(DRAFTS), false);
+    });
+  });
 });
