@@ -17,4 +17,5 @@ How each host AI tool receives a rule, and how to detect it.
 - The Codex index also loads in Cursor, Copilot and Antigravity, a known duplicate.
 - OpenCode V1 falls back to `CLAUDE.md` when no `AGENTS.md` exists; V2 does not.
 - `.codex/rules` holds Codex execution policy, never instructions.
+- The Codex `workspace-write` sandbox denies writes under `.agents/`, so an Antigravity copy written from Codex needs the user's approval to run outside it.
 - Unsupported host: offer a root `AGENTS.md` index, or a host above.

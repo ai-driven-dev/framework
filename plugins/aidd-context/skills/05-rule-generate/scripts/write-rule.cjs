@@ -1,80 +1,134 @@
 #!/usr/bin/env node
 "use strict";
 // Usage: node write-rule.cjs --project <abs dir> --tools <claude,cursor,copilot,antigravity,codex,opencode> (--input <request.json> | --delete <category>/<slug> | --publish) [--plan | --check] [--force]
-// Publishes aidd_docs/rules sources as native copies. Exit 0 ok, 1 refusal/conflict/drift, 2 usage error.
+// Publishes aidd_docs/rules sources as native copies.
+// Exit 0 ok, 1 refusal/conflict/drift/unexpected error, 2 usage error, 3 filesystem blocked or failed.
+// Every non-zero exit prints a JSON object on stdout.
 const fs = require("node:fs");
 const path = require("node:path");
 const { createHash } = require("node:crypto");
 
 const TOOLS = ["claude", "cursor", "copilot", "antigravity", "codex", "opencode"];
-const CATEGORIES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"].map((n, i) => `0${i}-${n}`);
+const CATEGORIES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"].map((name, index) => `0${index}-${name}`);
 const SOURCE_DIR = "aidd_docs/rules";
 const OPENCODE_INSTRUCTIONS = "aidd_docs/rules/*/*.md";
-const fail = (match) => { throw new Error(match); };
-const usage = (match) => { throw Object.assign(new Error(`${match}\nUsage: see header of write-rule.cjs`), { usage: true }); };
-const sha = (t) => createHash("sha256").update(t).digest("hex");
-const isUtf8 = (s) => Buffer.from(s).toString("utf8") === s;
-const toolList = (l) => {
-  if (!Array.isArray(l) || l.some((t) => !TOOLS.includes(t))) fail(`Unknown tool; expected ${TOOLS.join(",")}.`);
-  return TOOLS.filter((t) => l.includes(t));
-};
+const FLAG_OPTIONS = ["--publish", "--plan", "--check", "--force"];
+const VALUE_OPTIONS = ["--project", "--tools", "--input", "--delete"];
+const REQUEST_KEYS = ["category", "slug", "description", "body", "paths"];
+const ANTIGRAVITY_MAX_BYTES = 24000;
+const EXIT = { OK: 0, REFUSED: 1, USAGE: 2, FILESYSTEM: 3 };
 
-function utf8file(file) {
-  const bytes = fs.readFileSync(file);
-  const text = bytes.toString("utf8");
-  if (!Buffer.from(text).equals(bytes)) fail(`Invalid UTF-8 in ${file}.`);
-  return text;
+class Refusal extends Error {}
+class UsageError extends Error {}
+
+function refuse(message) {
+  throw new Refusal(message);
+}
+
+function rejectUsage(message) {
+  throw new UsageError(message);
+}
+
+// ---------- pure helpers ----------
+
+const sha256 = (text) => createHash("sha256").update(text).digest("hex");
+const isUtf8 = (text) => Buffer.from(text).toString("utf8") === text;
+const isMissing = (error) => error.code === "ENOENT" || error.code === "ENOTDIR";
+const quote = (value) => JSON.stringify(value);
+
+function parseTools(list) {
+  if (!Array.isArray(list) || list.some((tool) => !TOOLS.includes(tool))) refuse(`Unknown tool; expected ${TOOLS.join(",")}.`);
+  return TOOLS.filter((tool) => list.includes(tool));
+}
+
+function mergeTargets(targets, tools) {
+  return parseTools([...targets, ...tools]);
 }
 
 function parseArgs(argv) {
   const options = {};
-  const values = ["--project", "--tools", "--input", "--delete"];
   for (let i = 0; i < argv.length; i++) {
-    const k = argv[i];
-    const flag = ["--publish", "--plan", "--check", "--force"].includes(k);
-    if (!(flag || values.includes(k)) || k in options) usage(`Bad option: ${k}`);
-    options[k] = flag || argv[++i];
-    if (!options[k] || (!flag && options[k].startsWith("--"))) usage(`Missing value: ${k}`);
+    const name = argv[i];
+    const isFlag = FLAG_OPTIONS.includes(name);
+    if (!(isFlag || VALUE_OPTIONS.includes(name)) || name in options) rejectUsage(`Bad option: ${name}`);
+    if (isFlag) {
+      options[name] = true;
+      continue;
+    }
+    const value = argv[++i];
+    if (!value || value.startsWith("--")) rejectUsage(`Missing value: ${name}`);
+    options[name] = value;
   }
-  if (!options["--project"] || !options["--tools"]) usage("--project and --tools are required.");
-  if (["--input", "--delete", "--publish"].filter((k) => k in options).length !== 1) usage("Choose exactly one of --input, --delete, --publish.");
-  if (options["--check"] && (!options["--publish"] || options["--plan"])) usage("--check applies to --publish only, without --plan.");
+  assertOptionsConsistent(options);
   return options;
 }
 
-function validate(rule) {
-  const i = CATEGORIES.indexOf(rule.category);
-  if (i < 0 || typeof rule.slug !== "string" || !/^\d-[a-z0-9]+(?:[-.@][a-z0-9]+)*$/.test(rule.slug) || rule.slug[0] !== String(i)) fail("Invalid category or slug.");
-  if (typeof rule.description !== "string" || !rule.description.trim() || /[\r\n]/.test(rule.description)) fail("Description must be a non-empty single line.");
-  if (typeof rule.body !== "string" || !rule.body.trim()) fail("Body must be non-empty.");
-  if (!Array.isArray(rule.paths) || rule.paths.some((p) => typeof p !== "string" || !p || /[,\r\n]/.test(p))) fail("Paths must be non-empty strings without commas or newlines.");
-  if (![rule.body, rule.description, ...rule.paths].every(isUtf8)) fail("Text must be valid UTF-8.");
-  rule.targets = toolList(rule.targets);
+function assertOptionsConsistent(options) {
+  if (!options["--project"] || !options["--tools"]) rejectUsage("--project and --tools are required.");
+  const actions = ["--input", "--delete", "--publish"].filter((name) => name in options);
+  if (actions.length !== 1) rejectUsage("Choose exactly one of --input, --delete, --publish.");
+  if (options["--check"] && (!options["--publish"] || options["--plan"])) rejectUsage("--check applies to --publish only, without --plan.");
+}
+
+function validateRule(rule) {
+  const categoryIndex = CATEGORIES.indexOf(rule.category);
+  const slugPattern = /^\d-[a-z0-9]+(?:[-.@][a-z0-9]+)*$/;
+  if (categoryIndex < 0 || typeof rule.slug !== "string" || !slugPattern.test(rule.slug) || rule.slug[0] !== String(categoryIndex)) refuse("Invalid category or slug.");
+  if (typeof rule.description !== "string" || !rule.description.trim() || /[\r\n]/.test(rule.description)) refuse("Description must be a non-empty single line.");
+  if (typeof rule.body !== "string" || !rule.body.trim()) refuse("Body must be non-empty.");
+  if (!Array.isArray(rule.paths) || rule.paths.some((glob) => typeof glob !== "string" || !glob || /[,\r\n]/.test(glob))) refuse("Paths must be non-empty strings without commas or newlines.");
+  if (![rule.body, rule.description, ...rule.paths].every(isUtf8)) refuse("Text must be valid UTF-8.");
+  return { ...rule, targets: parseTools(rule.targets) };
+}
+
+function parseRequest(text) {
+  const request = JSON.parse(text);
+  if (!request || typeof request !== "object" || Object.keys(request).some((key) => !REQUEST_KEYS.includes(key))) refuse(`Request must be an object with ${REQUEST_KEYS.join(", ")}.`);
+  return request;
+}
+
+function sourcePath(rule) {
+  return `${SOURCE_DIR}/${rule.category}/${rule.slug}.md`;
+}
+
+function yamlPaths(paths) {
+  return paths.map((glob) => `  - ${quote(glob)}\n`).join("");
+}
+
+function renderSource(rule) {
+  const paths = rule.paths.length ? `paths:\n${yamlPaths(rule.paths)}` : "";
+  return `---\ndescription: ${quote(rule.description)}\n${paths}targets: [${rule.targets.join(", ")}]\n---\n\n${rule.body}`;
+}
+
+function parseLegacySource(match, text) {
+  return { ...JSON.parse(match[1]), body: text.slice(match[0].length), legacy: true };
+}
+
+function parseFrontmatterSource(match, relativePath) {
+  const rule = { body: match[2], paths: [], targets: [] };
+  for (const line of match[1].split("\n")) {
+    const description = /^description: (.*)$/.exec(line);
+    const glob = /^  - (.*)$/.exec(line);
+    const targets = /^targets: \[(.*)\]$/.exec(line);
+    if (description) rule.description = JSON.parse(description[1]);
+    else if (glob) rule.paths.push(JSON.parse(glob[1]));
+    else if (targets) rule.targets = targets[1] ? targets[1].split(", ") : [];
+    else if (line !== "paths:") refuse(`Unparseable source line in ${relativePath}.`);
+  }
+  [rule.category, rule.slug] = relativePath.slice(SOURCE_DIR.length + 1, -".md".length).split("/");
   return rule;
 }
 
-const srcPath = (rule) => `${SOURCE_DIR}/${rule.category}/${rule.slug}.md`;
-const srcText = (rule) => `---\ndescription: ${JSON.stringify(rule.description)}\n${rule.paths.length ? `paths:\n${rule.paths.map((p) => `  - ${JSON.stringify(p)}\n`).join("")}` : ""}targets: [${rule.targets.join(", ")}]\n---\n\n${rule.body}`;
-
-function parseSource(text, rel) {
-  let match;
+function parseSource(text, relativePath) {
+  const legacyMatch = /^<!-- aidd_rule:([^\r\n]+) -->\n/.exec(text);
+  const frontmatterMatch = /^---\n([\s\S]*?)\n---\n\n([\s\S]*)$/.exec(text);
   let rule;
-  if ((match = /^<!-- aidd_rule:([^\r\n]+) -->\n/.exec(text))) rule = { ...JSON.parse(match[1]), body: text.slice(match[0].length), legacy: true };
-  else if ((match = /^---\n([\s\S]*?)\n---\n\n([\s\S]*)$/.exec(text))) {
-    rule = { body: match[2], paths: [], targets: [] };
-    for (const line of match[1].split("\n")) {
-      let x;
-      if ((x = /^description: (.*)$/.exec(line))) rule.description = JSON.parse(x[1]);
-      else if ((x = /^  - (.*)$/.exec(line))) rule.paths.push(JSON.parse(x[1]));
-      else if ((x = /^targets: \[(.*)\]$/.exec(line))) rule.targets = x[1] ? x[1].split(", ") : [];
-      else if (line !== "paths:") fail(`Unparseable source line in ${rel}.`);
-    }
-    [rule.category, rule.slug] = rel.slice(SOURCE_DIR.length + 1, -3).split("/");
-  } else fail(`Unrecognized source: ${rel}`);
-  rule.paths ??= [];
-  rule.targets ??= [];
-  if (srcPath(validate(rule)) !== rel) fail(`Source path does not match its identity: ${rel}`);
-  return rule;
+  if (legacyMatch) rule = parseLegacySource(legacyMatch, text);
+  else if (frontmatterMatch) rule = parseFrontmatterSource(frontmatterMatch, relativePath);
+  else refuse(`Unrecognized source: ${relativePath}`);
+  const valid = validateRule({ ...rule, paths: rule.paths ?? [], targets: rule.targets ?? [] });
+  if (sourcePath(valid) !== relativePath) refuse(`Source path does not match its identity: ${relativePath}`);
+  return valid;
 }
 
 function nativePath(rule, tool) {
@@ -84,141 +138,330 @@ function nativePath(rule, tool) {
   return `.github/instructions/${rule.category.slice(0, 2)}-${rule.slug.slice(2)}.instructions.md`;
 }
 
-function render(rule, tool) {
+function renderNative(rule, tool) {
   const scoped = rule.paths.length > 0;
-  const globs = JSON.stringify(rule.paths.join(","));
-  const fm = {
-    claude: scoped ? `paths:\n${rule.paths.map((p) => `  - ${JSON.stringify(p)}\n`).join("")}` : "",
-    cursor: `description: ${JSON.stringify(rule.description)}\n${scoped ? `globs: ${globs}\n` : ""}alwaysApply: ${!scoped}\n`,
+  const globs = quote(rule.paths.join(","));
+  const frontmatter = {
+    claude: scoped ? `paths:\n${yamlPaths(rule.paths)}` : "",
+    cursor: `description: ${quote(rule.description)}\n${scoped ? `globs: ${globs}\n` : ""}alwaysApply: ${!scoped}\n`,
     copilot: `applyTo: ${scoped ? globs : '"**"'}\n`,
-    antigravity: `description: ${JSON.stringify(rule.description)}\n${scoped ? `trigger: glob\nglobs: ${globs}\n` : "trigger: always_on\n"}`,
+    antigravity: `description: ${quote(rule.description)}\n${scoped ? `trigger: glob\nglobs: ${globs}\n` : "trigger: always_on\n"}`,
   }[tool];
-  const text = (fm ? `---\n${fm}---\n` : "") + rule.body;
-  if (tool === "antigravity" && Buffer.byteLength(text) > 24000) fail("Antigravity rule exceeds 24000 bytes.");
+  const text = (frontmatter ? `---\n${frontmatter}---\n` : "") + rule.body;
+  if (tool === "antigravity" && Buffer.byteLength(text) > ANTIGRAVITY_MAX_BYTES) refuse(`Antigravity rule exceeds ${ANTIGRAVITY_MAX_BYTES} bytes.`);
   return text;
 }
 
+const copyTools = (targets) => targets.filter((tool) => tool !== "codex" && tool !== "opencode");
+
 // Legacy copies ended with a sha256 trailer; only a valid one proves we wrote the file.
-function legacySigned(text, rel) {
-  const match = /\n<!-- aidd_rule_output:path=(\S+) sha256=([a-f0-9]{64}) -->\n$/.exec(text);
-  return !!match && match[1] === rel && sha(text.slice(0, match.index)) === match[2];
+function isLegacySigned(text, relativePath) {
+  const trailer = /\n<!-- aidd_rule_output:path=(\S+) sha256=([a-f0-9]{64}) -->\n$/.exec(text);
+  return !!trailer && trailer[1] === relativePath && sha256(text.slice(0, trailer.index)) === trailer[2];
 }
 
-// Returns the new AGENTS.md text, or null when the existing block cannot be trusted.
-function reindex(text, lines) {
+function separatorBefore(text) {
+  if (text.endsWith("\n\n")) return "";
+  if (text.endsWith("\n")) return "\n";
+  return text ? "\n\n" : "";
+}
+
+// Returns where a signed legacy AGENTS.md block begins, or null when its signature does not hold.
+function legacyBlockStart(text, startMark, endMark) {
+  const signature = /^ sha256=([a-f0-9]{64}) separator=([01]) $/.exec(startMark[2]);
+  if (!signature) return null;
+  const [, expectedHash, separator] = signature;
+  const payload = text.slice(startMark.index + startMark[0].length + 1, endMark.index);
+  if (sha256(`separator=${separator}\n${payload}`) !== expectedHash) return null;
+  if (separator === "1" && text[startMark.index - 1] !== "\n") return null;
+  return startMark.index - Number(separator);
+}
+
+// Returns { text, legacy }, or null when the existing block cannot be trusted.
+function reindexAgents(text, lines) {
   const marks = [...text.matchAll(/^<!-- aidd_rules:(start|end)(.*?)-->$/gm)];
   const block = lines.length ? `<!-- aidd_rules:start -->\nBefore editing a file, read each rule whose scope matches it.\n\n${lines.join("\n")}\n<!-- aidd_rules:end -->\n` : "";
-  if (!marks.length) return { text: block ? text + (text.endsWith("\n\n") ? "" : text.endsWith("\n") ? "\n" : text ? "\n\n" : "") + block : text };
-  if (marks.length !== 2 || marks[0][1] !== "start" || marks[1][1] !== "end") return null;
-  const s = marks[0].index;
-  const e = marks[1].index + marks[1][0].length + (text[marks[1].index + marks[1][0].length] === "\n" ? 1 : 0);
-  let begin = s;
-  let old = false;
-  if (marks[0][2] !== " ") {
-    const match = /^ sha256=([a-f0-9]{64}) separator=([01]) $/.exec(marks[0][2]);
-    if (!match || sha(`separator=${match[2]}\n${text.slice(s + marks[0][0].length + 1, marks[1].index)}`) !== match[1] || (match[2] === "1" && text[s - 1] !== "\n")) return null;
-    begin = s - Number(match[2]);
-    old = true;
+  if (!marks.length) return { text: block ? text + separatorBefore(text) + block : text, legacy: false };
+  const [startMark, endMark] = marks;
+  if (marks.length !== 2 || startMark[1] !== "start" || endMark[1] !== "end") return null;
+  const markEnd = endMark.index + endMark[0].length;
+  const blockEnd = markEnd + (text[markEnd] === "\n" ? 1 : 0);
+  const isLegacy = startMark[2] !== " ";
+  const blockStart = isLegacy ? legacyBlockStart(text, startMark, endMark) : startMark.index;
+  if (blockStart === null) return null;
+  if (block) return { text: text.slice(0, startMark.index) + block + text.slice(blockEnd), legacy: isLegacy };
+  const prefix = text.slice(0, blockStart);
+  const trimmedPrefix = !isLegacy && prefix.endsWith("\n\n") ? prefix.slice(0, -1) : prefix;
+  return { text: trimmedPrefix + text.slice(blockEnd), legacy: isLegacy };
+}
+
+function agentsIndexLines(sources) {
+  return [...sources]
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .filter(([, rule]) => rule.targets.includes("codex"))
+    .map(([relativePath, rule]) => {
+      const scope = rule.paths.length ? rule.paths.map((glob) => `\`${glob}\``).join(", ") : "all files";
+      const title = /^# (.+)$/m.exec(rule.body)?.[1].trim() || rule.slug;
+      return `- ${scope}: [${title}](${relativePath})`;
+    });
+}
+
+// ---------- project reads ----------
+
+function readUtf8(file) {
+  const bytes = fs.readFileSync(file);
+  const text = bytes.toString("utf8");
+  if (!Buffer.from(text).equals(bytes)) refuse(`Invalid UTF-8 in ${file}.`);
+  return text;
+}
+
+function openProject(optionValue) {
+  const root = path.resolve(optionValue);
+  if (!path.isAbsolute(optionValue) || !fs.statSync(root).isDirectory() || fs.realpathSync(root) !== root) refuse("Project must be a real absolute directory.");
+
+  function resolve(relativePath) {
+    const parts = relativePath.split("/");
+    if (parts.some((part) => !part || part === "." || part === "..") || relativePath.includes("\\")) refuse(`Unsafe path: ${relativePath}`);
+    let current = root;
+    for (const part of parts) {
+      current = path.join(current, part);
+      if (isSymlink(current)) refuse(`Symlink in path: ${relativePath}`);
+    }
+    return current;
   }
-  if (block) return { text: text.slice(0, s) + block + text.slice(e), old };
-  const prefix = text.slice(0, begin);
-  return { text: (!old && prefix.endsWith("\n\n") ? prefix.slice(0, -1) : prefix) + text.slice(e), old };
+
+  function read(relativePath) {
+    try {
+      return readUtf8(resolve(relativePath));
+    } catch (error) {
+      if (isMissing(error)) return null;
+      throw error;
+    }
+  }
+
+  function list(relativePath) {
+    try {
+      return fs.readdirSync(resolve(relativePath)).sort();
+    } catch (error) {
+      if (isMissing(error)) return [];
+      throw error;
+    }
+  }
+
+  return { resolve, read, list };
+}
+
+function isSymlink(file) {
+  try {
+    return fs.lstatSync(file).isSymbolicLink();
+  } catch (error) {
+    if (isMissing(error)) return false;
+    throw error;
+  }
+}
+
+function loadSources(project) {
+  const sources = new Map();
+  for (const category of project.list(SOURCE_DIR)) {
+    for (const name of project.list(`${SOURCE_DIR}/${category}`)) {
+      if (!name.endsWith(".md")) continue;
+      const relativePath = `${SOURCE_DIR}/${category}/${name}`;
+      sources.set(relativePath, parseSource(project.read(relativePath), relativePath));
+    }
+  }
+  return sources;
+}
+
+// ---------- planning: decides writes, deletes and conflicts, touches nothing ----------
+
+function collectItems(project, options, tools, sources) {
+  if (options["--input"]) return [itemFromRequest(options["--input"], tools, sources)];
+  if (options["--delete"]) return [itemFromDeletion(options["--delete"], tools, sources)];
+  return [...sources.values()].map((prior) => ({ rule: { ...prior, targets: mergeTargets(prior.targets, tools) }, prior }));
+}
+
+function itemFromRequest(inputFile, tools, sources) {
+  const request = parseRequest(readUtf8(path.resolve(inputFile)));
+  const rule = validateRule({ paths: [], ...request, targets: tools });
+  const prior = sources.get(sourcePath(rule));
+  return { rule: { ...rule, targets: mergeTargets(prior ? prior.targets : [], tools) }, prior };
+}
+
+function itemFromDeletion(identity, tools, sources) {
+  const prior = sources.get(`${SOURCE_DIR}/${identity}.md`);
+  if (!prior) refuse("Cannot delete an absent rule.");
+  return { rule: { ...prior, targets: mergeTargets(prior.targets, tools) }, prior, deleting: true };
+}
+
+function planChanges(project, options, tools) {
+  const sources = loadSources(project);
+  const items = collectItems(project, options, tools, sources);
+  const plan = { writes: new Map(), conflicts: [], legacy: new Set(), unsupported: [] };
+  const force = "--force" in options;
+  const finalSources = planRuleFiles(plan, project, items, sources, force);
+  if (items.some((item) => item.rule.targets.includes("codex"))) planAgentsIndex(plan, project, finalSources);
+  if (items.some((item) => item.rule.targets.includes("opencode"))) planOpencodeCheck(plan, project);
+  return plan;
+}
+
+function planRuleFiles(plan, project, items, sources, force) {
+  const finalSources = new Map(sources);
+  for (const { rule, prior, deleting } of items) {
+    if (deleting) finalSources.delete(sourcePath(rule));
+    else finalSources.set(sourcePath(rule), rule);
+    planSource(plan, project, rule, deleting);
+    for (const tool of copyTools(rule.targets)) {
+      const wanted = deleting ? null : renderNative(rule, tool);
+      const previous = prior && renderNative(prior, tool);
+      planCopy(plan, project, force, nativePath(rule, tool), wanted, previous);
+    }
+  }
+  return finalSources;
+}
+
+function planSource(plan, project, rule, deleting) {
+  const relativePath = sourcePath(rule);
+  const current = project.read(relativePath);
+  const wanted = deleting ? null : renderSource(rule);
+  if (current !== wanted) plan.writes.set(relativePath, wanted);
+  if (current !== null && current.startsWith("<!-- aidd_rule:")) plan.legacy.add(relativePath);
+}
+
+// A copy is replaced when absent, legacy-signed or what we last wrote; anything else is a conflict.
+function planCopy(plan, project, force, relativePath, wanted, previous) {
+  const current = project.read(relativePath);
+  if (current === wanted) return;
+  const signed = current !== null && isLegacySigned(current, relativePath);
+  if (signed && wanted !== null) plan.legacy.add(relativePath);
+  if (current === null || signed || current === previous) {
+    plan.writes.set(relativePath, wanted);
+    return;
+  }
+  plan.conflicts.push(relativePath);
+  if (force) plan.writes.set(relativePath, wanted);
+}
+
+function planAgentsIndex(plan, project, finalSources) {
+  const current = project.read("AGENTS.md") ?? "";
+  const next = reindexAgents(current, agentsIndexLines(finalSources));
+  if (!next) {
+    plan.conflicts.push("AGENTS.md");
+    return;
+  }
+  if (next.legacy) plan.legacy.add("AGENTS.md");
+  if (next.text !== current) plan.writes.set("AGENTS.md", next.text || null);
+}
+
+function planOpencodeCheck(plan, project) {
+  const configs = ["opencode.json", "opencode.jsonc"].filter((name) => project.read(name) !== null);
+  if (configs.some((name) => project.read(name).includes(OPENCODE_INSTRUCTIONS))) return;
+  plan.unsupported.push({ tool: "opencode", missing: OPENCODE_INSTRUCTIONS, file: configs[0] || "opencode.json" });
+}
+
+// ---------- effects: preflight, apply ----------
+
+function toOperations(project, writes) {
+  return [...writes].map(([relativePath, text]) => ({
+    path: relativePath,
+    file: project.resolve(relativePath),
+    operation: text === null ? "delete" : "write",
+    text,
+  }));
+}
+
+function nearestExisting(file) {
+  let candidate = file;
+  while (!fs.existsSync(candidate)) candidate = path.dirname(candidate);
+  return candidate;
+}
+
+function writabilityProbe(operation) {
+  return operation.operation === "delete" ? path.dirname(operation.file) : nearestExisting(operation.file);
+}
+
+function describeFailure(operation, error) {
+  return { path: operation.path, operation: operation.operation, code: error.code ?? error.name, message: error.message };
+}
+
+function findBlocked(operations) {
+  const blocked = [];
+  for (const operation of operations) {
+    try {
+      fs.accessSync(writabilityProbe(operation), fs.constants.W_OK);
+    } catch (error) {
+      blocked.push(describeFailure(operation, error));
+    }
+  }
+  return blocked;
+}
+
+function performOperation(operation) {
+  if (operation.operation === "delete") {
+    fs.rmSync(operation.file, { force: true });
+    return;
+  }
+  fs.mkdirSync(path.dirname(operation.file), { recursive: true });
+  fs.writeFileSync(operation.file, operation.text);
+}
+
+function applyOperations(operations) {
+  const written = [];
+  for (const [index, operation] of operations.entries()) {
+    try {
+      performOperation(operation);
+    } catch (error) {
+      return { written, failed: describeFailure(operation, error), pending: operations.slice(index + 1).map((pending) => pending.path) };
+    }
+    written.push(operation.path);
+  }
+  return { written };
+}
+
+function publish(project, plan, summary) {
+  const operations = toOperations(project, plan.writes);
+  const blocked = findBlocked(operations);
+  if (blocked.length) return { payload: { blocked, written: [] }, exitCode: EXIT.FILESYSTEM, message: `${blocked.length} path(s) not writable; nothing written.` };
+  const outcome = applyOperations(operations);
+  if (outcome.failed) return { payload: outcome, exitCode: EXIT.FILESYSTEM, message: `${outcome.failed.operation} failed on ${outcome.failed.path}: ${outcome.failed.message}` };
+  return { payload: summary, exitCode: EXIT.OK };
+}
+
+// ---------- output ----------
+
+function errorResult(error) {
+  if (error instanceof UsageError) return { payload: { error: { code: "USAGE", message: error.message } }, exitCode: EXIT.USAGE, message: `${error.message}\nUsage: see header of write-rule.cjs` };
+  const code = error instanceof Refusal ? "REFUSED" : error.code ?? error.name;
+  return { payload: { error: { code, message: error.message } }, exitCode: EXIT.REFUSED, message: error.message };
+}
+
+function report({ payload, exitCode, message }) {
+  process.stdout.write(`${JSON.stringify(payload)}\n`);
+  if (message) process.stderr.write(`${message}\n`);
+  process.exitCode = exitCode;
+}
+
+function execute(argv) {
+  const options = parseArgs(argv);
+  const tools = parseTools(options["--tools"].split(","));
+  const project = openProject(options["--project"]);
+  const plan = planChanges(project, options, tools);
+  const files = [...plan.writes.keys()];
+  const summary = { files, conflicts: plan.conflicts, unsupported: plan.unsupported, legacy: [...plan.legacy] };
+  if (options["--plan"]) return { payload: { plan: true, ...summary }, exitCode: EXIT.OK };
+  if (options["--check"]) {
+    const drift = [...new Set([...files, ...plan.conflicts])];
+    return { payload: { drift }, exitCode: drift.length ? EXIT.REFUSED : EXIT.OK };
+  }
+  if (plan.conflicts.length && !("--force" in options)) return { payload: { ...summary, files: [] }, exitCode: EXIT.REFUSED };
+  return publish(project, plan, summary);
 }
 
 function main() {
-  const options = parseArgs(process.argv.slice(2));
-  const tools = toolList(options["--tools"].split(","));
-  const root = path.resolve(options["--project"]);
-  if (!path.isAbsolute(options["--project"]) || !fs.statSync(root).isDirectory() || fs.realpathSync(root) !== root) fail("Project must be a real absolute directory.");
-  const target = (rel) => {
-    const parts = rel.split("/");
-    if (parts.some((p) => !p || p === "." || p === "..") || rel.includes("\\")) fail(`Unsafe path: ${rel}`);
-    let current = root;
-    for (const p of parts) {
-      current = path.join(current, p);
-      try { if (fs.lstatSync(current).isSymbolicLink()) fail(`Symlink in path: ${rel}`); } catch (e) { if (e.code !== "ENOENT") throw e; }
-    }
-    return current;
-  };
-  const read = (rel) => { try { return utf8file(target(rel)); } catch (e) { if (e.code === "ENOENT") return null; throw e; } };
-  const list = (rel) => { try { return fs.readdirSync(target(rel)).sort(); } catch (e) { if (e.code === "ENOENT") return []; throw e; } };
-
-  const sources = new Map();
-  for (const cat of list(SOURCE_DIR)) for (const f of list(`${SOURCE_DIR}/${cat}`)) if (f.endsWith(".md")) sources.set(`${SOURCE_DIR}/${cat}/${f}`, parseSource(read(`${SOURCE_DIR}/${cat}/${f}`), `${SOURCE_DIR}/${cat}/${f}`));
-
-  const union = (rule) => toolList([...rule.targets, ...tools]);
-  const items = []; // { rule, prior, del }
-  if (options["--input"]) {
-    const req = JSON.parse(utf8file(path.resolve(options["--input"])));
-    if (!req || typeof req !== "object" || Object.keys(req).some((k) => !["category", "slug", "description", "body", "paths"].includes(k))) fail("Request must be an object with category, slug, description, body, paths.");
-    const rule = validate({ paths: [], ...req, targets: tools });
-    const prior = sources.get(srcPath(rule));
-    rule.targets = union({ targets: prior ? prior.targets : [] });
-    items.push({ rule, prior });
-  } else if (options["--delete"]) {
-    const prior = sources.get(`${SOURCE_DIR}/${options["--delete"]}.md`);
-    if (!prior) fail("Cannot delete an absent rule.");
-    items.push({ rule: { ...prior, targets: union(prior) }, prior, del: true });
-  } else for (const prior of sources.values()) items.push({ rule: { ...prior, targets: union(prior) }, prior });
-
-  const writes = new Map();
-  const conflicts = [];
-  const legacy = new Set();
-  const force = !!options["--force"];
-  const copy = (rel, want, ours) => {
-    const current = read(rel);
-    if (current === want) return;
-    const signed = current !== null && legacySigned(current, rel);
-    if (signed && want !== null) legacy.add(rel);
-    if (current === null || signed || current === ours) return void writes.set(rel, want);
-    conflicts.push(rel);
-    if (force) writes.set(rel, want);
-  };
-  const final = new Map(sources);
-  for (const { rule, prior, del } of items) {
-    const rel = srcPath(rule);
-    if (del) final.delete(rel); else final.set(rel, rule);
-    const current = read(rel);
-    const want = del ? null : srcText(rule);
-    if (current !== want) writes.set(rel, want);
-    if (current !== null && current.startsWith("<!-- aidd_rule:")) legacy.add(rel);
-    for (const tool of rule.targets.filter((t) => !["codex", "opencode"].includes(t))) copy(nativePath(rule, tool), del ? null : render(rule, tool), prior && render(prior, tool));
+  try {
+    report(execute(process.argv.slice(2)));
+  } catch (error) {
+    report(errorResult(error));
   }
-  if (items.some((i) => i.rule.targets.includes("codex"))) {
-    const lines = [...final].sort(([a], [b]) => (a < b ? -1 : 1)).filter(([, rule]) => rule.targets.includes("codex")).map(([rel, rule]) => {
-      const scope = rule.paths.length ? rule.paths.map((p) => `\`${p}\``).join(", ") : "all files";
-      return `- ${scope}: [${/^# (.+)$/m.exec(rule.body)?.[1].trim() || rule.slug}](${rel})`;
-    });
-    const current = read("AGENTS.md");
-    const next = reindex(current ?? "", lines);
-    if (!next) conflicts.push("AGENTS.md");
-    else {
-      if (next.old) legacy.add("AGENTS.md");
-      if (next.text !== (current ?? "")) writes.set("AGENTS.md", next.text || null);
-    }
-  }
-  const unsupported = [];
-  if (items.some((i) => i.rule.targets.includes("opencode"))) {
-    const found = ["opencode.json", "opencode.jsonc"].filter((n) => read(n) !== null);
-    if (!found.some((n) => read(n).includes(OPENCODE_INSTRUCTIONS))) unsupported.push({ tool: "opencode", missing: OPENCODE_INSTRUCTIONS, file: found[0] || "opencode.json" });
-  }
-
-  const files = [...writes.keys()];
-  const out = (x, code = 0) => { process.stdout.write(`${JSON.stringify(x)}\n`); process.exitCode = code; };
-  const result = { files, conflicts, unsupported, legacy: [...legacy] };
-  if (options["--plan"]) return out({ plan: true, ...result });
-  if (options["--check"]) {
-    const drift = [...new Set([...files, ...conflicts])];
-    return out({ drift }, drift.length ? 1 : 0);
-  }
-  if (conflicts.length && !force) return out({ ...result, files: [] }, 1);
-  for (const [rel, text] of writes) {
-    const file = target(rel);
-    if (text === null) { fs.rmSync(file, { force: true }); continue; }
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, text);
-  }
-  out(result);
 }
 
-try { main(); } catch (e) { process.stderr.write(`${e.message}\n`); process.exitCode = e.usage ? 2 : 1; }
+main();

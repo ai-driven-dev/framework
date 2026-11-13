@@ -292,3 +292,91 @@ test("antigravity output over 24000 bytes refuses", (t) => {
   assert.equal(f.run({ ...rule, body: "x".repeat(24000) }, "antigravity").status, 1);
   assert.deepEqual(f.snapshot(), before);
 });
+
+const asRoot = process.getuid && process.getuid() === 0;
+
+function runLocked(dirs, action) {
+  for (const dir of dirs) fs.chmodSync(dir, 0o555);
+  try {
+    return action();
+  } finally {
+    for (const dir of dirs) fs.chmodSync(dir, 0o755);
+  }
+}
+
+test("unwritable target blocks everything before any write", { skip: asRoot && "root ignores permissions" }, (t) => {
+  const f = fixture(t);
+  const locked = path.join(f.project, ".cursor");
+  fs.mkdirSync(locked);
+  const before = f.snapshot();
+  const r = runLocked([locked], () => f.run());
+  assert.equal(r.status, 3);
+  const out = json(r);
+  assert.deepEqual(out.written, []);
+  assert.equal(out.blocked.length, 1);
+  assert.equal(out.blocked[0].path, CURSOR);
+  assert.equal(out.blocked[0].operation, "write");
+  assert.match(out.blocked[0].code, /^(EACCES|EPERM)$/);
+  assert.ok(out.blocked[0].message);
+  assert.deepEqual(f.snapshot(), before);
+  assert.ok(!f.has("aidd_docs"));
+});
+
+test("every blocked path is reported, not just the first", { skip: asRoot && "root ignores permissions" }, (t) => {
+  const f = fixture(t);
+  const locked = [".cursor", ".agents"].map((name) => path.join(f.project, name));
+  for (const dir of locked) fs.mkdirSync(dir);
+  const r = runLocked(locked, () => f.run());
+  assert.equal(r.status, 3);
+  assert.deepEqual(json(r).blocked.map((b) => b.path).sort(), [AGY, CURSOR].sort());
+  assert.ok(!f.has(SRC) && !f.has(CLAUDE));
+});
+
+test("unwritable parent blocks a delete before any removal", { skip: asRoot && "root ignores permissions" }, (t) => {
+  const f = fixture(t);
+  assert.equal(f.run().status, 0);
+  const before = f.snapshot();
+  const r = runLocked([path.join(f.project, path.dirname(CLAUDE))], () => f.run(null, NATIVE, ["--delete", "01-standards/1-naming"]));
+  assert.equal(r.status, 3);
+  const out = json(r);
+  assert.deepEqual(out.written, []);
+  assert.deepEqual(out.blocked.map((b) => [b.path, b.operation]), [[CLAUDE, "delete"]]);
+  assert.deepEqual(f.snapshot(), before);
+});
+
+test("mid-apply failure stops and reports written, failed and pending", (t) => {
+  const f = fixture(t);
+  f.put(".cursor", "a file where a directory must be\n");
+  const r = f.run();
+  assert.equal(r.status, 3);
+  const out = json(r);
+  assert.deepEqual(out.written, [SRC, CLAUDE]);
+  assert.equal(out.failed.path, CURSOR);
+  assert.equal(out.failed.operation, "write");
+  assert.ok(out.failed.code && out.failed.message);
+  assert.deepEqual(out.pending, [COPILOT, AGY]);
+  assert.ok(f.has(SRC) && f.has(CLAUDE) && !f.has(COPILOT) && !f.has(AGY));
+  assert.ok(r.stderr);
+});
+
+test("every non-zero exit prints parseable JSON on stdout", (t) => {
+  const f = fixture(t);
+  const usage = f.exec("--tools", "claude");
+  assert.equal(usage.status, 2);
+  assert.equal(json(usage).error.code, "USAGE");
+  const refusal = f.run(rule, "claude,nope");
+  assert.equal(refusal.status, 1);
+  assert.equal(json(refusal).error.code, "REFUSED");
+  const unexpected = f.run(Buffer.from("{not json"), "claude");
+  assert.equal(unexpected.status, 1);
+  assert.ok(json(unexpected).error.code && json(unexpected).error.message);
+  f.put(CURSOR, "mine\n");
+  const conflict = f.run();
+  assert.equal(conflict.status, 1);
+  assert.deepEqual(json(conflict).conflicts, [CURSOR]);
+  assert.equal(f.run(rule, NATIVE, [...input(f), "--force"]).status, 0);
+  f.put(COPILOT, "edited\n");
+  const drift = f.run(null, NATIVE, ["--check", "--publish"]);
+  assert.equal(drift.status, 1);
+  assert.ok(Array.isArray(json(drift).drift));
+});
