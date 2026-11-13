@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import {
   NoManifestError,
   SyncFailedError,
@@ -33,7 +34,8 @@ async function runUserScopeSync(
   output: CLIOutput,
   projectRoot: string,
   fileArgs: string[],
-  cmdOptions: SyncCmdOptions
+  cmdOptions: SyncCmdOptions,
+  catalog: ToolCatalog
 ): Promise<void> {
   // Neither has a user-scope counterpart, so both are refused rather than read and
   // silently discarded.
@@ -56,9 +58,11 @@ async function runUserScopeSync(
           projectRoot,
           scope: "user",
           rebuild: true,
+          tools: catalog,
         });
   const activation = await deps.marketplaceSyncSettingsUseCase.execute({
     projectRoot,
+    tools: catalog,
     scope: "user",
     manifestRepo: deps.userManifestRepo,
     toolIds,
@@ -71,33 +75,40 @@ async function runUserScopeSync(
 
 async function runSyncAction(
   program: Command,
+  tools: ToolCatalog,
   fileArgs: string[],
   cmdOptions: SyncCmdOptions
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   const errorHandler = new ErrorHandler(output);
   try {
-    const deps = await createDeps(projectRoot, { verbose }, output);
+    const deps = await createDeps(projectRoot, { verbose }, output, tools);
     const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
     if (scope === "user") {
-      await runUserScopeSync(deps, output, projectRoot, fileArgs, cmdOptions);
+      await runUserScopeSync(deps, output, projectRoot, fileArgs, cmdOptions, tools);
       return;
     }
 
     if (cmdOptions.tool !== undefined) {
-      await runScopedSync(deps, output, projectRoot, fileArgs, cmdOptions);
+      await runScopedSync(deps, output, projectRoot, fileArgs, cmdOptions, tools);
       return;
     }
 
     const interactive = !cmdOptions.force && process.stdout.isTTY;
-    const result = await deps.restoreAllUseCase.execute(projectRoot, cmdOptions.force, interactive);
+    const result = await deps.restoreAllUseCase.execute(
+      projectRoot,
+      cmdOptions.force,
+      interactive,
+      tools
+    );
     printRestoreOutcome(output, result);
 
     // After restoration, never before: activation drives the host CLI that writes into the
     // settings file restoration regenerates, which must be on disk before that CLI runs.
     const activation = await deps.marketplaceSyncSettingsUseCase.execute({
       projectRoot,
+      tools,
       recreateFrameworkIfMissing: true,
     });
     printActivationOutcome(output, activation);
@@ -116,7 +127,8 @@ async function runScopedSync(
   output: CLIOutput,
   projectRoot: string,
   fileArgs: string[],
-  cmdOptions: SyncCmdOptions
+  cmdOptions: SyncCmdOptions,
+  catalog: ToolCatalog
 ): Promise<void> {
   const toolId = cmdOptions.tool as ToolId;
   const manifest = await deps.manifestRepo.load();
@@ -131,6 +143,7 @@ async function runScopedSync(
     interactive: process.stdout.isTTY,
     manifest,
     pluginName: cmdOptions.plugin,
+    tools: catalog,
   });
   printToolRestoreOutcome(output, result);
 
@@ -138,6 +151,7 @@ async function runScopedSync(
   // installed tool's activation.
   const activation = await deps.marketplaceSyncSettingsUseCase.execute({
     projectRoot,
+    tools: catalog,
     toolIds: [toolId],
     recreateFrameworkIfMissing: true,
   });
@@ -145,7 +159,7 @@ async function runScopedSync(
   if (activation.errors.length > 0) throw new SyncFailedError(activation.errors);
 }
 
-export function registerSyncCommand(program: Command): void {
+export function registerSyncCommand(program: Command, tools: ToolCatalog): void {
   program
     .command("sync")
     .description(
@@ -162,6 +176,6 @@ export function registerSyncCommand(program: Command): void {
     )
     .option("--global", `${GLOBAL_FLAG_HELP}, rebuilding its files from the framework source`)
     .action(async (fileArgs: string[], cmdOptions: SyncCmdOptions) => {
-      await runSyncAction(program, fileArgs, cmdOptions);
+      await runSyncAction(program, tools, fileArgs, cmdOptions);
     });
 }

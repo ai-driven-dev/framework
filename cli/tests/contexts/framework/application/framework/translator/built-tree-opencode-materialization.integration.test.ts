@@ -8,6 +8,7 @@ import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const BUILT = "/built/opencode";
@@ -80,7 +81,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     await translator.addPlugin(
       dist(),
-      "opencode",
+      registeredAiProfile("opencode"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -117,7 +118,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     await translator.addPlugin(
       distWithHooks(),
-      "opencode",
+      registeredAiProfile("opencode"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -151,7 +152,7 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
     );
     return translator.addPlugin(
       distribution,
-      "opencode",
+      registeredAiProfile("opencode"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -248,7 +249,7 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
 
     await translator.addPlugin(
       distribution,
-      "kilo",
+      registeredAiProfile("kilo"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

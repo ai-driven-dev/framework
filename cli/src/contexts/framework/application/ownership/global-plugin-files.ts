@@ -3,8 +3,7 @@ import { InstallationFile } from "../../../../kernel/file.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
-import { globalFilesOf } from "../../../tools/domain/registry.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-containment.js";
@@ -17,10 +16,10 @@ export async function readGlobalPluginFiles(
   fs: FileReader,
   hasher: Hasher,
   builtDir: string,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   dist: PluginDistribution
 ): Promise<InstallationFile[]> {
-  const machine = globalFilesOf(toolId);
+  const machine = tool.plugins()?.globalFiles() ?? null;
   if (machine === null) return [];
   const plugin = {
     name: dist.manifest.name,
@@ -50,13 +49,14 @@ export async function readGlobalPluginFiles(
  */
 export async function assertGlobalFilesWritable(
   fs: FileReader & FileWriter,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   plugin: Pick<InstalledPlugin, "name" | "files"> | undefined,
   pluginName: string,
   files: readonly InstallationFile[],
   homedir: string
 ): Promise<string> {
-  const machine = globalFilesOf(toolId);
+  const { toolId } = tool;
+  const machine = tool.plugins()?.globalFiles() ?? null;
   if (machine === null) throw new Error(`${toolId}: no machine-scope directory is declared.`);
   const boundary = machine.dir(homedir);
   await fs.createDirectory(boundary);

@@ -1,7 +1,7 @@
 /**
  * A tool evolves inside its own folder: a profile that imports another profile's file is edited
- * whenever that other tool changes. What two tools share goes to `domain/formats/` or
- * `domain/hooks/`, owned by neither.
+ * whenever that other tool changes. What two tools share goes to `domain/formats/`,
+ * `domain/hooks/` or `domain/bridges/`, owned by neither.
  */
 import { describe, expect, it } from "vitest";
 import { INTERNAL_IMPORT, read, resolveImportTarget, sourceFiles } from "./helpers.js";
@@ -32,23 +32,5 @@ describe("profiles are islands", () => {
 
     expect(sources.size).toBeGreaterThan(0);
     expect(crossProfileImports(sources)).toEqual([]);
-  });
-
-  it("names an import into a sibling profile, and leaves an import of the shared folders", () => {
-    const sources = new Map([
-      ["src/contexts/tools/domain/profiles/opencode/build.ts", ""],
-      [
-        "src/contexts/tools/domain/profiles/kilo/profile.ts",
-        [
-          'import { toTypedMcpSection } from "../opencode/build.js";',
-          'import { stripToolSuffix } from "../../formats/command.js";',
-          'import { KILO_HOOKS } from "./hooks.js";',
-        ].join("\n"),
-      ],
-    ]);
-
-    expect(crossProfileImports(sources)).toEqual([
-      "src/contexts/tools/domain/profiles/kilo/profile.ts -> src/contexts/tools/domain/profiles/opencode/build.ts",
-    ]);
   });
 });

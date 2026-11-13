@@ -9,6 +9,8 @@ import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-u
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -48,7 +50,7 @@ function makeRestoreUseCase(
     deps.fs,
     deps.hasher,
     deps.pluginFetcher,
-    new PluginDistributionReaderAdapter(deps.fs),
+    new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes()),
     {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
@@ -69,13 +71,17 @@ async function installGithubPlugin(
   await new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     deps.logger,
     registry,
     fakeEnsureBuiltMarketplace(),
     deps.userManifestRepo
   ).execute({
+    tools: catalogOf(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: ["claude"],
     projectRoot: PROJECT_ROOT,
@@ -109,6 +115,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     }
 
     const result = await makeRestoreUseCase(deps, registry).execute({
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -142,6 +149,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     await deps.fs.writeFile(join(PROJECT_ROOT, untrackedPath), "keep me");
 
     await makeRestoreUseCase(deps, registry).execute({
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -163,6 +171,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     expect(before?.files.size).toBe(0);
 
     const result = await makeRestoreUseCase(deps, registry).execute({
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,

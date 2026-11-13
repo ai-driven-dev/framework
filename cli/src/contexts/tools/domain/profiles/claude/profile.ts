@@ -1,15 +1,21 @@
 import { join } from "node:path";
-import { CONFIG_MCP } from "../../capabilities/config-refs.js";
-import { McpCapability } from "../../capabilities/mcp-capability.js";
+import claudeSettings from "../../../../../../assets/configs/claude/settings.json" with {
+  type: "json",
+};
+import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
-import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { sharedMarketplaceKey } from "../../marketplace-entry.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { nativeLayout } from "../../sections/layout-section.js";
+import { manifestSection } from "../../sections/manifest-section.js";
+import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
 import { claudeAgentFrontmatter } from "./claude-agent.js";
 import { CLAUDE_DIRECTORY } from "./claude-build-paths.js";
 import { CLAUDE_HOOKS } from "./hooks.js";
+
+const PLUGIN_MCP = acceptedPluginMcp();
 
 const DIRECTORY = CLAUDE_DIRECTORY;
 const TOOL_SUFFIX = ".claude.md";
@@ -17,6 +23,8 @@ const TOOL_SUFFIX = ".claude.md";
 function commandsDir(phase: string): string {
   return `${DIRECTORY}commands/aidd/${phase}/`;
 }
+
+const hooksSupport = nativeHooksSupport(CLAUDE_HOOKS);
 
 export const claude = defineAiTool({
   toolId: "claude",
@@ -28,7 +36,14 @@ export const claude = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "Claude Code",
   signalDir: ".claude/commands",
-  configOutputPaths: { "settings.json": ".claude/settings.json" },
+  configAssets: [
+    {
+      name: "settings.json",
+      content: claudeSettings,
+      destination: ".claude/settings.json",
+      delivery: "install",
+    },
+  ],
   buildContracts: { marketplace: buildClaudeContract, flat: buildClaudeFlatContract },
 
   capabilities: (bound) => ({
@@ -63,18 +78,17 @@ export const claude = defineAiTool({
         return {};
       },
     }),
-    mcp: new McpCapability({
-      outputPath: ".mcp.json",
-      format: "json",
-      consumes: [CONFIG_MCP],
-    }),
-    plugins: pluginsCapability({
-      mode: "native",
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: ".mcp.json",
+        format: "json",
+        consumes: [CONFIG_MCP],
+      }),
+      plugin: PLUGIN_MCP,
+    },
+    hooks: { delivery: hooksSupport.delivery },
+    layout: nativeLayout({
       pluginsDir: ".claude/plugins/",
-      pluginManifestRelativePath: "plugin.json",
-      ...nativeHooksSupport(CLAUDE_HOOKS),
-      acceptsMcp: true,
-      translationMode: "marketplace",
       // Claude registers its own marketplaces and enables its own plugins, both driven here.
       // At project scope the command rewrites `.claude/settings.json` after this CLI hashed
       // it — two writers, one recorder, and `status` reporting drift forever. `--scope local`
@@ -120,8 +134,13 @@ export const claude = defineAiTool({
         // is the file `claude plugin marketplace add --scope local` writes itself.
         marketplacesSettingsPath: ".claude/settings.local.json",
         enabledPluginsKey: "enabledPlugins",
-        toEntryKey: claudeStyleMarketplaceKey,
+        toEntryKey: sharedMarketplaceKey,
       },
+    }),
+    manifest: manifestSection({
+      manifestRelativePath: "plugin.json",
+      pluginRootToken: hooksSupport.rootToken,
+      translationMode: "marketplace",
     }),
   }),
 

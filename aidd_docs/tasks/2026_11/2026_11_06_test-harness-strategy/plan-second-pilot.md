@@ -317,7 +317,7 @@ Definitions, the reference's own (`ref:15-17`), with one addition for a slice, f
 | A6 | `target/04-tools-and-translate.md:340`: merge the parallel files "of 60 lines or fewer" | `target/07-test-architecture.md:180-181`: a case moves up when written identically in three profiles; a datum-only difference becomes a bounded `it.each` | the case rule decides; the size only orders the reading (line one itself requires "each case read before the file is dropped") |
 | A7 | `target/04-tools-and-translate.md:104,342`: conformance runs I1 to I10 | `target/07-test-architecture.md:178`: the ~27 identical cases (capabilities, build contract, paths, ids, formats) | K1 to K12 above: the invariants checkable on a profile alone, plus the identical cases and the hooks cases; I4, I5, I7, I8, I10 need a translation output and stay with form 1 (scope limit) |
 | A8 | `target/04-tools-and-translate.md:245,344`: reduce the `build.unit` tests to what the golden does not cover | `target/00-overview.md:134`, `ref:112`: a behaviour is tested at the lowest level that proves it | the lowest level (the overview wins): no unit case is deleted because the golden holds it; the golden is never the holder of an inverted proof |
-| A9 | `target/04-tools-and-translate.md:139,293`: one shared `event-bridge` | the landed `cli/aidd_docs/memory/architecture.md` (hooks bullet): one descriptor per tool, one host adapter per tool | one descriptor per tool now; merging the bridges is its own PR (scope limit) |
+| A9 | `target/04-tools-and-translate.md:139,293`: one shared `event-bridge` | the landed `cli/aidd_docs/memory/architecture.md` (hooks bullet): one descriptor per tool, one host adapter per tool | parsing, call tables, spawning and the exit 2 answer are composed from `event-bridge`; the per-host run, stop and answer text stays, E-T11 in reference section 9 |
 | A10 | the design bar of this plan: `node:path` only | `ref:79` (reference section 4): `node:path` and `node:crypto` | the reference wins |
 | A11 | K3 above: every path a profile computes for a sample plugin tree stays under `directory` | codex installs skills to `.agents/skills/`, outside `.codex/`; mcp files sit outside the directory for several tools | K3 narrowed to commands, rules, agents and flat hooks under `directory`, and every supported artefact path relative; skills and mcp paths are not asserted |
 | A12 | K8 above: `onMultipleCandidates` behaviour fixed for zero, one or several config candidates | `onMultipleCandidates` and `configCandidates` exist only in `target/04-tools-and-translate.md:63,83`, nowhere in `src/` | K8 dropped: no code for an input never observed, stated as a limit |
@@ -599,7 +599,76 @@ Re-run, after the revised sections 6, 7, 9 and 10 of the reference:
 - Counts: `count-after.mjs` from `cli/`, total 6618.
 - C2: the zeta probe replayed on the final tree, all gates green, then discarded.
 
-Measures: go. Verdict waits on the design bar review.
+Measures: go. Design bar: no-go, pending one decision.
+
+- Pass: the boundary (outside callers reach `tools` through `contract/` only, held by Biome, no `PUBLIC_MODULES` entry), domain purity, construction refusals tested in `define-tool`, characterization deleted.
+- Fail, leaking structure: the flat install path is built by `translate/domain/content-translator.ts` and parsed back by `built-tree-materialization-translator.ts` from `directory` and `flatLayout()`; `kind === "native" && requiresUserScope()` is repeated in four framework files; `distributionProbes?.marketplace?.[0]` is read by two callers. Each becomes one profile answer.
+- Fail, invariant outside its owner, open: single-profile rules (root token, probes, flat hooks against `acceptsHooks`, artefact paths under `directory`) are checked by conformance over the registration list, not refused by `defineAiTool`. A7 put them in conformance on purpose; the bar requires a refusal at construction. Decided: the target wins. `target/04-tools-and-translate.md:71-104` checks I1 to I10 by the conformance suite over every registered profile, and `:350` holds a profile as data checked by that suite; the bar's construction rule binds aggregates. Not a blocker.
+- Reserved to stage D (`target/00-overview.md`, section 12), not debt: the profile in `composition/tool-profiles/` and translation form 1.
+- Every other finding is fixed in this PR.
+- Stage C blockers whatever the decision: `cli/.claude/skills/tools/SKILL.md` describes the deleted registry; `src/contexts/tools/glossary.md` and `cli/.claude/rules/cli-contexts/tools.md` are missing; E-T3 is not written in reference section 9.
+
+Re-run after the sections refactor and the design-bar fixes (head `87573c633`):
+
+| Measure | Limit | Measured | Met |
+| --- | --- | --- | --- |
+| C2 code and test outside the profile | at most 7 | 2 (`kernel/tool.ts`, `registered-profiles.ts`), M-T1 written | yes |
+| C3 | exceptions not above ambiguities | 6 against 10: E-T3, E-T4, E-T7 kept, E-T8 to E-T10 added; M-T1 to M-T3 are migration state, not counted | yes |
+| Gates | all green | unit 4557, integration 2644, architecture 291, golden 6, e2e 88, contract 160; lint, typecheck, knip, jscpd, jscpd:profiles, type honesty, doc duplication | yes |
+| Answers | unchanged but the 18 waived duplicate paths | probe diff equals `accepted.txt`; contract folder diff empty; frozen surface only `tests/e2e/helpers.ts` | yes |
+| Mutation `tools` | floor | 95.3 | yes |
+
+- Leaking structure, fixed: the flat install path is a profile answer (`flatInstallPath`, `ownsFlatPath`); `requiresUserScope()` is asked once; distribution paths are asked, not indexed. `plugins-are-asked-not-read` holds callers to answers, its allowlist shrink-only and checked against missing files.
+- Invariants at construction: `define-tool` refuses an invalid profile, each refusal proven by a planted break (commit body of the layout and manifest sections commit).
+- No tool-named identifier in `domain/sections/`, `hooks/`, `bridges/`, `native-registration/`, `profile/` or `profile.ts`; the guard went red on a planted `claudeDir` in each.
+- Not exceptions: the shared event bridge is what `target/04-tools-and-translate.md:139` asks for; the antigravity hooks merge and the codex TOML agent writer became tool-free shared code with a thin binder in the profile folder, so the `behaviours/` proposal (`target/04-tools-and-translate.md:140-141`) is not needed; the profile data golden (`:364`) is a stage D proposal.
+- Commit `700e57711`'s subject claimed `createDeps` required the catalog while a default remained; the default is now gone and `create-deps-takes-the-catalog` holds it.
+- Stage C blockers above: the skill, the glossary, the context rule file and E-T3 are written.
+- Cross-context test imports, migration state M-T3: 157 test files outside `tools` import its kit, 40 the `host-registration` kit, 48 `tools/domain`.
+
+Verdict after re-review: no-go. B2 and the design bar are met; B1 is not, B3 and B4 are partial.
+
+- B1, unrecorded deviations: the `CONFIG_ASSETS` table in `src/runtime/assets/asset-loader.ts` (`target/04-tools-and-translate.md:299`, decided: the table disappears); `SourceMarketplaceRef` and `SourcePluginEntryRef` still in `tools/contract/build-contract.ts` (`:124` moves them to translate, `:15,115` forbid a `tools -> translate` edge: an ambiguity to settle); the kilo and opencode bridge files each keep their own `runHook`, `answerOf`, `stopReasonOf` and `toIdentifier` (`:293` puts them in the shared module, `:139` leaves two parameter files). The bullet above calling the bridge what `:139` asks for is wrong.
+- B3: the widened identifier guard has no Red proofs row.
+- B4: "Add a tool" omits `BASELINE` of `tool-addition-cost.arch.test.ts` (`asset-loader.ts`) and the hooks cost (descriptor, host adapter, payload fixtures).
+- Should-fix: the identifier guard skips `contract/` and `domain/marketplace-*.ts`, where one-profile names remain (`CURSOR_PLUGIN_ROOT_TOKEN`, `buildCodexMarketplace`); stale guard titles; the tools ambiguities live in the plan only, not in section 9.
+
+Fixes after the no-go (heads `0bca4d0dc`, `ba0d017f4`, `b2a6b6f9e`):
+
+- Bridges: `generateBridge` in `domain/bridges/event-bridge.ts` holds parsing, call tables, spawning, stdin and the exit 2 answer; each profile keeps an `identifierSuffix` and a template. Generated bytes unchanged (`cmp`). The run, stop and answer functions differ in bytes between kilo and opencode, so they stay per template: E-T11.
+- Config assets: each profile declares `configAssets`; `CONFIG_ASSETS` is gone and `asset-loader.ts` left `BASELINE`. Contract change: `configAssets()` on both profile interfaces.
+- Source refs: settled as ambiguity T-A13 (they stay in `tools/contract`, the build contract's signatures take them).
+- Identifier guard widened to `tools/contract/` and `domain/marketplace-{catalog,entry}.ts`: `CURSOR_PLUGIN_ROOT_TOKEN` and the Codex marketplace builders moved into their profiles, the shared builders renamed by shape. `contract/config-refs.ts` (4) and `contract/plugin-root-token.ts` (1) entered `IDENTIFIER_BASELINE`: newly covered paths, held shrink-only, rather than left unguarded.
+- Section 9 now holds the tools ambiguities T-A1 to T-A13 (T-A9 became E-T11) and E-T11; "Add a tool" names `BASELINE` and the hooks cost.
+
+| Measure | Limit | Measured | Met |
+| --- | --- | --- | --- |
+| C3 | exceptions not above ambiguities | 8 (E-T3, E-T4, E-T7 to E-T12) against 12 (T-A1 to T-A8, T-A10 to T-A13) | yes |
+| Gates | all green | unit 4565, integration 2653, architecture 291, golden 6, e2e 88, contract 160; lint, typecheck, knip, jscpd, jscpd:profiles, type honesty, doc duplication | yes |
+| Answers | unchanged but the 18 waived duplicate paths | probe equals `accepted.txt`; frozen surface only `tests/e2e/helpers.ts` | yes |
+| Mutation `tools` | floor 95 | 96.0; every per-tool scope holds its floor | yes |
+
+Second re-review: no-go on one citation, T-A13 cited `:117` for the rule at `:15,115`; corrected. Its should-fixes, closed (heads `98f6937a6`, `e02bc141d`, `c8953fc1b`):
+
+- Shipped config: one `ShippedConfig { name, content, destination, delivery }` list per profile (`target/04-tools-and-translate.md:66`); `configOutputPaths` and `pluginRuntimeFiles` are gone, a destination is required by type. `defineTool` refuses a profile that ships one name twice or ships a settings-section file at a path none of its sections writes. Limit: a declared name bundled for no tool is not caught, since content is imported where it is declared.
+- Bridge tests: the generated-text comparisons are deleted, each with its holder (golden, `tests/fixtures/hooks-routes/`, the bridge integration runs); the broken-pipe case runs the module (`target/04-tools-and-translate.md:293`).
+- `SOURCE_PLUGIN_ROOT_TOKEN` names the token by its role; it and `plugin-root-token-rewrite.ts` left `IDENTIFIER_BASELINE`.
+- `config-refs.ts`, read by `framework`'s restore, is E-T12.
+- The bridge integration file failed once on `ENOTEMPTY` at temp-directory removal (opencode's load-time SessionStart script racing the cleanup); its cleanup now retries the removal. Limit: a race longer than five retries still fails.
+- Mutation `tools` after these commits: 95.8 against floor 95.
+
+Third re-review: no-go on two missing proofs; closed (heads `93197ca48`, `da13cec11`, `207bcacb1`):
+
+- The bridge's script timeout was held by text snapshots alone, against T-A8: a case now runs the generated module with a script that never exits and checks it is killed (about 5 s real time, opencode only, the timeout being shared code).
+- A stdin write error was reported by vitest as unattributed; the case now collects it and fails on it.
+- The guards of the shipped config each have a red proof below; a profile answers one shipped file by name (`configAsset(name)`), and the list leaves the profile interfaces.
+- Mutation `tools` after these commits: 95.1 against floor 95.
+
+Verdict after the fourth review: go. The measures hold (C2: 2 files outside the profile against at most 7), the design bar is met, and every guard has its red proof. Closed after it (head `d5dcb200e`): a failing timeout case kills the hung script by the pid it wrote. Kept as limits, not fixed:
+
+- A declared shipped-config name that no tool bundles is not refused: content is imported where the profile declares it, so no code path holds both lists.
+- The test helper that replaces a profile's sections drops a settings section's own file with that section, by design: the file belongs to the section replaced.
+- Mutation `tools` stands one point above its floor; a later change under `tools` may need a test before it passes.
 
 ## Design bar (user requirement, checked at every design review)
 
@@ -642,3 +711,24 @@ Phases 3 and 6 end with an opus design review against this bar before the phase 
 | generates a bridge for exactly the events it relays through one | bridge relay, generator returns null | `expected [] to deeply equal [ 'SessionStart' ]` |
 | comes with one captured payload per event it relays | no payload fixtures | `claude: no payload for SessionStart: expected false to be true // Object.is equality` |
 | `registeredIdsMatchKernel` | kernel ids missing from the list | throws |
+| `tools-travel-as-the-catalog`: types no profile list outside the tools context and presentation | `export type Plant = ToolProfile[];` in a framework file | `Received ["src/contexts/framework/zz-plant.ts"]` |
+| `create-deps-takes-the-catalog`: passes all four arguments wherever src calls it | `createDeps(root, opts, out);` in a framework file | `Received ["src/contexts/framework/zz-plant.ts"]` |
+| `source-tree-holds-only-source`: has no file with an extension outside .ts and .md | a `zz-plant.ts-E` file under src | `Received ["src/contexts/framework/zz-plant.ts-E"]` |
+| `profiles-are-islands`: has no profile importing a file of another profile | claude file importing `../codex/codex-paths.js` | `Received ["...profiles/claude/zz-plant.ts -> ...profiles/codex/codex-paths.ts"]` |
+| `plugins-are-asked-not-read`: no code outside the tools context reads a field of a plugins capability | `tool.section("plugins").hooksAcceptance` in a framework file | `Received ["src/contexts/framework/zz-plant.ts :: reads .hooksAcceptance"]` |
+| `tool-id-list-is-the-catalogs`: is named only in the kernel and the tools context | `void AI_TOOL_IDS;` in `doctor-registration-use-case.ts` | `ask ToolCatalog.aiIdsInCanonicalOrder() instead: expected [ Array(1) ] to deeply equal []` |
+| `tool-addition-cost`: no shared file declares or imports an identifier carrying a tool name (sections, hooks, bridges, native-registration, profile) | `const claudeDir = 1;` in `domain/sections/agents-section.ts` | `Received [ "src/contexts/tools/domain/sections/agents-section.ts", …` |
+| the same guard over `tools/contract/` and the shared marketplace modules | `const claudeDir = 1;` in `contract/tool-catalog.ts`, `domain/marketplace-catalog.ts`, `domain/marketplace-entry.ts`, one at a time | `+ "src/contexts/tools/contract/tool-catalog.ts"` in the added list, likewise for the other two |
+| a profile ships its config assets | `configAssets` not yet on the profile | `catalog.profile(...).configAssets is not a function`, 9 cases |
+| the shared event adapter is bundled | `opencode-events.js` dropped from opencode's `configAssets` | 3 cases red, among them "bundles the shared event adapter as executable source text" |
+| the bridge kills a script that never exits | `timeout: 5000` raised to `60000` in `event-bridge.ts` | `expected 'still waiting' to be 'done'` |
+| a stdin write error is attributed to its case | `child.stdin.on("error", ...)` dropped | `expected [ Error: write EPIPE ] to deeply equal []`, kilo and opencode cases |
+| each shipped file is declared once, runtime files | `runtimeFiles: () => ({})` | `expected {} to strictly equal { 'bridge.js': '.x/bridge.js' }` |
+| each shipped file is declared once, config files | runtime entries dropped from `configFiles` | `expected { 'settings.json': '.x/settings.json' } to strictly equal { …(2) }` |
+| each shipped file is declared once, delivery filter | `asset.delivery !== "x"` | `expected { …(3) } to strictly equal { …(2) }` |
+| each shipped file is declared once, names | the list returns `[]` | `expected [] to deeply equal [ 'settings.json', 'bridge.js', …(1) ]` |
+| a shipped file needs a destination | `destination?: string` in `ShippedConfig` | `shipped-config.unit.test.ts(52,7): error TS2578: Unused '@ts-expect-error' directive` |
+| a profile ships one name once | the duplicate check disabled | `Error: the profile was accepted`, AI and IDE |
+| a section's shipped file lands where the section writes | `delivery === "x"` in the check | `Error: the profile was accepted`, AI and IDE |
+| a profile answers one shipped file by name | `asset.name !== name` | `expected undefined to be defined` |
+

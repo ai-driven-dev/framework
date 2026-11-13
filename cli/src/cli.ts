@@ -1,5 +1,6 @@
 import { platform } from "node:os";
 import { Command } from "commander";
+import { wireTools } from "./composition/tools.js";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
 import { registerCleanCommand } from "./presentation/commands/clean.js";
 import { registerDoctorCommand } from "./presentation/commands/doctor.js";
@@ -22,6 +23,8 @@ function formatVersion(version: string): string {
 
 const currentVersion = new CurrentVersionAdapter().get();
 
+const tools = wireTools();
+
 const program = new Command();
 
 program
@@ -30,17 +33,17 @@ program
   .version(formatVersion(currentVersion), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false);
 
-registerSetupCommand(program);
-registerFrameworkCommand(program);
-registerTranslateCommand(program);
-registerPluginCommand(program);
-registerMarketplaceCommand(program);
-registerAuthCommand(program);
-registerSyncCommand(program);
-registerUpdateCommand(program);
-registerDoctorCommand(program);
-registerCleanCommand(program);
-registerTelemetryCommand(program);
+registerSetupCommand(program, tools);
+registerFrameworkCommand(program, tools);
+registerTranslateCommand(program, tools);
+registerPluginCommand(program, tools);
+registerMarketplaceCommand(program, tools);
+registerAuthCommand(program, tools);
+registerSyncCommand(program, tools);
+registerUpdateCommand(program, tools);
+registerDoctorCommand(program, tools);
+registerCleanCommand(program, tools);
+registerTelemetryCommand(program, tools);
 
 // Commands already paying for network I/O, so the update-check refresh rides one of them.
 // `marketplace remove` is offline and `update` already resolves the latest version itself.
@@ -58,9 +61,12 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   if (resolveCommandPath(actionCommand).startsWith("telemetry")) return;
   const opts = program.opts<{ verbose?: boolean }>();
   const output = new CLIOutput(opts.verbose ?? false);
-  const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
-    () => null
-  );
+  const deps = await createDeps(
+    process.cwd(),
+    { verbose: opts.verbose ?? false },
+    output,
+    tools
+  ).catch(() => null);
   if (!deps) return;
   // A bare verb with no subject means "the CLI itself" (Claude Code/Codex convention):
   // `update` resolves the latest version on its own, so the generic check is redundant.
@@ -81,9 +87,12 @@ program.hook("postAction", async (_thisCommand, actionCommand) => {
   if (!ONLINE_COMMAND_PATHS.has(resolveCommandPath(actionCommand))) return;
   const opts = program.opts<{ verbose?: boolean }>();
   const output = new CLIOutput(opts.verbose ?? false);
-  const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
-    () => null
-  );
+  const deps = await createDeps(
+    process.cwd(),
+    { verbose: opts.verbose ?? false },
+    output,
+    tools
+  ).catch(() => null);
   if (!deps) return;
   await deps.checkUpdateUseCase.refresh().catch((err: unknown) => {
     deps.logger.debug(
@@ -111,7 +120,7 @@ process.stdout.on("error", (error: NodeJS.ErrnoException) => {
 const cliArgs = process.argv.slice(2);
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
-  runMenuLoop();
+  runMenuLoop(tools);
 } else {
   program.parse(process.argv);
 }

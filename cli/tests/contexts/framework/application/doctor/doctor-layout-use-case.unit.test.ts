@@ -5,6 +5,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
 const CLAUDE_COMMAND = ".claude/commands/plan.md";
@@ -33,6 +34,7 @@ async function issuesFor(onDisk: Record<string, string>, authReader?: TokenProvi
   return new DoctorLayoutUseCase(new InMemoryFileAdapter(files, hasher), authReader).execute({
     manifest: manifestTrackingClaude(),
     projectRoot: PROJECT_ROOT,
+    tools: catalogOf(),
   });
 }
 

@@ -39,7 +39,7 @@ function makeResult(overrides: Partial<ReturnType<typeof spawnSync>>) {
   } as ReturnType<typeof spawnSync>;
 }
 
-describe("CodexCliAdapter", () => {
+describe("HostCliAdapter (codex)", () => {
   let restorePath: (() => void) | undefined;
   afterEach(() => {
     restorePath?.();

@@ -12,6 +12,7 @@ import {
   FaultingFileAdapter,
 } from "../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN = "aidd-context";
@@ -75,7 +76,9 @@ describe("removeProjectHooks", () => {
       );
       const legacy = InstalledPlugin.fromJSON({ ...plugin().toJSON(), projectHooks: undefined });
 
-      await expect(removeProjectHooks(fs, legacy, "cursor", PROJECT_ROOT, guard)).rejects.toThrow(
+      await expect(
+        removeProjectHooks(fs, legacy, registeredAiProfile("cursor"), PROJECT_ROOT, guard)
+      ).rejects.toThrow(
         `Cursor project hooks for '${PLUGIN}' have an unproven legacy install digest; detach refused.`
       );
 
@@ -99,7 +102,9 @@ describe("removeProjectHooks", () => {
         },
       });
 
-      await expect(removeProjectHooks(fs, invalid, "cursor", PROJECT_ROOT)).rejects.toThrow(
+      await expect(
+        removeProjectHooks(fs, invalid, registeredAiProfile("cursor"), PROJECT_ROOT)
+      ).rejects.toThrow(
         `Cursor hook script '.cursor/hooks/${PLUGIN}/pre.js' has an unproven install digest; detach refused.`
       );
 
@@ -130,9 +135,9 @@ describe("removeProjectHooks", () => {
       },
     });
 
-    await expect(removeProjectHooks(fs, invalid, "cursor", PROJECT_ROOT)).rejects.toThrow(
-      `Cursor hook script path '${path}' has unproven provenance; detach refused.`
-    );
+    await expect(
+      removeProjectHooks(fs, invalid, registeredAiProfile("cursor"), PROJECT_ROOT)
+    ).rejects.toThrow(`Cursor hook script path '${path}' has unproven provenance; detach refused.`);
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
     expect(fs.getFile(join(PROJECT_ROOT, path))).toBe(script);
@@ -156,7 +161,9 @@ describe("removeProjectHooks", () => {
       });
 
       await expect(
-        removeProjectHooks(fs, invalid, "cursor", PROJECT_ROOT, { overwriteEdited: true })
+        removeProjectHooks(fs, invalid, registeredAiProfile("cursor"), PROJECT_ROOT, {
+          overwriteEdited: true,
+        })
       ).rejects.toThrow(`Cursor hook script path '${path}' has unproven provenance`);
 
       expect(fs.getFile(join(PROJECT_ROOT, path))).toBe(script);
@@ -175,7 +182,9 @@ describe("removeProjectHooks", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: hooksFile(PLUGIN) });
 
     await expect(
-      removeProjectHooks(fs, invalid, "cursor", PROJECT_ROOT, { overwriteEdited: true })
+      removeProjectHooks(fs, invalid, registeredAiProfile("cursor"), PROJECT_ROOT, {
+        overwriteEdited: true,
+      })
     ).rejects.toThrow(`Cursor project hooks for '${PLUGIN}' have an unproven install digest`);
   });
 
@@ -187,11 +196,13 @@ describe("removeProjectHooks", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: edited, [SCRIPT_PATH]: "user edit" });
     const installed = plugin({ entry: true, script: "installed script" });
 
-    await expect(removeProjectHooks(fs, installed, "cursor", PROJECT_ROOT)).rejects.toThrow(
-      /edited after install; detach refused\. Rerun aidd sync --force/
-    );
+    await expect(
+      removeProjectHooks(fs, installed, registeredAiProfile("cursor"), PROJECT_ROOT)
+    ).rejects.toThrow(/edited after install; detach refused\. Rerun aidd sync --force/);
     expect(
-      await removeProjectHooks(fs, installed, "cursor", PROJECT_ROOT, { overwriteEdited: true })
+      await removeProjectHooks(fs, installed, registeredAiProfile("cursor"), PROJECT_ROOT, {
+        overwriteEdited: true,
+      })
     ).toBe(true);
 
     expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null").hooks).toStrictEqual({
@@ -210,7 +221,9 @@ describe("removeProjectHooks", () => {
   ])("preserves a hooks file with no contribution byte-for-byte: %s", async (content) => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });
 
-    expect(await removeProjectHooks(fs, plugin(), "cursor", PROJECT_ROOT)).toBe(false);
+    expect(
+      await removeProjectHooks(fs, plugin(), registeredAiProfile("cursor"), PROJECT_ROOT)
+    ).toBe(false);
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
   });
@@ -242,15 +255,23 @@ describe("removeProjectHooks", () => {
     });
 
     await expect(
-      assertProjectHooksRemovable(fs, installed, "cursor", PROJECT_ROOT)
+      assertProjectHooksRemovable(fs, installed, registeredAiProfile("cursor"), PROJECT_ROOT)
     ).resolves.toBeUndefined();
     await expect(
-      assertProjectHooksUnchanged(fs, PLUGIN, installed.projectHooks, "cursor", PROJECT_ROOT)
+      assertProjectHooksUnchanged(
+        fs,
+        PLUGIN,
+        installed.projectHooks,
+        registeredAiProfile("cursor"),
+        PROJECT_ROOT
+      )
     ).resolves.toStrictEqual({ existing: content });
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
     expect(fs.getFile(SCRIPT_PATH)).toBe("script");
-    expect(await removeProjectHooks(fs, installed, "cursor", PROJECT_ROOT)).toBe(true);
+    expect(
+      await removeProjectHooks(fs, installed, registeredAiProfile("cursor"), PROJECT_ROOT)
+    ).toBe(true);
     expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null").hooks).toStrictEqual({
       preToolUse: [entry(OTHER)],
     });
@@ -262,7 +283,12 @@ describe("removeProjectHooks", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content, [SCRIPT_PATH]: script });
 
     await expect(
-      assertProjectHooksRemovable(fs, plugin({ entry: true, script }), "cursor", PROJECT_ROOT)
+      assertProjectHooksRemovable(
+        fs,
+        plugin({ entry: true, script }),
+        registeredAiProfile("cursor"),
+        PROJECT_ROOT
+      )
     ).rejects.toThrow(/edited after install/);
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
@@ -274,7 +300,12 @@ describe("removeProjectHooks", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });
 
     expect(
-      await removeProjectHooks(fs, plugin({ script: "installed script" }), "cursor", PROJECT_ROOT)
+      await removeProjectHooks(
+        fs,
+        plugin({ script: "installed script" }),
+        registeredAiProfile("cursor"),
+        PROJECT_ROOT
+      )
     ).toBe(false);
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
@@ -286,10 +317,22 @@ describe("removeProjectHooks", () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: content });
 
     await expect(
-      assertProjectHooksUnchanged(fs, PLUGIN, undefined, "cursor", PROJECT_ROOT)
+      assertProjectHooksUnchanged(
+        fs,
+        PLUGIN,
+        undefined,
+        registeredAiProfile("cursor"),
+        PROJECT_ROOT
+      )
     ).resolves.toStrictEqual({ existing: content });
     await expect(
-      assertProjectHooksUnchanged(fs, PLUGIN, undefined, "opencode", PROJECT_ROOT)
+      assertProjectHooksUnchanged(
+        fs,
+        PLUGIN,
+        undefined,
+        registeredAiProfile("opencode"),
+        PROJECT_ROOT
+      )
     ).resolves.toStrictEqual({ existing: null });
 
     expect(fs.getFile(HOOKS_PATH)).toBe(content);
@@ -303,7 +346,7 @@ describe("removeProjectHooks", () => {
     const remove = vi.spyOn(fs, "deleteFile");
 
     await expect(
-      removeProjectHooks(fs, plugin({ entry: true }), "cursor", PROJECT_ROOT)
+      removeProjectHooks(fs, plugin({ entry: true }), registeredAiProfile("cursor"), PROJECT_ROOT)
     ).rejects.toThrow(/outside.*project|escapes.*project/);
 
     expect(write).not.toHaveBeenCalled();
@@ -324,7 +367,7 @@ describe("removeProjectHooks", () => {
     const remove = vi.spyOn(fs, "deleteFile");
 
     await expect(
-      removeProjectHooks(fs, plugin({ script }), "cursor", PROJECT_ROOT)
+      removeProjectHooks(fs, plugin({ script }), registeredAiProfile("cursor"), PROJECT_ROOT)
     ).rejects.toThrow(/outside.*project|escapes.*project/);
 
     expect(write).not.toHaveBeenCalled();
@@ -335,9 +378,14 @@ describe("removeProjectHooks", () => {
   it("leaves a tool that keeps hooks in its plugin directory untouched and reports nothing undone", async () => {
     const fs = new InMemoryFileAdapter({ [HOOKS_PATH]: hooksFile(PLUGIN) });
 
-    expect(await removeProjectHooks(fs, plugin({ entry: true }), "opencode", PROJECT_ROOT)).toBe(
-      false
-    );
+    expect(
+      await removeProjectHooks(
+        fs,
+        plugin({ entry: true }),
+        registeredAiProfile("opencode"),
+        PROJECT_ROOT
+      )
+    ).toBe(false);
     expect(fs.getFile(HOOKS_PATH)).toBe(hooksFile(PLUGIN));
   });
 
@@ -345,7 +393,9 @@ describe("removeProjectHooks", () => {
     const fs = new FaultingFileAdapter();
     fs.failOn("deleteDirectory", `${PROJECT_ROOT}/.cursor/hooks/${PLUGIN}/`, errnoError("EPERM"));
 
-    expect(await removeProjectHooks(fs, plugin(), "cursor", PROJECT_ROOT)).toBe(false);
+    expect(
+      await removeProjectHooks(fs, plugin(), registeredAiProfile("cursor"), PROJECT_ROOT)
+    ).toBe(false);
   });
 
   it("removes only recorded entries and scripts while preserving untracked files in the same plugin directory", async () => {
@@ -362,7 +412,7 @@ describe("removeProjectHooks", () => {
     const undone = await removeProjectHooks(
       fs,
       plugin({ entry: true, script }),
-      "cursor",
+      registeredAiProfile("cursor"),
       PROJECT_ROOT
     );
 
@@ -383,7 +433,12 @@ describe("removeProjectHooks", () => {
       [SCRIPT_PATH]: script,
     });
 
-    await removeProjectHooks(fs, plugin({ entry: true, script }), "cursor", PROJECT_ROOT);
+    await removeProjectHooks(
+      fs,
+      plugin({ entry: true, script }),
+      registeredAiProfile("cursor"),
+      PROJECT_ROOT
+    );
 
     expect(JSON.parse(fs.getFile(HOOKS_PATH) ?? "null")).toStrictEqual({
       version: 1,
@@ -410,7 +465,12 @@ describe("removeProjectHooks", () => {
       });
 
       await expect(
-        removeProjectHooks(fs, plugin({ entry: true, script }), "cursor", PROJECT_ROOT)
+        removeProjectHooks(
+          fs,
+          plugin({ entry: true, script }),
+          registeredAiProfile("cursor"),
+          PROJECT_ROOT
+        )
       ).rejects.toThrow(/edited after install/);
 
       expect(fs.getFile(HOOKS_PATH)).toBe(current);
@@ -422,7 +482,12 @@ describe("removeProjectHooks", () => {
     const script = "module.exports = () => {};";
     const fs = new InMemoryFileAdapter({ [SCRIPT_PATH]: script });
 
-    const undone = await removeProjectHooks(fs, plugin({ script }), "cursor", PROJECT_ROOT);
+    const undone = await removeProjectHooks(
+      fs,
+      plugin({ script }),
+      registeredAiProfile("cursor"),
+      PROJECT_ROOT
+    );
 
     expect(undone).toBe(true);
     expect(fs.listAll()).toStrictEqual([]);
@@ -432,9 +497,9 @@ describe("removeProjectHooks", () => {
     const fs = new FaultingFileAdapter();
     fs.failOn("readFile", HOOKS_PATH, errnoError("EACCES"));
 
-    await expect(removeProjectHooks(fs, plugin(), "cursor", PROJECT_ROOT)).rejects.toThrow(
-      "EACCES: planted by the test"
-    );
+    await expect(
+      removeProjectHooks(fs, plugin(), registeredAiProfile("cursor"), PROJECT_ROOT)
+    ).rejects.toThrow("EACCES: planted by the test");
   });
 
   it("refuses a legacy hook with no install digest instead of deleting by plugin name", async () => {
@@ -450,9 +515,9 @@ describe("removeProjectHooks", () => {
       files: {},
       scope: "user",
     });
-    await expect(removeProjectHooks(fs, legacy, "cursor", PROJECT_ROOT)).rejects.toThrow(
-      /unproven/
-    );
+    await expect(
+      removeProjectHooks(fs, legacy, registeredAiProfile("cursor"), PROJECT_ROOT)
+    ).rejects.toThrow(/unproven/);
     expect(fs.getFile(HOOKS_PATH)).toBe(hooksFile(PLUGIN));
     expect(fs.getFile(SCRIPT_PATH)).toBe("legacy");
   });

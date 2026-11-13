@@ -1,14 +1,11 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/runtime/wiring/translate.js";
-import {
-  buildContractFor,
-  getAllRegisteredTools,
-} from "../../../../../src/contexts/tools/domain/registry.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredCatalog, registeredFlatContract } from "../../../tools/testing/catalog-of.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-agent-path");
@@ -26,9 +23,10 @@ const ASSETS: AssetProvider = {
 
 /** The registered tools that build flat and declare an agents artifact. */
 function flatTools(): ToolId[] {
-  return [...getAllRegisteredTools().keys()].filter(
-    (id) => buildContractFor(id, "flat")?.().artifacts.agents.supported === true
-  );
+  return registeredCatalog()
+    .sortedById()
+    .map((profile) => profile.toolId)
+    .filter((id) => registeredFlatContract(id)?.artifacts.agents.supported === true);
 }
 
 /** Where the plugin keeps its agent: at the top of `agents/`, or in a folder under it. */
@@ -52,9 +50,9 @@ function seeded(agentFile: string): InMemoryFileAdapter {
 }
 
 function strategyFor(tool: ToolId, fs: InMemoryFileAdapter): FlatBuildStrategy {
-  const contract = buildContractFor(tool, "flat");
-  if (contract === undefined) throw new Error(`${tool} has no flat contract`);
-  return new FlatBuildStrategy(fs, ASSETS, contract(), false, OUT, async () => true);
+  const contract = registeredFlatContract(tool);
+  if (contract === null) throw new Error(`${tool} has no flat contract`);
+  return new FlatBuildStrategy(fs, ASSETS, contract, false, OUT, async () => true);
 }
 
 function outRelative(fs: InMemoryFileAdapter): Set<string> {

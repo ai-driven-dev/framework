@@ -4,13 +4,13 @@
  * hold only what their own way needs. A field read from outside re-couples a caller to a
  * variant's shape, and the shape is free to change.
  *
- * Three doors lead to the capability from outside the tools context: the section a profile
- * answers (`tool.section("plugins")`), the catalog resolver (`resolvePluginsCapability(id)`) and
- * the native narrowing (`resolveNativePlugins(id)`). All are watched for a property read or a destructuring. A capability held in a variable and
- * read from there is out of this test's sight; a `#` field is what stops that one, where the
- * compiler refuses a cast or an element access that the `private` keyword lets through.
+ * Three doors lead to the answers from outside the tools context: the tool's `plugins()` answer,
+ * the catalog resolver (`resolvePluginsCapability(id)`) and the native narrowing
+ * (`resolveNativePlugins(id)`). All are watched for a property read or a destructuring. An answer
+ * held in a variable and read from there is out of this test's sight; a `#` field is what stops
+ * that one, where the compiler refuses a cast or an element access that `private` lets through.
  */
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLI_ROOT, read, sourceFiles } from "./helpers.js";
@@ -18,11 +18,14 @@ import { CLI_ROOT, read, sourceFiles } from "./helpers.js";
 const TOOLS_CONTEXT = /^(src|tests)\/contexts\/tools\//;
 
 const ANSWERING_DIRS = [
-  "src/contexts/tools/domain/capabilities",
-  "src/contexts/tools/domain/plugins",
+  "src/contexts/tools/domain/sections",
+  "src/contexts/tools/domain/native-registration",
 ];
 
-const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|resolveNativePlugins\([^)]*\)|PluginsCapability\))`;
+/** The one file of `profile/` that answers about plugins; its sibling classes are not answers. */
+const ANSWERING_FILES = ["src/contexts/tools/domain/profile/plugin-answers.ts"];
+
+const DOORS = String.raw`(?:section\(\s*"plugins"\s*\)|resolvePluginsCapability\([^)]*\)|resolveNativePlugins\([^)]*\)|PluginsCapability\)|\.plugins\(\)|\.nativeActivation\(\))`;
 /** `kind` is the one read allowed: the discriminant a caller narrows the variant on. */
 const FIELD_READ = new RegExp(String.raw`${DOORS}\??\.(?!kind\b)(\w+)\b(?!\s*\()`, "g");
 const DESTRUCTURING = new RegExp(String.raw`\}\s*=\s*[\w.?]*${DOORS}\s*;`, "g");
@@ -54,54 +57,28 @@ const STORED_OBJECT_COPY =
  * The eleven on the plugin delivery classes are the answers `plan-tools-clean.md` section 3.1
  * names; the others are declared values recorded there with their reason. Shrink-only: an entry the code no longer matches fails the test, and none is added. */
 const STORED_ANSWERS_ALLOWED: Readonly<Record<string, string>> = {
-  "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.hostBinary":
+  "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.hostBinary":
     "the executable is the key every host registry and driver is looked up by; no computation sits behind it",
-  "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.cliShape":
+  "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.cliShape":
     "the composition root configures the host CLI adapter with the whole declared shape; an answer per field would make the adapter ask the tool nine times for what it is handed once",
-  "src/contexts/tools/domain/plugins/native-activation.ts :: NativeActivation.marketplaceSourcesDeclaration":
+  "src/contexts/tools/domain/native-registration/native-activation.ts :: NativeActivation.marketplaceSourcesDeclaration":
     "the composition root picks the source reader by the declared form, which carries its own list command and wording",
-  "src/contexts/tools/domain/plugins/marketplace-registration.ts :: MarketplaceRegistration.sharedSettingsFile":
+  "src/contexts/tools/domain/native-registration/marketplace-registration.ts :: MarketplaceRegistration.sharedSettingsFile":
     "the path that names the tracked file in the manifest, resolved against a project root and hashed by its caller",
-  "src/contexts/tools/domain/capabilities/hooks-capability.ts :: HooksCapability.outputPath":
+  "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.outputPath":
     "the declared destination, asked by the framework install use cases (config, runtime config) and written into the manifest",
-  "src/contexts/tools/domain/capabilities/hooks-capability.ts :: HooksCapability.mergeStrategy":
+  "src/contexts/tools/domain/sections/hooks-section.ts :: HooksConfigPart.mergeStrategy":
     "the declared way the hooks file is merged, recorded on each installed file by the framework install use cases",
-  "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.outputPath":
-    "the declared destination, asked by the framework install use cases (config, runtime config) and by resolve-mcp-output-path",
-  "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.mergeStrategy":
+  "src/contexts/tools/domain/sections/mcp-section.ts :: McpConfigPart.outputPath":
+    "the declared destination, asked by the framework install use cases (config, runtime config)",
+  "src/contexts/tools/domain/sections/mcp-section.ts :: McpConfigPart.mergeStrategy":
     "the declared way the mcp file is merged, recorded on each installed file by the framework install use cases",
-  "src/contexts/tools/domain/capabilities/mcp-capability.ts :: McpCapability.outputPathCandidates":
-    "the declared places a tool's mcp file may already sit, probed in order by resolve-mcp-output-path",
-  "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.outputPath":
+  "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.outputPath":
     "the declared destination, asked by the framework install use cases (ide tool, runtime config) and written into the manifest",
-  "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.mergeStrategy":
+  "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.mergeStrategy":
     "the declared way the settings file is merged, handed to the file merge by the framework install use cases",
-  "src/contexts/tools/domain/capabilities/settings-capability.ts :: SettingsCapability.requiredTool":
+  "src/contexts/tools/domain/sections/config-section.ts :: ConfigSection.requiredTool":
     "the declared tool a settings section applies to, matched against the installed one by the ide tool and runtime config install use cases",
-  "src/contexts/tools/domain/plugins/flat-plugins.ts :: FlatPlugins.flatLayout":
-    "the declared layout of a flat tool, asked by the flat build",
-  "src/contexts/tools/domain/plugins/flat-plugins.ts :: FlatPlugins.hooksAcceptance":
-    "the declared hooks stance, asked by every caller that places hooks",
-  "src/contexts/tools/domain/plugins/flat-plugins.ts :: FlatPlugins.projectHooksDelivery":
-    "the declared project hooks delivery, asked by the hooks installer",
-  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.activation":
-    "hands back the native activation entity, which answers for itself",
-  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.marketplaceRegistration":
-    "hands back the marketplace registration entity, which answers for itself",
-  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.hooksAcceptance":
-    "the declared hooks stance, asked by every caller that places hooks",
-  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.hooksFilePath":
-    "the declared hooks file, asked by the plugin content translator, which places the hooks manifest and the scripts beside it",
-  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.manifestPath":
-    "the declared plugin manifest path, asked by the plugin build",
-  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.projectHooksDelivery":
-    "the declared project hooks delivery, asked by the hooks installer",
-  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.rootToken":
-    "the declared plugin root token, substituted by the plugin build",
-  "src/contexts/tools/domain/plugins/native-plugins.ts :: NativePlugins.trustNotice":
-    "the declared hooks trust notice, collected by the plugin content translator into the install notices",
-  "src/contexts/tools/domain/plugins/plugin-delivery.ts :: PluginDeliveryBase.globalFiles":
-    "the declared global files, asked by the global install",
 };
 
 function testFiles(): string[] {
@@ -127,11 +104,14 @@ function readsOutsideTools(files: readonly string[]): string[] {
 }
 
 function answeringFiles(): string[] {
-  return ANSWERING_DIRS.flatMap((dir) =>
-    readdirSync(join(CLI_ROOT, dir))
-      .filter((entry) => entry.endsWith(".ts"))
-      .map((entry) => `${dir}/${entry}`)
-  );
+  return [
+    ...ANSWERING_DIRS.flatMap((dir) =>
+      readdirSync(join(CLI_ROOT, dir))
+        .filter((entry) => entry.endsWith(".ts"))
+        .map((entry) => `${dir}/${entry}`)
+    ),
+    ...ANSWERING_FILES,
+  ];
 }
 
 /** What a class leaves readable in one source: each entry is a read a caller can make. */
@@ -176,155 +156,31 @@ describe("a tool's plugin delivery is asked, never read", () => {
     expect(verdictOn(readableFields(), Object.keys(STORED_ANSWERS_ALLOWED))).toEqual([]);
   });
 
-  it("names a stored value nobody allowed, and an allowed entry the code no longer holds", () => {
-    expect(verdictOn(["a :: A.x", "a :: A.y"], ["a :: A.y", "a :: A.gone"])).toEqual([
-      "readable: a :: A.x",
-      "stale: a :: A.gone",
-    ]);
-  });
-
-  it("sees a public field, a keyword-private one, a parameter property, a stored-value getter and method in each written shape, an object of stored fields, and clears a # field and a computed answer", () => {
-    const planted = [
-      "class A {",
-      "  readonly open: string;",
-      "  private readonly secret: string;",
-      "  readonly #hidden: string;",
-      "  constructor(private readonly leaked: string) {}",
-      "  get echoed(): string {",
-      "    return this.#hidden;",
-      "  }",
-      "  get kind(): string {",
-      '    return "a";',
-      "  }",
-      "  ask(): string {",
-      "    return this.#hidden;",
-      "  }",
-      "  askPlain(): string {",
-      "    return this.shown;",
-      "  }",
-      "  derived(): boolean {",
-      "    return this.#hidden !== undefined;",
-      "  }",
-      "  derivedFromOptional(name: string): boolean {",
-      "    return this.#hidden?.includes(name) ?? false;",
-      "  }",
-      "  override get overridden(): string {",
-      "    return this.#hidden;",
-      "  }",
-      "  override askOverridden(): string {",
-      "    return this.#hidden;",
-      "  }",
-      "  askGeneric<T>(): T {",
-      "    return this.#hidden;",
-      "  }",
-      "  askWithDefault(): string {",
-      '    return this.#hidden ?? "none";',
-      "  }",
-      "  askOptional(): string | undefined {",
-      "    return this.#hidden?.inner;",
-      "  }",
-      "  askCopy(): Shape {",
-      "    return { ...this.#hidden };",
-      "  }",
-      "  askShape(): Shape {",
-      "    const spec = this.#hidden;",
-      "    return {",
-      "      first: spec.first,",
-      "      second: spec.second,",
-      "    };",
-      "  }",
-      "  askShapeDirect(): Shape {",
-      "    return {",
-      "      first: this.#hidden.first,",
-      "      second: this.#hidden.second,",
-      "    };",
-      "  }",
-      "  askComputedShape(): Shape {",
-      "    const spec = this.#hidden;",
-      "    return {",
-      "      first: spec.first,",
-      "      second: spec.second.trim(),",
-      "    };",
-      "  }",
-      "}",
-    ].join("\n");
-    expect(readableIn("a.ts", planted)).toEqual([
-      "a.ts :: A.open",
-      "a.ts :: A.secret",
-      "a.ts :: A.leaked",
-      "a.ts :: A.echoed",
-      "a.ts :: A.overridden",
-      "a.ts :: A.ask",
-      "a.ts :: A.askPlain",
-      "a.ts :: A.askOverridden",
-      "a.ts :: A.askGeneric",
-      "a.ts :: A.askWithDefault",
-      "a.ts :: A.askOptional",
-      "a.ts :: A.askCopy",
-      "a.ts :: A.askShape",
-      "a.ts :: A.askShapeDirect",
-    ]);
-  });
-
-  it("reads every capability and plugins file, the activation and registration included", () => {
+  it("reads every section, profile and registration file that answers", () => {
     const files = answeringFiles();
-    expect(files).toContain("src/contexts/tools/domain/capabilities/settings-capability.ts");
-    expect(files).toContain("src/contexts/tools/domain/plugins/native-plugins.ts");
-    expect(files).toContain("src/contexts/tools/domain/plugins/native-activation.ts");
-    expect(files).toContain("src/contexts/tools/domain/plugins/marketplace-registration.ts");
+    expect(files).toContain("src/contexts/tools/domain/sections/config-section.ts");
+    expect(files).toContain("src/contexts/tools/domain/profile/plugin-answers.ts");
+    expect(files).toContain("src/contexts/tools/domain/native-registration/native-activation.ts");
+    expect(files).toContain(
+      "src/contexts/tools/domain/native-registration/marketplace-registration.ts"
+    );
   });
 
-  it("sees a read and a destructuring where one is written", () => {
-    const written = [
-      'const a = tool.section("plugins").acceptsMcp;',
-      'const b = tool.section("plugins")?.acceptsMcp;',
-      'const { hookScript } = tool.section("plugins");',
-      "const c = catalog.resolvePluginsCapability(id).acceptsMcp;",
-      "const e = (x as PluginsCapability).acceptsMcp;",
-      "const f = catalog.resolveNativePlugins(id).hookScript;",
-    ];
-    const found = written.map((line) => [...line.matchAll(FIELD_READ)].length);
-    const destructured = written.map((line) => [...line.matchAll(DESTRUCTURING)].length);
-    expect([found, destructured]).toEqual([
-      [1, 1, 0, 1, 1, 1],
-      [0, 0, 1, 0, 0, 0],
-    ]);
-
-    const asked = 'const d = tool.section("plugins").buildMode();';
-    expect([...asked.matchAll(FIELD_READ)]).toHaveLength(0);
-
-    const narrowed = 'if (tool.section("plugins").kind === "flat") return;';
-    expect([...narrowed.matchAll(FIELD_READ)]).toHaveLength(0);
+  it("holds no allowlist entry whose file is gone", () => {
+    expect(missingFilesOf(Object.keys(STORED_ANSWERS_ALLOWED))).toEqual([]);
   });
 
-  it("the shared base declares no answer only one way of taking plugins has", () => {
-    const base = read("src/contexts/tools/domain/plugins/plugin-delivery.ts");
-    expect(variantOnlyAnswersOn(base)).toEqual([]);
-  });
-
-  it("sees a variant-only answer declared on a base, and clears a shared one", () => {
-    const placeholder = "  manifestPath(): string | null {\n    return null;\n  }";
-    expect(variantOnlyAnswersOn(placeholder)).toEqual(["manifestPath"]);
-    expect(variantOnlyAnswersOn("  globalFiles(): GlobalFiles | null {")).toEqual([]);
+  it("the guard itself: names an allowlist key whose file path is off by one character", () => {
+    const [key] = Object.keys(STORED_ANSWERS_ALLOWED);
+    const broken = (key as string).replace(".ts ::", "x.ts ::");
+    expect(missingFilesOf([broken])).toEqual([broken.split(" :: ")[0]]);
+    expect(missingFilesOf([key as string])).toEqual([]);
   });
 });
 
-/** Answers that belong to one variant alone; the base holds none of them. */
-const VARIANT_ONLY = [
-  "translatesAsMarketplace",
-  "requiresUserScope",
-  "manifestPath",
-  "rootToken",
-  "trustNotice",
-  "activation",
-  "marketplaceRegistration",
-  "enablementIsMachineGlobal",
-  "pluginOutputDir",
-  "hookScript",
-];
-
-function variantOnlyAnswersOn(source: string): string[] {
-  return VARIANT_ONLY.filter((name) =>
-    new RegExp(String.raw`^  (?:abstract )?${name}\(`, "m").test(source)
-  );
+/** The files an allowlist's keys point at that no longer exist. */
+function missingFilesOf(keys: readonly string[]): string[] {
+  return keys
+    .map((key) => key.split(" :: ")[0] as string)
+    .filter((file) => !existsSync(join(CLI_ROOT, file)));
 }

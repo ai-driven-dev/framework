@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceScope } from "../../kernel/scope.js";
 import { parsePluginSourceShorthand } from "../../kernel/source.js";
 import { createDeps, createMenuDeps } from "../../runtime/wiring/framework.js";
@@ -15,7 +16,7 @@ import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
 import { syncNativeActivation } from "./sync-native-activation.js";
 
-export function registerMarketplaceCommand(program: Command): void {
+export function registerMarketplaceCommand(program: Command, tools: ToolCatalog): void {
   const marketplace = program.command("marketplace").description("Manage plugin marketplaces");
 
   marketplace.action(async () => {
@@ -69,7 +70,12 @@ export function registerMarketplaceCommand(program: Command): void {
         }
         try {
           const scope: MarketplaceScope = cmdOptions.scope === "user" ? "user" : "project";
-          const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
+          const deps = await createDeps(
+            projectRoot,
+            { verbose, token: cmdOptions.token },
+            output,
+            tools
+          );
           const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
           const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));
           const source = parsePluginSourceShorthand(rawSource);
@@ -81,7 +87,7 @@ export function registerMarketplaceCommand(program: Command): void {
             autoTrust: cmdOptions.yes ?? false,
             overwrite: cmdOptions.overwrite ?? false,
           });
-          await syncNativeActivation(deps, output, projectRoot, [result.marketplace.name]);
+          await syncNativeActivation(deps, output, tools, projectRoot, [result.marketplace.name]);
           printMarketplaceRegistered(output, result.marketplace.name);
         } catch (error) {
           errorHandler.handle(error);
@@ -97,7 +103,7 @@ export function registerMarketplaceCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, tools);
         const { marketplaces, catalogs } = await deps.marketplaceListUseCase.execute({
           projectRoot,
           withCatalogs: cmdOptions.plugins ?? false,
@@ -118,17 +124,18 @@ export function registerMarketplaceCommand(program: Command): void {
       const errorHandler = new ErrorHandler(output);
       try {
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, tools);
         const result = await (scope === "user"
           ? deps.userMarketplaceRemoveUseCase
           : deps.marketplaceRemoveUseCase
         ).execute({
           name,
           projectRoot,
+          tools,
           autoConfirm: cmdOptions.yes ?? false,
           scope,
         });
-        if (scope !== "user") await syncNativeActivation(deps, output, projectRoot);
+        if (scope !== "user") await syncNativeActivation(deps, output, tools, projectRoot);
         printMarketplaceRemoved(output, result.marketplace.name, result.removedPluginCount);
       } catch (error) {
         errorHandler.handle(error);
@@ -145,13 +152,13 @@ export function registerMarketplaceCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, tools);
         const { results, failedCount } = await deps.marketplaceRefreshUseCase.execute({
           projectRoot,
           name,
           force: cmdOptions.force,
         });
-        await syncNativeActivation(deps, output, projectRoot);
+        await syncNativeActivation(deps, output, tools, projectRoot);
         printRefreshResults(output, results);
         if (failedCount > 0) process.exit(1);
       } catch (error) {
@@ -166,8 +173,8 @@ export function registerMarketplaceCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.marketplaceCheckUseCase.execute({ projectRoot });
+        const deps = await createDeps(projectRoot, { verbose }, output, tools);
+        const result = await deps.marketplaceCheckUseCase.execute({ projectRoot, tools });
         printMarketplaceCheck(output, result);
       } catch (error) {
         errorHandler.handle(error);

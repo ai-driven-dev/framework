@@ -1,4 +1,4 @@
-import { AI_TOOL_IDS, type AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId } from "../../../../kernel/tool.js";
 import type { ResolveMarketplaceUseCase } from "../../../distribution/application/resolve-marketplace-use-case.js";
 import {
   isMarketplaceStale,
@@ -6,11 +6,13 @@ import {
   STALE_MAX_DAYS_DEFAULT,
 } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 
 export interface MarketplaceCheckOptions {
   projectRoot: string;
+  tools: ToolCatalog;
   staleMaxDays?: number;
 }
 
@@ -52,7 +54,8 @@ export class MarketplaceCheckUseCase {
     const { upstreamRemoved, skipped } = await this.collectStatus(
       marketplaces,
       manifest,
-      options.projectRoot
+      options.projectRoot,
+      options.tools
     );
     return { stale, upstreamRemoved, skipped };
   }
@@ -60,7 +63,8 @@ export class MarketplaceCheckUseCase {
   private async collectStatus(
     marketplaces: readonly Marketplace[],
     manifest: Manifest | null,
-    projectRoot: string
+    projectRoot: string,
+    tools: ToolCatalog
   ): Promise<{ upstreamRemoved: UpstreamRemoved[]; skipped: SkippedMarketplace[] }> {
     const upstreamRemoved: UpstreamRemoved[] = [];
     const skipped: SkippedMarketplace[] = [];
@@ -71,7 +75,7 @@ export class MarketplaceCheckUseCase {
         continue;
       }
       if (manifest !== null) {
-        upstreamRemoved.push(...this.diffInstalledAgainst(known, m.name, manifest));
+        upstreamRemoved.push(...this.diffInstalledAgainst(known, m.name, manifest, tools));
       }
     }
     return { upstreamRemoved, skipped };
@@ -92,10 +96,11 @@ export class MarketplaceCheckUseCase {
   private diffInstalledAgainst(
     known: Set<string>,
     marketplaceName: string,
-    manifest: Manifest
+    manifest: Manifest,
+    tools: ToolCatalog
   ): UpstreamRemoved[] {
     const out: UpstreamRemoved[] = [];
-    for (const toolId of AI_TOOL_IDS) {
+    for (const toolId of tools.aiIdsInCanonicalOrder()) {
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.marketplace !== marketplaceName) continue;
         if (!known.has(plugin.name)) {

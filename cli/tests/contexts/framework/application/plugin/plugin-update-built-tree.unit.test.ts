@@ -15,6 +15,8 @@ import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensur
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { catalogOf, registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -59,7 +61,7 @@ function makeUpdateUseCase(
       deps.fs,
       new PluginDistributionLoader(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs)
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       deps.hasher,
       {
@@ -85,13 +87,17 @@ async function installStalePlugin(
   await new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     deps.logger,
     registry,
     fakeEnsureBuiltMarketplace(),
     deps.userManifestRepo
   ).execute({
+    tools: catalogOf(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: ["cursor"],
     projectRoot: PROJECT_ROOT,
@@ -177,6 +183,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
 
     await expect(
       makeUpdateUseCase(deps, registry).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -207,6 +214,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
 
     await expect(
       makeUpdateUseCase(deps, registry).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -240,6 +248,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
 
       expect(
         await makeUpdateUseCase(deps, registry, nativeHost).execute({
+          tools: catalogOf(),
           toolIds: ["copilot", "cursor"],
           projectRoot: PROJECT_ROOT,
           scope: "user",
@@ -311,6 +320,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
 
     expect(
       await makeUpdateUseCase(deps, registry, nativeHost).execute({
+        tools: catalogOf(),
         pluginNames: ["native-plugin@aidd-catalog", "sample-plugin"],
         toolIds: ["copilot", "cursor"],
         projectRoot: PROJECT_ROOT,
@@ -362,6 +372,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
 
     await expect(
       makeUpdateUseCase(deps, registry, nativeHost).execute({
+        tools: catalogOf(),
         pluginNames: ["sample-plugin", "native-plugin"],
         toolIds: ["cursor", "copilot"],
         projectRoot: PROJECT_ROOT,
@@ -399,6 +410,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
 
     expect(
       await makeUpdateUseCase(deps, registry).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -448,6 +460,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
 
     expect(
       await makeUpdateUseCase(deps, registry, undefined, ensureBuilt).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -471,6 +484,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     deps.fs.setFile(BUILT_SKILL, "# Demo skill v2");
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
+      tools: catalogOf(),
       toolIds: ["cursor"],
       projectRoot: PROJECT_ROOT,
       scope: "user",
@@ -493,6 +507,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     await installStalePlugin(deps, registry);
 
     await makeUpdateUseCase(deps, registry).execute({
+      tools: catalogOf(),
       toolIds: ["cursor"],
       projectRoot: PROJECT_ROOT,
       scope: "user",
@@ -520,6 +535,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     const savesBefore = deps.userManifestRepo.saveCount;
     expect(
       await makeUpdateUseCase(deps, registry).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -540,6 +556,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     deps.fs.setFile(join(foreign, "skills/demo/SKILL.md"), "foreign bytes");
     await expect(
       makeUpdateUseCase(deps, registry).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -561,6 +578,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     const savesBefore = deps.userManifestRepo.saveCount;
     await expect(
       makeUpdateUseCase(deps, registry).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -586,6 +604,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
 
     await expect(
       makeUpdateUseCase(deps, registry).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -610,6 +629,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     const savesBefore = deps.userManifestRepo.saveCount;
     await expect(
       makeUpdateUseCase(deps, registry).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -636,6 +656,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
 
     await expect(
       makeUpdateUseCase(deps, registry, nativeHost).execute({
+        tools: catalogOf(),
         toolIds: ["copilot", "cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -668,7 +689,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
       deps.fs,
       new PluginDistributionLoader(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs)
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       deps.hasher,
       {
@@ -679,7 +700,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     );
     const plan = await updater.planUpdate(
       machine.getPlugins("cursor")[0],
-      "cursor",
+      registeredAiProfile("cursor"),
       PROJECT_ROOT,
       deps.logger
     );
@@ -714,6 +735,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     const savesBefore = deps.userManifestRepo.saveCount;
 
     const operation = makeUpdateUseCase(deps, registry, nativeHost).execute({
+      tools: catalogOf(),
       toolIds: ["copilot", "cursor"],
       projectRoot: PROJECT_ROOT,
       scope: "user",
@@ -750,6 +772,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     );
     expect(
       await makeUpdateUseCase(deps, registry).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -781,6 +804,7 @@ describe("PluginUpdateUseCase — built-tree materialization", () => {
     await deps.userManifestRepo.save(machine);
     expect(
       await makeUpdateUseCase(deps, registry).execute({
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         scope: "user",

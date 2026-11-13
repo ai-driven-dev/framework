@@ -13,7 +13,7 @@ import type { HostActions } from "../../../host-registration/contract/host-actio
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
-import { nativeActivationOf } from "../../../tools/domain/registry.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -37,6 +37,7 @@ export interface CleanUserScopeOptions {
    * project-scope caller it usually serves — discarded by the adapter for scope `"user"`, since
    * this operation has no one project of its own. */
   projectRoot: string;
+  tools: ToolCatalog;
   force: boolean;
   interactive?: boolean;
 }
@@ -120,21 +121,22 @@ export class CleanUserScopeUseCase {
     }
 
     if (manifest !== null) {
-      await this.assertTrackedUserPluginFilesSafe(manifest);
-      this.assertNativeActivatorsAvailable(manifest);
-      await this.assertNativeSourcesProven(manifest, options.projectRoot);
+      await this.assertTrackedUserPluginFilesSafe(manifest, options.tools);
+      this.assertNativeActivatorsAvailable(manifest, options.tools);
+      await this.assertNativeSourcesProven(manifest, options.projectRoot, options.tools);
       // Undoing a host's own registration must happen before any purge: a host's own CLI resolves
       // what it is unregistering against the built tree still on disk, and the purge below removes
       // exactly that tree. Absent a manifest there is nothing recorded to undo.
-      const undone = await this.undoNativeRegistrations(manifest);
+      const undone = await this.undoNativeRegistrations(manifest, options.tools);
       await purgeAllNativeCaches(
         this.fs,
         this.logger,
         this.homeDir(),
         this.hostMarketplaceRegistries,
-        undone
+        undone,
+        options.tools
       );
-      await this.purgeCursorUserScopeFiles(manifest, options.projectRoot);
+      await this.purgeCursorUserScopeFiles(manifest, options.tools, options.projectRoot);
     }
     await this.purgeWhitelistedMachineState(options.projectRoot);
 
@@ -199,7 +201,10 @@ export class CleanUserScopeUseCase {
     return this.userSourceReferences.listAllReferencingProjects();
   }
 
-  private async assertTrackedUserPluginFilesSafe(manifest: Manifest): Promise<void> {
+  private async assertTrackedUserPluginFilesSafe(
+    manifest: Manifest,
+    tools: ToolCatalog
+  ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!isAiToolId(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
@@ -208,7 +213,7 @@ export class CleanUserScopeUseCase {
           this.fs,
           this.logger,
           plugin,
-          toolId,
+          tools.aiProfile(toolId),
           this.homeDir()
         );
         if (safe.size !== plugin.files.size) {
@@ -248,31 +253,36 @@ export class CleanUserScopeUseCase {
   }
 
   private async undoNativeRegistrations(
-    manifest: Manifest
+    manifest: Manifest,
+    tools: ToolCatalog
   ): Promise<ReadonlyMap<ToolId, UndoneToolRegistrations>> {
     const undone = new Map<ToolId, UndoneToolRegistrations>();
     for (const toolId of manifest.getInstalledToolIds()) {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
-      const removedHostNames = await this.undoToolNativeRegistrations(toolId, registrations);
+      const removedHostNames = await this.undoToolNativeRegistrations(toolId, registrations, tools);
       if (removedHostNames !== undefined) undone.set(toolId, { registrations, removedHostNames });
     }
     return undone;
   }
 
-  private assertNativeActivatorsAvailable(manifest: Manifest): void {
+  private assertNativeActivatorsAvailable(manifest: Manifest, tools: ToolCatalog): void {
     for (const toolId of manifest.getInstalledToolIds()) {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
       const activator = this.activators.get(registrations.binary);
       if (activator === undefined || !activator.isAvailable())
         throw new Error(
-          `${this.describeBinaryAbsent(toolId, registrations)} User clean refused; canonical claims retained.`
+          `${this.describeBinaryAbsent(toolId, registrations, tools)} User clean refused; canonical claims retained.`
         );
     }
   }
 
-  private async assertNativeSourcesProven(manifest: Manifest, projectRoot: string): Promise<void> {
+  private async assertNativeSourcesProven(
+    manifest: Manifest,
+    projectRoot: string,
+    tools: ToolCatalog
+  ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
@@ -322,7 +332,7 @@ export class CleanUserScopeUseCase {
           registration.hostName,
           owned,
           projectRoot,
-          toolId
+          tools.aiProfile(toolId)
         );
         for (const ref of refsByHost.get(registration.hostName) ?? []) {
           if (hostRefs.get(ref)?.enabled !== true)
@@ -336,13 +346,14 @@ export class CleanUserScopeUseCase {
 
   private async undoToolNativeRegistrations(
     toolId: ToolId,
-    registrations: NativeRegistrations
+    registrations: NativeRegistrations,
+    tools: ToolCatalog
   ): Promise<ReadonlySet<string> | undefined> {
     const { binary } = registrations;
     const activator = this.activators.get(binary);
     if (activator === undefined || !activator.isAvailable()) {
       throw new Error(
-        `${this.describeBinaryAbsent(toolId, registrations)} User clean refused; canonical claims retained.`
+        `${this.describeBinaryAbsent(toolId, registrations, tools)} User clean refused; canonical claims retained.`
       );
     }
     for (const { ref } of registrations.pluginClaims ?? []) {
@@ -375,14 +386,18 @@ export class CleanUserScopeUseCase {
   /** Named so a binary this run cannot reach still tells a person what it left standing — the
    * marketplace and plugin-ref counts, plus this tool's own cache path when its profile declares
    * one. */
-  private describeBinaryAbsent(toolId: ToolId, registrations: NativeRegistrations): string {
+  private describeBinaryAbsent(
+    toolId: ToolId,
+    registrations: NativeRegistrations,
+    tools: ToolCatalog
+  ): string {
     const { binary } = registrations;
     const base =
       `${binary}: registration left in place, the ${binary} CLI is not on the PATH. ` +
       `It would have unregistered ${registrations.marketplaces.length} marketplace(s) ` +
       `and ${registrations.pluginClaims?.length ?? 0} plugin ref(s).`;
     if (!isAiToolId(toolId)) return base;
-    const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(this.homeDir());
+    const cacheRoot = tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(this.homeDir());
     if (cacheRoot === undefined) return base;
     const paths = registrations.marketplaces.map((m) => join(cacheRoot, m.hostName));
     if (paths.length === 0) return base;
@@ -393,7 +408,11 @@ export class CleanUserScopeUseCase {
    * own files, listed by the user manifest and never deleted without `userScopeFilesSafeToDelete`'s
    * `realpath` + containment check — a `..` segment a corrupted entry carries, or a plugin
    * directory that became a symlink after install, is left in place and named. */
-  private async purgeCursorUserScopeFiles(manifest: Manifest, projectRoot: string): Promise<void> {
+  private async purgeCursorUserScopeFiles(
+    manifest: Manifest,
+    tools: ToolCatalog,
+    projectRoot: string
+  ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!isAiToolId(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
@@ -402,10 +421,17 @@ export class CleanUserScopeUseCase {
           this.fs,
           this.logger,
           plugin,
-          toolId,
+          tools.aiProfile(toolId),
           this.homeDir()
         );
-        await deletePluginFilesForTool(files, plugin.scope, toolId, projectRoot, this.fs, "user");
+        await deletePluginFilesForTool(
+          files,
+          plugin.scope,
+          tools.aiProfile(toolId),
+          projectRoot,
+          this.fs,
+          "user"
+        );
       }
     }
   }

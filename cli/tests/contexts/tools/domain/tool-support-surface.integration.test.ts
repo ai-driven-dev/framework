@@ -1,18 +1,12 @@
 // Capture the snapshot by running this file with `UPDATE_TOOL_SUPPORT_GOLDEN=1`.
-// `docs/COMPATIBILITY.md` is rendered from the stored file by `scripts/sync-compatibility.mjs`.
+// `docs/COMPATIBILITY.md` is rendered from the stored file by `scripts/sync-generated-docs.mjs`.
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../src/contexts/tools/domain/build-contract.js";
-import {
-  buildContractFor,
-  getAiToolConfig,
-  nativeActivationOf,
-  resolvePluginsCapability,
-} from "../../../../src/contexts/tools/domain/registry.js";
-import { AI_TOOL_IDS } from "../../../../src/kernel/tool.js";
+import type { ArtifactContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
+import { catalogOf, registeredAiConfig } from "../testing/catalog-of.js";
 import { pluginModeOf } from "../testing/plugin-mode.js";
 
 const SNAPSHOT_FILE = join(REPOSITORY_ROOT, "cli/tests/golden/snapshots/tool-support/surface.json");
@@ -44,26 +38,28 @@ function supportOf(surface: Surface, contract: ArtifactContract): Support {
 }
 
 function capture(): ToolSupport[] {
-  return AI_TOOL_IDS.map((id) => {
-    const tool = getAiToolConfig(id);
-    const plugins = resolvePluginsCapability(id);
-    const builds: ToolSupport["builds"] = {};
-    for (const mode of ["marketplace", "flat"] as const) {
-      const contract = buildContractFor(id, mode)?.();
-      if (contract === undefined) continue;
-      builds[mode] = Object.fromEntries(
-        SURFACES.map((surface) => [surface, supportOf(surface, contract.artifacts[surface])])
-      ) as Record<Surface, Support>;
-    }
-    return {
-      id,
-      name: tool.displayName,
-      directory: tool.directory,
-      pluginMode: plugins === null ? null : pluginModeOf(plugins),
-      nativeCli: nativeActivationOf(id)?.hostBinary() ?? null,
-      builds,
-    };
-  });
+  return catalogOf()
+    .aiIdsInCanonicalOrder()
+    .map((id) => {
+      const tool = registeredAiConfig(id);
+      const plugins = tool.plugins();
+      const builds: ToolSupport["builds"] = {};
+      for (const mode of ["marketplace", "flat"] as const) {
+        const contract = tool.buildContract(mode);
+        if (contract === null) continue;
+        builds[mode] = Object.fromEntries(
+          SURFACES.map((surface) => [surface, supportOf(surface, contract.artifacts[surface])])
+        ) as Record<Surface, Support>;
+      }
+      return {
+        id,
+        name: tool.displayName,
+        directory: tool.directory,
+        pluginMode: plugins === null ? null : pluginModeOf(plugins),
+        nativeCli: tool.nativeActivation()?.hostBinary() ?? null,
+        builds,
+      };
+    });
 }
 
 describe("tool support surface", () => {

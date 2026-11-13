@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ProjectHooksMaterializer } from "../../../src/contexts/framework/application/framework/translator/project-hooks-materializer.js";
-import type { ToolBuildContract } from "../../../src/contexts/tools/domain/build-contract.js";
+import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 import { buildClaudeFlatContract } from "../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";
@@ -13,6 +13,7 @@ import {
 } from "../../../src/contexts/translate/domain/plugin-distribution.js";
 import type { AssetProvider } from "../../../src/kernel/ports/asset-provider.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { registeredAiProfile } from "./testing/catalog-of.js";
 
 /**
  * Every route that merges a plugin's hooks into a file the project already holds. The file
@@ -222,9 +223,18 @@ describe("plugin install merging a plugin into the project's hooks file again", 
       }),
     });
     const materializer = new ProjectHooksMaterializer(fs);
-    const first = await materializer.materializeWithProvenance(dist(), "cursor", PROJECT);
+    const first = await materializer.materializeWithProvenance(
+      dist(),
+      registeredAiProfile("cursor"),
+      PROJECT
+    );
 
-    await materializer.materializeWithProvenance(dist(), "cursor", PROJECT, first.projectHooks);
+    await materializer.materializeWithProvenance(
+      dist(),
+      registeredAiProfile("cursor"),
+      PROJECT,
+      first.projectHooks
+    );
     const file = fs.getFile(HOOKS);
 
     expect(commands(file, "sessionStart")).toStrictEqual([

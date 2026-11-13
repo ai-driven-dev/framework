@@ -1,13 +1,12 @@
 import { expect } from "vitest";
-import type { ToolBuildContract } from "../../../../src/contexts/tools/domain/build-contract.js";
-import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
+import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
+import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import {
   PLUGIN_RELATIVE_PATHS,
   PLUGIN_TREE_SOURCES,
   pluginRelativePathsOf,
   pluginTreeSourcesOf,
-  supported,
 } from "./build-artifacts.js";
 
 type Buildable = Pick<AiTool, "buildContracts">;
@@ -17,17 +16,6 @@ export function contractOf(profile: Buildable, mode: "marketplace" | "flat"): To
   const contract = profile.buildContracts?.[mode];
   if (contract === undefined) throw new Error(`no ${mode} build contract`);
   return contract();
-}
-
-/** Where a flat build puts a plugin's skill and agents, the awkward agent name included. */
-export function flatPathsOf(profile: Buildable) {
-  const { skills, agents } = contractOf(profile, "flat").artifacts;
-  return {
-    skill: supported(skills).path("aidd-dev", "skills/01-plan/SKILL.md"),
-    renamesSkill: supported(skills).rewriteSkillName,
-    agent: supported(agents).path("aidd-dev", "agents/planner.md"),
-    innerMdAgent: supported(agents).path("aidd-dev", "agents/notes.md-helper.md"),
-  };
 }
 
 export function marketplaceSourcesOf(profile: Buildable) {

@@ -31,6 +31,7 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf, registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
 const CLAUDE_BUILT_DIR = "/shared/built/claude";
@@ -141,7 +142,11 @@ describe("MarketplaceSyncSettingsUseCase — sync migrates a project installed b
       new MarketplaceRegisterFrameworkUseCase(registry)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     const entries = await registry.list(PROJECT_ROOT);
     expect(entries).toHaveLength(1);
@@ -170,7 +175,11 @@ describe("MarketplaceSyncSettingsUseCase — sync migrates a project installed b
       new MarketplaceRegisterFrameworkUseCase(registry)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     const entries = await registry.list(PROJECT_ROOT);
     expect(entries).toEqual([expect.objectContaining({ scope: "user" })]);
@@ -227,7 +236,10 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
       ])
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.forcedRemovals).toEqual([]);
@@ -263,7 +275,10 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
       fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR)
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual([]);
@@ -309,7 +324,7 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
       fakeEnsureBuiltMarketplace(() => builtDir)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual([]);
@@ -382,7 +397,10 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
       // "proceed" without reading one, so the exclusion is decided in `reclaimOrReport`.
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual([]);
@@ -432,7 +450,10 @@ describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () =
       freshClaudeSource(activator, CLAUDE_BUILT_DIR)
     );
 
-    return { activator, result: await useCase.execute({ projectRoot: PROJECT_ROOT }) };
+    return {
+      activator,
+      result: await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT }),
+    };
   }
 
   it("adds a fresh catalogue when the host registry is explicitly absent", async () => {
@@ -519,7 +540,10 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
     );
 
     const before = await fs.readFile(`${foreignProjectCache}/${CATALOG_RELATIVE}`);
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(activator.addedMarketplaces).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -579,7 +603,10 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
     );
 
     const before = await fs.readFile(`${sharedBuiltDir()}/${CATALOG_RELATIVE}`);
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(activator.addedMarketplaces).toEqual([]);
     expect(added).toEqual([]);
@@ -650,7 +677,10 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
       new InMemoryManifestRepository(canonicallyOwned("claude"))
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(result.errors).toStrictEqual([]);
     expect(activator.addedMarketplaces).toStrictEqual([]);
@@ -678,7 +708,10 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
       new InMemoryManifestRepository(canonicallyOwned("claude"))
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(result.errors).toStrictEqual([]);
     expect(activator.addedMarketplaces).toStrictEqual([]);
@@ -741,7 +774,11 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       new MarketplaceRegisterFrameworkUseCase(registry)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     expect(fs.has(OLD_CACHE_FILE)).toBe(false);
   });
@@ -778,6 +815,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -827,6 +865,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -865,6 +904,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -901,7 +941,11 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       new MarketplaceRegisterFrameworkUseCase(registry)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     expect(fs.has(escapedFile)).toBe(true);
   });
@@ -982,7 +1026,11 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       ])
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     expect(activator.cacheStillPresentAtAdd).toEqual([true]);
     expect(fs.has(OLD_CACHE_FILE)).toBe(false);
@@ -1036,7 +1084,11 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       new MarketplaceRegisterFrameworkUseCase(registry)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     expect(logger.warnMessages).toStrictEqual([
       "claude CLI not found on PATH — skipping native plugin activation.",
@@ -1064,7 +1116,11 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       new MarketplaceRegisterFrameworkUseCase(registry)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     expect(logger.warnMessages).toStrictEqual([
       "Native plugin activation — build 'aidd-framework' for claude skipped: translator refused the source",
@@ -1102,6 +1158,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1137,7 +1194,11 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       freshClaudeSource(activator, CLAUDE_BUILT_DIR)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     expect(logger.warnMessages).toStrictEqual([
       `This project's own pre-migration framework cache does not resolve inside ${PROJECT_ROOT}; left in place: ${OLD_CACHE_DIR}`,
@@ -1160,7 +1221,11 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       new MarketplaceRegisterFrameworkUseCase(registry)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     expect(logger.infoMessages).toStrictEqual([
       `This project's own pre-migration framework cache purged: ${OLD_CACHE_DIR}`,
@@ -1180,6 +1245,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
       scope: "user",
@@ -1201,7 +1267,10 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR)
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(result.errors).toStrictEqual([]);
     expect(fs.has(OLD_CACHE_FILE)).toBe(true);
@@ -1220,6 +1289,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     );
 
     const result = await useCase.execute({
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1253,7 +1323,11 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       recordingRegister(calls)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     expect(calls).toStrictEqual([]);
   });
@@ -1283,7 +1357,11 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       recordingRegister(calls)
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, recreateFrameworkIfMissing: true });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      recreateFrameworkIfMissing: true,
+    });
 
     expect(calls).toStrictEqual([]);
     expect((await registry.list(PROJECT_ROOT)).map((m) => m.name)).toStrictEqual(["other-plugins"]);
@@ -1383,7 +1461,12 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
       fakeVersion(CURRENT_VERSION)
     );
 
-    const before = await doctor.execute({ manifest, projectRoot: PROJECT_A, allowedIds: null });
+    const before = await doctor.execute({
+      manifest,
+      projectRoot: PROJECT_A,
+      allowedIds: null,
+      tools: catalogOf(),
+    });
     expect(before.some((issue) => issue.fix.includes("aidd sync"))).toBe(true);
 
     const activator = new RegisteringActivator(hostEntries);
@@ -1446,12 +1529,18 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
     );
 
     const syncResult = await sync.execute({
+      tools: registeredCatalog(),
       projectRoot: PROJECT_A,
       recreateFrameworkIfMissing: true,
     });
     expect(syncResult.errors).toEqual([]);
 
-    const after = await doctor.execute({ manifest, projectRoot: PROJECT_A, allowedIds: null });
+    const after = await doctor.execute({
+      manifest,
+      projectRoot: PROJECT_A,
+      allowedIds: null,
+      tools: catalogOf(),
+    });
     expect(after).toEqual([]);
 
     const projectBEntries = await registry.list(PROJECT_B);

@@ -15,6 +15,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";
@@ -137,6 +138,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
     await expect(
       removeUseCase.execute({
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["codex"],
         projectRoot: PROJECT_ROOT,
@@ -207,6 +209,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     );
 
     await removeUseCase.execute({
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["codex"],
       projectRoot: PROJECT_ROOT,
@@ -263,6 +266,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
     await expect(
       removeUseCase.execute({
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["codex"],
         projectRoot: PROJECT_ROOT,
@@ -287,6 +291,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
     await expect(
       removeUseCase.execute({
+        tools: catalogOf(),
         pluginName: PLUGIN_NAME,
         toolIds: ["codex"],
         projectRoot: PROJECT_ROOT,
@@ -324,6 +329,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
+          tools: catalogOf(),
           pluginName: PLUGIN_NAME,
           toolIds: ["codex"],
           projectRoot: PROJECT_ROOT,
@@ -348,6 +354,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
+          tools: catalogOf(),
           pluginName: PLUGIN_NAME,
           toolIds: ["codex"],
           projectRoot: PROJECT_ROOT,
@@ -378,6 +385,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
+          tools: catalogOf(),
           pluginName: PLUGIN_NAME,
           toolIds: ["codex"],
           projectRoot: PROJECT_ROOT,
@@ -405,6 +413,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
+          tools: catalogOf(),
           pluginName: PLUGIN_NAME,
           toolIds: ["codex"],
           projectRoot: PROJECT_ROOT,

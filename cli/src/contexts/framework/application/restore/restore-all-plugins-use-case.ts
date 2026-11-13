@@ -4,14 +4,9 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
-import {
-  getToolConfig,
-  isAiTool,
-  nativeActivationOf,
-  type ToolConfig,
-} from "../../../tools/domain/registry.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";
@@ -28,6 +23,8 @@ interface RestoreAllPluginsOptions {
   /** Restrict which AI tools' plugins get touched. Undefined means every installed AI tool (unscoped). */
   toolIds?: readonly ToolId[];
   force?: boolean;
+  /** The tool profiles the restore asks. */
+  tools: ToolCatalog;
 }
 
 export interface RestoreAllPluginsResult {
@@ -50,18 +47,29 @@ export class RestoreAllPluginsUseCase {
   ) {}
 
   async execute(options: RestoreAllPluginsOptions): Promise<RestoreAllPluginsResult> {
-    const { projectRoot, manifest, fileFilter, pluginName, toolIds, force = false } = options;
+    const {
+      projectRoot,
+      manifest,
+      fileFilter,
+      pluginName,
+      toolIds,
+      force = false,
+      tools,
+    } = options;
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     let totalFiles = 0;
     const restoredNames = new Set<string>();
     const nativeOnlyToolIds: AiToolId[] = [];
-    for (const toolId of AI_TOOL_IDS) {
+    for (const toolId of tools.aiIdsInCanonicalOrder()) {
       if (!manifest.hasTool(toolId)) continue;
       if (toolIds !== undefined && !toolIds.includes(toolId)) continue;
-      const toolConfig = getToolConfig(toolId);
-      if (!isAiTool(toolConfig)) continue;
+      const toolConfig = tools.aiProfile(toolId);
       const targets = this.targetPlugins(toolId, manifest, pluginName);
-      if (targets.length > 0 && this.everyTargetUntracked(targets) && nativeActivationOf(toolId)) {
+      if (
+        targets.length > 0 &&
+        this.everyTargetUntracked(targets) &&
+        toolConfig.nativeActivation()
+      ) {
         nativeOnlyToolIds.push(toolId);
       }
       const result = await this.restoreToolPlugins(
@@ -81,7 +89,7 @@ export class RestoreAllPluginsUseCase {
   }
 
   private targetPlugins(
-    toolId: (typeof AI_TOOL_IDS)[number],
+    toolId: AiToolId,
     manifest: Manifest,
     pluginName: string | undefined
   ): readonly InstalledPlugin[] {
@@ -94,9 +102,9 @@ export class RestoreAllPluginsUseCase {
   }
 
   private async restoreToolPlugins(
-    toolId: (typeof AI_TOOL_IDS)[number],
+    toolId: AiToolId,
     manifest: Manifest,
-    toolConfig: ToolConfig,
+    toolConfig: AiToolProfile,
     projectRoot: string,
     cacheDir: string,
     fileFilter: ((p: string) => boolean) | null,
@@ -116,7 +124,7 @@ export class RestoreAllPluginsUseCase {
       ).execute({
         toolId,
         plugin,
-        toolConfig,
+        tool: toolConfig,
         projectRoot,
         cacheDir,
         manifest,

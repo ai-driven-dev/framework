@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { GitignoreUseCase } from "../../../../../src/contexts/framework/application/gitignore-use-case.js";
 import { PostInstallPipelineUseCase } from "../../../../../src/contexts/framework/application/install/post-install-pipeline-use-case.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -26,6 +27,7 @@ describe("post-install pipeline", () => {
     if (manifest === null) throw new Error("manifest not found");
 
     await new PostInstallPipelineUseCase(deps.manifestRepo, deps.gitignoreUseCase).execute({
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
     });
@@ -47,6 +49,7 @@ describe("post-install pipeline", () => {
 
     const recordingGitignore = new RecordingGitignoreUseCase(deps.fs);
     await new PostInstallPipelineUseCase(deps.manifestRepo, recordingGitignore).execute({
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
     });
@@ -64,6 +67,7 @@ describe("post-install pipeline", () => {
     if (manifest === null) throw new Error("manifest not found");
 
     await new PostInstallPipelineUseCase(deps.manifestRepo, deps.gitignoreUseCase).execute({
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
     });

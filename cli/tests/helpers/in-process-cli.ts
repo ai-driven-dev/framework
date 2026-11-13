@@ -4,6 +4,7 @@ import { relative, sep } from "node:path";
 import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
 import { type MockInstance, vi } from "vitest";
+import type { ToolCatalog } from "../../src/contexts/tools/contract/tool-catalog.js";
 import { sandboxedEnv } from "../e2e/helpers.js";
 
 /**
@@ -43,7 +44,7 @@ class ExitSignal extends Error {
   }
 }
 
-type Register = (program: Command) => void;
+type Register = (program: Command, tools: ToolCatalog) => void;
 
 /** The order `src/cli.ts` registers them in. Literal specifiers, so the bundler resolves them. */
 const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
@@ -155,9 +156,11 @@ export async function runInProcess(
 
     // A new process starts with an empty deps cache and an empty profile registry.
     vi.resetModules();
+    const { wireTools } = await import("../../src/composition/tools.js");
+    const tools = wireTools();
     const program = new Command();
     program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
-    for (const load of REGISTRATIONS) (await load())(program);
+    for (const load of REGISTRATIONS) (await load())(program, tools);
 
     try {
       await program.parseAsync(["node", "aidd", ...args]);

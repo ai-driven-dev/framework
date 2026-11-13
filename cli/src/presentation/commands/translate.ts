@@ -1,9 +1,7 @@
 import { resolve } from "node:path";
 import type { Command } from "commander";
-import {
-  type FrameworkBuildMode,
-  registeredToolIds,
-} from "../../contexts/tools/domain/registry.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-profile.js";
 import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
@@ -16,6 +14,7 @@ import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 interface TranslateExecutionParams {
+  tools: ToolCatalog;
   projectRoot: string;
   verbose: boolean;
   output: CLIOutput;
@@ -30,8 +29,13 @@ interface TranslateExecutionParams {
 async function runTranslateCore(params: TranslateExecutionParams): Promise<void> {
   const errorHandler = new ErrorHandler(params.output);
   try {
-    const deps = await createDeps(params.projectRoot, { verbose: params.verbose }, params.output);
-    const useCase = createFrameworkBuildUseCase(deps, {
+    const deps = await createDeps(
+      params.projectRoot,
+      { verbose: params.verbose },
+      params.output,
+      params.tools
+    );
+    const useCase = createFrameworkBuildUseCase(params.tools, deps, {
       target: params.target,
       mode: params.mode,
       outDir: params.outDir,
@@ -66,21 +70,21 @@ interface TranslateCmdOptions {
   force?: boolean;
 }
 
-export function registerTranslateCommand(program: Command): void {
+export function registerTranslateCommand(program: Command, tools: ToolCatalog): void {
   program
     .command("translate")
     .description(
       "Convert an arbitrary source into a target-native plugin tree — records nothing (see `sync` for the manifest-driven, tracked version)"
     )
     .argument("<source>", "Path to the source framework directory")
-    .requiredOption("--to <target>", `Conversion target (${registeredToolIds("ai").join(", ")})`)
+    .requiredOption("--to <target>", `Conversion target (${tools.inHelpOrder("ai").join(", ")})`)
     .requiredOption("--out <dir>", "Output directory (marketplace dist or project root)")
     .option("--as <marketplace|flat>", "Output layout", "marketplace")
     .option("--force", "Overwrite existing files at canonical paths under --out")
     .action(async (source: string, cmdOptions: TranslateCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
 
-      const targets = supportedBuildTargets();
+      const targets = supportedBuildTargets(tools);
       if (!(targets as readonly string[]).includes(cmdOptions.to)) {
         output.error(
           `Unsupported target '${cmdOptions.to}'. Supported targets: ${targets.join(", ")}.`
@@ -98,6 +102,7 @@ export function registerTranslateCommand(program: Command): void {
       const mode: FrameworkBuildMode = cmdOptions.as === "flat" ? "flat" : "marketplace";
 
       await runTranslateCore({
+        tools,
         projectRoot,
         verbose,
         output,

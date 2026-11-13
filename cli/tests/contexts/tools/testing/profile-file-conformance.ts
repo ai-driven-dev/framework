@@ -3,7 +3,6 @@ import {
   CANONICAL_HOOK_EVENTS,
   type HookEventRoute,
 } from "../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
-import { isAiTool } from "../../../../src/contexts/tools/domain/registry.js";
 import type { ConformanceCheck, ConformanceSubject } from "./profile-conformance.js";
 
 /** What a conformance check is told of the files a profile ships beside its code. */
@@ -97,14 +96,14 @@ function aiFileCheck(
   return {
     title,
     holds: (subject) => {
-      if (isAiTool(subject.profile)) holds(subject);
+      if (subject.profile.kind === "ai") holds(subject);
     },
   };
 }
 
 function acceptsHooks(subject: FileConformanceSubject): boolean {
-  if (!isAiTool(subject.profile)) return false;
-  return subject.profile.section("plugins")?.hooksAcceptance().accepts === true;
+  if (subject.profile.kind !== "ai") return false;
+  return subject.profile.plugins()?.hooksAcceptance().accepts === true;
 }
 
 export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubject>[] = [
@@ -142,8 +141,8 @@ export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubje
     }
   }),
   aiFileCheck("generates a bridge for exactly the events it relays through one", (subject) => {
-    if (!isAiTool(subject.profile)) return;
-    const plugins = subject.profile.section("plugins");
+    if (subject.profile.kind !== "ai") return;
+    const plugins = subject.profile.plugins();
     const bridge = plugins?.kind === "flat" ? plugins.flatLayout().hooksBridge : undefined;
     const declared = declaredHooks(subject);
     if (bridge == null || declared === undefined) return;

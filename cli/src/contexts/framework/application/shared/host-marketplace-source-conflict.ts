@@ -1,11 +1,11 @@
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import {
   type MarketplaceCatalogIdentity,
   type MarketplaceSourceConflict,
   marketplaceSourceConflict,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
 import {
   type MarketplaceSourceDrift,
   type MarketplaceSourceDriftContext,
@@ -58,7 +58,7 @@ async function resolvedOrSelf(fs: FileReader, path: string): Promise<string> {
  */
 export async function hostMarketplaceSourceConflict(
   fs: FileReader,
-  toolId: AiToolId,
+  tool: ToolProfile,
   reader: HostMarketplaceRegistry,
   requestedSource: string,
   requestedIdentity: MarketplaceCatalogIdentity,
@@ -82,7 +82,7 @@ export async function hostMarketplaceSourceConflict(
       };
     }
   }
-  const registeredIdentity = await readMarketplaceCatalogIdentity(fs, toolId, registeredSource);
+  const registeredIdentity = await readMarketplaceCatalogIdentity(fs, tool, registeredSource);
   return marketplaceSourceConflict(
     reading,
     requestedIdentity.name,

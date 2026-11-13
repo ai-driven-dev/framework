@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { vscode } from "../../../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 
 describe("vscode profile", () => {
-  const declared = vscode.section("settings");
+  const declared = vscode.section("config");
   const settings = Array.isArray(declared) ? declared : [declared];
   const consuming = (name: string) => settings.find((s) => s.consumes(name));
 

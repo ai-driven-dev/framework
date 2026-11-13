@@ -4,6 +4,7 @@ import { UninstallIdeUseCase } from "../../../../src/contexts/framework/applicat
 import { UninstallToolsUseCase } from "../../../../src/contexts/framework/application/uninstall/uninstall-tools-use-case.js";
 import { NoManifestError, ToolNotInstalledError } from "../../../../src/kernel/errors.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const SETTINGS = join(PROJECT_ROOT, ".vscode/settings.json");
@@ -31,7 +32,11 @@ describe("UninstallIdeUseCase — merge-file entries", () => {
     const managedKeys = Object.keys(parse(deps.fs.getFile(SETTINGS)));
     expect(managedKeys.length).toBeGreaterThan(0);
 
-    await makeUseCase(deps).execute({ toolId: "vscode", projectRoot: PROJECT_ROOT });
+    await makeUseCase(deps).execute({
+      tools: catalogOf(),
+      toolId: "vscode",
+      projectRoot: PROJECT_ROOT,
+    });
 
     const after = parse(deps.fs.getFile(SETTINGS));
     for (const key of managedKeys) {
@@ -47,7 +52,11 @@ describe("UninstallIdeUseCase — merge-file entries", () => {
     const withUserKey = { ...parse(deps.fs.getFile(SETTINGS)), "editor.tabSize": 7 };
     await deps.fs.writeFile(SETTINGS, JSON.stringify(withUserKey, null, 2));
 
-    await makeUseCase(deps).execute({ toolId: "vscode", projectRoot: PROJECT_ROOT });
+    await makeUseCase(deps).execute({
+      tools: catalogOf(),
+      toolId: "vscode",
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(parse(deps.fs.getFile(SETTINGS))["editor.tabSize"]).toBe(7);
   });
@@ -60,7 +69,11 @@ describe("UninstallIdeUseCase — merge-file entries", () => {
     const before = Object.keys(parse(deps.fs.getFile(EXTENSIONS)));
     expect(before.length).toBeGreaterThan(0);
 
-    await makeUseCase(deps).execute({ toolId: "vscode", projectRoot: PROJECT_ROOT });
+    await makeUseCase(deps).execute({
+      tools: catalogOf(),
+      toolId: "vscode",
+      projectRoot: PROJECT_ROOT,
+    });
 
     const after = parse(deps.fs.getFile(EXTENSIONS));
     for (const key of before) {
@@ -73,7 +86,11 @@ describe("UninstallIdeUseCase — merge-file entries", () => {
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, "vscode");
 
-    await makeUseCase(deps).execute({ toolId: "vscode", projectRoot: PROJECT_ROOT });
+    await makeUseCase(deps).execute({
+      tools: catalogOf(),
+      toolId: "vscode",
+      projectRoot: PROJECT_ROOT,
+    });
 
     const manifest = await deps.manifestRepo.load();
     expect(manifest?.hasTool("vscode")).toBe(false);
@@ -85,7 +102,11 @@ describe("UninstallIdeUseCase — refusals and report", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
 
     await expect(
-      makeUseCase(deps).execute({ toolId: "vscode", projectRoot: PROJECT_ROOT })
+      makeUseCase(deps).execute({
+        tools: catalogOf(),
+        toolId: "vscode",
+        projectRoot: PROJECT_ROOT,
+      })
     ).rejects.toThrow(NoManifestError);
   });
 
@@ -94,7 +115,11 @@ describe("UninstallIdeUseCase — refusals and report", () => {
     await initProject(deps, PROJECT_ROOT);
 
     await expect(
-      makeUseCase(deps).execute({ toolId: "vscode", projectRoot: PROJECT_ROOT })
+      makeUseCase(deps).execute({
+        tools: catalogOf(),
+        toolId: "vscode",
+        projectRoot: PROJECT_ROOT,
+      })
     ).rejects.toThrow(ToolNotInstalledError);
   });
 
@@ -103,7 +128,11 @@ describe("UninstallIdeUseCase — refusals and report", () => {
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, "vscode");
 
-    const result = await makeUseCase(deps).execute({ toolId: "vscode", projectRoot: PROJECT_ROOT });
+    const result = await makeUseCase(deps).execute({
+      tools: catalogOf(),
+      toolId: "vscode",
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(result).toStrictEqual({
       toolId: "vscode",

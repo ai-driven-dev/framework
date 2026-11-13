@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { wireTools } from "../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { DoctorLayoutUseCase } from "../../../src/contexts/framework/application/doctor/doctor-layout-use-case.js";
 import { DoctorMergeFilesUseCase } from "../../../src/contexts/framework/application/doctor/doctor-merge-files-use-case.js";
@@ -18,13 +19,14 @@ import { PostInstallPipelineUseCase } from "../../../src/contexts/framework/appl
 import { DetectPluginDriftUseCase } from "../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
 import { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import { isIdeToolId } from "../../../src/contexts/tools/domain/registry.js";
-import type { ToolId } from "../../../src/kernel/tool.js";
+import { isIdeToolId, type ToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { SyncConflictResolverUseCase } from "../../../src/presentation/prompts/sync-conflict-resolver-use-case.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import { SilentPrompterAdapter } from "../../../src/runtime/prompter/prompter-adapter.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "./fake-ensure-built-marketplace.js";
@@ -44,9 +46,12 @@ export async function buildUnitDeps(_projectRoot: string) {
   const manifestRepo = new InMemoryManifestRepository();
   const userManifestRepo = new InMemoryManifestRepository();
   const logger = new CLIOutput(false);
-  const assetProvider = new BundledAssetProviderAdapter();
+  const assetProvider = new BundledAssetProviderAdapter(wireTools());
   const pluginFetcher = new FixturePluginFetcher();
-  const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
+  const pluginDistributionReader = new PluginDistributionReaderAdapter(
+    fs,
+    registeredManifestProbes()
+  );
   const _pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const marketplaceRegistry = new InMemoryMarketplaceRegistry();
   const gitignoreUseCase = new GitignoreUseCase(fs);
@@ -108,7 +113,7 @@ export async function initProject(
   projectRoot: string
 ): Promise<void> {
   const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
-  await initUseCase.execute({ projectRoot });
+  await initUseCase.execute({ projectRoot, tools: catalogOf() });
 }
 
 export async function installTool(
@@ -120,6 +125,7 @@ export async function installTool(
   const version = "test";
   if (isIdeToolId(toolId)) {
     return deps.installIdeConfigUseCase.execute({
+      tools: catalogOf(),
       toolId,
       projectRoot,
       manifest,
@@ -128,6 +134,7 @@ export async function installTool(
     });
   }
   return deps.installRuntimeConfigUseCase.execute({
+    tools: catalogOf(),
     toolId,
     projectRoot,
     manifest,

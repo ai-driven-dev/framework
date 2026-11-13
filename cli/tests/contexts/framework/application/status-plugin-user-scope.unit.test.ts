@@ -8,6 +8,7 @@ import type { ManifestRepository } from "../../../../src/contexts/framework/doma
 import { FileHash } from "../../../../src/kernel/file.js";
 import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../src/kernel/ports/hasher.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";
@@ -81,7 +82,7 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
         noopHasher,
         new DetectPluginDriftUseCase(fs)
       );
-      await useCase.execute({ projectRoot: "/proj" });
+      await useCase.execute({ tools: catalogOf(), projectRoot: "/proj" });
 
       expect(checkedPaths.some((p) => p.includes(join(".cursor", "plugins", "local")))).toBe(true);
       expect(checkedPaths.every((p) => !p.includes(join("/proj", PLUGIN_KEY)))).toBe(true);
@@ -97,7 +98,10 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
         new DetectPluginDriftUseCase(fs)
       );
 
-      const report = await useCase.execute({ projectRoot: "/proj" });
+      const report = await useCase.execute({
+        tools: catalogOf(),
+        projectRoot: "/proj",
+      });
 
       expect(report.pluginDrift).toHaveLength(1);
       expect(report.pluginDrift[0].toolId).toBe("cursor");
@@ -129,7 +133,10 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
         new DetectPluginDriftUseCase(fs)
       );
 
-      const report = await useCase.execute({ projectRoot: "/proj" });
+      const report = await useCase.execute({
+        tools: catalogOf(),
+        projectRoot: "/proj",
+      });
 
       expect(report.pluginDrift).toHaveLength(1);
       expect(report.pluginDrift[0].notInstalledOnMachine).toBe(true);
@@ -148,7 +155,10 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
         new DetectPluginDriftUseCase(fs)
       );
 
-      const report = await useCase.execute({ projectRoot: "/proj" });
+      const report = await useCase.execute({
+        tools: catalogOf(),
+        projectRoot: "/proj",
+      });
 
       expect(report.pluginDrift).toHaveLength(0);
     });

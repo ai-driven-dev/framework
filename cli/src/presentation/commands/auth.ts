@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import type { AuthLevel, Credential } from "../../contexts/auth/contract/credential.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { InputRequiredError } from "../../kernel/errors.js";
 import { AIDD_DIR } from "../../kernel/paths.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
@@ -56,20 +57,21 @@ type Deps = Awaited<ReturnType<typeof createDeps>>;
 /** An action that builds the dependencies, runs, and hands any failure to the error handler. */
 function reportingErrors(
   program: Command,
+  tools: ToolCatalog,
   run: (deps: Deps, output: CLIOutput) => Promise<void>
 ): () => Promise<void> {
   return async () => {
     const { verbose, output, projectRoot } = parseGlobalOptions(program);
     const errorHandler = new ErrorHandler(output);
     try {
-      await run(await createDeps(projectRoot, { verbose }, output), output);
+      await run(await createDeps(projectRoot, { verbose }, output, tools), output);
     } catch (error) {
       errorHandler.handle(error);
     }
   };
 }
 
-export function registerAuthCommand(program: Command): void {
+export function registerAuthCommand(program: Command, tools: ToolCatalog): void {
   const authCmd = program.command("auth").description("Manage authentication");
   authCmd.action(() => authCmd.help());
 
@@ -86,7 +88,7 @@ export function registerAuthCommand(program: Command): void {
       refuseInvalidOptions(cmdOptions, output);
 
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, tools);
         const level = await askLevel(deps.prompter, cmdOptions.level);
         const credential = await askCredential(deps.prompter, cmdOptions);
         const result = await deps.logIn.execute({ credential, level });
@@ -100,7 +102,7 @@ export function registerAuthCommand(program: Command): void {
     .command("logout")
     .description("Remove stored authentication")
     .action(
-      reportingErrors(program, async (deps, output) => {
+      reportingErrors(program, tools, async (deps, output) => {
         printLogoutResult(output, await deps.logOut.execute());
       })
     );
@@ -109,7 +111,7 @@ export function registerAuthCommand(program: Command): void {
     .command("status")
     .description("Show authentication status")
     .action(
-      reportingErrors(program, async (deps, output) => {
+      reportingErrors(program, tools, async (deps, output) => {
         printAuthStatus(output, await deps.checkStatus.execute());
       })
     );

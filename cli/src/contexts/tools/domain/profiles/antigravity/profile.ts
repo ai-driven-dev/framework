@@ -1,14 +1,7 @@
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
 import { defineAiTool } from "../../profile/define-tool.js";
-import {
-  antigravityHookEntries,
-  antigravityHooksScriptDir,
-  antigravityHooksScriptPath,
-  isAntigravityHooksFileEmpty,
-  mergeAntigravityHooks,
-  unmergeAntigravityHooks,
-} from "./antigravity-hooks.js";
+import { flatPlacement } from "../../sections/layout-section.js";
+import { antigravityHooksFormat } from "./antigravity-hooks.js";
 import { ANTIGRAVITY_DIRECTORY } from "./antigravity-paths.js";
 import { buildAntigravityFlatContract } from "./build.js";
 import { ANTIGRAVITY_HOOKS } from "./hooks.js";
@@ -17,13 +10,17 @@ const TOOL_SUFFIX = ".antigravity.md";
 const SKILLS_PREFIX = "aidd-";
 
 function skillName(fileName: string): string {
-  const parts = fileName.split("/");
-  if (parts.length > 1) return parts[0] as string;
-  const base = parts[0] as string;
+  const base = fileName.split("/")[0] as string;
   return base.endsWith(TOOL_SUFFIX)
     ? base.slice(0, -TOOL_SUFFIX.length)
     : base.replace(/\.md$/, "");
 }
+
+const hooksDelivery = flatProjectHooksDelivery(
+  flatHooksSupport(ANTIGRAVITY_HOOKS),
+  ANTIGRAVITY_HOOKS.flat,
+  antigravityHooksFormat()
+);
 
 export const antigravity = defineAiTool({
   toolId: "antigravity",
@@ -40,19 +37,10 @@ export const antigravity = defineAiTool({
         `${bound.installUnder(`skills/${SKILLS_PREFIX}`)(skillName(fileName))}/SKILL.md`,
       convertFrontmatter: (fm) => fm,
     }),
-    plugins: pluginsCapability({
-      mode: "flat",
-      flatNamespacePrefix: "aidd-",
-      flatSkillLayout: "single-level",
-      ...flatHooksSupport(ANTIGRAVITY_HOOKS),
-      ...flatProjectHooksDelivery(ANTIGRAVITY_HOOKS.flat, {
-        merge: mergeAntigravityHooks,
-        unmerge: unmergeAntigravityHooks,
-        contributedEntries: antigravityHookEntries,
-        isEmpty: isAntigravityHooksFileEmpty,
-        scriptPath: antigravityHooksScriptPath,
-        scriptDir: antigravityHooksScriptDir,
-      }),
+    hooks: { delivery: hooksDelivery },
+    layout: flatPlacement({
+      namespacePrefix: "aidd-",
+      skillLayout: "single-level",
     }),
   }),
 

@@ -1,25 +1,33 @@
 import { join } from "node:path";
+import copilotVscodeSettings from "../../../../../../assets/configs/copilot/vscode-settings.json" with {
+  type: "json",
+};
 import { GITKEEP_FILE } from "../../../../../kernel/file.js";
 import { DOCS_DIR } from "../../../../../kernel/paths.js";
-import { AgentsCapability } from "../../capabilities/agents-capability.js";
-import { CommandsCapability } from "../../capabilities/commands-capability.js";
-import { CONFIG_MCP } from "../../capabilities/config-refs.js";
-import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { RulesCapability } from "../../capabilities/rules-capability.js";
-import { SettingsCapability } from "../../capabilities/settings-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
+import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
-import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { sharedMarketplaceKey } from "../../marketplace-entry.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { AgentsSection } from "../../sections/agents-section.js";
+import { CommandsSection } from "../../sections/commands-section.js";
+import { ConfigSection } from "../../sections/config-section.js";
+import { nativeLayout } from "../../sections/layout-section.js";
+import { manifestSection } from "../../sections/manifest-section.js";
+import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
+import { RulesSection } from "../../sections/rules-section.js";
+import { SkillsSection } from "../../sections/skills-section.js";
 import { buildCopilotFlatContract, buildCopilotMarketplaceContract } from "./build.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
 import { COPILOT_HOOKS } from "./hooks.js";
 
+const PLUGIN_MCP = acceptedPluginMcp();
+
 const DIRECTORY = COPILOT_WORKSPACE_DIR;
 const TOOL_SUFFIX = ".copilot.md";
+const VSCODE_SETTINGS_ASSET = "vscode-settings.json";
+const VSCODE_SETTINGS_PATH = ".vscode/settings.json";
 
 // Canon's framework-doc reference placeholders. Copilot is the only tool that rewrites
 // content between the canonical form and its own workspace-relative paths, so these
@@ -70,7 +78,7 @@ function flattenFileName(
 function buildPrefix(subPath: string): string {
   return subPath
     .split("/")
-    .map((p) => p.replace(/^(\d+)[_-].*$/, "$1"))
+    .map((p) => p.replace(/^(\d+)[_-].*/, "$1"))
     .join("-");
 }
 
@@ -146,12 +154,7 @@ function resolveInstalledPath(path: string): string {
     if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}instructions/${subPath}`;
     return rulesHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
   }
-  if (path.startsWith("skills/")) {
-    const subPath = path.slice("skills/".length);
-    if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}skills/${subPath}`;
-    return skillsHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
-  }
-  // Unknown section: a predictable directory-prefixed default rather than a silently dropped
+  // Skills keep their structure, so they take this default with every unknown section: a predictable directory-prefixed default rather than a silently dropped
   // reference when a new section is added to the framework.
   return `${DIRECTORY}${path}`;
 }
@@ -186,6 +189,8 @@ function rewriteCopilotContent(content: string): string {
   );
 }
 
+const hooksSupport = nativeHooksSupport(COPILOT_HOOKS);
+
 export const copilot = defineAiTool({
   toolId: "copilot",
   distributionProbes: {
@@ -198,69 +203,76 @@ export const copilot = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "GitHub Copilot",
   signalDir: ".github/prompts",
+  configAssets: [
+    {
+      name: VSCODE_SETTINGS_ASSET,
+      content: copilotVscodeSettings,
+      destination: VSCODE_SETTINGS_PATH,
+      delivery: "section",
+    },
+  ],
   buildContracts: {
     marketplace: buildCopilotMarketplaceContract,
     flat: buildCopilotFlatContract,
   },
 
   capabilities: () => ({
-    agents: new AgentsCapability({
+    agents: new AgentsSection({
       directory: DIRECTORY,
       toolSuffix: EXT_AGENT,
       format: "markdown",
       buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
       frontmatter: copilotAgentFrontmatter,
     }),
-    skills: new SkillsCapability({
+    skills: new SkillsSection({
       directory: DIRECTORY,
       toolSuffix: TOOL_SUFFIX,
       buildInstallPath: (fileName) => skillsHandler.buildFilePath(fileName),
       convertFrontmatter: (fm) => skillsHandler.convertFrontmatter(fm),
     }),
-    commands: new CommandsCapability({
+    commands: new CommandsSection({
       directory: DIRECTORY,
       toolSuffix: EXT_PROMPT,
       buildInstallPath: (fileName) => commandsHandler.buildFilePath(fileName),
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
-    rules: new RulesCapability({
+    rules: new RulesSection({
       directory: DIRECTORY,
       toolSuffix: EXT_INSTRUCTIONS,
       inputSuffix: TOOL_SUFFIX,
       buildInstallPath: (fileName) => rulesHandler.buildFilePath(fileName),
       convertFrontmatter: (fm) => rulesHandler.convertFrontmatter(fm),
     }),
-    mcp: new McpCapability({
-      outputPath: ".vscode/mcp.json",
-      format: "json",
-      consumes: [CONFIG_MCP],
-      transformContent: (content) => {
-        const parsed = JSON.parse(content) as Record<string, unknown>;
-        if ("mcpServers" in parsed && !("servers" in parsed)) {
-          const { mcpServers, ...rest } = parsed as { mcpServers: unknown } & Record<
-            string,
-            unknown
-          >;
-          return JSON.stringify({ ...rest, servers: mcpServers }, null, 2);
-        }
-        return content;
-      },
-    }),
-    settings: [
-      new SettingsCapability({
-        outputPath: ".vscode/settings.json",
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: ".vscode/mcp.json",
+        format: "json",
+        consumes: [CONFIG_MCP],
+        transformContent: (content) => {
+          const parsed = JSON.parse(content) as Record<string, unknown>;
+          if ("mcpServers" in parsed && !("servers" in parsed)) {
+            const { mcpServers, ...rest } = parsed as { mcpServers: unknown } & Record<
+              string,
+              unknown
+            >;
+            return JSON.stringify({ ...rest, servers: mcpServers }, null, 2);
+          }
+          return content;
+        },
+      }),
+      plugin: PLUGIN_MCP,
+    },
+    config: [
+      new ConfigSection({
+        outputPath: VSCODE_SETTINGS_PATH,
         mergeStrategy: "framework-prime",
-        staticContentAssetFile: "vscode-settings.json",
+        staticContentAssetFile: VSCODE_SETTINGS_ASSET,
         requiresTool: "vscode",
       }),
     ],
-    plugins: pluginsCapability({
-      mode: "native",
+    hooks: { delivery: hooksSupport.delivery },
+    layout: nativeLayout({
       pluginsDir: ".github/plugins/",
-      pluginManifestRelativePath: "plugin.json",
-      ...nativeHooksSupport(COPILOT_HOOKS),
-      acceptsMcp: true,
-      translationMode: "marketplace",
       // Copilot auto-installs repo-level enabledPlugins; a foreign catalogue at the same name
       // must therefore never receive a declarative true entry before native source proof.
       // Its registry is global to the user and keyed by name, so a name held by a project that
@@ -307,8 +319,13 @@ export const copilot = defineAiTool({
         marketplacesSettingsPath: null,
         enabledPluginsKey: "enabledPlugins",
         declarativePluginActivationRequiresNativeProof: true,
-        toEntryKey: claudeStyleMarketplaceKey,
+        toEntryKey: sharedMarketplaceKey,
       },
+    }),
+    manifest: manifestSection({
+      manifestRelativePath: "plugin.json",
+      pluginRootToken: hooksSupport.rootToken,
+      translationMode: "marketplace",
     }),
   }),
 

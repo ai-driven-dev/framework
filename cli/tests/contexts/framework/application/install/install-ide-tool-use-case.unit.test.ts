@@ -2,9 +2,10 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { InstallIdeToolUseCase } from "../../../../../src/contexts/framework/application/install/install-ide-tool-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
+import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { registerTool } from "../../../../../src/contexts/tools/domain/registry.js";
+import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
+import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
 import {
   buildUnitDeps,
@@ -14,6 +15,13 @@ import {
 } from "../../../../helpers/ports/build-unit-deps.js";
 import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
+
+function toolsWithCursor(cursorProfile: BuiltToolConfig) {
+  return catalogOf(
+    REGISTERED_PROFILES.map((profile) => (profile.toolId === "cursor" ? cursorProfile : profile))
+  );
+}
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -40,6 +48,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -60,6 +69,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       await buildUseCase(deps).execute({
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -81,6 +91,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -106,6 +117,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -124,6 +136,7 @@ describe("InstallIdeToolUseCase", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       await buildUseCase(deps).execute({
+        tools: catalogOf(),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -140,35 +153,37 @@ describe("InstallIdeToolUseCase", () => {
   });
 
   describe("selecting what an installed AI tool declares for the IDE", () => {
-    const forIde = new SettingsCapability({
+    const forIde = new ConfigSection({
       outputPath: ".vscode/aidd-a.json",
       mergeStrategy: "framework-prime",
       staticContent: '{"a": 1}',
       requiresTool: "vscode",
     });
-    const consumesOnly = new SettingsCapability({
+    const consumesOnly = new ConfigSection({
       outputPath: ".vscode/aidd-b.json",
       mergeStrategy: "user-prime",
       consumes: ["something"],
     });
-    const forItself = new SettingsCapability({
+    const forItself = new ConfigSection({
       outputPath: ".cursor/aidd-c.json",
       mergeStrategy: "framework-prime",
       staticContent: '{"c": 1}',
     });
-    const fromAsset = new SettingsCapability({
+    const fromAsset = new ConfigSection({
       outputPath: ".vscode/aidd-d.json",
       mergeStrategy: "framework-prime",
       staticContentAssetFile: "d.json",
       requiresTool: "vscode",
     });
 
-    function registerCursorWith(settings: SettingsCapability[]): void {
-      registerTool(withSections(cursor, { settings }));
+    let cursorProfile: BuiltToolConfig = cursor;
+
+    function registerCursorWith(settings: ConfigSection[]): void {
+      cursorProfile = withSections(cursor, { config: settings });
     }
 
     afterEach(() => {
-      registerTool(cursor);
+      cursorProfile = cursor;
     });
 
     async function withCursorRegistered(
@@ -186,6 +201,7 @@ describe("InstallIdeToolUseCase", () => {
       manifest: Manifest
     ) {
       return buildUseCase(deps).execute({
+        tools: toolsWithCursor(cursorProfile),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -257,6 +273,7 @@ describe("InstallIdeToolUseCase", () => {
       const assets = new StubAssetProvider({ "cursor/d.json": '{"d": 1}' });
 
       await buildUseCase(deps, assets).execute({
+        tools: toolsWithCursor(cursorProfile),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -274,6 +291,7 @@ describe("InstallIdeToolUseCase", () => {
       const manifest = await withCursorRegistered(deps);
 
       await buildUseCase(deps, null).execute({
+        tools: toolsWithCursor(cursorProfile),
         toolId: "vscode",
         projectRoot: PROJECT_ROOT,
         manifest,

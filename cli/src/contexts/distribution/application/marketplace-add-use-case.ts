@@ -13,7 +13,7 @@ import type {
 } from "../../framework/application/flows/marketplace-remove-use-case.js";
 
 export interface MarketplaceRemover {
-  execute(options: MarketplaceRemoveOptions): Promise<MarketplaceRemoveResult>;
+  execute(options: Omit<MarketplaceRemoveOptions, "tools">): Promise<MarketplaceRemoveResult>;
 }
 
 import { FRAMEWORK_MARKETPLACE_NAME, Marketplace } from "../domain/marketplace.js";
@@ -77,7 +77,12 @@ export class MarketplaceAddUseCase {
     const found = existing.find((m) => m.name === name);
     if (!found) return;
     if (!overwrite) throw new MarketplaceAlreadyRegisteredError(name);
-    await this.removeUseCase.execute({ name, projectRoot, autoConfirm: true, scope: found.scope });
+    await this.removeUseCase.execute({
+      name,
+      projectRoot,
+      autoConfirm: true,
+      scope: found.scope,
+    });
   }
 
   private async ensureTrust(options: MarketplaceAddOptions): Promise<void> {

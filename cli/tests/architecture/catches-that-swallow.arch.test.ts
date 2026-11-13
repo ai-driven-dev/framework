@@ -18,10 +18,6 @@ const BASELINE: Readonly<Record<string, { readonly count: number; readonly reaso
     reason:
       "the bridge text shipped into OpenCode: a hook that fails must never surface as a thrown error inside the host",
   },
-  "tests/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.integration.test.ts": {
-    count: 3,
-    reason: "asserts that same bridge text byte for byte",
-  },
   "src/runtime/filesystem/file-adapter.ts": {
     count: 1,
     reason: "a refusal to delete something present must not fail an uninstall midway",

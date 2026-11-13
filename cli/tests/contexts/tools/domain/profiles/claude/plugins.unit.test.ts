@@ -7,25 +7,25 @@ import { nativeOf } from "../../../testing/plugin-mode.js";
 describe("claude plugins", () => {
   describe("capabilities.plugins", () => {
     it("is native mode", () => {
-      expect(claude.section("plugins").kind).toBe("native");
+      expect(claude.plugins()?.kind).toBe("native");
     });
 
     it("uses .claude/plugins/ as plugins directory", () => {
-      expect(nativeOf(claude.section("plugins")).pluginOutputDir("x")).toBe(".claude/plugins/x/");
+      expect(nativeOf(claude.plugins()).pluginOutputDir("x")).toBe(".claude/plugins/x/");
     });
 
     it("uses plugin.json as plugin manifest path", () => {
-      expect(nativeOf(claude.section("plugins")).manifestPath()).toBe("plugin.json");
+      expect(nativeOf(claude.plugins()).manifestPath()).toBe("plugin.json");
     });
 
     it("pluginOutputDir returns correct path for a plugin name", () => {
-      expect(nativeOf(claude.section("plugins")).pluginOutputDir("my-plugin")).toBe(
+      expect(nativeOf(claude.plugins()).pluginOutputDir("my-plugin")).toBe(
         ".claude/plugins/my-plugin/"
       );
     });
 
     it("declares its own marketplace registry and plugin cache root, for clean's own purge", () => {
-      const activation = nativeOf(claude.section("plugins")).activation();
+      const activation = claude.nativeActivation();
       expect(activation?.marketplaceRegistryAt("/home/tester")?.path).toBe(
         join("/home/tester", ".claude", "plugins", "known_marketplaces.json")
       );
@@ -35,14 +35,14 @@ describe("claude plugins", () => {
     });
 
     it("declares where claude's own user-scope settings file lives, for --scope user", () => {
-      const activation = nativeOf(claude.section("plugins")).activation();
+      const activation = claude.nativeActivation();
       expect(activation?.userSettingsFile("/home/tester", () => undefined)).toBe(
         join("/home/tester", ".claude", "settings.json")
       );
     });
 
     it("drives the claude binary at local scope, with the verbs claude uses and nothing else", () => {
-      const activation = nativeOf(claude.section("plugins")).activation();
+      const activation = claude.nativeActivation();
       // Exhaustive, not `toMatchObject`: a verb added by mistake must fail here.
       expect(activation?.hostBinary()).toBe("claude");
       expect(activation?.cliShape()).toEqual({
@@ -63,13 +63,13 @@ describe("claude plugins", () => {
     });
 
     it("registers a marketplace in the file claude writes itself, and enables plugins in the tracked one", () => {
-      const settings = nativeOf(claude.section("plugins")).marketplaceRegistration();
+      const settings = claude.marketplaceRegistration();
 
       expect({
         settingsPath: settings?.sharedSettingsFile(),
-        settingsKey: keyAskedOf((shared) => settings?.dropMarketplaces(shared)),
+        settingsKey: keyAskedOf((shared) => settings?.withoutMarketplaces(shared)),
         marketplacesSettingsPath: settings?.machineLocalFiles()[0] ?? null,
-        enabledPluginsKey: keyAskedOf((shared) => settings?.enabledPluginsIn(shared)),
+        enabledPluginsKey: keyAskedOf((shared) => settings?.withEnabledPlugins(shared, ["p@m"])),
         entryKey: settings?.entryKeyFor({
           name: "aidd-framework",
           source: { kind: "local", path: "/abs/cache" },

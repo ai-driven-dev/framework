@@ -6,6 +6,7 @@ import {
   conflictsOf,
   type ReportFilters,
 } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 const ingest = vi.fn();
 const declare = vi.fn();
@@ -75,7 +76,7 @@ async function run(...args: string[]): Promise<number | null> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerTelemetryCommand(program);
+  registerTelemetryCommand(program, catalogOf());
   try {
     await program.parseAsync(["node", "aidd", "telemetry", ...args]);
     return null;
@@ -645,7 +646,7 @@ describe("the telemetry command surface", () => {
 
   it("prints each subcommand's help as the golden pins it", () => {
     const program = new Command().name("aidd");
-    registerTelemetryCommand(program);
+    registerTelemetryCommand(program, catalogOf());
     const telemetry = program.commands.find((command) => command.name() === "telemetry");
     const helps = [telemetry, ...(telemetry?.commands ?? [])].map((command) => ({
       invocation: command === telemetry ? "aidd telemetry" : `aidd telemetry ${command?.name()}`,

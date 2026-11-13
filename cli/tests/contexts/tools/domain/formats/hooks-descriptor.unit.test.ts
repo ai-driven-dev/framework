@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../../src/contexts/tools/domain/build-contract.js";
+import type { ArtifactContract } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import {
   flatHooksArtifact,
   flatHooksSupport,
   flatProjectHooksDelivery,
   type HooksBrand,
   hooksBridgePath,
-  hooksConfigCapability,
+  hooksConfigPart,
   nativeHooksSupport,
   pluginTreeHooksArtifact,
   projectHooksSupport,
@@ -84,7 +84,7 @@ describe("the host adapter a build puts behind a plugin's hooks", () => {
     );
 
     expect([
-      native.hookScript?.(HOST, "claude's"),
+      native.delivery.hookScript?.(HOST, "claude's"),
       flat.hookScript?.(HOST, "claude's"),
     ]).toStrictEqual(["the tool's adapter", "the tool's adapter"]);
   });
@@ -92,7 +92,7 @@ describe("the host adapter a build puts behind a plugin's hooks", () => {
   it("leaves every script as shipped where the descriptor names no adapter", () => {
     expect([
       supported(pluginTreeHooksArtifact(routed({}))).script,
-      nativeHooksSupport(routed({ rootToken: "$ROOT" })).hookScript,
+      nativeHooksSupport(routed({ rootToken: "$ROOT" })).delivery.hookScript,
       flatHooksSupport(routed({ flat: { scriptsDir: ".tool/hooks/" } })).hookScript,
     ]).toStrictEqual([undefined, undefined, undefined]);
   });
@@ -263,7 +263,7 @@ describe("a flat build's hooks artifact", () => {
 
 describe("the hooks file the framework install writes", () => {
   it("is read from the descriptor's own parameters", () => {
-    const capability = hooksConfigCapability({
+    const capability = hooksConfigPart({
       config: {
         outputPath: ".tool/hooks.json",
         mergeStrategy: "none",
@@ -288,9 +288,8 @@ describe("a tool's plugins capability, as far as hooks go", () => {
     expect(
       nativeHooksSupport(routed({ rootToken: "$ROOT", trustNotice: "trust it" }))
     ).toStrictEqual({
-      acceptsHooks: true,
-      pluginRootToken: "$ROOT",
-      hooksTrustNotice: "trust it",
+      delivery: { kind: "plugin-file", trustNotice: "trust it" },
+      rootToken: "$ROOT",
     });
   });
 
@@ -302,8 +301,8 @@ describe("a tool's plugins capability, as far as hooks go", () => {
     expect(
       flatHooksSupport(routed({ flat: { scriptsDir: ".tool/hooks/" } }), bridge)
     ).toStrictEqual({
-      acceptsHooks: true,
-      flatHooksDir: ".tool/hooks/",
+      kind: "bridge",
+      flat: { dir: ".tool/hooks/" },
     });
   });
 
@@ -313,13 +312,13 @@ describe("a tool's plugins capability, as far as hooks go", () => {
       bridge
     );
 
-    expect(support.flatHooksLoaderEntry).toStrictEqual(LOADER);
-    expect(support.flatHooksBridge?.generate("{}", "p")).toBe("p:{}");
-    expect(support.flatHooksBridge?.path("p")).toBe(".tool/plugin/p-hooks.js");
-    expect(support.flatHooksBridge?.skipIfSourceHas).toBe("tool-plugin.js");
+    expect(support.flat.loaderEntry).toStrictEqual(LOADER);
+    expect(support.flat.bridge?.generate("{}", "p")).toBe("p:{}");
+    expect(support.flat.bridge?.path("p")).toBe(".tool/plugin/p-hooks.js");
+    expect(support.flat.bridge?.skipIfSourceHas).toBe("tool-plugin.js");
     expect(
-      flatHooksSupport(routed({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } }))
-        .flatHooksBridge
+      flatHooksSupport(routed({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } })).flat
+        .bridge
     ).toBeUndefined();
   });
 
@@ -338,14 +337,14 @@ describe("a tool's plugins capability, as far as hooks go", () => {
       })
     );
     const { merge, unmerge, contributedEntries, isEmpty, scriptPath, scriptDir } =
-      support.projectHooksFormat;
+      support.project.format;
     const merged = merge(null, SHIPPED, "p").content;
 
-    expect([
-      support.hooksRelativePath,
-      support.hooksDestination,
-      support.projectHooksRelativePath,
-    ]).toStrictEqual(["hooks.json", "project", ".tool/hooks.json"]);
+    expect([support.kind, support.pluginFile, support.project.relativePath]).toStrictEqual([
+      "project-merge",
+      "hooks.json",
+      ".tool/hooks.json",
+    ]);
     expect(JSON.parse(merged)).toStrictEqual({
       version: 1,
       hooks: { start: [{ command: "node ./.tool/hooks/p/a.cjs skills/s" }] },
@@ -384,13 +383,37 @@ describe("a tool's plugins capability, as far as hooks go", () => {
 
     expect(
       flatProjectHooksDelivery(
+        flatHooksSupport(routed({ flat: { scriptsDir: ".tool/hooks/" } })),
         { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" },
         format
       )
     ).toStrictEqual({
-      hooksDestination: "project",
-      projectHooksRelativePath: ".tool/hooks.json",
-      projectHooksFormat: format,
+      kind: "project-merge",
+      project: { relativePath: ".tool/hooks.json", format },
+      flat: { dir: ".tool/hooks/" },
     });
+  });
+});
+
+describe("what a descriptor refusal says", () => {
+  it("names the plugin root token a native tool lacks", () => {
+    expect(() => nativeHooksSupport(routed({}))).toThrow("native mode requires a pluginRootToken.");
+  });
+
+  it("carries the trust notice of a project route, and none without one", () => {
+    const route = {
+      rootToken: ROOT,
+      file: FLAT_FILE,
+      project: {
+        pluginFile: "hooks.json",
+        sharedFile: ".tool/hooks.json",
+        scriptsDir: ".tool/hooks/",
+      },
+    };
+
+    expect(projectHooksSupport(routed({ ...route, trustNotice: "trust it" })).trustNotice).toBe(
+      "trust it"
+    );
+    expect(projectHooksSupport(routed(route))).not.toHaveProperty("trustNotice");
   });
 });

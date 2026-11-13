@@ -72,6 +72,8 @@ import { PluginDistributionReaderAdapter } from "../../contexts/framework/infras
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import { pluginManifestProbes } from "../../contexts/translate/domain/plugin-format.js";
 import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
@@ -172,7 +174,8 @@ interface Deps {
   telemetry: TelemetryDeps;
 }
 
-const _cache = new Map<string, Deps>();
+/** One graph per catalog, then per project root and token: two catalogs never share a graph. */
+const _cache = new WeakMap<ToolCatalog, Map<string, Deps>>();
 
 export function createMenuDeps(projectRoot: string): {
   manifestRepo: ManifestRepository;
@@ -187,15 +190,21 @@ export function createMenuDeps(projectRoot: string): {
 export async function createDeps(
   projectRoot: string,
   options: GlobalOptions,
-  output?: CLIOutput
+  output: CLIOutput | undefined,
+  tools: ToolCatalog
 ): Promise<Deps> {
   const cacheKey = `${projectRoot}\u0000${options.token ?? ""}`;
-  const cached = _cache.get(cacheKey);
+  const graphs = _cache.get(tools) ?? new Map<string, Deps>();
+  _cache.set(tools, graphs);
+  const cached = graphs.get(cacheKey);
   if (cached !== undefined) return cached;
   const hasher = new HasherAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
   const fs = new FileAdapter(hasher, logger);
-  const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
+  const pluginDistributionReader = new PluginDistributionReaderAdapter(
+    fs,
+    pluginManifestProbes(tools)
+  );
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);
   const http = new HttpClient();
@@ -226,7 +235,7 @@ export async function createDeps(
     marketplaceRegistries: hostMarketplaceRegistries,
     marketplaceSources: nativeSources,
     pluginRegistries: hostPluginRegistries,
-  } = wireHostRegistration();
+  } = wireHostRegistration(tools);
   // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
   // and `userConfigDir`, neither of which distribution's own wiring produces.
   const userSourceReferences = new UserSourceReferencesAdapter(fs, userConfigDir);
@@ -277,10 +286,12 @@ export async function createDeps(
     resolveMarketplaceUseCase,
     prompter,
     {
-      execute: (options) =>
-        options.scope === "user"
-          ? userMarketplaceRemoveUseCase.execute(options)
-          : marketplaceRemoveUseCase.execute(options),
+      execute: (options) => {
+        const removal = { ...options, tools };
+        return options.scope === "user"
+          ? userMarketplaceRemoveUseCase.execute(removal)
+          : marketplaceRemoveUseCase.execute(removal);
+      },
     }
   );
   const marketplaceCheckUseCase = new MarketplaceCheckUseCase(
@@ -288,7 +299,7 @@ export async function createDeps(
     marketplaceRegistry,
     resolveMarketplaceUseCase
   );
-  const assetProvider = new BundledAssetProviderAdapter();
+  const assetProvider = new BundledAssetProviderAdapter(tools);
   // `force: true` is safe here: `outDir` is always an aidd-owned disposable cache, never a
   // user-owned directory, so a collision only means a previous build's cache exists. Its
   // diagnostics drop to debug because this build runs behind almost every command, where
@@ -300,6 +311,7 @@ export async function createDeps(
   };
   const frameworkBuildFor: FrameworkBuildFor = (target, mode, outDir) =>
     createFrameworkBuildUseCase(
+      tools,
       { fs, assetProvider, logger: cacheBuildLogger },
       { target, mode, outDir, force: true }
     );
@@ -625,6 +637,6 @@ export async function createDeps(
     checkUpdateUseCase,
     telemetry: wireTelemetry(homedir),
   };
-  _cache.set(cacheKey, deps);
+  graphs.set(cacheKey, deps);
   return deps;
 }

@@ -19,6 +19,7 @@ import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";
@@ -224,10 +225,19 @@ describe("clean guards a ref another project on this machine still needs", () =>
       });
 
       if (outcome === "fails")
-        await expect(useCase.execute({ projectRoot: PROJECT_ROOT, force: true })).rejects.toThrow(
-          "gitignore cleanup failed"
-        );
-      else await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+        await expect(
+          useCase.execute({
+            tools: catalogOf(),
+            projectRoot: PROJECT_ROOT,
+            force: true,
+          })
+        ).rejects.toThrow("gitignore cleanup failed");
+      else
+        await useCase.execute({
+          tools: catalogOf(),
+          projectRoot: PROJECT_ROOT,
+          force: true,
+        });
 
       const dependents = outcome === "succeeds" ? [OTHER_PROJECT] : [PROJECT_ROOT, OTHER_PROJECT];
       expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
@@ -283,7 +293,11 @@ describe("clean guards a ref another project on this machine still needs", () =>
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(activator.uninstalledPlugins).not.toContain("aidd-vcs@aidd-framework");
     expect(fs.getFile(`${USER_CONFIG_DIR}/references.json`)).toContain(OTHER_PROJECT);
@@ -311,7 +325,11 @@ describe("clean guards a ref another project on this machine still needs", () =>
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -338,7 +356,11 @@ describe("clean guards a ref another project on this machine still needs", () =>
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(activator.uninstalledPlugins).toContain("aidd-vcs@aidd-framework");
     expect(fs.getFile(`${OTHER_PROJECT}/marker`)).toBe(OTHER_PROJECT_BYTES);
@@ -365,7 +387,11 @@ describe("clean guards a ref another project on this machine still needs", () =>
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(true),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -394,7 +420,11 @@ describe("clean guards a ref another project on this machine still needs", () =>
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(true),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -421,7 +451,11 @@ describe("clean guards a ref another project on this machine still needs", () =>
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(activator.uninstalledPlugins).toEqual([]);
     expect(activator.removedMarketplaces).toEqual([]);
@@ -449,7 +483,11 @@ describe("clean guards a ref another project on this machine still needs", () =>
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(),
     });
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, force: true });
+    await useCase.execute({
+      tools: catalogOf(),
+      projectRoot: PROJECT_ROOT,
+      force: true,
+    });
 
     expect(activator.uninstalledPlugins).not.toContain("aidd-vcs@aidd-framework");
     expect(fs.getFile(`${USER_CONFIG_DIR}/references.json`)).toContain(OTHER_PROJECT);

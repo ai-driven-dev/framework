@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { wireTools } from "../../../../../src/composition/tools.js";
 import type { FrameworkBuildTarget } from "../../../../../src/contexts/translate/domain/build-target.js";
 import { FlatTargetExistsError } from "../../../../../src/kernel/errors.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
@@ -13,6 +14,7 @@ import { createFrameworkBuildUseCase } from "../../../../../src/runtime/wiring/t
 import { FRAMEWORK_REAL } from "../../../../helpers/fixture-setup.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
 // Avoid biome noTemplateCurlyInString: split literal for the placeholder.
@@ -35,9 +37,10 @@ async function buildFlat(
 ): Promise<void> {
   const logger = new CapturingLogger();
   const useCase = createFrameworkBuildUseCase(
+    catalogOf(),
     {
       fs: new FileAdapter(new HasherAdapter(), logger),
-      assetProvider: new BundledAssetProviderAdapter(),
+      assetProvider: new BundledAssetProviderAdapter(wireTools()),
       logger,
     },
     { target, mode: "flat", outDir: out, force: options.force ?? false }

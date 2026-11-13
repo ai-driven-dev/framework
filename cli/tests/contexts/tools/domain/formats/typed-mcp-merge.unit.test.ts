@@ -1,0 +1,356 @@
+import { describe, expect, it } from "vitest";
+import {
+  buildTypedMcpFlatConfig,
+  mergeTypedMcp,
+  unmergeTypedMcp,
+} from "../../../../../src/contexts/tools/domain/formats/typed-mcp-merge.js";
+import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+
+const hasher = new DeterministicHasher();
+
+const LOCAL_SERVER = { type: "local", command: ["node", "server.js"], enabled: true };
+const REMOTE_SERVER = { type: "remote", url: "https://example.com/mcp", enabled: true };
+const DISABLED_SERVER = { type: "local", command: ["node", "off.js"], enabled: false };
+
+function makeIncoming(servers: Record<string, unknown>): string {
+  return JSON.stringify({ mcp: servers }, null, 2);
+}
+
+function makeExisting(servers: Record<string, unknown>): string {
+  return JSON.stringify({ mcp: servers }, null, 2);
+}
+
+describe("mergeTypedMcp", () => {
+  it("merges into empty target", () => {
+    const { mergedContent, contributedEntries, collisions } = mergeTypedMcp(
+      null,
+      makeIncoming({ "my-server": LOCAL_SERVER }),
+      new Map(),
+      hasher
+    );
+    const parsed = JSON.parse(mergedContent) as { mcp: Record<string, unknown> };
+    expect(parsed.mcp["my-server"]).toEqual(LOCAL_SERVER);
+    expect(contributedEntries.has("my-server")).toBe(true);
+    expect(collisions).toHaveLength(0);
+  });
+
+  it("preserves user-added servers not in incoming", () => {
+    const { mergedContent } = mergeTypedMcp(
+      makeExisting({ "user-server": REMOTE_SERVER }),
+      makeIncoming({ "plugin-server": LOCAL_SERVER }),
+      new Map(),
+      hasher
+    );
+    const parsed = JSON.parse(mergedContent) as { mcp: Record<string, unknown> };
+    expect(parsed.mcp["user-server"]).toEqual(REMOTE_SERVER);
+    expect(parsed.mcp["plugin-server"]).toEqual(LOCAL_SERVER);
+  });
+
+  it("is idempotent: second merge with same version produces identical output", () => {
+    const incoming = makeIncoming({ "plugin-server": LOCAL_SERVER });
+    const prev = new Map<string, string>();
+    const first = mergeTypedMcp(null, incoming, prev, hasher);
+    const secondPrev = first.contributedEntries;
+    const second = mergeTypedMcp(first.mergedContent, incoming, secondPrev, hasher);
+    expect(second.mergedContent).toBe(first.mergedContent);
+    expect([...second.contributedEntries.keys()]).toEqual([...first.contributedEntries.keys()]);
+  });
+
+  it("replace path: drops orphaned server from v1, adds new server from v2", () => {
+    const incomingV1 = makeIncoming({ "server-a": LOCAL_SERVER, "server-b": REMOTE_SERVER });
+    const v1 = mergeTypedMcp(null, incomingV1, new Map(), hasher);
+    const incomingV2 = makeIncoming({ "server-a": LOCAL_SERVER, "server-c": DISABLED_SERVER });
+    const v2 = mergeTypedMcp(v1.mergedContent, incomingV2, v1.contributedEntries, hasher);
+    const parsed = JSON.parse(v2.mergedContent) as { mcp: Record<string, unknown> };
+    expect(parsed.mcp).toHaveProperty("server-a");
+    expect(parsed.mcp).toHaveProperty("server-c");
+    expect(parsed.mcp).not.toHaveProperty("server-b");
+  });
+
+  it("skips incoming server that collides with user-owned key (not in previous)", () => {
+    const existing = makeExisting({ "user-server": REMOTE_SERVER });
+    const { collisions, contributedEntries } = mergeTypedMcp(
+      existing,
+      makeIncoming({ "user-server": LOCAL_SERVER }),
+      new Map(),
+      hasher
+    );
+    expect(collisions.length).toBeGreaterThan(0);
+    expect(collisions[0]).toContain("user-server");
+    expect(contributedEntries.has("user-server")).toBe(false);
+  });
+
+  it("replaces own server that was previously contributed (no collision)", () => {
+    const incoming = makeIncoming({ "plugin-server": LOCAL_SERVER });
+    const first = mergeTypedMcp(null, incoming, new Map(), hasher);
+    const incomingV2 = makeIncoming({ "plugin-server": DISABLED_SERVER });
+    const { collisions, mergedContent } = mergeTypedMcp(
+      first.mergedContent,
+      incomingV2,
+      first.contributedEntries,
+      hasher
+    );
+    expect(collisions).toHaveLength(0);
+    const parsed = JSON.parse(mergedContent) as { mcp: Record<string, unknown> };
+    expect((parsed.mcp["plugin-server"] as { enabled: boolean }).enabled).toBe(false);
+  });
+
+  it("treats a user-edited previously contributed server as a collision on reinstall", () => {
+    const first = mergeTypedMcp(
+      null,
+      makeIncoming({ "plugin-server": LOCAL_SERVER }),
+      new Map(),
+      hasher
+    );
+    const edited = makeExisting({ "plugin-server": REMOTE_SERVER });
+    const next = mergeTypedMcp(
+      edited,
+      makeIncoming({ "plugin-server": DISABLED_SERVER }),
+      first.contributedEntries,
+      hasher
+    );
+    expect(next.collisions).toHaveLength(1);
+    expect(next.contributedEntries.size).toBe(0);
+    expect((JSON.parse(next.mergedContent) as { mcp: Record<string, unknown> }).mcp).toEqual({
+      "plugin-server": REMOTE_SERVER,
+    });
+  });
+
+  it("preserves disabled state (enabled: false) from incoming", () => {
+    const { mergedContent } = mergeTypedMcp(
+      null,
+      makeIncoming({ "off-server": DISABLED_SERVER }),
+      new Map(),
+      hasher
+    );
+    const parsed = JSON.parse(mergedContent) as { mcp: Record<string, unknown> };
+    expect((parsed.mcp["off-server"] as { enabled: boolean }).enabled).toBe(false);
+  });
+
+  it("returns hashes in contributedEntries for each contributed server", () => {
+    const { contributedEntries } = mergeTypedMcp(
+      null,
+      makeIncoming({ alpha: LOCAL_SERVER, beta: REMOTE_SERVER }),
+      new Map(),
+      hasher
+    );
+    expect(contributedEntries.has("alpha")).toBe(true);
+    expect(contributedEntries.has("beta")).toBe(true);
+    expect(typeof contributedEntries.get("alpha")).toBe("string");
+  });
+
+  it("preserves top-level keys (e.g. instructions) alongside mcp after merge", () => {
+    const frameworkDefault = JSON.stringify(
+      { instructions: [".opencode/rules/**/*.md"], mcp: {} },
+      null,
+      2
+    );
+    const { mergedContent } = mergeTypedMcp(
+      frameworkDefault,
+      makeIncoming({ "my-server": LOCAL_SERVER }),
+      new Map(),
+      hasher
+    );
+    const parsed = JSON.parse(mergedContent) as {
+      instructions: string[];
+      mcp: Record<string, unknown>;
+    };
+    expect(parsed.instructions).toEqual([".opencode/rules/**/*.md"]);
+    expect(parsed.mcp["my-server"]).toEqual(LOCAL_SERVER);
+  });
+});
+
+describe("tolerates a JSONC user-owned opencode.json", () => {
+  // A user opencode.json may carry comments and trailing commas, which a strict `JSON.parse`
+  // refuses with "Expected double-quoted property name in JSON".
+  const JSONC_EXISTING = `{
+  "$schema": "https://opencode.ai/config.json",
+  // user-authored comment
+  "theme": "dark",
+  "mcp": {
+    "user": ${JSON.stringify(REMOTE_SERVER)},
+  },
+}`;
+
+  it("merges into JSONC content without throwing, preserving user keys", () => {
+    const base = JSON.stringify({
+      $schema: "https://opencode.ai/config.json",
+      instructions: [".opencode/rules/**/*.md"],
+    });
+    const incoming = { "aidd-context__server": LOCAL_SERVER };
+    let merged = "";
+    expect(() => {
+      merged = buildTypedMcpFlatConfig(base, JSONC_EXISTING, incoming);
+    }).not.toThrow();
+    const parsed = JSON.parse(merged) as {
+      $schema: string;
+      theme: string;
+      mcp: Record<string, unknown>;
+    };
+    expect(parsed.$schema).toBe("https://opencode.ai/config.json");
+    expect(parsed.theme).toBe("dark");
+    expect(parsed.mcp.user).toEqual(REMOTE_SERVER);
+    expect(parsed.mcp["aidd-context__server"]).toEqual(LOCAL_SERVER);
+  });
+
+  it("unmerges from JSONC content without throwing", () => {
+    const entries = new Map([["aidd-context__server", "hash"]]);
+    expect(() => unmergeTypedMcp(JSONC_EXISTING, entries)).not.toThrow();
+  });
+});
+
+describe("buildTypedMcpFlatConfig", () => {
+  const BASE = JSON.stringify({
+    $schema: "https://opencode.ai/config.json",
+    instructions: [".opencode/rules/**/*.md"],
+  });
+
+  it("emits the base ($schema + instructions) with no mcp key when there are zero servers", () => {
+    const config = JSON.parse(buildTypedMcpFlatConfig(BASE, null, {})) as Record<string, unknown>;
+    expect(config).toEqual({
+      $schema: "https://opencode.ai/config.json",
+      instructions: [".opencode/rules/**/*.md"],
+    });
+    expect(config).not.toHaveProperty("mcp");
+  });
+
+  it("includes the mcp key only when servers are contributed", () => {
+    const config = JSON.parse(
+      buildTypedMcpFlatConfig(BASE, null, { "aidd-dev-server": LOCAL_SERVER })
+    ) as { $schema: string; instructions: string[]; mcp: Record<string, unknown> };
+    expect(config.$schema).toBe("https://opencode.ai/config.json");
+    expect(config.instructions).toEqual([".opencode/rules/**/*.md"]);
+    expect(config.mcp["aidd-dev-server"]).toEqual(LOCAL_SERVER);
+  });
+
+  it("lets base framework keys win over stale existing copies, preserving user extras", () => {
+    const existing = JSON.stringify({
+      $schema: "https://stale.example/schema.json",
+      instructions: ["user-owned.md"],
+      theme: "dark",
+      mcp: { user: REMOTE_SERVER },
+    });
+    const config = JSON.parse(buildTypedMcpFlatConfig(BASE, existing, {})) as {
+      $schema: string;
+      instructions: string[];
+      theme: string;
+      mcp: Record<string, unknown>;
+    };
+    expect(config.$schema).toBe("https://opencode.ai/config.json");
+    expect(config.instructions).toEqual([".opencode/rules/**/*.md"]);
+    expect(config.theme).toBe("dark");
+    expect(config.mcp.user).toEqual(REMOTE_SERVER);
+  });
+
+  it("preserves duplicate user instructions while appending generated entries once", () => {
+    const existing = JSON.stringify({
+      instructions: ["user.md", "user.md", ".opencode/rules/**/*.md"],
+    });
+    const config = JSON.parse(buildTypedMcpFlatConfig(BASE, existing, {}, ["instructions"])) as {
+      instructions: string[];
+    };
+    expect(config.instructions).toEqual(["user.md", "user.md", ".opencode/rules/**/*.md"]);
+  });
+});
+
+describe("buildTypedMcpFlatConfig merged list keys", () => {
+  const base = JSON.stringify({ instructions: ["rules/a.md", "rules/b.md"] });
+
+  it("appends the generated entries the existing list lacks, after the user's own", () => {
+    const config = JSON.parse(
+      buildTypedMcpFlatConfig(
+        base,
+        JSON.stringify({ instructions: ["rules/a.md", "mine.md"] }),
+        {},
+        ["instructions"]
+      )
+    ) as { instructions: string[] };
+
+    expect(config.instructions).toEqual(["rules/a.md", "mine.md", "rules/b.md"]);
+  });
+
+  it("writes the generated entries alone when no existing config has the list", () => {
+    const merged = (existing: string | null) =>
+      (
+        JSON.parse(buildTypedMcpFlatConfig(base, existing, {}, ["instructions"])) as {
+          instructions: string[];
+        }
+      ).instructions;
+
+    expect(merged(null)).toEqual(["rules/a.md", "rules/b.md"]);
+    expect(merged("{}")).toEqual(["rules/a.md", "rules/b.md"]);
+    expect(merged(JSON.stringify({ instructions: "mine.md" }))).toEqual([
+      "rules/a.md",
+      "rules/b.md",
+    ]);
+  });
+});
+
+describe("unmergeTypedMcp", () => {
+  it("removes only the tracked entries, preserving other servers", () => {
+    const existing = makeExisting({ plugin: LOCAL_SERVER, user: REMOTE_SERVER });
+    const entries = new Map([["plugin", hasher.hash(JSON.stringify(LOCAL_SERVER)).value]]);
+    const result = unmergeTypedMcp(existing, entries);
+    const parsed = JSON.parse(result) as { mcp: Record<string, unknown> };
+    expect(parsed.mcp).not.toHaveProperty("plugin");
+    expect(parsed.mcp.user).toEqual(REMOTE_SERVER);
+  });
+
+  it("is a no-op when entries map is empty", () => {
+    const existing = makeExisting({ server: LOCAL_SERVER });
+    const result = unmergeTypedMcp(existing, new Map());
+    const parsed = JSON.parse(result) as { mcp: Record<string, unknown> };
+    expect(parsed.mcp.server).toEqual(LOCAL_SERVER);
+  });
+
+  it("does not fail when a tracked key is absent from existing", () => {
+    const existing = makeExisting({ server: LOCAL_SERVER });
+    const entries = new Map([["ghost-server", "oldhash"]]);
+    expect(() => unmergeTypedMcp(existing, entries)).not.toThrow();
+    const parsed = JSON.parse(unmergeTypedMcp(existing, entries)) as {
+      mcp: Record<string, unknown>;
+    };
+    expect(parsed.mcp.server).toEqual(LOCAL_SERVER);
+  });
+
+  it("refuses to unmerge a tracked server changed by the user", () => {
+    const entries = new Map([["plugin", hasher.hash(JSON.stringify(LOCAL_SERVER)).value]]);
+    expect(() => unmergeTypedMcp(makeExisting({ plugin: REMOTE_SERVER }), entries)).toThrow(
+      /edited.*plugin|plugin.*edited/
+    );
+  });
+
+  it("refuses an unproven legacy digest before removing a present server", () => {
+    expect(() =>
+      unmergeTypedMcp(makeExisting({ plugin: LOCAL_SERVER }), new Map([["plugin", ""]]))
+    ).toThrow(/unproven.*plugin|plugin.*unproven/);
+  });
+
+  it("does not call a tracked server edited when the user already removed it", () => {
+    const merged = mergeTypedMcp(
+      makeExisting({ user: REMOTE_SERVER }),
+      makeIncoming({}),
+      new Map([["gone", hasher.hash(JSON.stringify(LOCAL_SERVER)).value]]),
+      hasher
+    );
+
+    expect(merged.editedPreviousEntries).toEqual([]);
+  });
+
+  it.each([
+    ["a prefix before the digest", `x${"a".repeat(32)}`],
+    ["a suffix after the digest", `${"a".repeat(32)}x`],
+  ])("refuses %s as an unproven digest", (_case, digest) => {
+    expect(() =>
+      unmergeTypedMcp(makeExisting({ plugin: LOCAL_SERVER }), new Map([["plugin", digest]]))
+    ).toThrow("OpenCode MCP server 'plugin' has an unproven install digest; removal refused.");
+  });
+
+  it("names the server a user edited after install", () => {
+    const digest = hasher.hash(JSON.stringify(LOCAL_SERVER)).value;
+
+    expect(() =>
+      unmergeTypedMcp(makeExisting({ plugin: REMOTE_SERVER }), new Map([["plugin", digest]]))
+    ).toThrow("OpenCode MCP server 'plugin' was edited after install; removal refused.");
+  });
+});

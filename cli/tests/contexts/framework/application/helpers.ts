@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { wireTools } from "../../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { GitignoreUseCase } from "../../../../src/contexts/framework/application/gitignore-use-case.js";
@@ -11,10 +12,9 @@ import { PostInstallPipelineUseCase } from "../../../../src/contexts/framework/a
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import { isIdeToolId } from "../../../../src/contexts/tools/domain/registry.js";
 import type { Prompter } from "../../../../src/kernel/ports/prompter.js";
 import type { VersionReader } from "../../../../src/kernel/ports/version-reader.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
+import { isIdeToolId, type ToolId } from "../../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import { BundledAssetProviderAdapter } from "../../../../src/runtime/assets/asset-loader.js";
 import { FileAdapter } from "../../../../src/runtime/filesystem/file-adapter.js";
@@ -22,6 +22,8 @@ import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter
 import type { Platform } from "../../../../src/runtime/platform/platform.js";
 import { SilentPrompterAdapter } from "../../../../src/runtime/prompter/prompter-adapter.js";
 import { CurrentVersionAdapter } from "../../../../src/runtime/self-update/current-version-adapter.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };
 export const OverwritePrompter = SilentPrompterAdapter;
@@ -201,9 +203,12 @@ export function buildDeps(projectRoot: string) {
   const fs = new FileAdapter(hasher);
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const logger = new CLIOutput(false);
-  const assetProvider = new BundledAssetProviderAdapter();
+  const assetProvider = new BundledAssetProviderAdapter(wireTools());
   const pluginFetcher = new PluginFetcherAdapter(fs);
-  const pluginDistributionReader = new PluginDistributionReaderAdapter(fs);
+  const pluginDistributionReader = new PluginDistributionReaderAdapter(
+    fs,
+    registeredManifestProbes()
+  );
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const gitignoreUseCase = new GitignoreUseCase(fs);
   const postInstallPipelineUseCase = new PostInstallPipelineUseCase(manifestRepo, gitignoreUseCase);
@@ -255,6 +260,7 @@ export async function initProject(
   const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
   await initUseCase.execute({
     projectRoot,
+    tools: catalogOf(),
   });
 }
 
@@ -267,6 +273,7 @@ export async function installTool(
   const version = "test";
   if (isIdeToolId(toolId)) {
     return deps.installIdeConfigUseCase.execute({
+      tools: catalogOf(),
       toolId,
       projectRoot,
       manifest,
@@ -275,6 +282,7 @@ export async function installTool(
     });
   }
   return deps.installRuntimeConfigUseCase.execute({
+    tools: catalogOf(),
     toolId,
     projectRoot,
     manifest,

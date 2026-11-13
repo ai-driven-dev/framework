@@ -12,6 +12,7 @@ import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapt
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
 const LOCAL_SETTINGS = `${PROJECT_ROOT}/.claude/settings.local.json`;
@@ -65,6 +66,7 @@ async function issuesFor(
     manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds,
+    tools: catalogOf(),
     globalInstall: machine,
   });
 }
@@ -189,6 +191,7 @@ async function nativeIssuesFor(
     manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds: null,
+    tools: catalogOf(),
   });
 }
 

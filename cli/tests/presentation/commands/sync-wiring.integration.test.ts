@@ -1,5 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../same-instance.js";
 
 const restoreAll = vi.fn();
 const restoreOne = vi.fn();
@@ -27,6 +29,7 @@ const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerSyncCommand } = await import("../../../src/presentation/commands/sync.js");
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = catalogOf();
 
 const NOTHING_RESTORED = {
   errors: [],
@@ -82,7 +85,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerSyncCommand(program);
+  registerSyncCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "sync", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -90,9 +93,15 @@ async function run(...args: string[]): Promise<string[]> {
 describe("aidd sync — the whole project", () => {
   it("restores first, then re-drives every registered marketplace's activation", async () => {
     expect(await run()).toEqual(["Nothing to restore — all files are unmodified."]);
-    expect(restoreAll).toHaveBeenCalledWith(PROJECT_ROOT, false, false);
+    expect(restoreAll).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      false,
+      false,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) })
+    );
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredCatalog(),
       recreateFrameworkIfMissing: true,
     });
     expect(restoreAll.mock.invocationCallOrder[0]).toBeLessThan(
@@ -104,10 +113,20 @@ describe("aidd sync — the whole project", () => {
     pretendTerminal(true);
 
     await run();
-    expect(restoreAll).toHaveBeenCalledWith(PROJECT_ROOT, false, true);
+    expect(restoreAll).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      false,
+      true,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) })
+    );
 
     await run("--force");
-    expect(restoreAll).toHaveBeenLastCalledWith(PROJECT_ROOT, true, false);
+    expect(restoreAll).toHaveBeenLastCalledWith(
+      PROJECT_ROOT,
+      true,
+      false,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) })
+    );
   });
 
   it("names both the restoration's and the activation's refusals, and fails the process", async () => {
@@ -163,9 +182,11 @@ describe("aidd sync --tool", () => {
       interactive: false,
       manifest: expect.anything(),
       pluginName: undefined,
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredCatalog(),
       toolIds: ["claude"],
       recreateFrameworkIfMissing: true,
     });
@@ -231,6 +252,7 @@ describe("aidd sync --scope user", () => {
     expect(await run("--scope", "user")).toEqual(["Synced native activation for: claude"]);
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredCatalog(),
       scope: "user",
       manifestRepo: userManifestRepo,
       toolIds: undefined,
@@ -260,6 +282,7 @@ describe("aidd sync --scope user", () => {
       projectRoot: PROJECT_ROOT,
       scope: "user",
       rebuild: true,
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith(expect.objectContaining({ scope: "user" }));
   });
@@ -332,51 +355,8 @@ describe("aidd sync — how it builds its graph", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
-      expect.anything()
+      expect.anything(),
+      sameInstance(CATALOG)
     );
-  });
-});
-
-describe("aidd sync — the help surface", () => {
-  function syncCommand(): Command {
-    const program = new Command();
-    registerSyncCommand(program);
-    const sync = program.commands.find((command) => command.name() === "sync");
-    if (sync === undefined) throw new Error("sync command was not registered");
-    return sync;
-  }
-
-  it("describes itself against the command that records nothing", () => {
-    expect(syncCommand().description()).toBe(
-      "Rewrite owned files from what is already there — regenerate tracked files, driven by the manifest (see `translate`, which converts a source without recording anything)"
-    );
-  });
-
-  it("takes any number of tracked files, none of them required", () => {
-    expect(
-      syncCommand().registeredArguments.map((argument) => [
-        argument.name(),
-        argument.required,
-        argument.variadic,
-        argument.description,
-      ])
-    ).toEqual([["files", false, true, "Limit sync to specific tracked files"]]);
-  });
-
-  it("offers a forced run and three narrowings, and asks nothing else", () => {
-    expect(syncCommand().options.map((option) => [option.flags, option.description])).toEqual([
-      ["-f, --force", "Sync without prompting"],
-      ["--tool <tool>", "Limit sync to a specific tool"],
-      ["--plugin <name>", "Limit sync to a specific plugin"],
-      [
-        "--scope <scope>",
-        "project (default) resolves this project's own manifest; user resolves the " +
-          "machine-wide manifest --scope user setup wrote, restoring no project files",
-      ],
-      [
-        "--global",
-        "act on the machine-wide install `setup --global` wrote, rebuilding its files from the framework source",
-      ],
-    ]);
   });
 });

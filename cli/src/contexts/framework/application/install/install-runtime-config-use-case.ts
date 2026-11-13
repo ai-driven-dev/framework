@@ -8,15 +8,8 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
-import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
-import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
-import { buildOpencodeFlatConfig } from "../../../tools/domain/formats/opencode-mcp-merge.js";
-import {
-  getToolConfig,
-  isAiTool,
-  mcpCapabilityOf,
-  settingsCapabilitiesOf,
-} from "../../../tools/domain/registry.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { AiToolProfile, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PostInstallPipelineUseCase } from "./post-install-pipeline-use-case.js";
 
@@ -26,6 +19,8 @@ export interface InstallRuntimeConfigOptions {
   manifest: Manifest;
   force: boolean;
   version: string;
+  /** The profiles the install answers from: the tool's own and every installed one. */
+  tools: ToolCatalog;
   /** Optional per-file gate for the update path. Returns "skip" to leave the file unwritten. Defaults to always-write. */
   onBeforeWriteRegularFile?: (relativePath: string) => Promise<"write" | "skip">;
 }
@@ -60,13 +55,12 @@ export class InstallRuntimeConfigUseCase {
   }
 
   async ensurePluginRuntimeFiles(
-    toolId: AiToolId,
+    profile: AiToolProfile,
     projectRoot: string,
     manifest: Manifest
   ): Promise<void> {
-    const toolConfig = getToolConfig(toolId);
-    if (!isAiTool(toolConfig)) return;
-    for (const [fileName, relativePath] of Object.entries(toolConfig.pluginRuntimeFiles ?? {})) {
+    const toolId = profile.toolId;
+    for (const [fileName, relativePath] of Object.entries(profile.runtimeFiles())) {
       const path = join(projectRoot, relativePath);
       if (await this.fs.fileExists(path)) continue;
       const asset = this.assets.loadConfigAsset(toolId, fileName);
@@ -92,24 +86,23 @@ export class InstallRuntimeConfigUseCase {
     await this.postInstallPipelineUseCase.execute({
       projectRoot: options.projectRoot,
       manifest: options.manifest,
+      tools: options.tools,
     });
   }
 
   private async buildConfigFiles(
     options: InstallRuntimeConfigOptions
   ): Promise<InstallationFile[]> {
-    const toolConfig = getToolConfig(options.toolId);
-    if (!isAiTool(toolConfig)) return [];
+    const profile = options.tools.aiProfile(options.toolId);
     const files: InstallationFile[] = [];
-    const outputPaths = { ...toolConfig.configOutputPaths, ...toolConfig.pluginRuntimeFiles };
-    for (const [fileName, outputPath] of Object.entries(outputPaths)) {
-      const resolvedPath = await this.resolveConfigPath(toolConfig, fileName, outputPath, options);
+    for (const [fileName, outputPath] of Object.entries(profile.configFiles())) {
+      const resolvedPath = await this.resolveConfigPath(profile, fileName, outputPath, options);
       const asset = this.assets.loadConfigAsset(options.toolId, fileName);
       let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
       if (await this.isUserOwned(resolvedPath, options)) continue;
-      const mcp = mcpCapabilityOf(options.toolId);
+      const mcp = profile.mcpConfig();
       if (mcp?.isFrameworkPrimeJson(fileName)) {
-        content = buildOpencodeFlatConfig(
+        content = mcp.frameworkConfigOver(
           content,
           await this.readExistingConfig(resolvedPath, options.projectRoot),
           {}
@@ -127,14 +120,16 @@ export class InstallRuntimeConfigUseCase {
   }
 
   private async resolveConfigPath(
-    toolConfig: Extract<ReturnType<typeof getToolConfig>, { kind: "ai" }>,
+    profile: AiToolProfile,
     fileName: string,
     outputPath: string,
     options: InstallRuntimeConfigOptions
   ): Promise<string> {
-    const mcp = mcpCapabilityOf(toolConfig.toolId);
+    const mcp = profile.mcpConfig();
     if (mcp === null || mcp.outputPath() !== fileName) return outputPath;
-    return resolveMcpOutputPath(this.fs, mcp, options.projectRoot);
+    return mcp.resolveOutputPath((relativePath) =>
+      this.fs.fileExists(join(options.projectRoot, relativePath))
+    );
   }
 
   private async readExistingConfig(
@@ -151,7 +146,7 @@ export class InstallRuntimeConfigUseCase {
 
   private buildStaticSettingsFiles(options: InstallRuntimeConfigOptions): InstallationFile[] {
     const result: InstallationFile[] = [];
-    for (const cap of settingsCapabilitiesOf(options.toolId)) {
+    for (const cap of options.tools.aiProfile(options.toolId).settingsFiles()) {
       const file = this.buildStaticSettingsFile(cap, options);
       if (file !== null) result.push(file);
     }
@@ -159,10 +154,9 @@ export class InstallRuntimeConfigUseCase {
   }
 
   private buildStaticSettingsFile(
-    cap: unknown,
+    cap: SettingsFileAnswers,
     options: InstallRuntimeConfigOptions
   ): InstallationFile | null {
-    if (!(cap instanceof SettingsCapability)) return null;
     const requiredTool = cap.requiredTool();
     if (requiredTool !== null && !options.manifest.hasTool(requiredTool)) return null;
     const content = cap.resolveStaticContent((fileName) =>

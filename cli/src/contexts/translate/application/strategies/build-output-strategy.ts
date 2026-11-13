@@ -1,7 +1,7 @@
 import type {
   SourceMarketplaceRef,
   SourcePluginEntryRef,
-} from "../../../tools/domain/build-contract.js";
+} from "../../../tools/contract/build-contract.js";
 import type { BuildPluginResult } from "../../domain/build-target.js";
 
 /** Source marketplace catalog entry from the framework's `.claude-plugin/marketplace.json`.

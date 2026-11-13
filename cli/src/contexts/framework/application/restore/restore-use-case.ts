@@ -17,7 +17,8 @@ import {
   CONFIG_VSCODE_KEYBINDINGS,
   CONFIG_VSCODE_SETTINGS,
   type ConfigRef,
-} from "../../../tools/domain/capabilities/config-refs.js";
+} from "../../../tools/contract/config-refs.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { FRAMEWORK_CONFIG_PREFIX, FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -54,6 +55,7 @@ interface RestoreOptions {
   interactive?: boolean;
   manifest?: Manifest;
   pluginName?: string;
+  tools: ToolCatalog;
 }
 
 interface RestoreCtx {
@@ -67,6 +69,7 @@ interface RestoreCtx {
   fileFilter: ((p: string) => boolean) | null;
   toolIds: ToolId[];
   pluginName?: string;
+  tools: ToolCatalog;
 }
 
 interface RestoreResult {
@@ -120,6 +123,7 @@ export class RestoreUseCase {
       fileFilter: buildFileFilter(options.files),
       toolIds: options.toolIds?.length ? options.toolIds : manifest.getInstalledToolIds(),
       pluginName: options.pluginName,
+      tools: options.tools,
     };
   }
 
@@ -164,6 +168,7 @@ export class RestoreUseCase {
       pluginName: ctx.pluginName,
       toolIds: ctx.toolIds,
       force: ctx.force,
+      tools: ctx.tools,
     });
   }
 

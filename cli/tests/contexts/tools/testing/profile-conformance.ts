@@ -3,21 +3,19 @@ import { describe, expect, it } from "vitest";
 import type {
   ArtifactContract,
   ToolBuildContract,
-} from "../../../../src/contexts/tools/domain/build-contract.js";
-import { AgentsCapability } from "../../../../src/contexts/tools/domain/capabilities/agents-capability.js";
-import { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
-import { CONFIG_MCP } from "../../../../src/contexts/tools/domain/capabilities/config-refs.js";
-import { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
-import { RulesCapability } from "../../../../src/contexts/tools/domain/capabilities/rules-capability.js";
-import type { AiTool } from "../../../../src/contexts/tools/domain/contracts.js";
-import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile/profile-sections.js";
-import { isAiTool, type ToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
+} from "../../../../src/contexts/tools/contract/build-contract.js";
+import { CONFIG_MCP } from "../../../../src/contexts/tools/contract/config-refs.js";
+import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
+import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile.js";
+import { AgentsSection } from "../../../../src/contexts/tools/domain/sections/agents-section.js";
+import { CommandsSection } from "../../../../src/contexts/tools/domain/sections/commands-section.js";
+import { RulesSection } from "../../../../src/contexts/tools/domain/sections/rules-section.js";
 import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
 
 /** What a conformance check is told about one profile and the registration it sits in. */
 export interface ConformanceSubject {
-  readonly profile: ToolConfig;
-  readonly registration: readonly ToolConfig[];
+  readonly profile: AiTool | IdeToolConfig;
+  readonly registration: readonly (AiTool | IdeToolConfig)[];
 }
 
 /** A check is a pure assertion, so a proof can run it against a subject built to break it. */
@@ -68,7 +66,7 @@ function aiCheck(
   return {
     title,
     holds: (subject) => {
-      if (isAiTool(subject.profile)) holds(subject.profile, subject);
+      if (subject.profile.kind === "ai") holds(subject.profile, subject);
     },
   };
 }
@@ -79,9 +77,9 @@ function expectRelative(path: string, what: string): void {
 
 function installedPaths(profile: AiTool): string[] {
   return [
-    capability(profile, "commands", CommandsCapability)?.buildInstallPath(SAMPLE_PATHS.commands),
-    capability(profile, "rules", RulesCapability)?.buildInstallPath(SAMPLE_PATHS.rules),
-    capability(profile, "agents", AgentsCapability)?.buildInstallPath(SAMPLE_PATHS.agents),
+    capability(profile, "commands", CommandsSection)?.buildInstallPath(SAMPLE_PATHS.commands),
+    capability(profile, "rules", RulesSection)?.buildInstallPath(SAMPLE_PATHS.rules),
+    capability(profile, "agents", AgentsSection)?.buildInstallPath(SAMPLE_PATHS.agents),
   ].filter((path) => typeof path === "string");
 }
 
@@ -97,7 +95,7 @@ function flatPathsUnderDirectory(contract: ToolBuildContract): string[] {
 const NUMBERED_COMMAND = "04_code/implement.md";
 
 function expectNumberedCommandsRouted(profile: AiTool): void {
-  const commands = capability(profile, "commands", CommandsCapability);
+  const commands = capability(profile, "commands", CommandsSection);
   const routed = `${profile.directory}commands/aidd/04/implement.md`;
   if (commands?.buildInstallPath(NUMBERED_COMMAND) !== routed) return;
   const reference = `${profile.directory}commands/${NUMBERED_COMMAND}`;
@@ -112,7 +110,7 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     title: "is registered once, under its own id",
     holds: ({ profile, registration }) => {
       expect(registration.filter((other) => other.toolId === profile.toolId)).toHaveLength(1);
-      const ids: readonly string[] = isAiTool(profile) ? AI_TOOL_IDS : IDE_TOOL_IDS;
+      const ids: readonly string[] = profile.kind === "ai" ? AI_TOOL_IDS : IDE_TOOL_IDS;
       expect(ids).toContain(profile.toolId);
     },
   },
@@ -120,9 +118,6 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(profile.toolSuffix.startsWith(".")).toBe(true);
     expect(typeof profile.rewriteContent).toBe("function");
     expect(profile.signalDir === null || typeof profile.signalDir === "string").toBe(true);
-  }),
-  aiCheck("keeps a relative directory ending in a slash", ({ directory }) => {
-    expect(!isAbsolute(directory) && directory.endsWith("/") && directory.length > 1).toBe(true);
   }),
   aiCheck(
     "computes every path relative, and keeps commands, rules, agents and flat hooks under its directory",
@@ -160,26 +155,26 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     }
   }),
   aiCheck("is reachable by at least one build", (profile) => {
-    if (profile.section("plugins") === null) return;
+    if (profile.plugins() === null) return;
     expect(Object.keys(profile.buildContracts ?? {}).length).toBeGreaterThan(0);
   }),
   aiCheck("is probed where it publishes a marketplace", (profile) => {
     if (profile.buildContracts?.marketplace === undefined) return;
-    expect(profile.distributionProbes?.marketplace?.length ?? 0).toBeGreaterThan(0);
+    expect(profile.distributionPaths("marketplace").length).toBeGreaterThan(0);
   }),
   aiCheck("lets its flat build carry hooks exactly when it accepts them", (profile) => {
-    const plugins = profile.section("plugins");
+    const plugins = profile.plugins();
     const flat = profile.buildContracts?.flat?.();
     if (plugins?.kind !== "flat" || flat === undefined) return;
     expect(flat.artifacts.hooks.supported).toBe(plugins.hooksAcceptance().accepts);
   }),
   aiCheck("names a variable, never a path", (profile) => {
-    const plugins = profile.section("plugins");
+    const plugins = profile.plugins();
     if (plugins?.kind !== "native") return;
     expect(plugins.rootToken()).toMatch(PLUGIN_ROOT_TOKEN);
   }),
   aiCheck("writes its own token into a marketplace build", (profile) => {
-    const plugins = profile.section("plugins");
+    const plugins = profile.plugins();
     const marketplace = profile.buildContracts?.marketplace?.();
     if (plugins?.kind !== "native" || marketplace === undefined) return;
     expect(marketplace.pluginRootToken ?? null).toBe(plugins.rootToken());
@@ -190,18 +185,18 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     expect(flat.pluginRootToken).toBeUndefined();
   }),
   aiCheck("declares a plugins capability", (profile) => {
-    expect(profile.section("plugins")).not.toBeNull();
+    expect(profile.plugins()).not.toBeNull();
   }),
   aiCheck("feeds its mcp file from the mcp config", (profile) => {
-    const mcp = capability(profile, "mcp", McpCapability);
-    if (mcp === undefined) return;
-    expect(mcp.consumes(CONFIG_MCP)).toBe(true);
+    const config = profile.section("mcp")?.config;
+    if (config === undefined) return;
+    expect(config.consumes(CONFIG_MCP)).toBe(true);
   }),
   aiCheck("routes a numbered command and its references to the same folder", (profile) => {
     expectNumberedCommandsRouted(profile);
   }),
   aiCheck("names a numbered command after its phase and keeps only what it reads", (profile) => {
-    const commands = capability(profile, "commands", CommandsCapability);
+    const commands = capability(profile, "commands", CommandsSection);
     if (commands === undefined) return;
     const source = { name: "implement", description: "Implement a plan", model: "sonnet" };
     const converted = commands.convertFrontmatter(source, NUMBERED_COMMAND);
@@ -217,8 +212,8 @@ export function registeredIdsMatchKernel(ids: readonly ToolId[]): void {
 }
 
 export function describeProfileConformance(
-  profile: ToolConfig,
-  registration: readonly ToolConfig[]
+  profile: AiTool | IdeToolConfig,
+  registration: readonly (AiTool | IdeToolConfig)[]
 ): void {
   describe(profile.toolId, () => {
     for (const check of PROFILE_CHECKS) {

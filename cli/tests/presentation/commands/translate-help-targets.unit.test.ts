@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { describe, expect, it } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
 import { registerTranslateCommand } from "../../../src/presentation/commands/translate.js";
 
@@ -9,16 +10,18 @@ import { registerTranslateCommand } from "../../../src/presentation/commands/tra
  */
 describe("translate --to help text", () => {
   it("names exactly the targets the command accepts", () => {
+    const tools = wireTools();
+    const targets: readonly string[] = supportedBuildTargets(tools);
     const program = new Command();
-    registerTranslateCommand(program);
+    registerTranslateCommand(program, tools);
 
     const translate = program.commands.find((command) => command.name() === "translate");
     const description = translate?.options.find((option) => option.long === "--to")?.description;
 
     const named = [...(description ?? "").matchAll(/[a-z][a-z-]+/g)]
       .map((match) => match[0])
-      .filter((word) => (supportedBuildTargets() as readonly string[]).includes(word));
+      .filter((word) => targets.includes(word));
 
-    expect([...named].sort()).toEqual([...supportedBuildTargets()].sort());
+    expect([...named].sort()).toEqual([...targets].sort());
   });
 });

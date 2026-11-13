@@ -5,6 +5,7 @@ import { ModeAMarketplaceTranslator } from "../../../../../../src/contexts/frame
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
 
 function buildDist(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
@@ -36,7 +37,7 @@ describe("ModeAMarketplaceTranslator", () => {
       const dist = buildDist("aidd-context");
       await adapter.addPlugin(
         dist,
-        "claude",
+        registeredAiProfile("claude"),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
@@ -56,7 +57,7 @@ describe("ModeAMarketplaceTranslator", () => {
 
       const result = await adapter.addPlugin(
         buildDist("aidd-context"),
-        "claude",
+        registeredAiProfile("claude"),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
@@ -75,7 +76,7 @@ describe("ModeAMarketplaceTranslator", () => {
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        "claude",
+        registeredAiProfile("claude"),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
@@ -97,7 +98,7 @@ describe("ModeAMarketplaceTranslator", () => {
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        "claude",
+        registeredAiProfile("claude"),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,

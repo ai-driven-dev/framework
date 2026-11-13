@@ -33,12 +33,12 @@ field to the contract — never a branch in an orchestrator.
 | `path(plugin, relPath)` | output path for one file, extension included — reuse the profile's own `buildInstallPath`; the orchestrator adds the per-plugin namespace in flat mode |
 | `transform?(content, plugin, basename)` | per-kind content transform; default is identity. Examples: strip `tools`/`color` frontmatter; markdown → TOML |
 | `merge?` / `mergeDest?` / `mcpServersKey?` | for config-file kinds (mcp) merging into one shared file rather than a per-plugin write; reuse an existing merge helper, never reimplement |
-| `hooksFile?` | the hooks file a plugin's hooks.json becomes: its `path`, whether every plugin `shared`s it, and the `merge` built from the tool's hooks descriptor by `flatHooksArtifact` (one engine, `formats/hooks-merge.ts`); never written by hand in a contract |
+| `hooksFile?` | the hooks file a plugin's hooks.json becomes: its `path`, whether every plugin `shared`s it, and the `merge` built from the tool's hooks descriptor by `flatHooksArtifact` (`domain/formats/hooks-descriptor.ts`; one engine, `domain/hooks/hooks-merge.ts`); never written by hand in a contract |
 
 Contract-level: `manifestFileRelative` / `synthesizeManifest` / `manifestSchemaName`
 (marketplace mode; each `null` when the tool has no native manifest), the optional
-`pluginRootToken`, and an optional `emitConfigArtifact(builtPlugins, outDir, …)`. Read
-`contexts/tools/domain/build-contract.ts` for the live field list.
+`pluginRootToken`, and an optional `configArtifact` (the tool's own config file, built once every plugin is written). Read
+`contexts/tools/contract/build-contract.ts` for the live field list.
 
 ## Reuse, never reinvent
 
@@ -65,12 +65,13 @@ server of the same name would collide. The prefix is mandatory for every tool.
 Each tool's contract(s) live in `contexts/tools/domain/profiles/<tool>/build.ts`, exporting
 `build<Tool>Contract()` or `build<Tool>MarketplaceContract()` (marketplace — copilot uses the
 second spelling) and/or `build<Tool>FlatContract()` (flat). The profile
-declares which modes it supports via `buildContracts: { marketplace?, flat? }` on the `AiTool`
-object — a tool with no native marketplace omits `marketplace`.
+declares which modes it supports via `buildContracts: { marketplace?, flat? }` in its
+`defineAiTool` call — a tool with no native marketplace omits `marketplace`. A caller asks the
+profile `buildContract(mode)`, which answers the contract or `null`.
 
-`runtime/wiring/translate.ts` derives its build registry (the `"<target>:<mode>"` →
-`mode-orchestrator(contract)` map) by iterating every registered tool id and reading
-`buildContractFor(id, mode)` off its profile — there is no per-tool row to hand-add. A tool with
-no `<tool>:marketplace` contract falls through to the existing "Unsupported target/mode" error.
+`createFrameworkBuildUseCase` in `runtime/wiring/translate.ts` asks the `ToolCatalog` it is handed
+for the target's profile and its `buildContract(mode)`, then picks the mode-generic orchestrator
+for it — there is no per-tool row to hand-add. A tool with no contract for the mode answers
+`null`, and `presentation/commands/translate.ts` reports "Unsupported target/mode combination".
 The tool id must still be added to `AiToolId` in `kernel/tool.ts`, which `FrameworkBuildTarget`
 aliases: that names which targets exist at all, independent of which contracts they declare.

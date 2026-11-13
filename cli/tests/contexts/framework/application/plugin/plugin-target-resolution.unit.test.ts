@@ -1,14 +1,13 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  frameworkPrimeFlatMcpOf,
   resolveBaseDirFromRecord,
   resolvePluginToolIds,
   resolveScopeForInstall,
 } from "../../../../../src/contexts/framework/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { mcpCapabilityOf } from "../../../../../src/contexts/tools/domain/registry.js";
 import { UnresolvableUserScopeError } from "../../../../../src/kernel/errors.js";
+import { registeredAiProfile, registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const HOME = "/home/u";
 const homedir = () => HOME;
@@ -19,29 +18,17 @@ describe("resolvePluginToolIds()", () => {
     manifest.addTool("cursor", "1.0.0", []);
     manifest.addTool("claude", "1.0.0", []);
 
-    expect(resolvePluginToolIds("all", manifest)).toStrictEqual(["claude", "cursor"]);
-  });
-});
-
-describe("frameworkPrimeFlatMcpOf()", () => {
-  it("answers the MCP capability of a flat tool merging framework-prime", () => {
-    expect(frameworkPrimeFlatMcpOf("opencode")).toBe(mcpCapabilityOf("opencode"));
-    expect(frameworkPrimeFlatMcpOf("kilo")).toBe(mcpCapabilityOf("kilo"));
-  });
-
-  it("answers null for a native tool merging framework-prime", () => {
-    expect(frameworkPrimeFlatMcpOf("copilot")).toBeNull();
-  });
-
-  it("answers null for a tool whose MCP does not merge framework-prime", () => {
-    expect(frameworkPrimeFlatMcpOf("claude")).toBeNull();
+    expect(resolvePluginToolIds("all", manifest, registeredCatalog())).toStrictEqual([
+      "claude",
+      "cursor",
+    ]);
   });
 });
 
 describe("resolveScopeForInstall()", () => {
   it("reads the scope a fresh install writes from the tool's own profile", () => {
-    expect(resolveScopeForInstall("cursor")).toBe("user");
-    expect(resolveScopeForInstall("claude")).toBe("project");
+    expect(resolveScopeForInstall(registeredAiProfile("cursor"))).toBe("user");
+    expect(resolveScopeForInstall(registeredAiProfile("claude"))).toBe("project");
   });
 });
 
@@ -49,21 +36,47 @@ describe("resolveBaseDirFromRecord() — the manifest's recorded scope, not the 
   it("resolves project scope to projectRoot regardless of what the tool's profile says", () => {
     // cursor's own profile declares installScope "user", so a manifest entry recorded
     // scope: "project" must still resolve under projectRoot.
-    const baseDir = resolveBaseDirFromRecord("project", "cursor", "/proj", homedir);
+    const baseDir = resolveBaseDirFromRecord(
+      "project",
+      registeredAiProfile("cursor"),
+      "/proj",
+      homedir
+    );
     expect(baseDir).toBe("/proj");
     expect(baseDir).not.toContain(join(".cursor", "plugins", "local"));
   });
 
   it("resolves user scope to the tool's user-scope plugins dir", () => {
-    const baseDir = resolveBaseDirFromRecord("user", "cursor", "/proj", homedir);
+    const baseDir = resolveBaseDirFromRecord(
+      "user",
+      registeredAiProfile("cursor"),
+      "/proj",
+      homedir
+    );
     expect(baseDir).toBe(join(HOME, ".cursor", "plugins", "local"));
   });
 
   // A "user" scope the tool's current profile cannot explain must refuse to guess rather
   // than quietly resolve under projectRoot; claude declares no user-scope directory at all.
   it("throws, rather than falling back to projectRoot, when the tool declares no user-scope directory", () => {
-    expect(() => resolveBaseDirFromRecord("user", "claude", "/proj", homedir)).toThrow(
-      UnresolvableUserScopeError
-    );
+    expect(() =>
+      resolveBaseDirFromRecord("user", registeredAiProfile("claude"), "/proj", homedir)
+    ).toThrow(UnresolvableUserScopeError);
+  });
+});
+
+describe("resolvePluginToolIds() order", () => {
+  it("keeps the kernel tool order, which puts codex after opencode and kilo", () => {
+    const manifest = Manifest.create();
+    for (const id of ["codex", "opencode", "kilo", "copilot"] as const) {
+      manifest.addTool(id, "1.0.0", []);
+    }
+
+    expect(resolvePluginToolIds("all", manifest, registeredCatalog())).toStrictEqual([
+      "copilot",
+      "opencode",
+      "kilo",
+      "codex",
+    ]);
   });
 });

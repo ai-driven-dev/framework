@@ -1,3 +1,4 @@
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { PluginIssueEntry } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { DetectPluginDriftUseCase } from "../shared/detect-plugin-drift-use-case.js";
@@ -6,6 +7,7 @@ export interface DoctorPluginOptions {
   manifest: Manifest;
   projectRoot: string;
   allowedIds: Set<string> | null;
+  tools: ToolCatalog;
   pluginName?: string;
 }
 
@@ -13,7 +15,7 @@ export class DoctorPluginUseCase {
   constructor(private readonly detectPluginDrift: DetectPluginDriftUseCase) {}
 
   async execute(options: DoctorPluginOptions): Promise<PluginIssueEntry[]> {
-    const { manifest, projectRoot, allowedIds, pluginName } = options;
+    const { manifest, projectRoot, allowedIds, pluginName, tools } = options;
     const toolIds = manifest
       .getInstalledToolIds()
       .filter((toolId) => allowedIds === null || allowedIds.has(toolId));
@@ -21,6 +23,7 @@ export class DoctorPluginUseCase {
       manifest,
       projectRoot,
       toolIds,
+      tools,
       pluginName,
     });
     return drifts.flatMap((drift): PluginIssueEntry[] => {

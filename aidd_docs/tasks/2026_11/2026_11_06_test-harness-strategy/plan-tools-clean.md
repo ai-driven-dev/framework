@@ -71,7 +71,7 @@ The brand is a private symbol: a literal cannot pass for a profile.
 | `domain/hooks/` | `hook-events.ts`, `hooks-descriptor.ts`, `declare-hooks.ts`, `hooks-routes.ts`, `hooks-merge.ts`, `plugin-hooks-shape.ts`, `event-bridge.ts` |
 | `domain/formats/` | agent-format, command, mcp-format, opencode-mcp-merge, vscode-mcp-merge, portable-agent, plugin-root-token, mcp-launch-command, `toml.ts`, `base64.ts` |
 | `domain/profiles/<id>/` | per tool, minus `native-marketplace-source.ts`; `registered-profiles.ts` at `profiles/` |
-| `application/` | `detect-tool-signals.ts`, `resolve-mcp-output-path.ts` |
+| `application/` | `detect-tool-signals.ts` |
 | `ports/` | empty after the moves: native ports to host-registration (D2); `file-merger` to `shared/ports`, `schema-validator` to `translate/domain/ports` |
 | `infrastructure/` | empty after host-registration leaves |
 
@@ -83,7 +83,7 @@ The brand is a private symbol: a literal cannot pass for a profile.
 | `Buffer` | `antigravity-hooks.ts:31` | `domain/formats/base64.ts`, pure UTF-8 encoder |
 | Globals | no rule | Biome `noRestrictedGlobals` on `domain/**`: `Buffer`, `process`, `require`, `__dirname` |
 | File signals | `hasToolSignals(fs, ...)` | `application/detect-tool-signals.ts` over the kernel `FileReader`; domain keeps `signalPattern`, `signalDir` |
-| MCP output path | `resolveOutputPath(root, fs)`, kilo `resolveKiloConfigPath(fs)` | domain `outputPathCandidates()`; `application/resolve-mcp-output-path.ts` picks the first that exists |
+| MCP output path | `resolveOutputPath(root, fs)`, kilo `resolveKiloConfigPath(fs)` | the mcp capability answers `resolveOutputPath(exists)`: it probes its declared candidates in order and takes the first that exists. No application file |
 | Native host CLIs and registries | `domain/ports`, `infrastructure/` | `host-registration` (D2) |
 | `FileMerger` | `domain/ports` | `shared/ports/file-merger.ts` |
 | `SchemaValidator` | `domain/ports` | `translate/domain/ports/schema-validator.ts` |
@@ -119,18 +119,37 @@ Deviation from §1.4 and the line above, decided at P8.
 | `copiesFilesGlobally()`, `globalFiles()` | `copiesPluginFilesGlobally`, `globalFilesOf` |
 | `projectHooksDelivery()` | `projectHooksDeliveryOf`, `projectHooksFileOf` |
 
+Deviation from §3.1, decided at P7 and settled by the orchestrator decisions D0 to D4.
+- The tool id rules (`toolIdsForCategory`, `isIdeToolId`, `assertToolIdsMatchCategory`) are not catalog members. They read the kernel's id lists and nothing a profile declares, so they live in `kernel/tool.ts` beside `isAiToolId`. No file is added: the `old-layout-count` kernel path set is exact.
+- A caller that asked only the category of an id (`update-one-tool`, `setup-tools`, `uninstall-tools`) now asks `isAiToolId`, not `isAiTool(getToolConfig(id))`. Limit: an id no profile registers no longer fails at that line with `UnregisteredToolError`.
+- The published surface is `tools/contract/` and nothing else (D1). `ToolCatalog` has three members: `profile(id)`, `inHelpOrder(category)` and `sortedById()`. The catalog is built once by `wireTools()` in `cli.ts` and handed to every command, then to `createDeps` (D0).
+- `AiToolProfile` publishes: `kind`, `toolId`, `directory`, `distributionProbes`, `buildContract(mode)`, `rewriteContent`, `plugins()`, `supportsUserScopeActivation()`, `markdownSection(kind)`, `skillsSection()`, `nativeActivation()`, `configFiles()`, `runtimeFiles()`, `mcpConfig()`, `settingsFiles()`, `machineLocalFiles()`. `IdeToolProfile` publishes `kind`, `toolId` and `settingsFiles()`.
+- `buildContract(mode)` is an answer, not a field: a tool that declares no contract for a mode answers `null`. `supportsUserScopeActivation()` is one answer on the profile, replacing the check written in `setup.ts` twice and in `registry.ts`; a profile with no plugins answers `false`.
+- The old `section(k)` is split in two: `markdownSection(kind)` for commands, agents and rules, which share one answer shape, and `skillsSection()`, whose shape differs. A caller outside the context never names a section key.
+- Tool-named mcp functions are folded into the mcp capability (D4): `mcpConfig()` answers `outputPath()`, `isFrameworkPrimeJson(fileName)`, `resolveOutputPath(exists)` and `frameworkConfigOver(...)`. `resolve-mcp-output-path.ts` no longer exists.
+- `contract/tool-profile-lookup.ts` holds `profileOf`, `aiProfileOf` and `ideProfileOf`: they find a profile in the list an install was handed and refuse an id it was not handed. They live in `contract/` because the framework use cases receive `readonly ToolProfile[]`, not the catalog, and each looked one up by id; one lookup in the published surface replaces a copy per caller.
+- `SchemaName` and `ConfigAsset` are defined once, in `kernel/file.ts`, which both `kernel/ports/asset-provider.ts` and the contract import. The contract may not import a `ports/` folder, the kernel's included, and the kernel receives no new file.
+- `hooksAcceptance()` is declared once, on `PluginDelivery`, and `FRAMEWORK_BUILD_MODES` in `contract/tool-profile.ts` is the one list of build modes.
+
+Deviation from D0, decided at P7: `createDeps(projectRoot, options, output?, tools = <one default catalog>)` carries a default for the catalog. `tests/e2e/helpers.ts` calls the three-argument form and is a frozen surface. Every product caller passes the catalog from `cli.ts`; `tests/runtime/wiring/create-deps.integration.test.ts` proves `createDeps` reads the catalog it was handed and builds none of its own when one is passed. Limit: a caller that omits it gets one default catalog, built once, never the one `cli.ts` wired. `tests/architecture/create-deps-takes-the-catalog.arch.test.ts` fails any `createDeps(` call under `src/` that passes fewer than four arguments, so only the frozen helper uses the default, and the graph cache is keyed on the catalog first. The default disappears when the e2e helper passes one.
+
+Helper setup plumbing under `tests/e2e/` may follow a signature change; e2e assertions, fixtures, goldens and snapshots stay byte-identical.
+
+Known limit: `detectToolSignals` lives in `framework/application/init-use-case.ts` and `doctor-layout-use-case.ts` imports it from there, because `folder-size` and `old-layout-count` leave no room for a file of its own; revisit when framework splits in stage C.
+
+D0 note, per-call profiles. The edge hands each use case `catalog.sortedById()`, every profile, in `setup.ts`, `clean.ts`, `plugin.ts`, `framework.ts` (six sites), `translate.ts` and `framework.ts` in `runtime/wiring/`. That is the whole registered list, not the profiles of the tools a command acts on. It is the set the use cases need where the acting tools are discovered inside them: `setup` picks interactively or from detected signals, `clean`, `update` and `plugin install --tool all` read the installed tools from the manifest, and an IDE install propagates to the AI tools the manifest holds. The edge cannot name those tools before the use case runs. Where the edge does know the tool (`framework install|update|remove --tool <id>`, `plugin install --tool <id>`), the use case still receives the full list and looks the profile up by id with `aiProfileOf`. Decision: edges pass `catalog.sortedById()` as the candidate list (design-p7 §3 rule 1), and narrowing those known-tool sites is refused. `post-install-pipeline-use-case.ts` looks up the profile of every tool the manifest holds, to collect their machine-local gitignore entries, so a use case narrowed to the acting tool breaks it: narrowing `installAiTool` turned red "installs an AI tool at the version the graph reports, plugins carried along" in `framework-wiring` and "propagates the catalog version to a new tool when the manifest recorded a drifted one" in `setup.integration`.
+
 Declared values approved as stored answers, outside the table above. Each is a value the caller needs as written, kept in the arch guard's allowlist (`tests/architecture/plugins-are-asked-not-read.arch.test.ts`) with its reason, shrink-only:
 
 | Member | Why it stays a stored answer |
 | --- | --- |
 | `HooksCapability.outputPath`, `McpCapability.outputPath`, `SettingsCapability.outputPath` | the declared destination, written into the manifest by the framework install use cases |
 | `HooksCapability.mergeStrategy`, `McpCapability.mergeStrategy`, `SettingsCapability.mergeStrategy` | the declared merge mode, recorded on each installed file or handed to the file merge |
-| `McpCapability.outputPathCandidates` | the declared places probed in order by `resolve-mcp-output-path.ts` |
+| `McpCapability.outputPathCandidates` | the declared places the capability's own `resolveOutputPath(exists)` probes in order |
 | `SettingsCapability.requiredTool` | the declared tool a section applies to, matched against the installed one |
 | `NativePlugins.hooksFilePath` | the declared hooks file, placed by `translate/domain/content-translator.ts` |
 | `NativeActivation.cliShape` | the whole declared shape configures the host CLI adapter once in the composition root |
 
-`ToolCatalog`: `get(id)`, `aiProfile(id)`, `inHelpOrder()`, `sortedById()`, `ids(category)`, `assertIdsMatch(category, ids)`.
 
 ### 3.2 External caller migration
 

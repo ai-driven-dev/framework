@@ -9,6 +9,7 @@ import type { VersionReader } from "../../../../src/kernel/ports/version-reader.
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 function fakeVersion(value: string): VersionReader {
   return { get: () => value };
@@ -111,7 +112,12 @@ async function issuesFor(
     () => "/user-cache",
     fakeVersion("1.0.0")
   );
-  const issues = await useCase.execute({ manifest, projectRoot: PROJECT_ROOT, allowedIds: null });
+  const issues = await useCase.execute({
+    manifest,
+    projectRoot: PROJECT_ROOT,
+    allowedIds: null,
+    tools: catalogOf(),
+  });
   // Not filtered by `NAME`, this project's own local alias: a conflict message names the
   // catalog's own declared name, which a test may diverge from the alias entirely.
   return issues.filter((issue) => issue.message.includes("catalog"));
@@ -281,7 +287,12 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
     );
 
     await expect(
-      useCase.execute({ manifest, projectRoot: PROJECT_ROOT, allowedIds: null })
+      useCase.execute({
+        manifest,
+        projectRoot: PROJECT_ROOT,
+        allowedIds: null,
+        tools: catalogOf(),
+      })
     ).resolves.toStrictEqual([]);
   });
 
@@ -321,7 +332,12 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       fakeVersion("1.0.0")
     );
 
-    const issues = await useCase.execute({ manifest, projectRoot: PROJECT_ROOT, allowedIds: null });
+    const issues = await useCase.execute({
+      manifest,
+      projectRoot: PROJECT_ROOT,
+      allowedIds: null,
+      tools: catalogOf(),
+    });
 
     expect(issues).toStrictEqual([]);
   });
@@ -371,7 +387,12 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       fakeVersion("1.0.0")
     );
 
-    await useCase.execute({ manifest, projectRoot: PROJECT_ROOT, allowedIds: null });
+    await useCase.execute({
+      manifest,
+      projectRoot: PROJECT_ROOT,
+      allowedIds: null,
+      tools: catalogOf(),
+    });
 
     expect(hostReader.reads).toBe(2);
   });
@@ -415,7 +436,12 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION)
     );
-    return useCase.execute({ manifest, projectRoot: PROJECT_ROOT, allowedIds: null });
+    return useCase.execute({
+      manifest,
+      projectRoot: PROJECT_ROOT,
+      allowedIds: null,
+      tools: catalogOf(),
+    });
   }
 
   it("warns naming both versions when the host already follows a newer aidd version than this run", async () => {

@@ -13,6 +13,7 @@ import { CLIOutput } from "../../../../../../src/presentation/output.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
+import { catalogOf, registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
 
 const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";
@@ -94,7 +95,7 @@ async function installPlugin(
   );
   await adapter.addPlugin(
     buildDist(name),
-    "cursor",
+    registeredAiProfile("cursor"),
     { kind: "local", path: "/plugin-source" },
     PROJECT_ROOT,
     manifest,
@@ -152,6 +153,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
       new Map()
     );
     await removeUseCase.execute({
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["cursor"],
       projectRoot: PROJECT_ROOT,
@@ -210,7 +212,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     );
     await translator.addPlugin(
       buildWithoutHooks(PLUGIN_NAME),
-      "cursor",
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -233,7 +235,12 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const repo = new InMemoryManifestRepository(manifest);
     const remove = new PluginRemoveUseCase(fs, repo, new CLIOutput(false), new Map());
     await expect(
-      remove.execute({ pluginName: PLUGIN_NAME, toolIds: ["cursor"], projectRoot: PROJECT_ROOT })
+      remove.execute({
+        tools: catalogOf(),
+        pluginName: PLUGIN_NAME,
+        toolIds: ["cursor"],
+        projectRoot: PROJECT_ROOT,
+      })
     ).rejects.toThrow(/edited.*pre.js|pre.js.*edited/);
     expect(fs.getFile(SCRIPT_PATH)).toBe("user-edited script");
     expect(
@@ -258,7 +265,12 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const repo = new InMemoryManifestRepository(manifest);
     const remove = new PluginRemoveUseCase(fs, repo, new CLIOutput(false), new Map());
     await expect(
-      remove.execute({ pluginName: PLUGIN_NAME, toolIds: ["cursor"], projectRoot: PROJECT_ROOT })
+      remove.execute({
+        tools: catalogOf(),
+        pluginName: PLUGIN_NAME,
+        toolIds: ["cursor"],
+        projectRoot: PROJECT_ROOT,
+      })
     ).rejects.toThrow(/edited.*hooks|hooks.*edited/);
     expect(fs.getFile(HOOKS_PATH)).toContain("--user-flag");
     expect(fs.has(OTHER_SCRIPT_PATH)).toBe(true);
@@ -275,6 +287,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const repo = new InMemoryManifestRepository(manifest);
     const remove = new PluginRemoveUseCase(fs, repo, new CLIOutput(false), new Map());
     await remove.execute({
+      tools: catalogOf(),
       pluginName: PLUGIN_NAME,
       toolIds: ["cursor"],
       projectRoot: PROJECT_ROOT,

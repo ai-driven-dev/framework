@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { AgentsCapability } from "../../../../../../src/contexts/tools/domain/capabilities/agents-capability.js";
 import { claudeAgentFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/claude/claude-agent.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import { AgentsSection } from "../../../../../../src/contexts/tools/domain/sections/agents-section.js";
 import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.js";
 
 describe("claude agents", () => {
@@ -27,7 +27,7 @@ Plan before building.
 
   describe("format", () => {
     it("writes markdown, the same as a capability declared with that format", () => {
-      const markdown = new AgentsCapability({
+      const markdown = new AgentsSection({
         directory: claude.directory,
         toolSuffix: claude.toolSuffix,
         format: "markdown",

@@ -1,33 +1,30 @@
-import type { ToolBuildContract } from "../../../../src/contexts/tools/domain/build-contract.js";
-import type { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
-import type { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
-import type { SettingsCapability } from "../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
-import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
-import type {
-  NativePluginsParams,
-  ProjectHooksFormat,
-} from "../../../../src/contexts/tools/domain/plugins/plugin-params.js";
-import {
-  type PluginsCapability,
-  pluginsCapability,
-} from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
+import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
+import type { ProjectHooksFormat } from "../../../../src/contexts/tools/contract/tool-vocabulary.js";
 import {
   defineAiTool,
-  defineIdeTool,
   type ProfileBrand,
 } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
-import {
-  type BuiltToolConfig,
-  ToolCatalog,
-} from "../../../../src/contexts/tools/domain/registry.js";
-import type { AiToolId, IdeToolId } from "../../../../src/kernel/tool.js";
+import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
+import type { CommandsSection } from "../../../../src/contexts/tools/domain/sections/commands-section.js";
+import type { ConfigSection } from "../../../../src/contexts/tools/domain/sections/config-section.js";
+import type {
+  HooksDelivery,
+  HooksSection,
+} from "../../../../src/contexts/tools/domain/sections/hooks-section.js";
+import type { LayoutSection } from "../../../../src/contexts/tools/domain/sections/layout-section.js";
+import type { ManifestSection } from "../../../../src/contexts/tools/domain/sections/manifest-section.js";
+import type { McpSection } from "../../../../src/contexts/tools/domain/sections/mcp-section.js";
+import type { AiToolId } from "../../../../src/kernel/tool.js";
+import { flatPlugins, type PluginSet } from "./plugin-mode.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */
 export type KitCapabilities = {
-  readonly plugins?: PluginsCapability;
-  readonly mcp?: McpCapability;
-  readonly commands?: CommandsCapability;
-  readonly settings?: SettingsCapability[];
+  readonly layout?: LayoutSection;
+  readonly manifest?: ManifestSection;
+  readonly hooks?: HooksSection;
+  readonly mcp?: McpSection;
+  readonly commands?: CommandsSection;
+  readonly config?: ConfigSection[];
 };
 
 type Contracts = NonNullable<AiTool<KitCapabilities>["buildContracts"]>;
@@ -62,33 +59,12 @@ export const PROJECT_HOOKS_FORMAT: ProjectHooksFormat = {
   scriptDir: () => "",
 };
 
-/** A flat plugins capability that runs the hooks a plugin ships, or says it does not. */
-export function flatPlugins(hooks: "accepts" | "refuses"): PluginsCapability {
-  return hooks === "accepts"
-    ? pluginsCapability({
-        mode: "flat",
-        flatNamespacePrefix: "fake-",
-        acceptsHooks: true,
-        flatHooksDir: ".fake/hooks/",
-      })
-    : pluginsCapability({
-        mode: "flat",
-        flatNamespacePrefix: "fake-",
-        acceptsHooks: false,
-        hooksUnsupportedReason: "synthetic",
-      });
-}
-
-export function nativePlugins(extra: Partial<NativePluginsParams> = {}): PluginsCapability {
-  return pluginsCapability({
-    mode: "native",
-    acceptsHooks: true,
-    pluginsDir: ".fake/plugins/",
-    pluginManifestRelativePath: null,
-    // biome-ignore lint/suspicious/noTemplateCurlyInString: the placeholder a host expands
-    pluginRootToken: "${FAKE_PLUGIN_ROOT}",
-    ...extra,
-  });
+/** A delivery merging the hooks into one project file. */
+export function projectMergeDelivery(): HooksDelivery {
+  return {
+    kind: "project-merge",
+    project: { relativePath: ".fake/hooks.json", format: PROJECT_HOOKS_FORMAT },
+  };
 }
 
 export class ProfileBuilder {
@@ -96,11 +72,13 @@ export class ProfileBuilder {
   // Neither `.md` nor a real tool's own suffix, so a kit file is never mistaken for a built one.
   private toolSuffix = ".fake.md";
   private signalDir: string | null = null;
-  private capabilities: KitCapabilities = { plugins: flatPlugins("refuses") };
+  private capabilities: KitCapabilities = {};
   private contracts: Contracts = { flat: () => anEmptyContract() };
   private probes: Probes | undefined;
 
-  constructor(private readonly toolId: AiToolId) {}
+  constructor(private readonly toolId: AiToolId) {
+    this.withPlugins(flatPlugins("refuses"));
+  }
 
   withDirectory(directory: string): this {
     this.directory = directory;
@@ -112,25 +90,33 @@ export class ProfileBuilder {
     return this;
   }
 
-  /** `undefined` drops the capability. */
-  withPlugins(plugins: PluginsCapability | undefined): this {
-    const { plugins: _dropped, ...rest } = this.capabilities;
-    this.capabilities = plugins === undefined ? rest : { ...rest, plugins };
+  /** `undefined` drops the three sections, which only make sense together. */
+  withPlugins(plugins: PluginSet | undefined): this {
+    const { layout: _l, manifest: _m, hooks: _h, ...rest } = this.capabilities;
+    this.capabilities =
+      plugins === undefined
+        ? rest
+        : {
+            ...rest,
+            layout: plugins.layout,
+            hooks: plugins.hooks,
+            ...(plugins.manifest === null ? {} : { manifest: plugins.manifest }),
+          };
     return this;
   }
 
-  withMcp(mcp: McpCapability): this {
+  withMcp(mcp: McpSection): this {
     this.capabilities = { ...this.capabilities, mcp };
     return this;
   }
 
-  withCommands(commands: CommandsCapability): this {
+  withCommands(commands: CommandsSection): this {
     this.capabilities = { ...this.capabilities, commands };
     return this;
   }
 
-  withSettings(settings: SettingsCapability | SettingsCapability[]): this {
-    this.capabilities = { ...this.capabilities, settings: [settings].flat() };
+  withSettings(settings: ConfigSection | ConfigSection[]): this {
+    this.capabilities = { ...this.capabilities, config: [settings].flat() };
     return this;
   }
 
@@ -172,19 +158,6 @@ export class ProfileBuilder {
 
 export function aProfile(toolId: AiToolId = "claude"): ProfileBuilder {
   return new ProfileBuilder(toolId);
-}
-
-export function anIdeProfile(toolId: IdeToolId = "vscode"): IdeToolConfig & ProfileBrand {
-  return defineIdeTool({
-    toolId,
-    directory: ".fake-ide/",
-    signalDir: null,
-    capabilities: () => ({}),
-  });
-}
-
-export function aCatalog(...profiles: readonly BuiltToolConfig[]): ToolCatalog {
-  return new ToolCatalog(profiles);
 }
 
 export type InstallKind = "skills" | "agents" | "commands" | "rules";

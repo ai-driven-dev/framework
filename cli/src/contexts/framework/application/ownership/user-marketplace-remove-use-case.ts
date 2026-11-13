@@ -6,7 +6,6 @@ import {
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import { resolveHomeDir } from "../../../../kernel/reading/home-dir.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   type Marketplace,
@@ -63,13 +62,13 @@ export class UserMarketplaceRemoveUseCase {
       throw new Error(
         `Cannot prove AIDD ownership of user-scope marketplace '${marketplace.name}': no user manifest.`
       );
-    const plugins = AI_TOOL_IDS.flatMap((toolId) =>
+    const plugins = options.tools.aiIdsInCanonicalOrder().flatMap((toolId) =>
       manifest
         .getPlugins(toolId)
         .filter((plugin) => plugin.scope === "user" && plugin.marketplace === marketplace.name)
         .map((plugin) => ({ toolId, plugin }))
     );
-    const native = AI_TOOL_IDS.flatMap((toolId) => {
+    const native = options.tools.aiIdsInCanonicalOrder().flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
       return registrations.marketplaces
@@ -103,7 +102,7 @@ export class UserMarketplaceRemoveUseCase {
           this.fs,
           { debug() {}, info() {}, warn() {} },
           plugin,
-          toolId,
+          options.tools.aiProfile(toolId),
           resolveHomeDir()
         );
         if (files.size !== plugin.files.size)
@@ -119,7 +118,7 @@ export class UserMarketplaceRemoveUseCase {
         registrations,
         registration,
         ...(await this.nativeHost.planMarketplaceRemoval(
-          toolId,
+          options.tools.aiProfile(toolId),
           registrations,
           registration,
           options.projectRoot
@@ -132,7 +131,14 @@ export class UserMarketplaceRemoveUseCase {
       activator.removeMarketplace(registration.hostName, "user");
     }
     for (const { toolId, plugin, files } of safeFiles) {
-      await deletePluginFilesForTool(files, "user", toolId, options.projectRoot, this.fs, "user");
+      await deletePluginFilesForTool(
+        files,
+        "user",
+        options.tools.aiProfile(toolId),
+        options.projectRoot,
+        this.fs,
+        "user"
+      );
       manifest.removePlugin(toolId, plugin.name);
     }
     for (const { toolId, registrations, registration } of nativeCalls) {

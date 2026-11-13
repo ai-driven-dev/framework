@@ -3,7 +3,7 @@ import { CapabilityConfigError } from "../../../../kernel/errors.js";
 const TOOL_SUFFIX = /^\.[a-z]+\.md$/;
 
 function basenameOf(fileName: string): string {
-  return fileName.split("/").at(-1) ?? fileName;
+  return fileName.slice(fileName.lastIndexOf("/") + 1);
 }
 
 /** The `.<tool>.md` ending that marks a source file as written for one tool. */

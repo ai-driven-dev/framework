@@ -15,8 +15,9 @@ import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { PluginSource } from "../../../../kernel/source.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
-import type { ReadonlyNoticeList } from "../../../tools/domain/models/plugin-install-notice.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
+import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
@@ -44,6 +45,7 @@ export interface PluginAddOptions {
   source: PluginSource;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
+  tools: ToolCatalog;
   interactive: boolean;
   marketplace?: string;
   requiredVersion?: string;
@@ -82,7 +84,7 @@ export class PluginAddUseCase implements PluginAdd {
     const existingMachine = await this.userManifestRepo.load();
     const machine =
       existingMachine === null ? Manifest.create() : Manifest.fromJSON(existingMachine.toJSON());
-    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest);
+    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, options.tools);
     const installedBefore = pluginsInstalledBefore(manifest, resolvedToolIds);
     if (marketplace !== undefined && (await this.isGithubMarketplace(marketplace, projectRoot))) {
       await this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest, machine);
@@ -119,11 +121,12 @@ export class PluginAddUseCase implements PluginAdd {
         pluginMetadata.name,
         toolIds,
         manifest,
-        options.projectRoot
+        options.projectRoot,
+        options.tools
       );
     if (options.replace === true) this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
     else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
-    const adapterMap = this.buildAdapterMap(toolIds);
+    const adapterMap = this.buildAdapterMap(toolIds, options.tools);
     const flatToolIds = toolIds.filter((id) => adapterMap.get(id)?.mode === "flat");
     const nativeToolIds = toolIds.filter((id) => adapterMap.get(id)?.mode !== "flat");
     if (flatToolIds.length > 0) {
@@ -139,10 +142,13 @@ export class PluginAddUseCase implements PluginAdd {
     await this.registerNativeGithubPlugins(options, nativeToolIds, manifest);
   }
 
-  private buildAdapterMap(toolIds: AiToolId[]): Map<AiToolId, PluginTranslator | null> {
+  private buildAdapterMap(
+    toolIds: AiToolId[],
+    tools: ToolCatalog
+  ): Map<AiToolId, PluginTranslator | null> {
     const map = new Map<AiToolId, PluginTranslator | null>();
     for (const id of toolIds) {
-      map.set(id, this.resolveAdapter(getToolConfig(id)));
+      map.set(id, this.resolveAdapter(tools.aiProfile(id)));
     }
     return map;
   }
@@ -163,7 +169,7 @@ export class PluginAddUseCase implements PluginAdd {
           version,
           source,
           pluginMetadata.strict,
-          resolveScopeForInstall(toolId),
+          resolveScopeForInstall(options.tools.aiProfile(toolId)),
           marketplace
         )
       );
@@ -207,7 +213,8 @@ export class PluginAddUseCase implements PluginAdd {
         pluginName,
         resolvedToolIds,
         manifest,
-        projectRoot
+        projectRoot,
+        options.tools
       );
     const { prevMcpMap, prevHooksMap } = this.prepareForInstall(
       pluginName,
@@ -224,7 +231,8 @@ export class PluginAddUseCase implements PluginAdd {
       marketplace,
       prevMcpMap,
       prevHooksMap,
-      machine
+      machine,
+      options.tools
     );
   }
 
@@ -232,13 +240,15 @@ export class PluginAddUseCase implements PluginAdd {
     pluginName: string,
     toolIds: readonly AiToolId[],
     manifest: Manifest,
-    projectRoot: string
+    projectRoot: string,
+    tools: ToolCatalog
   ): Promise<void> {
     for (const toolId of toolIds) {
       const previous = manifest.getPlugins(toolId).find((plugin) => plugin.name === pluginName);
       if (previous === undefined) continue;
-      await assertProjectMcpEntriesRemovable(this.fs, previous, toolId, projectRoot);
-      await assertProjectHooksRemovable(this.fs, previous, toolId, projectRoot);
+      const tool = tools.aiProfile(toolId);
+      await assertProjectMcpEntriesRemovable(this.fs, previous, tool, projectRoot);
+      await assertProjectHooksRemovable(this.fs, previous, tool, projectRoot);
     }
   }
 
@@ -276,15 +286,17 @@ export class PluginAddUseCase implements PluginAdd {
     marketplace: string | undefined,
     prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>,
     prevHooksMap: Map<AiToolId, ProjectHooksProvenance>,
-    machine: Manifest
+    machine: Manifest,
+    tools: ToolCatalog
   ): Promise<void> {
     const allSkipped: ReadonlySkipList[] = [];
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
-      await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
+      const tool = tools.aiProfile(toolId);
+      await this.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
       const foreignDir = await this.userScopeDirNotInstalledHere(
         dist.manifest.name,
-        toolId,
+        tool,
         projectRoot,
         machine
       );
@@ -296,7 +308,7 @@ export class PluginAddUseCase implements PluginAdd {
       const prev = prevMcpMap.get(toolId) ?? new Map();
       const { skipped, notices } = await this.addPluginForTool(
         dist,
-        toolId,
+        tool,
         source,
         projectRoot,
         manifest,
@@ -315,16 +327,14 @@ export class PluginAddUseCase implements PluginAdd {
 
   private async userScopeDirNotInstalledHere(
     pluginName: string,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string,
     machine: Manifest
   ): Promise<string | undefined> {
-    if (resolveScopeForInstall(toolId) !== "user") return undefined;
+    const toolId = tool.toolId;
+    if (resolveScopeForInstall(tool) !== "user") return undefined;
     if (machine.getPlugins(toolId).some((p) => p.name === pluginName)) return undefined;
-    const dir = join(
-      resolveBaseDirFromRecord("user", toolId, projectRoot, nodeHomedir),
-      pluginName
-    );
+    const dir = join(resolveBaseDirFromRecord("user", tool, projectRoot, nodeHomedir), pluginName);
     const present = await this.fs.listFilesRecursive(dir);
     return present.length > 0 ? dir : undefined;
   }
@@ -401,7 +411,7 @@ export class PluginAddUseCase implements PluginAdd {
 
   private async addPluginForTool(
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     source: PluginSource,
     projectRoot: string,
     manifest: Manifest,
@@ -410,13 +420,11 @@ export class PluginAddUseCase implements PluginAdd {
     userScopeDirTaken: boolean,
     previousProjectHooks?: ProjectHooksProvenance
   ): Promise<{ skipped: ReadonlySkipList; notices: ReadonlyNoticeList }> {
-    const toolConfig = getToolConfig(toolId);
-    if (!isAiTool(toolConfig)) return { skipped: [], notices: [] };
-    const adapter = this.resolveAdapter(toolConfig);
+    const adapter = this.resolveAdapter(tool);
     if (adapter?.mode === "flat") {
       const result = await adapter.addPlugin(
         dist,
-        toolId,
+        tool,
         source,
         projectRoot,
         manifest,
@@ -429,11 +437,11 @@ export class PluginAddUseCase implements PluginAdd {
     }
     const translated = new PluginContentTranslator(this.hasher).translateWithComponentPaths(
       dist,
-      toolConfig
+      tool
     );
     return this.materializeNativePlugin(
       dist,
-      toolId,
+      tool,
       source,
       projectRoot,
       manifest,
@@ -448,7 +456,7 @@ export class PluginAddUseCase implements PluginAdd {
   // a fact about the tool, not about which materialization route happened to run.
   private async materializeNativePlugin(
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     source: PluginSource,
     projectRoot: string,
     manifest: Manifest,
@@ -466,7 +474,7 @@ export class PluginAddUseCase implements PluginAdd {
     if (adapter?.mode === "marketplace" && source.kind === "local" && marketplace !== undefined) {
       const result = await adapter.addPlugin(
         dist,
-        toolId,
+        tool,
         source,
         projectRoot,
         manifest,
@@ -476,12 +484,12 @@ export class PluginAddUseCase implements PluginAdd {
     }
     await writePluginFiles(files, projectRoot, this.fs);
     manifest.addPlugin(
-      toolId,
+      tool.toolId,
       InstalledPlugin.fromDistribution(
         dist,
         source,
         files,
-        resolveScopeForInstall(toolId),
+        resolveScopeForInstall(tool),
         componentPaths,
         marketplace
       )
@@ -503,9 +511,8 @@ export class PluginAddUseCase implements PluginAdd {
     }
   }
 
-  private resolveAdapter(toolConfig: ReturnType<typeof getToolConfig>): PluginTranslator | null {
-    if (toolConfig === undefined) return null;
-    return resolvePluginTranslator(toolConfig, {
+  private resolveAdapter(tool: ToolProfile): PluginTranslator | null {
+    return resolvePluginTranslator(tool, {
       fs: this.fs,
       hasher: this.hasher,
       homedir: nodeHomedir,

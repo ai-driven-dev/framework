@@ -8,6 +8,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -23,7 +24,14 @@ async function build() {
 }
 
 function options(aiTools: ToolId[], ideTools: ToolId[]) {
-  return { projectRoot: PROJECT_ROOT, aiTools, ideTools, force: false, version: VERSION };
+  return {
+    projectRoot: PROJECT_ROOT,
+    aiTools,
+    ideTools,
+    force: false,
+    version: VERSION,
+    tools: catalogOf(),
+  };
 }
 
 describe("SetupToolsUseCase", () => {

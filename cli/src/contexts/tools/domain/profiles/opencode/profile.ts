@@ -1,15 +1,19 @@
 import { join } from "node:path";
+import opencodeJson from "../../../../../../assets/configs/opencode/opencode.json" with {
+  type: "json",
+};
+import opencodeEvents from "../../../../../../assets/configs/opencode/opencode-events.js.txt";
 import { OpencodeDualConfigError } from "../../../../../kernel/errors.js";
-import { CONFIG_MCP, CONFIG_OPENCODE } from "../../capabilities/config-refs.js";
-import { McpCapability } from "../../capabilities/mcp-capability.js";
+import { CONFIG_MCP, CONFIG_OPENCODE } from "../../../contract/config-refs.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { flatPlacement } from "../../sections/layout-section.js";
+import { McpConfigPart } from "../../sections/mcp-section.js";
 import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
@@ -18,6 +22,8 @@ import { OPENCODE_DIRECTORY, opencodeGlobalFilePath } from "./opencode-paths.js"
 
 const DIRECTORY = OPENCODE_DIRECTORY;
 const TOOL_SUFFIX = ".opencode.md";
+
+const hooksDelivery = flatHooksSupport(OPENCODE_HOOKS, generateOpencodeHooksBridge);
 
 export const opencode = defineAiTool({
   toolId: "opencode",
@@ -28,8 +34,20 @@ export const opencode = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "OpenCode",
   signalDir: ".opencode/commands",
-  configOutputPaths: { "opencode.json": "opencode.json" },
-  pluginRuntimeFiles: { [OPENCODE_HOOKS.bridgeRuntime.asset]: OPENCODE_HOOKS.bridgeRuntime.path },
+  configAssets: [
+    {
+      name: "opencode.json",
+      content: opencodeJson,
+      destination: "opencode.json",
+      delivery: "install",
+    },
+    {
+      name: OPENCODE_HOOKS.bridgeRuntime.asset,
+      content: opencodeEvents,
+      destination: OPENCODE_HOOKS.bridgeRuntime.path,
+      delivery: "runtime",
+    },
+  ],
   buildContracts: { flat: buildOpencodeFlatContract },
 
   capabilities: (bound) => ({
@@ -55,30 +73,31 @@ export const opencode = defineAiTool({
         return {};
       },
     }),
-    mcp: new McpCapability({
-      outputPath: "opencode.json",
-      format: "json",
-      mergeStrategy: "framework-prime",
-      transformContent: toTypedMcpSection,
-      consumes: [CONFIG_MCP, CONFIG_OPENCODE],
-      outputPathCandidates: {
-        tiers: [["opencode.json", "opencode.jsonc"]],
-        fallback: "opencode.json",
-        conflict: () => {
-          throw new OpencodeDualConfigError();
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: "opencode.json",
+        format: "json",
+        mergeStrategy: "framework-prime",
+        transformContent: toTypedMcpSection,
+        consumes: [CONFIG_MCP, CONFIG_OPENCODE],
+        outputPathCandidates: {
+          tiers: [["opencode.json", "opencode.jsonc"]],
+          fallback: "opencode.json",
+          conflict: () => {
+            throw new OpencodeDualConfigError();
+          },
         },
-      },
-    }),
+      }),
+    },
     // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
     // only npm package names — no source or version a marketplace entry could express.
-    plugins: pluginsCapability({
-      mode: "flat",
-      flatNamespacePrefix: "aidd-",
+    hooks: { delivery: hooksDelivery },
+    layout: flatPlacement({
+      namespacePrefix: "aidd-",
       globalFiles: {
         dir: (homedir) => join(homedir, ".config", "opencode"),
         map: opencodeGlobalFilePath,
       },
-      ...flatHooksSupport(OPENCODE_HOOKS, generateOpencodeHooksBridge),
     }),
   }),
 

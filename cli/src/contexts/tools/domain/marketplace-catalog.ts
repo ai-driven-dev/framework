@@ -8,9 +8,7 @@
  */
 import { join } from "node:path";
 import { InvalidSourceMarketplaceError } from "../../../kernel/errors.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
-import type { PluginPresence } from "./build-contract.js";
+import type { BuildFileReader, PluginPresence } from "../contract/build-contract.js";
 
 type SrcEntry =
   | {
@@ -21,7 +19,7 @@ type SrcEntry =
     }
   | undefined;
 
-export interface SynthesizeClaudeStyleManifestOpts {
+export interface SynthesizeSharedManifestOpts {
   /** When true, include `agents` as a list of `./agents/*.md` file paths if agents are present. */
   readonly agentsField: boolean;
   /**
@@ -33,12 +31,13 @@ export interface SynthesizeClaudeStyleManifestOpts {
   readonly hooksField: boolean;
 }
 
-/** Synthesize a Claude-style plugin manifest, shared by the claude, cursor and copilot
- * strategies. Key insertion order is part of the output shape. */
-export function synthesizeClaudeStyleManifest(
+/** Synthesize the plugin manifest shared by the claude, cursor and copilot strategies: the
+ * source manifest's identity fields, then the skills, agents, hooks and MCP paths the built
+ * plugin ships, all as `./`-relative paths. Key insertion order is part of the output shape. */
+export function synthesizeSharedManifest(
   source: Record<string, unknown>,
   presence: PluginPresence,
-  opts: SynthesizeClaudeStyleManifestOpts
+  opts: SynthesizeSharedManifestOpts
 ): Record<string, unknown> {
   const manifest: Record<string, unknown> = {};
   if (typeof source.name === "string") manifest.name = source.name;
@@ -59,7 +58,7 @@ export function synthesizeClaudeStyleManifest(
   return manifest;
 }
 
-export function buildClaudeStyleMarketplace(
+export function buildSharedMarketplace(
   source: { name: string; version?: string; description?: string; owner?: unknown },
   pluginEntries: readonly Record<string, unknown>[]
 ): Record<string, unknown> {
@@ -71,7 +70,7 @@ export function buildClaudeStyleMarketplace(
   return obj;
 }
 
-export function buildClaudeStyleCatalogEntry(
+export function buildSharedCatalogEntry(
   name: string,
   description: string,
   version: string,
@@ -94,7 +93,7 @@ export function buildClaudeStyleCatalogEntry(
 }
 
 export async function resolveVersion(
-  fs: FileReader,
+  fs: BuildFileReader,
   name: string,
   srcEntry: { version?: string } | undefined,
   outDir: string,
@@ -111,7 +110,7 @@ export async function resolveVersion(
 }
 
 export async function resolveDescription(
-  fs: FileReader,
+  fs: BuildFileReader,
   name: string,
   srcEntry: { description?: string } | undefined,
   outDir: string,
@@ -131,60 +130,20 @@ export async function resolveDescription(
 
 /** Resolve version and description, then shape the catalog entry — the marketplace-entry
  * builder claude and cursor both hand to `ToolBuildContract.buildMarketplaceEntry`. */
-export async function buildClaudeStyleEntry(
+export async function buildSharedEntry(
   name: string,
   outDir: string,
   srcEntry: SrcEntry,
   manifestRelative: string,
-  fs: FileReader & FileWriter
+  fs: BuildFileReader
 ): Promise<Record<string, unknown>> {
   const args = [fs, name, srcEntry, outDir, manifestRelative] as const;
   const version = await resolveVersion(...args);
   const description = await resolveDescription(...args);
-  return buildClaudeStyleCatalogEntry(
+  return buildSharedCatalogEntry(
     name,
     description,
     version,
     srcEntry as Record<string, unknown> | undefined
   );
-}
-
-// Codex-native marketplace catalog, for `codex plugin marketplace add`. Shape verified against
-// OpenAI's own published plugins marketplace and its plugin-build documentation.
-
-/** Default category when the source marketplace entry does not specify one. */
-const CODEX_DEFAULT_CATEGORY = "Developer Tools";
-/** Default per-plugin auth policy. AIDD plugins bundle skills/agents/hooks with no external
- * OAuth, so auth is deferred to first use rather than forced at install. */
-const CODEX_DEFAULT_AUTHENTICATION = "ON_USE";
-const CODEX_INSTALLATION_AVAILABLE = "AVAILABLE";
-
-/** Build a Codex marketplace catalog. `displayName` falls back to the marketplace name when
- * the source omits it. */
-export function buildCodexMarketplace(
-  source: { name: string; displayName?: string },
-  pluginEntries: readonly Record<string, unknown>[]
-): Record<string, unknown> {
-  const displayName = typeof source.displayName === "string" ? source.displayName : source.name;
-  return { name: source.name, interface: { displayName }, plugins: pluginEntries };
-}
-
-/** Build a single Codex marketplace entry. `installation`, `authentication` and `category` are
- * required by the plugin-creator spec; the last two accept a source-entry override. */
-export function buildCodexMarketplaceEntry(
-  name: string,
-  srcEntry: Record<string, unknown> | undefined
-): Record<string, unknown> {
-  const authentication =
-    typeof srcEntry?.authentication === "string"
-      ? srcEntry.authentication
-      : CODEX_DEFAULT_AUTHENTICATION;
-  const category =
-    typeof srcEntry?.category === "string" ? srcEntry.category : CODEX_DEFAULT_CATEGORY;
-  return {
-    name,
-    source: { source: "local", path: `./plugins/${name}` },
-    policy: { installation: CODEX_INSTALLATION_AVAILABLE, authentication },
-    category,
-  };
 }

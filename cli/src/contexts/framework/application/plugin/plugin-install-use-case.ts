@@ -6,10 +6,15 @@ import {
   type PluginSource,
   parsePluginSourceShorthand,
 } from "../../../../kernel/source.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId } from "../../../../kernel/tool.js";
 import type { PluginPick } from "../../../../presentation/prompts/plugin-pick-use-case.js";
 import type { MarketplaceTrustStore } from "../../../distribution/domain/ports/marketplace-trust-store.js";
-import { assertToolSupportsScope, type InstallScope } from "../../domain/install-scope.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import {
+  assertToolSupportsScope,
+  getToolSupportedScope,
+  type InstallScope,
+} from "../../domain/install-scope.js";
 import { parsePluginSpec } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { PluginAdd } from "./plugin-add-use-case.js";
@@ -18,6 +23,7 @@ import type { PluginInstallFromMarketplace } from "./plugin-install-from-marketp
 export interface PluginInstallOptions {
   pluginArg: string | undefined;
   toolIds: AiToolId[] | "all";
+  tools: ToolCatalog;
   projectRoot: string;
   interactive: boolean;
   fromMarketplace?: string;
@@ -41,23 +47,35 @@ export class PluginInstallUseCase {
   ) {}
 
   async execute(options: PluginInstallOptions): Promise<PluginInstallResult> {
-    if (options.scope !== undefined) await this.validateScope(options.toolIds, options.scope);
+    if (options.scope !== undefined) {
+      await this.validateScope(options.toolIds, options.scope, options.tools);
+    }
     if (options.pluginArg === undefined) return this.executeNoArg(options);
     if (this.isSourceArg(options.pluginArg)) return this.executeLocalSource(options);
     return this.executeMarketplace(options);
   }
 
-  private async validateScope(toolIds: AiToolId[] | "all", scope: InstallScope): Promise<void> {
-    const targets = await this.resolveTargetTools(toolIds);
-    for (const toolId of targets) assertToolSupportsScope(toolId, scope);
+  private async validateScope(
+    toolIds: AiToolId[] | "all",
+    scope: InstallScope,
+    tools: ToolCatalog
+  ): Promise<void> {
+    const targets = await this.resolveTargetTools(toolIds, tools);
+    for (const toolId of targets) {
+      const requiresUserScope = tools.aiProfile(toolId).plugins()?.requiresUserScope() === true;
+      assertToolSupportsScope(toolId, scope, getToolSupportedScope(requiresUserScope));
+    }
   }
 
-  private async resolveTargetTools(toolIds: AiToolId[] | "all"): Promise<readonly AiToolId[]> {
+  private async resolveTargetTools(
+    toolIds: AiToolId[] | "all",
+    tools: ToolCatalog
+  ): Promise<readonly AiToolId[]> {
     if (toolIds !== "all") return toolIds;
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) return AI_TOOL_IDS;
+    if (manifest === null) return tools.aiIdsInCanonicalOrder();
     const installed = manifest.getInstalledToolIds();
-    return AI_TOOL_IDS.filter((id) => installed.includes(id));
+    return tools.aiIdsInCanonicalOrder().filter((id) => installed.includes(id));
   }
 
   private isSourceArg(arg: string): boolean {
@@ -72,6 +90,7 @@ export class PluginInstallUseCase {
     const result = await this.pluginPickUseCase.execute({
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
+      tools: options.tools,
       interactive: true,
     });
     return { kind: "picked", installed: result.installed };
@@ -84,6 +103,7 @@ export class PluginInstallUseCase {
       source,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
+      tools: options.tools,
       interactive: options.interactive,
     });
     return { kind: "local", installed: [] };
@@ -112,6 +132,7 @@ export class PluginInstallUseCase {
       fromMarketplace: options.fromMarketplace,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
+      tools: options.tools,
       interactive: options.interactive,
       autoSelect: options.yes ?? false,
     });

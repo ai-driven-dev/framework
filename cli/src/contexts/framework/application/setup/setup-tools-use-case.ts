@@ -1,7 +1,7 @@
 import { CategoryMismatchError } from "../../../../kernel/errors.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../../../kernel/tool.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
+import { isAiToolId } from "../../../../kernel/tool.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
@@ -21,6 +21,7 @@ export interface SetupToolsOptions {
   ideTools: readonly ToolId[];
   force: boolean;
   version: string;
+  tools: ToolCatalog;
 }
 
 export interface SetupToolsResult {
@@ -54,14 +55,15 @@ export class SetupToolsUseCase {
     manifest: Manifest,
     options: SetupToolsOptions
   ): Promise<InstallRuntimeConfigResult> {
-    const config = getToolConfig(toolId);
-    if (!isAiTool(config)) throw new CategoryMismatchError([toolId], "ai", AI_TOOL_IDS);
+    if (!isAiToolId(toolId))
+      throw new CategoryMismatchError([toolId], "ai", options.tools.aiIdsInCanonicalOrder());
     return this.installRuntimeConfigUseCase.execute({
       toolId,
       projectRoot: options.projectRoot,
       manifest,
       force: options.force,
       version: options.version,
+      tools: options.tools,
     });
   }
 
@@ -76,6 +78,7 @@ export class SetupToolsUseCase {
       manifest,
       force: options.force,
       version: options.version,
+      tools: options.tools,
     });
   }
 }

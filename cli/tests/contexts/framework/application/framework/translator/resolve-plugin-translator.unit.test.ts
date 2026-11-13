@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { TranslatorDeps } from "../../../../../../src/contexts/framework/application/framework/translator/plugin-translator-factory.js";
 import { resolvePluginTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/resolve-plugin-translator.js";
-import { getToolConfig } from "../../../../../../src/contexts/tools/domain/registry.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredConfig } from "../../../../tools/testing/catalog-of.js";
 
 function deps(): TranslatorDeps {
   return {
@@ -19,6 +19,6 @@ function deps(): TranslatorDeps {
 
 describe("resolvePluginTranslator", () => {
   it("answers nothing for a tool that is not an AI tool", () => {
-    expect(resolvePluginTranslator(getToolConfig("vscode"), deps())).toBeNull();
+    expect(resolvePluginTranslator(registeredConfig("vscode"), deps())).toBeNull();
   });
 });

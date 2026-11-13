@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { wireTools } from "../../../../../src/composition/tools.js";
 import { InstallConfigUseCase } from "../../../../../src/contexts/framework/application/install/install-config-use-case.js";
-import { CONFIG_MCP } from "../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
-import { McpCapability } from "../../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
-import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
+import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
+import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -29,16 +30,16 @@ function emptyDescriptor(): FrameworkDescriptor {
 }
 
 describe("InstallConfigUseCase — staticContent", () => {
-  it("produces an installation file for a SettingsCapability with staticContent", async () => {
+  it("produces an installation file for a ConfigSection with staticContent", async () => {
     const { useCase } = buildUseCase();
-    const capability = new SettingsCapability({
+    const capability = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       staticContent: '{"my.key": true}',
     });
 
     const results = await useCase.execute({
-      capabilities: [capability],
+      writes: [{ kind: "settings", capability: capability }],
       configRefs: [],
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -53,14 +54,14 @@ describe("InstallConfigUseCase — staticContent", () => {
 
   it("staticContent capability does not need a matching configRef", async () => {
     const { useCase } = buildUseCase();
-    const capability = new SettingsCapability({
+    const capability = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       staticContent: '{"standalone": true}',
     });
 
     const results = await useCase.execute({
-      capabilities: [capability],
+      writes: [{ kind: "settings", capability: capability }],
       configRefs: [{ name: "irrelevantSignal", path: "config/irrelevant.json" }],
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -74,10 +75,10 @@ describe("InstallConfigUseCase — staticContent", () => {
   it("copilot staticContent contains all required Copilot keys", async () => {
     const { useCase } = buildUseCase();
     const descriptor = emptyDescriptor();
-    const assetProvider = new BundledAssetProviderAdapter();
+    const assetProvider = new BundledAssetProviderAdapter(wireTools());
 
     const results = await useCase.execute({
-      capabilities: copilot.configCapabilities(),
+      writes: copilot.configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -99,14 +100,14 @@ describe("InstallConfigUseCase — staticContent", () => {
 
   it("skips a consumes-based capability when no matching configRef content is available", async () => {
     const { useCase } = buildUseCase();
-    const capability = new SettingsCapability({
+    const capability = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       consumes: ["someSignal"],
     });
 
     const results = await useCase.execute({
-      capabilities: [capability],
+      writes: [{ kind: "settings", capability: capability }],
       configRefs: [{ name: "someSignal", path: "config/some.json" }],
       contentFiles: new Map(), // no content for 'config/some.json'
       projectRoot: PROJECT_ROOT,
@@ -118,19 +119,19 @@ describe("InstallConfigUseCase — staticContent", () => {
 
   it("leaves a consumes-only capability alone even with an asset provider at hand", async () => {
     const { useCase } = buildUseCase();
-    const capability = new SettingsCapability({
+    const capability = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       consumes: ["someSignal"],
     });
 
     const results = await useCase.execute({
-      capabilities: [capability],
+      writes: [{ kind: "settings", capability: capability }],
       configRefs: [],
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
       platform: linuxPlatform,
-      assetProvider: new BundledAssetProviderAdapter(),
+      assetProvider: new BundledAssetProviderAdapter(wireTools()),
       toolId: "copilot",
     });
 
@@ -138,7 +139,7 @@ describe("InstallConfigUseCase — staticContent", () => {
   });
 
   describe("an asset-backed capability", () => {
-    const fromAsset = new SettingsCapability({
+    const fromAsset = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
       staticContentAssetFile: "vscode-settings.json",
@@ -148,7 +149,7 @@ describe("InstallConfigUseCase — staticContent", () => {
       const { useCase } = buildUseCase();
 
       const results = await useCase.execute({
-        capabilities: [fromAsset],
+        writes: [{ kind: "settings", capability: fromAsset }],
         configRefs: [],
         contentFiles: new Map(),
         projectRoot: PROJECT_ROOT,
@@ -163,12 +164,12 @@ describe("InstallConfigUseCase — staticContent", () => {
       const { useCase } = buildUseCase();
 
       const results = await useCase.execute({
-        capabilities: [fromAsset],
+        writes: [{ kind: "settings", capability: fromAsset }],
         configRefs: [],
         contentFiles: new Map(),
         projectRoot: PROJECT_ROOT,
         platform: linuxPlatform,
-        assetProvider: new BundledAssetProviderAdapter(),
+        assetProvider: new BundledAssetProviderAdapter(wireTools()),
       });
 
       expect(results).toStrictEqual([]);
@@ -179,7 +180,7 @@ describe("InstallConfigUseCase — staticContent", () => {
       const text = '{\n  // kept as written\n  "t": 1\n}';
 
       const results = await useCase.execute({
-        capabilities: [fromAsset],
+        writes: [{ kind: "settings", capability: fromAsset }],
         configRefs: [],
         contentFiles: new Map(),
         projectRoot: PROJECT_ROOT,
@@ -203,7 +204,7 @@ describe("InstallConfigUseCase — MCP config", () => {
   );
 
   function mcpCapability(mergeStrategy?: "user-prime" | "framework-prime" | "none") {
-    return new McpCapability({
+    return new McpConfigPart({
       outputPath: ".cursor/mcp.json",
       format: "json",
       consumes: [CONFIG_MCP],
@@ -215,7 +216,7 @@ describe("InstallConfigUseCase — MCP config", () => {
     const { useCase } = buildUseCase();
 
     const results = await useCase.execute({
-      capabilities: [mcpCapability()],
+      writes: [{ kind: "mcp", capability: mcpCapability() }],
       configRefs: [MCP_REF],
       contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,
@@ -229,14 +230,14 @@ describe("InstallConfigUseCase — MCP config", () => {
 
   it("leaves a non-MCP config as written on Windows, even from a capability that also takes MCP", async () => {
     const { useCase } = buildUseCase();
-    const both = new SettingsCapability({
+    const both = new ConfigSection({
       outputPath: ".cursor/hooks.json",
       mergeStrategy: "user-prime",
       consumes: [CONFIG_MCP, HOOKS_REF.name],
     });
 
     const results = await useCase.execute({
-      capabilities: [both],
+      writes: [{ kind: "settings", capability: both }],
       configRefs: [HOOKS_REF],
       contentFiles: new Map([[HOOKS_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,
@@ -250,7 +251,7 @@ describe("InstallConfigUseCase — MCP config", () => {
     const { useCase } = buildUseCase();
 
     const results = await useCase.execute({
-      capabilities: [mcpCapability("framework-prime")],
+      writes: [{ kind: "mcp", capability: mcpCapability("framework-prime") }],
       configRefs: [MCP_REF],
       contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,
@@ -264,7 +265,7 @@ describe("InstallConfigUseCase — MCP config", () => {
     const { useCase } = buildUseCase();
 
     const results = await useCase.execute({
-      capabilities: [mcpCapability()],
+      writes: [{ kind: "mcp", capability: mcpCapability() }],
       configRefs: [MCP_REF],
       contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,

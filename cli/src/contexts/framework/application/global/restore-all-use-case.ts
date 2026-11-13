@@ -1,6 +1,7 @@
 import { NoManifestError } from "../../../../kernel/errors.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { RestoreUseCase } from "../restore/restore-use-case.js";
@@ -29,13 +30,14 @@ export class RestoreAllUseCase {
   async execute(
     projectRoot: string,
     force: boolean,
-    interactive: boolean
+    interactive: boolean,
+    tools: ToolCatalog
   ): Promise<RestoreAllResult> {
     const errors: GlobalExecutionError[] = [];
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError();
 
-    const effectiveFiles = interactive ? await this.promptForFiles(projectRoot) : undefined;
+    const effectiveFiles = interactive ? await this.promptForFiles(projectRoot, tools) : undefined;
     if (effectiveFiles !== undefined && effectiveFiles.length === 0) {
       return {
         totalRestored: 0,
@@ -54,7 +56,8 @@ export class RestoreAllUseCase {
       force,
       interactive,
       manifest,
-      errors
+      errors,
+      tools
     );
 
     return {
@@ -76,8 +79,11 @@ export class RestoreAllUseCase {
     );
   }
 
-  private async promptForFiles(projectRoot: string): Promise<string[] | undefined> {
-    const report = await this.statusUseCase.execute({ projectRoot });
+  private async promptForFiles(
+    projectRoot: string,
+    tools: ToolCatalog
+  ): Promise<string[] | undefined> {
+    const report = await this.statusUseCase.execute({ projectRoot, tools });
     const driftedFiles = report.tools.flatMap((t) =>
       t.drifted
         .filter((d) => d.status === "modified" || d.status === "deleted")
@@ -98,7 +104,8 @@ export class RestoreAllUseCase {
     force: boolean,
     interactive: boolean,
     manifest: Awaited<ReturnType<ManifestRepository["load"]>>,
-    errors: GlobalExecutionError[]
+    errors: GlobalExecutionError[],
+    tools: ToolCatalog
   ): Promise<{
     totalRestored: number;
     totalKept: number;
@@ -125,6 +132,7 @@ export class RestoreAllUseCase {
         force: force || interactive,
         interactive,
         manifest,
+        tools,
       });
       return {
         totalRestored: result.totalRestored,

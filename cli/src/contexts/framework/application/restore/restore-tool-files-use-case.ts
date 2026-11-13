@@ -9,7 +9,7 @@ import type { Prompter } from "../../../../kernel/ports/prompter.js";
 import type { ToolId } from "../../../../kernel/tool.js";
 import type { Platform } from "../../../../runtime/platform/platform.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
-import { getToolConfig } from "../../../tools/domain/registry.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { GenerateToolDistributionUseCase } from "./generate-tool-distribution-use-case.js";
@@ -26,6 +26,8 @@ export interface RestoreToolFilesOptions {
   force: boolean;
   interactive: boolean;
   fileFilter: ((p: string) => boolean) | null;
+  /** The tool profiles the restore asks. */
+  tools: ToolCatalog;
 }
 
 interface SectionRestoreResult {
@@ -80,8 +82,8 @@ export class RestoreToolFilesUseCase {
   private async buildDistributionMap(
     options: RestoreToolFilesOptions
   ): Promise<Map<string, InstallationFile>> {
-    const { toolId, descriptor, contentFiles, projectRoot } = options;
-    const config = getToolConfig(toolId);
+    const { toolId, descriptor, contentFiles, projectRoot, tools } = options;
+    const config = tools.profile(toolId);
     const distribution = await new GenerateToolDistributionUseCase(
       this.fs,
       this.hasher,

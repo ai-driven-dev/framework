@@ -17,6 +17,7 @@ import { InitUseCase } from "../../src/contexts/framework/application/init-use-c
 import { CLIOutput } from "../../src/presentation/output.js";
 import { environmentWithoutGitVariables as withoutGitEnv } from "../../src/runtime/git/git-environment.js";
 import { createDeps } from "../../src/runtime/wiring/framework.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 
 export const execFileAsync = promisify(execFile);
 
@@ -320,9 +321,10 @@ export async function runCliFast(
 
 export async function initProject(projectDir: string, _frameworkPath: string): Promise<void> {
   const output = new CLIOutput(false);
-  const deps = await createDeps(projectDir, { verbose: false }, output);
+  const deps = await createDeps(projectDir, { verbose: false }, output, catalogOf());
   await new InitUseCase(deps.fs, deps.manifestRepo).execute({
     projectRoot: projectDir,
+    tools: catalogOf(),
   });
 }
 

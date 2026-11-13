@@ -8,8 +8,8 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { IdeToolId } from "../../../../kernel/tool.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
-import type { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
-import { getToolConfig } from "../../../tools/domain/registry.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PostInstallPipelineUseCase } from "./post-install-pipeline-use-case.js";
 
@@ -19,6 +19,8 @@ export interface InstallIdeConfigOptions {
   manifest: Manifest;
   force: boolean;
   version: string;
+  /** The profiles the install answers from: the tool's own and every installed one. */
+  tools: ToolCatalog;
   /** Optional per-file gate for the update path. Returns "skip" to leave the file unwritten. Defaults to always-write. */
   onBeforeWriteRegularFile?: (relativePath: string) => Promise<"write" | "skip">;
 }
@@ -58,6 +60,7 @@ export class InstallIdeConfigUseCase {
     await this.postInstallPipelineUseCase.execute({
       projectRoot: options.projectRoot,
       manifest,
+      tools: options.tools,
     });
     return {
       toolId,
@@ -71,10 +74,7 @@ export class InstallIdeConfigUseCase {
   private async buildSettingsFiles(
     options: InstallIdeConfigOptions
   ): Promise<{ regularFiles: InstallationFile[]; mergeFiles: InstallationFile[] }> {
-    const toolConfig = getToolConfig(options.toolId);
-    const raw = toolConfig.section("settings");
-    if (raw === null) return { regularFiles: [], mergeFiles: [] };
-    const capabilities = Array.isArray(raw) ? raw : [raw];
+    const capabilities = options.tools.ideProfile(options.toolId).settingsFiles();
     const regularFiles: InstallationFile[] = [];
     const mergeFiles: InstallationFile[] = [];
     for (const capability of capabilities) {
@@ -87,7 +87,7 @@ export class InstallIdeConfigUseCase {
   }
 
   private async buildSettingsFile(
-    capability: SettingsCapability,
+    capability: SettingsFileAnswers,
     options: InstallIdeConfigOptions
   ): Promise<InstallationFile | null> {
     const outputPath = capability.outputPath();

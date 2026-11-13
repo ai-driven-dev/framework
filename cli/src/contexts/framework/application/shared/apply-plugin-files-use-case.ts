@@ -5,7 +5,7 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
 import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
-import { projectHooksDeliveryOf, type ToolConfig } from "../../../tools/domain/registry.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -24,7 +24,7 @@ import type { EnsureBuiltMarketplace } from "./ensure-built-marketplace-use-case
 interface ApplyPluginFilesOptions {
   toolId: AiToolId;
   plugin: InstalledPlugin;
-  toolConfig: ToolConfig;
+  tool: AiToolProfile;
   projectRoot: string;
   cacheDir: string;
   manifest: Manifest;
@@ -40,6 +40,10 @@ export interface BuiltMaterializationDeps {
   homedir: () => string;
 }
 
+function deliversHooksToProject(tool: AiToolProfile): boolean {
+  return tool.plugins()?.deliversHooksToProject() ?? false;
+}
+
 export class ApplyPluginFilesUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
@@ -53,11 +57,11 @@ export class ApplyPluginFilesUseCase {
     if (options.plugin.scope === "user") return 0;
     const localPath = await this.pluginFetcher.fetch(options.plugin.source, options.cacheDir);
     const dist = await this.pluginDistributionReader.read(localPath);
-    const translator = this.resolveTranslator(options.toolConfig);
+    const translator = this.resolveTranslator(options.tool);
     if (
       translator !== null &&
       (options.plugin.marketplace !== undefined ||
-        (!options.fileFilter && projectHooksDeliveryOf(options.toolId) !== null))
+        (!options.fileFilter && deliversHooksToProject(options.tool)))
     ) {
       return this.restoreViaTranslator(translator, dist, options);
     }
@@ -68,9 +72,9 @@ export class ApplyPluginFilesUseCase {
   // restored content + hashes match what install wrote, and Mode A marketplace tools
   // (claude/codex/copilot) must re-register without writing files — not the raw source
   // transform in either case.
-  private resolveTranslator(toolConfig: ToolConfig): PluginTranslator | null {
+  private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
     if (this.builtDeps === undefined) return null;
-    return resolvePluginTranslator(toolConfig, {
+    return resolvePluginTranslator(tool, {
       fs: this.fs,
       hasher: this.hasher,
       homedir: this.builtDeps.homedir,
@@ -84,20 +88,20 @@ export class ApplyPluginFilesUseCase {
     dist: PluginDistribution,
     options: ApplyPluginFilesOptions
   ): Promise<number> {
-    const { toolId, plugin, projectRoot, manifest, force = false } = options;
+    const { tool, plugin, projectRoot, manifest, force = false } = options;
     // Mode A never materializes files, so any manifest-tracked path here is a leftover from a run
     // before that was true. Scoped to the manifest's own keys under the plugin's base dir — never a
     // directory scan — so it cannot touch files the plugin never wrote.
     if (translator.mode === "marketplace" && this.builtDeps !== undefined) {
       const baseDir = resolveBaseDirFromRecord(
         plugin.scope,
-        toolId,
+        tool,
         projectRoot,
         this.builtDeps.homedir
       );
       await deleteOldFiles(plugin.files, baseDir, this.fs);
     }
-    return materializeViaTranslator(translator, dist, toolId, plugin, projectRoot, manifest, {
+    return materializeViaTranslator(translator, dist, tool, plugin, projectRoot, manifest, {
       overwriteEdited: force,
     });
   }
@@ -106,8 +110,8 @@ export class ApplyPluginFilesUseCase {
     dist: PluginDistribution,
     options: ApplyPluginFilesOptions
   ): Promise<number> {
-    const { toolId, plugin, toolConfig, projectRoot, manifest, fileFilter } = options;
-    const files = new PluginContentTranslator(this.hasher).translate(dist, toolConfig);
+    const { toolId, plugin, tool, projectRoot, manifest, fileFilter } = options;
+    const files = new PluginContentTranslator(this.hasher).translate(dist, tool);
     let restored = 0;
     for (const f of files) {
       if (fileFilter !== null && fileFilter !== undefined && !fileFilter(f.relativePath)) continue;

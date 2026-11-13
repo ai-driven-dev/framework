@@ -4,9 +4,10 @@ import { ApplyPluginFilesUseCase } from "../../../../../src/contexts/framework/a
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import { getToolConfig } from "../../../../../src/contexts/tools/domain/registry.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -28,7 +29,7 @@ async function makeUseCase(): Promise<{
     deps.fs,
     deps.hasher,
     deps.pluginFetcher,
-    new PluginDistributionReaderAdapter(deps.fs)
+    new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
   );
   return { useCase, fs: deps.fs };
 }
@@ -56,7 +57,7 @@ describe("ApplyPluginFilesUseCase — without built-tree materialization wired i
     const restored = await useCase.execute({
       toolId: "claude",
       plugin,
-      toolConfig: getToolConfig("claude"),
+      tool: registeredAiProfile("claude"),
       projectRoot: PROJECT_ROOT,
       cacheDir: CACHE_DIR,
       manifest,

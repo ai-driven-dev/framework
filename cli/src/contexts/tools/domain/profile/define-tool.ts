@@ -1,4 +1,4 @@
-import { isAbsolute } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { InvalidToolProfileError } from "../../../../kernel/errors.js";
 import {
   AI_TOOL_IDS,
@@ -6,17 +6,31 @@ import {
   IDE_TOOL_IDS,
   type IdeToolId,
 } from "../../../../kernel/tool.js";
-import { AgentsCapability } from "../capabilities/agents-capability.js";
-import { CommandsCapability } from "../capabilities/commands-capability.js";
-import { RulesCapability } from "../capabilities/rules-capability.js";
-import { SkillsCapability } from "../capabilities/skills-capability.js";
-import type { AiTool, ConfigCapability, IdeToolConfig } from "../contracts.js";
+import type {
+  ConfigWrite,
+  FlatInstallSection,
+  FlatSkillLayout,
+  FrameworkBuildMode,
+  PluginAnswers,
+  SettingsFileAnswers,
+  ShippedConfig,
+} from "../../contract/tool-profile.js";
+import type { SignalDirectory } from "../../contract/tool-vocabulary.js";
+import type { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
+import type { NativeActivation } from "../native-registration/native-activation.js";
+import type { AiTool, IdeToolConfig } from "../profile.js";
 import {
   isProfileSectionKey,
   type ProfileSection,
   type ProfileSectionKey,
   type ProfileSections,
-} from "./profile-sections.js";
+} from "../profile.js";
+import { AgentsSection } from "../sections/agents-section.js";
+import { CommandsSection } from "../sections/commands-section.js";
+import { RulesSection } from "../sections/rules-section.js";
+import { SkillsSection } from "../sections/skills-section.js";
+import { flatInstallPath, ownsFlatPath } from "./flat-install-paths.js";
+import { deliverySuits, pluginAnswers, projectPlacement } from "./plugin-answers.js";
 import { ToolSuffix } from "./tool-suffix.js";
 
 /** Only `defineAiTool` and `defineIdeTool` can produce one: an object literal lacks the private
@@ -24,6 +38,9 @@ import { ToolSuffix } from "./tool-suffix.js";
 export declare class ProfileBrand {
   private readonly profileBrand: true;
 }
+
+/** A profile only the factory could have produced. */
+export type BuiltToolConfig = (AiTool | IdeToolConfig) & ProfileBrand;
 
 type Unbound<P> = Omit<P, "directory" | "toolSuffix">;
 type ParamsOf<T extends new (params: never) => unknown> = ConstructorParameters<T>[0];
@@ -33,24 +50,53 @@ type ParamsOf<T extends new (params: never) => unknown> = ConstructorParameters<
 export interface BoundTool {
   /** Where a built file lands: `<directory><subdirectory><name without the tool suffix>`. */
   installUnder(subdirectory: string): (fileName: string) => string;
-  agents(params: Unbound<ParamsOf<typeof AgentsCapability>>): AgentsCapability;
-  skills(params: Unbound<ParamsOf<typeof SkillsCapability>>): SkillsCapability;
-  commands(params: Unbound<ParamsOf<typeof CommandsCapability>>): CommandsCapability;
-  rules(params: Unbound<ParamsOf<typeof RulesCapability>>): RulesCapability;
+  agents(params: Unbound<ParamsOf<typeof AgentsSection>>): AgentsSection;
+  skills(params: Unbound<ParamsOf<typeof SkillsSection>>): SkillsSection;
+  commands(params: Unbound<ParamsOf<typeof CommandsSection>>): CommandsSection;
+  rules(params: Unbound<ParamsOf<typeof RulesSection>>): RulesSection;
 }
 
 type AiToolFields = Omit<
   AiTool<ProfileSections>,
-  "kind" | "toolId" | "section" | "configCapabilities"
+  | "kind"
+  | "toolId"
+  | "section"
+  | "buildContract"
+  | "configWrites"
+  | "plugins"
+  | "supportsUserScopeActivation"
+  | "nativeActivation"
+  | "hostRefInUse"
+  | "markdownSection"
+  | "skillsSection"
+  | "configFiles"
+  | "runtimeFiles"
+  | "configAsset"
+  | "mcpConfig"
+  | "flatPluginMcp"
+  | "settingsFiles"
+  | "projectHooksDelivery"
+  | "frameworkBuildMode"
+  | "distributionPaths"
+  | "flatInstallPath"
+  | "ownsFlatPath"
+  | "marketplaceRegistration"
+  | "machineLocalFiles"
+  | "installedRulesLocation"
+  | "pluginEnablementIsMachineGlobal"
+  | "signalDirectoryIn"
 >;
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
   readonly toolId: string;
+  /** The config files the tool ships, each with its content imported where it is declared. */
+  readonly configAssets?: readonly ShippedConfig[];
   readonly capabilities: (bound: BoundTool) => C;
 }
 
 export interface IdeToolSpec<C extends ProfileSections> {
   readonly toolId: string;
+  readonly configAssets?: readonly ShippedConfig[];
   readonly directory: string;
   readonly signalDir: string | null;
   readonly capabilities: () => C;
@@ -86,10 +132,10 @@ function bind(directory: string, suffix: ToolSuffix): BoundTool {
   return {
     installUnder: (subdirectory) => (fileName) =>
       `${directory}${subdirectory}${suffix.strip(fileName)}`,
-    agents: (params) => new AgentsCapability({ directory, toolSuffix, ...params }),
-    skills: (params) => new SkillsCapability({ directory, toolSuffix, ...params }),
-    commands: (params) => new CommandsCapability({ directory, toolSuffix, ...params }),
-    rules: (params) => new RulesCapability({ directory, toolSuffix, ...params }),
+    agents: (params) => new AgentsSection({ directory, toolSuffix, ...params }),
+    skills: (params) => new SkillsSection({ directory, toolSuffix, ...params }),
+    commands: (params) => new CommandsSection({ directory, toolSuffix, ...params }),
+    rules: (params) => new RulesSection({ directory, toolSuffix, ...params }),
   };
 }
 
@@ -101,12 +147,34 @@ function sectionReader(
   return (key) => sections[key] ?? null;
 }
 
-function aiConfigCapabilities(sections: ProfileSections): ConfigCapability[] {
+function aiConfigWrites(sections: ProfileSections): readonly ConfigWrite[] {
   return [
-    ...(sections.mcp === undefined ? [] : [sections.mcp]),
-    ...(sections.hooks === undefined ? [] : [sections.hooks]),
-    ...(sections.settings ?? []),
+    ...(sections.mcp?.config === undefined
+      ? []
+      : [{ kind: "mcp" as const, capability: sections.mcp.config }]),
+    ...(sections.hooks?.config === undefined
+      ? []
+      : [{ kind: "hooks" as const, capability: sections.hooks.config }]),
+    ...settingsWrites(sections),
   ];
+}
+
+function settingsWrites(sections: ProfileSections): readonly ConfigWrite[] {
+  return settingsOf(sections).map((capability) => ({ kind: "settings" as const, capability }));
+}
+
+function nativeActivationOf(sections: ProfileSections): NativeActivation | undefined {
+  return sections.layout?.mode === "native" ? sections.layout.activation : undefined;
+}
+
+function settingsOf(sections: ProfileSections): readonly SettingsFileAnswers[] {
+  return sections.config ?? [];
+}
+
+function signalDirectoryOf(signalDir: string | null, projectRoot: string): SignalDirectory | null {
+  return signalDir === null
+    ? null
+    : { absolute: join(projectRoot, signalDir), relative: signalDir };
 }
 
 function aiToolId(id: string): AiToolId {
@@ -123,6 +191,92 @@ function ideToolId(id: string): IdeToolId {
     throw new InvalidToolProfileError(id, "unknown-tool-id", `no IDE tool is named '${id}'.`);
   }
   return known;
+}
+
+function skillLayoutOf(sections: ProfileSections): FlatSkillLayout {
+  return sections.layout?.mode === "flat" ? sections.layout.skillLayout : "nested";
+}
+
+function refuse(toolId: string, detail: string): never {
+  throw new InvalidToolProfileError(toolId, "plugin-sections-disagree", detail);
+}
+
+/** A layout, its manifest and its hooks delivery are one declaration: they agree or no profile. */
+function refuseDisagreeingPlugin(toolId: string, sections: ProfileSections): void {
+  const { layout, manifest, hooks } = sections;
+  if (layout === undefined) {
+    if (manifest !== undefined) refuse(toolId, "a manifest needs a native layout.");
+    return;
+  }
+  if (layout.mode === "native" && manifest === undefined) {
+    refuse(toolId, "a native layout requires a manifest section.");
+  }
+  if (layout.mode !== "native" && manifest !== undefined) {
+    refuse(toolId, `a ${layout.mode} layout takes no manifest section.`);
+  }
+  if (hooks === undefined)
+    refuse(toolId, "a layout requires a hooks section to state its delivery.");
+  if (!deliverySuits(layout, hooks.delivery)) {
+    refuse(
+      toolId,
+      `hooks delivery '${hooks.delivery.kind}' does not suit a ${layout.mode} layout.`
+    );
+  }
+}
+
+function pluginsOf(sections: ProfileSections): PluginAnswers | null {
+  const { layout, hooks } = sections;
+  if (layout === undefined || hooks === undefined) return null;
+  return pluginAnswers(layout, sections.manifest ?? null, hooks, sections.mcp ?? null);
+}
+
+function marketplaceOf(sections: ProfileSections): MarketplaceRegistration | undefined {
+  return sections.layout?.mode === "native" ? sections.layout.marketplace : undefined;
+}
+
+/** A shipped file is one name and one place, and a section's file is where that section writes it:
+ * a name declared twice, or a section file elsewhere than its section, answers two ways. */
+function refuseDisagreeingShippedConfig(
+  toolId: string,
+  assets: readonly ShippedConfig[] | undefined,
+  sections: ProfileSections
+): void {
+  const written = settingsOf(sections).map((section) => section.outputPath());
+  const seen = new Set<string>();
+  for (const asset of assets ?? []) {
+    if (seen.has(asset.name)) {
+      refuseShipped(toolId, `'${asset.name}' is shipped twice.`);
+    }
+    seen.add(asset.name);
+    if (asset.delivery === "section" && !written.includes(asset.destination)) {
+      refuseShipped(
+        toolId,
+        `'${asset.name}' lands at ${asset.destination}, which no settings section writes.`
+      );
+    }
+  }
+}
+
+function refuseShipped(toolId: string, detail: string): never {
+  throw new InvalidToolProfileError(toolId, "shipped-config-disagrees", detail);
+}
+
+function configAssetNamed(
+  assets: readonly ShippedConfig[] | undefined,
+  name: string
+): ShippedConfig | undefined {
+  return assets?.find((asset) => asset.name === name);
+}
+
+function destinationsOf(
+  assets: readonly ShippedConfig[] | undefined,
+  delivery: ShippedConfig["delivery"]
+): Record<string, string> {
+  return Object.fromEntries(
+    (assets ?? [])
+      .filter((asset) => asset.delivery === delivery)
+      .map((a) => [a.name, a.destination])
+  );
 }
 
 export function defineAiTool<C extends ProfileSections>(
@@ -142,12 +296,57 @@ export function defineAiTool<C extends ProfileSections>(
   }
   const capabilities = declare(bind(spec.directory, suffix));
   refuseUnknownSections(toolId, capabilities);
+  refuseDisagreeingPlugin(toolId, capabilities);
+  refuseDisagreeingShippedConfig(toolId, spec.configAssets, capabilities);
+  const plugins = pluginsOf(capabilities);
   const profile = {
     ...fields,
     kind: "ai",
     toolId,
     section: sectionReader(capabilities),
-    configCapabilities: () => aiConfigCapabilities(capabilities),
+    frameworkBuildMode: (): FrameworkBuildMode =>
+      capabilities.layout?.mode === "flat" ? "flat" : "marketplace",
+    buildContract: (mode: FrameworkBuildMode) => contracts[mode]?.() ?? null,
+    distributionPaths: (kind: "manifest" | "marketplace") =>
+      fields.distributionProbes?.[kind] ?? [],
+    flatInstallPath: (section: FlatInstallSection, pluginName: string, fileName: string) =>
+      flatInstallPath(spec.directory, skillLayoutOf(capabilities), section, pluginName, fileName),
+    ownsFlatPath: (relativePath: string, pluginName: string) =>
+      ownsFlatPath(spec.directory, skillLayoutOf(capabilities), relativePath, pluginName),
+    configWrites: () => aiConfigWrites(capabilities),
+    plugins: () => plugins,
+    supportsUserScopeActivation: () => plugins?.supportsUserScopeActivation() ?? false,
+    markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,
+    skillsSection: () => capabilities.skills ?? null,
+    nativeActivation: () => nativeActivationOf(capabilities),
+    hostRefInUse: (enabled: boolean) =>
+      nativeActivationOf(capabilities)?.takesRefForInUse(enabled) ?? true,
+    configFiles: () => ({
+      ...destinationsOf(spec.configAssets, "install"),
+      ...destinationsOf(spec.configAssets, "runtime"),
+    }),
+    runtimeFiles: () => destinationsOf(spec.configAssets, "runtime"),
+    configAsset: (name: string) => configAssetNamed(spec.configAssets, name),
+    mcpConfig: () => capabilities.mcp?.config ?? null,
+    flatPluginMcp: () =>
+      capabilities.mcp?.config?.mergeStrategy() === "framework-prime" &&
+      capabilities.layout?.mode === "flat"
+        ? capabilities.mcp.config
+        : null,
+    settingsFiles: () => settingsOf(capabilities),
+    marketplaceRegistration: () => marketplaceOf(capabilities) ?? null,
+    machineLocalFiles: () => marketplaceOf(capabilities)?.machineLocalFiles() ?? [],
+    installedRulesLocation: () => capabilities.rules?.installedLocation() ?? null,
+    pluginEnablementIsMachineGlobal: () =>
+      capabilities.layout?.mode === "native"
+        ? capabilities.layout.activation?.scopesEnablement() !== true
+        : true,
+    signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
+    projectHooksDelivery: () => {
+      const placement =
+        capabilities.hooks === undefined ? null : projectPlacement(capabilities.hooks.delivery);
+      return placement === null ? null : { ...placement, toolName: spec.displayName };
+    },
   };
   return profile as AiTool<C> & ProfileBrand;
 }
@@ -160,12 +359,17 @@ export function defineIdeTool<C extends ProfileSections>(
   refuseDirectory(toolId, spec.directory);
   const capabilities = declare();
   refuseUnknownSections(toolId, capabilities);
+  refuseDisagreeingShippedConfig(toolId, spec.configAssets, capabilities);
   const profile = {
     ...fields,
     kind: "ide",
     toolId,
     section: sectionReader(capabilities),
-    configCapabilities: () => [...(capabilities.settings ?? [])],
+    configWrites: () => settingsWrites(capabilities),
+    settingsFiles: () => settingsOf(capabilities),
+    configAsset: (name: string) => configAssetNamed(spec.configAssets, name),
+    signalDirectoryIn: (projectRoot: string) => signalDirectoryOf(spec.signalDir, projectRoot),
+    machineLocalFiles: (): readonly string[] => [],
   };
   return profile as IdeToolConfig<C> & ProfileBrand;
 }

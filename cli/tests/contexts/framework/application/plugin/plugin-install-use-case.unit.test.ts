@@ -13,6 +13,7 @@ import {
 import type { Prompter } from "../../../../../src/kernel/ports/prompter.js";
 import type { PluginPick } from "../../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -101,6 +102,7 @@ describe("PluginInstallUseCase", () => {
 
       const result = await makeUseCase({ pickExecute }).execute({
         pluginArg: undefined,
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: true,
@@ -115,6 +117,7 @@ describe("PluginInstallUseCase", () => {
       await expect(
         makeUseCase().execute({
           pluginArg: undefined,
+          tools: catalogOf(),
           toolIds: "all",
           projectRoot: PROJECT_ROOT,
           interactive: false,
@@ -128,6 +131,7 @@ describe("PluginInstallUseCase", () => {
       await expect(
         makeUseCase().execute({
           pluginArg: "my-plugin",
+          tools: catalogOf(),
           toolIds: ["claude"],
           projectRoot: PROJECT_ROOT,
           interactive: false,
@@ -140,6 +144,7 @@ describe("PluginInstallUseCase", () => {
       await expect(
         makeUseCase().execute({
           pluginArg: "my-plugin",
+          tools: catalogOf(),
           toolIds: ["cursor"],
           projectRoot: PROJECT_ROOT,
           interactive: false,
@@ -152,6 +157,7 @@ describe("PluginInstallUseCase", () => {
       const marketplaceExecute = vi.fn().mockResolvedValue({ entry: { name: "my-plugin" } });
       const result = await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin",
+        tools: catalogOf(),
         toolIds: ["cursor"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -164,6 +170,7 @@ describe("PluginInstallUseCase", () => {
       const marketplaceExecute = vi.fn().mockResolvedValue({ entry: { name: "my-plugin" } });
       const result = await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin",
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -179,6 +186,7 @@ describe("PluginInstallUseCase", () => {
 
       const result = await makeUseCase({ addExecute }).execute({
         pluginArg: PLUGIN_FIXTURE,
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -193,6 +201,7 @@ describe("PluginInstallUseCase", () => {
 
       const result = await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin",
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -227,6 +236,7 @@ describe("PluginInstallUseCase", () => {
           prompter: denyingPrompter,
         }).execute({
           pluginArg: PLUGIN_FIXTURE,
+          tools: catalogOf(),
           toolIds: "all",
           projectRoot: PROJECT_ROOT,
           interactive: true,
@@ -257,6 +267,7 @@ describe("PluginInstallUseCase", () => {
         prompter: grantingPrompter,
       }).execute({
         pluginArg: PLUGIN_FIXTURE,
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: true,
@@ -276,6 +287,7 @@ describe("PluginInstallUseCase", () => {
 
       await makeUseCase({ marketplaceExecute, trustStore }).execute({
         pluginArg: "my-plugin",
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -292,6 +304,7 @@ describe("PluginInstallUseCase", () => {
       await expect(
         makeUseCase({ marketplaceExecute: marketplaceExecute() }).execute({
           pluginArg: "my-plugin",
+          tools: catalogOf(),
           toolIds: "all",
           projectRoot: PROJECT_ROOT,
           interactive: false,
@@ -306,6 +319,7 @@ describe("PluginInstallUseCase", () => {
         manifestRepo: manifestWith("claude"),
       }).execute({
         pluginArg: "my-plugin",
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -322,6 +336,7 @@ describe("PluginInstallUseCase", () => {
           manifestRepo: manifestWith("claude"),
         }).execute({
           pluginArg: "my-plugin",
+          tools: catalogOf(),
           toolIds: "all",
           projectRoot: PROJECT_ROOT,
           interactive: false,
@@ -337,6 +352,7 @@ describe("PluginInstallUseCase", () => {
 
       const result = await makeUseCase({ addExecute }).execute({
         pluginArg: "https://github.com/x/y.git",
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -350,6 +366,7 @@ describe("PluginInstallUseCase", () => {
 
       const result = await makeUseCase({ addExecute }).execute({
         pluginArg: "./plugins/mine",
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -364,6 +381,7 @@ describe("PluginInstallUseCase", () => {
       await expect(
         makeUseCase().execute({
           pluginArg: undefined,
+          tools: catalogOf(),
           toolIds: "all",
           projectRoot: PROJECT_ROOT,
           interactive: false,
@@ -376,12 +394,14 @@ describe("PluginInstallUseCase", () => {
 
       await makeUseCase({ pickExecute }).execute({
         pluginArg: undefined,
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: true,
       });
 
       expect(pickExecute).toHaveBeenCalledWith({
+        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: true,
@@ -393,12 +413,14 @@ describe("PluginInstallUseCase", () => {
 
       const result = await makeUseCase({ addExecute }).execute({
         pluginArg: PLUGIN_FIXTURE,
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
 
       expect(addExecute).toHaveBeenCalledWith({
+        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -412,6 +434,7 @@ describe("PluginInstallUseCase", () => {
 
       await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin@1.2.3",
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -420,6 +443,7 @@ describe("PluginInstallUseCase", () => {
       });
 
       expect(marketplaceExecute).toHaveBeenCalledWith({
+        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
         pluginName: "my-plugin",
         version: "1.2.3",
         fromMarketplace: "mkt",
@@ -435,12 +459,14 @@ describe("PluginInstallUseCase", () => {
 
       await makeUseCase({ marketplaceExecute }).execute({
         pluginArg: "my-plugin",
+        tools: catalogOf(),
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
 
       expect(marketplaceExecute).toHaveBeenCalledWith({
+        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
         pluginName: "my-plugin",
         version: undefined,
         fromMarketplace: undefined,
@@ -466,6 +492,7 @@ describe("PluginInstallUseCase", () => {
 
       await makeUseCase({ addExecute: vi.fn(), trustStore, prompter }).execute({
         pluginArg: PLUGIN_FIXTURE,
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: true,
@@ -481,6 +508,7 @@ describe("PluginInstallUseCase", () => {
 
       await makeUseCase({ addExecute: vi.fn(), trustStore, prompter }).execute({
         pluginArg: PLUGIN_FIXTURE,
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: false,
@@ -499,6 +527,7 @@ describe("PluginInstallUseCase", () => {
 
       await makeUseCase({ addExecute: vi.fn(), trustStore: untrustedStore(), prompter }).execute({
         pluginArg: PLUGIN_FIXTURE,
+        tools: catalogOf(),
         toolIds: "all",
         projectRoot: PROJECT_ROOT,
         interactive: true,

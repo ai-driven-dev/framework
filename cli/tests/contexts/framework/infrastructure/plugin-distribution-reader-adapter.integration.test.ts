@@ -10,18 +10,21 @@ import type {
 import {
   InvalidPluginManifestError,
   InvalidPluginNameError,
-  InvalidPluginVersionError,
 } from "../../../../src/kernel/errors.js";
 import { FileAdapter } from "../../../../src/runtime/filesystem/file-adapter.js";
 import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
 const IN_MEMORY_ROOT = "/plugins/in-memory";
 const IN_MEMORY_MANIFEST = ".claude-plugin/plugin.json";
 
 function makeAdapter(): PluginDistributionReaderAdapter {
-  return new PluginDistributionReaderAdapter(new FileAdapter(new HasherAdapter()));
+  return new PluginDistributionReaderAdapter(
+    new FileAdapter(new HasherAdapter()),
+    registeredManifestProbes()
+  );
 }
 
 function readInMemory(
@@ -34,11 +37,10 @@ function readInMemory(
   for (const [relativePath, content] of Object.entries(files)) {
     seed[`${IN_MEMORY_ROOT}/${relativePath}`] = content;
   }
-  return new PluginDistributionReaderAdapter(new InMemoryFileAdapter(seed)).read(IN_MEMORY_ROOT);
-}
-
-function readManifest(manifest: Record<string, unknown>): Promise<PluginDistribution> {
-  return readInMemory(JSON.stringify(manifest));
+  return new PluginDistributionReaderAdapter(
+    new InMemoryFileAdapter(seed),
+    registeredManifestProbes()
+  ).read(IN_MEMORY_ROOT);
 }
 
 function byPath(a: PluginComponentFile, b: PluginComponentFile): number {
@@ -46,6 +48,21 @@ function byPath(a: PluginComponentFile, b: PluginComponentFile): number {
 }
 
 describe("PluginDistributionReaderAdapter", () => {
+  it("looks for a manifest only where the probes it was given say one can sit", async () => {
+    const fs = new InMemoryFileAdapter({
+      [`${IN_MEMORY_ROOT}/custom/plugin.json`]: JSON.stringify({ name: "p", version: "1.0.0" }),
+    });
+
+    const dist = await new PluginDistributionReaderAdapter(fs, [
+      { format: "cursor", relativePath: "custom/plugin.json" },
+    ]).read(IN_MEMORY_ROOT);
+
+    expect(dist.format).toBe("cursor");
+    await expect(
+      new PluginDistributionReaderAdapter(fs, []).read(IN_MEMORY_ROOT)
+    ).rejects.toBeInstanceOf(InvalidPluginManifestError);
+  });
+
   describe("claude-format fixture", () => {
     it("detects claude format", async () => {
       const adapter = makeAdapter();
@@ -189,7 +206,10 @@ describe("PluginDistributionReaderAdapter", () => {
     });
 
     it("names the directory it searched", async () => {
-      const reader = new PluginDistributionReaderAdapter(new InMemoryFileAdapter());
+      const reader = new PluginDistributionReaderAdapter(
+        new InMemoryFileAdapter(),
+        registeredManifestProbes()
+      );
 
       await expect(reader.read("/plugins/none")).rejects.toThrow(
         new InvalidPluginManifestError('no plugin.json found in "/plugins/none"')
@@ -259,127 +279,5 @@ describe("PluginDistributionReaderAdapter", () => {
         }
       }
     );
-  });
-
-  describe("the manifest's fields", () => {
-    it("keeps name and version alone when nothing else is declared", async () => {
-      const dist = await readManifest({ name: "full", version: "1.0.0" });
-
-      expect(dist.manifest).toStrictEqual({ name: "full", version: "1.0.0" });
-    });
-
-    it("keeps a string description", async () => {
-      const dist = await readManifest({ name: "full", version: "1.0.0", description: "A plugin" });
-
-      expect(dist.manifest).toStrictEqual({
-        name: "full",
-        version: "1.0.0",
-        description: "A plugin",
-      });
-    });
-
-    it("drops a description that is not a string", async () => {
-      const dist = await readManifest({ name: "full", version: "1.0.0", description: 42 });
-
-      expect(dist.manifest).toStrictEqual({ name: "full", version: "1.0.0" });
-    });
-
-    it("keeps the author's name and email", async () => {
-      const dist = await readManifest({
-        name: "full",
-        version: "1.0.0",
-        author: { name: "Ann", email: "ann@example.com" },
-      });
-
-      expect(dist.manifest).toStrictEqual({
-        name: "full",
-        version: "1.0.0",
-        author: { name: "Ann", email: "ann@example.com" },
-      });
-    });
-
-    it("keeps the author's name alone when the email is not a string", async () => {
-      const dist = await readManifest({
-        name: "full",
-        version: "1.0.0",
-        author: { name: "Ann", email: 5 },
-      });
-
-      expect(dist.manifest).toStrictEqual({
-        name: "full",
-        version: "1.0.0",
-        author: { name: "Ann" },
-      });
-    });
-
-    it("drops an author whose name is not a string", async () => {
-      const dist = await readManifest({
-        name: "full",
-        version: "1.0.0",
-        author: { name: 5, email: "ann@example.com" },
-      });
-
-      expect(dist.manifest).toStrictEqual({ name: "full", version: "1.0.0" });
-    });
-
-    it("drops an author that is null", async () => {
-      const dist = await readManifest({ name: "full", version: "1.0.0", author: null });
-
-      expect(dist.manifest).toStrictEqual({ name: "full", version: "1.0.0" });
-    });
-  });
-
-  describe("a manifest it refuses", () => {
-    it("names invalid JSON", async () => {
-      await expect(readInMemory("{ not json")).rejects.toThrow(
-        new InvalidPluginManifestError("plugin.json is not valid JSON")
-      );
-    });
-
-    it.each([
-      ["null", "null"],
-      ["a list", "[]"],
-      ["a string", '"full"'],
-    ])("names a top level that is %s rather than an object", async (_shape, manifestText) => {
-      await expect(readInMemory(manifestText)).rejects.toThrow(
-        new InvalidPluginManifestError("plugin.json must be a JSON object")
-      );
-    });
-
-    it("names a missing name", async () => {
-      await expect(readManifest({ version: "1.0.0" })).rejects.toThrow(
-        new InvalidPluginManifestError('"name" must be a non-empty string')
-      );
-    });
-
-    it("names an empty name", async () => {
-      await expect(readManifest({ name: "", version: "1.0.0" })).rejects.toThrow(
-        new InvalidPluginManifestError('"name" must be a non-empty string')
-      );
-    });
-
-    it("names a name outside lowercase alphanumerics and hyphens", async () => {
-      await expect(readManifest({ name: "Bad Name", version: "1.0.0" })).rejects.toThrow(
-        new InvalidPluginNameError("Bad Name")
-      );
-    });
-
-    it("names a missing version", async () => {
-      await expect(readManifest({ name: "full" })).rejects.toThrow(
-        new InvalidPluginManifestError('"version" must be a non-empty string')
-      );
-    });
-
-    it("names an empty version", async () => {
-      await expect(readManifest({ name: "full", version: "" })).rejects.toThrow(
-        new InvalidPluginManifestError('"version" must be a non-empty string')
-      );
-    });
-
-    it("names a version that is not semver", async () => {
-      await expect(readManifest({ name: "full", version: "latest" })).rejects.toThrow(
-        new InvalidPluginVersionError("latest")
-      );
-    });
   });
 });

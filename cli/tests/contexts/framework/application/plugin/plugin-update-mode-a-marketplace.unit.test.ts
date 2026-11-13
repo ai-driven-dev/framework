@@ -9,6 +9,8 @@ import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-u
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -46,7 +48,10 @@ function makeUpdateUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): P
   return new PluginUpdateUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -69,13 +74,17 @@ async function installStaleGithubPlugin(
   await new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     deps.logger,
     registry,
     fakeEnsureBuiltMarketplace(),
     deps.userManifestRepo
   ).execute({
+    tools: catalogOf(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,
@@ -105,6 +114,7 @@ describe("PluginUpdateUseCase — Mode A marketplace tools (claude/codex/copilot
     expect(deps.fs.listAll().some((p) => p.includes(".claude/plugins/"))).toBe(false);
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
     });
@@ -126,6 +136,7 @@ describe("PluginUpdateUseCase — Mode A marketplace tools (claude/codex/copilot
     await installStaleGithubPlugin(deps, registry, "claude");
 
     await makeUpdateUseCase(deps, registry).execute({
+      tools: catalogOf(),
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
     });
@@ -147,6 +158,7 @@ describe("PluginUpdateUseCase — flat-mode tools are unaffected (regression gua
     deps.fs.setFile(BUILT_OPENCODE_SKILL, "# Demo skill v2");
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
+      tools: catalogOf(),
       toolIds: ["opencode"],
       projectRoot: PROJECT_ROOT,
     });

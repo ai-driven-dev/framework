@@ -1,4 +1,4 @@
-import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../../tools/domain/formats/plugin-root-token.js";
+import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../tools/contract/plugin-root-token.js";
 
 /**
  * Replaces every occurrence of the canonical `${CLAUDE_PLUGIN_ROOT}` source token with the one
@@ -7,6 +7,6 @@ import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../../tools/domain/formats/plugin-r
  * the source returns the content unchanged.
  */
 export function rewritePluginRootToken(content: string, targetToken: string): string {
-  if (targetToken === CLAUDE_PLUGIN_ROOT_TOKEN) return content;
-  return content.replaceAll(CLAUDE_PLUGIN_ROOT_TOKEN, targetToken);
+  if (targetToken === SOURCE_PLUGIN_ROOT_TOKEN) return content;
+  return content.replaceAll(SOURCE_PLUGIN_ROOT_TOKEN, targetToken);
 }

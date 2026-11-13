@@ -1,9 +1,12 @@
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../same-instance.js";
 
 const resolveSourceIfNeeded = vi.fn();
 const registerIfPresent = vi.fn();
@@ -37,6 +40,7 @@ const { globalSetupHelp, registerSetupCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = wireTools();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -86,7 +90,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerSetupCommand(program);
+  registerSetupCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "setup", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -107,6 +111,7 @@ describe("aidd setup — the flow a scripted run builds", () => {
       scope: "project",
     });
     expect(setupTools).toHaveBeenCalledWith({
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       aiTools: ["claude"],
       ideTools: [],
@@ -130,6 +135,7 @@ describe("aidd setup — the flow a scripted run builds", () => {
       mode: "named",
       pluginNames: ["aidd-dev", "aidd-pm"],
       interactive: false,
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
   });
 
@@ -344,7 +350,8 @@ describe("aidd setup — what it refuses and what it reports", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
-      expect.anything()
+      expect.anything(),
+      sameInstance(CATALOG)
     );
   });
 });
@@ -352,14 +359,14 @@ describe("aidd setup — what it refuses and what it reports", () => {
 describe("aidd setup — the help surface", () => {
   function setupCommand(): Command {
     const program = new Command();
-    registerSetupCommand(program);
+    registerSetupCommand(program, CATALOG);
     const setup = program.commands.find((command) => command.name() === "setup");
     if (setup === undefined) throw new Error("setup command was not registered");
     return setup;
   }
 
   it("says what --global does for each tool, read from its profile", () => {
-    expect(globalSetupHelp().split("\n")).toEqual([
+    expect(globalSetupHelp(wireTools()).split("\n")).toEqual([
       "",
       "Global:",
       "  Pass --ide claude,codex,copilot,cursor,kilo,opencode (one or more, no editor) and --plugins all, recommended, none or names.",

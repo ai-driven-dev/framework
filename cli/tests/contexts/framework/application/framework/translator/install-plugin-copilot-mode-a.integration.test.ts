@@ -14,6 +14,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-mem
 import { FakeHostActions } from "../../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../../host-registration/testing/fake-host-plugin-registry.js";
+import { registeredAiProfile, registeredCatalog } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -59,7 +60,7 @@ async function seedCopilotPlugin(
   manifest.addTool("copilot", "test", []);
   await new ModeAMarketplaceTranslator().addPlugin(
     buildDist(),
-    "copilot",
+    registeredAiProfile("copilot"),
     { kind: "github", repo: "ai-driven-dev/framework" },
     PROJECT_ROOT,
     manifest,
@@ -116,7 +117,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       new Map(),
       fakeEnsureBuiltMarketplace()
     );
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(await fs.readFile(settingsPath)).toBe(foreignSettings);
   });
@@ -156,7 +157,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
         ],
       ])
     );
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual(["/built/copilot"]);
@@ -193,7 +194,10 @@ describe("install copilot plugin via Mode A (integration)", () => {
       readableHostPlugins(),
       ownedMachineCatalog()
     );
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.forcedRemovals).toEqual([]);
@@ -221,7 +225,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       new CapturingLogger(),
       new Map([["copilot", activator]]),
       fakeEnsureBuiltMarketplace()
-    ).execute({ projectRoot: PROJECT_ROOT });
+    ).execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.forcedRemovals).toEqual([]);
@@ -253,7 +257,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       logger,
       new Map([["copilot", activator]]),
       fakeEnsureBuiltMarketplace()
-    ).execute({ projectRoot: PROJECT_ROOT });
+    ).execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(logger.warnMessages.some((m) => m.includes("host source unproven"))).toBe(true);
@@ -285,7 +289,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
       new Map([["copilot", activator]]),
       fakeEnsureBuiltMarketplace()
     );
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(logger.warnMessages.some((m) => m.includes("no longer exists"))).toBe(false);

@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { globalFilesOf } from "../../../../../../src/contexts/tools/domain/registry.js";
+import { registeredAiConfig } from "../../../testing/catalog-of.js";
 
 const AIDD_DEV = { name: "aidd-dev", agents: new Set(["reviewer"]) };
 
 describe("the kilo profile's machine-scope files", () => {
-  const machine = globalFilesOf("kilo");
+  const machine = registeredAiConfig("kilo").plugins()?.globalFiles();
 
   it("land in ~/.config/kilo under the home directory", () => {
     expect(machine?.dir("/home/me")).toBe(join("/home/me", ".config/kilo"));

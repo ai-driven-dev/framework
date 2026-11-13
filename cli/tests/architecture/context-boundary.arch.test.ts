@@ -8,31 +8,6 @@ import { expectRatchet, HELD_BY_BIOME, importersByFile, sourceFiles } from "./he
 
 /** Each context's declared public surface, one entry per context. */
 const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
-  tools: [
-    // the tool contract and lookup surface
-    "src/contexts/tools/domain/contracts.ts",
-    "src/contexts/tools/domain/registry.ts",
-    "src/contexts/tools/domain/build-contract.ts",
-    // co-owned configuration (settings.json, .mcp.json et al.)
-    "src/contexts/tools/domain/capabilities/mcp-capability.ts",
-    "src/contexts/tools/domain/mcp-launch-command.ts",
-    "src/contexts/tools/domain/capabilities/settings-capability.ts",
-    "src/contexts/tools/domain/capabilities/config-refs.ts",
-    "src/contexts/tools/domain/formats/opencode-mcp-merge.ts",
-    // what a tool answers from the project's files: which tool's files are present, and which
-    // file its MCP config goes in
-    "src/contexts/tools/application/detect-tool-signals.ts",
-    "src/contexts/tools/application/resolve-mcp-output-path.ts",
-    // what a tool declares about plugins: installing is framework work
-    "src/contexts/tools/domain/plugins/plugins-capability.ts",
-    "src/contexts/tools/domain/plugins/plugin-params.ts",
-    "src/contexts/tools/domain/plugins/marketplace-registration.ts",
-    "src/contexts/tools/domain/plugin-translation-mode.ts",
-    "src/contexts/tools/domain/models/plugin-install-notice.ts",
-    // The variable each tool expands to an installed plugin's directory: a tool declares it,
-    // translate substitutes it, the diagnostic looks for it in what was installed.
-    "src/contexts/tools/domain/formats/plugin-root-token.ts",
-  ],
   translate: [
     // the canonical shapes framework produces and translate consumes
     "src/contexts/translate/domain/canon.ts",
@@ -175,18 +150,8 @@ function reachesIntoInterior(
   return violations.sort();
 }
 
-/**
- * Reaches into a context's interior today; the list may only shrink. Each entry is an
- * `install-*-use-case.ts` reaching past `tools`' declared contract for the capability class
- * itself, and they resolve together when `install/` moves into `contexts/tools/application/`.
- */
-const BASELINE = [
-  "src/contexts/framework/application/install/content/install-agents-use-case.ts -> src/contexts/tools/domain/capabilities/agents-capability.ts",
-  "src/contexts/framework/application/install/content/install-commands-use-case.ts -> src/contexts/tools/domain/capabilities/commands-capability.ts",
-  "src/contexts/framework/application/install/content/install-content-section-use-case.ts -> src/contexts/tools/domain/formats/command.ts",
-  "src/contexts/framework/application/install/content/install-rules-use-case.ts -> src/contexts/tools/domain/capabilities/rules-capability.ts",
-  "src/contexts/framework/application/install/content/install-skills-use-case.ts -> src/contexts/tools/domain/capabilities/skills-capability.ts",
-];
+/** Reaches into a context's interior today; the list may only shrink. */
+const BASELINE: string[] = [];
 
 /**
  * What a context publishes in `contract/` exists for a reader outside it: another context,

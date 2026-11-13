@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import { printProjectCleanOutcome, printUserScopeCleanOutcome } from "../display/clean-display.js";
 import { ErrorHandler } from "../error-handler.js";
@@ -17,10 +18,12 @@ async function runProjectScopeClean(
   deps: Deps,
   output: CLIOutput,
   projectRoot: string,
-  cmdOptions: CleanCmdOptions
+  cmdOptions: CleanCmdOptions,
+  catalog: ToolCatalog
 ): Promise<void> {
   const interactive = process.stdout.isTTY === true;
   const result = await deps.cleanUseCase.execute({
+    tools: catalog,
     projectRoot,
     force: cmdOptions.force,
     interactive,
@@ -33,10 +36,12 @@ async function runUserScopeClean(
   deps: Deps,
   output: CLIOutput,
   projectRoot: string,
-  cmdOptions: CleanCmdOptions
+  cmdOptions: CleanCmdOptions,
+  catalog: ToolCatalog
 ): Promise<void> {
   const interactive = process.stdout.isTTY === true;
   const result = await deps.cleanUserScopeUseCase.execute({
+    tools: catalog,
     projectRoot,
     force: cmdOptions.force,
     interactive,
@@ -45,7 +50,7 @@ async function runUserScopeClean(
   printUserScopeCleanOutcome(output, result, interactive);
 }
 
-export function registerCleanCommand(program: Command): void {
+export function registerCleanCommand(program: Command, catalog: ToolCatalog): void {
   program
     .command("clean")
     .description(
@@ -64,11 +69,11 @@ export function registerCleanCommand(program: Command): void {
       const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         if (scope === "user") {
-          await runUserScopeClean(deps, output, projectRoot, cmdOptions);
+          await runUserScopeClean(deps, output, projectRoot, cmdOptions, catalog);
         } else {
-          await runProjectScopeClean(deps, output, projectRoot, cmdOptions);
+          await runProjectScopeClean(deps, output, projectRoot, cmdOptions, catalog);
         }
       } catch (error) {
         errorHandler.handle(error);

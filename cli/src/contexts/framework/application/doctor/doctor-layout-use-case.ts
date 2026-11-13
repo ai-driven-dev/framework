@@ -1,13 +1,14 @@
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { TokenProvider } from "../../../auth/contract/token-provider.js";
-import { detectToolSignals } from "../../../tools/application/detect-tool-signals.js";
-import { getAllRegisteredTools } from "../../../tools/domain/registry.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
+import { detectToolSignals } from "../init-use-case.js";
 
 export interface DoctorLayoutOptions {
   manifest: Manifest;
   projectRoot: string;
+  tools: ToolCatalog;
 }
 
 export class DoctorLayoutUseCase {
@@ -17,19 +18,20 @@ export class DoctorLayoutUseCase {
   ) {}
 
   async execute(options: DoctorLayoutOptions): Promise<DoctorIssue[]> {
-    const { manifest, projectRoot } = options;
-    const orphanIssues = await this.checkOrphanedDirectories(manifest, projectRoot);
+    const { manifest, projectRoot, tools } = options;
+    const orphanIssues = await this.checkOrphanedDirectories(manifest, projectRoot, tools);
     const authIssues = await this.checkAuth();
     return [...orphanIssues, ...authIssues];
   }
 
   private async checkOrphanedDirectories(
     manifest: Manifest,
-    projectRoot: string
+    projectRoot: string,
+    tools: ToolCatalog
   ): Promise<DoctorIssue[]> {
     const issues: DoctorIssue[] = [];
     const installedToolDirs = manifest.getInstalledDirectories();
-    for (const tool of getAllRegisteredTools().values()) {
+    for (const tool of tools.sortedById()) {
       if ((await detectToolSignals(this.fs, tool, projectRoot)).length > 0) {
         if (!installedToolDirs.has(tool.directory)) {
           issues.push({

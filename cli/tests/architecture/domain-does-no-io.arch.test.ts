@@ -26,18 +26,7 @@ const DOMAIN_PORTS = /^src\/contexts\/[^/]+\/domain\/ports\//;
  * Domain files that import a file port today, each with the number of such imports. The list
  * may only shrink: a file that stops importing one leaves it, a new import fails.
  */
-const BASELINE: readonly { readonly file: string; readonly imports: number; reason: string }[] = [
-  {
-    file: "src/contexts/tools/domain/build-contract.ts",
-    imports: 2,
-    reason: "the build contract hands each profile `fs` for its marketplace catalog and entry",
-  },
-  {
-    file: "src/contexts/tools/domain/marketplace-catalog.ts",
-    imports: 2,
-    reason: "the Claude-style catalog reads each plugin manifest and writes the entry",
-  },
-];
+const BASELINE: readonly { readonly file: string; readonly imports: number; reason: string }[] = [];
 
 /** One `<file> (<imports>)` entry per domain file naming a file port, ports excepted. */
 function fileIoImports(bodies: ReadonlyMap<string, string>): string[] {

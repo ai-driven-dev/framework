@@ -1,6 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VALID_TOOL_IDS } from "../../../src/kernel/tool.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../same-instance.js";
 
 const installAiTool = vi.fn();
 const installIdeTool = vi.fn();
@@ -35,6 +37,7 @@ const { registerFrameworkCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = catalogOf();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -86,7 +89,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerFrameworkCommand(program);
+  registerFrameworkCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "framework", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -100,6 +103,7 @@ describe("aidd framework install", () => {
       force: false,
       version: "5.2.2",
       propagatePlugins: true,
+      tools: catalogOf(),
     });
     expect(installIdeTool).not.toHaveBeenCalled();
   });
@@ -157,6 +161,7 @@ describe("aidd framework install", () => {
   it("sends an IDE tool down its own install, with the manifest it loaded", async () => {
     expect(await run("install", "--tool", "vscode")).toEqual(["Installed vscode (2 files)"]);
     expect(installIdeTool).toHaveBeenCalledWith({
+      tools: catalogOf(),
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
       manifest: expect.anything(),
@@ -205,6 +210,7 @@ describe("aidd framework remove", () => {
     expect(uninstallAiTools).toHaveBeenCalledWith({
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
+      tools: catalogOf(),
     });
     expect(uninstallIdeTool).not.toHaveBeenCalled();
   });
@@ -226,6 +232,7 @@ describe("aidd framework remove", () => {
     expect(uninstallIdeTool).toHaveBeenCalledWith({
       toolId: "vscode",
       projectRoot: PROJECT_ROOT,
+      tools: catalogOf(),
     });
     expect(uninstallAiTools).not.toHaveBeenCalled();
   });
@@ -244,11 +251,13 @@ describe("aidd framework update", () => {
 
     expect(await run("update")).toEqual(["Updated claude (5 files)", "Updated vscode (2 files)"]);
     expect(updateAiTools).toHaveBeenCalledWith({
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       userForce: false,
       interactive: false,
     });
     expect(updateIdeTools).toHaveBeenCalledWith({
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       userForce: false,
       interactive: false,
@@ -264,6 +273,7 @@ describe("aidd framework update", () => {
     await run("update", "--tool", "claude", "--force");
 
     expect(updateAiTools).toHaveBeenCalledWith({
+      tools: catalogOf(),
       toolArg: "claude",
       projectRoot: PROJECT_ROOT,
       userForce: true,
@@ -276,6 +286,7 @@ describe("aidd framework update", () => {
     await run("update", "--tool", "vscode");
 
     expect(updateIdeTools).toHaveBeenCalledWith({
+      tools: catalogOf(),
       toolArg: "vscode",
       projectRoot: PROJECT_ROOT,
       userForce: false,
@@ -331,7 +342,10 @@ describe("aidd framework update", () => {
 describe("aidd framework rules", () => {
   it("reads this project's rules and says so when there are none", async () => {
     expect(await run("rules")).toEqual(["No rules installed for any AI tool."]);
-    expect(listInstalledRules).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT });
+    expect(listInstalledRules).toHaveBeenCalledWith({
+      projectRoot: PROJECT_ROOT,
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
+    });
   });
 
   it("prints the inventory as text a person reads", async () => {
@@ -369,7 +383,8 @@ describe("aidd framework — how every subcommand builds its graph and reports a
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
-      expect.anything()
+      expect.anything(),
+      sameInstance(CATALOG)
     );
   });
 
@@ -389,7 +404,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
 describe("aidd framework — the help surface", () => {
   function frameworkCommand(): Command {
     const program = new Command();
-    registerFrameworkCommand(program);
+    registerFrameworkCommand(program, CATALOG);
     const framework = program.commands.find((command) => command.name() === "framework");
     if (framework === undefined) throw new Error("framework command was not registered");
     return framework;

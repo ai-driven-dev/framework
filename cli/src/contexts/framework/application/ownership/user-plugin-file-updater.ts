@@ -6,13 +6,7 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import { compareSemver } from "../../../../kernel/semver.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
-import {
-  frameworkBuildModeFor,
-  getToolConfig,
-  globalFilesOf,
-  resolvePluginsCapability,
-} from "../../../tools/domain/registry.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import { InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
@@ -34,7 +28,7 @@ import { assertGlobalFilesWritable, readGlobalPluginFiles } from "./global-plugi
 
 export interface PlannedUserPluginFileUpdate {
   readonly plugin: InstalledPlugin;
-  readonly toolId: AiToolId;
+  readonly tool: AiToolProfile;
   readonly home: string;
   readonly baseDir: string;
   readonly files: readonly InstallationFile[];
@@ -52,42 +46,38 @@ export class UserPluginFileUpdater {
 
   async update(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string,
     logger: Logger
   ): Promise<InstalledPlugin | null> {
-    const plan = await this.planUpdate(plugin, toolId, projectRoot, logger);
+    const plan = await this.planUpdate(plugin, tool, projectRoot, logger);
     return plan === null ? null : this.applyUpdate(plan, logger);
   }
 
   async planUpdate(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     projectRoot: string,
     logger: Logger,
     rebuild = false
   ): Promise<PlannedUserPluginFileUpdate | null> {
+    const toolId = tool.toolId;
     const dist = await this.loader.loadLatest(plugin, projectRoot);
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
-    const { files, componentPaths } = await this.materializeFiles(
-      dist,
-      toolId,
-      plugin,
-      projectRoot
-    );
+    const { files, componentPaths } = await this.materializeFiles(dist, tool, plugin, projectRoot);
     const home = (this.builtDeps?.homedir ?? nodeHomedir)();
-    const present = await withoutMissingFiles(this.fs, plugin, toolId, home);
-    const oldSafe = await userScopeFilesSafeToDelete(this.fs, logger, present, toolId, home);
+    const present = await withoutMissingFiles(this.fs, plugin, tool, home);
+    const oldSafe = await userScopeFilesSafeToDelete(this.fs, logger, present, tool, home);
     if (oldSafe.size !== present.files.size) {
       throw new Error(
         `${toolId}: '${plugin.name}' has unsafe recorded files; update refused without dropping its machine claim.`
       );
     }
-    await this.assertWritable(plugin, toolId, files, home);
-    const baseDir = resolveBaseDirFromRecord("user", toolId, projectRoot, () => home);
+    await this.assertWritable(plugin, tool, files, home);
+    const baseDir = resolveBaseDirFromRecord("user", tool, projectRoot, () => home);
     return {
       plugin,
-      toolId,
+      tool,
       home,
       baseDir,
       files,
@@ -104,20 +94,20 @@ export class UserPluginFileUpdater {
   }
 
   async applyUpdate(plan: PlannedUserPluginFileUpdate, logger: Logger): Promise<InstalledPlugin> {
-    const present = await withoutMissingFiles(this.fs, plan.plugin, plan.toolId, plan.home);
+    const present = await withoutMissingFiles(this.fs, plan.plugin, plan.tool, plan.home);
     const oldSafe = await userScopeFilesSafeToDelete(
       this.fs,
       logger,
       present,
-      plan.toolId,
+      plan.tool,
       plan.home
     );
     if (oldSafe.size !== present.files.size || oldSafe.size !== plan.oldSafe.size) {
       throw new Error(
-        `${plan.toolId}: '${plan.plugin.name}' has unsafe recorded files since preflight; update refused before writing.`
+        `${plan.tool.toolId}: '${plan.plugin.name}' has unsafe recorded files since preflight; update refused before writing.`
       );
     }
-    await this.assertWritable(plan.plugin, plan.toolId, plan.files, plan.home);
+    await this.assertWritable(plan.plugin, plan.tool, plan.files, plan.home);
     await writePluginFiles([...plan.files], plan.baseDir, this.fs);
     const newPaths = new Set(plan.files.map((file) => file.relativePath));
     await deleteOldFiles(
@@ -132,27 +122,27 @@ export class UserPluginFileUpdater {
    * holds one plugin per subdirectory. Each layout has its own containment proof. */
   private async assertWritable(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     files: readonly InstallationFile[],
     home: string
   ): Promise<void> {
-    if (globalFilesOf(toolId) !== null) {
-      await assertGlobalFilesWritable(this.fs, toolId, plugin, plugin.name, files, home);
+    if (tool.plugins()?.globalFiles() != null) {
+      await assertGlobalFilesWritable(this.fs, tool, plugin, plugin.name, files, home);
       return;
     }
-    const baseDir = resolveBaseDirFromRecord("user", toolId, "", () => home);
+    const baseDir = resolveBaseDirFromRecord("user", tool, "", () => home);
     // A first install owns no file yet, and a restore may have lost the directory: it is created
     // so the containment proof has a real path to resolve. The name is one safe path segment.
     if (PLUGIN_NAME_REGEX.test(plugin.name)) {
       await this.fs.createDirectory(join(baseDir, plugin.name));
     }
-    await assertUserScopeWriteBoundary(this.fs, toolId, plugin.name, [...files], home);
-    await this.assertNewFilesDoNotCollide(plugin, toolId, baseDir, files);
+    await assertUserScopeWriteBoundary(this.fs, tool, plugin.name, [...files], home);
+    await this.assertNewFilesDoNotCollide(plugin, tool.toolId, baseDir, files);
   }
 
   private async assertNewFilesDoNotCollide(
     plugin: InstalledPlugin,
-    toolId: AiToolId,
+    toolId: AiToolProfile["toolId"],
     baseDir: string,
     files: readonly InstallationFile[]
   ): Promise<void> {
@@ -168,7 +158,7 @@ export class UserPluginFileUpdater {
 
   private async materializeFiles(
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<{ files: InstallationFile[]; componentPaths: ReadonlyMap<string, string> }> {
@@ -182,34 +172,31 @@ export class UserPluginFileUpdater {
       const { builtDir } = await this.builtDeps.ensureBuilt.execute({
         projectRoot,
         marketplace,
-        target: toolId,
-        mode: frameworkBuildModeFor(toolId),
+        target: tool.toolId,
+        mode: tool.frameworkBuildMode(),
       });
-      if (globalFilesOf(toolId) !== null) {
-        const files = await readGlobalPluginFiles(this.fs, this.hasher, builtDir, toolId, dist);
+      if (tool.plugins()?.globalFiles() != null) {
+        const files = await readGlobalPluginFiles(this.fs, this.hasher, builtDir, tool, dist);
         return { files, componentPaths: new Map() };
       }
       const built = await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, plugin.name);
       const files =
-        resolvePluginsCapability(toolId)?.deliversHooksToProject() === true
+        tool.plugins()?.deliversHooksToProject() === true
           ? withoutHooksPrefix(built, plugin.name)
           : built;
       return { files, componentPaths: new Map() };
     }
     // Without the built tree, translation would write a project's layout in the user directory.
-    if (globalFilesOf(toolId) !== null) {
+    if (tool.plugins()?.globalFiles() != null) {
       throw new Error(
-        `${toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt; run \`aidd setup --global\`.`
+        `${tool.toolId}: the shared framework source is not registered, so '${plugin.name}' cannot be rebuilt; run \`aidd setup --global\`.`
       );
     }
-    const toolConfig = getToolConfig(toolId);
     const forGlobalFiles =
-      resolvePluginsCapability(toolId)?.deliversHooksToProject() === true
-        ? withoutHooks(dist)
-        : dist;
+      tool.plugins()?.deliversHooksToProject() === true ? withoutHooks(dist) : dist;
     const translated = new PluginContentTranslator(this.hasher).translateWithComponentPaths(
       forGlobalFiles,
-      toolConfig
+      tool
     );
     return { files: translated.files, componentPaths: translated.componentPaths };
   }

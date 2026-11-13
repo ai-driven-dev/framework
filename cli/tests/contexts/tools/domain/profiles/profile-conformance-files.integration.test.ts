@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
 import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { isAiTool } from "../../../../../src/contexts/tools/domain/registry.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { describeProfileFileConformance } from "../../testing/profile-file-conformance.js";
 
@@ -35,7 +34,7 @@ describe("the profile files on disk", () => {
     const modules = await Promise.all(REGISTERED_PROFILES.map((p) => hooksModuleOf(p.toolId)));
     expect(modules.some((module) => module !== null)).toBe(true);
     expect(modules.some((module) => module === null)).toBe(true);
-    expect(REGISTERED_PROFILES.some(isAiTool)).toBe(true);
+    expect(REGISTERED_PROFILES.some((profile) => profile.kind === "ai")).toBe(true);
   });
 
   for (const profile of REGISTERED_PROFILES) {

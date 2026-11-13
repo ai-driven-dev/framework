@@ -15,6 +15,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project-a";
 const CATALOG = "aidd-framework";
@@ -281,6 +282,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
       });
 
       const result = await f.useCase.execute({
+        tools: registeredCatalog(),
         projectRoot: PROJECT_ROOT,
         marketplaceNames: [CATALOG],
       });
@@ -321,7 +323,10 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
       hostRefs: new Map([[FOREIGN_REF, { enabled: true }]]),
     });
 
-    const result = await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await fixture.useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(fixture.activator.refreshedCatalogs).toEqual([]);
     expect(fixture.activator.removedMarketplaces).toEqual([]);
@@ -338,7 +343,10 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
       hostRefs: new Map([[FOREIGN_REF, { enabled: true }]]),
     });
 
-    const result = await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await fixture.useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(fixture.activator.addedMarketplaces).toEqual([]);
     expect(fixture.activator.refreshedCatalogs).toEqual([]);
@@ -351,7 +359,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
   it("refreshes only an exact canonically owned catalogue without foreign refs", async () => {
     const fixture = makeSync(toolId, { machine: canonicallyOwned(toolId) });
 
-    await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
+    await fixture.useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(fixture.activator.refreshedCatalogs).toEqual([CATALOG]);
     expect(fixture.activator.enabledPlugins).toEqual([PLUGIN_REF]);
@@ -400,7 +408,10 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
       ]),
     });
 
-    const result = await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await fixture.useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(result.errors).toStrictEqual([]);
     expect(result.warnings).toStrictEqual([]);
@@ -475,7 +486,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
         hostReader,
       });
 
-      await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
+      await fixture.useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
       expect(fixture.activator.addedMarketplaces).toEqual([]);
       expect(fixture.activator.removedMarketplaces).toEqual([]);
@@ -498,7 +509,10 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
       hostRefs: new Map([[FOREIGN_REF, { enabled: true }]]),
     });
 
-    const result = await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await fixture.useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(fixture.activator.refreshedCatalogs).toEqual([]);
     expect(await fixture.fs.readFile(CACHE_WITNESS)).toBe("foreign bytes stay byte-for-byte");
@@ -512,7 +526,10 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
       hostRefs: new Map([[FOREIGN_REF, { enabled: true }]]),
     });
 
-    const result = await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
+    const result = await fixture.useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(fixture.activator.refreshedCatalogs).toEqual([]);
     expect(fixture.activator.addedMarketplaces).toEqual([]);
@@ -526,7 +543,7 @@ describe.each(["codex", "copilot"] as const)("%s native marketplace provenance",
   it("activates a freshly added AIDD ref without a redundant refresh", async () => {
     const fixture = makeSync(toolId);
 
-    await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
+    await fixture.useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(fixture.activator.addedMarketplaces).toEqual([`/built/${toolId}`]);
     expect(fixture.activator.enabledPlugins).toEqual([PLUGIN_REF]);

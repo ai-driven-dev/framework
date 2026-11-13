@@ -68,7 +68,10 @@ function makeUseCase(
 
 async function register(environment: InMemoryEnvironment): Promise<MarketplaceRefresh> {
   const { useCase, refresh } = makeUseCase(environment);
-  const flow = new SetupFlow({ projectRoot: PROJECT_ROOT });
+  const flow = new SetupFlow({
+    supportsUserScopeActivation: () => true,
+    projectRoot: PROJECT_ROOT,
+  });
   await useCase.registerIfPresent(flow, MarketplaceSourceMode.local("/framework-source"));
   return refresh;
 }
@@ -100,7 +103,10 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
         tokenProvider: { resolve: async () => null },
         releaseResolver: makeNoOpLatestResolver(false),
       });
-      const flow = new SetupFlow({ projectRoot: PROJECT_ROOT });
+      const flow = new SetupFlow({
+        supportsUserScopeActivation: () => true,
+        projectRoot: PROJECT_ROOT,
+      });
 
       const attempt = useCase.registerIfPresent(flow, MarketplaceSourceMode.remote("owner/repo"));
 
@@ -114,7 +120,10 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
       const { useCase } = makeUseCase(new InMemoryEnvironment(), {
         tokenProvider: { resolve: async () => null },
       });
-      const flow = new SetupFlow({ projectRoot: PROJECT_ROOT });
+      const flow = new SetupFlow({
+        supportsUserScopeActivation: () => true,
+        projectRoot: PROJECT_ROOT,
+      });
 
       const attempt = useCase.registerIfPresent(flow, MarketplaceSourceMode.remote("owner/repo"));
 
@@ -125,7 +134,10 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
   describe("registration options", () => {
     it("registers a local source at the project root, forcing the registration", async () => {
       const { useCase, register } = makeUseCase(new InMemoryEnvironment());
-      const flow = new SetupFlow({ projectRoot: PROJECT_ROOT });
+      const flow = new SetupFlow({
+        supportsUserScopeActivation: () => true,
+        projectRoot: PROJECT_ROOT,
+      });
 
       await useCase.registerIfPresent(flow, MarketplaceSourceMode.local("/framework-source"));
 
@@ -138,7 +150,10 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
 
     it("registers a remote source by repository and ref", async () => {
       const { useCase, register } = makeUseCase(new InMemoryEnvironment());
-      const flow = new SetupFlow({ projectRoot: PROJECT_ROOT });
+      const flow = new SetupFlow({
+        supportsUserScopeActivation: () => true,
+        projectRoot: PROJECT_ROOT,
+      });
 
       await useCase.registerIfPresent(flow, MarketplaceSourceMode.remote("owner/repo", "v1.0.0"));
 
@@ -157,7 +172,10 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
         () => "/user-config"
       );
       const { useCase } = makeUseCase(new InMemoryEnvironment(), { userSourceReferences });
-      const flow = new SetupFlow({ projectRoot: PROJECT_ROOT });
+      const flow = new SetupFlow({
+        supportsUserScopeActivation: () => true,
+        projectRoot: PROJECT_ROOT,
+      });
 
       await useCase.registerIfPresent(flow, MarketplaceSourceMode.local("/framework-source"));
 
@@ -173,7 +191,10 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
         userSourceReferences,
         registeredScope: "project",
       });
-      const flow = new SetupFlow({ projectRoot: PROJECT_ROOT });
+      const flow = new SetupFlow({
+        supportsUserScopeActivation: () => true,
+        projectRoot: PROJECT_ROOT,
+      });
 
       await useCase.registerIfPresent(flow, MarketplaceSourceMode.local("/framework-source"));
 

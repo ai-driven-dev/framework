@@ -65,9 +65,8 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
  */
 const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/framework/domain/tool-recommendations.ts", named: 4 },
-  { path: "src/contexts/tools/domain/capabilities/config-refs.ts", named: 1 },
+  { path: "src/contexts/tools/contract/config-refs.ts", named: 1 },
   { path: "src/presentation/commands/setup.ts", named: 2 },
-  { path: "src/runtime/assets/asset-loader.ts", named: 7 },
   // The record's tool vocabulary is the contract's: `codex` is admitted so a second tool's
   // reader needs no change to the record, and is not a list a new tool joins.
   { path: "src/contexts/telemetry/domain/usage-record.ts", named: 1 },
@@ -86,7 +85,8 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
 
 const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;
 const IDENTIFIER = /[A-Za-z_$][A-Za-z0-9_$]*/g;
-const ISOLATED_FROM_TOOLS = /^src\/contexts\/[^/]+\/(?:application\/|domain\/formats\/)/;
+const ISOLATED_FROM_TOOLS =
+  /^src\/contexts\/(?:[^/]+\/(?:application\/|domain\/formats\/)|tools\/domain\/(?:(?:sections|hooks|bridges|native-registration|profile)\/|profile\.ts$|marketplace-(?:catalog|entry)\.ts$)|tools\/contract\/)/;
 
 function words(identifier: string): string[] {
   return identifier
@@ -112,37 +112,25 @@ function toolIdentifiersIn(source: string, ids: readonly string[]): string[] {
 }
 
 /**
- * Files under `application/` or `domain/formats/` still naming a tool in an identifier, with
- * how many distinct identifiers; the list may only shrink, and a listed file may not take on
- * another.
+ * Files under `ISOLATED_FROM_TOOLS` still naming a tool in an identifier, with how many
+ * distinct identifiers; the list may only shrink, and a listed file may not take on another.
+ * The file under `tools/contract/` is the shared vocabulary itself: the config artifact names a
+ * profile consumes.
  */
 const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/distribution/application/fetch-marketplace-source-use-case.ts", named: 1 },
   { path: "src/contexts/distribution/application/marketplace-refresh-use-case.ts", named: 1 },
   { path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts", named: 1 },
   {
-    path: "src/contexts/framework/application/framework/translator/flat-mcp-materializer.ts",
-    named: 1,
-  },
-  {
     path: "src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.ts",
     named: 1,
   },
-  {
-    path: "src/contexts/framework/application/install/install-runtime-config-use-case.ts",
-    named: 1,
-  },
-  { path: "src/contexts/framework/application/ownership/project-plugin-cleanup.ts", named: 1 },
-  { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", named: 1 },
   { path: "src/contexts/framework/application/restore/restore-use-case.ts", named: 4 },
   { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", named: 2 },
   { path: "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts", named: 2 },
   { path: "src/contexts/telemetry/domain/formats/codex-transcript-usage.ts", named: 2 },
-  { path: "src/contexts/tools/domain/formats/opencode-mcp-merge.ts", named: 4 },
-  { path: "src/contexts/tools/domain/formats/plugin-root-token.ts", named: 2 },
-  { path: "src/contexts/tools/domain/formats/vscode-mcp-merge.ts", named: 1 },
+  { path: "src/contexts/tools/contract/config-refs.ts", named: 4 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 1 },
-  { path: "src/contexts/translate/domain/formats/plugin-root-token-rewrite.ts", named: 1 },
 ];
 
 describe("a tool identifier stays inside its own profile", () => {
@@ -226,10 +214,10 @@ describe("the guard itself", () => {
   });
 });
 
-describe("a tool never names an identifier in application or format code", () => {
+describe("a tool never names an identifier outside its profile, in the code every tool shares", () => {
   const scoped = () => sourceFiles().filter((file) => ISOLATED_FROM_TOOLS.test(file));
 
-  it("no application or format file declares or imports an identifier carrying a tool name", () => {
+  it("no shared file declares or imports an identifier carrying a tool name", () => {
     const ids = toolIds(sourceFiles());
     const violations = scoped().filter((file) => toolIdentifiersIn(read(file), ids).length > 0);
 

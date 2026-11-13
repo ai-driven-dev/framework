@@ -1,6 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
+import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../same-instance.js";
 
 const pluginRemove = vi.fn();
 const pluginList = vi.fn();
@@ -33,6 +35,7 @@ const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerPluginCommand } = await import("../../../src/presentation/commands/plugin.js");
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = catalogOf();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -74,7 +77,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerPluginCommand(program);
+  registerPluginCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "plugin", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -107,13 +110,13 @@ describe("aidd plugin — the group with no subcommand", () => {
 describe("aidd plugin list", () => {
   it("sweeps every installed tool when none was named", async () => {
     expect(await run("list")).toEqual(["claude:", "  aidd-dev@1.0.0"]);
-    expect(pluginList).toHaveBeenCalledWith({ toolIds: "all" });
+    expect(pluginList).toHaveBeenCalledWith({ toolIds: "all", tools: CATALOG });
   });
 
   it("narrows to the one tool that was named", async () => {
     await run("list", "--tool", "codex");
 
-    expect(pluginList).toHaveBeenCalledWith({ toolIds: ["codex"] });
+    expect(pluginList).toHaveBeenCalledWith({ toolIds: ["codex"], tools: CATALOG });
   });
 
   it("refuses a tool no profile declares, before any use case runs", async () => {
@@ -138,9 +141,11 @@ describe("aidd plugin remove", () => {
       toolIds: "all",
       projectRoot: PROJECT_ROOT,
       scope: "project",
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredCatalog(),
       marketplaceNames: undefined,
     });
   });
@@ -170,6 +175,7 @@ describe("aidd plugin install", () => {
     expect(pluginInstall).toHaveBeenCalledWith({
       pluginArg: "aidd-dev",
       toolIds: "all",
+      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       interactive: false,
       fromMarketplace: undefined,
@@ -178,6 +184,7 @@ describe("aidd plugin install", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredCatalog(),
       marketplaceNames: undefined,
     });
   });
@@ -196,7 +203,8 @@ describe("aidd plugin install", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false, token: "ghp_x" },
-      expect.anything()
+      expect.anything(),
+      sameInstance(CATALOG)
     );
     expect(pluginInstall.mock.calls[0][0]).not.toHaveProperty("token");
   });
@@ -209,6 +217,7 @@ describe("aidd plugin install", () => {
     );
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredCatalog(),
       marketplaceNames: ["market-b"],
     });
   });
@@ -288,6 +297,7 @@ describe("aidd plugin update", () => {
       toolIds: [toolId],
       projectRoot: PROJECT_ROOT,
       scope: "user",
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(pluginUpdate).not.toHaveBeenCalled();
   });
@@ -299,9 +309,11 @@ describe("aidd plugin update", () => {
       toolIds: "all",
       projectRoot: PROJECT_ROOT,
       scope: "project",
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredCatalog(),
       marketplaceNames: undefined,
     });
   });
@@ -340,7 +352,8 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
-      expect.anything()
+      expect.anything(),
+      sameInstance(CATALOG)
     );
   });
 });
@@ -348,7 +361,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
 describe("aidd plugin — the help surface", () => {
   function pluginCommand(): Command {
     const program = new Command();
-    registerPluginCommand(program);
+    registerPluginCommand(program, CATALOG);
     const plugin = program.commands.find((command) => command.name() === "plugin");
     if (plugin === undefined) throw new Error("plugin command was not registered");
     return plugin;

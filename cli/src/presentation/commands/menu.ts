@@ -1,4 +1,5 @@
 import readline from "node:readline";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { resolveProjectRoot } from "../../runtime/project-root/project-root.js";
 import { createMenuDeps } from "../../runtime/wiring/framework.js";
 import { printBanner } from "../display/menu-display.js";
@@ -29,14 +30,14 @@ export function routeMenuError(error: unknown, errorHandler: ErrorHandler): neve
   return errorHandler.handle(error);
 }
 
-export async function runMenuLoop(): Promise<never> {
+export async function runMenuLoop(tools: ToolCatalog): Promise<never> {
   const output = new CLIOutput();
   printBanner(output);
   const { manifestRepo, prompter } = createMenuDeps(resolveProjectRoot());
   const errorHandler = new ErrorHandler(output);
   for (;;) {
     try {
-      const result = await new InteractiveMenuUseCase(manifestRepo, prompter).execute();
+      const result = await new InteractiveMenuUseCase(manifestRepo, prompter, tools).execute();
       if (result.command[0] === "exit") process.exit(0);
       const exitCode = await spawnCliCommand(result.command);
       await waitForEnter();

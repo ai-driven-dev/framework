@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ArtifactContract } from "../../../../../../src/contexts/tools/domain/build-contract.js";
+import type { ArtifactContract } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { buildClaudeFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/claude/build.js";
 
 function merge(pluginHooks: string): unknown {

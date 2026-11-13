@@ -5,6 +5,7 @@ import type { HostActions } from "../../../../../src/contexts/host-registration/
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
 
 const REF = "test-plugin@real-catalog";
 const HOST = "real-catalog";
@@ -35,7 +36,9 @@ describe("native host registration gate", () => {
           ],
         ])
       );
-      await expect(gate.requireTargetedUpdate("copilot", claim, "/A", recorded)).rejects.toThrow(
+      await expect(
+        gate.requireTargetedUpdate(registeredAiProfile("copilot"), claim, "/A", recorded)
+      ).rejects.toThrow(
         `copilot: ref '${REF}' has no canonical catalogue source proof; update refused.`
       );
       expect(activator.updatedPlugins).toEqual([]);
@@ -65,9 +68,9 @@ describe("native host registration gate", () => {
       );
       const promise =
         operation === "update"
-          ? gate.requireTargetedUpdate("copilot", claim, "/A", registrations)
+          ? gate.requireTargetedUpdate(registeredAiProfile("copilot"), claim, "/A", registrations)
           : gate.planMarketplaceRemoval(
-              "copilot",
+              registeredAiProfile("copilot"),
               registrations,
               registrations.marketplaces[0],
               "/A"
@@ -101,7 +104,7 @@ describe("native host registration gate", () => {
       ])
     );
     const plan = await gate.planMarketplaceRemoval(
-      "copilot",
+      registeredAiProfile("copilot"),
       { binary: "copilot", marketplaces: [registration], pluginRefs: [] },
       registration,
       "/A"
@@ -149,7 +152,12 @@ describe("native host registration gate", () => {
     );
 
     await expect(
-      gate.planMarketplaceRemoval("codex", provenCodex, provenCodex.marketplaces[0], "/project-b")
+      gate.planMarketplaceRemoval(
+        registeredAiProfile("codex"),
+        provenCodex,
+        provenCodex.marketplaces[0],
+        "/project-b"
+      )
     ).rejects.toThrow(/current host source differs.*reconcile manually/);
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.uninstalledPlugins).toEqual([]);
@@ -165,7 +173,7 @@ describe("native host registration gate", () => {
 
     await expect(
       gate.planMarketplaceRemoval(
-        "codex",
+        registeredAiProfile("codex"),
         { ...provenCodex, marketplaces: [{ alias: "alias", hostName: HOST }] },
         { alias: "alias", hostName: HOST },
         "/project-b"
@@ -180,9 +188,9 @@ describe("native host registration gate", () => {
       new Map([["codex", activator]]),
       new Map([["codex", reader(enabled())]])
     );
-    await expect(gate.requireTargetedUpdate("codex", claim, "/A")).rejects.toThrow(
-      /does not support targeted native plugin update/
-    );
+    await expect(
+      gate.requireTargetedUpdate(registeredAiProfile("codex"), claim, "/A")
+    ).rejects.toThrow(/does not support targeted native plugin update/);
     expect(activator.updatedPlugins).toEqual([]);
   });
 
@@ -210,9 +218,9 @@ describe("native host registration gate", () => {
       ),
       new NativeHostRegistrationGate(new Map([["copilot", activator]]), new Map()),
     ]) {
-      await expect(gate.requireTargetedUpdate("copilot", claim, "/A")).rejects.toThrow(
-        /without its CLI and readable host registry/
-      );
+      await expect(
+        gate.requireTargetedUpdate(registeredAiProfile("copilot"), claim, "/A")
+      ).rejects.toThrow(/without its CLI and readable host registry/);
     }
     for (const registry of [
       reader(),
@@ -223,17 +231,17 @@ describe("native host registration gate", () => {
         new Map([["copilot", activator]]),
         new Map([["copilot", registry]])
       );
-      await expect(gate.requireTargetedUpdate("copilot", claim, "/A")).rejects.toThrow(
-        /not provably enabled/
-      );
+      await expect(
+        gate.requireTargetedUpdate(registeredAiProfile("copilot"), claim, "/A")
+      ).rejects.toThrow(/not provably enabled/);
     }
     const gate = new NativeHostRegistrationGate(
       new Map([["copilot", activator]]),
       new Map([["copilot", reader(enabled())]])
     );
-    await expect(gate.requireTargetedUpdate("copilot", claim, "/A", registrations)).rejects.toThrow(
-      /legacy claim has no source proof|source reader unavailable/
-    );
+    await expect(
+      gate.requireTargetedUpdate(registeredAiProfile("copilot"), claim, "/A", registrations)
+    ).rejects.toThrow(/legacy claim has no source proof|source reader unavailable/);
     expect(activator.updatedPlugins).toEqual([]);
   });
 
@@ -249,7 +257,12 @@ describe("native host registration gate", () => {
       new NativeHostRegistrationGate(new Map([["copilot", activator]]), new Map()),
     ]) {
       await expect(
-        gate.planMarketplaceRemoval("copilot", registrations, registration, "/A")
+        gate.planMarketplaceRemoval(
+          registeredAiProfile("copilot"),
+          registrations,
+          registration,
+          "/A"
+        )
       ).rejects.toThrow(/CLI or host registry unavailable/);
     }
     for (const registry of [
@@ -263,7 +276,12 @@ describe("native host registration gate", () => {
         new Map([["codex", hostSource(provenCodex.marketplaces[0].provenance.source)]])
       );
       await expect(
-        gate.planMarketplaceRemoval("codex", provenCodex, provenCodex.marketplaces[0], "/A")
+        gate.planMarketplaceRemoval(
+          registeredAiProfile("codex"),
+          provenCodex,
+          provenCodex.marketplaces[0],
+          "/A"
+        )
       ).rejects.toThrow(/host plugin registry|still enabled/);
     }
   });
@@ -278,7 +296,12 @@ describe("native host registration gate", () => {
       new Map([["codex", hostSource(provenCodex.marketplaces[0].provenance.source)]])
     );
     await expect(
-      gate.planMarketplaceRemoval("codex", provenCodex, provenCodex.marketplaces[0], "/A")
+      gate.planMarketplaceRemoval(
+        registeredAiProfile("codex"),
+        provenCodex,
+        provenCodex.marketplaces[0],
+        "/A"
+      )
     ).rejects.toThrow(/foreign host ref 'foreign@real-catalog'/);
     const safe = new NativeHostRegistrationGate(
       new Map([["codex", activator]]),
@@ -286,10 +309,15 @@ describe("native host registration gate", () => {
       new Map([["codex", hostSource(provenCodex.marketplaces[0].provenance.source)]])
     );
     expect(
-      await safe.planMarketplaceRemoval("codex", provenCodex, provenCodex.marketplaces[0], "/A")
+      await safe.planMarketplaceRemoval(
+        registeredAiProfile("codex"),
+        provenCodex,
+        provenCodex.marketplaces[0],
+        "/A"
+      )
     ).toMatchObject({ activator, refs: [claim] });
     const plan = await safe.planMarketplaceRemoval(
-      "codex",
+      registeredAiProfile("codex"),
       provenCodex,
       provenCodex.marketplaces[0],
       "/A"

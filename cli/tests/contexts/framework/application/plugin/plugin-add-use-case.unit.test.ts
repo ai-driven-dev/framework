@@ -20,6 +20,8 @@ import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensur
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -50,7 +52,10 @@ function buildAddUseCase(
   return new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     logger,
     registry,
@@ -82,6 +87,7 @@ function localAdd(toolId: "claude" | "opencode", path = PLUGIN_FIXTURE, replace?
     projectRoot: PROJECT_ROOT,
     interactive: false,
     replace,
+    tools: catalogOf(),
   };
 }
 
@@ -96,6 +102,7 @@ describe("PluginAddUseCase", () => {
       await initAndInstall(deps, PROJECT_ROOT, "claude");
       const useCase = await makeUseCase(deps);
       await useCase.execute({
+        tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -116,6 +123,7 @@ describe("PluginAddUseCase", () => {
       await initAndInstall(deps, PROJECT_ROOT, "claude");
       const useCase = await makeUseCase(deps);
       await useCase.execute({
+        tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -123,6 +131,7 @@ describe("PluginAddUseCase", () => {
       });
       await expect(
         useCase.execute({
+          tools: catalogOf(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
           toolIds: ["claude"],
           projectRoot: PROJECT_ROOT,
@@ -152,7 +161,7 @@ describe("PluginAddUseCase", () => {
         deps.manifestRepo,
         new PluginDistributionLoader(
           deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs)
+          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
         ),
         deps.hasher,
         deps.logger,
@@ -161,6 +170,7 @@ describe("PluginAddUseCase", () => {
         deps.userManifestRepo
       );
       await useCase.execute({
+        tools: catalogOf(),
         source: {
           kind: "git-subdir",
           url: "https://github.com/ai-driven-dev/framework.git",
@@ -198,7 +208,7 @@ describe("PluginAddUseCase", () => {
         deps.manifestRepo,
         new PluginDistributionLoader(
           deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs)
+          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
         ),
         deps.hasher,
         deps.logger,
@@ -208,6 +218,7 @@ describe("PluginAddUseCase", () => {
       );
       await expect(
         useCase.execute({
+          tools: catalogOf(),
           source: {
             kind: "git-subdir",
             url: "https://github.com/ai-driven-dev/framework.git",
@@ -241,7 +252,7 @@ describe("PluginAddUseCase", () => {
         deps.manifestRepo,
         new PluginDistributionLoader(
           deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs)
+          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
         ),
         deps.hasher,
         deps.logger,
@@ -250,6 +261,7 @@ describe("PluginAddUseCase", () => {
         deps.userManifestRepo
       );
       await useCase.execute({
+        tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -301,7 +313,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -310,6 +322,7 @@ describe("PluginAddUseCase", () => {
           deps.userManifestRepo
         );
         await useCase.execute({
+          tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: ["opencode"],
           projectRoot: PROJECT_ROOT,
@@ -342,7 +355,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -351,6 +364,7 @@ describe("PluginAddUseCase", () => {
           deps.userManifestRepo
         );
         await useCase.execute({
+          tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: ["opencode"],
           projectRoot: PROJECT_ROOT,
@@ -382,7 +396,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -391,6 +405,7 @@ describe("PluginAddUseCase", () => {
           deps.userManifestRepo
         );
         await useCase.execute({
+          tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: ["cursor"],
           projectRoot: PROJECT_ROOT,
@@ -420,6 +435,7 @@ describe("PluginAddUseCase", () => {
 
       async function addForCursor(deps: Deps, logger: Logger, replace?: boolean): Promise<void> {
         await buildAddUseCase(deps, await makeGithubRegistry(PROJECT_ROOT), logger).execute({
+          tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: ["cursor"],
           projectRoot: PROJECT_ROOT,
@@ -500,6 +516,7 @@ describe("PluginAddUseCase", () => {
         deps.fs.setFile(cursorSkillAt(), "# Their own skill");
 
         await buildAddUseCase(deps).execute({
+          tools: catalogOf(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
           toolIds: ["cursor"],
           projectRoot: PROJECT_ROOT,
@@ -548,7 +565,7 @@ describe("PluginAddUseCase", () => {
           projectBRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           logger,
@@ -556,6 +573,7 @@ describe("PluginAddUseCase", () => {
           fakeEnsureBuiltMarketplace(),
           deps.userManifestRepo
         ).execute({
+          tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: ["cursor"],
           projectRoot: "/B",
@@ -588,7 +606,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -597,6 +615,7 @@ describe("PluginAddUseCase", () => {
           deps.userManifestRepo
         );
         await useCase.execute({
+          tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: ["codex"],
           projectRoot: PROJECT_ROOT,
@@ -623,7 +642,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -632,6 +651,7 @@ describe("PluginAddUseCase", () => {
           deps.userManifestRepo
         );
         await useCase.execute({
+          tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: ["codex"],
           projectRoot: PROJECT_ROOT,
@@ -660,7 +680,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -669,6 +689,7 @@ describe("PluginAddUseCase", () => {
           deps.userManifestRepo
         );
         await useCase.execute({
+          tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: ["claude"],
           projectRoot: PROJECT_ROOT,
@@ -694,7 +715,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -703,6 +724,7 @@ describe("PluginAddUseCase", () => {
           deps.userManifestRepo
         );
         await useCase.execute({
+          tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: ["claude"],
           projectRoot: PROJECT_ROOT,
@@ -731,7 +753,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -740,6 +762,7 @@ describe("PluginAddUseCase", () => {
           deps.userManifestRepo
         );
         await useCase.execute({
+          tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: ["copilot"],
           projectRoot: PROJECT_ROOT,
@@ -785,7 +808,7 @@ describe("PluginAddUseCase", () => {
           deps.manifestRepo,
           new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs)
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           deps.hasher,
           deps.logger,
@@ -794,6 +817,7 @@ describe("PluginAddUseCase", () => {
           deps.userManifestRepo
         );
         await useCase.execute({
+          tools: catalogOf(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
           toolIds: ["opencode"],
           projectRoot: PROJECT_ROOT,
@@ -846,6 +870,7 @@ describe("PluginAddUseCase", () => {
         deps.userManifestRepo
       );
       await useCase.execute({
+        tools: catalogOf(),
         source: { kind: "local", path: "/some-plugin" },
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,
@@ -887,7 +912,10 @@ describe("PluginAddUseCase", () => {
       await initAndInstall(deps, PROJECT_ROOT, "claude");
       const useCase = await makeUseCase(deps);
 
-      await useCase.execute({ ...localAdd("claude"), marketplace: "ghost" });
+      await useCase.execute({
+        ...localAdd("claude"),
+        marketplace: "ghost",
+      });
 
       const installed = deps.manifestRepo
         .getCurrent()
@@ -922,6 +950,7 @@ describe("PluginAddUseCase", () => {
         marketplace: "aidd-framework",
         interactive: false,
         pluginMetadata: { name: "sample-plugin", version: "1.0.0", strict: false },
+        tools: catalogOf(),
       };
       await useCase.execute(options);
       await useCase.execute({ ...options, replace });
@@ -957,6 +986,7 @@ describe("PluginAddUseCase", () => {
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
 
       await buildAddUseCase(deps, registry).execute({
+        tools: catalogOf(),
         source: GITHUB_SOURCE,
         toolIds: ["opencode"],
         projectRoot: PROJECT_ROOT,
@@ -1031,7 +1061,10 @@ describe("PluginAddUseCase", () => {
       await initAndInstall(deps, PROJECT_ROOT, "claude");
       const useCase = await makeUseCase(deps);
 
-      await useCase.execute({ ...localAdd("claude"), requiredVersion: "1.0.0" });
+      await useCase.execute({
+        ...localAdd("claude"),
+        requiredVersion: "1.0.0",
+      });
 
       expect(pluginNames(deps, "claude")).toStrictEqual(["sample-plugin"]);
     });
@@ -1070,6 +1103,7 @@ describe("PluginAddUseCase", () => {
       await saveMarketplace(registry, "local-mkt", { kind: "local", path: "/mkt-source" });
 
       await buildAddUseCase(deps, registry).execute({
+        tools: catalogOf(),
         source: GITHUB_SOURCE,
         toolIds: ["claude"],
         projectRoot: PROJECT_ROOT,

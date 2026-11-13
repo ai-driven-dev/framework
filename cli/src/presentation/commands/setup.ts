@@ -3,16 +3,10 @@ import { type Command, Option } from "commander";
 import { MarketplaceSourceMode } from "../../contexts/distribution/domain/marketplace-source-mode.js";
 import { SetupUseCase } from "../../contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
-import {
-  assertToolIdsMatchCategory,
-  copiesPluginFilesGlobally,
-  getAllRegisteredTools,
-  nativeActivationOf,
-  resolvePluginsCapability,
-  supportsUserScopeActivation,
-} from "../../contexts/tools/domain/registry.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { ToolId } from "../../kernel/tool.js";
-import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../kernel/tool.js";
+import { assertToolIdsMatchCategory, IDE_TOOL_IDS, isIdeToolId } from "../../kernel/tool.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printDetectedContext,
@@ -66,10 +60,11 @@ export function expandAllKeyword(raw: string | undefined, all: readonly ToolId[]
  * still takes AI tools alone. Each id lands in the list its category decides. */
 export function parseToolIds(
   cmdOptions: SetupCmdOptions,
-  errorHandler: ErrorHandler
+  errorHandler: ErrorHandler,
+  tools: ToolCatalog
 ): { aiTools: ToolId[]; ideTools: ToolId[] } | null {
-  const aiIds = expandAllKeyword(cmdOptions.ai, AI_TOOL_IDS);
-  const ids = expandAllKeyword(cmdOptions.ide, [...AI_TOOL_IDS, ...IDE_TOOL_IDS]);
+  const aiIds = expandAllKeyword(cmdOptions.ai, tools.aiIdsInCanonicalOrder());
+  const ids = expandAllKeyword(cmdOptions.ide, [...tools.aiIdsInCanonicalOrder(), ...IDE_TOOL_IDS]);
   try {
     if (aiIds.length > 0 && cmdOptions.ai?.trim() !== "all")
       assertToolIdsMatchCategory(aiIds, "ai");
@@ -77,9 +72,8 @@ export function parseToolIds(
     errorHandler.handle(e);
     return null;
   }
-  const isIde = (id: ToolId) => (IDE_TOOL_IDS as readonly string[]).includes(id);
   const unique = [...new Set([...aiIds, ...ids])];
-  return { aiTools: unique.filter((id) => !isIde(id)), ideTools: unique.filter(isIde) };
+  return { aiTools: unique.filter((id) => !isIdeToolId(id)), ideTools: unique.filter(isIdeToolId) };
 }
 
 type PluginsMode = "interactive" | "all" | "recommended" | "named" | "none";
@@ -100,24 +94,29 @@ export function parsePluginsFlag(
   return { mode: "named", names };
 }
 
+function activatesAtUserScope(profile: ToolProfile): profile is AiToolProfile {
+  return profile.kind === "ai" && profile.supportsUserScopeActivation();
+}
+
 /** What `--global` does for each registered tool, read from its profile. */
-export function globalSetupHelp(): string {
-  const tools = [...getAllRegisteredTools().keys()].filter(supportsUserScopeActivation).sort();
-  const native = tools.filter((id) => nativeActivationOf(id) !== undefined);
-  const copying = tools.filter(copiesPluginFilesGlobally);
-  const where = (id: ToolId) =>
-    resolvePluginsCapability(id)?.userPluginsBaseDir("~")?.replaceAll("\\", "/");
+export function globalSetupHelp(catalog: ToolCatalog): string {
+  const global = catalog.sortedById().filter(activatesAtUserScope);
+  const tools = global.map((profile) => profile.toolId);
+  const native = global.filter((profile) => profile.nativeActivation() !== undefined);
+  const copying = global.filter((profile) => profile.plugins()?.copiesFilesGlobally());
+  const where = (profile: AiToolProfile) =>
+    profile.plugins()?.userPluginsBaseDir("~")?.replaceAll("\\", "/");
   return [
     "",
     "Global:",
     `  Pass --ide ${tools.join(",")} (one or more, no editor) and --plugins all, recommended, none or names.`,
-    `  ${native.join(", ")} enable the plugins through their own CLI, which must be on PATH.`,
-    `  ${copying.map((id) => `${id} gets their files in ${where(id)}`).join(", ")}.`,
+    `  ${native.map((p) => p.toolId).join(", ")} enable the plugins through their own CLI, which must be on PATH.`,
+    `  ${copying.map((p) => `${p.toolId} gets their files in ${where(p)}`).join(", ")}.`,
     "  `aidd sync --global` refreshes them from the framework source.",
   ].join("\n");
 }
 
-export function registerSetupCommand(program: Command): void {
+export function registerSetupCommand(program: Command, catalog: ToolCatalog): void {
   program
     .command("setup")
     .description(
@@ -143,14 +142,14 @@ export function registerSetupCommand(program: Command): void {
         "requirements below"
     )
     .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp())
-    .addHelpText("after", globalSetupHelp)
+    .addHelpText("after", () => globalSetupHelp(catalog))
     .action(async (cmdOptions: SetupCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
 
       const source = parseSourceFlag(cmdOptions, output);
       const scope = cmdOptions.global === true ? "user" : parseScopeFlag(cmdOptions.scope, output);
-      const toolIds = parseToolIds(cmdOptions, errorHandler);
+      const toolIds = parseToolIds(cmdOptions, errorHandler, catalog);
       if (toolIds === null) return;
 
       const hasScriptingFlags = !!(
@@ -173,6 +172,7 @@ export function registerSetupCommand(program: Command): void {
       try {
         const flow = new SetupFlow({
           projectRoot,
+          supportsUserScopeActivation: (id) => activatesAtUserScope(catalog.profile(id)),
           source,
           aiTools: toolIds.aiTools,
           ideTools: toolIds.ideTools,
@@ -186,7 +186,7 @@ export function registerSetupCommand(program: Command): void {
 
         if (interactive) printWelcomeBanner(output);
 
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
 
         const result = await new SetupUseCase(
           deps.fs,
@@ -199,7 +199,7 @@ export function registerSetupCommand(program: Command): void {
           deps.setupToolsPromptUseCase,
           deps.projectContextDetector,
           deps.setupMachineScopeUseCase
-        ).execute(flow);
+        ).execute(flow, catalog);
 
         if (interactive && result.context !== undefined) {
           printDetectedContext(output, result.context.describe());

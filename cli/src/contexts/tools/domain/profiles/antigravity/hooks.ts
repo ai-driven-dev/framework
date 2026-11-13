@@ -5,7 +5,6 @@ import { ANTIGRAVITY_DIRECTORY } from "./antigravity-paths.js";
 
 export const ANTIGRAVITY_HOOKS = declareHooks("antigravity", ANTIGRAVITY_DIRECTORY, adapter, {
   events: { SessionStart: "SessionStart" },
-  undeclaredEvents: "skipped",
   // Claude and `agy` name their tools differently, so only the tool-free event is carried over.
   // `agy` reads hooks only from the project's `.agents/hooks.json`, keyed by hook name, and runs
   // each handler from `<repo>/.agents`.

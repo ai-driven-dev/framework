@@ -3,13 +3,15 @@ import {
   recommendAiTools,
   recommendIdeTools,
 } from "../../contexts/framework/domain/tool-recommendations.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
-import { AI_TOOL_IDS, type AiToolId, IDE_TOOL_IDS, type IdeToolId } from "../../kernel/tool.js";
+import { type AiToolId, IDE_TOOL_IDS, type IdeToolId } from "../../kernel/tool.js";
 
 export interface SetupToolsPromptOptions {
   interactive: boolean;
   aiTools: readonly AiToolId[];
   ideTools: readonly IdeToolId[];
+  tools: ToolCatalog;
   context?: ProjectContext;
 }
 
@@ -25,14 +27,17 @@ export class SetupToolsPromptUseCase {
     if (!options.interactive || options.aiTools.length > 0 || options.ideTools.length > 0) {
       return { aiTools: options.aiTools, ideTools: options.ideTools };
     }
-    return this.promptTools(options.context);
+    return this.promptTools(options.tools, options.context);
   }
 
-  private async promptTools(context?: ProjectContext): Promise<SetupToolsPromptResult> {
+  private async promptTools(
+    tools: ToolCatalog,
+    context?: ProjectContext
+  ): Promise<SetupToolsPromptResult> {
     const aiRecs = recommendAiTools(context);
     const ideRecs = recommendIdeTools(context);
     const aiTools = await this.prompter.checkbox<AiToolId>("Select AI tools to install:", [
-      ...AI_TOOL_IDS.map((id) => ({
+      ...tools.aiIdsInCanonicalOrder().map((id) => ({
         name: aiRecs.includes(id) ? `${id} (recommended)` : id,
         value: id,
         checked: aiRecs.includes(id),

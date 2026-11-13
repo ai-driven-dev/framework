@@ -1,6 +1,6 @@
 import { ManifestValidationError, NoManifestError } from "../../../../kernel/errors.js";
-import type { ToolCategory } from "../../../../kernel/tool.js";
-import { toolIdsForCategory } from "../../../tools/domain/registry.js";
+import { type ToolCategory, toolIdsForCategory } from "../../../../kernel/tool.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   DoctorIssue,
   DoctorReport,
@@ -20,6 +20,7 @@ export interface DoctorOptions {
   projectRoot: string;
   category?: ToolCategory;
   pluginName?: string;
+  tools: ToolCatalog;
 }
 
 export class DoctorUseCase {
@@ -34,15 +35,16 @@ export class DoctorUseCase {
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
-    const { projectRoot, category, pluginName } = options;
+    const { projectRoot, category, pluginName, tools } = options;
     const manifest = await this.loadManifest();
     const allowedIds = category ? new Set(toolIdsForCategory(category) as readonly string[]) : null;
     const toolHealth = this.buildToolHealth(manifest, allowedIds);
-    const issues = await this.collectIssues(manifest, projectRoot, allowedIds, category);
+    const issues = await this.collectIssues(manifest, projectRoot, allowedIds, tools, category);
     const pluginIssues = await this.plugin.execute({
       manifest,
       projectRoot,
       allowedIds,
+      tools,
       pluginName,
     });
     return this.buildReport(toolHealth, issues, pluginIssues);
@@ -76,6 +78,7 @@ export class DoctorUseCase {
     manifest: Manifest,
     projectRoot: string,
     allowedIds: Set<string> | null,
+    tools: ToolCatalog,
     category?: ToolCategory
   ): Promise<DoctorIssue[]> {
     const trackedFileList = this.trackedFiles.collectTrackedFiles(manifest, allowedIds);
@@ -88,9 +91,9 @@ export class DoctorUseCase {
         allowedIds,
         trackedFiles: trackedFileList,
       })),
-      ...(await this.registration.execute({ manifest, projectRoot, allowedIds })),
+      ...(await this.registration.execute({ manifest, projectRoot, allowedIds, tools })),
     ];
-    if (!category) issues.push(...(await this.layout.execute({ manifest, projectRoot })));
+    if (!category) issues.push(...(await this.layout.execute({ manifest, projectRoot, tools })));
     return issues;
   }
 

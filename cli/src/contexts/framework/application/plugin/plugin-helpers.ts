@@ -5,7 +5,7 @@ import type { InstallationFile } from "../../../../kernel/file.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin, PluginScope } from "../../domain/plugins/installed-plugin.js";
@@ -49,13 +49,13 @@ export async function deleteOldFiles(
 export async function deletePluginFilesForTool(
   files: ReadonlyMap<string, string>,
   scope: PluginScope,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   projectRoot: string,
   fs: FileWriter,
   ownerScope: "project" | "user" = "project"
 ): Promise<string[]> {
   if (scope === "user" && ownerScope !== "user") return [];
-  const baseDir = resolveBaseDirFromRecord(scope, toolId, projectRoot, nodeHomedir);
+  const baseDir = resolveBaseDirFromRecord(scope, tool, projectRoot, nodeHomedir);
   const deleted: string[] = [];
   for (const relativePath of files.keys()) {
     const fullPath = join(baseDir, relativePath);
@@ -91,16 +91,16 @@ export async function isPluginFileAtDesiredState(
 export async function materializeViaTranslator(
   translator: PluginTranslator,
   dist: PluginDistribution,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   plugin: InstalledPlugin,
   projectRoot: string,
   manifest: Manifest,
   hooksGuard: ProjectHooksGuard = {}
 ): Promise<number> {
-  manifest.removePlugin(toolId, plugin.name);
+  manifest.removePlugin(tool.toolId, plugin.name);
   const { written } = await translator.addPlugin(
     dist,
-    toolId,
+    tool,
     plugin.source,
     projectRoot,
     manifest,

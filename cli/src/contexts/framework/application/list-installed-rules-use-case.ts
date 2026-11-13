@@ -1,26 +1,18 @@
 import { join } from "node:path";
 import { posixRelative } from "../../../kernel/paths.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../kernel/tool.js";
-import { getToolConfig, isAiTool } from "../../tools/domain/registry.js";
+import type { AiToolId } from "../../../kernel/tool.js";
+import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { InstalledRule } from "../domain/installed-rule.js";
 import { toInstalledRule } from "../domain/installed-rule.js";
 
 export interface ListInstalledRulesInput {
   readonly projectRoot: string;
+  readonly tools: ToolCatalog;
 }
 
 export interface ListInstalledRulesResult {
   readonly rules: readonly InstalledRule[];
-}
-
-/** Where this tool's installed rules live, asked of the tool. `undefined` for one that
- * registers no rules capability at all, and for one whose installer answers no path — both
- * mean there is nothing to scan, and neither is a directory guessed here. */
-function locationOf(toolId: AiToolId): { directory: string; extension: string } | undefined {
-  const tool = getToolConfig(toolId);
-  if (!isAiTool(tool)) return undefined;
-  return tool.section("rules")?.installedLocation() ?? undefined;
 }
 
 /** `/`-separated whatever the platform hands back, because the path is data a caller reads
@@ -39,9 +31,9 @@ export class ListInstalledRulesUseCase {
 
   async execute(input: ListInstalledRulesInput): Promise<ListInstalledRulesResult> {
     const rules: InstalledRule[] = [];
-    for (const toolId of AI_TOOL_IDS) {
-      const location = locationOf(toolId);
-      if (location === undefined) continue;
+    for (const toolId of input.tools.aiIdsInCanonicalOrder()) {
+      const location = input.tools.aiProfile(toolId).installedRulesLocation();
+      if (location === null) continue;
       rules.push(...(await this.rulesUnder(input.projectRoot, toolId, location)));
     }
     return { rules };

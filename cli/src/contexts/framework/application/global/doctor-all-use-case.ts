@@ -1,3 +1,4 @@
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { DoctorReport } from "../../domain/doctor.js";
 import type { DoctorUseCase } from "../doctor/doctor-use-case.js";
 import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
@@ -14,15 +15,19 @@ export interface DoctorAllResult {
 export class DoctorAllUseCase {
   constructor(private readonly doctorUseCase: DoctorUseCase) {}
 
-  async execute(projectRoot: string, pluginName?: string): Promise<DoctorAllResult> {
+  async execute(
+    projectRoot: string,
+    tools: ToolCatalog,
+    pluginName?: string
+  ): Promise<DoctorAllResult> {
     const errors: GlobalExecutionError[] = [];
     const ai = await this.runScope(
-      () => this.doctorUseCase.execute({ projectRoot, category: "ai", pluginName }),
+      () => this.doctorUseCase.execute({ projectRoot, category: "ai", pluginName, tools }),
       "ai",
       errors
     );
     const ide = await this.runScope(
-      () => this.doctorUseCase.execute({ projectRoot, category: "ide", pluginName }),
+      () => this.doctorUseCase.execute({ projectRoot, category: "ide", pluginName, tools }),
       "ide",
       errors
     );

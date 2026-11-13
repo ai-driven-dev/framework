@@ -10,13 +10,13 @@ import {
   genericFlatSkillPath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
-import type { ToolBuildContract } from "../../build-contract.js";
+import type { ToolBuildContract } from "../../../contract/build-contract.js";
+import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
-import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
 import {
   resolveDescription,
   resolveVersion,
-  synthesizeClaudeStyleManifest,
+  synthesizeSharedManifest,
 } from "../../marketplace-catalog.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_VSCODE_MCP_PATH, COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
@@ -43,7 +43,7 @@ export function buildCopilotMarketplaceContract(): ToolBuildContract {
     pluginRootToken: COPILOT_HOOKS.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
-      synthesizeClaudeStyleManifest(source, presence, {
+      synthesizeSharedManifest(source, presence, {
         agentsField: true,
         hooksField: COPILOT_HOOKS.manifestNamesHooks,
       }),
@@ -115,7 +115,7 @@ function transformCopilotAgent(content: string, _plugin: string, outName: string
 
 function transformCopilotFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
-  const flatRelPath = copilotFlatAgentPath(plugin, `agents/${outName}`);
+  const flatRelPath = copilotFlatAgentPath(plugin, outName);
   const rewrittenBody = rewriteRelativeLinks(body, {
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => copilotFlatResolveTarget(plugin, rel),
@@ -153,7 +153,7 @@ export function buildCopilotFlatContract(): ToolBuildContract {
         supported: true,
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => FLAT_VSCODE_MCP_PATH,
-        merge: (existing, incoming, force) => mergeVscodeMcp(existing, incoming, force),
+        merge: (existing, incoming, force) => mergeAdditiveMcp(existing, incoming, force),
         mcpServersKey: "servers",
         mergeDest: (outDir) => `${outDir}/${FLAT_VSCODE_MCP_PATH}`,
       },

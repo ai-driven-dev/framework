@@ -1,4 +1,5 @@
 import type { AiToolId } from "../../../../kernel/tool.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -7,6 +8,7 @@ import { resolvePluginToolIds } from "./plugin-target-resolution.js";
 
 export interface PluginListOptions {
   toolIds: AiToolId[] | "all";
+  tools: ToolCatalog;
 }
 
 export type PluginListResult = Map<AiToolId, readonly InstalledPlugin[]>;
@@ -16,7 +18,7 @@ export class PluginListUseCase {
 
   async execute(options: PluginListOptions): Promise<PluginListResult> {
     const manifest = await loadPluginManifest(this.manifestRepo);
-    const resolvedToolIds = resolvePluginToolIds(options.toolIds, manifest);
+    const resolvedToolIds = resolvePluginToolIds(options.toolIds, manifest, options.tools);
     return this.buildResult(resolvedToolIds, manifest);
   }
 

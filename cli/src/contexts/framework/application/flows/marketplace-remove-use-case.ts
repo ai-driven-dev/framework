@@ -3,13 +3,13 @@ import {
   MarketplaceNotFoundError,
 } from "../../../../kernel/errors.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
-import type { ToolId } from "../../../../kernel/tool.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   type Marketplace,
 } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -17,6 +17,7 @@ import type { ProjectPluginCleanup } from "../ownership/project-plugin-cleanup.j
 
 export interface MarketplaceRemoveOptions {
   name: string;
+  tools: ToolCatalog;
   projectRoot: string;
   autoConfirm: boolean;
   scope?: "project" | "user";
@@ -54,7 +55,7 @@ export class MarketplaceRemoveUseCase {
       throw new Error("User-scope marketplace removal requires UserMarketplaceRemoveUseCase.");
     const marketplace = await this.findOrThrow(options.projectRoot, options.name, "project");
     const manifest = await this.manifestRepo.load();
-    const orphans = manifest ? this.collectOrphans(manifest, options.name) : [];
+    const orphans = manifest ? this.collectOrphans(manifest, options.name, options.tools) : [];
     const nativeRefs = new Map<ToolId, readonly string[]>();
     if (manifest !== null) {
       for (const { toolId, plugin } of orphans) {
@@ -68,7 +69,7 @@ export class MarketplaceRemoveUseCase {
     const cleanup = await this.shouldCleanup(orphans.length, options.autoConfirm);
     let removed = 0;
     if (cleanup && manifest) {
-      removed = await this.removeOrphans(manifest, orphans, options.projectRoot);
+      removed = await this.removeOrphans(manifest, orphans, options.tools, options.projectRoot);
     }
     await this.registry.delete(options.projectRoot, marketplace.name, marketplace.scope);
     if (cleanup) {
@@ -88,9 +89,13 @@ export class MarketplaceRemoveUseCase {
     return found;
   }
 
-  private collectOrphans(manifest: Manifest, marketplaceName: string): OrphanRef[] {
+  private collectOrphans(
+    manifest: Manifest,
+    marketplaceName: string,
+    tools: ToolCatalog
+  ): OrphanRef[] {
     const orphans: OrphanRef[] = [];
-    for (const toolId of AI_TOOL_IDS) {
+    for (const toolId of tools.aiIdsInCanonicalOrder()) {
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.marketplace === marketplaceName) orphans.push({ toolId, plugin });
       }
@@ -107,14 +112,20 @@ export class MarketplaceRemoveUseCase {
   private async removeOrphans(
     manifest: Manifest,
     orphans: readonly OrphanRef[],
+    tools: ToolCatalog,
     projectRoot: string
   ): Promise<number> {
     for (const { toolId, plugin } of orphans) {
-      await this.cleanup.assertLocalIntegrationRemovable(toolId, plugin, projectRoot);
+      await this.cleanup.assertLocalIntegrationRemovable(
+        tools.aiProfile(toolId),
+        plugin,
+        projectRoot
+      );
     }
     for (const { toolId, plugin } of orphans) {
-      await this.cleanup.removeLocalIntegration(toolId, plugin, projectRoot);
-      await this.cleanup.deleteLocalFiles(toolId, plugin, projectRoot);
+      const tool = tools.aiProfile(toolId);
+      await this.cleanup.removeLocalIntegration(tool, plugin, projectRoot);
+      await this.cleanup.deleteLocalFiles(tool, plugin, projectRoot);
       const registrations = manifest.getNativeRegistrations(toolId);
       const hostName = registrations?.marketplaces.find(
         (m) => m.alias === plugin.marketplace

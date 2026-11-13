@@ -15,6 +15,9 @@ const LITERAL = /^(?:["'`[{]|-?\d|(?:true|false)\b|new\s+(?:Map|Set)\(|Object\.f
 // A tool with no `hooks.ts` declares its absence in `profile.ts` and `build.ts`: no fact.
 const ABSENCE = /^(?:false\b|\{\s*supported:\s*false\b)/;
 
+// A hooks section naming the descriptor's builders by reference, never restating a fact.
+const HOOKS_SECTION_OF_REFERENCES = /^\{\s*(?:config:\s*[\w$.()]+|delivery:\s*[\w$.]+)\s*$/;
+
 const HOOKS_PATH = /^["'`][^"'`]*[/.{}"'`]hooks(?:\/|\.json)/;
 
 /** Each member of an interface in the descriptor's type file, true when its type is another of
@@ -46,7 +49,7 @@ function hooksFacts(source: string, keys: ReadonlyMap<string, boolean>): string[
       typeDepth = Math.max(0, typeDepth + line.split("{").length - line.split("}").length);
       return;
     }
-    if (/\bnew HooksCapability\(/.test(line)) facts.push("HooksCapability");
+    if (/\bnew HooksConfigPart\(/.test(line)) facts.push("HooksConfigPart");
     for (const { 1: name = "", 2: rawValue = "", index } of line.matchAll(
       /(?<=^|[{,])\s*(?:readonly\s+)?(\w+)\??\s*:\s*(?=([^,}]*))/g
     )) {
@@ -58,9 +61,13 @@ function hooksFacts(source: string, keys: ReadonlyMap<string, boolean>): string[
         (/hook/i.test(name) && index === 0) || isRoute === false
           ? !REFERENCE_OR_CALL.test(value)
           : isRoute === true && value.startsWith("{");
+      // `config: [...]` is the profile's config section list; the descriptor's own `config`
+      // is an object literal and stays a fact.
       const absent =
         name === "hooksUnsupportedReason" ||
-        ((name === "acceptsHooks" || name === "hooks") && ABSENCE.test(value));
+        (name === "config" && value.startsWith("[")) ||
+        ((name === "acceptsHooks" || name === "hooks") && ABSENCE.test(value)) ||
+        (name === "hooks" && HOOKS_SECTION_OF_REFERENCES.test(value));
       if (fact && !absent) facts.push(name);
     }
     // Found on the blanked line, so the text a bridge generates declares nothing; the path is
@@ -93,7 +100,7 @@ const BUILD = "src/contexts/tools/domain/profiles/claude/build.ts";
 
 /** A planted profile source, then ` → ` and the facts it declares, which none must be. */
 const PLANTED = [
-  "const p = new HooksCapability({ a: X }); → HooksCapability",
+  "const p = new HooksConfigPart({ a: X }); → HooksConfigPart",
   "const c = {\n  hooks: { supported: true },\n  hooksBridge: true,\n}; → hooks hooksBridge",
   'const HOOK_TIMEOUT = 30;\nconst EVENT_ON = false;\nconst HOOK_FIELDS = ["a"]; → HOOK_TIMEOUT EVENT_ON HOOK_FIELDS',
   'const HOOK_NAME =\n  "a" + "b"; → HOOK_NAME',
@@ -109,8 +116,12 @@ const PLANTED = [
   'function f(): void {\n  const localHooks = { a: "hooks/" };\n} →',
   'const a = { scopeArgs: { project: ["--scope", "local"] }, features: { hooks: true } }; →',
   'const U = ".codex/config.toml"; →',
+  "const s = {\n  config: [new ConfigSection({ a: X })],\n}; →",
+  "const s = {\n  hooks: { config: part(D), delivery: d.delivery },\n}; →",
+  "const c = {\n  config: { outputPath: X },\n}; → config",
   'const p = {\n  acceptsHooks: false,\n  hooksUnsupportedReason: "runs no plugin hooks",\n}; →',
   "const c = {\n  hooks: { supported: true },\n  acceptsHooks: true,\n}; → hooks acceptsHooks",
+  "const c = {\n  hooks: { delivery: { kind: X } },\n}; → hooks",
   "const c = {\n  skills: { supported: true },\n  hooks: { supported: false },\n}; →",
   'type Shape = {\n  hooks: Array<string>;\n};\n// hooks: { not: code },\nconst BRIDGE = `\nconst HOOKS_DIR = "../hooks/";\n  hooks: [1],\n`; →',
 ];
@@ -132,7 +143,7 @@ describe("a tool's hooks facts live in its descriptor", () => {
   });
 
   it("names the file, and reads no fact in the tool's own hooks.ts", () => {
-    const fact = "export const p = new HooksCapability({});";
+    const fact = "export const p = new HooksConfigPart({});";
     const bodies = new Map([
       [BUILD, fact],
       [BUILD.replace("build.ts", "hooks.ts"), fact],

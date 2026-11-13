@@ -1,23 +1,18 @@
 import { join, posix } from "node:path";
 import { InstallationFile } from "../../../../../kernel/file.js";
-/**
- * Materializes plugin content by copying the per-target BUILT tree verbatim into the tool's plugin
- * directory, bypassing the per-file transform the build already applied. Marketplace-sourced
- * installs only; a raw local-path install falls back to flat materialization.
- */
-import { flatHooksPathWithLoaderEntry } from "../../../../../kernel/materialization/flat-paths.js";
 import { posixRelative } from "../../../../../kernel/paths.js";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { PluginSource } from "../../../../../kernel/source.js";
-import type { AiToolId } from "../../../../../kernel/tool.js";
 import type { MarketplaceRegistry } from "../../../../distribution/domain/ports/marketplace-registry.js";
-import {
-  frameworkBuildModeFor,
-  getAiToolConfig,
-  resolvePluginsCapability,
-} from "../../../../tools/domain/registry.js";
+import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
+/**
+ * Materializes plugin content by copying the per-target BUILT tree verbatim into the tool's plugin
+ * directory, bypassing the per-file transform the build already applied. Marketplace-sourced
+ * installs only; a raw local-path install falls back to flat materialization.
+ */
+import { PluginContentTranslator } from "../../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../../domain/manifest.js";
@@ -52,7 +47,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
 
   async addPlugin(
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     source: PluginSource,
     projectRoot: string,
     manifest: Manifest,
@@ -67,7 +62,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     if (marketplace === undefined || resolved === null) {
       return this.fallback().addPlugin(
         dist,
-        toolId,
+        tool,
         source,
         projectRoot,
         manifest,
@@ -78,26 +73,25 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
         hooksGuard
       );
     }
-    const mode = frameworkBuildModeFor(toolId);
+    const mode = tool.frameworkBuildMode();
     const { builtDir } = await this.ensureBuilt.execute({
       projectRoot,
       marketplace: resolved,
-      target: toolId,
+      target: tool.toolId,
       mode,
     });
     // The built tree still carries a plugin's hooks for a capability declaring `hooksDestination:
     // "project"`: dropped from the plugin's files, recorded once, by the project-hooks side channel
     // the local-source route uses, so both land where the tool's own declaration says.
-    const deliversHooksToProject =
-      resolvePluginsCapability(toolId)?.deliversHooksToProject() === true;
+    const deliversHooksToProject = tool.plugins()?.deliversHooksToProject() === true;
     const builtFiles =
       mode === "flat"
-        ? await this.readFlatFiles(builtDir, dist, toolId, deliversHooksToProject)
+        ? await this.readFlatFiles(builtDir, dist, tool, deliversHooksToProject)
         : await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, dist.manifest.name);
     const hooks = deliversHooksToProject
       ? await this.projectHooks.materializeWithProvenance(
           dist,
-          toolId,
+          tool,
           projectRoot,
           previousProjectHooks,
           hooksGuard
@@ -110,20 +104,26 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       this.fs,
       this.hasher,
       dist,
-      toolId,
+      tool,
       projectRoot,
       previousMcpEntries
     );
-    await refreshTrackedMcpConfigHash(this.fs, manifest, toolId, projectRoot, mcp.outputRelPath);
-    const scope = resolveScopeForInstall(toolId);
+    await refreshTrackedMcpConfigHash(
+      this.fs,
+      manifest,
+      tool.toolId,
+      projectRoot,
+      mcp.outputRelPath
+    );
+    const scope = resolveScopeForInstall(tool);
     const baseDir =
       mode === "flat"
         ? projectRoot
-        : resolveBaseDirFromRecord(scope, toolId, projectRoot, this.homedir);
+        : resolveBaseDirFromRecord(scope, tool, projectRoot, this.homedir);
     const owned = userScopeDirTaken ? [] : files;
     const written = await this.writeChangedFiles(owned, baseDir);
     manifest.addPlugin(
-      toolId,
+      tool.toolId,
       InstalledPlugin.withProjectHooks(
         InstalledPlugin.fromDistributionWithMcp(
           dist,
@@ -163,18 +163,18 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   private async readFlatFiles(
     builtDir: string,
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     deliversHooksToProject: boolean
   ): Promise<InstallationFile[]> {
     const name = dist.manifest.name;
     const hookPaths = deliversHooksToProject
       ? new Set<string>()
-      : this.flatHookOutputPaths(dist, toolId);
+      : new PluginContentTranslator(this.hasher).flatHookPaths(dist, tool);
     const absPaths = await this.fs.listFilesRecursive(builtDir);
     const files: InstallationFile[] = [];
     for (const abs of absPaths) {
       const rel = posixRelative(builtDir, abs);
-      if (!this.belongsToPlugin(rel, name, toolId) && !hookPaths.has(rel)) continue;
+      if (!this.belongsToPlugin(rel, name, tool) && !hookPaths.has(rel)) continue;
       const content = await this.fs.readFile(abs);
       files.push(
         new InstallationFile({ relativePath: rel, content, hash: this.hasher.hash(content) })
@@ -183,45 +183,8 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     return files;
   }
 
-  private belongsToPlugin(rel: string, name: string, toolId: AiToolId): boolean {
-    const segments = rel.split("/");
-    const toolDirectory = getAiToolConfig(toolId).directory.replace(/\/$/, "");
-    if (segments[0] !== toolDirectory || segments.length < 3) return false;
-    // `skills/` nests the whole plugin under one exactly-named segment; every other flat section
-    // hyphen-prefixes the leaf segment.
-    if (segments[1] === "skills") {
-      const plugins = resolvePluginsCapability(toolId);
-      return plugins?.kind === "flat" && plugins.flatLayout().skillLayout === "single-level"
-        ? segments[2].startsWith(`${name}-`)
-        : segments[2] === name;
-    }
-    return segments[2].startsWith(`${name}-`);
-  }
-
-  private flatHookOutputPaths(dist: PluginDistribution, toolId: AiToolId): ReadonlySet<string> {
-    const plugins = resolvePluginsCapability(toolId);
-    const layout = plugins?.kind === "flat" ? plugins.flatLayout() : undefined;
-    const flatHooksDir = layout?.hooksDir;
-    if (layout === undefined || flatHooksDir === null || flatHooksDir === undefined) {
-      return new Set();
-    }
-    const name = dist.manifest.name;
-    const paths = new Set(
-      dist.components.hooks
-        .filter((f) => f.relativePath !== "hooks/hooks.json")
-        .map((f) =>
-          flatHooksPathWithLoaderEntry(flatHooksDir, layout.hooksLoaderEntry, name, f.relativePath)
-        )
-    );
-    const bridge = layout.hooksBridge;
-    const hooksJson = dist.components.hooks.find((f) => f.relativePath === "hooks/hooks.json");
-    const hasOwnBridge =
-      bridge !== null &&
-      dist.components.hooks.some((f) => f.relativePath.endsWith(`/${bridge.skipIfSourceHas}`));
-    if (bridge !== null && hooksJson !== undefined && !hasOwnBridge) {
-      if (bridge.generate(hooksJson.content, name) !== null) paths.add(bridge.path(name));
-    }
-    return paths;
+  private belongsToPlugin(rel: string, name: string, tool: AiToolProfile): boolean {
+    return tool.ownsFlatPath(rel, name);
   }
 
   private async findMarketplace(name: string, projectRoot: string) {

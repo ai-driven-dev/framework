@@ -2,8 +2,7 @@ import { dirname, join, posix } from "node:path";
 import type { InstallationFile } from "../../../../kernel/file.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
-import { resolvePluginsCapability } from "../../../tools/domain/registry.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-containment.js";
 
@@ -17,10 +16,11 @@ export async function userScopeFilesSafeToDelete(
   fs: FileReader,
   logger: Logger,
   plugin: InstalledPlugin,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   homedir: string
 ): Promise<ReadonlyMap<string, string>> {
-  const boundary = resolvePluginsCapability(toolId)?.userPluginsBaseDir(homedir);
+  const { toolId } = tool;
+  const boundary = tool.plugins()?.userPluginsBaseDir(homedir);
   if (boundary === null || boundary === undefined) return new Map();
   const resolvedBoundary = await tryRealpath(fs, boundary);
   if (resolvedBoundary === null) return new Map();
@@ -57,10 +57,10 @@ export async function userScopeFilesSafeToDelete(
 export async function withoutMissingFiles(
   fs: FileReader,
   plugin: InstalledPlugin,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   homedir: string
 ): Promise<InstalledPlugin> {
-  const boundary = resolvePluginsCapability(toolId)?.userPluginsBaseDir(homedir);
+  const boundary = tool.plugins()?.userPluginsBaseDir(homedir);
   if (boundary === null || boundary === undefined) return plugin;
   const present = new Map<string, string>();
   for (const [relativePath, hash] of plugin.files) {
@@ -72,12 +72,13 @@ export async function withoutMissingFiles(
 /** Refuse a machine update if a new path, existing parent, or plugin directory escapes its declared base. */
 export async function assertUserScopeWriteBoundary(
   fs: FileReader,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   pluginName: string,
   files: readonly InstallationFile[],
   homedir: string
 ): Promise<void> {
-  const boundary = resolvePluginsCapability(toolId)?.userPluginsBaseDir(homedir);
+  const { toolId } = tool;
+  const boundary = tool.plugins()?.userPluginsBaseDir(homedir);
   if (boundary === null || boundary === undefined)
     throw new Error(`${toolId}: no user plugins directory is declared.`);
   const resolvedBoundary = await tryRealpath(fs, boundary);

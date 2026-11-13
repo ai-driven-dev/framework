@@ -6,11 +6,7 @@ import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { PluginSource } from "../../../../../kernel/source.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
-import {
-  getToolConfig,
-  isAiTool,
-  resolvePluginsCapability,
-} from "../../../../tools/domain/registry.js";
+import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../translate/domain/plugin-translation-skip.js";
@@ -49,7 +45,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
 
   async addPlugin(
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     source: PluginSource,
     projectRoot: string,
     manifest: Manifest,
@@ -59,20 +55,26 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     previousProjectHooks?: ProjectHooksProvenance,
     hooksGuard: ProjectHooksGuard = {}
   ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
-    const ctx = this.resolveFlatToolContext(toolId, dist, projectRoot);
+    const ctx = this.resolveFlatToolContext(tool, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
     const mcp = await materializeFlatMcp(
       this.fs,
       this.hasher,
       dist,
-      toolId,
+      tool,
       projectRoot,
       previousMcpEntries
     );
-    await refreshTrackedMcpConfigHash(this.fs, manifest, toolId, projectRoot, mcp.outputRelPath);
+    await refreshTrackedMcpConfigHash(
+      this.fs,
+      manifest,
+      tool.toolId,
+      projectRoot,
+      mcp.outputRelPath
+    );
     const hooks = await this.projectHooks.materializeWithProvenance(
       dist,
-      toolId,
+      tool,
       projectRoot,
       previousProjectHooks,
       hooksGuard
@@ -82,7 +84,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       return { skipped: allSkipped };
     const written = await this.writeAndRegisterPlugin(
       dist,
-      toolId,
+      tool.toolId,
       source,
       userScopeDirTaken ? [] : ctx.files,
       mcp.mcpEntries,
@@ -97,7 +99,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
   }
 
   private resolveFlatToolContext(
-    toolId: AiToolId,
+    tool: AiToolProfile,
     dist: PluginDistribution,
     projectRoot: string
   ): {
@@ -107,19 +109,17 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     baseDir: string;
     scope: PluginScope;
   } | null {
-    const toolConfig = getToolConfig(toolId);
-    if (!isAiTool(toolConfig)) return null;
-    const pluginsCap = resolvePluginsCapability(toolId);
+    const pluginsCap = tool.plugins();
     if (pluginsCap === null) return null;
-    if (pluginsCap.kind === "native" && !pluginsCap.requiresUserScope()) {
+    if (pluginsCap.kind === "native" && !pluginsCap.materializesFromBuiltTree()) {
       throw new CursorProjectScopeUnsupportedError();
     }
     const distForNative = pluginsCap.deliversHooksToProject() ? withoutHooks(dist) : dist;
     const { files, componentPaths, skipped } = new PluginContentTranslator(
       this.hasher
-    ).translateWithComponentPaths(distForNative, toolConfig);
-    const scope = resolveScopeForInstall(toolId);
-    const baseDir = resolveBaseDirFromRecord(scope, toolId, projectRoot, this.homedir);
+    ).translateWithComponentPaths(distForNative, tool);
+    const scope = resolveScopeForInstall(tool);
+    const baseDir = resolveBaseDirFromRecord(scope, tool, projectRoot, this.homedir);
     return { files, componentPaths, skipped, baseDir, scope };
   }
 

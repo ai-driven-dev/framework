@@ -7,6 +7,7 @@ import { Manifest } from "../../../../../../src/contexts/framework/domain/manife
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
 
 const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";
@@ -90,7 +91,7 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
     const { skipped } = await adapter.addPlugin(
       buildDist(),
-      "cursor",
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -118,7 +119,7 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      "cursor",
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -141,7 +142,7 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      "cursor",
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -165,7 +166,7 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      "cursor",
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -189,7 +190,7 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
     const { skipped } = await adapter.addPlugin(
       buildDist(),
-      "cursor",
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

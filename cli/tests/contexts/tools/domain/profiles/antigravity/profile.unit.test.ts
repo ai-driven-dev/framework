@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { hasRules } from "../../../../../../src/contexts/tools/domain/contracts.js";
-import { PROFILE_SECTION_KEYS } from "../../../../../../src/contexts/tools/domain/profile/profile-sections.js";
+import { PROFILE_SECTION_KEYS } from "../../../../../../src/contexts/tools/domain/profile.js";
 import { mergeAntigravityHooks } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
-import { ToolCatalog } from "../../../../../../src/contexts/tools/domain/registry.js";
 import { flatOf } from "../../../testing/plugin-mode.js";
 import { installPathOf } from "../../../testing/profiles.js";
 
@@ -13,13 +11,17 @@ describe("antigravity", () => {
     expect(antigravity.directory).toBe(".agents/");
     expect(antigravity.buildContracts?.flat).toBeDefined();
     expect(antigravity.buildContracts?.marketplace).toBeUndefined();
-    expect(antigravity.distributionProbes).toBeUndefined();
+    expect([
+      antigravity.distributionPaths("manifest"),
+      antigravity.distributionPaths("marketplace"),
+    ]).toStrictEqual([[], []]);
   });
 
   it.each<[string, string]>([
     ["01-plan/SKILL.antigravity.md", ".agents/skills/aidd-01-plan/SKILL.md"],
     ["plan.antigravity.md", ".agents/skills/aidd-plan/SKILL.md"],
     ["plan.md", ".agents/skills/aidd-plan/SKILL.md"],
+    ["plan.mdx.md", ".agents/skills/aidd-plan.mdx/SKILL.md"],
   ])("installs skill file %s at %s", (built, path) => {
     expect(installPathOf(antigravity, "skills", built)).toBe(path);
   });
@@ -29,16 +31,23 @@ describe("antigravity", () => {
       true
     );
     expect(antigravity.section("skills").accepts(".kilo/skills/x/SKILL.md")).toBe(false);
+    expect(antigravity.section("skills").accepts(".agents/agents/x/agent.md")).toBe(false);
+  });
+
+  it("keeps a skill's frontmatter as it is", () => {
+    const frontmatter = { name: "plan", description: "Plans." };
+
+    expect(antigravity.section("skills").convertFrontmatter(frontmatter)).toEqual(frontmatter);
   });
 
   it("is a flat host merging plugin hooks into .agents/hooks.json, scripts under .agents/hooks/", () => {
-    const plugins = flatOf(antigravity.section("plugins"));
+    const plugins = flatOf(antigravity.plugins());
     expect({
       mode: plugins.kind,
       flatLayout: plugins.flatLayout(),
       acceptsHooks: plugins.hooksAcceptance().accepts,
       deliversHooksToProject: plugins.deliversHooksToProject(),
-      projectHooksRelativePath: plugins.projectHooksDelivery()?.relativePath,
+      projectHooksRelativePath: antigravity.projectHooksDelivery()?.relativePath,
     }).toMatchObject({
       mode: "flat",
       flatLayout: {
@@ -50,24 +59,11 @@ describe("antigravity", () => {
       deliversHooksToProject: true,
       projectHooksRelativePath: ".agents/hooks.json",
     });
-    expect(antigravity.section("plugins").projectHooksDelivery()?.format.merge).toBe(
-      mergeAntigravityHooks
-    );
+    expect(antigravity.projectHooksDelivery()?.format.merge).toBe(mergeAntigravityHooks);
     expect(PROFILE_SECTION_KEYS.filter((key) => antigravity.section(key) !== null).sort()).toEqual([
-      "plugins",
+      "hooks",
+      "layout",
       "skills",
     ]);
-  });
-});
-
-describe("antigravity as the registry answers for it", () => {
-  it("names .agents/hooks.json as the project hooks file", () => {
-    expect(new ToolCatalog([antigravity]).projectHooksFileOf("antigravity")).toBe(
-      ".agents/hooks.json"
-    );
-  });
-
-  it("installs no rules", () => {
-    expect(hasRules(antigravity)).toBe(false);
   });
 });

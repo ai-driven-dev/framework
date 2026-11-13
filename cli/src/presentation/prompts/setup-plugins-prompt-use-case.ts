@@ -3,12 +3,14 @@ import type { PluginCatalogEntry } from "../../contexts/distribution/domain/cata
 import type { MarketplaceRegistry } from "../../contexts/distribution/domain/ports/marketplace-registry.js";
 import type { PluginInstallFromMarketplace } from "../../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import type { PluginInstallMode } from "../../contexts/framework/domain/setup-flow.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { PluginPick } from "./plugin-pick-use-case.js";
 export interface SetupPluginsPromptOptions {
   projectRoot: string;
   mode: PluginInstallMode;
   pluginNames: readonly string[];
   interactive: boolean;
+  tools: ToolCatalog;
 }
 
 export interface SetupPluginsPromptResult {
@@ -37,6 +39,7 @@ export class SetupPluginsPromptUseCase {
       toolIds: "all",
       projectRoot: options.projectRoot,
       interactive: true,
+      tools: options.tools,
     });
     return { installed: result.installed };
   }
@@ -52,6 +55,7 @@ export class SetupPluginsPromptUseCase {
         interactive: options.interactive,
         autoSelect: true,
         replace: true,
+        tools: options.tools,
       });
       installed.push(name);
     }

@@ -2,11 +2,16 @@ import { describe, expect, it } from "vitest";
 import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";
 import { ModeAMarketplaceTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import { resolveTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/plugin-translator-factory.js";
-import { pluginsCapability } from "../../../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
+import {
+  answersOf,
+  flatPlugins,
+  nativePlugins,
+  unsupportedPlugins,
+} from "../../../../tools/testing/plugin-mode.js";
 
 function buildDeps(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter();
@@ -31,16 +36,16 @@ describe("resolveTranslator", () => {
   describe("when translationMode is marketplace", () => {
     it("returns ModeAMarketplaceTranslator", () => {
       const deps = buildDeps();
-      const plugins = pluginsCapability({
-        mode: "native",
-        pluginRootToken: "$X_PLUGIN_ROOT",
-        acceptsHooks: true,
-        pluginsDir: ".claude/plugins/",
-        pluginManifestRelativePath: "plugin.json",
-        translationMode: "marketplace",
-        marketplaceSettings: MARKETPLACE_SETTINGS,
-        nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },
-      });
+      const plugins = answersOf(
+        nativePlugins({
+          pluginRootToken: "$X_PLUGIN_ROOT",
+          pluginsDir: ".claude/plugins/",
+          manifestRelativePath: "plugin.json",
+          translationMode: "marketplace",
+          marketplaceSettings: MARKETPLACE_SETTINGS,
+          nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },
+        })
+      );
       const adapter = resolveTranslator(plugins, deps);
       expect(adapter).toBeInstanceOf(ModeAMarketplaceTranslator);
       expect(adapter?.mode).toBe("marketplace");
@@ -50,15 +55,15 @@ describe("resolveTranslator", () => {
   describe("when installScope is user", () => {
     it("returns BuiltTreeMaterializationTranslator", () => {
       const deps = buildDeps();
-      const plugins = pluginsCapability({
-        mode: "native",
-        pluginRootToken: "$X_PLUGIN_ROOT",
-        acceptsHooks: true,
-        pluginsDir: "",
-        pluginManifestRelativePath: null,
-        installScope: "user",
-        userPluginsDir: (h) => `${h}/.cursor/plugins/local`,
-      });
+      const plugins = answersOf(
+        nativePlugins({
+          pluginRootToken: "$X_PLUGIN_ROOT",
+          pluginsDir: "",
+          manifestRelativePath: null,
+          installScope: "user",
+          userPluginsDir: (h) => `${h}/.cursor/plugins/local`,
+        })
+      );
       const adapter = resolveTranslator(plugins, deps);
       expect(adapter).toBeInstanceOf(BuiltTreeMaterializationTranslator);
       expect(adapter?.mode).toBe("flat");
@@ -68,12 +73,7 @@ describe("resolveTranslator", () => {
   describe("when translationMode is flat", () => {
     it("returns BuiltTreeMaterializationTranslator", () => {
       const deps = buildDeps();
-      const plugins = pluginsCapability({
-        mode: "flat",
-        acceptsHooks: false,
-        hooksUnsupportedReason: "a test double that hosts no plugin directory",
-        flatNamespacePrefix: "aidd-",
-      });
+      const plugins = answersOf(flatPlugins("refuses", "aidd-"));
       const adapter = resolveTranslator(plugins, deps);
       expect(adapter).toBeInstanceOf(BuiltTreeMaterializationTranslator);
       expect(adapter?.mode).toBe("flat");
@@ -83,10 +83,7 @@ describe("resolveTranslator", () => {
   describe("when translationMode is null (unsupported)", () => {
     it("returns null", () => {
       const deps = buildDeps();
-      const plugins = pluginsCapability({
-        mode: "unsupported",
-        hooksUnsupportedReason: "a test double that hosts no plugin directory",
-      });
+      const plugins = answersOf(unsupportedPlugins());
       const adapter = resolveTranslator(plugins, deps);
       expect(adapter).toBeNull();
     });
@@ -95,13 +92,13 @@ describe("resolveTranslator", () => {
   describe("when translationMode is null (native without marketplace)", () => {
     it("returns null (neutral native, no translation strategy applies)", () => {
       const deps = buildDeps();
-      const plugins = pluginsCapability({
-        mode: "native",
-        pluginRootToken: "$X_PLUGIN_ROOT",
-        acceptsHooks: true,
-        pluginsDir: ".custom/plugins/",
-        pluginManifestRelativePath: "plugin.json",
-      });
+      const plugins = answersOf(
+        nativePlugins({
+          pluginRootToken: "$X_PLUGIN_ROOT",
+          pluginsDir: ".custom/plugins/",
+          manifestRelativePath: "plugin.json",
+        })
+      );
       const adapter = resolveTranslator(plugins, deps);
       expect(adapter).toBeNull();
     });

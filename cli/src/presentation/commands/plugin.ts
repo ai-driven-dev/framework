@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { assertValidAiToolId, parseToolOption } from "../../kernel/tool.js";
 import { createDeps, createMenuDeps } from "../../runtime/wiring/framework.js";
 import {
@@ -14,7 +15,7 @@ import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
 import { syncNativeActivation } from "./sync-native-activation.js";
 
-export function registerPluginCommand(program: Command): void {
+export function registerPluginCommand(program: Command, catalog: ToolCatalog): void {
   const plugin = program.command("plugin").description("Manage plugins for AI tools");
 
   plugin.action(async () => {
@@ -44,14 +45,15 @@ export function registerPluginCommand(program: Command): void {
       try {
         assertValidAiToolId(cmdOptions.tool);
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         await deps.pluginRemoveUseCase.execute({
           pluginName: name,
           toolIds: parseToolOption(cmdOptions.tool),
           projectRoot,
           scope,
+          tools: catalog,
         });
-        if (scope === "project") await syncNativeActivation(deps, output, projectRoot);
+        if (scope === "project") await syncNativeActivation(deps, output, catalog, projectRoot);
         printPluginRemoved(output, name);
       } catch (error) {
         errorHandler.handle(error);
@@ -67,9 +69,10 @@ export function registerPluginCommand(program: Command): void {
       const errorHandler = new ErrorHandler(output);
       try {
         assertValidAiToolId(cmdOptions.tool);
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const result = await deps.pluginListUseCase.execute({
           toolIds: parseToolOption(cmdOptions.tool),
+          tools: catalog,
         });
         printInstalledPlugins(output, result);
       } catch (error) {
@@ -101,10 +104,16 @@ export function registerPluginCommand(program: Command): void {
         try {
           assertValidAiToolId(cmdOptions.tool);
           const scope = parseInstallScope(cmdOptions.scope);
-          const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
+          const deps = await createDeps(
+            projectRoot,
+            { verbose, token: cmdOptions.token },
+            output,
+            catalog
+          );
           const result = await deps.pluginInstallUseCase.execute({
             pluginArg,
             toolIds: parseToolOption(cmdOptions.tool),
+            tools: catalog,
             projectRoot,
             interactive: process.stdout.isTTY,
             fromMarketplace: cmdOptions.from,
@@ -114,6 +123,7 @@ export function registerPluginCommand(program: Command): void {
           await syncNativeActivation(
             deps,
             output,
+            catalog,
             projectRoot,
             cmdOptions.from !== undefined ? [cmdOptions.from] : undefined
           );
@@ -133,7 +143,7 @@ export function registerPluginCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const { hits } = await deps.pluginSearchUseCase.execute({
           query,
           recommendedOnly: cmdOptions.recommended ?? false,
@@ -157,7 +167,7 @@ export function registerPluginCommand(program: Command): void {
       try {
         assertValidAiToolId(cmdOptions.tool);
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const updated = await (scope === "user"
           ? deps.userPluginUpdateUseCase
           : deps.pluginUpdateUseCase
@@ -166,8 +176,9 @@ export function registerPluginCommand(program: Command): void {
           toolIds: parseToolOption(cmdOptions.tool),
           projectRoot,
           scope,
+          tools: catalog,
         });
-        if (scope === "project") await syncNativeActivation(deps, output, projectRoot);
+        if (scope === "project") await syncNativeActivation(deps, output, catalog, projectRoot);
         printPluginsUpdated(output, updated);
       } catch (error) {
         errorHandler.handle(error);

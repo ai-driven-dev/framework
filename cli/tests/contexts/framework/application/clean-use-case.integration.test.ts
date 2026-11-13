@@ -9,6 +9,7 @@ import { FileAdapter } from "../../../../src/runtime/filesystem/file-adapter.js"
 import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 let projectRoot: string;
 
@@ -48,7 +49,11 @@ describe("clean and the .aidd/ directory itself", () => {
     await writeFile(join(aiddDir, "cache", "built", "x.json"), "{}");
     const logger = new CapturingLogger();
 
-    await buildUseCase(logger).execute({ projectRoot, force: true });
+    await buildUseCase(logger).execute({
+      tools: catalogOf(),
+      projectRoot,
+      force: true,
+    });
 
     expect(await exists(aiddDir)).toBe(false);
     expect(logger.infoMessages).toStrictEqual(["Removing claude files..."]);
@@ -57,7 +62,11 @@ describe("clean and the .aidd/ directory itself", () => {
   it("finishes cleanly when .aidd/ was already removed by hand before the run", async () => {
     const logger = new CapturingLogger();
 
-    const result = await buildUseCase(logger).execute({ projectRoot, force: true });
+    const result = await buildUseCase(logger).execute({
+      tools: catalogOf(),
+      projectRoot,
+      force: true,
+    });
 
     expect(result.fileCount).toBe(0);
     expect(await exists(join(projectRoot, ".aidd"))).toBe(false);

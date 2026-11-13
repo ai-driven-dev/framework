@@ -1,19 +1,23 @@
 import { join } from "node:path";
-import { CONFIG_MCP } from "../../capabilities/config-refs.js";
-import { McpCapability } from "../../capabilities/mcp-capability.js";
+import codexConfigToml from "../../../../../../assets/configs/codex/config.toml";
+import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
-import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
+import { tomlAgentFrontmatter, tomlAgentToml } from "../../formats/toml-agent.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { nativeLayout } from "../../sections/layout-section.js";
+import { manifestSection } from "../../sections/manifest-section.js";
+import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,
   mergeCodexConfigToml,
   stripCodexSkillFrontmatter,
 } from "./build.js";
-import { codexAgentFrontmatter, codexAgentToml } from "./codex-agent-toml.js";
 import { CODEX_DIRECTORY, codexGlobalFilePath } from "./codex-paths.js";
 import { CODEX_HOOKS } from "./hooks.js";
+
+const PLUGIN_MCP = acceptedPluginMcp();
 
 const DIRECTORY = CODEX_DIRECTORY;
 const TOOL_SUFFIX = ".codex.md";
@@ -45,6 +49,8 @@ function buildCodexSkillFilePath(fileName: string): string {
   return `${AGENTS_SKILLS_PREFIX}aidd-${skillNameFromPath(fileName)}/SKILL.md`;
 }
 
+const hooksSupport = nativeHooksSupport(CODEX_HOOKS);
+
 export const codex = defineAiTool({
   toolId: "codex",
   distributionProbes: {
@@ -55,14 +61,21 @@ export const codex = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "Codex",
   signalDir: `${DIRECTORY}commands`,
-  configOutputPaths: { "config.toml": ".codex/config.toml" },
+  configAssets: [
+    {
+      name: "config.toml",
+      content: codexConfigToml,
+      destination: ".codex/config.toml",
+      delivery: "install",
+    },
+  ],
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
 
   capabilities: (bound) => ({
     agents: bound.agents({
       format: "toml",
-      frontmatter: codexAgentFrontmatter,
-      serialize: codexAgentToml,
+      frontmatter: tomlAgentFrontmatter,
+      serialize: tomlAgentToml,
     }),
     skills: bound.skills({
       agentsSkillsDirectory: true,
@@ -77,23 +90,21 @@ export const codex = defineAiTool({
       buildInstallPath: bound.installUnder("rules/"),
       convertFrontmatter: (fm) => fm,
     }),
-    mcp: new McpCapability({
-      outputPath: ".codex/config.toml",
-      format: "toml",
-      mergeFn: mergeCodexConfigToml,
-      consumes: [CONFIG_MCP],
-    }),
-    hooks: hooksConfigCapability(CODEX_HOOKS),
-    plugins: pluginsCapability({
-      mode: "native",
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: ".codex/config.toml",
+        format: "toml",
+        mergeFn: mergeCodexConfigToml,
+        consumes: [CONFIG_MCP],
+      }),
+      plugin: PLUGIN_MCP,
+    },
+    hooks: { config: hooksConfigPart(CODEX_HOOKS), delivery: hooksSupport.delivery },
+    layout: nativeLayout({
       pluginsDir: ".codex/plugins/",
-      pluginManifestRelativePath: "plugin.json",
       globalFiles: { dir: (homedir) => join(homedir, ".codex"), map: codexGlobalFilePath },
-      acceptsMcp: true,
-      translationMode: "marketplace",
       // Codex only enables plugins from its user-global config plus its own plugin cache; a
       // project-local settings file is inert, so the `codex` CLI is driven directly instead.
-      ...nativeHooksSupport(CODEX_HOOKS),
       nativeActivation: {
         binary: "codex",
         upgradeVerb: "upgrade",
@@ -124,6 +135,11 @@ export const codex = defineAiTool({
         // says — else `~/.codex/config.toml`. Never written by aidd; named for a diagnostic alone.
         userSettingsPath: (h, env) => join(env("CODEX_HOME") || join(h, ".codex"), "config.toml"),
       },
+    }),
+    manifest: manifestSection({
+      manifestRelativePath: "plugin.json",
+      translationMode: "marketplace",
+      pluginRootToken: hooksSupport.rootToken,
     }),
   }),
 

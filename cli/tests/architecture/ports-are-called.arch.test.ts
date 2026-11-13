@@ -4,10 +4,10 @@
  * whether `.someMethod(` appears anywhere outside the port's own file, so it proves only that
  * nothing spells the name as a call, never that a real path reaches it.
  *
- * A capability class is held to the same rule, on a stricter reading of a call: its method
+ * A section class is held to the same rule, on a stricter reading of a call: its method
  * names (`merge`, `equals`, `accepts`) are shared by other types, so `.merge(` alone would clear
- * a capability's `merge` while nothing called it. A call counts only when its receiver is an
- * identifier naming the capability (`hooks`, `mcpCap`, `capability`), a `…Capability` resolver
+ * a section's `merge` while nothing called it. A call counts only when its receiver is an
+ * identifier naming the section (`hooks`, `mcpCap`, `section`), a `…Section` resolver
  * call, or `this` in the class's own file. Getters and statics count too.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -68,91 +68,79 @@ function uncalledMethods(bodies: ReadonlyMap<string, string>, ports: readonly st
   return uncalled.sort();
 }
 
-const CAPABILITY_FILE = /^src\/contexts\/[^/]+\/domain\/capabilities\/[^/]+\.ts$/;
-const CAPABILITY_CLASS = /^export class (\w+)Capability\b[^{]*\{([\s\S]*?)\n\}/gm;
+const SECTION_FILE = /^src\/contexts\/[^/]+\/domain\/sections\/[^/]+\.ts$/;
+const SECTION_CLASS = /^export class (\w+)Section\b[^{]*\{([\s\S]*?)\n\}/gm;
 const CLASS_METHOD = /^ {2}(?:(static) )?(?:async )?(?:(get) )?(\w+)\s*(?:<[^>]*>)?\(/gm;
 
 /**
- * Capability methods with no caller in src today, by class. Every one is called only by its
+ * Section methods with no caller in src today, by class. Every one is called only by its
  * own unit test or a profile test, which reads a declared behaviour nothing in the product
  * uses. The list may only shrink.
  */
-const CAPABILITY_BASELINE: readonly {
+const SECTION_BASELINE: readonly {
   readonly file: string;
   readonly className: string;
   readonly methods: readonly string[];
   readonly reason: string;
 }[] = [
   {
-    file: "src/contexts/tools/domain/capabilities/agents-capability.ts",
-    className: "AgentsCapability",
+    file: "src/contexts/tools/domain/sections/agents-section.ts",
+    className: "AgentsSection",
     methods: ["accepts", "deserialize", "equals"],
     reason: "called only by tests; the translate pipeline reads agents through the build contract",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/commands-capability.ts",
-    className: "CommandsCapability",
+    file: "src/contexts/tools/domain/sections/commands-section.ts",
+    className: "CommandsSection",
     methods: ["accepts", "equals"],
     reason: "called only by tests",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/hooks-capability.ts",
-    className: "HooksCapability",
+    file: "src/contexts/tools/domain/sections/rules-section.ts",
+    className: "RulesSection",
     methods: ["accepts", "equals"],
     reason: "called only by tests",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/mcp-capability.ts",
-    className: "McpCapability",
-    methods: ["accepts", "equals", "merge"],
-    reason: "called only by tests; MCP config merges through the file adapter's strategy",
-  },
-  {
-    file: "src/contexts/tools/domain/capabilities/rules-capability.ts",
-    className: "RulesCapability",
+    file: "src/contexts/tools/domain/sections/config-section.ts",
+    className: "ConfigSection",
     methods: ["accepts", "equals"],
     reason: "called only by tests",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/settings-capability.ts",
-    className: "SettingsCapability",
-    methods: ["accepts", "equals"],
-    reason: "called only by tests",
-  },
-  {
-    file: "src/contexts/tools/domain/capabilities/skills-capability.ts",
-    className: "SkillsCapability",
+    file: "src/contexts/tools/domain/sections/skills-section.ts",
+    className: "SkillsSection",
     methods: ["accepts", "equals"],
     reason: "called only by tests",
   },
 ];
 
-function capabilityFiles(files: readonly string[]): string[] {
-  return files.filter((file) => CAPABILITY_FILE.test(file)).sort();
+function sectionFiles(files: readonly string[]): string[] {
+  return files.filter((file) => SECTION_FILE.test(file)).sort();
 }
 
-/** The receivers a capability is reached through in src: its key (`hooks`), the key with
- * `Cap` or `Capability`, or the generic `cap` and `capability`. Matched as whole identifiers:
+/** The receivers a section is reached through in src: its key (`hooks`), the key with
+ * `Cap` or `Section`, or the generic `cap`, `section` and `capability` (the field name the contract's write answers carry). Matched as whole identifiers:
  * `escaped` or `hooksList` is another value. */
-function namesCapability(receiver: string, key: string): boolean {
+function namesSection(receiver: string, key: string): boolean {
   const name = receiver.toLowerCase();
-  return [key, `${key}cap`, `${key}capability`, "cap", "capability"].includes(name);
+  return [key, `${key}cap`, `${key}section`, "cap", "section", "capability"].includes(name);
 }
 
 /**
  * A method is called through `this.m(` in its class's own file, or `<receiver>.m(` elsewhere
- * whose receiver names the capability, or whose receiver is a call to a `…Capability`
- * resolver (`resolvePluginsCapability(id)?.m(`) or to `section` with its key (`tool.section("rules").m(`). A getter is read without the parentheses; a
+ * whose receiver names the section, or whose receiver is a call to a `…Section`
+ * resolver (`resolvePluginsSection(id)?.m(`) or to `section` with its key (`tool.section("rules").m(`). A getter is read without the parentheses; a
  * static is called on the class itself.
  */
-function uncalledCapabilityMethods(
+function uncalledSectionMethods(
   bodies: ReadonlyMap<string, string>,
-  capabilities: readonly string[]
+  sections: readonly string[]
 ): string[] {
   const uncalled: string[] = [];
-  for (const file of capabilities) {
-    for (const block of (bodies.get(file) ?? "").matchAll(CAPABILITY_CLASS)) {
-      const className = `${block[1]}Capability`;
+  for (const file of sections) {
+    for (const block of (bodies.get(file) ?? "").matchAll(SECTION_CLASS)) {
+      const className = `${block[1]}Section`;
       const key = (block[1] as string).toLowerCase();
       for (const member of (block[2] as string).matchAll(CLASS_METHOD)) {
         const [, isStatic, isGetter, name] = member;
@@ -169,11 +157,10 @@ function uncalledCapabilityMethods(
             if (isStatic) return receiver === className;
             if (match[2] !== undefined) {
               return (
-                /Capability$/.test(receiver) ||
-                (receiver === "section" && match[2] === `("${key}")`)
+                /Section$/.test(receiver) || (receiver === "section" && match[2] === `("${key}")`)
               );
             }
-            return namesCapability(receiver, key);
+            return namesSection(receiver, key);
           })
         );
         if (!called) uncalled.push(`${file} :: ${className}.${name}`);
@@ -207,36 +194,36 @@ describe("a port declares nothing nobody calls", () => {
   });
 });
 
-describe("a capability declares nothing nobody calls", () => {
-  it("every capability method is called in src through a receiver naming a capability", () => {
+describe("a section declares nothing nobody calls", () => {
+  it("every section method is called in src through a receiver naming a section", () => {
     const bodies = new Map(
       sourceFiles().map((file) => [file, readFileSync(join(CLI_ROOT, file), "utf8")])
     );
 
-    const uncalled = uncalledCapabilityMethods(bodies, capabilityFiles(sourceFiles()));
+    const uncalled = uncalledSectionMethods(bodies, sectionFiles(sourceFiles()));
 
     const { added, fixed } = expectRatchet(
       uncalled,
-      CAPABILITY_BASELINE.flatMap((entry) =>
+      SECTION_BASELINE.flatMap((entry) =>
         entry.methods.map((method) => `${entry.file} :: ${entry.className}.${method}`)
       )
     );
-    expect(added, "a capability declares a method nothing in src calls").toEqual([]);
-    expect(fixed, "fixed — remove these from CAPABILITY_BASELINE").toEqual([]);
+    expect(added, "a section declares a method nothing in src calls").toEqual([]);
+    expect(fixed, "fixed — remove these from SECTION_BASELINE").toEqual([]);
   });
 
-  it("finds the capability classes, so the rule cannot pass by selecting nothing", () => {
+  it("finds the section classes, so the rule cannot pass by selecting nothing", () => {
     expect(
-      capabilityFiles(sourceFiles()).length,
-      "no capability file found — the scope of this rule is stale"
+      sectionFiles(sourceFiles()).length,
+      "no section file found — the scope of this rule is stale"
     ).toBeGreaterThan(5);
   });
 });
 
 describe("the guard itself", () => {
-  const capability = "src/contexts/tools/domain/capabilities/thing-capability.ts";
+  const section = "src/contexts/tools/domain/sections/thing-section.ts";
   const thing = [
-    "export class ThingCapability {",
+    "export class ThingSection {",
     "  constructor(readonly params: { a: string }) {}",
     "  used(): string {",
     "    return this.helper();",
@@ -250,55 +237,49 @@ describe("the guard itself", () => {
     "}",
   ].join("\n");
 
-  it("names the capability method nobody calls, and clears the ones a capability receiver calls", () => {
+  it("names the section method nobody calls, and clears the ones a section receiver calls", () => {
     const bodies = new Map([
-      [capability, thing],
-      ["src/contexts/framework/application/caller.ts", "tool.capabilities.thing.used();"],
+      [section, thing],
+      ["src/contexts/framework/application/caller.ts", "tool.sections.thing.used();"],
     ]);
 
-    expect(uncalledCapabilityMethods(bodies, [capability])).toEqual([
-      `${capability} :: ThingCapability.merge`,
-    ]);
+    expect(uncalledSectionMethods(bodies, [section])).toEqual([`${section} :: ThingSection.merge`]);
   });
 
-  it("does not read another type's method of the same name as a call to the capability's", () => {
+  it("does not read another type's method of the same name as a call to the section's", () => {
     const bodies = new Map([
-      [capability, thing],
+      [section, thing],
       ["src/contexts/framework/application/caller.ts", "cap.used();\nformat.merge(a, b);"],
     ]);
 
-    expect(uncalledCapabilityMethods(bodies, [capability])).toEqual([
-      `${capability} :: ThingCapability.merge`,
-    ]);
+    expect(uncalledSectionMethods(bodies, [section])).toEqual([`${section} :: ThingSection.merge`]);
   });
 
-  it("reads a call through a generic capability receiver or a capability resolver", () => {
+  it("reads a call through a generic section receiver or a section resolver", () => {
     const bodies = new Map([
-      [capability, thing],
+      [section, thing],
       [
         "src/contexts/framework/application/caller.ts",
-        "capability.used();\nresolveThingCapability(id)?.merge(a, b);",
+        "section.used();\nresolveThingSection(id)?.merge(a, b);",
       ],
     ]);
 
-    expect(uncalledCapabilityMethods(bodies, [capability])).toEqual([]);
+    expect(uncalledSectionMethods(bodies, [section])).toEqual([]);
   });
 
   it("reads a receiver as a whole identifier, never one that merely contains the key or cap", () => {
     const bodies = new Map([
-      [capability, thing],
+      [section, thing],
       [
         "src/contexts/framework/application/caller.ts",
         "thing.used();\nescaped.merge(a, b);\ncapture.merge(a, b);\nthingConfig.merge(a, b);\nthingList.merge(a, b);",
       ],
     ]);
 
-    expect(uncalledCapabilityMethods(bodies, [capability])).toEqual([
-      `${capability} :: ThingCapability.merge`,
-    ]);
+    expect(uncalledSectionMethods(bodies, [section])).toEqual([`${section} :: ThingSection.merge`]);
   });
 
-  it("names an unread getter and an uncalled static, and clears the ones read through the capability", () => {
+  it("names an unread getter and an uncalled static, and clears the ones read through the section", () => {
     const withMembers = thing.replace(
       "\n}",
       [
@@ -315,16 +296,16 @@ describe("the guard itself", () => {
       ].join("\n")
     );
     const bodies = new Map([
-      [capability, withMembers],
+      [section, withMembers],
       [
         "src/contexts/framework/application/caller.ts",
-        "thing.used();\nthing.merge(a, b);\nconst v = thing.readGetter;\nThingCapability.calledStatic();\nother.plantedGetter;\nother.plantedStatic();",
+        "thing.used();\nthing.merge(a, b);\nconst v = thing.readGetter;\nThingSection.calledStatic();\nother.plantedGetter;\nother.plantedStatic();",
       ],
     ]);
 
-    expect(uncalledCapabilityMethods(bodies, [capability])).toEqual([
-      `${capability} :: ThingCapability.plantedGetter`,
-      `${capability} :: ThingCapability.plantedStatic`,
+    expect(uncalledSectionMethods(bodies, [section])).toEqual([
+      `${section} :: ThingSection.plantedGetter`,
+      `${section} :: ThingSection.plantedStatic`,
     ]);
   });
 

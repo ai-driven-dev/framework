@@ -1,4 +1,5 @@
 import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 /** Installing a plugin carrying hooks/ against OpenCode delivers the script, namespaced under
  * .opencode/hooks/<plugin>/ like .claude/ and .cursor/ already are. Never .opencode/plugin/,
  * which OpenCode's own loader imports in-process, where a plain hook script kills the host. */
@@ -12,6 +13,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -25,7 +27,10 @@ async function installSamplePlugin() {
   const useCase = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     capturingLogger,
     registry,
@@ -33,6 +38,7 @@ async function installSamplePlugin() {
     deps.userManifestRepo
   );
   await useCase.execute({
+    tools: catalogOf(),
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: ["opencode"],
     projectRoot: PROJECT_ROOT,

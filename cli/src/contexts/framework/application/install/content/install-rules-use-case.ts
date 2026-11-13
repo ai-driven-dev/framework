@@ -1,27 +1,29 @@
 import type { InstallationFile } from "../../../../../kernel/file.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
-import type { RulesCapability } from "../../../../tools/domain/capabilities/rules-capability.js";
-import type { AiTool, HasRules } from "../../../../tools/domain/contracts.js";
+import type {
+  AiToolProfile,
+  MarkdownSectionAnswers,
+} from "../../../../tools/contract/tool-profile.js";
 import type { ContentSection } from "../../../../translate/domain/canon.js";
 import {
   type ContentSectionDescriptor,
   InstallContentSectionUseCase,
 } from "./install-content-section-use-case.js";
 
-const rulesDescriptor: ContentSectionDescriptor<"rules", RulesCapability> = {
-  capabilityOf: (tool) => tool.section("rules"),
-  acceptsFileName: (cap, fileName) => cap.acceptsFileName(fileName),
-  convertFrontmatter: (cap, frontmatter) => cap.convertFrontmatter(frontmatter),
+const rulesDescriptor: ContentSectionDescriptor<MarkdownSectionAnswers> = {
+  answersOf: (tool) => tool.markdownSection("rules"),
+  convertFrontmatter: (cap, frontmatter, relativeFileName) =>
+    cap.convertFrontmatter(frontmatter, relativeFileName),
 };
 
 interface InstallRulesOptions {
-  toolConfig: AiTool<HasRules>;
+  toolConfig: AiToolProfile;
   section: ContentSection;
   contentFiles: Map<string, string>;
 }
 
 export class InstallRulesUseCase {
-  private readonly inner: InstallContentSectionUseCase<"rules", RulesCapability>;
+  private readonly inner: InstallContentSectionUseCase<MarkdownSectionAnswers>;
 
   constructor(hasher: Hasher) {
     this.inner = new InstallContentSectionUseCase(hasher, rulesDescriptor);

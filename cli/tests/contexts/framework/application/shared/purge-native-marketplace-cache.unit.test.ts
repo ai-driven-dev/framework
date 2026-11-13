@@ -9,6 +9,7 @@ import type { ToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
+import { catalogOf, registeredConfig } from "../../../tools/testing/catalog-of.js";
 
 const HOME = "/home/u";
 const CACHE_ROOT = "/cache";
@@ -36,7 +37,8 @@ describe("purgeAllNativeCaches", () => {
       logger,
       HOME,
       new Map(),
-      new Map<ToolId, UndoneToolRegistrations>([["cursor", undone("cursor")]])
+      new Map<ToolId, UndoneToolRegistrations>([["cursor", undone("cursor")]]),
+      catalogOf([registeredConfig("cursor")])
     );
 
     expect(logger.allMessages).toStrictEqual([]);

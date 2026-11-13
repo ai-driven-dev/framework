@@ -7,6 +7,7 @@ import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const HOME = "/home/u";
@@ -51,7 +52,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
       restored.addTool("cursor", "test", []);
       return translator.addPlugin(
         dist(),
-        "cursor",
+        registeredAiProfile("cursor"),
         { kind: "local", path: "/source" },
         PROJECT_ROOT,
         restored,
@@ -97,7 +98,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
 
     await translator.addPlugin(
       dist(),
-      "cursor",
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -131,7 +132,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
 
     const result = await translator.addPlugin(
       dist(),
-      "cursor",
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -157,7 +158,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     );
     const result = await translator.addPlugin(
       dist(),
-      "cursor",
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -200,7 +201,7 @@ describe("BuiltTreeMaterializationTranslator — when no built tree applies (int
     );
     await translator.addPlugin(
       distWithCommand(),
-      "cursor",
+      registeredAiProfile("cursor"),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

@@ -1,6 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { userMachineLocalFilesOf } from "../../../src/contexts/tools/domain/registry.js";
+import { wireTools } from "../../../src/composition/tools.js";
+import { registeredAiConfig } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../same-instance.js";
 
 const doctorAll = vi.fn();
 const statusAll = vi.fn();
@@ -28,6 +30,7 @@ const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerDoctorCommand } = await import("../../../src/presentation/commands/doctor.js");
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = wireTools();
 
 const HEALTHY_SCOPE = { toolHealth: [], issues: [] };
 
@@ -82,7 +85,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerDoctorCommand(program);
+  registerDoctorCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "doctor", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -101,8 +104,15 @@ describe("aidd doctor — every tool at once", () => {
       "",
       "Installation is healthy",
     ]);
-    expect(doctorAll).toHaveBeenCalledWith(PROJECT_ROOT, undefined);
-    expect(statusAll).toHaveBeenCalledWith(PROJECT_ROOT);
+    expect(doctorAll).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) }),
+      undefined
+    );
+    expect(statusAll).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) })
+    );
   });
 
   it("names each equipped tool with its version and what it carries", async () => {
@@ -186,7 +196,11 @@ describe("aidd doctor — every tool at once", () => {
 
     const lines = await run("--plugin", "aidd-dev");
 
-    expect(doctorAll).toHaveBeenCalledWith(PROJECT_ROOT, "aidd-dev");
+    expect(doctorAll).toHaveBeenCalledWith(
+      PROJECT_ROOT,
+      expect.objectContaining({ inHelpOrder: expect.any(Function) }),
+      "aidd-dev"
+    );
     expect(errors.join("")).toBe("");
     expect(lines[lines.length - 1]).toBe("Installation is healthy");
   });
@@ -296,11 +310,13 @@ describe("aidd doctor --tool", () => {
       projectRoot: PROJECT_ROOT,
       category: "ai",
       pluginName: undefined,
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(statusScoped).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
       filterToolId: "claude",
       pluginName: undefined,
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(doctorAll).not.toHaveBeenCalled();
   });
@@ -391,7 +407,9 @@ describe("aidd doctor --scope user", () => {
   it("reads the machine-wide manifest and checks registrations alone", async () => {
     expect(await run("--scope", "user")).toEqual([
       "User-scope tools:",
-      `  claude (v5.2.2): expects activation in ${userMachineLocalFilesOf("claude", "/home/dev", () => undefined)[0]}`,
+      `  claude (v5.2.2): expects activation in ${registeredAiConfig("claude")
+        .nativeActivation()
+        ?.userSettingsFile("/home/dev", () => undefined)}`,
       "",
       "User-scope installation is healthy",
     ]);
@@ -399,6 +417,7 @@ describe("aidd doctor --scope user", () => {
       manifest: expect.anything(),
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
       globalInstall: true,
     });
     expect(doctorAll).not.toHaveBeenCalled();
@@ -494,7 +513,8 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
-      expect.anything()
+      expect.anything(),
+      sameInstance(CATALOG)
     );
   });
 
@@ -514,7 +534,7 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
 describe("aidd doctor — the help surface", () => {
   function doctorCommand(): Command {
     const program = new Command();
-    registerDoctorCommand(program);
+    registerDoctorCommand(program, CATALOG);
     const doctor = program.commands.find((command) => command.name() === "doctor");
     if (doctor === undefined) throw new Error("doctor command was not registered");
     return doctor;

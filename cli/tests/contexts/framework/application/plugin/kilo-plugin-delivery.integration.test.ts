@@ -8,6 +8,7 @@ import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const ROOT = "/test-project";
 const FIXTURE = join(REPOSITORY_ROOT, "cli/tests/fixtures/plugins/claude-format/sample-plugin");
@@ -35,6 +36,7 @@ async function existingProject(configPath: string) {
     ideTools: [],
     force: false,
     version: "test",
+    tools: catalogOf(),
   };
   await setup.execute(setupOptions);
   await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });
@@ -55,6 +57,7 @@ async function existingProject(configPath: string) {
   );
   const install = () =>
     add.execute({
+      tools: catalogOf(),
       source: { kind: "local", path: FIXTURE },
       toolIds: ["kilo"],
       projectRoot: ROOT,
@@ -105,9 +108,13 @@ describe.each(["kilo.jsonc", ".kilo/kilo.jsonc"])(
         '{"name":"sample-plugin","version":"2.0.0"}'
       );
       await deps.fs.deleteFile(join(ROOT, BRIDGE));
-      expect(await update.execute({ toolIds: ["kilo"], projectRoot: ROOT })).toEqual([
-        "sample-plugin",
-      ]);
+      expect(
+        await update.execute({
+          tools: catalogOf(),
+          toolIds: ["kilo"],
+          projectRoot: ROOT,
+        })
+      ).toEqual(["sample-plugin"]);
       expect(await deps.fs.readFile(join(ROOT, configPath))).toBe(USER_CONFIG);
       expect(await deps.fs.readFile(join(ROOT, HOOK))).toBe(upgradedHook);
       expect(await deps.fs.readFile(join(ROOT, BRIDGE))).toContain('id: "sample-plugin-hooks"');

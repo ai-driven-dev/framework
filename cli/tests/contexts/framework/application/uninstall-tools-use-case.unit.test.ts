@@ -9,6 +9,7 @@ import type { ToolId } from "../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -44,7 +45,12 @@ describe("UninstallToolsUseCase — cursor plugin file (user-scope)", () => {
 
     const fs = new RecordingFileAdapter();
     const useCase = new UninstallToolsUseCase(fs, new CapturingLogger());
-    await useCase.execute({ toolIds: ["cursor"], manifest, projectRoot: PROJECT_ROOT });
+    await useCase.execute({
+      tools: catalogOf(),
+      toolIds: ["cursor"],
+      manifest,
+      projectRoot: PROJECT_ROOT,
+    });
 
     expect(
       fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
@@ -88,6 +94,7 @@ function remove(
   logger = new CapturingLogger()
 ) {
   return new UninstallToolsUseCase(target.fs, logger).execute({
+    tools: catalogOf(),
     toolIds,
     manifest: target.manifest,
     projectRoot: PROJECT_ROOT,

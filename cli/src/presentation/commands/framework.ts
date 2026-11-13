@@ -1,9 +1,9 @@
 import { join, resolve } from "node:path";
 import type { Command } from "commander";
 import { Manifest } from "../../contexts/framework/domain/manifest.js";
-import { isIdeToolId } from "../../contexts/tools/domain/registry.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../kernel/tool.js";
-import { isAiToolId, VALID_TOOL_IDS } from "../../kernel/tool.js";
+import { isAiToolId, isIdeToolId, VALID_TOOL_IDS } from "../../kernel/tool.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
 import {
   printToolAlreadyInstalled,
@@ -34,13 +34,14 @@ async function runFrameworkInstall(
   output: CLIOutput,
   projectRoot: string,
   toolId: ToolId,
-  cmdOptions: { force: boolean; plugins: boolean }
+  cmdOptions: { force: boolean; plugins: boolean },
+  catalog: ToolCatalog
 ): Promise<void> {
   assertKnownToolId(toolId);
   if (isAiToolId(toolId)) {
-    await installAiTool(deps, output, projectRoot, toolId, cmdOptions);
+    await installAiTool(deps, output, projectRoot, toolId, cmdOptions, catalog);
   } else {
-    await installIdeTool(deps, output, projectRoot, toolId, cmdOptions);
+    await installIdeTool(deps, output, projectRoot, toolId, cmdOptions, catalog);
   }
 }
 
@@ -49,7 +50,8 @@ async function installAiTool(
   output: CLIOutput,
   projectRoot: string,
   toolId: AiToolId,
-  cmdOptions: { force: boolean; plugins: boolean }
+  cmdOptions: { force: boolean; plugins: boolean },
+  catalog: ToolCatalog
 ): Promise<void> {
   const version = deps.currentVersionProvider.get();
   const result = await deps.installAiToolUseCase.execute({
@@ -58,6 +60,7 @@ async function installAiTool(
     force: cmdOptions.force,
     version,
     propagatePlugins: cmdOptions.plugins,
+    tools: catalog,
   });
   if (result.runtimeResult.skipped) {
     printToolAlreadyInstalled(output, toolId);
@@ -75,7 +78,8 @@ async function installIdeTool(
   output: CLIOutput,
   projectRoot: string,
   toolId: IdeToolId,
-  cmdOptions: { force: boolean }
+  cmdOptions: { force: boolean },
+  catalog: ToolCatalog
 ): Promise<void> {
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = deps.currentVersionProvider.get();
@@ -85,6 +89,7 @@ async function installIdeTool(
     manifest,
     force: cmdOptions.force,
     version,
+    tools: catalog,
   });
   if (result.skipped) {
     printToolAlreadyInstalled(output, result.toolId);
@@ -97,19 +102,22 @@ async function runFrameworkRemove(
   deps: Deps,
   output: CLIOutput,
   projectRoot: string,
-  toolId: ToolId
+  toolId: ToolId,
+  catalog: ToolCatalog
 ): Promise<void> {
   assertKnownToolId(toolId);
+
   if (isAiToolId(toolId)) {
     const results = await deps.uninstallUseCase.execute({
       toolIds: [toolId],
       projectRoot,
+      tools: catalog,
     });
     const totalFileCount = results.reduce((sum, r) => sum + r.fileCount, 0);
     printToolRemoved(output, results[0].toolId, totalFileCount);
     return;
   }
-  const result = await deps.uninstallIdeUseCase.execute({ toolId, projectRoot });
+  const result = await deps.uninstallIdeUseCase.execute({ toolId, projectRoot, tools: catalog });
   printToolRemoved(output, result.toolId, result.fileCount);
 }
 
@@ -118,7 +126,8 @@ async function runFrameworkUpdate(
   output: CLIOutput,
   projectRoot: string,
   toolId: ToolId | undefined,
-  cmdOptions: { force: boolean }
+  cmdOptions: { force: boolean },
+  catalog: ToolCatalog
 ): Promise<void> {
   if (toolId !== undefined) assertKnownToolId(toolId);
   const interactive = process.stdout.isTTY ?? false;
@@ -130,6 +139,7 @@ async function runFrameworkUpdate(
         projectRoot,
         userForce: cmdOptions.force,
         interactive,
+        tools: catalog,
       });
       printUpdateResult(output, result.updatedTools, result.errors);
     } else {
@@ -138,6 +148,7 @@ async function runFrameworkUpdate(
         projectRoot,
         userForce: cmdOptions.force,
         interactive,
+        tools: catalog,
       });
       printUpdateResult(output, result.updatedTools, result.errors);
     }
@@ -149,11 +160,13 @@ async function runFrameworkUpdate(
     projectRoot,
     userForce: cmdOptions.force,
     interactive,
+    tools: catalog,
   });
   const ide = await deps.updateIdeToolsUseCase.execute({
     projectRoot,
     userForce: cmdOptions.force,
     interactive,
+    tools: catalog,
   });
   printUpdateResult(
     output,
@@ -162,7 +175,7 @@ async function runFrameworkUpdate(
   );
 }
 
-export function registerFrameworkCommand(program: Command): void {
+export function registerFrameworkCommand(program: Command, catalog: ToolCatalog): void {
   const framework = program
     .command("framework")
     .description("Manage the framework's lifecycle on installed tools");
@@ -179,8 +192,15 @@ export function registerFrameworkCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        await runFrameworkInstall(deps, output, projectRoot, cmdOptions.tool as ToolId, cmdOptions);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        await runFrameworkInstall(
+          deps,
+          output,
+          projectRoot,
+          cmdOptions.tool as ToolId,
+          cmdOptions,
+          catalog
+        );
       } catch (error) {
         errorHandler.handle(error);
       }
@@ -196,8 +216,8 @@ export function registerFrameworkCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        await runFrameworkRemove(deps, output, projectRoot, cmdOptions.tool as ToolId);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        await runFrameworkRemove(deps, output, projectRoot, cmdOptions.tool as ToolId, catalog);
       } catch (error) {
         errorHandler.handle(error);
       }
@@ -214,13 +234,14 @@ export function registerFrameworkCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         await runFrameworkUpdate(
           deps,
           output,
           projectRoot,
           cmdOptions.tool as ToolId | undefined,
-          cmdOptions
+          cmdOptions,
+          catalog
         );
       } catch (error) {
         errorHandler.handle(error);
@@ -235,8 +256,11 @@ export function registerFrameworkCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
-        const { rules } = await deps.listInstalledRulesUseCase.execute({ projectRoot });
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const { rules } = await deps.listInstalledRulesUseCase.execute({
+          projectRoot,
+          tools: catalog,
+        });
         if (cmdOptions.json) printInstalledRulesJson(output, rules);
         else printInstalledRules(output, rules);
       } catch (error) {
@@ -253,7 +277,7 @@ export function registerFrameworkCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
         const directories = [];
         if (options.all)
           directories.push({ path: join(projectRoot, "aidd_docs", "recipes"), optional: true });

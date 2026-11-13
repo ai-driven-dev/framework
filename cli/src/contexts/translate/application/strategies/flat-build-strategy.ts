@@ -12,7 +12,10 @@ import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { ArtifactContract, ToolBuildContract } from "../../../tools/domain/build-contract.js";
+import type {
+  ArtifactContract,
+  ToolBuildContract,
+} from "../../../tools/contract/build-contract.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,

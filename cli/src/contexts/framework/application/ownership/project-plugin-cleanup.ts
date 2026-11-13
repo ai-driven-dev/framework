@@ -2,12 +2,10 @@ import { join } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
-import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
-import { unmergeOpencodeMcp } from "../../../tools/domain/formats/opencode-mcp-merge.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
-import { frameworkPrimeFlatMcpOf } from "../plugin/plugin-target-resolution.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { detachNativePluginRefs } from "./native-plugin-ownership.js";
 import { assertProjectPathWithinRoot } from "./project-path-boundary.js";
@@ -17,26 +15,29 @@ import { detachUserPlugin } from "./user-plugin-ownership.js";
 export async function assertProjectMcpEntriesRemovable(
   fs: FileReader,
   plugin: InstalledPlugin,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   projectRoot: string
 ): Promise<void> {
-  await planProjectMcpRemoval(fs, plugin, toolId, projectRoot);
+  await planProjectMcpRemoval(fs, plugin, tool, projectRoot);
 }
 
 async function planProjectMcpRemoval(
   fs: FileReader,
   plugin: InstalledPlugin,
-  toolId: AiToolId,
+  tool: AiToolProfile,
   projectRoot: string
 ): Promise<{ output: string; content: string } | undefined> {
   if (plugin.mcpEntries.size === 0) return undefined;
-  const mcp = frameworkPrimeFlatMcpOf(toolId);
+  const mcp = tool.flatPluginMcp();
   if (mcp === null) return undefined;
-  const output = join(projectRoot, await resolveMcpOutputPath(fs, mcp, projectRoot));
+  const output = join(
+    projectRoot,
+    await mcp.resolveOutputPath((relativePath) => fs.fileExists(join(projectRoot, relativePath)))
+  );
   await assertProjectPathWithinRoot(fs, projectRoot, output);
   try {
     const existing = await fs.readFile(output);
-    return { output, content: unmergeOpencodeMcp(existing, plugin.mcpEntries) };
+    return { output, content: mcp.removePluginServers(existing, plugin.mcpEntries) };
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
     throw error;
@@ -50,21 +51,21 @@ export class ProjectPluginCleanup {
   ) {}
 
   async assertLocalIntegrationRemovable(
-    toolId: AiToolId,
+    tool: AiToolProfile,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
-    await assertProjectMcpEntriesRemovable(this.fs, plugin, toolId, projectRoot);
-    await assertProjectHooksRemovable(this.fs, plugin, toolId, projectRoot);
+    await assertProjectMcpEntriesRemovable(this.fs, plugin, tool, projectRoot);
+    await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot);
   }
 
   async removeLocalIntegration(
-    toolId: AiToolId,
+    tool: AiToolProfile,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
-    const mcpUpdate = await planProjectMcpRemoval(this.fs, plugin, toolId, projectRoot);
-    await removeProjectHooks(this.fs, plugin, toolId, projectRoot);
+    const mcpUpdate = await planProjectMcpRemoval(this.fs, plugin, tool, projectRoot);
+    await removeProjectHooks(this.fs, plugin, tool, projectRoot);
     if (mcpUpdate !== undefined) {
       await assertProjectPathWithinRoot(this.fs, projectRoot, mcpUpdate.output);
       await this.fs.writeFile(mcpUpdate.output, mcpUpdate.content);
@@ -72,11 +73,11 @@ export class ProjectPluginCleanup {
   }
 
   async deleteLocalFiles(
-    toolId: AiToolId,
+    tool: AiToolProfile,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
-    await deletePluginFilesForTool(plugin.files, plugin.scope, toolId, projectRoot, this.fs);
+    await deletePluginFilesForTool(plugin.files, plugin.scope, tool, projectRoot, this.fs);
   }
 
   async detachClaims(

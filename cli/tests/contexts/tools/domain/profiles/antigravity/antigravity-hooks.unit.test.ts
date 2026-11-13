@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/plugins/plugin-params.js";
+import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/contract/tool-vocabulary.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 
-const format = antigravity.section("plugins").projectHooksDelivery()?.format as ProjectHooksFormat;
+const format = antigravity.projectHooksDelivery()?.format as ProjectHooksFormat;
 
 // biome-ignore lint/suspicious/noTemplateCurlyInString: intentionally testing Claude hook placeholder substitution
 const PLUGIN_ROOT_VAR = "${CLAUDE_PLUGIN_ROOT}";
@@ -162,6 +162,16 @@ describe("antigravity's project hooks format", () => {
         },
       ]);
       expect(format.contributedEntries(USER_HOOKS, "aidd-context")).toEqual([]);
+    });
+  });
+
+  describe("contributedEntries on a malformed file", () => {
+    it("names Antigravity, the plugin and the event when handlers are not an array", () => {
+      const content = JSON.stringify({ "aidd-context": { SessionStart: {} } });
+
+      expect(() => format.contributedEntries(content, "aidd-context")).toThrow(
+        "Antigravity hook 'aidd-context.SessionStart' must be an array."
+      );
     });
   });
 

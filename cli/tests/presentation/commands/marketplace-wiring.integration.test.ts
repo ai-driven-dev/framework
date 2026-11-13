@@ -1,6 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parsePluginSourceShorthand } from "../../../src/kernel/source.js";
+import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
+import { sameInstance } from "../same-instance.js";
 
 const marketplaceAdd = vi.fn();
 const marketplaceList = vi.fn();
@@ -37,6 +39,7 @@ const { registerMarketplaceCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = catalogOf();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -88,7 +91,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerMarketplaceCommand(program);
+  registerMarketplaceCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", "marketplace", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -132,6 +135,7 @@ describe("aidd marketplace add", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredCatalog(),
       marketplaceNames: ["market-b"],
     });
   });
@@ -156,7 +160,8 @@ describe("aidd marketplace add", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false, token: "ghp_x" },
-      expect.anything()
+      expect.anything(),
+      sameInstance(CATALOG)
     );
     expect(process.env.AIDD_TOKEN).not.toBe("ghp_x");
   });
@@ -205,7 +210,8 @@ it("hands no token when none was given", async () => {
   expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
     PROJECT_ROOT,
     { verbose: false, token: undefined },
-    expect.anything()
+    expect.anything(),
+    sameInstance(CATALOG)
   );
 });
 
@@ -280,6 +286,7 @@ describe("aidd marketplace remove", () => {
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
       scope: "user",
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(marketplaceRemove).not.toHaveBeenCalled();
     expect(activation).not.toHaveBeenCalled();
@@ -305,9 +312,11 @@ describe("aidd marketplace remove", () => {
       projectRoot: PROJECT_ROOT,
       autoConfirm: false,
       scope: "project",
+      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
+      tools: registeredCatalog(),
       marketplaceNames: undefined,
     });
   });
@@ -358,7 +367,7 @@ describe("aidd marketplace refresh", () => {
 describe("aidd marketplace check", () => {
   it("asks about this project alone, and says so when nothing is stale", async () => {
     expect(await run("check")).toEqual(["All marketplaces fresh."]);
-    expect(marketplaceCheck).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT });
+    expect(marketplaceCheck).toHaveBeenCalledWith({ projectRoot: PROJECT_ROOT, tools: CATALOG });
   });
 });
 
@@ -375,7 +384,8 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
-      expect.anything()
+      expect.anything(),
+      sameInstance(CATALOG)
     );
   });
 
@@ -395,7 +405,7 @@ describe("aidd marketplace — how every subcommand builds its graph and reports
 describe("aidd marketplace — the help surface", () => {
   function marketplaceCommand(): Command {
     const program = new Command();
-    registerMarketplaceCommand(program);
+    registerMarketplaceCommand(program, CATALOG);
     const marketplace = program.commands.find((command) => command.name() === "marketplace");
     if (marketplace === undefined) throw new Error("marketplace command was not registered");
     return marketplace;

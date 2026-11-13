@@ -1,9 +1,10 @@
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { isAiTool } from "../../../src/contexts/tools/domain/registry.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
+import { sameInstance } from "../same-instance.js";
 
 const build = vi.fn();
 let buildUseCase: { execute: typeof build } | undefined;
@@ -24,6 +25,7 @@ const { registerTranslateCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
+const CATALOG = wireTools();
 const SOURCE_DIR = resolve(PROJECT_ROOT, "framework");
 const OUT_DIR = resolve(PROJECT_ROOT, "dist-plugins");
 
@@ -55,7 +57,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerTranslateCommand(program);
+  registerTranslateCommand(program, CATALOG);
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -65,12 +67,16 @@ describe("aidd translate — what it hands the build", () => {
     expect(await run("translate", "framework", "--to", "claude", "--out", "dist-plugins")).toEqual([
       `Built 2 plugins, 12 files written to ${OUT_DIR}`,
     ]);
-    expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(expect.anything(), {
-      target: "claude",
-      mode: "marketplace",
-      outDir: OUT_DIR,
-      force: false,
-    });
+    expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      {
+        target: "claude",
+        mode: "marketplace",
+        outDir: OUT_DIR,
+        force: false,
+      }
+    );
     expect(build).toHaveBeenCalledWith({
       sourceDir: SOURCE_DIR,
       outDir: OUT_DIR,
@@ -85,6 +91,7 @@ describe("aidd translate — what it hands the build", () => {
     ).toEqual([`Flat-installed 2 plugins, 12 files written under ${OUT_DIR}`]);
     expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
       expect.anything(),
+      expect.anything(),
       expect.objectContaining({ mode: "flat" })
     );
     expect(build).toHaveBeenCalledWith(expect.objectContaining({ mode: "flat" }));
@@ -94,6 +101,7 @@ describe("aidd translate — what it hands the build", () => {
     await run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--force");
 
     expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
+      expect.anything(),
       expect.anything(),
       expect.objectContaining({ force: true })
     );
@@ -105,7 +113,8 @@ describe("aidd translate — what it hands the build", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
-      expect.anything()
+      expect.anything(),
+      sameInstance(CATALOG)
     );
   });
 });
@@ -121,7 +130,7 @@ describe("aidd translate — what it refuses", () => {
     ).rejects.toThrow("exited");
 
     expect(errors.join("")).toBe(
-      `Error: Unsupported target 'emacs'. Supported targets: ${supportedBuildTargets().join(", ")}.\n`
+      `Error: Unsupported target 'emacs'. Supported targets: ${supportedBuildTargets(wireTools()).join(", ")}.\n`
     );
     expect(exit).toHaveBeenCalledWith(1);
     expect(vi.mocked(createDeps)).not.toHaveBeenCalled();
@@ -174,7 +183,7 @@ describe("aidd translate — what it refuses", () => {
 describe("aidd translate — the help surface", () => {
   function translateCommand(): Command {
     const program = new Command();
-    registerTranslateCommand(program);
+    registerTranslateCommand(program, CATALOG);
     const translate = program.commands.find((command) => command.name() === "translate");
     if (translate === undefined) throw new Error("translate command was not registered");
     return translate;
@@ -206,7 +215,7 @@ describe("aidd translate — the help surface", () => {
     ).toEqual([
       [
         "--to <target>",
-        `Conversion target (${REGISTERED_PROFILES.filter(isAiTool)
+        `Conversion target (${REGISTERED_PROFILES.filter((profile) => profile.kind === "ai")
           .map((profile) => profile.toolId)
           .join(", ")})`,
         undefined,

@@ -8,7 +8,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import {
   CONFIG_VSCODE_EXTENSIONS,
   CONFIG_VSCODE_KEYBINDINGS,
-} from "../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
+} from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import type { Prompter } from "../../../../../src/kernel/ports/prompter.js";
@@ -17,6 +17,7 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { KeepPrompter, OverwritePrompter } from "../../../../helpers/ports/scripted-prompter.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";
@@ -102,6 +103,7 @@ function restore(
     force: true,
     interactive: false,
     fileFilter: null,
+    tools: catalogOf(),
     ...overrides,
   });
 }

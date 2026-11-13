@@ -8,15 +8,15 @@ import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
 describe("codex hooks", () => {
   describe("capabilities.hooks", () => {
     it("outputs to .codex/hooks.json", () => {
-      expect(codex.section("hooks").outputPath()).toBe(".codex/hooks.json");
+      expect(codex.section("hooks").config?.outputPath()).toBe(".codex/hooks.json");
     });
 
     it("consumes the codex-hooks config name", () => {
-      expect(codex.section("hooks").consumes("codex-hooks")).toBe(true);
+      expect(codex.section("hooks").config?.consumes("codex-hooks")).toBe(true);
     });
 
     it("uses user-prime merge strategy", () => {
-      expect(codex.section("hooks").mergeStrategy()).toBe("user-prime");
+      expect(codex.section("hooks").config?.mergeStrategy()).toBe("user-prime");
     });
   });
 });

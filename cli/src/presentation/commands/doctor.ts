@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import type { DoctorReport } from "../../contexts/framework/domain/doctor.js";
-import { userMachineLocalFilesOf } from "../../contexts/tools/domain/registry.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { UserScopeFilterUnsupportedError } from "../../kernel/errors.js";
 import type { ToolCategory, ToolId } from "../../kernel/tool.js";
 import { isAiToolId } from "../../kernel/tool.js";
@@ -28,10 +28,11 @@ async function runFullDoctor(
   deps: Deps,
   output: CLIOutput,
   projectRoot: string,
+  tools: ToolCatalog,
   pluginName: string | undefined
 ): Promise<void> {
-  const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, pluginName);
-  const statusResult = await deps.statusAllUseCase.execute(projectRoot);
+  const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, tools, pluginName);
+  const statusResult = await deps.statusAllUseCase.execute(projectRoot, tools);
   printReportErrors(output, doctorResult.errors);
 
   printInventory(output, "AI", doctorResult.ai, statusResult.aiTools.tools);
@@ -64,16 +65,23 @@ async function runScopedDoctor(
   output: CLIOutput,
   projectRoot: string,
   toolId: ToolId,
+  tools: ToolCatalog,
   pluginName: string | undefined
 ): Promise<void> {
   const category = categoryOf(toolId);
   // DoctorUseCase scopes by category, never by tool: the inventory below narrows to the exact
   // tool, the issue list stays category-wide.
-  const doctorReport = await deps.doctorUseCase.execute({ projectRoot, category, pluginName });
+  const doctorReport = await deps.doctorUseCase.execute({
+    projectRoot,
+    category,
+    pluginName,
+    tools,
+  });
   const statusReport = await deps.statusUseCase.execute({
     projectRoot,
     filterToolId: toolId,
     pluginName,
+    tools,
   });
 
   const scopedReport: DoctorReport = {
@@ -104,6 +112,7 @@ async function runScopedDoctor(
  * `doctorRegistrationUseCase` against the user manifest: registrations versus a host's own
  * registry file, the one check that is not project-file-shaped. */
 async function runUserScopeDoctor(
+  tools: ToolCatalog,
   deps: Deps,
   output: CLIOutput,
   projectRoot: string,
@@ -124,13 +133,17 @@ async function runUserScopeDoctor(
   printUserScopeTools(
     output,
     toolIds.map((id) => {
-      const settingsPaths = userMachineLocalFilesOf(id, deps.homedir(), (name) =>
-        deps.environment.get(name)
-      );
+      const profile = tools.profile(id);
+      const settingsFile =
+        profile.kind === "ai"
+          ? profile
+              .nativeActivation()
+              ?.userSettingsFile(deps.homedir(), (name) => deps.environment.get(name))
+          : undefined;
       return {
         toolId: id,
         version: manifest.getToolVersion(id) ?? "unknown",
-        settings: settingsPaths.length > 0 ? settingsPaths[0] : "no user-scope settings file",
+        settings: settingsFile ?? "no user-scope settings file",
       };
     })
   );
@@ -139,6 +152,7 @@ async function runUserScopeDoctor(
     manifest,
     projectRoot,
     allowedIds,
+    tools,
     globalInstall: true,
   });
   printScopeIssues(output, "User scope", { issues });
@@ -157,7 +171,7 @@ interface DoctorCmdOptions {
   global?: boolean;
 }
 
-export function registerDoctorCommand(program: Command): void {
+export function registerDoctorCommand(program: Command, tools: ToolCatalog): void {
   program
     .command("doctor")
     .description(
@@ -175,20 +189,21 @@ export function registerDoctorCommand(program: Command): void {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output);
+        const deps = await createDeps(projectRoot, { verbose }, output, tools);
         const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
         if (scope === "user") {
-          await runUserScopeDoctor(deps, output, projectRoot, cmdOptions);
+          await runUserScopeDoctor(tools, deps, output, projectRoot, cmdOptions);
         } else if (cmdOptions.tool !== undefined) {
           await runScopedDoctor(
             deps,
             output,
             projectRoot,
             cmdOptions.tool as ToolId,
+            tools,
             cmdOptions.plugin
           );
         } else {
-          await runFullDoctor(deps, output, projectRoot, cmdOptions.plugin);
+          await runFullDoctor(deps, output, projectRoot, tools, cmdOptions.plugin);
         }
       } catch (error) {
         errorHandler.handle(error);

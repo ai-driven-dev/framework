@@ -1,15 +1,21 @@
 import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
 import type { ToolId } from "../../../../kernel/tool.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { BulkConflictState } from "./resolve-update-decision-use-case.js";
-import type { GlobalExecutionError, UpdateOneToolUseCase } from "./update-one-tool-use-case.js";
+import type {
+  GlobalExecutionError,
+  UpdateOneToolOptions,
+  UpdateOneToolUseCase,
+} from "./update-one-tool-use-case.js";
 
 export interface UpdateToolsInput<T extends ToolId> {
   toolArg?: T;
   projectRoot: string;
   userForce: boolean;
   interactive: boolean;
+  tools: ToolCatalog;
 }
 
 export interface UpdateToolsResult {
@@ -30,7 +36,7 @@ export class UpdateToolsUseCase<T extends ToolId> {
   ) {}
 
   async execute(input: UpdateToolsInput<T>): Promise<UpdateToolsResult> {
-    const { toolArg, projectRoot, userForce, interactive } = input;
+    const { toolArg, projectRoot, userForce, interactive, tools } = input;
     const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
     const targetIds = this.resolveTargetIds(manifest, toolArg);
     const version = this.versionReader.get();
@@ -48,6 +54,7 @@ export class UpdateToolsUseCase<T extends ToolId> {
         userForce,
         interactive,
         bulkState,
+        tools,
       }
     );
     return { updatedTools, errors };
@@ -64,7 +71,7 @@ export class UpdateToolsUseCase<T extends ToolId> {
     projectRoot: string,
     version: string,
     errors: GlobalExecutionError[],
-    options: { userForce: boolean; interactive: boolean; bulkState: BulkConflictState }
+    options: UpdateOneToolOptions
   ): Promise<{ toolId: ToolId; fileCount: number }[]> {
     const updated: { toolId: ToolId; fileCount: number }[] = [];
     for (const toolId of targetIds) {

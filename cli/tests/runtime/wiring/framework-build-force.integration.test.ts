@@ -2,12 +2,14 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import { FlatTargetExistsError } from "../../../src/kernel/errors.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import {
   createFrameworkBuildUseCase,
   type FrameworkBuildDeps,
 } from "../../../src/runtime/wiring/translate.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
@@ -20,7 +22,7 @@ const STALE_CONTENT = "stale content from a previous build";
 function makeDeps(fs: InMemoryFileAdapter): FrameworkBuildDeps {
   return {
     fs,
-    assetProvider: new BundledAssetProviderAdapter(),
+    assetProvider: new BundledAssetProviderAdapter(wireTools()),
     logger: new CapturingLogger(),
   };
 }
@@ -44,7 +46,7 @@ describe("createFrameworkBuildUseCase threads the caller's --force through to th
   });
 
   it("force: false throws FlatTargetExistsError when the canonical destination already exists", async () => {
-    const useCase = createFrameworkBuildUseCase(makeDeps(fs), {
+    const useCase = createFrameworkBuildUseCase(catalogOf(), makeDeps(fs), {
       target: "copilot",
       mode: "flat",
       outDir,
@@ -59,7 +61,7 @@ describe("createFrameworkBuildUseCase threads the caller's --force through to th
   });
 
   it("force: true overwrites the canonical destination instead of throwing", async () => {
-    const useCase = createFrameworkBuildUseCase(makeDeps(fs), {
+    const useCase = createFrameworkBuildUseCase(catalogOf(), makeDeps(fs), {
       target: "copilot",
       mode: "flat",
       outDir,

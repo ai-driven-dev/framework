@@ -3,7 +3,7 @@
   "scopes": {
     "kernel": {
       "mutate": "src/kernel/**/*.ts",
-      "break": 95,
+      "break": 96,
       "shards": 4
     },
     "auth": {
@@ -39,7 +39,7 @@
     },
     "translate": {
       "mutate": "src/contexts/translate/**/*.ts",
-      "break": 85,
+      "break": 89,
       "shards": 2
     },
     "distribution": {

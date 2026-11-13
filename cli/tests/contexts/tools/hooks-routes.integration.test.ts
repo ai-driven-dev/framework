@@ -10,10 +10,11 @@ import { COPILOT_HOOKS } from "../../../src/contexts/tools/domain/profiles/copil
 import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
 import { KILO_HOOKS } from "../../../src/contexts/tools/domain/profiles/kilo/hooks.js";
 import { OPENCODE_HOOKS } from "../../../src/contexts/tools/domain/profiles/opencode/hooks.js";
-import { AI_TOOL_IDS, type AiToolId } from "../../../src/kernel/tool.js";
+import type { AiToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { pathWithoutAidd } from "../../e2e/helpers.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
+import { catalogOf } from "./testing/catalog-of.js";
 
 /**
  * Every route that writes or removes a tool's hook files, driven through the same use cases
@@ -104,7 +105,7 @@ async function writeSource(source: string): Promise<void> {
 
 async function deps(project: string) {
   const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
-  return createDeps(project, { verbose: false }, new CLIOutput(false));
+  return createDeps(project, { verbose: false }, new CLIOutput(false), catalogOf());
 }
 
 async function installTool(project: string, toolId: AiToolId): Promise<void> {
@@ -112,25 +113,20 @@ async function installTool(project: string, toolId: AiToolId): Promise<void> {
   const { InitUseCase } = await import(
     "../../../src/contexts/framework/application/init-use-case.js"
   );
-  await new InitUseCase(d.fs, d.manifestRepo).execute({ projectRoot: project });
+  await new InitUseCase(d.fs, d.manifestRepo).execute({ projectRoot: project, tools: catalogOf() });
+  const install = { tools: catalogOf(), toolId, force: false, version: "1.0.0" };
   await d.installAiToolUseCase.execute({
-    toolId,
+    ...install,
     projectRoot: project,
-    force: false,
-    version: "1.0.0",
     propagatePlugins: false,
   });
 }
 
 async function installPlugin(project: string, toolId: AiToolId, plugin: string): Promise<void> {
   const d = await deps(project);
-  await d.pluginInstallUseCase.execute({
-    pluginArg: join(REPOSITORY_ROOT, "plugins", plugin),
-    toolIds: [toolId],
-    projectRoot: project,
-    interactive: false,
-    yes: true,
-  });
+  const pluginArg = join(REPOSITORY_ROOT, "plugins", plugin);
+  const install = { pluginArg, toolIds: [toolId], tools: catalogOf(), interactive: false };
+  await d.pluginInstallUseCase.execute({ ...install, projectRoot: project, yes: true });
 }
 
 async function build(
@@ -142,7 +138,7 @@ async function build(
   const d = await deps(ws.project);
   const out = join(ws.root, `out-${mode}`);
   await mkdir(out, { recursive: true });
-  const useCase = createFrameworkBuildUseCase(d, {
+  const useCase = createFrameworkBuildUseCase(catalogOf(), d, {
     target: toolId,
     mode,
     outDir: out,
@@ -329,6 +325,7 @@ async function reinstallThroughSetup(ws: Workspace): Promise<string> {
     mode: "named",
     pluginNames: [...PLUGINS],
     interactive: false,
+    tools: catalogOf(),
   } as const;
   await d.setupPluginsPromptUseCase.execute(options);
   const before = await describeHookFiles(ws, [ws.project, ws.home]);
@@ -372,19 +369,17 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
   }
   const d = await deps(ws.project);
   if (route === "plugin-remove") {
-    await d.pluginRemoveUseCase.execute({
-      pluginName: "aidd-context",
-      toolIds: [toolId],
-      projectRoot: ws.project,
-    });
+    const removal = { tools: catalogOf(), pluginName: "aidd-context", toolIds: [toolId] };
+    await d.pluginRemoveUseCase.execute({ ...removal, projectRoot: ws.project });
     return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
   }
-  await d.cleanUseCase.execute({ projectRoot: ws.project, force: true, interactive: false });
+  const clean = { force: true, interactive: false, tools: catalogOf() };
+  await d.cleanUseCase.execute({ ...clean, projectRoot: ws.project });
   return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
 }
 
 describe("the hook files every route writes and removes, per tool", () => {
-  for (const toolId of AI_TOOL_IDS) {
+  for (const toolId of catalogOf().aiIdsInCanonicalOrder()) {
     describe(toolId, () => {
       for (const route of ROUTES) {
         it(`${route} leaves exactly the pinned hook files`, async () => {

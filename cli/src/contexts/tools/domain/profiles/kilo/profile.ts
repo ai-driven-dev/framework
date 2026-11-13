@@ -1,15 +1,15 @@
 import { join } from "node:path";
-import { CONFIG_MCP } from "../../capabilities/config-refs.js";
-import { McpCapability } from "../../capabilities/mcp-capability.js";
+import kiloJson from "../../../../../../assets/configs/kilo/kilo.json" with { type: "json" };
+import { CONFIG_MCP } from "../../../contract/config-refs.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
-import { flatGlobalFilePath } from "../../plugins/plugin-params.js";
-import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
 import { defineAiTool } from "../../profile/define-tool.js";
+import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section.js";
+import { McpConfigPart } from "../../sections/mcp-section.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
@@ -18,6 +18,8 @@ import { KILO_DIRECTORY, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.js";
 
 const TOOL_SUFFIX = ".kilo.md";
 
+const hooksDelivery = flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge);
+
 export const kilo = defineAiTool({
   toolId: "kilo",
   distributionProbes: { marketplace: ["kilo.json"] },
@@ -25,7 +27,9 @@ export const kilo = defineAiTool({
   toolSuffix: TOOL_SUFFIX,
   displayName: "Kilo Code",
   signalDir: ".kilo/commands",
-  configOutputPaths: { "kilo.json": ".kilo/kilo.jsonc" },
+  configAssets: [
+    { name: "kilo.json", content: kiloJson, destination: ".kilo/kilo.jsonc", delivery: "install" },
+  ],
   buildContracts: { flat: buildKiloFlatContract },
 
   capabilities: (bound) => ({
@@ -49,22 +53,23 @@ export const kilo = defineAiTool({
           ? { description: fm.description }
           : {},
     }),
-    mcp: new McpCapability({
-      outputPath: "kilo.json",
-      format: "json",
-      mergeStrategy: "framework-prime",
-      transformContent: toTypedMcpSection,
-      consumes: [CONFIG_MCP],
-      outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
-    }),
-    plugins: pluginsCapability({
-      mode: "flat",
-      flatNamespacePrefix: "aidd-",
+    mcp: {
+      config: new McpConfigPart({
+        outputPath: "kilo.json",
+        format: "json",
+        mergeStrategy: "framework-prime",
+        transformContent: toTypedMcpSection,
+        consumes: [CONFIG_MCP],
+        outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
+      }),
+    },
+    hooks: { delivery: hooksDelivery },
+    layout: flatPlacement({
+      namespacePrefix: "aidd-",
       globalFiles: {
         dir: (homedir) => join(homedir, ".config", "kilo"),
         map: flatGlobalFilePath(KILO_DIRECTORY),
       },
-      ...flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge),
     }),
   }),
 

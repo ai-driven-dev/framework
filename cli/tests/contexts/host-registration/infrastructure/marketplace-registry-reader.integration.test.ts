@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
-import { nativeActivationOf } from "../../../../src/contexts/tools/domain/registry.js";
+import { catalogOf, registeredAiConfig } from "../../tools/testing/catalog-of.js";
 
 let home: string;
 
@@ -20,7 +20,7 @@ afterEach(async () => {
 /** Read off claude's own profile, never a literal, so this path cannot drift from
  * `profile.ts`'s own `marketplaceRegistry`. */
 function registryPath(): string {
-  const declared = nativeActivationOf("claude")?.marketplaceRegistryAt(home);
+  const declared = registeredAiConfig("claude").nativeActivation()?.marketplaceRegistryAt(home);
   if (declared === undefined) throw new Error("claude's profile declares no marketplaceRegistry");
   return declared.path;
 }
@@ -32,7 +32,7 @@ async function write(content: string): Promise<void> {
 }
 
 function reader() {
-  const found = wireHostRegistration(home).marketplaceRegistries.get("claude");
+  const found = wireHostRegistration(catalogOf(), home).marketplaceRegistries.get("claude");
   if (found === undefined) throw new Error("no reader declared for claude");
   return found;
 }
@@ -113,7 +113,9 @@ describe("Claude Code's own known_marketplaces.json", () => {
 
 describe("which hosts declare a marketplace registry to read", () => {
   it("is claude alone, read off the profiles rather than a list", () => {
-    expect([...wireHostRegistration(home).marketplaceRegistries.keys()]).toStrictEqual(["claude"]);
+    expect([...wireHostRegistration(catalogOf(), home).marketplaceRegistries.keys()]).toStrictEqual(
+      ["claude"]
+    );
   });
 });
 

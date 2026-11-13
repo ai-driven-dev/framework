@@ -7,12 +7,12 @@ import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { getAiToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/kernel/file.js";
 import { AI_TOOL_IDS } from "../../../../src/kernel/tool.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
+import { registeredAiConfig } from "../../tools/testing/catalog-of.js";
 
 /**
  * Prose — a skill, an agent, a rule — is translated: frontmatter converted, paths rewritten.
@@ -28,7 +28,7 @@ describe("a plugin's executable files survive being installed", () => {
   for (const relativePath of ARTEFACTS) {
     it(`${relativePath} is not what any tool's own rewrite would make of it`, () => {
       const content = pluginFile(relativePath);
-      const rewritten = AI_TOOL_IDS.map((tool) => getAiToolConfig(tool).rewriteContent(content));
+      const rewritten = AI_TOOL_IDS.map((tool) => registeredAiConfig(tool).rewriteContent(content));
 
       // The rewrite is the thing the translator must not apply to this file. Where a tool's
       // rewrite happens to leave it alone, that is luck; where it does not, this names it.

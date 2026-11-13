@@ -194,6 +194,48 @@ describe("buildCopilotFlatContract()", () => {
     });
   });
 
+  it("renames a skill folder after its plugin, only for a path that starts with skills/", () => {
+    const skills = supported(buildCopilotFlatContract().artifacts.skills);
+
+    expect(skills.path("aidd-dev", "skills/01-plan/SKILL.md")).toBe(
+      ".github/skills/aidd-dev-01-plan/SKILL.md"
+    );
+    expect(skills.path("aidd-dev", "docs/skills/x.md")).toBe(
+      ".github/skills/aidd-dev-docs/skills/x.md"
+    );
+    expect(skills.rewriteSkillName).toBe(true);
+  });
+
+  it("names a flat agent from its path, dropping agents/ only at the start", () => {
+    const { path } = supported(buildCopilotFlatContract().artifacts.agents);
+
+    expect(path("aidd-dev", "docs/agents/x.md")).toBe(
+      ".github/agents/aidd-dev-docs/agents/x.agent.md"
+    );
+  });
+
+  it("keeps only the fields Copilot reads of a hook entry", () => {
+    const hooks = supported(buildCopilotFlatContract().artifacts.hooks);
+    const incoming = JSON.stringify({
+      hooks: {
+        PostToolUse: [
+          {
+            matcher: "Write",
+            hooks: [{ type: "command", command: "node a.cjs", timeout: 5, extra: 1 }],
+          },
+        ],
+      },
+    });
+
+    const written = JSON.parse(
+      hooks.hooksFile?.merge(null, incoming, "aidd-dev", (path) => path).content ?? ""
+    );
+
+    expect(written.hooks.PostToolUse).toStrictEqual([
+      { type: "command", command: "node a.cjs", matcher: "Write", timeout: 5 },
+    ]);
+  });
+
   it("renames a flat agent after its plugin, drops what Copilot cannot read, and points its references at their flat destinations", () => {
     const transform = supported(buildCopilotFlatContract().artifacts.agents).transform;
 

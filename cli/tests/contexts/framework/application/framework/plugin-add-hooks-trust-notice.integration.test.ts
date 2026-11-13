@@ -11,7 +11,9 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { catalogOf } from "../../../tools/testing/catalog-of.js";
 import { nativeOf } from "../../../tools/testing/plugin-mode.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -24,7 +26,10 @@ async function installWithLogger(toolId: "codex" | "claude") {
   const useCase = new PluginAddUseCase(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, new PluginDistributionReaderAdapter(deps.fs)),
+    new PluginDistributionLoader(
+      deps.pluginFetcher,
+      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+    ),
     deps.hasher,
     logger,
     new InMemoryMarketplaceRegistry(),
@@ -32,6 +37,7 @@ async function installWithLogger(toolId: "codex" | "claude") {
     deps.userManifestRepo
   );
   await useCase.execute({
+    tools: catalogOf(),
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,
@@ -46,7 +52,7 @@ describe("PluginAddUseCase hook trust notice", () => {
 
     expect(logger.infoMessages).toHaveLength(1);
     expect(logger.infoMessages[0]).toBe(
-      `Plugin "sample-plugin" (codex): ${nativeOf(codex.section("plugins")).trustNotice()}`
+      `Plugin "sample-plugin" (codex): ${nativeOf(codex.plugins()).trustNotice()}`
     );
     expect(logger.warnMessages).toEqual([]);
   });

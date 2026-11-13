@@ -1,18 +1,15 @@
+import { join } from "node:path";
 import { InstallationFile } from "../../../../kernel/file.js";
 import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { Platform } from "../../../../runtime/platform/platform.js";
-import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
-import { CONFIG_MCP, type ConfigRef } from "../../../tools/domain/capabilities/config-refs.js";
-import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
-import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
-import type { ConfigCapability } from "../../../tools/domain/contracts.js";
-import { transformFor as transformMcpForPlatform } from "../../../tools/domain/mcp-launch-command.js";
+import { CONFIG_MCP, type ConfigRef } from "../../../tools/contract/config-refs.js";
+import type { ConfigWrite, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 
 interface InstallConfigOptions {
-  capabilities: readonly ConfigCapability[];
+  writes: readonly ConfigWrite[];
   configRefs: readonly ConfigRef[];
   contentFiles: Map<string, string>;
   projectRoot: string;
@@ -28,24 +25,18 @@ export class InstallConfigUseCase {
   ) {}
 
   async execute(options: InstallConfigOptions): Promise<InstallationFile[]> {
-    const { capabilities, configRefs, contentFiles, projectRoot, platform } = options;
-    const win32Transform = transformMcpForPlatform(platform.current());
+    const { writes, configRefs, contentFiles, projectRoot, platform } = options;
+    const platformName = platform.current();
     const results: InstallationFile[] = [];
     for (const ref of configRefs) {
-      const capability = capabilities.find((c) => c.consumes(ref.name));
-      if (capability === undefined) continue;
-      const file = await this.processRef(
-        ref,
-        capability,
-        contentFiles,
-        projectRoot,
-        win32Transform
-      );
+      const write = writes.find((w) => w.capability.consumes(ref.name));
+      if (write === undefined) continue;
+      const file = await this.processRef(ref, write, contentFiles, projectRoot, platformName);
       if (file !== null) results.push(file);
     }
-    for (const capability of capabilities) {
-      if (!(capability instanceof SettingsCapability)) continue;
-      const file = await this.processStaticCapability(capability, projectRoot, options);
+    for (const write of writes) {
+      if (write.kind !== "settings") continue;
+      const file = this.processStaticWrite(write.capability, options);
       if (file !== null) results.push(file);
     }
     return results;
@@ -53,30 +44,29 @@ export class InstallConfigUseCase {
 
   private async processRef(
     ref: ConfigRef,
-    capability: ConfigCapability,
+    write: ConfigWrite,
     contentFiles: Map<string, string>,
     projectRoot: string,
-    win32Transform: ((content: string) => string) | undefined
+    platformName: string
   ): Promise<InstallationFile | null> {
     const rawContent = contentFiles.get(ref.path);
     if (rawContent === undefined) return null;
-    const outputPath = await this.resolveCapabilityOutputPath(capability, projectRoot);
+    const outputPath = await this.resolveOutputPath(write, projectRoot);
     if (outputPath === null) return null;
-    const content = this.applyTransforms(capability, ref.name, rawContent, win32Transform);
+    const content = this.applyTransforms(write, ref.name, rawContent, platformName);
     return new InstallationFile({
       relativePath: outputPath,
       content,
       hash: this.hasher.hash(content),
-      mergeStrategy: capability.mergeStrategy(),
+      mergeStrategy: write.capability.mergeStrategy(),
       frameworkPath: ref.path,
     });
   }
 
-  private async processStaticCapability(
-    capability: SettingsCapability,
-    projectRoot: string,
+  private processStaticWrite(
+    capability: SettingsFileAnswers,
     options: InstallConfigOptions
-  ): Promise<InstallationFile | null> {
+  ): InstallationFile | null {
     const { assetProvider, toolId } = options;
     const content = capability.resolveStaticContent(
       assetProvider === undefined || toolId === undefined
@@ -84,35 +74,32 @@ export class InstallConfigUseCase {
         : (fileName) => assetProvider.loadConfigAsset(toolId, fileName)
     );
     if (content === null) return null;
-    const outputPath = await this.resolveCapabilityOutputPath(capability, projectRoot);
-    if (outputPath === null) return null;
     return new InstallationFile({
-      relativePath: outputPath,
+      relativePath: capability.outputPath(),
       content,
       hash: this.hasher.hash(content),
       mergeStrategy: capability.mergeStrategy(),
     });
   }
 
-  private async resolveCapabilityOutputPath(
-    capability: ConfigCapability,
-    projectRoot: string
-  ): Promise<string | null> {
-    if (capability instanceof McpCapability) {
-      return resolveMcpOutputPath(this.fs, capability, projectRoot);
+  private async resolveOutputPath(write: ConfigWrite, projectRoot: string): Promise<string | null> {
+    if (write.kind === "mcp") {
+      return write.capability.resolveOutputPath((relativePath) =>
+        this.fs.fileExists(join(projectRoot, relativePath))
+      );
     }
-    return capability.outputPath();
+    return write.capability.outputPath();
   }
 
   private applyTransforms(
-    capability: ConfigCapability,
+    write: ConfigWrite,
     configName: string,
     rawContent: string,
-    win32Transform: ((content: string) => string) | undefined
+    platformName: string
   ): string {
-    const toolContent =
-      capability instanceof McpCapability ? capability.transform(rawContent) : rawContent;
-    const isMcp = capability.consumes(CONFIG_MCP) && configName === CONFIG_MCP;
-    return isMcp && win32Transform ? win32Transform(toolContent) : toolContent;
+    if (write.kind !== "mcp") return rawContent;
+    const toolContent = write.capability.transform(rawContent);
+    const launch = write.capability.launchTransformFor(platformName);
+    return configName === CONFIG_MCP && launch ? launch(toolContent) : toolContent;
   }
 }

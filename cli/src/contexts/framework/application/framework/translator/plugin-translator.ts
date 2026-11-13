@@ -1,6 +1,6 @@
 import type { PluginSource } from "../../../../../kernel/source.js";
-import type { AiToolId } from "../../../../../kernel/tool.js";
-import type { PluginTranslationMode } from "../../../../tools/domain/plugin-translation-mode.js";
+import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
+import type { PluginTranslationMode } from "../../../../tools/contract/tool-vocabulary.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../../domain/manifest.js";
@@ -20,7 +20,7 @@ export interface PluginTranslator {
    */
   addPlugin(
     dist: PluginDistribution,
-    toolId: AiToolId,
+    tool: AiToolProfile,
     source: PluginSource,
     projectRoot: string,
     manifest: Manifest,

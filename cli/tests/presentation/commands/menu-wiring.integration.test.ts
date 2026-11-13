@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 
 const loadManifest = vi.fn();
 const promptSelect = vi.fn();
@@ -64,7 +65,7 @@ function exiting(): MockInstance<typeof process.exit> {
 }
 
 async function loopUntilExit(): Promise<void> {
-  await expect(runMenuLoop()).rejects.toThrow(/^exit /);
+  await expect(runMenuLoop(wireTools())).rejects.toThrow(/^exit /);
 }
 
 describe("aidd with no argument — the menu loop", () => {

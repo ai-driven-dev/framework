@@ -14,6 +14,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { catalogOf, registeredAiProfile } from "../../../tools/testing/catalog-of.js";
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
@@ -104,7 +105,13 @@ for (const toolId of ["codex", "copilot"] as const) {
     }
 
     const execute = (remove: PluginRemoveUseCase, pluginName: string) =>
-      remove.execute({ pluginName, toolIds: [toolId], projectRoot: "/A", scope: "user" });
+      remove.execute({
+        tools: catalogOf(),
+        pluginName,
+        toolIds: [toolId],
+        projectRoot: "/A",
+        scope: "user",
+      });
 
     it.each([{ hostRegistryUnavailable: true }, { hostRegistryUnreadable: true }])(
       "retains all ownership data when the host registry cannot be measured: %j",
@@ -336,6 +343,7 @@ describe("Cursor user plugin boundary", () => {
     fs.setFile(path, "user-edited plugin.json");
     await expect(
       remove.execute({
+        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: ["cursor"],
         projectRoot: "/A",
@@ -346,6 +354,7 @@ describe("Cursor user plugin boundary", () => {
     expect(repo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
     fs.setFile(path, "owned bytes");
     await remove.execute({
+      tools: catalogOf(),
       pluginName: "sample-plugin",
       toolIds: ["cursor"],
       projectRoot: "/A",
@@ -385,7 +394,7 @@ describe("Cursor user plugin boundary", () => {
           fs,
           new CapturingLogger(),
           owned,
-          "cursor",
+          registeredAiProfile("cursor"),
           resolveHomeDir()
         )
       ).size
@@ -402,6 +411,7 @@ describe("Cursor user plugin boundary", () => {
     );
     await expect(
       remove.execute({
+        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: ["cursor"],
         projectRoot: "/A",

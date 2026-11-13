@@ -4,12 +4,14 @@ import type { FileHash } from "../../../kernel/file.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../kernel/merge.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { Hasher } from "../../../kernel/ports/hasher.js";
-import type { AiToolId, ToolCategory, ToolId } from "../../../kernel/tool.js";
 import {
-  getToolConfig,
-  machineLocalFilesOf,
+  type AiToolId,
+  type ToolCategory,
+  type ToolId,
   toolIdsForCategory,
-} from "../../tools/domain/registry.js";
+} from "../../../kernel/tool.js";
+import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { DetectPluginDriftUseCase } from "./shared/detect-plugin-drift-use-case.js";
@@ -45,6 +47,7 @@ export interface StatusOptions {
   filterToolId?: ToolId;
   category?: ToolCategory;
   pluginName?: string;
+  tools: ToolCatalog;
 }
 
 /**
@@ -64,18 +67,19 @@ export class StatusUseCase implements StatusQuery {
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {
-    const { projectRoot, filterToolId, category, pluginName } = options;
+    const { projectRoot, filterToolId, category, pluginName, tools: profiles } = options;
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError();
     if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
 
     const installedToolIds = this.resolveToolIds(filterToolId, category, manifest);
-    const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot);
+    const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot, profiles);
     const pluginDrift = await this.checkAllPlugins(
       installedToolIds,
       manifest,
       projectRoot,
+      profiles,
       pluginName
     );
     const inSync = tools.every((t) => t.drifted.length === 0) && pluginDrift.length === 0;
@@ -100,29 +104,31 @@ export class StatusUseCase implements StatusQuery {
   private async checkAllTools(
     toolIds: ToolId[],
     manifest: Manifest,
-    projectRoot: string
+    projectRoot: string,
+    profiles: ToolCatalog
   ): Promise<ToolStatus[]> {
     const tools: ToolStatus[] = [];
     for (const toolId of toolIds) {
-      tools.push(await this.checkOneTool(toolId, manifest, projectRoot));
+      tools.push(await this.checkOneTool(profiles.profile(toolId), manifest, projectRoot));
     }
     return tools;
   }
 
   private async checkOneTool(
-    toolId: ToolId,
+    tool: ToolProfile,
     manifest: Manifest,
     projectRoot: string
   ): Promise<ToolStatus> {
+    const toolId = tool.toolId;
     const version = manifest.getToolVersion(toolId) ?? "unknown";
     const trackedFiles = manifest.getToolFiles(toolId);
     const mergeFiles = manifest.getMergeFiles(toolId);
     const drifted = await this.checkTrackedFiles(trackedFiles, projectRoot);
     drifted.push(...(await this.checkMergeFiles(mergeFiles, projectRoot)));
-    const dir = getToolConfig(toolId).directory;
+    const dir = tool.directory;
     const trackedSet = manifest.getTrackedPathsInDirectory(dir);
     drifted.push(
-      ...(await this.detectAddedFiles(dir, trackedSet, projectRoot, machineLocalFilesOf(toolId)))
+      ...(await this.detectAddedFiles(dir, trackedSet, projectRoot, tool.machineLocalFiles()))
     );
     return { toolId, version, drifted };
   }
@@ -217,12 +223,14 @@ export class StatusUseCase implements StatusQuery {
     toolIds: ToolId[],
     manifest: Manifest,
     projectRoot: string,
+    tools: ToolCatalog,
     pluginName?: string
   ): Promise<PluginDriftEntry[]> {
     const drifts = await this.detectPluginDrift.execute({
       manifest,
       projectRoot,
       toolIds,
+      tools,
       pluginName,
     });
     return drifts.map((drift) => ({

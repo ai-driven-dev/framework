@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SetupToolsPromptUseCase } from "../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
+import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 
 describe("SetupToolsPromptUseCase", () => {
@@ -12,6 +13,7 @@ describe("SetupToolsPromptUseCase", () => {
         interactive: false,
         aiTools: [],
         ideTools: [],
+        tools: registeredCatalog(),
       });
 
       expect(result.aiTools).toEqual([]);
@@ -28,6 +30,7 @@ describe("SetupToolsPromptUseCase", () => {
         interactive: true,
         aiTools: ["claude"],
         ideTools: [],
+        tools: registeredCatalog(),
       });
 
       expect(result.aiTools).toEqual(["claude"]);
@@ -42,6 +45,7 @@ describe("SetupToolsPromptUseCase", () => {
         interactive: true,
         aiTools: [],
         ideTools: ["vscode"],
+        tools: registeredCatalog(),
       });
 
       expect(result.aiTools).toEqual([]);
@@ -61,6 +65,7 @@ describe("SetupToolsPromptUseCase", () => {
         interactive: true,
         aiTools: [],
         ideTools: [],
+        tools: registeredCatalog(),
       });
 
       expect(result.aiTools).toEqual(["claude", "cursor"]);
@@ -78,6 +83,7 @@ describe("SetupToolsPromptUseCase", () => {
         interactive: true,
         aiTools: [],
         ideTools: [],
+        tools: registeredCatalog(),
       });
 
       expect(result.aiTools).toEqual([]);

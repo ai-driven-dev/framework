@@ -1,4 +1,3 @@
-import type { ToolId } from "../../../../kernel/tool.js";
 import type {
   HostMarketplaceSources,
   NativeMarketplaceSource,
@@ -9,7 +8,7 @@ import type {
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
 } from "../../../host-registration/contract/host-plugin-registry.js";
-import { hostRefInUse } from "../../../tools/domain/registry.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { NativeMarketplaceRegistration } from "../../domain/manifest/native-registrations.js";
 
 export interface NativeMarketplaceSourceInspection {
@@ -83,7 +82,7 @@ export async function assertNoForeignNativeRefs(
   hostName: string,
   ownedRefs: ReadonlySet<string>,
   projectRoot: string,
-  toolId: ToolId
+  tool: AiToolProfile | undefined
 ): Promise<ReadonlyMap<string, HostPluginRegistryEntry>> {
   if (reader === undefined)
     throw new Error(
@@ -104,7 +103,9 @@ export async function assertNoForeignNativeRefs(
   const refs = reading.refs ?? new Map<string, HostPluginRegistryEntry>();
   const foreign = [...refs].find(
     ([ref, entry]) =>
-      hostRefInUse(toolId, entry.enabled) && ref.endsWith(`@${hostName}`) && !ownedRefs.has(ref)
+      (tool?.hostRefInUse(entry.enabled) ?? true) &&
+      ref.endsWith(`@${hostName}`) &&
+      !ownedRefs.has(ref)
   )?.[0];
   if (foreign !== undefined)
     throw new Error(

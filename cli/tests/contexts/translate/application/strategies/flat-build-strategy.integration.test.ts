@@ -4,7 +4,7 @@ import type {
   ArtifactContract,
   ConfigArtifactInput,
   ToolBuildContract,
-} from "../../../../../src/contexts/tools/domain/build-contract.js";
+} from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";

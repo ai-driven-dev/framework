@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";
 
@@ -30,6 +31,7 @@ export interface DetectPluginDriftOptions {
   manifest: Manifest;
   projectRoot: string;
   toolIds: Iterable<ToolId>;
+  tools: ToolCatalog;
   pluginName?: string;
 }
 
@@ -40,14 +42,19 @@ export class DetectPluginDriftUseCase {
   constructor(private readonly fs: FileReader) {}
 
   async execute(options: DetectPluginDriftOptions): Promise<PluginDrift[]> {
-    const { manifest, projectRoot, toolIds, pluginName } = options;
+    const { manifest, projectRoot, toolIds, pluginName, tools } = options;
     const drifts: PluginDrift[] = [];
     for (const id of toolIds) {
       const toolId = id as AiToolId;
       const plugins = manifest.getPlugins(toolId);
       const targets = pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
       for (const plugin of targets) {
-        const baseDir = resolveBaseDirFromRecord(plugin.scope, toolId, projectRoot, homedir);
+        const baseDir = resolveBaseDirFromRecord(
+          plugin.scope,
+          tools.aiProfile(toolId),
+          projectRoot,
+          homedir
+        );
         const files = await this.driftedFiles(plugin.files, baseDir);
         if (files.length === 0) continue;
         const allMissing =

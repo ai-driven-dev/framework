@@ -14,7 +14,6 @@ import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/pl
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
-import { nativeActivationOf } from "../../../../../src/contexts/tools/domain/registry.js";
 import { resolveHomeDir } from "../../../../../src/kernel/reading/home-dir.js";
 import type { AiToolId } from "../../../../../src/kernel/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -25,6 +24,12 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import {
+  catalogOf,
+  registeredAiConfig,
+  registeredCatalog,
+} from "../../../tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 for (const [toolId, catalogPath] of [
   ["codex", ".agents/plugins/marketplace.json"],
@@ -101,9 +106,9 @@ for (const [toolId, catalogPath] of [
         sources,
         hostPlugins
       );
-      await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
-        /active projects.*\/B/
-      );
+      await expect(
+        clean.execute({ tools: catalogOf(), projectRoot: "/B", force: true })
+      ).rejects.toThrow(/active projects.*\/B/);
       expect(failing.uninstalledPlugins).toEqual([]);
       expect(
         repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims?.[0]?.dependents
@@ -115,9 +120,9 @@ for (const [toolId, catalogPath] of [
         pluginClaims: [{ ref, dependents: [] }],
       });
       await repo.save(machine);
-      await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
-        /uninstall.*failed.*claims retained/
-      );
+      await expect(
+        clean.execute({ tools: catalogOf(), projectRoot: "/B", force: true })
+      ).rejects.toThrow(/uninstall.*failed.*claims retained/);
       expect(repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: [] },
       ]);
@@ -136,7 +141,7 @@ for (const [toolId, catalogPath] of [
         sources,
         hostPlugins
       );
-      await finish.execute({ projectRoot: "/B", force: true });
+      await finish.execute({ tools: catalogOf(), projectRoot: "/B", force: true });
       expect(working.uninstalledPlugins).toEqual([ref]);
       expect(working.removedMarketplaces).toEqual(["real-catalog"]);
       expect(repo.getCurrent()).toBeNull();
@@ -228,9 +233,19 @@ for (const [toolId, catalogPath] of [
         sources
       );
 
-      await useCase.execute({ projectRoot: "/A", manifestRepo: a, toolIds: [toolId] });
+      await useCase.execute({
+        tools: registeredCatalog(),
+        projectRoot: "/A",
+        manifestRepo: a,
+        toolIds: [toolId],
+      });
       enabled = true;
-      await useCase.execute({ projectRoot: "/B", manifestRepo: b, toolIds: [toolId] });
+      await useCase.execute({
+        tools: registeredCatalog(),
+        projectRoot: "/B",
+        manifestRepo: b,
+        toolIds: [toolId],
+      });
       expect(activator.enabledPlugins).toEqual([ref]);
       expect(b.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toContain(ref);
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
@@ -243,7 +258,7 @@ for (const [toolId, catalogPath] of [
           updateFs,
           new PluginDistributionLoader(
             new FixturePluginFetcher(),
-            new PluginDistributionReaderAdapter(updateFs)
+            new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
           ),
           new DeterministicHasher()
         ),
@@ -257,6 +272,7 @@ for (const [toolId, catalogPath] of [
       if (toolId === "copilot") {
         expect(
           await update.execute({
+            tools: catalogOf(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -271,7 +287,7 @@ for (const [toolId, catalogPath] of [
             updateFs,
             new PluginDistributionLoader(
               new FixturePluginFetcher(),
-              new PluginDistributionReaderAdapter(updateFs)
+              new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
             ),
             new DeterministicHasher()
           ),
@@ -284,6 +300,7 @@ for (const [toolId, catalogPath] of [
         );
         await expect(
           failingUpdate.execute({
+            tools: catalogOf(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -296,6 +313,7 @@ for (const [toolId, catalogPath] of [
       } else {
         await expect(
           update.execute({
+            tools: catalogOf(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -316,6 +334,7 @@ for (const [toolId, catalogPath] of [
       );
       await expect(
         removeMarketplace.execute({
+          tools: catalogOf(),
           name: alias,
           projectRoot: "/A",
           autoConfirm: true,
@@ -348,6 +367,7 @@ for (const [toolId, catalogPath] of [
         sources
       );
       await foreignUseCase.execute({
+        tools: registeredCatalog(),
         projectRoot: "/foreign",
         manifestRepo: foreign,
         toolIds: [toolId],
@@ -357,7 +377,9 @@ for (const [toolId, catalogPath] of [
         []
       );
       const removeFs = new InMemoryFileAdapter();
-      const cacheRoot = nativeActivationOf(toolId)?.pluginCacheRoot(resolveHomeDir());
+      const cacheRoot = registeredAiConfig(toolId)
+        .nativeActivation()
+        ?.pluginCacheRoot(resolveHomeDir());
       const cachedBytes =
         cacheRoot === undefined ? undefined : join(cacheRoot, hostName, "test-plugin", "skill.md");
       if (cachedBytes !== undefined)
@@ -374,19 +396,30 @@ for (const [toolId, catalogPath] of [
           user,
           sources
         );
-      await remove(a).execute({ pluginName: "test-plugin", toolIds: [toolId], projectRoot: "/A" });
+      await remove(a).execute({
+        tools: catalogOf(),
+        pluginName: "test-plugin",
+        toolIds: [toolId],
+        projectRoot: "/A",
+      });
       expect(activator.uninstalledPlugins).toEqual([]);
       if (cachedBytes !== undefined)
         expect(removeFs.getFile(cachedBytes)).toBe("B still uses this cached plugin");
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: ["/B"] },
       ]);
-      await remove(b).execute({ pluginName: "test-plugin", toolIds: [toolId], projectRoot: "/B" });
+      await remove(b).execute({
+        tools: catalogOf(),
+        pluginName: "test-plugin",
+        toolIds: [toolId],
+        projectRoot: "/B",
+      });
       expect(activator.uninstalledPlugins).toEqual([]);
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: [] },
       ]);
       await remove(a).execute({
+        tools: catalogOf(),
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/A",
@@ -396,6 +429,7 @@ for (const [toolId, catalogPath] of [
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
       enabled = false;
       await removeMarketplace.execute({
+        tools: catalogOf(),
         name: alias,
         projectRoot: "/A",
         autoConfirm: true,

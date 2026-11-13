@@ -2,9 +2,11 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { wireTools } from "../../../src/composition/tools.js";
 import { OutDirNotDirectoryError } from "../../../src/kernel/errors.js";
 import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import { createFrameworkBuildUseCase } from "../../../src/runtime/wiring/translate.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
@@ -29,7 +31,12 @@ describe("createFrameworkBuildUseCase, by mode", () => {
 
   it("builds a marketplace tree, plugin directories included, in marketplace mode", async () => {
     const useCase = createFrameworkBuildUseCase(
-      { fs, assetProvider: new BundledAssetProviderAdapter(), logger: new CapturingLogger() },
+      catalogOf(),
+      {
+        fs,
+        assetProvider: new BundledAssetProviderAdapter(wireTools()),
+        logger: new CapturingLogger(),
+      },
       { target: "claude", mode: "marketplace", outDir, force: true }
     );
     if (useCase === undefined) throw new Error("claude:marketplace must be wired");
@@ -42,7 +49,12 @@ describe("createFrameworkBuildUseCase, by mode", () => {
 
   it("builds a flat tree, no marketplace catalog, in flat mode", async () => {
     const useCase = createFrameworkBuildUseCase(
-      { fs, assetProvider: new BundledAssetProviderAdapter(), logger: new CapturingLogger() },
+      catalogOf(),
+      {
+        fs,
+        assetProvider: new BundledAssetProviderAdapter(wireTools()),
+        logger: new CapturingLogger(),
+      },
       { target: "copilot", mode: "flat", outDir, force: true }
     );
     if (useCase === undefined) throw new Error("copilot:flat must be wired");
@@ -57,7 +69,12 @@ describe("createFrameworkBuildUseCase, by mode", () => {
     const gone = join(outDir, "gone");
     fs.setFile(`${gone}/.keep`, "");
     const useCase = createFrameworkBuildUseCase(
-      { fs, assetProvider: new BundledAssetProviderAdapter(), logger: new CapturingLogger() },
+      catalogOf(),
+      {
+        fs,
+        assetProvider: new BundledAssetProviderAdapter(wireTools()),
+        logger: new CapturingLogger(),
+      },
       { target: "copilot", mode: "flat", outDir: gone, force: true }
     );
     if (useCase === undefined) throw new Error("copilot:flat must be wired");

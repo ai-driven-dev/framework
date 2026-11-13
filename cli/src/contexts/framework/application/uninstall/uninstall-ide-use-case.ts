@@ -1,11 +1,13 @@
 import { NoManifestError, ToolNotInstalledError } from "../../../../kernel/errors.js";
 import type { IdeToolId } from "../../../../kernel/tool.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UninstallToolsUseCase } from "./uninstall-tools-use-case.js";
 
 export interface UninstallIdeOptions {
   toolId: IdeToolId;
   projectRoot: string;
+  tools: ToolCatalog;
 }
 
 export interface UninstallIdeResult {
@@ -21,7 +23,7 @@ export class UninstallIdeUseCase {
   ) {}
 
   async execute(options: UninstallIdeOptions): Promise<UninstallIdeResult> {
-    const { toolId, projectRoot } = options;
+    const { toolId, projectRoot, tools } = options;
     const manifest = await this.manifestRepo.load();
     if (manifest === null) throw new NoManifestError();
     if (!manifest.hasTool(toolId)) throw new ToolNotInstalledError(toolId);
@@ -29,6 +31,7 @@ export class UninstallIdeUseCase {
       toolIds: [toolId],
       manifest,
       projectRoot,
+      tools,
     });
     await this.manifestRepo.save(manifest);
     return { toolId, fileCount: result?.fileCount ?? 0, deletedFiles: result?.deletedFiles ?? [] };

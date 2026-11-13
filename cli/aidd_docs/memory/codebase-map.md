@@ -44,22 +44,24 @@ src/
 │   │   └── infrastructure/
 │   ├── tools/    # what a project targets, and what each target declares
 │   │   ├── application/
+│   │   ├── contract/
 │   │   └── domain/
-│   │       ├── capabilities/
+│   │       ├── bridges/    # the generated event modules of the hosts that read no hooks file
 │   │       ├── formats/
 │   │       ├── hooks/
-│   │       ├── models/
-│   │       ├── plugins/
+│   │       ├── native-registration/    # the native host's plugin CLI and marketplace declarations, held as data
+│   │       ├── profile.ts    # the sections a profile declares and the shape a defined tool has
 │   │       ├── profile/
-│   │       └── profiles/    # one directory per tool
-│   │           ├── antigravity/
-│   │           ├── claude/
-│   │           ├── codex/
-│   │           ├── copilot/
-│   │           ├── cursor/
-│   │           ├── kilo/
-│   │           ├── opencode/
-│   │           └── vscode/
+│   │       ├── profiles/    # one directory per tool
+│   │       │   ├── antigravity/
+│   │       │   ├── claude/
+│   │       │   ├── codex/
+│   │       │   ├── copilot/
+│   │       │   ├── cursor/
+│   │       │   ├── kilo/
+│   │       │   ├── opencode/
+│   │       │   └── vscode/
+│   │       └── sections/    # the parts a profile is made of: one class per section it declares
 │   ├── host-registration/    # what a host's own registry says about plugins and marketplaces, and the driving of its CLI
 │   │   ├── contract/
 │   │   └── infrastructure/

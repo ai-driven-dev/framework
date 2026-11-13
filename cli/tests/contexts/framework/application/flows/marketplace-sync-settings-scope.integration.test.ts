@@ -14,6 +14,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -125,7 +126,11 @@ describe("settings synchronization under the machine ownership lock", () => {
     "reads project ownership only inside the machine lock for scope %s",
     async (scope) => {
       const f = await fixture();
-      const result = await f.sync.execute({ projectRoot: PROJECT_ROOT, scope });
+      const result = await f.sync.execute({
+        tools: registeredCatalog(),
+        projectRoot: PROJECT_ROOT,
+        scope,
+      });
       expect(result.errors).toEqual([]);
       expect(f.acquireLock).toHaveBeenCalledTimes(1);
       expect(f.accesses.length).toBeGreaterThan(0);
@@ -137,7 +142,11 @@ describe("settings synchronization under the machine ownership lock", () => {
 
   it("does not reacquire the project ownership lock during an explicit user-scope sync", async () => {
     const f = await fixture();
-    const result = await f.sync.execute({ projectRoot: PROJECT_ROOT, scope: "user" });
+    const result = await f.sync.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      scope: "user",
+    });
     expect(result.errors).toEqual([]);
     expect(f.acquireLock).not.toHaveBeenCalled();
     expect(f.activator.addedMarketplaces).toEqual(["/built/claude"]);
@@ -150,7 +159,9 @@ describe("settings synchronization under the machine ownership lock", () => {
     f.acquireLock.mockImplementationOnce(() => {
       throw error;
     });
-    await expect(f.sync.execute({ projectRoot: PROJECT_ROOT })).rejects.toBe(error);
+    await expect(
+      f.sync.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT })
+    ).rejects.toBe(error);
     expect(f.load).not.toHaveBeenCalled();
     expect(f.projectRepo.saveCount).toBe(0);
     expect(f.machineRepo.saveCount).toBe(0);
@@ -185,7 +196,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       proof.sources
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     // No plugin declared here, so nothing to enable: this asserts the marketplace
     // registration path ran at all, and the next test declares one for enablePlugin.
@@ -238,7 +249,11 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       proof.sources
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, scope: "user" });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      scope: "user",
+    });
 
     expect(activator.enabledPluginScopes).toEqual(["user"]);
   });
@@ -290,7 +305,11 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       fakeEnsureBuiltMarketplace()
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, scope: "user" });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      scope: "user",
+    });
 
     // resolve(): a project-scope write lands at resolve(projectRoot, settingsPath), which
     // carries a drive letter on win32, so the drive-less literal would prove nothing there.
@@ -312,7 +331,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       fakeEnsureBuiltMarketplace()
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     // resolve(): the write carries a drive letter on win32, which a forward-slash template
     // literal never matches.
@@ -337,6 +356,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     );
 
     const result = await useCase.execute({
+      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
       manifestRepo: overrideRepo,
@@ -374,7 +394,11 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       new FakeCurrentVersion()
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT, scope: "user" });
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      scope: "user",
+    });
 
     expect(added).toEqual([]);
   });
@@ -410,7 +434,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       proof.sources
     );
 
-    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(added).toHaveLength(1);
   });
