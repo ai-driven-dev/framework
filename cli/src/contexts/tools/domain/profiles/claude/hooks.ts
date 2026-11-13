@@ -5,7 +5,8 @@ import { declareHooks, ownNameEvents } from "../../formats/hooks-descriptor.js";
 import { CLAUDE_DIRECTORY } from "./claude-build-paths.js";
 
 export const CLAUDE_HOOKS = declareHooks("claude", CLAUDE_DIRECTORY, adapter, {
-  ...ownNameEvents({ except: ["SubagentStop"] }),
+  // Claude subscribes every event under its own name, SubagentStop included.
+  events: ownNameEvents(),
   rootToken: SOURCE_PLUGIN_ROOT_TOKEN,
   // Claude Code loads ./hooks/hooks.json by its own convention and rejects the plugin outright
   // when a manifest names it too — "Duplicate hooks file detected". The hooks fired anyway, so

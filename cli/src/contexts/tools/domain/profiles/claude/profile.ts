@@ -57,13 +57,8 @@ export const claude = defineAiTool({
     }),
     commands: bound.commands({
       buildInstallPath: (fileName) => {
-        const slashIdx = fileName.indexOf("/");
-        if (slashIdx !== -1) {
-          const phaseDir = fileName.slice(0, slashIdx);
-          const rest = fileName.slice(slashIdx + 1);
-          const phase = phaseDir.match(/^(\d+)/)?.[1];
-          if (phase) return `${commandsDir(phase)}${rest}`;
-        }
+        const phased = fileName.match(/^(\d+)[^/]*\/(.*)/);
+        if (phased) return `${commandsDir(phased[1])}${phased[2]}`;
         return bound.installUnder("commands/")(fileName);
       },
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
@@ -77,11 +72,8 @@ export const claude = defineAiTool({
           return { paths };
         }
         if ("globs" in fm) return { paths: fm.globs };
-        if ("alwaysApply" in fm) {
-          if (fm.alwaysApply === false && fm.description !== undefined) {
-            return { description: fm.description };
-          }
-          return {};
+        if (fm.alwaysApply === false && fm.description !== undefined) {
+          return { description: fm.description };
         }
         return {};
       },

@@ -109,7 +109,7 @@ export const cursor = defineAiTool({
 
   rewriteContent(content: string): string {
     return content
-      .replace(/(@?)\.cursor\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g, "$1.cursor/commands/aidd/$2/$3")
+      .replace(/(@?)\.cursor\/commands\/(\d+)[_-][^/]+\/(?=\S)/g, "$1.cursor/commands/aidd/$2/")
       .replace(/(@\.cursor\/rules\/[^\s]+)\.md\b/g, "$1.mdc");
   },
 });

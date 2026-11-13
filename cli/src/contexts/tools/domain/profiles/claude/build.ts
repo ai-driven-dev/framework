@@ -72,11 +72,11 @@ export function buildClaudeContract(): ToolBuildContract {
 }
 
 function claudeFlatAgentPath(plugin: string, rel: string): string {
-  return genericFlatAgentPath(".claude/agents/", plugin, rel.replace(/^agents\//, ""), ".md");
+  return genericFlatAgentPath(".claude/agents/", plugin, rel.slice("agents/".length), ".md");
 }
 
 function claudeFlatSkillPath(plugin: string, rel: string): string {
-  return genericFlatSkillPath(".claude/skills/", plugin, rel.replace(/^skills\//, ""));
+  return genericFlatSkillPath(".claude/skills/", plugin, rel.slice("skills/".length));
 }
 
 function transformClaudeAgent(content: string, _plugin: string, outName: string): string {

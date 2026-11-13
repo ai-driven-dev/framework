@@ -13,6 +13,14 @@ describe("claude profile", () => {
   it.each<[InstallKind, string, string]>([
     ["skills", "commit.claude.md", ".claude/skills/commit.md"],
     ["commands", "04_code/implement.md", ".claude/commands/aidd/04/implement.md"],
+    [
+      "commands",
+      "02_context/create_user_stories.md",
+      ".claude/commands/aidd/02/create_user_stories.md",
+    ],
+    ["commands", "4/implement.md", ".claude/commands/aidd/4/implement.md"],
+    ["commands", "01-notes.md", ".claude/commands/01-notes.md"],
+    ["commands", "v04/notes.md", ".claude/commands/v04/notes.md"],
   ])("installs %s file %s at %s", (kind, built, path) => {
     expect(installPathOf(claude, kind, built)).toBe(path);
   });
