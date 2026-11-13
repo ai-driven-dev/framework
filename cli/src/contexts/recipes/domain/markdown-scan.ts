@@ -17,7 +17,7 @@ export interface Heading {
   line: number;
   index: number;
 }
-export interface OpenFence {
+interface OpenFence {
   marker: string;
   length: number;
   start: number;
@@ -27,13 +27,13 @@ export interface Fence extends OpenFence {
   end: number;
   body: string;
 }
-export interface FenceScan {
+interface FenceScan {
   fencedLines: Set<number>;
   blocks: Fence[];
 }
-export const HEADING_PATTERN = /^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/u;
-export const LINK_PATTERN = /(!?)\[[^\]\n]*\]\(([^)\n]+)\)/gu;
-export const HTML_TAGS = new Set([
+const HEADING_PATTERN = /^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/u;
+const LINK_PATTERN = /(!?)\[[^\]\n]*\]\(([^)\n]+)\)/gu;
+const HTML_TAGS = new Set([
   "a",
   "article",
   "aside",
@@ -218,7 +218,7 @@ export function parseHeadings(lines: string[], fencedLines: Set<number>): Headin
   return headings;
 }
 
-export function baseSlug(text: string): string {
+function baseSlug(text: string): string {
   text = text.replace(/\[([^\]]*)\]\([^)]*\)/gu, "$1");
   let plain = "";
   let tagDepth = 0;
@@ -264,7 +264,7 @@ export function normalizedAnchor(raw: string): string {
   }
 }
 
-export function splitTarget(raw: string): string {
+function splitTarget(raw: string): string {
   const trimmed = raw.trim();
   if (trimmed.startsWith("<") && trimmed.includes(">")) {
     return trimmed.slice(1, trimmed.indexOf(">"));
