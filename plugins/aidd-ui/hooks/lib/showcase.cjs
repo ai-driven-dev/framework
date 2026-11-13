@@ -31,6 +31,7 @@ const LABELS = {
   en: {
     title: "Design system showcase",
     choose: "To choose",
+    picks: "Axes picked",
     desktop: "Desktop",
     mobile: "Mobile",
     same: "Same in all: {sections}",
@@ -82,6 +83,7 @@ const LABELS = {
   fr: {
     title: "Vitrine du système de design",
     choose: "À choisir",
+    picks: "Axes choisis",
     desktop: "Ordinateur",
     mobile: "Mobile",
     same: "Identique dans toutes : {sections}",
@@ -427,8 +429,9 @@ if (sides) sides.addEventListener("click", () => {
 function copiedOf(entries) {
   const body = entries.flatMap((entry) => {
     if (entry.variants) {
-      if (!entry.variants.some((each) => each.verdict)) return [];
-      return [{ set: entry.set, variants: entry.variants.map((each) => ({ name: each.name, verdict: each.verdict || null, comment: String(each.comment || "").trim() })) }];
+      const picked = entry.picks && Object.keys(entry.picks).length ? { picks: entry.picks } : {};
+      if (!entry.variants.some((each) => each.verdict) && !picked.picks) return [];
+      return [Object.assign({ set: entry.set, variants: entry.variants.map((each) => ({ name: each.name, verdict: each.verdict || null, comment: String(each.comment || "").trim() })) }, picked)];
     }
     if (!entry.verdicts.length) return [];
     return [{
@@ -453,14 +456,26 @@ function entriesOf(model, choices) {
       return { state: one.state, verdict: choice.verdict, comment: choice.comment || "" };
     }),
   }));
-  const sets = model.sets.map((each) => ({
-    set: each.set,
-    variants: each.variants.map((name) => {
-      const choice = (choices[each.key] || {})[name];
-      return { name, verdict: choice ? choice.verdict : null, comment: choice ? choice.comment || "" : "" };
-    }),
-  }));
+  const sets = model.sets.map((each) => {
+    const picks = (choices[each.key] || {})["@picks"];
+    return Object.assign({
+      set: each.set,
+      variants: each.variants.map((name) => {
+        const choice = (choices[each.key] || {})[name];
+        return { name, verdict: choice ? choice.verdict : null, comment: choice ? choice.comment || "" : "" };
+      }),
+    }, picks && Object.keys(picks).length ? { picks } : {});
+  });
   return records.concat(sets);
+}
+
+/** The picks of a set after one more pick of `variant` for `axis`: the last pick of an axis stands, and the same
+ * pick again takes it back. Picks are by axis name, kept in the set's choices under `@picks`, which no variant is named. */
+function pickedOf(picks, axis, variant) {
+  const next = Object.assign({}, picks);
+  if (next[axis] === variant) delete next[axis];
+  else next[axis] = variant;
+  return next;
 }
 
 /** Whether a verdict to revise has no comment, in a state or in a variant: the copy waits for it. */
@@ -492,6 +507,7 @@ ${keptOf.toString()}
 ${entriesOf.toString()}
 ${blockedOf.toString()}
 ${remainingOf.toString()}
+${pickedOf.toString()}
 const STORE = "aidd-ui-review";
 const drawer = document.getElementById("review");
 const opener = document.getElementById("open-review");
@@ -501,9 +517,11 @@ const allOk = document.getElementById("all-ok");
 const note = document.getElementById("note");
 const items = [...drawer.querySelectorAll("details.item")];
 const sets = [...drawer.querySelectorAll("details.choice")];
+const pickers = [...document.querySelectorAll(".variants[data-set]")];
 const keyOf = (item) => item.dataset.record + "@" + item.dataset.version;
 const setKeyOf = (set) => "set:" + set.dataset.set + "@" + set.dataset.fingerprint;
 const rowsOf = (item) => [...item.querySelectorAll("li.pstate")];
+const picksOf = (holder) => (choices[setKeyOf(holder)] || {})["@picks"] || {};
 const variantsOf = (set) => [...set.querySelectorAll("li.pvariant")];
 function stored(name) {
   try { return window.localStorage.getItem(name); } catch (error) { return null; }
@@ -573,6 +591,12 @@ function paint() {
       if (document.activeElement !== field) field.value = (choice && choice.comment) || "";
     }
     set.querySelector(".done").textContent = decided + "/" + variantsOf(set).length;
+    const count = set.querySelector(".picked");
+    count.textContent = Object.keys(picksOf(set)).length + "/" + count.dataset.axes;
+  }
+  for (const holder of pickers) {
+    const own = picksOf(holder);
+    holder.querySelectorAll(".take").forEach((button) => button.setAttribute("aria-pressed", String(own[button.dataset.axis] === button.dataset.variant)));
   }
   const stuck = blocked();
   copy.disabled = stuck || !copiedOf(entries());
@@ -625,6 +649,11 @@ sets.forEach((set) => variantsOf(set).forEach((row) => {
     paint();
   });
 }));
+pickers.forEach((holder) => holder.querySelectorAll(".take").forEach((button) => button.addEventListener("click", () => {
+  const next = pickedOf(picksOf(holder), button.dataset.axis, button.dataset.variant);
+  choose(setKeyOf(holder), "@picks", Object.keys(next).length ? next : null);
+  paint();
+})));
 opener.addEventListener("click", () => show(true));
 document.getElementById("close-review").addEventListener("click", () => show(false));
 allOk.addEventListener("click", () => {
@@ -1012,7 +1041,7 @@ function drawerOf({ project, reviewable, rows, labels, current, sets = [] }) {
   const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
   const choice = (set) => {
     const row = (variant) => `<li class="pvariant" data-variant="${escaped(variant.name)}"><span class="pick">${escaped(variant.name)}</span><span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(vote).join("")}</span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></li>`;
-    return `<details class="choice" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.id)}</span><span class="done">0/${set.variants.length}</span></summary><ol>${set.variants.map(row).join("")}</ol></details>`;
+    return `<details class="choice" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.id)}</span><span class="picked" title="${escaped(labels.picks)}" data-axes="${set.axes.length}">0/${set.axes.length}</span><span class="done">0/${set.variants.length}</span></summary><ol>${set.variants.map(row).join("")}</ol></details>`;
   };
   const open = sets.filter((set) => !set.problems.length);
   const choices = open.length ? `<section class="choices" data-group="choose"><h3>${labels.choose}</h3>${open.map(choice).join("")}</section>` : "";
@@ -1156,4 +1185,4 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   return pages;
 }
 
-module.exports = { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, languageOf, LABELS };
+module.exports = { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, pickedOf, languageOf, LABELS };

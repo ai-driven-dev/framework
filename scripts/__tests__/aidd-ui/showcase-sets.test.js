@@ -4,7 +4,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, LIB, makeTmp, removeTmp, engine, writeProject, put } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
-const { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
+const { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, pickedOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
 // The sets of variants are chosen inside the showcase: a page per set, in the navigation and the
 // review panel beside the records. The pages are judged as text, the command as a subprocess.
@@ -77,8 +77,8 @@ describe("aidd-ui showcase sets", () => {
       assert.deepEqual(columns.map((column) => column.name), ["a", "b"]);
       assert.match(columns[0].html, /<h2>a<\/h2>/);
       assert.match(columns[0].html, /Intent of a/);
-      assert.match(columns[1].html, /<th>Tone<\/th><td>bold<\/td>/);
-      assert.match(columns[1].html, /<th>Density<\/th><td>roomy<\/td>/);
+      assert.match(columns[1].html, /<th>Tone<\/th><td><button[^>]*>bold<\/button><\/td>/);
+      assert.match(columns[1].html, /<th>Density<\/th><td><button[^>]*>roomy<\/button><\/td>/);
     });
 
     it("shows each html of a variant in a desktop frame of 1280 and a mobile frame of 390, with the tokens inline", () => {
@@ -178,7 +178,7 @@ describe("aidd-ui showcase sets", () => {
     const cellsOf = (axes) => {
       const set = SET();
       set.variants[0].axes = axes;
-      return [...columnsOf(pagesOf([set])["_set-layout.html"])[0].html.matchAll(/<td>([\s\S]*?)<\/td>/g)].map((match) => match[1]);
+      return [...columnsOf(pagesOf([set])["_set-layout.html"])[0].html.matchAll(/<td><button[^>]*>([\s\S]*?)<\/button><\/td>/g)].map((match) => match[1]);
     };
 
     it("turns each colour of an axis cell into a swatch and its code, the rest stays text", () => {
@@ -232,7 +232,7 @@ describe("aidd-ui showcase sets", () => {
       for (const html of Object.values(pagesOf([SET()]))) {
         const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
         assert.doesNotThrow(() => new Function(script));
-        for (const fn of [copiedOf, keptOf, entriesOf, blockedOf, remainingOf]) assert.ok(script.includes(fn.toString()), fn.name);
+        for (const fn of [copiedOf, keptOf, entriesOf, blockedOf, remainingOf, pickedOf]) assert.ok(script.includes(fn.toString()), fn.name);
       }
     });
   });
@@ -280,6 +280,48 @@ describe("aidd-ui showcase sets", () => {
 
     it("keeps the choices of a set at its fingerprint only", () => {
       assert.deepEqual(keptOf({ "set:layout@f1": { a: { verdict: "keep" } }, "set:layout@f0": { a: { verdict: "keep" } } }, ["set:layout@f1"]), { "set:layout@f1": { a: { verdict: "keep" } } });
+    });
+  });
+
+  describe("the picks per axis", () => {
+    const plain = { set: "layout", variants: [{ name: "a", verdict: "keep", comment: "" }, { name: "b", verdict: null, comment: "" }] };
+    const parsed = (copy) => JSON.parse(copy.replace(/^```json\n|\n```\n$/g, ""));
+
+    it("copies the picks of a set after its variants, and nothing more without a pick", () => {
+      assert.deepEqual(parsed(copiedOf([{ ...plain, picks: { Tone: "a", Density: "b" } }])), { ...plain, picks: { Tone: "a", Density: "b" } });
+      assert.equal(copiedOf([{ ...plain, picks: {} }]), copiedOf([plain]));
+      assert.doesNotMatch(copiedOf([plain]), /picks/);
+    });
+
+    it("copies a set with picks and no verdict yet", () => {
+      const copy = copiedOf([{ set: "layout", variants: [{ name: "a", verdict: null, comment: "" }], picks: { Tone: "a" } }]);
+      assert.deepEqual(parsed(copy).picks, { Tone: "a" });
+    });
+
+    it("reads the picks of a set from its choices, never as a variant", () => {
+      const sets = [{ key: "set:layout@f1", set: "layout", variants: ["a", "b"] }];
+      const [entry] = entriesOf({ records: [], sets }, { "set:layout@f1": { "@picks": { Tone: "b" } } });
+      assert.deepEqual(entry.picks, { Tone: "b" });
+      assert.deepEqual(entry.variants.map((each) => each.verdict), [null, null]);
+      assert.equal("picks" in entriesOf({ records: [], sets }, {})[0], false);
+    });
+
+    it("keeps the last pick of an axis, and takes a pick back when it is made again", () => {
+      assert.deepEqual(pickedOf({ Tone: "a" }, "Tone", "b"), { Tone: "b" });
+      assert.deepEqual(pickedOf({ Tone: "a", Density: "a" }, "Tone", "a"), { Density: "a" });
+      assert.deepEqual(pickedOf(undefined, "Tone", "a"), { Tone: "a" });
+    });
+
+    it("makes each cell of an axis a button naming its axis and its variant, inside the set", () => {
+      const html = pagesOf([SET()])["_set-layout.html"];
+      assert.match(html, /<div class="variants"[^>]* data-set="layout" data-fingerprint="f1"/);
+      const [a] = columnsOf(html);
+      assert.match(a.html, /<th>Tone<\/th><td><button type="button" class="take" data-axis="Tone" data-variant="a" aria-pressed="false">calm<\/button><\/td>/);
+    });
+
+    it("counts the picks in the drawer against the axes of the set", () => {
+      const row = pagesOf([SET()])["index.html"].match(/<details class="choice"[\s\S]*?<\/summary>/)[0];
+      assert.match(row, /<span class="picked" title="Axes picked" data-axes="2">0\/2<\/span>/);
     });
   });
 

@@ -80,7 +80,7 @@ function framesOf({ variant, file, tokens, labels }) {
 function columnOf({ variant, at, shared, tokens, labels, wireframes }) {
   const look = lookOf(variant);
   const screens = look && wireframes.length ? wireframes.map((wireframe) => framesOf({ variant, file: { path: wireframe.path, text: dressedOf(wireframe.text, look) }, tokens, labels })) : null;
-  const axes = variant.axes.map(([axis, value]) => `<tr><th>${escaped(axis)}</th><td>${cellOf(value)}</td></tr>`).join("");
+  const axes = variant.axes.map(([axis, value]) => `<tr><th>${escaped(axis)}</th><td><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value)}</button></td></tr>`).join("");
   const files = variant.files.flatMap((file) => {
     if (RENDER_FILE.test(file.path)) return screens ? [] : [framesOf({ variant, file, tokens, labels })];
     if (!MARKDOWN_FILE.test(file.path)) return [];
@@ -101,7 +101,7 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
   const shared = sharedOf(set.variants);
   const same = [...shared].filter(([, own]) => own.same.length).map(([path, own]) => `<p class="same" data-path="${escaped(path)}"><code>${escaped(path)}</code> ${escaped(filled(labels.same, { sections: own.same.join(JOINER) }))}</p>`);
   const columns = set.variants.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes }));
-  return [head, same.join("\n"), `<div class="variants" style="--count: ${columns.length}">${columns.join("")}</div>`].filter(Boolean).join("\n");
+  return [head, same.join("\n"), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
 }
 
 /** The look of a set's page, added to the shell's. */
@@ -114,6 +114,9 @@ const STYLE = `
 .axes { border-collapse: collapse; width: 100%; font-size: 13px; }
 .axes th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px var(--s2) 4px 0; white-space: nowrap; vertical-align: top; }
 .axes td { padding: 4px 0; overflow-wrap: anywhere; }
+.take { display: block; inline-size: 100%; padding: 2px var(--s2); border: 1px solid transparent; border-radius: var(--r1); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.take:hover { border-color: var(--line-strong); }
+.take[aria-pressed="true"] { border-color: var(--ok); background: var(--surface); }
 .choices h3 { margin: var(--s3) var(--s5) var(--s1); font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
 .choice { border-bottom: 1px solid var(--line); }
 .choice summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: 13px; font-weight: 600; }
