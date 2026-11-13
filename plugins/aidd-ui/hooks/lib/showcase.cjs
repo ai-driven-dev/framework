@@ -10,6 +10,7 @@ const { parseLink } = require("./code.cjs");
 const { text } = require("./project.cjs");
 const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./html.cjs");
 const { catalog, resolvedValues, TYPES } = require("./tokens.cjs");
+const variants = require("./variants.cjs");
 
 const DEFAULT_LANGUAGE = "en";
 const UNRESOLVED = ["none", "pending"]; // a state still to review
@@ -20,11 +21,18 @@ const UNTYPED = "css"; // the section of the tokens that hold raw CSS and no `$t
 const SAMPLE = "Aa";
 const EXPECTED_COMPONENT = "R18";
 const GROUPS = ["system", "components", "journeys", "templates", "pages"];
+const SET_CURRENT = "set:"; // what a page of a set passes the navigation as its current page
 
 /** The words of the page chrome, one table per language: the same keys in each. */
 const LABELS = {
   en: {
     title: "Design system showcase",
+    choose: "To choose",
+    desktop: "Desktop",
+    mobile: "Mobile",
+    same: "Same in all: {sections}",
+    keep: "Keep",
+    discard: "Discard",
     pick: "Pick a record in the list.",
     home: "Overview",
     list: "Records",
@@ -70,6 +78,12 @@ const LABELS = {
   },
   fr: {
     title: "Vitrine du système de design",
+    choose: "À choisir",
+    desktop: "Ordinateur",
+    mobile: "Mobile",
+    same: "Identique dans toutes : {sections}",
+    keep: "Garder",
+    discard: "Écarter",
     pick: "Choisissez une fiche dans la liste.",
     home: "Aperçu",
     list: "Fiches",
@@ -617,8 +631,9 @@ const link = (id, current, shown = id) => `<a href="${escaped(id)}.html"${curren
 const statusLabel = (labels, status) => (Object.hasOwn(labels.statuses, status) ? labels.statuses[status] : String(status));
 
 /** The navigation, the same on every page: each group in the order of the paths. */
-function navigationOf(project, records, labels, current) {
+function navigationOf(project, records, labels, current, sets = []) {
   const item = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, titleOf(project, record))}${fm(record).status === "proposed" ? `<span class="tag">${escaped(statusLabel(labels, "proposed"))}</span>` : ""}</li>`;
+  const choose = sets.length ? [`<section data-group="choose"><h2>${labels.choose}</h2><ul>${sets.map((set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}"${current === `${SET_CURRENT}${set.id}` ? ' aria-current="page"' : ""}>${escaped(set.id)}</a></li>`).join("")}</ul></section>`] : [];
   const sections = GROUPS.flatMap((group) => {
     const own = records.filter((record) => groupOf(record) === group);
     if (!own.length) return [];
@@ -629,7 +644,7 @@ function navigationOf(project, records, labels, current) {
     });
     return [`<section data-group="${group}"><h2>${labels[group]}</h2>${levels.join("")}</section>`];
   });
-  return `<nav aria-label="${escaped(labels.list)}"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p>${sections.join("")}</nav>`;
+  return `<nav aria-label="${escaped(labels.list)}"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p>${[...choose, ...sections].join("")}</nav>`;
 }
 
 /** The state a miniature shows: `default` when the record has it, else its first. */
@@ -1008,12 +1023,12 @@ function overviewOf({ project, records, recordsById, rows, tokens, labels }) {
   }).join("\n");
 }
 
-const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${SHELL}</style>`, "</head>", "<body>", '<div class="shell">', navigation, wide ? '<main class="wide">' : "<main>", body, "</main>", "</div>", drawer, `<script>${script}</script>`, "</body>", "</html>", ""].join("\n");
+const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${SHELL}${variants.STYLE}</style>`, "</head>", "<body>", '<div class="shell">', navigation, wide ? '<main class="wide">' : "<main>", body, "</main>", "</div>", drawer, `<script>${script}</script>`, "</body>", "</html>", ""].join("\n");
 
-/** The pages of the showcase by file name: `index.html` and one page per record that is not a review.
+/** The pages of the showcase by file name: `index.html`, one page per record that is not a review and one per set of variants.
  * `problems` are the engine's, `tokens` the stylesheet text or null, `captures` the png paths beside
  * the records, relative to the design system folder. */
-function showcaseOf({ project, problems, tokens, captures, lang }) {
+function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   const language = languageOf(lang);
   const labels = LABELS[language];
   const records = placed(project).filter((record) => fm(record).kind !== REVIEW_KIND && fm(record).id);
@@ -1025,7 +1040,7 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
   const reviewable = records.filter((record) => hasRender(project, record)).sort((a, b) => GROUPS.indexOf(groupOf(a)) - GROUPS.indexOf(groupOf(b)) || byLevel(a, b));
   const drawer = (current) => drawerOf({ project, reviewable, rows, labels, current });
   const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, overviewOf({ project, records, recordsById, rows, tokens, labels })].join("\n");
-  const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null), body: home, drawer: drawer(null), script: PANEL }) };
+  const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
     const id = fm(record).id;
     const uses = [...new Set(cited(record))].filter((each) => each !== id && recordsById.has(each)).sort(byCode);
@@ -1046,7 +1061,10 @@ function showcaseOf({ project, problems, tokens, captures, lang }) {
       appearsOf({ project, ids: usedBy, recordsById, labels }),
     ].filter(Boolean).join("\n");
     const script = (reviewed ? FRAMES + PANEL + TABS : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");
-    pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id), body, drawer: drawer(id), script, wide: journey });
+    pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id, sets), body, drawer: drawer(id), script, wide: journey });
+  }
+  for (const set of sets) {
+    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets), body: variants.setBodyOf({ set, tokens, labels }), drawer: drawer(null), script: variants.SCRIPT + PANEL, wide: true });
   }
   return pages;
 }

@@ -225,7 +225,8 @@ function capturesOf(root) {
   return new Set(walk(base, (dir) => skipped.includes(dir)).filter((file) => file.endsWith(".png")).map((file) => relative(base, file)));
 }
 
-/** Writes a page for each record under `showcase/`, replacing the folder whole. */
+/** Writes a page for each record and each set of variants under `showcase/`, replacing the folder whole. A set with problems
+ * shows them on its page, and the command prints them and exits 1. */
 function writeShowcase(args) {
   const { values, rest, error } = parse(args, { options: [ROOT_FLAG, LANG_FLAG] });
   if (error || rest.length) {
@@ -246,7 +247,10 @@ function writeShowcase(args) {
     for (const [name, html] of Object.entries(pages)) fs.writeFileSync(path.join(dir, name), html);
     if (fs.existsSync(path.join(root, UI_DIR, DRAFTS_DIR))) fs.writeFileSync(path.join(root, UI_DIR, DRAFTS_DIR, drafts.IGNORE_FILE), drafts.IGNORE_ALL);
     console.log(JSON.stringify({ page: `${UI_DIR}/${SHOWCASE_DIR}/index.html`, pages: Object.keys(pages).length, lang }, null, 2));
-    return EXIT_VALID;
+    const refused = sets.flatMap((set) => set.problems);
+    if (!refused.length) return EXIT_VALID;
+    console.log(formatAll(refused));
+    return EXIT_INVALID;
   });
 }
 
