@@ -23,7 +23,7 @@ flowchart LR
   plan -->|"revision or refusal"| draft
   plan -->|"keep or cancel"| cancelled((cancelled))
   write -->|"no drift"| written((written))
-  write -->|"refusal or drift"| stopped((stopped))
+  write -->|"refusal, drift or blocked path"| stopped((stopped))
   frame & draft & plan & write -->|"reference unreadable"| stopped
 ```
 

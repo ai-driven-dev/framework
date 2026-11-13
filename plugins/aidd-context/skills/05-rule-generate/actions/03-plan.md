@@ -16,9 +16,9 @@ The candidate and its findings, or the source to remove or publish.
    - Legacy: name each file the writer converts.
    - Missing OpenCode entry: propose adding it to `opencode.json`.
 3. End the turn and wait for the answer.
-   - Revision, or an approval with any change: read [draft](02-draft.md).
+   - Revision: read [draft](02-draft.md).
    - Keep or cancel: stop, cancelled.
-4. Read [write](04-write.md) once the user approves the candidate shown last, unchanged.
+4. Read [write](04-write.md) once approved.
 
 ## Output
 

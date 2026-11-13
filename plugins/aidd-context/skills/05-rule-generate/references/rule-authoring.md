@@ -9,6 +9,7 @@ How to write and name a rule.
 - R3. Explicit scope or all files.
 - R4. English unless asked otherwise.
 - R5. Distinct bullets: none repeats, weakens or contradicts another.
+- R6. Group themes under `## <group>`, at most one tiny good-code example each.
 
 ## Naming
 
@@ -28,5 +29,3 @@ How to write and name a rule.
 | 09 | other | miscellaneous |
 
 Pick in order: `03`, `02`, `01`, `00`, `04`–`08`, else `09`.
-
-- Themes: `## group`, at most one tiny good-code example each.

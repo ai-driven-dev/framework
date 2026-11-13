@@ -13,12 +13,11 @@ The approved candidate, paths and overwrites.
    - Approved OpenCode entry: add it to `instructions` in `opencode.json`, leaving the rest byte-identical.
 2. Run the writer with `--check --publish`, and require no drift.
 3. Report the written files.
-   - Refusal or drift: quote it verbatim and stop.
-   - Blocked or failed file operation: name each blocked, failed and already written path from the writer's output, then stop.
+   - Non-zero exit: quote the writer's output verbatim, naming each blocked, failed and written path, then stop.
 
 ## Output
 
-The written files, checked, or the quoted refusal or blocked paths.
+The written files, checked, or the quoted writer output.
 
 ## Rules
 
