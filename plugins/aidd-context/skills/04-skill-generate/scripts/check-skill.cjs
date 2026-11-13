@@ -23,8 +23,6 @@ const FENCE = /^\s*(```|~~~)/u;
 const INLINE_CODE = /`[^`\n]*`/gu;
 const COMMENT = /<!--[\s\S]*?-->/gu;
 const LINK = /\[[^\]\n]*\]\(([^)\s#]+)(?:#[^)]*)?\)/gu;
-const DATE = /\b(?:19|20)\d\d[-_/](?:0[1-9]|1[0-2])\b/u;
-const TICKET = /(?:^|\s|(?<!\])\()#\d{2,}\b/u;
 const ACTION_NODE = /\["(actions\/[^"]+\.md)"\]/gu;
 const BOX = /([\w-]+)\["([^"]*)"\]/gu;
 const ARROW = /\s*(<?(?:-->|-\.->|==>)(?:\|[^|]*\|)?)\s*/u;
@@ -32,6 +30,8 @@ const SLOT = /<[a-z][^<>\n]*>/u;
 const CLAUSE_BREAK = /[.!?;]\s+\S/u;
 const ABBREVIATION = /\b(?:e\.g|i\.e|etc|vs|cf)\./giu;
 const ITEM_SECTIONS = ["Process", "Rules", ROUTER_SECTION];
+const LIST_ITEM = /^\s*(?:\d+\.|-)\s+(.*)$/u;
+const SECTION_HEADING = /^##\s+(.+?)\s*$/u;
 const ACTION_LINK =/\]\((?:\.\/)?(\d\d-[^)/]+\.md)\)/u;
 
 function excerpt(text) {
@@ -182,19 +182,24 @@ function checkAction(file, text, chains, report) {
   if (step !== undefined && !ACTION_LINK.test(lines[step])) report.error(file, step + 1, "read-next", lines[step], "end with a step that reads the next action, as a link");
 }
 
+/** The text with what holds a period yet ends no sentence removed: link targets and abbreviations. */
+function withoutFalseBreaks(text) {
+  return text.replace(LINK, "").replace(ABBREVIATION, "");
+}
+
 /** Each numbered or dash item of a step or rule list holds one sentence, its cases as dash sub-items. */
 function checkItems(file, text, report) {
   const lines = text.split("\n");
   let inside = false;
   proseLines(text).forEach((line, index) => {
-    const heading = /^##\s+(.+?)\s*$/u.exec(line);
+    const heading = SECTION_HEADING.exec(line);
     if (heading) inside = ITEM_SECTIONS.includes(heading[1]);
-    const item = inside && /^\s*(?:\d+\.|-)\s+(.*)$/u.exec(line);
-    if (item && CLAUSE_BREAK.test(item[1].replace(LINK, "[]").replace(ABBREVIATION, "abbr"))) report.error(file, index + 1, "sentence", lines[index], "split it: one sentence per item, cases as dash sub-items");
+    const item = inside && LIST_ITEM.exec(line);
+    if (item && CLAUSE_BREAK.test(withoutFalseBreaks(item[1]))) report.error(file, index + 1, "sentence", lines[index], "split it: one sentence per item, cases as dash sub-items, or put exact text in backticks");
   });
 }
 
-/** Lexical rules every file obeys: length, bold, dates, citations. */
+/** Lexical rules every file obeys: length, bold, citations. */
 function checkFile(skill, file, text, report) {
   const lines = text.split("\n");
   const markdown = file.endsWith(".md");
@@ -214,11 +219,9 @@ function checkFile(skill, file, text, report) {
       report.error(file, line, "slot", match[0], "state it in the prose, or move it to an asset");
     }
   }
-  const linked = new Map();
   proseLines(text).forEach((line, index) => {
     if (index < skip) return;
     const number = index + 1;
-    if (DATE.test(line) || TICKET.test(line)) report.error(file, number, "date", line, "remove the date or ticket id");
     if (!markdown) return;
     if (!file.startsWith("assets/") && SLOT.test(line)) report.error(file, number, "slot", line, "fill the template slot, or move it to an asset");
     if (line.includes("**")) report.error(file, number, "bold", line, "write the sentence without bold");
@@ -227,8 +230,6 @@ function checkFile(skill, file, text, report) {
       if (/^[a-z]+:/iu.test(target)) continue;
       const resolved = path.resolve(path.dirname(path.join(skill, file)), target);
       if (!fs.existsSync(resolved)) report.error(file, number, "citation", match[0], `fix the link, ${target} does not exist`);
-      if (linked.has(resolved)) report.error(file, number, "citation", match[0], `name it in backticks; it is linked at line ${linked.get(resolved)}`);
-      else linked.set(resolved, number);
     }
   });
 }

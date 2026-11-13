@@ -222,23 +222,13 @@ describe("skill check", () => {
     expectError("citation");
   });
 
-  it("citation: a second link to the same file", () => {
+  it("a second link to the same file is no finding", () => {
     mutate("actions/01-first.md", "1. Read", "1. Check [the rubric](../references/rubric.md).\n2. Read");
-    expectError("citation");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("date: a date", () => {
-    mutate("references/rubric.md", "| any | yes |", "| any | yes, since 2026-11 |");
-    expectError("date");
-  });
-
-  it("date: a ticket id", () => {
-    mutate("references/rubric.md", "| any | yes |", "| any | yes, see #1234 |");
-    expectError("date");
-  });
-
-  it("date: a link to a numbered heading is no ticket id", () => {
-    mutate("references/rubric.md", "| any | yes |", "| any | [ten](#10-plan) |");
+  it("a date or a ticket id is no finding, the skill's content is its owner's", () => {
+    mutate("references/rubric.md", "| any | yes |", "| any | yes, since 2026-11, see #1234 |");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
@@ -288,9 +278,10 @@ describe("skill check", () => {
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
-  it("sentence: two sentences in a step", () => {
+  it("sentence: two sentences in a step, with a way out for text kept exact", () => {
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric. Write nothing else.");
     expectError("sentence");
+    assert.match(run().out, /backticks/u);
   });
 
   it("sentence: two sentences in a case of a step", () => {
