@@ -94,8 +94,9 @@ export function describeMarketplaceRegistryContract(
       await registry.save(projectRoot, entry({ name: "shared", scope: "user" }));
 
       await registry.delete(projectRoot, "shared", "project");
-      await expect(registry.delete(projectRoot, "missing", "project")).resolves.toBeUndefined();
+      expect((await registry.list(projectRoot)).map((m) => m.scope)).toEqual(["user"]);
 
+      await expect(registry.delete(projectRoot, "missing", "project")).resolves.toBeUndefined();
       expect((await registry.list(projectRoot)).map((m) => m.scope)).toEqual(["user"]);
     });
 
