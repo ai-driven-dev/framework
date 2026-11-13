@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import type { DoctorReport } from "../../contexts/framework/domain/doctor.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
-import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
+import type { ToolCategory } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printAllToolsDrift,
@@ -27,10 +27,6 @@ type DoctorKeys =
   | "homedir"
   | "environment"
   | "doctorRegistrationUseCase";
-
-function categoryOf(toolId: ToolId, tools: ToolCatalog): ToolCategory {
-  return tools.isAiTool(toolId) ? "ai" : "ide";
-}
 
 async function runFullDoctor(
   deps: Pick<Deps, DoctorKeys>,
@@ -72,11 +68,11 @@ async function runScopedDoctor(
   deps: Pick<Deps, DoctorKeys>,
   output: CLIOutput,
   projectRoot: string,
-  toolId: ToolId,
+  toolId: string,
   tools: ToolCatalog,
   pluginName: string | undefined
 ): Promise<void> {
-  const category = categoryOf(toolId, tools);
+  const category: ToolCategory = tools.isAiTool(toolId) ? "ai" : "ide";
   // DoctorUseCase scopes by category, never by tool: the inventory below narrows to the exact
   // tool, the issue list stays category-wide.
   const doctorReport = await deps.doctorUseCase.execute({
@@ -136,8 +132,8 @@ async function runUserScopeDoctor(
     output.success("Nothing registered at user scope yet — run `aidd setup --global` first.");
     return;
   }
-  const toolId = cmdOptions.tool as ToolId | undefined;
-  const toolIds = toolId === undefined ? manifest.getInstalledToolIds() : [toolId];
+  const { tool } = cmdOptions;
+  const toolIds: readonly string[] = tool === undefined ? manifest.getInstalledToolIds() : [tool];
   printUserScopeTools(
     output,
     toolIds.map((id) => {
@@ -149,13 +145,13 @@ async function runUserScopeDoctor(
               ?.userSettingsFile(deps.homedir(), (name) => deps.environment.get(name))
           : undefined;
       return {
-        toolId: id,
+        toolId: profile.toolId,
         version: manifest.getToolVersion(id) ?? "unknown",
         settings: settingsFile ?? "no user-scope settings file",
       };
     })
   );
-  const allowedIds = toolId === undefined ? null : new Set([toolId]);
+  const allowedIds = tool === undefined ? null : new Set([tool]);
   const issues = await deps.doctorRegistrationUseCase.execute({
     manifest,
     projectRoot,
@@ -210,7 +206,7 @@ export function registerDoctorCommand(
             deps,
             output,
             projectRoot,
-            cmdOptions.tool as ToolId,
+            cmdOptions.tool,
             tools,
             cmdOptions.plugin
           );

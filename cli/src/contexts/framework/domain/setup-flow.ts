@@ -7,7 +7,7 @@ import {
   UserScopeUnsupportedAiToolsError,
 } from "../../../shared/domain/errors.js";
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
-import type { ToolId } from "../../../shared/domain/tool.js";
+import type { AiToolId, IdeToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { MarketplaceSourceMode } from "../../distribution/domain/marketplace-source-mode.js";
 
 export type PluginInstallMode = "interactive" | "all" | "recommended" | "named" | "none";
@@ -19,12 +19,16 @@ export type SetupScope = MarketplaceScope;
 export interface SetupFlowParams {
   projectRoot: string;
   /** Every id a registered tool bears, in the order a refusal names them. */
-  registeredToolIds: readonly string[];
+  registeredToolIds: readonly ToolId[];
+  /** The registered AI ids: what `aiTools` is picked from. */
+  aiToolIds: readonly AiToolId[];
+  /** The registered editor ids: what `ideTools` is picked from. */
+  ideToolIds: readonly IdeToolId[];
   /** Whether `--scope user` has anywhere to point this tool, as the tool answers it. */
   supportsUserScopeActivation: (toolId: ToolId) => boolean;
   source?: MarketplaceSourceMode;
-  aiTools?: readonly ToolId[];
-  ideTools?: readonly ToolId[];
+  aiTools?: readonly string[];
+  ideTools?: readonly string[];
   pluginMode?: PluginInstallMode;
   pluginNames?: readonly string[];
   interactive?: boolean;
@@ -39,8 +43,8 @@ export interface SetupFlowParams {
 export class SetupFlow {
   readonly projectRoot: string;
   readonly source?: MarketplaceSourceMode;
-  readonly aiTools: readonly ToolId[];
-  readonly ideTools: readonly ToolId[];
+  readonly aiTools: readonly AiToolId[];
+  readonly ideTools: readonly IdeToolId[];
   readonly pluginMode: PluginInstallMode;
   readonly pluginNames: readonly string[];
   readonly interactive: boolean;
@@ -49,19 +53,28 @@ export class SetupFlow {
   readonly scope: SetupScope;
 
   constructor(params: SetupFlowParams) {
-    this.validateToolIds(params.registeredToolIds, params.aiTools ?? [], params.ideTools ?? []);
+    const aiTools = this.registeredAmong(
+      params.registeredToolIds,
+      params.aiToolIds,
+      params.aiTools ?? []
+    );
+    const ideTools = this.registeredAmong(
+      params.registeredToolIds,
+      params.ideToolIds,
+      params.ideTools ?? []
+    );
     this.validatePluginMode(params.pluginMode ?? "none", params.pluginNames ?? []);
     this.validateScope(
       params.supportsUserScopeActivation,
       params.scope ?? "project",
-      params.aiTools ?? [],
-      params.ideTools ?? [],
+      aiTools,
+      ideTools,
       params.pluginMode ?? "none"
     );
     this.projectRoot = params.projectRoot;
     this.source = params.source;
-    this.aiTools = params.aiTools ?? [];
-    this.ideTools = params.ideTools ?? [];
+    this.aiTools = aiTools;
+    this.ideTools = ideTools;
     this.pluginMode = params.pluginMode ?? "none";
     this.pluginNames = params.pluginNames ?? [];
     this.interactive = params.interactive ?? false;
@@ -70,17 +83,18 @@ export class SetupFlow {
     this.scope = params.scope ?? "project";
   }
 
-  private validateToolIds(
-    registered: readonly string[],
-    aiTools: readonly ToolId[],
-    ideTools: readonly ToolId[]
-  ): void {
-    const all = [...aiTools, ...ideTools];
-    for (const id of all) {
-      if (!registered.includes(id)) {
-        throw new InvalidSetupToolIdError(id, registered);
-      }
-    }
+  /** The ids of `candidates` the names spell, in the order written; a name no candidate bears is
+   * refused, naming every registered id. */
+  private registeredAmong<T extends ToolId>(
+    registered: readonly ToolId[],
+    candidates: readonly T[],
+    names: readonly string[]
+  ): T[] {
+    return names.map((name) => {
+      const id = candidates.find((candidate) => candidate === name);
+      if (id === undefined) throw new InvalidSetupToolIdError(name, registered);
+      return id;
+    });
   }
 
   // `--scope user` writes nothing under `projectRoot`: an IDE tool's project-relative config has
@@ -91,8 +105,8 @@ export class SetupFlow {
   private validateScope(
     supportsUserScopeActivation: (toolId: ToolId) => boolean,
     scope: SetupScope,
-    aiTools: readonly ToolId[],
-    ideTools: readonly ToolId[],
+    aiTools: readonly AiToolId[],
+    ideTools: readonly IdeToolId[],
     pluginMode: PluginInstallMode
   ): void {
     if (scope !== "user") return;

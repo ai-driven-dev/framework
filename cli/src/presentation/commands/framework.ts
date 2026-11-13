@@ -33,23 +33,25 @@ type FrameworkKeys =
   | "listInstalledRulesUseCase"
   | "validateRecipes";
 
-export function assertKnownToolId(toolId: string, catalog: ToolCatalog): asserts toolId is ToolId {
-  if (catalog.toolId(toolId) === null) {
+export function assertKnownToolId(raw: string, catalog: ToolCatalog): ToolId {
+  const toolId = catalog.toolId(raw);
+  if (toolId === null) {
     throw new Error(
-      `Unknown tool: ${toolId}. Valid tools: ${catalog.idsInCanonicalOrder().join(", ")}`
+      `Unknown tool: ${raw}. Valid tools: ${catalog.idsInCanonicalOrder().join(", ")}`
     );
   }
+  return toolId;
 }
 
 async function runFrameworkInstall(
   deps: Pick<Deps, FrameworkKeys>,
   output: CLIOutput,
   projectRoot: string,
-  toolId: ToolId,
+  raw: string,
   cmdOptions: { force: boolean; plugins: boolean },
   catalog: ToolCatalog
 ): Promise<void> {
-  assertKnownToolId(toolId, catalog);
+  const toolId = assertKnownToolId(raw, catalog);
   if (catalog.isAiTool(toolId)) {
     await installAiTool(deps, output, projectRoot, toolId, cmdOptions, catalog);
   } else {
@@ -114,10 +116,10 @@ async function runFrameworkRemove(
   deps: Pick<Deps, FrameworkKeys>,
   output: CLIOutput,
   projectRoot: string,
-  toolId: ToolId,
+  raw: string,
   catalog: ToolCatalog
 ): Promise<void> {
-  assertKnownToolId(toolId, catalog);
+  const toolId = assertKnownToolId(raw, catalog);
 
   if (catalog.isAiTool(toolId)) {
     const results = await deps.uninstallUseCase.execute({
@@ -137,11 +139,11 @@ async function runFrameworkUpdate(
   deps: Pick<Deps, FrameworkKeys>,
   output: CLIOutput,
   projectRoot: string,
-  toolId: ToolId | undefined,
+  raw: string | undefined,
   cmdOptions: { force: boolean },
   catalog: ToolCatalog
 ): Promise<void> {
-  if (toolId !== undefined) assertKnownToolId(toolId, catalog);
+  const toolId = raw === undefined ? undefined : assertKnownToolId(raw, catalog);
   const interactive = process.stdout.isTTY ?? false;
 
   if (toolId !== undefined) {
@@ -156,7 +158,7 @@ async function runFrameworkUpdate(
       printUpdateResult(output, result.updatedTools, result.errors);
     } else {
       const result = await deps.updateIdeToolsUseCase.execute({
-        toolArg: toolId as IdeToolId,
+        toolArg: toolId,
         projectRoot,
         userForce: cmdOptions.force,
         interactive,
@@ -209,14 +211,7 @@ export function registerFrameworkCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        await runFrameworkInstall(
-          deps,
-          output,
-          projectRoot,
-          cmdOptions.tool as ToolId,
-          cmdOptions,
-          catalog
-        );
+        await runFrameworkInstall(deps, output, projectRoot, cmdOptions.tool, cmdOptions, catalog);
       } catch (error) {
         errorHandler.handle(error);
       }
@@ -233,7 +228,7 @@ export function registerFrameworkCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        await runFrameworkRemove(deps, output, projectRoot, cmdOptions.tool as ToolId, catalog);
+        await runFrameworkRemove(deps, output, projectRoot, cmdOptions.tool, catalog);
       } catch (error) {
         errorHandler.handle(error);
       }
@@ -251,14 +246,7 @@ export function registerFrameworkCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        await runFrameworkUpdate(
-          deps,
-          output,
-          projectRoot,
-          cmdOptions.tool as ToolId | undefined,
-          cmdOptions,
-          catalog
-        );
+        await runFrameworkUpdate(deps, output, projectRoot, cmdOptions.tool, cmdOptions, catalog);
       } catch (error) {
         errorHandler.handle(error);
       }

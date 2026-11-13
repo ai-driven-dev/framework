@@ -85,11 +85,10 @@ export function wireHostRegistration(
   const pluginRegistries = new Map<AiToolId, HostPluginRegistry>();
   const marketplaceRegistries = new Map<AiToolId, HostMarketplaceRegistry>();
   const marketplaceSources = new Map<AiToolId, HostMarketplaceSources>();
-  for (const id of tools.inHelpOrder("ai")) {
-    const aiId = id as AiToolId;
+  for (const aiId of tools.inHelpOrder("ai")) {
     if (tools.aiProfile(aiId).nativeActivation() === undefined) continue;
-    const activation = registrations.get(id);
-    if (activation === undefined) throw new UnregisteredToolError(id);
+    const activation = registrations.get(aiId);
+    if (activation === undefined) throw new UnregisteredToolError(aiId);
     const binary = activation.hostBinary();
     hostActions.set(binary, new HostCliAdapter(binary, activation.cliShape()));
     const pluginRegistry = activation.pluginRegistryAt(home);

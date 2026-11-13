@@ -44,8 +44,8 @@ export class DetectPluginDriftUseCase {
   async execute(options: DetectPluginDriftOptions): Promise<PluginDrift[]> {
     const { manifest, projectRoot, toolIds, pluginName, tools } = options;
     const drifts: PluginDrift[] = [];
-    for (const id of toolIds) {
-      const toolId = id as AiToolId;
+    for (const toolId of toolIds) {
+      if (!tools.isAiTool(toolId)) continue;
       const plugins = manifest.getPlugins(toolId);
       const targets = pluginName ? plugins.filter((p) => p.name === pluginName) : plugins;
       for (const plugin of targets) {

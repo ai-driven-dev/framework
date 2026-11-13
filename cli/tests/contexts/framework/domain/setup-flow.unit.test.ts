@@ -8,13 +8,13 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../../../src/shared/domain/errors.js";
-import { registeredToolIds, TOOL } from "../../tools/testing/catalog-of.js";
+import { flowTools, TOOL } from "../../tools/testing/catalog-of.js";
 
 const ROOT = "/project";
 
 function makeFlow(overrides: Partial<ConstructorParameters<typeof SetupFlow>[0]> = {}): SetupFlow {
   return new SetupFlow({
-    registeredToolIds: registeredToolIds(),
+    ...flowTools(),
     projectRoot: ROOT,
     supportsUserScopeActivation: () => true,
     ...overrides,
@@ -24,30 +24,15 @@ function makeFlow(overrides: Partial<ConstructorParameters<typeof SetupFlow>[0]>
 describe("SetupFlow", () => {
   describe("constructor validation", () => {
     it("throws InvalidSetupToolIdError for unknown AI tool IDs, naming every valid one", () => {
-      // @ts-expect-error an unregistered name is not an AI tool id
       expect(() => makeFlow({ aiTools: ["unknown-tool"] })).toThrow(InvalidSetupToolIdError);
-      // @ts-expect-error an unregistered name is not an AI tool id
       expect(() => makeFlow({ aiTools: ["unknown-tool"] })).toThrow(
         'Invalid tool ID: "unknown-tool". Valid IDs: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode'
       );
     });
 
     it("refuses an unknown tool ID before it looks at the plugin mode", () => {
-      expect(() =>
-        // @ts-expect-error an unregistered name is not an IDE tool id
-        makeFlow({ ideTools: ["nope"], pluginMode: "named", pluginNames: [] })
-      ).toThrow(InvalidSetupToolIdError);
-    });
-
-    it("throws InvalidPluginModeConfigError when mode is 'named' with no names", () => {
-      expect(() => makeFlow({ pluginMode: "named", pluginNames: [] })).toThrow(
-        InvalidPluginModeConfigError
-      );
-    });
-
-    it("throws InvalidPluginModeConfigError when names provided but mode is not 'named'", () => {
-      expect(() => makeFlow({ pluginMode: "all", pluginNames: ["my-plugin"] })).toThrow(
-        InvalidPluginModeConfigError
+      expect(() => makeFlow({ ideTools: ["nope"], pluginMode: "named", pluginNames: [] })).toThrow(
+        InvalidSetupToolIdError
       );
     });
 
@@ -65,15 +50,17 @@ describe("SetupFlow", () => {
     });
 
     it("says what mode 'named' needs when no plugin is named", () => {
-      expect(() => makeFlow({ pluginMode: "named", pluginNames: [] })).toThrow(
-        'Plugin mode "named" requires at least one plugin name.'
-      );
+      const noName = () => makeFlow({ pluginMode: "named", pluginNames: [] });
+
+      expect(noName).toThrow(InvalidPluginModeConfigError);
+      expect(noName).toThrow('Plugin mode "named" requires at least one plugin name.');
     });
 
     it("names the mode that was given when names arrive under another mode", () => {
-      expect(() => makeFlow({ pluginMode: "all", pluginNames: ["my-plugin"] })).toThrow(
-        'Plugin names provided but mode is "all" (expected "named").'
-      );
+      const stray = () => makeFlow({ pluginMode: "all", pluginNames: ["my-plugin"] });
+
+      expect(stray).toThrow(InvalidPluginModeConfigError);
+      expect(stray).toThrow('Plugin names provided but mode is "all" (expected "named").');
     });
   });
 

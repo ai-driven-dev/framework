@@ -5,7 +5,6 @@ import {
   SyncFailedError,
   UserScopeFilterUnsupportedError,
 } from "../../shared/domain/errors.js";
-import type { AiToolId, ToolId } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printActivationOutcome,
@@ -55,11 +54,15 @@ async function runUserScopeSync(
   if (fileArgs.length > 0) {
     throw new UserScopeFilterUnsupportedError("a file argument", "sync <files...>");
   }
-  const toolIds = cmdOptions.tool !== undefined ? [cmdOptions.tool as ToolId] : undefined;
+  // An editor or an unknown name owns no user-scope file and no native activation, so it narrows
+  // the run to nothing instead of failing it.
+  const aiToolIds = (names: readonly string[]) =>
+    names.flatMap((name) => catalog.aiToolId(name) ?? []);
+  const toolIds = cmdOptions.tool === undefined ? undefined : aiToolIds([cmdOptions.tool]);
   const machine = await deps.userManifestRepo.load();
-  const withFiles = (toolIds ?? machine?.getInstalledToolIds() ?? []).filter((toolId) =>
-    machine?.getPlugins(toolId as AiToolId).some((plugin) => plugin.scope === "user")
-  ) as AiToolId[];
+  const withFiles = (toolIds ?? aiToolIds(machine?.getInstalledToolIds() ?? [])).filter((id) =>
+    machine?.getPlugins(id).some((plugin) => plugin.scope === "user")
+  );
   const refreshed =
     withFiles.length === 0
       ? []
@@ -102,7 +105,7 @@ async function runSyncAction(
     }
 
     if (cmdOptions.tool !== undefined) {
-      await runScopedSync(deps, output, projectRoot, fileArgs, cmdOptions, tools);
+      await runScopedSync(deps, output, projectRoot, fileArgs, cmdOptions, tools, cmdOptions.tool);
       return;
     }
 
@@ -139,16 +142,16 @@ async function runScopedSync(
   projectRoot: string,
   fileArgs: string[],
   cmdOptions: SyncCmdOptions,
-  catalog: ToolCatalog
+  catalog: ToolCatalog,
+  toolName: string
 ): Promise<void> {
-  const toolId = cmdOptions.tool as ToolId;
   const manifest = await deps.manifestRepo.load();
   if (!manifest) throw new NoManifestError();
-  const version = manifest.getToolVersion(toolId) ?? deps.currentVersionProvider.get();
+  const version = manifest.getToolVersion(toolName) ?? deps.currentVersionProvider.get();
   const result = await deps.restoreUseCase.execute({
     version,
     projectRoot,
-    toolIds: [toolId],
+    toolIds: [toolName],
     files: fileArgs.length > 0 ? fileArgs : undefined,
     force: cmdOptions.force,
     interactive: process.stdout.isTTY,
@@ -163,7 +166,7 @@ async function runScopedSync(
   const activation = await deps.marketplaceSyncSettingsUseCase.execute({
     projectRoot,
     tools: catalog,
-    toolIds: [toolId],
+    toolIds: result.tools.map((tool) => tool.toolId),
     recreateFrameworkIfMissing: true,
   });
   printActivationOutcome(output, activation);

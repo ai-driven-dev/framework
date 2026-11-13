@@ -106,10 +106,8 @@ async function sync(setup: Setup = {}) {
     );
   }
   const activator = new FakeHostActions({ available: true, enablesPlugins: false });
-  const hostRegistries = new Map(
-    setup.hostReader === undefined
-      ? []
-      : ([[toolId, setup.hostReader]] as [AiToolId, FakeHostMarketplaceRegistry][])
+  const hostRegistries = new Map<AiToolId, FakeHostMarketplaceRegistry>(
+    setup.hostReader === undefined ? [] : [[toolId, setup.hostReader]]
   );
   const hostReading = toolId === "claude" ? await setup.hostReader?.read() : undefined;
   const registeredSource = hostReading?.entries?.get(catalogName);

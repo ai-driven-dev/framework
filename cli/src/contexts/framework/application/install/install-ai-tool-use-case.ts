@@ -1,4 +1,4 @@
-import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
@@ -68,10 +68,8 @@ export class InstallAiToolUseCase {
     if (freshManifest === null) {
       return { runtimeResult, propagatedPlugins: [], propagationWarnings: [] };
     }
-    const plugins = this.collectUniquePlugins(
-      freshManifest.getInstalledToolIds() as AiToolId[],
-      toolId,
-      (id) => freshManifest.getPlugins(id)
+    const plugins = this.collectUniquePlugins(freshManifest.getInstalledToolIds(), toolId, (id) =>
+      freshManifest.getPlugins(id)
     );
     const propagated: string[] = [];
     const warnings: string[] = [];
@@ -91,9 +89,9 @@ export class InstallAiToolUseCase {
   }
 
   private collectUniquePlugins(
-    allToolIds: AiToolId[],
+    allToolIds: ToolId[],
     excludeToolId: AiToolId,
-    getPlugins: (id: AiToolId) => readonly InstalledPlugin[]
+    getPlugins: (id: ToolId) => readonly InstalledPlugin[]
   ): InstalledPlugin[] {
     const seen = new Set<string>();
     const result: InstalledPlugin[] = [];

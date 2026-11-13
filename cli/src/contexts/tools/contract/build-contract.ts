@@ -1,5 +1,4 @@
 import type { ConfigAsset, SchemaName } from "../../../shared/domain/file.js";
-import type { ToolId } from "../../../shared/domain/tool.js";
 
 /** All a marketplace builder reads of the output tree. */
 export interface BuildFileReader {
@@ -141,7 +140,7 @@ export interface ConfigArtifact {
   /** Files under the output root whose presence alone `emit` needs; never read. */
   readonly probes: (builtPlugins: readonly string[]) => readonly string[];
   /** The tool's bundled config assets `emit` builds on. */
-  readonly assets: { readonly tool: ToolId; readonly names: readonly string[] };
+  readonly assets: { readonly tool: string; readonly names: readonly string[] };
   readonly emit: (input: ConfigArtifactInput) => readonly ConfigArtifactFile[];
 }
 

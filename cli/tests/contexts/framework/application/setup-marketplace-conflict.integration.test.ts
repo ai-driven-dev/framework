@@ -21,7 +21,7 @@ import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-ma
 import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
-import { catalogOf, registeredToolIds, TOOL } from "../../tools/testing/catalog-of.js";
+import { catalogOf, flowTools, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -124,7 +124,7 @@ async function buildUseCaseWithConflict() {
 
 function remoteFlow(aiTools: ToolId[]): SetupFlow {
   return new SetupFlow({
-    registeredToolIds: registeredToolIds(),
+    ...flowTools(),
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
     source: MarketplaceSourceMode.remote(),

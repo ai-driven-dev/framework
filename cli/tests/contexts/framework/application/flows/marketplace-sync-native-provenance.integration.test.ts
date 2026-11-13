@@ -120,7 +120,7 @@ function makeSync(
     undefined,
     new Map([
       [
-        toolId as AiToolId,
+        toolId,
         options.hostReader ??
           new FakeHostPluginRegistry({
             location: `/fake-home/${toolId}/registry`,
@@ -131,7 +131,7 @@ function makeSync(
     machineRepo,
     new Map([
       [
-        toolId as AiToolId,
+        toolId,
         options.sourceReader ??
           new FakeHostMarketplaceSources(
             activator,

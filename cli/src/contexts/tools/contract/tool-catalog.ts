@@ -4,7 +4,7 @@ import type { AiToolProfile, IdeToolProfile, ToolProfile } from "./tool-profile.
 /** The registered tools, asked by id or walked in one of three orders that must never be mixed. */
 export interface ToolCatalog {
   /** The profile of a registered id; an unregistered one is refused. */
-  profile(id: ToolId): ToolProfile;
+  profile(id: string): ToolProfile;
   /** The AI profile of a registered id; an unregistered id or an editor is refused. */
   aiProfile(id: AiToolId): AiToolProfile;
   /** The IDE profile of a registered id; an unregistered id or an AI tool is refused. */
@@ -17,8 +17,10 @@ export interface ToolCatalog {
   aiToolId(raw: string): AiToolId | null;
   /** Whether the id is a registered AI tool: false for an editor and for an unregistered id. */
   isAiTool(id: ToolId): id is AiToolId;
+  isAiTool(raw: string): boolean;
   /** Whether the id is a registered editor: false for an AI tool and for an unregistered id. */
   isIdeTool(id: ToolId): id is IdeToolId;
+  isIdeTool(raw: string): boolean;
   /** The ids of one category in registration order: the order a help text names the tools. */
   inHelpOrder(category: "ai"): readonly AiToolId[];
   inHelpOrder(category: ToolCategory): readonly ToolId[];

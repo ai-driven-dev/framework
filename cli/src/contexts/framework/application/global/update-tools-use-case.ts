@@ -24,15 +24,15 @@ export interface UpdateToolsResult {
 }
 
 /**
- * Fans out an update across every installed tool of one category, fixed by the `isTargetToolId`
- * predicate injected at construction: the orchestration is identical for both categories.
+ * Fans out an update across every installed tool of one category, fixed by the `targetsOf`
+ * selector injected at construction: the orchestration is identical for both categories.
  */
 export class UpdateToolsUseCase<T extends ToolId> {
   constructor(
     private readonly manifestRepo: ManifestRepository,
     private readonly versionReader: VersionReader,
     private readonly updateOneToolUseCase: UpdateOneToolUseCase,
-    private readonly isTargetToolId: (tools: ToolCatalog, id: ToolId) => id is T
+    private readonly targetsOf: (tools: ToolCatalog) => readonly T[]
   ) {}
 
   async execute(input: UpdateToolsInput<T>): Promise<UpdateToolsResult> {
@@ -62,7 +62,10 @@ export class UpdateToolsUseCase<T extends ToolId> {
 
   private resolveTargetIds(manifest: Manifest, toolArg: T | undefined, tools: ToolCatalog): T[] {
     if (toolArg !== undefined) return [toolArg];
-    return manifest.getInstalledToolIds().filter((id): id is T => this.isTargetToolId(tools, id));
+    const targets = this.targetsOf(tools);
+    return manifest
+      .getInstalledToolIds()
+      .flatMap((installed) => targets.find((target) => target === installed) ?? []);
   }
 
   private async updateTargets(

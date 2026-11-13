@@ -1,7 +1,6 @@
 import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import type { ConfigAsset } from "../../../../shared/domain/file.js";
 import type { MergeStrategy } from "../../../../shared/domain/merge.js";
-import type { ToolId } from "../../../../shared/domain/tool.js";
 
 type ConfigSectionParams = {
   outputPath: string;
@@ -9,7 +8,7 @@ type ConfigSectionParams = {
   consumes?: readonly string[];
   staticContent?: string;
   staticContentAssetFile?: string;
-  requiresTool?: ToolId;
+  requiresTool?: string;
 };
 
 export class ConfigSection {
@@ -41,7 +40,7 @@ export class ConfigSection {
   }
 
   /** The tool that must be installed for this section's content to apply, or `null`. */
-  requiredTool(): ToolId | null {
+  requiredTool(): string | null {
     return this.#params.requiresTool ?? null;
   }
 

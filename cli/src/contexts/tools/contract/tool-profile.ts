@@ -1,7 +1,7 @@
 import type { ConfigAsset, FileHash } from "../../../shared/domain/file.js";
 import type { FlatHooksLoaderEntry } from "../../../shared/domain/materialization/flat-paths.js";
 import type { MergeStrategy } from "../../../shared/domain/merge.js";
-import type { AiToolId, IdeToolId, ToolId } from "../../../shared/domain/tool.js";
+import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
 import type {
   GlobalFiles,
@@ -166,7 +166,7 @@ export interface SettingsFileAnswers {
   /** Whether the tool takes the framework config artifact named `configName` into this file. */
   consumes(configName: string): boolean;
   /** The tool that must be installed for this file to apply, or null. */
-  requiredTool(): ToolId | null;
+  requiredTool(): string | null;
   outputPath(): string;
   mergeStrategy(): MergeStrategy;
   /** The file's fixed content, loaded through `loadAsset` when it lives in an asset. */

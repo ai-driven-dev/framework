@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { NoManifestError } from "../../../../shared/domain/errors.js";
-import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -49,7 +49,7 @@ interface RestoreOptions {
   frameworkPath?: string;
   version?: string;
   projectRoot: string;
-  toolIds?: ToolId[];
+  toolIds?: string[];
   files?: string[];
   force?: boolean;
   interactive?: boolean;
@@ -67,7 +67,7 @@ interface RestoreCtx {
   force: boolean;
   interactive: boolean;
   fileFilter: ((p: string) => boolean) | null;
-  toolIds: ToolId[];
+  toolIds: string[];
   pluginName?: string;
   tools: ToolCatalog;
 }

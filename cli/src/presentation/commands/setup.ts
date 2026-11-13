@@ -6,7 +6,6 @@ import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import { CategoryMismatchError } from "../../shared/domain/errors.js";
-import type { ToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory } from "../deps.js";
 import {
   printDetectedContext,
@@ -60,13 +59,13 @@ export function parseSourceFlag(
   return MarketplaceSourceMode.remote(undefined, cmdOptions.release);
 }
 
-export function expandAllKeyword(raw: string | undefined, all: readonly ToolId[]): ToolId[] {
+export function expandAllKeyword(raw: string | undefined, all: readonly string[]): string[] {
   if (raw === undefined) return [];
   if (raw.trim() === "all") return [...all];
   return raw
     .split(",")
     .map((s) => s.trim())
-    .filter(Boolean) as ToolId[];
+    .filter(Boolean);
 }
 
 /** `--ide` takes every tool, AI assistants and editors alike; `--ai`, its former spelling,
@@ -75,7 +74,7 @@ export function parseToolIds(
   cmdOptions: SetupCmdOptions,
   errorHandler: ErrorHandler,
   tools: ToolCatalog
-): { aiTools: ToolId[]; ideTools: ToolId[] } | null {
+): { aiTools: string[]; ideTools: string[] } | null {
   const aiIds = expandAllKeyword(cmdOptions.ai, tools.idsInCanonicalOrder("ai"));
   const ids = expandAllKeyword(cmdOptions.ide, tools.idsInCanonicalOrder());
   try {
@@ -91,10 +90,11 @@ export function parseToolIds(
   };
 }
 
-function assertAiToolIds(toolIds: readonly ToolId[], tools: ToolCatalog): void {
-  const allowed = tools.idsInCanonicalOrder("ai");
-  const wrong = toolIds.filter((id) => !allowed.some((ai) => ai === id));
-  if (wrong.length > 0) throw new CategoryMismatchError(wrong, "ai", allowed);
+function assertAiToolIds(toolIds: readonly string[], tools: ToolCatalog): void {
+  const wrong = toolIds.filter((id) => !tools.isAiTool(id));
+  if (wrong.length > 0) {
+    throw new CategoryMismatchError(wrong, "ai", tools.idsInCanonicalOrder("ai"));
+  }
 }
 
 type PluginsMode = "interactive" | "all" | "recommended" | "named" | "none";
@@ -198,6 +198,8 @@ export function registerSetupCommand(
         const flow = new SetupFlow({
           projectRoot,
           registeredToolIds: catalog.idsInCanonicalOrder(),
+          aiToolIds: catalog.idsInCanonicalOrder("ai"),
+          ideToolIds: catalog.idsInCanonicalOrder("ide"),
           supportsUserScopeActivation: (id) => activatesAtUserScope(catalog.profile(id)),
           source,
           aiTools: toolIds.aiTools,

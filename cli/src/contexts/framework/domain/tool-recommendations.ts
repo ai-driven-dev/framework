@@ -1,7 +1,6 @@
-import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { ProjectContext } from "./project-context.js";
 
-export function recommendAiTools(context?: ProjectContext): readonly AiToolId[] {
+export function recommendAiTools(context?: ProjectContext): readonly string[] {
   if (context === undefined) return ["claude"];
   if (context.hasFramework) return [];
   if (context.isMonorepo) return ["claude", "copilot"];
@@ -10,7 +9,7 @@ export function recommendAiTools(context?: ProjectContext): readonly AiToolId[] 
   return ["claude"];
 }
 
-export function recommendIdeTools(context?: ProjectContext): readonly IdeToolId[] {
+export function recommendIdeTools(context?: ProjectContext): readonly string[] {
   if (context === undefined) return [];
   if (context.hasFramework) return [];
   if (context.stack === "typescript" || context.isMonorepo) return ["vscode"];

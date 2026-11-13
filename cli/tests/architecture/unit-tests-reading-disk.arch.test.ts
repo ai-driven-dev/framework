@@ -26,7 +26,6 @@ const BASELINE: readonly string[] = [
   "tests/contexts/framework/application/shared/apply-plugin-files-built-tree.unit.test.ts",
   "tests/contexts/framework/application/shared/apply-plugin-files-mode-a-marketplace.unit.test.ts",
   "tests/contexts/framework/application/shared/apply-plugin-files-use-case.unit.test.ts",
-  "tests/contexts/framework/application/uninstall-plugin.unit.test.ts",
   "tests/presentation/prompts/plugin-pick-use-case.unit.test.ts",
 ];
 

@@ -1,8 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { SetupToolsUseCase } from "../../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
-import { CategoryMismatchError } from "../../../../../src/shared/domain/errors.js";
-import type { ToolId } from "../../../../../src/shared/domain/tool.js";
+import type { AiToolId, IdeToolId } from "../../../../../src/shared/domain/tool.js";
 import {
   buildUnitDeps,
   initProject,
@@ -23,7 +22,7 @@ async function build() {
   return { deps, useCase };
 }
 
-function options(aiTools: ToolId[], ideTools: ToolId[]) {
+function options(aiTools: AiToolId[], ideTools: IdeToolId[]) {
   return {
     projectRoot: PROJECT_ROOT,
     aiTools,
@@ -76,16 +75,5 @@ describe("SetupToolsUseCase", () => {
 
     const manifest = await deps.manifestRepo.load();
     expect(manifest?.getInstalledToolIds()).toStrictEqual(["claude", "vscode"]);
-  });
-
-  it("refuses an IDE handed in as an AI tool, naming the valid ones", async () => {
-    const { useCase } = await build();
-
-    const run = useCase.execute(options([TOOL.vscode], []));
-
-    await expect(run).rejects.toThrow(CategoryMismatchError);
-    await expect(run).rejects.toThrow(
-      "vscode is not an AI tool. Valid AI tools: claude, cursor, copilot, opencode, kilo, codex, antigravity"
-    );
   });
 });
