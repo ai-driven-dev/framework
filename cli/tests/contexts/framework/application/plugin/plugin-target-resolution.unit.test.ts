@@ -66,7 +66,7 @@ describe("resolveBaseDirFromRecord() — the manifest's recorded scope, not the 
 });
 
 describe("resolvePluginToolIds() order", () => {
-  it("keeps the kernel tool order, which puts codex after opencode and kilo", () => {
+  it("keeps the shared tool order, which puts codex after opencode and kilo", () => {
     const manifest = Manifest.create();
     for (const id of ["codex", "opencode", "kilo", "copilot"] as const) {
       manifest.addTool(id, "1.0.0", []);

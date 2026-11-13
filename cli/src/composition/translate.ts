@@ -9,13 +9,12 @@ import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/
 import type { FrameworkBuildContext } from "../presentation/deps.js";
 import { isAiToolId } from "../shared/domain/tool.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
-import type { FileMerger } from "../shared/ports/file-merger.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Logger } from "../shared/ports/logger.js";
 
 export interface FrameworkBuildDeps {
-  fs: FileReader & FileWriter & FileMerger;
+  fs: FileReader & FileWriter;
   assetProvider: AssetProvider;
   logger: Logger;
 }

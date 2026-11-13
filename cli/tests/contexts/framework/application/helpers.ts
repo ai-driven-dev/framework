@@ -17,6 +17,7 @@ import { ManifestRepositoryAdapter } from "../../../../src/contexts/framework/in
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../../../src/presentation/terminal/prompter-adapter.js";
+import { type MergeStrategy, mergeIntoJsonFile } from "../../../../src/shared/domain/merge.js";
 import { isIdeToolId, type ToolId } from "../../../../src/shared/domain/tool.js";
 import { CurrentVersionAdapter } from "../../../../src/shared/infrastructure/current-version-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
@@ -200,7 +201,11 @@ export const FIXTURE_DIR_V2 = join(process.cwd(), "tests/fixtures/framework-v2")
 
 export function buildDeps(projectRoot: string) {
   const hasher = new HasherAdapter();
-  const fs = new FileAdapter(hasher);
+  const files = new FileAdapter(hasher);
+  const fs = Object.assign(files, {
+    mergeJsonFile: (path: string, content: string, strategy: MergeStrategy) =>
+      mergeIntoJsonFile(files, path, content, strategy),
+  });
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const logger = new CLIOutput(false);
   const assetProvider = new BundledAssetProviderAdapter(wireTools());

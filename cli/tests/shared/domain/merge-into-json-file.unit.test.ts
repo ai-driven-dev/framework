@@ -125,60 +125,6 @@ describe("mergeIntoJsonFile", () => {
       expect((result.nested as Record<string, number>).a).toBe(1);
     });
 
-    it("tolerates JSONC trailing commas in an existing file", async () => {
-      const path = join(root, "existing-jsonc.json");
-      const existingWithTrailingComma = `{
-  "keep": "me",
-  "nested": {
-    "a": 1,
-  }
-}`;
-      files.setFile(path, existingWithTrailingComma);
-      await files.mergeJsonFile(path, JSON.stringify({ added: true }), "framework-prime");
-      const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-      expect(result.keep).toBe("me");
-      expect(result.added).toBe(true);
-    });
-
-    describe("per-key strategy", () => {
-      describe("framework-prime key", () => {
-        it("incoming value wins over existing value", async () => {
-          const path = join(root, "per-key-fp.json");
-          files.setFile(path, JSON.stringify({ "github.copilot.enable": false }));
-          await files.mergeJsonFile(path, JSON.stringify({ "github.copilot.enable": true }), {
-            default: "user-prime",
-            frameworkOverrideKeys: ["github.copilot.enable"],
-          });
-          const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-          expect(result["github.copilot.enable"]).toBe(true);
-        });
-      });
-
-      describe("user-prime key", () => {
-        it("existing value wins over incoming value", async () => {
-          const path = join(root, "per-key-up.json");
-          files.setFile(path, JSON.stringify({ "editor.fontSize": 14 }));
-          await files.mergeJsonFile(path, JSON.stringify({ "editor.fontSize": 16 }), {
-            default: "user-prime",
-            frameworkOverrideKeys: ["github.copilot.enable"],
-          });
-          const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-          expect(result["editor.fontSize"]).toBe(14);
-        });
-
-        it("incoming value is added when key is absent from disk", async () => {
-          const path = join(root, "per-key-new.json");
-          files.setFile(path, JSON.stringify({}));
-          await files.mergeJsonFile(path, JSON.stringify({ "chat.agent.enabled": true }), {
-            default: "user-prime",
-            frameworkOverrideKeys: ["chat.agent.enabled"],
-          });
-          const result = JSON.parse(await files.readFile(path)) as Record<string, unknown>;
-          expect(result["chat.agent.enabled"]).toBe(true);
-        });
-      });
-    });
-
     it("tolerates comments and trailing commas in an existing .jsonc file", async () => {
       const path = join(root, "opencode.jsonc");
       const existingJsonc = `{

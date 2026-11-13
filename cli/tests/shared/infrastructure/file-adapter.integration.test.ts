@@ -129,23 +129,4 @@ describe("FileAdapter, at the edges", () => {
       }
     );
   });
-
-  describe("mergeJsonFile()", () => {
-    it("merges the incoming keys into the file on disk, the framework's value winning a conflict", async () => {
-      const path = join(tempDir, "nested", "settings.json");
-      await fs.writeFile(path, JSON.stringify({ kept: "user", shared: "user" }));
-
-      await fs.mergeJsonFile(
-        path,
-        JSON.stringify({ added: "framework", shared: "framework" }),
-        "framework-prime"
-      );
-
-      expect(JSON.parse(await readFile(path, "utf-8"))).toStrictEqual({
-        kept: "user",
-        shared: "framework",
-        added: "framework",
-      });
-    });
-  });
 });

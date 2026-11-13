@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { AuthenticationError } from "../../../src/shared/domain/errors.js";
-import { GitHubAdapter } from "../../../src/shared/infrastructure/github-adapter.js";
-import type { HttpGet, HttpGetOptions, HttpResponse } from "../../../src/shared/ports/http-get.js";
+import { GitHubAdapter } from "../../../../src/contexts/auth/infrastructure/github-adapter.js";
+import { AuthenticationError } from "../../../../src/shared/domain/errors.js";
+import type {
+  HttpGet,
+  HttpGetOptions,
+  HttpResponse,
+} from "../../../../src/shared/ports/http-get.js";
 
 function http(
   body: unknown,

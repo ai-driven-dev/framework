@@ -3,7 +3,6 @@ import { InstallationFile } from "../../../../shared/domain/file.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { IdeToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
-import type { FileMerger } from "../../../../shared/ports/file-merger.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
@@ -11,6 +10,7 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { FileMerger } from "../../domain/ports/file-merger.js";
 import type { PostInstallPipelineUseCase } from "./post-install-pipeline-use-case.js";
 
 export interface InstallIdeConfigOptions {

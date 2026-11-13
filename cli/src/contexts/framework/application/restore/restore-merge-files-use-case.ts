@@ -5,10 +5,10 @@ import {
   type MergeFileEntry,
   type MergeStrategy,
 } from "../../../../shared/domain/merge.js";
-import type { FileMerger } from "../../../../shared/ports/file-merger.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
+import type { FileMerger } from "../../domain/ports/file-merger.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries-use-case.js";
 import { RestoreDriftEntriesUseCase } from "./restore-drift-entries-use-case.js";
 

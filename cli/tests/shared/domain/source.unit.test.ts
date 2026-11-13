@@ -7,27 +7,33 @@ import {
   serializePluginSource,
 } from "../../../src/shared/domain/source.js";
 
+/** The message every npm name refusal shares. */
+const npmNameDetail = (got: string): string =>
+  `"package" must be a valid npm package name (e.g. my-plugin or @scope/my-plugin). Got: "${got}"`;
+
 describe("parsePluginSource", () => {
   describe("github kind", () => {
     it("round-trips a minimal github source", () => {
       const raw = { kind: "github", repo: "owner/repo" };
       const src = parsePluginSource(raw);
-      expect(serializePluginSource(src)).toEqual(raw);
+      expect(serializePluginSource(src)).toStrictEqual(raw);
     });
 
     it("round-trips a github source with ref and sha", () => {
       const raw = { kind: "github", repo: "owner/repo", ref: "main", sha: "a".repeat(40) };
       const src = parsePluginSource(raw);
-      expect(serializePluginSource(src)).toEqual(raw);
+      expect(serializePluginSource(src)).toStrictEqual(raw);
     });
 
     it("throws when repo is missing", () => {
-      expect(() => parsePluginSource({ kind: "github" })).toThrow(InvalidPluginSourceError);
+      expect(() => parsePluginSource({ kind: "github" })).toThrow(
+        new InvalidPluginSourceError('"repo" must be a non-empty string.')
+      );
     });
 
     it("throws when repo format is invalid", () => {
       expect(() => parsePluginSource({ kind: "github", repo: "not-valid" })).toThrow(
-        InvalidPluginSourceError
+        new InvalidPluginSourceError('"repo" must match owner/repo format.')
       );
     });
   });
@@ -36,7 +42,7 @@ describe("parsePluginSource", () => {
     it("round-trips a url source", () => {
       const raw = { kind: "url", url: "https://example.com/plugin.zip" };
       const src = parsePluginSource(raw);
-      expect(serializePluginSource(src)).toEqual(raw);
+      expect(serializePluginSource(src)).toStrictEqual(raw);
     });
 
     it("round-trips a url source with optional fields", () => {
@@ -47,11 +53,13 @@ describe("parsePluginSource", () => {
         sha: "b".repeat(40),
       };
       const src = parsePluginSource(raw);
-      expect(serializePluginSource(src)).toEqual(raw);
+      expect(serializePluginSource(src)).toStrictEqual(raw);
     });
 
     it("throws when url is missing", () => {
-      expect(() => parsePluginSource({ kind: "url" })).toThrow(InvalidPluginSourceError);
+      expect(() => parsePluginSource({ kind: "url" })).toThrow(
+        new InvalidPluginSourceError('"url" must be a non-empty string.')
+      );
     });
   });
 
@@ -63,7 +71,7 @@ describe("parsePluginSource", () => {
         path: "plugins/my-plugin",
       };
       const src = parsePluginSource(raw);
-      expect(serializePluginSource(src)).toEqual(raw);
+      expect(serializePluginSource(src)).toStrictEqual(raw);
     });
 
     it("keeps the ref and the sha through a round trip", () => {
@@ -81,13 +89,13 @@ describe("parsePluginSource", () => {
 
     it("throws when url is missing", () => {
       expect(() => parsePluginSource({ kind: "git-subdir", path: "sub" })).toThrow(
-        InvalidPluginSourceError
+        new InvalidPluginSourceError('"url" must be a non-empty string.')
       );
     });
 
     it("throws when path is missing", () => {
       expect(() => parsePluginSource({ kind: "git-subdir", url: "https://example.com" })).toThrow(
-        InvalidPluginSourceError
+        new InvalidPluginSourceError('"path" must be a non-empty string.')
       );
     });
   });
@@ -96,7 +104,7 @@ describe("parsePluginSource", () => {
     it("round-trips a minimal npm source", () => {
       const raw = { kind: "npm", package: "@my-org/my-plugin" };
       const src = parsePluginSource(raw);
-      expect(serializePluginSource(src)).toEqual(raw);
+      expect(serializePluginSource(src)).toStrictEqual(raw);
     });
 
     it("round-trips an npm source with version and registry", () => {
@@ -107,11 +115,13 @@ describe("parsePluginSource", () => {
         registry: "https://registry.npmjs.org",
       };
       const src = parsePluginSource(raw);
-      expect(serializePluginSource(src)).toEqual(raw);
+      expect(serializePluginSource(src)).toStrictEqual(raw);
     });
 
     it("throws when package is missing", () => {
-      expect(() => parsePluginSource({ kind: "npm" })).toThrow(InvalidPluginSourceError);
+      expect(() => parsePluginSource({ kind: "npm" })).toThrow(
+        new InvalidPluginSourceError('"package" must be a non-empty string.')
+      );
     });
 
     describe("npm name security validation", () => {
@@ -127,25 +137,25 @@ describe("parsePluginSource", () => {
 
       it("rejects a package name starting with a dash (injection vector)", () => {
         expect(() => parsePluginSource({ kind: "npm", package: "-x" })).toThrow(
-          InvalidPluginSourceError
+          new InvalidPluginSourceError(npmNameDetail("-x"))
         );
       });
 
       it("rejects a package name starting with double-dash (option injection)", () => {
         expect(() =>
           parsePluginSource({ kind: "npm", package: "--registry=https://evil.com" })
-        ).toThrow(InvalidPluginSourceError);
+        ).toThrow(new InvalidPluginSourceError(npmNameDetail("--registry=https://evil.com")));
       });
 
       it("rejects a package name starting with a dot", () => {
         expect(() => parsePluginSource({ kind: "npm", package: ".my-plugin" })).toThrow(
-          InvalidPluginSourceError
+          new InvalidPluginSourceError(npmNameDetail(".my-plugin"))
         );
       });
 
       it("rejects a package name with uppercase letters", () => {
         expect(() => parsePluginSource({ kind: "npm", package: "My-Plugin" })).toThrow(
-          InvalidPluginSourceError
+          new InvalidPluginSourceError(npmNameDetail("My-Plugin"))
         );
       });
     });
@@ -155,11 +165,13 @@ describe("parsePluginSource", () => {
     it("round-trips a local source", () => {
       const raw = { kind: "local", path: "./plugins/my-plugin" };
       const src = parsePluginSource(raw);
-      expect(serializePluginSource(src)).toEqual(raw);
+      expect(serializePluginSource(src)).toStrictEqual(raw);
     });
 
     it("throws when path is missing", () => {
-      expect(() => parsePluginSource({ kind: "local" })).toThrow(InvalidPluginSourceError);
+      expect(() => parsePluginSource({ kind: "local" })).toThrow(
+        new InvalidPluginSourceError('"path" must be a non-empty string.')
+      );
     });
   });
 
@@ -199,24 +211,38 @@ describe("parsePluginSource", () => {
   describe("invalid inputs", () => {
     it("throws for unknown kind", () => {
       expect(() => parsePluginSource({ kind: "svn", url: "svn://example.com" })).toThrow(
-        InvalidPluginSourceError
+        new InvalidPluginSourceError(
+          'unknown kind "svn". Expected: github, url, git-subdir, npm, local.'
+        )
       );
     });
 
     it("throws for null", () => {
-      expect(() => parsePluginSource(null)).toThrow(InvalidPluginSourceError);
+      expect(() => parsePluginSource(null)).toThrow(
+        new InvalidPluginSourceError("expected an object.")
+      );
     });
 
     it("throws for array", () => {
-      expect(() => parsePluginSource([])).toThrow(InvalidPluginSourceError);
+      expect(() => parsePluginSource([])).toThrow(
+        new InvalidPluginSourceError("expected an object.")
+      );
     });
 
     it("throws for primitive string", () => {
-      expect(() => parsePluginSource("github:owner/repo")).toThrow(InvalidPluginSourceError);
+      expect(() => parsePluginSource("github:owner/repo")).toThrow(
+        new InvalidPluginSourceError(
+          'string source "github:owner/repo" is not a recognized path or repo.'
+        )
+      );
     });
 
     it("throws when kind is missing", () => {
-      expect(() => parsePluginSource({ repo: "owner/repo" })).toThrow(InvalidPluginSourceError);
+      expect(() => parsePluginSource({ repo: "owner/repo" })).toThrow(
+        new InvalidPluginSourceError(
+          'unknown kind "undefined". Expected: github, url, git-subdir, npm, local.'
+        )
+      );
     });
   });
 });
@@ -255,29 +281,33 @@ describe("the source spellings a user types", () => {
       // The repo half would be "owner/repo@release", not owner/repo, so the spelling falls
       // through to the JSON branch and is rejected rather than installing a mangled name.
       expect(() => parsePluginSourceShorthand("owner/repo@release@2")).toThrow(
-        InvalidPluginSourceError
+        new InvalidPluginSourceError('unrecognized source format: "owner/repo@release@2"')
       );
     });
 
     it("refuses a spelling whose repo half is not owner/repo", () => {
-      expect(() => parsePluginSourceShorthand("not-a-repo@v1")).toThrow(InvalidPluginSourceError);
+      expect(() => parsePluginSourceShorthand("not-a-repo@v1")).toThrow(
+        new InvalidPluginSourceError('unrecognized source format: "not-a-repo@v1"')
+      );
     });
 
     it("treats a leading @ as part of an unrecognized spelling, not a separator", () => {
-      expect(() => parsePluginSourceShorthand("@v1.2.0")).toThrow(InvalidPluginSourceError);
+      expect(() => parsePluginSourceShorthand("@v1.2.0")).toThrow(
+        new InvalidPluginSourceError('unrecognized source format: "@v1.2.0"')
+      );
     });
   });
 
   describe("a gitlab: shorthand", () => {
     it("resolves gitlab:owner/repo to a gitlab.com git URL", () => {
-      expect(parsePluginSourceShorthand("gitlab:my-org/my-plugin")).toEqual({
+      expect(parsePluginSourceShorthand("gitlab:my-org/my-plugin")).toStrictEqual({
         kind: "url",
         url: "https://gitlab.com/my-org/my-plugin.git",
       });
     });
 
     it("carries a ref through when one is given", () => {
-      expect(parsePluginSourceShorthand("gitlab:my-org/my-plugin@v2")).toEqual({
+      expect(parsePluginSourceShorthand("gitlab:my-org/my-plugin@v2")).toStrictEqual({
         kind: "url",
         url: "https://gitlab.com/my-org/my-plugin.git",
         ref: "v2",

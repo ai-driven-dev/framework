@@ -22,7 +22,7 @@ describe("the registered tool catalog", () => {
   });
 
   describe("the AI ids in the canonical order", () => {
-    it("is the order the kernel names the AI tools in, which is neither the help order nor the id order", () => {
+    it("is the order the shared vocabulary names the AI tools in, which is neither the help order nor the id order", () => {
       const ids = catalogOf().aiIdsInCanonicalOrder();
 
       expect(ids.indexOf("opencode")).toBeLessThan(ids.indexOf("codex"));

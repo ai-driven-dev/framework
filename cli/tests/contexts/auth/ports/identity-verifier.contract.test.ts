@@ -1,6 +1,6 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
-import { GitHubAdapter } from "../../../../src/shared/infrastructure/github-adapter.js";
+import { GitHubAdapter } from "../../../../src/contexts/auth/infrastructure/github-adapter.js";
 import { HttpClient } from "../../../../src/shared/infrastructure/http-client.js";
 import { FakeIdentityVerifier } from "../testing/fake-identity-verifier.js";
 import {

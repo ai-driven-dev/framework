@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { NoManifestError } from "../../../../shared/domain/errors.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
-import type { FileMerger } from "../../../../shared/ports/file-merger.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
@@ -20,6 +19,7 @@ import {
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { FRAMEWORK_CONFIG_PREFIX, FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { FileMerger } from "../../domain/ports/file-merger.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";

@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import {
   describeProfileConformance,
-  registeredIdsMatchKernel,
+  registeredIdsMatchToolVocabulary,
 } from "../../testing/profile-conformance.js";
 
 describe("the registered profiles", () => {
-  it("register exactly the kernel's ids, once each", () => {
-    registeredIdsMatchKernel(REGISTERED_PROFILES.map((profile) => profile.toolId));
+  it("register exactly the shared tool ids, once each", () => {
+    registeredIdsMatchToolVocabulary(REGISTERED_PROFILES.map((profile) => profile.toolId));
   });
 
   it("include at least one AI tool and one IDE tool", () => {

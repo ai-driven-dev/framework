@@ -2,7 +2,6 @@ import { type FileHash, InstallationFile } from "../../../../shared/domain/file.
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
-import type { FileMerger } from "../../../../shared/ports/file-merger.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
@@ -11,6 +10,7 @@ import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { FileMerger } from "../../domain/ports/file-merger.js";
 import type { Platform } from "../../domain/ports/platform.js";
 import { GenerateToolDistributionUseCase } from "./generate-tool-distribution-use-case.js";
 import { RestoreMergeFilesUseCase } from "./restore-merge-files-use-case.js";

@@ -13,7 +13,7 @@ import type { MarketplaceSourceMode } from "../../distribution/domain/marketplac
 export type PluginInstallMode = "interactive" | "all" | "recommended" | "named" | "none";
 
 /** Same value domain as `MarketplaceScope`, aliased so this field reads about a setup's own scope
- * rather than about the kernel type it shares. */
+ * rather than about the shared type it aliases. */
 export type SetupScope = MarketplaceScope;
 
 export interface SetupFlowParams {

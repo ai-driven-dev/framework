@@ -205,10 +205,10 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   }),
 ];
 
-/** The kernel's ids and the registration's agree, in both directions. */
-export function registeredIdsMatchKernel(ids: readonly ToolId[]): void {
-  const kernel = [...AI_TOOL_IDS, ...IDE_TOOL_IDS];
-  expect([...ids].sort()).toEqual([...kernel].sort());
+/** The shared tool ids and the registration's agree, in both directions. */
+export function registeredIdsMatchToolVocabulary(ids: readonly ToolId[]): void {
+  const vocabulary = [...AI_TOOL_IDS, ...IDE_TOOL_IDS];
+  expect([...ids].sort()).toEqual([...vocabulary].sort());
 }
 
 export function describeProfileConformance(

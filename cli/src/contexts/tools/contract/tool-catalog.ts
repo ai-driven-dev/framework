@@ -13,7 +13,7 @@ export interface ToolCatalog {
   aiProfileIfAny(id: ToolId): AiToolProfile | null;
   /** The ids of one category in registration order: the order a help text names the tools. */
   inHelpOrder(category: ToolCategory): readonly ToolId[];
-  /** The ids of the registered AI tools in the order the kernel names them: the order the install,
+  /** The ids of the registered AI tools in the order the shared tool vocabulary names them: the order the install,
    * uninstall and listing flows have always walked a manifest's tools. */
   aiIdsInCanonicalOrder(): readonly AiToolId[];
   /** Every profile sorted by id: the order the setup and doctor flows walk them. */

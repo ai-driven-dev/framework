@@ -55,6 +55,7 @@ const PURE_FOLDERS = [
   "src/contexts/auth/contract/**/*.ts",
   "src/contexts/recipes/domain/**/*.ts",
   "src/contexts/recipes/ports/**/*.ts",
+  "src/shared/domain/**/*.ts",
   "src/shared/ports/**/*.ts",
 ] as const;
 const PURE_BUILTINS: ReadonlySet<string> = new Set(["path", "crypto"]);
@@ -326,6 +327,8 @@ describe("the guard itself", () => {
     }
     writeFileSync(join(planted, "src/contexts/auth/ports/imports-fs.ts"), imports("node:fs"));
     writeFileSync(join(planted, "src/contexts/auth/contract/imports-fs.ts"), imports("node:fs"));
+    writeFileSync(join(planted, "src/shared/domain/imports-fs.ts"), imports("node:fs"));
+    writeFileSync(join(planted, "src/shared/domain/imports-path.ts"), imports("node:path"));
     writeFileSync(join(planted, "src/shared/ports/imports-fs.ts"), imports("node:fs"));
     writeFileSync(join(planted, "src/shared/ports/imports-path.ts"), imports("node:path"));
     writeFileSync(join(planted, "src/contexts/auth/ports/env.ts"), readsEnvSource);
@@ -577,6 +580,7 @@ describe("the guard itself", () => {
       "src/contexts/auth/contract/imports-fs.ts",
       "src/contexts/recipes/domain/imports-fs.ts",
       "src/contexts/recipes/ports/imports-fs.ts",
+      "src/shared/domain/imports-fs.ts",
       "src/shared/ports/imports-fs.ts",
     ]) {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
@@ -584,6 +588,7 @@ describe("the guard itself", () => {
     for (const file of [
       "src/contexts/auth/domain/pure/imports-path.ts",
       "src/contexts/auth/domain/pure/imports-crypto.ts",
+      "src/shared/domain/imports-path.ts",
       "src/shared/ports/imports-path.ts",
     ]) {
       expect(findings).not.toContain(`${file}:${rule}`);

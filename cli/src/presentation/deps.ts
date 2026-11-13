@@ -36,6 +36,7 @@ import type { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/
 import type { StatusUseCase } from "../contexts/framework/application/status-use-case.js";
 import type { UninstallIdeUseCase } from "../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import type { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
+import type { FileMerger } from "../contexts/framework/domain/ports/file-merger.js";
 import type { ManifestRepository } from "../contexts/framework/domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../contexts/framework/domain/ports/user-source-references.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
@@ -55,7 +56,6 @@ import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
-import type { FileMerger } from "../shared/ports/file-merger.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Logger } from "../shared/ports/logger.js";

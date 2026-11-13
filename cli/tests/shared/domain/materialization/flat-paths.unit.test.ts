@@ -161,6 +161,12 @@ describe("flatHooksPathWithLoaderEntry", () => {
     const b = flatHooksPathWithLoaderEntry(".opencode/hooks/", null, "plugin-b", "hooks/x.js");
     expect(a).not.toBe(b);
   });
+
+  it("strips only a leading hooks/ segment, never one deeper in the path", () => {
+    expect(
+      flatHooksPathWithLoaderEntry(".opencode/hooks/", null, "aidd-dev", "scripts/hooks/x.js")
+    ).toBe(".opencode/hooks/aidd-dev/scripts/hooks/x.js");
+  });
 });
 
 describe("flatMcpKeyPrefix", () => {

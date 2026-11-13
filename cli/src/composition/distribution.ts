@@ -20,14 +20,13 @@ import type { RepositoryVisibility } from "../contexts/distribution/ports/reposi
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import type { HttpClient } from "../shared/infrastructure/http-client.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
-import type { FileMerger } from "../shared/ports/file-merger.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
 import type { Hasher } from "../shared/ports/hasher.js";
 import type { Logger } from "../shared/ports/logger.js";
 
 export interface DistributionWiringShared {
-  fs: FileReader & FileWriter & FileMerger;
+  fs: FileReader & FileWriter;
   hasher: Hasher;
   http: HttpClient;
   tokenProvider: TokenProvider;

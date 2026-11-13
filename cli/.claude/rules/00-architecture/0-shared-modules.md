@@ -9,9 +9,9 @@ paths:
 
 ## `src/shared/`
 
-- A module enters when two contexts consume it, by import or by being handed its adapter by the composition root.
-- `earned-sharing.arch.test.ts` counts the importing contexts of every file under `src/shared/` and fails on fewer than two. Presentation and composition are consumers, not contexts. A file short of two moves into its one context, or is deleted when nobody imports it.
-- `SHARED_BASELINE` in that test lists the files that cannot move yet, each with the condition that removes it; it only shrinks.
+- A `shared/domain` or `shared/ports` file enters when two contexts import it. Presentation and composition consume it but are not contexts.
+- A `shared/infrastructure` file enters when it implements an earned shared port, when an earned shared infrastructure file imports it, or when two composition files import it.
+- `earned-sharing.arch.test.ts` holds both rules over every file under `src/shared/`. A file short of its rule moves into its one context, or is deleted when nobody imports it. No baseline of exceptions exists.
 
 ## A `shared/` directory inside a context
 

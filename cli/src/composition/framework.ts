@@ -75,6 +75,7 @@ import {
   InquirerPrompterAdapter,
   SilentPrompterAdapter,
 } from "../presentation/terminal/prompter-adapter.js";
+import { type MergeStrategy, mergeIntoJsonFile } from "../shared/domain/merge.js";
 import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
 import { CurrentVersionAdapter } from "../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
@@ -118,7 +119,11 @@ export async function createDeps(
   if (cached !== undefined) return cached;
   const hasher = new HasherAdapter();
   const logger = output ?? new CLIOutput(options.verbose);
-  const fs = new FileAdapter(hasher, logger);
+  const files = new FileAdapter(hasher, logger);
+  const fs = Object.assign(files, {
+    mergeJsonFile: (path: string, content: string, strategy: MergeStrategy) =>
+      mergeIntoJsonFile(files, path, content, strategy),
+  });
   const pluginDistributionReader = new PluginDistributionReaderAdapter(
     fs,
     pluginManifestProbes(tools)

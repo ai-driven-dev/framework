@@ -1,5 +1,5 @@
-import { AuthenticationError } from "../domain/errors.js";
-import type { HttpGet } from "../ports/http-get.js";
+import { AuthenticationError } from "../../../shared/domain/errors.js";
+import type { HttpGet } from "../../../shared/ports/http-get.js";
 
 export class GitHubAdapter {
   constructor(
