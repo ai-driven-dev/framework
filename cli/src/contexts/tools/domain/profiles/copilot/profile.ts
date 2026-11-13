@@ -78,7 +78,7 @@ function flattenFileName(
 function buildPrefix(subPath: string): string {
   return subPath
     .split("/")
-    .map((p) => p.replace(/^(\d+)[_-].*$/, "$1"))
+    .map((p) => p.replace(/^(\d+)[_-].*/, "$1"))
     .join("-");
 }
 
@@ -154,12 +154,7 @@ function resolveInstalledPath(path: string): string {
     if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}instructions/${subPath}`;
     return rulesHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
   }
-  if (path.startsWith("skills/")) {
-    const subPath = path.slice("skills/".length);
-    if (subPath === "" || subPath.endsWith("/")) return `${DIRECTORY}skills/${subPath}`;
-    return skillsHandler.buildFilePath(subPath) ?? `${DIRECTORY}${path}`;
-  }
-  // Unknown section: a predictable directory-prefixed default rather than a silently dropped
+  // Skills keep their structure, so they take this default with every unknown section: a predictable directory-prefixed default rather than a silently dropped
   // reference when a new section is added to the framework.
   return `${DIRECTORY}${path}`;
 }

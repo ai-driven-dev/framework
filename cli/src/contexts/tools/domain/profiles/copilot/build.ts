@@ -115,7 +115,7 @@ function transformCopilotAgent(content: string, _plugin: string, outName: string
 
 function transformCopilotFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
-  const flatRelPath = copilotFlatAgentPath(plugin, `agents/${outName}`);
+  const flatRelPath = copilotFlatAgentPath(plugin, outName);
   const rewrittenBody = rewriteRelativeLinks(body, {
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => copilotFlatResolveTarget(plugin, rel),

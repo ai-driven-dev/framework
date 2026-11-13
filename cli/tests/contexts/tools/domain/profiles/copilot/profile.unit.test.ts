@@ -24,11 +24,21 @@ describe("copilot declarations the rest of the CLI reads", () => {
     expect(copilot.section("agents").serialize({ name: "a" }, "body")).toMatch(/^---\n/);
   });
 
+  it("writes agents as markdown frontmatter, not TOML", () => {
+    expect(copilot.section("agents").serialize({ name: "a" }, "body")).toBe(
+      "---\nname: 'a'\n---\nbody"
+    );
+  });
+
+  it("delivers VS Code settings through the config section", () => {
+    expect(copilot.configAsset("vscode-settings.json")?.delivery).toBe("section");
+  });
+
   it("writes its MCP servers as JSON under `servers`", () => {
     const written = copilot
       .section("mcp")
       .config?.transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
-    expect(() => JSON.parse(written)).not.toThrow();
+    expect(JSON.parse(written)).toStrictEqual({ servers: { a: { command: "node" } } });
     expect(copilot.section("mcp").config?.consumes(CONFIG_MCP)).toBe(true);
   });
 
@@ -76,6 +86,8 @@ describe("copilot declarations the rest of the CLI reads", () => {
       ".github/instructions/04-ide-mapping.instructions.md",
     ],
     ["rules", "00-architecture/.gitkeep", null],
+    ["skills", ".gitkeep", null],
+    ["skills", "01-plan/SKILL.md", ".github/skills/01-plan/SKILL.md"],
   ])("installs %s file %s at %s", (kind, built, path) => {
     expect(installPathOf(copilot, kind, built)).toBe(path);
   });
