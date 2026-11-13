@@ -18,7 +18,7 @@ The engine and the files written.
 7. Reply, in plain words:
    - the journeys and wireframes written or raised
    - where to look: the showcase's index page
-   - that each waits for the person's review
+   - that their review waits for the design system
    - what comes next: the brand, then the design system
    - the components the wireframes expect, for the design system
    - an error another skill owes, as a next step, not a failure.

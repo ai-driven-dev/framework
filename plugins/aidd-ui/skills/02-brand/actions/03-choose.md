@@ -18,7 +18,7 @@ The set, in the showcase.
    - Keep: a candidate as it is.
    - Revise: a lead. Its comment says what to change.
    - Discard: out.
-   - No verdict: not looked at. Ask before deciding.
+   - No verdict and no pick: not looked at. Ask before deciding.
    - Picks: each picked axis comes from its variant. Together they make the mix.
    - Several kept: ask which one. The user makes the choice.
 4. One kept, no revise, no picks: keep it per [engine](../references/engine.md).

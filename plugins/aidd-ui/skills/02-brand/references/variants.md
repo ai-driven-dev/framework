@@ -17,6 +17,7 @@ A direction is a variant of the brand.
   - Picked axes stay as picked. Only the others move.
   - Parent: the direction the mix starts from.
   - "Go further" in a comment: move the others further.
+  - Every axis picked: move only what the comments ask.
 - Earlier rounds stay in the set.
 
 ## Axes
@@ -28,10 +29,11 @@ An axis is one choice on which the directions differ.
 - In each cell, name the reference it draws on, if any.
 - Write a palette as hex values: background, text, accent.
 - Name the type with its family: sans-serif, serif or monospace.
+- Write sizes in px: text, headings, buttons.
 
 ## Preview
 
 - It shows the direction at work.
 - Show its name, its words and one screen of the subject.
 - It carries its own styles.
-- The showcase dresses the project's wireframes in the palette and type.
+- The showcase dresses the project's wireframes in the palette, type and sizes.
