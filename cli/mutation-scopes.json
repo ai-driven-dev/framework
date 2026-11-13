@@ -64,12 +64,19 @@
       "shards": 4
     },
     "presentation": {
-      "mutate": ["src/presentation/**/*.ts", "!src/presentation/display/telemetry/**/*.ts"],
+      "mutate": [
+        "src/presentation/**/*.ts",
+        "!src/presentation/display/telemetry/**/*.ts",
+        "!src/presentation/terminal/prompter-adapter.ts",
+        "!src/presentation/project-root.ts"
+      ],
       "break": 95
     },
     "runtime": {
       "mutate": [
         "src/runtime/**/*.ts",
+        "src/presentation/terminal/prompter-adapter.ts",
+        "src/presentation/project-root.ts",
         "src/shared/infrastructure/filesystem/**/*.ts",
         "src/shared/infrastructure/asset-loader.ts",
         "src/shared/infrastructure/platform-adapter.ts",

@@ -1,10 +1,10 @@
 import readline from "node:readline";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { resolveProjectRoot } from "../../runtime/project-root/project-root.js";
 import { createMenuDeps } from "../../runtime/wiring/framework.js";
 import { printBanner } from "../display/menu-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import { CLIOutput } from "../output.js";
+import { resolveProjectRoot } from "../project-root.js";
 import { InteractiveMenuUseCase } from "../prompts/menu-use-case.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
 

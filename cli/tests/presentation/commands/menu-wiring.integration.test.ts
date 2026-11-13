@@ -27,7 +27,7 @@ vi.mock("node:readline", () => ({
 
 const { createMenuDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { runMenuLoop } = await import("../../../src/presentation/commands/menu.js");
-const { resolveProjectRoot } = await import("../../../src/runtime/project-root/project-root.js");
+const { resolveProjectRoot } = await import("../../../src/presentation/project-root.js");
 
 let written: string[] = [];
 let errors: string[] = [];

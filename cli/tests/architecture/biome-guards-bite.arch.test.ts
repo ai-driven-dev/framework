@@ -70,6 +70,8 @@ describe("biome carries the exit and default-export rules", () => {
       "src/shared/**",
       "src/contexts/**",
       "src/runtime/**",
+      "src/presentation/terminal/prompter-adapter.ts",
+      "src/presentation/project-root.ts",
     ]);
   });
 
@@ -181,6 +183,7 @@ describe("the guard itself", () => {
       "src/contexts/framework/infrastructure",
       "src/contexts/tools/infrastructure",
       "src/presentation/display",
+      "src/presentation/terminal",
       "src/runtime/git",
       "src/runtime/wiring",
       "src/shared/ports",
@@ -213,6 +216,12 @@ describe("the guard itself", () => {
       join(planted, "src/presentation/exit.ts"),
       "export const stop = (): never => process.exit(1);\n"
     );
+    for (const file of [
+      "src/presentation/project-root.ts",
+      "src/presentation/terminal/prompter-adapter.ts",
+    ]) {
+      writeFileSync(join(planted, file), "export const stop = (): never => process.exit(1);\n");
+    }
     writeFileSync(
       join(planted, "src/kernel/default.ts"),
       "const value = 1;\nexport default value;\n"
@@ -417,12 +426,15 @@ describe("the guard itself", () => {
     rmSync(planted, { recursive: true, force: true });
   });
 
-  it("flags process.exit under kernel/, contexts/ and runtime/, and leaves the command edge alone", () => {
+  it("flags process.exit under kernel/, contexts/, runtime/ and the two moved presentation files, and leaves the command edge alone", () => {
     const findings = biomeFindings(planted);
     expect(findings, findings.join(", ")).toContain("src/kernel/exit.ts:plugin");
     expect(
-      findings.filter((f) => f.startsWith("src/presentation/") && f.endsWith(":plugin"))
-    ).toEqual([]);
+      findings.filter((f) => f.startsWith("src/presentation/") && f.endsWith(":plugin")).sort()
+    ).toEqual([
+      "src/presentation/project-root.ts:plugin",
+      "src/presentation/terminal/prompter-adapter.ts:plugin",
+    ]);
   });
 
   it("flags the process global in a context's domain and application, and not in its infrastructure", () => {

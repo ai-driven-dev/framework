@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   InquirerPrompterAdapter,
   SilentPrompterAdapter,
-} from "../../../src/runtime/prompter/prompter-adapter.js";
+} from "../../../src/presentation/terminal/prompter-adapter.js";
 
 const ENTER = "\n";
 const ARROW_DOWN = "\x1b[B";

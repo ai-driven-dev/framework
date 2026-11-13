@@ -16,7 +16,7 @@ import type { Prompter } from "../../../../src/kernel/ports/prompter.js";
 import type { VersionReader } from "../../../../src/kernel/ports/version-reader.js";
 import { isIdeToolId, type ToolId } from "../../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../../src/presentation/output.js";
-import { SilentPrompterAdapter } from "../../../../src/runtime/prompter/prompter-adapter.js";
+import { SilentPrompterAdapter } from "../../../../src/presentation/terminal/prompter-adapter.js";
 import { BundledAssetProviderAdapter } from "../../../../src/shared/infrastructure/asset-loader.js";
 import { CurrentVersionAdapter } from "../../../../src/shared/infrastructure/current-version-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/filesystem/file-adapter.js";

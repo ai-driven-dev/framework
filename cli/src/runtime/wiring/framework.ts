@@ -86,6 +86,10 @@ import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-ca
 import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../presentation/prompts/setup-tools-prompt-use-case.js";
 import { SyncConflictResolverUseCase } from "../../presentation/prompts/sync-conflict-resolver-use-case.js";
+import {
+  InquirerPrompterAdapter,
+  SilentPrompterAdapter,
+} from "../../presentation/terminal/prompter-adapter.js";
 import { BundledAssetProviderAdapter } from "../../shared/infrastructure/asset-loader.js";
 import { CurrentVersionAdapter } from "../../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
@@ -97,7 +101,6 @@ import { PlatformAdapter } from "../../shared/infrastructure/platform-adapter.js
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Environment } from "../../shared/ports/environment.js";
 import type { FileMerger } from "../../shared/ports/file-merger.js";
-import { InquirerPrompterAdapter, SilentPrompterAdapter } from "../prompter/prompter-adapter.js";
 import { type TelemetryDeps, wireTelemetry } from "./telemetry.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 

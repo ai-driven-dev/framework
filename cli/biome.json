@@ -3429,7 +3429,14 @@
       }
     },
     {
-      "includes": ["src/kernel/**", "src/shared/**", "src/contexts/**", "src/runtime/**"],
+      "includes": [
+        "src/kernel/**",
+        "src/shared/**",
+        "src/contexts/**",
+        "src/runtime/**",
+        "src/presentation/terminal/prompter-adapter.ts",
+        "src/presentation/project-root.ts"
+      ],
       "plugins": ["./biome-plugins/no-process-exit.grit"]
     },
     {

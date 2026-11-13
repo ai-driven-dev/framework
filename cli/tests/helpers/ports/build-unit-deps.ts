@@ -22,7 +22,7 @@ import { PluginDistributionReaderAdapter } from "../../../src/contexts/framework
 import { isIdeToolId, type ToolId } from "../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { SyncConflictResolverUseCase } from "../../../src/presentation/prompts/sync-conflict-resolver-use-case.js";
-import { SilentPrompterAdapter } from "../../../src/runtime/prompter/prompter-adapter.js";
+import { SilentPrompterAdapter } from "../../../src/presentation/terminal/prompter-adapter.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
