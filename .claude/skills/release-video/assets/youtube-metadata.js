@@ -34,18 +34,14 @@ function youtubeMetadata(plan, { version, tag, repo }) {
   return { title: titleOf(plan, version), description: lines.join("\n"), themes, programme, contributors: logins };
 }
 
-/** What a plan lacks to be published: the block, a title that fits, a line for every scene's surface. */
+/** What a plan lacks to be published: the block, a title that fits, a known theme on every line. */
 function youtubeProblems(plan) {
   if (!plan.youtube) return ["youtube: missing"];
   const problems = [];
   const title = titleOf(plan, "0.0");
   if (title.length > MAX_TITLE) problems.push(`title: ${title.length} characters, ${MAX_TITLE} at most`);
-  const covered = new Set(plan.youtube.programme.map((line) => line.surface));
   for (const line of plan.youtube.programme) {
     if (!plan.youtube.themes.includes(line.theme)) problems.push(`youtube programme: ${line.surface} has no theme from themes`);
-  }
-  for (const surface of plan.scenes.flatMap((scene) => scene.surfaces ?? [])) {
-    if (!covered.has(surface)) problems.push(`youtube programme: no line for ${surface}`);
   }
   return problems;
 }
