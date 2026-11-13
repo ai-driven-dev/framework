@@ -17,10 +17,10 @@ The case and the engine.
 3. Write each direction as a variant.
    - Use the [brand](../assets/brand-template.md) template.
    - Add a preview of the direction.
-4. Compare the set per [engine](../references/engine.md).
-   - Fix what it reports, and compare again until it accepts.
+4. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+   - Fix what it reports.
 5. Read [choose](03-choose.md).
 
 ## Output
 
-The set of directions, compared.
+The set of directions, in the showcase.

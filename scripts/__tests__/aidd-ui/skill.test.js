@@ -190,14 +190,13 @@ describe("aidd-ui screens skill", () => {
     put(tmp, `${UI}/drafts/${id}/${root}/screens/${id}.html`, filled("screen-render"));
   };
 
-  it("validates once filled, kept from a compared set and recorded, its pairs and control size read", () => {
+  it("validates once filled, kept from a chosen set and recorded, its pairs and control size read", () => {
     withTokens();
     variant("search", "airy");
     variant("search", "dense");
     put(tmp, `${UI}/drafts/search/variants.md`, "| Variant | Intent | Density |\n| --- | --- | --- |\n| airy | calm | loose |\n| dense | fast | tight |\n");
-    const compared = JSON.parse(engine("compare", "search", "--root", tmp).stdout);
-    assert.deepEqual(compared.variants.map(({ name }) => name), ["airy", "dense"]);
-    const page = fs.readFileSync(path.join(tmp, compared.page), "utf8");
+    assert.equal(engine("showcase", "--root", tmp).status, 0);
+    const page = fs.readFileSync(path.join(tmp, UI, "showcase/_set-search.html"), "utf8");
     assert.ok(page.includes("airy screens/search.html") && page.includes("dense screens/search.html"), "the page shows each variant's screen");
     assert.equal(page.includes("../tokens.css"), false, "the stylesheet is inlined");
     assert.deepEqual(JSON.parse(engine("keep", "search", "dense", "--root", tmp).stdout).written, [`${UI}/screens/search.html`, `${UI}/screens/search.md`]);
@@ -493,7 +492,6 @@ describe("aidd-ui engine step table", () => {
     [/^node <engine> extract\b/, /extract/],
     [/^node <engine> tokens\b/, /stylesheet/],
     [/^node <engine> validate\b/, /Validate/],
-    [/^node <engine> compare\b/, /compar/i],
     [/^node <engine> keep\b/, /keep/i],
     [/^node <engine> publish\b/, /publishes/],
     [/^node <engine> showcase\b/, /showcase/],

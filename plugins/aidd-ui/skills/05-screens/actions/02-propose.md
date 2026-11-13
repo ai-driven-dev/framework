@@ -15,10 +15,10 @@ The wireframes to dress, and the engine.
    - Follow [screens](../references/screens.md).
    - Use the [screen](../assets/screen-template.md) template.
    - Use the [render](../assets/render-template.html) template.
-4. Compare the set per [engine](../references/engine.md).
-   - Fix what it reports, and compare again until it accepts.
+4. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+   - Fix what it reports.
 5. Read [choose](03-choose.md).
 
 ## Output
 
-The set of variants, compared.
+The set of variants, in the showcase.

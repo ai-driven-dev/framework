@@ -1,14 +1,12 @@
-// Sets of variants: a skill writes one under aidd_docs/ui/drafts/<set>/, `compare` checks it, `keep` makes one variant the design system's own.
+// Sets of variants: a skill writes one under aidd_docs/ui/drafts/<set>/, `showcase` checks it, `keep` makes one variant the design system's own.
 const fs = require("node:fs");
 const path = require("node:path");
-const { Refusal, NO_UI_FOLDER, walk, clean, relative, UI_DIR, SYSTEM_FILE, CSS_FILE, DRAFTS_DIR, ERROR } = require("./project.cjs");
-const { table, list, parseRecord, LINE_BREAK } = require("./markdown.cjs");
-const { pageOf } = require("./page.cjs");
+const { Refusal, NO_UI_FOLDER, walk, clean, relative, UI_DIR, DRAFTS_DIR, ERROR } = require("./project.cjs");
+const { table, LINE_BREAK } = require("./markdown.cjs");
 const { fingerprintOf } = require("./html.cjs");
 
 const VARIANTS_FILE = "variants.md";
-const PREVIEW_FILE = "preview.html"; // a variant's own look, shown while comparing and never kept
-const PAGE_FILE = "compare.html";
+const PREVIEW_FILE = "preview.html"; // a variant's own look, shown while choosing and never kept
 const IGNORE_FILE = ".gitignore";
 const IGNORE_ALL = "*\n";
 const VARIANT_COLUMN = "Variant";
@@ -24,7 +22,7 @@ function setOf(root, id) {
   if (!fs.existsSync(path.join(root, UI_DIR))) throw new Refusal(NO_UI_FOLDER);
   const dir = path.join(root, UI_DIR, DRAFTS_DIR, id);
   const file = `${UI_DIR}/${DRAFTS_DIR}/${id}/${VARIANTS_FILE}`;
-  if (!fs.existsSync(path.join(root, file))) throw new Refusal(`no ${file}. Write it, then run compare ${id}.`);
+  if (!fs.existsSync(path.join(root, file))) throw new Refusal(`no ${file}. Write it, then run showcase.`);
   const rows = table({ lines: clean(fs.readFileSync(path.join(root, file), "utf8")).split(LINE_BREAK) });
   const axes = rows.length ? Object.keys(rows[0]).filter((column) => column !== VARIANT_COLUMN && column !== INTENT_COLUMN) : [];
   return { id, dir, file, rows, axes };
@@ -85,28 +83,11 @@ function setsOf(root) {
     });
 }
 
-/** A project file's text, or null when the project has none. */
-const readIfThere = (root, name) => (fs.existsSync(path.join(root, UI_DIR, name)) ? clean(fs.readFileSync(path.join(root, UI_DIR, name), "utf8")) : null);
-
-/** The set's problems when it has any. Else writes `drafts/.gitignore` and the set's page, and says
- * where the page is and which variants it shows. */
-function compare(root, id) {
-  const set = setOf(root, id);
-  const problems = check(set);
-  if (problems.length) return { problems };
-  const draftsDir = path.join(root, UI_DIR, DRAFTS_DIR);
-  fs.writeFileSync(path.join(draftsDir, IGNORE_FILE), IGNORE_ALL);
-  const system = readIfThere(root, SYSTEM_FILE);
-  const variants = set.rows.map((row) => shownOf(set, row));
-  fs.writeFileSync(path.join(set.dir, PAGE_FILE), pageOf({ id, variants, tokens: readIfThere(root, CSS_FILE), themes: system === null ? [] : list(parseRecord(system).frontMatter.themes) }));
-  return { variants: variants.map(({ name, intent }) => ({ name, intent })), page: `${UI_DIR}/${DRAFTS_DIR}/${id}/${PAGE_FILE}` };
-}
-
 /** Copies the variant's folder into the design system, `preview.html` aside, then deletes the set. */
 function keep(root, id, variant) {
   const set = setOf(root, id);
   const problems = check(set);
-  if (problems.length) throw new Refusal(`${id} has problems (${[...new Set(problems.map((problem) => problem.rule))].join(", ")}). Fix them, then run compare ${id}.`);
+  if (problems.length) throw new Refusal(`${id} has problems (${[...new Set(problems.map((problem) => problem.rule))].join(", ")}). Fix them, then run showcase.`);
   if (!set.rows.some((row) => row[VARIANT_COLUMN] === variant)) throw new Refusal(`no variant "${variant}" in ${id}`);
   const from = path.join(set.dir, variant);
   const written = walk(from)
@@ -122,4 +103,4 @@ function keep(root, id, variant) {
   return { kept: variant, written };
 }
 
-module.exports = { compare, keep, setsOf, IGNORE_FILE, IGNORE_ALL };
+module.exports = { keep, setsOf, IGNORE_FILE, IGNORE_ALL };

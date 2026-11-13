@@ -10,14 +10,14 @@ The output of [prepare](01-prepare.md).
 
 1. From the code, [read it](../references/extraction.md).
 2. If the user asks for variants, propose and choose per [variants](../references/variants.md).
-   - Compare the set per [engine](../references/engine.md).
-   - Give the user the page. Ask them to paste the copied feedback here.
+   - Write the showcase per [engine](../references/engine.md), in the project memory's language. Fix what it reports.
+   - Give the user the set's page. Ask them to choose, then paste the copied feedback here.
    - Wait for the feedback.
      - Read a comment against the tokens it names.
      - Keep: a candidate as it is. Discard: out.
      - Revise: a lead. Its comment says what to change.
      - Several kept: keep the one nearer the brand.
-     - Only revise: revise per the comments, then compare again.
+     - Only revise: revise per the comments, then write the showcase again.
    - Keep the chosen variant per [engine](../references/engine.md).
 3. If no `system.md` exists, write `aidd_docs/ui/system.md` from the [system](../assets/system-template.md) template.
    - Code: answer from step 1's reading.

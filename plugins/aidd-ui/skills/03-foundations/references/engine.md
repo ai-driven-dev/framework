@@ -12,7 +12,7 @@
 | Step | Command |
 | --- | --- |
 | prepare 6, what a change reaches | `node <engine> impact <token>…` |
-| write 2, compare the set | `node <engine> compare <set>` |
+| write 2, write the showcase | `node <engine> showcase --lang <code>` |
 | write 2, keep the chosen variant | `node <engine> keep <set> <variant>` |
 | write 4, extract the tokens of the code | `node <engine> extract` |
 | write 5, raise what a change reaches | `node <engine> bump --task <task folder> --change "<one line>" [--breaking] <agreed refs>` |

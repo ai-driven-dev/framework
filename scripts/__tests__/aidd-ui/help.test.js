@@ -59,11 +59,6 @@ describe("aidd-ui engine help", () => {
       extract: { 0: ["extract", "--force", "--root", tmp], 2: ["extract", "--root", tmp] },
       bump: { 0: ["bump", "--task", TASK, "--change", "c", "color.action.default", "--root", tmp], 2: ["bump", "--root", tmp] },
       publish: { 0: () => (engine("bump", "--task", TASK, "--change", "c", "color.action.default", "--root", tmp), ["publish", "--root", tmp]), 2: ["publish", "--root", tmp] },
-      compare: {
-        0: () => (draft(tmp, "ok", PAIR), ["compare", "ok", "--root", tmp]),
-        1: () => (draft(tmp, "one", PAIR.slice(0, 1)), ["compare", "one", "--root", tmp]),
-        2: ["compare", "none", "--root", tmp],
-      },
       keep: { 0: () => (draft(tmp, "ok", PAIR), ["keep", "ok", "a", "--root", tmp]), 2: ["keep", "none", "a", "--root", tmp] },
       showcase: { 0: () => (fs.rmSync(path.join(tmp, UI, "drafts"), { recursive: true, force: true }), ["showcase", "--root", tmp]), 1: () => (draft(tmp, "one", PAIR.slice(0, 1)), ["showcase", "--root", tmp]), 2: ["showcase", "extra", "--root", tmp] },
       help: { 0: ["help", "validate"], 2: ["help", "nothing"] },
@@ -123,12 +118,17 @@ describe("aidd-ui engine help", () => {
     for (const [name, entry] of Object.entries(HELP)) assert.deepEqual(entry.output.filter((line) => /^Refuses/.test(line)), [], name);
   });
 
-  it("names the verdict of a compare entry, and no rating", () => {
-    const { output, effects } = HELP.compare;
+  it("names the verdict of a set entry, and no rating", () => {
+    const { output, effects } = HELP.showcase;
     assert.ok(output.includes('An entry is {"name", "verdict", "comment"}.'));
     assert.ok(output.includes('A verdict is "keep", "revise", "discard", or null if undecided.'));
-    assert.ok(effects.includes("The page remembers the review across reloads, until the set changes."));
-    assert.doesNotMatch(engine("help", "compare").stdout, /rating|discarded/);
+    assert.ok(effects.includes("The review is remembered across reloads, until the set changes."));
+    assert.doesNotMatch(engine("help", "showcase").stdout, /rating|discarded/);
+  });
+
+  it("has no compare command: its help exits 2", () => {
+    assert.equal("compare" in HELP, false);
+    assert.equal(engine("help", "compare").status, 2);
   });
 
   it("shows the grouped line of the hook alone", () => {

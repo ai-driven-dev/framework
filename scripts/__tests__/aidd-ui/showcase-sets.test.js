@@ -190,6 +190,13 @@ describe("aidd-ui showcase sets", () => {
       assert.ok(drawer.includes('class="drawer-body"'));
     });
 
+    it("holds no row for a set with problems, whose variants cannot be told apart yet", () => {
+      const broken = SET({ id: "broken", problems: [{ rule: "D5", message: "x", fix: "y" }], variants: [{ name: undefined, intent: "", axes: [], files: [] }] });
+      const pages = pagesOf([SET(), broken]);
+      assert.deepEqual([...groupOfSets(pages["index.html"]).matchAll(/data-set="([^"]+)"/g)].map((match) => match[1]), ["layout"]);
+      assert.equal(groupOfSets(pagesOf([broken])["index.html"]), undefined);
+    });
+
     it("says the group in French, and carries the pure functions of the copy in every script", () => {
       assert.match(groupOfSets(pagesOf([SET()], { lang: "fr" })["index.html"]), /<h3>À choisir<\/h3>/);
       for (const html of Object.values(pagesOf([SET()]))) {
