@@ -130,6 +130,8 @@ describe("createDeps", () => {
   });
 
   it("hands the menu a manifest repository rooted at the project", () => {
-    expect(createMenuDeps(root).manifestRepo.path).toBe(join(root, ".aidd", "manifest.json"));
+    expect(createMenuDeps(root, catalogOf()).manifestRepo.path).toBe(
+      join(root, ".aidd", "manifest.json")
+    );
   });
 });

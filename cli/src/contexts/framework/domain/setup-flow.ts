@@ -7,7 +7,7 @@ import {
   UserScopeUnsupportedAiToolsError,
 } from "../../../shared/domain/errors.js";
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../../shared/domain/tool.js";
+import type { ToolId } from "../../../shared/domain/tool.js";
 import type { MarketplaceSourceMode } from "../../distribution/domain/marketplace-source-mode.js";
 
 export type PluginInstallMode = "interactive" | "all" | "recommended" | "named" | "none";
@@ -18,6 +18,8 @@ export type SetupScope = MarketplaceScope;
 
 export interface SetupFlowParams {
   projectRoot: string;
+  /** Every id a registered tool bears, in the order a refusal names them. */
+  registeredToolIds: readonly string[];
   /** Whether `--scope user` has anywhere to point this tool, as the tool answers it. */
   supportsUserScopeActivation: (toolId: ToolId) => boolean;
   source?: MarketplaceSourceMode;
@@ -47,7 +49,7 @@ export class SetupFlow {
   readonly scope: SetupScope;
 
   constructor(params: SetupFlowParams) {
-    this.validateToolIds(params.aiTools ?? [], params.ideTools ?? []);
+    this.validateToolIds(params.registeredToolIds, params.aiTools ?? [], params.ideTools ?? []);
     this.validatePluginMode(params.pluginMode ?? "none", params.pluginNames ?? []);
     this.validateScope(
       params.supportsUserScopeActivation,
@@ -68,11 +70,15 @@ export class SetupFlow {
     this.scope = params.scope ?? "project";
   }
 
-  private validateToolIds(aiTools: readonly ToolId[], ideTools: readonly ToolId[]): void {
+  private validateToolIds(
+    registered: readonly string[],
+    aiTools: readonly ToolId[],
+    ideTools: readonly ToolId[]
+  ): void {
     const all = [...aiTools, ...ideTools];
     for (const id of all) {
-      if (!(VALID_TOOL_IDS as readonly string[]).includes(id)) {
-        throw new InvalidSetupToolIdError(id, VALID_TOOL_IDS);
+      if (!registered.includes(id)) {
+        throw new InvalidSetupToolIdError(id, registered);
       }
     }
   }

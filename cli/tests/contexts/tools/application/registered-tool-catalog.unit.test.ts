@@ -59,10 +59,13 @@ describe("the registered tool catalog", () => {
     expect(catalogOf([]).toolId("claude")).toBeNull();
   });
 
-  it("answers the category of a registered id, and refuses an unregistered one", () => {
-    expect(catalogOf().categoryOf("claude")).toBe("ai");
-    expect(catalogOf().categoryOf("vscode")).toBe("ide");
-    expect(() => catalogOf([]).categoryOf("claude")).toThrow(UnregisteredToolError);
+  it("tells an editor from an AI tool, and neither for an unregistered tool", () => {
+    expect(catalogOf().isIdeTool("vscode")).toBe(true);
+    expect(catalogOf().isIdeTool("claude")).toBe(false);
+    expect(catalogOf([]).isIdeTool("vscode")).toBe(false);
+    expect(catalogOf().isAiTool("claude")).toBe(true);
+    expect(catalogOf().isAiTool("vscode")).toBe(false);
+    expect(catalogOf([]).isAiTool("claude")).toBe(false);
   });
 
   it("refuses two profiles declaring the same id", () => {

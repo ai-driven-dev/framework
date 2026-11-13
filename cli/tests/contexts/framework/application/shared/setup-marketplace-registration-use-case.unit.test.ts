@@ -17,6 +17,7 @@ import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-versi
 import { InMemoryEnvironment } from "../../../../helpers/ports/in-memory-environment.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { KeepPrompter } from "../../../../helpers/ports/scripted-prompter.js";
+import { registeredToolIds } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const SKIP_SWITCH = "AIDD_SKIP_MARKETPLACE_REFRESH";
@@ -73,6 +74,7 @@ async function register(
 ): Promise<Pick<RefreshMarketplace, "execute">> {
   const { useCase, refresh } = makeUseCase(environment);
   const flow = new SetupFlow({
+    registeredToolIds: registeredToolIds(),
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
   });
@@ -108,6 +110,7 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
         releaseResolver: makeNoOpLatestResolver(false),
       });
       const flow = new SetupFlow({
+        registeredToolIds: registeredToolIds(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });
@@ -125,6 +128,7 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
         tokenProvider: { resolve: async () => null },
       });
       const flow = new SetupFlow({
+        registeredToolIds: registeredToolIds(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });
@@ -139,6 +143,7 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
     it("registers a local source at the project root, forcing the registration", async () => {
       const { useCase, register } = makeUseCase(new InMemoryEnvironment());
       const flow = new SetupFlow({
+        registeredToolIds: registeredToolIds(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });
@@ -155,6 +160,7 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
     it("registers a remote source by repository and ref", async () => {
       const { useCase, register } = makeUseCase(new InMemoryEnvironment());
       const flow = new SetupFlow({
+        registeredToolIds: registeredToolIds(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });
@@ -177,6 +183,7 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
       );
       const { useCase } = makeUseCase(new InMemoryEnvironment(), { userSourceReferences });
       const flow = new SetupFlow({
+        registeredToolIds: registeredToolIds(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });
@@ -196,6 +203,7 @@ describe("SetupMarketplaceRegistrationUseCase", () => {
         registeredScope: "project",
       });
       const flow = new SetupFlow({
+        registeredToolIds: registeredToolIds(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
       });

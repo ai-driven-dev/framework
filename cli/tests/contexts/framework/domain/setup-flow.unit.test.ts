@@ -8,11 +8,13 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../../../src/shared/domain/errors.js";
+import { registeredToolIds } from "../../tools/testing/catalog-of.js";
 
 const ROOT = "/project";
 
 function makeFlow(overrides: Partial<ConstructorParameters<typeof SetupFlow>[0]> = {}): SetupFlow {
   return new SetupFlow({
+    registeredToolIds: registeredToolIds(),
     projectRoot: ROOT,
     supportsUserScopeActivation: () => true,
     ...overrides,

@@ -32,13 +32,13 @@ export class UpdateToolsUseCase<T extends ToolId> {
     private readonly manifestRepo: ManifestRepository,
     private readonly versionReader: VersionReader,
     private readonly updateOneToolUseCase: UpdateOneToolUseCase,
-    private readonly isTargetToolId: (id: string) => id is T
+    private readonly isTargetToolId: (tools: ToolCatalog, id: ToolId) => id is T
   ) {}
 
   async execute(input: UpdateToolsInput<T>): Promise<UpdateToolsResult> {
     const { toolArg, projectRoot, userForce, interactive, tools } = input;
     const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
-    const targetIds = this.resolveTargetIds(manifest, toolArg);
+    const targetIds = this.resolveTargetIds(manifest, toolArg, tools);
     const version = this.versionReader.get();
     const errors: GlobalExecutionError[] = [];
     // Scoped to this invocation only — a fresh instance per `execute()` call, never a field, so an
@@ -60,9 +60,9 @@ export class UpdateToolsUseCase<T extends ToolId> {
     return { updatedTools, errors };
   }
 
-  private resolveTargetIds(manifest: Manifest, toolArg: T | undefined): T[] {
+  private resolveTargetIds(manifest: Manifest, toolArg: T | undefined, tools: ToolCatalog): T[] {
     if (toolArg !== undefined) return [toolArg];
-    return manifest.getInstalledToolIds().filter(this.isTargetToolId);
+    return manifest.getInstalledToolIds().filter((id): id is T => this.isTargetToolId(tools, id));
   }
 
   private async updateTargets(

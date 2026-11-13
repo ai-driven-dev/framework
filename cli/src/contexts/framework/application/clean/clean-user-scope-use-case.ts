@@ -4,7 +4,7 @@ import {
   USER_SOURCE_REFERENCES_FILENAME,
   userBuiltCacheRoot,
 } from "../../../../shared/domain/paths.js";
-import { type AiToolId, isAiToolId, type ToolId } from "../../../../shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
@@ -106,7 +106,7 @@ export class CleanUserScopeUseCase {
   private async executeLocked(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {
     const manifest = await this.userManifestRepo.load();
     const manifestFound = manifest !== null;
-    const preview = await this.buildPreview(manifest);
+    const preview = await this.buildPreview(manifest, options.tools);
     if (!manifestFound) this.logger.info(this.describeNoUserRegistration(preview));
     const dryRunResult = await this.confirmOrDryRun(options, preview, manifestFound);
     if (dryRunResult !== null) return dryRunResult;
@@ -146,13 +146,16 @@ export class CleanUserScopeUseCase {
     return { dryRun: false, manifestFound, preview };
   }
 
-  private async buildPreview(manifest: Manifest | null): Promise<CleanUserScopePreview> {
+  private async buildPreview(
+    manifest: Manifest | null,
+    tools: ToolCatalog
+  ): Promise<CleanUserScopePreview> {
     return {
       toolIds: manifest?.getInstalledToolIds() ?? [],
       activePluginDependents: [
         ...new Set(
           manifest?.getInstalledToolIds().flatMap((toolId) =>
-            isAiToolId(toolId)
+            tools.isAiTool(toolId)
               ? [
                   ...manifest
                     .getPlugins(toolId)
@@ -209,7 +212,7 @@ export class CleanUserScopeUseCase {
     tools: ToolCatalog
   ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
-      if (!isAiToolId(toolId)) continue;
+      if (!tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.scope !== "user") continue;
         const safe = await userScopeFilesSafeToDelete(
@@ -290,7 +293,7 @@ export class CleanUserScopeUseCase {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
       if (
-        !isAiToolId(toolId) ||
+        !tools.isAiTool(toolId) ||
         ((registrations.pluginClaims?.length ?? 0) > 0 && registrations.marketplaces.length === 0)
       )
         throw new Error(
@@ -399,7 +402,7 @@ export class CleanUserScopeUseCase {
       `${binary}: registration left in place, the ${binary} CLI is not on the PATH. ` +
       `It would have unregistered ${registrations.marketplaces.length} marketplace(s) ` +
       `and ${registrations.pluginClaims?.length ?? 0} plugin ref(s).`;
-    if (!isAiToolId(toolId)) return base;
+    if (!tools.isAiTool(toolId)) return base;
     const cacheRoot = tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(this.homeDir());
     if (cacheRoot === undefined) return base;
     const paths = registrations.marketplaces.map((m) => join(cacheRoot, m.hostName));
@@ -417,7 +420,7 @@ export class CleanUserScopeUseCase {
     projectRoot: string
   ): Promise<void> {
     for (const toolId of manifest.getInstalledToolIds()) {
-      if (!isAiToolId(toolId)) continue;
+      if (!tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.scope !== "user") continue;
         const files = await userScopeFilesSafeToDelete(

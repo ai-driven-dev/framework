@@ -95,9 +95,9 @@ import { wireUpdate } from "./update.js";
 /** One graph per catalog, then per project root and token: two catalogs never share a graph. */
 const _cache = new WeakMap<ToolCatalog, Map<string, Deps>>();
 
-export function createMenuDeps(projectRoot: string): MenuDeps {
+export function createMenuDeps(projectRoot: string, tools: ToolCatalog): MenuDeps {
   return {
-    manifestRepo: new ManifestRepositoryAdapter(projectRoot),
+    manifestRepo: new ManifestRepositoryAdapter(projectRoot, (raw) => tools.toolId(raw)),
     prompter: process.stdout.isTTY ? new InquirerPrompterAdapter() : new SilentPrompterAdapter(),
   };
 }
@@ -125,8 +125,13 @@ export async function createDeps(
     fs,
     pluginManifestProbes(tools)
   );
-  const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
-  const userManifestRepo = new UserManifestRepositoryAdapter(userConfigDir, atomicWriteFile);
+  const resolveToolId = (raw: string) => tools.toolId(raw);
+  const manifestRepo = new ManifestRepositoryAdapter(projectRoot, resolveToolId);
+  const userManifestRepo = new UserManifestRepositoryAdapter(
+    userConfigDir,
+    atomicWriteFile,
+    resolveToolId
+  );
   const http = new HttpClient();
   const environment = new EnvironmentAdapter();
   const { tokenProvider, logIn, logOut, checkStatus } = wireAuth({

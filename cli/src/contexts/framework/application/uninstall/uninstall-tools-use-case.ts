@@ -5,7 +5,6 @@ import {
   removeEntriesFromJson,
 } from "../../../../shared/domain/merge.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import { isAiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
@@ -70,6 +69,7 @@ export class UninstallToolsUseCase {
     const deletedFiles = await this.deleteToolFiles(
       toolId,
       allToolIds,
+      tools,
       allPaths,
       sharedPaths,
       mergeFilePaths,
@@ -84,6 +84,7 @@ export class UninstallToolsUseCase {
   private async deleteToolFiles(
     toolId: ToolId,
     allToolIds: ToolId[],
+    tools: ToolCatalog,
     allPaths: string[],
     sharedPaths: Set<string>,
     mergeFilePaths: Set<string>,
@@ -97,6 +98,7 @@ export class UninstallToolsUseCase {
         const removed = await this.removeMergeFile(
           toolId,
           allToolIds,
+          tools,
           relativePath,
           manifest,
           projectRoot
@@ -118,7 +120,7 @@ export class UninstallToolsUseCase {
     manifest: Manifest,
     projectRoot: string
   ): Promise<void> {
-    if (!isAiToolId(toolId)) return;
+    if (!tools.isAiTool(toolId)) return;
     for (const plugin of manifest.getPlugins(toolId)) {
       await deletePluginFilesForTool(
         plugin.files,
@@ -143,6 +145,7 @@ export class UninstallToolsUseCase {
   private async removeMergeFile(
     toolId: ToolId,
     allToolIds: ToolId[],
+    tools: ToolCatalog,
     relativePath: string,
     manifest: Manifest,
     projectRoot: string
@@ -151,7 +154,13 @@ export class UninstallToolsUseCase {
     if (!mergeEntry) return false;
     const fullPath = join(projectRoot, relativePath);
     if (!(await this.fs.fileExists(fullPath))) return false;
-    const canDelete = this.computeDeletePermission(toolId, allToolIds, relativePath, manifest);
+    const canDelete = this.computeDeletePermission(
+      toolId,
+      allToolIds,
+      tools,
+      relativePath,
+      manifest
+    );
     if (mergeEntry.sectionKey === null && canDelete) {
       await this.fs.deleteFile(fullPath);
       await this.fs.deleteEmptyDirectories(dirname(fullPath));
@@ -163,6 +172,7 @@ export class UninstallToolsUseCase {
   private computeDeletePermission(
     toolId: ToolId,
     allToolIds: ToolId[],
+    tools: ToolCatalog,
     relativePath: string,
     manifest: Manifest
   ): boolean {
@@ -172,7 +182,7 @@ export class UninstallToolsUseCase {
       relativePath,
       manifest
     );
-    const isIdeTool = !isAiToolId(toolId);
+    const isIdeTool = !tools.isAiTool(toolId);
     return !otherOwnersExist && !isIdeTool;
   }
 

@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { UserManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
+import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
 
 describe("UserManifestRepositoryAdapter", () => {
   let userConfigDir: string;
@@ -14,7 +15,11 @@ describe("UserManifestRepositoryAdapter", () => {
 
   beforeEach(async () => {
     userConfigDir = await mkdtemp(join(tmpdir(), "aidd-user-manifest-repo-"));
-    adapter = new UserManifestRepositoryAdapter(() => userConfigDir, atomicWriteFile);
+    adapter = new UserManifestRepositoryAdapter(
+      () => userConfigDir,
+      atomicWriteFile,
+      resolveRegisteredToolId
+    );
   });
 
   afterEach(async () => {
@@ -89,7 +94,11 @@ describe("UserManifestRepositoryAdapter", () => {
     });
 
     it("serializes two claims so the second reads the first after the lock releases", async () => {
-      const second = new UserManifestRepositoryAdapter(() => userConfigDir, atomicWriteFile);
+      const second = new UserManifestRepositoryAdapter(
+        () => userConfigDir,
+        atomicWriteFile,
+        resolveRegisteredToolId
+      );
       let release = () => {};
       const held = new Promise<void>((resolve) => {
         release = resolve;
@@ -134,7 +143,8 @@ describe("UserManifestRepositoryAdapter", () => {
         () => userConfigDir,
         async () => {
           throw new Error("write failed before rename");
-        }
+        },
+        resolveRegisteredToolId
       );
       const replacement = Manifest.create();
       replacement.addTool("codex", "1.0.0", []);
@@ -179,7 +189,11 @@ describe("UserManifestRepositoryAdapter", () => {
   describe("manifest persistence", () => {
     it("creates the user config dir if it does not exist yet", async () => {
       const freshDir = join(userConfigDir, "not-yet-created");
-      const freshAdapter = new UserManifestRepositoryAdapter(() => freshDir, atomicWriteFile);
+      const freshAdapter = new UserManifestRepositoryAdapter(
+        () => freshDir,
+        atomicWriteFile,
+        resolveRegisteredToolId
+      );
 
       await freshAdapter.save(Manifest.create());
 

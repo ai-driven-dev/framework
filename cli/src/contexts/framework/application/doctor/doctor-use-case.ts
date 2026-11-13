@@ -1,5 +1,5 @@
 import { ManifestValidationError, NoManifestError } from "../../../../shared/domain/errors.js";
-import { type ToolCategory, toolIdsForCategory } from "../../../../shared/domain/tool.js";
+import type { ToolCategory } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   DoctorIssue,
@@ -37,7 +37,7 @@ export class DoctorUseCase {
   async execute(options: DoctorOptions): Promise<DoctorReport> {
     const { projectRoot, category, pluginName, tools } = options;
     const manifest = await this.loadManifest();
-    const allowedIds = category ? new Set(toolIdsForCategory(category) as readonly string[]) : null;
+    const allowedIds = category ? new Set<string>(tools.idsInCanonicalOrder(category)) : null;
     const toolHealth = this.buildToolHealth(manifest, allowedIds);
     const issues = await this.collectIssues(manifest, projectRoot, allowedIds, tools, category);
     const pluginIssues = await this.plugin.execute({

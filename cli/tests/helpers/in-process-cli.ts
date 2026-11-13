@@ -178,7 +178,10 @@ export async function runInProcess(
     program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
     const { bindCatalog, createMenuDeps } = await import("../../src/composition/framework.js");
     const depsFactory: DepsFactory = bindCatalog(tools);
-    for (const load of REGISTRATIONS) (await load())(program, tools, depsFactory, createMenuDeps);
+    for (const load of REGISTRATIONS)
+      (await load())(program, tools, depsFactory, (projectRoot) =>
+        createMenuDeps(projectRoot, tools)
+      );
 
     try {
       await program.parseAsync(["node", "aidd", ...args]);

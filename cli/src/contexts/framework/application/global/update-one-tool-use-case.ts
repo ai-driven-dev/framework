@@ -2,12 +2,7 @@ import { join } from "node:path";
 import type { SyncConflictResolverUseCase } from "../../../../presentation/prompts/sync-conflict-resolver-use-case.js";
 import { InputRequiredError } from "../../../../shared/domain/errors.js";
 import type { FileHash } from "../../../../shared/domain/file.js";
-import {
-  type AiToolId,
-  type IdeToolId,
-  isAiToolId,
-  type ToolId,
-} from "../../../../shared/domain/tool.js";
+import type { AiToolId, IdeToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -110,7 +105,7 @@ export class UpdateOneToolUseCase {
     tools: ToolCatalog,
     onBeforeWriteRegularFile: (relativePath: string) => Promise<"write" | "skip">
   ): Promise<{ toolId: ToolId; fileCount: number } | null> {
-    const result = isAiToolId(toolId)
+    const result = tools.isAiTool(toolId)
       ? await this.installRuntimeConfigUseCase.execute({
           toolId: toolId as AiToolId,
           projectRoot,

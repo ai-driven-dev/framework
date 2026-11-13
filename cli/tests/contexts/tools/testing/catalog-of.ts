@@ -12,7 +12,7 @@ import {
   REGISTERED_PROFILES,
 } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { UnregisteredToolError } from "../../../../src/shared/domain/errors.js";
-import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
+import type { AiToolId, ToolId, ToolIdResolver } from "../../../../src/shared/domain/tool.js";
 
 /** A catalog over the given profiles, the registered ones when none is given, canonical order
  * kept for the registered ones among them. Built inside the `it` that reads it: a catalog is a
@@ -57,3 +57,9 @@ export function registeredFlatContract(id: ToolId): ToolBuildContract | null {
   const config = registeredConfig(id);
   return config.kind === "ai" ? config.buildContract("flat") : null;
 }
+
+/** What the code under test asks to turn a written id into a registered one. */
+export const resolveRegisteredToolId: ToolIdResolver = (raw) => catalogOf().toolId(raw);
+
+/** The ids a setup is told are registered, in the order a refusal names them. */
+export const registeredToolIds = (): readonly string[] => catalogOf().idsInCanonicalOrder();

@@ -21,7 +21,7 @@ import {
   ScriptedPrompter,
 } from "../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -603,7 +603,10 @@ describe("restore — persisting the manifest", () => {
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, "vscode");
     await installTool(deps, PROJECT_ROOT, "cursor");
-    const handed = Manifest.fromJSON((await loadedManifest(deps)).toJSON());
+    const handed = Manifest.fromJSON(
+      (await loadedManifest(deps)).toJSON(),
+      resolveRegisteredToolId
+    );
     await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/keybindings.json"), "[]");
 
     await makeRestoreUseCase(deps).execute({
@@ -622,7 +625,7 @@ describe("restore — persisting the manifest", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "vscode");
     const stored = await loadedManifest(deps);
-    const handed = Manifest.fromJSON(stored.toJSON());
+    const handed = Manifest.fromJSON(stored.toJSON(), resolveRegisteredToolId);
 
     await makeRestoreUseCase(deps).execute({
       tools: catalogOf(),
@@ -640,7 +643,10 @@ describe("restore — persisting the manifest", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, "claude");
     await installPlugin(deps, "claude");
-    const handed = Manifest.fromJSON((await loadedManifest(deps)).toJSON());
+    const handed = Manifest.fromJSON(
+      (await loadedManifest(deps)).toJSON(),
+      resolveRegisteredToolId
+    );
     await deps.fs.writeFile(
       join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md"),
       "CORRUPTED"

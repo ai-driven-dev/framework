@@ -7,7 +7,6 @@ import { MarketplaceBuildStrategy } from "../contexts/translate/application/stra
 import { FrameworkBuildUseCase } from "../contexts/translate/application/translate-source.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
 import type { FrameworkBuildContext } from "../presentation/deps.js";
-import { isAiToolId } from "../shared/domain/tool.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
@@ -83,8 +82,9 @@ export function createFrameworkBuildUseCase(
   deps: FrameworkBuildDeps,
   ctx: FrameworkBuildContext
 ): FrameworkBuildUseCase | undefined {
-  if (!isAiToolId(ctx.target)) return undefined;
-  const buildContract = tools.aiProfile(ctx.target).buildContract(ctx.mode);
+  const target = tools.aiToolId(ctx.target);
+  if (target === null) return undefined;
+  const buildContract = tools.aiProfile(target).buildContract(ctx.mode);
   if (buildContract === null) return undefined;
   return frameworkBuildFactoryFor(buildContract, ctx.mode)(deps, ctx);
 }

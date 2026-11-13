@@ -40,8 +40,12 @@ export class RegisteredToolCatalog implements ToolCatalog {
     return profile?.kind === "ai" ? profile.toolId : null;
   }
 
-  categoryOf(id: ToolId): ToolCategory {
-    return this.profile(id).kind;
+  isAiTool(id: ToolId): id is AiToolId {
+    return this.#byId.get(id)?.kind === "ai";
+  }
+
+  isIdeTool(id: ToolId): id is IdeToolId {
+    return this.#byId.get(id)?.kind === "ide";
   }
 
   profile(id: ToolId): ToolProfile {
@@ -74,6 +78,7 @@ export class RegisteredToolCatalog implements ToolCatalog {
   }
 
   idsInCanonicalOrder(category: "ai"): readonly AiToolId[];
+  idsInCanonicalOrder(category: "ide"): readonly IdeToolId[];
   idsInCanonicalOrder(category?: ToolCategory): readonly ToolId[];
   idsInCanonicalOrder(category?: ToolCategory): readonly ToolId[] {
     return idsOf(this.#canonical, category);

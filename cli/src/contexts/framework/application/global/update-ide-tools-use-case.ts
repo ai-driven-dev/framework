@@ -1,4 +1,4 @@
-import { type IdeToolId, isIdeToolId } from "../../../../shared/domain/tool.js";
+import type { IdeToolId } from "../../../../shared/domain/tool.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UpdateOneToolUseCase } from "./update-one-tool-use-case.js";
@@ -10,6 +10,8 @@ export class UpdateIdeToolsUseCase extends UpdateToolsUseCase<IdeToolId> {
     versionReader: VersionReader,
     updateOneToolUseCase: UpdateOneToolUseCase
   ) {
-    super(manifestRepo, versionReader, updateOneToolUseCase, isIdeToolId);
+    super(manifestRepo, versionReader, updateOneToolUseCase, (tools, id): id is IdeToolId =>
+      tools.isIdeTool(id)
+    );
   }
 }

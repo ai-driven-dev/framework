@@ -20,7 +20,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, resolveRegisteredToolId } from "../../../tools/testing/catalog-of.js";
 
 const ALIAS = "project-alias";
 const HOST = "real-catalog";
@@ -368,7 +368,9 @@ for (const toolId of ["codex"] as const) {
           path: f.repo.path,
           load: async () => {
             const current = await f.repo.load();
-            return current === null ? null : Manifest.fromJSON(current.toJSON());
+            return current === null
+              ? null
+              : Manifest.fromJSON(current.toJSON(), resolveRegisteredToolId);
           },
           save: (manifest) => f.repo.save(manifest),
           delete: () => f.repo.delete(),

@@ -2,7 +2,7 @@ import { InvalidManifestDataError, ToolNotInManifestError } from "../../../share
 import type { FileHash, InstallationFile } from "../../../shared/domain/file.js";
 import type { MergeFileEntry } from "../../../shared/domain/merge.js";
 import { AIDD_DIR, MANIFEST_FILENAME } from "../../../shared/domain/paths.js";
-import type { ToolId } from "../../../shared/domain/tool.js";
+import type { ToolId, ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { NativeRegistrations } from "./manifest/native-registrations.js";
 import {
   addPluginToEntry,
@@ -188,13 +188,17 @@ export class Manifest {
     return { version: MANIFEST_VERSION as 8, tools: serializeManifestTools(this._tools) };
   }
 
-  static fromJSON(data: unknown, context: ManifestFileContext = DEFAULT_CONTEXT): Manifest {
+  static fromJSON(
+    data: unknown,
+    resolveToolId: ToolIdResolver,
+    context: ManifestFileContext = DEFAULT_CONTEXT
+  ): Manifest {
     if (data === null || typeof data !== "object") {
       throw new InvalidManifestDataError("expected an object.");
     }
     const raw = data as Record<string, unknown>;
     Manifest.assertSupportedVersion(raw, context);
-    const tools = parseManifestTools(raw);
+    const tools = parseManifestTools(raw, resolveToolId);
     return new Manifest({ tools });
   }
 

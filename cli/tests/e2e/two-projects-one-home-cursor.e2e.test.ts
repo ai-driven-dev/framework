@@ -3,6 +3,7 @@ import { mkdir, readdir, readFile, realpath } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../src/contexts/framework/domain/manifest.js";
+import { resolveRegisteredToolId } from "../contexts/tools/testing/catalog-of.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
@@ -34,7 +35,7 @@ describe("E2E: two projects on one HOME install the same cursor plugin", () => {
         );
       const hooksOf = (cwd: string) => readFile(join(cwd, ".cursor", "hooks.json"), "utf-8");
       const manifestAt = async (path: string) =>
-        Manifest.fromJSON(JSON.parse(await readFile(path, "utf-8")));
+        Manifest.fromJSON(JSON.parse(await readFile(path, "utf-8")), resolveRegisteredToolId);
 
       expect((await setup(test.projectDir)).exitCode).toBe(0);
       expect(await hooksOf(test.projectDir)).toContain("update_memory");

@@ -3,7 +3,6 @@ import type { DoctorReport } from "../../contexts/framework/domain/doctor.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
 import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
-import { isAiToolId } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printAllToolsDrift,
@@ -29,8 +28,8 @@ type DoctorKeys =
   | "environment"
   | "doctorRegistrationUseCase";
 
-function categoryOf(toolId: ToolId): ToolCategory {
-  return isAiToolId(toolId) ? "ai" : "ide";
+function categoryOf(toolId: ToolId, tools: ToolCatalog): ToolCategory {
+  return tools.isAiTool(toolId) ? "ai" : "ide";
 }
 
 async function runFullDoctor(
@@ -77,7 +76,7 @@ async function runScopedDoctor(
   tools: ToolCatalog,
   pluginName: string | undefined
 ): Promise<void> {
-  const category = categoryOf(toolId);
+  const category = categoryOf(toolId, tools);
   // DoctorUseCase scopes by category, never by tool: the inventory below narrows to the exact
   // tool, the issue list stays category-wide.
   const doctorReport = await deps.doctorUseCase.execute({

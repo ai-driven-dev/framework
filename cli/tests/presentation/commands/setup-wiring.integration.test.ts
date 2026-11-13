@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
-import { AI_TOOL_IDS } from "../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
@@ -120,7 +119,7 @@ describe("aidd setup — the flow a scripted run builds", () => {
   it("expands the all keyword to every tool of that category", async () => {
     await run("--ai", "all");
 
-    expect(builtFlow().aiTools).toEqual([...AI_TOOL_IDS]);
+    expect(builtFlow().aiTools).toEqual([...catalogOf().idsInCanonicalOrder("ai")]);
   });
 
   it("carries a named plugin list, and its mode, into the plugin prompt", async () => {

@@ -15,14 +15,19 @@ const ROOT = path.resolve(__dirname, "../..");
  * every `--scope user` phase into an unexpected exit 1.
  */
 
+// A script test cannot read the registration without building the CLI, so it takes the folder
+// name of each profile as the registered id: folder name = registered id.
 function aiToolIds() {
-  const text = fs.readFileSync(path.join(ROOT, "cli/src/shared/domain/tool.ts"), "utf8");
-  const match = text.match(/export const AI_TOOL_IDS:[^=]*=\s*\[([^\]]*)\]/u);
-  assert.ok(match, "shared/domain/tool.ts no longer declares AI_TOOL_IDS the way this guard expects");
-  return match[1]
-    .split(",")
-    .map((id) => id.trim().replace(/^"|"$/gu, ""))
-    .filter(Boolean);
+  const profiles = path.join(ROOT, "cli/src/contexts/tools/domain/profiles");
+  const ids = fs
+    .readdirSync(profiles, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .filter((id) =>
+      /defineAiTool\(/u.test(fs.readFileSync(path.join(profiles, id, "profile.ts"), "utf8"))
+    );
+  assert.ok(ids.length > 0, "no profile is defined with defineAiTool; the guard reads nothing");
+  return ids;
 }
 
 function declaresUserScopeActivation(toolId) {

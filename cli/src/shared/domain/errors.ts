@@ -139,7 +139,6 @@ export class InvalidHooksDescriptorError extends Error {
 }
 
 export type ProfileInvariant =
-  | "unknown-tool-id"
   | "directory-not-relative"
   | "directory-without-trailing-slash"
   | "no-build-contract"
@@ -496,13 +495,6 @@ export class MarketplaceOutDirNotEmptyError extends Error {
         "Re-run with --force to overwrite files this build produces, or choose an empty --out directory."
     );
     this.name = "MarketplaceOutDirNotEmptyError";
-  }
-}
-
-export class UnknownToolCategoryError extends Error {
-  constructor(category: string) {
-    super(`Unknown category: ${category}`);
-    this.name = "UnknownToolCategoryError";
   }
 }
 

@@ -13,7 +13,6 @@ import {
 } from "../../../shared/domain/paths.js";
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
-import { isAiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
@@ -171,7 +170,7 @@ export class CleanUseCase {
     if (dryRunResult !== null) return dryRunResult;
     await this.assertNativeSourcesUnchanged(manifest, options.projectRoot, options.tools);
     for (const toolId of manifest.getInstalledToolIds()) {
-      if (!isAiToolId(toolId)) continue;
+      if (!options.tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         const tool = options.tools.aiProfile(toolId);
         if (tool.projectHooksDelivery() !== null) {
@@ -225,7 +224,7 @@ export class CleanUseCase {
     }
     await detachNativePluginRefs(this.userManifestRepo, this.fs, options.projectRoot, nativeRefs);
     for (const toolId of manifest.getInstalledToolIds()) {
-      if (!isAiToolId(toolId)) continue;
+      if (!options.tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.scope === "user") {
           await detachUserPlugin(
@@ -250,7 +249,7 @@ export class CleanUseCase {
     const projectMarketplaces = (await this.marketplaceRegistry?.list(projectRoot)) ?? [];
     const machineManifest = await this.userManifestRepo?.load();
     for (const toolId of manifest.getInstalledToolIds()) {
-      if (!isAiToolId(toolId)) continue;
+      if (!tools.isAiTool(toolId)) continue;
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
       const activator = this.activators.get(registrations.binary);
@@ -528,7 +527,7 @@ export class CleanUseCase {
     home: string,
     tools: ToolCatalog
   ): string {
-    if (!isAiToolId(toolId)) return "";
+    if (!tools.isAiTool(toolId)) return "";
     const cacheRoot = tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(home);
     if (cacheRoot === undefined) return "";
     return `, and its cache at: ${join(cacheRoot, hostName)}`;
@@ -543,7 +542,7 @@ export class CleanUseCase {
     home: string,
     tools: ToolCatalog
   ): string {
-    if (!isAiToolId(toolId)) return "";
+    if (!tools.isAiTool(toolId)) return "";
     const cacheRoot = tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(home);
     if (cacheRoot === undefined) return "";
     const paths = registrations.marketplaces.map((m) => join(cacheRoot, m.hostName));
@@ -609,7 +608,7 @@ export class CleanUseCase {
       return;
     }
     const proof = await inspectNativeMarketplaceSource(
-      isAiToolId(toolId) ? this.nativeSources.get(toolId) : undefined,
+      tools.isAiTool(toolId) ? this.nativeSources.get(toolId) : undefined,
       projectRoot,
       sourceRegistration
     );
@@ -619,7 +618,7 @@ export class CleanUseCase {
       );
       return;
     }
-    const reader = isAiToolId(toolId) ? this.hostPluginRegistries.get(toolId) : undefined;
+    const reader = tools.isAiTool(toolId) ? this.hostPluginRegistries.get(toolId) : undefined;
     const machineRefs =
       (await this.userManifestRepo?.load())
         ?.getNativeRegistrations(toolId)
@@ -630,7 +629,7 @@ export class CleanUseCase {
         sourceRegistration.hostName,
         new Set([...registrations.pluginRefs, ...machineRefs]),
         projectRoot,
-        isAiToolId(toolId) ? tools.aiProfile(toolId) : undefined
+        tools.isAiTool(toolId) ? tools.aiProfile(toolId) : undefined
       );
     } catch (error) {
       this.logger.warn(`${binary}: '${ref}' left enabled; ${String(error)}`);
@@ -762,7 +761,8 @@ export class CleanUseCase {
     projectRoot: string,
     hooksGuard: ProjectHooksGuard
   ): Promise<number> {
-    if (!isAiToolId(toolId) || tools.aiProfile(toolId).projectHooksDelivery() === null) return 0;
+    if (!tools.isAiTool(toolId) || tools.aiProfile(toolId).projectHooksDelivery() === null)
+      return 0;
     let count = 0;
     for (const plugin of manifest.getPlugins(toolId)) {
       if (
@@ -809,7 +809,7 @@ export class CleanUseCase {
     for (const toolId of manifest.getInstalledToolIds()) {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
-      const cacheRoot = isAiToolId(toolId)
+      const cacheRoot = tools.isAiTool(toolId)
         ? tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(home)
         : undefined;
       preview.push({
@@ -849,7 +849,7 @@ export class CleanUseCase {
       this.logger.info(`Removing ${toolId} files...`);
       deleted += await this.deleteFiles(manifest.getToolFiles(toolId), projectRoot);
       deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), projectRoot);
-      if (isAiToolId(toolId)) {
+      if (tools.isAiTool(toolId)) {
         deleted += await this.deleteToolPluginFiles(manifest, tools.aiProfile(toolId), projectRoot);
       }
     }

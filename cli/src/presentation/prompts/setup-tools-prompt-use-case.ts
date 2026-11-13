@@ -4,7 +4,7 @@ import {
   recommendIdeTools,
 } from "../../contexts/framework/domain/tool-recommendations.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { type AiToolId, IDE_TOOL_IDS, type IdeToolId } from "../../shared/domain/tool.js";
+import type { AiToolId, IdeToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 
 export interface SetupToolsPromptOptions {
@@ -44,7 +44,7 @@ export class SetupToolsPromptUseCase {
       })),
     ]);
     const ideTools = await this.prompter.checkbox<IdeToolId>("Select IDE tools to install:", [
-      ...IDE_TOOL_IDS.map((id) => ({
+      ...tools.idsInCanonicalOrder("ide").map((id) => ({
         name: ideRecs.includes(id) ? `${id} (recommended)` : id,
         value: id,
         checked: ideRecs.includes(id),

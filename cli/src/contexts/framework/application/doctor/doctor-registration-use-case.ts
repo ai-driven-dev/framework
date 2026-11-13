@@ -1,6 +1,6 @@
 import { join, resolve } from "node:path";
 import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../../shared/domain/paths.js";
-import { type AiToolId, isAiToolId, type ToolId } from "../../../../shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import {
@@ -113,7 +113,7 @@ export class DoctorRegistrationUseCase {
     const { projectRoot, tools } = options;
     const issues: DoctorIssue[] = [];
     for await (const { toolId, expected } of this.retainedToolsWithExpectedMarketplaces(options)) {
-      if (!isAiToolId(toolId)) continue;
+      if (!tools.isAiTool(toolId)) continue;
       const profile = tools.aiProfile(toolId);
       if (profile.nativeActivation()?.keepsMarketplaceRegistry() !== true) continue;
       const reader = this.hostMarketplaceRegistries.get(toolId);
@@ -251,7 +251,7 @@ export class DoctorRegistrationUseCase {
     const { manifest, projectRoot, allowedIds, tools } = options;
     const issues: DoctorIssue[] = [];
     for (const toolId of this.retainedToolIds(manifest, allowedIds)) {
-      if (!isAiToolId(toolId)) continue;
+      if (!tools.isAiTool(toolId)) continue;
       if (tools.aiProfile(toolId).nativeActivation() === undefined) continue;
       const expected = this.expectedNativeRegistrations(manifest, toolId);
       if (expected.length === 0) continue;

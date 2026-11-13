@@ -2,12 +2,7 @@ import { join } from "node:path";
 import { NoManifestError, ToolNotInstalledError } from "../../../shared/domain/errors.js";
 import type { FileHash } from "../../../shared/domain/file.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../shared/domain/merge.js";
-import {
-  type AiToolId,
-  type ToolCategory,
-  type ToolId,
-  toolIdsForCategory,
-} from "../../../shared/domain/tool.js";
+import type { AiToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Hasher } from "../../../shared/ports/hasher.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
@@ -73,7 +68,7 @@ export class StatusUseCase implements StatusQuery {
     if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
 
-    const installedToolIds = this.resolveToolIds(filterToolId, category, manifest);
+    const installedToolIds = this.resolveToolIds(filterToolId, category, manifest, profiles);
     const tools = await this.checkAllTools(installedToolIds, manifest, projectRoot, profiles);
     const pluginDrift = await this.checkAllPlugins(
       installedToolIds,
@@ -89,14 +84,13 @@ export class StatusUseCase implements StatusQuery {
   private resolveToolIds(
     filterToolId: ToolId | undefined,
     category: ToolCategory | undefined,
-    manifest: Manifest
+    manifest: Manifest,
+    profiles: ToolCatalog
   ): ToolId[] {
     if (filterToolId) return [filterToolId];
     if (category) {
-      const allowed = toolIdsForCategory(category);
-      return manifest
-        .getInstalledToolIds()
-        .filter((id) => (allowed as readonly string[]).includes(id));
+      const allowed: readonly string[] = profiles.idsInCanonicalOrder(category);
+      return manifest.getInstalledToolIds().filter((id) => allowed.includes(id));
     }
     return manifest.getInstalledToolIds();
   }

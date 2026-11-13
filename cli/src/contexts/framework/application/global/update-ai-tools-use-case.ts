@@ -1,5 +1,4 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import { isAiToolId } from "../../../../shared/domain/tool.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UpdateOneToolUseCase } from "./update-one-tool-use-case.js";
@@ -11,6 +10,8 @@ export class UpdateAiToolsUseCase extends UpdateToolsUseCase<AiToolId> {
     versionReader: VersionReader,
     updateOneToolUseCase: UpdateOneToolUseCase
   ) {
-    super(manifestRepo, versionReader, updateOneToolUseCase, isAiToolId);
+    super(manifestRepo, versionReader, updateOneToolUseCase, (tools, id): id is AiToolId =>
+      tools.isAiTool(id)
+    );
   }
 }

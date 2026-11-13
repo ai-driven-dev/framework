@@ -52,11 +52,7 @@ function declaredMethods(file: string, source: string): string[] {
 
 /** Empty, and it stays empty: an uncalled port method is a missing caller or a dead
  * declaration, and both are closed by fixing the code rather than recording it. */
-const BASELINE: readonly string[] = [
-  "src/contexts/tools/contract/tool-catalog.ts :: ToolCatalog.aiToolId",
-  "src/contexts/tools/contract/tool-catalog.ts :: ToolCatalog.categoryOf",
-  "src/contexts/tools/contract/tool-catalog.ts :: ToolCatalog.toolId",
-];
+const BASELINE: readonly string[] = [];
 
 function uncalledMethods(bodies: ReadonlyMap<string, string>, ports: readonly string[]): string[] {
   const uncalled: string[] = [];
