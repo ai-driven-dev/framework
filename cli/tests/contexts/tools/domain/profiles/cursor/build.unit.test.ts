@@ -154,4 +154,24 @@ describe("buildCursorFlatContract()", () => {
       ].join("\n")
     );
   });
+
+  it("strips only the leading agents/ or skills/ segment from a flat destination", () => {
+    const { agents, skills } = buildCursorFlatContract().artifacts;
+
+    expect(supported(agents).path("aidd-dev", "deep/agents/x.md")).toBe(
+      ".cursor/agents/aidd-dev-deep/agents/x.md"
+    );
+    expect(supported(skills).path("aidd-dev", "deep/skills/x")).toBe(
+      ".cursor/skills/aidd-dev-deep/skills/x"
+    );
+  });
+
+  it("resolves a flat agent's references from the folder its nested file lands in", () => {
+    const transform = supported(buildCursorFlatContract().artifacts.agents).transform;
+    const source = `---\nname: x\n---\nAsk @${ROOT}/agents/reviewer.md\n`;
+
+    expect(transform?.(source, "aidd-dev", "team/lead.md")).toContain(
+      "Ask [reviewer.md](../aidd-dev-reviewer.md)"
+    );
+  });
 });
