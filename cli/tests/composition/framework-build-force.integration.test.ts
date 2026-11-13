@@ -45,31 +45,24 @@ describe("createFrameworkBuildUseCase threads the caller's --force through to th
     await rm(outDir, { recursive: true, force: true });
   });
 
-  it("force: false throws FlatTargetExistsError when the canonical destination already exists", async () => {
+  function flatCopilot(force: boolean) {
     const useCase = createFrameworkBuildUseCase(catalogOf(), makeDeps(fs), {
       target: "copilot",
       mode: "flat",
       outDir,
-      force: false,
+      force,
     });
     if (useCase === undefined) throw new Error("copilot:flat must be wired in the registry");
+    return useCase.execute({ sourceDir: FIXTURE_DIR, outDir, target: "copilot" });
+  }
 
-    await expect(
-      useCase.execute({ sourceDir: FIXTURE_DIR, outDir, target: "copilot" })
-    ).rejects.toBeInstanceOf(FlatTargetExistsError);
+  it("force: false throws FlatTargetExistsError when the canonical destination already exists", async () => {
+    await expect(flatCopilot(false)).rejects.toBeInstanceOf(FlatTargetExistsError);
     expect(fs.getFile(`${outDir}/${COLLIDING_RELATIVE_PATH}`)).toBe(STALE_CONTENT);
   });
 
   it("force: true overwrites the canonical destination instead of throwing", async () => {
-    const useCase = createFrameworkBuildUseCase(catalogOf(), makeDeps(fs), {
-      target: "copilot",
-      mode: "flat",
-      outDir,
-      force: true,
-    });
-    if (useCase === undefined) throw new Error("copilot:flat must be wired in the registry");
-
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir, target: "copilot" });
+    await flatCopilot(true);
 
     const written = fs.getFile(`${outDir}/${COLLIDING_RELATIVE_PATH}`);
     expect(written).not.toBe(STALE_CONTENT);

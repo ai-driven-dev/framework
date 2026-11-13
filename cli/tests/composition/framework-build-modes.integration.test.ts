@@ -29,7 +29,7 @@ describe("createFrameworkBuildUseCase, by mode", () => {
     await rm(outDir, { recursive: true, force: true });
   });
 
-  it("builds a marketplace tree, plugin directories included, in marketplace mode", async () => {
+  function useCaseFor(target: "claude" | "copilot", mode: "marketplace" | "flat", dir = outDir) {
     const useCase = createFrameworkBuildUseCase(
       catalogOf(),
       {
@@ -37,29 +37,29 @@ describe("createFrameworkBuildUseCase, by mode", () => {
         assetProvider: new BundledAssetProviderAdapter(wireTools()),
         logger: new CapturingLogger(),
       },
-      { target: "claude", mode: "marketplace", outDir, force: true }
+      { target, mode, outDir: dir, force: true }
     );
-    if (useCase === undefined) throw new Error("claude:marketplace must be wired");
+    if (useCase === undefined) throw new Error(`${target}:${mode} must be wired`);
+    return useCase;
+  }
 
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir, target: "claude" });
+  it("builds a marketplace tree, plugin directories included, in marketplace mode", async () => {
+    await useCaseFor("claude", "marketplace").execute({
+      sourceDir: FIXTURE_DIR,
+      outDir,
+      target: "claude",
+    });
 
     expect(fs.has(`${outDir}/.claude-plugin/marketplace.json`)).toBe(true);
     expect(fs.listUnder(`${outDir}/.github`)).toStrictEqual([]);
   });
 
   it("builds a flat tree, no marketplace catalog, in flat mode", async () => {
-    const useCase = createFrameworkBuildUseCase(
-      catalogOf(),
-      {
-        fs,
-        assetProvider: new BundledAssetProviderAdapter(wireTools()),
-        logger: new CapturingLogger(),
-      },
-      { target: "copilot", mode: "flat", outDir, force: true }
-    );
-    if (useCase === undefined) throw new Error("copilot:flat must be wired");
-
-    await useCase.execute({ sourceDir: FIXTURE_DIR, outDir, target: "copilot" });
+    await useCaseFor("copilot", "flat").execute({
+      sourceDir: FIXTURE_DIR,
+      outDir,
+      target: "copilot",
+    });
 
     expect(fs.has(`${outDir}/.claude-plugin/marketplace.json`)).toBe(false);
     expect(fs.listUnder(`${outDir}/.github/agents`).length).toBeGreaterThan(0);
@@ -68,19 +68,13 @@ describe("createFrameworkBuildUseCase, by mode", () => {
   it("refuses a flat build into a directory that is not there on disk", async () => {
     const gone = join(outDir, "gone");
     fs.setFile(`${gone}/.keep`, "");
-    const useCase = createFrameworkBuildUseCase(
-      catalogOf(),
-      {
-        fs,
-        assetProvider: new BundledAssetProviderAdapter(wireTools()),
-        logger: new CapturingLogger(),
-      },
-      { target: "copilot", mode: "flat", outDir: gone, force: true }
-    );
-    if (useCase === undefined) throw new Error("copilot:flat must be wired");
 
     await expect(
-      useCase.execute({ sourceDir: FIXTURE_DIR, outDir: gone, target: "copilot" })
+      useCaseFor("copilot", "flat", gone).execute({
+        sourceDir: FIXTURE_DIR,
+        outDir: gone,
+        target: "copilot",
+      })
     ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
   });
 });

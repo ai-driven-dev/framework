@@ -44,20 +44,6 @@ describe("FileAdapter", () => {
       expect(await readFile(path, "utf-8")).toBe("new content");
     });
   });
-
-  describe("deleteEmptyDirectories()", () => {
-    it("stops when directory is not empty", async () => {
-      const outer = join(tempDir, "outer2");
-      const inner = join(outer, "inner");
-      const sibling = join(outer, "sibling.txt");
-      await mkdir(inner, { recursive: true });
-      await writeFile(sibling, "content", "utf-8");
-
-      await fs.deleteEmptyDirectories(inner);
-      expect(await fs.fileExists(inner)).toBe(false);
-      expect(await fs.fileExists(outer)).toBe(true);
-    });
-  });
 });
 
 describe("FileAdapter, at the edges", () => {

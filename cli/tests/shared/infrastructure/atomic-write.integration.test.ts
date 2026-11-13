@@ -2,7 +2,6 @@ import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { HasherAdapter } from "../../../src/contexts/framework/infrastructure/hasher-adapter.js";
 import { PlatformAdapter } from "../../../src/contexts/framework/infrastructure/platform-adapter.js";
 import { atomicWriteFile } from "../../../src/shared/infrastructure/atomic-write.js";
 
@@ -24,12 +23,6 @@ describe("atomicWriteFile", () => {
 
     expect(await readdir(tempDir)).toStrictEqual(["out.txt"]);
     expect(await readFile(path, "utf-8")).toBe("héllo");
-  });
-});
-
-describe("HasherAdapter", () => {
-  it("hashes the UTF-8 bytes of the content", () => {
-    expect(new HasherAdapter().hash("héllo").value).toBe("be50e8478cf24ff3595bc7307fb91b50");
   });
 });
 

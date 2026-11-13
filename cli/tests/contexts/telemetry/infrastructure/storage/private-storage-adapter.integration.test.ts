@@ -122,10 +122,10 @@ describe("a private directory on Windows", () => {
 });
 
 describe("a private directory on the machine itself, as Windows", () => {
-  const realPlatform = Object.getOwnPropertyDescriptor(process, "platform") as PropertyDescriptor;
+  const platform = Object.getOwnPropertyDescriptor(process, "platform") as PropertyDescriptor;
 
   afterEach(() => {
-    Object.defineProperty(process, "platform", realPlatform);
+    Object.defineProperty(process, "platform", platform);
     vi.doUnmock("node:child_process");
     vi.unstubAllEnvs();
     vi.resetModules();

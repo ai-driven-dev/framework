@@ -50,15 +50,8 @@ describe("every announced build target/mode resolves to a wired use case", () =>
   }
 });
 
-describe("a build target the catalog does not know", () => {
-  it("resolves to no use case, whatever the mode", () => {
-    const useCase = createFrameworkBuildUseCase(catalogOf(), makeDeps(), {
-      target: "not-a-tool",
-      mode: "flat",
-      outDir: "/out",
-      force: false,
-    });
+it("resolves a build target the catalog does not know to no use case", () => {
+  const ctx = { target: "not-a-tool", mode: "flat", outDir: "/out", force: false } as const;
 
-    expect(useCase).toBeUndefined();
-  });
+  expect(createFrameworkBuildUseCase(catalogOf(), makeDeps(), ctx)).toBeUndefined();
 });
