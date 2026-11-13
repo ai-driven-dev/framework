@@ -42,8 +42,14 @@ function sharedOf(variants) {
   return shared;
 }
 
-/** What an axis cell says. */
-const cellOf = (value) => escaped(String(value ?? ""));
+const COLOUR = /(#[0-9a-f]{6})\b/gi;
+
+/** What an axis cell says: each `#rrggbb` as a swatch beside its code, the rest as escaped text. */
+const cellOf = (value) =>
+  String(value ?? "")
+    .split(COLOUR)
+    .map((part, at) => (at % 2 ? `<i class="swatch" style="background: ${part}"></i><code>${part}</code>` : escaped(part)))
+    .join("");
 
 /** A render in the frames of each size, each scaled by the script to the width of its column. */
 function framesOf({ variant, file, tokens, labels }) {
@@ -87,6 +93,8 @@ const STYLE = `
 .axes { border-collapse: collapse; width: 100%; font-size: 13px; }
 .axes th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px var(--s2) 4px 0; white-space: nowrap; vertical-align: top; }
 .axes td { padding: 4px 0; overflow-wrap: anywhere; }
+.axes .swatch { display: inline-block; inline-size: 14px; block-size: 14px; margin-inline-end: 4px; vertical-align: -2px; }
+.axes td code { margin-inline-end: 6px; }
 .same { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 .file { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; }
 .variant .doc { padding: var(--s3) var(--s4); max-width: none; box-shadow: none; }

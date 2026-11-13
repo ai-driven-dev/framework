@@ -144,6 +144,26 @@ describe("aidd-ui showcase sets", () => {
     });
   });
 
+  describe("the swatches", () => {
+    const cellsOf = (axes) => {
+      const set = SET();
+      set.variants[0].axes = axes;
+      return [...columnsOf(pagesOf([set])["_set-layout.html"])[0].html.matchAll(/<td>([\s\S]*?)<\/td>/g)].map((match) => match[1]);
+    };
+
+    it("turns each colour of an axis cell into a swatch and its code, the rest stays text", () => {
+      const [cell] = cellsOf([["Colours", "ink #1A2b3C on #fff0e6, plain"]]);
+      assert.equal((cell.match(/class="swatch"/g) ?? []).length, 2);
+      assert.match(cell, /<i class="swatch" style="background: #1A2b3C"><\/i><code>#1A2b3C<\/code>/);
+      assert.match(cell, /<i class="swatch" style="background: #fff0e6"><\/i><code>#fff0e6<\/code>/);
+      assert.match(cell, /^ink .* on .*, plain$/);
+    });
+
+    it("leaves a cell without colour as escaped text", () => {
+      assert.deepEqual(cellsOf([["Tone", "<b>calm</b> #12345"]]), ["&lt;b&gt;calm&lt;/b&gt; #12345"]);
+    });
+  });
+
   describe("the command", () => {
     const writeSet = (rows) => {
       put(tmp, `${UI}/drafts/layout/variants.md`, `# Variants\n\n${rows.join("\n")}\n`);
