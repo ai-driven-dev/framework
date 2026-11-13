@@ -93,17 +93,102 @@ async function waitForRecordedHooks(dirs: readonly string[]): Promise<void> {
   }
 }
 
+async function cleanupHookFixtures(
+  dirs: readonly string[],
+  waitForHooks: (dirs: readonly string[]) => Promise<void> = waitForRecordedHooks,
+  removeDir: (dir: string) => Promise<void> = (dir) =>
+    rm(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 })
+): Promise<void> {
+  let waitFailed = false;
+  let waitError: unknown;
+  const cleanupErrors: unknown[] = [];
+
+  try {
+    await waitForHooks(dirs);
+  } catch (error) {
+    waitFailed = true;
+    waitError = error;
+  } finally {
+    const results = await Promise.allSettled(dirs.map(async (dir) => removeDir(dir)));
+    for (const result of results) {
+      if (result.status === "rejected") cleanupErrors.push(result.reason);
+    }
+  }
+
+  if (cleanupErrors.length > 0) {
+    const errors = [...(waitFailed ? [waitError] : []), ...cleanupErrors];
+    if (errors.length === 1) throw errors[0];
+    throw new AggregateError(errors, "Hook fixture cleanup failed");
+  }
+  if (waitFailed) throw waitError;
+}
+
 /** The adapter each build puts at `hooks/lib/host.cjs`. */
 const ADAPTERS = { opencode: OPENCODE_HOOKS.runtime.adapter, kilo: KILO_HOOKS.runtime.adapter };
 
 afterEach(async () => {
   vi.unstubAllEnvs();
   const dirs = created.splice(0);
-  await waitForRecordedHooks(dirs);
   // Windows may release a detached hook's cwd shortly after the process exits.
-  await Promise.all(
-    dirs.map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }))
-  );
+  await cleanupHookFixtures(dirs);
+});
+
+describe("hook fixture cleanup", () => {
+  it("removes every fixture and propagates a hook-wait failure", async () => {
+    const waitError = new Error("hook process still active");
+    const removed: string[] = [];
+
+    await expect(
+      cleanupHookFixtures(
+        ["first", "second"],
+        async () => {
+          throw waitError;
+        },
+        async (dir) => {
+          removed.push(dir);
+        }
+      )
+    ).rejects.toBe(waitError);
+
+    expect(removed).toEqual(["first", "second"]);
+  });
+
+  it("waits before removing fixtures on the normal path", async () => {
+    const events: string[] = [];
+
+    await cleanupHookFixtures(
+      ["first", "second"],
+      async () => {
+        events.push("wait");
+      },
+      async (dir) => {
+        events.push(`remove ${dir}`);
+      }
+    );
+
+    expect(events).toEqual(["wait", "remove first", "remove second"]);
+  });
+
+  it("attempts later removals and reports cleanup failures alongside a wait failure", async () => {
+    const waitError = new Error("hook process still active");
+    const cleanupError = new Error("first fixture is locked");
+    const attempted: string[] = [];
+
+    await expect(
+      cleanupHookFixtures(
+        ["first", "second"],
+        async () => {
+          throw waitError;
+        },
+        async (dir) => {
+          attempted.push(dir);
+          if (dir === "first") throw cleanupError;
+        }
+      )
+    ).rejects.toMatchObject({ errors: [waitError, cleanupError] });
+
+    expect(attempted).toEqual(["first", "second"]);
+  });
 });
 
 /** The captured arguments, the scrubbed project folder pointed at a real one. */
