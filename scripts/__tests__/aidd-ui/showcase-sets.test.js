@@ -240,6 +240,21 @@ describe("aidd-ui showcase sets", () => {
     });
   });
 
+  describe("the full text of a variant", () => {
+    it("sits in a details closed by default, labelled in the language, each markdown file inside it", () => {
+      for (const lang of ["en", "fr"]) {
+        const [column] = columnsOf(pagesOf([SET()], { lang })["_set-layout.html"]);
+        const details = column.html.match(/<details class="fulltext"([^>]*)><summary>([^<]*)<\/summary>([\s\S]*?)<\/details>/);
+        assert.ok(details, "a details of the full text");
+        assert.doesNotMatch(details[1], /open/);
+        assert.equal(details[2], LABELS[lang].full);
+        assert.match(details[3], /<div class="file" data-path="brand\.md">/);
+        assert.doesNotMatch(column.html.replace(details[0], ""), /data-path="brand\.md"/, "nowhere else");
+      }
+      assert.deepEqual([LABELS.en.full, LABELS.fr.full], ["Full text", "Texte complet de la piste"]);
+    });
+  });
+
   describe("the words", () => {
     it("are the same keys in both languages, plain in French", () => {
       for (const key of ["choose", "desktop", "mobile", "same", "keep", "discard"]) assert.ok(LABELS.en[key] && LABELS.fr[key], key);

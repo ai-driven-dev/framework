@@ -102,13 +102,13 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent }) {
   const before = new Map(parent?.axes ?? []);
   const changed = (axis, value) => (parent && String(before.get(axis) ?? "").trim() !== String(value ?? "").trim() ? ` data-changed="${escaped(parent.name)}" title="${escaped(filled(labels.changed, { parent: parent.name }))}"` : "");
   const axes = variant.axes.map(([axis, value]) => `<tr><th>${escaped(axis)}</th><td${changed(axis, value)}><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value)}</button></td></tr>`).join("");
-  const files = variant.files.flatMap((file) => {
-    if (RENDER_FILE.test(file.path)) return screens ? [] : [framesOf({ variant, file, tokens, labels })];
-    if (!MARKDOWN_FILE.test(file.path)) return [];
+  const renders = screens ? [] : variant.files.filter((file) => RENDER_FILE.test(file.path)).map((file) => framesOf({ variant, file, tokens, labels }));
+  const documents = variant.files.filter((file) => MARKDOWN_FILE.test(file.path)).flatMap((file) => {
     const text = shared.has(file.path) ? shared.get(file.path).texts[at] : file.text;
     return text ? [`<div class="file" data-path="${escaped(file.path)}"><h3><code>${escaped(file.path)}</code></h3>${documentOf(text)}</div>`] : [];
   });
-  return `<section class="variant" data-variant="${escaped(variant.name)}"><h2>${escaped(titleOf(variant.name))}</h2><p class="intent">${escaped(variant.intent ?? "")}</p><table class="axes"><tbody>${axes}</tbody></table>${files.concat(screens ?? []).join("")}</section>`;
+  const full = documents.length ? `<details class="fulltext"><summary>${escaped(labels.full)}</summary>${documents.join("")}</details>` : "";
+  return `<section class="variant" data-variant="${escaped(variant.name)}"><h2>${escaped(titleOf(variant.name))}</h2><p class="intent">${escaped(variant.intent ?? "")}</p><table class="axes"><tbody>${axes}</tbody></table>${renders.concat(screens ?? [], full).join("")}</section>`;
 }
 
 /** The body of a set's page: its name, then the problems that keep it from being shown, else the paths the
@@ -162,6 +162,8 @@ const STYLE = `
 .axes .swatch { display: inline-block; inline-size: 14px; block-size: 14px; margin-inline-end: 4px; vertical-align: -2px; }
 .axes td code { margin-inline-end: 6px; }
 .preview-note { margin: 0; color: var(--muted); font-size: var(--t-sm); }
+.fulltext > summary { cursor: pointer; font-size: var(--t-sm); font-weight: 600; color: var(--muted); }
+.fulltext[open] > summary { margin-bottom: var(--s3); }
 .same { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 .file { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; }
 .variant .doc { padding: var(--s3) var(--s4); max-width: none; box-shadow: none; }
