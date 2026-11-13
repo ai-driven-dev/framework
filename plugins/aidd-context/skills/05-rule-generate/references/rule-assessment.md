@@ -1,22 +1,27 @@
 # Rule assessment
 
+How a candidate compares with each found policy, and what to offer.
+
 ## Labels
 
 | Label | Means |
 | --- | --- |
-| needs review | uncertainty that could change the comparison; overrides every other label |
-| new | no coverage, overlap or conflict |
-| covered | existing policies supply every obligation throughout the scope |
-| overlap | compatible partial repetition or extension |
-| conflict | incompatible obligations, or an unjustified weakening |
+| new | no policy covers, repeats or contradicts it |
+| covered | existing policies already require all of it in its scope |
+| overlap | a policy repeats or extends part of it, compatibly |
+| conflict | a policy requires the opposite, or the candidate weakens one |
 
 ## Comparison
 
-- Compare obligations, prohibitions, scopes, conditions, exceptions and priority, prior sources on update and future files included.
+- Compare obligations, prohibitions, scopes, conditions and exceptions.
 - Exclude only scopes proven disjoint.
-- Cite source paths, decisive quotes and scope reasons in every finding.
+- Cite each finding's source path and decisive quote.
 
 ## Choices
 
-- Offer create, keep, update, merge, scope, priority or cancel as applicable.
-- Needs review: request evidence, reassess before offering source changes. Keep and cancel stay available.
+| Label | Offer |
+| --- | --- |
+| new | create, cancel |
+| covered | keep, cancel |
+| overlap | create, merge, cancel |
+| conflict | update the policy, rescope the candidate, cancel |

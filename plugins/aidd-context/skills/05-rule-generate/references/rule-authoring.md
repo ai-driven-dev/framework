@@ -1,5 +1,7 @@
 # Rule authoring
 
+How to write and name a rule.
+
 ## Rules
 
 - R1. One topic per file; split multiple topics.

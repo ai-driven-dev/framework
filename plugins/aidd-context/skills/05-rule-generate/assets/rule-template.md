@@ -1,5 +1,5 @@
-<!-- Replace placeholders; delete this comment and unused lines. -->
-
 # <Title>
 
 - <Requirement.>
+
+> Fill every `<...>` and delete this line.
