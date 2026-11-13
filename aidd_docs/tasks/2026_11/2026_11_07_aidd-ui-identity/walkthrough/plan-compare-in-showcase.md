@@ -27,7 +27,7 @@ Each phase: write the test, see it red, implement, see it green, apply the liste
 1. **Shared helpers.** Move `escaped`, `documentOf`, `inlined`, `STYLESHEET_LINK`, `FONT_FLOOR`, `fingerprintOf` to a new `hooks/lib/html.cjs`; `showcase.cjs` imports from it. Mutation: drop `fingerprintOf` from the exports.
 2. **The showcase reads the sets.** `drafts.cjs` exports `setsOf(root)` returning `[{id, rows, axes, variants, problems, fingerprint}]`. `writeShowcase` passes `sets` to the pure `showcaseOf`, and writes `drafts/.gitignore` when drafts exist. Mutations: skip the `.gitignore` write; `setsOf` returns `[]`.
 3. **The set page.**
-   - Sidebar: a first group `data-group="choose"`, "À choisir" / "To choose", one link per set.
+   - Sidebar: a first group `data-group="choose"`, "Variantes" / "Variants", one link per set.
    - File `_set-<set>.html`, so a set `brand` never overwrites the record page `brand.html`. Guard with a set and a record both named `brand`. Mutation: drop the prefix.
    - One column per variant: name, intent, axis table.
    - Each variant's HTML in two fixed frames, desktop 1280 and mobile 390, scaled to the column. No toggle, no "1 up / 2 up", no shift-click. Tokens inlined.
@@ -37,7 +37,7 @@ Each phase: write the test, see it red, implement, see it green, apply the liste
    - Mutation: render one frame size only.
 4. **Swatches.** In an axis cell, each `#rrggbb` becomes a swatch plus its code; the rest stays escaped. Mutations: case-sensitive regex; drop the code.
 5. **Drawer and copy.**
-   - A "À choisir" group in the drawer, one row per variant: Garder / À revoir / Écarter (`keep`/`revise`/`discard`) and a comment. Own selector: record entries never read sets.
+   - A "Variantes" group in the drawer, one row per variant: Garder / À revoir / Écarter (`keep`/`revise`/`discard`) and a comment. Own selector: record entries never read sets.
    - Storage `aidd-ui-review`, key `set:<id>@<fingerprint>`.
    - A set entry keeps today's compare copy shape exactly, emitted once any variant is decided. A lone set copy is byte-identical to today's compare copy.
    - Guards: a set alone gives the old copy (mutation: wrap single entries); records and sets mixed give a list (mutation: filter sets out); "all OK" never marks a variant (mutation: count set rows as remaining); revise without comment blocks the copy (mutation: drop the set check).

@@ -30,7 +30,7 @@ const SET_CURRENT = "set:"; // what a page of a set passes the navigation as its
 const LABELS = {
   en: {
     title: "Design system showcase",
-    choose: "To choose",
+    choose: "Variants",
     picks: "Axes picked",
     round: "Round {round}",
     changed: "Changed from {parent}",
@@ -84,7 +84,7 @@ const LABELS = {
   },
   fr: {
     title: "Vitrine du système de design",
-    choose: "À choisir",
+    choose: "Variantes",
     picks: "Axes choisis",
     round: "Tour {round}",
     changed: "Changé depuis {parent}",

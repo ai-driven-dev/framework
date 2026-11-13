@@ -59,7 +59,7 @@ describe("aidd-ui showcase sets", () => {
     });
 
     it("says it in French on a French page", () => {
-      assert.match(groupOf(pagesOf([SET()], { lang: "fr" })["index.html"], "choose"), /<h2>À choisir<\/h2>/);
+      assert.match(groupOf(pagesOf([SET()], { lang: "fr" })["index.html"], "choose"), /<h2>Variantes<\/h2>/);
     });
   });
 
@@ -167,7 +167,7 @@ describe("aidd-ui showcase sets", () => {
   describe("the words", () => {
     it("are the same keys in both languages, plain in French", () => {
       for (const key of ["choose", "desktop", "mobile", "same", "keep", "discard"]) assert.ok(LABELS.en[key] && LABELS.fr[key], key);
-      assert.equal(LABELS.fr.choose, "À choisir");
+      assert.equal(LABELS.fr.choose, "Variantes");
       assert.deepEqual([LABELS.fr.desktop, LABELS.fr.mobile, LABELS.fr.keep, LABELS.fr.revise, LABELS.fr.discard], ["Ordinateur", "Mobile", "Garder", "À revoir", "Écarter"]);
       assert.equal(LABELS.fr.same, "Identique dans toutes : {sections}");
       assert.deepEqual(Object.keys(LABELS.fr).sort(), Object.keys(LABELS.en).sort());
@@ -228,7 +228,7 @@ describe("aidd-ui showcase sets", () => {
     });
 
     it("says the group in French, and carries the pure functions of the copy in every script", () => {
-      assert.match(groupOfSets(pagesOf([SET()], { lang: "fr" })["index.html"]), /<h3>À choisir<\/h3>/);
+      assert.match(groupOfSets(pagesOf([SET()], { lang: "fr" })["index.html"]), /<h3>Variantes<\/h3>/);
       for (const html of Object.values(pagesOf([SET()]))) {
         const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
         assert.doesNotThrow(() => new Function(script));
