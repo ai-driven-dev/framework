@@ -2,17 +2,17 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { wireTools } from "../../../src/composition/tools.js";
-import { BundledAssetProviderAdapter } from "../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
-import { FlatTargetExistsError } from "../../../src/kernel/errors.js";
+import { wireTools } from "../../src/composition/tools.js";
 import {
   createFrameworkBuildUseCase,
   type FrameworkBuildDeps,
-} from "../../../src/runtime/wiring/translate.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
-import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
+} from "../../src/composition/translate.js";
+import { BundledAssetProviderAdapter } from "../../src/contexts/framework/infrastructure/assets/asset-loader.js";
+import { FlatTargetExistsError } from "../../src/kernel/errors.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
+import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
+import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
+import { seedFromDirectory } from "../helpers/ports/seed-from-directory.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // Canonical flat destination for the fixture's "aidd-test" plugin agent, under --target copilot.

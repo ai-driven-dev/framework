@@ -104,7 +104,7 @@ async function writeSource(source: string): Promise<void> {
 }
 
 async function deps(project: string) {
-  const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
+  const { createDeps } = await import("../../../src/composition/framework.js");
   return createDeps(project, { verbose: false }, new CLIOutput(false), catalogOf());
 }
 
@@ -134,7 +134,7 @@ async function build(
   toolId: AiToolId,
   mode: "marketplace" | "flat"
 ): Promise<string | null> {
-  const { createFrameworkBuildUseCase } = await import("../../../src/runtime/wiring/translate.js");
+  const { createFrameworkBuildUseCase } = await import("../../../src/composition/translate.js");
   const d = await deps(ws.project);
   const out = join(ws.root, `out-${mode}`);
   await mkdir(out, { recursive: true });

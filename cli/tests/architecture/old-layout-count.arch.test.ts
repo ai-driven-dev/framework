@@ -1,16 +1,15 @@
 /**
- * The old layout (`runtime/`, `contexts/framework/`, `kernel/`) is being drained into the
+ * The old layout (`contexts/framework/`, `kernel/`) is being drained into the
  * target one (`shared/`, a context per concern). A folder that only shrinks needs a number
- * that only shrinks: `runtime/` and `framework/` are held by their file count, `kernel/` by
+ * that only shrinks: `framework/` is held by its file count, `kernel/` by
  * its path set, because a count alone lets one file be deleted and another added.
- * Delete this file when the three folders are gone.
+ * Delete this file when the two folders are gone.
  */
 import { describe, expect, it } from "vitest";
 import { sourceFiles } from "./helpers.js";
 
 /** Source files under each folder that is still counted. Lower a value when files leave. */
 const COMMITTED_COUNTS: Readonly<Record<string, number>> = {
-  "src/runtime/": 3,
   "src/contexts/framework/": 126,
 };
 
@@ -75,7 +74,6 @@ const KNOWN_SOURCE_AREAS: ReadonlySet<string> = new Set([
   "contexts",
   "kernel",
   "presentation",
-  "runtime",
   "shared",
 ]);
 
@@ -111,9 +109,9 @@ describe("the old layout only shrinks", () => {
 
 describe("the guard itself", () => {
   it("says what to do about a count one above or one below the committed value", () => {
-    expect(countVerdict("src/runtime/", 40, 39)).toContain("nothing new enters");
-    expect(countVerdict("src/runtime/", 38, 39)).toContain("lower the committed value");
-    expect(countVerdict("src/runtime/", 39, 39)).toBeNull();
+    expect(countVerdict("src/contexts/framework/", 40, 39)).toContain("nothing new enters");
+    expect(countVerdict("src/contexts/framework/", 38, 39)).toContain("lower the committed value");
+    expect(countVerdict("src/contexts/framework/", 39, 39)).toBeNull();
   });
 
   it("reports a swap in the kernel path set although the count is equal", () => {
@@ -131,7 +129,6 @@ describe("the guard itself", () => {
       unknownAreaVerdicts([
         "src/foo/x.ts",
         "src/cli.ts",
-        "src/runtime/a.ts",
         "src/composition/auth.ts",
         "src/elsewhere/auth.ts",
       ])

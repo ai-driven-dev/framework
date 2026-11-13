@@ -1,8 +1,9 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { AIDD_DIR } from "../../../src/kernel/paths.js";
+import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../same-instance.js";
+import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const login = vi.fn();
 const status = vi.fn();
@@ -11,24 +12,21 @@ const promptSelect = vi.fn();
 const promptConfirm = vi.fn();
 const promptInput = vi.fn();
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({
-    logIn: {
-      execute: (command: { credential: unknown; level: unknown }) =>
-        login(command.credential, command.level),
-    },
-    logOut: { execute: () => logout() },
-    checkStatus: { execute: () => status() },
-    prompter: { select: promptSelect, confirm: promptConfirm, input: promptInput },
-  })),
-  createMenuDeps: vi.fn(),
+const createDeps = vi.fn(async () => ({
+  logIn: {
+    execute: (command: { credential: unknown; level: unknown }) =>
+      login(command.credential, command.level),
+  },
+  logOut: { execute: () => logout() },
+  checkStatus: { execute: () => status() },
+  prompter: { select: promptSelect, confirm: promptConfirm, input: promptInput },
 }));
+const depsFactory = asDepsFactory(createDeps);
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerAuthCommand } = await import("../../../src/presentation/commands/auth.js");
 
 const PROJECT_ROOT = process.cwd();
-const CATALOG = catalogOf();
+const _CATALOG = catalogOf();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -67,7 +65,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerAuthCommand(program, CATALOG);
+  registerAuthCommand(program, depsFactory);
   await program.parseAsync(["node", "aidd", "auth", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -238,8 +236,7 @@ describe("aidd auth, how every subcommand builds its graph and reports a failure
       expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
         PROJECT_ROOT,
         { verbose: false },
-        expect.anything(),
-        sameInstance(CATALOG)
+        expect.anything()
       );
     }
   );
@@ -258,7 +255,7 @@ describe("aidd auth, how every subcommand builds its graph and reports a failure
 describe("aidd auth, the help surface", () => {
   function authCommand(): Command {
     const program = new Command();
-    registerAuthCommand(program, CATALOG);
+    registerAuthCommand(program, depsFactory);
     const auth = program.commands.find((command) => command.name() === "auth");
     if (auth === undefined) throw new Error("auth command was not registered");
     return auth;

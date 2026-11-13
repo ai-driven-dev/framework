@@ -1,20 +1,18 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../same-instance.js";
+import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const cleanProject = vi.fn();
 const cleanUserScope = vi.fn();
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({
-    cleanUseCase: { execute: cleanProject },
-    cleanUserScopeUseCase: { execute: cleanUserScope },
-  })),
-  createMenuDeps: vi.fn(),
+const createDeps = vi.fn(async () => ({
+  cleanUseCase: { execute: cleanProject },
+  cleanUserScopeUseCase: { execute: cleanUserScope },
 }));
+const depsFactory = asDepsFactory(createDeps);
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerCleanCommand } = await import("../../../src/presentation/commands/clean.js");
 
 const PROJECT_ROOT = process.cwd();
@@ -68,7 +66,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerCleanCommand(program, CATALOG);
+  registerCleanCommand(program, CATALOG, depsFactory);
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -184,8 +182,7 @@ describe("aidd clean — how it builds its graph and reports a failure", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 
@@ -205,7 +202,7 @@ describe("aidd clean — how it builds its graph and reports a failure", () => {
 describe("aidd clean — the help surface", () => {
   function cleanCommand(): Command {
     const program = new Command();
-    registerCleanCommand(program, CATALOG);
+    registerCleanCommand(program, CATALOG, depsFactory);
     const clean = program.commands.find((command) => command.name() === "clean");
     if (clean === undefined) throw new Error("clean command was not registered");
     return clean;

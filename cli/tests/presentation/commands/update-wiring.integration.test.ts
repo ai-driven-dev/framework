@@ -1,21 +1,19 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SelfUpdateResult } from "../../../src/contexts/update/application/self-update.js";
+import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../same-instance.js";
+import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const selfUpdate = vi.fn<() => Promise<SelfUpdateResult>>();
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({ selfUpdate: { execute: selfUpdate } })),
-  createMenuDeps: vi.fn(),
-}));
+const createDeps = vi.fn(async () => ({ selfUpdate: { execute: selfUpdate } }));
+const depsFactory = asDepsFactory(createDeps);
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerUpdateCommand } = await import("../../../src/presentation/commands/update.js");
 
 const PROJECT_ROOT = process.cwd();
-const CATALOG = catalogOf();
+const _CATALOG = catalogOf();
 
 let written: string[] = [];
 let errors: string[] = [];
@@ -44,7 +42,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerUpdateCommand(program, CATALOG);
+  registerUpdateCommand(program, depsFactory);
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -100,8 +98,7 @@ describe("aidd update — what it asks the self-updater", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: false },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 
@@ -111,8 +108,7 @@ describe("aidd update — what it asks the self-updater", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 
@@ -132,7 +128,7 @@ describe("aidd update — what it asks the self-updater", () => {
 describe("aidd update — the help surface", () => {
   function updateCommand(): Command {
     const program = new Command();
-    registerUpdateCommand(program, CATALOG);
+    registerUpdateCommand(program, depsFactory);
     const update = program.commands.find((command) => command.name() === "update");
     if (update === undefined) throw new Error("update command was not registered");
     return update;

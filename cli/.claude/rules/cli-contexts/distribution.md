@@ -24,11 +24,11 @@ paths:
 
 - `auth`: the `TokenProvider` contract, for the adapters that read a private source.
 - `kernel/`: errors, `Logger`, paths and the source value.
-- Nothing from `framework/` or `runtime/`: biome denies both, and `biome-guards-bite.arch.test.ts` plants each.
+- Nothing from `framework/`: biome denies it, and `biome-guards-bite.arch.test.ts` plants it.
 
 ## Never
 
-- Import `framework/` or `runtime/`: framework asks for a marketplace, distribution never asks back.
+- Import `framework/`: framework asks for a marketplace, distribution never asks back.
 - Change what a command prints or writes: the use-case tests, the contract kits, the adapter integration tests and the e2e `marketplace-add-conflict.e2e.test.ts` freeze the behaviour; the goldens hold help text only.
 - Fix `marketplace add --overwrite` in passing. It removes the old entry before it fetches the new one, so a fetch that fails leaves the old entry gone. `add-marketplace.unit.test.ts` pins that as it is (D1, `aidd_docs/memory/internal/distribution.md`), and the fix flips that test.
 

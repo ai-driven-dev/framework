@@ -5,6 +5,7 @@ import { isMainThread } from "node:worker_threads";
 import { Command } from "commander";
 import { type MockInstance, vi } from "vitest";
 import type { ToolCatalog } from "../../src/contexts/tools/contract/tool-catalog.js";
+import type { DepsFactory, MenuDepsFactory } from "../../src/presentation/deps.js";
 import { sandboxedEnv } from "../e2e/helpers.js";
 
 /**
@@ -44,7 +45,12 @@ class ExitSignal extends Error {
   }
 }
 
-type Register = (program: Command, tools: ToolCatalog) => void;
+type Register = (
+  program: Command,
+  tools: ToolCatalog,
+  createDeps: DepsFactory,
+  createMenuDeps: MenuDepsFactory
+) => void;
 
 /** The order `src/cli.ts` registers them in. Literal specifiers, so the bundler resolves them. */
 const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
@@ -56,13 +62,23 @@ const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
   async () => (await import("../../src/presentation/commands/plugin.js")).registerPluginCommand,
   async () =>
     (await import("../../src/presentation/commands/marketplace.js")).registerMarketplaceCommand,
-  async () => (await import("../../src/presentation/commands/auth.js")).registerAuthCommand,
+  async () => {
+    const { registerAuthCommand } = await import("../../src/presentation/commands/auth.js");
+    return (program, _tools, createDeps) => registerAuthCommand(program, createDeps);
+  },
   async () => (await import("../../src/presentation/commands/sync.js")).registerSyncCommand,
-  async () => (await import("../../src/presentation/commands/update.js")).registerUpdateCommand,
+  async () => {
+    const { registerUpdateCommand } = await import("../../src/presentation/commands/update.js");
+    return (program, _tools, createDeps) => registerUpdateCommand(program, createDeps);
+  },
   async () => (await import("../../src/presentation/commands/doctor.js")).registerDoctorCommand,
   async () => (await import("../../src/presentation/commands/clean.js")).registerCleanCommand,
-  async () =>
-    (await import("../../src/presentation/commands/telemetry.js")).registerTelemetryCommand,
+  async () => {
+    const { registerTelemetryCommand } = await import(
+      "../../src/presentation/commands/telemetry.js"
+    );
+    return (program, _tools, createDeps) => registerTelemetryCommand(program, createDeps);
+  },
 ];
 
 let inFlight = false;
@@ -160,7 +176,10 @@ export async function runInProcess(
     const tools = wireTools();
     const program = new Command();
     program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
-    for (const load of REGISTRATIONS) (await load())(program, tools);
+    const { createDeps, createMenuDeps } = await import("../../src/composition/framework.js");
+    const depsFactory: DepsFactory = (projectRoot, options, output) =>
+      createDeps(projectRoot, options, output, tools);
+    for (const load of REGISTRATIONS) (await load())(program, tools, depsFactory, createMenuDeps);
 
     try {
       await program.parseAsync(["node", "aidd", ...args]);

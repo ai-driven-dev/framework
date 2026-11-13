@@ -1,6 +1,6 @@
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { SyncFailedError } from "../../kernel/errors.js";
-import type { createDeps } from "../../runtime/wiring/framework.js";
+import type { Deps } from "../deps.js";
 import { printScopedFailures } from "../display/framework-display.js";
 import type { CLIOutput } from "../output.js";
 
@@ -14,7 +14,7 @@ interface SyncActivationOutcome {
  * into exit 0 with nothing printed and a plugin that never loads. Every command driving
  * activation reads it here, never a second way. */
 export async function syncNativeActivation(
-  deps: Awaited<ReturnType<typeof createDeps>>,
+  deps: Deps,
   output: CLIOutput,
   catalog: ToolCatalog,
   projectRoot: string,

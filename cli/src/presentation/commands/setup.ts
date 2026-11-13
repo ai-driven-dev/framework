@@ -7,7 +7,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { ToolId } from "../../kernel/tool.js";
 import { assertToolIdsMatchCategory, IDE_TOOL_IDS, isIdeToolId } from "../../kernel/tool.js";
-import { createDeps } from "../../runtime/wiring/framework.js";
+import type { DepsFactory } from "../deps.js";
 import {
   printDetectedContext,
   printNextSteps,
@@ -116,7 +116,11 @@ export function globalSetupHelp(catalog: ToolCatalog): string {
   ].join("\n");
 }
 
-export function registerSetupCommand(program: Command, catalog: ToolCatalog): void {
+export function registerSetupCommand(
+  program: Command,
+  catalog: ToolCatalog,
+  createDeps: DepsFactory
+): void {
   program
     .command("setup")
     .description(
@@ -186,7 +190,7 @@ export function registerSetupCommand(program: Command, catalog: ToolCatalog): vo
 
         if (interactive) printWelcomeBanner(output);
 
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
 
         const result = await new SetupUseCase(
           deps.fs,

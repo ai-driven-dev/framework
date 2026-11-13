@@ -1,13 +1,18 @@
 import { Command } from "commander";
 import { describe, expect, it } from "vitest";
+import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 const { registerSyncCommand } = await import("../../../src/presentation/commands/sync.js");
 
+const noDeps: DepsFactory = async () => {
+  throw new Error("help builds no dependencies");
+};
+
 describe("aidd sync — the help surface", () => {
   function syncCommand(): Command {
     const program = new Command();
-    registerSyncCommand(program, catalogOf());
+    registerSyncCommand(program, catalogOf(), noDeps);
     const sync = program.commands.find((command) => command.name() === "sync");
     if (sync === undefined) throw new Error("sync command was not registered");
     return sync;

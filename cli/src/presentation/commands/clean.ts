@@ -1,12 +1,10 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { createDeps } from "../../runtime/wiring/framework.js";
+import type { Deps, DepsFactory } from "../deps.js";
 import { printProjectCleanOutcome, printUserScopeCleanOutcome } from "../display/clean-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
-
-type Deps = Awaited<ReturnType<typeof createDeps>>;
 
 interface CleanCmdOptions {
   force: boolean;
@@ -50,7 +48,11 @@ async function runUserScopeClean(
   printUserScopeCleanOutcome(output, result, interactive);
 }
 
-export function registerCleanCommand(program: Command, catalog: ToolCatalog): void {
+export function registerCleanCommand(
+  program: Command,
+  catalog: ToolCatalog,
+  createDeps: DepsFactory
+): void {
   program
     .command("clean")
     .description(
@@ -69,7 +71,7 @@ export function registerCleanCommand(program: Command, catalog: ToolCatalog): vo
       const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         if (scope === "user") {
           await runUserScopeClean(deps, output, projectRoot, cmdOptions, catalog);
         } else {

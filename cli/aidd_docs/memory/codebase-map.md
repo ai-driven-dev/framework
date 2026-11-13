@@ -119,25 +119,22 @@ src/
 ├── shared/    # technology ports and their adapters. Imports no context
 │   ├── infrastructure/    # adapters of the shared ports, imported by the composition root only
 │   └── ports/    # a technology port two or more contexts need
-├── presentation/    # everything that talks to a human — depends on contexts, never the reverse
-│   ├── commands/    # one file per command, wiring only
-│   ├── display/    # rendering a result
-│   │   └── telemetry/    # the telemetry report, which outgrew one file beside the others
-│   ├── hooks/    # what runs around every command: the update notice before it, the refresh after
-│   ├── prompts/    # asking the user; the decision stays in the context
-│   └── terminal/    # the prompt adapter over the terminal
-└── runtime/    # technical services that are not a context
-    └── wiring/    # one composition module per context, plus the composition root
+└── presentation/    # everything that talks to a human — depends on contexts, never the reverse
+    ├── commands/    # one file per command, wiring only
+    ├── display/    # rendering a result
+    │   └── telemetry/    # the telemetry report, which outgrew one file beside the others
+    ├── hooks/    # what runs around every command: the update notice before it, the refresh after
+    ├── prompts/    # asking the user; the decision stays in the context
+    └── terminal/    # the prompt adapter over the terminal
 ```
 
 ## Areas
 
-- `src/composition/`: the wiring module of each migrated context. Only the composition root and `cli.ts` import it.
+- `src/composition/`: the wiring module of each migrated context. Only the composition root and `cli.ts` import it; commands receive its factories typed by `presentation/deps.ts`.
 - `src/shared/`: technology ports and their adapters that two or more contexts need. No context import.
 - `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
 - `src/contexts/`: the nine bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
-- `src/runtime/`: services that are not a context: the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.
 - `assets/`: configs inlined at build time, schemas copied beside the binary.
 - `scripts/`: bundle budget, mutation runner, smoke harness, the copy check between tool profiles.
@@ -145,7 +142,7 @@ src/
 ## Entry points
 
 - `src/cli.ts` → `dist/cli.js`, bin `aidd`.
-- `src/runtime/wiring/framework.ts` — the composition root. Start here when wiring anything.
+- `src/composition/framework.ts` — the composition root. Start here when wiring anything.
 
 ## Where to add things
 
@@ -158,5 +155,4 @@ src/
 | a transform shared by two profiles | `contexts/tools/domain/formats/`; used by one, that profile's own directory |
 | a port used by one context | that context's `domain/ports/` (`ports/` in a migrated context), adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |
-| a runtime service | `runtime/<service>/`, wired from `runtime/wiring/` |
-| a migrated context's wiring | `composition/<context>.ts`, called by `runtime/wiring/framework.ts` |
+| a context's wiring | `composition/<context>.ts`, called by `composition/framework.ts` |

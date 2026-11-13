@@ -70,8 +70,8 @@ describe("import rules still bite", () => {
 
 describe("the guard itself", () => {
   it("checks a real rule and flags a deleted one", () => {
-    const paths = ["src/contexts/translate/domain/canon.ts", "src/runtime/wiring/translate.ts"];
-    expect(matchesSomething(literalCore("**/runtime/**"), paths)).toBe(true);
+    const paths = ["src/contexts/translate/domain/canon.ts", "src/composition/translate.ts"];
+    expect(matchesSomething(literalCore("**/composition/**"), paths)).toBe(true);
     expect(matchesSomething(literalCore("**/application/use-cases/**"), paths)).toBe(false);
     expect(literalCore("../../../domain/ports/**")).toBe("domain/ports/");
     expect(literalCore("**/manifest.js")).toBe("manifest.js");

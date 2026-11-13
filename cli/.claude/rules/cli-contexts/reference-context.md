@@ -32,7 +32,7 @@ tests/contexts/<ctx>/      mirrors src, plus testing/ (the kit) and ports/ (cont
 
 | Folder | Must not import | Besides |
 | --- | --- | --- |
-| `contract/` | any other folder of its context | presentation, runtime, composition, every context `ALLOWED` does not admit |
+| `contract/` | any other folder of its context | presentation, composition, every context `ALLOWED` does not admit |
 | `domain/` | `application/`, `infrastructure/` | same |
 | `ports/` | what `domain/` must not | same |
 | `application/` | `infrastructure/` | same |
@@ -83,13 +83,13 @@ Provisional until `installation` and its `Manifest` aggregate migrate: auth's ag
 
 - A port is declared by the side that needs it, named by capability, one interface per file, the file named for the interface (`ports/identity-verifier.ts` for `IdentityVerifier`).
 - A port method has a caller, a `contract/` port included: `ports-are-called.arch.test.ts` reads `contract/` as ports ("reads a contract folder as ports, and a folder merely ending in ports as none").
-- A `contract/` file is imported by at least one file outside its context: another context, `presentation/` or a runtime service; the composition root does not count. `context-boundary.arch.test.ts` "every file under a context's contract/ has an importer outside the context and the composition root" (exception E6).
+- A `contract/` file is imported by at least one file outside its context: another context or `presentation/`; the composition root does not count. `context-boundary.arch.test.ts` "every file under a context's contract/ has an importer outside the context and the composition root" (exception E6).
 - Types a non-context needs live in `contract/` (`contract/credential.ts`), never reached through `domain/` or a re-export.
 - Nothing outside the context but the composition root imports its `domain/`, `ports/` or `infrastructure/`: the context is listed in `HELD_BY_BIOME` (`tests/architecture/helpers.ts`), and `biome-context-parity.arch.test.ts` computes the folder groups every importer's override must carry from `ALLOWED` ("asks an importer of a held context for the interior groups, and no other context"). Presentation may also import `application/`, except `tools`, see section 9.
 - An implementation of a contract port that is not a command lives in `application/` (`CachedTokenProvider`, exception E5).
 - An adapter outside the context matches a port by shape and is handed in by the composition root (`GitHubAdapter` from `shared/infrastructure/github-adapter.ts` as `IdentityVerifier`, wired in `src/composition/auth.ts`).
 - Edges: every edge into the context is in `ALLOWED` (`tests/architecture/helpers.ts`, `context-graph.arch.test.ts` "reports a planted tools to auth crossing and clears the two edges into auth"); a context the graph does not admit is forbidden in `biome.json` (`biome-guards-bite.arch.test.ts` "flags a context nothing admits reaching auth, and auth reaching a context, and not distribution reaching auth"). `BASELINE` weights are only lowered.
-- Composition: `src/composition/` is a known area that only the composition root imports (`old-layout-count.arch.test.ts` "src/ holds no top-level area beyond the known ones", `context-graph.arch.test.ts` "names the composition apart from every context, reports a context reaching it and clears it reaching a context", `biome-guards-bite.arch.test.ts` "flags a context, the kernel, shared, presentation and runtime reaching the composition, and not the composition root").
+- Composition: `src/composition/` is a known area that only the composition root imports (`old-layout-count.arch.test.ts` "src/ holds no top-level area beyond the known ones", `context-graph.arch.test.ts` "names the composition apart from every context, reports a context reaching it and clears it reaching a context", `biome-guards-bite.arch.test.ts` "flags a context, the kernel, shared and presentation reaching the composition, and not the composition root").
 
 ## 6. Kit template
 
@@ -140,7 +140,7 @@ Auth's pass is Appendix A of `aidd_docs/tasks/2026_11/2026_11_06_test-harness-st
 
 | Rule | Mechanism | Proof it bites |
 | --- | --- | --- |
-| R1 interior closed to all but the composition root | `biome.json` folder groups in every override of an importer; `HELD_BY_BIOME`; `biome-context-parity.arch.test.ts` computes them from `ALLOWED` | `biome-guards-bite.arch.test.ts` "flags presentation, runtime and an admitted context reaching auth's domain, ports or infrastructure, and clears the contract and the commands" |
+| R1 interior closed to all but the composition root | `biome.json` folder groups in every override of an importer; `HELD_BY_BIOME`; `biome-context-parity.arch.test.ts` computes them from `ALLOWED` | `biome-guards-bite.arch.test.ts` "flags presentation and an admitted context reaching auth's domain, ports or infrastructure, and clears the contract and the commands" |
 | R1b a contract file has an outside importer | `context-boundary.arch.test.ts` | its "the guard itself": "names a contract file only its context or the composition root imports, and clears one read from outside" |
 | R2 edges | `ALLOWED`, `BASELINE` (`tests/architecture/helpers.ts`), `biome.json` | `context-graph.arch.test.ts` "reports a planted tools to auth crossing and clears the two edges into auth" |
 | R4 purity | `biome.json` `paths` and `noRestrictedGlobals` | section 4 |
@@ -151,7 +151,7 @@ Auth's pass is Appendix A of `aidd_docs/tasks/2026_11/2026_11_06_test-harness-st
 | Code size | not in force here, see section 8 | the code-size branch's own `code-size.arch.test.ts` |
 
 - A list of tools, help included, derives from `REGISTERED_PROFILES`, in its order; the help golden holds the bytes.
-- Translate and installation-side use cases consume the `ToolCatalog` port and ask it for a tool by id; presentation, composition and runtime wiring hand it over. `tools` is in `HELD_BY_BIOME`: its `domain/` and `application/` are the composition root's, and an outside caller imports `tools/contract/` only.
+- Translate and installation-side use cases consume the `ToolCatalog` port and ask it for a tool by id; presentation and composition hand it over. `tools` is in `HELD_BY_BIOME`: its `domain/` and `application/` are the composition root's, and an outside caller imports `tools/contract/` only.
 - A missing capability is a missing file: no `hooks.ts`, no hooks.
 - A caller asks a plugin section a question and never reads its fields; `plugins-are-asked-not-read.arch.test.ts` holds it. Its `STORED_ANSWERS_ALLOWED` lists the declared values a caller needs as written, each with its reason (`aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-tools-clean.md` section 3.1): shrink-only, an entry the code no longer matches fails the test.
 
@@ -210,11 +210,10 @@ Not exceptions of the model: each vanishes when the old layout moves in stage C,
 | # | Deviation | Vanishes when |
 | --- | --- | --- |
 | M3 | the context imports `kernel/` (errors, `Logger`, `AIDD_DIR`) where the target has `shared/` | `kernel/` moves to `shared/` |
-| M4 | presentation reaches `createDeps` in `runtime/wiring/` (and `presentation/hooks/update-notice-hooks.ts` for the update notice and refresh) where the target has `cli.ts` hand it the container | `runtime/wiring/` moves to `composition/` |
-| M5 | `runtime/wiring/framework.ts` imports `src/composition/auth.ts`, `src/composition/distribution.ts`, `src/composition/recipes.ts` and `src/composition/update.ts`, where the target has nobody import `composition/` | the same move, with M4 |
+| M5 | `composition/framework.ts` imports `src/composition/auth.ts`, `src/composition/distribution.ts`, `src/composition/recipes.ts` and `src/composition/update.ts`, where the target has nobody import `composition/` | `composition/framework.ts` stops composing the other modules by import |
 | M7 | `validate-recipes` is declared in `src/presentation/commands/framework.ts`, beside the framework commands, where the target gives each context its own command file | a recipes command file can leave `framework` without changing the parent `declaredCommands()` reads or the order the help golden freezes |
 | M8 | `distribution` is outside `HELD_BY_BIOME` and has no `contract/`, because framework reads its aggregate `Marketplace`, `MarketplaceSourceMode`, `FRAMEWORK_MARKETPLACE_NAME`, `isMarketplaceStale` and `STALE_MAX_DAYS_DEFAULT` from `domain/`, where a `contract/` cannot import it | framework is split and reads a `contract/` instead of the domain |
-| M9 | `MarketplaceRemover` is a port of distribution implemented by framework's remove commands, handed in as a lambda by `runtime/wiring/framework.ts` | the removal moves into distribution, or framework is split |
+| M9 | `MarketplaceRemover` is a port of distribution implemented by framework's remove commands, handed in as a lambda by `composition/framework.ts` | the removal moves into distribution, or framework is split |
 | M10 | `ReleaseLister` and `RepositoryVisibility` are called by framework's application, not by distribution | distribution owns the commands that list releases and assert a repository readable |
 | M11 | `composition/distribution.ts` does not build `AddMarketplace`: its remover is framework's two remove commands, built after distribution | framework is split, so the remover exists when distribution is composed |
 | M-T1 | `kernel/tool.ts` declares the tool ids as a written union (`AiToolId`, `AI_TOOL_IDS`) where the target has an opaque `ToolId` in the shared domain, validated by the registry | `kernel/` moves to `shared/` with M3 and the id becomes the opaque `ToolId` (`target/00-overview.md:238`) |

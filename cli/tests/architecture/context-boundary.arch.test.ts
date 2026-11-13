@@ -23,7 +23,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // file's own context, so a `tools` file is only ever checked against `tools`.
   ],
   // Measured with the composition root excluded, and not one entry is an adapter: the
-  // adapters are wired from `composition/` and `runtime/wiring/` alone, so they stay internal.
+  // adapters are wired from `composition/` alone, so they stay internal.
   distribution: [
     // what a marketplace is, and where it can be read from
     "src/contexts/distribution/domain/marketplace.ts",
@@ -64,7 +64,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // marketplace and this context forgets the plugins that came from it
     "src/contexts/framework/application/flows/marketplace-remove-use-case.ts",
   ],
-  // Measured with the composition root excluded: the adapter is wired from `runtime/wiring/`
+  // Measured with the composition root excluded: the adapter is wired from `composition/`
   // alone, so it stays internal.
   telemetry: [
     // the common record every tool's reader produces
@@ -123,16 +123,12 @@ function contextOf(file: string): string | null {
 /**
  * The composition root wires every context by construction — a profile registers itself
  * through a side-effect import, an adapter must be named to be instantiated — so the whole
- * `runtime/wiring/` directory, and `composition/` beside it, are exempt rather than callers
+ * `composition/` directory is exempt rather than callers
  * this rule tries to catch. `presentation/deps.ts` is its driving port: it names the type of each
  * use case the composition root hands the commands and carries no logic of its own.
  */
 function isCompositionRoot(file: string): boolean {
-  return (
-    file.startsWith("src/runtime/wiring/") ||
-    file.startsWith("src/composition/") ||
-    file === "src/presentation/deps.ts"
-  );
+  return file.startsWith("src/composition/") || file === "src/presentation/deps.ts";
 }
 
 function reachesIntoInterior(
@@ -258,7 +254,7 @@ describe("the guard itself", () => {
     ];
     const importers = new Map([
       ["src/contexts/acme/contract/orphan.ts", new Set(["src/contexts/acme/application/use.ts"])],
-      ["src/contexts/acme/contract/wired.ts", new Set(["src/runtime/wiring/framework.ts"])],
+      ["src/contexts/acme/contract/wired.ts", new Set(["src/composition/framework.ts"])],
       ["src/contexts/acme/contract/shown.ts", new Set(["src/presentation/display/x.ts"])],
       ["src/contexts/acme/contract/shared.ts", new Set(["src/contexts/other/domain/y.ts"])],
     ]);
@@ -272,7 +268,7 @@ describe("the guard itself", () => {
   it("names a public module only its own context imports, and clears one read from outside", () => {
     const importers = new Map([
       ["src/contexts/acme/domain/stale.ts", new Set(["src/contexts/acme/application/use.ts"])],
-      ["src/contexts/acme/domain/wired.ts", new Set(["src/runtime/wiring/framework.ts"])],
+      ["src/contexts/acme/domain/wired.ts", new Set(["src/composition/framework.ts"])],
       ["src/contexts/acme/domain/shown.ts", new Set(["src/presentation/commands/x.ts"])],
     ]);
     const publicModules = {
@@ -324,7 +320,7 @@ describe("the guard itself", () => {
     const importers = new Map([
       [
         "src/contexts/acme/domain/internal.ts",
-        new Set(["src/contexts/acme/application/sibling.ts", "src/runtime/wiring/framework.ts"]),
+        new Set(["src/contexts/acme/application/sibling.ts", "src/composition/framework.ts"]),
       ],
     ]);
     const publicModules = { acme: [] };

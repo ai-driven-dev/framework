@@ -2,10 +2,10 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../src/kernel/tool.js";
-import { CLIOutput } from "../../../src/presentation/output.js";
-import { createDeps, createMenuDeps } from "../../../src/runtime/wiring/framework.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { createDeps, createMenuDeps } from "../../src/composition/framework.js";
+import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../src/kernel/tool.js";
+import { CLIOutput } from "../../src/presentation/output.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 
 describe("createDeps", () => {
   const tools = catalogOf();

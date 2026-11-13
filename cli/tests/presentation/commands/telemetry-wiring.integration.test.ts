@@ -6,7 +6,8 @@ import {
   conflictsOf,
   type ReportFilters,
 } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import type { DepsFactory } from "../../../src/presentation/deps.js";
+import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const ingest = vi.fn();
 const declare = vi.fn();
@@ -21,23 +22,21 @@ const select = vi.fn();
 const input = vi.fn();
 const propose = vi.fn();
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({
-    prompter: { confirm, select, input },
-    telemetry: {
-      telemetryOnUseCase: { execute: turnOn },
-      telemetryOffUseCase: { execute: turnOff },
-      forgetTelemetryUseCase: { execute: forget },
-      ingestUsageUseCase: { execute: ingest },
-      declareTaskUseCase: { execute: declare },
-      telemetryStatusUseCase: { execute: show },
-      reportUsageUseCase: { execute: report },
-      manageIdentityUseCase: identity,
-      proposeIdentityUseCase: { execute: propose },
-    },
-  })),
-  createMenuDeps: vi.fn(),
+const createDeps = vi.fn(async () => ({
+  prompter: { confirm, select, input },
+  telemetry: {
+    telemetryOnUseCase: { execute: turnOn },
+    telemetryOffUseCase: { execute: turnOff },
+    forgetTelemetryUseCase: { execute: forget },
+    ingestUsageUseCase: { execute: ingest },
+    declareTaskUseCase: { execute: declare },
+    telemetryStatusUseCase: { execute: show },
+    reportUsageUseCase: { execute: report },
+    manageIdentityUseCase: identity,
+    proposeIdentityUseCase: { execute: propose },
+  },
 }));
+const depsFactory = asDepsFactory(createDeps);
 
 const { registerTelemetryCommand } = await import(
   "../../../src/presentation/commands/telemetry.js"
@@ -76,7 +75,7 @@ async function run(...args: string[]): Promise<number | null> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerTelemetryCommand(program, catalogOf());
+  registerTelemetryCommand(program, depsFactory);
   try {
     await program.parseAsync(["node", "aidd", "telemetry", ...args]);
     return null;
@@ -646,7 +645,7 @@ describe("the telemetry command surface", () => {
 
   it("prints each subcommand's help as the golden pins it", () => {
     const program = new Command().name("aidd");
-    registerTelemetryCommand(program, catalogOf());
+    registerTelemetryCommand(program, depsFactory);
     const telemetry = program.commands.find((command) => command.name() === "telemetry");
     const helps = [telemetry, ...(telemetry?.commands ?? [])].map((command) => ({
       invocation: command === telemetry ? "aidd telemetry" : `aidd telemetry ${command?.name()}`,

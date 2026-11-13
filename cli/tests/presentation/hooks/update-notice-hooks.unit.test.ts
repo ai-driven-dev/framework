@@ -1,16 +1,13 @@
 import { Command } from "commander";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import type { DepsFactory } from "../../../src/presentation/deps.js";
+import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const printNotice = vi.fn(async () => ({ lines: ["CLI update available"] }));
 const refresh = vi.fn(async () => ({}));
 const warn = vi.fn();
 const debug = vi.fn();
 const createDeps = vi.fn();
-
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: (...args: unknown[]) => createDeps(...args),
-}));
 
 const { registerUpdateNoticeHooks } = await import(
   "../../../src/presentation/hooks/update-notice-hooks.js"
@@ -21,7 +18,7 @@ async function run(path: string, extraArgs: string[] = []): Promise<void> {
   const program = new Command("aidd");
   program.option("--verbose");
   program.exitOverride();
-  registerUpdateNoticeHooks(program, catalogOf());
+  registerUpdateNoticeHooks(program, asDepsFactory(createDeps));
   let parent = program;
   const names = path.split(" ");
   for (const name of names.slice(0, -1)) parent = parent.command(name);
@@ -72,8 +69,7 @@ describe("the update notice hook", () => {
     expect(createDeps).toHaveBeenCalledWith(
       process.cwd(),
       { verbose: true },
-      expect.objectContaining({ verbose: true }),
-      expect.anything()
+      expect.objectContaining({ verbose: true })
     );
   });
 
@@ -82,8 +78,7 @@ describe("the update notice hook", () => {
     expect(createDeps).toHaveBeenCalledWith(
       process.cwd(),
       { verbose: false },
-      expect.objectContaining({ verbose: false }),
-      expect.anything()
+      expect.objectContaining({ verbose: false })
     );
   });
 
@@ -139,8 +134,7 @@ describe("the update refresh hook", () => {
     expect(createDeps).toHaveBeenLastCalledWith(
       process.cwd(),
       { verbose: true },
-      expect.objectContaining({ verbose: true }),
-      expect.anything()
+      expect.objectContaining({ verbose: true })
     );
   });
 

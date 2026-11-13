@@ -6,7 +6,7 @@ import {
   UserScopeFilterUnsupportedError,
 } from "../../kernel/errors.js";
 import type { AiToolId, ToolId } from "../../kernel/tool.js";
-import { createDeps } from "../../runtime/wiring/framework.js";
+import type { Deps, DepsFactory } from "../deps.js";
 import {
   printActivationOutcome,
   printRestoreOutcome,
@@ -30,7 +30,7 @@ interface SyncCmdOptions {
  * source, then drives native activation, through `deps.userManifestRepo` and never this
  * project's own manifest. */
 async function runUserScopeSync(
-  deps: Awaited<ReturnType<typeof createDeps>>,
+  deps: Deps,
   output: CLIOutput,
   projectRoot: string,
   fileArgs: string[],
@@ -76,13 +76,14 @@ async function runUserScopeSync(
 async function runSyncAction(
   program: Command,
   tools: ToolCatalog,
+  createDeps: DepsFactory,
   fileArgs: string[],
   cmdOptions: SyncCmdOptions
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   const errorHandler = new ErrorHandler(output);
   try {
-    const deps = await createDeps(projectRoot, { verbose }, output, tools);
+    const deps = await createDeps(projectRoot, { verbose }, output);
     const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
 
     if (scope === "user") {
@@ -123,7 +124,7 @@ async function runSyncAction(
 }
 
 async function runScopedSync(
-  deps: Awaited<ReturnType<typeof createDeps>>,
+  deps: Deps,
   output: CLIOutput,
   projectRoot: string,
   fileArgs: string[],
@@ -159,7 +160,11 @@ async function runScopedSync(
   if (activation.errors.length > 0) throw new SyncFailedError(activation.errors);
 }
 
-export function registerSyncCommand(program: Command, tools: ToolCatalog): void {
+export function registerSyncCommand(
+  program: Command,
+  tools: ToolCatalog,
+  createDeps: DepsFactory
+): void {
   program
     .command("sync")
     .description(
@@ -176,6 +181,6 @@ export function registerSyncCommand(program: Command, tools: ToolCatalog): void 
     )
     .option("--global", `${GLOBAL_FLAG_HELP}, rebuilding its files from the framework source`)
     .action(async (fileArgs: string[], cmdOptions: SyncCmdOptions) => {
-      await runSyncAction(program, tools, fileArgs, cmdOptions);
+      await runSyncAction(program, tools, createDeps, fileArgs, cmdOptions);
     });
 }

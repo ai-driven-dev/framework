@@ -181,14 +181,13 @@ export function contextOf(file: string): string {
   if (file.startsWith("src/kernel/")) return "kernel";
   if (file.startsWith("src/shared/")) return "shared";
   if (file.startsWith("src/presentation/")) return "presentation";
-  if (file.startsWith("src/runtime/")) return "runtime";
   if (file.startsWith("src/composition/")) return "composition";
   return "outside";
 }
 
 /** A layer a context may not depend on: the arrows run towards the kernel, never back. The
  * composition wires every context and is imported by the composition root alone. */
-export const BELOW_NOTHING = new Set(["presentation", "runtime", "composition"]);
+export const BELOW_NOTHING = new Set(["presentation", "composition"]);
 
 export function isContext(name: string): boolean {
   return !BELOW_NOTHING.has(name) && !["kernel", "shared", "outside"].includes(name);
@@ -200,14 +199,14 @@ interface Crossing {
   readonly to: string;
   /** `domain`, `application`, `infrastructure`, or a migrated context's `ports` or `contract`
    * or null when `file` is not itself under a context's own layer split (kernel, shared,
-   * presentation, runtime). */
+   * presentation). */
   readonly layer: "domain" | "application" | "infrastructure" | "ports" | "contract" | null;
 }
 
 const LAYER_OF_FILE = /^src\/contexts\/[^/]+\/(domain|application|infrastructure|ports|contract)\//;
 
-/** Whether an import from one layer to another is an edge worth naming. Presentation and
- * runtime may reach down, so only the reverse is one. */
+/** Whether an import from one layer to another is an edge worth naming. Presentation may
+ * reach down, so only the reverse is one. */
 export function isCrossing(from: string, to: string): boolean {
   if (from === to || to === "kernel" || to === "shared") return false;
   if (from === "outside" || to === "outside") return false;

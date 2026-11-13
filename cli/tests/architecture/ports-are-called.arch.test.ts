@@ -316,7 +316,7 @@ describe("the guard itself", () => {
         port,
         ["export interface Thing {", "  doIt(x: number): void;", "  gone(): void;", "}"].join("\n"),
       ],
-      ["src/runtime/caller.ts", "thing.doIt(1);"],
+      ["src/composition/caller.ts", "thing.doIt(1);"],
     ]);
 
     expect(uncalledMethods(bodies, [port])).toEqual([`${port} :: Thing.gone`]);
@@ -326,7 +326,10 @@ describe("the guard itself", () => {
     const port = "src/kernel/ports/thing.ts";
     const bodies = new Map([
       [port, ["export interface Thing {", "  doIt(x: number): void;", "}"].join("\n")],
-      ["src/runtime/thing-adapter.ts", "class ThingAdapter { doIt(x: number): void {} }"],
+      [
+        "src/shared/infrastructure/thing-adapter.ts",
+        "class ThingAdapter { doIt(x: number): void {} }",
+      ],
     ]);
 
     expect(uncalledMethods(bodies, [port])).toEqual([`${port} :: Thing.doIt`]);

@@ -18,7 +18,7 @@ paths:
 - One caller: move it down.
 - Never share for a caller not yet written.
 - An area is `application/<subdirectory>/` or the application root.
-- `runtime/wiring/` is never an area.
+- `composition/` is never an area.
 - Count first: `grep -rl <module> src`; `earned-sharing.arch.test.ts` counts the same.
 - A file nested under a shared module is its private step.
 - A promoted module follows `0-hexagonal.md`.

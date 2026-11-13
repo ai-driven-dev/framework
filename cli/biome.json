@@ -79,7 +79,6 @@
                       "**/application/**",
                       "**/infrastructure/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/shared/**"
                     ],
                     "message": "kernel must not import any context or shared: it is the old home of the shared vocabulary, not a consumer of one"
@@ -105,12 +104,7 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/contexts/**",
-                      "**/presentation/**",
-                      "**/runtime/**",
-                      "**/infrastructure/**"
-                    ],
+                    "group": ["**/contexts/**", "**/presentation/**", "**/infrastructure/**"],
                     "message": "shared/ports declares an interface and imports no context, no layer above it and no adapter: see 0-contexts.md"
                   },
                   {
@@ -282,7 +276,7 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["**/contexts/**", "**/presentation/**", "**/runtime/**"],
+                    "group": ["**/contexts/**", "**/presentation/**"],
                     "message": "shared/infrastructure implements a port and imports no context and nothing above it: a context is satisfied by shape, not by import"
                   },
                   {
@@ -298,58 +292,6 @@
     },
     {
       "includes": ["src/presentation/**/*.ts"],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": ["**/shared/infrastructure/**"],
-                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
-                  },
-                  {
-                    "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/host-registration/infrastructure/**"],
-                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
-                  },
-                  {
-                    "group": [
-                      "**/update/domain/**",
-                      "**/update/ports/**",
-                      "**/update/infrastructure/**"
-                    ],
-                    "message": "update publishes its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
-                  },
-                  {
-                    "group": [
-                      "**/recipes/domain/**",
-                      "**/recipes/ports/**",
-                      "**/recipes/infrastructure/**"
-                    ],
-                    "message": "recipes publishes its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "includes": ["src/runtime/**/*.ts", "!src/runtime/wiring/**"],
       "linter": {
         "rules": {
           "style": {
@@ -426,13 +368,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -627,7 +564,6 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -662,7 +598,6 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -694,13 +629,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "a port must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "a port must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -889,8 +819,7 @@
                       "**/application/**",
                       "**/infrastructure/**",
                       "**/ports/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
+                      "**/presentation/**"
                     ],
                     "message": "contract is what other contexts may import: it imports no other folder of its context, nor anything above it"
                   },
@@ -1076,13 +1005,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -1280,7 +1204,6 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/recipes/**"
                     ],
@@ -1322,7 +1245,6 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/recipes/**"
                     ],
@@ -1357,13 +1279,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "a port must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "a port must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -1550,13 +1467,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -1753,8 +1665,7 @@
                       "**/host-registration/**",
                       "**/auth/**",
                       "**/update/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
+                      "**/presentation/**"
                     ],
                     "message": "recipes imports only the kernel, see context-graph.arch.test.ts"
                   },
@@ -1794,8 +1705,7 @@
                       "**/host-registration/**",
                       "**/auth/**",
                       "**/update/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
+                      "**/presentation/**"
                     ],
                     "message": "recipes imports only the kernel, see context-graph.arch.test.ts"
                   },
@@ -1824,13 +1734,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "a port must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "a port must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -2014,13 +1919,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -2215,7 +2115,6 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/auth/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -2250,7 +2149,6 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/auth/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -2287,8 +2185,7 @@
                       "**/application/**",
                       "**/infrastructure/**",
                       "**/ports/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
+                      "**/presentation/**"
                     ],
                     "message": "contract is what other contexts may import: it imports no other folder of its context, nor anything above it"
                   },
@@ -2479,8 +2376,7 @@
                       "**/application/**",
                       "**/infrastructure/**",
                       "**/ports/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
+                      "**/presentation/**"
                     ],
                     "message": "contract is what other contexts may import: it imports no other folder of its context, nor anything above it"
                   },
@@ -2666,13 +2562,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
                   },
                   {
                     "group": ["**/telemetry/**", "**/update/**", "**/recipes/**"],
@@ -2719,10 +2610,6 @@
                     "message": "framework may import translate, tools and distribution, never telemetry \u2014 see context-graph.arch.test.ts"
                   },
                   {
-                    "group": ["**/runtime/**"],
-                    "message": "runtime wires the contexts and is imported by nothing, see context-graph.arch.test.ts"
-                  },
-                  {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   },
@@ -2758,11 +2645,10 @@
                     "group": [
                       "**/telemetry/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "framework/infrastructure may import translate, tools and distribution, never telemetry, presentation or runtime \u2014 see context-graph.arch.test.ts"
+                    "message": "framework/infrastructure may import translate, tools and distribution, never telemetry or presentation \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -2801,13 +2687,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -2856,7 +2737,6 @@
                       "**/telemetry/**",
                       "**/auth/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -2894,7 +2774,6 @@
                       "**/telemetry/**",
                       "**/auth/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -2933,13 +2812,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -2978,13 +2852,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -3031,7 +2900,6 @@
                       "**/telemetry/**",
                       "**/auth/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -3066,7 +2934,6 @@
                       "**/telemetry/**",
                       "**/auth/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -3098,13 +2965,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -3144,13 +3006,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "a port must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "a port must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -3199,7 +3056,6 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -3241,12 +3097,11 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record, and reaches no presentation or runtime (context-graph.arch.test.ts)"
+                    "message": "distribution knows no tool, no translation and no installation record, and reaches no presentation (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -3277,13 +3132,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "**/application/**",
-                      "**/infrastructure/**",
-                      "**/presentation/**",
-                      "**/runtime/**"
-                    ],
-                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
                   },
                   {
                     "group": [
@@ -3330,7 +3180,6 @@
                       "**/tools/**",
                       "**/auth/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -3365,7 +3214,6 @@
                       "**/tools/**",
                       "**/auth/**",
                       "**/presentation/**",
-                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -3433,7 +3281,6 @@
         "src/kernel/**",
         "src/shared/**",
         "src/contexts/**",
-        "src/runtime/**",
         "src/presentation/terminal/prompter-adapter.ts",
         "src/presentation/project-root.ts"
       ],

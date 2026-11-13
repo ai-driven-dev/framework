@@ -3,7 +3,6 @@ description: Apply when a command or use case needs a collaborator; every depend
 paths:
   - "src/presentation/commands/**/*.ts"
   - "src/cli.ts"
-  - "src/runtime/wiring/**/*.ts"
   - "src/composition/**/*.ts"
 ---
 
@@ -11,17 +10,16 @@ paths:
 
 ## Factories
 
-- `createDeps(projectRoot, options, output)` builds the full graph.
+- `createDeps(projectRoot, options, output)` builds the full graph. A command receives it as a `DepsFactory` argument and never imports `composition/`.
 - Call it from a command action, never before `program.parse()`.
 - `createMenuDeps(projectRoot)` serves the menu: a `ManifestRepository`, a `Prompter`.
 - Extend that factory for a pre-parse need.
 - Never instantiate an adapter in `cli.ts`.
-- The composition root is `runtime/wiring/` in the old layout and `composition/` in the target one.
+- The composition root is `composition/`.
 - A migrated context's adapters are instantiated by the composition root only.
-- A migrated context's wiring module is `composition/<context>.ts`; the others stay under `runtime/wiring/`.
-- `runtime/wiring/framework.ts` composes them all until the root moves to `composition/`.
+- A context's wiring module is `composition/<context>.ts`; `composition/framework.ts` composes them all.
 - Nothing but the composition root imports `composition/` (`context-graph.arch.test.ts`, `biome.json`).
-- `cli.ts` builds two things: the version reader, the `CLIOutput`.
+- `cli.ts` builds the version reader, the `CLIOutput` and the `DepsFactory` and `MenuDepsFactory` it hands every command (`presentation/deps.ts`).
 
 ## Once
 

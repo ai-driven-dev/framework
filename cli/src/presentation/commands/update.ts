@@ -1,6 +1,5 @@
 import type { Command } from "commander";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { createDeps } from "../../runtime/wiring/framework.js";
+import type { DepsFactory } from "../deps.js";
 import { printSelfUpdateResult } from "../display/update-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -16,14 +15,14 @@ interface UpdateCmdOptions {
  * `marketplace refresh`. */
 async function runUpdateAction(
   program: Command,
-  tools: ToolCatalog,
+  createDeps: DepsFactory,
   cmdOptions: UpdateCmdOptions
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
   const errorHandler = new ErrorHandler(output);
 
   try {
-    const deps = await createDeps(projectRoot, { verbose }, output, tools);
+    const deps = await createDeps(projectRoot, { verbose }, output);
 
     const result = await deps.selfUpdate.execute({
       check: cmdOptions.check,
@@ -37,7 +36,7 @@ async function runUpdateAction(
   }
 }
 
-export function registerUpdateCommand(program: Command, tools: ToolCatalog): void {
+export function registerUpdateCommand(program: Command, createDeps: DepsFactory): void {
   program
     .command("update")
     .alias("upgrade")
@@ -46,6 +45,6 @@ export function registerUpdateCommand(program: Command, tools: ToolCatalog): voi
     .option("--dry-run", "Preview the update without installing", false)
     .option("-f, --force", "Reinstall even if already up to date", false)
     .action(async (cmdOptions: UpdateCmdOptions) => {
-      await runUpdateAction(program, tools, cmdOptions);
+      await runUpdateAction(program, createDeps, cmdOptions);
     });
 }

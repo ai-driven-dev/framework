@@ -69,7 +69,6 @@ describe("biome carries the exit and default-export rules", () => {
       "src/kernel/**",
       "src/shared/**",
       "src/contexts/**",
-      "src/runtime/**",
       "src/presentation/terminal/prompter-adapter.ts",
       "src/presentation/project-root.ts",
     ]);
@@ -158,10 +157,7 @@ describe("biome carries the exit and default-export rules", () => {
 
 /** What distribution's layers must not import, and the layers that try it. */
 const DISTRIBUTION_LAYERS = ["domain", "ports", "application", "infrastructure"] as const;
-const DISTRIBUTION_REACHES = [
-  ["framework", DISTRIBUTION_LAYERS],
-  ["runtime", DISTRIBUTION_LAYERS],
-] as const;
+const DISTRIBUTION_REACHES = [["framework", DISTRIBUTION_LAYERS]] as const;
 const distributionReaches = (): string[] =>
   DISTRIBUTION_REACHES.flatMap(([target, layers]) =>
     layers.map((layer) => `src/contexts/distribution/${layer}/reaches-${target}.ts`)
@@ -184,8 +180,6 @@ describe("the guard itself", () => {
       "src/contexts/tools/infrastructure",
       "src/presentation/display",
       "src/presentation/terminal",
-      "src/runtime/git",
-      "src/runtime/wiring",
       "src/shared/ports",
       "src/shared/infrastructure",
       "src/contexts/tools/domain",
@@ -305,8 +299,7 @@ describe("the guard itself", () => {
     for (const [folder, file, name] of authFolders) {
       for (const [dir, up] of [
         ["src/presentation/display", "../../contexts/"],
-        ["src/runtime/git", "../../contexts/"],
-        ["src/runtime/wiring", "../../contexts/"],
+        ["src/composition", "../contexts/"],
         ["src/contexts/distribution/infrastructure", "../../"],
         ["src/contexts/framework/application", "../../"],
       ] as const) {
@@ -364,7 +357,7 @@ describe("the guard itself", () => {
       );
     }
     for (const file of distributionReaches()) {
-      const target = file.includes("framework") ? "framework" : "runtime";
+      const target = "framework";
       writeFileSync(
         join(planted, file),
         `import type { X } from "../../../${target}/x.js";\nexport type Z = X;\n`
@@ -378,8 +371,7 @@ describe("the guard itself", () => {
       ["src/kernel/reaches-composition.ts", "../"],
       ["src/shared/infrastructure/reaches-composition.ts", "../../"],
       ["src/presentation/display/reaches-composition.ts", "../../"],
-      ["src/runtime/git/reaches-composition.ts", "../../"],
-      ["src/runtime/wiring/reaches-composition.ts", "../../"],
+      ["src/composition/reaches-composition.ts", "../"],
     ] as const) {
       writeFileSync(join(planted, file), reachesComposition(up));
     }
@@ -388,8 +380,7 @@ describe("the guard itself", () => {
     for (const [file, up] of [
       ["src/contexts/tools/infrastructure/reaches-shared.ts", "../../../"],
       ["src/presentation/display/reaches-shared.ts", "../../"],
-      ["src/runtime/git/reaches-shared.ts", "../../"],
-      ["src/runtime/wiring/reaches-shared.ts", "../../"],
+      ["src/composition/reaches-shared.ts", "../"],
     ] as const) {
       writeFileSync(join(planted, file), reachesSharedInfrastructure(up));
     }
@@ -426,7 +417,7 @@ describe("the guard itself", () => {
     rmSync(planted, { recursive: true, force: true });
   });
 
-  it("flags process.exit under kernel/, contexts/, runtime/ and the two moved presentation files, and leaves the command edge alone", () => {
+  it("flags process.exit under kernel/, contexts/ and the two moved presentation files, and leaves the command edge alone", () => {
     const findings = biomeFindings(planted);
     expect(findings, findings.join(", ")).toContain("src/kernel/exit.ts:plugin");
     expect(
@@ -464,18 +455,17 @@ describe("the guard itself", () => {
     }
   });
 
-  it("flags a context's infrastructure, presentation and runtime reaching shared/infrastructure, and not the composition root", () => {
+  it("flags a context's infrastructure, and presentation reaching shared/infrastructure, and not the composition root", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
 
     for (const file of [
       "src/contexts/tools/infrastructure/reaches-shared.ts",
       "src/presentation/display/reaches-shared.ts",
-      "src/runtime/git/reaches-shared.ts",
     ]) {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
     }
-    expect(findings).not.toContain(`src/runtime/wiring/reaches-shared.ts:${rule}`);
+    expect(findings).not.toContain(`src/composition/reaches-shared.ts:${rule}`);
   });
 
   it("flags a context nothing admits reaching auth, and auth reaching a context, and not distribution reaching auth", () => {
@@ -493,12 +483,11 @@ describe("the guard itself", () => {
     );
   });
 
-  it("flags presentation, runtime and an admitted context reaching auth's domain, ports or infrastructure, and clears the contract and the commands", () => {
+  it("flags presentation and an admitted context reaching auth's domain, ports or infrastructure, and clears the contract and the commands", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
     const importers = [
       "src/presentation/display",
-      "src/runtime/git",
       "src/contexts/distribution/infrastructure",
       "src/contexts/framework/application",
     ];
@@ -513,7 +502,7 @@ describe("the guard itself", () => {
     }
     for (const folder of ["domain", "ports", "application", "infrastructure", "contract"]) {
       expect(findings, "the composition root imports every folder of auth").not.toContain(
-        `src/runtime/wiring/reaches-auth-${folder}.ts:${rule}`
+        `src/composition/reaches-auth-${folder}.ts:${rule}`
       );
     }
   });
@@ -554,14 +543,14 @@ describe("the guard itself", () => {
     );
   });
 
-  it("flags distribution reaching framework, and distribution reaching runtime", () => {
+  it("flags and distribution reaching framework", () => {
     const findings = biomeFindings(planted);
     for (const file of distributionReaches()) {
       expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedImports`);
     }
   });
 
-  it("flags a context, the kernel, shared, presentation and runtime reaching the composition, and not the composition root", () => {
+  it("flags a context, the kernel, shared and presentation reaching the composition, and not the composition root", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
 
@@ -570,11 +559,10 @@ describe("the guard itself", () => {
       "src/kernel/reaches-composition.ts",
       "src/shared/infrastructure/reaches-composition.ts",
       "src/presentation/display/reaches-composition.ts",
-      "src/runtime/git/reaches-composition.ts",
     ]) {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
     }
-    expect(findings).not.toContain(`src/runtime/wiring/reaches-composition.ts:${rule}`);
+    expect(findings).not.toContain(`src/composition/reaches-composition.ts:${rule}`);
   });
 
   it("flags a package or a Node builtin in a pure folder, and clears path and crypto", () => {

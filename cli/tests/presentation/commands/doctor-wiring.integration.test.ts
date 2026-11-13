@@ -1,8 +1,9 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
+import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { registeredAiConfig } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../same-instance.js";
+import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const doctorAll = vi.fn();
 const statusAll = vi.fn();
@@ -12,21 +13,18 @@ const doctorRegistration = vi.fn();
 const loadUserManifest = vi.fn();
 const homedir = vi.fn(() => "/home/dev");
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({
-    doctorAllUseCase: { execute: doctorAll },
-    statusAllUseCase: { execute: statusAll },
-    doctorUseCase: { execute: doctorScoped },
-    statusUseCase: { execute: statusScoped },
-    doctorRegistrationUseCase: { execute: doctorRegistration },
-    userManifestRepo: { load: loadUserManifest },
-    homedir,
-    environment: { get: () => undefined, set: () => undefined },
-  })),
-  createMenuDeps: vi.fn(),
+const createDeps = vi.fn(async () => ({
+  doctorAllUseCase: { execute: doctorAll },
+  statusAllUseCase: { execute: statusAll },
+  doctorUseCase: { execute: doctorScoped },
+  statusUseCase: { execute: statusScoped },
+  doctorRegistrationUseCase: { execute: doctorRegistration },
+  userManifestRepo: { load: loadUserManifest },
+  homedir,
+  environment: { get: () => undefined, set: () => undefined },
 }));
+const depsFactory = asDepsFactory(createDeps);
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerDoctorCommand } = await import("../../../src/presentation/commands/doctor.js");
 
 const PROJECT_ROOT = process.cwd();
@@ -85,7 +83,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerDoctorCommand(program, CATALOG);
+  registerDoctorCommand(program, CATALOG, depsFactory);
   await program.parseAsync(["node", "aidd", "doctor", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -513,8 +511,7 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 
@@ -534,7 +531,7 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
 describe("aidd doctor — the help surface", () => {
   function doctorCommand(): Command {
     const program = new Command();
-    registerDoctorCommand(program, CATALOG);
+    registerDoctorCommand(program, CATALOG, depsFactory);
     const doctor = program.commands.find((command) => command.name() === "doctor");
     if (doctor === undefined) throw new Error("doctor command was not registered");
     return doctor;

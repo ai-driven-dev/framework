@@ -1,7 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-import { sameInstance } from "../same-instance.js";
+import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const restoreAll = vi.fn();
 const restoreOne = vi.fn();
@@ -12,20 +13,17 @@ const currentVersion = vi.fn();
 const userManifestRepo = { load: vi.fn() };
 const userPluginUpdate = vi.fn();
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({
-    restoreAllUseCase: { execute: restoreAll },
-    restoreUseCase: { execute: restoreOne },
-    marketplaceSyncSettingsUseCase: { execute: activation },
-    manifestRepo: { load: loadManifest },
-    userManifestRepo,
-    userPluginUpdateUseCase: { execute: userPluginUpdate },
-    currentVersionProvider: { get: currentVersion },
-  })),
-  createMenuDeps: vi.fn(),
+const createDeps = vi.fn(async () => ({
+  restoreAllUseCase: { execute: restoreAll },
+  restoreUseCase: { execute: restoreOne },
+  marketplaceSyncSettingsUseCase: { execute: activation },
+  manifestRepo: { load: loadManifest },
+  userManifestRepo,
+  userPluginUpdateUseCase: { execute: userPluginUpdate },
+  currentVersionProvider: { get: currentVersion },
 }));
+const depsFactory = asDepsFactory(createDeps);
 
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
 const { registerSyncCommand } = await import("../../../src/presentation/commands/sync.js");
 
 const PROJECT_ROOT = process.cwd();
@@ -85,7 +83,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerSyncCommand(program, CATALOG);
+  registerSyncCommand(program, CATALOG, depsFactory);
   await program.parseAsync(["node", "aidd", "sync", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -355,8 +353,7 @@ describe("aidd sync — how it builds its graph", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 });

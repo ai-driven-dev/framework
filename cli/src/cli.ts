@@ -1,5 +1,9 @@
 import { platform } from "node:os";
 import { Command } from "commander";
+import {
+  createDeps as createFrameworkDeps,
+  createMenuDeps as createFrameworkMenuDeps,
+} from "./composition/framework.js";
 import { wireTools } from "./composition/tools.js";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
 import { registerCleanCommand } from "./presentation/commands/clean.js";
@@ -13,6 +17,7 @@ import { registerSyncCommand } from "./presentation/commands/sync.js";
 import { registerTelemetryCommand } from "./presentation/commands/telemetry.js";
 import { registerTranslateCommand } from "./presentation/commands/translate.js";
 import { registerUpdateCommand } from "./presentation/commands/update.js";
+import type { DepsFactory, MenuDepsFactory } from "./presentation/deps.js";
 import { registerUpdateNoticeHooks } from "./presentation/hooks/update-notice-hooks.js";
 import { CurrentVersionAdapter } from "./shared/infrastructure/current-version-adapter.js";
 
@@ -24,6 +29,11 @@ const currentVersion = new CurrentVersionAdapter().get();
 
 const tools = wireTools();
 
+// The composition edge: commands receive these factories and never import the wiring.
+const createDeps: DepsFactory = (projectRoot, options, output) =>
+  createFrameworkDeps(projectRoot, options, output, tools);
+const createMenuDeps: MenuDepsFactory = createFrameworkMenuDeps;
+
 const program = new Command();
 
 program
@@ -32,19 +42,19 @@ program
   .version(formatVersion(currentVersion), "-V, --version", "Show version number")
   .option("--verbose", "Show detailed diagnostic output", false);
 
-registerSetupCommand(program, tools);
-registerFrameworkCommand(program, tools);
-registerTranslateCommand(program, tools);
-registerPluginCommand(program, tools);
-registerMarketplaceCommand(program, tools);
-registerAuthCommand(program, tools);
-registerSyncCommand(program, tools);
-registerUpdateCommand(program, tools);
-registerDoctorCommand(program, tools);
-registerCleanCommand(program, tools);
-registerTelemetryCommand(program, tools);
+registerSetupCommand(program, tools, createDeps);
+registerFrameworkCommand(program, tools, createDeps);
+registerTranslateCommand(program, tools, createDeps);
+registerPluginCommand(program, tools, createDeps, createMenuDeps);
+registerMarketplaceCommand(program, tools, createDeps, createMenuDeps);
+registerAuthCommand(program, createDeps);
+registerSyncCommand(program, tools, createDeps);
+registerUpdateCommand(program, createDeps);
+registerDoctorCommand(program, tools, createDeps);
+registerCleanCommand(program, tools, createDeps);
+registerTelemetryCommand(program, createDeps);
 
-registerUpdateNoticeHooks(program, tools);
+registerUpdateNoticeHooks(program, createDeps);
 
 // A reader that stops reading (`aidd … | head -1`) closes stdout under the run: what is left to
 // print has nobody to read it, so the run goes on without it and exits on its own outcome.
@@ -55,7 +65,7 @@ process.stdout.on("error", (error: NodeJS.ErrnoException) => {
 const cliArgs = process.argv.slice(2);
 
 if (cliArgs.length === 0 && process.stdout.isTTY) {
-  runMenuLoop(tools);
+  runMenuLoop(tools, createMenuDeps);
 } else {
   program.parse(process.argv);
 }

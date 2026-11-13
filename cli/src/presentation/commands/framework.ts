@@ -4,7 +4,7 @@ import { Manifest } from "../../contexts/framework/domain/manifest.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../kernel/tool.js";
 import { isAiToolId, isIdeToolId, VALID_TOOL_IDS } from "../../kernel/tool.js";
-import { createDeps } from "../../runtime/wiring/framework.js";
+import type { Deps, DepsFactory } from "../deps.js";
 import {
   printToolAlreadyInstalled,
   printToolInstalled,
@@ -20,8 +20,6 @@ import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { reportSyncActivation } from "./sync-native-activation.js";
-
-type Deps = Awaited<ReturnType<typeof createDeps>>;
 
 export function assertKnownToolId(toolId: string): asserts toolId is ToolId {
   if (!isAiToolId(toolId) && !isIdeToolId(toolId)) {
@@ -175,7 +173,11 @@ async function runFrameworkUpdate(
   );
 }
 
-export function registerFrameworkCommand(program: Command, catalog: ToolCatalog): void {
+export function registerFrameworkCommand(
+  program: Command,
+  catalog: ToolCatalog,
+  createDeps: DepsFactory
+): void {
   const framework = program
     .command("framework")
     .description("Manage the framework's lifecycle on installed tools");
@@ -192,7 +194,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         await runFrameworkInstall(
           deps,
           output,
@@ -216,7 +218,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         await runFrameworkRemove(deps, output, projectRoot, cmdOptions.tool as ToolId, catalog);
       } catch (error) {
         errorHandler.handle(error);
@@ -234,7 +236,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         await runFrameworkUpdate(
           deps,
           output,
@@ -256,7 +258,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const { rules } = await deps.listInstalledRulesUseCase.execute({
           projectRoot,
           tools: catalog,
@@ -277,7 +279,7 @@ export function registerFrameworkCommand(program: Command, catalog: ToolCatalog)
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, catalog);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const directories = [];
         if (options.all)
           directories.push({ path: join(projectRoot, "aidd_docs", "recipes"), optional: true });

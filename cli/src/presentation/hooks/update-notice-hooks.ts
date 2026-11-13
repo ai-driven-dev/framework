@@ -1,6 +1,5 @@
 import type { Command } from "commander";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { createDeps } from "../../runtime/wiring/framework.js";
+import type { DepsFactory } from "../deps.js";
 import { CLIOutput } from "../output.js";
 
 // Commands already paying for network I/O, so the update-check refresh rides one of them.
@@ -13,19 +12,16 @@ const ONLINE_COMMAND_PATHS = new Set([
   "sync",
 ]);
 
-export function registerUpdateNoticeHooks(program: Command, tools: ToolCatalog): void {
+export function registerUpdateNoticeHooks(program: Command, createDeps: DepsFactory): void {
   program.hook("preAction", async (_thisCommand, actionCommand) => {
     if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
     // A hook runs `telemetry ingest --quiet`; an update notice would break its silence.
     if (resolveCommandPath(actionCommand).startsWith("telemetry")) return;
     const opts = program.opts<{ verbose?: boolean }>();
     const output = new CLIOutput(opts.verbose ?? false);
-    const deps = await createDeps(
-      process.cwd(),
-      { verbose: opts.verbose ?? false },
-      output,
-      tools
-    ).catch(() => null);
+    const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
+      () => null
+    );
     if (!deps) return;
     // A bare verb with no subject means "the CLI itself" (Claude Code/Codex convention):
     // `update` resolves the latest version on its own, so the generic check is redundant.
@@ -51,12 +47,9 @@ export function registerUpdateNoticeHooks(program: Command, tools: ToolCatalog):
     if (!ONLINE_COMMAND_PATHS.has(resolveCommandPath(actionCommand))) return;
     const opts = program.opts<{ verbose?: boolean }>();
     const output = new CLIOutput(opts.verbose ?? false);
-    const deps = await createDeps(
-      process.cwd(),
-      { verbose: opts.verbose ?? false },
-      output,
-      tools
-    ).catch(() => null);
+    const deps = await createDeps(process.cwd(), { verbose: opts.verbose ?? false }, output).catch(
+      () => null
+    );
     if (!deps) return;
     await deps.refreshUpdateCheck.execute().catch((err: unknown) => {
       deps.logger.debug(

@@ -69,18 +69,18 @@ const NON_GRAPH_EXTRA: Readonly<Record<string, readonly string[]>> = {
  * context. */
 function genericLayerTargets(layer: Layer): ReadonlySet<string> {
   if (layer === "domain") {
-    return new Set(["application", "infrastructure", "presentation", "runtime"]);
+    return new Set(["application", "infrastructure", "presentation"]);
   }
   if (layer === "ports") return genericLayerTargets("domain");
   if (layer === "contract") {
-    return new Set(["domain", "application", "infrastructure", "ports", "presentation", "runtime"]);
+    return new Set(["domain", "application", "infrastructure", "ports", "presentation"]);
   }
   if (layer === "application") return new Set(["infrastructure"]);
   return new Set(["**/shared/infrastructure/**"]);
 }
 
 /**
- * The layer-intrinsic direction, union every context, presentation, runtime and the composition
+ * The layer-intrinsic direction, union every context, presentation and the composition
  * this context may not reach, minus what `ALLOWED` admits and minus the debt `BASELINE`
  * carries at this layer.
  */
@@ -92,7 +92,7 @@ function expectedForbidden(
 ): Set<string> {
   const forbidden = new Set(genericLayerTargets(layer));
   const others = contexts.filter((name) => name !== context);
-  for (const target of [...others, "presentation", "runtime", "composition"]) {
+  for (const target of [...others, "presentation", "composition"]) {
     const edge = `${context}->${target}`;
     if (ALLOWED.has(edge)) continue;
     if (baselineLayerMap.get(edge)?.has(layer)) continue;
@@ -185,7 +185,7 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
     }
   );
 
-  it("kernel forbids every context layer, shared, presentation, runtime and the composition, unconditionally", () => {
+  it("kernel forbids every context layer, shared, presentation and the composition, unconditionally", () => {
     const override = overrides.find((candidate) =>
       candidate.includes?.includes("src/kernel/**/*.ts")
     );
@@ -193,37 +193,21 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
 
     const groups = (restrictedImportGroups(override as BiomeOverride) ?? []).map(tokenOf);
     expect(new Set(groups)).toEqual(
-      new Set([
-        "domain",
-        "application",
-        "infrastructure",
-        "shared",
-        "presentation",
-        "runtime",
-        "composition",
-      ])
+      new Set(["domain", "application", "infrastructure", "shared", "presentation", "composition"])
     );
   });
 
   it.each([
     {
       includes: "src/shared/ports/**/*.ts",
-      forbids: ["contexts", "presentation", "runtime", "infrastructure", "composition"],
+      forbids: ["contexts", "presentation", "infrastructure", "composition"],
     },
     {
       includes: "src/shared/infrastructure/**/*.ts",
-      forbids: ["contexts", "presentation", "runtime", "composition"],
+      forbids: ["contexts", "presentation", "composition"],
     },
     {
       includes: "src/presentation/**/*.ts",
-      forbids: [
-        "**/shared/infrastructure/**",
-        "composition",
-        ...HELD_BY_BIOME.flatMap(interiorGroupsOf),
-      ],
-    },
-    {
-      includes: "src/runtime/**/*.ts",
       forbids: [
         "**/shared/infrastructure/**",
         "composition",
@@ -236,14 +220,6 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
 
     const groups = (restrictedImportGroups(override as BiomeOverride) ?? []).map(tokenOf);
     expect(new Set(groups)).toEqual(new Set(forbids));
-  });
-
-  it("holds the runtime override clear of the composition root, which wires shared/infrastructure", () => {
-    const override = overrides.find((candidate) =>
-      candidate.includes?.includes("src/runtime/**/*.ts")
-    );
-
-    expect(override?.includes).toContain("!src/runtime/wiring/**");
   });
 });
 

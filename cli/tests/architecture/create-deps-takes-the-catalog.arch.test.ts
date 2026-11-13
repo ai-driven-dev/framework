@@ -7,9 +7,9 @@ import { describe, expect, it } from "vitest";
 import { read, sourceFiles } from "./helpers.js";
 
 const ARGUMENTS_A_CALL_PASSES = 4;
-const CALL = /(?<!function\s)\bcreateDeps\(/g;
+const CALL = /(?<!function\s)\bcreateFrameworkDeps\(/g;
 
-/** The number of top-level arguments of each `createDeps(` call in `source`. */
+/** The number of top-level arguments of each `createFrameworkDeps(` call in `source`. */
 function argumentCounts(source: string): number[] {
   const counts: number[] = [];
   for (const match of source.matchAll(CALL)) {
@@ -32,28 +32,31 @@ function argumentCounts(source: string): number[] {
   return counts;
 }
 
-describe("every createDeps call hands the catalog", () => {
+describe("every createFrameworkDeps call hands the catalog", () => {
   it("passes all four arguments wherever src calls it", () => {
     const short = sourceFiles().filter((file) =>
       argumentCounts(read(file)).some((count) => count !== ARGUMENTS_A_CALL_PASSES)
     );
 
-    expect(short, "createDeps called without the catalog: pass it as the fourth argument").toEqual(
-      []
-    );
+    expect(
+      short,
+      "createFrameworkDeps called without the catalog: pass it as the fourth argument"
+    ).toEqual([]);
   });
 });
 
 describe("the guard itself", () => {
   it("counts the arguments of a call, however it is broken across lines", () => {
-    expect(argumentCounts("await createDeps(root, { verbose }, output);")).toEqual([3]);
+    expect(argumentCounts("await createFrameworkDeps(root, { verbose }, output);")).toEqual([3]);
     expect(
-      argumentCounts("createDeps(\n  root,\n  { verbose: a, b },\n  output,\n  tools\n)")
+      argumentCounts("createFrameworkDeps(\n  root,\n  { verbose: a, b },\n  output,\n  tools\n)")
     ).toEqual([4]);
-    expect(argumentCounts("createDeps(root, opts, out, tools,)")).toEqual([4]);
+    expect(argumentCounts("createFrameworkDeps(root, opts, out, tools,)")).toEqual([4]);
   });
 
   it("ignores the declaration", () => {
-    expect(argumentCounts("export async function createDeps(root: string) {}")).toEqual([]);
+    expect(argumentCounts("export async function createFrameworkDeps(root: string) {}")).toEqual(
+      []
+    );
   });
 });

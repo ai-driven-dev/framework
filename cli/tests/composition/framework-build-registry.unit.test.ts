@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { wireTools } from "../../../src/composition/tools.js";
-import { BundledAssetProviderAdapter } from "../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
-import type { FrameworkBuildMode } from "../../../src/contexts/tools/contract/tool-profile.js";
+import { wireTools } from "../../src/composition/tools.js";
+import { createFrameworkBuildUseCase } from "../../src/composition/translate.js";
+import { BundledAssetProviderAdapter } from "../../src/contexts/framework/infrastructure/assets/asset-loader.js";
+import type { FrameworkBuildMode } from "../../src/contexts/tools/contract/tool-profile.js";
 import {
   buildTargetModesOf,
   type FrameworkBuildTarget,
-} from "../../../src/contexts/translate/domain/build-target.js";
-import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
-import { createFrameworkBuildUseCase } from "../../../src/runtime/wiring/translate.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+} from "../../src/contexts/translate/domain/build-target.js";
+import { AI_TOOL_IDS } from "../../src/kernel/tool.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
+import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
+import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
 
 const ALL_TARGETS: readonly FrameworkBuildTarget[] = AI_TOOL_IDS;
 const ALL_MODES: readonly FrameworkBuildMode[] = ["marketplace", "flat"];

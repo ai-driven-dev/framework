@@ -4,7 +4,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import { UserScopeFilterUnsupportedError } from "../../kernel/errors.js";
 import type { ToolCategory, ToolId } from "../../kernel/tool.js";
 import { isAiToolId } from "../../kernel/tool.js";
-import { createDeps } from "../../runtime/wiring/framework.js";
+import type { Deps, DepsFactory } from "../deps.js";
 import {
   printAllToolsDrift,
   printInventory,
@@ -17,8 +17,6 @@ import {
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
-
-type Deps = Awaited<ReturnType<typeof createDeps>>;
 
 function categoryOf(toolId: ToolId): ToolCategory {
   return isAiToolId(toolId) ? "ai" : "ide";
@@ -171,7 +169,11 @@ interface DoctorCmdOptions {
   global?: boolean;
 }
 
-export function registerDoctorCommand(program: Command, tools: ToolCatalog): void {
+export function registerDoctorCommand(
+  program: Command,
+  tools: ToolCatalog,
+  createDeps: DepsFactory
+): void {
   program
     .command("doctor")
     .description(
@@ -189,7 +191,7 @@ export function registerDoctorCommand(program: Command, tools: ToolCatalog): voi
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        const deps = await createDeps(projectRoot, { verbose }, output, tools);
+        const deps = await createDeps(projectRoot, { verbose }, output);
         const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
         if (scope === "user") {
           await runUserScopeDoctor(tools, deps, output, projectRoot, cmdOptions);

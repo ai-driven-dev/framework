@@ -6,15 +6,14 @@ import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
 } from "../../contexts/translate/domain/build-target.js";
-import { createDeps } from "../../runtime/wiring/framework.js";
-import { createFrameworkBuildUseCase } from "../../runtime/wiring/translate.js";
+import type { DepsFactory } from "../deps.js";
 import { printTranslateResult } from "../display/translate-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 interface TranslateExecutionParams {
-  tools: ToolCatalog;
+  createDeps: DepsFactory;
   projectRoot: string;
   verbose: boolean;
   output: CLIOutput;
@@ -27,15 +26,11 @@ interface TranslateExecutionParams {
 
 /** The build+report core, once `--to`/`--as`/`--out` flags are validated and resolved. */
 async function runTranslateCore(params: TranslateExecutionParams): Promise<void> {
+  const { createDeps } = params;
   const errorHandler = new ErrorHandler(params.output);
   try {
-    const deps = await createDeps(
-      params.projectRoot,
-      { verbose: params.verbose },
-      params.output,
-      params.tools
-    );
-    const useCase = createFrameworkBuildUseCase(params.tools, deps, {
+    const deps = await createDeps(params.projectRoot, { verbose: params.verbose }, params.output);
+    const useCase = deps.frameworkBuild({
       target: params.target,
       mode: params.mode,
       outDir: params.outDir,
@@ -70,7 +65,11 @@ interface TranslateCmdOptions {
   force?: boolean;
 }
 
-export function registerTranslateCommand(program: Command, tools: ToolCatalog): void {
+export function registerTranslateCommand(
+  program: Command,
+  tools: ToolCatalog,
+  createDeps: DepsFactory
+): void {
   program
     .command("translate")
     .description(
@@ -102,7 +101,7 @@ export function registerTranslateCommand(program: Command, tools: ToolCatalog): 
       const mode: FrameworkBuildMode = cmdOptions.as === "flat" ? "flat" : "marketplace";
 
       await runTranslateCore({
-        tools,
+        createDeps,
         projectRoot,
         verbose,
         output,

@@ -19,10 +19,10 @@ flowchart LR
     Presentation --> Recipes["recipes"]
     Presentation --> Tools["tools"]
     Presentation --> Translate["translate"]
-    Runtime["runtime"] --> Distribution
-    Runtime --> Framework
-    Runtime --> Tools
-    Runtime --> Translate
+    Composition["composition"] --> Distribution
+    Composition --> Framework
+    Composition --> Tools
+    Composition --> Translate
     Framework --> Translate
     Framework --> Distribution
     Framework --> Tools

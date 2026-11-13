@@ -4,22 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
-import { sameInstance } from "../same-instance.js";
+import type { DepsFactory } from "../../../src/presentation/deps.js";
+import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const build = vi.fn();
 let buildUseCase: { execute: typeof build } | undefined;
 
-vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({ fs: {}, assetProvider: {}, logger: {} })),
-  createMenuDeps: vi.fn(),
-}));
+const frameworkBuild = vi.fn(() => buildUseCase);
+const createDeps = vi.fn(async () => ({ frameworkBuild }));
+const depsFactory = asDepsFactory(createDeps);
 
-vi.mock("../../../src/runtime/wiring/translate.js", () => ({
-  createFrameworkBuildUseCase: vi.fn(() => buildUseCase),
-}));
-
-const { createDeps } = await import("../../../src/runtime/wiring/framework.js");
-const { createFrameworkBuildUseCase } = await import("../../../src/runtime/wiring/translate.js");
 const { registerTranslateCommand } = await import(
   "../../../src/presentation/commands/translate.js"
 );
@@ -57,7 +51,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerTranslateCommand(program, CATALOG);
+  registerTranslateCommand(program, CATALOG, depsFactory);
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -67,16 +61,12 @@ describe("aidd translate — what it hands the build", () => {
     expect(await run("translate", "framework", "--to", "claude", "--out", "dist-plugins")).toEqual([
       `Built 2 plugins, 12 files written to ${OUT_DIR}`,
     ]);
-    expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      {
-        target: "claude",
-        mode: "marketplace",
-        outDir: OUT_DIR,
-        force: false,
-      }
-    );
+    expect(frameworkBuild).toHaveBeenCalledWith({
+      target: "claude",
+      mode: "marketplace",
+      outDir: OUT_DIR,
+      force: false,
+    });
     expect(build).toHaveBeenCalledWith({
       sourceDir: SOURCE_DIR,
       outDir: OUT_DIR,
@@ -89,22 +79,14 @@ describe("aidd translate — what it hands the build", () => {
     expect(
       await run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--as", "flat")
     ).toEqual([`Flat-installed 2 plugins, 12 files written under ${OUT_DIR}`]);
-    expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      expect.objectContaining({ mode: "flat" })
-    );
+    expect(frameworkBuild).toHaveBeenCalledWith(expect.objectContaining({ mode: "flat" }));
     expect(build).toHaveBeenCalledWith(expect.objectContaining({ mode: "flat" }));
   });
 
   it("carries an overwrite through to the factory alone", async () => {
     await run("translate", "framework", "--to", "claude", "--out", "dist-plugins", "--force");
 
-    expect(vi.mocked(createFrameworkBuildUseCase)).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      expect.objectContaining({ force: true })
-    );
+    expect(frameworkBuild).toHaveBeenCalledWith(expect.objectContaining({ force: true }));
   });
 
   it("builds the graph for this project at this run's verbosity", async () => {
@@ -113,8 +95,7 @@ describe("aidd translate — what it hands the build", () => {
     expect(vi.mocked(createDeps)).toHaveBeenCalledWith(
       PROJECT_ROOT,
       { verbose: true },
-      expect.anything(),
-      sameInstance(CATALOG)
+      expect.anything()
     );
   });
 });
@@ -183,7 +164,7 @@ describe("aidd translate — what it refuses", () => {
 describe("aidd translate — the help surface", () => {
   function translateCommand(): Command {
     const program = new Command();
-    registerTranslateCommand(program, CATALOG);
+    registerTranslateCommand(program, CATALOG, depsFactory);
     const translate = program.commands.find((command) => command.name() === "translate");
     if (translate === undefined) throw new Error("translate command was not registered");
     return translate;

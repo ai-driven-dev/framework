@@ -1,18 +1,18 @@
 import { stat } from "node:fs/promises";
-import type { ToolBuildContract } from "../../contexts/tools/contract/build-contract.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-profile.js";
-import { FlatBuildStrategy } from "../../contexts/translate/application/strategies/flat-build-strategy.js";
-import { MarketplaceBuildStrategy } from "../../contexts/translate/application/strategies/marketplace-build-strategy.js";
-import { FrameworkBuildUseCase } from "../../contexts/translate/application/translate-source.js";
-import { AjvSchemaValidatorAdapter } from "../../contexts/translate/infrastructure/schema-validator.js";
-import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
-import type { FileReader } from "../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../kernel/ports/file-writer.js";
-import type { Logger } from "../../kernel/ports/logger.js";
-import { isAiToolId } from "../../kernel/tool.js";
-import type { FrameworkBuildContext } from "../../presentation/deps.js";
-import type { FileMerger } from "../../shared/ports/file-merger.js";
+import type { ToolBuildContract } from "../contexts/tools/contract/build-contract.js";
+import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
+import type { FrameworkBuildMode } from "../contexts/tools/contract/tool-profile.js";
+import { FlatBuildStrategy } from "../contexts/translate/application/strategies/flat-build-strategy.js";
+import { MarketplaceBuildStrategy } from "../contexts/translate/application/strategies/marketplace-build-strategy.js";
+import { FrameworkBuildUseCase } from "../contexts/translate/application/translate-source.js";
+import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
+import type { AssetProvider } from "../kernel/ports/asset-provider.js";
+import type { FileReader } from "../kernel/ports/file-reader.js";
+import type { FileWriter } from "../kernel/ports/file-writer.js";
+import type { Logger } from "../kernel/ports/logger.js";
+import { isAiToolId } from "../kernel/tool.js";
+import type { FrameworkBuildContext } from "../presentation/deps.js";
+import type { FileMerger } from "../shared/ports/file-merger.js";
 
 export interface FrameworkBuildDeps {
   fs: FileReader & FileWriter & FileMerger;

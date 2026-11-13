@@ -10,10 +10,10 @@ const calls = (text: string, pattern: RegExp): string[] =>
 
 describe("the in-process runner", () => {
   it("registers the same commands as the binary, in the same order", () => {
-    const binary = calls(read("src/cli.ts"), /^(register\w+Command)\(program(?:, tools)?\);$/gm);
+    const binary = calls(read("src/cli.ts"), /^(register\w+Command)\(program(?:, \w+)*\);$/gm);
     const runner = calls(
       read("tests/helpers/in-process-cli.ts"),
-      /\)\)\.(register\w+Command),?$/gm
+      /(?:\)\)\.|=> )(register\w+Command)/gm
     );
 
     expect(binary.length).toBeGreaterThan(0);

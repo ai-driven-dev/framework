@@ -102,7 +102,7 @@ export default defineConfig({
       // including it reports 0%. `presentation/commands/` is counted: the command tests run
       // it in process.
       // Ports are interfaces with no runtime body, `shared/ports/` and a migrated context's
-      // `ports/` included; `runtime/wiring/` and `composition/` are composition. Their real net
+      // `ports/` included; `composition/` is composition. Their real net
       // is the e2e suite and scripts/smoke-tools.sh, counted there. A `contract/` folder is
       // excluded whole although host-registration's holds runtime rules beside its ports: only
       // its mutation scope checks those.
@@ -119,7 +119,6 @@ export default defineConfig({
         "src/contexts/*/ports/**",
         "src/contexts/*/contract/**",
         "src/shared/ports/**",
-        "src/runtime/wiring/**",
         "src/composition/**",
       ],
       // Set a little under 98.81 / 96.08 / 99.47 / 99.34, measured once `presentation/commands/`
