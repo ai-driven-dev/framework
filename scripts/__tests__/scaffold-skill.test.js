@@ -170,6 +170,52 @@ describe("skill scaffold", () => {
     assert.match(result.stderr, /<read-next step>/u);
   });
 
+  it("links every next action in one sentence, so an action with several branches passes the check", () => {
+    const plan = withPlan((plan) => (plan.actions[2].next = [{ to: "explore", label: "explore more" }, { to: "capture", label: "start over" }, { end: "done" }]));
+    const { code, err } = run(plan);
+    assert.equal(code, 0, err);
+    assert.match(read("actions/03-conclude.md"), /\[explore\]\(02-explore\.md\) when explore more, \[capture\]\(01-capture\.md\) when start over\./u);
+    fillContent(target);
+    const check = spawnSync(process.execPath, [CHECK, target], { encoding: "utf8" });
+    assert.deepEqual({ code: check.status, out: check.stdout }, { code: 0, out: "" });
+  });
+
+  it("copies the plan's text as written, dollar patterns included", () => {
+    const description = "Costs $' and $& and $1 nothing, when the user asks.";
+    run(withPlan((plan) => (plan.description = description)));
+    assert.ok(read("SKILL.md").includes(`description: ${description}\n`), read("SKILL.md"));
+  });
+
+  for (const [field, change] of [
+    ["name", (plan) => (plan.name = "../../escaped")],
+    ["slug", (plan) => (plan.actions[0].slug = "../../escaped")],
+  ]) {
+    it(`refuses a ${field} that is not kebab-case, so nothing is written outside the skill folder`, () => {
+      const plan = withPlan(change);
+      if (field === "slug") plan.actions[1].next = [{ to: "../../escaped" }];
+      const { code, err } = run(plan);
+      assert.equal(code, 1);
+      assert.match(err, /kebab-case/u);
+      assert.equal(fs.existsSync(target), false);
+    });
+  }
+
+  it("fills templates saved with CRLF line endings, the read-next step included", () => {
+    const copy = path.join(root, "copy");
+    fs.cpSync(SKILL, copy, { recursive: true });
+    for (const name of ["skill-template.md", "action-template.md"]) {
+      const template = path.join(copy, "assets", name);
+      fs.writeFileSync(template, fs.readFileSync(template, "utf8").replace(/\n/gu, "\r\n"));
+    }
+    const file = path.join(root, "plan.json");
+    fs.writeFileSync(file, JSON.stringify(PLAN));
+    const result = spawnSync(process.execPath, [path.join(copy, "scripts/scaffold-skill.cjs"), file, target], { encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+    const explore = read("actions/02-explore.md");
+    assert.doesNotMatch(explore, /<read-next step>|\r/u);
+    assert.match(explore, /\[conclude\]\(03-conclude\.md\)/u);
+  });
+
   it("refuses a call without a plan and a folder with exit 2", () => {
     const result = spawnSync(process.execPath, [ENGINE], { encoding: "utf8" });
     assert.equal(result.status, 2);
