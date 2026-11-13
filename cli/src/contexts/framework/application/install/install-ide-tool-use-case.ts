@@ -49,7 +49,7 @@ export class InstallIdeToolUseCase {
   ): Promise<void> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return;
-    for (const aiId of tools.aiIdsInCanonicalOrder()) {
+    for (const aiId of tools.idsInCanonicalOrder("ai")) {
       if (!manifest.hasTool(aiId)) continue;
       await this.mergeAiToolSettings(aiId, ideId, projectRoot, manifest, tools);
     }

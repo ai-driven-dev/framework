@@ -76,8 +76,11 @@ export function parseToolIds(
   errorHandler: ErrorHandler,
   tools: ToolCatalog
 ): { aiTools: ToolId[]; ideTools: ToolId[] } | null {
-  const aiIds = expandAllKeyword(cmdOptions.ai, tools.aiIdsInCanonicalOrder());
-  const ids = expandAllKeyword(cmdOptions.ide, [...tools.aiIdsInCanonicalOrder(), ...IDE_TOOL_IDS]);
+  const aiIds = expandAllKeyword(cmdOptions.ai, tools.idsInCanonicalOrder("ai"));
+  const ids = expandAllKeyword(cmdOptions.ide, [
+    ...tools.idsInCanonicalOrder("ai"),
+    ...IDE_TOOL_IDS,
+  ]);
   try {
     if (aiIds.length > 0 && cmdOptions.ai?.trim() !== "all")
       assertToolIdsMatchCategory(aiIds, "ai");

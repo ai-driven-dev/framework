@@ -56,7 +56,7 @@ export class SetupToolsUseCase {
     options: SetupToolsOptions
   ): Promise<InstallRuntimeConfigResult> {
     if (!isAiToolId(toolId))
-      throw new CategoryMismatchError([toolId], "ai", options.tools.aiIdsInCanonicalOrder());
+      throw new CategoryMismatchError([toolId], "ai", options.tools.idsInCanonicalOrder("ai"));
     return this.installRuntimeConfigUseCase.execute({
       toolId,
       projectRoot: options.projectRoot,

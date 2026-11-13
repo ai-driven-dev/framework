@@ -32,9 +32,10 @@ function code(source: string): string {
 }
 
 /**
- * Five forms force an edit: a quoted literal, an object key, a profile's import path, a
- * dotfile directory literal (`".cursor"`, which the exact-match form misses), and a string
- * enumerating two or more tools. A string naming one tool is not a list a sixth must join.
+ * Six forms force an edit: a quoted literal, an object key, a profile's import path, a
+ * dotfile directory literal (`".cursor"`, which the exact-match form misses), a file suffix
+ * literal (`".cursor.md"`), and a string enumerating two or more tools. A string naming one tool
+ * is not a list a sixth must join.
  */
 function toolsNamedIn(source: string, ids: readonly string[]): string[] {
   const alternation = ids.join("|");
@@ -45,6 +46,7 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
     new RegExp(`(?:^|[\\s{,(])(${alternation})\\s*:`, "gm"),
     new RegExp(`["'][^"']*/(${alternation})/[^"']*["']`, "g"),
     new RegExp(`["'\`]\\.(${alternation})["'\`]`, "g"),
+    new RegExp(`["'\`]\\.(${alternation})\\.md["'\`]`, "g"),
   ];
   for (const form of forms) {
     for (const match of body.matchAll(form)) named.add(match[1] as string);
@@ -67,6 +69,9 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/framework/domain/tool-recommendations.ts", named: 4 },
   { path: "src/contexts/tools/contract/config-refs.ts", named: 1 },
   { path: "src/presentation/commands/setup.ts", named: 2 },
+  // The foreign-file suffix vocabulary, held equal to the registered AI profiles by conformance.
+  // It vanishes when the profiles move to composition and hand each section its own filter.
+  { path: "src/contexts/tools/domain/profile/foreign-suffix-filter.ts", named: 7 },
   // The record's tool vocabulary is the contract's: `codex` is admitted so a second tool's
   // reader needs no change to the record, and is not a list a new tool joins.
   { path: "src/contexts/telemetry/domain/usage-record.ts", named: 1 },

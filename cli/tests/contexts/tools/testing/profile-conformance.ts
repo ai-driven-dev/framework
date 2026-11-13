@@ -5,12 +5,12 @@ import type {
   ToolBuildContract,
 } from "../../../../src/contexts/tools/contract/build-contract.js";
 import { CONFIG_MCP } from "../../../../src/contexts/tools/contract/config-refs.js";
+import { TOOL_FILE_SUFFIXES } from "../../../../src/contexts/tools/domain/profile/foreign-suffix-filter.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
 import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profile.js";
 import { AgentsSection } from "../../../../src/contexts/tools/domain/sections/agents-section.js";
 import { CommandsSection } from "../../../../src/contexts/tools/domain/sections/commands-section.js";
 import { RulesSection } from "../../../../src/contexts/tools/domain/sections/rules-section.js";
-import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/shared/domain/tool.js";
 
 /** What a conformance check is told about one profile and the registration it sits in. */
 export interface ConformanceSubject {
@@ -110,8 +110,6 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     title: "is registered once, under its own id",
     holds: ({ profile, registration }) => {
       expect(registration.filter((other) => other.toolId === profile.toolId)).toHaveLength(1);
-      const ids: readonly string[] = profile.kind === "ai" ? AI_TOOL_IDS : IDE_TOOL_IDS;
-      expect(ids).toContain(profile.toolId);
     },
   },
   aiCheck("has a well-formed shape", (profile) => {
@@ -205,10 +203,12 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   }),
 ];
 
-/** The shared tool ids and the registration's agree, in both directions. */
-export function registeredIdsMatchToolVocabulary(ids: readonly ToolId[]): void {
-  const vocabulary = [...AI_TOOL_IDS, ...IDE_TOOL_IDS];
-  expect([...ids].sort()).toEqual([...vocabulary].sort());
+/** The suffix vocabulary and the registered AI tools agree, in both directions. */
+export function registeredSuffixesMatchVocabulary(
+  profiles: readonly (AiTool | IdeToolConfig)[]
+): void {
+  const suffixes = profiles.filter((p) => p.kind === "ai").map((p) => p.toolSuffix);
+  expect(suffixes.sort()).toEqual([...TOOL_FILE_SUFFIXES].sort());
 }
 
 export function describeProfileConformance(

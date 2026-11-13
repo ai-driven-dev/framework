@@ -37,7 +37,7 @@ export class SetupToolsPromptUseCase {
     const aiRecs = recommendAiTools(context);
     const ideRecs = recommendIdeTools(context);
     const aiTools = await this.prompter.checkbox<AiToolId>("Select AI tools to install:", [
-      ...tools.aiIdsInCanonicalOrder().map((id) => ({
+      ...tools.idsInCanonicalOrder("ai").map((id) => ({
         name: aiRecs.includes(id) ? `${id} (recommended)` : id,
         value: id,
         checked: aiRecs.includes(id),

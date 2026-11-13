@@ -12,7 +12,7 @@ export function resolvePluginToolIds(
   tools: ToolCatalog
 ): AiToolId[] {
   if (toolIds !== "all") return toolIds;
-  return tools.aiIdsInCanonicalOrder().filter((id) => manifest.hasTool(id));
+  return tools.idsInCanonicalOrder("ai").filter((id) => manifest.hasTool(id));
 }
 
 /** The scope a fresh install writes to the manifest, read once from the tool's own profile.

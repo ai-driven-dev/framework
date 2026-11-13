@@ -379,7 +379,7 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
 }
 
 describe("the hook files every route writes and removes, per tool", () => {
-  for (const toolId of catalogOf().aiIdsInCanonicalOrder()) {
+  for (const toolId of catalogOf().idsInCanonicalOrder("ai")) {
     describe(toolId, () => {
       for (const route of ROUTES) {
         it(`${route} leaves exactly the pinned hook files`, async () => {

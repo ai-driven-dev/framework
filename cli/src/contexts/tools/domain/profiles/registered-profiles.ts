@@ -21,3 +21,17 @@ export const REGISTERED_PROFILES: readonly BuiltToolConfig[] = [
   antigravity,
   vscode,
 ];
+
+/** The same profiles in the order the tools are named in the messages that list them and in the
+ * order a manifest's tools are walked. It is not the help order: opencode and kilo come before
+ * codex. `ToolCatalog` refuses a list that is not the registration list's own set. */
+export const CANONICAL_PROFILES: readonly BuiltToolConfig[] = [
+  claude,
+  cursor,
+  copilot,
+  opencode,
+  kilo,
+  codex,
+  antigravity,
+  vscode,
+];

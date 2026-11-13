@@ -7,14 +7,20 @@ import type {
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import type { BuiltToolConfig } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiTool } from "../../../../src/contexts/tools/domain/profile.js";
-import { REGISTERED_PROFILES } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
+import {
+  CANONICAL_PROFILES,
+  REGISTERED_PROFILES,
+} from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { UnregisteredToolError } from "../../../../src/shared/domain/errors.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 
-/** A catalog over the given profiles, the registered ones when none is given. Built inside the
- * `it` that reads it: a catalog is a value, never shared state. */
+/** A catalog over the given profiles, the registered ones when none is given, canonical order
+ * kept for the registered ones among them. Built inside the `it` that reads it: a catalog is a
+ * value, never shared state. */
 export function catalogOf(profiles: readonly BuiltToolConfig[] = REGISTERED_PROFILES): ToolCatalog {
-  return new RegisteredToolCatalog(profiles);
+  const registered = CANONICAL_PROFILES.filter((profile) => profiles.includes(profile));
+  const others = profiles.filter((profile) => !registered.includes(profile));
+  return new RegisteredToolCatalog(profiles, [...registered, ...others]);
 }
 
 /** The registered profile of one AI tool, for a test that hands a profile to code that asks one. */

@@ -60,7 +60,7 @@ export class RestoreAllPluginsUseCase {
     let totalFiles = 0;
     const restoredNames = new Set<string>();
     const nativeOnlyToolIds: AiToolId[] = [];
-    for (const toolId of tools.aiIdsInCanonicalOrder()) {
+    for (const toolId of tools.idsInCanonicalOrder("ai")) {
       if (!manifest.hasTool(toolId)) continue;
       if (toolIds !== undefined && !toolIds.includes(toolId)) continue;
       const toolConfig = tools.aiProfile(toolId);

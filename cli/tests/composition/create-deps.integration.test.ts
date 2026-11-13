@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/framework.js";
 import { CLIOutput } from "../../src/presentation/output.js";
-import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../src/shared/domain/tool.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 
 describe("createDeps", () => {
@@ -76,24 +75,12 @@ describe("createDeps", () => {
   });
 
   it("reads the catalog it was handed, never one of its own", async () => {
-    const real = catalogOf();
-    let walked = 0;
-    const handed = {
-      profile: (id: ToolId) => real.profile(id),
-      aiProfile: (id: AiToolId) => real.aiProfile(id),
-      ideProfile: (id: IdeToolId) => real.ideProfile(id),
-      aiProfileIfAny: (id: ToolId) => real.aiProfileIfAny(id),
-      inHelpOrder: (category: ToolCategory) => {
-        walked += 1;
-        return real.inHelpOrder(category);
-      },
-      aiIdsInCanonicalOrder: () => real.aiIdsInCanonicalOrder(),
-      sortedById: () => real.sortedById(),
-    };
+    const handed = catalogOf();
+    const walked = vi.spyOn(handed, "inHelpOrder");
 
     await createDeps(root, { verbose: false }, undefined, handed);
 
-    expect(walked).toBeGreaterThan(0);
+    expect(walked).toHaveBeenCalled();
   });
 
   describe("marketplace add --overwrite", () => {

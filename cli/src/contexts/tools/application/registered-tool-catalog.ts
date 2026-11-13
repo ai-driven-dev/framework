@@ -1,24 +1,47 @@
-import { DuplicateToolIdError, UnregisteredToolError } from "../../../shared/domain/errors.js";
 import {
-  AI_TOOL_IDS,
-  type AiToolId,
-  type IdeToolId,
-  type ToolCategory,
-  type ToolId,
-} from "../../../shared/domain/tool.js";
+  DuplicateToolIdError,
+  ToolOrderMismatchError,
+  UnregisteredToolError,
+} from "../../../shared/domain/errors.js";
+import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, ToolProfile } from "../contract/tool-profile.js";
 import type { BuiltToolConfig } from "../domain/profile/define-tool.js";
 
-/** The catalog of the profiles it is built from, which are held in the order they were given. */
+/** The catalog of the profiles it is built from, which are held in the order they were given. The
+ * canonical list is the same profiles in the order the messages name them: a list that adds or
+ * drops one is refused, so neither order can drift from the other. */
 export class RegisteredToolCatalog implements ToolCatalog {
-  readonly #byId = new Map<ToolId, BuiltToolConfig>();
+  readonly #byId = new Map<string, BuiltToolConfig>();
+  readonly #canonical: readonly BuiltToolConfig[];
 
-  constructor(profiles: readonly BuiltToolConfig[]) {
+  constructor(profiles: readonly BuiltToolConfig[], canonical: readonly BuiltToolConfig[]) {
     for (const profile of profiles) {
       if (this.#byId.has(profile.toolId)) throw new DuplicateToolIdError(profile.toolId);
       this.#byId.set(profile.toolId, profile);
     }
+    const ordered = new Set<string>(canonical.map((profile) => profile.toolId));
+    const differing = [
+      ...[...this.#byId.keys()].filter((id) => !ordered.has(id)),
+      ...[...ordered].filter((id) => !this.#byId.has(id)),
+    ];
+    if (differing.length > 0) {
+      throw new ToolOrderMismatchError(differing);
+    }
+    this.#canonical = canonical;
+  }
+
+  toolId(raw: string): ToolId | null {
+    return this.#byId.get(raw)?.toolId ?? null;
+  }
+
+  aiToolId(raw: string): AiToolId | null {
+    const profile = this.#byId.get(raw);
+    return profile?.kind === "ai" ? profile.toolId : null;
+  }
+
+  categoryOf(id: ToolId): ToolCategory {
+    return this.profile(id).kind;
   }
 
   profile(id: ToolId): ToolProfile {
@@ -44,14 +67,16 @@ export class RegisteredToolCatalog implements ToolCatalog {
     return profile.kind === "ai" ? profile : null;
   }
 
+  inHelpOrder(category: "ai"): readonly AiToolId[];
+  inHelpOrder(category: ToolCategory): readonly ToolId[];
   inHelpOrder(category: ToolCategory): readonly ToolId[] {
-    return [...this.#byId.values()]
-      .filter((profile) => profile.kind === category)
-      .map((profile) => profile.toolId);
+    return idsOf([...this.#byId.values()], category);
   }
 
-  aiIdsInCanonicalOrder(): readonly AiToolId[] {
-    return AI_TOOL_IDS.filter((id) => this.#byId.has(id));
+  idsInCanonicalOrder(category: "ai"): readonly AiToolId[];
+  idsInCanonicalOrder(category?: ToolCategory): readonly ToolId[];
+  idsInCanonicalOrder(category?: ToolCategory): readonly ToolId[] {
+    return idsOf(this.#canonical, category);
   }
 
   sortedById(): readonly ToolProfile[] {
@@ -59,4 +84,10 @@ export class RegisteredToolCatalog implements ToolCatalog {
       a.toolId < b.toolId ? -1 : a.toolId > b.toolId ? 1 : 0
     );
   }
+}
+
+function idsOf(profiles: readonly BuiltToolConfig[], category?: ToolCategory): ToolId[] {
+  return profiles
+    .filter((profile) => category === undefined || profile.kind === category)
+    .map((profile) => profile.toolId);
 }

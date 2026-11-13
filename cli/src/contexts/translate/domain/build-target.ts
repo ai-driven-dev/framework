@@ -20,7 +20,7 @@ export interface FrameworkBuildTargetMode {
  * the order the tools were registered in. */
 export function buildTargetModesOf(tools: ToolCatalog): readonly FrameworkBuildTargetMode[] {
   const pairs: FrameworkBuildTargetMode[] = [];
-  for (const target of tools.aiIdsInCanonicalOrder()) {
+  for (const target of tools.idsInCanonicalOrder("ai")) {
     const profile = tools.aiProfile(target);
     for (const mode of FRAMEWORK_BUILD_MODES) {
       if (profile.buildContract(mode) !== null) pairs.push({ target, mode });
