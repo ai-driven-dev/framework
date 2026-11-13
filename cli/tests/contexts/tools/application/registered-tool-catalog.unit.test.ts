@@ -46,8 +46,8 @@ describe("the registered tool catalog", () => {
     const extra = () => new RegisteredToolCatalog(REGISTERED_PROFILES, CANONICAL_PROFILES.slice(1));
 
     expect(missing).toThrow(ToolOrderMismatchError);
-    expect(missing).toThrow("differ on: claude.");
-    expect(extra).toThrow("differ on: claude.");
+    expect(missing).toThrow("Tool lists differ on: claude.");
+    expect(extra).toThrow("Tool lists differ on: claude.");
   });
 
   it("answers the registered id a text names, and null for another text", () => {

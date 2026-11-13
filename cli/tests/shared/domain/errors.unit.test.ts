@@ -519,6 +519,11 @@ describe("every error in the catalog", () => {
       message: "Unknown AI tool: zed. Valid AI tools: claude, cursor",
     },
     {
+      build: () => new errors.ToolOrderMismatchError(["a", "b"]),
+      name: "ToolOrderMismatchError",
+      message: "Tool lists differ on: a, b.",
+    },
+    {
       build: () => new errors.NativePluginCliError("claude exited 2"),
       name: "NativePluginCliError",
       message: "claude exited 2",
