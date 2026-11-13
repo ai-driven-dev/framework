@@ -12,7 +12,7 @@ const marketplaceSyncExecute = vi
 const marketplaceAddExecute = vi.fn().mockResolvedValue({ marketplace: { name: "market-b" } });
 
 const createDeps = vi.fn(async () => ({
-  marketplaceAddUseCase: { execute: marketplaceAddExecute },
+  addMarketplace: { execute: marketplaceAddExecute },
   marketplaceSyncSettingsUseCase: { execute: marketplaceSyncExecute },
   prompter: { input: vi.fn() },
 }));

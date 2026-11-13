@@ -151,9 +151,9 @@ export async function createDeps(
     marketplaceTrustStore,
     releaseResolver,
     resolveMarketplaceUseCase,
-    marketplaceListUseCase,
-    marketplaceRefreshUseCase,
-    marketplaceRegisterFrameworkUseCase,
+    listMarketplaces,
+    refreshMarketplace,
+    registerFrameworkMarketplace,
   } = wireDistribution({ fs, hasher, http, tokenProvider, logger, projectRoot });
   const pluginRemoveUseCase = new PluginRemoveUseCase(
     fs,
@@ -187,7 +187,7 @@ export async function createDeps(
   // `marketplace add --overwrite` removes before it adds, and removing deletes installed
   // plugin files — framework work — so the orchestration belongs here rather than pulling
   // framework into distribution's own wiring.
-  const marketplaceAddUseCase = new AddMarketplace(
+  const addMarketplace = new AddMarketplace(
     marketplaceRegistry,
     marketplaceTrustStore,
     resolveMarketplaceUseCase,
@@ -239,7 +239,7 @@ export async function createDeps(
     ensureBuiltMarketplaceUseCase,
     hostMarketplaceRegistries,
     userConfigDir,
-    marketplaceRegisterFrameworkUseCase,
+    registerFrameworkMarketplace,
     userSourceReferences,
     currentVersionProvider,
     hostPluginRegistries,
@@ -364,8 +364,8 @@ export async function createDeps(
   const setupMarketplaceRegistration = new SetupMarketplaceRegistrationUseCase(
     fs,
     setupMarketplaceSourceUseCase,
-    marketplaceRegisterFrameworkUseCase,
-    marketplaceRefreshUseCase,
+    registerFrameworkMarketplace,
+    refreshMarketplace,
     currentVersionProvider,
     logger,
     environment,
@@ -510,11 +510,11 @@ export async function createDeps(
     pluginListUseCase,
     pluginUpdateUseCase,
     userPluginUpdateUseCase,
-    marketplaceAddUseCase,
-    marketplaceListUseCase,
+    addMarketplace,
+    listMarketplaces,
     marketplaceRemoveUseCase,
     userMarketplaceRemoveUseCase,
-    marketplaceRefreshUseCase,
+    refreshMarketplace,
     marketplaceCheckUseCase,
     userSourceReferences,
     installAiToolUseCase,
@@ -522,12 +522,11 @@ export async function createDeps(
     uninstallIdeUseCase,
     assetProvider,
     pluginSearchUseCase,
-    marketplaceRegisterFrameworkUseCase,
+    registerFrameworkMarketplace,
     pluginInstallUseCase,
     marketplaceSyncSettingsUseCase,
     doctorUseCase,
     doctorRegistrationUseCase,
-    releaseResolver,
     setupMarketplaceSourceUseCase,
     setupToolsUseCase,
     setupPluginsPromptUseCase,

@@ -313,7 +313,7 @@ async function pluginsRecorded(ws: Workspace): Promise<string> {
 async function reinstallThroughSetup(ws: Workspace): Promise<string> {
   await writeSource(ws.source);
   const d = await deps(ws.project);
-  await d.marketplaceAddUseCase.execute({
+  await d.addMarketplace.execute({
     source: { kind: "local", path: ws.source },
     name: "hooks-routes",
     scope: "project",

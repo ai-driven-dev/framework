@@ -42,12 +42,12 @@ export interface DistributionDeps {
   marketplaceTrustStore: MarketplaceTrustStore;
   releaseResolver: ReleaseLister & RepositoryVisibility;
   resolveMarketplaceUseCase: ResolveMarketplace;
-  marketplaceListUseCase: ListMarketplaces;
-  marketplaceRefreshUseCase: RefreshMarketplace;
-  marketplaceRegisterFrameworkUseCase: RegisterFrameworkMarketplace;
+  listMarketplaces: ListMarketplaces;
+  refreshMarketplace: RefreshMarketplace;
+  registerFrameworkMarketplace: RegisterFrameworkMarketplace;
 }
 
-/** `marketplaceAddUseCase` is deliberately absent: it takes framework's
+/** `addMarketplace` is deliberately absent: it takes framework's
  * `marketplaceRemoveUseCase`, so it is composed in `runtime/wiring/framework.ts` rather than pulling
  * framework in here. */
 export function wireDistribution(shared: DistributionWiringShared): DistributionDeps {
@@ -69,19 +69,19 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
     pluginCatalogRepository,
     userConfigDir
   );
-  const marketplaceListUseCase = new ListMarketplaces(
+  const listMarketplaces = new ListMarketplaces(
     marketplaceRegistry,
     resolveMarketplaceUseCase,
     shared.logger
   );
-  const marketplaceRefreshUseCase = new RefreshMarketplace(
+  const refreshMarketplace = new RefreshMarketplace(
     marketplaceRegistry,
     resolveMarketplaceUseCase,
     marketplaceCache,
     shared.logger,
     shared.fs
   );
-  const marketplaceRegisterFrameworkUseCase = new RegisterFrameworkMarketplace(marketplaceRegistry);
+  const registerFrameworkMarketplace = new RegisterFrameworkMarketplace(marketplaceRegistry);
   return {
     pluginCatalogRepository,
     pluginFetcher,
@@ -89,8 +89,8 @@ export function wireDistribution(shared: DistributionWiringShared): Distribution
     marketplaceTrustStore,
     releaseResolver,
     resolveMarketplaceUseCase,
-    marketplaceListUseCase,
-    marketplaceRefreshUseCase,
-    marketplaceRegisterFrameworkUseCase,
+    listMarketplaces,
+    refreshMarketplace,
+    registerFrameworkMarketplace,
   };
 }

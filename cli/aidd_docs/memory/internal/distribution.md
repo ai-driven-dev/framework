@@ -14,9 +14,7 @@ Where a plugin's content comes from: the registered marketplaces, the trust give
 - D5: split `plugin-fetcher-adapter.ts` into a git source fetcher and an npm source fetcher. Vanishes with the next distribution PR.
 - D6: `catalog.ts` into `catalog-parsers/claude-marketplace-catalog.ts`, and the catalog precedence into the domain. Vanishes with the next distribution PR.
 - D7: the trust store over shared private storage. Vanishes with the runtime and kernel step.
-- D8: `atomic-write.ts` into `shared/infrastructure/`. Vanishes with the runtime and kernel step.
 - D9: the release adapter merged into a shared GitHub adapter, and a rule pinning `api.github.com` to one file. Vanishes with D3.
-- D10: the `Deps` keys (`releaseResolver`, `marketplaceAddUseCase`) renamed. Vanishes with the runtime and kernel step.
 - D11: the marketplace fakes, `fixture-plugin-fetcher.ts` and `fake-ensure-built-marketplace.ts` moved into `tests/contexts/distribution/testing/`. Vanishes with the framework split.
 - D12: contract kits for `PluginFetcher`, `PluginCatalogRepository`, `RawCatalogFetcher`, `ReleaseLister`, `RepositoryVisibility` and `MarketplaceRemover`. Vanishes with D5 for `PluginFetcher`, D2 for the release ports.
 - D13: the raw catalog fetcher over a `RepositoryReader` port. Vanishes with D3.

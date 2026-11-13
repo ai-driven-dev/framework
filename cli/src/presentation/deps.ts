@@ -5,8 +5,6 @@ import type { AddMarketplace } from "../contexts/distribution/application/add-ma
 import type { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.js";
 import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.js";
-import type { ReleaseLister } from "../contexts/distribution/ports/release-lister.js";
-import type { RepositoryVisibility } from "../contexts/distribution/ports/repository-visibility.js";
 import type { CleanUserScopeUseCase } from "../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import type { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
 import type { DoctorRegistrationUseCase } from "../contexts/framework/application/doctor/doctor-registration-use-case.js";
@@ -114,11 +112,11 @@ export interface Deps {
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
   userPluginUpdateUseCase: UserPluginUpdateUseCase;
-  marketplaceAddUseCase: AddMarketplace;
-  marketplaceListUseCase: ListMarketplaces;
+  addMarketplace: AddMarketplace;
+  listMarketplaces: ListMarketplaces;
   marketplaceRemoveUseCase: MarketplaceRemoveUseCase;
   userMarketplaceRemoveUseCase: UserMarketplaceRemoveUseCase;
-  marketplaceRefreshUseCase: RefreshMarketplace;
+  refreshMarketplace: RefreshMarketplace;
   marketplaceCheckUseCase: MarketplaceCheckUseCase;
   userSourceReferences: UserSourceReferences;
   installAiToolUseCase: InstallAiToolUseCase;
@@ -126,13 +124,12 @@ export interface Deps {
   uninstallIdeUseCase: UninstallIdeUseCase;
   assetProvider: AssetProvider;
   pluginSearchUseCase: PluginSearchUseCase;
-  marketplaceRegisterFrameworkUseCase: RegisterFrameworkMarketplace;
+  registerFrameworkMarketplace: RegisterFrameworkMarketplace;
   pluginInstallUseCase: PluginInstallUseCase;
   marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase;
   doctorUseCase: DoctorUseCase;
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: DoctorRegistrationUseCase;
-  releaseResolver: ReleaseLister & RepositoryVisibility;
   setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase;
   setupToolsUseCase: SetupToolsUseCase;
   setupPluginsPromptUseCase: SetupPluginsPromptUseCase;

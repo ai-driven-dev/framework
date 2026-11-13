@@ -17,11 +17,11 @@ const menuSelect = vi.fn();
 const spawn = vi.fn();
 
 const createDeps = vi.fn(async () => ({
-  marketplaceAddUseCase: { execute: marketplaceAdd },
-  marketplaceListUseCase: { execute: marketplaceList },
+  addMarketplace: { execute: marketplaceAdd },
+  listMarketplaces: { execute: marketplaceList },
   marketplaceRemoveUseCase: { execute: marketplaceRemove },
   userMarketplaceRemoveUseCase: { execute: userMarketplaceRemove },
-  marketplaceRefreshUseCase: { execute: marketplaceRefresh },
+  refreshMarketplace: { execute: marketplaceRefresh },
   marketplaceCheckUseCase: { execute: marketplaceCheck },
   marketplaceSyncSettingsUseCase: { execute: activation },
   prompter: { input: promptInput },

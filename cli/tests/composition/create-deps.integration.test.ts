@@ -100,15 +100,10 @@ describe("createDeps", () => {
 
     async function registerThenOverwrite(scope: "project" | "user") {
       vi.stubEnv("AIDD_USER_CONFIG_DIR", join(root, "user-config"));
-      const { marketplaceAddUseCase } = await createDeps(
-        root,
-        { verbose: false },
-        undefined,
-        tools
-      );
+      const { addMarketplace } = await createDeps(root, { verbose: false }, undefined, tools);
       const command = { source, name: "awesome", scope, projectRoot: root, autoTrust: true };
-      await marketplaceAddUseCase.execute(command);
-      return marketplaceAddUseCase.execute({ ...command, overwrite: true });
+      await addMarketplace.execute(command);
+      return addMarketplace.execute({ ...command, overwrite: true });
     }
 
     it("removes a project entry through the project remover", async () => {

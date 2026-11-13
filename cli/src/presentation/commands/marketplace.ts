@@ -79,7 +79,7 @@ export function registerMarketplaceCommand(
           const name = nameArg ?? (await deps.prompter.input("Marketplace name:"));
           const rawSource = sourceArg ?? (await deps.prompter.input("Source (path or user/repo):"));
           const source = parsePluginSourceShorthand(rawSource);
-          const result = await deps.marketplaceAddUseCase.execute({
+          const result = await deps.addMarketplace.execute({
             source,
             name,
             scope,
@@ -104,7 +104,7 @@ export function registerMarketplaceCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const { marketplaces, catalogs } = await deps.marketplaceListUseCase.execute({
+        const { marketplaces, catalogs } = await deps.listMarketplaces.execute({
           projectRoot,
           withCatalogs: cmdOptions.plugins ?? false,
         });
@@ -153,7 +153,7 @@ export function registerMarketplaceCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const { results, failedCount } = await deps.marketplaceRefreshUseCase.execute({
+        const { results, failedCount } = await deps.refreshMarketplace.execute({
           projectRoot,
           name,
           force: cmdOptions.force,
