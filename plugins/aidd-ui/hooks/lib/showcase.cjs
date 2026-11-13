@@ -686,7 +686,7 @@ clear.addEventListener("click", () => {
   if (out) out.remove();
   paint();
 });
-if (stored(STORE + "-open") === "1") show(true);
+if (drawer.dataset.start !== "closed" && stored(STORE + "-open") === "1") show(true);
 paint();
 `;
 
@@ -1031,7 +1031,7 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
 /** The review panel, the same on every page but for the record it stands on, which starts open: every record
  * with states and a render, each state with a link to its tab, its verdict pair and a comment field, then
  * one copy of all that is decided. Opened by the button at the top of the page, which tallies the states settled. */
-function drawerOf({ project, reviewable, rows, labels, current, sets = [] }) {
+function drawerOf({ project, reviewable, rows, labels, current, sets = [], closed = false }) {
   let settled = 0;
   let total = 0;
   const item = (record) => {
@@ -1060,7 +1060,7 @@ function drawerOf({ project, reviewable, rows, labels, current, sets = [] }) {
   const tally = `<span class="tally">${settled}/${total}</span>`;
   return [
     `<button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} ${tally}</button>`,
-    `<aside class="drawer" id="review" aria-label="${escaped(labels.review)}" hidden>`,
+    `<aside class="drawer" id="review" aria-label="${escaped(labels.review)}"${closed ? ' data-start="closed"' : ""} hidden>`,
     `<div class="drawer-head"><h2>${labels.review}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
     `<div class="drawer-body">${choices}${items || (choices ? "" : `<p>${labels.nothing}</p>`)}</div>`,
     `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="all-ok">${labels.allOk}</button><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}">${labels.copy}</button></div>`,
@@ -1164,7 +1164,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   const journeys = records.filter((record) => fm(record).kind === "journey");
   const system = project.records.find((record) => fm(record).kind === "system");
   const reviewable = records.filter((record) => hasRender(project, record)).sort((a, b) => GROUPS.indexOf(groupOf(a)) - GROUPS.indexOf(groupOf(b)) || byLevel(a, b));
-  const drawer = (current) => drawerOf({ project, reviewable, rows, labels, current, sets });
+  const drawer = (current, closed = false) => drawerOf({ project, reviewable, rows, labels, current, sets, closed });
   const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, overviewOf({ project, records, recordsById, rows, tokens, labels })].join("\n");
   const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
@@ -1191,7 +1191,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   }
   const wireframes = project.renders.filter((file) => file.startsWith(WIREFRAMES_DIR)).sort().slice(0, WIREFRAMES_SHOWN).map((file) => ({ path: file.slice(WIREFRAMES_DIR.length), text: text(project, file) ?? "" }));
   for (const set of sets) {
-    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null), script: variants.SCRIPT + PANEL, wide: true });
+    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null, true), script: variants.SCRIPT + PANEL, wide: true });
   }
   return pages;
 }
