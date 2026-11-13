@@ -1,9 +1,8 @@
 /** Paths Kilo scans in a project. Kept apart from the profile so the build contract and the
  * later hooks bridge share one declaration rather than duplicate Kilo's plugin layout. */
 
-import { join } from "node:path";
 import { KiloDualConfigError } from "../../../../../kernel/errors.js";
-import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
+import type { McpOutputPathCandidates } from "../../capabilities/mcp-capability.js";
 
 export const KILO_DIRECTORY = ".kilo/";
 export const KILO_PLUGIN_DIR = `${KILO_DIRECTORY}plugin/`;
@@ -39,10 +38,14 @@ export function chooseKiloConfigPath(exists: (relPath: string) => boolean): stri
   return KILO_PROJECT_CONFIG_JSONC;
 }
 
-export async function resolveKiloConfigPath(projectRoot: string, fs: FileReader): Promise<string> {
-  const present = new Set<string>();
-  for (const candidate of KILO_CONFIG_CANDIDATES) {
-    if (await fs.fileExists(join(projectRoot, candidate))) present.add(candidate);
-  }
-  return chooseKiloConfigPath((relPath) => present.has(relPath));
-}
+/** The same order `chooseKiloConfigPath` applies, as data: project tier, then legacy root tier. */
+export const KILO_OUTPUT_PATH_CANDIDATES: McpOutputPathCandidates = {
+  tiers: [
+    [KILO_PROJECT_CONFIG_JSON, KILO_PROJECT_CONFIG_JSONC],
+    [KILO_LEGACY_CONFIG_JSON, KILO_LEGACY_CONFIG_JSONC],
+  ],
+  fallback: KILO_PROJECT_CONFIG_JSONC,
+  conflict: () => {
+    throw new KiloDualConfigError();
+  },
+};

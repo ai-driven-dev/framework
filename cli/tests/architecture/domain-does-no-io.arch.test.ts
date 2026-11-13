@@ -33,24 +33,9 @@ const BASELINE: readonly { readonly file: string; readonly imports: number; reas
     reason: "the build contract hands each profile `fs` for its marketplace catalog and entry",
   },
   {
-    file: "src/contexts/tools/domain/capabilities/mcp-capability.ts",
-    imports: 1,
-    reason: "`resolveOutput` probes the disk for the tool's MCP config path",
-  },
-  {
     file: "src/contexts/tools/domain/marketplace-catalog.ts",
     imports: 2,
     reason: "the Claude-style catalog reads each plugin manifest and writes the entry",
-  },
-  {
-    file: "src/contexts/tools/domain/profiles/kilo/kilo-paths.ts",
-    imports: 1,
-    reason: "`resolveKiloConfigPath` probes which config file the project already has",
-  },
-  {
-    file: "src/contexts/tools/domain/registry.ts",
-    imports: 1,
-    reason: "the registry lists and reads a tool's files from disk",
   },
 ];
 

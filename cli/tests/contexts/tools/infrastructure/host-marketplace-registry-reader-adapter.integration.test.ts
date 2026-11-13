@@ -2,15 +2,6 @@ import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-// hostMarketplaceRegistryReaders iterates every AI_TOOL_IDS entry, so every profile
-// must be registered here — not just claude's, whose reader this file exercises.
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { nativeActivationOf } from "../../../../src/contexts/tools/domain/registry.js";
 import { hostMarketplaceRegistryReaders } from "../../../../src/contexts/tools/infrastructure/host-marketplace-registry-reader-adapter.js";
 

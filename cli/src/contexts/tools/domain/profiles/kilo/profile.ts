@@ -21,13 +21,12 @@ import {
   stripToolSuffix,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { registerTool } from "../../registry.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
-import { KILO_DIRECTORY, resolveKiloConfigPath } from "./kilo-paths.js";
+import { KILO_DIRECTORY, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.js";
 
 const TOOL_SUFFIX = ".kilo.md";
 
@@ -80,7 +79,7 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       mergeStrategy: "framework-prime",
       transformContent: transformMcpToOpencode,
       consumes: [CONFIG_MCP],
-      resolveOutputPath: resolveKiloConfigPath,
+      outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
     }),
     plugins: new PluginsCapability({
       mode: "flat",
@@ -100,5 +99,3 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
     );
   },
 };
-
-registerTool(kilo);

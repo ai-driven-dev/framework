@@ -1,10 +1,9 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-codex.cjs";
-import type { HooksDescriptor } from "../../formats/hooks-descriptor.js";
-import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { declareHooks } from "../../formats/hooks-descriptor.js";
+import { CODEX_DIRECTORY } from "./codex-paths.js";
 
-export const CODEX_HOOKS = {
-  rootToken: PLUGIN_ROOT_TOKEN,
+export const CODEX_HOOKS = declareHooks("codex", CODEX_DIRECTORY, adapter, {
   // Measured: four consecutive `codex exec` sessions installed a plugin's hooks and ran none of
   // them, with no warning, until `--dangerously-bypass-hook-trust` made the same install run
   // all three. Codex writes one `trusted_hash` per hook under `[hooks.state]` when a person
@@ -24,5 +23,4 @@ export const CODEX_HOOKS = {
     entrySection: "SessionStart",
     consumes: ["codex-hooks"],
   },
-  runtime: { adapter },
-} as const satisfies HooksDescriptor;
+});

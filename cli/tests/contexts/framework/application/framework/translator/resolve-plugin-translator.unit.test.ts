@@ -1,4 +1,3 @@
-import "../../../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { describe, expect, it } from "vitest";
 import type { TranslatorDeps } from "../../../../../../src/contexts/framework/application/framework/translator/plugin-translator-factory.js";
 import { resolvePluginTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/resolve-plugin-translator.js";

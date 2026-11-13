@@ -1,12 +1,6 @@
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { GitignoreUseCase } from "../../../../src/contexts/framework/application/gitignore-use-case.js";

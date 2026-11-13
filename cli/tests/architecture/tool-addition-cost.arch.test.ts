@@ -1,5 +1,6 @@
 /**
- * A tool identifier may only appear in that tool's own profile and in the shared vocabulary.
+ * A tool identifier may only appear in that tool's own profile, the registration list and the
+ * shared vocabulary.
  * Everywhere else behaviour is read from the profile rather than branched on the name, or a
  * sixth tool means editing N files again. Scope is `src/`: a test naming the tool it tests is
  * not coupling. Comments are stripped first — prose about a tool's layout is documentation.
@@ -19,6 +20,7 @@ function toolIds(files: readonly string[]): string[] {
 
 function isAllowed(file: string, ids: readonly string[]): boolean {
   if (file === "src/kernel/tool.ts") return true;
+  if (file === "src/contexts/tools/domain/profiles/registered-profiles.ts") return true;
   return ids.some((id) => file.startsWith(`src/contexts/tools/domain/profiles/${id}/`));
 }
 
@@ -59,19 +61,16 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
  * Files naming a tool outside its profile today, with how many they name; the list may only
  * shrink, and a listed file may not take on another tool. Three are not debt:
  * `tool-recommendations.ts`, `config-refs.ts` and `plugins-capability.ts`, each naming a tool
- * for a reason no profile carries. The rest is registration and words shown to a user.
+ * for a reason no profile carries. The rest is host wiring and words shown to a user.
  */
 const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/framework/domain/tool-recommendations.ts", named: 4 },
   { path: "src/contexts/tools/domain/capabilities/config-refs.ts", named: 1 },
   { path: "src/contexts/tools/domain/capabilities/plugins-capability.ts", named: 3 },
   { path: "src/presentation/commands/setup.ts", named: 2 },
-  { path: "src/presentation/commands/translate.ts", named: 7 },
-  { path: "src/presentation/prompts/menu-use-case.ts", named: 8 },
-  { path: "src/runtime/assets/asset-loader.ts", named: 8 },
-  { path: "src/runtime/wiring/framework.ts", named: 8 },
-  { path: "src/runtime/wiring/tools.ts", named: 8 },
-  { path: "src/runtime/wiring/translate.ts", named: 8 },
+  { path: "src/runtime/assets/asset-loader.ts", named: 7 },
+  // The composition names the hosts whose native marketplace readers it builds.
+  { path: "src/runtime/wiring/framework.ts", named: 3 },
   // Which file each host keeps its plugin registry in, called from the composition root
   // alone; the reader classes beside it name no tool.
   {

@@ -7,13 +7,6 @@ import type {
   PluginComponentFile,
   PluginDistribution,
 } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-// Side-effect imports: the adapter reads each tool's declared manifest locations off the
-// registry, so an unregistered profile is a format it cannot recognise.
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import {
   InvalidPluginManifestError,
   InvalidPluginNameError,

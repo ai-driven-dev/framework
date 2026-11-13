@@ -1,7 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import type { PluginCatalogEntry } from "../../../../../src/contexts/distribution/domain/catalog.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";

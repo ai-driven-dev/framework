@@ -1,5 +1,3 @@
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { join } from "node:path";
 import { describe, expect, it, type Mock, vi } from "vitest";
 import type { MarketplaceTrustStore } from "../../../../../src/contexts/distribution/domain/ports/marketplace-trust-store.js";

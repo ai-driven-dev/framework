@@ -1,8 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { DoctorLayoutUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-layout-use-case.js";
 import { DoctorMergeFilesUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-merge-files-use-case.js";
 import { DoctorPluginUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-plugin-use-case.js";

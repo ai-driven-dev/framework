@@ -1,9 +1,4 @@
 import { describe, expect, it } from "vitest";
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { GenerateToolDistributionUseCase } from "../../../../../src/contexts/framework/application/restore/generate-tool-distribution-use-case.js";
 import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
 import {

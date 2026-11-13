@@ -43,9 +43,11 @@ src/
 │   │   │   └── recipes/
 │   │   └── infrastructure/
 │   ├── tools/    # what a project targets, and what each target declares
+│   │   ├── application/
 │   │   ├── domain/
 │   │   │   ├── capabilities/
 │   │   │   ├── formats/
+│   │   │   ├── hooks/
 │   │   │   ├── models/
 │   │   │   ├── ports/
 │   │   │   └── profiles/    # one directory per tool

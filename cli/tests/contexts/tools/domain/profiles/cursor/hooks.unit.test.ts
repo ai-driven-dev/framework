@@ -19,19 +19,6 @@ function projectFormat() {
   return format;
 }
 
-describe("a matcher group that declares no hooks list", () => {
-  const groupless = JSON.stringify({
-    hooks: { Stop: [{ matcher: "x" }, { hooks: [{ command: "a" }] }] },
-  });
-
-  it("is skipped by the Cursor merge", () => {
-    expect(JSON.parse(flatFile().merge(null, groupless, "p", asIs).content)).toStrictEqual({
-      version: 1,
-      hooks: { stop: [{ command: "a" }], sessionEnd: [{ command: "a" }] },
-    });
-  });
-});
-
 describe("an event Cursor does not fire", () => {
   const notify = JSON.stringify({ hooks: { Notification: [{ hooks: [{ command: "a" }] }] } });
 

@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { FetchMarketplaceSourceUseCase } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source-use-case.js";
 import { ResolveMarketplaceUseCase } from "../../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";

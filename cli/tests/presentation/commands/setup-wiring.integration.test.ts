@@ -1,12 +1,6 @@
 import { resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import "../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import "../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
@@ -368,9 +362,9 @@ describe("aidd setup — the help surface", () => {
     expect(globalSetupHelp().split("\n")).toEqual([
       "",
       "Global:",
-      "  Pass --ide claude,codex,copilot,cursor,opencode (one or more, no editor) and --plugins all, recommended, none or names.",
+      "  Pass --ide claude,codex,copilot,cursor,kilo,opencode (one or more, no editor) and --plugins all, recommended, none or names.",
       "  claude, codex, copilot enable the plugins through their own CLI, which must be on PATH.",
-      "  codex gets their files in ~/.codex, cursor gets their files in ~/.cursor/plugins/local, opencode gets their files in ~/.config/opencode.",
+      "  codex gets their files in ~/.codex, cursor gets their files in ~/.cursor/plugins/local, kilo gets their files in ~/.config/kilo, opencode gets their files in ~/.config/opencode.",
       "  `aidd sync --global` refreshes them from the framework source.",
     ]);
   });

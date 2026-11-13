@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
 import type { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { unmergeOpencodeMcp } from "../../../tools/domain/formats/opencode-mcp-merge.js";
 import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
@@ -36,7 +37,7 @@ async function planProjectMcpRemoval(
   const caps = config.capabilities as Record<string, unknown>;
   if (!isFrameworkPrimeFlatMcp(caps)) return undefined;
   const mcp = caps.mcp as McpCapability;
-  const output = join(projectRoot, await mcp.resolveOutput(projectRoot, fs));
+  const output = join(projectRoot, await resolveMcpOutputPath(fs, mcp, projectRoot));
   await assertProjectPathWithinRoot(fs, projectRoot, output);
   try {
     const existing = await fs.readFile(output);

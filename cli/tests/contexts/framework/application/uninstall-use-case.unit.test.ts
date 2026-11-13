@@ -1,11 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { UninstallUseCase } from "../../../../src/contexts/framework/application/uninstall/uninstall-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
@@ -14,7 +8,7 @@ import {
   NoManifestError,
   ToolNotInstalledError,
 } from "../../../../src/kernel/errors.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
+import { type ToolId, VALID_TOOL_IDS } from "../../../../src/kernel/tool.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -184,7 +178,7 @@ describe("uninstall — refusals", () => {
       })
     ).rejects.toThrow(
       new InputRequiredError(
-        "At least one tool ID is required. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode"
+        `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
       )
     );
   });

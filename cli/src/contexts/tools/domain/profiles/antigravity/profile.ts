@@ -2,7 +2,6 @@ import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
 import type { AiTool, HasPlugins, HasSkills } from "../../contracts.js";
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
-import { registerTool } from "../../registry.js";
 import {
   antigravityHookEntries,
   antigravityHooksScriptDir,
@@ -64,5 +63,3 @@ export const antigravity: AiTool<HasSkills & HasPlugins> = {
     return content;
   },
 };
-
-registerTool(antigravity);

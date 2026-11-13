@@ -1,8 +1,5 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import "../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { userMachineLocalFilesOf } from "../../../src/contexts/tools/domain/registry.js";
 
 const doctorAll = vi.fn();

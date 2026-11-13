@@ -1,6 +1,7 @@
 import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { TokenProvider } from "../../../auth/contract/token-provider.js";
-import { getAllRegisteredTools, hasToolSignals } from "../../../tools/domain/registry.js";
+import { detectToolSignals } from "../../../tools/application/detect-tool-signals.js";
+import { getAllRegisteredTools } from "../../../tools/domain/registry.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
 
@@ -29,7 +30,7 @@ export class DoctorLayoutUseCase {
     const issues: DoctorIssue[] = [];
     const installedToolDirs = manifest.getInstalledDirectories();
     for (const tool of getAllRegisteredTools().values()) {
-      if ((await hasToolSignals(this.fs, tool, projectRoot)).length > 0) {
+      if ((await detectToolSignals(this.fs, tool, projectRoot)).length > 0) {
         if (!installedToolDirs.has(tool.directory)) {
           issues.push({
             severity: "warning",

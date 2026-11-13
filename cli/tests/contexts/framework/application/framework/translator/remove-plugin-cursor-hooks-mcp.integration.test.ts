@@ -2,7 +2,6 @@
  * hooks.json is not tracked in Plugin.files: hooksDestination:"project" merges its entries
  * into the project's own .cursor/hooks.json, which baseDir-relative deletion cannot find.
  */
-import "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";

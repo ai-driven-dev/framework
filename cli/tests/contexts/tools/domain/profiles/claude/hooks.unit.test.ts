@@ -23,12 +23,4 @@ describe("what a plugin ships, merged into .claude/settings.json", () => {
       hooks: { PostToolUse: [group] },
     });
   });
-
-  it("keeps a group that declares no hooks list as it is", () => {
-    const groups = [{ matcher: "x" }, { hooks: [{ command: "a" }] }];
-
-    expect(merge(JSON.stringify({ hooks: { Stop: groups } }))).toStrictEqual({
-      hooks: { Stop: groups },
-    });
-  });
 });

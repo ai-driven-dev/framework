@@ -4,10 +4,6 @@ import { claude } from "../../../../../../src/contexts/tools/domain/profiles/cla
 
 describe("claude plugins", () => {
   describe("capabilities.plugins", () => {
-    it("has a plugins capability", () => {
-      expect("plugins" in claude.capabilities).toBe(true);
-    });
-
     it("is native mode", () => {
       expect(claude.capabilities.plugins.mode).toBe("native");
     });

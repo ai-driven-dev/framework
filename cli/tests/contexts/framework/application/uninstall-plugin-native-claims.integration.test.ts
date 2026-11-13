@@ -1,8 +1,6 @@
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { describe, expect, it } from "vitest";
 import { UninstallPluginUseCase } from "../../../../src/contexts/framework/application/uninstall/uninstall-plugin-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";

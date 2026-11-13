@@ -22,7 +22,6 @@ import {
   stripToolSuffix,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { registerTool } from "../../registry.js";
 import { buildOpencodeFlatContract, transformMcpToOpencode } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
@@ -87,12 +86,12 @@ export const opencode: AiTool<
       mergeStrategy: "framework-prime",
       transformContent: transformMcpToOpencode,
       consumes: [CONFIG_MCP, CONFIG_OPENCODE],
-      resolveOutputPath: async (projectRoot, fs) => {
-        const jsonExists = await fs.fileExists(join(projectRoot, "opencode.json"));
-        const jsoncExists = await fs.fileExists(join(projectRoot, "opencode.jsonc"));
-        if (jsonExists && jsoncExists) throw new OpencodeDualConfigError();
-        if (jsoncExists) return "opencode.jsonc";
-        return "opencode.json";
+      outputPathCandidates: {
+        tiers: [["opencode.json", "opencode.jsonc"]],
+        fallback: "opencode.json",
+        conflict: () => {
+          throw new OpencodeDualConfigError();
+        },
       },
     }),
     // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
@@ -115,5 +114,3 @@ export const opencode: AiTool<
     );
   },
 };
-
-registerTool(opencode);

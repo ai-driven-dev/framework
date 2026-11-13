@@ -22,7 +22,6 @@ import {
   stripToolSuffix,
 } from "../../formats/command.js";
 import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
-import { registerTool } from "../../registry.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,
@@ -30,10 +29,10 @@ import {
   stripCodexSkillFrontmatter,
 } from "./build.js";
 import { codexAgentFrontmatter, codexAgentToml } from "./codex-agent-toml.js";
-import { codexGlobalFilePath } from "./codex-paths.js";
+import { CODEX_DIRECTORY, codexGlobalFilePath } from "./codex-paths.js";
 import { CODEX_HOOKS } from "./hooks.js";
 
-const DIRECTORY = ".codex/";
+const DIRECTORY = CODEX_DIRECTORY;
 const TOOL_SUFFIX = ".codex.md";
 const AGENTS_SKILLS_PREFIX = ".agents/skills/";
 
@@ -144,5 +143,3 @@ export const codex: AiTool<
     return rewriteCodexContent(content);
   },
 };
-
-registerTool(codex);

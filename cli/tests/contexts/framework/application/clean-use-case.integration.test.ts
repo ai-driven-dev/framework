@@ -2,7 +2,6 @@ import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
 import { GitignoreUseCase } from "../../../../src/contexts/framework/application/gitignore-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";

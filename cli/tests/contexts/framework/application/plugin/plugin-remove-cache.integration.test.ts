@@ -5,8 +5,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";

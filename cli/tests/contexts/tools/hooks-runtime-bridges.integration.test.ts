@@ -65,7 +65,13 @@ const ADAPTERS = { opencode: OPENCODE_HOOKS.runtime.adapter, kilo: KILO_HOOKS.ru
 
 afterEach(async () => {
   vi.unstubAllEnvs();
-  await Promise.all(created.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+  // A hook the bridge started without waiting can still hold its folder: Windows refuses the
+  // removal with EBUSY until it exits.
+  await Promise.all(
+    created
+      .splice(0)
+      .map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }))
+  );
 });
 
 /** The captured arguments, the scrubbed project folder pointed at a real one. */

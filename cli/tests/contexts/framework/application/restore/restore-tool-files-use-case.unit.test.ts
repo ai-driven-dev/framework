@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import "../../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import {
   type RestoreToolFilesOptions,
   RestoreToolFilesUseCase,

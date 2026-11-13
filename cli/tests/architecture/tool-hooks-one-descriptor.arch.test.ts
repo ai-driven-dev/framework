@@ -12,6 +12,9 @@ const BLANKED = /\/\/[^\n]*|\/\*[\s\S]*?\*\/|(["'`])(?:\\[\s\S]|(?!\1)[^\\])*\1/
 const REFERENCE_OR_CALL =
   /^(?!(?:true|false|null)\b)(?:new\s+)?[A-Za-z_$][\w$]*(?:\??\.[A-Za-z_$][\w$]*)*\s*(?:\(|,|;|\}|$)/;
 const LITERAL = /^(?:["'`[{]|-?\d|(?:true|false)\b|new\s+(?:Map|Set)\(|Object\.freeze\()/;
+// A tool with no `hooks.ts` declares its absence in `profile.ts` and `build.ts`: no fact.
+const ABSENCE = /^(?:false\b|\{\s*supported:\s*false\b)/;
+
 const HOOKS_PATH = /^["'`][^"'`]*[/.{}"'`]hooks(?:\/|\.json)/;
 
 /** Each member of an interface in the descriptor's type file, true when its type is another of
@@ -55,7 +58,10 @@ function hooksFacts(source: string, keys: ReadonlyMap<string, boolean>): string[
         (/hook/i.test(name) && index === 0) || isRoute === false
           ? !REFERENCE_OR_CALL.test(value)
           : isRoute === true && value.startsWith("{");
-      if (fact) facts.push(name);
+      const absent =
+        name === "hooksUnsupportedReason" ||
+        ((name === "acceptsHooks" || name === "hooks") && ABSENCE.test(value));
+      if (fact && !absent) facts.push(name);
     }
     // Found on the blanked line, so the text a bridge generates declares nothing; the path is
     // read on the raw line, where the literal still holds it. A value may start on the next line.
@@ -103,6 +109,9 @@ const PLANTED = [
   'function f(): void {\n  const localHooks = { a: "hooks/" };\n} →',
   'const a = { scopeArgs: { project: ["--scope", "local"] }, features: { hooks: true } }; →',
   'const U = ".codex/config.toml"; →',
+  'const p = {\n  acceptsHooks: false,\n  hooksUnsupportedReason: "runs no plugin hooks",\n}; →',
+  "const c = {\n  hooks: { supported: true },\n  acceptsHooks: true,\n}; → hooks acceptsHooks",
+  "const c = {\n  skills: { supported: true },\n  hooks: { supported: false },\n}; →",
   'type Shape = {\n  hooks: Array<string>;\n};\n// hooks: { not: code },\nconst BRIDGE = `\nconst HOOKS_DIR = "../hooks/";\n  hooks: [1],\n`; →',
 ];
 

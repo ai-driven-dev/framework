@@ -38,23 +38,23 @@ function convert(
   pluginHooksJson: string,
   pluginName: string,
   locate: (pluginPath: string) => string
-): { events: Record<string, ProjectHookEntry[]>; warnings: string[] } {
+): { handlers: Record<string, ProjectHookEntry[]>; warnings: string[] } {
   const parsed = JSON.parse(pluginHooksJson) as unknown;
   const rewritten = rewritePluginRootInJson(parsed, (suffix) =>
     suffix.startsWith(`${PLUGIN_HOOKS_SOURCE.scriptDir}/`)
       ? `./${antigravityHooksScriptPath(pluginName, suffix)}`
       : `./${locate(suffix)}`
   ) as ClaudeHooks;
-  const events: Record<string, ProjectHookEntry[]> = {};
+  const handlers: Record<string, ProjectHookEntry[]> = {};
   const warnings: string[] = [];
   for (const [event, groups] of Object.entries(rewritten.hooks ?? {})) {
     if (!Object.hasOwn(ANTIGRAVITY_HOOKS.eventMap, event)) {
       warnings.push(`unmapped event '${event}' skipped`);
       continue;
     }
-    events[event] = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
+    handlers[event] = groups.flatMap((group) => (group.hooks ?? []).map(toHandler));
   }
-  return { events, warnings };
+  return { handlers, warnings };
 }
 
 function withoutPlugin(existingJson: string, pluginName: string): NamedHooks {
@@ -75,14 +75,14 @@ export function mergeAntigravityHooks(
 ): { content: string; warnings: readonly string[] } {
   const { [pluginName]: previous, ...kept } =
     existingJson === null ? {} : (JSON.parse(existingJson) as NamedHooks);
-  const { events, warnings } = convert(pluginHooksJson, pluginName, locate);
+  const { handlers, warnings } = convert(pluginHooksJson, pluginName, locate);
   const merged =
-    Object.keys(events).length > 0
+    Object.keys(handlers).length > 0
       ? {
           ...kept,
           [pluginName]: {
             ...(previous?.enabled === undefined ? {} : { enabled: previous.enabled }),
-            ...events,
+            ...handlers,
           },
         }
       : kept;

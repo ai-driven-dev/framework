@@ -1,6 +1,5 @@
 // Plugin-scope Cursor hooks were measured never to fire, so `hooksDestination: "project"` routes
 // hooks/hooks.json into the project's own .cursor/hooks.json — the destination that does fire.
-import "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";

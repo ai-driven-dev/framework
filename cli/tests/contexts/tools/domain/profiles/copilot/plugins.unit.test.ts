@@ -3,10 +3,6 @@ import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/co
 
 describe("copilot plugins", () => {
   describe("capabilities.plugins", () => {
-    it("has a plugins capability", () => {
-      expect("plugins" in copilot.capabilities).toBe(true);
-    });
-
     it("is native mode", () => {
       expect(copilot.capabilities.plugins.mode).toBe("native");
     });

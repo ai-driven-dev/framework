@@ -7,10 +7,6 @@ describe("codex mcp", () => {
       expect(codex.capabilities.mcp.params.outputPath).toBe(".codex/config.toml");
     });
 
-    it("consumes the mcp config name", () => {
-      expect(codex.capabilities.mcp.consumes).toContain("mcp");
-    });
-
     it("uses user-prime merge strategy", () => {
       expect(codex.capabilities.mcp.params.mergeStrategy ?? "user-prime").toBe("user-prime");
     });

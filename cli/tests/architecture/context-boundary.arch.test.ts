@@ -33,8 +33,11 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // Whether a name a host's registry holds points at a different source: the sync-time
     // guard and `doctor`'s conflict check share the comparison.
     "src/contexts/tools/domain/marketplace-source-conflict.ts",
-    // what a tool declares about plugins: this context has no application layer, since
-    // installing is framework work
+    // what a tool answers from the project's files: which tool's files are present, and which
+    // file its MCP config goes in
+    "src/contexts/tools/application/detect-tool-signals.ts",
+    "src/contexts/tools/application/resolve-mcp-output-path.ts",
+    // what a tool declares about plugins: installing is framework work
     "src/contexts/tools/domain/capabilities/plugins-capability.ts",
     "src/contexts/tools/domain/marketplace-settings.ts",
     "src/contexts/tools/domain/plugin-translation-mode.ts",

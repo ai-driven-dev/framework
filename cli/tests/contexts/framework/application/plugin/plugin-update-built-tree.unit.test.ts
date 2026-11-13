@@ -1,6 +1,5 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/framework/application/ownership/native-host-registration-gate.js";
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";

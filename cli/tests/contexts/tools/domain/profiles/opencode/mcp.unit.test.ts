@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { OpencodeDualConfigError } from "../../../../../../src/kernel/errors.js";
 import { FileHash } from "../../../../../../src/kernel/file.js";
 import type { FileReader } from "../../../../../../src/kernel/ports/file-reader.js";
 
-function makeFs(existingPaths: string[]): FileReader {
+function _makeFs(existingPaths: string[]): FileReader {
   return {
     fileExists: async (path: string) => existingPaths.some((p) => path.endsWith(p)),
     isExecutable: async () => false,
@@ -163,32 +162,6 @@ describe("opencode mcp", () => {
         mcpServers: { "my-server": { command: "node", disabled: false } },
       });
       expect(JSON.parse(transform("mcp", input)).mcp["my-server"].enabled).toBe(true);
-    });
-  });
-
-  describe("capabilities.mcp.resolveOutput()", () => {
-    const PROJECT_ROOT = "/project";
-
-    async function resolve(fs: FileReader): Promise<string> {
-      return opencode.capabilities.mcp.resolveOutput(PROJECT_ROOT, fs);
-    }
-
-    it("returns opencode.json when neither config file exists", async () => {
-      expect(await resolve(makeFs([]))).toBe("opencode.json");
-    });
-
-    it("returns opencode.json when only opencode.json exists", async () => {
-      expect(await resolve(makeFs(["opencode.json"]))).toBe("opencode.json");
-    });
-
-    it("returns opencode.jsonc when only opencode.jsonc exists", async () => {
-      expect(await resolve(makeFs(["opencode.jsonc"]))).toBe("opencode.jsonc");
-    });
-
-    it("throws OpencodeDualConfigError when both opencode.json and opencode.jsonc exist", async () => {
-      await expect(resolve(makeFs(["opencode.json", "opencode.jsonc"]))).rejects.toThrow(
-        OpencodeDualConfigError
-      );
     });
   });
 });

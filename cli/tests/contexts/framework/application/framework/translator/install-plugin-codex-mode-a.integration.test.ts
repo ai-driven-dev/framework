@@ -1,6 +1,5 @@
 // Codex enables plugins through its own CLI, which writes the user-global
 // `~/.codex/config.toml` and plugin cache, so a project-local settings file is inert.
-import "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";

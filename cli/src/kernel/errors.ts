@@ -102,6 +102,34 @@ export class UnregisteredToolError extends Error {
   }
 }
 
+export class DuplicateToolIdError extends Error {
+  constructor(toolId: string) {
+    super(`Tool '${toolId}' is registered twice.`);
+    this.name = "DuplicateToolIdError";
+  }
+}
+
+export type HooksInvariant =
+  | "unknown-event"
+  | "empty-native-list"
+  | "duplicate-native-event"
+  | "project-without-file"
+  | "loader-with-file"
+  | "path-outside-directory"
+  | "root-token-without-file"
+  | "adapter-not-stamped";
+
+export class InvalidHooksDescriptorError extends Error {
+  constructor(
+    readonly toolId: string,
+    readonly invariant: HooksInvariant,
+    detail: string
+  ) {
+    super(`The hooks descriptor of '${toolId}' breaks '${invariant}': ${detail}`);
+    this.name = "InvalidHooksDescriptorError";
+  }
+}
+
 export class ToolNotInManifestError extends Error {
   constructor(toolId: string) {
     super(`Tool '${toolId}' is not installed in the manifest.`);

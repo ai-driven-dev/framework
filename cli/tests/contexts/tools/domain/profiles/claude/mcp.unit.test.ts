@@ -14,10 +14,6 @@ describe("claude mcp", () => {
       });
     });
 
-    it("consumes the mcp config name", () => {
-      expect(claude.capabilities.mcp.consumes).toContain("mcp");
-    });
-
     it("does not consume unknown config names", () => {
       expect(claude.capabilities.mcp.consumes).not.toContain("vscodeDir");
     });

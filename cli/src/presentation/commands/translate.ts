@@ -1,6 +1,9 @@
 import { resolve } from "node:path";
 import type { Command } from "commander";
-import type { FrameworkBuildMode } from "../../contexts/tools/domain/registry.js";
+import {
+  type FrameworkBuildMode,
+  registeredToolIds,
+} from "../../contexts/tools/domain/registry.js";
 import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
@@ -70,10 +73,7 @@ export function registerTranslateCommand(program: Command): void {
       "Convert an arbitrary source into a target-native plugin tree — records nothing (see `sync` for the manifest-driven, tracked version)"
     )
     .argument("<source>", "Path to the source framework directory")
-    .requiredOption(
-      "--to <target>",
-      "Conversion target (claude, cursor, copilot, codex, opencode, kilo, antigravity)"
-    )
+    .requiredOption("--to <target>", `Conversion target (${registeredToolIds("ai").join(", ")})`)
     .requiredOption("--out <dir>", "Output directory (marketplace dist or project root)")
     .option("--as <marketplace|flat>", "Output layout", "marketplace")
     .option("--force", "Overwrite existing files at canonical paths under --out")

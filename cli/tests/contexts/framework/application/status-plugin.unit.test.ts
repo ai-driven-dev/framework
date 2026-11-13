@@ -1,6 +1,4 @@
 import { describe, expect, it } from "vitest";
-import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { DetectPluginDriftUseCase } from "../../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
 import { StatusUseCase } from "../../../../src/contexts/framework/application/status-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";

@@ -40,8 +40,3 @@ export function distributionProbesOf(
 export function pluginManifestProbes(): readonly DistributionProbe[] {
   return distributionProbesOf(getAllRegisteredTools(), "manifest");
 }
-
-/** Where a marketplace catalog can sit, across every registered tool's layout. */
-export function marketplaceProbes(): readonly DistributionProbe[] {
-  return distributionProbesOf(getAllRegisteredTools(), "marketplace");
-}

@@ -1,5 +1,3 @@
-import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { describe, expect, it } from "vitest";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/framework/application/ownership/native-host-registration-gate.js";
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";

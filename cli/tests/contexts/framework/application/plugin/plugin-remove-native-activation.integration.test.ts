@@ -1,6 +1,5 @@
 // `claude`, `codex` and `copilot` only load a plugin once their own CLI has registered it, so
 // removal must drive `uninstallPlugin` with the same `<plugin>@<marketplace>` ref install used.
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";

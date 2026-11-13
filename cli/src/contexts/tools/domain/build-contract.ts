@@ -2,6 +2,7 @@ import type { ConfigAsset, SchemaName } from "../../../kernel/ports/asset-provid
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../kernel/ports/file-writer.js";
 import type { ToolId } from "../../../kernel/tool.js";
+import type { FlatHooksBridge } from "./capabilities/plugins-capability.js";
 
 /** How a plugin's artifact files are sourced: a sub-directory walked with an extension filter
  * or in full, a single plugin-relative file, or hooks.json plus its sibling scripts. */
@@ -58,15 +59,7 @@ export type ArtifactContract =
       readonly skipHooksJson?: boolean;
       /** A generated event bridge, for a tool with no hooks.json of its own and no other way
        * to trigger a plugin's declared hooks. Read only when `skipHooksJson` is also true. */
-      readonly hooksBridge?: {
-        /** Raw (unrewritten) hooks.json content + plugin name -> the generated bridge
-         * module's full text, or `null` when nothing in it named a mapped event. */
-        readonly generate: (rawHooksJson: string, plugin: string) => string | null;
-        readonly path: (plugin: string) => string;
-        /** A hooks/ file whose presence in this plugin's own source means the plugin ships its
-         * own bridge already — generate nothing for it. */
-        readonly skipIfSourceHas: string;
-      };
+      readonly hooksBridge?: FlatHooksBridge;
     };
 
 export interface ToolBuildContract {

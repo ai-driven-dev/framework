@@ -1,23 +1,25 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-cursor.cjs";
-import type { HooksDescriptor } from "../../formats/hooks-descriptor.js";
+import { declareHooks } from "../../formats/hooks-descriptor.js";
 import { CURSOR_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { CURSOR_DIRECTORY } from "./cursor-paths.js";
 
-export const CURSOR_HOOKS = {
+export const CURSOR_HOOKS = declareHooks("cursor", CURSOR_DIRECTORY, adapter, {
+  undeclaredEvents: "skipped",
+  events: {
+    SessionStart: "sessionStart",
+    UserPromptSubmit: "beforeSubmitPrompt",
+    PreToolUse: "preToolUse",
+    PostToolUse: "postToolUse",
+    Stop: ["stop", "sessionEnd"],
+    SubagentStop: "subagentStop",
+  },
   rootToken: CURSOR_PLUGIN_ROOT_TOKEN,
   manifestNamesHooks: true,
   // `Stop` fans out to two Cursor events, not one: interactive sessions fire `stop` and headless
   // ones `sessionEnd` instead — never both from the same run, but which one depends on how the
   // session ends, so both are subscribed. A run file already tolerates more than one `turn_end`
   // line, so a session firing both is not a problem.
-  eventMap: {
-    SessionStart: ["sessionStart"],
-    UserPromptSubmit: ["beforeSubmitPrompt"],
-    PreToolUse: ["preToolUse"],
-    PostToolUse: ["postToolUse"],
-    Stop: ["stop", "sessionEnd"],
-    SubagentStop: ["subagentStop"],
-  },
   // `timeout` is in seconds on both sides: Claude's hooks.json and Cursor's per-script option.
   file: {
     wrapper: { version: 1 },
@@ -32,5 +34,4 @@ export const CURSOR_HOOKS = {
     sharedFile: ".cursor/hooks.json",
     scriptsDir: ".cursor/hooks/",
   },
-  runtime: { adapter },
-} as const satisfies HooksDescriptor;
+});

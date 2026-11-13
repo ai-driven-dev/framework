@@ -1,5 +1,3 @@
-import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";

@@ -1,13 +1,5 @@
 import { homedir } from "node:os";
-import "../../contexts/tools/domain/profiles/antigravity/profile.js";
 import { join } from "node:path";
-import "../../contexts/tools/domain/profiles/claude/profile.js";
-import "../../contexts/tools/domain/profiles/codex/profile.js";
-import "../../contexts/tools/domain/profiles/copilot/profile.js";
-import "../../contexts/tools/domain/profiles/cursor/profile.js";
-import "../../contexts/tools/domain/profiles/kilo/profile.js";
-import "../../contexts/tools/domain/profiles/opencode/profile.js";
-import "../../contexts/tools/domain/profiles/vscode/profile.js";
 import { wireAuth } from "../../composition/auth.js";
 import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
 import type { LogIn } from "../../contexts/auth/application/log-in.js";

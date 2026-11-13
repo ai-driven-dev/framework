@@ -4,10 +4,6 @@ import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cur
 
 describe("cursor plugins", () => {
   describe("capabilities.plugins", () => {
-    it("has a plugins capability", () => {
-      expect("plugins" in cursor.capabilities).toBe(true);
-    });
-
     it("is native mode", () => {
       expect(cursor.capabilities.plugins.mode).toBe("native");
     });

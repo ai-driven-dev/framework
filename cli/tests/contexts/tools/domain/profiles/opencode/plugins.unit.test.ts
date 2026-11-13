@@ -3,10 +3,6 @@ import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/o
 
 describe("opencode plugins", () => {
   describe("capabilities.plugins", () => {
-    it("has a plugins capability", () => {
-      expect("plugins" in opencode.capabilities).toBe(true);
-    });
-
     it("is flat mode", () => {
       expect(opencode.capabilities.plugins.mode).toBe("flat");
     });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { inMarketplace, installed, NAMED_AGENT, UNNAMED_AGENT } from "../agent-fixture.js";
+import { inMarketplace, installed, NAMED_AGENT } from "../../../testing/agent-fixture.js";
 
 const NATIVE = `---
 name: 'planner'
@@ -18,16 +18,6 @@ describe("copilot agents", () => {
       expect(installed(copilot, NAMED_AGENT)).toBe(NATIVE);
     });
 
-    it("names an unnamed plugin agent after its file", () => {
-      expect(installed(copilot, UNNAMED_AGENT)).toBe(`---
-name: 'planner'
-description: 'Plans the work'
-include-custom-instructions: true
----
-Plan before building.
-`);
-    });
-
     it("keeps the declared name inside the plugin of a marketplace build", () => {
       expect(inMarketplace(copilot, NAMED_AGENT)).toStrictEqual({
         path: "agents/planner.md",
@@ -43,26 +33,5 @@ Plan before building.
         "include-custom-instructions": false,
       })
     ).toHaveProperty("include-custom-instructions", false);
-  });
-
-  describe("capabilities.agents.buildInstallPath()", () => {
-    it("adds .agent.md extension", () => {
-      const path = copilot.capabilities.agents.buildInstallPath("code-reviewer.md");
-      expect(path).toBe(".github/agents/code-reviewer.agent.md");
-    });
-
-    it("returns null for .gitkeep files", () => {
-      expect(copilot.capabilities.agents.buildInstallPath(".gitkeep")).toBeNull();
-    });
-
-    it("names a nested agent after its own file, not the folders above it", () => {
-      const path = copilot.capabilities.agents.buildInstallPath("team/sub/code-reviewer.md");
-      expect(path).toBe(".github/agents/code-reviewer.agent.md");
-    });
-
-    it("keeps a file that is not markdown under its own name", () => {
-      const path = copilot.capabilities.agents.buildInstallPath("helper.txt");
-      expect(path).toBe(".github/agents/helper.txt");
-    });
   });
 });

@@ -1,6 +1,5 @@
 /** At a host that enables a plugin machine-wide (no `NativeActivation.scopeArgs`), removing
  * it in one project must not disable it for another still referencing the shared source. */
-import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { describe, expect, it } from "vitest";
 import {
   FRAMEWORK_MARKETPLACE_NAME,

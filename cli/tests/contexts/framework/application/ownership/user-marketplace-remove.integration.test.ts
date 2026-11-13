@@ -1,6 +1,3 @@
-import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";

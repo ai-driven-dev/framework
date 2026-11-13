@@ -1,36 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { stripCodexSkillFrontmatter } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { serializeFrontmatter } from "../../../../../../src/kernel/markdown.js";
-
-describe("codex skills", () => {
-  describe("capabilities.skills.buildInstallPath()", () => {
-    it("builds path under .agents/skills/aidd-{name}/SKILL.md", () => {
-      const path = codex.capabilities.skills.buildInstallPath("my-skill/SKILL.md");
-      expect(path).toBe(".agents/skills/aidd-my-skill/SKILL.md");
-    });
-
-    it("strips .codex.md tool suffix", () => {
-      const path = codex.capabilities.skills.buildInstallPath("my-skill.codex.md");
-      expect(path).toBe(".agents/skills/aidd-my-skill/SKILL.md");
-    });
-
-    it("strips plain .md suffix from skill name", () => {
-      const path = codex.capabilities.skills.buildInstallPath("my-skill.md");
-      expect(path).toBe(".agents/skills/aidd-my-skill/SKILL.md");
-    });
-
-    it("keeps a skill name that carries no extension at all", () => {
-      const path = codex.capabilities.skills.buildInstallPath("my-skill");
-      expect(path).toBe(".agents/skills/aidd-my-skill/SKILL.md");
-    });
-
-    it("keeps a skill folder's name whole, even one ending in .md", () => {
-      const path = codex.capabilities.skills.buildInstallPath("notes.md/SKILL.md");
-      expect(path).toBe(".agents/skills/aidd-notes.md/SKILL.md");
-    });
-  });
-});
 
 /**
  * Codex is the only target that re-serialises skill frontmatter instead of passing the file

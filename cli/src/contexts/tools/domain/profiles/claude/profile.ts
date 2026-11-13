@@ -18,12 +18,12 @@ import type {
 import { convertCommandFrontmatter, stripToolSuffix } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
-import { registerTool } from "../../registry.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
 import { claudeAgentFrontmatter } from "./claude-agent.js";
+import { CLAUDE_DIRECTORY } from "./claude-build-paths.js";
 import { CLAUDE_HOOKS } from "./hooks.js";
 
-const DIRECTORY = ".claude/";
+const DIRECTORY = CLAUDE_DIRECTORY;
 const TOOL_SUFFIX = ".claude.md";
 
 function commandsDir(phase: string): string {
@@ -63,13 +63,8 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
         directory: DIRECTORY,
         toolSuffix: TOOL_SUFFIX,
         buildInstallPath: (fileName) => {
-          const slashIdx = fileName.indexOf("/");
-          if (slashIdx !== -1) {
-            const phaseDir = fileName.slice(0, slashIdx);
-            const rest = fileName.slice(slashIdx + 1);
-            const phase = phaseDir.match(/^(\d+)/)?.[1];
-            if (phase) return `${commandsDir(phase)}${rest}`;
-          }
+          const phased = fileName.match(/^(\d+)[^/]*\/(.*)/);
+          if (phased) return `${commandsDir(phased[1])}${phased[2]}`;
           return `${DIRECTORY}commands/${stripToolSuffix(TOOL_SUFFIX, fileName)}`;
         },
         convertFrontmatter: (fm, relativeFileName) =>
@@ -87,11 +82,8 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
             return { paths };
           }
           if ("globs" in fm) return { paths: fm.globs };
-          if ("alwaysApply" in fm) {
-            if (fm.alwaysApply === false && fm.description !== undefined) {
-              return { description: fm.description };
-            }
-            return {};
+          if (fm.alwaysApply === false && fm.description !== undefined) {
+            return { description: fm.description };
           }
           return {};
         },
@@ -156,5 +148,3 @@ export const claude: AiTool<HasAgents & HasSkills & HasCommands & HasRules & Has
       );
     },
   };
-
-registerTool(claude);

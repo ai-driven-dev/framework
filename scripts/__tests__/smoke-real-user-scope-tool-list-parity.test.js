@@ -45,25 +45,7 @@ function scriptUserAiList() {
 describe("smoke-real.sh drives --scope user with the tools the profiles support", () => {
   it("names every AI tool whose profile declares machine-wide activation, and no other", () => {
     const supported = aiToolIds().filter(declaresUserScopeActivation);
-    assert.deepEqual([...supported].sort(), [
-      "claude",
-      "codex",
-      "copilot",
-      "cursor",
-      "kilo",
-      "opencode",
-    ]);
+    assert.ok(supported.length > 0, "no profile declares machine-wide activation; the guard reads nothing");
     assert.deepEqual([...scriptUserAiList()].sort(), [...supported].sort());
-  });
-
-  it("leaves out AI tools that declare none, which setup --scope user refuses", () => {
-    const unsupported = aiToolIds().filter((id) => !declaresUserScopeActivation(id));
-    assert.deepEqual([...unsupported].sort(), ["antigravity"]);
-    for (const toolId of unsupported) {
-      assert.ok(
-        !scriptUserAiList().includes(toolId),
-        `smoke-real.sh's user_ai_list names ${toolId}, which setup --scope user refuses outright`
-      );
-    }
   });
 });

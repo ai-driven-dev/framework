@@ -1,11 +1,9 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-copilot.cjs";
-import type { HooksDescriptor } from "../../formats/hooks-descriptor.js";
-import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { declareHooks } from "../../formats/hooks-descriptor.js";
 import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
 
-export const COPILOT_HOOKS = {
-  rootToken: PLUGIN_ROOT_TOKEN,
+export const COPILOT_HOOKS = declareHooks("copilot", COPILOT_WORKSPACE_DIR, adapter, {
   manifestNamesHooks: true,
   // Copilot CLI honours the matcher, measured live: a `Write|Edit` PostToolUse entry stays
   // silent on Read.
@@ -15,5 +13,4 @@ export const COPILOT_HOOKS = {
   },
   // One file per plugin, `.github/hooks/<plugin>.hooks.json`, beside its scripts.
   flat: { scriptsDir: `${COPILOT_WORKSPACE_DIR}hooks/` },
-  runtime: { adapter },
-} as const satisfies HooksDescriptor;
+});

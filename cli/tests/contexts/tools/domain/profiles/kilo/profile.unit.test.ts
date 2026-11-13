@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { hasToolSignals } from "../../../../../../src/contexts/tools/domain/registry.js";
-import { KiloDualConfigError } from "../../../../../../src/kernel/errors.js";
+import { distributionProbesOf } from "../../../../../../src/contexts/translate/domain/plugin-format.js";
 import { FileHash } from "../../../../../../src/kernel/file.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/kernel/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/kernel/ports/file-reader.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
+import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.js";
+import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
 
-function makeFs(existingPaths: string[]): FileReader {
+function _makeFs(existingPaths: string[]): FileReader {
   return {
     fileExists: async (path) =>
       existingPaths.includes(path.replaceAll("\\", "/").replace(/^\/project\//, "")),
@@ -45,67 +45,17 @@ describe("kilo", () => {
     ).toEqual({ name: "aidd:01:greet", description: "Greet someone" });
   });
 
-  it("retains descriptions only for opt-in rules", () => {
-    expect(
-      kilo.capabilities.rules.convertFrontmatter({
-        alwaysApply: false,
-        description: "Use for TypeScript",
-        globs: "*.ts",
-      })
-    ).toEqual({ description: "Use for TypeScript" });
-    expect(
-      kilo.capabilities.rules.convertFrontmatter({ alwaysApply: true, description: "Always" })
-    ).toEqual({});
-    expect(kilo.capabilities.rules.convertFrontmatter({ description: "Default" })).toEqual({});
-    expect(kilo.capabilities.rules.convertFrontmatter({ alwaysApply: false })).toEqual({});
-  });
-
-  it("detects installed AIDD commands in Kilo's command directory", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/project/.kilo/commands/aidd/01/greet.md": "---\nname: aidd:01:greet\n---\nHello",
-      "/project/.kilo/commands/custom.md": "---\nname: custom\n---\nCustom",
-    });
-    const signals = await hasToolSignals(fs, kilo, "/project");
-    expect(signals.map((path) => path.replaceAll("\\", "/"))).toEqual([
-      ".kilo/commands/aidd/01/greet.md",
-    ]);
-  });
-
-  it("declares a flat build with Kilo's agents and skills paths", () => {
+  it("declares a flat build", () => {
     expect(kilo.buildContracts?.flat).toBeDefined();
-    expect(kilo.capabilities.agents.buildInstallPath("reviewer.kilo.md")).toBe(
-      ".kilo/agents/reviewer.md"
-    );
-    expect(kilo.capabilities.skills.buildInstallPath("01-plan/SKILL.kilo.md")).toBe(
-      ".kilo/skills/01-plan/SKILL.md"
-    );
-    expect(kilo.capabilities.commands.buildInstallPath("01-plan/greet.md")).toBe(
-      ".kilo/commands/aidd/01/greet.md"
-    );
-    expect(kilo.capabilities.rules.buildInstallPath("standards.kilo.md")).toBe(
-      ".kilo/rules/standards.md"
-    );
   });
 
-  it("prefers project-local JSONC and reuses an existing Kilo config", async () => {
-    expect(await kilo.capabilities.mcp.resolveOutput("/project", makeFs([]))).toBe(
-      ".kilo/kilo.jsonc"
-    );
-    expect(await kilo.capabilities.mcp.resolveOutput("/project", makeFs([".kilo/kilo.json"]))).toBe(
-      ".kilo/kilo.json"
-    );
-    expect(await kilo.capabilities.mcp.resolveOutput("/project", makeFs(["kilo.jsonc"]))).toBe(
-      "kilo.jsonc"
-    );
-    await expect(
-      kilo.capabilities.mcp.resolveOutput("/project", makeFs(["kilo.json", "kilo.jsonc"]))
-    ).rejects.toThrow(KiloDualConfigError);
-    await expect(
-      kilo.capabilities.mcp.resolveOutput(
-        "/project",
-        makeFs([".kilo/kilo.json", ".kilo/kilo.jsonc"])
-      )
-    ).rejects.toThrow(KiloDualConfigError);
+  it.each<[InstallKind, string, string]>([
+    ["agents", "reviewer.kilo.md", ".kilo/agents/reviewer.md"],
+    ["skills", "01-plan/SKILL.kilo.md", ".kilo/skills/01-plan/SKILL.md"],
+    ["commands", "01-plan/greet.md", ".kilo/commands/aidd/01/greet.md"],
+    ["rules", "standards.kilo.md", ".kilo/rules/standards.md"],
+  ])("installs %s file %s at %s", (kind, built, path) => {
+    expect(installPathOf(kilo, kind, built)).toBe(path);
   });
 
   it("delivers hook scripts under .kilo/hooks and generates a bridge under .kilo/plugin", () => {
@@ -134,5 +84,36 @@ describe("kilo", () => {
         "hooks/capture.cjs"
       )
     ).toBe(".kilo/hooks/aidd-context/capture.cjs");
+  });
+});
+
+describe("kilo build and conversion tables", () => {
+  it.each(
+    rulesRows({
+      ...WRITES_NOTHING,
+      "a paths list": {},
+      "globs that apply on request": { description: "d" },
+      "paths beside a description": { description: "d" },
+      "a description that opts out of always-apply": { description: "d" },
+    })
+  )("converts %s", (_case, frontmatter, expected) => {
+    expect(kilo.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+  });
+});
+
+describe("kilo as the registry answers for it", () => {
+  it("probes a marketplace although it builds none natively", () => {
+    expect(
+      distributionProbesOf(new Map([[kilo.toolId, kilo]]), "marketplace").map(
+        (probe) => probe.format
+      )
+    ).toEqual(["kilo"]);
+  });
+
+  it("installs its rules into .kilo/rules/ as markdown", () => {
+    expect(kilo.capabilities.rules.installedLocation()).toEqual({
+      directory: ".kilo/rules/",
+      extension: ".md",
+    });
   });
 });

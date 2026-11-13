@@ -1,5 +1,13 @@
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import { mcpJsonToToml, mergeJsonUserPrime } from "../formats/mcp-format.js";
+
+/** The config files a tool's MCP output may already live in. Tiers are tried in order; within the
+ * first tier that has any file present, two present files make `conflict` throw, one is the answer.
+ * `fallback` answers when no tier has a file. */
+export type McpOutputPathCandidates = {
+  readonly tiers: readonly (readonly string[])[];
+  readonly fallback: string;
+  readonly conflict: () => never;
+};
 
 export class McpCapability {
   readonly consumes: readonly string[];
@@ -12,7 +20,7 @@ export class McpCapability {
       mergeStrategy?: "user-prime" | "framework-prime" | "none";
       mergeFn?: (existing: string, incoming: string) => string;
       transformContent?: (content: string) => string;
-      resolveOutputPath?: (projectRoot: string, fs: FileReader) => Promise<string>;
+      outputPathCandidates?: McpOutputPathCandidates;
       consumes?: readonly string[];
     }
   ) {
@@ -29,11 +37,9 @@ export class McpCapability {
     return afterTransform;
   }
 
-  async resolveOutput(projectRoot: string, fs: FileReader): Promise<string> {
-    if (this.params.resolveOutputPath) {
-      return this.params.resolveOutputPath(projectRoot, fs);
-    }
-    return this.params.outputPath;
+  /** `null` when the tool's output path is the fixed `outputPath`. */
+  outputPathCandidates(): McpOutputPathCandidates | null {
+    return this.params.outputPathCandidates ?? null;
   }
 
   merge(existing: string, incoming: string): string {

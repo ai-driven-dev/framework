@@ -22,7 +22,6 @@ import type {
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
-import { registerTool } from "../../registry.js";
 import { buildCopilotFlatContract, buildCopilotMarketplaceContract } from "./build.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
@@ -310,5 +309,3 @@ export const copilot: AiTool<
 
   rewriteContent: rewriteCopilotContent,
 };
-
-registerTool(copilot);

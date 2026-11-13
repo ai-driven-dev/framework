@@ -5,6 +5,8 @@
 
 import type { GlobalPlugin } from "../../capabilities/plugins-capability.js";
 
+export const CODEX_DIRECTORY = ".codex/";
+
 /** Relative path for the Codex-native plugin manifest inside each plugin output directory. */
 export const OUTPUT_CODEX_MANIFEST_RELATIVE = ".codex-plugin/plugin.json";
 

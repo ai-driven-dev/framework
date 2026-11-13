@@ -21,15 +21,8 @@ type TargetSnapshot = Record<string, string>; // rel-path → sha256
 type GoldenSnapshot = Record<string, TargetSnapshot>; // key → files
 
 const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor"] as const;
-const FLAT_TARGETS = [
-  "claude",
-  "cursor",
-  "copilot",
-  "codex",
-  "opencode",
-  "kilo",
-  "antigravity",
-] as const;
+const FLAT_TARGETS = AI_TOOL_IDS;
+const CELL_COUNT = MARKETPLACE_TARGETS.length + FLAT_TARGETS.length;
 
 const FROZEN_CELLS = new Set<string>([
   ...MARKETPLACE_TARGETS,
@@ -120,10 +113,10 @@ const captures = twoCaptures("fb-golden-det", (env) =>
   captureAllCells(env.projectDir, env.fakeHome, env.tempDir)
 );
 
-describe.concurrent("Framework build golden — 11-cell matrix", () => {
+describe.concurrent(`Framework build golden — ${CELL_COUNT}-cell matrix`, () => {
   afterAll(captures.cleanup);
 
-  // Two full 9-cell builds measured just past the 60s default on a Windows runner, not a
+  // Two full builds of every cell measured just past the 60s default on a Windows runner, not a
   // hang. Raised per test so no other e2e file's budget moves.
   it("snapshot is deterministic (two captures of each target are byte-identical)", async () => {
     const snap1 = await captures.first();
@@ -137,7 +130,7 @@ describe.concurrent("Framework build golden — 11-cell matrix", () => {
     }
   }, 120_000);
 
-  it("every one of the 11 cells is byte-identical to its stored baseline", async () => {
+  it(`every one of the ${CELL_COUNT} cells is byte-identical to its stored baseline`, async () => {
     const captured = await captures.first();
 
     if (process.env.UPDATE_FRAMEWORK_GOLDEN === "1") {
@@ -169,12 +162,7 @@ describe.concurrent("Framework build golden — 11-cell matrix", () => {
     }
   }, 120_000);
 
-  it("the matrix covers every tool the CLI builds for, and nothing else", () => {
-    const matrixTools = new Set<string>([...MARKETPLACE_TARGETS, ...FLAT_TARGETS]);
-    for (const id of AI_TOOL_IDS) {
-      expect(matrixTools.has(id), `${id} is a registered AI tool with no golden cell`).toBe(true);
-    }
-
+  it("the stored baseline holds a cell for every tool the CLI builds for, and nothing else", () => {
     const stored = JSON.parse(readFileSync(SNAPSHOT_FILE, "utf-8")) as GoldenSnapshot;
     const expectedCells = [...MARKETPLACE_TARGETS, ...FLAT_TARGETS.map((t) => `${t}:flat`)];
     expect(Object.keys(stored).sort()).toEqual([...expectedCells].sort());
