@@ -7,7 +7,7 @@ import { MarketplaceListUseCase } from "../../../../src/contexts/distribution/ap
 import { ResolveMarketplaceUseCase } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
 import type { PluginCatalog } from "../../../../src/contexts/distribution/domain/catalog.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import type { PluginCatalogRepository } from "../../../../src/contexts/distribution/domain/ports/plugin-catalog-repository.js";
+import type { PluginCatalogRepository } from "../../../../src/contexts/distribution/ports/plugin-catalog-repository.js";
 import { makeRegistryAdapter } from "../testing/registry-adapter.js";
 
 const SAMPLE_MARKETPLACE = Marketplace.create({

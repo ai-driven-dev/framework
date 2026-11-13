@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../../kernel/scope.js";
+import type { MarketplaceScope } from "../../../kernel/scope.js";
 
 export interface MarketplaceRemovalRequest {
   name: string;

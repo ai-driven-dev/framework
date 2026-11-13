@@ -3,7 +3,7 @@ import type { ToolId } from "../../../../kernel/tool.js";
 import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace-use-case.js";
 import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";

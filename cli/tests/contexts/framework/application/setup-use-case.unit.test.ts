@@ -9,6 +9,8 @@ import {
   Marketplace,
 } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSourceMode } from "../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
+import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
 import type { MarketplaceSyncSettings } from "../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { ProjectContextDetectorUseCase } from "../../../../src/contexts/framework/application/setup/project-context-detector-use-case.js";
@@ -30,7 +32,6 @@ import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../../../src/kernel/tool.js";
 import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
-import type { LatestReleaseResolver } from "../../../../src/runtime/self-update/latest-release-resolver.js";
 import {
   buildUnitDeps,
   initAndInstall,
@@ -44,9 +45,8 @@ import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-ma
 import { OverwritePrompter, ScriptedPrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 
-function makeNoOpLatestResolver(): LatestReleaseResolver {
+function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {
-    resolveLatest: vi.fn().mockResolvedValue(null),
     listRootReleases: vi.fn().mockResolvedValue([]),
     isRepoPublic: vi.fn().mockResolvedValue(true),
   };

@@ -8,9 +8,9 @@ import type { Prompter } from "../../../kernel/ports/prompter.js";
 import type { MarketplaceScope } from "../../../kernel/scope.js";
 import type { PluginSource } from "../../../kernel/source.js";
 import { FRAMEWORK_MARKETPLACE_NAME, Marketplace } from "../domain/marketplace.js";
-import type { MarketplaceRegistry } from "../domain/ports/marketplace-registry.js";
-import type { MarketplaceRemover } from "../domain/ports/marketplace-remover.js";
-import type { MarketplaceTrustStore } from "../domain/ports/marketplace-trust-store.js";
+import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
+import type { MarketplaceRemover } from "../ports/marketplace-remover.js";
+import type { MarketplaceTrustStore } from "../ports/marketplace-trust-store.js";
 import type { ResolveMarketplaceUseCase } from "./resolve-marketplace-use-case.js";
 
 export interface MarketplaceAddOptions {

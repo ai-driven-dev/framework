@@ -6,7 +6,7 @@ import {
   FRAMEWORK_MARKETPLACE_NAME,
   Marketplace,
 } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../../../src/contexts/distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/framework/application/ownership/native-host-registration-gate.js";
 import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";

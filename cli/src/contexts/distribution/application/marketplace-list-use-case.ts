@@ -1,7 +1,7 @@
 import type { Logger } from "../../../kernel/ports/logger.js";
 import type { PluginCatalog } from "../domain/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
-import type { MarketplaceRegistry } from "../domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 import type { ResolveMarketplaceUseCase } from "./resolve-marketplace-use-case.js";
 
 export interface MarketplaceListOptions {

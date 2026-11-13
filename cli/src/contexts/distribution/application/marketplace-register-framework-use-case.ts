@@ -1,7 +1,7 @@
 import type { MarketplaceScope } from "../../../kernel/scope.js";
 import type { PluginSource } from "../../../kernel/source.js";
 import { FRAMEWORK_MARKETPLACE_NAME, Marketplace } from "../domain/marketplace.js";
-import type { MarketplaceRegistry } from "../domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 
 export interface MarketplaceRegisterFrameworkOptions {
   projectRoot: string;

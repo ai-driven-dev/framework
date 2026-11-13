@@ -54,9 +54,9 @@ plugin's own content and how it gets translated are someone else's job once it h
 
 Nothing outside `contexts/distribution/` may import a module this context has not declared
 public — `tests/architecture/context-boundary.arch.test.ts` holds the list
-(`PUBLIC_MODULES.distribution`). Measured at extraction, ten modules were reached from outside
-and not one was an adapter: the adapters are wired by the composition root
-(`runtime/wiring/distribution.ts`) alone, and stay internal for that reason. A module that
+(`PUBLIC_MODULES.distribution`). Measured, twelve modules are reached from outside
+and not one is an adapter: the adapters are wired by the composition root
+(`composition/distribution.ts`) alone, and stay internal for that reason. A module that
 exposes its own plumbing to a caller outside the composition root is not a leaf context anymore
 — keep new adapters unreachable from outside.
 

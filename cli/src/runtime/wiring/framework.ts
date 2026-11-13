@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { wireAuth } from "../../composition/auth.js";
+import { type DistributionDeps, wireDistribution } from "../../composition/distribution.js";
 import { wireHostRegistration } from "../../composition/host-registration.js";
 import { type RecipesDeps, wireRecipes } from "../../composition/recipes.js";
 import { type UpdateDeps, wireUpdate } from "../../composition/update.js";
@@ -96,10 +97,7 @@ import { FileAdapter } from "../filesystem/file-adapter.js";
 import { HasherAdapter } from "../filesystem/hasher-adapter.js";
 import { PlatformAdapter } from "../platform/platform-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "../prompter/prompter-adapter.js";
-import { GitHubReleaseResolverAdapter } from "../self-update/github-release-resolver-adapter.js";
-import type { LatestReleaseResolver } from "../self-update/latest-release-resolver.js";
 import { userConfigDir } from "../user-config-dir.js";
-import { wireDistribution } from "./distribution.js";
 import { type TelemetryDeps, wireTelemetry } from "./telemetry.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 
@@ -146,7 +144,7 @@ interface Deps {
   doctorUseCase: DoctorUseCase;
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: DoctorRegistrationUseCase;
-  releaseResolver: LatestReleaseResolver;
+  releaseResolver: DistributionDeps["releaseResolver"];
   setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase;
   setupToolsUseCase: SetupToolsUseCase;
   setupPluginsPromptUseCase: SetupPluginsPromptUseCase;
@@ -234,6 +232,7 @@ export async function createDeps(
     pluginFetcher,
     marketplaceRegistry,
     marketplaceTrustStore,
+    releaseResolver,
     resolveMarketplaceUseCase,
     marketplaceListUseCase,
     marketplaceRefreshUseCase,
@@ -428,7 +427,6 @@ export async function createDeps(
     doctorLayoutUseCase,
     doctorRegistrationUseCase
   );
-  const releaseResolver = new GitHubReleaseResolverAdapter(http, tokenProvider);
   const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
     prompter,
     releaseResolver

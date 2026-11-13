@@ -4,7 +4,7 @@ import type {
   PluginCatalogEntry,
 } from "../../contexts/distribution/domain/catalog.js";
 import type { Marketplace } from "../../contexts/distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../contexts/distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../contexts/distribution/ports/marketplace-registry.js";
 import type { PluginAdd } from "../../contexts/framework/application/plugin/plugin-add-use-case.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import {

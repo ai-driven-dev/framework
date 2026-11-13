@@ -1,39 +1,24 @@
-import type { TokenProvider } from "../../contexts/auth/contract/token-provider.js";
 import {
   AuthenticationError,
   CatalogFetchAuthError,
   CatalogFetchError,
   HttpNotFoundError,
-} from "../../kernel/errors.js";
-import type { HttpGet } from "../../shared/ports/http-get.js";
-import type { LatestReleaseResolver } from "./latest-release-resolver.js";
+} from "../../../kernel/errors.js";
+import type { HttpGet } from "../../../shared/ports/http-get.js";
+import type { TokenProvider } from "../../auth/contract/token-provider.js";
+import type { ReleaseLister } from "../ports/release-lister.js";
+import type { RepositoryVisibility } from "../ports/repository-visibility.js";
 
 const GITHUB_API_BASE = "https://api.github.com";
 
 /** Root release tag: `v` followed by a digit (`v4.0.0`, `v3.7.3-pm.1`). */
 const ROOT_RELEASE_TAG_REGEX = /^v\d/;
 
-export class GitHubReleaseResolverAdapter implements LatestReleaseResolver {
+export class GitHubReleaseAdapter implements ReleaseLister, RepositoryVisibility {
   constructor(
     private readonly http: HttpGet,
     private readonly tokenProvider?: TokenProvider
   ) {}
-
-  async resolveLatest(repo: string): Promise<string | null> {
-    // `/releases?per_page=1`, not `/releases/latest`, which excludes prereleases: the most
-    // recent published release of any kind is wanted, so beta tags resolve too.
-    const url = `${GITHUB_API_BASE}/repos/${repo}/releases?per_page=1`;
-    const token = (await this.tokenProvider?.resolve()) ?? undefined;
-    try {
-      const response = await this.http.get(url, { token });
-      const body = response.body as unknown[];
-      if (!Array.isArray(body) || body.length === 0) return null;
-      const first = body[0] as Record<string, unknown>;
-      return typeof first.tag_name === "string" ? first.tag_name : null;
-    } catch (err) {
-      return this.handleError(err, url);
-    }
-  }
 
   async listRootReleases(repo: string): Promise<string[]> {
     // `per_page=100`, GitHub's maximum, so root tags are not buried under release-please's

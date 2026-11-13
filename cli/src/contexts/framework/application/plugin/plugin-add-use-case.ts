@@ -14,7 +14,7 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { PluginSource } from "../../../../kernel/source.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";

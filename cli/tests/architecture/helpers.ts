@@ -170,15 +170,12 @@ export const BASELINE: readonly {
   readonly imports: number;
   readonly files: number;
 }[] = [
-  // The git token injection is concrete: a real dependency on runtime, until it moves in.
-  { edge: "distribution->runtime", imports: 1, files: 1 },
   // Three framework orchestrators still name the prompt classes they are handed, type-only.
   // Inverting them into a port is a design change, so the edge is measured rather than moved.
   { edge: "framework->presentation", imports: 4, files: 3 },
-  // Token provider, platform and latest-release resolver: interfaces a context may depend on,
-  // sitting in the wrong place — a port two contexts need belongs in the kernel. Nothing
-  // concrete crosses here.
-  { edge: "framework->runtime", imports: 6, files: 6 },
+  // Platform: an interface a context may depend on, sitting in the wrong place — a port two
+  // contexts need belongs in the kernel. Nothing concrete crosses here.
+  { edge: "framework->runtime", imports: 4, files: 4 },
 ];
 
 export function contextOf(file: string): string {

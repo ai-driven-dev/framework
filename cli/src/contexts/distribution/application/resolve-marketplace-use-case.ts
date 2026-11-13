@@ -1,7 +1,7 @@
 import { fetchedMarketplaceDir } from "../../../kernel/paths.js";
 import type { PluginCatalog } from "../domain/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
-import type { PluginCatalogRepository } from "../domain/ports/plugin-catalog-repository.js";
+import type { PluginCatalogRepository } from "../ports/plugin-catalog-repository.js";
 import type { FetchMarketplaceSourceUseCase } from "./fetch-marketplace-source-use-case.js";
 
 export interface ResolveMarketplaceOptions {

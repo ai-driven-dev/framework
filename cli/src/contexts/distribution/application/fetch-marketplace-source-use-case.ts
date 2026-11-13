@@ -9,8 +9,8 @@ import {
   parsePluginCatalog,
 } from "../domain/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
-import type { PluginFetcher, PluginFetchOptions } from "../domain/ports/plugin-fetcher.js";
-import type { RawCatalogFetcher } from "../domain/ports/raw-catalog-fetcher.js";
+import type { PluginFetcher, PluginFetchOptions } from "../ports/plugin-fetcher.js";
+import type { RawCatalogFetcher } from "../ports/raw-catalog-fetcher.js";
 
 const CLAUDE_CATALOG_PATH = ".claude-plugin/marketplace.json";
 

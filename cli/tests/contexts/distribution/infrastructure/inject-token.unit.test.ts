@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { injectTokenIntoUrl } from "../../../src/runtime/git/inject-token.js";
+import { injectTokenIntoUrl } from "../../../../src/contexts/distribution/infrastructure/inject-token.js";
 
 describe("injectTokenIntoUrl", () => {
   it("returns the URL unchanged when token is undefined", () => {

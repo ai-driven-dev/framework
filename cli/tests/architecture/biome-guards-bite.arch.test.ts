@@ -171,7 +171,7 @@ describe("the guard itself", () => {
       "src/contexts/framework/infrastructure",
       "src/contexts/tools/infrastructure",
       "src/presentation/display",
-      "src/runtime/self-update",
+      "src/runtime/git",
       "src/runtime/wiring",
       "src/shared/ports",
       "src/shared/infrastructure",
@@ -283,7 +283,7 @@ describe("the guard itself", () => {
     for (const [folder, file, name] of authFolders) {
       for (const [dir, up] of [
         ["src/presentation/display", "../../contexts/"],
-        ["src/runtime/self-update", "../../contexts/"],
+        ["src/runtime/git", "../../contexts/"],
         ["src/runtime/wiring", "../../contexts/"],
         ["src/contexts/distribution/infrastructure", "../../"],
         ["src/contexts/framework/application", "../../"],
@@ -349,7 +349,7 @@ describe("the guard itself", () => {
       ["src/kernel/reaches-composition.ts", "../"],
       ["src/shared/infrastructure/reaches-composition.ts", "../../"],
       ["src/presentation/display/reaches-composition.ts", "../../"],
-      ["src/runtime/self-update/reaches-composition.ts", "../../"],
+      ["src/runtime/git/reaches-composition.ts", "../../"],
       ["src/runtime/wiring/reaches-composition.ts", "../../"],
     ] as const) {
       writeFileSync(join(planted, file), reachesComposition(up));
@@ -359,7 +359,7 @@ describe("the guard itself", () => {
     for (const [file, up] of [
       ["src/contexts/tools/infrastructure/reaches-shared.ts", "../../../"],
       ["src/presentation/display/reaches-shared.ts", "../../"],
-      ["src/runtime/self-update/reaches-shared.ts", "../../"],
+      ["src/runtime/git/reaches-shared.ts", "../../"],
       ["src/runtime/wiring/reaches-shared.ts", "../../"],
     ] as const) {
       writeFileSync(join(planted, file), reachesSharedInfrastructure(up));
@@ -439,7 +439,7 @@ describe("the guard itself", () => {
     for (const file of [
       "src/contexts/tools/infrastructure/reaches-shared.ts",
       "src/presentation/display/reaches-shared.ts",
-      "src/runtime/self-update/reaches-shared.ts",
+      "src/runtime/git/reaches-shared.ts",
     ]) {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
     }
@@ -466,7 +466,7 @@ describe("the guard itself", () => {
     const rule = "lint/style/noRestrictedImports";
     const importers = [
       "src/presentation/display",
-      "src/runtime/self-update",
+      "src/runtime/git",
       "src/contexts/distribution/infrastructure",
       "src/contexts/framework/application",
     ];
@@ -531,7 +531,7 @@ describe("the guard itself", () => {
       "src/kernel/reaches-composition.ts",
       "src/shared/infrastructure/reaches-composition.ts",
       "src/presentation/display/reaches-composition.ts",
-      "src/runtime/self-update/reaches-composition.ts",
+      "src/runtime/git/reaches-composition.ts",
     ]) {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
     }

@@ -1,5 +1,5 @@
 import type { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../src/contexts/distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import type { MarketplaceScope } from "../../../src/kernel/scope.js";
 
 export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {

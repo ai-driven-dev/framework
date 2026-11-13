@@ -4,14 +4,14 @@ import {
   DEFAULT_FRAMEWORK_REPO,
   MarketplaceSourceMode,
 } from "../../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+import type { ReleaseLister } from "../../../../../src/contexts/distribution/ports/release-lister.js";
+import type { RepositoryVisibility } from "../../../../../src/contexts/distribution/ports/repository-visibility.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { InputRequiredError } from "../../../../../src/kernel/errors.js";
-import type { LatestReleaseResolver } from "../../../../../src/runtime/self-update/latest-release-resolver.js";
 import { ScriptedPrompter } from "../../../../helpers/ports/scripted-prompter.js";
 
-function makeResolver(rootReleases: string[]): LatestReleaseResolver {
+function makeResolver(rootReleases: string[]): ReleaseLister & RepositoryVisibility {
   return {
-    resolveLatest: vi.fn().mockResolvedValue(rootReleases[0] ?? null),
     listRootReleases: vi.fn().mockResolvedValue(rootReleases),
     isRepoPublic: vi.fn().mockResolvedValue(true),
   };

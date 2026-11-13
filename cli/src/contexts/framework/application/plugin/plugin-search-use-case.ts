@@ -1,7 +1,7 @@
 import type { ResolveMarketplaceUseCase } from "../../../distribution/application/resolve-marketplace-use-case.js";
 import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 
 export interface PluginSearchOptions {
   query: string;

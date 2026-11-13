@@ -1,4 +1,4 @@
-import type { PluginSource } from "../../../../kernel/source.js";
+import type { PluginSource } from "../../../kernel/source.js";
 
 export interface PluginFetchOptions {
   forceRefresh?: boolean;

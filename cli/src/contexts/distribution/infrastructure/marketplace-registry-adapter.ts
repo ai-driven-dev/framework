@@ -4,7 +4,7 @@ import { UnreadableMarketplaceRegistryError } from "../../../kernel/errors.js";
 import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../kernel/paths.js";
 import type { MarketplaceScope } from "../../../kernel/scope.js";
 import { Marketplace, type MarketplaceData } from "../domain/marketplace.js";
-import type { MarketplaceRegistry } from "../domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 
 const SCHEMA_VERSION = 1;
 

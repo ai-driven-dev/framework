@@ -1,7 +1,7 @@
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
-import type { MarketplaceRegistry } from "../../../../distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../../distribution/ports/marketplace-registry.js";
 import type { PluginAnswers } from "../../../../tools/contract/tool-profile.js";
 import type { EnsureBuiltMarketplace } from "../../shared/ensure-built-marketplace-use-case.js";
 import { BuiltTreeMaterializationTranslator } from "./built-tree-materialization-translator.js";

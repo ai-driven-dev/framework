@@ -5,7 +5,7 @@ import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { PluginSource } from "../../../../../kernel/source.js";
-import type { MarketplaceRegistry } from "../../../../distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../../distribution/ports/marketplace-registry.js";
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 /**
  * Materializes plugin content by copying the per-target BUILT tree verbatim into the tool's plugin

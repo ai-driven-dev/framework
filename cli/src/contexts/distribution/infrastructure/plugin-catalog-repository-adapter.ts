@@ -5,7 +5,7 @@ import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { PluginSource } from "../../../kernel/source.js";
 import { type PluginCatalog, parsePluginCatalog } from "../domain/catalog.js";
 import { parseCopilotMarketplaceCatalog } from "../domain/catalog-parsers/copilot-marketplace-catalog.js";
-import type { PluginCatalogRepository } from "../domain/ports/plugin-catalog-repository.js";
+import type { PluginCatalogRepository } from "../ports/plugin-catalog-repository.js";
 
 const COPILOT_MARKETPLACE_PATH = ".plugin/marketplace.json";
 const CLAUDE_MARKETPLACE_PATH = ".claude-plugin/marketplace.json";

@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import { FetchMarketplaceSourceUseCase } from "../../../../src/contexts/distribution/application/fetch-marketplace-source-use-case.js";
 import { MarketplaceAddUseCase } from "../../../../src/contexts/distribution/application/marketplace-add-use-case.js";
 import { ResolveMarketplaceUseCase } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import type {
   MarketplaceRemovalRequest,
   MarketplaceRemover,
-} from "../../../../src/contexts/distribution/domain/ports/marketplace-remover.js";
-import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
+} from "../../../../src/contexts/distribution/ports/marketplace-remover.js";
 import {
   InvalidMarketplaceNameError,
   InvalidPluginManifestError,

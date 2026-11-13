@@ -1,8 +1,8 @@
 import { resolve } from "node:path";
 import { InputRequiredError } from "../../../../kernel/errors.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
-import type { LatestReleaseResolver } from "../../../../runtime/self-update/latest-release-resolver.js";
 import { MarketplaceSourceMode } from "../../../distribution/domain/marketplace-source-mode.js";
+import type { ReleaseLister } from "../../../distribution/ports/release-lister.js";
 
 /** Sentinel select value for "install from main branch tip" — maps to ref undefined. */
 const HEAD_CHOICE = "__HEAD__";
@@ -16,7 +16,7 @@ export interface SetupMarketplaceSourceOptions {
 export class SetupMarketplaceSourceUseCase {
   constructor(
     private readonly prompter: Prompter,
-    private readonly releaseResolver: LatestReleaseResolver
+    private readonly releaseResolver: ReleaseLister
   ) {}
 
   async execute(options: SetupMarketplaceSourceOptions): Promise<MarketplaceSourceMode> {

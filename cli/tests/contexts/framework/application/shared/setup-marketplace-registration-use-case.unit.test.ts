@@ -3,6 +3,8 @@ import type { TokenProvider } from "../../../../../src/contexts/auth/contract/to
 import type { MarketplaceRefresh } from "../../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
 import type { MarketplaceRegisterFramework } from "../../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
 import { MarketplaceSourceMode } from "../../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+import type { ReleaseLister } from "../../../../../src/contexts/distribution/ports/release-lister.js";
+import type { RepositoryVisibility } from "../../../../../src/contexts/distribution/ports/repository-visibility.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/framework/domain/ports/user-source-references.js";
@@ -10,7 +12,6 @@ import { SetupFlow } from "../../../../../src/contexts/framework/domain/setup-fl
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import { CatalogFetchAuthError } from "../../../../../src/kernel/errors.js";
 import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
-import type { LatestReleaseResolver } from "../../../../../src/runtime/self-update/latest-release-resolver.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
 import { InMemoryEnvironment } from "../../../../helpers/ports/in-memory-environment.js";
@@ -20,9 +21,8 @@ import { KeepPrompter } from "../../../../helpers/ports/scripted-prompter.js";
 const PROJECT_ROOT = "/test-project";
 const SKIP_SWITCH = "AIDD_SKIP_MARKETPLACE_REFRESH";
 
-function makeNoOpLatestResolver(isRepoPublic = true): LatestReleaseResolver {
+function makeNoOpLatestResolver(isRepoPublic = true): ReleaseLister & RepositoryVisibility {
   return {
-    resolveLatest: vi.fn().mockResolvedValue(null),
     listRootReleases: vi.fn().mockResolvedValue([]),
     isRepoPublic: vi.fn().mockResolvedValue(isRepoPublic),
   };
@@ -34,7 +34,7 @@ function makeRegisterFramework(scope: MarketplaceScope): MarketplaceRegisterFram
 
 interface Collaborators {
   tokenProvider?: TokenProvider;
-  releaseResolver?: LatestReleaseResolver;
+  releaseResolver?: ReleaseLister & RepositoryVisibility;
   userSourceReferences?: UserSourceReferences;
   registeredScope?: MarketplaceScope;
 }

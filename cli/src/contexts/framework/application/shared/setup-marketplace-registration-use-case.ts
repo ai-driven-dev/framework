@@ -3,7 +3,6 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
 import type { PluginSource } from "../../../../kernel/source.js";
-import type { LatestReleaseResolver } from "../../../../runtime/self-update/latest-release-resolver.js";
 import type { Environment } from "../../../../shared/ports/environment.js";
 import type { TokenProvider } from "../../../auth/contract/token-provider.js";
 import type { MarketplaceRefresh } from "../../../distribution/application/marketplace-refresh-use-case.js";
@@ -13,6 +12,7 @@ import type {
 } from "../../../distribution/application/marketplace-register-framework-use-case.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceSourceMode } from "../../../distribution/domain/marketplace-source-mode.js";
+import type { RepositoryVisibility } from "../../../distribution/ports/repository-visibility.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 import type { SetupFlow } from "../../domain/setup-flow.js";
 import type { SetupMarketplaceSourceUseCase } from "../setup/setup-marketplace-source-use-case.js";
@@ -36,7 +36,7 @@ export class SetupMarketplaceRegistrationUseCase {
     private readonly logger: Logger,
     private readonly environment: Environment,
     private readonly tokenProvider?: TokenProvider,
-    private readonly releaseResolver?: LatestReleaseResolver,
+    private readonly releaseResolver?: RepositoryVisibility,
     /** The registry of projects referencing the shared machine-scope source. Absent skips
      * recording a reference rather than guessing one. */
     private readonly userSourceReferences?: UserSourceReferences

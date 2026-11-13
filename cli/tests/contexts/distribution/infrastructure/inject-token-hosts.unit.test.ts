@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { injectTokenIntoUrl, withoutCredentials } from "../../../src/runtime/git/inject-token.js";
+import {
+  injectTokenIntoUrl,
+  withoutCredentials,
+} from "../../../../src/contexts/distribution/infrastructure/inject-token.js";
 
 describe("injectTokenIntoUrl, Azure DevOps", () => {
   it("uses an empty user with the token as password", () => {
