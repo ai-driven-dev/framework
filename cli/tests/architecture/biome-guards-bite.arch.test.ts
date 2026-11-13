@@ -187,6 +187,8 @@ describe("the guard itself", () => {
       "src/contexts/recipes/ports",
       "src/contexts/recipes/application",
       "src/contexts/recipes/infrastructure",
+      "src/contexts/distribution/domain",
+      "src/contexts/distribution/application",
       "src/contexts/distribution/infrastructure",
       "src/composition",
     ]) {
@@ -339,6 +341,18 @@ describe("the guard itself", () => {
       writeFileSync(
         join(planted, `src/presentation/display/reaches-recipes-${folder}.ts`),
         `import type { Reached } from "../../contexts/recipes/${folder}/x.js";\nexport type Used = Reached;\n`
+      );
+    }
+    for (const folder of ["domain", "application", "infrastructure"]) {
+      writeFileSync(
+        join(planted, `src/contexts/distribution/${folder}/reaches-framework.ts`),
+        'import type { Registry } from "../../framework/domain/registry.js";\nexport type Reached = Registry;\n'
+      );
+    }
+    for (const folder of ["application", "infrastructure"]) {
+      writeFileSync(
+        join(planted, `src/contexts/distribution/${folder}/reaches-runtime.ts`),
+        'import type { Branch } from "../../../runtime/git/branch.js";\nexport type Reached = Branch;\n'
       );
     }
     writeFileSync(join(planted, "src/composition/auth.ts"), "export type AuthDeps = number;\n");
@@ -520,6 +534,20 @@ describe("the guard itself", () => {
     expect(findings).not.toContain(
       `src/presentation/display/reaches-recipes-application.ts:${rule}`
     );
+  });
+
+  it("flags distribution reaching framework, and distribution reaching runtime", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    for (const folder of ["domain", "application", "infrastructure"]) {
+      const file = `src/contexts/distribution/${folder}/reaches-framework.ts`;
+      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
+    }
+    for (const folder of ["application", "infrastructure"]) {
+      const file = `src/contexts/distribution/${folder}/reaches-runtime.ts`;
+      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
+    }
   });
 
   it("flags a context, the kernel, shared, presentation and runtime reaching the composition, and not the composition root", () => {
