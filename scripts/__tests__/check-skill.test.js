@@ -166,6 +166,19 @@ describe("skill check", () => {
     expectError("edge");
   });
 
+  for (const arrow of ["-.->", "==>", '-.->|"next"|', '==>|"next"|']) {
+    it(`edge: a ${arrow} edge between actions is held to the same link`, () => {
+      mutate("SKILL.md", 'first["actions/01-first.md"] -->', `first["actions/01-first.md"] ${arrow}`);
+      mutate("actions/01-first.md", "2. Read [second](02-second.md).", "2. Stop.");
+      expectError("edge");
+    });
+  }
+
+  it("edge: an unlabeled two-way edge leaves both of its nodes", () => {
+    mutate("SKILL.md", "second --> done((done))", "user((user)) <--> second\n  second --> done((done))");
+    expectError("edge");
+  });
+
   it("edge: an edge drawn in a grouped source passes when each source links its target", () => {
     write({ "actions/02-second.md": "# 02 - Second\n\nAnswer.\n\n## Process\n\n1. Answer, or read [third](03-third.md).\n", "actions/03-third.md": "# 03 - Third\n\nEnd.\n\n## Process\n\n1. End.\n" });
     mutate("actions/01-first.md", "2. Read [second](02-second.md).", "2. Read [second](02-second.md), or [third](03-third.md).");

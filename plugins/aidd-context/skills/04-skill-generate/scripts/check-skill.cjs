@@ -25,7 +25,7 @@ const COMMENT = /<!--[\s\S]*?--!?>/gu;
 const LINK = /\[[^\]\n]*\]\(([^)\s#]+)(?:#[^)]*)?\)/gu;
 const ACTION_NODE = /\["(actions\/[^"]+\.md)"\]/gu;
 const BOX = /([\w-]+)\["([^"]*)"\]/gu;
-const ARROW = /\s*(<?(?:-->|-\.->|==>)(?:\|[^|]*\|)?)\s*/u;
+const ARROWS = ["-->", "-.->", "==>"];
 const SLOT = /<[a-z][^<>\n]*>/u;
 const CLAUSE_BREAK = /[.!?;]\s+\S/u;
 const ABBREVIATION = /\b(?:e\.g|i\.e|etc|vs|cf)\./giu;
@@ -112,16 +112,14 @@ function checkEdges(skill, flow, rules, lineOf, report) {
     if (/^actions\/[^"]+\.md$/u.test(label)) actions.set(id, label);
     else report.error(file, lineOf(box), "diagram", box, "draw only action files as boxes; cite a reference from the step that uses it");
   }
-  const ids = (segment) => segment.split("&").map((part) => /^\s*([^\s[({]+)/u.exec(part)?.[1]).filter(Boolean);
   const unlabeled = new Map();
   for (const line of flow.split("\n")) {
-    const parts = line.trim().split(ARROW);
-    const segments = parts.filter((_, index) => index % 2 === 0);
-    for (const id of segments.flatMap(ids)) if (!/^[\w-]+$/u.test(id)) report.error(file, lineOf(line.trim()), "diagram", id, "name the node with a plain id; cite a file from the step that uses it");
+    const { segments, arrows } = splitArrows(line.trim());
+    for (const id of segments.flatMap(nodeIds)) if (!/^[\w-]+$/u.test(id)) report.error(file, lineOf(line.trim()), "diagram", id, "name the node with a plain id; cite a file from the step that uses it");
     for (let index = 0; index + 1 < segments.length; index += 1) {
-      const arrow = parts[index * 2 + 1];
-      for (const from of ids(segments[index])) {
-        for (const to of ids(segments[index + 1])) {
+      const arrow = arrows[index];
+      for (const from of nodeIds(segments[index])) {
+        for (const to of nodeIds(segments[index + 1])) {
           for (const [start, end] of arrow.startsWith("<") ? [[from, to], [to, from]] : [[from, to]]) {
             if (!arrow.includes("|")) unlabeled.set(start, { line: unlabeled.get(start)?.line ?? line.trim(), targets: new Set([...(unlabeled.get(start)?.targets ?? []), end]) });
           }
@@ -141,17 +139,42 @@ function checkEdges(skill, flow, rules, lineOf, report) {
   for (const [from, { line, targets }] of unlabeled) if (targets.size > 1) report.error(file, lineOf(line), "edge", `${from} --> ${[...targets].join(", ")}`, "label the condition of each edge but the default one");
 }
 
+/** Splits a diagram line into its node segments and the arrows between them, each arrow with its `<` and its `|label|`. */
+function splitArrows(line) {
+  const segments = [];
+  const arrows = [];
+  let rest = line;
+  for (;;) {
+    const found = ARROWS.map((token) => ({ token, at: rest.indexOf(token) })).filter(({ at }) => at >= 0);
+    if (found.length === 0) break;
+    const { token, at } = found.reduce((first, next) => (next.at < first.at ? next : first));
+    const start = rest[at - 1] === "<" ? at - 1 : at;
+    let end = at + token.length;
+    const close = rest[end] === "|" ? rest.indexOf("|", end + 1) : -1;
+    if (close >= 0) end = close + 1;
+    segments.push(rest.slice(0, start).trim());
+    arrows.push(rest.slice(start, end));
+    rest = rest.slice(end);
+  }
+  segments.push(rest.trim());
+  return { segments, arrows };
+}
+
+/** The node ids of a segment, one per `&`-joined node. */
+function nodeIds(segment) {
+  return segment.split("&").map((part) => /^\s*([^\s[({]+)/u.exec(part)?.[1]).filter(Boolean);
+}
+
 /** The action files the diagram draws an edge from to another action: only those end by reading the next. */
 function chainedActions(router) {
   const flow = /```mermaid\n([\s\S]*?)```/u.exec(router)?.[1] ?? "";
   const actions = new Map([...flow.matchAll(BOX)].filter(([, , label]) => /^actions\//u.test(label)).map(([, id, label]) => [id, label]));
-  const ids = (segment) => segment.split("&").map((part) => /^\s*([^\s[({]+)/u.exec(part)?.[1]).filter(Boolean);
   const chained = new Set();
   for (const line of flow.split("\n")) {
-    const segments = line.trim().split(ARROW).filter((_, index) => index % 2 === 0);
+    const { segments } = splitArrows(line.trim());
     for (let index = 0; index + 1 < segments.length; index += 1) {
-      for (const from of ids(segments[index])) {
-        for (const to of ids(segments[index + 1])) if (actions.has(from) && actions.has(to) && from !== to) chained.add(actions.get(from));
+      for (const from of nodeIds(segments[index])) {
+        for (const to of nodeIds(segments[index + 1])) if (actions.has(from) && actions.has(to) && from !== to) chained.add(actions.get(from));
       }
     }
   }

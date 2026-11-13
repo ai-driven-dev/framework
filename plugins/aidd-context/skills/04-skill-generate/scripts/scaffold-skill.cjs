@@ -81,6 +81,17 @@ function render(plan, skillText, actionText) {
   return out;
 }
 
+/** Writes the file only when none exists, in one call so nothing can appear between the check and the write; false when it was kept. */
+function createOnly(file, text) {
+  try {
+    fs.writeFileSync(file, text, { flag: "wx" });
+    return true;
+  } catch (error) {
+    if (error.code === "EEXIST") return false;
+    throw error;
+  }
+}
+
 function main(args) {
   if (args.length !== 2) {
     process.stderr.write(USAGE);
@@ -105,13 +116,8 @@ function main(args) {
   }
   for (const [file, text] of render(plan, skillText, actionText)) {
     const full = path.join(skill, file);
-    if (fs.existsSync(full)) {
-      process.stdout.write(`kept ${full}\n`);
-      continue;
-    }
     fs.mkdirSync(path.dirname(full), { recursive: true });
-    fs.writeFileSync(full, text);
-    process.stdout.write(`created ${full}\n`);
+    process.stdout.write(`${createOnly(full, text) ? "created" : "kept"} ${full}\n`);
   }
   return 0;
 }
