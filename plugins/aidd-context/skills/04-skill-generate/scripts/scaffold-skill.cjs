@@ -13,9 +13,10 @@ const ASSETS = path.join(__dirname, "../assets");
 const USAGE = "usage: scaffold-skill.cjs <plan.json> <skill-folder>\n";
 const SKILL_SLOTS = ["<skill-name>", "<description>", "<Skill Name>", "<diagram from the plan>"];
 const ACTION_SLOTS = ["<NN>", "<title>", "<read-next step>"];
+const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
 function template(name, slots) {
-  const text = fs.readFileSync(path.join(ASSETS, name), "utf8");
+  const text = fs.readFileSync(path.join(ASSETS, name), "utf8").replace(/\r\n?/gu, "\n");
   const missing = slots.filter((slot) => !text.includes(slot));
   if (missing.length > 0) throw new Error(`${name} lacks the slot ${missing.join(", ")}`);
   return text;
@@ -26,6 +27,7 @@ function refusals(plan) {
   const slugs = new Set((plan.actions ?? []).map((action) => action.slug));
   const found = [];
   if (!plan.name || !plan.description) found.push("give the plan a name and a description");
+  for (const name of [plan.name, ...slugs]) if (name && !KEBAB.test(name)) found.push(`${name}: write it in kebab-case`);
   if (slugs.size === 0) found.push("give the plan at least one action");
   const entries = plan.entries ?? [];
   for (const edge of entries) if (!slugs.has(edge.to)) found.push(`entry: no action is named ${edge.to}`);
@@ -58,24 +60,24 @@ function readNext(action, files) {
   const link = (edge) => `[${edge.to}](${files.get(edge.to)})`;
   const labeled = targets.filter((edge) => edge.label).map((edge) => `${link(edge)} when ${edge.label}`);
   const fallback = targets.filter((edge) => !edge.label).map((edge) => (labeled.length > 0 ? `otherwise ${link(edge)}` : link(edge)));
-  return `Read ${[...labeled, ...fallback].join("; ")}.`;
+  return `Read ${[...labeled, ...fallback].join(", ")}.`;
 }
 
 function render(plan, skillText, actionText) {
   const files = new Map(plan.actions.map((action, index) => [action.slug, `${number(index)}-${action.slug}.md`]));
   const title = plan.name.split("-").map((word) => word[0].toUpperCase() + word.slice(1)).join(" ");
   const router = skillText
-    .replace("<skill-name>", plan.name)
-    .replace("<description>", plan.description)
-    .replace("<Skill Name>", title)
-    .replace("<diagram from the plan>", diagram(plan, files));
+    .replace("<skill-name>", () => plan.name)
+    .replace("<description>", () => plan.description)
+    .replace("<Skill Name>", () => title)
+    .replace("<diagram from the plan>", () => diagram(plan, files));
   const out = new Map([["SKILL.md", router]]);
   plan.actions.forEach((action, index) => {
     const next = readNext(action, files);
     const text = actionText
-      .replace("<NN>", number(index))
-      .replace("<title>", action.title)
-      .replace(/^(\d+\. )<read-next step>\n/mu, next ? `$1${next}\n` : "");
+      .replace("<NN>", () => number(index))
+      .replace("<title>", () => action.title)
+      .replace(/^(\d+\. )<read-next step>\n/mu, (_, step) => (next ? `${step}${next}\n` : ""));
     out.set(`actions/${files.get(action.slug)}`, text);
   });
   return out;

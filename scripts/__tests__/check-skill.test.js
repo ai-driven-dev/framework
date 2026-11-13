@@ -350,6 +350,23 @@ describe("skill check", () => {
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
+  it("reads a skill saved with CRLF line endings like one saved with LF", () => {
+    for (const file of Object.keys(CLEAN)) fs.writeFileSync(path.join(root, file), CLEAN[file].replace(/\n/gu, "\r\n"));
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+    mutate("actions/02-second.md", "Answer per", "**Answer** per");
+    const { code, out } = run();
+    assert.equal(code, 1, out);
+    assert.match(out, / bold /u);
+    assert.doesNotMatch(out, / diagram /u);
+  });
+
+  it("exits 2, not 1, when a file of the skill cannot be read, so a crash never reads as findings", () => {
+    fs.symlinkSync(path.join(root, "missing.md"), path.join(root, "references/broken.md"));
+    const { code, out, err } = run();
+    assert.equal(code, 2, out);
+    assert.match(err, /check-skill: .*broken\.md/u);
+  });
+
   for (const skill of ["aidd-context/skills/04-skill-generate", "aidd-dev/skills/05-review"]) {
     it(`finds nothing in ${skill}`, () => {
       assert.deepEqual(run(path.resolve(__dirname, "../../plugins", skill)), { code: 0, out: "", err: "" });
