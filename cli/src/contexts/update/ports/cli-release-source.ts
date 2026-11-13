@@ -4,7 +4,7 @@ export interface CliRelease {
   changelog: string | null;
 }
 
-export interface SelfUpdater {
+/** Where the latest release of the CLI is announced. */
+export interface CliReleaseSource {
   fetchLatestRelease(): Promise<CliRelease>;
-  install(): string;
 }

@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { wireAuth } from "../../composition/auth.js";
 import { wireHostRegistration } from "../../composition/host-registration.js";
+import { type UpdateDeps, wireUpdate } from "../../composition/update.js";
 import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
 import type { LogIn } from "../../contexts/auth/application/log-in.js";
 import type { LogOut } from "../../contexts/auth/application/log-out.js";
@@ -85,6 +86,7 @@ import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-ca
 import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../presentation/prompts/setup-tools-prompt-use-case.js";
 import { SyncConflictResolverUseCase } from "../../presentation/prompts/sync-conflict-resolver-use-case.js";
+import { CurrentVersionAdapter } from "../../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
 import { HttpClient } from "../../shared/infrastructure/http-client.js";
 import type { Environment } from "../../shared/ports/environment.js";
@@ -95,12 +97,8 @@ import { FileAdapter } from "../filesystem/file-adapter.js";
 import { HasherAdapter } from "../filesystem/hasher-adapter.js";
 import { PlatformAdapter } from "../platform/platform-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "../prompter/prompter-adapter.js";
-import { CheckUpdateUseCase } from "../self-update/check-update-use-case.js";
-import { CurrentVersionAdapter } from "../self-update/current-version-adapter.js";
 import { GitHubReleaseResolverAdapter } from "../self-update/github-release-resolver-adapter.js";
 import type { LatestReleaseResolver } from "../self-update/latest-release-resolver.js";
-import { SelfUpdateUseCase } from "../self-update/self-update-use-case.js";
-import { SelfUpdaterAdapter } from "../self-update/self-updater-adapter.js";
 import { userConfigDir } from "../user-config-dir.js";
 import { wireDistribution } from "./distribution.js";
 import { type TelemetryDeps, wireTelemetry } from "./telemetry.js";
@@ -157,7 +155,7 @@ interface Deps {
   projectContextDetector: ProjectContextDetectorUseCase;
   setupMarketplaceRegistration: SetupMarketplaceRegistrationUseCase;
   setupMachineScopeUseCase: SetupMachineScopeUseCase;
-  selfUpdateUseCase: SelfUpdateUseCase;
+  selfUpdate: UpdateDeps["selfUpdate"];
   statusUseCase: StatusUseCase;
   restoreUseCase: RestoreUseCase;
   uninstallUseCase: UninstallUseCase;
@@ -170,7 +168,8 @@ interface Deps {
   doctorAllUseCase: DoctorAllUseCase;
   listInstalledRulesUseCase: ListInstalledRulesUseCase;
   validateRecipesUseCase: ValidateRecipesUseCase;
-  checkUpdateUseCase: CheckUpdateUseCase;
+  printUpdateNotice: UpdateDeps["printUpdateNotice"];
+  refreshUpdateCheck: UpdateDeps["refreshUpdateCheck"];
   telemetry: TelemetryDeps;
 }
 
@@ -216,14 +215,7 @@ export async function createDeps(
     environment,
     explicitToken: options.token,
   });
-  const cliUpdater = new SelfUpdaterAdapter(http, {
-    tokenProvider,
-    githubApiBase: process.env.AIDD_SELF_UPDATE_API_BASE,
-    npmRegistryBase: process.env.AIDD_SELF_UPDATE_NPM_BASE,
-    logger,
-  });
   const currentVersionProvider = new CurrentVersionAdapter();
-  const selfUpdateUseCase = new SelfUpdateUseCase(cliUpdater, currentVersionProvider);
   const platform = new PlatformAdapter();
   const prompter = process.stdout.isTTY
     ? new InquirerPrompterAdapter()
@@ -579,7 +571,14 @@ export async function createDeps(
   );
   const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
   const listInstalledRulesUseCase = new ListInstalledRulesUseCase(fs);
-  const checkUpdateUseCase = new CheckUpdateUseCase(cliUpdater, currentVersionProvider, logger, fs);
+  const update = wireUpdate({
+    logger,
+    http,
+    fs,
+    environment,
+    tokenProvider,
+    version: currentVersionProvider,
+  });
   const deps: Deps = {
     validateRecipesUseCase: new ValidateRecipesUseCase(new RecipeFilesAdapter()),
     fs,
@@ -622,7 +621,7 @@ export async function createDeps(
     projectContextDetector,
     setupMarketplaceRegistration,
     setupMachineScopeUseCase,
-    selfUpdateUseCase,
+    selfUpdate: update.selfUpdate,
     statusUseCase,
     restoreUseCase,
     uninstallUseCase,
@@ -634,7 +633,8 @@ export async function createDeps(
     cleanUserScopeUseCase,
     doctorAllUseCase,
     listInstalledRulesUseCase,
-    checkUpdateUseCase,
+    printUpdateNotice: update.printUpdateNotice,
+    refreshUpdateCheck: update.refreshUpdateCheck,
     telemetry: wireTelemetry(homedir),
   };
   graphs.set(cacheKey, deps);

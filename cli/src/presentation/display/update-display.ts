@@ -1,4 +1,4 @@
-import type { SelfUpdateResult } from "../../runtime/self-update/self-update-use-case.js";
+import type { SelfUpdateResult } from "../../contexts/update/application/self-update.js";
 import type { CLIOutput } from "../output.js";
 
 export function printSelfUpdateResult(output: CLIOutput, result: SelfUpdateResult): void {

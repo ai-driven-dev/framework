@@ -14,8 +14,8 @@ import { registerTelemetryCommand } from "./presentation/commands/telemetry.js";
 import { registerTranslateCommand } from "./presentation/commands/translate.js";
 import { registerUpdateCommand } from "./presentation/commands/update.js";
 import { CLIOutput } from "./presentation/output.js";
-import { CurrentVersionAdapter } from "./runtime/self-update/current-version-adapter.js";
 import { createDeps } from "./runtime/wiring/framework.js";
+import { CurrentVersionAdapter } from "./shared/infrastructure/current-version-adapter.js";
 
 function formatVersion(version: string): string {
   return `aidd/${version} node/${process.versions.node} ${platform()}-${process.arch}`;
@@ -71,7 +71,7 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   // A bare verb with no subject means "the CLI itself" (Claude Code/Codex convention):
   // `update` resolves the latest version on its own, so the generic check is redundant.
   if (actionCommand.name() === "update") return;
-  await deps.checkUpdateUseCase.printFromCacheOnly().catch((err: unknown) => {
+  await deps.printUpdateNotice.execute().catch((err: unknown) => {
     deps.logger.debug(
       `CLI update check failed: ${err instanceof Error ? err.message : String(err)}`
     );
@@ -94,7 +94,7 @@ program.hook("postAction", async (_thisCommand, actionCommand) => {
     tools
   ).catch(() => null);
   if (!deps) return;
-  await deps.checkUpdateUseCase.refresh().catch((err: unknown) => {
+  await deps.refreshUpdateCheck.execute().catch((err: unknown) => {
     deps.logger.debug(
       `CLI update refresh failed: ${err instanceof Error ? err.message : String(err)}`
     );

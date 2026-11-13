@@ -127,6 +127,8 @@ export const ALLOWED = new Set([
   // The pure rules `contract/` publishes over its own types (reference-context.md, E10 and E11),
   // until doctor and sync registration move into host-registration commands.
   "framework->host-registration",
+  // The token the changelog fetch carries (`contract/token-provider.ts`).
+  "update->auth",
 ]);
 
 /**
@@ -135,7 +137,7 @@ export const ALLOWED = new Set([
  * keep the three folders below to themselves and the composition root. The list is data for
  * `biome-context-parity.arch.test.ts`, which computes the groups every importer must carry.
  */
-export const HELD_BY_BIOME: readonly string[] = ["auth", "host-registration", "tools"];
+export const HELD_BY_BIOME: readonly string[] = ["auth", "host-registration", "tools", "update"];
 
 const INTERIOR_FOLDERS = ["domain", "ports", "infrastructure"] as const;
 

@@ -53,4 +53,4 @@ Thirty leaf commands. Read them live: `aidd --help`, then each group's. `scripts
 
 - npm bin `aidd` → `dist/cli.js`, one ESM bundle plus five JSON schemas read from disk; `files` must ship them.
 - `npx @ai-driven-dev/cli@latest`, or global install. Build and publish: `deployment.md`.
-- `AIDD_USER_CONFIG_DIR` relocates `userConfigDir()`; the one list of what moves: `auth.json`; `marketplaces.json` and `cache/built/<version>/`; `references.json`; the `--scope user` `manifest.json`; `cache/update-check.json` and the older root `update-check.json` (`runtime/self-update/check-update-use-case.ts`).
+- `AIDD_USER_CONFIG_DIR` relocates `userConfigDir()`; the one list of what moves: `auth.json`; `marketplaces.json` and `cache/built/<version>/`; `references.json`; the `--scope user` `manifest.json`; `cache/update-check.json` and the older root `update-check.json` (`contexts/update/infrastructure/update-check-cache-adapter.ts`).

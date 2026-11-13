@@ -1,13 +1,13 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { SelfUpdateResult } from "../../../src/runtime/self-update/self-update-use-case.js";
+import type { SelfUpdateResult } from "../../../src/contexts/update/application/self-update.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { sameInstance } from "../same-instance.js";
 
 const selfUpdate = vi.fn<() => Promise<SelfUpdateResult>>();
 
 vi.mock("../../../src/runtime/wiring/framework.js", () => ({
-  createDeps: vi.fn(async () => ({ selfUpdateUseCase: { execute: selfUpdate } })),
+  createDeps: vi.fn(async () => ({ selfUpdate: { execute: selfUpdate } })),
   createMenuDeps: vi.fn(),
 }));
 
