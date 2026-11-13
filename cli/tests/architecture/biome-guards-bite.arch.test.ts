@@ -154,6 +154,15 @@ describe("biome carries the exit and default-export rules", () => {
   });
 });
 
+/** What distribution's layers must not import, and the layers that try it. */
+const DISTRIBUTION_REACHES = [
+  ["framework", ["domain", "application", "infrastructure"]],
+  ["runtime", ["application", "infrastructure"]],
+] as const;
+const distributionReaches = (): string[] =>
+  DISTRIBUTION_REACHES.flatMap(([target, layers]) =>
+    layers.map((layer) => `src/contexts/distribution/${layer}/reaches-${target}.ts`)
+  );
 describe("the guard itself", () => {
   let planted: string;
   const readsEnvSource = "export const home = (): string | undefined => process.env.HOME;\n";
@@ -343,16 +352,11 @@ describe("the guard itself", () => {
         `import type { Reached } from "../../contexts/recipes/${folder}/x.js";\nexport type Used = Reached;\n`
       );
     }
-    for (const folder of ["domain", "application", "infrastructure"]) {
+    for (const file of distributionReaches()) {
+      const target = file.includes("framework") ? "framework" : "runtime";
       writeFileSync(
-        join(planted, `src/contexts/distribution/${folder}/reaches-framework.ts`),
-        'import type { Registry } from "../../framework/domain/registry.js";\nexport type Reached = Registry;\n'
-      );
-    }
-    for (const folder of ["application", "infrastructure"]) {
-      writeFileSync(
-        join(planted, `src/contexts/distribution/${folder}/reaches-runtime.ts`),
-        'import type { Branch } from "../../../runtime/git/branch.js";\nexport type Reached = Branch;\n'
+        join(planted, file),
+        `import type { X } from "../../../${target}/x.js";\nexport type Z = X;\n`
       );
     }
     writeFileSync(join(planted, "src/composition/auth.ts"), "export type AuthDeps = number;\n");
@@ -538,15 +542,8 @@ describe("the guard itself", () => {
 
   it("flags distribution reaching framework, and distribution reaching runtime", () => {
     const findings = biomeFindings(planted);
-    const rule = "lint/style/noRestrictedImports";
-
-    for (const folder of ["domain", "application", "infrastructure"]) {
-      const file = `src/contexts/distribution/${folder}/reaches-framework.ts`;
-      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
-    }
-    for (const folder of ["application", "infrastructure"]) {
-      const file = `src/contexts/distribution/${folder}/reaches-runtime.ts`;
-      expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
+    for (const file of distributionReaches()) {
+      expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedImports`);
     }
   });
 
