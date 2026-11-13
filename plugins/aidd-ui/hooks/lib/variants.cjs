@@ -10,6 +10,12 @@ const MARKDOWN_FILE = /\.md$/;
 const RENDER_FILE = /\.html$/;
 const JOINER = ", ";
 
+/** The variants of the latest round of a set: the only ones a choice is made on. */
+const latestOf = (variants) => {
+  const latest = Math.max(...variants.map((variant) => variant.round ?? 1));
+  return variants.filter((variant) => (variant.round ?? 1) === latest);
+};
+
 /** The file a set's page is written to. */
 const setFileOf = (id) => `${SET_PREFIX}${id}.html`;
 
@@ -168,4 +174,4 @@ window.addEventListener("resize", fitFrames);
 if (typeof ResizeObserver === "function") new ResizeObserver(fitFrames).observe(document.querySelector("main"));
 `;
 
-module.exports = { setBodyOf, setFileOf, sectionsOf, STYLE, SCRIPT };
+module.exports = { latestOf, setBodyOf, setFileOf, sectionsOf, STYLE, SCRIPT };

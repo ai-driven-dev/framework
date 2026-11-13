@@ -334,6 +334,12 @@ describe("aidd-ui showcase sets", () => {
       assert.deepEqual(roundsOf(pagesOf([rounds()])["_set-layout.html"]), [["1", false], ["2", true]]);
     });
 
+    it("lists in the drawer the variants of the latest round only, so a copy holds no verdict of a folded round", () => {
+      const group = pagesOf([rounds()])["index.html"].match(/<section class="choices" data-group="choose">[\s\S]*?<\/section>/)[0];
+      assert.deepEqual([...group.matchAll(/<li class="pvariant" data-variant="([^"]+)"/g)].map((match) => match[1]), ["c"]);
+      assert.match(group, /<span class="done">0\/1<\/span>/);
+    });
+
     it("shows a set of a single round as it was, with no fold", () => {
       assert.deepEqual(roundsOf(pagesOf([SET()])["_set-layout.html"]), []);
     });
