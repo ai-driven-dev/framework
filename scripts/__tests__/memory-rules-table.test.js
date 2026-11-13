@@ -4,7 +4,7 @@ const path = require("node:path");
 const test = require("node:test");
 
 const PLUGIN = path.resolve(__dirname, "../../plugins/aidd-context");
-const { RULES, LIMITS } = require(path.join(PLUGIN, "hooks/lib/memory-rules.cjs"));
+const { RULES, LIMITS } = require(path.join(PLUGIN, "skills/02-project-memory/scripts/lib/memory-rules.cjs"));
 const REFERENCES = path.join(PLUGIN, "skills/02-project-memory/references");
 
 const NO_LIMIT = "none";

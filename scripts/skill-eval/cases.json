@@ -165,7 +165,6 @@
         "src/index.js": "module.exports = 1;\n",
         "aidd_docs/GUIDELINES.md": "# Guidelines\n\nOur team reviews every change in pairs.\n",
         "aidd_docs/CONTRIBUTING.md": "# Contributing\n\nOpen a draft pull request early.\n",
-        "aidd_docs/memory/README.md": "# memory/\n\n<!-- files:start -->\n<!-- files:end -->\n",
         "CLAUDE.md": "# Shop\n\n## Memory Management\n\n<aidd_project_memory>\n</aidd_project_memory>\n"
       }
     },
@@ -183,10 +182,6 @@
         "CLAUDE.md": [
           "@aidd_docs/memory/architecture.md",
           "<!-- aidd_project_memory:start -->"
-        ],
-        "aidd_docs/memory/README.md": [
-          "<!-- files:start -->",
-          "<!-- files:end -->"
         ]
       }
     }
@@ -368,7 +363,6 @@
         "package.json": "{\n  \"name\": \"shop\",\n  \"version\": \"1.0.0\",\n  \"dependencies\": { \"express\": \"^4.19.0\" }\n}\n",
         "src/server.js": "const express = require(\"express\");\nmodule.exports = express();\n",
         "Dockerfile": "FROM node:22-alpine\nWORKDIR /app\nCOPY . .\nCMD [\"node\", \"src/server.js\"]\n",
-        "aidd_docs/memory/README.md": "# memory/\n\n<!-- files:start -->\n<!-- files:end -->\n",
         "aidd_docs/memory/architecture.md": "# Architecture\n\n## Stack\n\n- Node and Express\n\n## Gotchas\n\n- ZEBRAQUARTZ the order queue is single threaded on purpose, do not parallelise it\n",
         "aidd_docs/memory/vcs.md": "# VCS\n\n- Main branch: main\n- Platform: github\n",
         "aidd_docs/memory/project-brief.md": "# Project Brief\n\n## What it is\n\n- A small order API\n",
@@ -445,7 +439,7 @@
         "aidd_docs/memory/vcs.md": "# VCS\n\n- Main branch: main\n- Platform: github\n"
       }
     },
-    "prompt": "Use the {{SKILL}} skill to refresh the project memory. A bank already exists. Run the engine's whole-bank check first and correct the facts it reports as stale. You are running headless with no human available: answer for me, approving every finding that adds or corrects a fact, and declining every finding that would remove a line already in a file. Never wait for input, and complete the whole flow.",
+    "prompt": "Use the {{SKILL}} skill to refresh the project memory. A bank already exists. Correct the facts the code contradicts. You are running headless with no human available: answer for me, approving every finding that adds or corrects a fact, and declining every finding that would remove a line already in a file. Never wait for input, and complete the whole flow.",
     "expect": {
       "fileNotContains": {
         "aidd_docs/memory/architecture.md": [

@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.5.0](https://github.com/ai-driven-dev/framework/compare/aidd-telemetry-v0.4.0...aidd-telemetry-v0.5.0) (2026-11-13)
+
+
+### Features
+
+* **aidd-context:** lint memory files and hand a write's own errors back to the model ([2e808b6](https://github.com/ai-driven-dev/framework/commit/2e808b6444aa7872383630a55d794d3dc8a41b9a))
+* **cli:** host events carry the text each write put in a file ([810c8a1](https://github.com/ai-driven-dev/framework/commit/810c8a1d9f7b7f2839b689f681366345e0e40fdd))
+* **cli:** one host adapter per tool, placed at build time ([7fa8e6b](https://github.com/ai-driven-dev/framework/commit/7fa8e6b364f7f9ed45e4bf6ad1e330849f5679dc))
+
+
+### Bug Fixes
+
+* **aidd-context:** blame a write only for the lines it changed, and leave missing files to check ([325935e](https://github.com/ai-driven-dev/framework/commit/325935e046da711b7eff944c8e5e0dbf01989cee))
+* **aidd-context:** report only what a shell write wrote, and list .cjs hooks ([4b1c773](https://github.com/ai-driven-dev/framework/commit/4b1c773eb8e128c350210715693aae2dd3582c57)), closes [#1141](https://github.com/ai-driven-dev/framework/issues/1141)
+* **aidd-context:** ship the host adapter only to plugins whose hooks read it ([08807a7](https://github.com/ai-driven-dev/framework/commit/08807a73200413cf26e27014ad6cbac71720d247))
+* **cli:** host adapters ask once at stop and keep cwd at the session root ([153abbe](https://github.com/ai-driven-dev/framework/commit/153abbef90694211e12e02552b5603e6bfdb9670))
+* **framework:** name lifecycle hooks ([bb9f73d](https://github.com/ai-driven-dev/framework/commit/bb9f73ddaa337eecbb0758ddf430e11dc8ad9f55))
+* name lifecycle hooks in Codex ([3a2142e](https://github.com/ai-driven-dev/framework/commit/3a2142eec9907052fe438fbdbeae0d510c487d62))
+* **telemetry:** clarify the Claude session hook ([59ab097](https://github.com/ai-driven-dev/framework/commit/59ab0979fe1a96073028f7ba73d36697272e367b))
+
+
+### Documentation
+
+* rewrite the documentation set by audience ([#1131](https://github.com/ai-driven-dev/framework/issues/1131)) ([b90bffa](https://github.com/ai-driven-dev/framework/commit/b90bffada166c69f4e3952dd5e56abfcad540264))
+
 ## [0.4.0](https://github.com/ai-driven-dev/framework/compare/aidd-telemetry-v0.3.0...aidd-telemetry-v0.4.0) (2026-10-26)
 
 

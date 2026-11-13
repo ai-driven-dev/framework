@@ -44,14 +44,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File |
 |------|
-| [bank-guard.cjs](hooks/lib/bank-guard.cjs) |
-| [changes.cjs](hooks/lib/changes.cjs) |
-| [common-rules.cjs](hooks/lib/common-rules.cjs) |
-| [fact-sheet.cjs](hooks/lib/fact-sheet.cjs) |
 | [host.cjs](hooks/lib/host.cjs) |
-| [memory-rules.cjs](hooks/lib/memory-rules.cjs) |
-| [plan.cjs](hooks/lib/plan.cjs) |
-| [report.cjs](hooks/lib/report.cjs) |
+| [markdown.cjs](hooks/lib/markdown.cjs) |
 
 ### `skills`
 
@@ -86,19 +80,17 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-scan.md](skills/02-project-memory/actions/01-scan.md) | - |
+| `actions` | [01-read.md](skills/02-project-memory/actions/01-read.md) | - |
 | `actions` | [02-write.md](skills/02-project-memory/actions/02-write.md) | - |
-| `actions` | [03-check.md](skills/02-project-memory/actions/03-check.md) | - |
-| `actions` | [04-sync.md](skills/02-project-memory/actions/04-sync.md) | - |
-| `assets` | [fact-sheet.md](skills/02-project-memory/assets/fact-sheet.md) | - |
+| `actions` | [03-wire.md](skills/02-project-memory/actions/03-wire.md) | - |
 | `references` | [capabilities.md](skills/02-project-memory/references/capabilities.md) | - |
 | `references` | [ecosystem-signals.md](skills/02-project-memory/references/ecosystem-signals.md) | - |
-| `references` | [engine.md](skills/02-project-memory/references/engine.md) | - |
 | `references` | [memory-rules.md](skills/02-project-memory/references/memory-rules.md) | - |
 | `references` | [reading-sources.md](skills/02-project-memory/references/reading-sources.md) | - |
 | `references` | [review-protocol.md](skills/02-project-memory/references/review-protocol.md) | - |
 | `references` | [tools.md](skills/02-project-memory/references/tools.md) | - |
-| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Set up, refresh or update the project memory of its architecture, conventions and decisions, and wire it into your AI tools. Use for any request about the project memory, even a bare "check the project memory"; with no bank it sets one up, with a bank it refreshes it. Not for editing one existing memory file.` |
+| `scripts` | [project-memory.cjs](skills/02-project-memory/scripts/project-memory.cjs) | - |
+| `-` | [SKILL.md](skills/02-project-memory/SKILL.md) | `Set up, refresh or wire the project memory of its architecture, conventions and decisions into your AI tools. Use for any project memory request, even a bare "check". Not for one-file edits.` |
 
 #### `skills/03-context-generate`
 
@@ -193,7 +185,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [02-gather.md](skills/10-learn/actions/02-gather.md) | - |
 | `actions` | [03-assess.md](skills/10-learn/actions/03-assess.md) | - |
 | `actions` | [04-write.md](skills/10-learn/actions/04-write.md) | - |
-| `actions` | [05-sync.md](skills/10-learn/actions/05-sync.md) | - |
 | `assets` | [adr-template.md](skills/10-learn/assets/adr-template.md) | - |
 | `assets` | [learning-packet.md](skills/10-learn/assets/learning-packet.md) | - |
 | `assets` | [recommendation-table.md](skills/10-learn/assets/recommendation-table.md) | - |
@@ -203,7 +194,6 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [gather-protocol.md](skills/10-learn/references/gather-protocol.md) | - |
 | `references` | [review-protocol.md](skills/10-learn/references/review-protocol.md) | - |
 | `references` | [sources.md](skills/10-learn/references/sources.md) | - |
-| `references` | [sync-arguments.md](skills/10-learn/references/sync-arguments.md) | - |
 | `-` | [SKILL.md](skills/10-learn/SKILL.md) | `Capture durable project learnings. Use when the user wants to remember, record, or formalize a decision, convention, lesson, pitfall, reusable workflow, or review finding. Not for preferences or temporary notes.` |
 
 #### `skills/11-explore`

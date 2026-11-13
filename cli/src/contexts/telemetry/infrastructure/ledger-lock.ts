@@ -98,7 +98,12 @@ export class LedgerLock {
     const { now, waitMs, name, sleep, pollMs } = this.options;
     const deadline = now() + waitMs;
     for (;;) {
-      if (await this.tryCreate()) return () => this.release();
+      const created = await this.tryCreate(now() >= deadline);
+      if (created === "taken") return () => this.release();
+      if (created === "removing") {
+        await sleep(pollMs);
+        continue;
+      }
       const holder = await this.holder();
       if (holder === null) continue;
       if (this.isStale(holder)) {
@@ -115,16 +120,18 @@ export class LedgerLock {
     }
   }
 
-  private async tryCreate(): Promise<boolean> {
+  private async tryCreate(pastDeadline: boolean): Promise<"taken" | "held" | "removing"> {
     const created = new Date(this.options.now()).toISOString();
     try {
       await writeFile(this.path, JSON.stringify({ pid: this.options.pid, created_at: created }), {
         flag: "wx",
         mode: 0o600,
       });
-      return true;
+      return "taken";
     } catch (error) {
-      if (isErrnoException(error) && error.code === "EEXIST") return false;
+      if (isErrnoException(error) && error.code === "EEXIST") return "held";
+      // Windows refuses a file another handle is still deleting, until that handle closes.
+      if (isErrnoException(error) && error.code === "EPERM" && !pastDeadline) return "removing";
       throw error;
     }
   }

@@ -1,5 +1,35 @@
 # Changelog
 
+## [2.8.0](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.7.1...aidd-dev-v2.8.0) (2026-11-13)
+
+
+### Features
+
+* **aidd-context:** lint memory files and hand a write's own errors back to the model ([2e808b6](https://github.com/ai-driven-dev/framework/commit/2e808b6444aa7872383630a55d794d3dc8a41b9a))
+* **framework:** ship generic sub-agents across six hosts ([#1027](https://github.com/ai-driven-dev/framework/issues/1027)) ([7c67ca3](https://github.com/ai-driven-dev/framework/commit/7c67ca37a19dc30b8ba8933f7561f79e91736e2b))
+
+
+### Bug Fixes
+
+* **aidd-context:** report only what a shell write wrote, and list .cjs hooks ([4b1c773](https://github.com/ai-driven-dev/framework/commit/4b1c773eb8e128c350210715693aae2dd3582c57)), closes [#1141](https://github.com/ai-driven-dev/framework/issues/1141)
+* **aidd-dev:** check plan file operations across phases, not per phase ([4f9a04d](https://github.com/ai-driven-dev/framework/commit/4f9a04d466e760e1ab4cba7d6937381d505c142a))
+* **aidd-dev:** count a job skipped for want of input as not run ([b9450fe](https://github.com/ai-driven-dev/framework/commit/b9450fedffc95ed9eda88d8a2848a84ad16d13b8))
+* **aidd-dev:** drop the assert rule on skipped jobs, the exact command already prevents them ([bf4e3ca](https://github.com/ai-driven-dev/framework/commit/bf4e3ca2a53bb566572ceed965c1b58c492ad163))
+* **aidd-dev:** run assert checks in full and catch files recreated after deletion ([a9006cd](https://github.com/ai-driven-dev/framework/commit/a9006cdd166632487b7dd8bcece04c2500069a91))
+* **aidd-dev:** run each assert check exactly as written, counting skips as not run ([1e9d9cf](https://github.com/ai-driven-dev/framework/commit/1e9d9cf2263a413e13dc9f99e50a6dbfb5e0348f))
+
+
+### Documentation
+
+* rewrite the documentation set by audience ([#1131](https://github.com/ai-driven-dev/framework/issues/1131)) ([b90bffa](https://github.com/ai-driven-dev/framework/commit/b90bffada166c69f4e3952dd5e56abfcad540264))
+
+
+### Refactoring
+
+* **aidd-dev:** lean the implement skill for small models ([#1126](https://github.com/ai-driven-dev/framework/issues/1126)) ([6ec74db](https://github.com/ai-driven-dev/framework/commit/6ec74db56fc7060514ac38516e8472f9c0255a1b))
+* **aidd-dev:** make assert a judge and route sdlc through plan, implement and assert ([#1135](https://github.com/ai-driven-dev/framework/issues/1135)) ([65b54db](https://github.com/ai-driven-dev/framework/commit/65b54dbe0573da5542a20d5bd8abd380cfa70c03))
+* **aidd-dev:** make review three steps with its axes as references ([#1136](https://github.com/ai-driven-dev/framework/issues/1136)) ([6b1e091](https://github.com/ai-driven-dev/framework/commit/6b1e091d03188037af648d10e7568e039c5d3917))
+
 ## [2.7.1](https://github.com/ai-driven-dev/framework/compare/aidd-dev-v2.7.0...aidd-dev-v2.7.1) (2026-10-26)
 
 

@@ -4,18 +4,25 @@ Write the memory the project deserves.
 
 ## Input
 
-The sheet.
+The list of changes and the answers.
 
 ## Process
 
-1. Run [`plan`](../references/engine.md) with the ticked [tools](../references/tools.md) and fix the sheet until it passes. Then send its output as it is, in plain chat text, nothing before or after it.
-2. Wait for the answer, then run [`answer`](../references/engine.md) with it, before any memory file. On exit 1, write the answers into the sheet's answer fields by the [Answers](../references/capabilities.md#answers); apply what it leaves to you the same way.
-3. If the plan is declined, write nothing and stop; if it holds no fact line, no absent always file and no added tool, report the bank current and stop.
-4. Create the bank tree of [capabilities](../references/capabilities.md). Copy `aidd_docs/README.md` only when absent.
-5. Write each file per the [writing rules](../references/capabilities.md#writing), at `aidd_docs/memory/<file>`, never under its template folder, from the sheet only.
-6. Lint each file written with [`check`](../references/engine.md): fix each error on the lines you wrote, check each warning against the code and keep a true line.
-7. Go on to [sync](04-sync.md).
+1. From the project root, run the skill's `scripts/project-memory.cjs scaffold` with node, naming each conditional file to create: it creates the tree and each absent file from its template.
+2. Write each file from the list only, per [memory-rules](../references/memory-rules.md).
+3. From the project root, run the skill's `scripts/project-memory.cjs check` with node; after a fix, run it once more.
+4. Go on to [wire](03-wire.md).
 
 ## Output
 
-The written bank, with no format error.
+The written bank.
+
+## Rules
+
+- `aidd_docs/memory/` holds the [capability table](../references/capabilities.md)'s files and the team's own, kept as they are.
+- Create `internal/decisions/` with the first decision record, not by scaffold.
+- Name no file whose capability was answered no.
+- Fill a created file's template with the list's lines, dropping an empty section and an unanswered question.
+- A file the team keeps in `internal/` or `external/`, or under an Accepted name, is written there.
+- Replace or remove a bank line only on a yes; a move out of the bank counts as a removal.
+- A caller's instruction may answer for the person on an addition, never on a replace or a removal.

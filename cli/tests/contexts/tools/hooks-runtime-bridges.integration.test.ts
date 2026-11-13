@@ -100,7 +100,10 @@ afterEach(async () => {
   vi.unstubAllEnvs();
   const dirs = created.splice(0);
   await waitForRecordedHooks(dirs);
-  await Promise.all(dirs.map((dir) => rm(dir, { recursive: true, force: true })));
+  // Windows may release a detached hook's cwd shortly after the process exits.
+  await Promise.all(
+    dirs.map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }))
+  );
 });
 
 /** The captured arguments, the scrubbed project folder pointed at a real one. */

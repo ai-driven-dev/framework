@@ -1,6 +1,6 @@
 ---
 name: 02-project-memory
-description: Set up, refresh or update the project memory of its architecture, conventions and decisions, and wire it into your AI tools. Use for any request about the project memory, even a bare "check the project memory"; with no bank it sets one up, with a bank it refreshes it. Not for editing one existing memory file.
+description: Set up, refresh or wire the project memory of its architecture, conventions and decisions into your AI tools. Use for any project memory request, even a bare "check". Not for one-file edits.
 argument-hint: setup | refresh
 ---
 
@@ -10,25 +10,20 @@ argument-hint: setup | refresh
 
 ```mermaid
 flowchart LR
-  request((request)) -->|"no bank: set up"| scan["scan<br>actions/01-scan.md<br>script: memory.cjs changes"]
-  request -->|"a bank: refresh"| scan
-  scan -->|"setup"| write["write<br>actions/02-write.md<br>script: memory.cjs plan, answer, check"]
-  scan -->|"refresh"| check["check<br>actions/03-check.md<br>script: memory.cjs check"]
-  scan -->|"nothing to remember"| done((done))
-  check -->|"findings in the sheet"| write
-  write -->|"show the plan"| user((user answers))
-  user -->|"plan answered"| write
-  write --> sync
-  sync["sync<br>actions/04-sync.md<br>script: memory.cjs sync, report"] -->|"offer to reconcile"| user
-  user -->|"reconcile answered"| sync
-  sync -->|"reply: the report"| done
+  request((request)) --> read["read<br>actions/01-read.md"]
+  read -->|"nothing to change"| done((done))
+  read -->|"one message"| user((user answers))
+  user --> write["write<br>actions/02-write.md"]
+  write --> wire["wire<br>actions/03-wire.md"]
+  wire --> done
 ```
 
 - Each box: read its action file, then follow it.
 
 ## Transversal rules
 
-- Speak only to ask or to give the final reply; otherwise call tools.
-- After the plan or a reconcile offer, wait.
+- A line already in the bank is the team's: quote it exactly and get a yes before you replace or remove it.
+- Ask everything in one message, then wait; never ask twice.
 - Edit no memory file outside write.
-- Run no version-control command: `changes` gives what changed.
+- When the skill's script rejects a call, fix the call from what it prints; never do its work by hand.
+- Fix each error the script's check gives on a line you wrote; keep a warned line the code confirms.
