@@ -5,8 +5,10 @@
  * its path set, because a count alone lets one file be deleted and another added.
  * Delete this file when the two folders are gone.
  */
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { sourceFiles } from "./helpers.js";
+import { CLI_ROOT, sourceFiles } from "./helpers.js";
 
 /** Source files under each folder that is still counted. Lower a value when files leave. */
 const COMMITTED_COUNTS: Readonly<Record<string, number>> = {
@@ -87,6 +89,28 @@ function unknownAreaVerdicts(found: readonly string[]): string[] {
     );
 }
 
+/** Folders of `tests/` that mirrored a `src/` area now gone. A file recreated there is a test
+ * mirroring nothing. */
+const GONE_TEST_AREAS: readonly string[] = ["tests/runtime/"];
+
+/** Every file under a test area whose source area is gone. */
+function goneTestAreaVerdicts(found: readonly string[]): string[] {
+  return found
+    .filter((path) => GONE_TEST_AREAS.some((area) => path.startsWith(area)))
+    .map((path) => `${path} sits in a test area whose source area is gone: mirror its source path`);
+}
+
+function testFiles(): string[] {
+  return readdirSync(join(CLI_ROOT, "tests"), { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) =>
+      `tests/${join(entry.parentPath, entry.name).slice(join(CLI_ROOT, "tests").length + 1)}`.replace(
+        /\\/g,
+        "/"
+      )
+    );
+}
+
 describe("the old layout only shrinks", () => {
   for (const [folder, committed] of Object.entries(COMMITTED_COUNTS)) {
     it(`${folder} holds its committed file count`, () => {
@@ -104,6 +128,10 @@ describe("the old layout only shrinks", () => {
 
   it("src/ holds no top-level area beyond the known ones", () => {
     expect(unknownAreaVerdicts(sourceFiles())).toEqual([]);
+  });
+
+  it("tests/ holds no file under a test area whose source area is gone", () => {
+    expect(goneTestAreaVerdicts(testFiles())).toEqual([]);
   });
 });
 
@@ -135,6 +163,14 @@ describe("the guard itself", () => {
     ).toEqual([
       "src/foo/x.ts sits in an unknown top-level area: nothing new enters outside the known ones",
       "src/elsewhere/auth.ts sits in an unknown top-level area: nothing new enters outside the known ones",
+    ]);
+  });
+
+  it("reports a file recreated under a gone test area and clears its mirror", () => {
+    expect(
+      goneTestAreaVerdicts(["tests/runtime/wiring/x.unit.test.ts", "tests/kernel/reading/x.ts"])
+    ).toEqual([
+      "tests/runtime/wiring/x.unit.test.ts sits in a test area whose source area is gone: mirror its source path",
     ]);
   });
 
