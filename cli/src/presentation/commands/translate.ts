@@ -72,7 +72,7 @@ export function registerTranslateCommand(program: Command): void {
     .argument("<source>", "Path to the source framework directory")
     .requiredOption(
       "--to <target>",
-      "Conversion target (claude, cursor, copilot, codex, opencode, kilo, antigravity)"
+      "Conversion target (claude, cursor, copilot, codex, opencode, kilo, kiro, antigravity)"
     )
     .requiredOption("--out <dir>", "Output directory (marketplace dist or project root)")
     .option("--as <marketplace|flat>", "Output layout", "marketplace")

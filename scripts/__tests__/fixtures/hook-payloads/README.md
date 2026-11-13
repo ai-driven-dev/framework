@@ -14,7 +14,8 @@ the event spelled as the host spells it. Read by the CLI converter tests and the
   first file write and once at the first Stop, to learn whether the host delivers them; `answer`,
   a session token at SessionStart in the key the host's adapter prints, to learn whether the model
   reads it; `continue`, Cursor's `followup_message` once at the first `stop`.
-- `hookAnswer` is what the logging hook printed for that call, `null` when it printed nothing.
+- `hookAnswer` is what the logging hook printed for that call, `null` when it printed nothing:
+  JSON on most hosts, the bare text on Kiro, which hands a hook's output to the model as printed.
 
 ## OpenCode and Kilo
 
@@ -36,7 +37,9 @@ Copilot, OpenCode and Kilo; Cursor's `sessionStart`, `postToolUse` and `stop`. C
 `transcript_path` carries a value. Copilot's file write arrives as `Edit` with a `*** Begin Patch`
 string. Claude Code's `Edit` and its `PowerShell` tool, enabled by
 `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`. Cursor's edit, sent as a `Write` carrying the whole file, and
-its `Delete`. OpenCode's and Kilo's `edit` and `apply_patch` arguments.
+its `Delete`. OpenCode's and Kilo's `edit` and `apply_patch` arguments. Kiro's SessionStart, from
+its CLI on the V3 engine: the session id carries a `sess_` prefix, and the model was seen reading
+the hook's output between `<HOOK_INSTRUCTION>` tags, a JSON answer included as raw text.
 
 ## How the harder ones were reached
 

@@ -8,6 +8,7 @@ import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import "../../../../src/contexts/tools/domain/profiles/kiro/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { ListInstalledRulesUseCase } from "../../../../src/contexts/framework/application/list-installed-rules-use-case.js";
 import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";

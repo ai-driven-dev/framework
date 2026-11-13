@@ -37,6 +37,11 @@ export const JSCPD_ARGS = [
  */
 export const BASELINE = [
   {
+    pair: "antigravity/hooks.ts <> kiro/hooks.ts",
+    clones: 1,
+    reason: "each descriptor declares the same hooks route as data: session start, one shared file",
+  },
+  {
     pair: "codex/native-marketplace-source.ts <> copilot/native-marketplace-source.ts",
     clones: 1,
     reason: "each profile parses its own CLI's marketplace list into the same source map",

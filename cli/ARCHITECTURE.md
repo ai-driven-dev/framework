@@ -116,6 +116,7 @@ Hooks are authored with `${CLAUDE_PLUGIN_ROOT}`. The installer translates it per
 | GitHub Copilot | `${PLUGIN_ROOT}` | |
 | Cursor | `./` | Own hook format: the converter makes the root plugin-relative before token substitution |
 | OpenCode, Kilo Code | none | No hooks file: a generated bridge replays the hooks |
+| Kiro | none | One hooks file every plugin shares, session start only; each command is a `node -e` launcher that finds its script under `~/.kiro/hooks/`, else under the project's `.kiro/hooks/` |
 
 Runtime contracts:
 

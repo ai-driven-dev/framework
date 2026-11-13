@@ -109,6 +109,23 @@
     }
   },
   {
+    "id": "kiro",
+    "name": "Kiro",
+    "directory": ".kiro/",
+    "pluginMode": "flat",
+    "nativeCli": null,
+    "builds": {
+      "flat": {
+        "skills": "yes",
+        "agents": "yes",
+        "mcp": "yes",
+        "hooks": "yes",
+        "rules": "no",
+        "commands": "no"
+      }
+    }
+  },
+  {
     "id": "codex",
     "name": "Codex",
     "directory": ".codex/",
