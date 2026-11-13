@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.1](https://github.com/ai-driven-dev/framework/compare/aidd-pm-v2.6.0...aidd-pm-v2.6.1) (2026-11-13)
+
+
+### Documentation
+
+* rewrite the documentation set by audience ([#1131](https://github.com/ai-driven-dev/framework/issues/1131)) ([b90bffa](https://github.com/ai-driven-dev/framework/commit/b90bffada166c69f4e3952dd5e56abfcad540264))
+
 ## [2.6.0](https://github.com/ai-driven-dev/framework/compare/aidd-pm-v2.5.0...aidd-pm-v2.6.0) (2026-10-16)
 
 
