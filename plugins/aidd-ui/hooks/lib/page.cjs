@@ -1,10 +1,8 @@
 // The comparison page of a set of variants: one file, opened as a file, with no server and no request.
-const { createHash } = require("node:crypto");
+const { escaped, documentOf, inlined, fingerprintOf } = require("./html.cjs");
 
 const STATE_ATTRIBUTE = /data-state="([^"]+)"/g;
 const HTML_FILE = /\.html$/;
-const STYLESHEET_LINK = '<link rel="stylesheet" href="../tokens.css">'; // how a render loads the tokens
-const FONT_FLOOR = ":where(html) { font-family: system-ui, sans-serif; }"; // no specificity: any font a render sets wins
 const VERDICTS = [["keep", "Keep", "✓"], ["revise", "Revise", "↻"], ["discard", "Discard", "✕"]];
 const SHORTCUTS = [["K", "Keep the variant"], ["R", "Revise the variant"], ["D", "Discard the variant"], ["←→", "Previous or next variant"], ["C", "Copy the feedback"], ["\\", "Focus the canvas"], ["?", "Show or hide this sheet"], ["Esc", "Close this sheet"]];
 const LEGEND = [["keep", "Keep"], ["revise", "Revise"], ["discard", "Discard"], ["", "Undecided"]];
@@ -26,9 +24,6 @@ function feedbackOf(state) {
 function copiedOf(state) {
   return "```json\n" + JSON.stringify(feedbackOf(state), null, 2) + "\n```\n";
 }
-
-/** `text` as HTML text or as an attribute value. */
-const escaped = (text) => text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
 const options = (values, empty) => [...(empty === undefined ? [] : [`<option value="">${empty}</option>`]), ...values.map((value) => `<option value="${escaped(String(value))}">${escaped(String(value))}</option>`)].join("");
 
@@ -426,54 +421,6 @@ const watch = new ResizeObserver(() => requestAnimationFrame(fit));
 watch.observe(stage);
 `;
 
-const inline = (text) => escaped(text).replace(/`([^`]+)`/g, "<code>$1</code>");
-
-const cellsOf = (line) => line.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|").map((cell) => cell.trim());
-const isRule = (line) => /^\s*\|(\s*:?-+:?\s*\|)+\s*$/.test(line ?? "");
-
-/** A markdown file as a document: front matter as chips, then headings, paragraphs, lists, tables and inline code.
- * Every other line is an escaped paragraph. */
-function documentOf(text) {
-  const lines = text.replaceAll("\r", "").split("\n");
-  const html = [];
-  if (lines[0] === "---") {
-    const end = lines.indexOf("---", 1);
-    if (end > 0) {
-      const chips = lines.slice(1, end).filter((line) => line.trim()).map((line) => {
-        const at = line.indexOf(":");
-        return at < 0 ? `<span class="chip">${escaped(line.trim())}</span>` : `<span class="chip"><span class="key">${escaped(line.slice(0, at).trim())}</span>${escaped(line.slice(at + 1).trim())}</span>`;
-      });
-      html.push(`<div class="chips">${chips.join("")}</div>`);
-      lines.splice(0, end + 1);
-    }
-  }
-  for (let at = 0; at < lines.length; ) {
-    const line = lines[at];
-    const heading = /^(#{1,3}) (.+)$/.exec(line);
-    if (!line.trim()) at++;
-    else if (heading) {
-      html.push(`<h${heading[1].length}>${inline(heading[2].trim())}</h${heading[1].length}>`);
-      at++;
-    } else if (/^- /.test(line)) {
-      const items = [];
-      for (; at < lines.length && /^- /.test(lines[at]); at++) items.push(`<li>${inline(lines[at].slice(2))}</li>`);
-      html.push(`<ul>${items.join("")}</ul>`);
-    } else if (/^\s*\|/.test(line) && isRule(lines[at + 1])) {
-      const rows = [];
-      for (at += 2; at < lines.length && /^\s*\|/.test(lines[at]); at++) rows.push(`<tr>${cellsOf(lines[at]).map((cell) => `<td>${inline(cell)}</td>`).join("")}</tr>`);
-      html.push(`<div class="scroll"><table><thead><tr>${cellsOf(line).map((cell) => `<th>${inline(cell)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`);
-    } else {
-      const rows = [];
-      for (; at < lines.length && lines[at].trim() && !/^(#{1,3} |- )/.test(lines[at]); at++) rows.push(lines[at].trim());
-      html.push(`<p>${inline(rows.join(" "))}</p>`);
-    }
-  }
-  return `<article class="doc">${html.join("\n")}</article>`;
-}
-
-/** `doc` with its stylesheet link replaced by the system font floor, then the tokens when there are any. */
-const inlined = (doc, tokens) => doc.replaceAll(STYLESHEET_LINK, () => `<style>\n${FONT_FLOOR}\n${tokens ?? ""}</style>`);
-
 /** One variant on the canvas: a window holding its name and verdict, then what it ships for each view. A
  * markdown file is a document, an html file a frame; a view with nothing says so. */
 function frameOf({ name, files }, tokens, first, view) {
@@ -505,9 +452,6 @@ function panelOf({ name, intent, axes }, first) {
     "</section>",
   ].join("\n");
 }
-
-/** What the page shows, hashed: each variant's name and each file's path and text, in order. A review is kept only for the same fingerprint. */
-const fingerprintOf = (variants) => createHash("sha256").update(JSON.stringify(variants.map(({ name, files }) => [name, files.map(({ path, text }) => [path, text])]))).digest("hex");
 
 /** The page of a set: `variants` each `{name, intent, axes: [[axis, value]], files: [{path, text}]}`, the
  * `tokens` stylesheet or null, and the `themes` the design system names. */
@@ -578,4 +522,4 @@ function pageOf({ id, variants, tokens, themes }) {
   ].join("\n");
 }
 
-module.exports = { pageOf, feedbackOf, copiedOf, STYLE, escaped, documentOf, inlined, STYLESHEET_LINK };
+module.exports = { pageOf, feedbackOf, copiedOf, STYLE };

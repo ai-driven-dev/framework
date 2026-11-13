@@ -8,7 +8,7 @@ const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
 const { text } = require("./project.cjs");
-const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./page.cjs");
+const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./html.cjs");
 const { catalog, resolvedValues, TYPES } = require("./tokens.cjs");
 
 const DEFAULT_LANGUAGE = "en";
