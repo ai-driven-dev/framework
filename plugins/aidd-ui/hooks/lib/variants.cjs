@@ -175,7 +175,7 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
     return `${head}\n<section class="checks"><h2>${labels.checks}</h2><ul>${items.join("")}</ul></section>`;
   }
   const rounds = [...new Set(set.variants.map((variant) => variant.round ?? 1))].sort((a, b) => a - b);
-  const options = wireframes.map((wireframe) => `<option value="${escaped(wireframe.path)}">${escaped(wireframe.path)}</option>`).join("");
+  const options = wireframes.map((wireframe) => `<option value="${escaped(wireframe.path)}">${escaped(wireframe.title ?? wireframe.path)}</option>`).join("");
   const dressed = wireframes.length && set.variants.some(lookOf);
   const note = wireframes.length && set.variants.some(lookOf) ? `<div class="preview-bar"><p class="preview-note">${escaped(labels.preview)}</p><label class="screen-pick">${escaped(labels.screen)} <select id="screen-pick">${options}</select></label></div>` : "";
   const roundBody = (round) => {
@@ -202,7 +202,7 @@ const STYLE = `
 .axes td { padding: 4px 0; overflow-wrap: anywhere; }
 .round > summary { cursor: pointer; font-weight: 600; margin: var(--s3) 0; }
 .axes td[data-changed] { box-shadow: inset 3px 0 0 var(--revise); }
-.take { display: block; inline-size: 100%; padding: 2px var(--s2); border: 1px solid transparent; border-radius: var(--r1); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.take { display: block; inline-size: 100%; height: auto; line-height: 1.4; padding: 2px var(--s2); border: 1px solid transparent; border-radius: var(--r1); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .take:hover { border-color: var(--line-strong); }
 .take[aria-pressed="true"] { border-color: var(--ok); background: var(--surface); }
 .choices h3 { margin: var(--s3) var(--s5) var(--s1); font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }

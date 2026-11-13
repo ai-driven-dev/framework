@@ -1231,7 +1231,10 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
     const script = (reviewed ? FRAMES + PANEL + TABS : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");
     pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id, sets), body, drawer: drawer(id), script, wide: journey });
   }
-  const wireframes = project.renders.filter((file) => file.startsWith(WIREFRAMES_DIR)).sort().slice(0, WIREFRAMES_SHOWN).map((file) => ({ path: file.slice(WIREFRAMES_DIR.length), text: text(project, file) ?? "" }));
+  const wireframes = project.renders.filter((file) => file.startsWith(WIREFRAMES_DIR)).sort().slice(0, WIREFRAMES_SHOWN).map((file) => {
+    const record = records.find((candidate) => renderOf(candidate) === file);
+    return { path: file.slice(WIREFRAMES_DIR.length), title: record ? titleOf(project, record) : undefined, text: text(project, file) ?? "" };
+  });
   for (const set of sets) {
     pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null, true), script: variants.SCRIPT + PANEL, wide: true });
   }

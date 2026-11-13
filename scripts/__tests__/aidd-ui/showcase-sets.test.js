@@ -243,6 +243,17 @@ describe("aidd-ui showcase sets", () => {
         assert.match(html, /getElementById\("screen-pick"\)/);
       });
 
+      it("names each screen in the select by its record's title, its file when it has none", () => {
+        put(tmp, `${UI}/wireframes/other.html`, OTHER);
+        const select = page().match(/<select id="screen-pick"[^>]*>([\s\S]*?)<\/select>/)[1];
+        assert.deepEqual([...select.matchAll(/<option [^>]*>([^<]*)<\/option>/g)].map((match) => match[1]), ["other.html", "Search flow"]);
+      });
+
+      it("lets an axis cell grow to its content, over the shell's fixed button height", () => {
+        const take = require(path.join(LIB, "variants.cjs")).STYLE.match(/\.take \{[^}]*\}/)[0];
+        assert.match(take, /height: auto/);
+      });
+
       it("has no select when the preview is the fallback", () => {
         assert.doesNotMatch(page(dressed([["Palette", "nuit profonde"]], [file("preview.html", "<html><body>P</body></html>")])), /id="screen-pick"/);
       });
