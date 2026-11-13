@@ -51,6 +51,25 @@ const cellOf = (value) =>
     .map((part, at) => (at % 2 ? `<i class="swatch" style="background: ${part}"></i><code>${part}</code>` : escaped(part)))
     .join("");
 
+const PALETTE_AXIS = /palette|colou?r|couleur/i;
+const FAMILY = /\b(sans-serif|serif|monospace)\b/i;
+const FAMILIES = { "sans-serif": "system-ui, sans-serif", serif: "Georgia, serif", monospace: "ui-monospace, monospace" };
+
+/** What a variant says of its look in a form to read: the hex colours of its palette axis (background, text, then
+ * accent) and the generic font family any other axis names. Null when it gives fewer than two colours. */
+function lookOf(variant) {
+  const colours = variant.axes.filter(([axis]) => PALETTE_AXIS.test(axis)).flatMap(([, value]) => String(value ?? "").match(COLOUR) ?? []);
+  if (colours.length < 2) return null;
+  const family = variant.axes.filter(([axis]) => !PALETTE_AXIS.test(axis)).map(([, value]) => FAMILY.exec(String(value ?? ""))?.[1]?.toLowerCase()).find(Boolean);
+  return { background: colours[0], text: colours[1], accent: colours[2] ?? colours[1], font: family ? FAMILIES[family] : null };
+}
+
+/** A wireframe dressed in a look by element styles alone: its structure stays as written. */
+function dressedOf(html, { background, text, accent, font }) {
+  const style = `<style>body { background: ${background}; color: ${text};${font ? ` font-family: ${font};` : ""} } button { background: ${accent}; color: ${background}; border: 0; padding: 8px 16px; border-radius: 8px; font: inherit; } textarea, input { background: transparent; color: inherit; border: 1px solid ${accent}; }</style>`;
+  return html.includes("</head>") ? html.replace("</head>", () => `${style}</head>`) : style + html;
+}
+
 /** A render in the frames of each size, each scaled by the script to the width of its column. */
 function framesOf({ variant, file, tokens, labels }) {
   const frame = ([size, width, height]) => `<figure class="frame"><figcaption>${labels[size]}</figcaption><div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${variant.name} ${file.path} ${size}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(inlined(file.text, tokens))}"></iframe></div></figure>`;
@@ -58,20 +77,22 @@ function framesOf({ variant, file, tokens, labels }) {
 }
 
 /** One variant as a column: its name, its intent, its axes, then each of its files. */
-function columnOf({ variant, at, shared, tokens, labels }) {
+function columnOf({ variant, at, shared, tokens, labels, wireframes }) {
+  const look = lookOf(variant);
+  const screens = look && wireframes.length ? wireframes.map((wireframe) => framesOf({ variant, file: { path: wireframe.path, text: dressedOf(wireframe.text, look) }, tokens, labels })) : null;
   const axes = variant.axes.map(([axis, value]) => `<tr><th>${escaped(axis)}</th><td>${cellOf(value)}</td></tr>`).join("");
   const files = variant.files.flatMap((file) => {
-    if (RENDER_FILE.test(file.path)) return [framesOf({ variant, file, tokens, labels })];
+    if (RENDER_FILE.test(file.path)) return screens ? [] : [framesOf({ variant, file, tokens, labels })];
     if (!MARKDOWN_FILE.test(file.path)) return [];
     const text = shared.has(file.path) ? shared.get(file.path).texts[at] : file.text;
     return text ? [`<div class="file" data-path="${escaped(file.path)}"><h3><code>${escaped(file.path)}</code></h3>${documentOf(text)}</div>`] : [];
   });
-  return `<section class="variant" data-variant="${escaped(variant.name)}"><h2>${escaped(variant.name)}</h2><p class="intent">${escaped(variant.intent ?? "")}</p><table class="axes"><tbody>${axes}</tbody></table>${files.join("")}</section>`;
+  return `<section class="variant" data-variant="${escaped(variant.name)}"><h2>${escaped(variant.name)}</h2><p class="intent">${escaped(variant.intent ?? "")}</p><table class="axes"><tbody>${axes}</tbody></table>${files.concat(screens ?? []).join("")}</section>`;
 }
 
 /** The body of a set's page: its name, then the problems that keep it from being shown, else the paths the
  * variants share and one column per variant. */
-function setBodyOf({ set, tokens, labels }) {
+function setBodyOf({ set, tokens, labels, wireframes = [] }) {
   const head = `<header class="head"><p class="crumb">${labels.choose}</p><h1>${escaped(set.id)}</h1></header>`;
   if (set.problems.length) {
     const items = set.problems.map((each) => `<li data-rule="${escaped(each.rule)}"><b>${escaped(each.rule)}</b> ${escaped(each.message)} <span class="fix">${escaped(each.fix)}</span></li>`);
@@ -79,7 +100,7 @@ function setBodyOf({ set, tokens, labels }) {
   }
   const shared = sharedOf(set.variants);
   const same = [...shared].filter(([, own]) => own.same.length).map(([path, own]) => `<p class="same" data-path="${escaped(path)}"><code>${escaped(path)}</code> ${escaped(filled(labels.same, { sections: own.same.join(JOINER) }))}</p>`);
-  const columns = set.variants.map((variant, at) => columnOf({ variant, at, shared, tokens, labels }));
+  const columns = set.variants.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes }));
   return [head, same.join("\n"), `<div class="variants" style="--count: ${columns.length}">${columns.join("")}</div>`].filter(Boolean).join("\n");
 }
 

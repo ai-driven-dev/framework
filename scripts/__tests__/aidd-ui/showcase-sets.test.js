@@ -134,6 +134,36 @@ describe("aidd-ui showcase sets", () => {
     });
   });
 
+  describe("the variants on the project's screens", () => {
+    const dressed = (axes, files) => SET({ variants: [{ ...variant("a", "calm", files ?? []), axes }, variant("b", "bold", [file("preview.html", "<html><body><p>B</p></body></html>")])] });
+    const framesOf = (set) => [...columnsOf(pagesOf([set])["_set-layout.html"])[0].html.matchAll(/srcdoc="([^"]*)"/g)].map((match) => unescaped(match[1]));
+
+    it("dresses a wireframe of the project in the colours and the font a variant gives, in place of its preview", () => {
+      const frames = framesOf(dressed([["Palette", "nuit #0b0f14, texte #e8eef3, accent #7fd4f2"], ["Chiffres", "monospace télémétrie"]], [file("preview.html", "<html><body><p>PREVIEW</p></body></html>")]));
+      assert.equal(frames.length, 2, "a desktop and a mobile frame");
+      for (const frame of frames) {
+        assert.match(frame, /Results, default/, "the wireframe's own text");
+        assert.match(frame, /#0b0f14/);
+        assert.match(frame, /#7fd4f2/);
+        assert.match(frame, /monospace/);
+        assert.doesNotMatch(frame, /PREVIEW/);
+      }
+    });
+
+    it("falls back to the preview of a variant that gives no readable colour", () => {
+      const frames = framesOf(dressed([["Palette", "nuit profonde, accent bleu glacier"]], [file("preview.html", "<html><body><p>PREVIEW</p></body></html>")]));
+      for (const frame of frames) {
+        assert.match(frame, /PREVIEW/);
+        assert.doesNotMatch(frame, /Results, default/);
+      }
+    });
+
+    it("keeps the structure of the wireframe as written", () => {
+      const [frame] = framesOf(dressed([["Palette", "#0b0f14 #e8eef3 #7fd4f2"]]));
+      assert.match(frame, /<div data-zone="query">Query<\/div>/);
+    });
+  });
+
   describe("the words", () => {
     it("are the same keys in both languages, plain in French", () => {
       for (const key of ["choose", "desktop", "mobile", "same", "keep", "discard"]) assert.ok(LABELS.en[key] && LABELS.fr[key], key);

@@ -7,10 +7,13 @@ const { placed, fm, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, R
 const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
-const { text } = require("./project.cjs");
+const { text, UI_DIR } = require("./project.cjs");
 const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./html.cjs");
 const { catalog, resolvedValues, TYPES } = require("./tokens.cjs");
 const variants = require("./variants.cjs");
+
+const WIREFRAMES_DIR = `${UI_DIR}/wireframes/`; // the screens a set of variants is shown on
+const WIREFRAMES_SHOWN = 2;
 
 const DEFAULT_LANGUAGE = "en";
 const UNRESOLVED = ["none", "pending"]; // a state still to review
@@ -1146,8 +1149,9 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
     const script = (reviewed ? FRAMES + PANEL + TABS : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");
     pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id, sets), body, drawer: drawer(id), script, wide: journey });
   }
+  const wireframes = project.renders.filter((file) => file.startsWith(WIREFRAMES_DIR)).sort().slice(0, WIREFRAMES_SHOWN).map((file) => ({ path: file.slice(WIREFRAMES_DIR.length), text: text(project, file) ?? "" }));
   for (const set of sets) {
-    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets), body: variants.setBodyOf({ set, tokens, labels }), drawer: drawer(null), script: variants.SCRIPT + PANEL, wide: true });
+    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null), script: variants.SCRIPT + PANEL, wide: true });
   }
   return pages;
 }
