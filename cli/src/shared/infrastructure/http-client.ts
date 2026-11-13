@@ -38,7 +38,6 @@ function doGet(url: string, token?: string, accept?: string): Promise<IncomingMe
         hostname: parsed.hostname,
         port: parsed.port || undefined,
         path: parsed.pathname + parsed.search,
-        method: "GET",
         headers: buildHeaders(token, accept),
       },
       resolve
@@ -82,7 +81,7 @@ export class HttpClient implements HttpGet {
       throw new HttpNotFoundError(url);
     }
 
-    if (statusCode < 200 || statusCode >= 300) {
+    if (statusCode >= 300) {
       await collectBuffer(response);
       throw new HttpError(statusCode, url);
     }

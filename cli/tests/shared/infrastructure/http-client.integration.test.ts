@@ -1,178 +1,177 @@
-import { createServer } from "node:http";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { beforeEach, describe, expect, it } from "vitest";
-import { AuthenticationError } from "../../../src/shared/domain/errors.js";
+import { describe, expect, it } from "vitest";
+import {
+  AuthenticationError,
+  HttpError,
+  HttpRedirectError,
+} from "../../../src/shared/domain/errors.js";
 import { HttpClient } from "../../../src/shared/infrastructure/http-client.js";
 
-function startServer(
-  handler: (
-    req: import("node:http").IncomingMessage,
-    res: import("node:http").ServerResponse
-  ) => void
-) {
+function startServer(handler: (req: IncomingMessage, res: ServerResponse) => void) {
   const server = createServer(handler);
   return new Promise<{ url: string; close: () => Promise<void> }>((resolve) => {
     server.listen(0, "127.0.0.1", () => {
       const port = (server.address() as AddressInfo).port;
       resolve({
         url: `http://127.0.0.1:${port}`,
-        close: () => new Promise((res) => server.close(() => res())),
+        close: () => new Promise((done) => server.close(() => done())),
       });
     });
   });
 }
 
-describe("HttpClient", () => {
-  let client: HttpClient;
+async function against<T>(
+  handler: (req: IncomingMessage, res: ServerResponse) => void,
+  run: (url: string) => Promise<T>
+): Promise<T> {
+  const { url, close } = await startServer(handler);
+  try {
+    return await run(url);
+  } finally {
+    await close();
+  }
+}
 
-  beforeEach(() => {
-    client = new HttpClient();
+describe("HttpClient", () => {
+  it("sends GET, the path with its query, and the GitHub headers by default", async () => {
+    let seen: Record<string, string | undefined> = {};
+    await against(
+      (req, res) => {
+        seen = {
+          method: req.method,
+          url: req.url,
+          agent: req.headers["user-agent"],
+          accept: req.headers.accept,
+          auth: req.headers.authorization,
+        };
+        res.end();
+      },
+      (url) => new HttpClient().get(`${url}/a/b?c=1`)
+    );
+    expect(seen).toStrictEqual({
+      method: "GET",
+      url: "/a/b?c=1",
+      agent: "aidd-cli",
+      accept: "application/vnd.github+json",
+      auth: undefined,
+    });
   });
 
-  describe("GET JSON response", () => {
-    it("parses and provides JSON body from response", async () => {
-      const { url, close } = await startServer((_req, res) => {
+  it("sends the token as a bearer header", async () => {
+    let auth: string | undefined;
+    await against(
+      (req, res) => {
+        auth = req.headers.authorization;
+        res.end();
+      },
+      (url) => new HttpClient().get(url, { token: "my-secret-token" })
+    );
+    expect(auth).toBe("Bearer my-secret-token");
+  });
+
+  it("parses a JSON body", async () => {
+    const response = await against(
+      (_req, res) => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ tag_name: "v1.0.0" }));
-      });
-
-      try {
-        const response = await client.get(url);
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toEqual({ tag_name: "v1.0.0" });
-      } finally {
-        await close();
-      }
-    });
-
-    it("sends auth header when token provided", async () => {
-      let receivedAuth: string | undefined;
-      const { url, close } = await startServer((req, res) => {
-        receivedAuth = req.headers.authorization;
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end("{}");
-      });
-
-      try {
-        await client.get(url, { token: "my-secret-token" });
-        expect(receivedAuth).toBe("Bearer my-secret-token");
-      } finally {
-        await close();
-      }
-    });
-
-    it("does not send auth header when no token", async () => {
-      let receivedAuth: string | undefined;
-      const { url, close } = await startServer((req, res) => {
-        receivedAuth = req.headers.authorization;
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end("{}");
-      });
-
-      try {
-        await client.get(url);
-        expect(receivedAuth).toBeUndefined();
-      } finally {
-        await close();
-      }
+      },
+      (url) => new HttpClient().get(url)
+    );
+    expect(response).toStrictEqual({
+      body: { tag_name: "v1.0.0" },
+      statusCode: 200,
+      contentType: "application/json",
     });
   });
 
-  describe("GET binary response", () => {
-    it("provides raw Buffer for non-JSON content", async () => {
-      const content = Buffer.from("binary data here");
-      const { url, close } = await startServer((_req, res) => {
-        res.writeHead(200, { "Content-Type": "application/octet-stream" });
-        res.end(content);
-      });
-
-      try {
-        const response = await client.get(url);
-        expect(response.statusCode).toBe(200);
-        expect(Buffer.isBuffer(response.body)).toBe(true);
-        expect(response.body).toEqual(content);
-      } finally {
-        await close();
-      }
+  it("answers an empty content type and the raw bytes when the server names none", async () => {
+    const response = await against(
+      (_req, res) => res.end("raw"),
+      (url) => new HttpClient().get(url)
+    );
+    expect(Buffer.isBuffer(response.body)).toBe(true);
+    expect({ ...response, body: String(response.body) }).toStrictEqual({
+      body: "raw",
+      statusCode: 200,
+      contentType: "",
     });
   });
 
-  describe("redirect following", () => {
-    it("follows a 302 redirect", async () => {
-      const { url: finalUrl, close: closeFinal } = await startServer((_req, res) => {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ redirected: true }));
-      });
-
-      const { url: redirectUrl, close: closeRedirect } = await startServer((_req, res) => {
-        res.writeHead(302, { Location: finalUrl });
-        res.end();
-      });
-
-      try {
-        const response = await client.get(redirectUrl);
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toEqual({ redirected: true });
-      } finally {
-        await closeRedirect();
-        await closeFinal();
-      }
+  it.each([301, 302])("follows a %i to its destination", async (code) => {
+    const target = await startServer((_req, res) => {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ moved: true }));
     });
+    try {
+      const response = await against(
+        (_req, res) => {
+          res.writeHead(code, { Location: target.url });
+          res.end();
+        },
+        (url) => new HttpClient().get(url)
+      );
+      expect(response.body).toStrictEqual({ moved: true });
+    } finally {
+      await target.close();
+    }
   });
 
-  describe("error handling", () => {
-    it("throws AuthenticationError when server responds 401", async () => {
-      const { url, close } = await startServer((_req, res) => {
-        res.writeHead(401);
+  it("refuses a redirect that names no destination", async () => {
+    await against(
+      (_req, res) => {
+        res.writeHead(302);
         res.end();
-      });
+      },
+      (url) => expect(new HttpClient().get(url)).rejects.toThrow(new HttpRedirectError(url))
+    );
+  });
 
-      try {
-        await expect(client.get(url)).rejects.toThrow(AuthenticationError);
-        await expect(client.get(url)).rejects.toThrow("Authentication failed (HTTP 401)");
-      } finally {
-        await close();
-      }
-    });
-
-    it("throws AuthenticationError when server responds 403", async () => {
-      const { url, close } = await startServer((_req, res) => {
-        res.writeHead(403);
+  it.each([401, 403])("reports %i as an authentication failure", async (code) => {
+    await against(
+      (_req, res) => {
+        res.writeHead(code);
         res.end();
-      });
+      },
+      (url) =>
+        expect(new HttpClient().get(url)).rejects.toThrow(new AuthenticationError(`HTTP ${code}`))
+    );
+  });
 
-      try {
-        await expect(client.get(url)).rejects.toThrow(AuthenticationError);
-        await expect(client.get(url)).rejects.toThrow("Authentication failed (HTTP 403)");
-      } finally {
-        await close();
-      }
-    });
-
-    it("reports not found when resource does not exist", async () => {
-      const { url, close } = await startServer((_req, res) => {
+  it("reports not found when the resource does not exist", async () => {
+    await against(
+      (_req, res) => {
         res.writeHead(404);
         res.end();
-      });
+      },
+      (url) => expect(new HttpClient().get(url)).rejects.toThrow("Resource not found (HTTP 404)")
+    );
+  });
 
-      try {
-        await expect(client.get(url)).rejects.toThrow("Resource not found (HTTP 404)");
-      } finally {
-        await close();
-      }
-    });
-
-    it("reports an error on unexpected status code", async () => {
-      const { url, close } = await startServer((_req, res) => {
-        res.writeHead(500);
+  it("reports HTTP 300 as unexpected, the first code past success", async () => {
+    await against(
+      (_req, res) => {
+        res.writeHead(300);
         res.end();
-      });
+      },
+      (url) => expect(new HttpClient().get(url)).rejects.toThrow(new HttpError(300, url))
+    );
+  });
 
-      try {
-        await expect(client.get(url)).rejects.toThrow("Unexpected HTTP 500");
-      } finally {
-        await close();
-      }
-    });
+  it("speaks TLS to an https address", async () => {
+    await against(
+      (_req, res) => res.end(),
+      (url) => expect(new HttpClient().get(url.replace("http:", "https:"))).rejects.toThrow()
+    );
+  });
+
+  it("rejects when the connection drops in the middle of the body", async () => {
+    await against(
+      (_req, res) => {
+        res.writeHead(200, { "Content-Length": "10" });
+        res.write("abc", () => res.socket?.destroy());
+      },
+      (url) => expect(new HttpClient().get(url)).rejects.toThrow()
+    );
   });
 });
