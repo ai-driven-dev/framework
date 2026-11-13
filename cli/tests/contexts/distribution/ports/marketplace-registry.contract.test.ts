@@ -8,6 +8,7 @@ import { makeRegistryAdapter } from "../testing/registry-adapter.js";
 describeMarketplaceRegistryContract("the in-memory registry", async () => ({
   registry: new InMemoryMarketplaceRegistry(),
   projectRoot: "/project",
+  otherProjectRoot: "/other",
   dispose: async () => undefined,
 }));
 
@@ -16,6 +17,7 @@ describeMarketplaceRegistryContract("MarketplaceRegistryAdapter over a directory
   return {
     registry: makeRegistryAdapter(join(root, "config")),
     projectRoot: join(root, "project"),
+    otherProjectRoot: join(root, "other"),
     dispose: () => rm(root, { recursive: true, force: true }),
   };
 });

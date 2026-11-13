@@ -8,6 +8,7 @@ import type { MarketplaceRegistry } from "../../../../src/contexts/distribution/
 export interface MarketplaceRegistrySubject {
   readonly registry: MarketplaceRegistry;
   readonly projectRoot: string;
+  readonly otherProjectRoot: string;
   dispose(): Promise<void>;
 }
 
@@ -64,6 +65,15 @@ export function describeMarketplaceRegistryContract(
       await registry.save(projectRoot, entry({ name: "shared", scope: "user" }));
 
       expect((await registry.list(projectRoot)).map((m) => m.toJSON())).toEqual([project.toJSON()]);
+    });
+
+    it("keeps one user entry for every project, and a project entry in its own", async () => {
+      const { registry, projectRoot, otherProjectRoot } = await given();
+      await registry.save(projectRoot, entry({ name: "p" }));
+      await registry.save(projectRoot, entry({ name: "u", scope: "user" }));
+      await registry.save(otherProjectRoot, entry({ name: "u", scope: "user" }));
+
+      expect((await registry.list(otherProjectRoot)).map((m) => m.name)).toEqual(["u"]);
     });
 
     it("overwrites the entry of the same name in the same scope", async () => {

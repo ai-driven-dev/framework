@@ -1,14 +1,11 @@
-import { mkdtemp, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
 import { ListMarketplaces } from "../../../../src/contexts/distribution/application/list-marketplaces.js";
 import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalog } from "../../../../src/contexts/distribution/domain/catalog.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PluginCatalogRepository } from "../../../../src/contexts/distribution/ports/plugin-catalog-repository.js";
-import { makeRegistryAdapter } from "../testing/registry-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const SAMPLE_MARKETPLACE = Marketplace.create({
   name: "awesome",
@@ -18,35 +15,16 @@ const SAMPLE_MARKETPLACE = Marketplace.create({
 });
 
 describe("ListMarketplaces", () => {
-  let projectRoot: string;
-  let homeDir: string;
-  let originalHome: string | undefined;
-  let originalConfigDir: string | undefined;
+  const projectRoot = "/project";
+  let registry: InMemoryMarketplaceRegistry;
 
   beforeEach(async () => {
-    projectRoot = await mkdtemp(join(tmpdir(), "mkt-list-project-"));
-    homeDir = await mkdtemp(join(tmpdir(), "mkt-list-home-"));
-    originalHome = process.env.HOME;
-    originalConfigDir = process.env.AIDD_USER_CONFIG_DIR;
-    process.env.HOME = homeDir;
-    // Faking HOME alone is not enough: the CLI falls back to `homedir()` only when
-    // `AIDD_USER_CONFIG_DIR` is unset, so a value leaking in sends this test at a real registry.
-    process.env.AIDD_USER_CONFIG_DIR = join(homeDir, ".config", "aidd");
-  });
-
-  afterEach(async () => {
-    process.env.HOME = originalHome;
-    if (originalConfigDir === undefined) delete process.env.AIDD_USER_CONFIG_DIR;
-    else process.env.AIDD_USER_CONFIG_DIR = originalConfigDir;
-    await rm(projectRoot, { recursive: true, force: true });
-    await rm(homeDir, { recursive: true, force: true });
+    registry = new InMemoryMarketplaceRegistry();
+    await registry.save(projectRoot, SAMPLE_MARKETPLACE);
   });
 
   describe("without withCatalogs", () => {
     it("returns marketplaces from the registry", async () => {
-      const registry = makeRegistryAdapter();
-      await registry.save(projectRoot, SAMPLE_MARKETPLACE);
-
       const useCase = new ListMarketplaces(registry);
       const result = await useCase.execute({ projectRoot });
 
@@ -56,7 +34,7 @@ describe("ListMarketplaces", () => {
     });
 
     it("returns empty when nothing registered", async () => {
-      const useCase = new ListMarketplaces(makeRegistryAdapter());
+      const useCase = new ListMarketplaces(new InMemoryMarketplaceRegistry());
       const result = await useCase.execute({ projectRoot });
       expect(result.marketplaces).toEqual([]);
     });
@@ -64,9 +42,6 @@ describe("ListMarketplaces", () => {
 
   describe("withCatalogs: true", () => {
     it("returns catalogs map keyed by marketplace name", async () => {
-      const registry = makeRegistryAdapter();
-      await registry.save(projectRoot, SAMPLE_MARKETPLACE);
-
       const fakeCatalog: PluginCatalog = {
         plugins: [
           {
@@ -95,9 +70,6 @@ describe("ListMarketplaces", () => {
     });
 
     it("skips marketplace when catalog fetch fails and continues", async () => {
-      const registry = makeRegistryAdapter();
-      await registry.save(projectRoot, SAMPLE_MARKETPLACE);
-
       const failingFetcher = new FetchMarketplaceSource({
         fetch: async () => {
           throw new Error("network error");
@@ -117,9 +89,6 @@ describe("ListMarketplaces", () => {
     });
 
     it("logs a warning through the logger when the catalog fetch fails", async () => {
-      const registry = makeRegistryAdapter();
-      await registry.save(projectRoot, SAMPLE_MARKETPLACE);
-
       const failingFetcher = new FetchMarketplaceSource({
         fetch: async () => {
           throw new Error("network error");
@@ -140,9 +109,6 @@ describe("ListMarketplaces", () => {
     });
 
     it("skips catalog fetching entirely when resolveMarketplace is not wired", async () => {
-      const registry = makeRegistryAdapter();
-      await registry.save(projectRoot, SAMPLE_MARKETPLACE);
-
       const useCase = new ListMarketplaces(registry);
       const result = await useCase.execute({ projectRoot, withCatalogs: true });
 

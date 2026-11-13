@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import {
+  FRAMEWORK_MARKETPLACE_NAME,
+  Marketplace,
+} from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -48,5 +51,40 @@ describe("RegisterFrameworkMarketplace", () => {
     expect(first.registered).toBe(true);
     expect(second.registered).toBe(false);
     expect(await registry.list(PROJECT_ROOT)).toHaveLength(1);
+  });
+
+  it("writes one entry shared by two projects, none of their own", async () => {
+    const registry = new InMemoryMarketplaceRegistry();
+    const useCase = new RegisterFrameworkMarketplace(registry);
+
+    const first = await useCase.execute({ projectRoot: "/a", frameworkPath: "/src/framework" });
+    const second = await useCase.execute({ projectRoot: "/b", frameworkPath: "/src/framework" });
+
+    expect([first.registered, second.registered]).toEqual([true, false]);
+    expect(registry.getAll("/a").map((m) => [m.scope, m.source])).toEqual([
+      ["user", { kind: "local", path: "/src/framework" }],
+    ]);
+  });
+
+  // `list()` puts a project entry first and filters a user one of the same name out, so writing
+  // the migrated entry beside a stale project one would leave `list()` answering the old one.
+  it("migrates a pre-existing project-scope entry to the shared user-scope one, leaving a single entry", async () => {
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: FRAMEWORK_MARKETPLACE_NAME,
+        scope: "project",
+        source: { kind: "local", path: "." },
+        addedAt: "2026-01-01T00:00:00Z",
+      })
+    );
+
+    const result = await new RegisterFrameworkMarketplace(registry).execute({
+      projectRoot: PROJECT_ROOT,
+    });
+
+    expect(result.registered).toBe(true);
+    expect(registry.getAll(PROJECT_ROOT).map((m) => m.scope)).toEqual(["user"]);
   });
 });
