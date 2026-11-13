@@ -150,6 +150,7 @@ describe("SWR matrix: printFromCacheOnly", () => {
 
 describe("refresh (online piggyback path)", () => {
   it("fetches the latest release and persists the cache", async () => {
+    vi.useFakeTimers({ now: 1_700_000_000_000 });
     const { logger } = makeLogger();
     const store = new Map<string, string>();
     const selfUpdater = makeSelfUpdater("2.0.0");
@@ -159,10 +160,9 @@ describe("refresh (online piggyback path)", () => {
       logger,
       makeFsStub(store)
     ).refresh();
+    vi.useRealTimers();
     expect(selfUpdater.fetchLatestRelease).toHaveBeenCalledTimes(1);
-    const written = [...store.values()].find((v) => v.includes('"latest"'));
-    expect(written).toBeDefined();
-    expect(JSON.parse(written as string).latest).toBe("2.0.0");
+    expect([...store.values()]).toEqual(['{"checkedAt":1700000000000,"latest":"2.0.0"}']);
   });
 });
 
