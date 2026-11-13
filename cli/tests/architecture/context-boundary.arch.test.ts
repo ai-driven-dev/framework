@@ -124,10 +124,15 @@ function contextOf(file: string): string | null {
  * The composition root wires every context by construction — a profile registers itself
  * through a side-effect import, an adapter must be named to be instantiated — so the whole
  * `runtime/wiring/` directory, and `composition/` beside it, are exempt rather than callers
- * this rule tries to catch.
+ * this rule tries to catch. `presentation/deps.ts` is its driving port: it names the type of each
+ * use case the composition root hands the commands and carries no logic of its own.
  */
 function isCompositionRoot(file: string): boolean {
-  return file.startsWith("src/runtime/wiring/") || file.startsWith("src/composition/");
+  return (
+    file.startsWith("src/runtime/wiring/") ||
+    file.startsWith("src/composition/") ||
+    file === "src/presentation/deps.ts"
+  );
 }
 
 function reachesIntoInterior(

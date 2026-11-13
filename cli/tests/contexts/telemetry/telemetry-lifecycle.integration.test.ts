@@ -16,7 +16,8 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type TelemetryDeps, wireTelemetry } from "../../../src/runtime/wiring/telemetry.js";
+import type { TelemetryDeps } from "../../../src/presentation/deps.js";
+import { wireTelemetry } from "../../../src/runtime/wiring/telemetry.js";
 import { git } from "../../helpers/git-sandbox.js";
 import {
   assertUnderTemporaryDirectory,

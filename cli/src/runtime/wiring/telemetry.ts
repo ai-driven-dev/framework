@@ -51,20 +51,8 @@ import {
   codexSessionRoots,
 } from "../../contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
 import { UsageLedgerAdapter } from "../../contexts/telemetry/infrastructure/usage-ledger-adapter.js";
+import type { TelemetryDeps } from "../../presentation/deps.js";
 import { userConfigDirOf } from "../../shared/infrastructure/user-config-dir.js";
-
-export interface TelemetryDeps {
-  declareTaskUseCase: DeclareTaskUseCase;
-  telemetryStatusUseCase: TelemetryStatusUseCase;
-  ingestUsageUseCase: IngestUsageUseCase;
-  snapshotBindingsUseCase: SnapshotBindingsUseCase;
-  reportUsageUseCase: ReportUsageUseCase;
-  manageIdentityUseCase: ManageIdentityUseCase;
-  proposeIdentityUseCase: ProposeIdentityUseCase;
-  telemetryOnUseCase: TelemetryOnUseCase;
-  telemetryOffUseCase: TelemetryOffUseCase;
-  forgetTelemetryUseCase: ForgetTelemetryUseCase;
-}
 
 /** Where a person's measurement lives. `AIDD_TELEMETRY_DIR` moves it outright; otherwise it is
  * a subdirectory of the user configuration, apart from the files that live at its root. */

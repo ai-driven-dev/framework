@@ -11,19 +11,13 @@ import type { FileReader } from "../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Logger } from "../../kernel/ports/logger.js";
 import { isAiToolId } from "../../kernel/tool.js";
+import type { FrameworkBuildContext } from "../../presentation/deps.js";
 import type { FileMerger } from "../../shared/ports/file-merger.js";
 
 export interface FrameworkBuildDeps {
   fs: FileReader & FileWriter & FileMerger;
   assetProvider: AssetProvider;
   logger: Logger;
-}
-
-export interface FrameworkBuildContext {
-  readonly target: string;
-  readonly mode: FrameworkBuildMode;
-  readonly outDir: string;
-  readonly force: boolean;
 }
 
 type FrameworkBuildFactory = (

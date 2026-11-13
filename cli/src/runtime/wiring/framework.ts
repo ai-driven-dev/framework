@@ -1,17 +1,11 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { wireAuth } from "../../composition/auth.js";
-import { type DistributionDeps, wireDistribution } from "../../composition/distribution.js";
+import { wireDistribution } from "../../composition/distribution.js";
 import { wireHostRegistration } from "../../composition/host-registration.js";
-import { type RecipesDeps, wireRecipes } from "../../composition/recipes.js";
-import { type UpdateDeps, wireUpdate } from "../../composition/update.js";
-import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
-import type { LogIn } from "../../contexts/auth/application/log-in.js";
-import type { LogOut } from "../../contexts/auth/application/log-out.js";
+import { wireRecipes } from "../../composition/recipes.js";
+import { wireUpdate } from "../../composition/update.js";
 import { AddMarketplace } from "../../contexts/distribution/application/add-marketplace.js";
-import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
-import type { RefreshMarketplace } from "../../contexts/distribution/application/refresh-marketplace.js";
-import type { RegisterFrameworkMarketplace } from "../../contexts/distribution/application/register-framework-marketplace.js";
 import { CleanUserScopeUseCase } from "../../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -67,8 +61,6 @@ import { StatusUseCase } from "../../contexts/framework/application/status-use-c
 import { UninstallIdeUseCase } from "../../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import { UninstallToolsUseCase } from "../../contexts/framework/application/uninstall/uninstall-tools-use-case.js";
 import { UninstallUseCase } from "../../contexts/framework/application/uninstall/uninstall-use-case.js";
-import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
-import type { UserSourceReferences } from "../../contexts/framework/domain/ports/user-source-references.js";
 import { BundledAssetProviderAdapter } from "../../contexts/framework/infrastructure/assets/asset-loader.js";
 import { HasherAdapter } from "../../contexts/framework/infrastructure/hasher-adapter.js";
 import { ManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/manifest-repository-adapter.js";
@@ -78,12 +70,8 @@ import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastr
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../../contexts/translate/domain/plugin-format.js";
-import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
-import type { FileReader } from "../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../kernel/ports/file-writer.js";
 import type { Logger } from "../../kernel/ports/logger.js";
-import type { Prompter } from "../../kernel/ports/prompter.js";
-import type { VersionReader } from "../../kernel/ports/version-reader.js";
+import type { Deps, GlobalOptions, MenuDeps } from "../../presentation/deps.js";
 import { CLIOutput } from "../../presentation/output.js";
 import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plugins-prompt-use-case.js";
@@ -99,87 +87,13 @@ import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adap
 import { FileAdapter } from "../../shared/infrastructure/file-adapter.js";
 import { HttpClient } from "../../shared/infrastructure/http-client.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
-import type { Environment } from "../../shared/ports/environment.js";
-import type { FileMerger } from "../../shared/ports/file-merger.js";
-import { type TelemetryDeps, wireTelemetry } from "./telemetry.js";
+import { wireTelemetry } from "./telemetry.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
-
-interface GlobalOptions {
-  verbose: boolean;
-  token?: string;
-}
-
-interface Deps {
-  fs: FileReader & FileWriter & FileMerger;
-  manifestRepo: ManifestRepository;
-  /** `--scope user`'s own manifest repository: `userConfigDir()/manifest.json`, never nested
-   * under a project's `.aidd/`. */
-  userManifestRepo: ManifestRepository;
-  /** The one home-directory resolver presentation calls, never `os.homedir()` directly, so a
-   * test can point it elsewhere. */
-  homedir: () => string;
-  environment: Environment;
-  logger: Logger;
-  currentVersionProvider: VersionReader;
-  prompter: Prompter;
-  logIn: LogIn;
-  logOut: LogOut;
-  checkStatus: CheckStatus;
-  pluginRemoveUseCase: PluginRemoveUseCase;
-  pluginListUseCase: PluginListUseCase;
-  pluginUpdateUseCase: PluginUpdateUseCase;
-  userPluginUpdateUseCase: UserPluginUpdateUseCase;
-  marketplaceAddUseCase: AddMarketplace;
-  marketplaceListUseCase: ListMarketplaces;
-  marketplaceRemoveUseCase: MarketplaceRemoveUseCase;
-  userMarketplaceRemoveUseCase: UserMarketplaceRemoveUseCase;
-  marketplaceRefreshUseCase: RefreshMarketplace;
-  marketplaceCheckUseCase: MarketplaceCheckUseCase;
-  userSourceReferences: UserSourceReferences;
-  installAiToolUseCase: InstallAiToolUseCase;
-  installIdeToolUseCase: InstallIdeToolUseCase;
-  uninstallIdeUseCase: UninstallIdeUseCase;
-  assetProvider: AssetProvider;
-  pluginSearchUseCase: PluginSearchUseCase;
-  marketplaceRegisterFrameworkUseCase: RegisterFrameworkMarketplace;
-  pluginInstallUseCase: PluginInstallUseCase;
-  marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase;
-  doctorUseCase: DoctorUseCase;
-  /** The registration check alone, reused directly by `doctor --scope user`. */
-  doctorRegistrationUseCase: DoctorRegistrationUseCase;
-  releaseResolver: DistributionDeps["releaseResolver"];
-  setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase;
-  setupToolsUseCase: SetupToolsUseCase;
-  setupPluginsPromptUseCase: SetupPluginsPromptUseCase;
-  setupToolsPromptUseCase: SetupToolsPromptUseCase;
-  projectContextDetector: ProjectContextDetectorUseCase;
-  setupMarketplaceRegistration: SetupMarketplaceRegistrationUseCase;
-  setupMachineScopeUseCase: SetupMachineScopeUseCase;
-  selfUpdate: UpdateDeps["selfUpdate"];
-  statusUseCase: StatusUseCase;
-  restoreUseCase: RestoreUseCase;
-  uninstallUseCase: UninstallUseCase;
-  statusAllUseCase: StatusAllUseCase;
-  restoreAllUseCase: RestoreAllUseCase;
-  updateAiToolsUseCase: UpdateAiToolsUseCase;
-  updateIdeToolsUseCase: UpdateIdeToolsUseCase;
-  cleanUseCase: CleanUseCase;
-  cleanUserScopeUseCase: CleanUserScopeUseCase;
-  doctorAllUseCase: DoctorAllUseCase;
-  listInstalledRulesUseCase: ListInstalledRulesUseCase;
-  validateRecipes: RecipesDeps["validateRecipes"];
-  printUpdateNotice: UpdateDeps["printUpdateNotice"];
-  refreshUpdateCheck: UpdateDeps["refreshUpdateCheck"];
-  telemetry: TelemetryDeps;
-}
 
 /** One graph per catalog, then per project root and token: two catalogs never share a graph. */
 const _cache = new WeakMap<ToolCatalog, Map<string, Deps>>();
 
-export function createMenuDeps(projectRoot: string): {
-  manifestRepo: ManifestRepository;
-  prompter: Prompter;
-} {
+export function createMenuDeps(projectRoot: string): MenuDeps {
   return {
     manifestRepo: new ManifestRepositoryAdapter(projectRoot),
     prompter: process.stdout.isTTY ? new InquirerPrompterAdapter() : new SilentPrompterAdapter(),
@@ -636,6 +550,7 @@ export async function createDeps(
     printUpdateNotice: update.printUpdateNotice,
     refreshUpdateCheck: update.refreshUpdateCheck,
     telemetry: wireTelemetry(homedir),
+    frameworkBuild: (ctx) => createFrameworkBuildUseCase(tools, { fs, assetProvider, logger }, ctx),
   };
   graphs.set(cacheKey, deps);
   return deps;

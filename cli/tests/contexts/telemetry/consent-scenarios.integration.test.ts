@@ -14,7 +14,8 @@ import {
 } from "node:fs";
 import { delimiter, dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type TelemetryDeps, wireTelemetry } from "../../../src/runtime/wiring/telemetry.js";
+import type { TelemetryDeps } from "../../../src/presentation/deps.js";
+import { wireTelemetry } from "../../../src/runtime/wiring/telemetry.js";
 import { git, initRepository } from "../../helpers/git-sandbox.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
 import { createTelemetrySandbox, type TelemetrySandbox } from "../../helpers/telemetry-sandbox.js";

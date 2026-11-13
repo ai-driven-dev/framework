@@ -27,7 +27,7 @@ import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/domain/usage
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
 import { createDeps } from "../../runtime/wiring/framework.js";
-import type { TelemetryDeps } from "../../runtime/wiring/telemetry.js";
+import type { TelemetryDeps } from "../deps.js";
 import {
   printForgetResult,
   printIdentityRule,
