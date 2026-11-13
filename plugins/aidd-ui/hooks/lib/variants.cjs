@@ -54,6 +54,9 @@ function sharedOf(variants) {
   return shared;
 }
 
+/** What a cell says, with its case and spacing set aside. */
+const valueOf = (cell) => String(cell ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+
 const COLOUR = /(#[0-9a-f]{6})\b/gi;
 
 /** What an axis cell says: each `#rrggbb` as a swatch beside its code, the rest as escaped text. */
@@ -120,13 +123,14 @@ function screenOf({ variant, docs, tokens, labels }) {
 }
 
 /** One variant as a column: its name, its intent, its axes, then each of its files. */
-function columnOf({ variant, at, shared, tokens, labels, wireframes, parent }) {
+function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, siblings }) {
   const look = lookOf(variant);
   const docs = look && wireframes.length ? wireframes.map((wireframe) => ({ path: wireframe.path, text: dressedOf(wireframe.text, look) })) : null;
   const screens = docs ? [screenOf({ variant, docs, tokens, labels })] : null;
   const before = new Map(parent?.axes ?? []);
   const changed = (axis, value) => (parent && String(before.get(axis) ?? "").trim() !== String(value ?? "").trim() ? ` data-changed="${escaped(parent.name)}" title="${escaped(filled(labels.changed, { parent: parent.name }))}"` : "");
-  const axes = variant.axes.map(([axis, value]) => `<tr><th>${escaped(axis)}</th><td${changed(axis, value)}><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value)}</button></td></tr>`).join("");
+  const same = (axis) => siblings.length > 1 && siblings.every((each) => valueOf(each.axes.find(([name]) => name === axis)?.[1]) === valueOf(variant.axes.find(([name]) => name === axis)?.[1]));
+  const axes = variant.axes.map(([axis, value]) => `<tr${same(axis) ? " data-same" : ""}><th>${escaped(axis)}${same(axis) ? ` <small class="same-tag">${escaped(labels.identical)}</small>` : ""}</th><td${changed(axis, value)}><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value)}</button></td></tr>`).join("");
   const renders = screens ? [] : variant.files.filter((file) => RENDER_FILE.test(file.path)).map((file) => framesOf({ variant, file, tokens, labels }));
   const documents = variant.files.filter((file) => MARKDOWN_FILE.test(file.path)).flatMap((file) => {
     const text = shared.has(file.path) ? shared.get(file.path).texts[at] : file.text;
@@ -159,7 +163,7 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
     const own = set.variants.filter((variant) => (variant.round ?? 1) === round);
     const shared = sharedOf(own);
     const same = [...shared].filter(([, each]) => each.same.length).map(([path, each]) => `<p class="same" data-path="${escaped(path)}"><code>${escaped(path)}</code> ${escaped(filled(labels.same, { sections: each.same.join(JOINER) }))}</p>`);
-    const columns = own.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes, parent: set.variants.find((each) => each.name === variant.parent && (each.round ?? 1) < round) }));
+    const columns = own.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes, siblings: own, parent: set.variants.find((each) => each.name === variant.parent && (each.round ?? 1) < round) }));
     const body = [same.join("\n"), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
     return rounds.length > 1 ? `<details class="round" data-round="${round}"${round === rounds.at(-1) ? " open" : ""}><summary>${escaped(filled(labels.round, { round }))}</summary>${body}</details>` : body;
   };
@@ -198,6 +202,8 @@ const STYLE = `
 .preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); margin: 0 0 var(--s4); }
 .screen-pick { font-size: var(--t-sm); color: var(--muted); }
 .preview-note { margin: 0; color: var(--muted); font-size: var(--t-sm); }
+.axes tr[data-same] { opacity: 0.5; }
+.same-tag { font-weight: 400; font-style: italic; }
 .large { align-self: flex-start; }
 #large { padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r3); max-inline-size: 96vw; background: var(--surface); }
 #large::backdrop { background: rgba(24, 24, 20, 0.5); }

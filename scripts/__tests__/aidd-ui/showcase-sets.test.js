@@ -78,7 +78,7 @@ describe("aidd-ui showcase sets", () => {
       assert.match(columns[0].html, /<h2>A<\/h2>/);
       assert.match(columns[0].html, /Intent of a/);
       assert.match(columns[1].html, /<th>Tone<\/th><td><button[^>]*>bold<\/button><\/td>/);
-      assert.match(columns[1].html, /<th>Density<\/th><td><button[^>]*>roomy<\/button><\/td>/);
+      assert.match(columns[1].html, /<th>Density <small class="same-tag">same<\/small><\/th><td><button[^>]*>roomy<\/button><\/td>/);
     });
 
     it("shows each html of a variant in a desktop frame of 1280 and a mobile frame of 390, with the tokens inline", () => {
@@ -320,6 +320,32 @@ describe("aidd-ui showcase sets", () => {
       const html = pagesOf([set])["_set-layout.html"];
       assert.doesNotMatch(html, /<dialog/);
       assert.doesNotMatch(html, /class="large"/);
+    });
+  });
+
+  describe("the rows that do not differ", () => {
+    const rowsOf = (html) => [...html.matchAll(/<tr([^>]*)><th>([\s\S]*?)<\/th>/g)].map((match) => ({ same: /data-same/.test(match[1]), head: match[2] }));
+    const two = (a, b) => SET({ variants: [{ ...variant("a", "calm", []), axes: [["Tone", a[0]], ["Density", a[1]]] }, { ...variant("b", "bold", []), axes: [["Tone", b[0]], ["Density", b[1]]] }] });
+
+    it("marks a row identical in every variant of the round with data-same and a word, and leaves the others alone", () => {
+      for (const lang of ["en", "fr"]) {
+        const html = pagesOf([two(["calm", "roomy"], ["bold", " Roomy "])], { lang })["_set-layout.html"];
+        for (const column of columnsOf(html)) {
+          const [tone, density] = rowsOf(column.html);
+          assert.equal(tone.same, false);
+          assert.doesNotMatch(tone.head, /same-tag/);
+          assert.equal(density.same, true);
+          assert.match(density.head, new RegExp(`<small class="same-tag">${LABELS[lang].identical}</small>`));
+        }
+      }
+      assert.deepEqual([LABELS.en.identical, LABELS.fr.identical], ["same", "identique"]);
+    });
+
+    it("compares within the round of the column, not across rounds", () => {
+      const set = two(["calm", "roomy"], ["bold", "tight"]);
+      set.variants.push({ ...variant("c", "calm", []), round: 2, axes: [["Tone", "calm"], ["Density", "roomy"]] }, { ...variant("d", "calm", []), round: 2, axes: [["Tone", "calm"], ["Density", "wide"]] });
+      const columns = columnsOf(pagesOf([set])["_set-layout.html"]);
+      assert.deepEqual(columns.map((column) => rowsOf(column.html).map((row) => row.same)), [[false, false], [false, false], [true, false], [true, false]]);
     });
   });
 
