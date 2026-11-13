@@ -321,6 +321,10 @@ label { font-size: var(--t-sm); color: var(--muted); }
 .choose .verdict:hover { color: var(--text); }
 .verdict[data-verdict="ok"][aria-pressed="true"] { background: var(--surface); color: var(--ok); box-shadow: var(--shadow-1); }
 .verdict[data-verdict="revise"][aria-pressed="true"] { background: var(--surface); color: var(--revise); box-shadow: var(--shadow-1); }
+.choose .colvote { height: 24px; padding: 0 var(--s2); border: 0; border-radius: var(--r1); background: transparent; color: var(--muted); font-size: var(--t-xs); cursor: pointer; }
+.colvote:hover { color: var(--text); }
+.colvote[aria-pressed="true"] { background: var(--surface); color: var(--ok); box-shadow: var(--shadow-1); }
+.colvote[data-verdict="revise"][aria-pressed="true"] { color: var(--revise); }
 textarea.comment { display: block; flex-basis: 100%; inline-size: 100%; font: inherit; font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r1); padding: var(--s2) var(--s3); resize: vertical; }
 textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .pair { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-start; padding: var(--s6); background: var(--canvas) radial-gradient(#d6d6d0 1px, transparent 1px) 0 0 / 16px 16px; border-top: 1px solid var(--line); }
@@ -629,6 +633,10 @@ function paint() {
     count.textContent = taken + "/" + count.dataset.axes + " " + count.dataset.label;
   }
   for (const holder of pickers) {
+    for (const column of holder.querySelectorAll(".variant")) {
+      const choice = choiceOf(setKeyOf(holder), column.dataset.variant);
+      column.querySelectorAll(".colvote").forEach((button) => button.setAttribute("aria-pressed", String(!!choice && button.dataset.verdict === choice.verdict)));
+    }
     const own = picksOf(holder);
     holder.querySelectorAll(".take").forEach((button) => button.setAttribute("aria-pressed", String(own[button.dataset.axis] === button.dataset.variant)));
   }
@@ -667,16 +675,27 @@ items.forEach((item) => rowsOf(item).forEach((row) => {
     openTab(tab);
   });
 }));
+/** Sets or takes back a verdict on a variant, from the drawer or from its column; true when it asks for a comment. */
+function vote(key, name, verdict) {
+  const now = choiceOf(key, name);
+  const again = now && now.verdict === verdict;
+  const revise = verdict === "revise";
+  choose(key, name, again ? null : { verdict, comment: revise && now ? now.comment || "" : "" });
+  paint();
+  return !again && revise;
+}
+pickers.forEach((holder) => holder.querySelectorAll(".colvote").forEach((button) => button.addEventListener("click", () => {
+  if (!vote(setKeyOf(holder), button.dataset.variant, button.dataset.verdict)) return;
+  show(true);
+  const own = sets.find((set) => setKeyOf(set) === setKeyOf(holder));
+  const row = own && variantsOf(own).find((each) => each.dataset.variant === button.dataset.variant);
+  if (row) row.querySelector(".comment").focus();
+})));
 sets.forEach((set) => variantsOf(set).forEach((row) => {
   const name = row.dataset.variant;
   const field = row.querySelector(".comment");
   row.querySelectorAll(".vote").forEach((button) => button.addEventListener("click", () => {
-    const now = choiceOf(setKeyOf(set), name);
-    const again = now && now.verdict === button.dataset.verdict;
-    const revise = button.dataset.verdict === "revise";
-    choose(setKeyOf(set), name, again ? null : { verdict: button.dataset.verdict, comment: revise && now ? now.comment || "" : "" });
-    paint();
-    if (!again && revise) field.focus();
+    if (vote(setKeyOf(set), name, button.dataset.verdict)) field.focus();
   }));
   field.addEventListener("input", () => {
     choose(setKeyOf(set), name, { verdict: "revise", comment: field.value });

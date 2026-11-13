@@ -272,7 +272,7 @@ describe("aidd-ui showcase sets", () => {
       const set = SET();
       set.variants[0].name = "affiche-de-quartier";
       const html = pagesOf([set])["_set-layout.html"];
-      assert.match(html, /<section class="variant" data-variant="affiche-de-quartier"><h2>Affiche de quartier<\/h2>/);
+      assert.match(html, /<section class="variant" data-variant="affiche-de-quartier"><header class="column-head"><h2>Affiche de quartier<\/h2>/);
       assert.match(html, /data-variant="affiche-de-quartier" aria-pressed="false"/);
       assert.match(html, /<li class="pvariant" data-variant="affiche-de-quartier"><span class="pick">affiche-de-quartier<\/span>/);
     });
@@ -411,6 +411,100 @@ describe("aidd-ui showcase sets", () => {
       const [palette] = rowsOf([["Palette", "#0b0f14 #e8eef3 #7fd4f2"]]);
       assert.equal((palette.match(/<span class="tone"><i class="swatch" style="background: #[0-9a-f]{6}"><\/i><code>#[0-9a-f]{6}<\/code><\/span>/g) ?? []).length, 3);
       assert.match(palette, /<span class="sample" style="background: #7fd4f2; color: #0b0f14">Sample button<\/span>/);
+    });
+  });
+
+  describe("the verdicts in the column", () => {
+    const head = (column) => column.match(/<header class="column-head">[\s\S]*?<\/header>/)?.[0];
+
+    it("heads each column with its name, its intent and Keep, Revise, Discard, in the page language", () => {
+      for (const [lang, words] of [["en", ["Keep", "Revise", "Discard"]], ["fr", ["Garder", "À revoir", "Écarter"]]]) {
+        const [a] = columnsOf(pagesOf([SET()], { lang })["_set-layout.html"]);
+        const top = head(a.html);
+        assert.ok(top, "a header");
+        assert.match(top, /<h2>A<\/h2>/);
+        assert.match(top, /Intent of a/);
+        assert.deepEqual([...top.matchAll(/class="colvote" data-verdict="(\w+)" data-variant="a" aria-pressed="false">([^<]+)</g)].map((match) => [match[1], match[2]]), [["keep", words[0]], ["revise", words[1]], ["discard", words[2]]]);
+      }
+    });
+
+    it("keeps the header in view while the column scrolls", () => {
+      assert.match(pagesOf([SET()])["_set-layout.html"], /\.column-head \{[^}]*position: sticky/);
+    });
+
+    it("offers the verdicts on the columns of the latest round only", () => {
+      const old = variant("old", "calm", [file("brand.md", SECTIONS("calm"))]);
+      const html = pagesOf([SET({ variants: [{ ...old, round: 1 }, { ...variant("new", "bold", [file("brand.md", SECTIONS("bold"))]), round: 2, parent: "old" }] })])["_set-layout.html"];
+      const [first, second] = columnsOf(html);
+      assert.doesNotMatch(first.html, /colvote/);
+      assert.match(second.html, /colvote/);
+    });
+
+    describe("in the page", () => {
+      const element = (dataset = {}, own = {}) => {
+        const node = { dataset, hidden: false, value: "", disabled: false, textContent: "", attrs: {}, listeners: {}, below: {}, ...own };
+        node.addEventListener = (type, listener) => { node.listeners[type] = listener; };
+        node.setAttribute = (name, value) => { node.attrs[name] = value; };
+        node.getAttribute = (name) => node.attrs[name];
+        node.removeAttribute = () => {};
+        node.focus = () => { node.focused = true; };
+        node.remove = () => {};
+        node.classList = { toggle() {}, add() {}, remove() {} };
+        node.querySelectorAll = (selector) => node.below[selector] ?? [];
+        node.querySelector = (selector) => (node.below[selector] ?? [])[0] ?? null;
+        return node;
+      };
+      // The page as the script sees it: a drawer row per variant, a header per column, one copy button.
+      const open = () => {
+        const html = pagesOf([SET()])["_set-layout.html"];
+        const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+        const rows = ["a", "b"].map((name) => {
+          const field = element();
+          const votes = ["keep", "revise", "discard"].map((verdict) => element({ verdict }));
+          return element({ variant: name }, { below: { ".vote": votes, ".comment": [field] }, field, votes });
+        });
+        const set = element({ set: "layout", fingerprint: "f1" }, { below: { "li.pvariant": rows, ".done": [element({ label: "chosen" })], ".picked": [element({ axes: "2", label: "picked" })] } });
+        const columns = ["a", "b"].map((name) => {
+          const votes = ["keep", "revise", "discard"].map((verdict) => element({ verdict, variant: name }));
+          return element({ variant: name }, { below: { ".colvote": votes }, votes });
+        });
+        const holder = element({ set: "layout", fingerprint: "f1" }, { below: { ".variant": columns, ".colvote": columns.flatMap((column) => column.votes) } });
+        const by = { review: element({}, { below: { "details.choice": [set], "details.item": [] } }), "open-review": element(), copy: element({ blocked: "blocked" }), clear: element(), "all-ok": element(), note: element(), "close-review": element() };
+        const document = { getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === ".variants[data-set]" ? [holder] : []), querySelector: () => null };
+        const written = [];
+        const memory = {};
+        const window = { addEventListener() {}, localStorage: { getItem: (key) => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; }, removeItem: (key) => { delete memory[key]; } } };
+        const navigator = { clipboard: { writeText: async (content) => { written.push(content); } } };
+        new Function("document", "window", "navigator", "setTimeout", script)(document, window, navigator, () => {});
+        return { rows, columns, by, written };
+      };
+      const verdictsOf = (text) => JSON.parse(text.replace(/^```json\n|\n```\n$/g, "")).variants.map((each) => [each.name, each.verdict, each.comment]);
+
+      it("carries a verdict set in the column to the copy, and presses it in the drawer's row too", async () => {
+        const page = open();
+        page.columns[0].votes[0].listeners.click();
+        assert.equal(page.columns[0].votes[0].attrs["aria-pressed"], "true");
+        assert.equal(page.rows[0].votes[0].attrs["aria-pressed"], "true");
+        page.by.copy.listeners.click();
+        await new Promise((resolve) => setImmediate(resolve));
+        assert.deepEqual(verdictsOf(page.written[0]), [["a", "keep", ""], ["b", null, ""]]);
+      });
+
+      it("shows a verdict set in the drawer on the column too, and takes it back on a second click", () => {
+        const page = open();
+        page.rows[1].votes[2].listeners.click();
+        assert.equal(page.columns[1].votes[2].attrs["aria-pressed"], "true");
+        page.columns[1].votes[2].listeners.click();
+        assert.equal(page.columns[1].votes[2].attrs["aria-pressed"], "false");
+        assert.equal(page.rows[1].votes[2].attrs["aria-pressed"], "false");
+      });
+
+      it("opens the drawer on the comment of a variant to revise", () => {
+        const page = open();
+        page.columns[0].votes[1].listeners.click();
+        assert.equal(page.rows[0].field.focused, true);
+        assert.equal(page.by.review.hidden, false);
+      });
     });
   });
 

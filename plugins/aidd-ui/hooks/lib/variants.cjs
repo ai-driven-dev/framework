@@ -140,7 +140,7 @@ function screenOf({ variant, docs, tokens, labels }) {
 }
 
 /** One variant as a column: its name, its intent, its axes, then each of its files. */
-function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, siblings }) {
+function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, siblings, voting }) {
   const look = lookOf(variant);
   const docs = look && wireframes.length ? wireframes.map((wireframe) => ({ path: wireframe.path, text: dressedOf(wireframe.text, look) })) : null;
   const screens = docs ? [screenOf({ variant, docs, tokens, labels })] : null;
@@ -156,7 +156,8 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, sib
   });
   const full = documents.length ? `<details class="fulltext"><summary>${escaped(labels.full)}</summary>${documents.join("")}</details>` : "";
   const large = screens ? `<button type="button" class="large" data-variant="${escaped(variant.name)}">${escaped(labels.large)}</button>` : "";
-  return `<section class="variant" data-variant="${escaped(variant.name)}"><h2>${escaped(titleOf(variant.name))}</h2><p class="intent">${escaped(variant.intent ?? "")}</p><table class="axes"><tbody>${axes}</tbody></table>${renders.concat(screens ?? [], large, full).join("")}</section>`;
+  const votes = voting ? `<span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(([verdict, label]) => `<button type="button" class="colvote" data-verdict="${verdict}" data-variant="${escaped(variant.name)}" aria-pressed="false">${escaped(label)}</button>`).join("")}</span>` : "";
+  return `<section class="variant" data-variant="${escaped(variant.name)}"><header class="column-head"><h2>${escaped(titleOf(variant.name))}</h2><p class="intent">${escaped(variant.intent ?? "")}</p>${votes}</header><table class="axes"><tbody>${axes}</tbody></table>${renders.concat(screens ?? [], large, full).join("")}</section>`;
 }
 
 /** The dialog that shows the screen of a variant at desktop width, one script for all the columns. */
@@ -181,7 +182,7 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
     const own = set.variants.filter((variant) => (variant.round ?? 1) === round);
     const shared = sharedOf(own);
     const same = [...shared].filter(([, each]) => each.same.length).map(([path, each]) => `<p class="same" data-path="${escaped(path)}"><code>${escaped(path)}</code> ${escaped(filled(labels.same, { sections: each.same.join(JOINER) }))}</p>`);
-    const columns = own.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes, siblings: own, parent: set.variants.find((each) => each.name === variant.parent && (each.round ?? 1) < round) }));
+    const columns = own.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes, siblings: own, voting: round === rounds.at(-1), parent: set.variants.find((each) => each.name === variant.parent && (each.round ?? 1) < round) }));
     const body = [same.join("\n"), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
     return rounds.length > 1 ? `<details class="round" data-round="${round}"${round === rounds.at(-1) ? " open" : ""}><summary>${escaped(filled(labels.round, { round }))}</summary>${body}</details>` : body;
   };
@@ -192,6 +193,7 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
 const STYLE = `
 .variants { display: grid; grid-template-columns: repeat(var(--count), minmax(0, 1fr)); gap: var(--s5); align-items: start; }
 .variant { display: flex; flex-direction: column; gap: var(--s3); min-width: 0; padding: var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-1); }
+.column-head { position: sticky; top: 0; z-index: 2; display: flex; flex-direction: column; gap: var(--s2); padding-block: var(--s2); background: var(--surface); }
 .variant h2 { margin: 0; font-size: var(--t-xl); }
 .variant h3 { margin: 0; font-size: var(--t-sm); font-weight: 500; color: var(--muted); }
 .variant .intent { margin: 0; color: var(--muted); }
