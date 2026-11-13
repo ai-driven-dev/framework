@@ -651,8 +651,13 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(board, /flex-wrap: wrap|overflow-x: auto|overflow: auto/);
       assert.match(rule(html, ".journey"), /container-type: inline-size/);
       assert.match(html, /<ol class="board" data-steps="3" style="--steps: 3">/);
-      assert.match(html, /@container \(min-width: \d+px\) \{ \.board\[data-steps="3"\] \{[^@]*grid-template-columns: repeat\(var\(--steps\), minmax\(0, 1fr\)\)/);
+      assert.match(html, /@container \(min-width: \d+px\) \{ \.board\[data-steps="3"\] \{[^@]*grid-template-columns: repeat\(var\(--steps\), minmax\(0, 320px\)\)/);
       assert.match(rule(html, ".board .step"), /display: contents/);
+    });
+
+    it("caps a storyboard card's width, so a short journey on a wide screen keeps small cards", () => {
+      const html = pagesOf()["onboarding.html"];
+      assert.match(html, /\.board\[data-steps="2"\] \{[^@]*grid-template-columns: repeat\(var\(--steps\), minmax\(0, 320px\)\)/);
     });
 
     it("switches to the vertical list below a readable card, the threshold following the step count", () => {

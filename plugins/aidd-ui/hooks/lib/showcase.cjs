@@ -123,10 +123,11 @@ const byCode = (a, b) => (a < b ? -1 : a > b ? 1 : 0); // the same order on ever
 const byRecordId = (a, b) => byCode(fm(a).id, fm(b).id);
 const byLevel = (a, b) => LEVELS.indexOf(fm(a).kind) - LEVELS.indexOf(fm(b).kind) || byRecordId(a, b);
 
-/** The narrowest readable card of a storyboard, the gap that holds the arrow between two cards, and the
+/** The narrowest readable card of a storyboard, the widest one, so a short journey keeps small cards, the gap that holds the arrow between two cards, and the
  * longest journey that can stand on one row: a container query cannot read a variable, so the width that
  * a count of steps needs is written out for each count. Longer, or narrower, a journey reads as a list. */
 const CARD_MIN = 160;
+const CARD_MAX = 320;
 const CARD_GAP = 48;
 const ROW_MAX_STEPS = 12;
 const ARROW_RIGHT = `url("data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/2000/svg' viewBox='0 0 20 12'%3E%3Cpath d='M0 6h17M12 1l5 5-5 5' fill='none' stroke='%23d2d2cc' stroke-width='2'/%3E%3C/svg%3E")`;
@@ -134,7 +135,7 @@ const ARROW_DOWN = `url("data:image/svg+xml,%3Csvg xmlns='http%3A//www.w3.org/20
 const rowBoards = () => Array.from({ length: ROW_MAX_STEPS - 1 }, (_, at) => {
   const n = at + 2;
   const board = `.board[data-steps="${n}"]`;
-  return `@container (min-width: ${n * CARD_MIN + (n - 1) * CARD_GAP}px) { ${board} { display: grid; grid-template-columns: repeat(var(--steps), minmax(0, 1fr)); column-gap: ${CARD_GAP}px; } ${board} .card { display: flex; flex-direction: column; gap: var(--s2); } ${board} .screen { align-self: stretch; } ${board} .card:not(:first-child)::before { left: auto; right: 100%; top: 0; inline-size: ${CARD_GAP}px; padding-top: 62.5%; background: ${ARROW_RIGHT} center / 20px 12px no-repeat; } }`;
+  return `@container (min-width: ${n * CARD_MIN + (n - 1) * CARD_GAP}px) { ${board} { display: grid; grid-template-columns: repeat(var(--steps), minmax(0, ${CARD_MAX}px)); column-gap: ${CARD_GAP}px; } ${board} .card { display: flex; flex-direction: column; gap: var(--s2); } ${board} .screen { align-self: stretch; } ${board} .card:not(:first-child)::before { left: auto; right: 100%; top: 0; inline-size: ${CARD_GAP}px; padding-top: 62.5%; background: ${ARROW_RIGHT} center / 20px 12px no-repeat; } }`;
 }).join("\n");
 
 /** The look of the showcase, light on purpose: wireframes are paper and renders are mostly light
