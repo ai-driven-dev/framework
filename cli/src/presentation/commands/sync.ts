@@ -6,7 +6,7 @@ import {
   UserScopeFilterUnsupportedError,
 } from "../../kernel/errors.js";
 import type { AiToolId, ToolId } from "../../kernel/tool.js";
-import type { Deps, DepsFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printActivationOutcome,
   printRestoreOutcome,
@@ -16,6 +16,16 @@ import {
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
+
+/** What this command reads of the graph. */
+type SyncKeys =
+  | "userManifestRepo"
+  | "userPluginUpdateUseCase"
+  | "marketplaceSyncSettingsUseCase"
+  | "restoreAllUseCase"
+  | "manifestRepo"
+  | "currentVersionProvider"
+  | "restoreUseCase";
 
 interface SyncCmdOptions {
   force: boolean;
@@ -30,7 +40,7 @@ interface SyncCmdOptions {
  * source, then drives native activation, through `deps.userManifestRepo` and never this
  * project's own manifest. */
 async function runUserScopeSync(
-  deps: Deps,
+  deps: Pick<Deps, SyncKeys>,
   output: CLIOutput,
   projectRoot: string,
   fileArgs: string[],
@@ -76,7 +86,7 @@ async function runUserScopeSync(
 async function runSyncAction(
   program: Command,
   tools: ToolCatalog,
-  createDeps: DepsFactory,
+  createDeps: DepsSliceFactory<SyncKeys>,
   fileArgs: string[],
   cmdOptions: SyncCmdOptions
 ): Promise<void> {
@@ -124,7 +134,7 @@ async function runSyncAction(
 }
 
 async function runScopedSync(
-  deps: Deps,
+  deps: Pick<Deps, SyncKeys>,
   output: CLIOutput,
   projectRoot: string,
   fileArgs: string[],
@@ -163,7 +173,7 @@ async function runScopedSync(
 export function registerSyncCommand(
   program: Command,
   tools: ToolCatalog,
-  createDeps: DepsFactory
+  createDeps: DepsSliceFactory<SyncKeys>
 ): void {
   program
     .command("sync")

@@ -1,7 +1,5 @@
 import { Command } from "commander";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
-import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const printNotice = vi.fn(async () => ({ lines: ["CLI update available"] }));
 const refresh = vi.fn(async () => ({}));
@@ -18,7 +16,7 @@ async function run(path: string, extraArgs: string[] = []): Promise<void> {
   const program = new Command("aidd");
   program.option("--verbose");
   program.exitOverride();
-  registerUpdateNoticeHooks(program, asDepsFactory(createDeps));
+  registerUpdateNoticeHooks(program, createDeps);
   let parent = program;
   const names = path.split(" ");
   for (const name of names.slice(0, -1)) parent = parent.command(name);

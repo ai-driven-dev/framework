@@ -45,7 +45,6 @@ import type { ManageIdentityUseCase } from "../contexts/telemetry/application/id
 import type { ProposeIdentityUseCase } from "../contexts/telemetry/application/identity/propose-identity-use-case.js";
 import type { IngestUsageUseCase } from "../contexts/telemetry/application/ingest-usage-use-case.js";
 import type { ReportUsageUseCase } from "../contexts/telemetry/application/report/report-usage-use-case.js";
-import type { SnapshotBindingsUseCase } from "../contexts/telemetry/application/snapshot-bindings-use-case.js";
 import type { TelemetryOffUseCase } from "../contexts/telemetry/application/switch/telemetry-off-use-case.js";
 import type { TelemetryOnUseCase } from "../contexts/telemetry/application/switch/telemetry-on-use-case.js";
 import type { TelemetryStatusUseCase } from "../contexts/telemetry/application/telemetry-status-use-case.js";
@@ -72,16 +71,15 @@ export interface GlobalOptions {
 }
 
 export interface TelemetryDeps {
-  declareTaskUseCase: DeclareTaskUseCase;
-  telemetryStatusUseCase: TelemetryStatusUseCase;
-  ingestUsageUseCase: IngestUsageUseCase;
-  snapshotBindingsUseCase: SnapshotBindingsUseCase;
-  reportUsageUseCase: ReportUsageUseCase;
-  manageIdentityUseCase: ManageIdentityUseCase;
-  proposeIdentityUseCase: ProposeIdentityUseCase;
-  telemetryOnUseCase: TelemetryOnUseCase;
-  telemetryOffUseCase: TelemetryOffUseCase;
-  forgetTelemetryUseCase: ForgetTelemetryUseCase;
+  declareTaskUseCase: Pick<DeclareTaskUseCase, "execute">;
+  telemetryStatusUseCase: Pick<TelemetryStatusUseCase, "execute">;
+  ingestUsageUseCase: Pick<IngestUsageUseCase, "execute">;
+  reportUsageUseCase: Pick<ReportUsageUseCase, "execute">;
+  manageIdentityUseCase: Pick<ManageIdentityUseCase, "show" | "set" | "off">;
+  proposeIdentityUseCase: Pick<ProposeIdentityUseCase, "execute">;
+  telemetryOnUseCase: Pick<TelemetryOnUseCase, "execute">;
+  telemetryOffUseCase: Pick<TelemetryOffUseCase, "execute">;
+  forgetTelemetryUseCase: Pick<ForgetTelemetryUseCase, "execute">;
 }
 
 /** What a build for a target and mode asks of its caller. */
@@ -105,57 +103,62 @@ export interface Deps {
   logger: Logger;
   currentVersionProvider: VersionReader;
   prompter: Prompter;
-  logIn: LogIn;
-  logOut: LogOut;
-  checkStatus: CheckStatus;
-  pluginRemoveUseCase: PluginRemoveUseCase;
-  pluginListUseCase: PluginListUseCase;
-  pluginUpdateUseCase: PluginUpdateUseCase;
-  userPluginUpdateUseCase: UserPluginUpdateUseCase;
-  addMarketplace: AddMarketplace;
-  listMarketplaces: ListMarketplaces;
-  marketplaceRemoveUseCase: MarketplaceRemoveUseCase;
-  userMarketplaceRemoveUseCase: UserMarketplaceRemoveUseCase;
-  refreshMarketplace: RefreshMarketplace;
-  marketplaceCheckUseCase: MarketplaceCheckUseCase;
+  logIn: Pick<LogIn, "execute">;
+  logOut: Pick<LogOut, "execute">;
+  checkStatus: Pick<CheckStatus, "execute">;
+  pluginRemoveUseCase: Pick<PluginRemoveUseCase, "execute">;
+  pluginListUseCase: Pick<PluginListUseCase, "execute">;
+  pluginUpdateUseCase: Pick<PluginUpdateUseCase, "execute">;
+  userPluginUpdateUseCase: Pick<UserPluginUpdateUseCase, "execute">;
+  addMarketplace: Pick<AddMarketplace, "execute">;
+  listMarketplaces: Pick<ListMarketplaces, "execute">;
+  marketplaceRemoveUseCase: Pick<MarketplaceRemoveUseCase, "execute">;
+  userMarketplaceRemoveUseCase: Pick<UserMarketplaceRemoveUseCase, "execute">;
+  refreshMarketplace: Pick<RefreshMarketplace, "execute">;
+  marketplaceCheckUseCase: Pick<MarketplaceCheckUseCase, "execute">;
   userSourceReferences: UserSourceReferences;
-  installAiToolUseCase: InstallAiToolUseCase;
-  installIdeToolUseCase: InstallIdeToolUseCase;
-  uninstallIdeUseCase: UninstallIdeUseCase;
+  installAiToolUseCase: Pick<InstallAiToolUseCase, "execute">;
+  installIdeToolUseCase: Pick<InstallIdeToolUseCase, "execute">;
+  uninstallIdeUseCase: Pick<UninstallIdeUseCase, "execute">;
   assetProvider: AssetProvider;
-  pluginSearchUseCase: PluginSearchUseCase;
-  registerFrameworkMarketplace: RegisterFrameworkMarketplace;
-  pluginInstallUseCase: PluginInstallUseCase;
-  marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase;
-  doctorUseCase: DoctorUseCase;
+  pluginSearchUseCase: Pick<PluginSearchUseCase, "execute">;
+  registerFrameworkMarketplace: Pick<RegisterFrameworkMarketplace, "execute">;
+  pluginInstallUseCase: Pick<PluginInstallUseCase, "execute">;
+  marketplaceSyncSettingsUseCase: Pick<MarketplaceSyncSettingsUseCase, "execute">;
+  doctorUseCase: Pick<DoctorUseCase, "execute">;
   /** The registration check alone, reused directly by `doctor --scope user`. */
-  doctorRegistrationUseCase: DoctorRegistrationUseCase;
-  setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase;
-  setupToolsUseCase: SetupToolsUseCase;
-  setupPluginsPromptUseCase: SetupPluginsPromptUseCase;
-  setupToolsPromptUseCase: SetupToolsPromptUseCase;
-  projectContextDetector: ProjectContextDetectorUseCase;
-  setupMarketplaceRegistration: SetupMarketplaceRegistrationUseCase;
-  setupMachineScopeUseCase: SetupMachineScopeUseCase;
-  selfUpdate: SelfUpdate;
-  statusUseCase: StatusUseCase;
-  restoreUseCase: RestoreUseCase;
-  uninstallUseCase: UninstallUseCase;
-  statusAllUseCase: StatusAllUseCase;
-  restoreAllUseCase: RestoreAllUseCase;
-  updateAiToolsUseCase: UpdateAiToolsUseCase;
-  updateIdeToolsUseCase: UpdateIdeToolsUseCase;
-  cleanUseCase: CleanUseCase;
-  cleanUserScopeUseCase: CleanUserScopeUseCase;
-  doctorAllUseCase: DoctorAllUseCase;
-  listInstalledRulesUseCase: ListInstalledRulesUseCase;
-  validateRecipes: ValidateRecipes;
-  printUpdateNotice: PrintUpdateNotice;
-  refreshUpdateCheck: RefreshUpdateCheck;
+  doctorRegistrationUseCase: Pick<DoctorRegistrationUseCase, "execute">;
+  setupMarketplaceSourceUseCase: Pick<SetupMarketplaceSourceUseCase, "execute">;
+  setupToolsUseCase: Pick<SetupToolsUseCase, "execute">;
+  setupPluginsPromptUseCase: Pick<SetupPluginsPromptUseCase, "execute">;
+  setupToolsPromptUseCase: Pick<SetupToolsPromptUseCase, "execute">;
+  projectContextDetector: Pick<ProjectContextDetectorUseCase, "execute">;
+  setupMarketplaceRegistration: Pick<
+    SetupMarketplaceRegistrationUseCase,
+    "resolveSourceIfNeeded" | "registerIfPresent"
+  >;
+  setupMachineScopeUseCase: Pick<SetupMachineScopeUseCase, "execute">;
+  selfUpdate: Pick<SelfUpdate, "execute">;
+  statusUseCase: Pick<StatusUseCase, "execute">;
+  restoreUseCase: Pick<RestoreUseCase, "execute">;
+  uninstallUseCase: Pick<UninstallUseCase, "execute">;
+  statusAllUseCase: Pick<StatusAllUseCase, "execute">;
+  restoreAllUseCase: Pick<RestoreAllUseCase, "execute">;
+  updateAiToolsUseCase: Pick<UpdateAiToolsUseCase, "execute">;
+  updateIdeToolsUseCase: Pick<UpdateIdeToolsUseCase, "execute">;
+  cleanUseCase: Pick<CleanUseCase, "execute">;
+  cleanUserScopeUseCase: Pick<CleanUserScopeUseCase, "execute">;
+  doctorAllUseCase: Pick<DoctorAllUseCase, "execute">;
+  listInstalledRulesUseCase: Pick<ListInstalledRulesUseCase, "execute">;
+  validateRecipes: Pick<ValidateRecipes, "execute">;
+  printUpdateNotice: Pick<PrintUpdateNotice, "execute">;
+  refreshUpdateCheck: Pick<RefreshUpdateCheck, "execute">;
   telemetry: TelemetryDeps;
   /** The use case that builds a marketplace or a flat tree for a target, or undefined when the
    * target declares no build for the mode. */
-  frameworkBuild: (ctx: FrameworkBuildContext) => FrameworkBuildUseCase | undefined;
+  frameworkBuild: (
+    ctx: FrameworkBuildContext
+  ) => Pick<FrameworkBuildUseCase, "execute"> | undefined;
 }
 
 /** What the menu and the interactive prompts of a command group need, before any graph exists. */
@@ -173,3 +176,14 @@ export type DepsFactory = (
 ) => Promise<Deps>;
 
 export type MenuDepsFactory = (projectRoot: string) => MenuDeps;
+
+/** A factory of the part of the graph a command reads. The real `DepsFactory` is assignable to
+ * every one, and a test builds only the members its command touches. */
+export type DepsSliceFactory<K extends keyof Deps> = (
+  ...args: Parameters<DepsFactory>
+) => Promise<Pick<Deps, K>>;
+
+/** The menu counterpart of {@link DepsSliceFactory}. */
+export type MenuDepsSliceFactory<K extends keyof MenuDeps> = (
+  projectRoot: string
+) => Pick<MenuDeps, K>;

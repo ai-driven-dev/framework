@@ -1,9 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
-import type { DepsFactory, MenuDepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-import { asDepsFactory, asMenuDepsFactory } from "../../helpers/fake-deps.js";
+import { prompterAnswering } from "../../helpers/ports/partial-ports.js";
 
 const pluginRemove = vi.fn();
 const pluginList = vi.fn();
@@ -24,9 +23,7 @@ const createDeps = vi.fn(async () => ({
   userPluginUpdateUseCase: { execute: userPluginUpdate },
   marketplaceSyncSettingsUseCase: { execute: activation },
 }));
-const createMenuDeps = vi.fn(() => ({ prompter: { select: menuSelect } }));
-const depsFactory = asDepsFactory(createDeps);
-const menuDepsFactory = asMenuDepsFactory(createMenuDeps);
+const createMenuDeps = vi.fn(() => ({ prompter: prompterAnswering({ select: menuSelect }) }));
 
 vi.mock("../../../src/presentation/commands/spawn-cli-command.js", () => ({
   spawnCliCommand: spawn,
@@ -77,7 +74,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerPluginCommand(program, CATALOG, depsFactory, menuDepsFactory);
+  registerPluginCommand(program, CATALOG, createDeps, createMenuDeps);
   await program.parseAsync(["node", "aidd", "plugin", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -359,7 +356,7 @@ describe("aidd plugin — how every subcommand builds its graph", () => {
 describe("aidd plugin — the help surface", () => {
   function pluginCommand(): Command {
     const program = new Command();
-    registerPluginCommand(program, CATALOG, depsFactory, menuDepsFactory);
+    registerPluginCommand(program, CATALOG, createDeps, createMenuDeps);
     const plugin = program.commands.find((command) => command.name() === "plugin");
     if (plugin === undefined) throw new Error("plugin command was not registered");
     return plugin;

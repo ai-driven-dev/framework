@@ -1,9 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VALID_TOOL_IDS } from "../../../src/kernel/tool.js";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { asDepsFactory } from "../../helpers/fake-deps.js";
+import { manifestRepositoryLoading } from "../../helpers/ports/partial-ports.js";
 
 const installAiTool = vi.fn();
 const installIdeTool = vi.fn();
@@ -25,10 +24,9 @@ const createDeps = vi.fn(async () => ({
   updateIdeToolsUseCase: { execute: updateIdeTools },
   listInstalledRulesUseCase: { execute: listInstalledRules },
   validateRecipes: { execute: validateRecipes },
-  manifestRepo: { load: loadManifest },
+  manifestRepo: manifestRepositoryLoading(loadManifest),
   currentVersionProvider: { get: currentVersion },
 }));
-const depsFactory = asDepsFactory(createDeps);
 
 const { registerFrameworkCommand } = await import(
   "../../../src/presentation/commands/framework.js"
@@ -87,7 +85,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerFrameworkCommand(program, CATALOG, depsFactory);
+  registerFrameworkCommand(program, CATALOG, createDeps);
   await program.parseAsync(["node", "aidd", "framework", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -401,7 +399,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
 describe("aidd framework — the help surface", () => {
   function frameworkCommand(): Command {
     const program = new Command();
-    registerFrameworkCommand(program, CATALOG, depsFactory);
+    registerFrameworkCommand(program, CATALOG, createDeps);
     const framework = program.commands.find((command) => command.name() === "framework");
     if (framework === undefined) throw new Error("framework command was not registered");
     return framework;

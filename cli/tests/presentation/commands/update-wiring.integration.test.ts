@@ -1,14 +1,11 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SelfUpdateResult } from "../../../src/contexts/update/application/self-update.js";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const selfUpdate = vi.fn<() => Promise<SelfUpdateResult>>();
 
 const createDeps = vi.fn(async () => ({ selfUpdate: { execute: selfUpdate } }));
-const depsFactory = asDepsFactory(createDeps);
 
 const { registerUpdateCommand } = await import("../../../src/presentation/commands/update.js");
 
@@ -42,7 +39,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerUpdateCommand(program, depsFactory);
+  registerUpdateCommand(program, createDeps);
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -128,7 +125,7 @@ describe("aidd update — what it asks the self-updater", () => {
 describe("aidd update — the help surface", () => {
   function updateCommand(): Command {
     const program = new Command();
-    registerUpdateCommand(program, depsFactory);
+    registerUpdateCommand(program, createDeps);
     const update = program.commands.find((command) => command.name() === "update");
     if (update === undefined) throw new Error("update command was not registered");
     return update;

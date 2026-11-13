@@ -5,9 +5,9 @@ import { wireTools } from "../../../src/composition/tools.js";
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { asDepsFactory } from "../../helpers/fake-deps.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { manifestRepositoryLoading } from "../../helpers/ports/partial-ports.js";
 
 const resolveSourceIfNeeded = vi.fn();
 const registerIfPresent = vi.fn();
@@ -20,8 +20,8 @@ const setupMachineScope = vi.fn();
 const loadManifest = vi.fn();
 
 const createDeps = vi.fn(async () => ({
-  fs: {},
-  manifestRepo: { load: loadManifest },
+  fs: new InMemoryFileAdapter(),
+  manifestRepo: manifestRepositoryLoading(loadManifest),
   setupMarketplaceRegistration: { resolveSourceIfNeeded, registerIfPresent },
   marketplaceSyncSettingsUseCase: { execute: activation },
   setupToolsUseCase: { execute: setupTools },
@@ -31,7 +31,6 @@ const createDeps = vi.fn(async () => ({
   projectContextDetector: { execute: detectContext },
   setupMachineScopeUseCase: { execute: setupMachineScope },
 }));
-const depsFactory = asDepsFactory(createDeps);
 
 const { globalSetupHelp, registerSetupCommand } = await import(
   "../../../src/presentation/commands/setup.js"
@@ -88,7 +87,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerSetupCommand(program, CATALOG, depsFactory);
+  registerSetupCommand(program, CATALOG, createDeps);
   await program.parseAsync(["node", "aidd", "setup", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -356,7 +355,7 @@ describe("aidd setup — what it refuses and what it reports", () => {
 describe("aidd setup — the help surface", () => {
   function setupCommand(): Command {
     const program = new Command();
-    registerSetupCommand(program, CATALOG, depsFactory);
+    registerSetupCommand(program, CATALOG, createDeps);
     const setup = program.commands.find((command) => command.name() === "setup");
     if (setup === undefined) throw new Error("setup command was not registered");
     return setup;

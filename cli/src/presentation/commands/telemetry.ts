@@ -25,7 +25,7 @@ import {
 } from "../../contexts/telemetry/domain/report/usage-report.js";
 import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/domain/usage-record.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
-import type { Deps, DepsFactory, TelemetryDeps } from "../deps.js";
+import type { Deps, DepsSliceFactory, TelemetryDeps } from "../deps.js";
 import {
   printForgetResult,
   printIdentityRule,
@@ -43,11 +43,16 @@ import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
+/** What this command reads of the graph. */
+type TelemetryCommandKeys = "prompter" | "telemetry";
+
 /** A command's output and directory, and `run`, which wires its dependencies for some work
  * and reports any failure the one way. */
-function commandOf(program: Command, createDeps: DepsFactory) {
+function commandOf(program: Command, createDeps: DepsSliceFactory<TelemetryCommandKeys>) {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
-  const run = async (work: (deps: Deps) => Promise<void>): Promise<void> => {
+  const run = async (
+    work: (deps: Pick<Deps, TelemetryCommandKeys>) => Promise<void>
+  ): Promise<void> => {
     try {
       await work(await createDeps(projectRoot, { verbose }, output));
     } catch (error) {
@@ -121,7 +126,10 @@ function filterOption(
   );
 }
 
-export function registerTelemetryCommand(program: Command, createDeps: DepsFactory): void {
+export function registerTelemetryCommand(
+  program: Command,
+  createDeps: DepsSliceFactory<TelemetryCommandKeys>
+): void {
   const telemetry = program
     .command("telemetry")
     .description("Measure what Claude Code and Codex sessions consume, locally");

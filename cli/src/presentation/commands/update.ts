@@ -1,8 +1,11 @@
 import type { Command } from "commander";
-import type { DepsFactory } from "../deps.js";
+import type { DepsSliceFactory } from "../deps.js";
 import { printSelfUpdateResult } from "../display/update-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
+
+/** What this command reads of the graph. */
+type UpdateKeys = "selfUpdate";
 
 interface UpdateCmdOptions {
   check: boolean;
@@ -15,7 +18,7 @@ interface UpdateCmdOptions {
  * `marketplace refresh`. */
 async function runUpdateAction(
   program: Command,
-  createDeps: DepsFactory,
+  createDeps: DepsSliceFactory<UpdateKeys>,
   cmdOptions: UpdateCmdOptions
 ): Promise<void> {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
@@ -36,7 +39,10 @@ async function runUpdateAction(
   }
 }
 
-export function registerUpdateCommand(program: Command, createDeps: DepsFactory): void {
+export function registerUpdateCommand(
+  program: Command,
+  createDeps: DepsSliceFactory<UpdateKeys>
+): void {
   program
     .command("update")
     .alias("upgrade")

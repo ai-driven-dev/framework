@@ -7,7 +7,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { ToolId } from "../../kernel/tool.js";
 import { assertToolIdsMatchCategory, IDE_TOOL_IDS, isIdeToolId } from "../../kernel/tool.js";
-import type { DepsFactory } from "../deps.js";
+import type { DepsSliceFactory } from "../deps.js";
 import {
   printDetectedContext,
   printNextSteps,
@@ -18,6 +18,19 @@ import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
 import { reportSyncActivation } from "./sync-native-activation.js";
+
+/** What this command reads of the graph. */
+type SetupKeys =
+  | "fs"
+  | "manifestRepo"
+  | "setupMarketplaceRegistration"
+  | "marketplaceSyncSettingsUseCase"
+  | "setupToolsUseCase"
+  | "setupPluginsPromptUseCase"
+  | "currentVersionProvider"
+  | "setupToolsPromptUseCase"
+  | "projectContextDetector"
+  | "setupMachineScopeUseCase";
 
 interface SetupCmdOptions {
   source?: "remote" | "local";
@@ -119,7 +132,7 @@ export function globalSetupHelp(catalog: ToolCatalog): string {
 export function registerSetupCommand(
   program: Command,
   catalog: ToolCatalog,
-  createDeps: DepsFactory
+  createDeps: DepsSliceFactory<SetupKeys>
 ): void {
   program
     .command("setup")

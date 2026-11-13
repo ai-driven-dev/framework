@@ -6,14 +6,17 @@ import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
 } from "../../contexts/translate/domain/build-target.js";
-import type { DepsFactory } from "../deps.js";
+import type { DepsSliceFactory } from "../deps.js";
 import { printTranslateResult } from "../display/translate-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
+/** What this command reads of the graph. */
+type TranslateKeys = "frameworkBuild";
+
 interface TranslateExecutionParams {
-  createDeps: DepsFactory;
+  createDeps: DepsSliceFactory<TranslateKeys>;
   projectRoot: string;
   verbose: boolean;
   output: CLIOutput;
@@ -68,7 +71,7 @@ interface TranslateCmdOptions {
 export function registerTranslateCommand(
   program: Command,
   tools: ToolCatalog,
-  createDeps: DepsFactory
+  createDeps: DepsSliceFactory<TranslateKeys>
 ): void {
   program
     .command("translate")

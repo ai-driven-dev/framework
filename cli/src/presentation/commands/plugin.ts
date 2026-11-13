@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { assertValidAiToolId, parseToolOption } from "../../kernel/tool.js";
-import type { DepsFactory, MenuDepsFactory } from "../deps.js";
+import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
 import {
   printInstalledPlugins,
   printPluginInstallOutcome,
@@ -15,11 +15,21 @@ import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
 import { syncNativeActivation } from "./sync-native-activation.js";
 
+/** What this command reads of the graph. */
+type PluginKeys =
+  | "pluginRemoveUseCase"
+  | "pluginListUseCase"
+  | "pluginInstallUseCase"
+  | "pluginSearchUseCase"
+  | "userPluginUpdateUseCase"
+  | "pluginUpdateUseCase"
+  | "marketplaceSyncSettingsUseCase";
+
 export function registerPluginCommand(
   program: Command,
   catalog: ToolCatalog,
-  createDeps: DepsFactory,
-  createMenuDeps: MenuDepsFactory
+  createDeps: DepsSliceFactory<PluginKeys>,
+  createMenuDeps: MenuDepsSliceFactory<"prompter">
 ): void {
   const plugin = program.command("plugin").description("Manage plugins for AI tools");
 

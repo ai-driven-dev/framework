@@ -3,7 +3,7 @@ import { parseInstallScope } from "../../contexts/framework/domain/install-scope
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceScope } from "../../kernel/scope.js";
 import { parsePluginSourceShorthand } from "../../kernel/source.js";
-import type { DepsFactory, MenuDepsFactory } from "../deps.js";
+import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
 import {
   printMarketplaceCheck,
   printMarketplaceRegistered,
@@ -16,11 +16,22 @@ import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
 import { syncNativeActivation } from "./sync-native-activation.js";
 
+/** What this command reads of the graph. */
+type MarketplaceKeys =
+  | "prompter"
+  | "addMarketplace"
+  | "listMarketplaces"
+  | "userMarketplaceRemoveUseCase"
+  | "marketplaceRemoveUseCase"
+  | "refreshMarketplace"
+  | "marketplaceCheckUseCase"
+  | "marketplaceSyncSettingsUseCase";
+
 export function registerMarketplaceCommand(
   program: Command,
   tools: ToolCatalog,
-  createDeps: DepsFactory,
-  createMenuDeps: MenuDepsFactory
+  createDeps: DepsSliceFactory<MarketplaceKeys>,
+  createMenuDeps: MenuDepsSliceFactory<"prompter">
 ): void {
   const marketplace = program.command("marketplace").description("Manage plugin marketplaces");
 

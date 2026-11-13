@@ -1,9 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { registeredAiConfig } from "../../contexts/tools/testing/catalog-of.js";
-import { asDepsFactory } from "../../helpers/fake-deps.js";
+import { manifestRepositoryLoading } from "../../helpers/ports/partial-ports.js";
 
 const doctorAll = vi.fn();
 const statusAll = vi.fn();
@@ -19,11 +18,10 @@ const createDeps = vi.fn(async () => ({
   doctorUseCase: { execute: doctorScoped },
   statusUseCase: { execute: statusScoped },
   doctorRegistrationUseCase: { execute: doctorRegistration },
-  userManifestRepo: { load: loadUserManifest },
+  userManifestRepo: manifestRepositoryLoading(loadUserManifest),
   homedir,
   environment: { get: () => undefined, set: () => undefined },
 }));
-const depsFactory = asDepsFactory(createDeps);
 
 const { registerDoctorCommand } = await import("../../../src/presentation/commands/doctor.js");
 
@@ -83,7 +81,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerDoctorCommand(program, CATALOG, depsFactory);
+  registerDoctorCommand(program, CATALOG, createDeps);
   await program.parseAsync(["node", "aidd", "doctor", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -531,7 +529,7 @@ describe("aidd doctor — how it builds its graph and reports a failure", () => 
 describe("aidd doctor — the help surface", () => {
   function doctorCommand(): Command {
     const program = new Command();
-    registerDoctorCommand(program, CATALOG, depsFactory);
+    registerDoctorCommand(program, CATALOG, createDeps);
     const doctor = program.commands.find((command) => command.name() === "doctor");
     if (doctor === undefined) throw new Error("doctor command was not registered");
     return doctor;

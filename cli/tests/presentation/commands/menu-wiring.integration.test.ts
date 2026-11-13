@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import type { MenuDepsFactory } from "../../../src/presentation/deps.js";
-import { asMenuDepsFactory } from "../../helpers/fake-deps.js";
+import { manifestRepositoryLoading, prompterAnswering } from "../../helpers/ports/partial-ports.js";
 
 const loadManifest = vi.fn();
 const promptSelect = vi.fn();
@@ -12,8 +11,8 @@ const question = vi.fn();
 const close = vi.fn();
 
 const createMenuDeps = vi.fn(() => ({
-  manifestRepo: { load: loadManifest },
-  prompter: { select: promptSelect, confirm: promptConfirm, input: promptInput },
+  manifestRepo: manifestRepositoryLoading(loadManifest),
+  prompter: prompterAnswering({ select: promptSelect, confirm: promptConfirm, input: promptInput }),
 }));
 
 vi.mock("../../../src/presentation/commands/spawn-cli-command.js", () => ({
@@ -63,9 +62,7 @@ function exiting(): MockInstance<typeof process.exit> {
 }
 
 async function loopUntilExit(): Promise<void> {
-  await expect(runMenuLoop(wireTools(), asMenuDepsFactory(createMenuDeps))).rejects.toThrow(
-    /^exit /
-  );
+  await expect(runMenuLoop(wireTools(), createMenuDeps)).rejects.toThrow(/^exit /);
 }
 
 describe("aidd with no argument — the menu loop", () => {

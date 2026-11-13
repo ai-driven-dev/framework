@@ -156,7 +156,6 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     declareTaskUseCase,
     telemetryStatusUseCase,
     ingestUsageUseCase,
-    snapshotBindingsUseCase,
     reportUsageUseCase: new ReportUsageUseCase(
       ingestUsageUseCase,
       ledger,

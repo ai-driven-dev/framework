@@ -4,7 +4,7 @@ import { Manifest } from "../../contexts/framework/domain/manifest.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../kernel/tool.js";
 import { isAiToolId, isIdeToolId, VALID_TOOL_IDS } from "../../kernel/tool.js";
-import type { Deps, DepsFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printToolAlreadyInstalled,
   printToolInstalled,
@@ -21,6 +21,19 @@ import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { reportSyncActivation } from "./sync-native-activation.js";
 
+/** What this command reads of the graph. */
+type FrameworkKeys =
+  | "currentVersionProvider"
+  | "installAiToolUseCase"
+  | "manifestRepo"
+  | "installIdeToolUseCase"
+  | "uninstallUseCase"
+  | "uninstallIdeUseCase"
+  | "updateAiToolsUseCase"
+  | "updateIdeToolsUseCase"
+  | "listInstalledRulesUseCase"
+  | "validateRecipes";
+
 export function assertKnownToolId(toolId: string): asserts toolId is ToolId {
   if (!isAiToolId(toolId) && !isIdeToolId(toolId)) {
     throw new Error(`Unknown tool: ${toolId}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`);
@@ -28,7 +41,7 @@ export function assertKnownToolId(toolId: string): asserts toolId is ToolId {
 }
 
 async function runFrameworkInstall(
-  deps: Deps,
+  deps: Pick<Deps, FrameworkKeys>,
   output: CLIOutput,
   projectRoot: string,
   toolId: ToolId,
@@ -44,7 +57,7 @@ async function runFrameworkInstall(
 }
 
 async function installAiTool(
-  deps: Deps,
+  deps: Pick<Deps, FrameworkKeys>,
   output: CLIOutput,
   projectRoot: string,
   toolId: AiToolId,
@@ -72,7 +85,7 @@ async function installAiTool(
 }
 
 async function installIdeTool(
-  deps: Deps,
+  deps: Pick<Deps, FrameworkKeys>,
   output: CLIOutput,
   projectRoot: string,
   toolId: IdeToolId,
@@ -97,7 +110,7 @@ async function installIdeTool(
 }
 
 async function runFrameworkRemove(
-  deps: Deps,
+  deps: Pick<Deps, FrameworkKeys>,
   output: CLIOutput,
   projectRoot: string,
   toolId: ToolId,
@@ -120,7 +133,7 @@ async function runFrameworkRemove(
 }
 
 async function runFrameworkUpdate(
-  deps: Deps,
+  deps: Pick<Deps, FrameworkKeys>,
   output: CLIOutput,
   projectRoot: string,
   toolId: ToolId | undefined,
@@ -176,7 +189,7 @@ async function runFrameworkUpdate(
 export function registerFrameworkCommand(
   program: Command,
   catalog: ToolCatalog,
-  createDeps: DepsFactory
+  createDeps: DepsSliceFactory<FrameworkKeys>
 ): void {
   const framework = program
     .command("framework")

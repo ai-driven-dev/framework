@@ -1,6 +1,9 @@
 import type { Command } from "commander";
-import type { DepsFactory } from "../deps.js";
+import type { DepsSliceFactory } from "../deps.js";
 import { CLIOutput } from "../output.js";
+
+/** What this command reads of the graph. */
+type UpdateNoticeKeys = "printUpdateNotice" | "logger" | "refreshUpdateCheck";
 
 // Commands already paying for network I/O, so the update-check refresh rides one of them.
 // `marketplace remove` is offline and `update` already resolves the latest version itself.
@@ -12,7 +15,10 @@ const ONLINE_COMMAND_PATHS = new Set([
   "sync",
 ]);
 
-export function registerUpdateNoticeHooks(program: Command, createDeps: DepsFactory): void {
+export function registerUpdateNoticeHooks(
+  program: Command,
+  createDeps: DepsSliceFactory<UpdateNoticeKeys>
+): void {
   program.hook("preAction", async (_thisCommand, actionCommand) => {
     if (process.env.AIDD_SKIP_UPDATE_CHECK === "1") return;
     // A hook runs `telemetry ingest --quiet`; an update notice would break its silence.

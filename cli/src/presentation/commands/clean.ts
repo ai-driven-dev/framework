@@ -1,10 +1,13 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { Deps, DepsFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory } from "../deps.js";
 import { printProjectCleanOutcome, printUserScopeCleanOutcome } from "../display/clean-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
+
+/** What this command reads of the graph. */
+type CleanKeys = "cleanUseCase" | "cleanUserScopeUseCase";
 
 interface CleanCmdOptions {
   force: boolean;
@@ -13,7 +16,7 @@ interface CleanCmdOptions {
 }
 
 async function runProjectScopeClean(
-  deps: Deps,
+  deps: Pick<Deps, CleanKeys>,
   output: CLIOutput,
   projectRoot: string,
   cmdOptions: CleanCmdOptions,
@@ -31,7 +34,7 @@ async function runProjectScopeClean(
 }
 
 async function runUserScopeClean(
-  deps: Deps,
+  deps: Pick<Deps, CleanKeys>,
   output: CLIOutput,
   projectRoot: string,
   cmdOptions: CleanCmdOptions,
@@ -51,7 +54,7 @@ async function runUserScopeClean(
 export function registerCleanCommand(
   program: Command,
   catalog: ToolCatalog,
-  createDeps: DepsFactory
+  createDeps: DepsSliceFactory<CleanKeys>
 ): void {
   program
     .command("clean")

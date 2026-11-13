@@ -1,8 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const cleanProject = vi.fn();
 const cleanUserScope = vi.fn();
@@ -11,7 +9,6 @@ const createDeps = vi.fn(async () => ({
   cleanUseCase: { execute: cleanProject },
   cleanUserScopeUseCase: { execute: cleanUserScope },
 }));
-const depsFactory = asDepsFactory(createDeps);
 
 const { registerCleanCommand } = await import("../../../src/presentation/commands/clean.js");
 
@@ -66,7 +63,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerCleanCommand(program, CATALOG, depsFactory);
+  registerCleanCommand(program, CATALOG, createDeps);
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -202,7 +199,7 @@ describe("aidd clean — how it builds its graph and reports a failure", () => {
 describe("aidd clean — the help surface", () => {
   function cleanCommand(): Command {
     const program = new Command();
-    registerCleanCommand(program, CATALOG, depsFactory);
+    registerCleanCommand(program, CATALOG, createDeps);
     const clean = program.commands.find((command) => command.name() === "clean");
     if (clean === undefined) throw new Error("clean command was not registered");
     return clean;

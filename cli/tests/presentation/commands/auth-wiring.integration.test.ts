@@ -1,9 +1,8 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { AIDD_DIR } from "../../../src/kernel/paths.js";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { asDepsFactory } from "../../helpers/fake-deps.js";
+import { prompterAnswering } from "../../helpers/ports/partial-ports.js";
 
 const login = vi.fn();
 const status = vi.fn();
@@ -19,9 +18,8 @@ const createDeps = vi.fn(async () => ({
   },
   logOut: { execute: () => logout() },
   checkStatus: { execute: () => status() },
-  prompter: { select: promptSelect, confirm: promptConfirm, input: promptInput },
+  prompter: prompterAnswering({ select: promptSelect, confirm: promptConfirm, input: promptInput }),
 }));
-const depsFactory = asDepsFactory(createDeps);
 
 const { registerAuthCommand } = await import("../../../src/presentation/commands/auth.js");
 
@@ -65,7 +63,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerAuthCommand(program, depsFactory);
+  registerAuthCommand(program, createDeps);
   await program.parseAsync(["node", "aidd", "auth", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -255,7 +253,7 @@ describe("aidd auth, how every subcommand builds its graph and reports a failure
 describe("aidd auth, the help surface", () => {
   function authCommand(): Command {
     const program = new Command();
-    registerAuthCommand(program, depsFactory);
+    registerAuthCommand(program, createDeps);
     const auth = program.commands.find((command) => command.name() === "auth");
     if (auth === undefined) throw new Error("auth command was not registered");
     return auth;

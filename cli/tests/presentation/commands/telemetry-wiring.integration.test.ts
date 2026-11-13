@@ -6,8 +6,7 @@ import {
   conflictsOf,
   type ReportFilters,
 } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
-import { asDepsFactory } from "../../helpers/fake-deps.js";
+import { prompterAnswering } from "../../helpers/ports/partial-ports.js";
 
 const ingest = vi.fn();
 const declare = vi.fn();
@@ -23,7 +22,7 @@ const input = vi.fn();
 const propose = vi.fn();
 
 const createDeps = vi.fn(async () => ({
-  prompter: { confirm, select, input },
+  prompter: prompterAnswering({ confirm, select, input }),
   telemetry: {
     telemetryOnUseCase: { execute: turnOn },
     telemetryOffUseCase: { execute: turnOff },
@@ -36,7 +35,6 @@ const createDeps = vi.fn(async () => ({
     proposeIdentityUseCase: { execute: propose },
   },
 }));
-const depsFactory = asDepsFactory(createDeps);
 
 const { registerTelemetryCommand } = await import(
   "../../../src/presentation/commands/telemetry.js"
@@ -75,7 +73,7 @@ async function run(...args: string[]): Promise<number | null> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerTelemetryCommand(program, depsFactory);
+  registerTelemetryCommand(program, createDeps);
   try {
     await program.parseAsync(["node", "aidd", "telemetry", ...args]);
     return null;
@@ -645,7 +643,7 @@ describe("the telemetry command surface", () => {
 
   it("prints each subcommand's help as the golden pins it", () => {
     const program = new Command().name("aidd");
-    registerTelemetryCommand(program, depsFactory);
+    registerTelemetryCommand(program, createDeps);
     const telemetry = program.commands.find((command) => command.name() === "telemetry");
     const helps = [telemetry, ...(telemetry?.commands ?? [])].map((command) => ({
       invocation: command === telemetry ? "aidd telemetry" : `aidd telemetry ${command?.name()}`,

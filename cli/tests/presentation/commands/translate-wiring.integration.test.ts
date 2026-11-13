@@ -4,15 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
-import type { DepsFactory } from "../../../src/presentation/deps.js";
-import { asDepsFactory } from "../../helpers/fake-deps.js";
 
 const build = vi.fn();
 let buildUseCase: { execute: typeof build } | undefined;
 
 const frameworkBuild = vi.fn(() => buildUseCase);
 const createDeps = vi.fn(async () => ({ frameworkBuild }));
-const depsFactory = asDepsFactory(createDeps);
 
 const { registerTranslateCommand } = await import(
   "../../../src/presentation/commands/translate.js"
@@ -51,7 +48,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerTranslateCommand(program, CATALOG, depsFactory);
+  registerTranslateCommand(program, CATALOG, createDeps);
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -164,7 +161,7 @@ describe("aidd translate — what it refuses", () => {
 describe("aidd translate — the help surface", () => {
   function translateCommand(): Command {
     const program = new Command();
-    registerTranslateCommand(program, CATALOG, depsFactory);
+    registerTranslateCommand(program, CATALOG, createDeps);
     const translate = program.commands.find((command) => command.name() === "translate");
     if (translate === undefined) throw new Error("translate command was not registered");
     return translate;

@@ -3,11 +3,14 @@ import type { AuthLevel, Credential } from "../../contexts/auth/contract/credent
 import { InputRequiredError } from "../../kernel/errors.js";
 import { AIDD_DIR } from "../../kernel/paths.js";
 import type { Prompter } from "../../kernel/ports/prompter.js";
-import type { Deps, DepsFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory } from "../deps.js";
 import { printAuthenticated, printAuthStatus, printLogoutResult } from "../display/auth-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
+
+/** What this command reads of the graph. */
+type AuthKeys = "prompter" | "logIn" | "logOut" | "checkStatus";
 
 interface LoginOptions {
   gh: boolean;
@@ -54,8 +57,8 @@ async function askCredential(prompter: Prompter, options: LoginOptions): Promise
 /** An action that builds the dependencies, runs, and hands any failure to the error handler. */
 function reportingErrors(
   program: Command,
-  createDeps: DepsFactory,
-  run: (deps: Deps, output: CLIOutput) => Promise<void>
+  createDeps: DepsSliceFactory<AuthKeys>,
+  run: (deps: Pick<Deps, AuthKeys>, output: CLIOutput) => Promise<void>
 ): () => Promise<void> {
   return async () => {
     const { verbose, output, projectRoot } = parseGlobalOptions(program);
@@ -68,7 +71,10 @@ function reportingErrors(
   };
 }
 
-export function registerAuthCommand(program: Command, createDeps: DepsFactory): void {
+export function registerAuthCommand(
+  program: Command,
+  createDeps: DepsSliceFactory<AuthKeys>
+): void {
   const authCmd = program.command("auth").description("Manage authentication");
   authCmd.action(() => authCmd.help());
 

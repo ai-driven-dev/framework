@@ -4,7 +4,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import { UserScopeFilterUnsupportedError } from "../../kernel/errors.js";
 import type { ToolCategory, ToolId } from "../../kernel/tool.js";
 import { isAiToolId } from "../../kernel/tool.js";
-import type { Deps, DepsFactory } from "../deps.js";
+import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printAllToolsDrift,
   printInventory,
@@ -18,12 +18,23 @@ import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
+/** What this command reads of the graph. */
+type DoctorKeys =
+  | "doctorAllUseCase"
+  | "statusAllUseCase"
+  | "doctorUseCase"
+  | "statusUseCase"
+  | "userManifestRepo"
+  | "homedir"
+  | "environment"
+  | "doctorRegistrationUseCase";
+
 function categoryOf(toolId: ToolId): ToolCategory {
   return isAiToolId(toolId) ? "ai" : "ide";
 }
 
 async function runFullDoctor(
-  deps: Deps,
+  deps: Pick<Deps, DoctorKeys>,
   output: CLIOutput,
   projectRoot: string,
   tools: ToolCatalog,
@@ -59,7 +70,7 @@ async function runFullDoctor(
 }
 
 async function runScopedDoctor(
-  deps: Deps,
+  deps: Pick<Deps, DoctorKeys>,
   output: CLIOutput,
   projectRoot: string,
   toolId: ToolId,
@@ -111,7 +122,7 @@ async function runScopedDoctor(
  * registry file, the one check that is not project-file-shaped. */
 async function runUserScopeDoctor(
   tools: ToolCatalog,
-  deps: Deps,
+  deps: Pick<Deps, DoctorKeys>,
   output: CLIOutput,
   projectRoot: string,
   cmdOptions: DoctorCmdOptions
@@ -172,7 +183,7 @@ interface DoctorCmdOptions {
 export function registerDoctorCommand(
   program: Command,
   tools: ToolCatalog,
-  createDeps: DepsFactory
+  createDeps: DepsSliceFactory<DoctorKeys>
 ): void {
   program
     .command("doctor")
