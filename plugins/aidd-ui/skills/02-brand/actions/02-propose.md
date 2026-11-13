@@ -1,26 +1,31 @@
 # 02 - Propose
 
-Propose at least two directions for the brand.
+Propose directions for the brand, round by round.
 
 ## Input
 
-The case and the engine.
+The case and the engine. In a later round, the mix and comments.
 
 ## Process
 
-1. Take the answers:
-   - Code: read its README, package manifest and visible copy.
-   - Scratch: ask the user for each.
+1. In the first round, ask what the user starts from. Several answers combine.
+   - Existing: the code, a site address, or screenshots.
+   - References: products liked and disliked.
+     - For each, what to take or avoid.
+   - Nothing: ask for each section of the [brand](../assets/brand-template.md) template.
+2. Read what they give.
+   - Code: its README, package manifest and visible copy.
+   - Site: only the address they give, with the host's fetch tool. A page that reads empty: ask for screenshots.
+   - Screenshots: read them.
    - Evolution: read `aidd_docs/ui/brand.md`, and ask what changes.
-2. Draw at least two directions from the subject and the exchange.
-   - Follow [variants](../references/variants.md).
-3. Write each direction as a variant.
+3. Draw the directions per [variants](../references/variants.md).
+4. Write each direction as a variant.
    - Use the [brand](../assets/brand-template.md) template.
    - Add a preview of the direction.
-4. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
    - Fix what it reports.
-5. Read [choose](03-choose.md).
+6. Read [choose](03-choose.md).
 
 ## Output
 
-The set of directions, in the showcase.
+The round of directions, in the showcase.

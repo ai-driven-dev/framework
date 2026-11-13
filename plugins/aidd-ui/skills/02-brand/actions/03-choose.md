@@ -9,7 +9,9 @@ The set, in the showcase.
 ## Process
 
 1. Give the user the set's page.
-   - Ask them to choose, then paste the copied feedback here.
+   - Ask them to keep, revise or discard each direction.
+   - Or to take one cell per axis.
+   - Then to paste the copied feedback here.
 2. Wait for the feedback.
    - Read the entry with `set`. Leave record entries.
 3. Weigh the feedback.
@@ -17,11 +19,12 @@ The set, in the showcase.
    - Revise: a lead. Its comment says what to change.
    - Discard: out.
    - No verdict: not looked at. Ask before deciding.
+   - Picks: each picked axis comes from its variant. Together they make the mix.
    - Several kept: ask which one. The user makes the choice.
-   - If nothing is kept, read [propose](02-propose.md) with the comments.
-4. Keep the chosen variant per [engine](../references/engine.md).
-5. Read [conclude](04-conclude.md).
+4. One kept, no revise, no picks: keep it per [engine](../references/engine.md).
+   - Then read [conclude](04-conclude.md).
+5. Otherwise read [propose](02-propose.md) with the mix and the comments.
 
 ## Output
 
-The brand kept, and the set gone.
+The brand kept and the set gone, or the next round asked.

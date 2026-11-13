@@ -14,7 +14,7 @@ flowchart LR
   choose --> conclude["conclude<br>actions/04-conclude.md"]
   prepare -->|"a decision blocks"| user((user answers))
   propose -->|"a decision blocks"| user
-  choose -->|"no direction stands out"| propose
+  choose -->|"next round"| propose
   choose -->|"give the page, wait"| user
   user --> prepare
   user --> propose
