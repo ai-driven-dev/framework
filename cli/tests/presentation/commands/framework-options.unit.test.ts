@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { assertKnownToolId } from "../../../src/presentation/commands/framework.js";
-import { VALID_TOOL_IDS } from "../../../src/shared/domain/tool.js";
 
 describe("assertKnownToolId", () => {
   it("accepts an AI tool id", () => {
@@ -13,7 +12,7 @@ describe("assertKnownToolId", () => {
 
   it("refuses an unknown id and lists every one it would have taken", () => {
     expect(() => assertKnownToolId("emacs")).toThrow(
-      `Unknown tool: emacs. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+      "Unknown tool: emacs. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode"
     );
   });
 

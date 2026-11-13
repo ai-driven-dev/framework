@@ -93,16 +93,18 @@ describe("parseToolIds", () => {
     });
   });
 
-  it("refuses an id belonging to the other category", () => {
+  it("refuses an id belonging to the other category, and an unknown one with it", () => {
     const output = new CapturingOutput(false);
     const exit = refuseByThrowing();
 
     expect(() =>
-      parseToolIds({ ai: "vscode" }, new ErrorHandler(output), registeredCatalog())
+      parseToolIds({ ai: "vscode,nope" }, new ErrorHandler(output), registeredCatalog())
     ).toThrow("process.exit");
 
     expect(exit).toHaveBeenCalledWith(1);
-    expect(output.at("error")).toHaveLength(1);
+    expect(output.at("error")).toEqual([
+      "vscode, nope are not AI tools. Valid AI tools: claude, cursor, copilot, opencode, kilo, codex, antigravity",
+    ]);
   });
 
   it("files every id --ide names under the list its category decides", () => {

@@ -198,6 +198,12 @@ describe("aidd sync --tool", () => {
     expect(restoreOne).toHaveBeenCalledWith(expect.objectContaining({ version: "5.2.2" }));
   });
 
+  it("hands a tool no profile declares to the restore, which refuses it", async () => {
+    await run("--tool", "nope");
+
+    expect(restoreOne).toHaveBeenCalledWith(expect.objectContaining({ toolIds: ["nope"] }));
+  });
+
   it("narrows to the files and the plugin that were named", async () => {
     await run("--tool", "claude", "--plugin", "aidd-dev", "a.md", "b.md");
 

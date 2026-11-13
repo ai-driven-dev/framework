@@ -323,6 +323,13 @@ describe("aidd doctor --tool", () => {
     expect(doctorScoped).toHaveBeenCalledWith(expect.objectContaining({ category: "ide" }));
   });
 
+  it("reads a tool no profile declares as an editor, and still asks for it", async () => {
+    await run("--tool", "nope");
+
+    expect(doctorScoped).toHaveBeenCalledWith(expect.objectContaining({ category: "ide" }));
+    expect(statusScoped).toHaveBeenCalledWith(expect.objectContaining({ filterToolId: "nope" }));
+  });
+
   it("carries the named plugin into both reads", async () => {
     await run("--tool", "claude", "--plugin", "aidd-dev");
 
@@ -423,6 +430,16 @@ describe("aidd doctor --scope user", () => {
     await run("--scope", "user", "--tool", "claude");
 
     expect(doctorRegistration.mock.calls[0][0].allowedIds).toEqual(new Set(["claude"]));
+  });
+
+  it("refuses a tool no profile declares, naming it unregistered", async () => {
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+
+    await expect(run("--scope", "user", "--tool", "nope")).rejects.toThrow("exited");
+
+    expect(errors.join("")).toBe("Error: Tool 'nope' is not registered.\n");
   });
 
   it("points at setup when nothing was ever registered machine-wide", async () => {
