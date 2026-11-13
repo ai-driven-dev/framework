@@ -70,6 +70,16 @@ describe("replaysNothing", () => {
       replaysNothing(parseHooksJsonForBridge(hooksOf("PostToolUse", `node ${ROOT}/hooks/a.cjs`)))
     ).toBe(false);
   });
+  it("does not hold when two events each name a replayable command", () => {
+    const hooksJson = JSON.stringify({
+      hooks: {
+        SessionStart: [{ hooks: [{ type: "command", command: `node ${ROOT}/hooks/a.cjs` }] }],
+        Stop: [{ hooks: [{ type: "command", command: `node ${ROOT}/hooks/b.cjs` }] }],
+      },
+    });
+
+    expect(replaysNothing(parseHooksJsonForBridge(hooksJson))).toBe(false);
+  });
 });
 
 describe("pascalCasePluginName", () => {

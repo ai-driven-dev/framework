@@ -157,7 +157,7 @@ export function pascalCasePluginName(plugin: string): string {
   return plugin
     .split("-")
     .filter(Boolean)
-    .map((part) => part[0]?.toUpperCase() + part.slice(1))
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join("");
 }
 

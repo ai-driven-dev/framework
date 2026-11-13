@@ -184,3 +184,35 @@ describe("AgentsSection equality", () => {
     ).toBe(false);
   });
 });
+
+describe("AgentsSection naming from a path", () => {
+  const section = (format: "markdown" | "toml") =>
+    new AgentsSection({
+      directory: ".x/",
+      toolSuffix: ".x.md",
+      format,
+      frontmatter: (fm) => fm,
+    });
+
+  it("keeps only the file name of a nested agent for the toml install path", () => {
+    expect(section("toml").buildInstallPath("sub/dir/planner.x.md")).toBe(".x/agents/planner.toml");
+    expect(section("toml").buildInstallPath("sub/dir/planner.md")).toBe(".x/agents/planner.toml");
+    expect(section("toml").buildInstallPath("sub/dir/planner.txt")).toBe(
+      ".x/agents/planner.txt.toml"
+    );
+  });
+
+  it("keeps only the file name of a nested agent for the markdown install path", () => {
+    expect(section("markdown").buildInstallPath("sub/planner.x.md")).toBe(".x/agents/planner.md");
+  });
+
+  it("names an agent after its file without a markdown extension anywhere else", () => {
+    expect(section("markdown").convertFrontmatter({}, "a/b.mdx.md")).toStrictEqual({
+      name: "b.mdx",
+    });
+  });
+
+  it("leaves the name unset when neither the frontmatter nor a file gives one", () => {
+    expect(section("markdown").convertFrontmatter({})).toStrictEqual({ name: undefined });
+  });
+});

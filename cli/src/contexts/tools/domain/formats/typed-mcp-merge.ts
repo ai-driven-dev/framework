@@ -210,7 +210,7 @@ function assertContributedServerUnchanged(name: string, server: unknown, digest:
       `OpenCode MCP server '${name}' has an unproven install digest; removal refused.`
     );
   }
-  const current = createHash("md5").update(JSON.stringify(server), "utf-8").digest("hex");
+  const current = createHash("md5").update(JSON.stringify(server)).digest("hex");
   if (current !== digest) {
     throw new Error(`OpenCode MCP server '${name}' was edited after install; removal refused.`);
   }

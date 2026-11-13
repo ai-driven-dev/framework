@@ -9,8 +9,8 @@ const ALL_TOOL_SUFFIXES: readonly ToolSuffix[] = AI_TOOL_IDS.map(
 export class ForeignSuffixFilter {
   private constructor(private readonly foreign: readonly ToolSuffix[]) {}
 
-  /** A filter for the reader whose own suffix is `own`, possibly none (`""`). */
-  static keeping(own: string): ForeignSuffixFilter {
+  /** A filter for the reader whose own suffix is `own`, possibly none. */
+  static keeping(own?: string): ForeignSuffixFilter {
     return new ForeignSuffixFilter(ALL_TOOL_SUFFIXES.filter((suffix) => suffix.value !== own));
   }
 

@@ -7,13 +7,13 @@ function agentNameFromFrontmatter(
   fm: Record<string, unknown>,
   fileName?: string
 ): string | undefined {
-  const base = fileName?.split("/").at(-1);
+  const base = fileName?.slice(fileName.lastIndexOf("/") + 1);
   const name = fm.name ?? base?.replace(/\.md$/, "");
   return typeof name === "string" ? name : undefined;
 }
 
 function toTomlBasename(toolSuffix: string, fileName: string): string {
-  const basename = fileName.split("/").at(-1) ?? fileName;
+  const basename = fileName.slice(fileName.lastIndexOf("/") + 1);
   if (basename.endsWith(toolSuffix)) {
     return `${basename.slice(0, -toolSuffix.length)}.toml`;
   }
@@ -49,7 +49,7 @@ export class AgentsSection {
 
   buildInstallPath(relativeFileName: string): string | null {
     if (this.#params.buildInstallPath) return this.#params.buildInstallPath(relativeFileName);
-    const basename = relativeFileName.split("/").at(-1) ?? relativeFileName;
+    const basename = relativeFileName.slice(relativeFileName.lastIndexOf("/") + 1);
     if (this.#params.format === "toml") {
       return `${this.#params.directory}agents/${toTomlBasename(this.#params.toolSuffix, basename)}`;
     }

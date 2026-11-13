@@ -24,7 +24,7 @@ export function ownsFlatPath(
   pluginName: string
 ): boolean {
   const segments = relativePath.split("/");
-  if (segments[0] !== directory.replace(/\/$/, "") || segments.length < 3) return false;
+  if (segments[0] !== directory.slice(0, -1) || segments.length < 3) return false;
   if (segments[1] === "skills" && skillLayout === "nested") return segments[2] === pluginName;
   return segments[2].startsWith(`${pluginName}-`);
 }

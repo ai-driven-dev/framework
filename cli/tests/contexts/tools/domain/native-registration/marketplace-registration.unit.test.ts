@@ -85,4 +85,47 @@ describe("MarketplaceRegistration", () => {
   it("refuses a registration the tool has no native activation to drive", () => {
     expect(() => new MarketplaceRegistration(settings, null)).toThrow(CapabilityConfigError);
   });
+
+  describe("declaredMarketplaceNames", () => {
+    const registration = new MarketplaceRegistration(settings, activation);
+
+    it("is empty for a file that is not an object", () => {
+      expect(registration.declaredMarketplaceNames(null)).toEqual(new Set());
+      expect(registration.declaredMarketplaceNames("extraKnownMarketplaces")).toEqual(new Set());
+    });
+
+    it("is empty when the declaration is null or a scalar", () => {
+      expect(registration.declaredMarketplaceNames({ extraKnownMarketplaces: null })).toEqual(
+        new Set()
+      );
+      expect(registration.declaredMarketplaceNames({ extraKnownMarketplaces: "a" })).toEqual(
+        new Set()
+      );
+    });
+  });
+
+  it("refuses to register without a native activation, and says why", () => {
+    expect(() => new MarketplaceRegistration(settings, null)).toThrow(
+      "marketplaceSettings requires a nativeActivation to drive the registration."
+    );
+  });
+
+  describe("withEnabledPlugins over a non-map enabled value", () => {
+    const registration = new MarketplaceRegistration(
+      { ...settings, enabledPluginsKey: "enabledPlugins" },
+      activation
+    );
+
+    it("starts from an empty map when the value is null", () => {
+      expect(registration.withEnabledPlugins({ enabledPlugins: null }, ["p"])).toStrictEqual({
+        enabledPlugins: { p: true },
+      });
+    });
+
+    it("starts from an empty map when the value is a list", () => {
+      expect(registration.withEnabledPlugins({ enabledPlugins: ["x"] }, ["p"])).toStrictEqual({
+        enabledPlugins: { p: true },
+      });
+    });
+  });
 });

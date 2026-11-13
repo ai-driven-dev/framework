@@ -69,4 +69,19 @@ describe("portableAgentFrontmatter", () => {
       );
     }
   );
+  it("refuses a description that is not a string", () => {
+    expect(() => portableAgentFrontmatter({ description: 5 }, "a")).toThrow(
+      InvalidAgentFrontmatterError
+    );
+  });
+
+  it("drops the empty entries of a comma-separated tools string", () => {
+    expect(
+      portableAgentFrontmatter({ description: "d", tools: "Read,, ,Grep," }, "a").tools
+    ).toEqual(["Read", "Grep"]);
+  });
+
+  it.each(["", " , ", 7])("emits no tools key when the tools value (%j) names no tool", (tools) => {
+    expect(portableAgentFrontmatter({ description: "d", tools }, "a")).not.toHaveProperty("tools");
+  });
 });
