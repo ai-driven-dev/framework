@@ -2,8 +2,8 @@ import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../kernel/reading/json-file.js";
 import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
+import type { PrivateStorage } from "../../../shared/ports/private-storage.js";
 import { requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
-import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
 import {
   parseStoredUsage,

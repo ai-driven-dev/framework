@@ -6,8 +6,8 @@ import {
   type FrameworkBuildTarget,
 } from "../../../src/contexts/translate/domain/build-target.js";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
-import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
 import { createFrameworkBuildUseCase } from "../../../src/runtime/wiring/translate.js";
+import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";

@@ -2,7 +2,7 @@ import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MarketplaceTrustStoreAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-trust-store-adapter.js";
-import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/filesystem/hasher-adapter.js";
 import { InMemoryMarketplaceTrustStore } from "../../../helpers/ports/in-memory-marketplace-trust-store.js";
 import { describeMarketplaceTrustStoreContract } from "../testing/marketplace-trust-store-contract.js";
 

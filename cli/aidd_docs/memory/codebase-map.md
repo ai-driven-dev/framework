@@ -92,6 +92,7 @@ src/
 │   │       ├── consent/    # reading a clone's identity from the file system, and the consent history file
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
+│   │       ├── git/    # the environment a git child process runs in
 │   │       ├── identity/    # the identity file in the telemetry dir
 │   │       ├── legacy/    # the table of ids an earlier version gave repositories, beside the ledger
 │   │       ├── left-out/    # what ingests measured and could not store, by hash, beside the ledger
@@ -115,6 +116,7 @@ src/
 │   └── reading/    # getting at a file's location and its content safely
 ├── shared/    # technology ports and their adapters. Imports no context
 │   ├── infrastructure/    # adapters of the shared ports, imported by the composition root only
+│   │   └── filesystem/    # reading and writing files: the file adapter, its hasher, the atomic write, the owner-only storage
 │   └── ports/    # a technology port two or more contexts need
 ├── presentation/    # everything that talks to a human — depends on contexts, never the reverse
 │   ├── commands/    # one file per command, wiring only
@@ -123,10 +125,6 @@ src/
 │   ├── hooks/    # what runs around every command: the update notice before it, the refresh after
 │   └── prompts/    # asking the user; the decision stays in the context
 └── runtime/    # technical services that are not a context
-    ├── assets/
-    ├── filesystem/
-    ├── git/
-    ├── platform/
     ├── project-root/
     ├── prompter/
     └── wiring/    # one composition module per context, plus the composition root
@@ -139,7 +137,7 @@ src/
 - `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
 - `src/contexts/`: the nine bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
-- `src/runtime/`: services that are not a context: git, assets, filesystem, and the wiring that composes everything.
+- `src/runtime/`: services that are not a context: the prompter, the project root, and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.
 - `assets/`: configs inlined at build time, schemas copied beside the binary.
 - `scripts/`: bundle budget, mutation runner, smoke harness, the copy check between tool profiles.

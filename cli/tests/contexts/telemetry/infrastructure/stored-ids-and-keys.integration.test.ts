@@ -4,14 +4,14 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { StoredUsageMigration } from "../../../../src/contexts/telemetry/application/legacy/stored-usage-migration.js";
 import { legacyRepositoryIdOf } from "../../../../src/contexts/telemetry/domain/legacy/legacy-repository-identity.js";
-import type { PrivateStorage } from "../../../../src/contexts/telemetry/domain/ports/private-storage.js";
 import { repositoryIdOf } from "../../../../src/contexts/telemetry/domain/repository-identity.js";
 import { renderResolutions } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import { BindingSnapshotStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
 import { RepositoryAliasStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
 import { ResolutionStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/resolution-store-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/filesystem/private-storage-adapter.js";
+import type { PrivateStorage } from "../../../../src/shared/ports/private-storage.js";
 import { FailingStorage } from "../../../helpers/ports/failing-private-storage.js";
 import { cloneOf, FakeLocator } from "../../../helpers/ports/in-memory-telemetry.js";
 

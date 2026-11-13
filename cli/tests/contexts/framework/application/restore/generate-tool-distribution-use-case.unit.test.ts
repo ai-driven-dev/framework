@@ -6,7 +6,7 @@ import type { ToolProfile } from "../../../../../src/contexts/tools/contract/too
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { InstallationFile } from "../../../../../src/kernel/file.js";
 import type { ToolId } from "../../../../../src/kernel/tool.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";

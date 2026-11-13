@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { environmentWithoutGitVariables } from "../../../src/runtime/git/git-environment.js";
+import { environmentWithoutGitVariables } from "../../../../../src/contexts/telemetry/infrastructure/git/git-environment.js";
 
 describe("environmentWithoutGitVariables", () => {
   it("drops every variable git exports into a hook, and keeps the rest", () => {

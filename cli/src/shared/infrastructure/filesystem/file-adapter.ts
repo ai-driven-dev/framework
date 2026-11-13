@@ -1,14 +1,14 @@
 import { constants } from "node:fs";
 import { access, mkdir, readdir, readFile, realpath, rm, rmdir, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { FileHash } from "../../kernel/file.js";
-import { type MergeStrategy, mergeIntoJsonFile } from "../../kernel/merge.js";
-import { posixRelative } from "../../kernel/paths.js";
-import type { FileReader } from "../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../kernel/ports/file-writer.js";
-import type { Hasher } from "../../kernel/ports/hasher.js";
-import type { Logger } from "../../kernel/ports/logger.js";
-import type { FileMerger } from "../../shared/ports/file-merger.js";
+import type { FileHash } from "../../../kernel/file.js";
+import { type MergeStrategy, mergeIntoJsonFile } from "../../../kernel/merge.js";
+import { posixRelative } from "../../../kernel/paths.js";
+import type { FileReader } from "../../../kernel/ports/file-reader.js";
+import type { FileWriter } from "../../../kernel/ports/file-writer.js";
+import type { Hasher } from "../../../kernel/ports/hasher.js";
+import type { Logger } from "../../../kernel/ports/logger.js";
+import type { FileMerger } from "../../ports/file-merger.js";
 import { atomicWriteFile } from "./atomic-write.js";
 
 export class FileAdapter implements FileReader, FileWriter, FileMerger {

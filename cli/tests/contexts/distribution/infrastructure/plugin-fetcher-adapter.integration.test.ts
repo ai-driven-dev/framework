@@ -7,8 +7,8 @@ import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { PluginFetchError } from "../../../../src/kernel/errors.js";
-import { FileAdapter } from "../../../../src/runtime/filesystem/file-adapter.js";
-import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter.js";
+import { FileAdapter } from "../../../../src/shared/infrastructure/filesystem/file-adapter.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/filesystem/hasher-adapter.js";
 
 const execFileAsync = promisify(execFile);
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");

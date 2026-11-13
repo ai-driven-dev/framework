@@ -1,4 +1,4 @@
-import type { Platform } from "./platform.js";
+import type { Platform } from "../ports/platform.js";
 
 export class PlatformAdapter implements Platform {
   current(): string {

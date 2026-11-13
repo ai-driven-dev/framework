@@ -13,7 +13,7 @@ import {
 } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { foldUsage } from "../../../../src/contexts/telemetry/domain/usage-fold.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/filesystem/private-storage-adapter.js";
 
 let root: string;
 let runs = 0;

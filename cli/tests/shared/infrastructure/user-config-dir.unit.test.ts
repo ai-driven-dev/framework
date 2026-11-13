@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { userConfigDir } from "../../src/runtime/user-config-dir.js";
+import { userConfigDir } from "../../../src/shared/infrastructure/user-config-dir.js";
 
 const ENV_KEYS = ["AIDD_USER_CONFIG_DIR", "XDG_CONFIG_HOME"] as const;
 

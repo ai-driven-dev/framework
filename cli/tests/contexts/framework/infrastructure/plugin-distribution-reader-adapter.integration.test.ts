@@ -11,8 +11,8 @@ import {
   InvalidPluginManifestError,
   InvalidPluginNameError,
 } from "../../../../src/kernel/errors.js";
-import { FileAdapter } from "../../../../src/runtime/filesystem/file-adapter.js";
-import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter.js";
+import { FileAdapter } from "../../../../src/shared/infrastructure/filesystem/file-adapter.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/filesystem/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 

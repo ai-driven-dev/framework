@@ -1,4 +1,4 @@
-import type { Platform } from "../../../src/runtime/platform/platform.js";
+import type { Platform } from "../../../src/shared/ports/platform.js";
 
 export class FakePlatform implements Platform {
   constructor(private readonly platformName: string = "linux") {}

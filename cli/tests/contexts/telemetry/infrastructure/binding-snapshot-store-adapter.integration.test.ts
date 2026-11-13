@@ -7,7 +7,7 @@ import {
   snapshotKey,
 } from "../../../../src/contexts/telemetry/domain/branch-binding.js";
 import { BindingSnapshotStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/filesystem/private-storage-adapter.js";
 import { NO_ALIASES } from "../../../helpers/ports/in-memory-telemetry.js";
 
 let root: string;

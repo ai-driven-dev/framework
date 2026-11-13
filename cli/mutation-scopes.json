@@ -41,7 +41,11 @@
       "shards": 4
     },
     "telemetry": {
-      "mutate": ["src/contexts/telemetry/**/*.ts", "src/presentation/display/telemetry/**/*.ts"],
+      "mutate": [
+        "src/contexts/telemetry/**/*.ts",
+        "src/presentation/display/telemetry/**/*.ts",
+        "!src/contexts/telemetry/infrastructure/git/**/*.ts"
+      ],
       "break": 96,
       "shards": 3
     },
@@ -64,11 +68,24 @@
       "break": 95
     },
     "runtime": {
-      "mutate": "src/runtime/**/*.ts",
+      "mutate": [
+        "src/runtime/**/*.ts",
+        "src/shared/infrastructure/filesystem/**/*.ts",
+        "src/shared/infrastructure/asset-loader.ts",
+        "src/shared/infrastructure/platform-adapter.ts",
+        "src/shared/infrastructure/user-config-dir.ts",
+        "src/contexts/telemetry/infrastructure/git/**/*.ts"
+      ],
       "break": 90
     },
     "shared": {
-      "mutate": "src/shared/**/*.ts",
+      "mutate": [
+        "src/shared/**/*.ts",
+        "!src/shared/infrastructure/filesystem/**/*.ts",
+        "!src/shared/infrastructure/asset-loader.ts",
+        "!src/shared/infrastructure/platform-adapter.ts",
+        "!src/shared/infrastructure/user-config-dir.ts"
+      ],
       "break": 95
     },
     "tools-claude": {

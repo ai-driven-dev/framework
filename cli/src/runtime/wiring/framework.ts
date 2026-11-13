@@ -86,18 +86,18 @@ import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-ca
 import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../presentation/prompts/setup-tools-prompt-use-case.js";
 import { SyncConflictResolverUseCase } from "../../presentation/prompts/sync-conflict-resolver-use-case.js";
+import { BundledAssetProviderAdapter } from "../../shared/infrastructure/asset-loader.js";
 import { CurrentVersionAdapter } from "../../shared/infrastructure/current-version-adapter.js";
 import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
+import { atomicWriteFile } from "../../shared/infrastructure/filesystem/atomic-write.js";
+import { FileAdapter } from "../../shared/infrastructure/filesystem/file-adapter.js";
+import { HasherAdapter } from "../../shared/infrastructure/filesystem/hasher-adapter.js";
 import { HttpClient } from "../../shared/infrastructure/http-client.js";
+import { PlatformAdapter } from "../../shared/infrastructure/platform-adapter.js";
+import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Environment } from "../../shared/ports/environment.js";
 import type { FileMerger } from "../../shared/ports/file-merger.js";
-import { BundledAssetProviderAdapter } from "../assets/asset-loader.js";
-import { atomicWriteFile } from "../filesystem/atomic-write.js";
-import { FileAdapter } from "../filesystem/file-adapter.js";
-import { HasherAdapter } from "../filesystem/hasher-adapter.js";
-import { PlatformAdapter } from "../platform/platform-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "../prompter/prompter-adapter.js";
-import { userConfigDir } from "../user-config-dir.js";
 import { type TelemetryDeps, wireTelemetry } from "./telemetry.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 

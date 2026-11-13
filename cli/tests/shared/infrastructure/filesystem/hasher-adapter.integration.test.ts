@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HasherAdapter } from "../../../src/runtime/filesystem/hasher-adapter.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/filesystem/hasher-adapter.js";
 
 describe("HasherAdapter", () => {
   const hasher = new HasherAdapter();

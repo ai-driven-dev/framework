@@ -1,10 +1,16 @@
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { AssetNotFoundError } from "../../kernel/errors.js";
 import type { ConfigAsset, SchemaName } from "../../kernel/file.js";
 import type { AssetProvider } from "../../kernel/ports/asset-provider.js";
 import type { ToolId } from "../../kernel/tool.js";
+
+/** The one thing the loader asks of a tool catalog: a profile that can hand back a shipped config. */
+interface ConfigAssetCatalog {
+  profile(id: ToolId): {
+    configAsset(name: string): { readonly content: ConfigAsset } | undefined;
+  };
+}
 
 const SCHEMA_FILE = "claude-code-plugin-manifest.json";
 const MARKETPLACE_SCHEMA_FILE = "copilot-plugin-marketplace.json";
@@ -23,7 +29,7 @@ const SCHEMA_FILES: Record<SchemaName, string> = {
 export class BundledAssetProviderAdapter implements AssetProvider {
   private readonly schemaCache = new Map<SchemaName, object>();
 
-  constructor(private readonly tools: ToolCatalog) {}
+  constructor(private readonly tools: ConfigAssetCatalog) {}
 
   loadConfigAsset(toolId: ToolId, fileName: string): ConfigAsset {
     const shipped = this.tools.profile(toolId).configAsset(fileName);

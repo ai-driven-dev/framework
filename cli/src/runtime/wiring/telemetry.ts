@@ -33,6 +33,7 @@ import { GitBranchBindingStoreAdapter } from "../../contexts/telemetry/infrastru
 import { SessionBindingStoreAdapter } from "../../contexts/telemetry/infrastructure/declaration/session-binding-store-adapter.js";
 import { MeasurementErasureAdapter } from "../../contexts/telemetry/infrastructure/forget/measurement-erasure-adapter.js";
 import { RepositoryDeclarationsAdapter } from "../../contexts/telemetry/infrastructure/forget/repository-declarations-adapter.js";
+import { environmentWithoutGitVariables } from "../../contexts/telemetry/infrastructure/git/git-environment.js";
 import { GitBranchBindingSourceAdapter } from "../../contexts/telemetry/infrastructure/git-branch-binding-source-adapter.js";
 import { GitConsentAdapter } from "../../contexts/telemetry/infrastructure/git-consent-adapter.js";
 import { GitRepositoryLocatorAdapter } from "../../contexts/telemetry/infrastructure/git-repository-locator-adapter.js";
@@ -49,9 +50,8 @@ import {
   codexSessionRoots,
 } from "../../contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
 import { UsageLedgerAdapter } from "../../contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../filesystem/private-storage-adapter.js";
-import { environmentWithoutGitVariables } from "../git/git-environment.js";
-import { userConfigDirOf } from "../user-config-dir.js";
+import { PrivateStorageAdapter } from "../../shared/infrastructure/filesystem/private-storage-adapter.js";
+import { userConfigDirOf } from "../../shared/infrastructure/user-config-dir.js";
 
 export interface TelemetryDeps {
   declareTaskUseCase: DeclareTaskUseCase;

@@ -21,9 +21,9 @@ import type { FileReader } from "../kernel/ports/file-reader.js";
 import type { FileWriter } from "../kernel/ports/file-writer.js";
 import type { Hasher } from "../kernel/ports/hasher.js";
 import type { Logger } from "../kernel/ports/logger.js";
-import { atomicWriteFile } from "../runtime/filesystem/atomic-write.js";
-import { userConfigDir } from "../runtime/user-config-dir.js";
+import { atomicWriteFile } from "../shared/infrastructure/filesystem/atomic-write.js";
 import type { HttpClient } from "../shared/infrastructure/http-client.js";
+import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { FileMerger } from "../shared/ports/file-merger.js";
 
 export interface DistributionWiringShared {

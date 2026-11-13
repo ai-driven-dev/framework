@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
-import type { PrivateStorage } from "../domain/ports/private-storage.js";
+import type { PrivateStorage } from "../../../shared/ports/private-storage.js";
 import type { ResolutionStore } from "../domain/ports/resolution-store.js";
 import {
   parseResolutions,

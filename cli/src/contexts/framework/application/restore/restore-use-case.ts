@@ -7,8 +7,8 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
-import type { Platform } from "../../../../runtime/platform/platform.js";
 import type { FileMerger } from "../../../../shared/ports/file-merger.js";
+import type { Platform } from "../../../../shared/ports/platform.js";
 import type { PluginFetcher } from "../../../distribution/ports/plugin-fetcher.js";
 import {
   CONFIG_MCP,

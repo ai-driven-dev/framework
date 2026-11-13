@@ -7,8 +7,8 @@ import { CredentialRecordFileAdapter } from "../contexts/auth/infrastructure/cre
 import { GhCliAdapter } from "../contexts/auth/infrastructure/gh-cli-adapter.js";
 import type { CliAuthProvider } from "../contexts/auth/ports/cli-auth-provider.js";
 import type { Logger } from "../kernel/ports/logger.js";
-import { userConfigDir } from "../runtime/user-config-dir.js";
 import { GitHubAdapter } from "../shared/infrastructure/github-adapter.js";
+import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { HttpGet } from "../shared/ports/http-get.js";
 

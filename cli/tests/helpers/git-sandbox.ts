@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
-import { environmentWithoutGitVariables } from "../../src/runtime/git/git-environment.js";
+import { environmentWithoutGitVariables } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
 
 /** git told to read no configuration of the machine running the test: a global `insteadOf`,
  * a signing key or a default branch name must not change what a test sees. */

@@ -5,7 +5,7 @@ import {
   removeEntriesFromJson,
 } from "../../src/kernel/merge.js";
 import type { Hasher } from "../../src/kernel/ports/hasher.js";
-import { HasherAdapter } from "../../src/runtime/filesystem/hasher-adapter.js";
+import { HasherAdapter } from "../../src/shared/infrastructure/filesystem/hasher-adapter.js";
 
 const hasher: Hasher = new HasherAdapter();
 

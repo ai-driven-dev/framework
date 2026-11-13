@@ -78,8 +78,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/telemetry/application/ingest-usage-use-case.ts",
     // why a call was not stored, which the result names and a display words
     "src/contexts/telemetry/domain/repository-resolution.ts",
-    // the owner-only storage the runtime implements for the context
-    "src/contexts/telemetry/domain/ports/private-storage.ts",
     // the declaration a person makes: what `task` validates and sends, and the two results it
     // prints, with the reasons a declaration is refused
     "src/contexts/telemetry/domain/declaration/task-declaration.ts",

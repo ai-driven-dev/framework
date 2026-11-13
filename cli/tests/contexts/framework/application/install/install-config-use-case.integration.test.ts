@@ -6,7 +6,7 @@ import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copil
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/asset-loader.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";

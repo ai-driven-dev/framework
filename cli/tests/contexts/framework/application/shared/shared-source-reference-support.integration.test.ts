@@ -4,8 +4,8 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolveProjectRootForReferences } from "../../../../../src/contexts/framework/application/shared/shared-source-reference-support.js";
 import { CLIOutput } from "../../../../../src/presentation/output.js";
-import { FileAdapter } from "../../../../../src/runtime/filesystem/file-adapter.js";
-import { HasherAdapter } from "../../../../../src/runtime/filesystem/hasher-adapter.js";
+import { FileAdapter } from "../../../../../src/shared/infrastructure/filesystem/file-adapter.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/filesystem/hasher-adapter.js";
 
 let root: string;
 

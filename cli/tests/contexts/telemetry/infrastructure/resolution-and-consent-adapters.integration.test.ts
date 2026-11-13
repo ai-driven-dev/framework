@@ -6,7 +6,7 @@ import type { CloneIdentity } from "../../../../src/contexts/telemetry/domain/co
 import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import { ConsentHistoryAdapter } from "../../../../src/contexts/telemetry/infrastructure/consent/consent-history-adapter.js";
 import { ResolutionStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/resolution-store-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/filesystem/private-storage-adapter.js";
 
 let root: string;
 beforeEach(async () => {

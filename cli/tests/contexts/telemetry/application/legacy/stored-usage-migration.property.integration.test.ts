@@ -14,7 +14,6 @@ import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/a
 import type { CloneIdentity } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
 import { legacyRepositoryIdOf } from "../../../../../src/contexts/telemetry/domain/legacy/legacy-repository-identity.js";
-import type { PrivateStorage } from "../../../../../src/contexts/telemetry/domain/ports/private-storage.js";
 import type { ReportAxis } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
 import {
@@ -27,7 +26,8 @@ import { BindingSnapshotStoreAdapter } from "../../../../../src/contexts/telemet
 import { RepositoryAliasStoreAdapter } from "../../../../../src/contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
 import { ResolutionStoreAdapter } from "../../../../../src/contexts/telemetry/infrastructure/resolution-store-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/filesystem/private-storage-adapter.js";
+import type { PrivateStorage } from "../../../../../src/shared/ports/private-storage.js";
 import { FailingStorage } from "../../../../helpers/ports/failing-private-storage.js";
 import {
   cloneOf,

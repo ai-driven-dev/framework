@@ -6,7 +6,7 @@ import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/appl
 import { BindingSnapshotStoreAdapter } from "../../../../src/contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
 import { BindingsLockAdapter } from "../../../../src/contexts/telemetry/infrastructure/bindings-lock-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../src/shared/infrastructure/filesystem/private-storage-adapter.js";
 import { FakeBindings, NO_ALIASES } from "../../../helpers/ports/in-memory-telemetry.js";
 
 let root: string;

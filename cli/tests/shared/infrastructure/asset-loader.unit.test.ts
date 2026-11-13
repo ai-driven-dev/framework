@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { parseToml } from "../../../src/contexts/tools/domain/formats/toml.js";
-import { BundledAssetProviderAdapter } from "../../../src/runtime/assets/asset-loader.js";
+import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 
 const provider = new BundledAssetProviderAdapter(wireTools());
 

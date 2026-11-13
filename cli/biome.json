@@ -2719,6 +2719,10 @@
                     "message": "framework may import translate, tools and distribution, never telemetry \u2014 see context-graph.arch.test.ts"
                   },
                   {
+                    "group": ["**/runtime/**"],
+                    "message": "runtime wires the contexts and is imported by nothing, see context-graph.arch.test.ts"
+                  },
+                  {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   },

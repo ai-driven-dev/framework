@@ -14,7 +14,7 @@ import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/c
 import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
 import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import { PrivateStorageAdapter } from "../../../../../src/runtime/filesystem/private-storage-adapter.js";
+import { PrivateStorageAdapter } from "../../../../../src/shared/infrastructure/filesystem/private-storage-adapter.js";
 import {
   ALREADY_MIGRATED,
   cloneOf,

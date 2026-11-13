@@ -7,8 +7,8 @@ import {
   InvalidPluginManifestError,
   MalformedMarketplaceCatalogError,
 } from "../../../../src/kernel/errors.js";
-import { FileAdapter } from "../../../../src/runtime/filesystem/file-adapter.js";
-import { HasherAdapter } from "../../../../src/runtime/filesystem/hasher-adapter.js";
+import { FileAdapter } from "../../../../src/shared/infrastructure/filesystem/file-adapter.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/filesystem/hasher-adapter.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
 const COPILOT_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/copilot-format");
