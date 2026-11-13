@@ -28,15 +28,20 @@ export function isSemver(s: string): boolean {
   return parseSemver(s) !== undefined;
 }
 
+function compareOrdered<T extends number | string>(a: T, b: T): -1 | 0 | 1 {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
 export function compareSemver(a: string, b: string): -1 | 0 | 1 {
   // Two unparseable strings compare equal rather than throwing: a caller gating on `<= 0`
   // must see "no drift decided here", never a crash.
   const zero: ParsedSemver = { major: 0, minor: 0, patch: 0, prerelease: [] };
   const pa = parseSemver(a) ?? zero;
   const pb = parseSemver(b) ?? zero;
-  if (pa.major !== pb.major) return pa.major < pb.major ? -1 : 1;
-  if (pa.minor !== pb.minor) return pa.minor < pb.minor ? -1 : 1;
-  if (pa.patch !== pb.patch) return pa.patch < pb.patch ? -1 : 1;
+  for (const part of ["major", "minor", "patch"] as const) {
+    const order = compareOrdered(pa[part], pb[part]);
+    if (order !== 0) return order;
+  }
   return comparePrerelease(pa.prerelease, pb.prerelease);
 }
 
@@ -64,10 +69,8 @@ function comparePrereleaseIdentifier(a: string, b: string): -1 | 0 | 1 {
   const aIsNumeric = NUMERIC_IDENTIFIER.test(a);
   const bIsNumeric = NUMERIC_IDENTIFIER.test(b);
   if (aIsNumeric && bIsNumeric) {
-    const [an, bn] = [Number(a), Number(b)];
-    return an === bn ? 0 : an < bn ? -1 : 1;
+    return compareOrdered(Number(a), Number(b));
   }
   if (aIsNumeric !== bIsNumeric) return aIsNumeric ? -1 : 1;
-  if (a === b) return 0;
-  return a < b ? -1 : 1;
+  return compareOrdered(a, b);
 }

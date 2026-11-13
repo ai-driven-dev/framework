@@ -636,3 +636,32 @@ describe("every error in the catalog", () => {
     expect(new errors.HttpNotFoundError("https://x/y").url).toBe("https://x/y");
   });
 });
+
+describe("error names and messages a caller matches on", () => {
+  it.each([
+    new errors.ActiveMachineDependentsError("x", ["a"]),
+    new errors.DuplicateToolIdError("t"),
+    new errors.InvalidHooksDescriptorError("t", "unknown-event", "d"),
+    new errors.InvalidToolProfileError("t", "unknown-tool-id", "d"),
+    new errors.KiloDualConfigError(),
+    new errors.InvalidAgentFrontmatterError("a", "d"),
+  ])("names itself after its class: $constructor.name", (error) => {
+    expect(error.name).toBe(error.constructor.name);
+  });
+
+  it("lists every dependent project, comma separated", () => {
+    expect(new errors.ActiveMachineDependentsError("x", ["a", "b"]).message).toBe(
+      "Cannot remove x: active projects still depend on it: a, b."
+    );
+  });
+
+  it("says which tool was registered twice", () => {
+    expect(new errors.DuplicateToolIdError("t").message).toBe("Tool 't' is registered twice.");
+  });
+
+  it("asks to remove one of the two Kilo config variants", () => {
+    expect(new errors.KiloDualConfigError().message).toBe(
+      "Both Kilo JSON and JSONC config variants exist at the same location. Remove one."
+    );
+  });
+});

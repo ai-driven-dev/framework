@@ -153,6 +153,12 @@ describe("parsePluginSource", () => {
         );
       });
 
+      it("rejects a package name with a trailing invalid character", () => {
+        expect(() => parsePluginSource({ kind: "npm", package: "my-plugin!" })).toThrow(
+          new InvalidPluginSourceError(npmNameDetail("my-plugin!"))
+        );
+      });
+
       it("rejects a package name with uppercase letters", () => {
         expect(() => parsePluginSource({ kind: "npm", package: "My-Plugin" })).toThrow(
           new InvalidPluginSourceError(npmNameDetail("My-Plugin"))
@@ -223,6 +229,12 @@ describe("parsePluginSource", () => {
       );
     });
 
+    it("throws for a number", () => {
+      expect(() => parsePluginSource(42)).toThrow(
+        new InvalidPluginSourceError("expected an object.")
+      );
+    });
+
     it("throws for array", () => {
       expect(() => parsePluginSource([])).toThrow(
         new InvalidPluginSourceError("expected an object.")
@@ -288,6 +300,12 @@ describe("the source spellings a user types", () => {
     it("refuses a spelling whose repo half is not owner/repo", () => {
       expect(() => parsePluginSourceShorthand("not-a-repo@v1")).toThrow(
         new InvalidPluginSourceError('unrecognized source format: "not-a-repo@v1"')
+      );
+    });
+
+    it("does not read a spelling with no @ as a repo missing its last character", () => {
+      expect(() => parsePluginSourceShorthand("owner/repo!")).toThrow(
+        new InvalidPluginSourceError('unrecognized source format: "owner/repo!"')
       );
     });
 
@@ -447,6 +465,15 @@ describe("a manifest field of the wrong type", () => {
       /40-character lowercase hex/
     );
   });
+
+  it.each(["a".repeat(40) + "x", "x" + "a".repeat(40)])(
+    "refuses a sha with a stray character around the 40 hex ones: %s",
+    (sha) => {
+      expect(() => parsePluginSource({ kind: "github", repo: "owner/repo", sha })).toThrow(
+        /40-character lowercase hex/
+      );
+    }
+  );
 
   it("accepts a well-formed sha", () => {
     const sha = "a".repeat(40);
