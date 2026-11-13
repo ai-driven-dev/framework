@@ -303,7 +303,9 @@ a.card .mini { border: 0; border-bottom: 1px solid var(--line); border-radius: 0
 .mini-card:hover { text-decoration: none; border-color: #c7cdfb; box-shadow: var(--shadow-2); }
 .mini-card b { font-size: 13px; font-weight: 600; }
 .mini-card .chip { line-height: 18px; padding: 0 8px; font-size: var(--t-xs); }
-.open-review { position: fixed; bottom: var(--s5); right: var(--s5); z-index: 20; display: inline-flex; align-items: center; gap: var(--s2); height: 34px; box-shadow: var(--shadow-2); }
+.open-review { position: fixed; bottom: var(--s5); right: var(--s5); z-index: 20; display: inline-flex; align-items: center; gap: var(--s2); height: 34px; padding: 0 var(--s4); background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; box-shadow: var(--shadow-2); }
+.open-review:hover { background: var(--accent-hover); }
+.open-review .tally { background: rgba(255, 255, 255, 0.22); color: #fff; }
 .open-review[aria-expanded="true"] { display: none; }
 .tally { padding: 0 7px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); line-height: 18px; font-variant-numeric: tabular-nums; }
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 30; inline-size: var(--drawer); display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--line); box-shadow: -12px 0 32px rgba(24, 24, 20, 0.08); }

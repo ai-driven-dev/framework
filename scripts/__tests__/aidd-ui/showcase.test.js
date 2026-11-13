@@ -674,6 +674,8 @@ describe("aidd-ui showcase", () => {
       assert.match(opener, /bottom: var\(--s5\)/);
       assert.match(opener, /right: var\(--s5\)/);
       assert.doesNotMatch(opener, /top:/);
+      assert.match(opener, /background: var\(--accent\)/);
+      assert.match(opener, /color: #fff/);
       assert.match(rule(html, ".shell > main"), /padding: var\(--s6\) var\(--s7\) calc\(var\(--s7\) \+ 34px \+ var\(--s5\)\)/);
     });
 
