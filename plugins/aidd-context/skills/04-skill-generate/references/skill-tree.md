@@ -9,8 +9,10 @@ A generated skill has this shape:
 │   └── <NN>-<action>.md
 ├── references/
 │   └── <reference>.md
+├── scripts/
+│   └── <script>
 └── assets/
     └── <asset>
 ```
 
-Omit `actions/`, `references/`, or `assets/` when empty.
+Omit `actions/`, `references/`, `scripts/`, or `assets/` when empty.

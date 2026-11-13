@@ -1,18 +1,10 @@
 # Naming
 
-## Skill name
-
-| Domain   | Name it       | Example           |
-| -------- | ------------- | ----------------- |
-| tool     | singular noun | `slack`, `stripe` |
-| activity | action verb   | `review`, `test`  |
-
-Kebab-case, at most 64 chars, equal to the folder name (`^[a-z0-9]+(-[a-z0-9]+)*$`). `anthropic` and `claude` are reserved. Avoid a redundant prefix (`skill-slack`), a vague noun (`helper`), or a gerund (`reviewing`).
-
-## Action name
-
-Kebab-case verb phrase (`post-message`), a numbered prefix when order is strict. The slug drops the prefix.
-
-## Collision check
-
-List the installed skills, scan for description overlap. Two triggering on the same phrase means one is wrong: merge, rename, or tighten.
+| Item | Rule | Example |
+| --- | --- | --- |
+| Skill of a tool | singular noun | `slack` |
+| Skill of an activity | action verb | `review` |
+| Skill format | kebab-case, at most 64 chars, equal to its folder | `^[a-z0-9]+(-[a-z0-9]+)*$` |
+| Skill, reserved | never `anthropic` or `claude` | |
+| Skill, avoid | redundant prefix, vague noun, gerund | `skill-slack`, `helper`, `reviewing` |
+| Action | kebab-case verb phrase, `NN-` prefix when order is strict; the slug drops it | `01-post-message`, slug `post-message` |
