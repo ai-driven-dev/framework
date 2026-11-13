@@ -288,6 +288,46 @@ describe("skill check", () => {
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
+  it("sentence: two sentences in a step", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric. Write nothing else.");
+    expectError("sentence");
+  });
+
+  it("sentence: two sentences in a case of a step", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric.\n   - No rubric: ask for one. Then stop.");
+    expectError("sentence");
+  });
+
+  it("sentence: two clauses joined by a semicolon in a step", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric; write nothing else.");
+    expectError("sentence");
+  });
+
+  it("sentence: two sentences in a transversal rule", () => {
+    mutate("SKILL.md", "- Speak only to ask.", "- Speak only to ask. Wait after.");
+    expectError("sentence");
+  });
+
+  it("sentence: two sentences in an action rule", () => {
+    mutate("actions/02-second.md", "The answer.\n", "The answer.\n\n## Rules\n\n- Answer once; never twice.\n");
+    expectError("sentence");
+  });
+
+  it("sentence: an abbreviation like e.g. ends no sentence", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per a rubric (e.g. the team's, i.e. the shared one).");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("sentence: a period inside inline code or a link target is no finding", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per [the rubric](../references/rubric.md) with `a. b`.");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("sentence: several sentences outside the process are no finding", () => {
+    mutate("actions/02-second.md", "Answer.", "Answer. Then stop.");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
   it("skips code: fenced blocks and inline code hold no finding", () => {
     mutate("references/rubric.md", "| any | yes |", "| any | `**never** 2026-11` |\n\n```\n**never** [x](missing.md)\n```");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });

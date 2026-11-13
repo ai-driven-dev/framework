@@ -17,7 +17,8 @@ The files written.
    - Fix declined or impossible: report the blocker and stop.
 5. Propose a trial per [runtime-validation.md](../references/runtime-validation.md), then wait for approval.
    - Declined, no subagent, or running in a subagent: go to step 7, runtime unverified.
-6. Run the approved trial in a subagent and inspect its evidence; on failure, fix and repeat from step 1.
+6. Run the approved trial in a subagent and inspect its evidence.
+   - Failure: fix and repeat from step 1.
    - Trial scope changed: propose it again first.
 7. Report the findings and the runtime status, even when clean.
 

@@ -29,6 +29,9 @@ const ACTION_NODE = /\["(actions\/[^"]+\.md)"\]/gu;
 const BOX = /([\w-]+)\["([^"]*)"\]/gu;
 const ARROW = /\s*(<?(?:-->|-\.->|==>)(?:\|[^|]*\|)?)\s*/u;
 const SLOT = /<[a-z][^<>\n]*>/u;
+const CLAUSE_BREAK = /[.!?;]\s+\S/u;
+const ABBREVIATION = /\b(?:e\.g|i\.e|etc|vs|cf)\./giu;
+const ITEM_SECTIONS = ["Process", "Rules", ROUTER_SECTION];
 const ACTION_LINK =/\]\((?:\.\/)?(\d\d-[^)/]+\.md)\)/u;
 
 function excerpt(text) {
@@ -179,6 +182,18 @@ function checkAction(file, text, chains, report) {
   if (step !== undefined && !ACTION_LINK.test(lines[step])) report.error(file, step + 1, "read-next", lines[step], "end with a step that reads the next action, as a link");
 }
 
+/** Each numbered or dash item of a step or rule list holds one sentence, its cases as dash sub-items. */
+function checkItems(file, text, report) {
+  const lines = text.split("\n");
+  let inside = false;
+  proseLines(text).forEach((line, index) => {
+    const heading = /^##\s+(.+?)\s*$/u.exec(line);
+    if (heading) inside = ITEM_SECTIONS.includes(heading[1]);
+    const item = inside && /^\s*(?:\d+\.|-)\s+(.*)$/u.exec(line);
+    if (item && CLAUSE_BREAK.test(item[1].replace(LINK, "[]").replace(ABBREVIATION, "abbr"))) report.error(file, index + 1, "sentence", lines[index], "split it: one sentence per item, cases as dash sub-items");
+  });
+}
+
 /** Lexical rules every file obeys: length, bold, dates, citations. */
 function checkFile(skill, file, text, report) {
   const lines = text.split("\n");
@@ -228,6 +243,7 @@ function check(skill) {
     const text = fs.readFileSync(path.join(skill, file), "utf8");
     if (file === "SKILL.md") checkRouter(skill, text, report);
     if (actions.includes(file)) checkAction(file, text, chained.has(file), report);
+    if (file === "SKILL.md" || actions.includes(file)) checkItems(file, text, report);
     checkFile(skill, file, text, report);
   }
   return errors;
