@@ -77,6 +77,7 @@ const LABELS = {
     tokens: "Tokens",
     forPersona: "For",
     states: "States",
+    stateNames: {},
     steps: "{count} steps",
     noRender: "No render",
     statuses: { proposed: "proposed", validated: "validated", deprecated: "deprecated" },
@@ -133,6 +134,7 @@ const LABELS = {
     tokens: "Tokens",
     forPersona: "Pour",
     states: "États",
+    stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur" },
     steps: "{count} étapes",
     noRender: "Aucun rendu",
     statuses: { proposed: "proposé", validated: "validé", deprecated: "déprécié" },
@@ -141,6 +143,9 @@ const LABELS = {
     nextStep: "Étape suivante",
   },
 };
+
+/** A state as the page names it: a known name in the language, any other as written. */
+const stateNameOf = (labels, state) => (Object.hasOwn(labels.stateNames, state) ? labels.stateNames[state] : state);
 
 /** The language `code` names, English when there is no table for it. */
 const languageOf = (code) => (Object.hasOwn(LABELS, code) ? code : DEFAULT_LANGUAGE);
@@ -948,7 +953,7 @@ function stateOf({ record, state, verdict, render, tokens, captures, labels, pla
 
 /** The tabs of the states, in the order of their panels, each marked with the verdict that decides it. */
 function tabsOf(states, labels) {
-  const tab = ({ state, verdict }, at) => `<button type="button" role="tab" class="tab" id="${escaped(tabId(state))}" aria-controls="${escaped(panelId(state))}" aria-selected="${at === 0}" tabindex="${at === 0 ? 0 : -1}" data-tab="${escaped(state)}" data-current="${escaped(verdict.current)}"><i class="dot" aria-hidden="true"></i>${escaped(state)}</button>`;
+  const tab = ({ state, verdict }, at) => `<button type="button" role="tab" class="tab" id="${escaped(tabId(state))}" aria-controls="${escaped(panelId(state))}" aria-selected="${at === 0}" tabindex="${at === 0 ? 0 : -1}" data-tab="${escaped(state)}" data-current="${escaped(verdict.current)}"><i class="dot" aria-hidden="true"></i>${escaped(stateNameOf(labels, state))}</button>`;
   return `<div class="tabs" role="tablist" aria-label="${escaped(labels.states)}">${states.map(tab).join("")}</div>`;
 }
 
@@ -1041,7 +1046,7 @@ function drawerOf({ project, reviewable, rows, labels, current, sets = [], close
     total += states.length;
     const row = ({ state, verdict }) => [
       `<li class="pstate" data-state="${escaped(state)}" data-current="${escaped(verdict.current)}">`,
-      `<a class="pick" href="${escaped(id)}.html#${escaped(tabId(state))}">${escaped(state)}</a>`,
+      `<a class="pick" href="${escaped(id)}.html#${escaped(tabId(state))}">${escaped(stateNameOf(labels, state))}</a>`,
       `<span class="choose"><button type="button" class="verdict" data-verdict="ok" aria-pressed="false">${labels.ok}</button><button type="button" class="verdict" data-verdict="revise" aria-pressed="false">${labels.revise}</button></span>`,
       verdict.comment ? `<p class="said">${escaped(verdict.comment)}</p>` : "",
       `<textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea>`,

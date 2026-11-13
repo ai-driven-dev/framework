@@ -629,6 +629,18 @@ describe("aidd-ui showcase", () => {
       assert.match(pagesOf()["search-flow.html"], /<span class="chip" data-status="proposed">proposed<\/span>/);
     });
 
+    it("writes the known state names in the language in the tabs and the drawer rows, the raw names staying in the data and the copy", () => {
+      const fr = pagesOf({ lang: "fr" });
+      const tab = (html, state) => html.match(new RegExp(`<button type="button" role="tab"[^>]*data-tab="${state}"[^>]*>[\\s\\S]*?</button>`))[0];
+      assert.match(tab(fr["home.html"], "empty"), />vide<\/button>$/);
+      assert.match(rowOf(fr["home.html"], "home", "empty"), /<a class="pick" href="home\.html#tab-empty">vide<\/a>/);
+      assert.match(rowOf(fr["home.html"], "home", "empty"), /data-state="empty"/);
+      assert.deepEqual(["default", "empty", "loading", "error"].map((state) => rowOf(fr["home.html"], "home", state).match(/class="pick"[^>]*>([^<]*)</)[1]), ["par défaut", "vide", "chargement", "erreur"]);
+      assert.match(rowOf(fr["button.html"], "button", "hover"), /class="pick"[^>]*>hover</, "an unknown name as written");
+      assert.match(rowOf(pagesOf()["home.html"], "home", "empty"), /class="pick"[^>]*>empty</);
+      assert.equal(copiedOf([{ record: "home", version: 1, verdicts: [{ state: "empty", verdict: "ok", comment: "" }] }]).includes('"state": "empty"'), true);
+    });
+
     it("translates a deprecated status too, and shows an unknown one as written", () => {
       edit(tmp, `${UI}/wireframes/search-flow.md`, "status: proposed", "status: deprecated");
       assert.match(headerOf(pagesOf({ lang: "fr" })["search-flow.html"]), /data-status="deprecated">déprécié</);
