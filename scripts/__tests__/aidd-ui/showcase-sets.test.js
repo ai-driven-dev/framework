@@ -111,6 +111,17 @@ describe("aidd-ui showcase sets", () => {
       assert.doesNotMatch(same[0], /Voice|Tone/);
     });
 
+    it("sizes the frame to the render it holds and centres it in a column wider than the render", () => {
+      const { SCRIPT } = require(path.join(LIB, "variants.cjs"));
+      const box = (width, height) => ({ dataset: { width: String(width), height: String(height) }, parentElement: { clientWidth: 500 }, clientWidth: 500, firstElementChild: { style: {} }, style: {} });
+      const frames = [box(390, 844), box(1280, 800)];
+      new Function("document", "window", SCRIPT)({ querySelectorAll: () => frames, querySelector: () => ({}) }, { addEventListener() {} });
+      assert.equal(frames[0].style.width, "392px", "the mobile frame is its own width, not the column's");
+      assert.equal(frames[0].firstElementChild.style.transform, "scale(1)");
+      assert.equal(frames[1].firstElementChild.style.transform, "scale(0.390625)");
+      assert.match(unescaped(pagesOf([SET()])["_set-layout.html"]), /\.fit \{[^}]*margin-inline: auto/);
+    });
+
     it("shows a path that only some variants have as it is, and says nothing of it", () => {
       const set = SET();
       set.variants[1].files.push(file("only-b.md", "# Only B\n\n## Same\n\nShown.\n"));
@@ -156,11 +167,6 @@ describe("aidd-ui showcase sets", () => {
         assert.match(frame, /PREVIEW/);
         assert.doesNotMatch(frame, /Results, default/);
       }
-    });
-
-    it("gives the background to the page of the wireframe as well as to its body, so no strip of white shows in a narrow frame", () => {
-      const [frame] = framesOf(dressed([["Palette", "#0b0f14 #e8eef3 #7fd4f2"]]));
-      assert.match(frame, /html, body \{[^}]*background: #0b0f14/);
     });
 
     it("keeps the structure of the wireframe as written", () => {

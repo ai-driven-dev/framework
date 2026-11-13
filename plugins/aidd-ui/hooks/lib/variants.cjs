@@ -72,7 +72,7 @@ function lookOf(variant) {
 
 /** A wireframe dressed in a look by element styles alone: its structure stays as written. */
 function dressedOf(html, { background, text, accent, font }) {
-  const style = `<style>html, body { background: ${background}; } body { color: ${text};${font ? ` font-family: ${font};` : ""} } button { background: ${accent}; color: ${background}; border: 0; padding: 8px 16px; border-radius: 8px; font: inherit; } textarea, input { background: transparent; color: inherit; border: 1px solid ${accent}; }</style>`;
+  const style = `<style>body { background: ${background}; color: ${text};${font ? ` font-family: ${font};` : ""} } button { background: ${accent}; color: ${background}; border: 0; padding: 8px 16px; border-radius: 8px; font: inherit; } textarea, input { background: transparent; color: inherit; border: 1px solid ${accent}; }</style>`;
   return html.includes("</head>") ? html.replace("</head>", () => `${style}</head>`) : style + html;
 }
 
@@ -153,7 +153,7 @@ const STYLE = `
 .frames { display: flex; flex-direction: column; gap: var(--s3); }
 .frame { margin: 0; display: flex; flex-direction: column; gap: var(--s1); }
 .frame figcaption { font-size: var(--t-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); }
-.fit { position: relative; overflow: hidden; inline-size: 100%; border: 1px solid var(--line-strong); border-radius: var(--r2); background: #fff; }
+.fit { position: relative; overflow: hidden; margin-inline: auto; border: 1px solid var(--line-strong); border-radius: var(--r2); background: #fff; }
 .fit iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: #fff; }
 @media (max-width: 900px) { .variants { grid-template-columns: minmax(0, 1fr); } }
 `;
@@ -164,8 +164,10 @@ function fitFrames() {
   for (const box of document.querySelectorAll(".fit")) {
     const width = Number(box.dataset.width);
     const height = Number(box.dataset.height);
-    const scale = Math.min(1, (box.clientWidth || width) / width);
+    const room = box.parentElement.clientWidth || width;
+    const scale = Math.min(1, room / width);
     box.firstElementChild.style.transform = "scale(" + scale + ")";
+    box.style.width = Math.min(room, Math.ceil(width * scale) + 2) + "px";
     box.style.height = Math.ceil(height * scale) + "px";
   }
 }
