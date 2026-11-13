@@ -210,8 +210,8 @@ Not exceptions of the model: each vanishes when the old layout moves in stage C,
 | # | Deviation | Vanishes when |
 | --- | --- | --- |
 | M3 | the context imports `kernel/` (errors, `Logger`, `AIDD_DIR`) where the target has `shared/` | `kernel/` moves to `shared/` |
-| M4 | presentation reaches `createDeps` in `runtime/wiring/` where the target has `cli.ts` hand it the container | `runtime/wiring/` moves to `composition/` |
-| M5 | `runtime/wiring/framework.ts` imports `src/composition/auth.ts`, where the target has nobody import `composition/` | the same move, with M4 |
+| M4 | presentation reaches `createDeps` in `runtime/wiring/` (and `presentation/hooks/update-notice-hooks.ts` for the update notice and refresh) where the target has `cli.ts` hand it the container | `runtime/wiring/` moves to `composition/` |
+| M5 | `runtime/wiring/framework.ts` imports `src/composition/auth.ts` and `src/composition/update.ts`, where the target has nobody import `composition/` | the same move, with M4 |
 | M6 | `runtime/self-update/` still holds the latest-release resolver the distribution context reads, beside none of the update context | `distribution` migrates and takes it |
 | M-T1 | `kernel/tool.ts` declares the tool ids as a written union (`AiToolId`, `AI_TOOL_IDS`) where the target has an opaque `ToolId` in the shared domain, validated by the registry | `kernel/` moves to `shared/` with M3 and the id becomes the opaque `ToolId` (`target/00-overview.md:238`) |
 | M-T2 | use cases receive the `ToolCatalog` as an `execute()` argument or a `tools` option where the target has commands that take it in their constructor | each context's stage C PR turns its use cases into commands (`target/00-overview.md:201`) |

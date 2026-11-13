@@ -94,13 +94,13 @@ src/
 │   │       ├── left-out/    # what ingests measured and could not store, by hash, beside the ledger
 │   │       ├── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings; the clone's consent in git config is `git-consent-adapter.ts`, beside this folder
 │   │       └── transcripts/    # reading each tool's session files a block at a time; the Codex source
-│   └── translate/    # canonical source to target-native content
-│       ├── application/
-│       │   └── strategies/
-│       ├── domain/
-│       │   ├── formats/
-│       │   └── ports/
-│       └── infrastructure/
+│   ├── translate/    # canonical source to target-native content
+│   │   ├── application/
+│   │   │   └── strategies/
+│   │   ├── domain/
+│   │   │   ├── formats/
+│   │   │   └── ports/
+│   │   └── infrastructure/
 │   └── update/    # replacing the installed CLI with its latest release, and the notice that one exists
 │       ├── application/
 │       ├── domain/
@@ -117,6 +117,7 @@ src/
 │   ├── commands/    # one file per command, wiring only
 │   ├── display/    # rendering a result
 │   │   └── telemetry/    # the telemetry report, which outgrew one file beside the others
+│   ├── hooks/    # what runs around every command: the update notice before it, the refresh after
 │   └── prompts/    # asking the user; the decision stays in the context
 └── runtime/    # technical services that are not a context
     ├── assets/
@@ -134,7 +135,7 @@ src/
 - `src/composition/`: the wiring module of each migrated context. Only the composition root and `cli.ts` import it.
 - `src/shared/`: technology ports and their adapters that two or more contexts need. No context import.
 - `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
-- `src/contexts/`: the seven bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
+- `src/contexts/`: the eight bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
 - `src/runtime/`: services that are not a context — git, assets, filesystem, the latest-release resolver — and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.

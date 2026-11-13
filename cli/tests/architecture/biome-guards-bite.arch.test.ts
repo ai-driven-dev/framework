@@ -179,6 +179,8 @@ describe("the guard itself", () => {
       "src/contexts/auth/application",
       "src/contexts/auth/infrastructure",
       "src/contexts/auth/ports",
+      "src/contexts/update/application",
+      "src/contexts/update/infrastructure",
       "src/contexts/distribution/infrastructure",
       "src/composition",
     ]) {
@@ -308,6 +310,12 @@ describe("the guard itself", () => {
     writeFileSync(join(planted, "src/shared/ports/imports-path.ts"), imports("node:path"));
     writeFileSync(join(planted, "src/contexts/auth/ports/env.ts"), readsEnvSource);
     writeFileSync(join(planted, "src/contexts/auth/contract/env.ts"), readsEnvSource);
+    for (const folder of ["application", "infrastructure"]) {
+      writeFileSync(
+        join(planted, `src/contexts/update/${folder}/spawns.ts`),
+        'import { execSync } from "node:child_process";\nexport const run = execSync;\n'
+      );
+    }
     writeFileSync(join(planted, "src/composition/auth.ts"), "export type AuthDeps = number;\n");
     const reachesComposition = (up: string): string =>
       `import type { AuthDeps } from "${up}composition/auth.js";\nexport type Wired = AuthDeps;\n`;
@@ -451,6 +459,16 @@ describe("the guard itself", () => {
         `src/runtime/wiring/reaches-auth-${folder}.ts:${rule}`
       );
     }
+  });
+
+  it("flags the update context's application running a process, and not its infrastructure", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    expect(findings, findings.join(", ")).toContain(
+      `src/contexts/update/application/spawns.ts:${rule}`
+    );
+    expect(findings).not.toContain(`src/contexts/update/infrastructure/spawns.ts:${rule}`);
   });
 
   it("flags a context, the kernel, shared, presentation and runtime reaching the composition, and not the composition root", () => {
