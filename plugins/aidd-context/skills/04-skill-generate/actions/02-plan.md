@@ -4,13 +4,14 @@ Break the skill into actions, one job each.
 
 ## Input
 
-The source: the confirmed frame, or the existing skill.
+The request and its source: the confirmed frame, or the existing skill.
 
 ## Process
 
-1. List each file to write, with each breach of [skill-authoring.md](../references/skill-authoring.md) it fixes.
+1. List each file to write, with the breaches of [skill-authoring.md](../references/skill-authoring.md) it fixes and the requested changes it makes.
    - Nothing to change: say so and stop.
-2. List as content to keep each rule, step, branch, wait, loop and stop the source holds, with its file.
+2. List as content to keep each rule, step, branch, wait, loop and stop of the source, with its file.
+   - Changed by the request: list it as a change instead.
 3. List each fact of the source the rules leave no home, and each addition beyond the source and the request.
 4. Keep few actions; merge two that share most logic.
 5. Number each action and fill its row: slug, input to output, rules, the cases that enter it, its next actions and outcomes with their condition, check step; give every other file its path, kind and change.
@@ -19,4 +20,4 @@ The source: the confirmed frame, or the existing skill.
 
 ## Output
 
-A confirmed table, one row per file, with each target's frontmatter, the content to keep, and the facts dropped or added.
+A confirmed table, one row per file, with each target's frontmatter, the content to keep, the changes, and the facts dropped or added.
