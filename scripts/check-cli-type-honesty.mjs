@@ -29,6 +29,42 @@ const WIDENING_ANYWHERE = [
  */
 const WIDENING_SRC_ONLY = [/@ts-expect-error\b/, /@ts-ignore\b/];
 
+/**
+ * Every spelling that turns text into a tool id: an `as` followed by any type that names a tool
+ * id (`as AiToolId`, `as readonly ToolId[]`, `as Set<ToolId>`, `as Record<ToolId, x>`), `as typeof
+ * TOOL.x`, and an angle-bracket cast. `\s` lets a line break follow `as`. Checked in `src/` and
+ * `tests/` alike, outside `TOOL_ID_MINTER`.
+ */
+const TOOL_ID_CAST = new RegExp(
+  [
+    String.raw`\bas\s+[^;=\n]{0,80}?\b(?:Ai|Ide)?ToolId\b`,
+    String.raw`\bas\s+typeof\s+TOOL\b`,
+    String.raw`(?<![\w$>])<\s*(?:Ai|Ide)?ToolId\s*>\s*[\w$"'\`(\[{]`,
+  ].join("|")
+);
+
+/**
+ * A type predicate or assertion to a tool id (`x is ToolId`, `asserts x is IdeToolId`), whatever
+ * the parameter type or position: a hand-written one turns any text into an id the catalog never
+ * saw. Only the catalog's own declarations and `TOOL_ID_MINTER` may write one.
+ */
+const TOOL_ID_PREDICATE = /\bis\s+(?:Ai|Ide)?ToolId\b/;
+
+/** An import or export specifier list renames with `as` (`import { a as b, type ToolId }`): it
+ * casts nothing, so the tool-id rules read the source without it. */
+const SPECIFIER_LIST =
+  /^(?:import|export)\b[^;]*?\bfrom\s*["'][^"']*["']|^export\s*(?:type\s*)?\{[^}]*\}/gm;
+
+/** The one file where a written name becomes a tool id: a profile's own definition. */
+const TOOL_ID_MINTER = "src/contexts/tools/domain/profile/define-tool.ts";
+
+/** The files that declare the catalog's narrowing predicates `isAiTool` and `isIdeTool`. */
+const TOOL_ID_PREDICATE_HOLDERS = new Set([
+  TOOL_ID_MINTER,
+  "src/contexts/tools/contract/tool-catalog.ts",
+  "src/contexts/tools/application/registered-tool-catalog.ts",
+]);
+
 /** Cli-relative paths, each with the reason the cast survives. Listed so adding one is a
  * decision rather than a default. */
 const CASTS_ALLOWED = new Map([
@@ -78,6 +114,15 @@ for (const root of [SRC, TESTS]) {
     if (widensAType(source, patterns)) spentAllowances.add(cliPath);
     const breach = castBreach(cliPath, source, patterns);
     if (breach) breaches.push(`  ${breach}`);
+    const written = source.replace(SPECIFIER_LIST, "");
+    if (cliPath !== TOOL_ID_MINTER && TOOL_ID_CAST.test(written)) {
+      breaches.push(`  cli/${cliPath} casts text to a tool id - ask the catalog, or take a string`);
+    }
+    if (!TOOL_ID_PREDICATE_HOLDERS.has(cliPath) && TOOL_ID_PREDICATE.test(written)) {
+      breaches.push(
+        `  cli/${cliPath} declares a predicate to a tool id - ask the catalog, or take a string`
+      );
+    }
   }
 }
 
@@ -94,4 +139,6 @@ if (breaches.length > 0) {
   process.exit(1);
 }
 
-console.log("No type is widened through unknown, any or never, and no directive silences the compiler outside a test proving something does not compile.");
+console.log(
+  "No type is widened through unknown, any or never, and no directive silences the compiler outside a test proving something does not compile."
+);

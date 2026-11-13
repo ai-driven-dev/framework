@@ -1,6 +1,5 @@
 /**
- * A tool identifier may only appear in that tool's own profile, the registration list and the
- * shared vocabulary.
+ * A tool identifier may only appear in that tool's own profile and the registration list.
  * Everywhere else behaviour is read from the profile rather than branched on the name, or a
  * sixth tool means editing N files again. Scope is `src/`: a test naming the tool it tests is
  * not coupling. Comments are stripped first — prose about a tool's layout is documentation.
@@ -19,7 +18,6 @@ function toolIds(files: readonly string[]): string[] {
 }
 
 function isAllowed(file: string, ids: readonly string[]): boolean {
-  if (file === "src/shared/domain/tool.ts") return true;
   if (file === "src/contexts/tools/domain/profiles/registered-profiles.ts") return true;
   return ids.some((id) => file.startsWith(`src/contexts/tools/domain/profiles/${id}/`));
 }
