@@ -169,6 +169,36 @@ describe("aidd-ui showcase sets", () => {
       }
     });
 
+    describe("the sizes", () => {
+      const PALETTE = ["Palette", "#FFF8E7, #1F1A17, #E4572E"];
+      const sized = (cell) => dressed([PALETTE, ["Taille", cell]]);
+      const two = (a, b) => SET({ variants: [sized(a).variants[0], { ...sized(b).variants[0], name: "b" }] });
+      const bodySize = (set, at) => [...columnsOf(pagesOf([set])["_set-layout.html"])[at].html.matchAll(/srcdoc="([^"]*)"/g)].map((match) => /body \{[^}]*font-size: ([\d.]+)px/.exec(unescaped(match[1]))?.[1]);
+
+      it("reads the sizes of a cell in order: text, headings, buttons", () => {
+        const [frame] = framesOf(sized("texte 21 px, titres 38 px, boutons 60 px"));
+        assert.match(frame, /body \{[^}]*font-size: 21px/);
+        assert.match(frame, /h1, h2 \{[^}]*font-size: 38px/);
+        assert.match(frame, /button \{[^}]*min-height: 60px/);
+      });
+
+      it("reads the buttons as optional", () => {
+        const [frame] = framesOf(sized("texte 16 px, titres 28 px"));
+        assert.match(frame, /font-size: 28px/);
+        assert.doesNotMatch(frame, /min-height/);
+      });
+
+      it("gives two variants that differ only by that cell different dressed frames", () => {
+        const set = two("texte 16 px, titres 28 px", "texte 21 px, titres 38 px");
+        assert.deepEqual([bodySize(set, 0), bodySize(set, 1)], [["16", "16"], ["21", "21"]]);
+      });
+
+      it("sets nothing from a cell with fewer than two sizes", () => {
+        const [frame] = framesOf(sized("texte 16 px"));
+        assert.doesNotMatch(frame, /font-size|min-height/);
+      });
+    });
+
     it("keeps the structure of the wireframe as written", () => {
       const [frame] = framesOf(dressed([["Palette", "#0b0f14 #e8eef3 #7fd4f2"]]));
       assert.match(frame, /<div data-zone="query">Query<\/div>/);

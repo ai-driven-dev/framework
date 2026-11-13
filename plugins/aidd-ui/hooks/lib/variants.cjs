@@ -59,20 +59,27 @@ const cellOf = (value) =>
 
 const PALETTE_AXIS = /palette|colou?r|couleur/i;
 const FAMILY = /\b(sans-serif|serif|monospace)\b/i;
+const PIXELS = /(\d+(?:\.\d+)?)\s*px\b/gi;
 const FAMILIES = { "sans-serif": "system-ui, sans-serif", serif: "Georgia, serif", monospace: "ui-monospace, monospace" };
 
 /** What a variant says of its look in a form to read: the hex colours of its palette axis (background, text, then
- * accent) and the generic font family any other axis names. Null when it gives fewer than two colours. */
+ * accent), the generic font family any other axis names, and the sizes a cell gives in `px` (text, headings, then
+ * buttons) found by its values, never by its axis name. Null when it gives fewer than two colours. */
 function lookOf(variant) {
   const colours = variant.axes.filter(([axis]) => PALETTE_AXIS.test(axis)).flatMap(([, value]) => String(value ?? "").match(COLOUR) ?? []);
   if (colours.length < 2) return null;
   const family = variant.axes.filter(([axis]) => !PALETTE_AXIS.test(axis)).map(([, value]) => FAMILY.exec(String(value ?? ""))?.[1]?.toLowerCase()).find(Boolean);
-  return { background: colours[0], text: colours[1], accent: colours[2] ?? colours[1], font: family ? FAMILIES[family] : null };
+  const sizes = variant.axes.map(([, value]) => [...String(value ?? "").matchAll(PIXELS)].map((match) => match[1])).find((found) => found.length >= 2);
+  return { background: colours[0], text: colours[1], accent: colours[2] ?? colours[1], font: family ? FAMILIES[family] : null, sizes: sizes ?? null };
 }
 
 /** A wireframe dressed in a look by element styles alone: its structure stays as written. */
-function dressedOf(html, { background, text, accent, font }) {
-  const style = `<style>body { background: ${background}; color: ${text};${font ? ` font-family: ${font};` : ""} } button { background: ${accent}; color: ${background}; border: 0; padding: 8px 16px; border-radius: 8px; font: inherit; } textarea, input { background: transparent; color: inherit; border: 1px solid ${accent}; }</style>`;
+function dressedOf(html, { background, text, accent, font, sizes }) {
+  const [body, heading, button] = sizes ?? [];
+  const bodySize = body ? ` font-size: ${body}px;` : "";
+  const headingSize = heading ? ` h1, h2 { font-size: ${heading}px; }` : "";
+  const buttonSize = button ? ` min-height: ${button}px;` : "";
+  const style = `<style>body { background: ${background}; color: ${text};${font ? ` font-family: ${font};` : ""}${bodySize} }${headingSize} button { background: ${accent}; color: ${background}; border: 0; padding: 8px 16px; border-radius: 8px; font: inherit;${buttonSize} } textarea, input { background: transparent; color: inherit; border: 1px solid ${accent}; }</style>`;
   return html.includes("</head>") ? html.replace("</head>", () => `${style}</head>`) : style + html;
 }
 
