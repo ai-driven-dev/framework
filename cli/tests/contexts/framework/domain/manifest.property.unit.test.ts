@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
-import { VALID_TOOL_IDS } from "../../../../src/shared/domain/tool.js";
+import { catalogOf, resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
 
 /** 32-char lowercase hex → valid MD5. fast-check v4 removed hexaString; use stringMatching. */
 const md5Arb = fc.stringMatching(/^[0-9a-f]{32}$/);
@@ -19,7 +19,7 @@ const installationFileArb = fc
       new InstallationFile({ relativePath, content: "x", hash: new FileHash(hash) })
   );
 
-const toolIdArb = fc.constantFrom(...(VALID_TOOL_IDS as ToolId[]));
+const toolIdArb = fc.constantFrom(...catalogOf().idsInCanonicalOrder());
 
 const toolEntryArb = fc.record({
   toolId: toolIdArb,
@@ -46,7 +46,7 @@ describe("Manifest property tests", () => {
       fc.property(fc.array(toolEntryArb, { maxLength: 4 }), (tools) => {
         const m = buildManifest(tools);
         const firstSerialized = m.toJSON();
-        const reparsed = Manifest.fromJSON(firstSerialized);
+        const reparsed = Manifest.fromJSON(firstSerialized, resolveRegisteredToolId);
         const secondSerialized = reparsed.toJSON();
         expect(secondSerialized).toEqual(firstSerialized);
       }),
@@ -59,8 +59,8 @@ describe("Manifest property tests", () => {
       fc.property(fc.array(toolEntryArb, { maxLength: 4 }), (tools) => {
         const m = buildManifest(tools);
         const v6 = m.toJSON();
-        const once = Manifest.fromJSON(v6).toJSON();
-        const twice = Manifest.fromJSON(once).toJSON();
+        const once = Manifest.fromJSON(v6, resolveRegisteredToolId).toJSON();
+        const twice = Manifest.fromJSON(once, resolveRegisteredToolId).toJSON();
         expect(twice).toEqual(once);
       }),
       { numRuns: 100 }

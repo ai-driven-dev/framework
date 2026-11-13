@@ -30,7 +30,6 @@ import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/
 import { SetupToolsPromptUseCase } from "../../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
 import { UserScopeUnavailableError } from "../../../../src/shared/domain/errors.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
-import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../../../src/shared/domain/tool.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
 import {
   buildUnitDeps,
@@ -43,7 +42,7 @@ import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapt
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { OverwritePrompter, ScriptedPrompter } from "../../../helpers/ports/scripted-prompter.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, registeredToolIds } from "../../tools/testing/catalog-of.js";
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {
@@ -206,6 +205,7 @@ function remoteFlow(
   opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[]; scope: "project" | "user" }> = {}
 ): SetupFlow {
   return new SetupFlow({
+    registeredToolIds: registeredToolIds(),
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
     source: MarketplaceSourceMode.remote(),
@@ -221,6 +221,7 @@ describe("setup validates before any side effect", () => {
   it("non-interactive with no --source rejects without writing a manifest or .gitignore", async () => {
     const { useCase, deps } = await buildUseCase();
     const flow = new SetupFlow({
+      registeredToolIds: registeredToolIds(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       aiTools: [],
@@ -240,7 +241,10 @@ describe("setup without TTY", () => {
   it("fresh project with all tools flag initializes and installs all tools", async () => {
     const { useCase } = await buildUseCase();
     const result = await useCase.execute(
-      remoteFlow({ aiTools: [...AI_TOOL_IDS], ideTools: [...IDE_TOOL_IDS] }),
+      remoteFlow({
+        aiTools: [...catalogOf().idsInCanonicalOrder("ai")],
+        ideTools: [...catalogOf().idsInCanonicalOrder("ide")],
+      }),
       catalogOf()
     );
 
@@ -265,7 +269,10 @@ describe("setup without TTY", () => {
     deps.fs.writeFile(join(PROJECT_ROOT, "aidd_docs/.keep"), "");
 
     const result = await useCase.execute(
-      remoteFlow({ aiTools: [...AI_TOOL_IDS], ideTools: [...IDE_TOOL_IDS] }),
+      remoteFlow({
+        aiTools: [...catalogOf().idsInCanonicalOrder("ai")],
+        ideTools: [...catalogOf().idsInCanonicalOrder("ide")],
+      }),
       catalogOf()
     );
 
@@ -280,7 +287,10 @@ describe("setup without TTY", () => {
     await initProject(deps, PROJECT_ROOT);
 
     const result = await useCase.execute(
-      remoteFlow({ aiTools: [...AI_TOOL_IDS], ideTools: [...IDE_TOOL_IDS] }),
+      remoteFlow({
+        aiTools: [...catalogOf().idsInCanonicalOrder("ai")],
+        ideTools: [...catalogOf().idsInCanonicalOrder("ide")],
+      }),
       catalogOf()
     );
 
@@ -327,6 +337,7 @@ describe("setup without TTY", () => {
   describe("plugins named on the command line", () => {
     function namedFlow(registerDefaultMarketplace: boolean): SetupFlow {
       return new SetupFlow({
+        registeredToolIds: registeredToolIds(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
         source: MarketplaceSourceMode.remote(),
@@ -377,6 +388,7 @@ describe("setup without TTY", () => {
       const { useCase, marketplaceRegisterFramework, marketplaceRefresh } = await buildUseCase();
       await useCase.execute(
         new SetupFlow({
+          registeredToolIds: registeredToolIds(),
           supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
           source: MarketplaceSourceMode.remote(),
@@ -396,6 +408,7 @@ describe("setup without TTY", () => {
       const { useCase } = await buildUseCase();
       const result = await useCase.execute(
         new SetupFlow({
+          registeredToolIds: registeredToolIds(),
           supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
           source: MarketplaceSourceMode.remote(),
@@ -433,6 +446,7 @@ describe("setup without TTY", () => {
 
       await useCase.execute(
         new SetupFlow({
+          registeredToolIds: registeredToolIds(),
           supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
           source: MarketplaceSourceMode.remote(),
@@ -531,6 +545,7 @@ describe("setup interactive tool selection", () => {
     opts: Partial<{ aiTools: ToolId[]; ideTools: ToolId[] }> = {}
   ): SetupFlow {
     return new SetupFlow({
+      registeredToolIds: registeredToolIds(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.remote(),

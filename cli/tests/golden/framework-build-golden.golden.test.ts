@@ -9,7 +9,7 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { AI_TOOL_IDS } from "../../src/shared/domain/tool.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { runCli } from "../e2e/helpers.js";
 import { twoCaptures } from "./two-captures.js";
 
@@ -21,7 +21,7 @@ type TargetSnapshot = Record<string, string>; // rel-path → sha256
 type GoldenSnapshot = Record<string, TargetSnapshot>; // key → files
 
 const MARKETPLACE_TARGETS = ["copilot", "codex", "claude", "cursor"] as const;
-const FLAT_TARGETS = AI_TOOL_IDS;
+const FLAT_TARGETS = catalogOf().idsInCanonicalOrder("ai");
 const CELL_COUNT = MARKETPLACE_TARGETS.length + FLAT_TARGETS.length;
 
 const FROZEN_CELLS = new Set<string>([

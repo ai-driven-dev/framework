@@ -2,6 +2,7 @@ import { mkdir, rm, rmdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
 import { userManifestPath } from "../../../shared/domain/paths.js";
+import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import { readManifestFile } from "./manifest-file-io.js";
@@ -18,7 +19,8 @@ import { readManifestFile } from "./manifest-file-io.js";
 export class UserManifestRepositoryAdapter implements ManifestRepository {
   constructor(
     private readonly userConfigDir: () => string,
-    private readonly atomicWriter: (path: string, content: string) => Promise<void>
+    private readonly atomicWriter: (path: string, content: string) => Promise<void>,
+    private readonly resolveToolId: ToolIdResolver
   ) {}
 
   get path(): string {
@@ -26,11 +28,14 @@ export class UserManifestRepositoryAdapter implements ManifestRepository {
   }
 
   async load(): Promise<Manifest | null> {
-    return readManifestFile({
-      path: this.path,
-      location: "for this machine",
-      reinstallCommand: "aidd setup --global",
-    });
+    return readManifestFile(
+      {
+        path: this.path,
+        location: "for this machine",
+        reinstallCommand: "aidd setup --global",
+      },
+      this.resolveToolId
+    );
   }
 
   async save(manifest: Manifest): Promise<void> {

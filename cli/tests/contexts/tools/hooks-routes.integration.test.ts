@@ -14,7 +14,7 @@ import { CLIOutput } from "../../../src/presentation/output.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { pathWithoutAidd } from "../../e2e/helpers.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
-import { catalogOf } from "./testing/catalog-of.js";
+import { catalogOf, resolveRegisteredToolId } from "./testing/catalog-of.js";
 
 /**
  * Every route that writes or removes a tool's hook files, driven through the same use cases
@@ -271,7 +271,7 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
 async function recordedPlugins(ws: Workspace, path: string, scope: string): Promise<string[]> {
   const text = await readFile(path, "utf8").catch(() => null);
   if (text === null) return [`${scope}: no manifest`];
-  const manifest = Manifest.fromJSON(JSON.parse(text));
+  const manifest = Manifest.fromJSON(JSON.parse(text), resolveRegisteredToolId);
   const lines: string[] = [];
   for (const toolId of manifest.getInstalledToolIds()) {
     for (const plugin of manifest.getPlugins(toolId)) {
@@ -379,7 +379,7 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
 }
 
 describe("the hook files every route writes and removes, per tool", () => {
-  for (const toolId of catalogOf().aiIdsInCanonicalOrder()) {
+  for (const toolId of catalogOf().idsInCanonicalOrder("ai")) {
     describe(toolId, () => {
       for (const route of ROUTES) {
         it(`${route} leaves exactly the pinned hook files`, async () => {

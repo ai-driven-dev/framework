@@ -1,8 +1,20 @@
-import { AI_TOOL_IDS } from "../../../../shared/domain/tool.js";
 import { ToolSuffix } from "./tool-suffix.js";
 
-const ALL_TOOL_SUFFIXES: readonly ToolSuffix[] = AI_TOOL_IDS.map(
-  (id) => new ToolSuffix(`.${id}.md`)
+/** The suffix each AI tool marks its files with. Written here because a filter sits under the
+ * profiles it filters for and cannot read their registration; conformance holds it equal to the
+ * suffixes the registered AI profiles carry, so a tool added without its suffix fails there. */
+export const TOOL_FILE_SUFFIXES: readonly string[] = [
+  ".claude.md",
+  ".cursor.md",
+  ".copilot.md",
+  ".opencode.md",
+  ".kilo.md",
+  ".codex.md",
+  ".antigravity.md",
+];
+
+const ALL_TOOL_SUFFIXES: readonly ToolSuffix[] = TOOL_FILE_SUFFIXES.map(
+  (suffix) => new ToolSuffix(suffix)
 );
 
 /** Keeps a reader from installing a file written for another tool. */

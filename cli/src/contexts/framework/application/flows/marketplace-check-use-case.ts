@@ -100,7 +100,7 @@ export class MarketplaceCheckUseCase {
     tools: ToolCatalog
   ): UpstreamRemoved[] {
     const out: UpstreamRemoved[] = [];
-    for (const toolId of tools.aiIdsInCanonicalOrder()) {
+    for (const toolId of tools.idsInCanonicalOrder("ai")) {
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.marketplace !== marketplaceName) continue;
         if (!known.has(plugin.name)) {

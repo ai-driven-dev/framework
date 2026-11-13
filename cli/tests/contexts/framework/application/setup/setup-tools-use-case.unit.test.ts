@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { SetupToolsUseCase } from "../../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
 import { CategoryMismatchError } from "../../../../../src/shared/domain/errors.js";
-import { AI_TOOL_IDS, type ToolId } from "../../../../../src/shared/domain/tool.js";
+import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import {
   buildUnitDeps,
   initProject,
@@ -85,7 +85,7 @@ describe("SetupToolsUseCase", () => {
 
     await expect(run).rejects.toThrow(CategoryMismatchError);
     await expect(run).rejects.toThrow(
-      `vscode is not an AI tool. Valid AI tools: ${AI_TOOL_IDS.join(", ")}`
+      "vscode is not an AI tool. Valid AI tools: claude, cursor, copilot, opencode, kilo, codex, antigravity"
     );
   });
 });

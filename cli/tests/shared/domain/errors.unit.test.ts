@@ -448,11 +448,6 @@ describe("every error in the catalog", () => {
         "Refusing to build: '/out' is not empty. Re-run with --force to overwrite files this build produces, or choose an empty --out directory.",
     },
     {
-      build: () => new errors.UnknownToolCategoryError("editor"),
-      name: "UnknownToolCategoryError",
-      message: "Unknown category: editor",
-    },
-    {
       build: () => new errors.MarketplaceSourceKindError("remote"),
       name: "MarketplaceSourceKindError",
       message: "Not a remote source",
@@ -522,6 +517,11 @@ describe("every error in the catalog", () => {
       build: () => new errors.UnknownAiToolIdError("zed", ["claude", "cursor"]),
       name: "UnknownAiToolIdError",
       message: "Unknown AI tool: zed. Valid AI tools: claude, cursor",
+    },
+    {
+      build: () => new errors.ToolListMismatchError(["a", "b"]),
+      name: "ToolListMismatchError",
+      message: "Tool lists differ on: a, b.",
     },
     {
       build: () => new errors.NativePluginCliError("claude exited 2"),
@@ -642,7 +642,7 @@ describe("error names and messages a caller matches on", () => {
     new errors.ActiveMachineDependentsError("x", ["a"]),
     new errors.DuplicateToolIdError("t"),
     new errors.InvalidHooksDescriptorError("t", "unknown-event", "d"),
-    new errors.InvalidToolProfileError("t", "unknown-tool-id", "d"),
+    new errors.InvalidToolProfileError("t", "unknown-section", "d"),
     new errors.KiloDualConfigError(),
     new errors.InvalidAgentFrontmatterError("a", "d"),
   ])("names itself after its class: $constructor.name", (error) => {

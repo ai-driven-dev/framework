@@ -9,7 +9,7 @@ import {
 import type { InstallationFile } from "../../../../shared/domain/file.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
-import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { AiToolId, ToolIdResolver } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
@@ -80,10 +80,16 @@ export class PluginAddUseCase implements PluginAdd {
 
   private async executeLocked(options: PluginAddOptions): Promise<void> {
     const { source, toolIds, projectRoot, marketplace } = options;
-    const manifest = Manifest.fromJSON((await loadPluginManifest(this.manifestRepo)).toJSON());
+    const resolveToolId: ToolIdResolver = (raw) => options.tools.toolId(raw);
+    const manifest = Manifest.fromJSON(
+      (await loadPluginManifest(this.manifestRepo)).toJSON(),
+      resolveToolId
+    );
     const existingMachine = await this.userManifestRepo.load();
     const machine =
-      existingMachine === null ? Manifest.create() : Manifest.fromJSON(existingMachine.toJSON());
+      existingMachine === null
+        ? Manifest.create()
+        : Manifest.fromJSON(existingMachine.toJSON(), resolveToolId);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, options.tools);
     const installedBefore = pluginsInstalledBefore(manifest, resolvedToolIds);
     if (marketplace !== undefined && (await this.isGithubMarketplace(marketplace, projectRoot))) {

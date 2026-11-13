@@ -31,7 +31,7 @@ export class ListInstalledRulesUseCase {
 
   async execute(input: ListInstalledRulesInput): Promise<ListInstalledRulesResult> {
     const rules: InstalledRule[] = [];
-    for (const toolId of input.tools.aiIdsInCanonicalOrder()) {
+    for (const toolId of input.tools.idsInCanonicalOrder("ai")) {
       const location = input.tools.aiProfile(toolId).installedRulesLocation();
       if (location === null) continue;
       rules.push(...(await this.rulesUnder(input.projectRoot, toolId, location)));

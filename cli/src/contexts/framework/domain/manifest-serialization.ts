@@ -3,7 +3,7 @@ import {
   InvalidManifestToolIdError,
 } from "../../../shared/domain/errors.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../../shared/domain/tool.js";
+import type { ToolId, ToolIdResolver } from "../../../shared/domain/tool.js";
 import {
   parseToolEntry,
   serializeToolEntry,
@@ -28,13 +28,16 @@ export function serializeManifestTools(
   return out;
 }
 
-export function parseManifestTools(raw: Record<string, unknown>): Map<ToolId, ToolEntry> {
+export function parseManifestTools(
+  raw: Record<string, unknown>,
+  resolveToolId: ToolIdResolver
+): Map<ToolId, ToolEntry> {
   const tools = new Map<ToolId, ToolEntry>();
   if (raw.tools === null || typeof raw.tools !== "object") return tools;
 
   for (const [key, value] of Object.entries(raw.tools as Record<string, unknown>)) {
-    const toolId = key as ToolId;
-    if (!VALID_TOOL_IDS.includes(toolId)) {
+    const toolId = resolveToolId(key);
+    if (toolId === null) {
       throw new InvalidManifestToolIdError(key);
     }
     tools.set(toolId, parseToolEntry(toolId, parseToolEntryData(key, value)));

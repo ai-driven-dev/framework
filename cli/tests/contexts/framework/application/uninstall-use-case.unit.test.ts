@@ -8,7 +8,7 @@ import {
   NoManifestError,
   ToolNotInstalledError,
 } from "../../../../src/shared/domain/errors.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../../../src/shared/domain/tool.js";
+import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 
@@ -192,7 +192,7 @@ describe("uninstall — refusals", () => {
       })
     ).rejects.toThrow(
       new InputRequiredError(
-        `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+        "At least one tool ID is required. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode"
       )
     );
   });

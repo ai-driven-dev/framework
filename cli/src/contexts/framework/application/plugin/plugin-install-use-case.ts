@@ -73,9 +73,9 @@ export class PluginInstallUseCase {
   ): Promise<readonly AiToolId[]> {
     if (toolIds !== "all") return toolIds;
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) return tools.aiIdsInCanonicalOrder();
+    if (manifest === null) return tools.idsInCanonicalOrder("ai");
     const installed = manifest.getInstalledToolIds();
-    return tools.aiIdsInCanonicalOrder().filter((id) => installed.includes(id));
+    return tools.idsInCanonicalOrder("ai").filter((id) => installed.includes(id));
   }
 
   private isSourceArg(arg: string): boolean {

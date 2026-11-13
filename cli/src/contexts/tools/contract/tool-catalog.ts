@@ -11,11 +11,22 @@ export interface ToolCatalog {
   ideProfile(id: IdeToolId): IdeToolProfile;
   /** The AI profile of a registered id, or null for an editor; an unregistered id is refused. */
   aiProfileIfAny(id: ToolId): AiToolProfile | null;
+  /** The registered id a text names, or null when no registered tool answers to it. */
+  toolId(raw: string): ToolId | null;
+  /** The registered AI id a text names, or null for an editor or an unregistered name. */
+  aiToolId(raw: string): AiToolId | null;
+  /** Whether the id is a registered AI tool: false for an editor and for an unregistered id. */
+  isAiTool(id: ToolId): id is AiToolId;
+  /** Whether the id is a registered editor: false for an AI tool and for an unregistered id. */
+  isIdeTool(id: ToolId): id is IdeToolId;
   /** The ids of one category in registration order: the order a help text names the tools. */
+  inHelpOrder(category: "ai"): readonly AiToolId[];
   inHelpOrder(category: ToolCategory): readonly ToolId[];
-  /** The ids of the registered AI tools in the order the shared tool vocabulary names them: the order the install,
-   * uninstall and listing flows have always walked a manifest's tools. */
-  aiIdsInCanonicalOrder(): readonly AiToolId[];
+  /** The ids of one category, or of every tool, in the order the messages naming them and the flows
+   * walking a manifest's tools have always used: neither the help order nor the id order. */
+  idsInCanonicalOrder(category: "ai"): readonly AiToolId[];
+  idsInCanonicalOrder(category: "ide"): readonly IdeToolId[];
+  idsInCanonicalOrder(category?: ToolCategory): readonly ToolId[];
   /** Every profile sorted by id: the order the setup and doctor flows walk them. */
   sortedById(): readonly ToolProfile[];
 }

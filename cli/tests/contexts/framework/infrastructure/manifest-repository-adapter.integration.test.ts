@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/manifest-repository-adapter.js";
+import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
 
 describe("ManifestRepositoryAdapter", () => {
   let tempDir: string;
@@ -11,7 +12,7 @@ describe("ManifestRepositoryAdapter", () => {
 
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), "aidd-manifest-repo-"));
-    adapter = new ManifestRepositoryAdapter(tempDir);
+    adapter = new ManifestRepositoryAdapter(tempDir, resolveRegisteredToolId);
   });
 
   afterEach(async () => {

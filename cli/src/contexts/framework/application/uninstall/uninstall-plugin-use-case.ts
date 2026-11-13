@@ -71,7 +71,7 @@ export class UninstallPluginUseCase {
 
   private resolveToolScope(toolIds: ToolId[], manifest: Manifest, tools: ToolCatalog): AiToolId[] {
     if (toolIds.length > 0) return toolIds.filter((id) => manifest.hasTool(id)) as AiToolId[];
-    return tools.aiIdsInCanonicalOrder().filter((id) => manifest.hasTool(id));
+    return tools.idsInCanonicalOrder("ai").filter((id) => manifest.hasTool(id));
   }
 
   private async removeFromTools(

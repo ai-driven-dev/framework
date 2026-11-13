@@ -8,11 +8,13 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../../../src/shared/domain/errors.js";
+import { registeredToolIds } from "../../tools/testing/catalog-of.js";
 
 const ROOT = "/project";
 
 function makeFlow(overrides: Partial<ConstructorParameters<typeof SetupFlow>[0]> = {}): SetupFlow {
   return new SetupFlow({
+    registeredToolIds: registeredToolIds(),
     projectRoot: ROOT,
     supportsUserScopeActivation: () => true,
     ...overrides,
@@ -21,10 +23,19 @@ function makeFlow(overrides: Partial<ConstructorParameters<typeof SetupFlow>[0]>
 
 describe("SetupFlow", () => {
   describe("constructor validation", () => {
-    it("throws InvalidSetupToolIdError for unknown AI tool IDs", () => {
+    it("throws InvalidSetupToolIdError for unknown AI tool IDs, naming every valid one", () => {
       expect(() => makeFlow({ aiTools: ["unknown-tool" as "claude"] })).toThrow(
         InvalidSetupToolIdError
       );
+      expect(() => makeFlow({ aiTools: ["unknown-tool" as "claude"] })).toThrow(
+        'Invalid tool ID: "unknown-tool". Valid IDs: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode'
+      );
+    });
+
+    it("refuses an unknown tool ID before it looks at the plugin mode", () => {
+      expect(() =>
+        makeFlow({ ideTools: ["nope" as "vscode"], pluginMode: "named", pluginNames: [] })
+      ).toThrow(InvalidSetupToolIdError);
     });
 
     it("throws InvalidPluginModeConfigError when mode is 'named' with no names", () => {

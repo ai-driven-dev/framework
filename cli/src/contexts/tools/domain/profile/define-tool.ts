@@ -1,11 +1,6 @@
 import { isAbsolute, join } from "node:path";
 import { InvalidToolProfileError } from "../../../../shared/domain/errors.js";
-import {
-  AI_TOOL_IDS,
-  type AiToolId,
-  IDE_TOOL_IDS,
-  type IdeToolId,
-} from "../../../../shared/domain/tool.js";
+import type { AiToolId, IdeToolId } from "../../../../shared/domain/tool.js";
 import type {
   ConfigWrite,
   FlatInstallSection,
@@ -88,14 +83,14 @@ type AiToolFields = Omit<
 >;
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
-  readonly toolId: string;
+  readonly toolId: AiToolId;
   /** The config files the tool ships, each with its content imported where it is declared. */
   readonly configAssets?: readonly ShippedConfig[];
   readonly capabilities: (bound: BoundTool) => C;
 }
 
 export interface IdeToolSpec<C extends ProfileSections> {
-  readonly toolId: string;
+  readonly toolId: IdeToolId;
   readonly configAssets?: readonly ShippedConfig[];
   readonly directory: string;
   readonly signalDir: string | null;
@@ -175,22 +170,6 @@ function signalDirectoryOf(signalDir: string | null, projectRoot: string): Signa
   return signalDir === null
     ? null
     : { absolute: join(projectRoot, signalDir), relative: signalDir };
-}
-
-function aiToolId(id: string): AiToolId {
-  const known = AI_TOOL_IDS.find((candidate) => candidate === id);
-  if (known === undefined) {
-    throw new InvalidToolProfileError(id, "unknown-tool-id", `no AI tool is named '${id}'.`);
-  }
-  return known;
-}
-
-function ideToolId(id: string): IdeToolId {
-  const known = IDE_TOOL_IDS.find((candidate) => candidate === id);
-  if (known === undefined) {
-    throw new InvalidToolProfileError(id, "unknown-tool-id", `no IDE tool is named '${id}'.`);
-  }
-  return known;
 }
 
 function skillLayoutOf(sections: ProfileSections): FlatSkillLayout {
@@ -282,8 +261,7 @@ function destinationsOf(
 export function defineAiTool<C extends ProfileSections>(
   spec: AiToolSpec<C>
 ): AiTool<C> & ProfileBrand {
-  const { toolId: id, capabilities: declare, ...fields } = spec;
-  const toolId = aiToolId(id);
+  const { toolId, capabilities: declare, ...fields } = spec;
   refuseDirectory(toolId, spec.directory);
   const suffix = new ToolSuffix(spec.toolSuffix);
   const contracts = spec.buildContracts;
@@ -354,8 +332,7 @@ export function defineAiTool<C extends ProfileSections>(
 export function defineIdeTool<C extends ProfileSections>(
   spec: IdeToolSpec<C>
 ): IdeToolConfig<C> & ProfileBrand {
-  const { toolId: id, capabilities: declare, ...fields } = spec;
-  const toolId = ideToolId(id);
+  const { toolId, capabilities: declare, ...fields } = spec;
   refuseDirectory(toolId, spec.directory);
   const capabilities = declare();
   refuseUnknownSections(toolId, capabilities);

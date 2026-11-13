@@ -23,7 +23,7 @@ const settings = new ConfigSection({
 });
 
 const aiSpec = {
-  toolId: "claude",
+  toolId: "claude" as const,
   directory: ".x/",
   toolSuffix: ".claude.md",
   signalDir: null,
@@ -34,7 +34,7 @@ const aiSpec = {
 };
 
 const ideSpec = {
-  toolId: "vscode",
+  toolId: "vscode" as const,
   directory: ".x/",
   signalDir: null,
   capabilities: () => ({}),
@@ -125,18 +125,6 @@ describe("defineAiTool", () => {
     expect(defineAiTool(aiSpec).nativeActivation()).toBeUndefined();
   });
 
-  it("refuses an id no AI tool carries", () => {
-    expect(refusalOf(() => defineAiTool({ ...aiSpec, toolId: "emacs" })).invariant).toBe(
-      "unknown-tool-id"
-    );
-  });
-
-  it("refuses an IDE id as an AI tool", () => {
-    expect(refusalOf(() => defineAiTool({ ...aiSpec, toolId: "vscode" })).invariant).toBe(
-      "unknown-tool-id"
-    );
-  });
-
   it("refuses an absolute directory", () => {
     expect(refusalOf(() => defineAiTool({ ...aiSpec, directory: "/abs/" })).invariant).toBe(
       "directory-not-relative"
@@ -205,12 +193,6 @@ describe("defineAiTool", () => {
 });
 
 describe("defineIdeTool", () => {
-  it("refuses an id no IDE tool carries", () => {
-    expect(refusalOf(() => defineIdeTool({ ...ideSpec, toolId: "claude" })).invariant).toBe(
-      "unknown-tool-id"
-    );
-  });
-
   it("refuses an absolute directory", () => {
     expect(refusalOf(() => defineIdeTool({ ...ideSpec, directory: "/abs/" })).invariant).toBe(
       "directory-not-relative"
@@ -463,15 +445,6 @@ describe("what a refused profile says", () => {
     );
     expect(sayOf(() => defineAiTool({ ...aiSpec, directory: ".x" }))).toBe(
       "The profile of 'claude' breaks 'directory-without-trailing-slash': '.x' must end with '/'."
-    );
-  });
-
-  it("names the id no tool carries, for an AI tool and for an IDE tool", () => {
-    expect(sayOf(() => defineAiTool({ ...aiSpec, toolId: "emacs" }))).toBe(
-      "The profile of 'emacs' breaks 'unknown-tool-id': no AI tool is named 'emacs'."
-    );
-    expect(sayOf(() => defineIdeTool({ ...ideSpec, toolId: "claude" }))).toBe(
-      "The profile of 'claude' breaks 'unknown-tool-id': no IDE tool is named 'claude'."
     );
   });
 

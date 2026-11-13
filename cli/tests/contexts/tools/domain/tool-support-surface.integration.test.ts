@@ -39,7 +39,7 @@ function supportOf(surface: Surface, contract: ArtifactContract): Support {
 
 function capture(): ToolSupport[] {
   return catalogOf()
-    .aiIdsInCanonicalOrder()
+    .idsInCanonicalOrder("ai")
     .map((id) => {
       const tool = registeredAiConfig(id);
       const plugins = tool.plugins();

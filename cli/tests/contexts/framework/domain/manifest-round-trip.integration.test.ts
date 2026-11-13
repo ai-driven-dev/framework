@@ -4,6 +4,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
+import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
 
 const FIXTURES_DIR = join(__dirname, "../../../fixtures/manifests");
 
@@ -18,7 +19,7 @@ describe("Manifest round-trip: every fixture rewrites byte-identical", () => {
     const path = join(FIXTURES_DIR, name);
     const original = readFileSync(path, "utf-8");
 
-    const manifest = Manifest.fromJSON(JSON.parse(original));
+    const manifest = Manifest.fromJSON(JSON.parse(original), resolveRegisteredToolId);
     const rewritten = `${JSON.stringify(manifest.toJSON(), null, 2)}\n`;
 
     expect(rewritten).toBe(original);

@@ -5,8 +5,8 @@ import { SetupUseCase } from "../../contexts/framework/application/setup-use-cas
 import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
+import { CategoryMismatchError } from "../../shared/domain/errors.js";
 import type { ToolId } from "../../shared/domain/tool.js";
-import { assertToolIdsMatchCategory, IDE_TOOL_IDS, isIdeToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory } from "../deps.js";
 import {
   printDetectedContext,
@@ -76,17 +76,25 @@ export function parseToolIds(
   errorHandler: ErrorHandler,
   tools: ToolCatalog
 ): { aiTools: ToolId[]; ideTools: ToolId[] } | null {
-  const aiIds = expandAllKeyword(cmdOptions.ai, tools.aiIdsInCanonicalOrder());
-  const ids = expandAllKeyword(cmdOptions.ide, [...tools.aiIdsInCanonicalOrder(), ...IDE_TOOL_IDS]);
+  const aiIds = expandAllKeyword(cmdOptions.ai, tools.idsInCanonicalOrder("ai"));
+  const ids = expandAllKeyword(cmdOptions.ide, tools.idsInCanonicalOrder());
   try {
-    if (aiIds.length > 0 && cmdOptions.ai?.trim() !== "all")
-      assertToolIdsMatchCategory(aiIds, "ai");
+    if (aiIds.length > 0 && cmdOptions.ai?.trim() !== "all") assertAiToolIds(aiIds, tools);
   } catch (e) {
     errorHandler.handle(e);
     return null;
   }
   const unique = [...new Set([...aiIds, ...ids])];
-  return { aiTools: unique.filter((id) => !isIdeToolId(id)), ideTools: unique.filter(isIdeToolId) };
+  return {
+    aiTools: unique.filter((id) => !tools.isIdeTool(id)),
+    ideTools: unique.filter((id) => tools.isIdeTool(id)),
+  };
+}
+
+function assertAiToolIds(toolIds: readonly ToolId[], tools: ToolCatalog): void {
+  const allowed = tools.idsInCanonicalOrder("ai");
+  const wrong = toolIds.filter((id) => !allowed.some((ai) => ai === id));
+  if (wrong.length > 0) throw new CategoryMismatchError(wrong, "ai", allowed);
 }
 
 type PluginsMode = "interactive" | "all" | "recommended" | "named" | "none";
@@ -189,6 +197,7 @@ export function registerSetupCommand(
       try {
         const flow = new SetupFlow({
           projectRoot,
+          registeredToolIds: catalog.idsInCanonicalOrder(),
           supportsUserScopeActivation: (id) => activatesAtUserScope(catalog.profile(id)),
           source,
           aiTools: toolIds.aiTools,

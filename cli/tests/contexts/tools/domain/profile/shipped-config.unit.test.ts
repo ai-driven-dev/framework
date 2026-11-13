@@ -4,7 +4,7 @@ import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections
 import { anEmptyContract } from "../../testing/profiles.js";
 
 const aiSpec = {
-  toolId: "claude",
+  toolId: "claude" as const,
   directory: ".x/",
   toolSuffix: ".claude.md",
   signalDir: null,

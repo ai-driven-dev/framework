@@ -3,7 +3,6 @@ import type { Command } from "commander";
 import { Manifest } from "../../contexts/framework/domain/manifest.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";
-import { isAiToolId, isIdeToolId, VALID_TOOL_IDS } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printToolAlreadyInstalled,
@@ -34,9 +33,11 @@ type FrameworkKeys =
   | "listInstalledRulesUseCase"
   | "validateRecipes";
 
-export function assertKnownToolId(toolId: string): asserts toolId is ToolId {
-  if (!isAiToolId(toolId) && !isIdeToolId(toolId)) {
-    throw new Error(`Unknown tool: ${toolId}. Valid tools: ${VALID_TOOL_IDS.join(", ")}`);
+export function assertKnownToolId(toolId: string, catalog: ToolCatalog): asserts toolId is ToolId {
+  if (catalog.toolId(toolId) === null) {
+    throw new Error(
+      `Unknown tool: ${toolId}. Valid tools: ${catalog.idsInCanonicalOrder().join(", ")}`
+    );
   }
 }
 
@@ -48,8 +49,8 @@ async function runFrameworkInstall(
   cmdOptions: { force: boolean; plugins: boolean },
   catalog: ToolCatalog
 ): Promise<void> {
-  assertKnownToolId(toolId);
-  if (isAiToolId(toolId)) {
+  assertKnownToolId(toolId, catalog);
+  if (catalog.isAiTool(toolId)) {
     await installAiTool(deps, output, projectRoot, toolId, cmdOptions, catalog);
   } else {
     await installIdeTool(deps, output, projectRoot, toolId, cmdOptions, catalog);
@@ -116,9 +117,9 @@ async function runFrameworkRemove(
   toolId: ToolId,
   catalog: ToolCatalog
 ): Promise<void> {
-  assertKnownToolId(toolId);
+  assertKnownToolId(toolId, catalog);
 
-  if (isAiToolId(toolId)) {
+  if (catalog.isAiTool(toolId)) {
     const results = await deps.uninstallUseCase.execute({
       toolIds: [toolId],
       projectRoot,
@@ -140,11 +141,11 @@ async function runFrameworkUpdate(
   cmdOptions: { force: boolean },
   catalog: ToolCatalog
 ): Promise<void> {
-  if (toolId !== undefined) assertKnownToolId(toolId);
+  if (toolId !== undefined) assertKnownToolId(toolId, catalog);
   const interactive = process.stdout.isTTY ?? false;
 
   if (toolId !== undefined) {
-    if (isAiToolId(toolId)) {
+    if (catalog.isAiTool(toolId)) {
       const result = await deps.updateAiToolsUseCase.execute({
         toolArg: toolId,
         projectRoot,

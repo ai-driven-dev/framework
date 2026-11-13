@@ -23,7 +23,7 @@ import { PluginDistributionReaderAdapter } from "../../../src/contexts/framework
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { SyncConflictResolverUseCase } from "../../../src/presentation/prompts/sync-conflict-resolver-use-case.js";
 import { SilentPrompterAdapter } from "../../../src/presentation/terminal/prompter-adapter.js";
-import { isIdeToolId, type ToolId } from "../../../src/shared/domain/tool.js";
+import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
@@ -123,7 +123,7 @@ export async function installTool(
 ) {
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = "test";
-  if (isIdeToolId(toolId)) {
+  if (catalogOf().isIdeTool(toolId)) {
     return deps.installIdeConfigUseCase.execute({
       tools: catalogOf(),
       toolId,

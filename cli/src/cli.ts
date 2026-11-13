@@ -28,7 +28,8 @@ const tools = wireTools();
 
 // The composition edge: commands receive these factories and never import the wiring.
 const createDeps: DepsFactory = bindCatalog(tools);
-const createMenuDeps: MenuDepsFactory = createFrameworkMenuDeps;
+const createMenuDeps: MenuDepsFactory = (projectRoot) =>
+  createFrameworkMenuDeps(projectRoot, tools);
 
 const program = new Command();
 

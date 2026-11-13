@@ -1,7 +1,8 @@
 import type { Command } from "commander";
 import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { assertValidAiToolId, parseToolOption } from "../../shared/domain/tool.js";
+import { UnknownAiToolIdError } from "../../shared/domain/errors.js";
+import type { AiToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
 import {
   printInstalledPlugins,
@@ -24,6 +25,17 @@ type PluginKeys =
   | "userPluginUpdateUseCase"
   | "pluginUpdateUseCase"
   | "marketplaceSyncSettingsUseCase";
+
+/** `--tool` names one AI tool or, left out or set to `all`, every one. */
+export function parseToolOption(
+  tool: string | undefined,
+  catalog: ToolCatalog
+): AiToolId[] | "all" {
+  if (tool === undefined || tool === "all") return "all";
+  const id = catalog.aiToolId(tool);
+  if (id === null) throw new UnknownAiToolIdError(tool, catalog.idsInCanonicalOrder("ai"));
+  return [id];
+}
 
 export function registerPluginCommand(
   program: Command,
@@ -58,12 +70,12 @@ export function registerPluginCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        assertValidAiToolId(cmdOptions.tool);
+        const toolIds = parseToolOption(cmdOptions.tool, catalog);
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
         await deps.pluginRemoveUseCase.execute({
           pluginName: name,
-          toolIds: parseToolOption(cmdOptions.tool),
+          toolIds,
           projectRoot,
           scope,
           tools: catalog,
@@ -83,10 +95,10 @@ export function registerPluginCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        assertValidAiToolId(cmdOptions.tool);
+        const toolIds = parseToolOption(cmdOptions.tool, catalog);
         const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await deps.pluginListUseCase.execute({
-          toolIds: parseToolOption(cmdOptions.tool),
+          toolIds,
           tools: catalog,
         });
         printInstalledPlugins(output, result);
@@ -117,12 +129,12 @@ export function registerPluginCommand(
         const { verbose, output, projectRoot } = parseGlobalOptions(program);
         const errorHandler = new ErrorHandler(output);
         try {
-          assertValidAiToolId(cmdOptions.tool);
+          const toolIds = parseToolOption(cmdOptions.tool, catalog);
           const scope = parseInstallScope(cmdOptions.scope);
           const deps = await createDeps(projectRoot, { verbose, token: cmdOptions.token }, output);
           const result = await deps.pluginInstallUseCase.execute({
             pluginArg,
-            toolIds: parseToolOption(cmdOptions.tool),
+            toolIds,
             tools: catalog,
             projectRoot,
             interactive: process.stdout.isTTY,
@@ -175,7 +187,7 @@ export function registerPluginCommand(
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
-        assertValidAiToolId(cmdOptions.tool);
+        const toolIds = parseToolOption(cmdOptions.tool, catalog);
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
         const updated = await (scope === "user"
@@ -183,7 +195,7 @@ export function registerPluginCommand(
           : deps.pluginUpdateUseCase
         ).execute({
           pluginNames: name !== undefined ? [name] : undefined,
-          toolIds: parseToolOption(cmdOptions.tool),
+          toolIds,
           projectRoot,
           scope,
           tools: catalog,

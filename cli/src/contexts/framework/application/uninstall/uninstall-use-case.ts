@@ -4,7 +4,6 @@ import {
   ToolNotInstalledError,
 } from "../../../../shared/domain/errors.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import { isAiToolId, VALID_TOOL_IDS } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
@@ -50,13 +49,13 @@ export class UninstallUseCase {
 
     if (toolIds.length === 0) {
       throw new InputRequiredError(
-        `At least one tool ID is required. Valid tools: ${VALID_TOOL_IDS.join(", ")}`
+        `At least one tool ID is required. Valid tools: ${tools.idsInCanonicalOrder().join(", ")}`
       );
     }
 
     const manifest = await this.loadAndValidate(toolIds);
     const userPlugins = toolIds.flatMap((toolId) =>
-      isAiToolId(toolId)
+      tools.isAiTool(toolId)
         ? manifest
             .getPlugins(toolId)
             .filter((plugin) => plugin.scope === "user")

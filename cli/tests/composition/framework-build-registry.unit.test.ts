@@ -7,12 +7,11 @@ import {
   buildTargetModesOf,
   type FrameworkBuildTarget,
 } from "../../src/contexts/translate/domain/build-target.js";
-import { AI_TOOL_IDS } from "../../src/shared/domain/tool.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
 
-const ALL_TARGETS: readonly FrameworkBuildTarget[] = AI_TOOL_IDS;
+const ALL_TARGETS: readonly FrameworkBuildTarget[] = catalogOf().idsInCanonicalOrder("ai");
 const ALL_MODES: readonly FrameworkBuildMode[] = ["marketplace", "flat"];
 
 function makeDeps() {

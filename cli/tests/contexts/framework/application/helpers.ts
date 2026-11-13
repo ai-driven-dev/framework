@@ -19,12 +19,12 @@ import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framew
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../../../src/presentation/terminal/prompter-adapter.js";
 
-import { isIdeToolId, type ToolId } from "../../../../src/shared/domain/tool.js";
+import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { CurrentVersionAdapter } from "../../../../src/shared/infrastructure/current-version-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import type { Prompter } from "../../../../src/shared/ports/prompter.js";
 import type { VersionReader } from "../../../../src/shared/ports/version-reader.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };
@@ -203,7 +203,7 @@ export const FIXTURE_DIR_V2 = join(process.cwd(), "tests/fixtures/framework-v2")
 export function buildDeps(projectRoot: string) {
   const hasher = new HasherAdapter();
   const fs = new JsonFileMergerAdapter(new FileAdapter(hasher));
-  const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
+  const manifestRepo = new ManifestRepositoryAdapter(projectRoot, resolveRegisteredToolId);
   const logger = new CLIOutput(false);
   const assetProvider = new BundledAssetProviderAdapter(wireTools());
   const pluginFetcher = new PluginFetcherAdapter(fs);
@@ -273,7 +273,7 @@ export async function installTool(
 ) {
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = "test";
-  if (isIdeToolId(toolId)) {
+  if (catalogOf().isIdeTool(toolId)) {
     return deps.installIdeConfigUseCase.execute({
       tools: catalogOf(),
       toolId,

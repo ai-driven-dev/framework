@@ -1,4 +1,4 @@
-import { type AiToolId, isAiToolId, type ToolId } from "../../../../shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
@@ -24,7 +24,7 @@ export async function purgeAllNativeCaches(
   tools: ToolCatalog
 ): Promise<void> {
   for (const [toolId, { registrations, removedHostNames }] of undone) {
-    if (!isAiToolId(toolId)) continue;
+    if (!tools.isAiTool(toolId)) continue;
     const cacheRoot = tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(home);
     if (cacheRoot === undefined) continue;
     for (const { hostName } of registrations.marketplaces) {

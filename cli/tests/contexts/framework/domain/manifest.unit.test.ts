@@ -8,6 +8,7 @@ import {
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
+import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
 
 const makeHash = (hex: string): FileHash => new FileHash(hex.padEnd(32, "0"));
 
@@ -90,7 +91,7 @@ describe("Manifest", () => {
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
       const json = manifest.toJSON();
       const badVersion = { ...json, version: 99 };
-      expect(() => Manifest.fromJSON(badVersion)).toThrow(/version/);
+      expect(() => Manifest.fromJSON(badVersion, resolveRegisteredToolId)).toThrow(/version/);
     });
 
     it("toJSON() / fromJSON() preserves tool entries", () => {
@@ -101,7 +102,7 @@ describe("Manifest", () => {
       ]);
 
       const json = manifest.toJSON();
-      const restored = Manifest.fromJSON(json);
+      const restored = Manifest.fromJSON(json, resolveRegisteredToolId);
 
       expect(restored.hasTool("claude" as ToolId)).toBe(true);
       expect(restored.hasTool("cursor" as ToolId)).toBe(true);
@@ -119,7 +120,7 @@ describe("Manifest", () => {
       const manifest = Manifest.create();
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
 
-      const restored = Manifest.fromJSON(manifest.toJSON());
+      const restored = Manifest.fromJSON(manifest.toJSON(), resolveRegisteredToolId);
       const restoredJson = restored.toJSON();
 
       expect(restoredJson.tools.claude).toBeDefined();
@@ -128,7 +129,7 @@ describe("Manifest", () => {
     });
 
     it("fromJSON() reports an error on invalid data", () => {
-      expect(() => Manifest.fromJSON(null)).toThrow();
+      expect(() => Manifest.fromJSON(null, resolveRegisteredToolId)).toThrow();
     });
   });
 
@@ -185,7 +186,7 @@ describe("Manifest", () => {
     it("serialization round-trip preserves mergeFiles", () => {
       const manifest = Manifest.create();
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles, mergeFiles);
-      const restored = Manifest.fromJSON(manifest.toJSON());
+      const restored = Manifest.fromJSON(manifest.toJSON(), resolveRegisteredToolId);
       const restoredMerge = restored.getMergeFiles("claude" as ToolId);
       expect(restoredMerge).toHaveLength(1);
       expect(restoredMerge[0].relativePath).toBe(".mcp.json");
@@ -232,13 +233,13 @@ describe("Manifest", () => {
       manifest.addTool("copilot" as ToolId, "1.0.0", []);
       const json = manifest.toJSON();
       expect(json.version).toBe(8);
-      expect(() => Manifest.fromJSON(json)).not.toThrow();
+      expect(() => Manifest.fromJSON(json, resolveRegisteredToolId)).not.toThrow();
     });
 
     it("v8 round-trip is stable", () => {
       const manifest = Manifest.create();
       manifest.addTool("claude" as ToolId, "3.0.0", claudeFiles);
-      const restored = Manifest.fromJSON(manifest.toJSON());
+      const restored = Manifest.fromJSON(manifest.toJSON(), resolveRegisteredToolId);
       expect(restored.toJSON().version).toBe(8);
     });
 
@@ -248,20 +249,24 @@ describe("Manifest", () => {
 
     it("rejects a version below 8 and names the file to delete, not a command to migrate it", () => {
       const v7 = { version: 7, tools: {} };
-      expect(() => Manifest.fromJSON(v7)).toThrow(RECOVERY_INVOCATION);
+      expect(() => Manifest.fromJSON(v7, resolveRegisteredToolId)).toThrow(RECOVERY_INVOCATION);
       // The string this guard used to send a stuck user toward: a CLI that only ever wrote
       // v7 and would refuse the resulting document all over again.
-      expect(() => Manifest.fromJSON(v7)).not.toThrow(/update --force/);
-      expect(() => Manifest.fromJSON(v7)).toThrow(/No published CLI can write this version/);
+      expect(() => Manifest.fromJSON(v7, resolveRegisteredToolId)).not.toThrow(/update --force/);
+      expect(() => Manifest.fromJSON(v7, resolveRegisteredToolId)).toThrow(
+        /No published CLI can write this version/
+      );
     });
 
     // 5.2.2 is a published CLI that migrated a v5 document to v6 and re-saved it, so "no
     // published CLI can write this version" is false for v6, the one version it must not name.
     it("names 5.2.2 for a version 6 manifest, since that published CLI actually wrote it", () => {
       const v6 = { version: 6, tools: {} };
-      expect(() => Manifest.fromJSON(v6)).toThrow(RECOVERY_INVOCATION);
-      expect(() => Manifest.fromJSON(v6)).toThrow(/5\.2\.2/);
-      expect(() => Manifest.fromJSON(v6)).not.toThrow(/No published CLI can write this version/);
+      expect(() => Manifest.fromJSON(v6, resolveRegisteredToolId)).toThrow(RECOVERY_INVOCATION);
+      expect(() => Manifest.fromJSON(v6, resolveRegisteredToolId)).toThrow(/5\.2\.2/);
+      expect(() => Manifest.fromJSON(v6, resolveRegisteredToolId)).not.toThrow(
+        /No published CLI can write this version/
+      );
     });
 
     // 5.2.2's own reader accepts exactly version 6, so its `clean --force` can still unregister
@@ -270,7 +275,7 @@ describe("Manifest", () => {
       const v6 = { version: 6, tools: {} };
       let message = "";
       try {
-        Manifest.fromJSON(v6);
+        Manifest.fromJSON(v6, resolveRegisteredToolId);
       } catch (error) {
         message = error instanceof Error ? error.message : String(error);
       }
@@ -285,27 +290,31 @@ describe("Manifest", () => {
     // v7 document would send a stuck user to a command that cannot even open the file.
     it("never names 5.2.2's clean for a version 7 manifest, which that CLI cannot read either", () => {
       const v7 = { version: 7, tools: {} };
-      expect(() => Manifest.fromJSON(v7)).not.toThrow(/5\.2\.2/);
+      expect(() => Manifest.fromJSON(v7, resolveRegisteredToolId)).not.toThrow(/5\.2\.2/);
     });
 
     it("v0 manifest throws, naming the recovery invocation", () => {
       const v0 = { version: 0, tools: {} };
-      expect(() => Manifest.fromJSON(v0)).toThrow(/version/);
-      expect(() => Manifest.fromJSON(v0)).toThrow(RECOVERY_INVOCATION);
+      expect(() => Manifest.fromJSON(v0, resolveRegisteredToolId)).toThrow(/version/);
+      expect(() => Manifest.fromJSON(v0, resolveRegisteredToolId)).toThrow(RECOVERY_INVOCATION);
     });
 
     it("rejects a version above 8 by pointing at update, not a downgrade", () => {
       const v99 = { version: 99, tools: {} };
-      expect(() => Manifest.fromJSON(v99)).toThrow(/version/);
-      expect(() => Manifest.fromJSON(v99)).toThrow(/aidd update/);
-      expect(() => Manifest.fromJSON(v99)).not.toThrow(RECOVERY_INVOCATION);
+      expect(() => Manifest.fromJSON(v99, resolveRegisteredToolId)).toThrow(/version/);
+      expect(() => Manifest.fromJSON(v99, resolveRegisteredToolId)).toThrow(/aidd update/);
+      expect(() => Manifest.fromJSON(v99, resolveRegisteredToolId)).not.toThrow(
+        RECOVERY_INVOCATION
+      );
     });
   });
 
   describe("malformed tool entry", () => {
     it("throws an instructive, typed error naming the field when files is missing", () => {
       const data = { version: 8, tools: { claude: { toolId: "claude", version: "1.0.0" } } };
-      expect(() => Manifest.fromJSON(data)).toThrow(/tools\.claude\.files/);
+      expect(() => Manifest.fromJSON(data, resolveRegisteredToolId)).toThrow(
+        /tools\.claude\.files/
+      );
     });
 
     it("throws an instructive, typed error naming the field when files is the wrong type", () => {
@@ -313,12 +322,14 @@ describe("Manifest", () => {
         version: 8,
         tools: { claude: { toolId: "claude", version: "1.0.0", files: "nope" } },
       };
-      expect(() => Manifest.fromJSON(data)).toThrow(/tools\.claude\.files/);
+      expect(() => Manifest.fromJSON(data, resolveRegisteredToolId)).toThrow(
+        /tools\.claude\.files/
+      );
     });
 
     it("throws an instructive, typed error when a tool entry is not an object", () => {
       const data = { version: 8, tools: { claude: "nope" } };
-      expect(() => Manifest.fromJSON(data)).toThrow(/tools\.claude/);
+      expect(() => Manifest.fromJSON(data, resolveRegisteredToolId)).toThrow(/tools\.claude/);
     });
 
     // `scope` is mandatory since v7: a default would guess exactly what the field exists to stop
@@ -343,7 +354,7 @@ describe("Manifest", () => {
           },
         },
       };
-      expect(() => Manifest.fromJSON(data)).toThrow(/aidd-context/);
+      expect(() => Manifest.fromJSON(data, resolveRegisteredToolId)).toThrow(/aidd-context/);
     });
 
     it("rejects a v8 plugin entry whose scope is neither project nor user", () => {
@@ -367,7 +378,7 @@ describe("Manifest", () => {
           },
         },
       };
-      expect(() => Manifest.fromJSON(data)).toThrow(/aidd-context/);
+      expect(() => Manifest.fromJSON(data, resolveRegisteredToolId)).toThrow(/aidd-context/);
     });
   });
 
@@ -449,7 +460,7 @@ describe("Manifest", () => {
         pluginRefs: ["aidd-context@ai-driven-dev"],
       });
 
-      const restored = Manifest.fromJSON(manifest.toJSON());
+      const restored = Manifest.fromJSON(manifest.toJSON(), resolveRegisteredToolId);
 
       expect(restored.getNativeRegistrations("claude" as ToolId)).toStrictEqual({
         binary: "claude",
@@ -517,11 +528,15 @@ describe("Manifest", () => {
     };
 
     it("still loads, keeping the tool it records", () => {
-      expect(Manifest.fromJSON(written).getToolVersion("claude" as ToolId)).toBe("1.0.0");
+      expect(
+        Manifest.fromJSON(written, resolveRegisteredToolId).getToolVersion("claude" as ToolId)
+      ).toBe("1.0.0");
     });
 
     it("drops the exclusions on its next write", () => {
-      expect(Manifest.fromJSON(written).toJSON().tools.claude).toStrictEqual({
+      expect(
+        Manifest.fromJSON(written, resolveRegisteredToolId).toJSON().tools.claude
+      ).toStrictEqual({
         toolId: "claude",
         version: "1.0.0",
         files: [],
@@ -532,18 +547,24 @@ describe("Manifest", () => {
 
   describe("fromJSON() on a document that is not an object", () => {
     it("refuses null, saying an object was expected", () => {
-      expect(() => Manifest.fromJSON(null)).toThrow(InvalidManifestDataError);
-      expect(() => Manifest.fromJSON(null)).toThrow("Invalid manifest data: expected an object.");
+      expect(() => Manifest.fromJSON(null, resolveRegisteredToolId)).toThrow(
+        InvalidManifestDataError
+      );
+      expect(() => Manifest.fromJSON(null, resolveRegisteredToolId)).toThrow(
+        "Invalid manifest data: expected an object."
+      );
     });
 
     it("refuses a string, saying an object was expected", () => {
-      expect(() => Manifest.fromJSON("nope")).toThrow("Invalid manifest data: expected an object.");
+      expect(() => Manifest.fromJSON("nope", resolveRegisteredToolId)).toThrow(
+        "Invalid manifest data: expected an object."
+      );
     });
   });
 
   describe("version refusal wording", () => {
     it("spells out the 5.2.2 remedy, then the deletion, for a version 6 document", () => {
-      expect(() => Manifest.fromJSON({ version: 6, tools: {} })).toThrow(
+      expect(() => Manifest.fromJSON({ version: 6, tools: {} }, resolveRegisteredToolId)).toThrow(
         "Invalid manifest data: manifest version 6 predates version 8, the only one this CLI reads. " +
           "5.2.2, a published CLI, wrote this version. Before deleting it, run " +
           "`npx @ai-driven-dev/cli@5.2.2 clean --force` in this project so it unregisters " +
@@ -554,7 +575,7 @@ describe("Manifest", () => {
     });
 
     it("spells out the deletion alone for a version 7 document", () => {
-      expect(() => Manifest.fromJSON({ version: 7, tools: {} })).toThrow(
+      expect(() => Manifest.fromJSON({ version: 7, tools: {} }, resolveRegisteredToolId)).toThrow(
         "Invalid manifest data: manifest version 7 predates version 8, the only one this CLI reads. " +
           "No published CLI can write this version: delete .aidd/manifest.json in this project, " +
           "then run `aidd setup` to reinstall the framework."
@@ -562,9 +583,9 @@ describe("Manifest", () => {
     });
 
     it("reads a version that is not a number as unreadable, never as newer", () => {
-      expect(() => Manifest.fromJSON({ version: "99", tools: {} })).toThrow(
-        "manifest version 99 predates version 8"
-      );
+      expect(() =>
+        Manifest.fromJSON({ version: "99", tools: {} }, resolveRegisteredToolId)
+      ).toThrow("manifest version 99 predates version 8");
     });
   });
 });

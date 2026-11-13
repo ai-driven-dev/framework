@@ -1,6 +1,5 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { VALID_TOOL_IDS } from "../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
@@ -189,7 +188,7 @@ describe("aidd framework install", () => {
     await expect(run("install", "--tool", "emacs")).rejects.toThrow("exited");
 
     expect(errors.join("")).toBe(
-      `Error: Unknown tool: emacs. Valid tools: ${VALID_TOOL_IDS.join(", ")}\n`
+      "Error: Unknown tool: emacs. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode\n"
     );
     expect(installAiTool).not.toHaveBeenCalled();
   });
@@ -327,7 +326,7 @@ describe("aidd framework update", () => {
     await expect(run("update", "--tool", "nope")).rejects.toThrow("exited");
 
     expect(errors[0]).toBe(
-      `Error: Unknown tool: nope. Valid tools: ${VALID_TOOL_IDS.join(", ")}\n`
+      "Error: Unknown tool: nope. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode\n"
     );
     expect(updateAiTools).not.toHaveBeenCalled();
     expect(updateIdeTools).not.toHaveBeenCalled();

@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { InvalidManifestDataError } from "../../../shared/domain/errors.js";
 import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
+import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import { Manifest, type ManifestFileContext } from "../domain/manifest.js";
 
 /**
@@ -9,7 +10,10 @@ import { Manifest, type ManifestFileContext } from "../domain/manifest.js";
  * and user-scope adapters differ only in which path they read and what a version-refusal message
  * should name to fix it (`ManifestFileContext`).
  */
-export async function readManifestFile(context: ManifestFileContext): Promise<Manifest | null> {
+export async function readManifestFile(
+  context: ManifestFileContext,
+  resolveToolId: ToolIdResolver
+): Promise<Manifest | null> {
   let raw: string;
   try {
     raw = await readFile(context.path, "utf-8");
@@ -25,7 +29,7 @@ export async function readManifestFile(context: ManifestFileContext): Promise<Ma
       `${context.path} is not valid JSON: ${(error as Error).message}`
     );
   }
-  return Manifest.fromJSON(parsed, context);
+  return Manifest.fromJSON(parsed, resolveToolId, context);
 }
 
 /** `dirname(path)` is `<projectRoot>/.aidd` for the project adapter and `userConfigDir()` for the

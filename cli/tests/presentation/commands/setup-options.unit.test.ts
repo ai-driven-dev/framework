@@ -7,8 +7,7 @@ import {
   parseToolIds,
 } from "../../../src/presentation/commands/setup.js";
 import { ErrorHandler } from "../../../src/presentation/error-handler.js";
-import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../../src/shared/domain/tool.js";
-import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 function refuseByThrowing() {
@@ -59,16 +58,23 @@ describe("parseSourceFlag", () => {
 
 describe("expandAllKeyword", () => {
   it("selects nothing when the flag was not given", () => {
-    expect(expandAllKeyword(undefined, AI_TOOL_IDS)).toEqual([]);
+    expect(expandAllKeyword(undefined, catalogOf().idsInCanonicalOrder("ai"))).toEqual([]);
   });
 
   it("expands 'all' into every id of that category, spacing and all", () => {
-    expect(expandAllKeyword("all", IDE_TOOL_IDS)).toEqual([...IDE_TOOL_IDS]);
-    expect(expandAllKeyword("  all  ", IDE_TOOL_IDS)).toEqual([...IDE_TOOL_IDS]);
+    expect(expandAllKeyword("all", catalogOf().idsInCanonicalOrder("ide"))).toEqual([
+      ...catalogOf().idsInCanonicalOrder("ide"),
+    ]);
+    expect(expandAllKeyword("  all  ", catalogOf().idsInCanonicalOrder("ide"))).toEqual([
+      ...catalogOf().idsInCanonicalOrder("ide"),
+    ]);
   });
 
   it("splits a comma-separated list, dropping the spacing and the empty entries", () => {
-    expect(expandAllKeyword(" claude , , cursor ", AI_TOOL_IDS)).toEqual(["claude", "cursor"]);
+    expect(expandAllKeyword(" claude , , cursor ", catalogOf().idsInCanonicalOrder("ai"))).toEqual([
+      "claude",
+      "cursor",
+    ]);
   });
 });
 
@@ -93,16 +99,18 @@ describe("parseToolIds", () => {
     });
   });
 
-  it("refuses an id belonging to the other category", () => {
+  it("refuses an id belonging to the other category, and an unknown one with it", () => {
     const output = new CapturingOutput(false);
     const exit = refuseByThrowing();
 
     expect(() =>
-      parseToolIds({ ai: "vscode" }, new ErrorHandler(output), registeredCatalog())
+      parseToolIds({ ai: "vscode,nope" }, new ErrorHandler(output), registeredCatalog())
     ).toThrow("process.exit");
 
     expect(exit).toHaveBeenCalledWith(1);
-    expect(output.at("error")).toHaveLength(1);
+    expect(output.at("error")).toEqual([
+      "vscode, nope are not AI tools. Valid AI tools: claude, cursor, copilot, opencode, kilo, codex, antigravity",
+    ]);
   });
 
   it("files every id --ide names under the list its category decides", () => {
@@ -120,7 +128,7 @@ describe("parseToolIds", () => {
     const errorHandler = new ErrorHandler(new CapturingOutput(false));
 
     expect(parseToolIds({ ai: "all" }, errorHandler, registeredCatalog())).toEqual({
-      aiTools: [...AI_TOOL_IDS],
+      aiTools: [...catalogOf().idsInCanonicalOrder("ai")],
       ideTools: [],
     });
   });

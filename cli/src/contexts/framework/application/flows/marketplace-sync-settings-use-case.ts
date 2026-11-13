@@ -12,7 +12,7 @@ import {
   samePathSegment,
 } from "../../../../shared/domain/paths.js";
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
-import { type AiToolId, isAiToolId, type ToolId } from "../../../../shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
@@ -674,7 +674,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     manifest: Manifest,
     projectRoot: string
   ): Promise<{ refsToEnable: string[]; alreadyOwnedRefs: string[] }> {
-    const hostRegistry = isAiToolId(toolId) ? this.hostPluginRegistries.get(toolId) : undefined;
+    const hostRegistry = tools.isAiTool(toolId) ? this.hostPluginRegistries.get(toolId) : undefined;
     if (hostRegistry === undefined) return { refsToEnable: refs, alreadyOwnedRefs: [] };
     const ownRefs = manifest.getNativeRegistrations(toolId)?.pluginRefs;
     const onHost = (await hostRegistry.read(projectRoot)).refs;
@@ -827,7 +827,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     projectRoot: string,
     fresh?: NativeMarketplaceRegistration
   ): Promise<NativeCatalogProof> {
-    if (!isAiToolId(toolId))
+    if (!tools.isAiTool(toolId))
       return { canonical: false, hostReadable: false, sourceStatus: "unproven" };
     const machine = await this.userManifestRepo?.load();
     const registrations = machine?.getNativeRegistrations(toolId);
@@ -922,7 +922,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       (proof.sourceStatus === "owned" && proof.source === undefined)
     ) {
       if (
-        isAiToolId(toolId) &&
+        tools.isAiTool(toolId) &&
         tools.aiProfileIfAny(toolId)?.nativeActivation()?.keepsMarketplaceRegistry() === true
       ) {
         const existing = await this.hostMarketplaceRegistries.get(toolId)?.read();
@@ -943,7 +943,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       return { hostName, outcome: "refused", claimable: false };
     }
     const hostMarketplaceReading =
-      isAiToolId(toolId) &&
+      tools.isAiTool(toolId) &&
       tools.aiProfileIfAny(toolId)?.nativeActivation()?.keepsMarketplaceRegistry() === true
         ? await this.hostMarketplaceRegistries.get(toolId)?.read()
         : undefined;
@@ -1027,6 +1027,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       );
       if (!reclaimed) return { hostName, outcome: "refused", claimable: false };
       const afterReclaim = await this.proveAddedSource(
+        tools,
         toolId,
         hostName,
         builtDir,
@@ -1041,7 +1042,14 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
         provenance: afterReclaim,
       };
     }
-    const afterAdd = await this.proveAddedSource(toolId, hostName, builtDir, projectRoot, warnings);
+    const afterAdd = await this.proveAddedSource(
+      tools,
+      toolId,
+      hostName,
+      builtDir,
+      projectRoot,
+      warnings
+    );
     return {
       hostName,
       outcome: afterAdd === undefined ? "refused" : "registered",
@@ -1052,13 +1060,14 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   }
 
   private async proveAddedSource(
+    tools: ToolCatalog,
     toolId: ToolId,
     hostName: string,
     builtDir: string,
     projectRoot: string,
     warnings: string[]
   ): Promise<NativeMarketplaceSource | undefined> {
-    if (!isAiToolId(toolId)) return undefined;
+    if (!tools.isAiTool(toolId)) return undefined;
     const reading = await this.nativeSources.get(toolId)?.read(projectRoot);
     const current = reading?.entries?.get(hostName);
     const expected = await this.fs.realpath(builtDir).catch(() => builtDir);
@@ -1092,7 +1101,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     projectRoot: string,
     warnings: string[]
   ): Promise<"proceed" | "skip"> {
-    if (!isAiToolId(toolId)) return "proceed";
+    if (!tools.isAiTool(toolId)) return "proceed";
     if (tools.aiProfileIfAny(toolId)?.nativeActivation()?.keepsMarketplaceRegistry() !== true)
       return "proceed";
     const reader = this.hostMarketplaceRegistries.get(toolId);
@@ -1174,7 +1183,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       warnings.push(message);
       return false;
     }
-    const registeredSource = isAiToolId(toolId)
+    const registeredSource = tools.isAiTool(toolId)
       ? (await this.hostMarketplaceRegistries.get(toolId)?.read())?.entries?.get(hostName)
       : undefined;
     const source =

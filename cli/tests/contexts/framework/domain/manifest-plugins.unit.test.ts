@@ -8,6 +8,7 @@ import {
 } from "../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
+import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
 
 const CLAUDE = "claude" as ToolId;
 const CURSOR = "cursor" as ToolId;
@@ -37,7 +38,7 @@ describe("plugin serialization round-trip", () => {
     const manifest = makeManifest();
     manifest.addPlugin(CLAUDE, makePlugin("cool-plugin"));
     const serialized = manifest.toJSON();
-    const reparsed = Manifest.fromJSON(serialized);
+    const reparsed = Manifest.fromJSON(serialized, resolveRegisteredToolId);
     const plugins = reparsed.getPlugins(CLAUDE);
     expect(plugins).toHaveLength(1);
     expect(plugins[0].name).toBe("cool-plugin");
