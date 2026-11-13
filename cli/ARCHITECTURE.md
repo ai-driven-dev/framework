@@ -29,7 +29,7 @@ flowchart LR
 | `src/contexts/distribution/` | Where content comes from and how it is fetched. A leaf: knows no tool and no installation record. |
 | `src/contexts/framework/` | The installation record and everything done to a project. The only context allowed to reach the others. |
 | `src/presentation/` | What speaks to a human: commands, display, prompts, output. |
-| `src/runtime/` | Technical services and wiring: auth, http, git, platform, project root, self-update, one wiring module per context. |
+| `src/runtime/` | Technical services and wiring: auth, http, git, platform, project root, the latest-release resolver, one wiring module per context. |
 
 ## Invariants
 

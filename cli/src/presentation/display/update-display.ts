@@ -1,4 +1,4 @@
-import type { SelfUpdateResult } from "../../runtime/self-update/self-update-use-case.js";
+import type { SelfUpdateResult } from "../../contexts/update/application/self-update.js";
 import type { CLIOutput } from "../output.js";
 
 export function printSelfUpdateResult(output: CLIOutput, result: SelfUpdateResult): void {
@@ -16,8 +16,9 @@ export function printSelfUpdateResult(output: CLIOutput, result: SelfUpdateResul
       output.info(`Would install @ai-driven-dev/cli@${result.latestVersion}`);
       break;
     case "updated": {
-      const binaryPart = result.binaryPath ? ` (${result.binaryPath})` : "";
-      output.success(`Successfully updated to version ${result.latestVersion}${binaryPart}`);
+      output.success(
+        `Successfully updated to version ${result.latestVersion} (${result.binaryPath})`
+      );
       if (result.changelog) {
         output.info(`\nChangelog:\n${result.changelog}`);
       }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CurrentVersionAdapter } from "../../../src/runtime/self-update/current-version-adapter.js";
+import { CurrentVersionAdapter } from "../../../src/shared/infrastructure/current-version-adapter.js";
 
 describe("CurrentVersionAdapter", () => {
   it("returns the bundled package version", () => {

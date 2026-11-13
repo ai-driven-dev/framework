@@ -37,6 +37,9 @@ flowchart LR
     Auth --> Kernel
     HostRegistration --> Kernel
     Auth --> Shared
+    Update --> Auth
+    Update --> Kernel
+    Update --> Shared
     Translate --> Kernel
 ```
 

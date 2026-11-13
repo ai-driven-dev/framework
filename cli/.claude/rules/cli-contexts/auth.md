@@ -20,7 +20,7 @@ paths:
 - `CredentialRecordRepository`: the record of each level, read, saved and deleted by level.
 - `ExternalTokenSource`, `CliAuthProvider`: a provider's token and its identity check (`gh`).
 - `IdentityVerifier`: who a stored token belongs to.
-- Published in `contract/`: `TokenProvider` (distribution, framework, self-update) and the credential types (presentation).
+- Published in `contract/`: `TokenProvider` (distribution, framework, update) and the credential types (presentation).
 
 ## Suppliers
 

@@ -10,7 +10,7 @@ import { sourceFiles } from "./helpers.js";
 
 /** Source files under each folder that is still counted. Lower a value when files leave. */
 const COMMITTED_COUNTS: Readonly<Record<string, number>> = {
-  "src/runtime/": 24,
+  "src/runtime/": 19,
   "src/contexts/framework/": 125,
 };
 

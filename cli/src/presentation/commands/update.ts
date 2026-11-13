@@ -25,7 +25,7 @@ async function runUpdateAction(
   try {
     const deps = await createDeps(projectRoot, { verbose }, output, tools);
 
-    const result = await deps.selfUpdateUseCase.execute({
+    const result = await deps.selfUpdate.execute({
       check: cmdOptions.check,
       dryRun: cmdOptions.dryRun,
       force: cmdOptions.force,

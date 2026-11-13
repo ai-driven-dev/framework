@@ -324,6 +324,14 @@
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/update/domain/**",
+                      "**/update/ports/**",
+                      "**/update/infrastructure/**"
+                    ],
+                    "message": "update publishes its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -360,6 +368,14 @@
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/update/domain/**",
+                      "**/update/ports/**",
+                      "**/update/infrastructure/**"
+                    ],
+                    "message": "update publishes its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -409,7 +425,8 @@
                       "**/distribution/**",
                       "**/tools/**",
                       "**/telemetry/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "auth imports only the kernel, see context-graph.arch.test.ts"
                   },
@@ -594,7 +611,8 @@
                       "**/telemetry/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "auth imports only the kernel, see context-graph.arch.test.ts"
                   },
@@ -627,7 +645,8 @@
                       "**/telemetry/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "auth imports only the kernel, see context-graph.arch.test.ts"
                   },
@@ -671,7 +690,8 @@
                       "**/distribution/**",
                       "**/tools/**",
                       "**/telemetry/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "auth imports only the kernel, see context-graph.arch.test.ts"
                   },
@@ -861,13 +881,484 @@
                       "**/distribution/**",
                       "**/tools/**",
                       "**/telemetry/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "auth imports only the kernel, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  }
+                ],
+                "paths": {
+                  "_http_agent": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_agent": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_http_client": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_client": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_http_common": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_common": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_http_incoming": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_incoming": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_http_outgoing": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_outgoing": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_http_server": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_server": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_duplex": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_duplex": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_passthrough": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_passthrough": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_readable": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_readable": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_transform": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_transform": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_wrap": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_wrap": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_writable": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_writable": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_tls_common": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_tls_common": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_tls_wrap": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_tls_wrap": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "assert": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:assert": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "assert/strict": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:assert/strict": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "async_hooks": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:async_hooks": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "buffer": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:buffer": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "child_process": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:child_process": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "cluster": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:cluster": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "console": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:console": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "constants": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:constants": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "dgram": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:dgram": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "diagnostics_channel": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:diagnostics_channel": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "dns": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:dns": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "dns/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:dns/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "domain": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:domain": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "events": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:events": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "fs": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:fs": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "fs/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:fs/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "http": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:http": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "http2": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:http2": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "https": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:https": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "inspector": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:inspector": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "inspector/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:inspector/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "module": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:module": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "net": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:net": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "os": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:os": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "path/posix": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:path/posix": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "path/win32": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:path/win32": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "perf_hooks": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:perf_hooks": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "process": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:process": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "punycode": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:punycode": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "querystring": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:querystring": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "readline": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:readline": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "readline/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:readline/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "repl": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:repl": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "stream": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:stream": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "stream/consumers": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:stream/consumers": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "stream/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:stream/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "stream/web": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:stream/web": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "string_decoder": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:string_decoder": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "sys": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:sys": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "timers": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:timers": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "timers/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:timers/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "tls": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:tls": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "trace_events": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:trace_events": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "tty": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:tty": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "url": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:url": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "util": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:util": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "util/types": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:util/types": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "v8": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:v8": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "vm": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:vm": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "wasi": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:wasi": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "worker_threads": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:worker_threads": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "zlib": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:zlib": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "sea": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:sea": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "sqlite": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:sqlite": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "test": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:test": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "test/reporters": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:test/reporters": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "@inquirer/prompts": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/update/domain/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/application/**",
+                      "**/infrastructure/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/telemetry/**",
+                      "**/host-registration/**"
+                    ],
+                    "message": "update imports only the kernel and the contract of auth, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ],
+                "paths": {
+                  "_http_agent": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_agent": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_http_client": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_client": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_http_common": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_common": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_http_incoming": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_incoming": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_http_outgoing": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_outgoing": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_http_server": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_http_server": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_duplex": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_duplex": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_passthrough": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_passthrough": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_readable": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_readable": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_transform": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_transform": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_wrap": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_wrap": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_stream_writable": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_stream_writable": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_tls_common": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_tls_common": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "_tls_wrap": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:_tls_wrap": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "assert": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:assert": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "assert/strict": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:assert/strict": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "async_hooks": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:async_hooks": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "buffer": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:buffer": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "child_process": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:child_process": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "cluster": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:cluster": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "console": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:console": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "constants": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:constants": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "dgram": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:dgram": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "diagnostics_channel": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:diagnostics_channel": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "dns": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:dns": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "dns/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:dns/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "domain": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:domain": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "events": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:events": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "fs": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:fs": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "fs/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:fs/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "http": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:http": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "http2": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:http2": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "https": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:https": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "inspector": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:inspector": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "inspector/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:inspector/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "module": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:module": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "net": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:net": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "os": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:os": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "path/posix": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:path/posix": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "path/win32": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:path/win32": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "perf_hooks": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:perf_hooks": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "process": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:process": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "punycode": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:punycode": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "querystring": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:querystring": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "readline": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:readline": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "readline/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:readline/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "repl": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:repl": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "stream": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:stream": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "stream/consumers": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:stream/consumers": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "stream/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:stream/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "stream/web": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:stream/web": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "string_decoder": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:string_decoder": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "sys": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:sys": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "timers": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:timers": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "timers/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:timers/promises": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "tls": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:tls": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "trace_events": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:trace_events": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "tty": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:tty": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "url": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:url": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "util": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:util": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "util/types": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:util/types": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "v8": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:v8": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "vm": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:vm": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "wasi": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:wasi": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "worker_threads": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:worker_threads": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "zlib": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:zlib": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "sea": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:sea": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "sqlite": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:sqlite": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "test": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:test": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "test/reporters": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "node:test/reporters": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "@inquirer/prompts": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/update/application/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/infrastructure/**"],
+                    "message": "application must not import infrastructure: take a port and let the composition root supply the adapter"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/telemetry/**",
+                      "**/presentation/**",
+                      "**/runtime/**",
+                      "**/host-registration/**"
+                    ],
+                    "message": "update imports only the kernel and the contract of auth, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ],
+                "paths": {
+                  "node:child_process": "only update/infrastructure runs a process: take a port and let infrastructure supply the adapter",
+                  "child_process": "only update/infrastructure runs a process: take a port and let infrastructure supply the adapter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/update/infrastructure/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/telemetry/**",
+                      "**/presentation/**",
+                      "**/runtime/**",
+                      "**/host-registration/**"
+                    ],
+                    "message": "update imports only the kernel and the contract of auth, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/shared/infrastructure/**"],
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/update/ports/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/application/**",
+                      "**/infrastructure/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "a port must not import application, infrastructure, presentation or runtime"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/telemetry/**",
+                      "**/host-registration/**"
+                    ],
+                    "message": "update imports only the kernel and the contract of auth, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -1049,7 +1540,8 @@
                       "**/distribution/**",
                       "**/tools/**",
                       "**/telemetry/**",
-                      "**/auth/**"
+                      "**/auth/**",
+                      "**/update/**"
                     ],
                     "message": "host-registration imports only the kernel, see context-graph.arch.test.ts"
                   },
@@ -1234,7 +1726,8 @@
                       "**/telemetry/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/auth/**"
+                      "**/auth/**",
+                      "**/update/**"
                     ],
                     "message": "host-registration imports only the kernel, see context-graph.arch.test.ts"
                   },
@@ -1267,7 +1760,8 @@
                       "**/telemetry/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/auth/**"
+                      "**/auth/**",
+                      "**/update/**"
                     ],
                     "message": "host-registration imports only the kernel, see context-graph.arch.test.ts"
                   },
@@ -1313,7 +1807,8 @@
                       "**/distribution/**",
                       "**/tools/**",
                       "**/telemetry/**",
-                      "**/auth/**"
+                      "**/auth/**",
+                      "**/update/**"
                     ],
                     "message": "host-registration imports only the kernel, see context-graph.arch.test.ts"
                   },
@@ -1503,7 +1998,8 @@
                       "**/distribution/**",
                       "**/telemetry/**",
                       "**/auth/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
@@ -1685,7 +2181,7 @@
                     "message": "domain must not import application, infrastructure, presentation or runtime"
                   },
                   {
-                    "group": ["**/telemetry/**"],
+                    "group": ["**/telemetry/**", "**/update/**"],
                     "message": "framework may import translate, tools and distribution, never telemetry \u2014 see context-graph.arch.test.ts"
                   },
                   {
@@ -1725,7 +2221,7 @@
                     "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
                   },
                   {
-                    "group": ["**/telemetry/**"],
+                    "group": ["**/telemetry/**", "**/update/**"],
                     "message": "framework may import translate, tools and distribution, never telemetry \u2014 see context-graph.arch.test.ts"
                   },
                   {
@@ -1761,7 +2257,12 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["**/telemetry/**", "**/presentation/**", "**/runtime/**"],
+                    "group": [
+                      "**/telemetry/**",
+                      "**/presentation/**",
+                      "**/runtime/**",
+                      "**/update/**"
+                    ],
                     "message": "framework/infrastructure may import translate, tools and distribution, never telemetry, presentation or runtime \u2014 see context-graph.arch.test.ts"
                   },
                   {
@@ -1815,7 +2316,8 @@
                       "**/distribution/**",
                       "**/telemetry/**",
                       "**/auth/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "translate may import only the kernel and contexts/tools \u2014 see context-graph.arch.test.ts"
                   },
@@ -1855,7 +2357,8 @@
                       "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "translate may import only the kernel and contexts/tools \u2014 see context-graph.arch.test.ts"
                   },
@@ -1891,7 +2394,8 @@
                       "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "translate may import only the kernel and contexts/tools \u2014 see context-graph.arch.test.ts"
                   },
@@ -1942,7 +2446,8 @@
                       "**/distribution/**",
                       "**/telemetry/**",
                       "**/auth/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
@@ -1985,7 +2490,8 @@
                       "**/distribution/**",
                       "**/telemetry/**",
                       "**/auth/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
@@ -2022,7 +2528,8 @@
                       "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
@@ -2055,7 +2562,8 @@
                       "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
@@ -2099,7 +2607,8 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/manifest.js",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "distribution knows no tool, no translation and no installation record \u2014 it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
                   },
@@ -2138,7 +2647,8 @@
                       "**/telemetry/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "distribution knows no tool, no translation and no installation record (context-graph.arch.test.ts)"
                   },
@@ -2177,7 +2687,8 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "distribution knows no tool, no translation and no installation record, and reaches no presentation (context-graph.arch.test.ts). Its runtime imports are the grandfathered exception recorded there as BASELINE, not extended here"
                   },
@@ -2225,7 +2736,8 @@
                       "**/distribution/**",
                       "**/tools/**",
                       "**/auth/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
                   },
@@ -2262,7 +2774,8 @@
                       "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
                   },
@@ -2295,7 +2808,8 @@
                       "**/auth/**",
                       "**/presentation/**",
                       "**/runtime/**",
-                      "**/host-registration/**"
+                      "**/host-registration/**",
+                      "**/update/**"
                     ],
                     "message": "telemetry imports only the kernel \u2014 see context-graph.arch.test.ts"
                   },

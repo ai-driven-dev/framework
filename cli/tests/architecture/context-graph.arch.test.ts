@@ -77,7 +77,7 @@ describe("the guard itself", () => {
     expect(forbiddenEdges([permitted], ALLOWED)).toEqual([]);
   });
 
-  it("reports a planted tools to auth crossing and clears the two edges into auth", () => {
+  it("reports a planted tools to auth crossing and clears the three edges into auth", () => {
     const auth = "src/contexts/auth/contract/token-provider.ts";
     const planted = edgeBetween("src/contexts/tools/domain/registry.ts", auth);
     const distribution = edgeBetween(
@@ -88,9 +88,13 @@ describe("the guard itself", () => {
       "src/contexts/framework/application/doctor/doctor-layout-use-case.ts",
       auth
     );
+    const update = edgeBetween(
+      "src/contexts/update/infrastructure/npm-registry-release-adapter.ts",
+      auth
+    );
     const leaving = edgeBetween(auth, "src/contexts/distribution/domain/marketplace.ts");
 
-    expect(forbiddenEdges([planted, distribution, framework, leaving], ALLOWED)).toEqual([
+    expect(forbiddenEdges([planted, distribution, framework, update, leaving], ALLOWED)).toEqual([
       "tools->auth",
       "auth->distribution",
     ]);

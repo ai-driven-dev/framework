@@ -1,5 +1,5 @@
 {
-  "$comment": "The one declaration of what mutation testing covers and the floor each scope must hold. scripts/run-mutation.mjs runs a scope by name and fails below its break; tests/architecture/mutation-covers-source.arch.test.ts checks no source file falls outside both maps, that every scope declares a floor, and that package.json has a script per scope. framework's floor was 93; it measured 92.7 at this branch's head with --force, so its floor is 92. Globs, never file lists: a list goes stale the day a file is added, and the score does not drop, because the mutants that would have died were never generated. A floor is raised to the measured score after a run, never lowered without the reason here. A scope's mutate is one glob or a list where a leading ! excludes; tools is split one scope per tool profile: a profile is a static declaration whose every mutant reruns each test that loads it, and the five together outlasted every other scope on a two-core runner; vscode's single file stays with the rest. canary mutates a fixture, not the product: its static mutant stops a module from loading, which Stryker's vitest runner scores as survived on its own; its dynamic mutants check exact selection through nested suites, repeated spaces, and regex characters. The scope requires 100 and exactly each dynamic mutant's covering test, so a Stryker or Vitest upgrade cannot quietly bypass tests/helpers/unloadable-file-as-failed-test.ts or widen or lose mutation test selection.",
+  "$comment": "The one declaration of what mutation testing covers and the floor each scope must hold. scripts/run-mutation.mjs runs a scope by name and fails below its break; tests/architecture/mutation-covers-source.arch.test.ts checks no source file falls outside both maps, that every scope declares a floor, and that package.json has a script per scope. framework's floor was 93; it measured 92.7 at this branch's head with --force, so its floor is 92. Globs, never file lists: a list goes stale the day a file is added, and the score does not drop, because the mutants that would have died were never generated. update measured 100 at this branch's head with --force, so its floor is 100. A floor is raised to the measured score after a run, never lowered without the reason here. A scope's mutate is one glob or a list where a leading ! excludes; tools is split one scope per tool profile: a profile is a static declaration whose every mutant reruns each test that loads it, and the five together outlasted every other scope on a two-core runner; vscode's single file stays with the rest. canary mutates a fixture, not the product: its static mutant stops a module from loading, which Stryker's vitest runner scores as survived on its own; its dynamic mutants check exact selection through nested suites, repeated spaces, and regex characters. The scope requires 100 and exactly each dynamic mutant's covering test, so a Stryker or Vitest upgrade cannot quietly bypass tests/helpers/unloadable-file-as-failed-test.ts or widen or lose mutation test selection.",
   "scopes": {
     "kernel": {
       "mutate": "src/kernel/**/*.ts",
@@ -9,6 +9,10 @@
     "auth": {
       "mutate": "src/contexts/auth/**/*.ts",
       "break": 97
+    },
+    "update": {
+      "mutate": "src/contexts/update/domain/**/*.ts",
+      "break": 100
     },
     "host-registration-rules": {
       "mutate": "src/contexts/host-registration/contract/**/*.ts",
@@ -101,6 +105,9 @@
     }
   },
   "excluded": {
+    "src/contexts/update/application/**": "Three one-call use cases over ports: each reads a decision or a cache entry from a double and returns it, so a mutant here dies only to the assertion that already pins the call. The branching they dispatch on is the domain scope's, which is mutated.",
+    "src/contexts/update/infrastructure/**": "Adapters over the npm registry, the package managers and the cache file. What they translate is held by the contract suites against a local server and stub binaries; mutating them reruns those servers and subprocesses for every mutant, and the exact strings are pinned by the adapter tests.",
+    "src/contexts/update/ports/**": "Interfaces and types only: they compile to nothing, so no mutant can be generated that a test could see.",
     "src/cli.ts": "The entry point. It registers commands and returns: no branch a mutant could change that a unit or integration test would see, and what proves it runs is the e2e suite, which mutation excludes because it spawns a built binary no mutant reaches.",
     "src/composition/**": "The composition root of the migrated contexts: it constructs adapters and hands them to commands, with no rule of its own. What drives it is the in-process command tests and the e2e suite, which the mutation run leaves out (vitest.mutation.config.ts), so every mutant here would survive for a reason that says nothing about the tests."
   }
