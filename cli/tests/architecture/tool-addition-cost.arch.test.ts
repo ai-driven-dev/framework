@@ -60,13 +60,13 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
 /**
  * Files naming a tool outside its profile today, with how many they name; the list may only
  * shrink, and a listed file may not take on another tool. Three are not debt:
- * `tool-recommendations.ts`, `config-refs.ts` and `plugins-capability.ts`, each naming a tool
+ * `tool-recommendations.ts`, `config-refs.ts` and `native-activation.ts`, each naming a tool
  * for a reason no profile carries. The rest is host wiring and words shown to a user.
  */
 const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/framework/domain/tool-recommendations.ts", named: 4 },
   { path: "src/contexts/tools/domain/capabilities/config-refs.ts", named: 1 },
-  { path: "src/contexts/tools/domain/capabilities/plugins-capability.ts", named: 3 },
+  { path: "src/contexts/tools/domain/plugins/native-activation.ts", named: 3 },
   { path: "src/presentation/commands/setup.ts", named: 2 },
   { path: "src/runtime/assets/asset-loader.ts", named: 7 },
   // The composition names the hosts whose native marketplace readers it builds.

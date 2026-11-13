@@ -4,10 +4,15 @@ import type { AgentsCapability } from "./capabilities/agents-capability.js";
 import type { CommandsCapability } from "./capabilities/commands-capability.js";
 import type { HooksCapability } from "./capabilities/hooks-capability.js";
 import type { McpCapability } from "./capabilities/mcp-capability.js";
-import type { PluginsCapability } from "./capabilities/plugins-capability.js";
 import type { RulesCapability } from "./capabilities/rules-capability.js";
 import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { SkillsCapability } from "./capabilities/skills-capability.js";
+import type { PluginsCapability } from "./plugins/plugins-capability.js";
+import type {
+  ProfileSection,
+  ProfileSectionKey,
+  ProfileSections,
+} from "./profile/profile-sections.js";
 
 export interface HasAgents {
   readonly agents: AgentsCapability;
@@ -25,23 +30,18 @@ export interface HasRules {
   readonly rules: RulesCapability;
 }
 
-export interface HasMcp {
-  readonly mcp: McpCapability;
-}
-
-export interface HasHooks {
-  readonly hooks: HooksCapability;
-}
-
-export interface HasSettings {
-  readonly settings: SettingsCapability | SettingsCapability[];
-}
+export type ConfigCapability = McpCapability | HooksCapability | SettingsCapability;
 
 export interface HasPlugins {
   readonly plugins: PluginsCapability;
 }
 
-export interface AiTool<C> {
+/** The section keys a tool's own type declares, so asking for one needs no `null` check. */
+type DeclaredKey<C extends ProfileSections> = {
+  [K in ProfileSectionKey]-?: undefined extends C[K] ? never : K;
+}[ProfileSectionKey];
+
+export interface AiTool<C extends ProfileSections = ProfileSections> {
   readonly kind: "ai";
   readonly toolId: AiToolId;
   /** How the vendor writes it. `toolId` is a key, not a name: nothing user-facing
@@ -50,13 +50,12 @@ export interface AiTool<C> {
   readonly directory: string;
   readonly toolSuffix: string;
   readonly signalDir: string | null;
-  readonly capabilities: C;
   readonly configOutputPaths?: Readonly<Record<string, string>>;
   /** Bundled runtime modules required by plugins, owned by the tool rather than one plugin. */
   readonly pluginRuntimeFiles?: Readonly<Record<string, string>>;
   /** The tool's framework-build contracts, one per supported build mode, so the build registry
    * is derived from the registered tools instead of a hand-kept list of tool/mode pairs. */
-  readonly buildContracts?: {
+  readonly buildContracts: {
     readonly marketplace?: () => ToolBuildContract;
     readonly flat?: () => ToolBuildContract;
   };
@@ -69,19 +68,29 @@ export interface AiTool<C> {
     readonly marketplace?: readonly string[];
   };
   rewriteContent(content: string): string;
+  /** The section declared under `key`, or `null` when the tool declares none. A key the tool's
+   * own type declares answers without `null`. */
+  section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;
+  section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
+  /** The config files this tool writes: mcp, hooks, then each settings file. */
+  configCapabilities(): ConfigCapability[];
 }
 
-export interface IdeToolConfig {
+export interface IdeToolConfig<C extends ProfileSections = ProfileSections> {
   readonly kind: "ide";
   readonly toolId: IdeToolId;
   readonly directory: string;
   readonly signalDir: string | null;
+  section<K extends DeclaredKey<C>>(key: K): NonNullable<C[K]>;
+  section<K extends ProfileSectionKey>(key: K): ProfileSection<K> | null;
+  /** The config files this tool writes: each settings file. */
+  configCapabilities(): ConfigCapability[];
 }
 
 /** Whether this tool declares a rules capability at all. Generic over the tool's own capability
  * set so a caller keeps whatever it had already narrowed. */
-export function hasRules<TCapabilities>(
+export function hasRules<TCapabilities extends ProfileSections>(
   tool: AiTool<TCapabilities>
 ): tool is AiTool<TCapabilities & HasRules> {
-  return "rules" in (tool.capabilities as object);
+  return tool.section("rules") !== null;
 }

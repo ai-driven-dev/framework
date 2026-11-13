@@ -1,13 +1,25 @@
 import type { ToolBuildContract } from "../../../../src/contexts/tools/domain/build-contract.js";
 import type { CommandsCapability } from "../../../../src/contexts/tools/domain/capabilities/commands-capability.js";
 import type { McpCapability } from "../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
-import {
-  type NativePluginsParams,
-  PluginsCapability,
-  type ProjectHooksFormat,
-} from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import type { SettingsCapability } from "../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/contracts.js";
-import { ToolCatalog, type ToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
+import type {
+  NativePluginsParams,
+  ProjectHooksFormat,
+} from "../../../../src/contexts/tools/domain/plugins/plugin-params.js";
+import {
+  type PluginsCapability,
+  pluginsCapability,
+} from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
+import {
+  defineAiTool,
+  defineIdeTool,
+  type ProfileBrand,
+} from "../../../../src/contexts/tools/domain/profile/define-tool.js";
+import {
+  type BuiltToolConfig,
+  ToolCatalog,
+} from "../../../../src/contexts/tools/domain/registry.js";
 import type { AiToolId, IdeToolId } from "../../../../src/kernel/tool.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */
@@ -15,6 +27,7 @@ export type KitCapabilities = {
   readonly plugins?: PluginsCapability;
   readonly mcp?: McpCapability;
   readonly commands?: CommandsCapability;
+  readonly settings?: SettingsCapability[];
 };
 
 type Contracts = NonNullable<AiTool<KitCapabilities>["buildContracts"]>;
@@ -52,13 +65,13 @@ export const PROJECT_HOOKS_FORMAT: ProjectHooksFormat = {
 /** A flat plugins capability that runs the hooks a plugin ships, or says it does not. */
 export function flatPlugins(hooks: "accepts" | "refuses"): PluginsCapability {
   return hooks === "accepts"
-    ? new PluginsCapability({
+    ? pluginsCapability({
         mode: "flat",
         flatNamespacePrefix: "fake-",
         acceptsHooks: true,
         flatHooksDir: ".fake/hooks/",
       })
-    : new PluginsCapability({
+    : pluginsCapability({
         mode: "flat",
         flatNamespacePrefix: "fake-",
         acceptsHooks: false,
@@ -67,7 +80,7 @@ export function flatPlugins(hooks: "accepts" | "refuses"): PluginsCapability {
 }
 
 export function nativePlugins(extra: Partial<NativePluginsParams> = {}): PluginsCapability {
-  return new PluginsCapability({
+  return pluginsCapability({
     mode: "native",
     acceptsHooks: true,
     pluginsDir: ".fake/plugins/",
@@ -80,10 +93,11 @@ export function nativePlugins(extra: Partial<NativePluginsParams> = {}): Plugins
 
 export class ProfileBuilder {
   private directory = ".fake/";
-  private toolSuffix = ".md";
+  // Neither `.md` nor a real tool's own suffix, so a kit file is never mistaken for a built one.
+  private toolSuffix = ".fake.md";
   private signalDir: string | null = null;
   private capabilities: KitCapabilities = { plugins: flatPlugins("refuses") };
-  private contracts: Contracts | undefined = { flat: () => anEmptyContract() };
+  private contracts: Contracts = { flat: () => anEmptyContract() };
   private probes: Probes | undefined;
 
   constructor(private readonly toolId: AiToolId) {}
@@ -115,13 +129,13 @@ export class ProfileBuilder {
     return this;
   }
 
-  withBuildContract(mode: "marketplace" | "flat", contract: ToolBuildContract): this {
-    this.contracts = { ...this.contracts, [mode]: () => contract };
+  withSettings(settings: SettingsCapability | SettingsCapability[]): this {
+    this.capabilities = { ...this.capabilities, settings: [settings].flat() };
     return this;
   }
 
-  withoutBuildContracts(): this {
-    this.contracts = undefined;
+  withBuildContract(mode: "marketplace" | "flat", contract: ToolBuildContract): this {
+    this.contracts = { ...this.contracts, [mode]: () => contract };
     return this;
   }
 
@@ -140,20 +154,19 @@ export class ProfileBuilder {
     return this;
   }
 
-  build(): AiTool<KitCapabilities> {
+  build(): AiTool<KitCapabilities> & ProfileBrand {
     const { directory, toolSuffix, signalDir, capabilities } = this;
-    return {
-      kind: "ai",
+    return defineAiTool({
       toolId: this.toolId,
       displayName: "Fake",
       directory,
       toolSuffix,
       signalDir,
-      capabilities,
-      ...(this.contracts === undefined ? {} : { buildContracts: this.contracts }),
+      capabilities: () => capabilities,
+      buildContracts: this.contracts,
       ...(this.probes === undefined ? {} : { distributionProbes: this.probes }),
       rewriteContent: (content) => content,
-    };
+    });
   }
 }
 
@@ -161,11 +174,16 @@ export function aProfile(toolId: AiToolId = "claude"): ProfileBuilder {
   return new ProfileBuilder(toolId);
 }
 
-export function anIdeProfile(toolId: IdeToolId = "vscode"): IdeToolConfig {
-  return { kind: "ide", toolId, directory: ".fake-ide/", signalDir: null };
+export function anIdeProfile(toolId: IdeToolId = "vscode"): IdeToolConfig & ProfileBrand {
+  return defineIdeTool({
+    toolId,
+    directory: ".fake-ide/",
+    signalDir: null,
+    capabilities: () => ({}),
+  });
 }
 
-export function aCatalog(...profiles: readonly ToolConfig[]): ToolCatalog {
+export function aCatalog(...profiles: readonly BuiltToolConfig[]): ToolCatalog {
   return new ToolCatalog(profiles);
 }
 
@@ -173,12 +191,8 @@ export type InstallKind = "skills" | "agents" | "commands" | "rules";
 type Installs = { buildInstallPath(fileName: string): string | null };
 
 /** Where a profile installs one built file of a kind, or null when it installs none. */
-export function installPathOf(
-  profile: { readonly capabilities: { readonly [K in InstallKind]?: Installs } },
-  kind: InstallKind,
-  fileName: string
-): string | null {
-  const capability = profile.capabilities[kind];
-  if (capability === undefined) throw new Error(`profile has no ${kind}`);
+export function installPathOf(profile: AiTool, kind: InstallKind, fileName: string): string | null {
+  const capability: Installs | null = profile.section(kind);
+  if (capability === null) throw new Error(`profile has no ${kind}`);
   return capability.buildInstallPath(fileName);
 }

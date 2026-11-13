@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { parseToml } from "../../../src/contexts/tools/domain/profiles/codex/toml.js";
+import { parseToml } from "../../../src/contexts/tools/domain/formats/toml.js";
 import { parseFrontmatter } from "../../../src/kernel/markdown.js";
 import { createTestEnv } from "../../e2e/helpers.js";
 import { runInProcess } from "../../helpers/in-process-cli.js";

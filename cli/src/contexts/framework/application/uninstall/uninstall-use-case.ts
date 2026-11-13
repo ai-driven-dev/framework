@@ -30,7 +30,7 @@ export class UninstallUseCase {
   private readonly toolsUninstall: UninstallToolsUseCase;
 
   constructor(
-    private readonly fs: FileReader & FileWriter,
+    readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     logger: Logger,
     userManifestRepo?: ManifestRepository

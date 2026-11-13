@@ -38,7 +38,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/tools/application/detect-tool-signals.ts",
     "src/contexts/tools/application/resolve-mcp-output-path.ts",
     // what a tool declares about plugins: installing is framework work
-    "src/contexts/tools/domain/capabilities/plugins-capability.ts",
+    "src/contexts/tools/domain/plugins/plugins-capability.ts",
+    "src/contexts/tools/domain/plugins/plugin-params.ts",
     "src/contexts/tools/domain/marketplace-settings.ts",
     "src/contexts/tools/domain/plugin-translation-mode.ts",
     "src/contexts/tools/domain/models/plugin-install-notice.ts",

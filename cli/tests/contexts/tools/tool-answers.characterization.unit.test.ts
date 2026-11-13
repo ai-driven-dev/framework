@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type {
-  GlobalFiles,
-  NativeActivation,
-  PluginsCapability,
-  ProjectHooksFormat,
-} from "../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import { hasRules } from "../../../src/contexts/tools/domain/contracts.js";
 import type { MarketplaceSettings } from "../../../src/contexts/tools/domain/marketplace-settings.js";
+import type { NativeActivation } from "../../../src/contexts/tools/domain/plugins/native-activation.js";
+import type {
+  GlobalFiles,
+  ProjectHooksFormat,
+} from "../../../src/contexts/tools/domain/plugins/plugin-params.js";
+import type { PluginsCapability } from "../../../src/contexts/tools/domain/plugins/plugins-capability.js";
+import { PROFILE_SECTION_KEYS } from "../../../src/contexts/tools/domain/profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import {
   copiesPluginFilesGlobally,
@@ -28,6 +29,7 @@ import {
 } from "../../../src/contexts/tools/domain/registry.js";
 import type { FlatHooksLoaderEntry } from "../../../src/kernel/materialization/flat-paths.js";
 import type { PluginSource } from "../../../src/kernel/source.js";
+import { pluginModeOf } from "./testing/plugin-mode.js";
 
 const HOME = "/fake/home";
 const PROJECT = "/fake/project";
@@ -119,35 +121,56 @@ function loaderEntryAnswer(entry: FlatHooksLoaderEntry | null): unknown {
   return entry === null ? null : { dir: entry.dir, baseName: entry.baseName };
 }
 
+// What the snapshot records for a tool that has no such answer: a native-only or flat-only
+// answer is asked of its own kind alone, and these are the values the record keeps for the rest.
+const NO_FLAT_LAYOUT = {
+  skillLayout: "nested",
+  namespacePrefix: null,
+  hooksDir: null,
+  hooksLoaderEntry: null,
+  hooksBridge: null,
+} as const;
+const NO_MCP_FILE = { accepts: false, relativePath: ".mcp.json" } as const;
+const SCRIPT = "console.log(1);";
+const DEFAULT_HOOKS_PATH = "hooks/hooks.json";
+
 function pluginsAnswer(plugins: PluginsCapability | null, directory: string): unknown {
   if (plugins === null) return null;
-  const bridge = plugins.flatHooksBridge;
+  const layout = plugins.kind === "flat" ? plugins.flatLayout() : NO_FLAT_LAYOUT;
+  const bridge = layout.hooksBridge;
+  const acceptance = plugins.hooksAcceptance();
+  const native = plugins.kind === "native" ? plugins : null;
+  const mcp = native === null ? NO_MCP_FILE : native.mcpFile();
+  const delivery = plugins.projectHooksDelivery();
+  const delivers = plugins.kind !== "unsupported";
+  const userScope = native?.requiresUserScope() === true;
+  const outputDir = native?.pluginOutputDir(PLUGIN) ?? null;
   return {
-    mode: plugins.mode,
-    installScope: plugins.installScope,
-    hooksDestination: plugins.hooksDestination,
-    pluginsDir: plugins.pluginsDir,
-    resolvePluginsBaseDir: plugins.resolvePluginsBaseDir(PROJECT, HOME),
+    mode: pluginModeOf(plugins),
+    installScope: userScope ? "user" : "project",
+    hooksDestination: plugins.deliversHooksToProject() ? "project" : "plugin",
+    pluginsDir: outputDir?.slice(0, -`${PLUGIN}/`.length) ?? null,
+    resolvePluginsBaseDir: userScope ? plugins.userPluginsBaseDir(HOME) : PROJECT,
     userPluginsBaseDir: plugins.userPluginsBaseDir(HOME),
-    pluginOutputDir: plugins.pluginOutputDir(PLUGIN),
-    pluginManifestRelativePath: plugins.pluginManifestRelativePath,
-    pluginRootToken: plugins.pluginRootToken,
-    acceptsHooks: plugins.acceptsHooks,
-    hooksUnsupportedReason: plugins.hooksUnsupportedReason,
-    hooksTrustNotice: plugins.hooksTrustNotice,
-    acceptsMcp: plugins.acceptsMcp,
-    mcpRelativePath: plugins.mcpRelativePath,
-    hooksRelativePath: plugins.hooksRelativePath,
-    projectHooksRelativePath: plugins.projectHooksRelativePath,
-    projectHooksFormat: projectHooksFormatAnswer(plugins.projectHooksFormat),
+    pluginOutputDir: outputDir,
+    pluginManifestRelativePath: native?.manifestPath() ?? null,
+    pluginRootToken: native?.rootToken() ?? null,
+    acceptsHooks: acceptance.accepts,
+    hooksUnsupportedReason: acceptance.accepts ? null : acceptance.reason,
+    hooksTrustNotice: native?.trustNotice() ?? null,
+    acceptsMcp: mcp.accepts,
+    mcpRelativePath: mcp.relativePath,
+    hooksRelativePath: plugins.kind === "native" ? plugins.hooksFilePath() : DEFAULT_HOOKS_PATH,
+    projectHooksRelativePath: delivery?.relativePath ?? null,
+    projectHooksFormat: projectHooksFormatAnswer(delivery?.format ?? null),
     hookScript: {
-      script: plugins.hookScript("hooks/run.js", "console.log(1);"),
-      hooksJson: plugins.hookScript("hooks/hooks.json", HOOKS_JSON),
+      script: delivers ? plugins.hookScript("hooks/run.js", SCRIPT) : SCRIPT,
+      hooksJson: delivers ? plugins.hookScript("hooks/hooks.json", HOOKS_JSON) : HOOKS_JSON,
     },
-    flatNamespacePrefix: plugins.flatNamespacePrefix,
-    flatSkillLayout: plugins.flatSkillLayout,
-    flatHooksDir: plugins.flatHooksDir,
-    flatHooksLoaderEntry: loaderEntryAnswer(plugins.flatHooksLoaderEntry),
+    flatNamespacePrefix: layout.namespacePrefix,
+    flatSkillLayout: layout.skillLayout,
+    flatHooksDir: layout.hooksDir,
+    flatHooksLoaderEntry: loaderEntryAnswer(layout.hooksLoaderEntry),
     flatHooksBridge:
       bridge === null
         ? null
@@ -157,11 +180,16 @@ function pluginsAnswer(plugins: PluginsCapability | null, directory: string): un
             generatedFromNothing: bridge.generate('{"hooks":{}}', PLUGIN),
             generatedFromPreToolUse: bridge.generate(HOOKS_JSON, PLUGIN),
           },
-    translationMode: plugins.translationMode,
-    nativeActivation: activationAnswer(plugins.nativeActivation),
-    marketplaceSettings: marketplaceSettingsAnswer(plugins.marketplaceSettings),
-    globalFiles: globalFilesAnswer(plugins.globalFiles, directory),
+    translationMode: translationModeOf(plugins),
+    nativeActivation: activationAnswer(native?.activation() ?? null),
+    marketplaceSettings: marketplaceSettingsAnswer(native?.marketplaceRegistration() ?? null),
+    globalFiles: globalFilesAnswer(plugins.globalFiles(), directory),
   };
+}
+
+function translationModeOf(plugins: PluginsCapability): "flat" | "marketplace" | null {
+  if (plugins.kind === "flat") return "flat";
+  return plugins.kind === "native" && plugins.translatesAsMarketplace() ? "marketplace" : null;
 }
 
 function registryAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
@@ -208,14 +236,13 @@ function toolAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
       registry: registryAnswer(catalog, config),
     };
   }
-  const capabilities = config.capabilities as object;
   return {
     kind: config.kind,
     displayName: config.displayName,
     directory: config.directory,
     toolSuffix: config.toolSuffix,
     signalDir: config.signalDir,
-    sectionKeys: Object.keys(capabilities).sort(),
+    sectionKeys: PROFILE_SECTION_KEYS.filter((key) => config.section(key) !== null).sort(),
     configOutputPaths: config.configOutputPaths ?? null,
     pluginRuntimeFileKeys: Object.keys(config.pluginRuntimeFiles ?? {}).sort(),
     distributionProbes: config.distributionProbes ?? null,
@@ -223,7 +250,7 @@ function toolAnswer(catalog: ToolCatalog, config: ToolConfig): unknown {
       "See .claude/skills/x and CLAUDE.md for the Claude flow."
     ),
     rulesInstalledLocation: hasRules(config)
-      ? config.capabilities.rules.installedLocation()
+      ? config.section("rules").installedLocation()
       : "no rules section",
     plugins: pluginsAnswer(catalog.resolvePluginsCapability(config.toolId), config.directory),
     registry: registryAnswer(catalog, config),
@@ -242,6 +269,41 @@ describe("what every registered tool answers to the contexts that read it", () =
     await expect(`${pinned}\n`).toMatchFileSnapshot(
       "./__snapshots__/tool-answers.characterization.snap"
     );
+  });
+
+  it("answers through the capability's methods what the registry answers", () => {
+    const catalog = new ToolCatalog(REGISTERED_PROFILES);
+    for (const config of REGISTERED_PROFILES.filter(isAiTool)) {
+      const plugins = catalog.resolvePluginsCapability(config.toolId);
+      if (plugins === null) continue;
+      const id = config.toolId;
+      const native = plugins.kind === "native" ? plugins : null;
+      const delivery = plugins.projectHooksDelivery();
+      const registryDelivery = projectHooksDeliveryOf(id);
+
+      expect(
+        {
+          buildMode: plugins.kind === "flat" ? "flat" : "marketplace",
+          activation: activationAnswer(native?.activation() ?? null),
+          enablementIsMachineGlobal: native?.enablementIsMachineGlobal() ?? true,
+          supportsUserScopeActivation: plugins.supportsUserScopeActivation(),
+          copiesFilesGlobally: plugins.copiesFilesGlobally(),
+          globalFiles: globalFilesAnswer(plugins.globalFiles(), config.directory),
+          projectHooksDelivery: delivery === null ? null : delivery.relativePath,
+          projectHooksScript: delivery?.hookScript("hooks/run.js", "console.log(1);") ?? null,
+        },
+        id
+      ).toEqual({
+        buildMode: frameworkBuildModeFor(id),
+        activation: activationAnswer(nativeActivationOf(id) ?? null),
+        enablementIsMachineGlobal: pluginEnablementIsMachineGlobal(id),
+        supportsUserScopeActivation: supportsUserScopeActivation(id),
+        copiesFilesGlobally: copiesPluginFilesGlobally(id),
+        globalFiles: globalFilesAnswer(globalFilesOf(id), config.directory),
+        projectHooksDelivery: registryDelivery === null ? null : projectHooksFileOf(id),
+        projectHooksScript: registryDelivery?.hookScript("hooks/run.js", "console.log(1);") ?? null,
+      });
+    }
   });
 
   it("lists the tools in registration order from the catalog and sorted by id from the free function", () => {

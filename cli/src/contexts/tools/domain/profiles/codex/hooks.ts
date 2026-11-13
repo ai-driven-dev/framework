@@ -1,7 +1,7 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../../assets/hooks-runtime/host-codex.cjs";
 import { declareHooks } from "../../formats/hooks-descriptor.js";
-import { CODEX_DIRECTORY } from "./codex-paths.js";
+import { CODEX_DIRECTORY, CODEX_PLUGIN_ROOT_TOKEN } from "./codex-paths.js";
 
 export const CODEX_HOOKS = declareHooks("codex", CODEX_DIRECTORY, adapter, {
   // Measured: four consecutive `codex exec` sessions installed a plugin's hooks and ran none of
@@ -16,11 +16,11 @@ export const CODEX_HOOKS = declareHooks("codex", CODEX_DIRECTORY, adapter, {
   // Each item kept whole: Codex trusts a hook by its whole entry, and an entry stripped of
   // `async` runs in the way of the session it was written to stay out of.
   file: { wrapper: {}, entries: { shape: "matchers", itemsKept: "commands" } },
+  rootToken: CODEX_PLUGIN_ROOT_TOKEN,
   flat: { scriptsDir: ".codex/hooks/", sharedFile: ".codex/hooks.json" },
   config: {
     outputPath: ".codex/hooks.json",
     mergeStrategy: "user-prime",
-    entrySection: "SessionStart",
     consumes: ["codex-hooks"],
   },
 });

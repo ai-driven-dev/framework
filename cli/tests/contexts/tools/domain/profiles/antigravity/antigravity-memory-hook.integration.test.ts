@@ -19,6 +19,7 @@ import { dirname, join, relative } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
+import { flatOf } from "../../../testing/plugin-mode.js";
 
 const PLUGIN = "aidd-context";
 const PLUGIN_HOOKS = join(REPOSITORY_ROOT, "plugins", PLUGIN, "hooks");
@@ -34,7 +35,7 @@ const OPEN = "<!-- aidd_project_memory:start -->";
 const CLOSE = "<!-- aidd_project_memory:end -->";
 const LINK = "[aidd_docs/memory/architecture.md](aidd_docs/memory/architecture.md)";
 
-const plugins = antigravity.capabilities.plugins;
+const plugins = flatOf(antigravity.section("plugins"));
 
 function filesUnder(dir: string): string[] {
   return readdirSync(dir, { recursive: true, withFileTypes: true })
@@ -56,8 +57,8 @@ describe("the memory hook under Antigravity", () => {
 
   /** Installs the plugin's hooks as `plugin install` does, and returns its SessionStart command. */
   function install(): string {
-    const format = plugins.projectHooksFormat;
-    if (format === null) throw new Error("antigravity declares no project hooks format");
+    const format = plugins.projectHooksDelivery()?.format;
+    if (format === undefined) throw new Error("antigravity declares no project hooks format");
     for (const source of filesUnder(PLUGIN_HOOKS)) {
       const pluginPath = `hooks/${relative(PLUGIN_HOOKS, source).split("\\").join("/")}`;
       if (pluginPath === "hooks/hooks.json") continue;

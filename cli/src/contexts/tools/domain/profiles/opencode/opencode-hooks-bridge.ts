@@ -19,12 +19,12 @@
  * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
  */
 
-import type { BridgeHookCall } from "../../formats/plugin-hooks-shape.js";
 import {
   parseHooksJsonForBridge,
   pascalCasePluginName,
   replaysNothing,
 } from "../../hooks/event-bridge.js";
+import type { BridgeHookCall } from "../../hooks/plugin-hooks-shape.js";
 
 // Every plugin this generator sees is already named "aidd-<something>", so an "Aidd" prefix
 // here would stutter rather than name anything the plugin's own PascalCased name does not.

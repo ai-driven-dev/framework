@@ -12,6 +12,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
+import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -163,7 +164,7 @@ describe("InstallIdeToolUseCase", () => {
     });
 
     function registerCursorWith(settings: SettingsCapability[]): void {
-      registerTool({ ...cursor, capabilities: { ...cursor.capabilities, settings } });
+      registerTool(withSections(cursor, { settings }));
     }
 
     afterEach(() => {

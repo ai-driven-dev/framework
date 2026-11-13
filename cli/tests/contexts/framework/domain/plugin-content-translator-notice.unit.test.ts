@@ -5,6 +5,7 @@ import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencod
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/kernel/file.js";
+import { nativeOf } from "../../tools/testing/plugin-mode.js";
 
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
@@ -39,7 +40,7 @@ describe("PluginContentTranslator hook trust notice", () => {
       pluginName: "test-plugin",
       component: "hooks",
       toolId: "codex",
-      message: codex.capabilities.plugins.hooksTrustNotice,
+      message: nativeOf(codex.section("plugins")).trustNotice(),
     });
   });
 

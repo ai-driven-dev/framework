@@ -1,26 +1,10 @@
 import { join } from "node:path";
-import { AgentsCapability } from "../../capabilities/agents-capability.js";
-import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
-import { RulesCapability } from "../../capabilities/rules-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import type {
-  AiTool,
-  HasAgents,
-  HasCommands,
-  HasMcp,
-  HasPlugins,
-  HasRules,
-  HasSkills,
-} from "../../contracts.js";
-import {
-  buildAiddCommandFilePath,
-  convertCommandFrontmatter,
-  stripToolSuffix,
-} from "../../formats/command.js";
+import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
+import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { defineAiTool } from "../../profile/define-tool.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
 import { CURSOR_DIRECTORY } from "./cursor-paths.js";
@@ -34,94 +18,80 @@ function toMdc(fileName: string): string {
   return fileName.endsWith(".md") ? `${fileName.slice(0, -3)}${MDC_EXT}` : fileName;
 }
 
-export const cursor: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasPlugins> =
-  {
-    kind: "ai",
-    toolId: "cursor",
-    distributionProbes: {
-      manifest: [".cursor-plugin/plugin.json"],
-      marketplace: [".cursor-plugin/marketplace.json"],
-    },
-    directory: DIRECTORY,
-    toolSuffix: TOOL_SUFFIX,
-    displayName: "Cursor",
-    signalDir: ".cursor/commands",
-    configOutputPaths: { "settings.json": ".cursor/settings.json" },
-    buildContracts: { marketplace: buildCursorContract, flat: buildCursorFlatContract },
+export const cursor = defineAiTool({
+  toolId: "cursor",
+  distributionProbes: {
+    manifest: [".cursor-plugin/plugin.json"],
+    marketplace: [".cursor-plugin/marketplace.json"],
+  },
+  directory: DIRECTORY,
+  toolSuffix: TOOL_SUFFIX,
+  displayName: "Cursor",
+  signalDir: ".cursor/commands",
+  configOutputPaths: { "settings.json": ".cursor/settings.json" },
+  buildContracts: { marketplace: buildCursorContract, flat: buildCursorFlatContract },
 
-    capabilities: {
-      agents: new AgentsCapability({
-        directory: DIRECTORY,
-        toolSuffix: TOOL_SUFFIX,
-        format: "markdown",
-        frontmatter: cursorAgentFrontmatter,
-        // Cursor keeps single quotes as part of the value, so `'name'` would be the agent's name.
-        quote: "double",
-      }),
-      skills: new SkillsCapability({
-        directory: DIRECTORY,
-        toolSuffix: TOOL_SUFFIX,
-        buildInstallPath: (fileName) =>
-          `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
-        convertFrontmatter: (fm) => fm,
-      }),
-      commands: new CommandsCapability({
-        directory: DIRECTORY,
-        toolSuffix: TOOL_SUFFIX,
-        buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
-        convertFrontmatter: (fm, relativeFileName) =>
-          convertCommandFrontmatter(fm, relativeFileName),
-      }),
-      rules: new RulesCapability({
-        directory: DIRECTORY,
-        toolSuffix: TOOL_SUFFIX,
-        buildInstallPath: (fileName) =>
-          `${DIRECTORY}rules/${toMdc(stripToolSuffix(TOOL_SUFFIX, fileName))}`,
-        convertFrontmatter: (fm) => {
-          const { paths, globs, description } = fm;
-          const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
-          if (patterns === null || patterns.length === 0) {
-            if (fm.alwaysApply === false && description !== undefined) {
-              return { description, alwaysApply: false };
-            }
-            return {};
+  capabilities: (bound) => ({
+    agents: bound.agents({
+      format: "markdown",
+      frontmatter: cursorAgentFrontmatter,
+      // Cursor keeps single quotes as part of the value, so `'name'` would be the agent's name.
+      quote: "double",
+    }),
+    skills: bound.skills({
+      buildInstallPath: bound.installUnder("skills/"),
+      convertFrontmatter: (fm) => fm,
+    }),
+    commands: bound.commands({
+      buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
+      convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
+    }),
+    rules: bound.rules({
+      buildInstallPath: (fileName) => {
+        const stripped = bound.installUnder("rules/")(fileName);
+        return toMdc(stripped);
+      },
+      convertFrontmatter: (fm) => {
+        const { paths, globs, description } = fm;
+        const patterns = Array.isArray(paths) ? paths : Array.isArray(globs) ? globs : null;
+        if (patterns === null || patterns.length === 0) {
+          if (fm.alwaysApply === false && description !== undefined) {
+            return { description, alwaysApply: false };
           }
-          const result: Record<string, unknown> = {};
-          if (description !== undefined) result.description = description;
-          return {
-            ...result,
-            globs: JSON.stringify(patterns).replace(/,/g, ", "),
-            alwaysApply: false,
-          };
-        },
-      }),
-      mcp: new McpCapability({
-        outputPath: `${DIRECTORY}mcp.json`,
-        format: "json",
-        entrySection: "mcpServers",
-        consumes: [CONFIG_MCP],
-      }),
-      plugins: new PluginsCapability({
-        mode: "native",
-        // Empty so the translator computes pluginRoot as `<pluginName>/`, giving base-relative
-        // keys such as "aidd-context/commands/foo.md".
-        pluginsDir: "",
-        pluginManifestRelativePath: null,
-        ...nativeHooksSupport(CURSOR_HOOKS),
-        ...projectHooksSupport(CURSOR_HOOKS),
-        acceptsMcp: true,
-        mcpRelativePath: "mcp.json",
-        installScope: "user",
-        userPluginsDir: (h) => join(h, ".cursor", "plugins", "local"),
-      }),
-    },
+          return {};
+        }
+        const result: Record<string, unknown> = {};
+        if (description !== undefined) result.description = description;
+        return {
+          ...result,
+          globs: JSON.stringify(patterns).replace(/,/g, ", "),
+          alwaysApply: false,
+        };
+      },
+    }),
+    mcp: new McpCapability({
+      outputPath: `${DIRECTORY}mcp.json`,
+      format: "json",
+      consumes: [CONFIG_MCP],
+    }),
+    plugins: pluginsCapability({
+      mode: "native",
+      // Empty so the translator computes pluginRoot as `<pluginName>/`, giving base-relative
+      // keys such as "aidd-context/commands/foo.md".
+      pluginsDir: "",
+      pluginManifestRelativePath: null,
+      ...nativeHooksSupport(CURSOR_HOOKS),
+      ...projectHooksSupport(CURSOR_HOOKS),
+      acceptsMcp: true,
+      mcpRelativePath: "mcp.json",
+      installScope: "user",
+      userPluginsDir: (h) => join(h, ".cursor", "plugins", "local"),
+    }),
+  }),
 
-    rewriteContent(content: string): string {
-      return content
-        .replace(
-          /(@?)\.cursor\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
-          "$1.cursor/commands/aidd/$2/$3"
-        )
-        .replace(/(@\.cursor\/rules\/[^\s]+)\.md\b/g, "$1.mdc");
-    },
-  };
+  rewriteContent(content: string): string {
+    return content
+      .replace(/(@?)\.cursor\/commands\/(\d+)[_-][^/]+\/(?=\S)/g, "$1.cursor/commands/aidd/$2/")
+      .replace(/(@\.cursor\/rules\/[^\s]+)\.md\b/g, "$1.mdc");
+  },
+});

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { NativeActivation } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import type { MarketplaceSettings } from "../../../../src/contexts/tools/domain/marketplace-settings.js";
+import type { NativeActivationSpec } from "../../../../src/contexts/tools/domain/plugins/native-activation.js";
 import {
   assertToolIdsMatchCategory,
   toolIdsForCategory,
@@ -22,8 +22,8 @@ import {
 
 const NO_ENV = () => undefined;
 
-function activation(extra: Partial<NativeActivation> = {}): NativeActivation {
-  return { binary: "codex", ...extra };
+function activation(extra: Partial<NativeActivationSpec> = {}): NativeActivationSpec {
+  return { binary: "codex", enableVerb: "add", disableVerb: "remove", ...extra };
 }
 
 function settingsAt(path: string | null): MarketplaceSettings {
@@ -116,7 +116,7 @@ describe("what a profile's plugins capability says about activation", () => {
   });
 
   it("names a user settings file only where activation declares one", () => {
-    const userFile = (extra: Partial<NativeActivation>) =>
+    const userFile = (extra: Partial<NativeActivationSpec>) =>
       aCatalog(
         aProfile("cursor")
           .withPlugins(nativePlugins({ nativeActivation: activation(extra) }))
@@ -133,7 +133,9 @@ describe("what a profile's plugins capability says about activation", () => {
     const local = (path: string | null) =>
       aCatalog(
         aProfile("cursor")
-          .withPlugins(nativePlugins({ marketplaceSettings: settingsAt(path) }))
+          .withPlugins(
+            nativePlugins({ marketplaceSettings: settingsAt(path), nativeActivation: activation() })
+          )
           .build()
       ).machineLocalFilesOf("cursor");
 
@@ -166,7 +168,7 @@ describe("what a profile's plugins capability says about activation", () => {
   });
 
   it("makes plugin enablement machine-global without scopeArgs, and not with them", () => {
-    const withActivation = (extra: Partial<NativeActivation>) =>
+    const withActivation = (extra: Partial<NativeActivationSpec>) =>
       aCatalog(
         aProfile("cursor")
           .withPlugins(nativePlugins({ nativeActivation: activation(extra) }))
@@ -181,7 +183,7 @@ describe("what a profile's plugins capability says about activation", () => {
   });
 
   it("counts an enabled host ref as in use, and a disabled one only where uninstall removes the ref", () => {
-    const withActivation = (extra: Partial<NativeActivation>) =>
+    const withActivation = (extra: Partial<NativeActivationSpec>) =>
       aCatalog(
         aProfile("cursor")
           .withPlugins(nativePlugins({ nativeActivation: activation(extra) }))

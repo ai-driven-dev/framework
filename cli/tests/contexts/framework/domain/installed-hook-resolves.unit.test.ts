@@ -13,6 +13,7 @@ import { PluginContentTranslator } from "../../../../src/contexts/translate/doma
 import { rewritePluginRootToken } from "../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/kernel/file.js";
+import { nativeOf } from "../../tools/testing/plugin-mode.js";
 
 /**
  * A hook command pointing at nothing installs clean and does nothing, so the command is read
@@ -23,7 +24,7 @@ const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
 
 const PLUGIN = "aidd-telemetry";
-const SOURCE_TOKEN = claude.capabilities.plugins.pluginRootToken ?? "";
+const SOURCE_TOKEN = nativeOf(claude.section("plugins")).rootToken() ?? "";
 const SCRIPTS = ["hooks/journal.cjs", "hooks/lib/record.cjs"];
 const HOOKS_JSON = JSON.stringify({
   hooks: {
@@ -55,7 +56,7 @@ function distribution(): PluginDistribution {
 /** Every path a hook command names, as the tool would resolve it: its own plugin-root
  * variable and a leading `./` both mean the plugin's own directory. */
 function commandTargets(manifest: string, tool: AiTool<HasPlugins>): string[] {
-  const token = tool.capabilities.plugins.pluginRootToken ?? "";
+  const token = nativeOf(tool.section("plugins")).rootToken() ?? "";
   return [...manifest.matchAll(/"command":\s*"([^"]+)"/gu)]
     .flatMap((match) => (match[1] ?? "").split(" "))
     .filter((word) => word.includes("/") && !word.startsWith("-"))
@@ -64,7 +65,7 @@ function commandTargets(manifest: string, tool: AiTool<HasPlugins>): string[] {
 
 function installed(tool: AiTool<HasPlugins>): { paths: string[]; manifest: string } {
   const { files } = translator.translateWithComponentPaths(distribution(), tool);
-  const root = `${tool.capabilities.plugins.pluginsDir}${PLUGIN}/`;
+  const root = nativeOf(tool.section("plugins")).pluginOutputDir(PLUGIN) ?? "";
   return {
     paths: files.map((file) => file.relativePath.replace(root, "")),
     manifest: files.find((file) => file.relativePath.endsWith("hooks.json"))?.content ?? "",
@@ -93,7 +94,7 @@ describe("a hook that was installed", () => {
     for (const tool of HOOK_HOSTS) {
       const { manifest } = installed(tool);
       expect(commandTargets(manifest, tool), tool.toolId).not.toHaveLength(0);
-      if (tool.capabilities.plugins.pluginRootToken === SOURCE_TOKEN) continue;
+      if (nativeOf(tool.section("plugins")).rootToken() === SOURCE_TOKEN) continue;
 
       expect(manifest, tool.toolId).not.toContain(SOURCE_TOKEN);
     }
@@ -133,8 +134,10 @@ describe("the two ways a plugin gets installed", () => {
       const { files, skipped } = translator.translateWithComponentPaths(distribution(), tool);
       const carriesHooks = files.some((file) => file.relativePath.endsWith(".cjs"));
 
-      expect(carriesHooks, tool.toolId).toBe(tool.capabilities.plugins.acceptsHooks);
-      expect(skipped.length > 0, tool.toolId).toBe(!tool.capabilities.plugins.acceptsHooks);
+      expect(carriesHooks, tool.toolId).toBe(tool.section("plugins").hooksAcceptance().accepts);
+      expect(skipped.length > 0, tool.toolId).toBe(
+        !tool.section("plugins").hooksAcceptance().accepts
+      );
     }
   });
 });

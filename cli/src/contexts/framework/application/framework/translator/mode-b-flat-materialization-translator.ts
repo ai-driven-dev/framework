@@ -6,8 +6,11 @@ import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
 import type { PluginSource } from "../../../../../kernel/source.js";
 import type { AiToolId } from "../../../../../kernel/tool.js";
-import type { PluginsCapability } from "../../../../tools/domain/capabilities/plugins-capability.js";
-import { getToolConfig, isAiTool } from "../../../../tools/domain/registry.js";
+import {
+  getToolConfig,
+  isAiTool,
+  resolvePluginsCapability,
+} from "../../../../tools/domain/registry.js";
 import { PluginContentTranslator } from "../../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../translate/domain/plugin-translation-skip.js";
@@ -98,7 +101,6 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     dist: PluginDistribution,
     projectRoot: string
   ): {
-    caps: Record<string, unknown>;
     files: InstallationFile[];
     componentPaths: ReadonlyMap<string, string>;
     skipped: ReadonlySkipList;
@@ -107,18 +109,18 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
   } | null {
     const toolConfig = getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return null;
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    const pluginsCap = caps.plugins as PluginsCapability;
-    if (pluginsCap.mode === "native" && pluginsCap.installScope !== "user") {
+    const pluginsCap = resolvePluginsCapability(toolId);
+    if (pluginsCap === null) return null;
+    if (pluginsCap.kind === "native" && !pluginsCap.requiresUserScope()) {
       throw new CursorProjectScopeUnsupportedError();
     }
-    const distForNative = pluginsCap.hooksDestination === "project" ? withoutHooks(dist) : dist;
+    const distForNative = pluginsCap.deliversHooksToProject() ? withoutHooks(dist) : dist;
     const { files, componentPaths, skipped } = new PluginContentTranslator(
       this.hasher
     ).translateWithComponentPaths(distForNative, toolConfig);
     const scope = resolveScopeForInstall(toolId);
     const baseDir = resolveBaseDirFromRecord(scope, toolId, projectRoot, this.homedir);
-    return { caps, files, componentPaths, skipped, baseDir, scope };
+    return { files, componentPaths, skipped, baseDir, scope };
   }
 
   private async writeAndRegisterPlugin(

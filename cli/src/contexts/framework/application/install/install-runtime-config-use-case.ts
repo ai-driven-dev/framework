@@ -8,11 +8,15 @@ import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
-import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
 import { buildOpencodeFlatConfig } from "../../../tools/domain/formats/opencode-mcp-merge.js";
 import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
+import {
+  getToolConfig,
+  isAiTool,
+  mcpCapabilityOf,
+  settingsCapabilitiesOf,
+} from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PostInstallPipelineUseCase } from "./post-install-pipeline-use-case.js";
 
@@ -103,13 +107,8 @@ export class InstallRuntimeConfigUseCase {
       const asset = this.assets.loadConfigAsset(options.toolId, fileName);
       let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
       if (await this.isUserOwned(resolvedPath, options)) continue;
-      const mcp = (toolConfig.capabilities as Record<string, unknown>).mcp;
-      if (
-        mcp instanceof McpCapability &&
-        mcp.params.outputPath === fileName &&
-        mcp.params.format === "json" &&
-        mcp.params.mergeStrategy === "framework-prime"
-      ) {
+      const mcp = mcpCapabilityOf(options.toolId);
+      if (mcp?.isFrameworkPrimeJson(fileName)) {
         content = buildOpencodeFlatConfig(
           content,
           await this.readExistingConfig(resolvedPath, options.projectRoot),
@@ -133,9 +132,8 @@ export class InstallRuntimeConfigUseCase {
     outputPath: string,
     options: InstallRuntimeConfigOptions
   ): Promise<string> {
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    const mcp = caps.mcp;
-    if (!(mcp instanceof McpCapability) || mcp.params.outputPath !== fileName) return outputPath;
+    const mcp = mcpCapabilityOf(toolConfig.toolId);
+    if (mcp === null || mcp.outputPath() !== fileName) return outputPath;
     return resolveMcpOutputPath(this.fs, mcp, options.projectRoot);
   }
 
@@ -152,13 +150,8 @@ export class InstallRuntimeConfigUseCase {
   }
 
   private buildStaticSettingsFiles(options: InstallRuntimeConfigOptions): InstallationFile[] {
-    const toolConfig = getToolConfig(options.toolId);
-    if (!isAiTool(toolConfig)) return [];
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    const raw = caps.settings;
-    const capabilities = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
     const result: InstallationFile[] = [];
-    for (const cap of capabilities) {
+    for (const cap of settingsCapabilitiesOf(options.toolId)) {
       const file = this.buildStaticSettingsFile(cap, options);
       if (file !== null) result.push(file);
     }
@@ -170,23 +163,18 @@ export class InstallRuntimeConfigUseCase {
     options: InstallRuntimeConfigOptions
   ): InstallationFile | null {
     if (!(cap instanceof SettingsCapability)) return null;
-    const hasStaticForm =
-      cap.staticContent !== undefined || cap.staticContentAssetFile !== undefined;
-    if (!hasStaticForm) return null;
-    if (cap.requiresTool && !options.manifest.hasTool(cap.requiresTool)) return null;
-    const content = this.resolveStaticContent(cap, options.toolId);
+    const requiredTool = cap.requiredTool();
+    if (requiredTool !== null && !options.manifest.hasTool(requiredTool)) return null;
+    const content = cap.resolveStaticContent((fileName) =>
+      this.assets.loadConfigAsset(options.toolId, fileName)
+    );
+    if (content === null) return null;
     return new InstallationFile({
-      relativePath: cap.buildOutputPath(),
+      relativePath: cap.outputPath(),
       content,
       hash: this.hasher.hash(content),
-      mergeStrategy: cap.getMergeStrategy(),
+      mergeStrategy: cap.mergeStrategy(),
     });
-  }
-
-  private resolveStaticContent(cap: SettingsCapability, toolId: AiToolId): string {
-    if (cap.staticContent !== undefined) return cap.staticContent;
-    const asset = this.assets.loadConfigAsset(toolId, cap.staticContentAssetFile as string);
-    return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
   }
 
   private async isUserOwned(

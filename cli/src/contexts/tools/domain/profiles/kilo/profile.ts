@@ -1,27 +1,15 @@
 import { join } from "node:path";
-import { AgentsCapability } from "../../capabilities/agents-capability.js";
-import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { flatGlobalFilePath, PluginsCapability } from "../../capabilities/plugins-capability.js";
-import { RulesCapability } from "../../capabilities/rules-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import type {
-  AiTool,
-  HasAgents,
-  HasCommands,
-  HasMcp,
-  HasPlugins,
-  HasRules,
-  HasSkills,
-} from "../../contracts.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
-  stripToolSuffix,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { transformMcpToOpencode } from "../opencode/build.js";
+import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
+import { flatGlobalFilePath } from "../../plugins/plugin-params.js";
+import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { defineAiTool } from "../../profile/define-tool.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
@@ -30,8 +18,7 @@ import { KILO_DIRECTORY, KILO_OUTPUT_PATH_CANDIDATES } from "./kilo-paths.js";
 
 const TOOL_SUFFIX = ".kilo.md";
 
-export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasPlugins> = {
-  kind: "ai",
+export const kilo = defineAiTool({
   toolId: "kilo",
   distributionProbes: { marketplace: ["kilo.json"] },
   directory: KILO_DIRECTORY,
@@ -41,32 +28,22 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
   configOutputPaths: { "kilo.json": ".kilo/kilo.jsonc" },
   buildContracts: { flat: buildKiloFlatContract },
 
-  capabilities: {
-    agents: new AgentsCapability({
-      directory: KILO_DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+  capabilities: (bound) => ({
+    agents: bound.agents({
       format: "markdown",
       frontmatter: kiloAgentFrontmatter,
     }),
-    skills: new SkillsCapability({
-      directory: KILO_DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) =>
-        `${KILO_DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+    skills: bound.skills({
+      buildInstallPath: bound.installUnder("skills/"),
       convertFrontmatter: (fm) => fm,
     }),
-    commands: new CommandsCapability({
-      directory: KILO_DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+    commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(KILO_DIRECTORY, fileName),
       convertFrontmatter: (fm, relativeFileName) =>
         convertCommandFrontmatterNoHint(fm, relativeFileName),
     }),
-    rules: new RulesCapability({
-      directory: KILO_DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) =>
-        `${KILO_DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+    rules: bound.rules({
+      buildInstallPath: bound.installUnder("rules/"),
       convertFrontmatter: (fm) =>
         fm.alwaysApply === false && fm.description !== undefined
           ? { description: fm.description }
@@ -75,13 +52,12 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
     mcp: new McpCapability({
       outputPath: "kilo.json",
       format: "json",
-      entrySection: "mcp",
       mergeStrategy: "framework-prime",
-      transformContent: transformMcpToOpencode,
+      transformContent: toTypedMcpSection,
       consumes: [CONFIG_MCP],
       outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
     }),
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       globalFiles: {
@@ -90,7 +66,7 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       },
       ...flatHooksSupport(KILO_HOOKS, generateKiloHooksBridge),
     }),
-  },
+  }),
 
   rewriteContent(content: string): string {
     return content.replace(
@@ -98,4 +74,4 @@ export const kilo: AiTool<HasAgents & HasSkills & HasCommands & HasRules & HasMc
       "$1.kilo/commands/aidd/$2/$3"
     );
   },
-};
+});

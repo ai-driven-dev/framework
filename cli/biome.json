@@ -1213,7 +1213,52 @@
       }
     },
     {
-      "includes": ["src/contexts/tools/domain/**/*.ts"],
+      "includes": [
+        "src/contexts/tools/domain/**/*.ts",
+        "!src/contexts/tools/domain/formats/toml.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/application/**",
+                      "**/infrastructure/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "domain must not import application, infrastructure, presentation or runtime"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/telemetry/**",
+                      "**/auth/**"
+                    ],
+                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  }
+                ],
+                "paths": {
+                  "smol-toml": "domain/formats/toml.ts is the only domain file that imports smol-toml (exception E-T4): call parseToml or stringifyToml"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/tools/domain/formats/toml.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -1573,6 +1618,24 @@
               "options": {
                 "deniedGlobals": {
                   "process": "domain and application read no environment fact directly - take a port injected by the composition root, such as shared/ports/environment.ts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/tools/domain/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "process": "domain and application read no environment fact directly - take a port injected by the composition root, such as shared/ports/environment.ts",
+                  "Buffer": "tools domain is pure text in, text out: Buffer is a Node global, use formats/base64.ts"
                 }
               }
             }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import type { PluginsCapability } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { buildClaudeContract } from "../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { buildCodexContract } from "../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotMarketplaceContract } from "../../../../src/contexts/tools/domain/profiles/copilot/build.js";
@@ -7,6 +7,7 @@ import { buildCursorContract } from "../../../../src/contexts/tools/domain/profi
 import { getAiToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
 import { rewritePluginRootToken } from "../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
 import type { AiToolId } from "../../../../src/kernel/tool.js";
+import { nativeOf } from "../testing/plugin-mode.js";
 
 /** A hook whose command names a variable the host does not expand installs cleanly, runs on
  * every event, and silently does nothing, so the variable each tool expands is declared beside
@@ -20,8 +21,7 @@ const CONTRACTS: ReadonlyArray<[AiToolId, () => { pluginRootToken?: string | nul
 ];
 
 function pluginsOf(tool: AiToolId): PluginsCapability | undefined {
-  const capabilities = getAiToolConfig(tool).capabilities as { plugins?: PluginsCapability };
-  return capabilities.plugins;
+  return getAiToolConfig(tool).section("plugins") ?? undefined;
 }
 
 describe("the route that builds a marketplace bundle", () => {
@@ -29,12 +29,12 @@ describe("the route that builds a marketplace bundle", () => {
   // would be silent on the side nobody looks at.
   it("substitutes the token the tool itself declared", () => {
     for (const [tool, buildContract] of CONTRACTS) {
-      expect(buildContract().pluginRootToken, tool).toBe(pluginsOf(tool)?.pluginRootToken);
+      expect(buildContract().pluginRootToken, tool).toBe(nativeOf(pluginsOf(tool)).rootToken());
     }
   });
 
   it("leaves a command alone for the tool whose variable is the one authors write", () => {
-    const authored = `node ${pluginsOf("claude")?.pluginRootToken}/hooks/journal.cjs`;
+    const authored = `node ${nativeOf(pluginsOf("claude")).rootToken()}/hooks/journal.cjs`;
 
     const token = buildClaudeContract().pluginRootToken;
 

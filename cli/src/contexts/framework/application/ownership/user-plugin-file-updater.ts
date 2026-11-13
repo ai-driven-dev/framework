@@ -191,7 +191,7 @@ export class UserPluginFileUpdater {
       }
       const built = await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, plugin.name);
       const files =
-        resolvePluginsCapability(toolId)?.hooksDestination === "project"
+        resolvePluginsCapability(toolId)?.deliversHooksToProject() === true
           ? withoutHooksPrefix(built, plugin.name)
           : built;
       return { files, componentPaths: new Map() };
@@ -204,7 +204,9 @@ export class UserPluginFileUpdater {
     }
     const toolConfig = getToolConfig(toolId);
     const forGlobalFiles =
-      resolvePluginsCapability(toolId)?.hooksDestination === "project" ? withoutHooks(dist) : dist;
+      resolvePluginsCapability(toolId)?.deliversHooksToProject() === true
+        ? withoutHooks(dist)
+        : dist;
     const translated = new PluginContentTranslator(this.hasher).translateWithComponentPaths(
       forGlobalFiles,
       toolConfig

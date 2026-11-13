@@ -10,7 +10,7 @@ import {
   supported,
 } from "./build-artifacts.js";
 
-type Buildable = Pick<AiTool<unknown>, "buildContracts">;
+type Buildable = Pick<AiTool, "buildContracts">;
 type Frontmatter = Record<string, unknown>;
 
 export function contractOf(profile: Buildable, mode: "marketplace" | "flat"): ToolBuildContract {

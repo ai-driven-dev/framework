@@ -10,6 +10,7 @@ import {
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
 } from "../../../../src/kernel/errors.js";
+import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
 
 const ROOT = "/project";
 
@@ -117,8 +118,7 @@ describe("SetupFlow", () => {
     });
 
     it("refuses an AI tool with no user-scope activation at --scope user", () => {
-      const { plugins: _plugins, ...withoutPlugins } = kilo.capabilities;
-      registerTool({ ...kilo, capabilities: withoutPlugins });
+      registerTool(withSections(kilo, { plugins: null }));
       try {
         expect(() => makeFlow({ scope: "user", aiTools: ["kilo"] })).toThrow(
           UserScopeUnsupportedAiToolsError

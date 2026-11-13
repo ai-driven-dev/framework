@@ -4,6 +4,7 @@ import { distributionProbesOf } from "../../../../../../src/contexts/translate/d
 import { FileHash } from "../../../../../../src/kernel/file.js";
 import { flatHooksPathWithLoaderEntry } from "../../../../../../src/kernel/materialization/flat-paths.js";
 import type { FileReader } from "../../../../../../src/kernel/ports/file-reader.js";
+import { flatOf } from "../../../testing/plugin-mode.js";
 import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.js";
 
@@ -23,7 +24,7 @@ function _makeFs(existingPaths: string[]): FileReader {
 describe("kilo", () => {
   it("turns agents into Kilo subagents without copying host-specific metadata", () => {
     expect(
-      kilo.capabilities.agents.convertFrontmatter({
+      kilo.section("agents").convertFrontmatter({
         name: "reviewer",
         description: "Review code",
         tools: ["Read"],
@@ -33,15 +34,17 @@ describe("kilo", () => {
 
   it("preserves skill metadata", () => {
     const metadata = { name: "plan", description: "Plan work", license: "MIT" };
-    expect(kilo.capabilities.skills.convertFrontmatter(metadata)).toEqual(metadata);
+    expect(kilo.section("skills").convertFrontmatter(metadata)).toEqual(metadata);
   });
 
   it("namespaces commands by phase and omits argument hints unsupported by Kilo", () => {
     expect(
-      kilo.capabilities.commands.convertFrontmatter(
-        { name: "greet", description: "Greet someone", "argument-hint": "<name>" },
-        "01-plan/greet.md"
-      )
+      kilo
+        .section("commands")
+        .convertFrontmatter(
+          { name: "greet", description: "Greet someone", "argument-hint": "<name>" },
+          "01-plan/greet.md"
+        )
     ).toEqual({ name: "aidd:01:greet", description: "Greet someone" });
   });
 
@@ -59,27 +62,27 @@ describe("kilo", () => {
   });
 
   it("delivers hook scripts under .kilo/hooks and generates a bridge under .kilo/plugin", () => {
-    expect(kilo.capabilities.plugins).toMatchObject({
-      mode: "flat",
-      acceptsHooks: true,
-      flatHooksDir: ".kilo/hooks/",
-    });
-    expect(kilo.capabilities.plugins.flatHooksBridge?.path("aidd-context")).toBe(
+    const plugins = flatOf(kilo.section("plugins"));
+    expect([
+      plugins.kind,
+      plugins.hooksAcceptance().accepts,
+      plugins.flatLayout().hooksDir,
+    ]).toStrictEqual(["flat", true, ".kilo/hooks/"]);
+    expect(plugins.flatLayout().hooksBridge?.path("aidd-context")).toBe(
       ".kilo/plugin/aidd-context-hooks.js"
     );
-    const plugins = kilo.capabilities.plugins;
     expect(
       flatHooksPathWithLoaderEntry(
-        plugins.flatHooksDir ?? "",
-        plugins.flatHooksLoaderEntry,
+        plugins.flatLayout().hooksDir ?? "",
+        plugins.flatLayout().hooksLoaderEntry,
         "aidd-context",
         "hooks/kilo-plugin.js"
       )
     ).toBe(".kilo/plugin/aidd-context.js");
     expect(
       flatHooksPathWithLoaderEntry(
-        plugins.flatHooksDir ?? "",
-        plugins.flatHooksLoaderEntry,
+        plugins.flatLayout().hooksDir ?? "",
+        plugins.flatLayout().hooksLoaderEntry,
         "aidd-context",
         "hooks/capture.cjs"
       )
@@ -97,7 +100,7 @@ describe("kilo build and conversion tables", () => {
       "a description that opts out of always-apply": { description: "d" },
     })
   )("converts %s", (_case, frontmatter, expected) => {
-    expect(kilo.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+    expect(kilo.section("rules").convertFrontmatter(frontmatter)).toStrictEqual(expected);
   });
 });
 
@@ -111,7 +114,7 @@ describe("kilo as the registry answers for it", () => {
   });
 
   it("installs its rules into .kilo/rules/ as markdown", () => {
-    expect(kilo.capabilities.rules.installedLocation()).toEqual({
+    expect(kilo.section("rules").installedLocation()).toEqual({
       directory: ".kilo/rules/",
       extension: ".md",
     });

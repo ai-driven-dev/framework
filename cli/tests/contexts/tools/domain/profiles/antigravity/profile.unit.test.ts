@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { hasRules } from "../../../../../../src/contexts/tools/domain/contracts.js";
+import { PROFILE_SECTION_KEYS } from "../../../../../../src/contexts/tools/domain/profile/profile-sections.js";
 import { mergeAntigravityHooks } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/antigravity-hooks.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { ToolCatalog } from "../../../../../../src/contexts/tools/domain/registry.js";
+import { flatOf } from "../../../testing/plugin-mode.js";
 import { installPathOf } from "../../../testing/profiles.js";
 
 describe("antigravity", () => {
@@ -23,24 +25,38 @@ describe("antigravity", () => {
   });
 
   it("accepts the skills it installed and no other host's", () => {
-    expect(antigravity.capabilities.skills.accepts(".agents/skills/aidd-01-plan/SKILL.md")).toBe(
+    expect(antigravity.section("skills").accepts(".agents/skills/aidd-01-plan/SKILL.md")).toBe(
       true
     );
-    expect(antigravity.capabilities.skills.accepts(".kilo/skills/x/SKILL.md")).toBe(false);
+    expect(antigravity.section("skills").accepts(".kilo/skills/x/SKILL.md")).toBe(false);
   });
 
   it("is a flat host merging plugin hooks into .agents/hooks.json, scripts under .agents/hooks/", () => {
-    expect(antigravity.capabilities.plugins).toMatchObject({
+    const plugins = flatOf(antigravity.section("plugins"));
+    expect({
+      mode: plugins.kind,
+      flatLayout: plugins.flatLayout(),
+      acceptsHooks: plugins.hooksAcceptance().accepts,
+      deliversHooksToProject: plugins.deliversHooksToProject(),
+      projectHooksRelativePath: plugins.projectHooksDelivery()?.relativePath,
+    }).toMatchObject({
       mode: "flat",
-      flatNamespacePrefix: "aidd-",
-      flatSkillLayout: "single-level",
+      flatLayout: {
+        namespacePrefix: "aidd-",
+        skillLayout: "single-level",
+        hooksDir: ".agents/hooks/",
+      },
       acceptsHooks: true,
-      flatHooksDir: ".agents/hooks/",
-      hooksDestination: "project",
+      deliversHooksToProject: true,
       projectHooksRelativePath: ".agents/hooks.json",
     });
-    expect(antigravity.capabilities.plugins.projectHooksFormat?.merge).toBe(mergeAntigravityHooks);
-    expect(Object.keys(antigravity.capabilities).sort()).toEqual(["plugins", "skills"]);
+    expect(antigravity.section("plugins").projectHooksDelivery()?.format.merge).toBe(
+      mergeAntigravityHooks
+    );
+    expect(PROFILE_SECTION_KEYS.filter((key) => antigravity.section(key) !== null).sort()).toEqual([
+      "plugins",
+      "skills",
+    ]);
   });
 });
 

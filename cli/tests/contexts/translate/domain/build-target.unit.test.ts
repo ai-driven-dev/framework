@@ -18,10 +18,4 @@ describe("buildTargetModesOf", () => {
       { target: "opencode", mode: "flat" },
     ]);
   });
-
-  it("excludes a registered tool that declares no build contract at all", () => {
-    const catalog = aCatalog(aProfile("cursor").withoutBuildContracts().build());
-
-    expect(buildTargetModesOf(catalog.getAllRegisteredTools())).toEqual([]);
-  });
 });

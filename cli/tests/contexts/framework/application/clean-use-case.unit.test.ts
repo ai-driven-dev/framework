@@ -9,7 +9,7 @@ import { GitignoreUseCase } from "../../../../src/contexts/framework/application
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
-import { pluginScriptDir } from "../../../../src/contexts/tools/domain/formats/hooks-merge.js";
+import { pluginScriptDir } from "../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
 import type { HostPluginRegistryReader } from "../../../../src/contexts/tools/domain/ports/host-plugin-registry-reader.js";
 import type { NativeMarketplaceSourceReader } from "../../../../src/contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import type { NativePluginActivator } from "../../../../src/contexts/tools/domain/ports/native-plugin-activator.js";

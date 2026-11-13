@@ -14,7 +14,7 @@ const existingJson = JSON.stringify({
 });
 
 describe("McpCapability", () => {
-  describe("buildOutputPath / accepts", () => {
+  describe("outputPath / accepts", () => {
     it("accepts the exact output path", () => {
       const cap = new McpCapability({ outputPath: ".claude/mcp.json", format: "json" });
       expect(cap.accepts(".claude/mcp.json")).toBe(true);
@@ -94,28 +94,46 @@ describe("McpCapability", () => {
 
 describe("McpCapability declarations", () => {
   it("consumes nothing unless told otherwise", () => {
-    expect(new McpCapability({ outputPath: ".mcp.json", format: "json" }).consumes).toStrictEqual(
-      []
+    expect(new McpCapability({ outputPath: ".mcp.json", format: "json" }).consumes("mcp")).toBe(
+      false
     );
     expect(
-      new McpCapability({ outputPath: ".mcp.json", format: "json", consumes: ["mcp"] }).consumes
-    ).toStrictEqual(["mcp"]);
+      new McpCapability({ outputPath: ".mcp.json", format: "json", consumes: ["mcp"] }).consumes(
+        "mcp"
+      )
+    ).toBe(true);
   });
 
-  it("is not equal to a capability that differs in entrySection or mergeStrategy alone", () => {
+  it("is not equal to a capability that differs in mergeStrategy alone", () => {
     const base = { outputPath: ".mcp.json", format: "json" as const };
-    const cap = new McpCapability({ ...base, entrySection: "mcp", mergeStrategy: "user-prime" });
+    const cap = new McpCapability({ ...base, mergeStrategy: "user-prime" });
 
+    expect(cap.equals(new McpCapability({ ...base, mergeStrategy: "user-prime" }))).toBe(true);
+    expect(cap.equals(new McpCapability({ ...base, mergeStrategy: "none" }))).toBe(false);
+  });
+});
+
+describe("McpCapability isFrameworkPrimeJson", () => {
+  const json = { outputPath: "opencode.json", format: "json" as const };
+  const prime = { ...json, mergeStrategy: "framework-prime" as const };
+
+  it("names the one JSON file whose framework half is written over the person's", () => {
+    const cap = new McpCapability(prime);
+    expect(cap.isFrameworkPrimeJson("opencode.json")).toBe(true);
+    expect(cap.isFrameworkPrimeJson("other.json")).toBe(false);
+  });
+
+  it("refuses a file merged the other way", () => {
     expect(
-      cap.equals(new McpCapability({ ...base, entrySection: "mcp", mergeStrategy: "user-prime" }))
-    ).toBe(true);
-    expect(
-      cap.equals(
-        new McpCapability({ ...base, entrySection: "servers", mergeStrategy: "user-prime" })
+      new McpCapability({ ...json, mergeStrategy: "user-prime" }).isFrameworkPrimeJson(
+        "opencode.json"
       )
     ).toBe(false);
+  });
+
+  it("refuses a file that is not JSON", () => {
     expect(
-      cap.equals(new McpCapability({ ...base, entrySection: "mcp", mergeStrategy: "none" }))
+      new McpCapability({ ...prime, format: "toml" }).isFrameworkPrimeJson("opencode.json")
     ).toBe(false);
   });
 });

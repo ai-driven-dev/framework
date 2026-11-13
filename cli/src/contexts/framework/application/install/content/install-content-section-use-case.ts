@@ -1,12 +1,9 @@
 import { GITKEEP_FILE, InstallationFile } from "../../../../../kernel/file.js";
 import { parseFrontmatter } from "../../../../../kernel/markdown.js";
 import type { Hasher } from "../../../../../kernel/ports/hasher.js";
-import { AI_TOOL_IDS } from "../../../../../kernel/tool.js";
 import type { AiTool } from "../../../../tools/domain/contracts.js";
 import type { UserFileSection } from "../../../../tools/domain/formats/command.js";
 import type { ContentSection } from "../../../../translate/domain/canon.js";
-
-const ALL_TOOL_SUFFIXES: readonly string[] = AI_TOOL_IDS.map((id) => `.${id}.md`);
 
 /**
  * The shape every content-section capability exposes with identical arity, so this engine calls
@@ -19,16 +16,16 @@ export interface ContentSectionCapability {
 }
 
 /**
- * Per-section behaviour no uniform signature can express. `key` also drives which capability is
- * read off `toolConfig.capabilities`, keeping K, Cap and the toolConfig type correlated through
- * generics instead of an `as` cast at the call site.
+ * Per-section behaviour no uniform signature can express. `capabilityOf` names the section this
+ * descriptor reads, keeping K, Cap and the toolConfig type correlated through generics instead of
+ * an `as` cast at the call site.
  */
 export interface ContentSectionDescriptor<
   K extends UserFileSection,
   Cap extends ContentSectionCapability,
 > {
-  readonly key: K;
-  acceptsFileName(cap: Cap, fileName: string, allToolSuffixes: readonly string[]): boolean;
+  capabilityOf(tool: AiTool<Record<K, Cap>>): Cap;
+  acceptsFileName(cap: Cap, fileName: string): boolean;
   convertFrontmatter(
     cap: Cap,
     frontmatter: Record<string, unknown>,
@@ -56,7 +53,7 @@ export class InstallContentSectionUseCase<
 
   execute(options: InstallContentSectionOptions<K, Cap>): InstallationFile[] {
     const { toolConfig, section, contentFiles } = options;
-    const cap = toolConfig.capabilities[this.descriptor.key];
+    const cap = this.descriptor.capabilityOf(toolConfig);
     const results: InstallationFile[] = [];
     for (const [filePath, rawContent] of contentFiles) {
       const file = this.processFile(filePath, rawContent, section, cap, toolConfig);
@@ -74,7 +71,7 @@ export class InstallContentSectionUseCase<
   ): InstallationFile | null {
     if (!filePath.startsWith(`${section.directory}/`)) return null;
     const relativeFileName = filePath.slice(`${section.directory}/`.length);
-    if (!this.descriptor.acceptsFileName(cap, relativeFileName, ALL_TOOL_SUFFIXES)) return null;
+    if (!this.descriptor.acceptsFileName(cap, relativeFileName)) return null;
     if (section.entryFile !== null) {
       const basename = relativeFileName.split("/").at(-1) ?? relativeFileName;
       if (basename !== section.entryFile) return null;

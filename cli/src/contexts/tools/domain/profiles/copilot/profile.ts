@@ -5,23 +5,14 @@ import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
 import { SettingsCapability } from "../../capabilities/settings-capability.js";
 import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import type {
-  AiTool,
-  HasAgents,
-  HasCommands,
-  HasMcp,
-  HasPlugins,
-  HasRules,
-  HasSettings,
-  HasSkills,
-} from "../../contracts.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { claudeStyleMarketplaceKey } from "../../marketplace-entry.js";
+import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { defineAiTool } from "../../profile/define-tool.js";
 import { buildCopilotFlatContract, buildCopilotMarketplaceContract } from "./build.js";
 import { copilotAgentFrontmatter } from "./copilot-agent.js";
 import { COPILOT_WORKSPACE_DIR } from "./copilot-paths.js";
@@ -195,10 +186,7 @@ function rewriteCopilotContent(content: string): string {
   );
 }
 
-export const copilot: AiTool<
-  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasSettings & HasPlugins
-> = {
-  kind: "ai",
+export const copilot = defineAiTool({
   toolId: "copilot",
   distributionProbes: {
     manifest: [".plugin/plugin.json", ".github/plugin/plugin.json", "plugin.json"],
@@ -215,12 +203,11 @@ export const copilot: AiTool<
     flat: buildCopilotFlatContract,
   },
 
-  capabilities: {
+  capabilities: () => ({
     agents: new AgentsCapability({
       directory: DIRECTORY,
       toolSuffix: EXT_AGENT,
       format: "markdown",
-      userFileExt: EXT_AGENT,
       buildInstallPath: (fileName) => agentsHandler.buildFilePath(fileName),
       frontmatter: copilotAgentFrontmatter,
     }),
@@ -246,7 +233,6 @@ export const copilot: AiTool<
     mcp: new McpCapability({
       outputPath: ".vscode/mcp.json",
       format: "json",
-      entrySection: "servers",
       consumes: [CONFIG_MCP],
       transformContent: (content) => {
         const parsed = JSON.parse(content) as Record<string, unknown>;
@@ -260,13 +246,15 @@ export const copilot: AiTool<
         return content;
       },
     }),
-    settings: new SettingsCapability({
-      outputPath: ".vscode/settings.json",
-      mergeStrategy: "framework-prime",
-      staticContentAssetFile: "vscode-settings.json",
-      requiresTool: "vscode",
-    }),
-    plugins: new PluginsCapability({
+    settings: [
+      new SettingsCapability({
+        outputPath: ".vscode/settings.json",
+        mergeStrategy: "framework-prime",
+        staticContentAssetFile: "vscode-settings.json",
+        requiresTool: "vscode",
+      }),
+    ],
+    plugins: pluginsCapability({
       mode: "native",
       pluginsDir: ".github/plugins/",
       pluginManifestRelativePath: "plugin.json",
@@ -305,7 +293,7 @@ export const copilot: AiTool<
         toEntryKey: claudeStyleMarketplaceKey,
       },
     }),
-  },
+  }),
 
   rewriteContent: rewriteCopilotContent,
-};
+});

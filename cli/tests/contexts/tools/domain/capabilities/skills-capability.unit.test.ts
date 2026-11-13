@@ -8,24 +8,6 @@ const stubCallbacks = {
 };
 
 describe("SkillsCapability", () => {
-  describe("buildOutputPath (directory mode)", () => {
-    it("combines directory, skills folder, name, and tool suffix", () => {
-      const cap = new SkillsCapability({
-        directory: ".claude/",
-        toolSuffix: ".claude.md",
-        ...stubCallbacks,
-      });
-      expect(cap.buildOutputPath("my-skill")).toBe(".claude/skills/my-skill.claude.md");
-    });
-  });
-
-  describe("buildOutputPath (prefix/codex mode)", () => {
-    it("uses SKILL.md convention under .agents/skills/", () => {
-      const cap = new SkillsCapability({ prefix: "aidd-", ...stubCallbacks });
-      expect(cap.buildOutputPath("my-skill")).toBe(".agents/skills/aidd-my-skill/SKILL.md");
-    });
-  });
-
   describe("accepts (directory mode)", () => {
     it("returns true when path starts with directory", () => {
       const cap = new SkillsCapability({
@@ -46,20 +28,20 @@ describe("SkillsCapability", () => {
     });
   });
 
-  describe("accepts (prefix/codex mode)", () => {
+  describe("accepts (agents skills directory mode)", () => {
     it("returns true when path starts with .agents/skills/", () => {
-      const cap = new SkillsCapability({ prefix: "aidd-", ...stubCallbacks });
+      const cap = new SkillsCapability({ agentsSkillsDirectory: true, ...stubCallbacks });
       expect(cap.accepts(".agents/skills/aidd-foo/SKILL.md")).toBe(true);
     });
 
     it("returns false when path does not start with .agents/skills/", () => {
-      const cap = new SkillsCapability({ prefix: "aidd-", ...stubCallbacks });
+      const cap = new SkillsCapability({ agentsSkillsDirectory: true, ...stubCallbacks });
       expect(cap.accepts(".claude/skills/foo.md")).toBe(false);
     });
   });
 
   describe("constructor validation", () => {
-    it("throws when neither prefix nor directory is provided", () => {
+    it("throws when neither agentsSkillsDirectory nor directory is provided", () => {
       expect(() => new SkillsCapability({ ...stubCallbacks })).toThrow();
     });
   });
@@ -93,33 +75,11 @@ describe("SkillsCapability", () => {
       expect(a.equals(b)).toBe(false);
     });
 
-    it("returns false when prefix differs", () => {
-      const a = new SkillsCapability({ prefix: "aidd-", ...stubCallbacks });
-      const b = new SkillsCapability({ prefix: "other-", ...stubCallbacks });
+    it("returns false when one is the agents skills directory and the other is not", () => {
+      const a = new SkillsCapability({ agentsSkillsDirectory: true, ...stubCallbacks });
+      const b = new SkillsCapability({ directory: ".agents/", ...stubCallbacks });
       expect(a.equals(b)).toBe(false);
     });
-  });
-});
-
-describe("SkillsCapability without a tool suffix", () => {
-  it("names the skill file by its bare name", () => {
-    const cap = new SkillsCapability({
-      directory: ".claude/",
-      buildInstallPath: (fileName) => fileName,
-      convertFrontmatter: (fm) => fm,
-    });
-
-    expect(cap.buildOutputPath("planning")).toBe(".claude/skills/planning");
-  });
-
-  it("names what a capability lacking both prefix and directory is missing", () => {
-    expect(
-      () =>
-        new SkillsCapability({
-          buildInstallPath: (fileName) => fileName,
-          convertFrontmatter: (fm) => fm,
-        })
-    ).toThrow("SkillsCapability requires either prefix or directory");
   });
 });
 

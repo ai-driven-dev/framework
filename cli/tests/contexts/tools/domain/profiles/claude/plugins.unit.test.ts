@@ -1,29 +1,30 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import { nativeOf } from "../../../testing/plugin-mode.js";
 
 describe("claude plugins", () => {
   describe("capabilities.plugins", () => {
     it("is native mode", () => {
-      expect(claude.capabilities.plugins.mode).toBe("native");
+      expect(claude.section("plugins").kind).toBe("native");
     });
 
     it("uses .claude/plugins/ as plugins directory", () => {
-      expect(claude.capabilities.plugins.pluginsDir).toBe(".claude/plugins/");
+      expect(nativeOf(claude.section("plugins")).pluginOutputDir("x")).toBe(".claude/plugins/x/");
     });
 
     it("uses plugin.json as plugin manifest path", () => {
-      expect(claude.capabilities.plugins.pluginManifestRelativePath).toBe("plugin.json");
+      expect(nativeOf(claude.section("plugins")).manifestPath()).toBe("plugin.json");
     });
 
     it("pluginOutputDir returns correct path for a plugin name", () => {
-      expect(claude.capabilities.plugins.pluginOutputDir("my-plugin")).toBe(
+      expect(nativeOf(claude.section("plugins")).pluginOutputDir("my-plugin")).toBe(
         ".claude/plugins/my-plugin/"
       );
     });
 
     it("declares its own marketplace registry and plugin cache root, for clean's own purge", () => {
-      const activation = claude.capabilities.plugins.nativeActivation;
+      const activation = nativeOf(claude.section("plugins")).activation();
       expect(activation?.marketplaceRegistry?.("/home/tester")).toBe(
         join("/home/tester", ".claude", "plugins", "known_marketplaces.json")
       );
@@ -33,7 +34,7 @@ describe("claude plugins", () => {
     });
 
     it("declares where claude's own user-scope settings file lives, for --scope user", () => {
-      const activation = claude.capabilities.plugins.nativeActivation;
+      const activation = nativeOf(claude.section("plugins")).activation();
       expect(activation?.userSettingsPath?.("/home/tester", () => undefined)).toBe(
         join("/home/tester", ".claude", "settings.json")
       );
@@ -41,7 +42,7 @@ describe("claude plugins", () => {
 
     it("drives the claude binary at local scope, with the verbs claude uses and nothing else", () => {
       // Exhaustive, not `toMatchObject`: a field added by mistake must fail here.
-      expect(claude.capabilities.plugins.nativeActivation).toStrictEqual({
+      expect({ ...nativeOf(claude.section("plugins")).activation() }).toEqual({
         binary: "claude",
         scopeArgs: { project: ["--scope", "local"], user: ["--scope", "user"] },
         userRemoveArgs: [],
@@ -56,7 +57,7 @@ describe("claude plugins", () => {
     });
 
     it("registers a marketplace in the file claude writes itself, and enables plugins in the tracked one", () => {
-      const settings = claude.capabilities.plugins.marketplaceSettings;
+      const settings = nativeOf(claude.section("plugins")).marketplaceRegistration();
 
       expect({
         settingsPath: settings?.settingsPath,

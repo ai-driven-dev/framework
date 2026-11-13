@@ -3,10 +3,10 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/plugins/plugin-params.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 
-const format = antigravity.capabilities.plugins.projectHooksFormat as ProjectHooksFormat;
+const format = antigravity.section("plugins").projectHooksDelivery()?.format as ProjectHooksFormat;
 
 describe("Antigravity hook response", () => {
   let root: string;

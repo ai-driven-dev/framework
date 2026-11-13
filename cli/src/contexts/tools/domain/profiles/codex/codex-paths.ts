@@ -3,9 +3,13 @@
  * even where the literal values coincide: a change to either side must not collapse them.
  */
 
-import type { GlobalPlugin } from "../../capabilities/plugins-capability.js";
+import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import type { GlobalPlugin } from "../../plugins/plugin-params.js";
 
 export const CODEX_DIRECTORY = ".codex/";
+
+/** The variable Codex expands to an installed plugin's directory in a hooks file. */
+export const CODEX_PLUGIN_ROOT_TOKEN = PLUGIN_ROOT_TOKEN;
 
 /** Relative path for the Codex-native plugin manifest inside each plugin output directory. */
 export const OUTPUT_CODEX_MANIFEST_RELATIVE = ".codex-plugin/plugin.json";

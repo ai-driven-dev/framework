@@ -10,14 +10,7 @@ const stubParams = {
 describe("RulesCapability", () => {
   const params = { directory: ".claude/", toolSuffix: ".claude.md", ...stubParams };
 
-  describe("buildOutputPath", () => {
-    it("combines directory, rules folder, name, and tool suffix", () => {
-      const cap = new RulesCapability(params);
-      expect(cap.buildOutputPath("my-rule")).toBe(".claude/rules/my-rule.claude.md");
-    });
-  });
-
-  // Where a rule lands is `buildInstallPath`, not `buildOutputPath`, and it is a closure per tool.
+  // Where a rule lands is `buildInstallPath`, a closure per tool.
   // Asking it with a sentinel keeps the answer where the knowledge is, not in a path parser here.
   describe("installedLocation", () => {
     it("answers the directory and the extension an installed rule actually carries", () => {
@@ -130,10 +123,6 @@ describe("RulesCapability file acceptance", () => {
   it("accepts its own suffix and a suffix belonging to no tool", () => {
     expect(cap.acceptsFileName("rules/a.claude.md")).toBe(true);
     expect(cap.acceptsFileName("rules/a.md")).toBe(true);
-  });
-
-  it("refuses another tool's suffix wherever the file sits", () => {
-    expect(cap.acceptsFileName("a/b/c.cursor.md")).toBe(false);
   });
 
   it("reads the input suffix as its own when the tool declares one", () => {

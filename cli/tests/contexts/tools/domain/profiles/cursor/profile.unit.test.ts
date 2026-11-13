@@ -24,16 +24,16 @@ describe("cursor declarations the rest of the CLI reads", () => {
   });
 
   it("writes agents as markdown", () => {
-    expect(cursor.capabilities.agents.params.format).toBe("markdown");
+    expect(cursor.section("agents").serialize({ name: "a" }, "body")).toMatch(/^---\n/);
   });
 
   it("writes its MCP servers as JSON under `mcpServers`, in .cursor/mcp.json", () => {
-    expect(cursor.capabilities.mcp.params).toMatchObject({
-      outputPath: ".cursor/mcp.json",
-      format: "json",
-      entrySection: "mcpServers",
-    });
-    expect(cursor.capabilities.mcp.consumes).toStrictEqual([CONFIG_MCP]);
+    const mcp = cursor.section("mcp");
+    expect(mcp.outputPath()).toBe(".cursor/mcp.json");
+    expect(
+      JSON.parse(mcp.transform(JSON.stringify({ mcpServers: { a: { command: "node" } } })))
+    ).toHaveProperty("mcpServers");
+    expect(cursor.section("mcp").consumes(CONFIG_MCP)).toBe(true);
   });
 
   it.each<[InstallKind, string, string | null]>([
@@ -76,7 +76,7 @@ describe("cursor build and conversion tables", () => {
       "a description that opts out of always-apply": { description: "d", alwaysApply: false },
     })
   )("converts %s", (_case, frontmatter, expected) => {
-    expect(cursor.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+    expect(cursor.section("rules").convertFrontmatter(frontmatter)).toStrictEqual(expected);
   });
 });
 
@@ -94,7 +94,7 @@ describe("cursor as the registry answers for it", () => {
   });
 
   it("installs its rules into .cursor/rules/ as .mdc", () => {
-    expect(cursor.capabilities.rules.installedLocation()).toEqual({
+    expect(cursor.section("rules").installedLocation()).toEqual({
       directory: ".cursor/rules/",
       extension: ".mdc",
     });

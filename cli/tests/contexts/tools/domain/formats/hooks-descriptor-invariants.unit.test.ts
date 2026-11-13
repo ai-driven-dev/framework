@@ -80,6 +80,11 @@ const BROKEN: readonly {
     broken: () => declaration({ rootToken: "${X}" }),
   },
   {
+    invariant: "file-without-root-token",
+    case: "a hooks file whose commands name no plugin-root variable",
+    broken: () => declaration({ file: FILE }),
+  },
+  {
     invariant: "adapter-not-stamped",
     case: "an adapter naming another tool as its host",
     owner: ["codex", ".codex/", 'const HOST = "claude";'],
@@ -114,8 +119,10 @@ describe("declaring a tool's hooks", () => {
       expect(declared.events.get("Stop")).toEqual({ native: ["a", "b"], relay: "native" });
     });
 
-    it("holds the generic plugin-root variable for a hooks file's commands", () => {
-      expect(declareHooks(...OWNER, { file: FILE }).rootToken).toBe(PLUGIN_ROOT_TOKEN);
+    it("holds the plugin-root variable a hooks file states, and none without a file", () => {
+      expect(declareHooks(...OWNER, { file: FILE, rootToken: PLUGIN_ROOT_TOKEN }).rootToken).toBe(
+        PLUGIN_ROOT_TOKEN
+      );
       expect(declareHooks(...OWNER, {}).rootToken).toBeUndefined();
     });
   });

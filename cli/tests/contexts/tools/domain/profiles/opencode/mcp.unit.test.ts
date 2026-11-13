@@ -18,35 +18,36 @@ function _makeFs(existingPaths: string[]): FileReader {
 describe("opencode mcp", () => {
   describe("capabilities.mcp", () => {
     it("maps both opencode and mcp config names to opencode.json", () => {
-      expect(opencode.capabilities.mcp.params.outputPath).toBe("opencode.json");
-      expect(opencode.capabilities.mcp.consumes).toContain("opencode");
-      expect(opencode.capabilities.mcp.consumes).toContain("mcp");
+      expect(opencode.section("mcp").outputPath()).toBe("opencode.json");
+      expect(opencode.section("mcp").consumes("opencode")).toBe(true);
+      expect(opencode.section("mcp").consumes("mcp")).toBe(true);
     });
 
     it("does not consume unknown config names", () => {
-      expect(opencode.capabilities.mcp.consumes).not.toContain("unknown");
+      expect(opencode.section("mcp").consumes("unknown")).toBe(false);
     });
 
     it("uses framework-prime merge strategy", () => {
-      expect(opencode.capabilities.mcp.params.mergeStrategy).toBe("framework-prime");
+      expect(opencode.section("mcp").mergeStrategy()).toBe("framework-prime");
     });
 
-    it("writes its config as JSON, under the mcp key", () => {
-      const { format, entrySection } = opencode.capabilities.mcp.params;
-      expect({ format, entrySection }).toStrictEqual({ format: "json", entrySection: "mcp" });
+    it("writes its config as JSON", () => {
+      const written = opencode
+        .section("mcp")
+        .transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
+      expect(() => JSON.parse(written)).not.toThrow();
     });
   });
 
   describe("capabilities.mcp.transform() (MCP transform)", () => {
-    it("is defined on the OpenCode mcp capability", () => {
-      expect(opencode.capabilities.mcp.params.transformContent).toBeDefined();
+    it("rewrites the servers the OpenCode mcp capability is given", () => {
+      const input = JSON.stringify({ mcpServers: { a: { command: "node" } } });
+      expect(opencode.section("mcp").transform(input)).not.toBe(input);
     });
 
     const transform = (configName: string, content: string): string => {
       if (configName !== "mcp") return content;
-      const fn = opencode.capabilities.mcp.params.transformContent;
-      if (!fn) throw new Error("transformContent not defined");
-      return fn(content);
+      return opencode.section("mcp").transform(content);
     };
 
     it("transforms mcpServers to OpenCode mcp format with env", () => {

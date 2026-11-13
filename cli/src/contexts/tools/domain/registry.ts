@@ -13,15 +13,14 @@ import {
   type ToolId,
 } from "../../../kernel/tool.js";
 import type { ToolBuildContract } from "./build-contract.js";
-import type {
-  EnvironmentReader,
-  GlobalFiles,
-  HookScript,
-  NativeActivation,
-  PluginsCapability,
-  ProjectHooksFormat,
-} from "./capabilities/plugins-capability.js";
+import type { McpCapability } from "./capabilities/mcp-capability.js";
+import type { SettingsCapability } from "./capabilities/settings-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
+import type { EnvironmentReader, NativeActivation } from "./plugins/native-activation.js";
+import type { GlobalFiles, HookScript, ProjectHooksFormat } from "./plugins/plugin-params.js";
+import type { NativePluginsCapability, PluginsCapability } from "./plugins/plugins-capability.js";
+import type { ProfileBrand } from "./profile/define-tool.js";
+import { isProfileSectionKey } from "./profile/profile-sections.js";
 import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
 
 /** Output layout: a marketplace dist versus a flat workspace inject. Declared here, not by
@@ -29,9 +28,18 @@ import { REGISTERED_PROFILES } from "./profiles/registered-profiles.js";
  * tool knowledge. */
 export type FrameworkBuildMode = "marketplace" | "flat";
 
-export type ToolConfig = AiTool<unknown> | IdeToolConfig;
+export type ToolConfig = AiTool | IdeToolConfig;
 
-export function isAiTool(config: ToolConfig): config is AiTool<unknown> {
+/** A profile only the factory could have produced. */
+export type BuiltToolConfig = ToolConfig & ProfileBrand;
+
+/** Whether a tool declares the section a framework content section is named after; a name that is no
+ * section key is declared by no tool. */
+export function declaresSection(tool: ToolConfig, name: string): boolean {
+  return isProfileSectionKey(name) && tool.section(name) !== null;
+}
+
+export function isAiTool(config: ToolConfig): config is AiTool {
   return config.kind === "ai";
 }
 
@@ -60,16 +68,16 @@ export function assertToolIdsMatchCategory(toolIds: ToolId[], category: ToolCate
 }
 
 export class ToolCatalog {
-  private readonly byId = new Map<ToolId, ToolConfig>();
+  private readonly byId = new Map<ToolId, BuiltToolConfig>();
 
-  constructor(profiles: readonly ToolConfig[]) {
+  constructor(profiles: readonly BuiltToolConfig[]) {
     for (const profile of profiles) {
       if (this.byId.has(profile.toolId)) throw new DuplicateToolIdError(profile.toolId);
       this.byId.set(profile.toolId, profile);
     }
   }
 
-  replacing(profile: ToolConfig): ToolCatalog {
+  replacing(profile: BuiltToolConfig): ToolCatalog {
     this.getToolConfig(profile.toolId);
     return new ToolCatalog(
       [...this.byId.values()].map((existing) =>
@@ -78,13 +86,13 @@ export class ToolCatalog {
     );
   }
 
-  getToolConfig(toolId: ToolId): ToolConfig {
+  getToolConfig(toolId: ToolId): BuiltToolConfig {
     const config = this.byId.get(toolId);
     if (!config) throw new UnregisteredToolError(toolId);
     return config;
   }
 
-  getAiToolConfig(toolId: AiToolId): AiTool<unknown> {
+  getAiToolConfig(toolId: AiToolId): AiTool {
     const config = this.getToolConfig(toolId);
     if (!isAiTool(config)) throw new UnregisteredToolError(toolId);
     return config;
@@ -95,39 +103,31 @@ export class ToolCatalog {
   }
 
   nativeActivationOf(toolId: ToolId): NativeActivation | undefined {
-    return this.resolvePluginsCapability(toolId)?.nativeActivation ?? undefined;
+    return this.resolveNativePlugins(toolId)?.activation() ?? undefined;
   }
 
   frameworkBuildModeFor(toolId: ToolId): FrameworkBuildMode {
-    return this.resolvePluginsCapability(toolId)?.mode === "flat" ? "flat" : "marketplace";
+    return this.resolvePluginsCapability(toolId)?.kind === "flat" ? "flat" : "marketplace";
   }
 
   pluginEnablementIsMachineGlobal(toolId: ToolId): boolean {
-    return this.nativeActivationOf(toolId)?.scopeArgs === undefined;
+    return this.resolveNativePlugins(toolId)?.enablementIsMachineGlobal() ?? true;
   }
 
   supportsUserScopeActivation(toolId: ToolId): boolean {
-    const capability = this.resolvePluginsCapability(toolId);
-    if (capability === null) return false;
-    return (
-      capability.nativeActivation !== null ||
-      capability.installScope === "user" ||
-      capability.globalFiles !== null
-    );
+    return this.resolvePluginsCapability(toolId)?.supportsUserScopeActivation() ?? false;
   }
 
   hostRefInUse(toolId: ToolId, enabled: boolean): boolean {
-    return enabled || this.nativeActivationOf(toolId)?.uninstallLeavesRefDisabled !== true;
+    return this.nativeActivationOf(toolId)?.takesRefForInUse(enabled) ?? true;
   }
 
   copiesPluginFilesGlobally(toolId: ToolId): boolean {
-    const capability = this.resolvePluginsCapability(toolId);
-    if (capability === null) return false;
-    return capability.installScope === "user" || capability.globalFiles !== null;
+    return this.resolvePluginsCapability(toolId)?.copiesFilesGlobally() ?? false;
   }
 
   globalFilesOf(toolId: ToolId): GlobalFiles | null {
-    return this.resolvePluginsCapability(toolId)?.globalFiles ?? null;
+    return this.resolvePluginsCapability(toolId)?.globalFiles() ?? null;
   }
 
   buildContractFor(
@@ -136,7 +136,7 @@ export class ToolCatalog {
   ): (() => ToolBuildContract) | undefined {
     const config = this.getToolConfig(toolId);
     if (!isAiTool(config)) return undefined;
-    return config.buildContracts?.[mode];
+    return config.buildContracts[mode];
   }
 
   userMachineLocalFilesOf(
@@ -149,15 +149,11 @@ export class ToolCatalog {
   }
 
   machineLocalFilesOf(toolId: ToolId): readonly string[] {
-    const path =
-      this.resolvePluginsCapability(toolId)?.marketplaceSettings?.marketplacesSettingsPath;
-    // `null` means the tool has nowhere machine-local to write, so there is no such file to keep
-    // out of `status` or the gitignore either.
-    return typeof path === "string" ? [path] : [];
+    return this.resolveNativePlugins(toolId)?.marketplaceRegistration()?.machineLocalFiles() ?? [];
   }
 
   projectHooksFileOf(toolId: ToolId): string | undefined {
-    return this.resolvePluginsCapability(toolId)?.projectHooksRelativePath ?? undefined;
+    return this.resolvePluginsCapability(toolId)?.projectHooksDelivery()?.relativePath;
   }
 
   projectHooksDeliveryOf(toolId: ToolId): {
@@ -168,23 +164,30 @@ export class ToolCatalog {
   } | null {
     const config = this.getToolConfig(toolId);
     if (!isAiTool(config)) return null;
-    const cap = this.resolvePluginsCapability(toolId);
-    if (cap === null || cap.hooksDestination !== "project") return null;
-    if (cap.projectHooksRelativePath === null || cap.projectHooksFormat === null) return null;
-    return {
-      relativePath: cap.projectHooksRelativePath,
-      format: cap.projectHooksFormat,
-      toolName: config.displayName,
-      hookScript: cap.hookScript,
-    };
+    const delivery = this.resolvePluginsCapability(toolId)?.projectHooksDelivery();
+    if (delivery === null || delivery === undefined) return null;
+    return { ...delivery, toolName: config.displayName };
+  }
+
+  mcpCapabilityOf(toolId: ToolId): McpCapability | null {
+    const config = this.getToolConfig(toolId);
+    if (!isAiTool(config)) return null;
+    return config.section("mcp");
+  }
+
+  settingsCapabilitiesOf(toolId: AiToolId): readonly SettingsCapability[] {
+    return this.getAiToolConfig(toolId).section("settings") ?? [];
   }
 
   resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
     const toolConfig = this.getToolConfig(toolId);
     if (!isAiTool(toolConfig)) return null;
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    if (!("plugins" in caps)) return null;
-    return caps.plugins as PluginsCapability;
+    return toolConfig.section("plugins");
+  }
+
+  resolveNativePlugins(toolId: ToolId): NativePluginsCapability | null {
+    const plugins = this.resolvePluginsCapability(toolId);
+    return plugins?.kind === "native" ? plugins : null;
   }
 }
 
@@ -192,15 +195,15 @@ let catalog = new ToolCatalog(REGISTERED_PROFILES);
 
 /** Test override only: replaces the profile of that id. Goes when consumers receive a
  * ToolCatalog. */
-export function registerTool(config: ToolConfig): void {
+export function registerTool(config: BuiltToolConfig): void {
   catalog = catalog.replacing(config);
 }
 
-export function getToolConfig(toolId: ToolId): ToolConfig {
+export function getToolConfig(toolId: ToolId): BuiltToolConfig {
   return catalog.getToolConfig(toolId);
 }
 
-export function getAiToolConfig(toolId: AiToolId): AiTool<unknown> {
+export function getAiToolConfig(toolId: AiToolId): AiTool {
   return catalog.getAiToolConfig(toolId);
 }
 
@@ -320,8 +323,23 @@ export function projectHooksDeliveryOf(toolId: ToolId): {
   return catalog.projectHooksDeliveryOf(toolId);
 }
 
+/** The tool's MCP capability, or `null` when it declares none or is not an AI tool. */
+export function mcpCapabilityOf(toolId: ToolId): McpCapability | null {
+  return catalog.mcpCapabilityOf(toolId);
+}
+
+/** The settings capabilities a tool declares, whether one or several; empty for none. */
+export function settingsCapabilitiesOf(toolId: AiToolId): readonly SettingsCapability[] {
+  return catalog.settingsCapabilitiesOf(toolId);
+}
+
 /** A tool's plugin capability, or `null` when it declares none. Here rather than beside one of
  * its callers: it reads nothing but this registry, and its callers span three of them. */
 export function resolvePluginsCapability(toolId: ToolId): PluginsCapability | null {
   return catalog.resolvePluginsCapability(toolId);
+}
+
+/** A tool's plugin capability when it installs natively, or `null`. */
+export function resolveNativePlugins(toolId: ToolId): NativePluginsCapability | null {
+  return catalog.resolveNativePlugins(toolId);
 }

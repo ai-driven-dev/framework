@@ -5,7 +5,11 @@
  */
 
 import { isAbsolute } from "node:path";
-import { type HooksInvariant, InvalidHooksDescriptorError } from "../../../../kernel/errors.js";
+import {
+  CapabilityConfigError,
+  type HooksInvariant,
+  InvalidHooksDescriptorError,
+} from "../../../../kernel/errors.js";
 import {
   type FlatHooksLoaderEntry,
   flatHooksPathWithLoaderEntry,
@@ -14,11 +18,6 @@ import {
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { ArtifactContract } from "../build-contract.js";
 import { HooksCapability } from "../capabilities/hooks-capability.js";
-import type {
-  FlatHooksBridge,
-  HookScript,
-  ProjectHooksFormat,
-} from "../capabilities/plugins-capability.js";
 import {
   type HooksFileFormat,
   type HooksMergeTarget,
@@ -29,8 +28,8 @@ import {
   pluginScriptDir,
   pluginScriptPath,
   unmergeHooks,
-} from "./hooks-merge.js";
-import { PLUGIN_ROOT_TOKEN } from "./plugin-root-token.js";
+} from "../hooks/hooks-merge.js";
+import type { FlatHooksBridge, HookScript, ProjectHooksFormat } from "../plugins/plugin-params.js";
 
 /** The events a plugin's hooks may name, whichever tool runs them. */
 export const CANONICAL_HOOK_EVENTS = [
@@ -271,15 +270,18 @@ export function hooksConfigCapability(descriptor: {
 /** A native tool's plugins capability, as far as hooks go. */
 export function nativeHooksSupport(descriptor: HooksRouting): {
   readonly acceptsHooks: true;
-  readonly pluginRootToken?: string;
+  readonly pluginRootToken: string;
   readonly hooksTrustNotice?: string;
   readonly hookScript?: HookScript;
 } {
   const { rootToken, trustNotice } = descriptor;
+  if (rootToken === undefined) {
+    throw new CapabilityConfigError("native mode requires a pluginRootToken.");
+  }
   return {
     acceptsHooks: true,
     ...withHookScript(descriptor),
-    ...(rootToken === undefined ? {} : { pluginRootToken: rootToken }),
+    pluginRootToken: rootToken,
     ...(trustNotice === undefined ? {} : { hooksTrustNotice: trustNotice }),
   };
 }
@@ -358,8 +360,8 @@ export function flatProjectHooksDelivery(
 export type HookEventDeclaration = string | readonly string[] | HookEventRoute;
 
 /** A descriptor as its tool writes it. What it leaves out is what most tools share: every
- * canonical event fired under its own name, an event it never names still reaching the hook,
- * and the plugin-root variable a hooks file's commands hold. */
+ * canonical event fired under its own name, and an event it never names still reaching the hook.
+ * A tool with a hooks file states the plugin-root variable its commands hold. */
 export interface HooksDeclaration
   extends Omit<
     HooksDescriptor,
@@ -453,6 +455,9 @@ export function declareHooks<const D extends HooksDeclaration>(
   if (declaration.flat?.loaderEntry !== undefined && declaration.file !== undefined) {
     refuse("loader-with-file", "a loader imports a bridge instead of reading a hooks file");
   }
+  if (rootToken === undefined && declaration.file !== undefined) {
+    refuse("file-without-root-token", "a hooks file's commands name the plugin root by a variable");
+  }
   if (rootToken !== undefined && declaration.file === undefined) {
     refuse("root-token-without-file", "the root token names what a hooks file's commands hold");
   }
@@ -467,7 +472,7 @@ export function declareHooks<const D extends HooksDeclaration>(
     events,
     undeclaredEvents,
     eventMap: Object.fromEntries([...events].map(([event, route]) => [event, route.native])),
-    rootToken: declaration.file === undefined ? undefined : (rootToken ?? PLUGIN_ROOT_TOKEN),
+    rootToken,
   };
   return declared_ as typeof declared_ & HooksBrand;
 }

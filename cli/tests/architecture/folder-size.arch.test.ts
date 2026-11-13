@@ -22,10 +22,6 @@ const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
   // one module rendering several commands, which is what put the printing in the actions.
   { path: "src/presentation/display", count: 15 },
 
-  // `marketplace-source-drift.ts` decides a version/migration drift, a fact about aidd's own
-  // migration: that concern belongs to `framework`, not `tools`.
-  { path: "src/contexts/framework/domain", count: 11 },
-
   // Four native-cache and host-CLI helpers are shared by `clean` at project and machine scope
   // both, which is what `earned-sharing.arch.test.ts` means by earned; a `clean/`-only home
   // would pass that rule by sitting outside the directory it judges. Nothing else here groups

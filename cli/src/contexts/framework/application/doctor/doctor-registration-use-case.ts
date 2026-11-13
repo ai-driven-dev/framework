@@ -20,7 +20,7 @@ import type {
   HostPluginRegistryReading,
 } from "../../../tools/domain/ports/host-plugin-registry-reader.js";
 import type { NativePluginActivator } from "../../../tools/domain/ports/native-plugin-activator.js";
-import { getToolConfig, isAiTool, nativeActivationOf } from "../../../tools/domain/registry.js";
+import { nativeActivationOf, resolveNativePlugins } from "../../../tools/domain/registry.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
@@ -319,12 +319,7 @@ export class DoctorRegistrationUseCase {
   private untrackedSettingsOf(
     toolId: ToolId
   ): (MarketplaceSettings & { marketplacesSettingsPath: string }) | undefined {
-    const config = getToolConfig(toolId);
-    if (!isAiTool(config)) return undefined;
-    const caps = config.capabilities as {
-      plugins?: { marketplaceSettings?: MarketplaceSettings | null };
-    };
-    const settings = caps.plugins?.marketplaceSettings;
+    const settings = resolveNativePlugins(toolId)?.marketplaceRegistration();
     // `null` means the tool writes no machine-local registration at all, so there is
     // nothing here to check — only a declared path leaves a file worth looking at.
     if (typeof settings?.marketplacesSettingsPath !== "string") return undefined;

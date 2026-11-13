@@ -2,7 +2,7 @@ import type { ConfigAsset, SchemaName } from "../../../kernel/ports/asset-provid
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../kernel/ports/file-writer.js";
 import type { ToolId } from "../../../kernel/tool.js";
-import type { FlatHooksBridge } from "./capabilities/plugins-capability.js";
+import type { FlatHooksBridge } from "./plugins/plugin-params.js";
 
 /** How a plugin's artifact files are sourced: a sub-directory walked with an extension filter
  * or in full, a single plugin-relative file, or hooks.json plus its sibling scripts. */

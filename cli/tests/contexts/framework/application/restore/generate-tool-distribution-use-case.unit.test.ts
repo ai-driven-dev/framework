@@ -13,6 +13,7 @@ import { BundledAssetProviderAdapter } from "../../../../../src/runtime/assets/a
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKDOWN = "---\nname: sample\ndescription: A sample.\n---\n\nBody.\n";
@@ -73,9 +74,10 @@ describe("GenerateToolDistributionUseCase — content sections", () => {
   it("skips a section the tool declares no capability for", async () => {
     const claude = getToolConfig("claude");
     if (!isAiTool(claude)) throw new Error("claude is an AI tool");
-    const { rules: _rules, ...capabilities } = claude.capabilities as Record<string, unknown>;
 
-    const paths = (await generate({ ...claude, capabilities })).map((f) => f.relativePath).sort();
+    const paths = (await generate(withSections(claude, { rules: null })))
+      .map((f) => f.relativePath)
+      .sort();
 
     expect(paths).toStrictEqual([
       ".claude/agents/reviewer.md",

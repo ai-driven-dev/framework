@@ -9,7 +9,7 @@ import {
 } from "./install-content-section-use-case.js";
 
 const commandsDescriptor: ContentSectionDescriptor<"commands", CommandsCapability> = {
-  key: "commands",
+  capabilityOf: (tool) => tool.section("commands"),
   acceptsFileName: (cap, fileName) => cap.acceptsFileName(fileName),
   convertFrontmatter: (cap, frontmatter, relativeFileName) =>
     cap.convertFrontmatter(frontmatter, relativeFileName),

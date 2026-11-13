@@ -1,7 +1,6 @@
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import type { AiTool, HasPlugins, HasSkills } from "../../contracts.js";
 import { flatHooksSupport, flatProjectHooksDelivery } from "../../formats/hooks-descriptor.js";
+import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { defineAiTool } from "../../profile/define-tool.js";
 import {
   antigravityHookEntries,
   antigravityHooksScriptDir,
@@ -26,8 +25,7 @@ function skillName(fileName: string): string {
     : base.replace(/\.md$/, "");
 }
 
-export const antigravity: AiTool<HasSkills & HasPlugins> = {
-  kind: "ai",
+export const antigravity = defineAiTool({
   toolId: "antigravity",
   directory: ANTIGRAVITY_DIRECTORY,
   toolSuffix: TOOL_SUFFIX,
@@ -35,15 +33,14 @@ export const antigravity: AiTool<HasSkills & HasPlugins> = {
   signalDir: null,
   buildContracts: { flat: buildAntigravityFlatContract },
 
-  capabilities: {
-    skills: new SkillsCapability({
-      toolSuffix: TOOL_SUFFIX,
-      prefix: SKILLS_PREFIX,
+  capabilities: (bound) => ({
+    skills: bound.skills({
+      agentsSkillsDirectory: true,
       buildInstallPath: (fileName) =>
-        `${ANTIGRAVITY_DIRECTORY}skills/${SKILLS_PREFIX}${skillName(fileName)}/SKILL.md`,
+        `${bound.installUnder(`skills/${SKILLS_PREFIX}`)(skillName(fileName))}/SKILL.md`,
       convertFrontmatter: (fm) => fm,
     }),
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       flatSkillLayout: "single-level",
@@ -57,9 +54,9 @@ export const antigravity: AiTool<HasSkills & HasPlugins> = {
         scriptDir: antigravityHooksScriptDir,
       }),
     }),
-  },
+  }),
 
   rewriteContent(content: string): string {
     return content;
   },
-};
+});

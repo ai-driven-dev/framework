@@ -1,5 +1,4 @@
-import type { PluginsCapability } from "../../../../tools/domain/capabilities/plugins-capability.js";
-import { isAiTool, type ToolConfig } from "../../../../tools/domain/registry.js";
+import { resolvePluginsCapability, type ToolConfig } from "../../../../tools/domain/registry.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 import { resolveTranslator, type TranslatorDeps } from "./plugin-translator-factory.js";
 
@@ -8,8 +7,6 @@ export function resolvePluginTranslator(
   toolConfig: ToolConfig,
   deps: TranslatorDeps
 ): PluginTranslator | null {
-  if (!isAiTool(toolConfig)) return null;
-  const caps = toolConfig.capabilities as Record<string, unknown>;
-  if (!("plugins" in caps)) return null;
-  return resolveTranslator(caps.plugins as PluginsCapability, deps);
+  const plugins = resolvePluginsCapability(toolConfig.toolId);
+  return plugins === null ? null : resolveTranslator(plugins, deps);
 }

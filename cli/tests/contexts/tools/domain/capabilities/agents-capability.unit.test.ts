@@ -18,18 +18,6 @@ describe("AgentsCapability", () => {
     frontmatter: identity,
   };
 
-  describe("buildOutputPath", () => {
-    it("combines directory, agents folder, name, and tool suffix", () => {
-      const cap = new AgentsCapability(markdownParams);
-      expect(cap.buildOutputPath("my-agent")).toBe(".claude/agents/my-agent.claude.md");
-    });
-
-    it("uses toml params when format is toml", () => {
-      const cap = new AgentsCapability(tomlParams);
-      expect(cap.buildOutputPath("my-agent")).toBe(".codex/agents/my-agent.codex.md");
-    });
-  });
-
   describe("accepts", () => {
     it("returns true when path starts with directory", () => {
       const cap = new AgentsCapability(markdownParams);
@@ -146,15 +134,14 @@ describe("AgentsCapability file acceptance", () => {
     format: "markdown",
     frontmatter: identity,
   });
-  const suffixes = [".claude.md", ".cursor.md", ".codex.md"];
 
   it("accepts its own suffix and a suffix belonging to no tool", () => {
-    expect(cap.acceptsFileName("planner.claude.md", suffixes)).toBe(true);
-    expect(cap.acceptsFileName("planner.md", suffixes)).toBe(true);
+    expect(cap.acceptsFileName("planner.claude.md")).toBe(true);
+    expect(cap.acceptsFileName("planner.md")).toBe(true);
   });
 
   it("refuses another tool's suffix wherever the file sits", () => {
-    expect(cap.acceptsFileName("a/b/planner.cursor.md", suffixes)).toBe(false);
+    expect(cap.acceptsFileName("a/b/planner.cursor.md")).toBe(false);
   });
 });
 
@@ -194,14 +181,6 @@ describe("AgentsCapability equality", () => {
   it("differs on the tool suffix", () => {
     expect(
       new AgentsCapability(base).equals(new AgentsCapability({ ...base, toolSuffix: ".x.md" }))
-    ).toBe(false);
-  });
-
-  it("differs on the user file extension", () => {
-    expect(
-      new AgentsCapability({ ...base, userFileExt: ".md" }).equals(
-        new AgentsCapability({ ...base, userFileExt: ".toml" })
-      )
     ).toBe(false);
   });
 });

@@ -1,27 +1,10 @@
 import { join } from "node:path";
-import { AgentsCapability } from "../../capabilities/agents-capability.js";
-import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
-import { RulesCapability } from "../../capabilities/rules-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import type {
-  AiTool,
-  HasAgents,
-  HasCommands,
-  HasHooks,
-  HasMcp,
-  HasPlugins,
-  HasRules,
-  HasSkills,
-} from "../../contracts.js";
-import {
-  buildAiddCommandFilePath,
-  convertCommandFrontmatter,
-  stripToolSuffix,
-} from "../../formats/command.js";
+import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
+import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { defineAiTool } from "../../profile/define-tool.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,
@@ -62,10 +45,7 @@ function buildCodexSkillFilePath(fileName: string): string {
   return `${AGENTS_SKILLS_PREFIX}aidd-${skillNameFromPath(fileName)}/SKILL.md`;
 }
 
-export const codex: AiTool<
-  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasHooks & HasPlugins
-> = {
-  kind: "ai",
+export const codex = defineAiTool({
   toolId: "codex",
   distributionProbes: {
     manifest: [".codex-plugin/plugin.json"],
@@ -78,40 +58,33 @@ export const codex: AiTool<
   configOutputPaths: { "config.toml": ".codex/config.toml" },
   buildContracts: { marketplace: buildCodexContract, flat: buildCodexFlatContract },
 
-  capabilities: {
-    agents: new AgentsCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+  capabilities: (bound) => ({
+    agents: bound.agents({
       format: "toml",
       frontmatter: codexAgentFrontmatter,
       serialize: codexAgentToml,
     }),
-    skills: new SkillsCapability({
-      prefix: "aidd-",
+    skills: bound.skills({
+      agentsSkillsDirectory: true,
       buildInstallPath: buildCodexSkillFilePath,
       convertFrontmatter: stripCodexSkillFrontmatter,
     }),
-    commands: new CommandsCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+    commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
       convertFrontmatter: (fm, relativeFileName) => convertCommandFrontmatter(fm, relativeFileName),
     }),
-    rules: new RulesCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) => `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+    rules: bound.rules({
+      buildInstallPath: bound.installUnder("rules/"),
       convertFrontmatter: (fm) => fm,
     }),
     mcp: new McpCapability({
       outputPath: ".codex/config.toml",
       format: "toml",
-      entrySection: "mcp_servers",
       mergeFn: mergeCodexConfigToml,
       consumes: [CONFIG_MCP],
     }),
     hooks: hooksConfigCapability(CODEX_HOOKS),
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "native",
       pluginsDir: ".codex/plugins/",
       pluginManifestRelativePath: "plugin.json",
@@ -137,9 +110,9 @@ export const codex: AiTool<
         userSettingsPath: (h, env) => join(env("CODEX_HOME") || join(h, ".codex"), "config.toml"),
       },
     }),
-  },
+  }),
 
   rewriteContent(content: string): string {
     return rewriteCodexContent(content);
   },
-};
+});

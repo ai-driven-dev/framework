@@ -9,9 +9,8 @@ import {
 } from "./install-content-section-use-case.js";
 
 const agentsDescriptor: ContentSectionDescriptor<"agents", AgentsCapability> = {
-  key: "agents",
-  acceptsFileName: (cap, fileName, allToolSuffixes) =>
-    cap.acceptsFileName(fileName, allToolSuffixes),
+  capabilityOf: (tool) => tool.section("agents"),
+  acceptsFileName: (cap, fileName) => cap.acceptsFileName(fileName),
   convertFrontmatter: (cap, frontmatter, relativeFileName) =>
     cap.convertFrontmatter(frontmatter, relativeFileName),
 };

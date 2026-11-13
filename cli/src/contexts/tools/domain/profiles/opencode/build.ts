@@ -1,10 +1,7 @@
 /**
  * Opencode's build contract: flat only — opencode has no marketplace mode.
- * `transformMcpToOpencode` lives here because the flat contract's config-artifact step needs it
- * as much as the installed-content mcp capability does; the profile imports it back.
  */
 
-import { InvalidMcpServerConfigError, McpConfigError } from "../../../../../kernel/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
   flatMcpKeyPrefix,
@@ -18,62 +15,10 @@ import type {
   ToolBuildContract,
 } from "../../build-contract.js";
 import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks-descriptor.js";
-import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
+import { buildOpencodeFlatConfig, toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
-
-type RawServer =
-  | { command: string; args?: string[]; env?: Record<string, string>; disabled?: boolean }
-  | { url: string; disabled?: boolean };
-
-interface OpencodeMcpLocalServer {
-  type: "local";
-  command: string[];
-  enabled: boolean;
-  environment?: Record<string, string>;
-}
-
-interface OpencodeMcpRemoteServer {
-  type: "remote";
-  url: string;
-  enabled: boolean;
-}
-
-type OpencodeMcpServer = OpencodeMcpLocalServer | OpencodeMcpRemoteServer;
-
-function convertRawServer(name: string, server: RawServer): OpencodeMcpServer {
-  const enabled = server.disabled !== true;
-  if ("command" in server) {
-    const { command, args = [], env } = server;
-    const local: OpencodeMcpLocalServer = { type: "local", command: [command, ...args], enabled };
-    if (env && Object.keys(env).length > 0) local.environment = env;
-    return local;
-  }
-  if ("url" in server) {
-    return { type: "remote", url: server.url, enabled };
-  }
-  throw new InvalidMcpServerConfigError(name);
-}
-
-export function transformMcpToOpencode(content: string): string {
-  let parsed: { mcpServers?: Record<string, RawServer> };
-  try {
-    parsed = JSON.parse(content) as typeof parsed;
-  } catch (err) {
-    throw new McpConfigError(
-      `Cannot parse MCP config: ${err instanceof Error ? err.message : String(err)}`
-    );
-  }
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new McpConfigError("MCP config must be a JSON object");
-  }
-  const mcp: Record<string, OpencodeMcpServer> = {};
-  for (const [name, server] of Object.entries(parsed.mcpServers ?? {})) {
-    mcp[name] = convertRawServer(name, server);
-  }
-  return JSON.stringify({ mcp }, null, 2);
-}
 
 function opencodeFlatAgentPath(plugin: string, rel: string): string {
   return genericFlatAgentPath(".opencode/agents/", plugin, rel.replace(/^agents\//, ""), ".md");
@@ -110,7 +55,7 @@ function collectOpencodeMcp(
   for (const plugin of builtPlugins) {
     const raw = pluginMcp.get(plugin);
     if (raw === undefined) continue;
-    const transformed = JSON.parse(transformMcpToOpencode(raw)) as {
+    const transformed = JSON.parse(toTypedMcpSection(raw)) as {
       mcp?: Record<string, unknown>;
     };
     const prefix = flatMcpKeyPrefix(plugin);

@@ -1,9 +1,8 @@
 import { UnresolvableUserScopeError } from "../../../../kernel/errors.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
-import { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
-import type { PluginsCapability } from "../../../tools/domain/capabilities/plugins-capability.js";
-import { resolvePluginsCapability } from "../../../tools/domain/registry.js";
+import type { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
+import { mcpCapabilityOf, resolvePluginsCapability } from "../../../tools/domain/registry.js";
 import { getToolSupportedScope } from "../../domain/install-scope.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { PluginScope } from "../../domain/plugins/installed-plugin.js";
@@ -36,11 +35,10 @@ export function resolveBaseDirFromRecord(
   return dir;
 }
 
-export function isFrameworkPrimeFlatMcp(caps: Record<string, unknown>): boolean {
-  if (!("mcp" in caps)) return false;
-  const mcp = caps.mcp;
-  if (!(mcp instanceof McpCapability)) return false;
-  if (mcp.params.mergeStrategy !== "framework-prime") return false;
-  const plugins = caps.plugins as PluginsCapability;
-  return plugins.mode === "flat";
+/** The MCP capability of a tool that merges plugin MCP entries into one shared file it owns
+ * the framework half of, or `null` when the tool is not one. */
+export function frameworkPrimeFlatMcpOf(toolId: AiToolId): McpCapability | null {
+  const mcp = mcpCapabilityOf(toolId);
+  if (mcp === null || !mcp.isFrameworkPrime()) return null;
+  return resolvePluginsCapability(toolId)?.kind === "flat" ? mcp : null;
 }

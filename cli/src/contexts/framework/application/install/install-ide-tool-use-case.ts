@@ -6,9 +6,9 @@ import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, IdeToolId } from "../../../../kernel/tool.js";
 import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
-import { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
+import type { SettingsCapability } from "../../../tools/domain/capabilities/settings-capability.js";
 import type { FileMerger } from "../../../tools/domain/ports/file-merger.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
+import { settingsCapabilitiesOf } from "../../../tools/domain/registry.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
@@ -57,17 +57,7 @@ export class InstallIdeToolUseCase {
     projectRoot: string,
     manifest: Manifest
   ): Promise<void> {
-    const toolConfig = getToolConfig(aiId);
-    if (!isAiTool(toolConfig)) return;
-    const caps = toolConfig.capabilities as Record<string, unknown>;
-    const raw = caps.settings;
-    const capabilities = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
-    const toMerge = capabilities.filter(
-      (c): c is SettingsCapability =>
-        c instanceof SettingsCapability &&
-        (c.staticContent !== undefined || c.staticContentAssetFile !== undefined) &&
-        c.requiresTool === ideId
-    );
+    const toMerge = settingsCapabilitiesOf(aiId).filter((c) => c.requiredTool() === ideId);
     if (toMerge.length === 0) return;
     const existingEntries = [...manifest.getMergeFiles(aiId)];
     for (const cap of toMerge) {
@@ -82,18 +72,18 @@ export class InstallIdeToolUseCase {
     existingEntries: MergeFileEntry[],
     manifest: Manifest
   ): Promise<void> {
-    const fullPath = join(projectRoot, cap.buildOutputPath());
+    const fullPath = join(projectRoot, cap.outputPath());
     const content = this.resolveCapabilityContent(cap, aiId);
-    await this.fs.mergeJsonFile(fullPath, content, cap.getMergeStrategy());
+    await this.fs.mergeJsonFile(fullPath, content, cap.mergeStrategy());
     const diskContent = await this.fs.readFile(fullPath);
     const hashes = extractMergeEntries(diskContent, null, this.hasher);
     const newEntry: MergeFileEntry = {
-      relativePath: cap.buildOutputPath(),
+      relativePath: cap.outputPath(),
       sectionKey: null,
       entries: hashes,
     };
     const updated = [
-      ...existingEntries.filter((e) => e.relativePath !== cap.buildOutputPath()),
+      ...existingEntries.filter((e) => e.relativePath !== cap.outputPath()),
       newEntry,
     ];
     manifest.updateToolMergeFiles(aiId, updated);
@@ -104,11 +94,11 @@ export class InstallIdeToolUseCase {
   }
 
   private resolveCapabilityContent(cap: SettingsCapability, aiId: AiToolId): string {
-    if (cap.staticContent !== undefined) return cap.staticContent;
-    if (cap.staticContentAssetFile !== undefined && this.assetProvider !== undefined) {
-      const asset = this.assetProvider.loadConfigAsset(aiId, cap.staticContentAssetFile);
-      return typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-    }
-    return "{}";
+    const provider = this.assetProvider;
+    return (
+      cap.resolveStaticContent(
+        provider === undefined ? undefined : (fileName) => provider.loadConfigAsset(aiId, fileName)
+      ) ?? "{}"
+    );
   }
 }

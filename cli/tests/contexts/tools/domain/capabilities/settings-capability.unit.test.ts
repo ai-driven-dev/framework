@@ -9,8 +9,9 @@ describe("SettingsCapability", () => {
         mergeStrategy: "framework-prime",
         consumes: ["mySignal"],
       });
-      expect(cap.consumes).toContain("mySignal");
-      expect(cap.staticContent).toBeUndefined();
+      expect(cap.consumes("mySignal")).toBe(true);
+      expect(cap.consumes("other")).toBe(false);
+      expect(cap.resolveStaticContent()).toBeNull();
     });
 
     it("accepts staticContent without consumes", () => {
@@ -19,8 +20,8 @@ describe("SettingsCapability", () => {
         mergeStrategy: "framework-prime",
         staticContent: '{"key": true}',
       });
-      expect(cap.staticContent).toBe('{"key": true}');
-      expect(cap.consumes).toHaveLength(0);
+      expect(cap.resolveStaticContent()).toBe('{"key": true}');
+      expect(cap.consumes("mySignal")).toBe(false);
     });
 
     it("throws when both consumes and staticContent are provided", () => {
@@ -67,9 +68,15 @@ describe("SettingsCapability", () => {
         mergeStrategy: "framework-prime",
         staticContentAssetFile: "vscode-settings.json",
       });
-      expect(cap.staticContentAssetFile).toBe("vscode-settings.json");
-      expect(cap.staticContent).toBeUndefined();
-      expect(cap.consumes).toHaveLength(0);
+      const loaded: string[] = [];
+      expect(
+        cap.resolveStaticContent((name) => {
+          loaded.push(name);
+          return "{}";
+        })
+      ).toBe("{}");
+      expect(loaded).toStrictEqual(["vscode-settings.json"]);
+      expect(cap.consumes("mySignal")).toBe(false);
     });
 
     it("accepts neither consumes nor staticContent (empty capability)", () => {
@@ -77,19 +84,19 @@ describe("SettingsCapability", () => {
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
       });
-      expect(cap.consumes).toHaveLength(0);
-      expect(cap.staticContent).toBeUndefined();
+      expect(cap.consumes("mySignal")).toBe(false);
+      expect(cap.resolveStaticContent()).toBeNull();
     });
   });
 
-  describe("requiresTool", () => {
-    it("is undefined when not set", () => {
+  describe("requiredTool", () => {
+    it("is null when not set", () => {
       const cap = new SettingsCapability({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContent: '{"key": true}',
       });
-      expect(cap.requiresTool).toBeUndefined();
+      expect(cap.requiredTool()).toBeNull();
     });
 
     it("is set when provided alongside staticContent", () => {
@@ -99,7 +106,7 @@ describe("SettingsCapability", () => {
         staticContent: '{"key": true}',
         requiresTool: "vscode",
       });
-      expect(cap.requiresTool).toBe("vscode");
+      expect(cap.requiredTool()).toBe("vscode");
     });
 
     it("throws when requiresTool is set without staticContent", () => {
@@ -120,29 +127,57 @@ describe("SettingsCapability", () => {
         staticContentAssetFile: "vscode-settings.json",
         requiresTool: "vscode",
       });
-      expect(cap.staticContentAssetFile).toBe("vscode-settings.json");
-      expect(cap.requiresTool).toBe("vscode");
-      expect(cap.staticContent).toBeUndefined();
+      expect(cap.resolveStaticContent()).toBeNull();
+      expect(cap.requiredTool()).toBe("vscode");
     });
   });
 
-  describe("buildOutputPath", () => {
+  describe("resolveStaticContent", () => {
+    const fromAsset = new SettingsCapability({
+      outputPath: ".vscode/settings.json",
+      mergeStrategy: "framework-prime",
+      staticContentAssetFile: "vscode-settings.json",
+    });
+
+    it("writes an asset answered as an object as indented JSON", () => {
+      expect(fromAsset.resolveStaticContent(() => ({ a: 1 }))).toBe('{\n  "a": 1\n}');
+    });
+
+    it("answers nothing for an asset when no loader is given", () => {
+      expect(fromAsset.resolveStaticContent()).toBeNull();
+    });
+
+    it("prefers inline content and never asks the loader", () => {
+      const inline = new SettingsCapability({
+        outputPath: ".vscode/settings.json",
+        mergeStrategy: "framework-prime",
+        staticContent: "{}",
+      });
+      expect(
+        inline.resolveStaticContent(() => {
+          throw new Error("asked");
+        })
+      ).toBe("{}");
+    });
+  });
+
+  describe("outputPath", () => {
     it("returns the configured output path", () => {
       const cap = new SettingsCapability({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
       });
-      expect(cap.buildOutputPath()).toBe(".vscode/settings.json");
+      expect(cap.outputPath()).toBe(".vscode/settings.json");
     });
   });
 
-  describe("getMergeStrategy", () => {
+  describe("mergeStrategy", () => {
     it("returns the configured merge strategy", () => {
       const cap = new SettingsCapability({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "user-prime",
       });
-      expect(cap.getMergeStrategy()).toBe("user-prime");
+      expect(cap.mergeStrategy()).toBe("user-prime");
     });
   });
 });

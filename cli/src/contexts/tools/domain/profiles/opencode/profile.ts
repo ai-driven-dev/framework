@@ -1,28 +1,16 @@
 import { join } from "node:path";
 import { OpencodeDualConfigError } from "../../../../../kernel/errors.js";
-import { AgentsCapability } from "../../capabilities/agents-capability.js";
-import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP, CONFIG_OPENCODE } from "../../capabilities/config-refs.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../capabilities/plugins-capability.js";
-import { RulesCapability } from "../../capabilities/rules-capability.js";
-import { SkillsCapability } from "../../capabilities/skills-capability.js";
-import type {
-  AiTool,
-  HasAgents,
-  HasCommands,
-  HasMcp,
-  HasPlugins,
-  HasRules,
-  HasSkills,
-} from "../../contracts.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
-  stripToolSuffix,
 } from "../../formats/command.js";
 import { flatHooksSupport } from "../../formats/hooks-descriptor.js";
-import { buildOpencodeFlatContract, transformMcpToOpencode } from "./build.js";
+import { toTypedMcpSection } from "../../formats/opencode-mcp-merge.js";
+import { pluginsCapability } from "../../plugins/plugins-capability.js";
+import { defineAiTool } from "../../profile/define-tool.js";
+import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
@@ -31,10 +19,7 @@ import { OPENCODE_DIRECTORY, opencodeGlobalFilePath } from "./opencode-paths.js"
 const DIRECTORY = OPENCODE_DIRECTORY;
 const TOOL_SUFFIX = ".opencode.md";
 
-export const opencode: AiTool<
-  HasAgents & HasSkills & HasCommands & HasRules & HasMcp & HasPlugins
-> = {
-  kind: "ai",
+export const opencode = defineAiTool({
   toolId: "opencode",
   distributionProbes: {
     marketplace: ["opencode.json"],
@@ -47,31 +32,22 @@ export const opencode: AiTool<
   pluginRuntimeFiles: { [OPENCODE_HOOKS.bridgeRuntime.asset]: OPENCODE_HOOKS.bridgeRuntime.path },
   buildContracts: { flat: buildOpencodeFlatContract },
 
-  capabilities: {
-    agents: new AgentsCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+  capabilities: (bound) => ({
+    agents: bound.agents({
       format: "markdown",
       frontmatter: opencodeAgentFrontmatter,
     }),
-    skills: new SkillsCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) =>
-        `${DIRECTORY}skills/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+    skills: bound.skills({
+      buildInstallPath: bound.installUnder("skills/"),
       convertFrontmatter: (fm) => fm,
     }),
-    commands: new CommandsCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
+    commands: bound.commands({
       buildInstallPath: (fileName) => buildAiddCommandFilePath(DIRECTORY, fileName),
       convertFrontmatter: (fm, relativeFileName) =>
         convertCommandFrontmatterNoHint(fm, relativeFileName),
     }),
-    rules: new RulesCapability({
-      directory: DIRECTORY,
-      toolSuffix: TOOL_SUFFIX,
-      buildInstallPath: (fileName) => `${DIRECTORY}rules/${stripToolSuffix(TOOL_SUFFIX, fileName)}`,
+    rules: bound.rules({
+      buildInstallPath: bound.installUnder("rules/"),
       convertFrontmatter: (fm) => {
         if (fm.alwaysApply === false && fm.description !== undefined) {
           return { description: fm.description };
@@ -82,9 +58,8 @@ export const opencode: AiTool<
     mcp: new McpCapability({
       outputPath: "opencode.json",
       format: "json",
-      entrySection: "mcp",
       mergeStrategy: "framework-prime",
-      transformContent: transformMcpToOpencode,
+      transformContent: toTypedMcpSection,
       consumes: [CONFIG_MCP, CONFIG_OPENCODE],
       outputPathCandidates: {
         tiers: [["opencode.json", "opencode.jsonc"]],
@@ -96,7 +71,7 @@ export const opencode: AiTool<
     }),
     // Flat mode has no `marketplaceSettings` field, and opencode's `plugin[]` array accepts
     // only npm package names — no source or version a marketplace entry could express.
-    plugins: new PluginsCapability({
+    plugins: pluginsCapability({
       mode: "flat",
       flatNamespacePrefix: "aidd-",
       globalFiles: {
@@ -105,7 +80,7 @@ export const opencode: AiTool<
       },
       ...flatHooksSupport(OPENCODE_HOOKS, generateOpencodeHooksBridge),
     }),
-  },
+  }),
 
   rewriteContent(content: string): string {
     return content.replace(
@@ -113,4 +88,4 @@ export const opencode: AiTool<
       "$1.opencode/commands/aidd/$2/$3"
     );
   },
-};
+});

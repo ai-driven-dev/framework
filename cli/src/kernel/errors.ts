@@ -117,6 +117,7 @@ export type HooksInvariant =
   | "loader-with-file"
   | "path-outside-directory"
   | "root-token-without-file"
+  | "file-without-root-token"
   | "adapter-not-stamped";
 
 export class InvalidHooksDescriptorError extends Error {
@@ -127,6 +128,24 @@ export class InvalidHooksDescriptorError extends Error {
   ) {
     super(`The hooks descriptor of '${toolId}' breaks '${invariant}': ${detail}`);
     this.name = "InvalidHooksDescriptorError";
+  }
+}
+
+export type ProfileInvariant =
+  | "unknown-tool-id"
+  | "directory-not-relative"
+  | "directory-without-trailing-slash"
+  | "no-build-contract"
+  | "unknown-section";
+
+export class InvalidToolProfileError extends Error {
+  constructor(
+    readonly toolId: string,
+    readonly invariant: ProfileInvariant,
+    detail: string
+  ) {
+    super(`The profile of '${toolId}' breaks '${invariant}': ${detail}`);
+    this.name = "InvalidToolProfileError";
   }
 }
 

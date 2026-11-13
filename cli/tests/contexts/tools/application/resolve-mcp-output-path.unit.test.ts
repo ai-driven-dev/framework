@@ -19,7 +19,7 @@ describe("the file a tool's MCP config goes in", () => {
 
   describe("opencode", () => {
     const resolve = (...files: string[]) =>
-      resolveMcpOutputPath(withFiles(...files), opencode.capabilities.mcp, ROOT);
+      resolveMcpOutputPath(withFiles(...files), opencode.section("mcp"), ROOT);
 
     it("falls back to opencode.json when neither config file exists", async () => {
       expect(await resolve()).toBe("opencode.json");
@@ -42,7 +42,7 @@ describe("the file a tool's MCP config goes in", () => {
 
   describe("kilo", () => {
     const resolve = (...files: string[]) =>
-      resolveMcpOutputPath(withFiles(...files), kilo.capabilities.mcp, ROOT);
+      resolveMcpOutputPath(withFiles(...files), kilo.section("mcp"), ROOT);
 
     it("falls back to project-local JSONC when no config exists", async () => {
       expect(await resolve()).toBe(".kilo/kilo.jsonc");

@@ -1,40 +1,38 @@
 import { serializeFrontmatter } from "../../../../kernel/markdown.js";
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
+import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
-const ALL_TOOL_SUFFIXES: readonly string[] = AI_TOOL_IDS.map((id) => `.${id}.md`);
+type CommandsCapabilityParams = {
+  directory: string;
+  toolSuffix: string;
+  buildInstallPath: (fileName: string) => string | null;
+  convertFrontmatter: (
+    fm: Record<string, unknown>,
+    relativeFileName: string
+  ) => Record<string, unknown>;
+};
 
 export class CommandsCapability {
-  constructor(
-    readonly params: {
-      directory: string;
-      toolSuffix: string;
-      buildInstallPath: (fileName: string) => string | null;
-      convertFrontmatter: (
-        fm: Record<string, unknown>,
-        relativeFileName: string
-      ) => Record<string, unknown>;
-    }
-  ) {}
+  readonly #params: CommandsCapabilityParams;
+  readonly #foreignSuffixes: ForeignSuffixFilter;
 
-  buildOutputPath(commandName: string): string {
-    return `${this.params.directory}commands/${commandName}${this.params.toolSuffix}`;
+  constructor(params: CommandsCapabilityParams) {
+    this.#params = params;
+    this.#foreignSuffixes = ForeignSuffixFilter.keeping(params.toolSuffix);
   }
 
   buildInstallPath(fileName: string): string | null {
-    return this.params.buildInstallPath(fileName);
+    return this.#params.buildInstallPath(fileName);
   }
 
   convertFrontmatter(
     fm: Record<string, unknown>,
     relativeFileName: string
   ): Record<string, unknown> {
-    return this.params.convertFrontmatter(fm, relativeFileName);
+    return this.#params.convertFrontmatter(fm, relativeFileName);
   }
 
   acceptsFileName(fileName: string): boolean {
-    const basename = fileName.split("/").at(-1) ?? fileName;
-    const otherSuffixes = ALL_TOOL_SUFFIXES.filter((s) => s !== this.params.toolSuffix);
-    return !otherSuffixes.some((s) => basename.endsWith(s));
+    return this.#foreignSuffixes.accepts(fileName);
   }
 
   serialize(frontmatter: Record<string, unknown>, body: string): string {
@@ -42,13 +40,13 @@ export class CommandsCapability {
   }
 
   accepts(relativePath: string): boolean {
-    return relativePath.startsWith(this.params.directory);
+    return relativePath.startsWith(this.#params.directory);
   }
 
   equals(other: CommandsCapability): boolean {
     return (
-      this.params.directory === other.params.directory &&
-      this.params.toolSuffix === other.params.toolSuffix
+      this.#params.directory === other.#params.directory &&
+      this.#params.toolSuffix === other.#params.toolSuffix
     );
   }
 }

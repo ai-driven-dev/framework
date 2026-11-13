@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bridgeHookCalls } from "../../../../../src/contexts/tools/domain/formats/plugin-hooks-shape.js";
+import { bridgeHookCalls } from "../../../../../src/contexts/tools/domain/hooks/plugin-hooks-shape.js";
 
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
 

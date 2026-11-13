@@ -1,36 +1,17 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  isFrameworkPrimeFlatMcp,
+  frameworkPrimeFlatMcpOf,
   resolveBaseDirFromRecord,
   resolvePluginToolIds,
   resolveScopeForInstall,
 } from "../../../../../src/contexts/framework/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { McpCapability } from "../../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
-import { PluginsCapability } from "../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { mcpCapabilityOf } from "../../../../../src/contexts/tools/domain/registry.js";
 import { UnresolvableUserScopeError } from "../../../../../src/kernel/errors.js";
 
 const HOME = "/home/u";
 const homedir = () => HOME;
-
-function mcp(mergeStrategy?: "user-prime" | "framework-prime"): McpCapability {
-  return new McpCapability({ outputPath: "mcp.json", format: "json", mergeStrategy });
-}
-
-const FLAT_PLUGINS = new PluginsCapability({
-  mode: "flat",
-  flatNamespacePrefix: "x-",
-  acceptsHooks: false,
-  hooksUnsupportedReason: "none",
-});
-const NATIVE_PLUGINS = new PluginsCapability({
-  mode: "native",
-  pluginsDir: ".x/plugins/",
-  pluginManifestRelativePath: null,
-  acceptsHooks: false,
-  hooksUnsupportedReason: "none",
-});
 
 describe("resolvePluginToolIds()", () => {
   it("resolves 'all' to the AI tools the manifest holds, in registry order", () => {
@@ -42,27 +23,18 @@ describe("resolvePluginToolIds()", () => {
   });
 });
 
-describe("isFrameworkPrimeFlatMcp()", () => {
-  it("fails for a tool declaring no MCP capability", () => {
-    expect(isFrameworkPrimeFlatMcp({ plugins: FLAT_PLUGINS })).toBe(false);
+describe("frameworkPrimeFlatMcpOf()", () => {
+  it("answers the MCP capability of a flat tool merging framework-prime", () => {
+    expect(frameworkPrimeFlatMcpOf("opencode")).toBe(mcpCapabilityOf("opencode"));
+    expect(frameworkPrimeFlatMcpOf("kilo")).toBe(mcpCapabilityOf("kilo"));
   });
 
-  it("fails for an mcp declaration that is not a capability", () => {
-    expect(isFrameworkPrimeFlatMcp({ mcp: "framework-prime", plugins: FLAT_PLUGINS })).toBe(false);
+  it("answers null for a native tool merging framework-prime", () => {
+    expect(frameworkPrimeFlatMcpOf("copilot")).toBeNull();
   });
 
-  it("fails for a flat tool merging MCP user-prime", () => {
-    expect(isFrameworkPrimeFlatMcp({ mcp: mcp("user-prime"), plugins: FLAT_PLUGINS })).toBe(false);
-  });
-
-  it("fails for a flat tool declaring no merge strategy", () => {
-    expect(isFrameworkPrimeFlatMcp({ mcp: mcp(), plugins: FLAT_PLUGINS })).toBe(false);
-  });
-
-  it("fails for a native tool merging MCP framework-prime", () => {
-    expect(isFrameworkPrimeFlatMcp({ mcp: mcp("framework-prime"), plugins: NATIVE_PLUGINS })).toBe(
-      false
-    );
+  it("answers null for a tool whose MCP does not merge framework-prime", () => {
+    expect(frameworkPrimeFlatMcpOf("claude")).toBeNull();
   });
 });
 

@@ -18,7 +18,7 @@ Plan before building.
 
 /** What a plugin install writes for `planner.md`. */
 export function installed(tool: AiTool<HasAgents>, content: string): string {
-  const agents = tool.capabilities.agents;
+  const agents = tool.section("agents");
   const { frontmatter, body } = agents.deserialize(content);
   return agents.serialize(agents.convertFrontmatter(frontmatter, "planner.md"), body);
 }

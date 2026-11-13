@@ -72,8 +72,8 @@ export class InstallIdeConfigUseCase {
     options: InstallIdeConfigOptions
   ): Promise<{ regularFiles: InstallationFile[]; mergeFiles: InstallationFile[] }> {
     const toolConfig = getToolConfig(options.toolId);
-    if (!("settings" in toolConfig)) return { regularFiles: [], mergeFiles: [] };
-    const raw = toolConfig.settings as SettingsCapability | SettingsCapability[];
+    const raw = toolConfig.section("settings");
+    if (raw === null) return { regularFiles: [], mergeFiles: [] };
     const capabilities = Array.isArray(raw) ? raw : [raw];
     const regularFiles: InstallationFile[] = [];
     const mergeFiles: InstallationFile[] = [];
@@ -90,7 +90,7 @@ export class InstallIdeConfigUseCase {
     capability: SettingsCapability,
     options: InstallIdeConfigOptions
   ): Promise<InstallationFile | null> {
-    const outputPath = capability.buildOutputPath();
+    const outputPath = capability.outputPath();
     if (await this.isUserOwned(outputPath, options)) return null;
     const fileName = basename(outputPath);
     const asset = this.assets.loadConfigAsset(options.toolId, fileName);
@@ -99,7 +99,7 @@ export class InstallIdeConfigUseCase {
       relativePath: outputPath,
       content,
       hash: this.hasher.hash(content),
-      mergeStrategy: capability.getMergeStrategy(),
+      mergeStrategy: capability.mergeStrategy(),
     });
   }
 

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { InstallConfigUseCase } from "../../../../../src/contexts/framework/application/install/install-config-use-case.js";
-import { extractConfigCapabilities } from "../../../../../src/contexts/framework/domain/config-capability.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/domain/capabilities/config-refs.js";
 import { McpCapability } from "../../../../../src/contexts/tools/domain/capabilities/mcp-capability.js";
 import { SettingsCapability } from "../../../../../src/contexts/tools/domain/capabilities/settings-capability.js";
@@ -78,7 +77,7 @@ describe("InstallConfigUseCase — staticContent", () => {
     const assetProvider = new BundledAssetProviderAdapter();
 
     const results = await useCase.execute({
-      capabilities: extractConfigCapabilities(copilot),
+      capabilities: copilot.configCapabilities(),
       configRefs: descriptor.configRefs,
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,

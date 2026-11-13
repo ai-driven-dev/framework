@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import type { ProjectHooksFormat } from "../../../../../../src/contexts/tools/domain/plugins/plugin-params.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 
-const format = antigravity.capabilities.plugins.projectHooksFormat as ProjectHooksFormat;
+const format = antigravity.section("plugins").projectHooksDelivery()?.format as ProjectHooksFormat;
 
 // biome-ignore lint/suspicious/noTemplateCurlyInString: intentionally testing Claude hook placeholder substitution
 const PLUGIN_ROOT_VAR = "${CLAUDE_PLUGIN_ROOT}";

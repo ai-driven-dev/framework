@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { parseToml } from "../../../../src/contexts/tools/domain/formats/toml.js";
+import { pluginsCapability } from "../../../../src/contexts/tools/domain/plugins/plugins-capability.js";
 import { antigravity } from "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { parseToml } from "../../../../src/contexts/tools/domain/profiles/codex/toml.js";
 import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
@@ -17,6 +17,8 @@ import {
 } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/kernel/file.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../src/kernel/markdown.js";
+import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
+import { nativeOf } from "../../tools/testing/plugin-mode.js";
 
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
@@ -368,7 +370,7 @@ describe("cross-format matrix (source × target)", () => {
         it(`${source.format} source → ${target.name} target: emits manifest at ${target.manifestExpected}`, () => {
           const dist = makeSourceDist(source);
           const files = translator.translate(dist, target.tool);
-          const expected = `${target.tool.capabilities.plugins.pluginsDir}sample-plugin/${target.manifestExpected}`;
+          const expected = `${nativeOf(target.tool.section("plugins")).pluginOutputDir("sample-plugin")}${target.manifestExpected}`;
           expect(files.map((f) => f.relativePath)).toContain(expected);
         });
       }
@@ -585,24 +587,20 @@ describe("a flat target that rewrites what it hosts", () => {
 });
 
 describe("a flat target whose loader is triggered by a generated bridge", () => {
-  const bridged = {
-    ...opencode,
-    capabilities: {
-      ...opencode.capabilities,
-      plugins: new PluginsCapability({
-        mode: "flat",
-        flatNamespacePrefix: "aidd-",
-        acceptsHooks: true,
-        flatHooksDir: ".stub/hooks/",
-        flatHooksBridge: {
-          generate: (raw: string, plugin: string) =>
-            raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
-          path: (plugin: string) => `.stub/plugin/${plugin}.js`,
-          skipIfSourceHas: "own-plugin.js",
-        },
-      }),
-    },
-  };
+  const bridged = withSections(opencode, {
+    plugins: pluginsCapability({
+      mode: "flat",
+      flatNamespacePrefix: "aidd-",
+      acceptsHooks: true,
+      flatHooksDir: ".stub/hooks/",
+      flatHooksBridge: {
+        generate: (raw: string, plugin: string) =>
+          raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
+        path: (plugin: string) => `.stub/plugin/${plugin}.js`,
+        skipIfSourceHas: "own-plugin.js",
+      },
+    }),
+  });
 
   it("generates the bridge from the plugin's own hooks manifest", () => {
     expect(treeOf(bridged, hooksDist())).toEqual({
@@ -648,19 +646,16 @@ describe("a plugin's mcp declaration", () => {
   });
 
   it("is dropped by a target that hosts none", () => {
-    const refusingMcp = {
-      ...claude,
-      capabilities: {
-        ...claude.capabilities,
-        plugins: new PluginsCapability({
-          mode: "native",
-          pluginsDir: ".claude/plugins/",
-          pluginManifestRelativePath: null,
-          acceptsHooks: true,
-          acceptsMcp: false,
-        }),
-      },
-    };
+    const refusingMcp = withSections(claude, {
+      plugins: pluginsCapability({
+        mode: "native",
+        pluginRootToken: "$X_PLUGIN_ROOT",
+        pluginsDir: ".claude/plugins/",
+        pluginManifestRelativePath: null,
+        acceptsHooks: true,
+        acceptsMcp: false,
+      }),
+    });
     const mcp = [makeFile(".mcp.json", mcpJsonContent)];
     expect(treeOf(refusingMcp, distOf([...mcp], { mcp }))).toEqual({});
   });
@@ -686,7 +681,7 @@ describe("what a person still has to do before a hook runs", () => {
         pluginName: "sample-plugin",
         component: "hooks",
         toolId: "codex",
-        message: codex.capabilities.plugins.hooksTrustNotice,
+        message: nativeOf(codex.section("plugins")).trustNotice(),
       },
     ]);
   });
@@ -701,18 +696,14 @@ describe("what a person still has to do before a hook runs", () => {
 });
 
 describe("a target that runs no hook a plugin ships", () => {
-  const refusingHooks = {
-    ...opencode,
-    capabilities: {
-      ...opencode.capabilities,
-      plugins: new PluginsCapability({
-        mode: "flat",
-        flatNamespacePrefix: "aidd-",
-        acceptsHooks: false,
-        hooksUnsupportedReason: "OpenCode runs no hook a plugin ships.",
-      }),
-    },
-  };
+  const refusingHooks = withSections(opencode, {
+    plugins: pluginsCapability({
+      mode: "flat",
+      flatNamespacePrefix: "aidd-",
+      acceptsHooks: false,
+      hooksUnsupportedReason: "OpenCode runs no hook a plugin ships.",
+    }),
+  });
 
   it("records the refusal against the plugin and the target", () => {
     expect(translator.translateWithComponentPaths(hooksDist(), refusingHooks).skipped).toEqual([
@@ -777,16 +768,12 @@ describe("a target that hosts no plugin", () => {
   });
 
   it("produces nothing for a tool declaring plugins unsupported", () => {
-    const unsupported = {
-      ...claude,
-      capabilities: {
-        ...claude.capabilities,
-        plugins: new PluginsCapability({
-          mode: "unsupported",
-          hooksUnsupportedReason: "Claude hosts no plugin here.",
-        }),
-      },
-    };
+    const unsupported = withSections(claude, {
+      plugins: pluginsCapability({
+        mode: "unsupported",
+        hooksUnsupportedReason: "Claude hosts no plugin here.",
+      }),
+    });
     expect(translator.translateWithComponentPaths(makeDist(), unsupported)).toEqual(emptyResult);
   });
 });

@@ -5,7 +5,7 @@ import {
   pluginScriptDir,
   pluginScriptPath,
   unmergeHooks,
-} from "../../../../../src/contexts/tools/domain/formats/hooks-merge.js";
+} from "../../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
 
 // biome-ignore lint/suspicious/noTemplateCurlyInString: the placeholder a plugin's hooks name
 const ROOT = "${CLAUDE_PLUGIN_ROOT}";

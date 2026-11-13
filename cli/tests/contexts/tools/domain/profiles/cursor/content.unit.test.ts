@@ -12,6 +12,11 @@ describe("cursor content", () => {
       );
     });
 
+    it("leaves a numbered command folder alone when nothing follows its slash", () => {
+      const text = "See .cursor/commands/04_code/ for the list.\n";
+      expect(cursor.rewriteContent?.(text)).toBe(text);
+    });
+
     it("gives a referenced rule Cursor's .mdc extension", () => {
       const rewritten = cursor.rewriteContent?.("Read @.cursor/rules/01-standards/naming.md\n");
       expect(rewritten).toBe("Read @.cursor/rules/01-standards/naming.mdc\n");

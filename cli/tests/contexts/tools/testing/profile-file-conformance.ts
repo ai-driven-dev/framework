@@ -1,15 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
 import {
   CANONICAL_HOOK_EVENTS,
   type HookEventRoute,
 } from "../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
 import { isAiTool } from "../../../../src/contexts/tools/domain/registry.js";
-import {
-  type ConformanceCheck,
-  type ConformanceSubject,
-  capability,
-} from "./profile-conformance.js";
+import type { ConformanceCheck, ConformanceSubject } from "./profile-conformance.js";
 
 /** What a conformance check is told of the files a profile ships beside its code. */
 export interface FileConformanceSubject extends ConformanceSubject {
@@ -109,7 +104,7 @@ function aiFileCheck(
 
 function acceptsHooks(subject: FileConformanceSubject): boolean {
   if (!isAiTool(subject.profile)) return false;
-  return capability(subject.profile, "plugins", PluginsCapability)?.acceptsHooks === true;
+  return subject.profile.section("plugins")?.hooksAcceptance().accepts === true;
 }
 
 export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubject>[] = [
@@ -148,7 +143,8 @@ export const PROFILE_FILE_CHECKS: readonly ConformanceCheck<FileConformanceSubje
   }),
   aiFileCheck("generates a bridge for exactly the events it relays through one", (subject) => {
     if (!isAiTool(subject.profile)) return;
-    const bridge = capability(subject.profile, "plugins", PluginsCapability)?.flatHooksBridge;
+    const plugins = subject.profile.section("plugins");
+    const bridge = plugins?.kind === "flat" ? plugins.flatLayout().hooksBridge : undefined;
     const declared = declaredHooks(subject);
     if (bridge == null || declared === undefined) return;
     const generated = CANONICAL_HOOK_EVENTS.filter(

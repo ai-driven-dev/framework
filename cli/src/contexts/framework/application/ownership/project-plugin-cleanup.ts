@@ -3,13 +3,11 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
 import { resolveMcpOutputPath } from "../../../tools/application/resolve-mcp-output-path.js";
-import type { McpCapability } from "../../../tools/domain/capabilities/mcp-capability.js";
 import { unmergeOpencodeMcp } from "../../../tools/domain/formats/opencode-mcp-merge.js";
-import { getToolConfig, isAiTool } from "../../../tools/domain/registry.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
-import { isFrameworkPrimeFlatMcp } from "../plugin/plugin-target-resolution.js";
+import { frameworkPrimeFlatMcpOf } from "../plugin/plugin-target-resolution.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { detachNativePluginRefs } from "./native-plugin-ownership.js";
 import { assertProjectPathWithinRoot } from "./project-path-boundary.js";
@@ -32,11 +30,8 @@ async function planProjectMcpRemoval(
   projectRoot: string
 ): Promise<{ output: string; content: string } | undefined> {
   if (plugin.mcpEntries.size === 0) return undefined;
-  const config = getToolConfig(toolId);
-  if (!isAiTool(config)) return undefined;
-  const caps = config.capabilities as Record<string, unknown>;
-  if (!isFrameworkPrimeFlatMcp(caps)) return undefined;
-  const mcp = caps.mcp as McpCapability;
+  const mcp = frameworkPrimeFlatMcpOf(toolId);
+  if (mcp === null) return undefined;
   const output = join(projectRoot, await resolveMcpOutputPath(fs, mcp, projectRoot));
   await assertProjectPathWithinRoot(fs, projectRoot, output);
   try {

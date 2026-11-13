@@ -13,6 +13,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
+import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -348,7 +349,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     });
 
     function registerCursorWith(settings: SettingsCapability[]): void {
-      registerTool({ ...cursor, capabilities: { ...cursor.capabilities, settings } });
+      registerTool(withSections(cursor, { settings }));
     }
 
     afterEach(() => {
@@ -358,7 +359,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     it("merges a single declared settings capability and records its keys", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      registerTool({ ...cursor, capabilities: { ...cursor.capabilities, settings: inline } });
+      registerTool(withSections(cursor, { settings: [inline] }));
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       deps.fs.setFile(join(PROJECT_ROOT, ".cursor/aidd-static.json"), '{"user.setting": 7}');
 

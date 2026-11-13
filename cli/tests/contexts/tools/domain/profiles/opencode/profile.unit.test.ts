@@ -19,7 +19,7 @@ describe("opencode profile", () => {
 
   it("preserves every frontmatter field of a skill", () => {
     const fm = { name: "my-skill", description: "A skill" };
-    expect(opencode.capabilities.skills.convertFrontmatter(fm)).toEqual(fm);
+    expect(opencode.section("skills").convertFrontmatter(fm)).toEqual(fm);
   });
 });
 
@@ -42,7 +42,7 @@ describe("opencode build and conversion tables", () => {
       "a description that opts out of always-apply": { description: "d" },
     })
   )("converts %s", (_case, frontmatter, expected) => {
-    expect(opencode.capabilities.rules.convertFrontmatter(frontmatter)).toStrictEqual(expected);
+    expect(opencode.section("rules").convertFrontmatter(frontmatter)).toStrictEqual(expected);
   });
 });
 
@@ -57,7 +57,7 @@ describe("opencode as the registry answers for it", () => {
   });
 
   it("installs its rules into .opencode/rules/ as markdown", () => {
-    expect(opencode.capabilities.rules.installedLocation()).toEqual({
+    expect(opencode.section("rules").installedLocation()).toEqual({
       directory: ".opencode/rules/",
       extension: ".md",
     });

@@ -1,4 +1,4 @@
-import { stringify } from "smol-toml";
+import { stringifyToml } from "./toml.js";
 
 interface StdioServer {
   command: string;
@@ -59,7 +59,7 @@ export function mcpJsonToToml(json: string): string {
   for (const [name, raw] of Object.entries(servers)) {
     mcp_servers[name] = mapServerToToml(raw);
   }
-  return stringify({ mcp_servers });
+  return stringifyToml({ mcp_servers });
 }
 
 export function mergeJsonUserPrime(existing: string, incoming: string): string {

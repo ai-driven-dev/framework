@@ -12,7 +12,7 @@ describe("the config files a tool's MCP output may live in", () => {
   });
 
   it("lists opencode's two root files as one tier, falling back to the JSON one", () => {
-    const candidates = opencode.capabilities.mcp?.outputPathCandidates();
+    const candidates = opencode.section("mcp")?.outputPathCandidates();
 
     expect(candidates?.tiers).toStrictEqual([["opencode.json", "opencode.jsonc"]]);
     expect(candidates?.fallback).toBe("opencode.json");
@@ -20,7 +20,7 @@ describe("the config files a tool's MCP output may live in", () => {
   });
 
   it("lists kilo's project tier before its legacy root tier, falling back to project JSONC", () => {
-    const candidates = kilo.capabilities.mcp?.outputPathCandidates();
+    const candidates = kilo.section("mcp")?.outputPathCandidates();
 
     expect(candidates?.tiers).toStrictEqual([
       [".kilo/kilo.json", ".kilo/kilo.jsonc"],

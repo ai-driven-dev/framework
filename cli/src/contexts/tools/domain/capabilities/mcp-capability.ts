@@ -9,29 +9,55 @@ export type McpOutputPathCandidates = {
   readonly conflict: () => never;
 };
 
-export class McpCapability {
-  readonly consumes: readonly string[];
+type McpCapabilityParams = {
+  outputPath: string;
+  format: "json" | "toml";
+  mergeStrategy?: "user-prime" | "framework-prime" | "none";
+  mergeFn?: (existing: string, incoming: string) => string;
+  transformContent?: (content: string) => string;
+  outputPathCandidates?: McpOutputPathCandidates;
+  consumes?: readonly string[];
+};
 
-  constructor(
-    readonly params: {
-      outputPath: string;
-      format: "json" | "toml";
-      entrySection?: string;
-      mergeStrategy?: "user-prime" | "framework-prime" | "none";
-      mergeFn?: (existing: string, incoming: string) => string;
-      transformContent?: (content: string) => string;
-      outputPathCandidates?: McpOutputPathCandidates;
-      consumes?: readonly string[];
-    }
-  ) {
-    this.consumes = params.consumes ?? [];
+export class McpCapability {
+  readonly #params: McpCapabilityParams;
+
+  constructor(params: McpCapabilityParams) {
+    this.#params = params;
   }
 
+  consumes(configName: string): boolean {
+    return this.#params.consumes?.includes(configName) ?? false;
+  }
+
+  outputPath(): string {
+    return this.#params.outputPath;
+  }
+
+  mergeStrategy(): "user-prime" | "framework-prime" | "none" {
+    return this.#params.mergeStrategy ?? "user-prime";
+  }
+
+  isFrameworkPrime(): boolean {
+    return this.mergeStrategy() === "framework-prime";
+  }
+
+  /** Whether `fileName` is the JSON file this tool shares with a person, the framework's half of
+   * it written over theirs. */
+  isFrameworkPrimeJson(fileName: string): boolean {
+    return (
+      this.#params.outputPath === fileName &&
+      this.#params.format === "json" &&
+      this.isFrameworkPrime()
+    );
+  }
+
+  /** The tool's own rewrite of the server entries, then the conversion to its file format. */
   transform(mcpJson: string): string {
-    const afterTransform = this.params.transformContent
-      ? this.params.transformContent(mcpJson)
+    const afterTransform = this.#params.transformContent
+      ? this.#params.transformContent(mcpJson)
       : mcpJson;
-    if (this.params.format === "toml") {
+    if (this.#params.format === "toml") {
       return mcpJsonToToml(afterTransform);
     }
     return afterTransform;
@@ -39,29 +65,28 @@ export class McpCapability {
 
   /** `null` when the tool's output path is the fixed `outputPath`. */
   outputPathCandidates(): McpOutputPathCandidates | null {
-    return this.params.outputPathCandidates ?? null;
+    return this.#params.outputPathCandidates ?? null;
   }
 
   merge(existing: string, incoming: string): string {
-    if (this.params.mergeFn !== undefined) {
-      return this.params.mergeFn(existing, incoming);
+    if (this.#params.mergeFn !== undefined) {
+      return this.#params.mergeFn(existing, incoming);
     }
-    if (this.params.mergeStrategy === "none") {
+    if (this.#params.mergeStrategy === "none") {
       return incoming;
     }
     return mergeJsonUserPrime(existing, incoming);
   }
 
   accepts(relativePath: string): boolean {
-    return relativePath === this.params.outputPath;
+    return relativePath === this.#params.outputPath;
   }
 
   equals(other: McpCapability): boolean {
     return (
-      this.params.outputPath === other.params.outputPath &&
-      this.params.format === other.params.format &&
-      this.params.entrySection === other.params.entrySection &&
-      this.params.mergeStrategy === other.params.mergeStrategy
+      this.#params.outputPath === other.#params.outputPath &&
+      this.#params.format === other.#params.format &&
+      this.#params.mergeStrategy === other.#params.mergeStrategy
     );
   }
 }

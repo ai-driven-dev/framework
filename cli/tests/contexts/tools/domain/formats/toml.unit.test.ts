@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseToml,
-  stringifyToml,
-} from "../../../../../../src/contexts/tools/domain/profiles/codex/toml.js";
+import { parseToml, stringifyToml } from "../../../../../src/contexts/tools/domain/formats/toml.js";
 
 describe("parseToml()", () => {
   it("parses a simple TOML string into an object", () => {

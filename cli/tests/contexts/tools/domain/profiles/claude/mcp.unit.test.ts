@@ -4,22 +4,22 @@ import { claude } from "../../../../../../src/contexts/tools/domain/profiles/cla
 describe("claude mcp", () => {
   describe("capabilities.mcp", () => {
     it("outputs to .mcp.json", () => {
-      expect(claude.capabilities.mcp.params.outputPath).toBe(".mcp.json");
+      expect(claude.section("mcp").outputPath()).toBe(".mcp.json");
     });
 
     it("writes its servers as JSON under `mcpServers`", () => {
-      expect(claude.capabilities.mcp.params).toMatchObject({
-        format: "json",
-        entrySection: "mcpServers",
-      });
+      const written = claude
+        .section("mcp")
+        .transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
+      expect(JSON.parse(written)).toHaveProperty("mcpServers");
     });
 
     it("does not consume unknown config names", () => {
-      expect(claude.capabilities.mcp.consumes).not.toContain("vscodeDir");
+      expect(claude.section("mcp").consumes("vscodeDir")).toBe(false);
     });
 
     it("mcp config preserves user customizations during update", () => {
-      expect(claude.capabilities.mcp.params.mergeStrategy ?? "user-prime").toBe("user-prime");
+      expect(claude.section("mcp").mergeStrategy()).toBe("user-prime");
     });
   });
 });
