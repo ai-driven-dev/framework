@@ -40,6 +40,16 @@ describe("NpmRegistryReleaseAdapter", () => {
     ]);
   });
 
+  it("asks GitHub for the tag with no token when the provider has none", async () => {
+    const { client, calls } = http({ [NPM_URL]: { latest: "1.2.3" } });
+
+    await new NpmRegistryReleaseAdapter(client, {
+      tokenProvider: { resolve: async () => null },
+    }).fetchLatestRelease();
+
+    expect(calls[1]?.options).toStrictEqual({ token: undefined });
+  });
+
   it("asks the bases it was given instead of the public ones", async () => {
     const { client, calls } = http({});
     await new NpmRegistryReleaseAdapter(client, { npmRegistryBase: "http://npm.test" })

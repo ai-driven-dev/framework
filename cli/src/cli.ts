@@ -71,11 +71,16 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
   // A bare verb with no subject means "the CLI itself" (Claude Code/Codex convention):
   // `update` resolves the latest version on its own, so the generic check is redundant.
   if (actionCommand.name() === "update") return;
-  await deps.printUpdateNotice.execute().catch((err: unknown) => {
-    deps.logger.debug(
-      `CLI update check failed: ${err instanceof Error ? err.message : String(err)}`
-    );
-  });
+  await deps.printUpdateNotice
+    .execute()
+    .then(({ lines }) => {
+      for (const line of lines) deps.logger.warn(line);
+    })
+    .catch((err: unknown) => {
+      deps.logger.debug(
+        `CLI update check failed: ${err instanceof Error ? err.message : String(err)}`
+      );
+    });
 });
 
 program.hook("postAction", async (_thisCommand, actionCommand) => {

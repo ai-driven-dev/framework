@@ -4,16 +4,13 @@ import { aPrintUpdateNotice } from "../testing/update-builders.js";
 
 describe("PrintUpdateNotice", () => {
   it("warns of a newer release the last check kept, however old the check", async () => {
-    const { useCase, logger } = aPrintUpdateNotice()
+    const useCase = aPrintUpdateNotice()
       .withCache(new InMemoryUpdateCheckCache({ checkedAt: 0, latest: "2.0.0" }))
       .build();
 
-    await useCase.execute();
-
-    expect(logger.warnMessages).toStrictEqual([
-      "CLI update available: v1.0.0 → v2.0.0",
-      "Run `aidd update`.",
-    ]);
+    expect(await useCase.execute()).toStrictEqual({
+      lines: ["CLI update available: v1.0.0 → v2.0.0", "Run `aidd update`."],
+    });
   });
 
   it.each([
@@ -21,12 +18,8 @@ describe("PrintUpdateNotice", () => {
     ["something unreadable kept", "unreadable" as const],
     ["the installed version kept", { checkedAt: 0, latest: "1.0.0" }],
   ])("says nothing when %s", async (_label, kept) => {
-    const { useCase, logger } = aPrintUpdateNotice()
-      .withCache(new InMemoryUpdateCheckCache(kept))
-      .build();
+    const useCase = aPrintUpdateNotice().withCache(new InMemoryUpdateCheckCache(kept)).build();
 
-    await useCase.execute();
-
-    expect(logger.warnMessages).toStrictEqual([]);
+    expect(await useCase.execute()).toStrictEqual({ lines: [] });
   });
 });

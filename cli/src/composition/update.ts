@@ -43,7 +43,7 @@ export function wireUpdate(shared: UpdateWiring): UpdateDeps {
       new PackageManagerInstallerAdapter(process.env, platform()),
       shared.version
     ),
-    printUpdateNotice: new PrintUpdateNotice(cache, shared.version, shared.logger),
+    printUpdateNotice: new PrintUpdateNotice(cache, shared.version),
     refreshUpdateCheck: new RefreshUpdateCheck(releases, cache, Date.now),
   };
 }

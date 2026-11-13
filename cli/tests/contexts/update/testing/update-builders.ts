@@ -4,7 +4,6 @@ import { SelfUpdate } from "../../../../src/contexts/update/application/self-upd
 import type { CliInstaller } from "../../../../src/contexts/update/ports/cli-installer.js";
 import type { CliReleaseSource } from "../../../../src/contexts/update/ports/cli-release-source.js";
 import type { UpdateCheckCache } from "../../../../src/contexts/update/ports/update-check-cache.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { FakeCliInstaller } from "./fake-cli-installer.js";
 import { FakeCliReleaseSource } from "./fake-cli-release-source.js";
 import { InMemoryUpdateCheckCache } from "./in-memory-update-check-cache.js";
@@ -33,11 +32,10 @@ export function aSelfUpdate() {
   return builder;
 }
 
-/** The notice over an empty cache, version 1.0.0 installed, a logger that keeps what it hears. */
+/** The notice over an empty cache, version 1.0.0 installed. */
 export function aPrintUpdateNotice() {
   let cache: UpdateCheckCache = new InMemoryUpdateCheckCache();
   let current = "1.0.0";
-  const logger = new CapturingLogger();
   const builder = {
     withCache(value: UpdateCheckCache) {
       cache = value;
@@ -47,10 +45,7 @@ export function aPrintUpdateNotice() {
       current = version;
       return builder;
     },
-    build: () => ({
-      useCase: new PrintUpdateNotice(cache, { get: () => current }, logger),
-      logger,
-    }),
+    build: () => new PrintUpdateNotice(cache, { get: () => current }),
   };
   return builder;
 }

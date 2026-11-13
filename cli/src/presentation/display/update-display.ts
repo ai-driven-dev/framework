@@ -16,8 +16,9 @@ export function printSelfUpdateResult(output: CLIOutput, result: SelfUpdateResul
       output.info(`Would install @ai-driven-dev/cli@${result.latestVersion}`);
       break;
     case "updated": {
-      const binaryPart = result.binaryPath ? ` (${result.binaryPath})` : "";
-      output.success(`Successfully updated to version ${result.latestVersion}${binaryPart}`);
+      output.success(
+        `Successfully updated to version ${result.latestVersion} (${result.binaryPath})`
+      );
       if (result.changelog) {
         output.info(`\nChangelog:\n${result.changelog}`);
       }

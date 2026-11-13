@@ -39,22 +39,13 @@ describe("printSelfUpdateResult", () => {
     expect(output.at("info")).toEqual(["Would install @ai-driven-dev/cli@2.0.0"]);
   });
 
-  it("confirms the new version without a path when the update reported none", () => {
-    const output = new CapturingOutput(false);
-
-    printSelfUpdateResult(output, { kind: "updated", latestVersion: "2.0.0" });
-
-    expect(output.captured).toEqual([
-      { level: "success", message: "Successfully updated to version 2.0.0" },
-    ]);
-  });
-
   it("appends the binary path the update wrote to", () => {
     const output = new CapturingOutput(false);
 
     printSelfUpdateResult(output, {
       kind: "updated",
       latestVersion: "2.0.0",
+      changelog: null,
       binaryPath: "/usr/local/bin/aidd",
     });
 
@@ -70,10 +61,11 @@ describe("printSelfUpdateResult", () => {
       kind: "updated",
       latestVersion: "2.0.0",
       changelog: "- fixed a thing",
+      binaryPath: "/usr/local/bin/aidd",
     });
 
     expect(output.captured).toEqual([
-      { level: "success", message: "Successfully updated to version 2.0.0" },
+      { level: "success", message: "Successfully updated to version 2.0.0 (/usr/local/bin/aidd)" },
       { level: "info", message: "\nChangelog:\n- fixed a thing" },
     ]);
   });
@@ -81,7 +73,12 @@ describe("printSelfUpdateResult", () => {
   it("prints no changelog heading when the update carried an empty one", () => {
     const output = new CapturingOutput(false);
 
-    printSelfUpdateResult(output, { kind: "updated", latestVersion: "2.0.0", changelog: null });
+    printSelfUpdateResult(output, {
+      kind: "updated",
+      latestVersion: "2.0.0",
+      changelog: null,
+      binaryPath: "/usr/local/bin/aidd",
+    });
 
     expect(output.at("info")).toEqual([]);
   });

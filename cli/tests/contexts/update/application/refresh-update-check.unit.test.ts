@@ -8,9 +8,10 @@ describe("RefreshUpdateCheck", () => {
   it("keeps the latest version with the time it was asked", async () => {
     const cache = new InMemoryUpdateCheckCache();
 
-    await aRefreshUpdateCheck().withCache(cache).build().execute();
+    const kept = await aRefreshUpdateCheck().withCache(cache).build().execute();
 
-    expect(await cache.read()).toStrictEqual({ checkedAt: 1000, latest: "2.0.0" });
+    expect(kept).toStrictEqual({ checkedAt: 1000, latest: "2.0.0" });
+    expect(await cache.read()).toStrictEqual(kept);
   });
 
   it("keeps nothing new when the release cannot be read", async () => {

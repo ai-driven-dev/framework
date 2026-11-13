@@ -79,6 +79,7 @@ describe("aidd update — what it asks the self-updater", () => {
     selfUpdate.mockResolvedValue({
       kind: "updated",
       latestVersion: "5.3.0",
+      changelog: null,
       binaryPath: "/usr/local/bin/aidd",
     });
 
