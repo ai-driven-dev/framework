@@ -1,3 +1,4 @@
+import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import type { RecipeFiles } from "../../../../src/contexts/recipes/ports/recipe-files.js";
 
@@ -32,43 +33,53 @@ export function describeRecipeFilesContract(
       const { files, root, put } = await given();
       await put("a.md", "# A");
 
-      expect(files.read(`${root}/a.md`)).toStrictEqual({ kind: "readable", content: "# A" });
-      expect(files.read(`${root}/a.md`, false)).toStrictEqual({ kind: "readable", content: "" });
+      expect(files.read(path.join(root, "a.md"))).toStrictEqual({
+        kind: "readable",
+        content: "# A",
+      });
+      expect(files.read(path.join(root, "a.md"), false)).toStrictEqual({
+        kind: "readable",
+        content: "",
+      });
     });
 
     it("answers why a path cannot be read", async () => {
       const { files, root, makeDirectory } = await given();
       await makeDirectory("dir");
 
-      expect(files.read(`${root}/missing.md`)).toStrictEqual({
+      expect(files.read(path.join(root, "missing.md"))).toStrictEqual({
         kind: "unreadable",
         code: "ENOENT",
       });
-      expect(files.read(`${root}/dir`)).toStrictEqual({ kind: "unreadable", code: "EISDIR" });
+      expect(files.read(path.join(root, "dir"))).toStrictEqual({
+        kind: "unreadable",
+        code: "EISDIR",
+      });
     });
 
-    it("lists the markdown files of a directory, never README.md nor a deeper one", async () => {
-      const { files, root, put } = await given();
+    it("lists the markdown files of a directory, never README.md, a deeper one nor a directory", async () => {
+      const { files, root, put, makeDirectory } = await given();
       await put("dir/b.md", "");
+      await makeDirectory("dir/folder.md");
       await put("dir/README.md", "");
       await put("dir/notes.txt", "");
       await put("dir/deeper/c.md", "");
 
-      expect(files.list({ path: `${root}/dir`, optional: false })).toStrictEqual([
-        `${root}/dir/b.md`,
+      expect(files.list({ path: path.join(root, "dir"), optional: false })).toStrictEqual([
+        path.join(root, "dir", "b.md"),
       ]);
     });
 
     it("tolerates a missing directory only when it is optional", async () => {
       const { files, root, put } = await given();
       await put("a.md", "");
-      const missing = `${root}/absent`;
+      const missing = path.join(root, "absent");
 
       expect(files.list({ path: missing, optional: true })).toStrictEqual([]);
       expect(() => files.list({ path: missing, optional: false })).toThrow(
         expect.objectContaining({ code: "ENOENT" })
       );
-      expect(() => files.list({ path: `${root}/a.md`, optional: true })).toThrow(
+      expect(() => files.list({ path: path.join(root, "a.md"), optional: true })).toThrow(
         expect.objectContaining({ code: "ENOTDIR" })
       );
     });

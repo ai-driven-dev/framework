@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { RecipeFilesAdapter } from "../../../../src/contexts/recipes/infrastructure/recipe-files-adapter.js";
 
 const directory = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-recipe-adapter-"));
@@ -10,6 +10,10 @@ fs.writeFileSync(file, "# Recipe\n", "utf8");
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+afterAll(() => {
+  fs.rmSync(directory, { recursive: true, force: true });
 });
 
 /** Every descriptor opened on the recipe, and every one closed, as the adapter used them. */

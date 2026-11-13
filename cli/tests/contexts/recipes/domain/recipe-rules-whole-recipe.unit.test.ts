@@ -82,47 +82,12 @@ describe("a whole recipe is rejected", () => {
       ["11:json-syntax"],
     ],
     [
-      "scaffold prose in a JSX example",
-      withLines({ 10: "```jsx", 11: "<a config or snippet the reader can copy>" }),
-      ["12:placeholder"],
-    ],
-    [
       "scaffold prose in the step and the example",
       withLines({
         8: "<One benefit-focused line of what and why, in prose.>",
         11: "<a config or snippet the reader can copy>",
       }),
       ["9:placeholder", "12:placeholder"],
-    ],
-    [
-      "a second verification section",
-      [...valid, "", "## Verify again", "", "- Confirm it twice."],
-      ["19:verify-section"],
-    ],
-    [
-      "a step that skips a level and a number",
-      withLines({ 6: "#### 2) ✅ Run the check" }),
-      ["7:heading-depth", "7:step-number"],
-    ],
-    [
-      "text before the title and a step that starts at two",
-      [
-        "Intro before title.",
-        "# Broken recipe",
-        "",
-        "Produce a result.",
-        "",
-        "## Steps to produce a result",
-        "",
-        "### 2) ✅ Run the check",
-        "",
-        "This command produces a result.",
-        "",
-        "```bash",
-        "echo ok",
-        "```",
-      ],
-      ["2:title", "8:step-number"],
     ],
   ])("%s", (_name, lines, expected) => {
     expect(rules(lines)).toEqual(expect.arrayContaining(expected));

@@ -1,9 +1,7 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { ValidateRecipes } from "../../../../src/contexts/recipes/application/validate-recipes.js";
-import { RecipeFilesAdapter } from "../../../../src/contexts/recipes/infrastructure/recipe-files-adapter.js";
+import { inspectRecipe } from "../../../../src/contexts/recipes/domain/recipe-rules.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
 import { markdown, withLines } from "../testing/recipe-builders.js";
 
@@ -14,15 +12,7 @@ const templatePath = path.join(
 const template = fs.readFileSync(templatePath, "utf8");
 
 function findingsOf(lines: readonly string[]) {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-recipe-assets-"));
-  const file = path.join(directory, "recipe.md");
-  try {
-    fs.writeFileSync(file, markdown(lines), "utf8");
-    return new ValidateRecipes(new RecipeFilesAdapter()).execute({ files: [file], directories: [] })
-      .findings;
-  } finally {
-    fs.rmSync(directory, { recursive: true, force: true });
-  }
+  return inspectRecipe("recipe.md", markdown(lines)).findings;
 }
 
 function filledTemplate() {

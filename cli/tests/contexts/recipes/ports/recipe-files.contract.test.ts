@@ -11,8 +11,8 @@ describeRecipeFilesContract("the in-memory files", async () => {
   return {
     files,
     root,
-    put: async (relative, content) => void files.addFile(`${root}/${relative}`, content),
-    makeDirectory: async (relative) => void files.addDirectory(`${root}/${relative}`),
+    put: async (relative, content) => void files.addFile(join(root, relative), content),
+    makeDirectory: async (relative) => void files.addDirectory(join(root, relative)),
     dispose: async () => undefined,
   };
 });
