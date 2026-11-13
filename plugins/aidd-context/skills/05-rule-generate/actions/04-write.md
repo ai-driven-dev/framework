@@ -10,7 +10,7 @@ The approved candidate, paths and overwrites.
 
 1. Run the writer per [writer.md](../references/writer.md) with the approved request.
    - Approved overwrites: add `--force`.
-2. Run the writer with `--check --publish` and no `--tools`, and require no drift.
+2. Run the writer with `--check --publish`, and require no drift.
 3. Report the written files.
    - Non-zero exit: quote the writer's output verbatim, naming each blocked, failed and written path, then stop.
 
