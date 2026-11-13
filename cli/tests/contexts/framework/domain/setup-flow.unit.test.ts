@@ -7,7 +7,7 @@ import {
   UserScopeNoToolsError,
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/errors.js";
 
 const ROOT = "/project";
 

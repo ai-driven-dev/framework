@@ -6,8 +6,8 @@ import {
   type HookEventRoute,
   type HooksDeclaration,
 } from "../../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
-import type { HooksInvariant } from "../../../../../src/kernel/errors.js";
-import type { AiToolId } from "../../../../../src/kernel/tool.js";
+import type { HooksInvariant } from "../../../../../src/shared/domain/errors.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 
 const UNSTAMPED = 'const HOST = "unstamped";';
 const OWNER = ["claude", ".claude/", UNSTAMPED] as const;

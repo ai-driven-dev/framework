@@ -2,8 +2,8 @@ import { join, resolve } from "node:path";
 import type { Command } from "commander";
 import { Manifest } from "../../contexts/framework/domain/manifest.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import type { AiToolId, IdeToolId, ToolId } from "../../kernel/tool.js";
-import { isAiToolId, isIdeToolId, VALID_TOOL_IDS } from "../../kernel/tool.js";
+import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";
+import { isAiToolId, isIdeToolId, VALID_TOOL_IDS } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printToolAlreadyInstalled,

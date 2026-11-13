@@ -7,7 +7,7 @@ import type {
   HostPluginRegistry,
   HostPluginRegistryReading,
 } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
-import type { AiToolId, ToolId } from "../../../../src/kernel/tool.js";
+import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";

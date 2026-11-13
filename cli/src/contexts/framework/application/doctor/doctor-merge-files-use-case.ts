@@ -1,7 +1,7 @@
 import { join } from "node:path";
-import { extractMergeEntries, type MergeFileEntry } from "../../../../kernel/merge.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../../../shared/domain/merge.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import type { Manifest } from "../../domain/manifest.js";
 

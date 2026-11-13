@@ -1,10 +1,10 @@
-import { UserScopeUnavailableError } from "../../../kernel/errors.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
-import type { VersionReader } from "../../../kernel/ports/version-reader.js";
-import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
 import type { SetupPluginsPromptUseCase } from "../../../presentation/prompts/setup-plugins-prompt-use-case.js";
 import type { SetupToolsPromptUseCase } from "../../../presentation/prompts/setup-tools-prompt-use-case.js";
+import { UserScopeUnavailableError } from "../../../shared/domain/errors.js";
+import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../shared/ports/file-writer.js";
+import type { VersionReader } from "../../../shared/ports/version-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { ProjectContext } from "../domain/project-context.js";

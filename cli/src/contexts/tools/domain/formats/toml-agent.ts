@@ -1,4 +1,4 @@
-import { parseFrontmatter } from "../../../../kernel/markdown.js";
+import { parseFrontmatter } from "../../../../shared/domain/markdown.js";
 import { type AgentFrontmatter, pickFrontmatterKeys } from "./agent-format.js";
 import { stringifyToml } from "./toml.js";
 

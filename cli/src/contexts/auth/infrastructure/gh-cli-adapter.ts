@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { AuthenticationError, GhCliError } from "../../../kernel/errors.js";
+import { AuthenticationError, GhCliError } from "../../../shared/domain/errors.js";
 import type { CliAuthProvider } from "../ports/cli-auth-provider.js";
 
 export class GhCliAdapter implements CliAuthProvider {

@@ -6,7 +6,7 @@ import {
   resolveScopeForInstall,
 } from "../../../../../src/contexts/framework/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { UnresolvableUserScopeError } from "../../../../../src/kernel/errors.js";
+import { UnresolvableUserScopeError } from "../../../../../src/shared/domain/errors.js";
 import { registeredAiProfile, registeredCatalog } from "../../../tools/testing/catalog-of.js";
 
 const HOME = "/home/u";
@@ -66,7 +66,7 @@ describe("resolveBaseDirFromRecord() — the manifest's recorded scope, not the 
 });
 
 describe("resolvePluginToolIds() order", () => {
-  it("keeps the kernel tool order, which puts codex after opencode and kilo", () => {
+  it("keeps the shared tool order, which puts codex after opencode and kilo", () => {
     const manifest = Manifest.create();
     for (const id of ["codex", "opencode", "kilo", "copilot"] as const) {
       manifest.addTool(id, "1.0.0", []);

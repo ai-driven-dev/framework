@@ -1,4 +1,4 @@
-import type { AiToolId, IdeToolId } from "../../../kernel/tool.js";
+import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { ProjectContext } from "./project-context.js";
 
 export function recommendAiTools(context?: ProjectContext): readonly AiToolId[] {

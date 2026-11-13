@@ -1,5 +1,5 @@
-import type { MarketplaceScope } from "../../../kernel/scope.js";
-import type { PluginSource } from "../../../kernel/source.js";
+import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { PluginSource } from "../../../shared/domain/source.js";
 import { FRAMEWORK_MARKETPLACE_NAME, Marketplace } from "../domain/marketplace.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 

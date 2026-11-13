@@ -153,9 +153,9 @@ describe("running one shard", () => {
 
   it("keeps the whole config and makes only its files, sandbox and reports its own", () => {
     const config = shardConfig(base, {
-      files: ["src/kernel/a.ts"],
-      dir: "reports/mutation/kernel/shard-1-of-3",
-      tempDirName: ".stryker-tmp-kernel-1",
+      files: ["src/shared/a.ts"],
+      dir: "reports/mutation/shared/shard-1-of-3",
+      tempDirName: ".stryker-tmp-shared-1",
     });
     const own = [
       "mutate",
@@ -169,12 +169,12 @@ describe("running one shard", () => {
       if (!own.includes(key)) expect(config[key], key).toEqual(value);
     }
     expect(config).toMatchObject({
-      mutate: ["src/kernel/a.ts"],
+      mutate: ["src/shared/a.ts"],
       incremental: true,
-      incrementalFile: "reports/mutation/kernel/shard-1-of-3/incremental.json",
-      tempDirName: ".stryker-tmp-kernel-1",
-      jsonReporter: { fileName: "reports/mutation/kernel/shard-1-of-3/mutation.json" },
-      htmlReporter: { fileName: "reports/mutation/kernel/shard-1-of-3/report.html" },
+      incrementalFile: "reports/mutation/shared/shard-1-of-3/incremental.json",
+      tempDirName: ".stryker-tmp-shared-1",
+      jsonReporter: { fileName: "reports/mutation/shared/shard-1-of-3/mutation.json" },
+      htmlReporter: { fileName: "reports/mutation/shared/shard-1-of-3/report.html" },
     });
   });
 

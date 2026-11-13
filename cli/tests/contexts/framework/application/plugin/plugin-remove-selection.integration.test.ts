@@ -8,7 +8,7 @@ import {
   InstalledPlugin,
   type PluginEntryData,
 } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import { PluginNotFoundError } from "../../../../../src/kernel/errors.js";
+import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";

@@ -1,4 +1,4 @@
-import type { Logger } from "../kernel/ports/logger.js";
+import type { Logger } from "../shared/ports/logger.js";
 
 export class CLIOutput implements Logger {
   readonly verbose: boolean;

@@ -3,7 +3,7 @@ import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/pr
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/kernel/file.js";
+import { FileHash } from "../../../../src/shared/domain/file.js";
 
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);

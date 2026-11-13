@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DoctorAllUseCase } from "../../../../../src/contexts/framework/application/global/doctor-all-use-case.js";
 import type { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { ToolId } from "../../../../../src/kernel/tool.js";
+import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import {
   buildDoctorUseCase,
   buildUnitDeps,

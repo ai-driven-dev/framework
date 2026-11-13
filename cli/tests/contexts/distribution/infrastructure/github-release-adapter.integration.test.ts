@@ -5,7 +5,7 @@ import {
   CatalogFetchAuthError,
   CatalogFetchError,
   HttpNotFoundError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/errors.js";
 import type { HttpGet } from "../../../../src/shared/ports/http-get.js";
 
 const REPO = "owner/repo";

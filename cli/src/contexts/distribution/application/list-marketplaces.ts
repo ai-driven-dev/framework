@@ -1,4 +1,4 @@
-import type { Logger } from "../../../kernel/ports/logger.js";
+import type { Logger } from "../../../shared/ports/logger.js";
 import type { PluginCatalog } from "../domain/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
 import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";

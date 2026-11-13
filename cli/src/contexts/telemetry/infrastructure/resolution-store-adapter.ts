@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import type { ResolutionStore } from "../domain/ports/resolution-store.js";
 import {
@@ -8,6 +7,7 @@ import {
   renderResolutions,
 } from "../domain/repository-resolution.js";
 import { RepositoryAliasStoreAdapter } from "./legacy/repository-alias-store-adapter.js";
+import { readTextIfPresent } from "./reading/text-file.js";
 
 /** `roots.json`, beside the ledger. */
 export class ResolutionStoreAdapter implements ResolutionStore {

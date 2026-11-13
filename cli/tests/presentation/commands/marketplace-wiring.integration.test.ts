@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { parsePluginSourceShorthand } from "../../../src/kernel/source.js";
+import { parsePluginSourceShorthand } from "../../../src/shared/domain/source.js";
 import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { prompterAnswering } from "../../helpers/ports/index.js";
 

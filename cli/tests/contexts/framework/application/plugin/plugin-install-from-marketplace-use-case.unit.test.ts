@@ -12,9 +12,9 @@ import {
   AmbiguousPluginMatchError,
   PluginNotInMarketplaceError,
   VersionMismatchError,
-} from "../../../../../src/kernel/errors.js";
-import type { Logger } from "../../../../../src/kernel/ports/logger.js";
-import type { Prompter } from "../../../../../src/kernel/ports/prompter.js";
+} from "../../../../../src/shared/domain/errors.js";
+import type { Logger } from "../../../../../src/shared/ports/logger.js";
+import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { ChoosingPrompter } from "../../../../helpers/ports/choosing-prompter.js";

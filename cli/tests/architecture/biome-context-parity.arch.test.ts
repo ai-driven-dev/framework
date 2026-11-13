@@ -21,6 +21,8 @@ const LAYERS: readonly Layer[] = ["domain", "application", "infrastructure"];
 /** A migrated context also has these, and is held to them wherever the folder exists: a
  * `contract/` folder with no override of its own is a folder nothing restricts. */
 const OPTIONAL_LAYERS: readonly Layer[] = ["ports", "contract"];
+/** The negation that keeps `**\/domain/**` from forbidding `shared/domain/`. */
+const SHARED_DOMAIN_TAKEN_BACK = "!**/shared/domain/**";
 
 interface BiomeOverride {
   readonly includes?: readonly string[];
@@ -180,24 +182,18 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
       );
       const expected = expectedForbidden(context, layer, contexts, baselineLayerMap);
       for (const group of interiorGroupsFor(context)) expected.add(group);
+      // A contract names `domain` as a layer it may not reach, and takes back the shared one.
+      if (layer === "contract") expected.add(SHARED_DOMAIN_TAKEN_BACK);
 
       expect([...actual].sort()).toEqual([...expected].sort());
     }
   );
 
-  it("kernel forbids every context layer, shared, presentation and the composition, unconditionally", () => {
-    const override = overrides.find((candidate) =>
-      candidate.includes?.includes("src/kernel/**/*.ts")
-    );
-    expect(override, "no override at src/kernel/**/*.ts").toBeDefined();
-
-    const groups = (restrictedImportGroups(override as BiomeOverride) ?? []).map(tokenOf);
-    expect(new Set(groups)).toEqual(
-      new Set(["domain", "application", "infrastructure", "shared", "presentation", "composition"])
-    );
-  });
-
   it.each([
+    {
+      includes: "src/shared/domain/**/*.ts",
+      forbids: ["contexts", "presentation", "infrastructure", "composition"],
+    },
     {
       includes: "src/shared/ports/**/*.ts",
       forbids: ["contexts", "presentation", "infrastructure", "composition"],
@@ -227,7 +223,7 @@ describe("the guard itself", () => {
   const twoContexts = ["framework", "tools"];
 
   it("names a file two overrides both match, and clears one only a single override reaches", () => {
-    const files = ["src/contexts/tools/domain/registry.ts", "src/kernel/tool.ts"];
+    const files = ["src/contexts/tools/domain/registry.ts", "src/shared/domain/tool.ts"];
     const includes = [["src/contexts/**/*.ts"], ["src/contexts/tools/domain/**/*.ts"]];
 
     expect(filesMatchedTwice(files, includes)).toEqual(["src/contexts/tools/domain/registry.ts"]);

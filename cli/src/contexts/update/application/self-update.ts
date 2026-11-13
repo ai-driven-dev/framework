@@ -1,4 +1,4 @@
-import type { VersionReader } from "../../../kernel/ports/version-reader.js";
+import type { VersionReader } from "../../../shared/ports/version-reader.js";
 import { decideUpdate, type UpdateFlags } from "../domain/update-decision.js";
 import type { CliInstaller } from "../ports/cli-installer.js";
 import type { CliReleaseSource } from "../ports/cli-release-source.js";

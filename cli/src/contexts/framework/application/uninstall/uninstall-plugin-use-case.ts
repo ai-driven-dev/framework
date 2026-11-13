@@ -1,7 +1,7 @@
-import { NoManifestError, PluginNotFoundError } from "../../../../kernel/errors.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+import { NoManifestError, PluginNotFoundError } from "../../../../shared/domain/errors.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";

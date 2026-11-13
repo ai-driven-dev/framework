@@ -1,9 +1,9 @@
 import {
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,
-} from "../../../../kernel/errors.js";
-import type { Prompter } from "../../../../kernel/ports/prompter.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+} from "../../../../shared/domain/errors.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { Prompter } from "../../../../shared/ports/prompter.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   type Marketplace,

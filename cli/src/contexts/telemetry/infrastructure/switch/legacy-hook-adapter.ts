@@ -1,6 +1,5 @@
 import { rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { readTextIfPresent } from "../../../../kernel/reading/text-file.js";
 import {
   isInstalledDelegate,
   mentionsDelegate,
@@ -11,6 +10,7 @@ import type {
   HookCleanup,
   LegacyHookCleaner,
 } from "../../domain/ports/switch/legacy-hook-cleaner.js";
+import { readTextIfPresent } from "../reading/text-file.js";
 import { runGit } from "../run-git.js";
 
 const HOOK = "prepare-commit-msg";

@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { SetupToolsUseCase } from "../../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
-import { CategoryMismatchError } from "../../../../../src/kernel/errors.js";
-import { AI_TOOL_IDS, type ToolId } from "../../../../../src/kernel/tool.js";
+import { CategoryMismatchError } from "../../../../../src/shared/domain/errors.js";
+import { AI_TOOL_IDS, type ToolId } from "../../../../../src/shared/domain/tool.js";
 import {
   buildUnitDeps,
   initProject,

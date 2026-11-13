@@ -7,7 +7,7 @@ import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { vscode } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
-import { parseFrontmatter, serializeFrontmatter } from "../../../../src/kernel/markdown.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import {
   agentContent,
   claudeManifestContent,

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { TokenProvider } from "../../../../../src/contexts/auth/contract/token-provider.js";
 import { DoctorLayoutUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-layout-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { InstallationFile } from "../../../../../src/kernel/file.js";
+import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { catalogOf } from "../../../tools/testing/catalog-of.js";

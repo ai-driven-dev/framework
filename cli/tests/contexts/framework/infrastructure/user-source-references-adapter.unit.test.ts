@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
-import { UnreadableUserSourceReferencesError } from "../../../../src/kernel/errors.js";
+import { UnreadableUserSourceReferencesError } from "../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
 const USER_CONFIG_DIR = "/fake-home/.config/aidd";

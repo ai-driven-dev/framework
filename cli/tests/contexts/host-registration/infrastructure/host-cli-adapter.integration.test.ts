@@ -8,7 +8,7 @@ import {
   HostCliAdapter,
   type HostCliShape,
 } from "../../../../src/contexts/host-registration/infrastructure/host-cli-adapter.js";
-import { NativePluginCliError } from "../../../../src/kernel/errors.js";
+import { NativePluginCliError } from "../../../../src/shared/domain/errors.js";
 
 vi.mock("node:child_process", () => ({
   spawnSync: vi.fn(),

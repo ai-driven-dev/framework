@@ -1,15 +1,15 @@
 import { join } from "node:path";
-import { NoManifestError, ToolNotInstalledError } from "../../../kernel/errors.js";
-import type { FileHash } from "../../../kernel/file.js";
-import { extractMergeEntries, type MergeFileEntry } from "../../../kernel/merge.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { Hasher } from "../../../kernel/ports/hasher.js";
+import { NoManifestError, ToolNotInstalledError } from "../../../shared/domain/errors.js";
+import type { FileHash } from "../../../shared/domain/file.js";
+import { extractMergeEntries, type MergeFileEntry } from "../../../shared/domain/merge.js";
 import {
   type AiToolId,
   type ToolCategory,
   type ToolId,
   toolIdsForCategory,
-} from "../../../kernel/tool.js";
+} from "../../../shared/domain/tool.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { Hasher } from "../../../shared/ports/hasher.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import type { Manifest } from "../domain/manifest.js";

@@ -4,12 +4,12 @@
  * `domain/formats/`; the contracts themselves are thin wiring.
  */
 
-import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../../../shared/domain/markdown.js";
 import {
   genericFlatAgentPath,
   genericFlatSkillPath,
-} from "../../../../../kernel/materialization/flat-paths.js";
-import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
+} from "../../../../../shared/domain/materialization/flat-paths.js";
+import { rewriteRelativeLinks } from "../../../../../shared/domain/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../../contract/build-contract.js";
 import { mergeAdditiveMcp } from "../../formats/additive-mcp-merge.js";
 import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";

@@ -1,5 +1,5 @@
-import { NoManifestError, ToolNotInstalledError } from "../../../../kernel/errors.js";
-import type { IdeToolId } from "../../../../kernel/tool.js";
+import { NoManifestError, ToolNotInstalledError } from "../../../../shared/domain/errors.js";
+import type { IdeToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UninstallToolsUseCase } from "./uninstall-tools-use-case.js";

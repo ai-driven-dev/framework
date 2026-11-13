@@ -1,4 +1,4 @@
-import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 
 /** A clone, told from every other by its git common dir: where it is, and which directory it
  * really is. The path alone is not enough, because a clone can be deleted and another made at

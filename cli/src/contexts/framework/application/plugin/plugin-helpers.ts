@@ -1,10 +1,10 @@
 import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
-import { NoManifestError } from "../../../../kernel/errors.js";
-import type { InstallationFile } from "../../../../kernel/file.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
+import { NoManifestError } from "../../../../shared/domain/errors.js";
+import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";

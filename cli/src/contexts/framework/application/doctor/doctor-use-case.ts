@@ -1,5 +1,5 @@
-import { ManifestValidationError, NoManifestError } from "../../../../kernel/errors.js";
-import { type ToolCategory, toolIdsForCategory } from "../../../../kernel/tool.js";
+import { ManifestValidationError, NoManifestError } from "../../../../shared/domain/errors.js";
+import { type ToolCategory, toolIdsForCategory } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   DoctorIssue,

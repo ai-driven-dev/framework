@@ -5,10 +5,10 @@ import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js"
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../../../src/contexts/framework/domain/ports/plugin-distribution-reader.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/kernel/file.js";
-import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../src/kernel/ports/file-writer.js";
-import type { Hasher } from "../../../../src/kernel/ports/hasher.js";
+import { FileHash } from "../../../../src/shared/domain/file.js";
+import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
+import type { Hasher } from "../../../../src/shared/ports/hasher.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 const noopFs: FileReader & FileWriter = {

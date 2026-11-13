@@ -5,13 +5,13 @@ import type { PluginAdd } from "../../../../../src/contexts/framework/applicatio
 import type { PluginInstallFromMarketplace } from "../../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-install-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import type { PluginPick } from "../../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import {
   InteractiveOnlyError,
   InvalidPluginScopeError,
   TrustDeniedError,
-} from "../../../../../src/kernel/errors.js";
-import type { Prompter } from "../../../../../src/kernel/ports/prompter.js";
-import type { PluginPick } from "../../../../../src/presentation/prompts/plugin-pick-use-case.js";
+} from "../../../../../src/shared/domain/errors.js";
+import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { catalogOf } from "../../../tools/testing/catalog-of.js";
 

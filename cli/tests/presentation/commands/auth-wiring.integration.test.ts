@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
-import { AIDD_DIR } from "../../../src/kernel/paths.js";
+import { AIDD_DIR } from "../../../src/shared/domain/paths.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { prompterAnswering } from "../../helpers/ports/index.js";
 

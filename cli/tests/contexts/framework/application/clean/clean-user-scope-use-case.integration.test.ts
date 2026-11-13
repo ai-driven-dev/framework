@@ -12,8 +12,8 @@ import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/pl
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import type { HostActions } from "../../../../../src/contexts/host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
-import type { ToolId } from "../../../../../src/kernel/tool.js";
+import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
+import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";

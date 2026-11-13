@@ -14,7 +14,7 @@ description: >
 
 `translate` is the core: it turns the canonical, Claude-format framework source into
 target-native content for every tool at once. It reaches two places and no others: `tools`, its
-one outbound context edge, and `kernel`. Everything it reaches in `tools` is that context's
+one outbound context edge, and `shared`. Everything it reaches in `tools` is that context's
 declared public surface (`contracts.ts`, `registry.ts`, `build-contract.ts`, and the handful of
 capability and port modules listed as public), never an internal file. The whole graph is in
 `.claude/rules/00-architecture/0-contexts.md`.

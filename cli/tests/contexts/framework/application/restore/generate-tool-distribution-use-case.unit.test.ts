@@ -5,8 +5,8 @@ import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framewo
 import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
-import { InstallationFile } from "../../../../../src/kernel/file.js";
-import type { ToolId } from "../../../../../src/kernel/tool.js";
+import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";

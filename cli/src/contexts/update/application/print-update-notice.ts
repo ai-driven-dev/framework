@@ -1,4 +1,4 @@
-import type { VersionReader } from "../../../kernel/ports/version-reader.js";
+import type { VersionReader } from "../../../shared/ports/version-reader.js";
 import { noticeFor } from "../domain/update-notice.js";
 import type { UpdateCheckCache } from "../ports/update-check-cache.js";
 

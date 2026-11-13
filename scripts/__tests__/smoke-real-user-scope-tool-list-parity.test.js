@@ -16,9 +16,9 @@ const ROOT = path.resolve(__dirname, "../..");
  */
 
 function aiToolIds() {
-  const text = fs.readFileSync(path.join(ROOT, "cli/src/kernel/tool.ts"), "utf8");
+  const text = fs.readFileSync(path.join(ROOT, "cli/src/shared/domain/tool.ts"), "utf8");
   const match = text.match(/export const AI_TOOL_IDS:[^=]*=\s*\[([^\]]*)\]/u);
-  assert.ok(match, "kernel/tool.ts no longer declares AI_TOOL_IDS the way this guard expects");
+  assert.ok(match, "shared/domain/tool.ts no longer declares AI_TOOL_IDS the way this guard expects");
   return match[1]
     .split(",")
     .map((id) => id.trim().replace(/^"|"$/gu, ""))

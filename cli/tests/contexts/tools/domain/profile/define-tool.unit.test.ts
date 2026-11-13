@@ -8,7 +8,7 @@ import {
 } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
-import { InvalidToolProfileError } from "../../../../../src/kernel/errors.js";
+import { InvalidToolProfileError } from "../../../../../src/shared/domain/errors.js";
 import {
   flatPlugins,
   nativePlugins,

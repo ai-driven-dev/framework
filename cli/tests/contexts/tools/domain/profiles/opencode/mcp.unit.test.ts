@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { FileHash } from "../../../../../../src/kernel/file.js";
-import type { FileReader } from "../../../../../../src/kernel/ports/file-reader.js";
+import { FileHash } from "../../../../../../src/shared/domain/file.js";
+import type { FileReader } from "../../../../../../src/shared/ports/file-reader.js";
 
 function _makeFs(existingPaths: string[]): FileReader {
   return {

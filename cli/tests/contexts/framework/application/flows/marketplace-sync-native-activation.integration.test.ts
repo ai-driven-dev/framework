@@ -11,7 +11,10 @@ import type {
   HostPluginRegistryReading,
 } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { answeredRegistry } from "../../../../../src/contexts/host-registration/contract/host-registration-answers.js";
-import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../../../src/kernel/paths.js";
+import {
+  builtMarketplaceDir,
+  userBuiltMarketplaceDir,
+} from "../../../../../src/shared/domain/paths.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";

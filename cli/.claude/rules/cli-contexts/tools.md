@@ -21,7 +21,7 @@ paths:
 - Outside callers import `tools/contract/` only. `domain/` and `application/` are the composition root's, held by Biome (`HELD_BY_BIOME`, `APPLICATION_CLOSED` in `tests/architecture/helpers.ts`).
 - Use cases receive a `ToolCatalog`, built once by `wireTools()` in `src/composition/tools.ts`; none reaches a profile by import.
 - A caller asks a profile a question and never reads its structure.
-- Adding a tool is one profile folder under `domain/profiles/` and one line in `REGISTERED_PROFILES`, plus its id in `kernel/tool.ts` (M-T1); the conformance suite checks it. The files still in `BASELINE` and `IDENTIFIER_BASELINE` (`tests/architecture/tool-addition-cost.arch.test.ts`) name a tool outside its profile and may need it too; both lists only shrink. A tool that runs hooks also brings its `hooks.ts` descriptor, its host adapter in `assets/hooks-runtime/` and one payload fixture per relayed event, all checked by conformance.
+- Adding a tool is one profile folder under `domain/profiles/` and one line in `REGISTERED_PROFILES`, plus its id in `shared/domain/tool.ts` (M-T1); the conformance suite checks it. The files still in `BASELINE` and `IDENTIFIER_BASELINE` (`tests/architecture/tool-addition-cost.arch.test.ts`) name a tool outside its profile and may need it too; both lists only shrink. A tool that runs hooks also brings its `hooks.ts` descriptor, its host adapter in `assets/hooks-runtime/` and one payload fixture per relayed event, all checked by conformance.
 - Only `src/composition/` reads `domain/`: `tools.ts`, `native-registrations.ts` and `host-registration.ts`.
 
 ## Exceptions in force

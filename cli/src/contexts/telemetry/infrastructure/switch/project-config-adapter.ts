@@ -1,8 +1,8 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { AIDD_CONFIG_FILENAME, AIDD_DIR } from "../../../../kernel/paths.js";
-import { readTextIfPresent } from "../../../../kernel/reading/text-file.js";
+import { AIDD_CONFIG_FILENAME, AIDD_DIR } from "../../../../shared/domain/paths.js";
 import type { ProjectConfigFile } from "../../domain/ports/switch/project-config-file.js";
+import { readTextIfPresent } from "../reading/text-file.js";
 
 /** `.aidd/config.json` is a project file a team may track: written as an ordinary file, not
  * with the owner-only storage a person's own measurement gets. */

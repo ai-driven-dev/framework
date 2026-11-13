@@ -17,7 +17,7 @@ description: >
 installed file, and every flow that reads or changes that record — setup, doctor, sync (restore),
 uninstall, plugin install/update/remove, and the global chain orchestrators. It is the one
 context the dependency chain lets reach every other context (`framework →
-translate → tools → kernel`, plus `framework → distribution`), because assembling what goes on
+translate → tools → shared`, plus `framework → distribution`), because assembling what goes on
 disk is exactly the job that needs all three.
 
 ## What goes in

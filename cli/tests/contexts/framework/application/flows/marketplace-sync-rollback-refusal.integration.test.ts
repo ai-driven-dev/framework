@@ -6,8 +6,11 @@ import {
 } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { BUILT_CACHE_SUBDIR, userBuiltMarketplaceDir } from "../../../../../src/kernel/paths.js";
-import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
+import {
+  BUILT_CACHE_SUBDIR,
+  userBuiltMarketplaceDir,
+} from "../../../../../src/shared/domain/paths.js";
+import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";

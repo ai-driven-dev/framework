@@ -1,4 +1,4 @@
-import type { PluginSource } from "../../../../../kernel/source.js";
+import type { PluginSource } from "../../../../../shared/domain/source.js";
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { PluginTranslationMode } from "../../../../tools/contract/tool-vocabulary.js";
 import type { PluginDistribution } from "../../../../translate/domain/plugin-distribution.js";

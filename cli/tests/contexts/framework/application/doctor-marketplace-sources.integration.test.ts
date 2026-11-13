@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../../src/kernel/paths.js";
-import type { FileReader } from "../../../../src/kernel/ports/file-reader.js";
-import type { VersionReader } from "../../../../src/kernel/ports/version-reader.js";
+import {
+  builtMarketplaceDir,
+  userBuiltMarketplaceDir,
+} from "../../../../src/shared/domain/paths.js";
+import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
+import type { VersionReader } from "../../../../src/shared/ports/version-reader.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";

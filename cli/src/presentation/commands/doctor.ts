@@ -1,9 +1,9 @@
 import type { Command } from "commander";
 import type { DoctorReport } from "../../contexts/framework/domain/doctor.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { UserScopeFilterUnsupportedError } from "../../kernel/errors.js";
-import type { ToolCategory, ToolId } from "../../kernel/tool.js";
-import { isAiToolId } from "../../kernel/tool.js";
+import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
+import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
+import { isAiToolId } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printAllToolsDrift,

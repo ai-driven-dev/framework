@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { AjvSchemaValidatorAdapter } from "../../../../src/contexts/translate/infrastructure/schema-validator.js";
-import { JsonSchemaValidationError } from "../../../../src/kernel/errors.js";
+import { JsonSchemaValidationError } from "../../../../src/shared/domain/errors.js";
 
 const schemaPath = new URL(
   "../../../../assets/schemas/claude-marketplace-manifest.json",

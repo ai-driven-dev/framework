@@ -1,4 +1,4 @@
-import { compareSemver } from "../../../kernel/semver.js";
+import { compareSemver } from "../../../shared/domain/semver.js";
 
 export interface UpdateFlags {
   /** Only say whether a newer release exists. */

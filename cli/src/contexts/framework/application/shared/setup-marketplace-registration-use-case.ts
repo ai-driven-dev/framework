@@ -1,9 +1,9 @@
-import { CatalogFetchAuthError } from "../../../../kernel/errors.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
-import type { PluginSource } from "../../../../kernel/source.js";
+import { CatalogFetchAuthError } from "../../../../shared/domain/errors.js";
+import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { Environment } from "../../../../shared/ports/environment.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
+import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { TokenProvider } from "../../../auth/contract/token-provider.js";
 import type { RefreshMarketplace } from "../../../distribution/application/refresh-marketplace.js";
 import type {

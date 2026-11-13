@@ -1,7 +1,7 @@
 import { dirname, join, posix } from "node:path";
-import type { InstallationFile } from "../../../../kernel/file.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
+import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-containment.js";

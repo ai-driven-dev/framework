@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { InvalidManifestDataError } from "../../../kernel/errors.js";
-import { isErrnoException } from "../../../kernel/reading/json-file.js";
+import { InvalidManifestDataError } from "../../../shared/domain/errors.js";
+import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import { Manifest, type ManifestFileContext } from "../domain/manifest.js";
 
 /**

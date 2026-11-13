@@ -1,4 +1,4 @@
-import type { Logger } from "../../../src/kernel/ports/logger.js";
+import type { Logger } from "../../../src/shared/ports/logger.js";
 
 export class CapturingLogger implements Logger {
   readonly debugMessages: string[] = [];

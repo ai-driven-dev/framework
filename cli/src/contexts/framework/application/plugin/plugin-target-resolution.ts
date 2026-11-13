@@ -1,5 +1,5 @@
-import { UnresolvableUserScopeError } from "../../../../kernel/errors.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
+import { UnresolvableUserScopeError } from "../../../../shared/domain/errors.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { getToolSupportedScope } from "../../domain/install-scope.js";

@@ -18,7 +18,7 @@ tool's tree back into canonical form. If you find yourself wanting an inverse, t
 answer first is what would call it.
 
 There are no base helpers either, and no `docsDir` parameter. `DOCS_DIR` is a constant in
-`kernel/paths.ts`; a profile that needs it imports it.
+`shared/domain/paths.ts`; a profile that needs it imports it.
 
 ## What a profile actually does
 

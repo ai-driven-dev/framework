@@ -1,8 +1,8 @@
 import { join } from "node:path";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
-import type { Logger } from "../../../kernel/ports/logger.js";
-import type { PluginSourceGitHub } from "../../../kernel/source.js";
+import type { PluginSourceGitHub } from "../../../shared/domain/source.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../shared/ports/file-writer.js";
+import type { Logger } from "../../../shared/ports/logger.js";
 import {
   hasRelativePluginSources,
   type PluginCatalog,

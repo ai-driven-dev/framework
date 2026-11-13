@@ -1,12 +1,12 @@
 import { dirname, join } from "node:path";
-import { UnreadableUserSourceReferencesError } from "../../../kernel/errors.js";
+import { UnreadableUserSourceReferencesError } from "../../../shared/domain/errors.js";
 import {
   dedupePathSegments,
   samePathSegment,
   USER_SOURCE_REFERENCES_FILENAME,
-} from "../../../kernel/paths.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
+} from "../../../shared/domain/paths.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { UserSourceReferences } from "../domain/ports/user-source-references.js";
 
 type ReferencesFile = Record<string, readonly string[]>;

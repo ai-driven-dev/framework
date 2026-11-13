@@ -1,4 +1,4 @@
-import { AI_TOOL_IDS } from "../../../../kernel/tool.js";
+import { AI_TOOL_IDS } from "../../../../shared/domain/tool.js";
 import { ToolSuffix } from "./tool-suffix.js";
 
 const ALL_TOOL_SUFFIXES: readonly ToolSuffix[] = AI_TOOL_IDS.map(

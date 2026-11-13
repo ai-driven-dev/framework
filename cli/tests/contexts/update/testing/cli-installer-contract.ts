@@ -5,7 +5,7 @@ import {
   ElevatedPermissionUpdateError,
   PackageManagerDetectionError,
   UpdateError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/errors.js";
 import type { InstallScenario } from "./fake-cli-installer.js";
 
 export interface InstallerSubject {

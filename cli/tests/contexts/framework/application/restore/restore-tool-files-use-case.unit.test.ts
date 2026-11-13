@@ -10,8 +10,8 @@ import {
   CONFIG_VSCODE_KEYBINDINGS,
 } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
-import { InstallationFile } from "../../../../../src/kernel/file.js";
-import type { Prompter } from "../../../../../src/kernel/ports/prompter.js";
+import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";

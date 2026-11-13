@@ -1,4 +1,4 @@
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { TokenProvider } from "../../../auth/contract/token-provider.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { DoctorIssue } from "../../domain/doctor.js";

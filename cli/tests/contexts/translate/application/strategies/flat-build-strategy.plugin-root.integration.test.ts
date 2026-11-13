@@ -2,9 +2,9 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/composition/translate.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
-import { McpConfigError } from "../../../../../src/kernel/errors.js";
-import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
-import type { ToolId } from "../../../../../src/kernel/tool.js";
+import { McpConfigError } from "../../../../../src/shared/domain/errors.js";
+import type { ToolId } from "../../../../../src/shared/domain/tool.js";
+import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredCatalog, registeredFlatContract } from "../../../tools/testing/catalog-of.js";
 

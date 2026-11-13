@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";

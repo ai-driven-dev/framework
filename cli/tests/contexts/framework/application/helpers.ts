@@ -13,15 +13,17 @@ import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js"
 import type { Platform } from "../../../../src/contexts/framework/domain/ports/platform.js";
 import { BundledAssetProviderAdapter } from "../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
 import { HasherAdapter } from "../../../../src/contexts/framework/infrastructure/hasher-adapter.js";
+import { JsonFileMergerAdapter } from "../../../../src/contexts/framework/infrastructure/json-file-merger-adapter.js";
 import { ManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import type { Prompter } from "../../../../src/kernel/ports/prompter.js";
-import type { VersionReader } from "../../../../src/kernel/ports/version-reader.js";
-import { isIdeToolId, type ToolId } from "../../../../src/kernel/tool.js";
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../../../src/presentation/terminal/prompter-adapter.js";
+
+import { isIdeToolId, type ToolId } from "../../../../src/shared/domain/tool.js";
 import { CurrentVersionAdapter } from "../../../../src/shared/infrastructure/current-version-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
+import type { Prompter } from "../../../../src/shared/ports/prompter.js";
+import type { VersionReader } from "../../../../src/shared/ports/version-reader.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 export const linuxPlatform: Platform = { current: () => "linux" };
@@ -200,7 +202,7 @@ export const FIXTURE_DIR_V2 = join(process.cwd(), "tests/fixtures/framework-v2")
 
 export function buildDeps(projectRoot: string) {
   const hasher = new HasherAdapter();
-  const fs = new FileAdapter(hasher);
+  const fs = new JsonFileMergerAdapter(new FileAdapter(hasher));
   const manifestRepo = new ManifestRepositoryAdapter(projectRoot);
   const logger = new CLIOutput(false);
   const assetProvider = new BundledAssetProviderAdapter(wireTools());

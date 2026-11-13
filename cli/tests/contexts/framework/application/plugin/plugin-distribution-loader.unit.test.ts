@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../../../../src/kernel/paths.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../../../../src/shared/domain/paths.js";
 
 const source = { kind: "local" as const, path: "/source" };
 const dist = new PluginDistribution({

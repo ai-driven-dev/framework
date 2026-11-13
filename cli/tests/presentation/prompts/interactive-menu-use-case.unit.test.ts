@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import type { Prompter } from "../../../src/kernel/ports/prompter.js";
 import { InteractiveMenuUseCase } from "../../../src/presentation/prompts/menu-use-case.js";
+import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { buildUnitDeps, initProject } from "../../helpers/ports/build-unit-deps.js";
 

@@ -1,8 +1,8 @@
 import { join, sep } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { FileReader } from "../../../src/kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../src/kernel/ports/file-writer.js";
-import type { Hasher } from "../../../src/kernel/ports/hasher.js";
+import type { FileReader } from "../../../src/shared/ports/file-reader.js";
+import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
+import type { Hasher } from "../../../src/shared/ports/hasher.js";
 
 /** What a contract run needs from one implementation of the file port. */
 export interface FileSubject {

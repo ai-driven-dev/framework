@@ -1,17 +1,15 @@
 import { constants } from "node:fs";
 import { access, mkdir, readdir, readFile, realpath, rm, rmdir, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import type { FileHash } from "../../kernel/file.js";
-import { type MergeStrategy, mergeIntoJsonFile } from "../../kernel/merge.js";
-import { posixRelative } from "../../kernel/paths.js";
-import type { FileReader } from "../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../kernel/ports/file-writer.js";
-import type { Hasher } from "../../kernel/ports/hasher.js";
-import type { Logger } from "../../kernel/ports/logger.js";
-import type { FileMerger } from "../ports/file-merger.js";
+import type { FileHash } from "../domain/file.js";
+import { posixRelative } from "../domain/paths.js";
+import type { FileReader } from "../ports/file-reader.js";
+import type { FileWriter } from "../ports/file-writer.js";
+import type { Hasher } from "../ports/hasher.js";
+import type { Logger } from "../ports/logger.js";
 import { atomicWriteFile } from "./atomic-write.js";
 
-export class FileAdapter implements FileReader, FileWriter, FileMerger {
+export class FileAdapter implements FileReader, FileWriter {
   async isExecutable(path: string): Promise<boolean> {
     try {
       await access(path, constants.X_OK);
@@ -133,9 +131,5 @@ export class FileAdapter implements FileReader, FileWriter, FileMerger {
         results.push(fullPath);
       }
     }
-  }
-
-  async mergeJsonFile(path: string, content: string, strategy: MergeStrategy): Promise<void> {
-    return mergeIntoJsonFile(this, path, content, strategy);
   }
 }

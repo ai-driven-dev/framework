@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import { join, posix, resolve } from "node:path";
-import { FileHash } from "../../../src/kernel/file.js";
-import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/kernel/merge.js";
-import type { FileReader } from "../../../src/kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../src/kernel/ports/file-writer.js";
-import type { Hasher } from "../../../src/kernel/ports/hasher.js";
-import type { FileMerger } from "../../../src/shared/ports/file-merger.js";
+import type { FileMerger } from "../../../src/contexts/framework/domain/ports/file-merger.js";
+import { FileHash } from "../../../src/shared/domain/file.js";
+import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/shared/domain/merge.js";
+import type { FileReader } from "../../../src/shared/ports/file-reader.js";
+import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
+import type { Hasher } from "../../../src/shared/ports/hasher.js";
 
 export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   /** No file here has a mode: none is ever executable, and no product code asks. */

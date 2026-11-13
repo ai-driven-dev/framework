@@ -1,4 +1,4 @@
-import type { MarketplaceScope } from "../../../kernel/scope.js";
+import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { Marketplace } from "../domain/marketplace.js";
 
 export interface MarketplaceRegistry {

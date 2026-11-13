@@ -5,15 +5,15 @@ import {
   MissingPluginMetadataError,
   ToolNotInManifestError,
   VersionMismatchError,
-} from "../../../../kernel/errors.js";
-import type { InstallationFile } from "../../../../kernel/file.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../../../kernel/paths.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { PluginSource } from "../../../../kernel/source.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
+} from "../../../../shared/domain/errors.js";
+import type { InstallationFile } from "../../../../shared/domain/file.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
+import type { PluginSource } from "../../../../shared/domain/source.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";

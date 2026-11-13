@@ -1,5 +1,5 @@
-import { parseFrontmatter } from "../../../kernel/markdown.js";
-import type { AiToolId } from "../../../kernel/tool.js";
+import { parseFrontmatter } from "../../../shared/domain/markdown.js";
+import type { AiToolId } from "../../../shared/domain/tool.js";
 
 /** One rule as it sits installed in a project, read back rather than generated. */
 export interface InstalledRule {

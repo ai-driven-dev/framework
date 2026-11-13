@@ -10,8 +10,8 @@ import { SetupMarketplaceRegistrationUseCase } from "../../../../../src/contexts
 import type { UserSourceReferences } from "../../../../../src/contexts/framework/domain/ports/user-source-references.js";
 import { SetupFlow } from "../../../../../src/contexts/framework/domain/setup-flow.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
-import { CatalogFetchAuthError } from "../../../../../src/kernel/errors.js";
-import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
+import { CatalogFetchAuthError } from "../../../../../src/shared/domain/errors.js";
+import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
 import { InMemoryEnvironment } from "../../../../helpers/ports/in-memory-environment.js";

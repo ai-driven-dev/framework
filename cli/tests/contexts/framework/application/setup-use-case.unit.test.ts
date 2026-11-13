@@ -25,13 +25,13 @@ import type { UserSourceReferences } from "../../../../src/contexts/framework/do
 import { ProjectContext } from "../../../../src/contexts/framework/domain/project-context.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
-import { UserScopeUnavailableError } from "../../../../src/kernel/errors.js";
-import type { Logger } from "../../../../src/kernel/ports/logger.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
-import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../../../src/kernel/tool.js";
 import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
+import { UserScopeUnavailableError } from "../../../../src/shared/domain/errors.js";
+import type { ToolId } from "../../../../src/shared/domain/tool.js";
+import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../../../src/shared/domain/tool.js";
+import type { Logger } from "../../../../src/shared/ports/logger.js";
 import {
   buildUnitDeps,
   initAndInstall,

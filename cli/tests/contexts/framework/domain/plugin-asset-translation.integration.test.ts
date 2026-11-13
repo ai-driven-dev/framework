@@ -9,8 +9,8 @@ import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profil
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/kernel/file.js";
-import { AI_TOOL_IDS } from "../../../../src/kernel/tool.js";
+import { FileHash } from "../../../../src/shared/domain/file.js";
+import { AI_TOOL_IDS } from "../../../../src/shared/domain/tool.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
 import { registeredAiConfig } from "../../tools/testing/catalog-of.js";
 

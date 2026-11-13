@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
-import type { AiToolId } from "../../../../src/kernel/tool.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { buildDoctorUseCase, buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";

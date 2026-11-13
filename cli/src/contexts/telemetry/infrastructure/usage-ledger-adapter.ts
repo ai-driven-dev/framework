@@ -1,7 +1,6 @@
 import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { isErrnoException } from "../../../kernel/reading/json-file.js";
-import { readTextIfPresent } from "../../../kernel/reading/text-file.js";
+import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
 import { requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
@@ -21,6 +20,7 @@ import { foldUsage } from "../domain/usage-fold.js";
 import { DirectoryLock, type LockOptions } from "./ledger-lock.js";
 import { LeftOutAdapter } from "./left-out/left-out-adapter.js";
 import { RepositoryAliasStoreAdapter } from "./legacy/repository-alias-store-adapter.js";
+import { readTextIfPresent } from "./reading/text-file.js";
 
 const DAILY = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 const EXTENSION = ".jsonl";

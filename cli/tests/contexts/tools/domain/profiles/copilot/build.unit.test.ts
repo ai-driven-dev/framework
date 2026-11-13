@@ -3,7 +3,7 @@ import {
   buildCopilotFlatContract,
   buildCopilotMarketplaceContract,
 } from "../../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import { parseFrontmatter } from "../../../../../../src/kernel/markdown.js";
+import { parseFrontmatter } from "../../../../../../src/shared/domain/markdown.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { supported } from "../../../testing/build-artifacts.js";
 

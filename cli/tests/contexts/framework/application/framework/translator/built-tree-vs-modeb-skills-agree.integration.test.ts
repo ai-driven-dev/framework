@@ -8,7 +8,7 @@ import {
   type PluginComponentFile,
   PluginDistribution,
 } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../../../src/kernel/file.js";
+import { FileHash } from "../../../../../../src/shared/domain/file.js";
 import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
 
 const PLUGINS_DIR = join(REPOSITORY_ROOT, "plugins");

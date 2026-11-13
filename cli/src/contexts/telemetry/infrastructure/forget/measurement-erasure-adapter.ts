@@ -1,11 +1,11 @@
 import { readdir, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
-import { isAbsent } from "../../../../kernel/reading/text-file.js";
 import { DAY_FILE, type LegacyLocations } from "../../domain/legacy/legacy-locations.js";
 import type {
   ErasureEntry,
   MeasurementErasure,
 } from "../../domain/ports/forget/measurement-erasure.js";
+import { isAbsent } from "../reading/text-file.js";
 
 async function entriesOf(dir: string): Promise<string[]> {
   try {

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
-import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
+import { AI_TOOL_IDS } from "../../../src/shared/domain/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";

@@ -11,7 +11,7 @@ import {
   type PluginComponentFile,
   PluginDistribution,
 } from "../../../src/contexts/translate/domain/plugin-distribution.js";
-import type { AssetProvider } from "../../../src/kernel/ports/asset-provider.js";
+import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { registeredAiProfile } from "./testing/catalog-of.js";
 

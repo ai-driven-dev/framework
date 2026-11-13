@@ -1,7 +1,7 @@
 import { join } from "node:path";
-import { posixRelative } from "../../../kernel/paths.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { AiToolId } from "../../../kernel/tool.js";
+import { posixRelative } from "../../../shared/domain/paths.js";
+import type { AiToolId } from "../../../shared/domain/tool.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { InstalledRule } from "../domain/installed-rule.js";
 import { toInstalledRule } from "../domain/installed-rule.js";

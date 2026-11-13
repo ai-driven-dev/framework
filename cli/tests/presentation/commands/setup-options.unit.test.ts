@@ -1,6 +1,5 @@
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../../src/kernel/tool.js";
 import {
   expandAllKeyword,
   parsePluginsFlag,
@@ -8,6 +7,7 @@ import {
   parseToolIds,
 } from "../../../src/presentation/commands/setup.js";
 import { ErrorHandler } from "../../../src/presentation/error-handler.js";
+import { AI_TOOL_IDS, IDE_TOOL_IDS } from "../../../src/shared/domain/tool.js";
 import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 

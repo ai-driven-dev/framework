@@ -3,9 +3,9 @@ import {
   InvalidPluginManifestError,
   InvalidPluginNameError,
   InvalidPluginVersionError,
-} from "../../../kernel/errors.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import { isSemver } from "../../../kernel/semver.js";
+} from "../../../shared/domain/errors.js";
+import { isSemver } from "../../../shared/domain/semver.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
 import {
   type PluginComponentFile,
   type PluginComponents,

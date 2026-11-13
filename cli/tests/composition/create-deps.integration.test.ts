@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/framework.js";
-import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../src/kernel/tool.js";
 import { CLIOutput } from "../../src/presentation/output.js";
+import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../src/shared/domain/tool.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 
 describe("createDeps", () => {

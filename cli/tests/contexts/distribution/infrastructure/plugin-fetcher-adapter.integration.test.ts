@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { HasherAdapter } from "../../../../src/contexts/framework/infrastructure/hasher-adapter.js";
-import { PluginFetchError } from "../../../../src/kernel/errors.js";
+import { PluginFetchError } from "../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
 const execFileAsync = promisify(execFile);

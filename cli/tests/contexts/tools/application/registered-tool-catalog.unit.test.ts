@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { REGISTERED_PROFILES } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { DuplicateToolIdError, UnregisteredToolError } from "../../../../src/kernel/errors.js";
-import type { AiToolId, IdeToolId } from "../../../../src/kernel/tool.js";
+import {
+  DuplicateToolIdError,
+  UnregisteredToolError,
+} from "../../../../src/shared/domain/errors.js";
+import type { AiToolId, IdeToolId } from "../../../../src/shared/domain/tool.js";
 import { catalogOf } from "../testing/catalog-of.js";
 
 describe("the registered tool catalog", () => {
@@ -19,7 +22,7 @@ describe("the registered tool catalog", () => {
   });
 
   describe("the AI ids in the canonical order", () => {
-    it("is the order the kernel names the AI tools in, which is neither the help order nor the id order", () => {
+    it("is the order the shared vocabulary names the AI tools in, which is neither the help order nor the id order", () => {
       const ids = catalogOf().aiIdsInCanonicalOrder();
 
       expect(ids.indexOf("opencode")).toBeLessThan(ids.indexOf("codex"));

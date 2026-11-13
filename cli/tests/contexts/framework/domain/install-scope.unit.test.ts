@@ -5,7 +5,7 @@ import {
   isInstallScope,
   parseInstallScope,
 } from "../../../../src/contexts/framework/domain/install-scope.js";
-import { InvalidPluginScopeError } from "../../../../src/kernel/errors.js";
+import { InvalidPluginScopeError } from "../../../../src/shared/domain/errors.js";
 
 describe("install-scope value object", () => {
   describe("isInstallScope", () => {

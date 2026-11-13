@@ -1,5 +1,5 @@
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { SyncFailedError } from "../../kernel/errors.js";
+import { SyncFailedError } from "../../shared/domain/errors.js";
 import type { Deps } from "../deps.js";
 import { printScopedFailures } from "../display/framework-display.js";
 import type { CLIOutput } from "../output.js";

@@ -12,7 +12,7 @@ import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/pl
 import {
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,
-} from "../../../../../src/kernel/errors.js";
+} from "../../../../../src/shared/domain/errors.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";

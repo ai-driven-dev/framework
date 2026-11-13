@@ -1,9 +1,14 @@
 import { join } from "node:path";
-import { InputRequiredError } from "../../../../kernel/errors.js";
-import type { FileHash } from "../../../../kernel/file.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import { type AiToolId, type IdeToolId, isAiToolId, type ToolId } from "../../../../kernel/tool.js";
 import type { SyncConflictResolverUseCase } from "../../../../presentation/prompts/sync-conflict-resolver-use-case.js";
+import { InputRequiredError } from "../../../../shared/domain/errors.js";
+import type { FileHash } from "../../../../shared/domain/file.js";
+import {
+  type AiToolId,
+  type IdeToolId,
+  isAiToolId,
+  type ToolId,
+} from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstallIdeConfigUseCase } from "../install/install-ide-config-use-case.js";

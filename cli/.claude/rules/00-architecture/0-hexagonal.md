@@ -29,4 +29,4 @@ Which context owns a concept is `0-contexts.md`.
 - Inject through the constructor, typed as the port.
 - One adapter, one port; `FileAdapter` is recorded debt.
 - A port declares no uncalled method (`ports-are-called.arch.test.ts`, empty baseline).
-- `CLIOutput` implements the kernel `Logger` from `presentation/output.ts`.
+- `CLIOutput` implements the shared `Logger` from `presentation/output.ts`.

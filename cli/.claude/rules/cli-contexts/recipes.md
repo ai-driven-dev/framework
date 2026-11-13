@@ -20,7 +20,7 @@ paths:
 
 ## Suppliers
 
-- `kernel/`: `InputRequiredError` (migration state M3 of the reference).
+- `shared/`: `InputRequiredError`.
 - Nothing from `shared/` or another context: the context reads the disk through its own port.
 
 ## Never

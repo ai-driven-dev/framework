@@ -6,16 +6,15 @@ import { FlatBuildStrategy } from "../contexts/translate/application/strategies/
 import { MarketplaceBuildStrategy } from "../contexts/translate/application/strategies/marketplace-build-strategy.js";
 import { FrameworkBuildUseCase } from "../contexts/translate/application/translate-source.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
-import type { AssetProvider } from "../kernel/ports/asset-provider.js";
-import type { FileReader } from "../kernel/ports/file-reader.js";
-import type { FileWriter } from "../kernel/ports/file-writer.js";
-import type { Logger } from "../kernel/ports/logger.js";
-import { isAiToolId } from "../kernel/tool.js";
 import type { FrameworkBuildContext } from "../presentation/deps.js";
-import type { FileMerger } from "../shared/ports/file-merger.js";
+import { isAiToolId } from "../shared/domain/tool.js";
+import type { AssetProvider } from "../shared/ports/asset-provider.js";
+import type { FileReader } from "../shared/ports/file-reader.js";
+import type { FileWriter } from "../shared/ports/file-writer.js";
+import type { Logger } from "../shared/ports/logger.js";
 
 export interface FrameworkBuildDeps {
-  fs: FileReader & FileWriter & FileMerger;
+  fs: FileReader & FileWriter;
   assetProvider: AssetProvider;
   logger: Logger;
 }

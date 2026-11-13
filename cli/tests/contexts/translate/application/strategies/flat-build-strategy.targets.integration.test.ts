@@ -9,7 +9,7 @@ import { createFrameworkBuildUseCase } from "../../../../../src/composition/tran
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
 import { HasherAdapter } from "../../../../../src/contexts/framework/infrastructure/hasher-adapter.js";
 import type { FrameworkBuildTarget } from "../../../../../src/contexts/translate/domain/build-target.js";
-import { FlatTargetExistsError } from "../../../../../src/kernel/errors.js";
+import { FlatTargetExistsError } from "../../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
 import { FRAMEWORK_REAL } from "../../../../helpers/fixture-setup.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AuthenticationError, InputRequiredError } from "../../src/kernel/errors.js";
 import { ErrorHandler } from "../../src/presentation/error-handler.js";
 import type { CLIOutput } from "../../src/presentation/output.js";
+import { AuthenticationError, InputRequiredError } from "../../src/shared/domain/errors.js";
 
 function createMockOutput(): CLIOutput {
   return {

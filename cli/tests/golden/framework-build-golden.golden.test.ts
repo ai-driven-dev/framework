@@ -9,7 +9,7 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
-import { AI_TOOL_IDS } from "../../src/kernel/tool.js";
+import { AI_TOOL_IDS } from "../../src/shared/domain/tool.js";
 import { runCli } from "../e2e/helpers.js";
 import { twoCaptures } from "./two-captures.js";
 

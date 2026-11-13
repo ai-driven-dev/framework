@@ -4,7 +4,7 @@ import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/prof
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { vscode } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
-import { parseFrontmatter } from "../../../../src/kernel/markdown.js";
+import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
 import {
   flatPlugins,

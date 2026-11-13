@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { kilo } from "../../../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { FileHash } from "../../../../../../src/kernel/file.js";
-import { flatHooksPathWithLoaderEntry } from "../../../../../../src/kernel/materialization/flat-paths.js";
-import type { FileReader } from "../../../../../../src/kernel/ports/file-reader.js";
+import { FileHash } from "../../../../../../src/shared/domain/file.js";
+import { flatHooksPathWithLoaderEntry } from "../../../../../../src/shared/domain/materialization/flat-paths.js";
+import type { FileReader } from "../../../../../../src/shared/ports/file-reader.js";
 import { flatOf } from "../../../testing/plugin-mode.js";
 import { rulesRows, WRITES_NOTHING } from "../../../testing/profile-tables.js";
 import { type InstallKind, installPathOf } from "../../../testing/profiles.js";

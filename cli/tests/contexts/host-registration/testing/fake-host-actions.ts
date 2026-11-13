@@ -1,6 +1,6 @@
 import type { HostActions } from "../../../../src/contexts/host-registration/contract/host-actions.js";
-import { NativePluginCliError } from "../../../../src/kernel/errors.js";
-import type { MarketplaceScope } from "../../../../src/kernel/scope.js";
+import { NativePluginCliError } from "../../../../src/shared/domain/errors.js";
+import type { MarketplaceScope } from "../../../../src/shared/domain/scope.js";
 
 /** Records native plugin CLI calls instead of shelling out. Two measured shapes: a real
  * `claude` refuses a mismatched-scope uninstall, and a plain `Error` no adapter produces. */

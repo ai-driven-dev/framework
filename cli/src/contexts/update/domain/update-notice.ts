@@ -1,4 +1,4 @@
-import { compareSemver, isSemver } from "../../../kernel/semver.js";
+import { compareSemver, isSemver } from "../../../shared/domain/semver.js";
 
 /** What the last check learned: when it ran, and the latest release it saw. */
 export interface CheckEntry {

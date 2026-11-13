@@ -1,4 +1,4 @@
-import { CapabilityConfigError } from "../../../../kernel/errors.js";
+import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import type { FlatSkillLayout } from "../../contract/tool-profile.js";
 import type { GlobalFiles } from "../../contract/tool-vocabulary.js";
 import { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";

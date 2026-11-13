@@ -3,7 +3,7 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import type { HostPluginRegistryEntry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
-import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
+import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";

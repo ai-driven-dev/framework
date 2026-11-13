@@ -72,7 +72,7 @@ describe("the guard itself", () => {
   it("reads a path from the indentation, so the same name under two parents is two paths", () => {
     const block = [
       "src/",
-      "├── kernel/           # shared vocabulary",
+      "├── shared/           # shared vocabulary",
       "└── contexts/         # bounded contexts",
       "    ├── tools/        # what the project targets",
       "    │   └── domain/   # its rules",
@@ -81,7 +81,7 @@ describe("the guard itself", () => {
 
     expect(drawnDirectoriesInText(block)).toEqual(
       new Set([
-        "src/kernel",
+        "src/shared",
         "src/contexts",
         "src/contexts/tools",
         "src/contexts/tools/domain",
@@ -91,8 +91,8 @@ describe("the guard itself", () => {
   });
 
   it("names a real directory the map omits, an invented one it draws, nothing when they agree", () => {
-    const real = new Set(["src/kernel", "src/contexts/tools/domain"]);
-    const drawn = new Set(["src/kernel", "src/contexts/tools/application"]);
+    const real = new Set(["src/shared", "src/contexts/tools/domain"]);
+    const drawn = new Set(["src/shared", "src/contexts/tools/application"]);
 
     expect(disagreements(real, drawn)).toEqual({
       undocumented: ["src/contexts/tools/domain"],

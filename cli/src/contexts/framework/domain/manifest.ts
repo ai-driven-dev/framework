@@ -1,8 +1,8 @@
-import { InvalidManifestDataError, ToolNotInManifestError } from "../../../kernel/errors.js";
-import type { FileHash, InstallationFile } from "../../../kernel/file.js";
-import type { MergeFileEntry } from "../../../kernel/merge.js";
-import { AIDD_DIR, MANIFEST_FILENAME } from "../../../kernel/paths.js";
-import type { ToolId } from "../../../kernel/tool.js";
+import { InvalidManifestDataError, ToolNotInManifestError } from "../../../shared/domain/errors.js";
+import type { FileHash, InstallationFile } from "../../../shared/domain/file.js";
+import type { MergeFileEntry } from "../../../shared/domain/merge.js";
+import { AIDD_DIR, MANIFEST_FILENAME } from "../../../shared/domain/paths.js";
+import type { ToolId } from "../../../shared/domain/tool.js";
 import type { NativeRegistrations } from "./manifest/native-registrations.js";
 import {
   addPluginToEntry,

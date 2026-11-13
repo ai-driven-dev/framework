@@ -12,9 +12,9 @@ import {
   FrameworkPlaceholderInPluginError,
   InvalidBuildPathsError,
   JsonSchemaValidationError,
-} from "../../../../../src/kernel/errors.js";
-import { parseFrontmatter } from "../../../../../src/kernel/markdown.js";
-import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
+} from "../../../../../src/shared/domain/errors.js";
+import { parseFrontmatter } from "../../../../../src/shared/domain/markdown.js";
+import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";

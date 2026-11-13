@@ -16,8 +16,8 @@ import type {
 } from "../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
-import { AIDD_DIR } from "../../../../src/kernel/paths.js";
-import type { AiToolId } from "../../../../src/kernel/tool.js";
+import { AIDD_DIR } from "../../../../src/shared/domain/paths.js";
+import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";

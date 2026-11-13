@@ -1,5 +1,5 @@
-import { tryParseJson } from "../../../../kernel/reading/json-file.js";
-import { asPlainObject } from "../../../../kernel/reading/plain-object.js";
+import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 import { type CloneIdentity, cloneKey, parseCloneIdentity } from "./clone-identity.js";
 
 /** A line of `consents.jsonl`: an interval opened for a clone by `on`, or closed, by `off`, by

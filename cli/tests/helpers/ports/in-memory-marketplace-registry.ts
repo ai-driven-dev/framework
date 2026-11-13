@@ -1,6 +1,6 @@
 import type { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
-import type { MarketplaceScope } from "../../../src/kernel/scope.js";
+import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 
 export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
   private readonly project = new Map<string, Marketplace>();

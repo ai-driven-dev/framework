@@ -3,7 +3,7 @@ import {
   hostMarketplaceSourceConflict,
   isDriftFound,
 } from "../../../../../src/contexts/framework/application/shared/host-marketplace-source-conflict.js";
-import { userBuiltMarketplaceDir } from "../../../../../src/kernel/paths.js";
+import { userBuiltMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
 import {
   errnoError,
   FaultingFileAdapter,

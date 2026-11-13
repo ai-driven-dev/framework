@@ -1,5 +1,5 @@
-import { FileHash } from "../../../../kernel/file.js";
-import type { MergeFileEntry } from "../../../../kernel/merge.js";
+import { FileHash } from "../../../../shared/domain/file.js";
+import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 
 // A merge file is co-owned: framework and user each hold entries inside the same file (e.g.
 // `mcpServers` in `.claude/settings.json`), tracked per-key rather than per-file.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { VALID_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { assertKnownToolId } from "../../../src/presentation/commands/framework.js";
+import { VALID_TOOL_IDS } from "../../../src/shared/domain/tool.js";
 
 describe("assertKnownToolId", () => {
   it("accepts an AI tool id", () => {

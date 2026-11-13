@@ -1,6 +1,6 @@
 import { dirname, join, normalize } from "node:path";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import {
   extractAtReferences,

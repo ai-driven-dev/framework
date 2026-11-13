@@ -1,7 +1,7 @@
 import { basename, join, relative } from "node:path";
-import { rewriteRelativeLinks } from "../../../../kernel/materialization/relative-link-rewrite.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
+import { rewriteRelativeLinks } from "../../../../shared/domain/materialization/relative-link-rewrite.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import { PLUGIN_SKILL_ENTRY_FILE } from "../../domain/build-target.js";
 import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 

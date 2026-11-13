@@ -1,4 +1,4 @@
-import type { AiToolId } from "../../../kernel/tool.js";
+import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 
 /** The tool whose layout a plugin distribution follows. An alias rather than its own union: a

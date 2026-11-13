@@ -1,8 +1,8 @@
-import { UnreadableUserSourceReferencesError } from "../../../../kernel/errors.js";
-import { samePathSegment } from "../../../../kernel/paths.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
-import type { MarketplaceScope } from "../../../../kernel/scope.js";
+import { UnreadableUserSourceReferencesError } from "../../../../shared/domain/errors.js";
+import { samePathSegment } from "../../../../shared/domain/paths.js";
+import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 

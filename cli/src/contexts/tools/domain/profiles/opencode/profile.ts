@@ -3,7 +3,7 @@ import opencodeJson from "../../../../../../assets/configs/opencode/opencode.jso
   type: "json",
 };
 import opencodeEvents from "../../../../../../assets/configs/opencode/opencode-events.js.txt";
-import { OpencodeDualConfigError } from "../../../../../kernel/errors.js";
+import { OpencodeDualConfigError } from "../../../../../shared/domain/errors.js";
 import { CONFIG_MCP, CONFIG_OPENCODE } from "../../../contract/config-refs.js";
 import {
   buildAiddCommandFilePath,

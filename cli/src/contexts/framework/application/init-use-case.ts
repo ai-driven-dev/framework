@@ -3,10 +3,10 @@ import {
   AiddFilesDetectedError,
   AlreadyInitializedError,
   NoManifestError,
-} from "../../../kernel/errors.js";
-import { AIDD_DIR } from "../../../kernel/paths.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
+} from "../../../shared/domain/errors.js";
+import { AIDD_DIR } from "../../../shared/domain/paths.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import { Manifest } from "../domain/manifest.js";

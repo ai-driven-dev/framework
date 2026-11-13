@@ -1,5 +1,5 @@
-import { CapabilityConfigError } from "../../../../kernel/errors.js";
-import { serializeFrontmatter } from "../../../../kernel/markdown.js";
+import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import { serializeFrontmatter } from "../../../../shared/domain/markdown.js";
 import { ForeignSuffixFilter } from "../profile/foreign-suffix-filter.js";
 
 const AGENTS_SKILLS_PREFIX = ".agents/skills/";

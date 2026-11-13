@@ -8,7 +8,7 @@ import {
   resolveVersion,
   synthesizeSharedManifest,
 } from "../../../../src/contexts/tools/domain/marketplace-catalog.js";
-import { InvalidSourceMarketplaceError } from "../../../../src/kernel/errors.js";
+import { InvalidSourceMarketplaceError } from "../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/index.js";
 
 const EMPTY_PRESENCE: PluginPresence = {

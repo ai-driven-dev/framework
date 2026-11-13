@@ -1,9 +1,9 @@
 import { join } from "node:path";
-import { InstallationFile } from "../../../../kernel/file.js";
-import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { Hasher } from "../../../../kernel/ports/hasher.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
+import { InstallationFile } from "../../../../shared/domain/file.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Hasher } from "../../../../shared/ports/hasher.js";
 import { CONFIG_MCP, type ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ConfigWrite, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Platform } from "../../domain/ports/platform.js";

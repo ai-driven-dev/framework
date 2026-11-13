@@ -4,13 +4,12 @@ import {
   ActiveMachineDependentsError,
   NativePluginCliError,
   PluginNotFoundError,
-} from "../../../../kernel/errors.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
-import { resolveHomeDir } from "../../../../kernel/reading/home-dir.js";
-import type { MarketplaceScope } from "../../../../kernel/scope.js";
-import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
+} from "../../../../shared/domain/errors.js";
+import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
@@ -25,6 +24,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
+import { resolveHomeDir } from "../../domain/reading/home-dir.js";
 import { inspectNativeMarketplaceSource } from "../ownership/native-marketplace-source-proof.js";
 import {
   detachNativePluginRefs,

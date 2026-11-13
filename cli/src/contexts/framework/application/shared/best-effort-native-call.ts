@@ -1,5 +1,5 @@
-import { NativePluginCliError } from "../../../../kernel/errors.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
+import { NativePluginCliError } from "../../../../shared/domain/errors.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 
 /**
  * Runs `action`, a call into a tool's own native plugin CLI, and reports whether it ran to

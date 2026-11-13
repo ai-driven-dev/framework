@@ -44,7 +44,7 @@ Contract-level: `manifestFileRelative` / `synthesizeManifest` / `manifestSchemaN
 
 The tool profile already holds the per-tool knowledge — the contract wires it up:
 
-- paths → the capability `buildInstallPath` functions + the generic flat-path primitives in `kernel/materialization/flat-paths.ts`.
+- paths → the capability `buildInstallPath` functions + the generic flat-path primitives in `shared/domain/materialization/flat-paths.ts`.
 - agent format → the tool's existing transform (markdown→TOML formatter, frontmatter-strip helper).
 - mcp / config merges → the existing merge helper for that target format; generalize the helper
   (add a parameter) rather than write a parallel one.
@@ -73,5 +73,5 @@ profile `buildContract(mode)`, which answers the contract or `null`.
 for the target's profile and its `buildContract(mode)`, then picks the mode-generic orchestrator
 for it — there is no per-tool row to hand-add. A tool with no contract for the mode answers
 `null`, and `presentation/commands/translate.ts` reports "Unsupported target/mode combination".
-The tool id must still be added to `AiToolId` in `kernel/tool.ts`, which `FrameworkBuildTarget`
+The tool id must still be added to `AiToolId` in `shared/domain/tool.ts`, which `FrameworkBuildTarget`
 aliases: that names which targets exist at all, independent of which contracts they declare.

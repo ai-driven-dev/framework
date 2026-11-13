@@ -12,8 +12,8 @@ import { SetupToolsUseCase } from "../../../../src/contexts/framework/applicatio
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
-import type { ToolId } from "../../../../src/kernel/tool.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
+import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";

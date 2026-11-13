@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
-import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
+import type { FileReader } from "../../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { ProjectHooksLocation } from "../../../../tools/contract/tool-vocabulary.js";
 import {

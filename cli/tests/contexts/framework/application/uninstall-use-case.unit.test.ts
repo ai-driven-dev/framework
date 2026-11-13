@@ -7,8 +7,8 @@ import {
   InputRequiredError,
   NoManifestError,
   ToolNotInstalledError,
-} from "../../../../src/kernel/errors.js";
-import { type ToolId, VALID_TOOL_IDS } from "../../../../src/kernel/tool.js";
+} from "../../../../src/shared/domain/errors.js";
+import { type ToolId, VALID_TOOL_IDS } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 

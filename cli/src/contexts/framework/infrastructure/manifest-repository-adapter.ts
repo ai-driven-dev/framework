@@ -1,6 +1,6 @@
 import { readdir, rm, rmdir } from "node:fs/promises";
 import { join } from "node:path";
-import { AIDD_DIR, MANIFEST_FILENAME } from "../../../kernel/paths.js";
+import { AIDD_DIR, MANIFEST_FILENAME } from "../../../shared/domain/paths.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import { readManifestFile, writeManifestFile } from "./manifest-file-io.js";

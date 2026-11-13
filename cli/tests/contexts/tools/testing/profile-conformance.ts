@@ -10,7 +10,7 @@ import { isProfileSectionKey } from "../../../../src/contexts/tools/domain/profi
 import { AgentsSection } from "../../../../src/contexts/tools/domain/sections/agents-section.js";
 import { CommandsSection } from "../../../../src/contexts/tools/domain/sections/commands-section.js";
 import { RulesSection } from "../../../../src/contexts/tools/domain/sections/rules-section.js";
-import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/kernel/tool.js";
+import { AI_TOOL_IDS, IDE_TOOL_IDS, type ToolId } from "../../../../src/shared/domain/tool.js";
 
 /** What a conformance check is told about one profile and the registration it sits in. */
 export interface ConformanceSubject {
@@ -205,10 +205,10 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
   }),
 ];
 
-/** The kernel's ids and the registration's agree, in both directions. */
-export function registeredIdsMatchKernel(ids: readonly ToolId[]): void {
-  const kernel = [...AI_TOOL_IDS, ...IDE_TOOL_IDS];
-  expect([...ids].sort()).toEqual([...kernel].sort());
+/** The shared tool ids and the registration's agree, in both directions. */
+export function registeredIdsMatchToolVocabulary(ids: readonly ToolId[]): void {
+  const vocabulary = [...AI_TOOL_IDS, ...IDE_TOOL_IDS];
+  expect([...ids].sort()).toEqual([...vocabulary].sort());
 }
 
 export function describeProfileConformance(

@@ -1,11 +1,11 @@
 import { isAbsolute, join } from "node:path";
-import { InvalidToolProfileError } from "../../../../kernel/errors.js";
+import { InvalidToolProfileError } from "../../../../shared/domain/errors.js";
 import {
   AI_TOOL_IDS,
   type AiToolId,
   IDE_TOOL_IDS,
   type IdeToolId,
-} from "../../../../kernel/tool.js";
+} from "../../../../shared/domain/tool.js";
 import type {
   ConfigWrite,
   FlatInstallSection,

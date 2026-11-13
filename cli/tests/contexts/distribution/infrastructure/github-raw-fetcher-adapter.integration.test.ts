@@ -9,7 +9,7 @@ import {
   CatalogFetchError,
   CatalogFetchNotFoundError,
   HttpNotFoundError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/errors.js";
 
 const CATALOG_PATH = ".claude-plugin/marketplace.json";
 const SAMPLE_CATALOG = JSON.stringify({ plugins: [] });

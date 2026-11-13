@@ -7,7 +7,7 @@ import {
 import type { ReleaseLister } from "../../../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../../../src/contexts/distribution/ports/repository-visibility.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
-import { InputRequiredError } from "../../../../../src/kernel/errors.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
 import { ScriptedPrompter } from "../../../../helpers/ports/scripted-prompter.js";
 
 function makeResolver(rootReleases: string[]): ReleaseLister & RepositoryVisibility {

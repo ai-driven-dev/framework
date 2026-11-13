@@ -11,7 +11,7 @@ paths:
 - A use case throws.
 - It never catches its own errors.
 - It never returns a failure as a value.
-- An adapter catches only to type an I/O error (`kernel/errors.ts`).
+- An adapter catches only to type an I/O error (`shared/domain/errors.ts`).
 - Never `catch {}` into a default: unreadable is not absent.
 - An empty catch is a listed best effort or a failure (`catches-that-swallow.arch.test.ts`).
 - The command layer is the only catcher: `errorHandler.handle(error)`, exit 1.
@@ -19,7 +19,7 @@ paths:
 
 ## Catalog
 
-- `kernel/errors.ts` is the one catalog.
+- `shared/domain/errors.ts` is the one catalog.
 - Every class in it is thrown (`errors-that-are-thrown.arch.test.ts`, empty baseline).
 
 ## Instructing

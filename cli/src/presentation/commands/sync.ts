@@ -4,8 +4,8 @@ import {
   NoManifestError,
   SyncFailedError,
   UserScopeFilterUnsupportedError,
-} from "../../kernel/errors.js";
-import type { AiToolId, ToolId } from "../../kernel/tool.js";
+} from "../../shared/domain/errors.js";
+import type { AiToolId, ToolId } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printActivationOutcome,

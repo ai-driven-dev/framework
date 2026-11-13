@@ -1,9 +1,9 @@
 import { existsSync, realpath } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
-import { isAbsent } from "../../../kernel/reading/text-file.js";
 import type { LocatedDirectory, RepositoryLocator } from "../domain/ports/repository-locator.js";
 import { type CloneIdentityReader, readCloneIdentity } from "./consent/clone-identity-reader.js";
+import { isAbsent } from "./reading/text-file.js";
 import { runGit } from "./run-git.js";
 
 // `native` so Windows hands back the long, correctly cased name, not an 8.3 one.

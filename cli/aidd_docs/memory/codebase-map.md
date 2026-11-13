@@ -38,7 +38,8 @@ src/
 │   │   │   ├── formats/
 │   │   │   ├── manifest/
 │   │   │   ├── plugins/
-│   │   │   └── ports/
+│   │   │   ├── ports/
+│   │   │   └── reading/    # the home directory a use case resolves when none is given
 │   │   └── infrastructure/
 │   │       └── assets/    # configs inlined at build time, schemas copied beside the binary
 │   ├── recipes/    # checking a recipe's structure, examples and local links
@@ -96,6 +97,7 @@ src/
 │   │       ├── git/    # the environment a git child process runs in
 │   │       ├── identity/    # the identity file in the telemetry dir
 │   │       ├── legacy/    # the table of ids an earlier version gave repositories, beside the ledger
+│   │       ├── reading/    # reading a text file safely, for the stores under the telemetry dir
 │   │       ├── left-out/    # what ingests measured and could not store, by hash, beside the ledger
 │   │       ├── storage/    # the owner-only private storage under the telemetry dir
 │   │       ├── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings; the clone's consent in git config is `git-consent-adapter.ts`, beside this folder
@@ -112,11 +114,10 @@ src/
 │       ├── domain/
 │       ├── infrastructure/
 │       └── ports/
-├── kernel/    # old home of the shared vocabulary, receives no new file. Imports no context
-│   ├── materialization/    # where content lands and how its links follow
-│   ├── ports/
-│   └── reading/    # getting at a file's location and its content safely
-├── shared/    # technology ports and their adapters. Imports no context
+├── shared/    # what two or more contexts need. Imports no context
+│   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
+│   │   ├── materialization/    # where content lands and how its links follow
+│   │   └── reading/    # getting at a file's location and its content safely
 │   ├── infrastructure/    # adapters of the shared ports, imported by the composition root only
 │   └── ports/    # a technology port two or more contexts need
 └── presentation/    # everything that talks to a human — depends on contexts, never the reverse
@@ -131,8 +132,7 @@ src/
 ## Areas
 
 - `src/composition/`: the wiring module of each migrated context. Only the composition root and `cli.ts` import it; commands receive its factories typed by `presentation/deps.ts`.
-- `src/shared/`: technology ports and their adapters that two or more contexts need. No context import.
-- `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
+- `src/shared/`: the vocabulary, technology ports and adapters that two or more contexts need. No context import; a module imported by fewer than two contexts does not belong (`earned-sharing.arch.test.ts`).
 - `src/contexts/`: the nine bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.

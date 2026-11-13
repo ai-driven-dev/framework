@@ -11,7 +11,7 @@ import type {
 import {
   InvalidPluginManifestError,
   InvalidPluginNameError,
-} from "../../../../src/kernel/errors.js";
+} from "../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";

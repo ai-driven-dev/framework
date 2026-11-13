@@ -1,5 +1,5 @@
 import { join, relative } from "node:path";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,

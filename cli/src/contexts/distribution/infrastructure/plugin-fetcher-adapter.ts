@@ -2,16 +2,16 @@ import { execFile as execFileCb } from "node:child_process";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { simpleGit } from "simple-git";
-import { PluginFetchError } from "../../../kernel/errors.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
+import { PluginFetchError } from "../../../shared/domain/errors.js";
 import type {
   PluginSource,
   PluginSourceGitHub,
   PluginSourceGitSubdir,
   PluginSourceNpm,
   PluginSourceUrl,
-} from "../../../kernel/source.js";
+} from "../../../shared/domain/source.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { TokenProvider } from "../../auth/contract/token-provider.js";
 import type { PluginFetcher, PluginFetchOptions } from "../ports/plugin-fetcher.js";
 import { injectTokenIntoUrl, withoutCredentials } from "./inject-token.js";

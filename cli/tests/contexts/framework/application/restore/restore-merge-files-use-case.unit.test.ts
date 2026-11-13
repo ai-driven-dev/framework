@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RestoreMergeFilesUseCase } from "../../../../../src/contexts/framework/application/restore/restore-merge-files-use-case.js";
-import { InputRequiredError } from "../../../../../src/kernel/errors.js";
-import { InstallationFile } from "../../../../../src/kernel/file.js";
-import type { MergeFileEntry } from "../../../../../src/kernel/merge.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
+import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import type { MergeFileEntry } from "../../../../../src/shared/domain/merge.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   KeepPrompter,

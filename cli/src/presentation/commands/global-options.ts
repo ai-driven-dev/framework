@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import type { MarketplaceScope } from "../../kernel/scope.js";
+import type { MarketplaceScope } from "../../shared/domain/scope.js";
 import { CLIOutput } from "../output.js";
 
 export interface GlobalOptions {

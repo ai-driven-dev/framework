@@ -1,5 +1,5 @@
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { AiToolId } from "../../../../kernel/tool.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 
 /** Release only this project's claim; global files remain until explicit user cleanup. */

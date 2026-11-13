@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { ValidateRecipesResult } from "../../contexts/recipes/application/validate-recipes.js";
-import type { ToolId } from "../../kernel/tool.js";
+import type { ToolId } from "../../shared/domain/tool.js";
 import type { CLIOutput } from "../output.js";
 
 interface ScopedFailure {

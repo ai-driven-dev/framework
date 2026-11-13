@@ -1,24 +1,23 @@
 import { dirname, join } from "node:path";
-import { NativePluginCliError } from "../../../kernel/errors.js";
+import { NativePluginCliError } from "../../../shared/domain/errors.js";
 import {
   isMergeContentEmpty,
   type MergeFileEntry,
   removeEntriesFromJson,
-} from "../../../kernel/merge.js";
+} from "../../../shared/domain/merge.js";
 import {
   AIDD_CONFIG_FILENAME,
   AIDD_DIR,
   AIDD_MARKETPLACES_FILENAME,
   PLUGIN_CACHE_SUBDIR,
-} from "../../../kernel/paths.js";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
-import type { Logger } from "../../../kernel/ports/logger.js";
-import type { Prompter } from "../../../kernel/ports/prompter.js";
-import { resolveHomeDir } from "../../../kernel/reading/home-dir.js";
-import type { MarketplaceScope } from "../../../kernel/scope.js";
-import type { AiToolId, ToolId } from "../../../kernel/tool.js";
-import { isAiToolId } from "../../../kernel/tool.js";
+} from "../../../shared/domain/paths.js";
+import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
+import { isAiToolId } from "../../../shared/domain/tool.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../shared/ports/file-writer.js";
+import type { Logger } from "../../../shared/ports/logger.js";
+import type { Prompter } from "../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../distribution/ports/marketplace-registry.js";
 import type { HostActions } from "../../host-registration/contract/host-actions.js";
@@ -33,6 +32,7 @@ import { aiddGitignoreEntries } from "../domain/manifest-gitignore-entries.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../domain/ports/user-source-references.js";
+import { resolveHomeDir } from "../domain/reading/home-dir.js";
 import type { GitignoreUseCase } from "./gitignore-use-case.js";
 import {
   assertNoForeignNativeRefs,

@@ -25,7 +25,7 @@ describe("buildTargetModesOf", () => {
 });
 
 describe("supportedBuildTargets", () => {
-  it("lists the registered targets in the kernel tool order, which the usage message prints", () => {
+  it("lists the registered targets in the shared tool order, which the usage message prints", () => {
     expect(supportedBuildTargets(catalogOf())).toEqual([
       "claude",
       "cursor",

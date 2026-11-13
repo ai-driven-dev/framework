@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
-import type { PluginSource } from "../../../src/kernel/source.js";
-import { serializePluginSource } from "../../../src/kernel/source.js";
+import type { PluginSource } from "../../../src/shared/domain/source.js";
+import { serializePluginSource } from "../../../src/shared/domain/source.js";
 
 /** Pure in-memory MarketplaceTrustStore, one set per project, keyed by MD5 of the canonical serialized source. */
 export class InMemoryMarketplaceTrustStore implements MarketplaceTrustStore {

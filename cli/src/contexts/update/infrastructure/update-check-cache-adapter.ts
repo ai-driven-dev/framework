@@ -1,6 +1,6 @@
 import { join } from "node:path";
-import type { FileReader } from "../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../kernel/ports/file-writer.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { CheckEntry } from "../domain/update-notice.js";
 import type { UpdateCheckCache } from "../ports/update-check-cache.js";
 

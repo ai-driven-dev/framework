@@ -2,16 +2,16 @@ import {
   ActiveMachineDependentsError,
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,
-} from "../../../../kernel/errors.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import { resolveHomeDir } from "../../../../kernel/reading/home-dir.js";
+} from "../../../../shared/domain/errors.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   type Marketplace,
 } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import { resolveHomeDir } from "../../domain/reading/home-dir.js";
 import type {
   MarketplaceRemoveOptions,
   MarketplaceRemoveResult,

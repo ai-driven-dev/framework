@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { CursorProjectScopeUnsupportedError } from "../../../../../../src/kernel/errors.js";
+import { CursorProjectScopeUnsupportedError } from "../../../../../../src/shared/domain/errors.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import {
   errnoError,

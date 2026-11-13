@@ -3,7 +3,7 @@ import {
   CatalogFetchAuthError,
   CatalogFetchError,
   HttpNotFoundError,
-} from "../../../kernel/errors.js";
+} from "../../../shared/domain/errors.js";
 import type { HttpGet } from "../../../shared/ports/http-get.js";
 import type { TokenProvider } from "../../auth/contract/token-provider.js";
 import type { ReleaseLister } from "../ports/release-lister.js";

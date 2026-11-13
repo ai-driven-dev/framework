@@ -1,5 +1,5 @@
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
 
 /** Resolve an existing file or its nearest existing parent before mutating project-local content. */
 export async function assertProjectPathWithinRoot(

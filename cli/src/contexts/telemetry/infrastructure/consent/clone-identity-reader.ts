@@ -1,6 +1,6 @@
 import { stat } from "node:fs/promises";
-import { isAbsent } from "../../../../kernel/reading/text-file.js";
 import { type CloneIdentity, identityFromStat } from "../../domain/consent/clone-identity.js";
+import { isAbsent } from "../reading/text-file.js";
 
 /** What the directory at a path is now: see `readCloneIdentity`. */
 export type CloneIdentityReader = (path: string) => Promise<CloneIdentity | "unidentified" | null>;

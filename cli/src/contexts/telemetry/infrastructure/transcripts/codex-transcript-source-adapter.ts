@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { Duplex } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import * as zlib from "node:zlib";
-import { isErrnoException } from "../../../../kernel/reading/json-file.js";
+import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
 import type { TranscriptRead, TranscriptSource } from "../../domain/ports/transcript-source.js";
 import type { TranscriptPosition } from "../../domain/transcript-position.js";
 import {

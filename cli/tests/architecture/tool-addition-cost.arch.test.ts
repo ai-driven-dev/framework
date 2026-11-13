@@ -19,7 +19,7 @@ function toolIds(files: readonly string[]): string[] {
 }
 
 function isAllowed(file: string, ids: readonly string[]): boolean {
-  if (file === "src/kernel/tool.ts") return true;
+  if (file === "src/shared/domain/tool.ts") return true;
   if (file === "src/contexts/tools/domain/profiles/registered-profiles.ts") return true;
   return ids.some((id) => file.startsWith(`src/contexts/tools/domain/profiles/${id}/`));
 }

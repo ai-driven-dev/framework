@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { expectRatchet, read, sourceFiles } from "./helpers.js";
 
-const CATALOG = "src/kernel/errors.ts";
+const CATALOG = "src/shared/domain/errors.ts";
 
 function declaredErrorNames(source: string): string[] {
   return [...source.matchAll(/^export class (\w+) extends/gm)].map((match) => match[1] as string);

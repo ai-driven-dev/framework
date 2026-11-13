@@ -3,15 +3,15 @@ import {
   FlatTargetExistsError,
   McpConfigError,
   OutDirNotDirectoryError,
-} from "../../../../kernel/errors.js";
-import { parseFrontmatter, serializeFrontmatter } from "../../../../kernel/markdown.js";
-import { flatMcpKeyPrefix } from "../../../../kernel/materialization/flat-paths.js";
-import { rewritePluginRootInJson } from "../../../../kernel/materialization/plugin-root-path-rewrite.js";
-import { rewriteRelativeLinks } from "../../../../kernel/materialization/relative-link-rewrite.js";
-import type { AssetProvider } from "../../../../kernel/ports/asset-provider.js";
-import type { FileReader } from "../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
-import type { Logger } from "../../../../kernel/ports/logger.js";
+} from "../../../../shared/domain/errors.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../../shared/domain/markdown.js";
+import { flatMcpKeyPrefix } from "../../../../shared/domain/materialization/flat-paths.js";
+import { rewritePluginRootInJson } from "../../../../shared/domain/materialization/plugin-root-path-rewrite.js";
+import { rewriteRelativeLinks } from "../../../../shared/domain/materialization/relative-link-rewrite.js";
+import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Logger } from "../../../../shared/ports/logger.js";
 import type {
   ArtifactContract,
   ToolBuildContract,

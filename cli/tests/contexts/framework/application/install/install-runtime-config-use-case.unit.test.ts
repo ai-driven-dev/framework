@@ -6,9 +6,9 @@ import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/p
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
-import { InstallationFile } from "../../../../../src/kernel/file.js";
-import { extractMergeEntries } from "../../../../../src/kernel/merge.js";
-import type { AssetProvider } from "../../../../../src/kernel/ports/asset-provider.js";
+import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { extractMergeEntries } from "../../../../../src/shared/domain/merge.js";
+import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import {
   buildUnitDeps,
   initProject,

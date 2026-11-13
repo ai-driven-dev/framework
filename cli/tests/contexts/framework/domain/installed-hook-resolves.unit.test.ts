@@ -12,7 +12,7 @@ import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencod
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { rewritePluginRootToken } from "../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/kernel/file.js";
+import { FileHash } from "../../../../src/shared/domain/file.js";
 import { hooksAcceptanceOf, nativeOf } from "../../tools/testing/plugin-mode.js";
 
 /**

@@ -3,8 +3,8 @@ import {
   BulkConflictState,
   ResolveUpdateDecisionUseCase,
 } from "../../../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
-import { InputRequiredError } from "../../../../../src/kernel/errors.js";
-import type { Prompter } from "../../../../../src/kernel/ports/prompter.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
+import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
 
 function buildFakePrompter(
   resolveConflictBulkReturn: "keep" | "overwrite" | "overwrite-all" | "skip-all"

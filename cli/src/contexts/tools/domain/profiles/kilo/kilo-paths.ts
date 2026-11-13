@@ -1,7 +1,7 @@
 /** Paths Kilo scans in a project. Kept apart from the profile so the build contract and the
  * later hooks bridge share one declaration rather than duplicate Kilo's plugin layout. */
 
-import { KiloDualConfigError } from "../../../../../kernel/errors.js";
+import { KiloDualConfigError } from "../../../../../shared/domain/errors.js";
 import type { McpOutputPathCandidates } from "../../sections/mcp-section.js";
 
 export const KILO_DIRECTORY = ".kilo/";
