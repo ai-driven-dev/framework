@@ -96,7 +96,7 @@ function cellOf(value, { variant, labels, sampled }) {
   const text = String(value ?? "");
   const tones = text
     .split(COLOUR)
-    .map((part, at) => (at % 2 ? `<span class="tone"><i class="swatch" style="background: ${part}"></i><code>${part}</code></span>` : escaped(part)))
+    .map((part, at, parts) => (at % 2 ? `<span class="tone"><i class="swatch" style="background: ${part}"></i><code>${part}</code></span>` : at > 0 && at < parts.length - 1 && /^[\s,;]*$/.test(part) ? "" : escaped(part)))
     .join("");
   const look = text.split(COLOUR).length > 1 ? lookOf(variant) : null;
   const sample = look && !sampled.done ? ((sampled.done = true), `<span class="sample" style="background: ${look.accent}; color: ${look.background}">${escaped(labels.sample)}</span>`) : "";
@@ -225,7 +225,7 @@ const STYLE = `
 .preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); margin: 0 0 var(--s4); }
 .screen-pick { font-size: var(--t-sm); color: var(--muted); }
 .preview-note { margin: 0; color: var(--muted); font-size: var(--t-sm); }
-.axes tr[data-same] { opacity: 0.5; }
+.axes tr[data-same] th { opacity: 0.5; }
 .same-tag { font-weight: 400; font-style: italic; }
 .large { align-self: flex-start; }
 #large { padding: 0; border: 1px solid var(--line-strong); border-radius: var(--r3); max-inline-size: 96vw; background: var(--surface); }

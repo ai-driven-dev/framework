@@ -385,6 +385,18 @@ describe("aidd-ui showcase sets", () => {
       assert.match(cell, /^ink .* on .*, plain<span class="sample"/);
     });
 
+    it("drops the bare commas between swatches, keeps the words", () => {
+      const [cell] = cellsOf([["Colours", "#111111, #222222 ; #333333"]]);
+      assert.match(cell, /<\/span><span class="tone">[^]*<\/span><span class="tone">/);
+      assert.doesNotMatch(cell.replace(/<span class="sample"[^]*$/, ""), /<\/span>[,; ]+<span/);
+    });
+
+    it("dims only the name of an identical row, never its swatches", () => {
+      const style = require(path.join(LIB, "variants.cjs")).STYLE;
+      assert.match(style, /\.axes tr\[data-same\] th \{[^}]*opacity/);
+      assert.doesNotMatch(style, /\.axes tr\[data-same\] \{[^}]*opacity/);
+    });
+
     it("leaves a cell without colour as escaped text", () => {
       assert.deepEqual(cellsOf([["Tone", "<b>calm</b> #12345"]]), ["&lt;b&gt;calm&lt;/b&gt; #12345"]);
     });
