@@ -21,7 +21,7 @@ const LIMITED_DIRS = ["actions", "references"];
 
 const FENCE = /^\s*(```|~~~)/u;
 const INLINE_CODE = /`[^`\n]*`/gu;
-const COMMENT = /<!--[\s\S]*?-->/gu;
+const COMMENT = /<!--[\s\S]*?--!?>/gu;
 const LINK = /\[[^\]\n]*\]\(([^)\s#]+)(?:#[^)]*)?\)/gu;
 const ACTION_NODE = /\["(actions\/[^"]+\.md)"\]/gu;
 const BOX = /([\w-]+)\["([^"]*)"\]/gu;
@@ -253,7 +253,7 @@ function check(skill) {
 function format(skill, errors) {
   if (errors.length === 0) return "";
   const where = (finding) => `${path.join(skill, finding.file)}:${finding.line}`;
-  const quoted = (finding) => (finding.excerpt === undefined ? "" : ` "${finding.excerpt.replace(/"/gu, '\\"')}"`);
+  const quoted = (finding) => (finding.excerpt === undefined ? "" : ` ${JSON.stringify(finding.excerpt)}`);
   const counted = (count, noun) => `${count} ${noun}${count === 1 ? "" : "s"}`;
   return [
     `${path.basename(path.resolve(skill))}: ${counted(errors.length, "error")}`,

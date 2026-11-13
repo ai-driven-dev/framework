@@ -1,6 +1,6 @@
 ---
 name: 04-skill-generate
-description: Generates a skill across the host AI tools, when the user wants to create, scaffold or refactor one.
+description: Creates or updates a skill across the host AI tools, when the user wants to create a skill, or to refactor, rewrite or reformat an existing one.
 argument-hint: request
 ---
 

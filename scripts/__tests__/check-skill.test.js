@@ -242,6 +242,19 @@ describe("skill check", () => {
     expectError("slot");
   });
 
+  it("slot: a comment closed the way HTML also accepts, --!>", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric.\n<!-- answer briefly --!>");
+    expectError("slot");
+  });
+
+  it("quotes an excerpt so it reads back exactly, a backslash before a quote included", () => {
+    const line = '1. Answer **a\\"b**.';
+    mutate("actions/02-second.md", "1. Answer per the rubric.", line);
+    const quoted = run().out.match(/ bold (".*") => /u);
+    assert.ok(quoted);
+    assert.equal(JSON.parse(quoted[1]), line);
+  });
+
   it("slot: a template slot left unfilled outside an asset", () => {
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. <step>");
     expectError("slot");
