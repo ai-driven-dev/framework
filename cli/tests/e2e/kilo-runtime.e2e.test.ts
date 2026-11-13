@@ -10,11 +10,10 @@ import { KILO_BIN, KILO_ENV, KILO_SHELL } from "./helpers/kilo-cli.js";
 import { createTestEnv, execFileAsync, runCli, sandboxedEnv } from "./helpers.js";
 
 const describeKiloRuntime = process.env.KILO_RUNTIME_SMOKE === "1" ? describe : describe.skip;
-// Windows CI has measured ~53s for skill discovery and ~48s for the MCP fixture's
-// agent discovery. It reaches the model turn at ~117s, leaving no room in Vitest's
-// 120s default budget for the 60s model-turn limit and final assertions/cleanup.
-// 300s gives those measured phases room while retaining bounded child processes.
-const KILO_RUNTIME_TIMEOUT_MS = process.platform === "win32" ? 300_000 : 120_000;
+// Windows and macOS can need more time for artifact discovery and the full
+// scenario. Keep Linux at 120s and allow 300s elsewhere while child operations
+// remain individually bounded.
+const KILO_RUNTIME_TIMEOUT_MS = process.platform === "linux" ? 120_000 : 300_000;
 const KILO_DISCOVERY_TIMEOUT_MS = 90_000;
 const KILO_QUICK_COMMAND_TIMEOUT_MS = 30_000;
 const KILO_CLEANUP_TIMEOUT_MS = 10_000;
