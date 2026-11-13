@@ -4,7 +4,7 @@
  * The list is the fence, not a description of what happens to be used.
  */
 import { describe, expect, it } from "vitest";
-import { expectRatchet, HELD_BY_BIOME, importersByFile, sourceFiles } from "./helpers.js";
+import { expectRatchet, HELD_BY_BIOME, importersByFile, read, sourceFiles } from "./helpers.js";
 
 /** Each context's declared public surface, one entry per context. */
 const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
@@ -121,14 +121,34 @@ function contextOf(file: string): string | null {
 }
 
 /**
- * The composition root wires every context by construction — a profile registers itself
- * through a side-effect import, an adapter must be named to be instantiated — so the whole
- * `composition/` directory is exempt rather than callers
- * this rule tries to catch. `presentation/deps.ts` is its driving port: it names the type of each
- * use case the composition root hands the commands and carries no logic of its own.
+ * The composition root wires every context by construction (a profile registers itself
+ * through a side-effect import, an adapter must be named to be instantiated), so the whole
+ * `composition/` directory is exempt rather than a caller this rule tries to catch.
  */
 function isCompositionRoot(file: string): boolean {
-  return file.startsWith("src/composition/") || file === "src/presentation/deps.ts";
+  return file.startsWith("src/composition/");
+}
+
+/** The driving port names the type of each member the commands read, and nothing else. */
+const DRIVING_PORT = "src/presentation/deps.ts";
+
+/** What the driving port may name from a context: an application or contract type, or a port. */
+const DRIVING_PORT_TARGET = /\/(application|contract|ports)\//;
+
+function isDrivingPortEdge(importer: string, target: string): boolean {
+  return importer === DRIVING_PORT && DRIVING_PORT_TARGET.test(target);
+}
+
+/** The context imports of the driving port that are not an `import type` of an allowed target. */
+function drivingPortViolations(source: string): string[] {
+  const found: string[] = [];
+  for (const match of source.matchAll(/^import\s+(type\s+)?[^;]*?from\s+"([^"]+)"/gms)) {
+    const [, typeOnly, specifier] = match;
+    if (!(specifier as string).startsWith("../contexts/")) continue;
+    if (typeOnly === undefined) found.push(`${specifier} is a value import`);
+    else if (!DRIVING_PORT_TARGET.test(specifier as string)) found.push(`${specifier} is no port`);
+  }
+  return found;
 }
 
 function reachesIntoInterior(
@@ -142,7 +162,7 @@ function reachesIntoInterior(
     if (owner === null || !(owner in publicModules)) continue;
     if (publicModules[owner].includes(file)) continue;
     for (const importer of importers.get(file) ?? []) {
-      if (isCompositionRoot(importer)) continue;
+      if (isCompositionRoot(importer) || isDrivingPortEdge(importer, file)) continue;
       if (contextOf(importer) === owner) continue;
       violations.push(`${importer} -> ${file}`);
     }
@@ -155,7 +175,7 @@ const BASELINE: string[] = [];
 
 /**
  * What a context publishes in `contract/` exists for a reader outside it: another context,
- * `presentation/`, `orchestration/` or a runtime service. The composition root does not
+ * `presentation/` or `orchestration/`. The composition root and the driving port do not
  * count, it wires everything. A contract file nobody outside reads is an interior file in the
  * wrong folder, or a surface nobody asked for.
  */
@@ -168,7 +188,8 @@ function orphanContractFiles(
     .filter((file) => {
       const owner = contextOf(file);
       return ![...(importers.get(file) ?? [])].some(
-        (importer) => !isCompositionRoot(importer) && contextOf(importer) !== owner
+        (importer) =>
+          !isCompositionRoot(importer) && importer !== DRIVING_PORT && contextOf(importer) !== owner
       );
     })
     .sort();
@@ -209,6 +230,12 @@ describe("nothing imports a context's interior", () => {
       contextsOnDisk(sourceFiles()),
       "a context with no entry above is skipped entirely by the rule, not held by it"
     ).toEqual(declared);
+  });
+});
+
+describe("the driving port", () => {
+  it("names context types only, by import type, from application, contract or a port", () => {
+    expect(drivingPortViolations(read(DRIVING_PORT))).toEqual([]);
   });
 });
 
@@ -312,6 +339,20 @@ describe("the guard itself", () => {
 
     expect(reachesIntoInterior(files, importers, publicModules)).toEqual([
       "src/application/outsider.ts -> src/contexts/acme/domain/internal.ts",
+    ]);
+  });
+
+  it("reports a value import and a non-port target in the driving port, and clears an import type of a use case", () => {
+    const source = [
+      'import type { A } from "../contexts/acme/application/a.js";',
+      'import { B } from "../contexts/acme/application/b.js";',
+      'import type { C } from "../contexts/acme/domain/c.js";',
+      'import type { D } from "../kernel/d.js";',
+    ].join("\n");
+
+    expect(drivingPortViolations(source)).toEqual([
+      "../contexts/acme/application/b.js is a value import",
+      "../contexts/acme/domain/c.js is no port",
     ]);
   });
 

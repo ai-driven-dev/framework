@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { registeredAiConfig } from "../../contexts/tools/testing/catalog-of.js";
-import { manifestRepositoryLoading } from "../../helpers/ports/partial-ports.js";
+import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const doctorAll = vi.fn();
 const statusAll = vi.fn();

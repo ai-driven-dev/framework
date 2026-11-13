@@ -5,10 +5,9 @@ import { printScopedFailures } from "../display/framework-display.js";
 import type { CLIOutput } from "../output.js";
 
 /** What this command reads of the graph. */
-export type SyncActivationKeys = "marketplaceSyncSettingsUseCase";
+type SyncActivationKeys = "marketplaceSyncSettingsUseCase";
 
-/** Named structurally rather than imported: `marketplace-sync-settings-use-case.ts` is
- * internal to `framework`, and every real caller's result already satisfies this shape. */
+/** Named structurally: every real caller's result already satisfies this shape. */
 interface SyncActivationOutcome {
   readonly errors: readonly { scope: string; message: string }[];
 }

@@ -6,7 +6,7 @@ import {
   conflictsOf,
   type ReportFilters,
 } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
-import { prompterAnswering } from "../../helpers/ports/partial-ports.js";
+import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const ingest = vi.fn();
 const declare = vi.fn();

@@ -7,7 +7,7 @@ import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flo
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
-import { manifestRepositoryLoading } from "../../helpers/ports/partial-ports.js";
+import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const resolveSourceIfNeeded = vi.fn();
 const registerIfPresent = vi.fn();

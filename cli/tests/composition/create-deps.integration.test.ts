@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createDeps, createMenuDeps } from "../../src/composition/framework.js";
+import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/framework.js";
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../src/kernel/tool.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
@@ -54,6 +54,14 @@ describe("createDeps", () => {
     const graph = await createDeps(root, { verbose: false }, undefined, first);
 
     expect(await createDeps(root, { verbose: false }, undefined, first)).toBe(graph);
+    expect(await createDeps(root, { verbose: false }, undefined, catalogOf())).not.toBe(graph);
+  });
+
+  it("binds the catalog the commands were registered with to the graph it builds", async () => {
+    const bound = catalogOf();
+    const graph = await bindCatalog(bound)(root, { verbose: false }, undefined);
+
+    expect(await createDeps(root, { verbose: false }, undefined, bound)).toBe(graph);
     expect(await createDeps(root, { verbose: false }, undefined, catalogOf())).not.toBe(graph);
   });
 

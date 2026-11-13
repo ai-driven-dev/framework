@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import { manifestRepositoryLoading, prompterAnswering } from "../../helpers/ports/partial-ports.js";
+import { manifestRepositoryLoading, prompterAnswering } from "../../helpers/ports/index.js";
 
 const loadManifest = vi.fn();
 const promptSelect = vi.fn();

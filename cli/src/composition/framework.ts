@@ -66,7 +66,7 @@ import { UserSourceReferencesAdapter } from "../contexts/framework/infrastructur
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import type { Logger } from "../kernel/ports/logger.js";
-import type { Deps, GlobalOptions, MenuDeps } from "../presentation/deps.js";
+import type { Deps, DepsFactory, FactoryOptions, MenuDeps } from "../presentation/deps.js";
 import { CLIOutput } from "../presentation/output.js";
 import { PluginPickUseCase } from "../presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../presentation/prompts/setup-plugins-prompt-use-case.js";
@@ -100,9 +100,14 @@ export function createMenuDeps(projectRoot: string): MenuDeps {
   };
 }
 
+/** The factory the commands receive: it binds the catalog the commands were registered with. */
+export function bindCatalog(tools: ToolCatalog): DepsFactory {
+  return (projectRoot, options, output) => createDeps(projectRoot, options, output, tools);
+}
+
 export async function createDeps(
   projectRoot: string,
-  options: GlobalOptions,
+  options: FactoryOptions,
   output: CLIOutput | undefined,
   tools: ToolCatalog
 ): Promise<Deps> {

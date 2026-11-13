@@ -12,7 +12,7 @@ Organise by bounded context, never by layer.
 
 - Allowed edges live in `tests/architecture/helpers.ts` (`ALLOWED`).
 - Arrows run one way, toward `shared/` and the kernel.
-- `presentation` and `runtime` depend on any context.
+- `presentation` depends on any context.
 - A context depending on either is `BASELINE` debt; it only shrinks.
 - `composition/` wires any context; only the composition root imports it.
 - `context-graph.arch.test.ts` fails any other edge.

@@ -2,14 +2,15 @@ import { Command } from "commander";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const printNotice = vi.fn(async () => ({ lines: ["CLI update available"] }));
-const refresh = vi.fn(async () => ({}));
+const refresh = vi.fn(async () => ({ checkedAt: 0, latest: "0.0.0" }));
 const warn = vi.fn();
 const debug = vi.fn();
-const createDeps = vi.fn();
+const info = vi.fn();
 
 const { registerUpdateNoticeHooks } = await import(
   "../../../src/presentation/hooks/update-notice-hooks.js"
 );
+const createDeps = vi.fn<Parameters<typeof registerUpdateNoticeHooks>[1]>();
 
 /** Runs `path` as nested commands (`marketplace list` is a `list` under `marketplace`). */
 async function run(path: string, extraArgs: string[] = []): Promise<void> {
@@ -30,7 +31,7 @@ beforeEach(() => {
   createDeps.mockImplementation(async () => ({
     printUpdateNotice: { execute: printNotice },
     refreshUpdateCheck: { execute: refresh },
-    logger: { warn, debug },
+    logger: { warn, debug, info },
   }));
 });
 

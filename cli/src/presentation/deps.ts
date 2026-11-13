@@ -65,7 +65,7 @@ import type { CLIOutput } from "./output.js";
 import type { SetupPluginsPromptUseCase } from "./prompts/setup-plugins-prompt-use-case.js";
 import type { SetupToolsPromptUseCase } from "./prompts/setup-tools-prompt-use-case.js";
 
-export interface GlobalOptions {
+export interface FactoryOptions {
   verbose: boolean;
   token?: string;
 }
@@ -171,7 +171,7 @@ export interface MenuDeps {
  * reaches the composition root itself. */
 export type DepsFactory = (
   projectRoot: string,
-  options: GlobalOptions,
+  options: FactoryOptions,
   output: CLIOutput | undefined
 ) => Promise<Deps>;
 

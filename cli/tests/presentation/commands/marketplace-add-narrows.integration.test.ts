@@ -4,7 +4,7 @@ import { Command } from "commander";
 import { describe, expect, it, vi } from "vitest";
 
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { prompterAnswering } from "../../helpers/ports/partial-ports.js";
+import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const marketplaceSyncExecute = vi
   .fn()

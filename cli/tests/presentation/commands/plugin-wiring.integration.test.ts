@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AI_TOOL_IDS } from "../../../src/kernel/tool.js";
 import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
-import { prompterAnswering } from "../../helpers/ports/partial-ports.js";
+import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const pluginRemove = vi.fn();
 const pluginList = vi.fn();

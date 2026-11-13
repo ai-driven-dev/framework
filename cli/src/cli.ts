@@ -1,9 +1,6 @@
 import { platform } from "node:os";
 import { Command } from "commander";
-import {
-  createDeps as createFrameworkDeps,
-  createMenuDeps as createFrameworkMenuDeps,
-} from "./composition/framework.js";
+import { bindCatalog, createMenuDeps as createFrameworkMenuDeps } from "./composition/framework.js";
 import { wireTools } from "./composition/tools.js";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
 import { registerCleanCommand } from "./presentation/commands/clean.js";
@@ -30,8 +27,7 @@ const currentVersion = new CurrentVersionAdapter().get();
 const tools = wireTools();
 
 // The composition edge: commands receive these factories and never import the wiring.
-const createDeps: DepsFactory = (projectRoot, options, output) =>
-  createFrameworkDeps(projectRoot, options, output, tools);
+const createDeps: DepsFactory = bindCatalog(tools);
 const createMenuDeps: MenuDepsFactory = createFrameworkMenuDeps;
 
 const program = new Command();

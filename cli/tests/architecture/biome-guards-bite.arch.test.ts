@@ -455,7 +455,7 @@ describe("the guard itself", () => {
     }
   });
 
-  it("flags a context's infrastructure, and presentation reaching shared/infrastructure, and not the composition root", () => {
+  it("flags a context's infrastructure and presentation reaching shared/infrastructure, never the composition root", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
 
@@ -543,7 +543,7 @@ describe("the guard itself", () => {
     );
   });
 
-  it("flags and distribution reaching framework", () => {
+  it("flags every distribution layer reaching framework", () => {
     const findings = biomeFindings(planted);
     for (const file of distributionReaches()) {
       expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedImports`);
