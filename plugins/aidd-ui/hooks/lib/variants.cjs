@@ -79,26 +79,50 @@ function lookOf(variant) {
   return { background: colours[0], text: colours[1], accent: colours[2] ?? colours[1], font: family ? FAMILIES[family] : null, sizes: sizes ?? null };
 }
 
-/** A wireframe dressed in a look by element styles alone: its structure stays as written. */
+const STATE_ATTRIBUTE = /data-state="([^"]*)"/g;
+
+/** The state a screen opens on: its default, else the first it names. Null when it names none. */
+function firstStateOf(html) {
+  const states = [...html.matchAll(STATE_ATTRIBUTE)].map((match) => match[1]);
+  return states.includes("default") ? "default" : (states[0] ?? null);
+}
+
+/** A wireframe dressed in a look by element styles alone: its structure stays as written, only its first state shown. */
 function dressedOf(html, { background, text, accent, font, sizes }) {
   const [body, heading, button] = sizes ?? [];
   const bodySize = body ? ` font-size: ${body}px;` : "";
   const headingSize = heading ? ` h1, h2 { font-size: ${heading}px; }` : "";
   const buttonSize = button ? ` min-height: ${button}px;` : "";
-  const style = `<style>body { background: ${background}; color: ${text};${font ? ` font-family: ${font};` : ""}${bodySize} }${headingSize} button { background: ${accent}; color: ${background}; border: 0; padding: 8px 16px; border-radius: 8px; font: inherit;${buttonSize} } textarea, input { background: transparent; color: inherit; border: 1px solid ${accent}; }</style>`;
+  const state = firstStateOf(html);
+  const hide = state === null ? "" : `[data-state]:not([data-state=${JSON.stringify(state)}]) { display: none !important; }`;
+  const style = `<style>${hide}body { background: ${background}; color: ${text};${font ? ` font-family: ${font};` : ""}${bodySize} }${headingSize} button { background: ${accent}; color: ${background}; border: 0; padding: 8px 16px; border-radius: 8px; font: inherit;${buttonSize} } textarea, input { background: transparent; color: inherit; border: 1px solid ${accent}; }</style>`;
   return html.includes("</head>") ? html.replace("</head>", () => `${style}</head>`) : style + html;
 }
 
-/** A render in the frames of each size, each scaled by the script to the width of its column. */
+/** A frame of a document at a size, scaled by the script to the width of its column. */
+const frameOf = ({ variant, path, doc, label, size: [size, width, height] }) => `<figure class="frame"><figcaption>${escaped(label)}</figcaption><div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${variant.name} ${path} ${size}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(doc)}"></iframe></div></figure>`;
+
+/** A render in the frames of each size. */
 function framesOf({ variant, file, tokens, labels }) {
-  const frame = ([size, width, height]) => `<figure class="frame"><figcaption>${labels[size]}</figcaption><div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${variant.name} ${file.path} ${size}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(inlined(file.text, tokens))}"></iframe></div></figure>`;
-  return `<div class="file" data-path="${escaped(file.path)}"><h3><code>${escaped(file.path)}</code></h3><div class="frames">${SIZES.map(frame).join("")}</div></div>`;
+  const doc = inlined(file.text, tokens);
+  return `<div class="file" data-path="${escaped(file.path)}"><h3><code>${escaped(file.path)}</code></h3><div class="frames">${SIZES.map((size) => frameOf({ variant, path: file.path, doc, label: labels[size[0]], size })).join("")}</div></div>`;
+}
+
+const MOBILE = SIZES.find(([size]) => size === "mobile");
+
+/** The one screen a column shows: the first dressed wireframe in a mobile frame, and the document of each
+ * dressed wireframe kept beside it for the select above the columns to switch to. */
+function screenOf({ variant, docs, tokens, labels }) {
+  const [first] = docs;
+  const kept = docs.map((each) => `<template class="screen-doc" data-path="${escaped(each.path)}" data-doc="${escaped(inlined(each.text, tokens))}"></template>`).join("");
+  return `<div class="file screen" data-path="${escaped(first.path)}">${frameOf({ variant, path: first.path, doc: inlined(first.text, tokens), label: labels.mobile, size: MOBILE })}${kept}</div>`;
 }
 
 /** One variant as a column: its name, its intent, its axes, then each of its files. */
 function columnOf({ variant, at, shared, tokens, labels, wireframes, parent }) {
   const look = lookOf(variant);
-  const screens = look && wireframes.length ? wireframes.map((wireframe) => framesOf({ variant, file: { path: wireframe.path, text: dressedOf(wireframe.text, look) }, tokens, labels })) : null;
+  const docs = look && wireframes.length ? wireframes.map((wireframe) => ({ path: wireframe.path, text: dressedOf(wireframe.text, look) })) : null;
+  const screens = docs ? [screenOf({ variant, docs, tokens, labels })] : null;
   const before = new Map(parent?.axes ?? []);
   const changed = (axis, value) => (parent && String(before.get(axis) ?? "").trim() !== String(value ?? "").trim() ? ` data-changed="${escaped(parent.name)}" title="${escaped(filled(labels.changed, { parent: parent.name }))}"` : "");
   const axes = variant.axes.map(([axis, value]) => `<tr><th>${escaped(axis)}</th><td${changed(axis, value)}><button type="button" class="take" data-axis="${escaped(axis)}" data-variant="${escaped(variant.name)}" aria-pressed="false">${cellOf(value)}</button></td></tr>`).join("");
@@ -120,7 +144,8 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
     return `${head}\n<section class="checks"><h2>${labels.checks}</h2><ul>${items.join("")}</ul></section>`;
   }
   const rounds = [...new Set(set.variants.map((variant) => variant.round ?? 1))].sort((a, b) => a - b);
-  const note = wireframes.length && set.variants.some(lookOf) ? `<p class="preview-note">${escaped(labels.preview)}</p>` : "";
+  const options = wireframes.map((wireframe) => `<option value="${escaped(wireframe.path)}">${escaped(wireframe.path)}</option>`).join("");
+  const note = wireframes.length && set.variants.some(lookOf) ? `<div class="preview-bar"><p class="preview-note">${escaped(labels.preview)}</p><label class="screen-pick">${escaped(labels.screen)} <select id="screen-pick">${options}</select></label></div>` : "";
   const roundBody = (round) => {
     const own = set.variants.filter((variant) => (variant.round ?? 1) === round);
     const shared = sharedOf(own);
@@ -161,6 +186,8 @@ const STYLE = `
 .vote[data-verdict="revise"][aria-pressed="true"] { color: var(--revise); }
 .axes .swatch { display: inline-block; inline-size: 14px; block-size: 14px; margin-inline-end: 4px; vertical-align: -2px; }
 .axes td code { margin-inline-end: 6px; }
+.preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s3); margin: 0 0 var(--s4); }
+.screen-pick { font-size: var(--t-sm); color: var(--muted); }
 .preview-note { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 .fulltext > summary { cursor: pointer; font-size: var(--t-sm); font-weight: 600; color: var(--muted); }
 .fulltext[open] > summary { margin-bottom: var(--s3); }
@@ -190,6 +217,13 @@ function fitFrames() {
 }
 fitFrames();
 window.addEventListener("resize", fitFrames);
+const pick = document.getElementById("screen-pick");
+if (pick) pick.addEventListener("change", () => {
+  for (const screen of document.querySelectorAll(".screen")) {
+    const doc = [...screen.querySelectorAll("template.screen-doc")].find((each) => each.dataset.path === pick.value);
+    if (doc) screen.querySelector("iframe").srcdoc = doc.dataset.doc;
+  }
+});
 if (typeof ResizeObserver === "function") new ResizeObserver(fitFrames).observe(document.querySelector("main"));
 `;
 

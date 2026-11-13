@@ -115,7 +115,7 @@ describe("aidd-ui showcase sets", () => {
       const { SCRIPT } = require(path.join(LIB, "variants.cjs"));
       const box = (width, height) => ({ dataset: { width: String(width), height: String(height) }, parentElement: { clientWidth: 500 }, clientWidth: 500, firstElementChild: { style: {} }, style: {} });
       const frames = [box(390, 844), box(1280, 800)];
-      new Function("document", "window", SCRIPT)({ querySelectorAll: () => frames, querySelector: () => ({}) }, { addEventListener() {} });
+      new Function("document", "window", SCRIPT)({ querySelectorAll: () => frames, querySelector: () => ({}), getElementById: () => null }, { addEventListener() {} });
       assert.equal(frames[0].style.width, "392px", "the mobile frame is its own width, not the column's");
       assert.equal(frames[0].firstElementChild.style.transform, "scale(1)");
       assert.equal(frames[1].firstElementChild.style.transform, "scale(0.390625)");
@@ -151,7 +151,7 @@ describe("aidd-ui showcase sets", () => {
 
     it("dresses a wireframe of the project in the colours and the font a variant gives, in place of its preview", () => {
       const frames = framesOf(dressed([["Palette", "nuit #0b0f14, texte #e8eef3, accent #7fd4f2"], ["Chiffres", "monospace télémétrie"]], [file("preview.html", "<html><body><p>PREVIEW</p></body></html>")]));
-      assert.equal(frames.length, 2, "a desktop and a mobile frame");
+      assert.equal(frames.length, 1, "one frame for the variant");
       for (const frame of frames) {
         assert.match(frame, /Results, default/, "the wireframe's own text");
         assert.match(frame, /#0b0f14/);
@@ -190,7 +190,7 @@ describe("aidd-ui showcase sets", () => {
 
       it("gives two variants that differ only by that cell different dressed frames", () => {
         const set = two("texte 16 px, titres 28 px", "texte 21 px, titres 38 px");
-        assert.deepEqual([bodySize(set, 0), bodySize(set, 1)], [["16", "16"], ["21", "21"]]);
+        assert.deepEqual([bodySize(set, 0), bodySize(set, 1)], [["16"], ["21"]]);
       });
 
       it("sets nothing from a cell with fewer than two sizes", () => {
@@ -208,6 +208,44 @@ describe("aidd-ui showcase sets", () => {
       assert.equal(LABELS.fr.preview, "Les aperçus montrent les couleurs, les lettres et les tailles. La mise en page reste celle des maquettes.");
       assert.ok(page(look, "en").indexOf('class="preview-note"') < page(look, "en").indexOf('class="variants"'), "above the frames");
       assert.equal(note(page(dressed([["Palette", "nuit profonde"]]), "fr")), undefined, "the preview fallback says nothing");
+    });
+
+    describe("one screen per column", () => {
+      const look = () => dressed([["Palette", "#0b0f14 #e8eef3 #7fd4f2"]]);
+      const page = (set = look()) => pagesOf([set])["_set-layout.html"];
+      const OTHER = "<!doctype html><html><head></head><body><section data-state=\"default\"><p>Other, default</p></section><section data-state=\"error\"><p>Other, error</p></section></body></html>";
+
+      it("holds one mobile frame per variant, of the first state of the screen only", () => {
+        const [column] = columnsOf(page());
+        assert.equal((column.html.match(/<iframe/g) ?? []).length, 1, "one frame");
+        assert.doesNotMatch(column.html, /data-size="desktop"/);
+        assert.match(column.html, /data-size="mobile"/);
+        const [frame] = framesOf(look());
+        assert.match(frame, /\[data-state\]:not\(\[data-state="default"\]\) \{ display: none !important; \}/);
+        assert.match(frame, /Results, default/);
+      });
+
+      it("opens on the first state of a screen that has no default", () => {
+        put(tmp, `${UI}/wireframes/search-flow.html`, "<html><head></head><body><section data-state=\"results\">R</section><section data-state=\"error\">E</section></body></html>");
+        const [frame] = framesOf(look());
+        assert.match(frame, /\[data-state\]:not\(\[data-state="results"\]\)/);
+      });
+
+      it("lists the dressed wireframes in one select above the columns and holds each screen's document for the switch", () => {
+        put(tmp, `${UI}/wireframes/other.html`, OTHER);
+        const html = page();
+        const select = html.match(/<select id="screen-pick"[^>]*>([\s\S]*?)<\/select>/);
+        assert.ok(select, "a select of the screens");
+        assert.deepEqual([...select[1].matchAll(/<option value="([^"]+)"/g)].map((match) => match[1]), ["other.html", "search-flow.html"]);
+        assert.ok(html.indexOf('id="screen-pick"') < html.indexOf('class="variants"'), "above the columns");
+        const [column] = columnsOf(html);
+        assert.deepEqual([...column.html.matchAll(/<template class="screen-doc" data-path="([^"]+)"/g)].map((match) => match[1]), ["other.html", "search-flow.html"]);
+        assert.match(html, /getElementById\("screen-pick"\)/);
+      });
+
+      it("has no select when the preview is the fallback", () => {
+        assert.doesNotMatch(page(dressed([["Palette", "nuit profonde"]], [file("preview.html", "<html><body>P</body></html>")])), /id="screen-pick"/);
+      });
     });
 
     it("keeps the structure of the wireframe as written", () => {
