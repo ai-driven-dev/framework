@@ -12,9 +12,9 @@ import type {
   PluginSourceNpm,
   PluginSourceUrl,
 } from "../../../kernel/source.js";
-import { injectTokenIntoUrl, withoutCredentials } from "../../../runtime/git/inject-token.js";
 import type { TokenProvider } from "../../auth/contract/token-provider.js";
-import type { PluginFetcher, PluginFetchOptions } from "../domain/ports/plugin-fetcher.js";
+import type { PluginFetcher, PluginFetchOptions } from "../ports/plugin-fetcher.js";
+import { injectTokenIntoUrl, withoutCredentials } from "./inject-token.js";
 
 const execFile = promisify(execFileCb);
 

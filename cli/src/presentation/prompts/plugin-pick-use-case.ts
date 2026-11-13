@@ -1,10 +1,10 @@
-import type { ResolveMarketplaceUseCase } from "../../contexts/distribution/application/resolve-marketplace-use-case.js";
+import type { ResolveMarketplace } from "../../contexts/distribution/application/resolve-marketplace.js";
 import type {
   PluginCatalog,
   PluginCatalogEntry,
 } from "../../contexts/distribution/domain/catalog.js";
 import type { Marketplace } from "../../contexts/distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../contexts/distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../contexts/distribution/ports/marketplace-registry.js";
 import type { PluginAdd } from "../../contexts/framework/application/plugin/plugin-add-use-case.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import {
@@ -35,7 +35,7 @@ export interface PluginPick {
 export class PluginPickUseCase implements PluginPick {
   constructor(
     private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplace: ResolveMarketplaceUseCase,
+    private readonly resolveMarketplace: ResolveMarketplace,
     private readonly pluginAddUseCase: PluginAdd,
     private readonly prompter: Prompter
   ) {}

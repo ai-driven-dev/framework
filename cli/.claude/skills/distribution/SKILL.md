@@ -21,12 +21,12 @@ plugin's own content and how it gets translated are someone else's job once it h
 | Concept | Location |
 |---|---|
 | A marketplace registration (name, source, scope, staleness) | `domain/marketplace.ts`, `domain/marketplace-source-mode.ts` |
-| A cached catalog fetch | `domain/ports/marketplace-cache.ts` |
+| A cached catalog fetch | `ports/marketplace-cache.ts` |
 | The plugin catalog shape | `domain/catalog.ts` (the Claude-shaped parser lives here too) |
 | A reader for a non-Claude catalog shape | `domain/catalog-parsers/` |
-| A port this context's callers hold | `domain/ports/` — registry, cache, trust-store, catalog-repository, fetcher, raw-catalog-fetcher |
+| A port this context's callers hold | `ports/`: registry, cache, trust-store, catalog-repository, fetcher, raw-catalog-fetcher, marketplace-remover, release-lister, repository-visibility |
 | Add / list / refresh / register / resolve / fetch a marketplace source | `application/` |
-| The concrete adapter behind one of the six ports | `infrastructure/` |
+| The concrete adapter behind a port | `infrastructure/` |
 
 ## How
 
@@ -34,10 +34,8 @@ plugin's own content and how it gets translated are someone else's job once it h
   `framework` — `tests/architecture/context-graph.arch.test.ts` enforces the chain
   (`framework → distribution`, plus everything to `kernel`) and fails the build the moment a new
   edge appears. If a change seems to need one, the orchestration belongs to the caller
-  (`framework`), not here — see `BASELINE` in `tests/architecture/helpers.ts` for the one
-  documented exception, `distribution->framework`, and the comment there that explains it
-  (`marketplace add --overwrite` removing before adding), which is framework work that has not
-  yet been moved out.
+  (`framework`), not here. `marketplace add --overwrite` removes the old entry before it fetches
+  the new one; that is pinned, not fixed (`aidd_docs/memory/internal/distribution.md`).
 - A port here follows the port/adapter rule in `.claude/rules/00-architecture/`: interface only, ≤5
   methods, no `null` in the return type unless "not found" is genuinely a normal domain state
   (documented per-port, not assumed).
@@ -54,9 +52,9 @@ plugin's own content and how it gets translated are someone else's job once it h
 
 Nothing outside `contexts/distribution/` may import a module this context has not declared
 public — `tests/architecture/context-boundary.arch.test.ts` holds the list
-(`PUBLIC_MODULES.distribution`). Measured at extraction, ten modules were reached from outside
-and not one was an adapter: the adapters are wired by the composition root
-(`runtime/wiring/distribution.ts`) alone, and stay internal for that reason. A module that
+(`PUBLIC_MODULES.distribution`). Measured, twelve modules are reached from outside
+and not one is an adapter: the adapters are wired by the composition root
+(`composition/distribution.ts`) alone, and stay internal for that reason. A module that
 exposes its own plumbing to a caller outside the composition root is not a leaf context anymore
 — keep new adapters unreachable from outside.
 

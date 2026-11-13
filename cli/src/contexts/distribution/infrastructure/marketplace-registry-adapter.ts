@@ -3,10 +3,8 @@ import { dirname, join } from "node:path";
 import { UnreadableMarketplaceRegistryError } from "../../../kernel/errors.js";
 import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../kernel/paths.js";
 import type { MarketplaceScope } from "../../../kernel/scope.js";
-import { atomicWriteFile } from "../../../runtime/filesystem/atomic-write.js";
-import { userConfigDir } from "../../../runtime/user-config-dir.js";
 import { Marketplace, type MarketplaceData } from "../domain/marketplace.js";
-import type { MarketplaceRegistry } from "../domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
 
 const SCHEMA_VERSION = 1;
 
@@ -38,6 +36,11 @@ function registryEntries(raw: string, path: string): MarketplaceData[] {
 }
 
 export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
+  constructor(
+    private readonly userConfigDir: () => string,
+    private readonly writeFileAtomically: (path: string, text: string) => Promise<void>
+  ) {}
+
   async list(projectRoot: string): Promise<readonly Marketplace[]> {
     const project = await this.read(this.projectPath(projectRoot), "project");
     const user = await this.read(this.userPath(), "user");
@@ -94,7 +97,7 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
   }
 
   private userPath(): string {
-    return join(userConfigDir(), AIDD_MARKETPLACES_FILENAME);
+    return join(this.userConfigDir(), AIDD_MARKETPLACES_FILENAME);
   }
 
   private async read(path: string, scope: MarketplaceScope): Promise<Marketplace[]> {
@@ -113,6 +116,6 @@ export class MarketplaceRegistryAdapter implements MarketplaceRegistry {
       version: SCHEMA_VERSION,
       marketplaces: entries.map((m) => m.toJSON()),
     };
-    await atomicWriteFile(path, JSON.stringify(file, null, 2));
+    await this.writeFileAtomically(path, JSON.stringify(file, null, 2));
   }
 }

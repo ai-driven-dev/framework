@@ -1,11 +1,11 @@
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { ResolveMarketplaceUseCase } from "../../../distribution/application/resolve-marketplace-use-case.js";
+import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
 import {
   isMarketplaceStale,
   type Marketplace,
   STALE_MAX_DAYS_DEFAULT,
 } from "../../../distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
@@ -42,7 +42,7 @@ export class MarketplaceCheckUseCase {
   constructor(
     private readonly manifestRepo: ManifestRepository,
     private readonly registry: MarketplaceRegistry,
-    private readonly resolveMarketplace: ResolveMarketplaceUseCase
+    private readonly resolveMarketplace: ResolveMarketplace
   ) {}
 
   async execute(options: MarketplaceCheckOptions): Promise<MarketplaceCheckResult> {

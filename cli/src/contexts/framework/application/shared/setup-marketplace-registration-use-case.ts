@@ -3,16 +3,16 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { VersionReader } from "../../../../kernel/ports/version-reader.js";
 import type { PluginSource } from "../../../../kernel/source.js";
-import type { LatestReleaseResolver } from "../../../../runtime/self-update/latest-release-resolver.js";
 import type { Environment } from "../../../../shared/ports/environment.js";
 import type { TokenProvider } from "../../../auth/contract/token-provider.js";
-import type { MarketplaceRefresh } from "../../../distribution/application/marketplace-refresh-use-case.js";
+import type { RefreshMarketplace } from "../../../distribution/application/refresh-marketplace.js";
 import type {
-  MarketplaceRegisterFramework,
-  MarketplaceRegisterFrameworkOptions,
-} from "../../../distribution/application/marketplace-register-framework-use-case.js";
+  RegisterFrameworkMarketplace,
+  RegisterFrameworkMarketplaceCommand,
+} from "../../../distribution/application/register-framework-marketplace.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceSourceMode } from "../../../distribution/domain/marketplace-source-mode.js";
+import type { RepositoryVisibility } from "../../../distribution/ports/repository-visibility.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 import type { SetupFlow } from "../../domain/setup-flow.js";
 import type { SetupMarketplaceSourceUseCase } from "../setup/setup-marketplace-source-use-case.js";
@@ -30,13 +30,16 @@ export class SetupMarketplaceRegistrationUseCase {
   constructor(
     private readonly fs: FileReader,
     private readonly setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase,
-    private readonly marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFramework,
-    private readonly marketplaceRefreshUseCase: MarketplaceRefresh,
+    private readonly marketplaceRegisterFrameworkUseCase: Pick<
+      RegisterFrameworkMarketplace,
+      "execute"
+    >,
+    private readonly marketplaceRefreshUseCase: Pick<RefreshMarketplace, "execute">,
     private readonly currentVersionProvider: VersionReader,
     private readonly logger: Logger,
     private readonly environment: Environment,
     private readonly tokenProvider?: TokenProvider,
-    private readonly releaseResolver?: LatestReleaseResolver,
+    private readonly releaseResolver?: RepositoryVisibility,
     /** The registry of projects referencing the shared machine-scope source. Absent skips
      * recording a reference rather than guessing one. */
     private readonly userSourceReferences?: UserSourceReferences
@@ -106,7 +109,7 @@ export class SetupMarketplaceRegistrationUseCase {
   private buildRegisterOptions(
     flow: SetupFlow,
     source: MarketplaceSourceMode
-  ): MarketplaceRegisterFrameworkOptions {
+  ): RegisterFrameworkMarketplaceCommand {
     const pluginSource = this.toPluginSource(source);
     return { projectRoot: flow.projectRoot, pluginSource, force: true };
   }

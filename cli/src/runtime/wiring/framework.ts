@@ -1,16 +1,17 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { wireAuth } from "../../composition/auth.js";
+import { type DistributionDeps, wireDistribution } from "../../composition/distribution.js";
 import { wireHostRegistration } from "../../composition/host-registration.js";
 import { type RecipesDeps, wireRecipes } from "../../composition/recipes.js";
 import { type UpdateDeps, wireUpdate } from "../../composition/update.js";
 import type { CheckStatus } from "../../contexts/auth/application/check-status.js";
 import type { LogIn } from "../../contexts/auth/application/log-in.js";
 import type { LogOut } from "../../contexts/auth/application/log-out.js";
-import { MarketplaceAddUseCase } from "../../contexts/distribution/application/marketplace-add-use-case.js";
-import type { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
-import type { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
-import type { MarketplaceRegisterFrameworkUseCase } from "../../contexts/distribution/application/marketplace-register-framework-use-case.js";
+import { AddMarketplace } from "../../contexts/distribution/application/add-marketplace.js";
+import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
+import type { RefreshMarketplace } from "../../contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../contexts/distribution/application/register-framework-marketplace.js";
 import { CleanUserScopeUseCase } from "../../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -96,10 +97,7 @@ import { FileAdapter } from "../filesystem/file-adapter.js";
 import { HasherAdapter } from "../filesystem/hasher-adapter.js";
 import { PlatformAdapter } from "../platform/platform-adapter.js";
 import { InquirerPrompterAdapter, SilentPrompterAdapter } from "../prompter/prompter-adapter.js";
-import { GitHubReleaseResolverAdapter } from "../self-update/github-release-resolver-adapter.js";
-import type { LatestReleaseResolver } from "../self-update/latest-release-resolver.js";
 import { userConfigDir } from "../user-config-dir.js";
-import { wireDistribution } from "./distribution.js";
 import { type TelemetryDeps, wireTelemetry } from "./telemetry.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 
@@ -128,11 +126,11 @@ interface Deps {
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
   userPluginUpdateUseCase: UserPluginUpdateUseCase;
-  marketplaceAddUseCase: MarketplaceAddUseCase;
-  marketplaceListUseCase: MarketplaceListUseCase;
+  marketplaceAddUseCase: AddMarketplace;
+  marketplaceListUseCase: ListMarketplaces;
   marketplaceRemoveUseCase: MarketplaceRemoveUseCase;
   userMarketplaceRemoveUseCase: UserMarketplaceRemoveUseCase;
-  marketplaceRefreshUseCase: MarketplaceRefreshUseCase;
+  marketplaceRefreshUseCase: RefreshMarketplace;
   marketplaceCheckUseCase: MarketplaceCheckUseCase;
   userSourceReferences: UserSourceReferences;
   installAiToolUseCase: InstallAiToolUseCase;
@@ -140,13 +138,13 @@ interface Deps {
   uninstallIdeUseCase: UninstallIdeUseCase;
   assetProvider: AssetProvider;
   pluginSearchUseCase: PluginSearchUseCase;
-  marketplaceRegisterFrameworkUseCase: MarketplaceRegisterFrameworkUseCase;
+  marketplaceRegisterFrameworkUseCase: RegisterFrameworkMarketplace;
   pluginInstallUseCase: PluginInstallUseCase;
   marketplaceSyncSettingsUseCase: MarketplaceSyncSettingsUseCase;
   doctorUseCase: DoctorUseCase;
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: DoctorRegistrationUseCase;
-  releaseResolver: LatestReleaseResolver;
+  releaseResolver: DistributionDeps["releaseResolver"];
   setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase;
   setupToolsUseCase: SetupToolsUseCase;
   setupPluginsPromptUseCase: SetupPluginsPromptUseCase;
@@ -234,6 +232,7 @@ export async function createDeps(
     pluginFetcher,
     marketplaceRegistry,
     marketplaceTrustStore,
+    releaseResolver,
     resolveMarketplaceUseCase,
     marketplaceListUseCase,
     marketplaceRefreshUseCase,
@@ -271,17 +270,17 @@ export async function createDeps(
   // `marketplace add --overwrite` removes before it adds, and removing deletes installed
   // plugin files — framework work — so the orchestration belongs here rather than pulling
   // framework into distribution's own wiring.
-  const marketplaceAddUseCase = new MarketplaceAddUseCase(
+  const marketplaceAddUseCase = new AddMarketplace(
     marketplaceRegistry,
     marketplaceTrustStore,
     resolveMarketplaceUseCase,
     prompter,
     {
-      execute: (options) => {
-        const removal = { ...options, tools };
-        return options.scope === "user"
+      remove: async (request) => {
+        const removal = { ...request, tools };
+        await (request.scope === "user"
           ? userMarketplaceRemoveUseCase.execute(removal)
-          : marketplaceRemoveUseCase.execute(removal);
+          : marketplaceRemoveUseCase.execute(removal));
       },
     }
   );
@@ -428,7 +427,6 @@ export async function createDeps(
     doctorLayoutUseCase,
     doctorRegistrationUseCase
   );
-  const releaseResolver = new GitHubReleaseResolverAdapter(http, tokenProvider);
   const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
     prompter,
     releaseResolver

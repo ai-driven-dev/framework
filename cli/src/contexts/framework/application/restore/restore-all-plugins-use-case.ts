@@ -4,7 +4,7 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { FileWriter } from "../../../../kernel/ports/file-writer.js";
 import type { Hasher } from "../../../../kernel/ports/hasher.js";
 import type { AiToolId, ToolId } from "../../../../kernel/tool.js";
-import type { PluginFetcher } from "../../../distribution/domain/ports/plugin-fetcher.js";
+import type { PluginFetcher } from "../../../distribution/ports/plugin-fetcher.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";

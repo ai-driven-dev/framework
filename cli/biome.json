@@ -3131,6 +3131,51 @@
       }
     },
     {
+      "includes": ["src/contexts/distribution/ports/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/application/**",
+                      "**/infrastructure/**",
+                      "**/presentation/**",
+                      "**/runtime/**"
+                    ],
+                    "message": "a port must not import application, infrastructure, presentation or runtime"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/tools/**",
+                      "**/telemetry/**",
+                      "**/host-registration/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "distribution knows no tool, no translation and no installation record \u2014 it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/contexts/distribution/application/**/*.ts"],
       "linter": {
         "rules": {
@@ -3145,6 +3190,7 @@
                   },
                   {
                     "group": [
+                      "**/framework/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3158,7 +3204,7 @@
                   },
                   {
                     "group": ["**/manifest.js"],
-                    "message": "distribution reads a marketplace, never framework's installation record \u2014 marketplace-add-use-case.ts's own MarketplaceRemoveUseCase dependency is the one grandfathered exception (context-graph.arch.test.ts BASELINE), not a licence to read manifest.js too"
+                    "message": "distribution reads a marketplace, never framework's installation record, manifest.js included (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3191,11 +3237,12 @@
                       "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
+                      "**/runtime/**",
                       "**/host-registration/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record, and reaches no presentation (context-graph.arch.test.ts). Its runtime imports are the grandfathered exception recorded there as BASELINE, not extended here"
+                    "message": "distribution knows no tool, no translation and no installation record, and reaches no presentation or runtime (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],

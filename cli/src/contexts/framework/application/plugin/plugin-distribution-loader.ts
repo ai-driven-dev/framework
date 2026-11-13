@@ -4,7 +4,7 @@ import type { PluginSource } from "../../../../kernel/source.js";
 import type {
   PluginFetcher,
   PluginFetchOptions,
-} from "../../../distribution/domain/ports/plugin-fetcher.js";
+} from "../../../distribution/ports/plugin-fetcher.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../domain/ports/plugin-distribution-reader.js";

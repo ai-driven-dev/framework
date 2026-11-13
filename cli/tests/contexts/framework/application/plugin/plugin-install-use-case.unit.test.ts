@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, type Mock, vi } from "vitest";
-import type { MarketplaceTrustStore } from "../../../../../src/contexts/distribution/domain/ports/marketplace-trust-store.js";
+import type { MarketplaceTrustStore } from "../../../../../src/contexts/distribution/ports/marketplace-trust-store.js";
 import type { PluginAdd } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-install-use-case.js";

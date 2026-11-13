@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FetchMarketplaceSourceUseCase } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source-use-case.js";
-import { ResolveMarketplaceUseCase } from "../../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import { FetchMarketplaceSource } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { ResolveMarketplace } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { MarketplaceCheckUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-check-use-case.js";
@@ -24,8 +24,8 @@ async function buildUseCase() {
   await seedFromDirectory(fs, VALID_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const manifestRepo = new InMemoryManifestRepository();
-  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(new FixturePluginFetcher());
-  const resolveMarketplace = new ResolveMarketplaceUseCase(
+  const fetchMarketplaceSource = new FetchMarketplaceSource(new FixturePluginFetcher());
+  const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );

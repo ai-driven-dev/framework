@@ -154,6 +154,16 @@ describe("biome carries the exit and default-export rules", () => {
   });
 });
 
+/** What distribution's layers must not import, and the layers that try it. */
+const DISTRIBUTION_LAYERS = ["domain", "ports", "application", "infrastructure"] as const;
+const DISTRIBUTION_REACHES = [
+  ["framework", DISTRIBUTION_LAYERS],
+  ["runtime", DISTRIBUTION_LAYERS],
+] as const;
+const distributionReaches = (): string[] =>
+  DISTRIBUTION_REACHES.flatMap(([target, layers]) =>
+    layers.map((layer) => `src/contexts/distribution/${layer}/reaches-${target}.ts`)
+  );
 describe("the guard itself", () => {
   let planted: string;
   const readsEnvSource = "export const home = (): string | undefined => process.env.HOME;\n";
@@ -171,7 +181,7 @@ describe("the guard itself", () => {
       "src/contexts/framework/infrastructure",
       "src/contexts/tools/infrastructure",
       "src/presentation/display",
-      "src/runtime/self-update",
+      "src/runtime/git",
       "src/runtime/wiring",
       "src/shared/ports",
       "src/shared/infrastructure",
@@ -187,6 +197,9 @@ describe("the guard itself", () => {
       "src/contexts/recipes/ports",
       "src/contexts/recipes/application",
       "src/contexts/recipes/infrastructure",
+      "src/contexts/distribution/domain",
+      "src/contexts/distribution/ports",
+      "src/contexts/distribution/application",
       "src/contexts/distribution/infrastructure",
       "src/composition",
     ]) {
@@ -283,7 +296,7 @@ describe("the guard itself", () => {
     for (const [folder, file, name] of authFolders) {
       for (const [dir, up] of [
         ["src/presentation/display", "../../contexts/"],
-        ["src/runtime/self-update", "../../contexts/"],
+        ["src/runtime/git", "../../contexts/"],
         ["src/runtime/wiring", "../../contexts/"],
         ["src/contexts/distribution/infrastructure", "../../"],
         ["src/contexts/framework/application", "../../"],
@@ -341,6 +354,13 @@ describe("the guard itself", () => {
         `import type { Reached } from "../../contexts/recipes/${folder}/x.js";\nexport type Used = Reached;\n`
       );
     }
+    for (const file of distributionReaches()) {
+      const target = file.includes("framework") ? "framework" : "runtime";
+      writeFileSync(
+        join(planted, file),
+        `import type { X } from "../../../${target}/x.js";\nexport type Z = X;\n`
+      );
+    }
     writeFileSync(join(planted, "src/composition/auth.ts"), "export type AuthDeps = number;\n");
     const reachesComposition = (up: string): string =>
       `import type { AuthDeps } from "${up}composition/auth.js";\nexport type Wired = AuthDeps;\n`;
@@ -349,7 +369,7 @@ describe("the guard itself", () => {
       ["src/kernel/reaches-composition.ts", "../"],
       ["src/shared/infrastructure/reaches-composition.ts", "../../"],
       ["src/presentation/display/reaches-composition.ts", "../../"],
-      ["src/runtime/self-update/reaches-composition.ts", "../../"],
+      ["src/runtime/git/reaches-composition.ts", "../../"],
       ["src/runtime/wiring/reaches-composition.ts", "../../"],
     ] as const) {
       writeFileSync(join(planted, file), reachesComposition(up));
@@ -359,7 +379,7 @@ describe("the guard itself", () => {
     for (const [file, up] of [
       ["src/contexts/tools/infrastructure/reaches-shared.ts", "../../../"],
       ["src/presentation/display/reaches-shared.ts", "../../"],
-      ["src/runtime/self-update/reaches-shared.ts", "../../"],
+      ["src/runtime/git/reaches-shared.ts", "../../"],
       ["src/runtime/wiring/reaches-shared.ts", "../../"],
     ] as const) {
       writeFileSync(join(planted, file), reachesSharedInfrastructure(up));
@@ -439,7 +459,7 @@ describe("the guard itself", () => {
     for (const file of [
       "src/contexts/tools/infrastructure/reaches-shared.ts",
       "src/presentation/display/reaches-shared.ts",
-      "src/runtime/self-update/reaches-shared.ts",
+      "src/runtime/git/reaches-shared.ts",
     ]) {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
     }
@@ -466,7 +486,7 @@ describe("the guard itself", () => {
     const rule = "lint/style/noRestrictedImports";
     const importers = [
       "src/presentation/display",
-      "src/runtime/self-update",
+      "src/runtime/git",
       "src/contexts/distribution/infrastructure",
       "src/contexts/framework/application",
     ];
@@ -522,6 +542,13 @@ describe("the guard itself", () => {
     );
   });
 
+  it("flags distribution reaching framework, and distribution reaching runtime", () => {
+    const findings = biomeFindings(planted);
+    for (const file of distributionReaches()) {
+      expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedImports`);
+    }
+  });
+
   it("flags a context, the kernel, shared, presentation and runtime reaching the composition, and not the composition root", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
@@ -531,7 +558,7 @@ describe("the guard itself", () => {
       "src/kernel/reaches-composition.ts",
       "src/shared/infrastructure/reaches-composition.ts",
       "src/presentation/display/reaches-composition.ts",
-      "src/runtime/self-update/reaches-composition.ts",
+      "src/runtime/git/reaches-composition.ts",
     ]) {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
     }

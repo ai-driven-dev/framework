@@ -8,7 +8,7 @@ import {
 } from "../../../../kernel/source.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { PluginPick } from "../../../../presentation/prompts/plugin-pick-use-case.js";
-import type { MarketplaceTrustStore } from "../../../distribution/domain/ports/marketplace-trust-store.js";
+import type { MarketplaceTrustStore } from "../../../distribution/ports/marketplace-trust-store.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import {
   assertToolSupportsScope,

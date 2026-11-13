@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { TokenProvider } from "../../../../../src/contexts/auth/contract/token-provider.js";
-import type { MarketplaceRefresh } from "../../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
-import type { MarketplaceRegisterFramework } from "../../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
+import type { RefreshMarketplace } from "../../../../../src/contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import { MarketplaceSourceMode } from "../../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+import type { ReleaseLister } from "../../../../../src/contexts/distribution/ports/release-lister.js";
+import type { RepositoryVisibility } from "../../../../../src/contexts/distribution/ports/repository-visibility.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/framework/domain/ports/user-source-references.js";
@@ -10,7 +12,6 @@ import { SetupFlow } from "../../../../../src/contexts/framework/domain/setup-fl
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import { CatalogFetchAuthError } from "../../../../../src/kernel/errors.js";
 import type { MarketplaceScope } from "../../../../../src/kernel/scope.js";
-import type { LatestReleaseResolver } from "../../../../../src/runtime/self-update/latest-release-resolver.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
 import { InMemoryEnvironment } from "../../../../helpers/ports/in-memory-environment.js";
@@ -20,21 +21,22 @@ import { KeepPrompter } from "../../../../helpers/ports/scripted-prompter.js";
 const PROJECT_ROOT = "/test-project";
 const SKIP_SWITCH = "AIDD_SKIP_MARKETPLACE_REFRESH";
 
-function makeNoOpLatestResolver(isRepoPublic = true): LatestReleaseResolver {
+function makeNoOpLatestResolver(isRepoPublic = true): ReleaseLister & RepositoryVisibility {
   return {
-    resolveLatest: vi.fn().mockResolvedValue(null),
     listRootReleases: vi.fn().mockResolvedValue([]),
     isRepoPublic: vi.fn().mockResolvedValue(isRepoPublic),
   };
 }
 
-function makeRegisterFramework(scope: MarketplaceScope): MarketplaceRegisterFramework {
+function makeRegisterFramework(
+  scope: MarketplaceScope
+): Pick<RegisterFrameworkMarketplace, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ registered: true, scope }) };
 }
 
 interface Collaborators {
   tokenProvider?: TokenProvider;
-  releaseResolver?: LatestReleaseResolver;
+  releaseResolver?: ReleaseLister & RepositoryVisibility;
   userSourceReferences?: UserSourceReferences;
   registeredScope?: MarketplaceScope;
 }
@@ -44,10 +46,10 @@ function makeUseCase(
   collaborators: Collaborators = {}
 ): {
   useCase: SetupMarketplaceRegistrationUseCase;
-  refresh: MarketplaceRefresh;
-  register: MarketplaceRegisterFramework;
+  refresh: Pick<RefreshMarketplace, "execute">;
+  register: Pick<RegisterFrameworkMarketplace, "execute">;
 } {
-  const refresh: MarketplaceRefresh = {
+  const refresh: Pick<RefreshMarketplace, "execute"> = {
     execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }),
   };
   const register = makeRegisterFramework(collaborators.registeredScope ?? "user");
@@ -66,7 +68,9 @@ function makeUseCase(
   return { useCase, refresh, register };
 }
 
-async function register(environment: InMemoryEnvironment): Promise<MarketplaceRefresh> {
+async function register(
+  environment: InMemoryEnvironment
+): Promise<Pick<RefreshMarketplace, "execute">> {
   const { useCase, refresh } = makeUseCase(environment);
   const flow = new SetupFlow({
     supportsUserScopeActivation: () => true,

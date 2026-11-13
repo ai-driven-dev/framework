@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PluginFetcher } from "../../../../src/contexts/distribution/domain/ports/plugin-fetcher.js";
+import type { PluginFetcher } from "../../../../src/contexts/distribution/ports/plugin-fetcher.js";
 import { RestoreAllPluginsUseCase } from "../../../../src/contexts/framework/application/restore/restore-all-plugins-use-case.js";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";

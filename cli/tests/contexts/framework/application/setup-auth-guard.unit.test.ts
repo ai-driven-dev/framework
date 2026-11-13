@@ -1,13 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
-import type { MarketplaceRefresh } from "../../../../src/contexts/distribution/application/marketplace-refresh-use-case.js";
-import type { MarketplaceRegisterFramework } from "../../../../src/contexts/distribution/application/marketplace-register-framework-use-case.js";
-import type { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import type { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import type { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import {
   FRAMEWORK_MARKETPLACE_NAME,
   Marketplace,
 } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSourceMode } from "../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
+import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
 import type { MarketplaceSyncSettings } from "../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
@@ -18,16 +20,14 @@ import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.
 import { CatalogFetchAuthError } from "../../../../src/kernel/errors.js";
 import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
-import type { LatestReleaseResolver } from "../../../../src/runtime/self-update/latest-release-resolver.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 
-function makeReleaseResolver(isPublic: boolean): LatestReleaseResolver {
+function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
   return {
-    resolveLatest: vi.fn().mockResolvedValue(null),
     listRootReleases: vi.fn().mockResolvedValue([]),
     isRepoPublic: vi.fn().mockResolvedValue(isPublic),
   };
@@ -62,7 +62,7 @@ function makeNoOpPluginInstallFromMarketplace(): PluginInstallFromMarketplace {
   };
 }
 
-function makeNoOpResolveMarketplace(): ResolveMarketplace {
+function makeNoOpResolveMarketplace(): Pick<ResolveMarketplace, "execute"> {
   return {
     execute: vi
       .fn()
@@ -70,11 +70,11 @@ function makeNoOpResolveMarketplace(): ResolveMarketplace {
   };
 }
 
-function makeNoOpRegisterFramework(): MarketplaceRegisterFramework {
+function makeNoOpRegisterFramework(): Pick<RegisterFrameworkMarketplace, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ registered: false, scope: "user" }) };
 }
 
-function makeNoOpRefresh(): MarketplaceRefresh {
+function makeNoOpRefresh(): Pick<RefreshMarketplace, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }) };
 }
 

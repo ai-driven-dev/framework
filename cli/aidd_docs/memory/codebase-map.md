@@ -15,9 +15,9 @@ src/
 │   ├── distribution/    # where content comes from and how it is fetched
 │   │   ├── application/
 │   │   ├── domain/
-│   │   │   ├── catalog-parsers/
-│   │   │   └── ports/
-│   │   └── infrastructure/
+│   │   │   └── catalog-parsers/
+│   │   ├── infrastructure/
+│   │   └── ports/
 │   ├── framework/    # the installation record and everything done to a project
 │   │   ├── application/
 │   │   │   ├── clean/
@@ -129,7 +129,6 @@ src/
     ├── platform/
     ├── project-root/
     ├── prompter/
-    ├── self-update/    # the latest-release resolver the distribution context still reads
     └── wiring/    # one composition module per context, plus the composition root
 ```
 
@@ -140,7 +139,7 @@ src/
 - `src/kernel/`: old home of the shared vocabulary. No context import, no business logic, no new file.
 - `src/contexts/`: the nine bounded contexts. Nothing reaches inside another; the allowed edges are in `architecture.md`.
 - `src/presentation/`: commands, rendering, prompts. Depends on contexts, never the reverse.
-- `src/runtime/`: services that are not a context — git, assets, filesystem, the latest-release resolver — and the wiring that composes everything.
+- `src/runtime/`: services that are not a context: git, assets, filesystem, and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.
 - `assets/`: configs inlined at build time, schemas copied beside the binary.
 - `scripts/`: bundle budget, mutation runner, smoke harness, the copy check between tool profiles.

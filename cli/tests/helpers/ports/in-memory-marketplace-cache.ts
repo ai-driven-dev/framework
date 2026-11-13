@@ -1,4 +1,4 @@
-import type { MarketplaceCachePort } from "../../../src/contexts/distribution/domain/ports/marketplace-cache.js";
+import type { MarketplaceCachePort } from "../../../src/contexts/distribution/ports/marketplace-cache.js";
 
 /** Pure in-memory MarketplaceCachePort: names only, since clearing is the whole port. */
 export class InMemoryMarketplaceCache implements MarketplaceCachePort {
@@ -21,5 +21,13 @@ export class InMemoryMarketplaceCache implements MarketplaceCachePort {
 
   has(name: string): boolean {
     return this.names.has(name);
+  }
+
+  add(...names: string[]): void {
+    for (const name of names) this.names.add(name);
+  }
+
+  list(): string[] {
+    return [...this.names].sort();
   }
 }

@@ -1,5 +1,5 @@
 import type { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../src/contexts/distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import type { MarketplaceScope } from "../../../src/kernel/scope.js";
 
 export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
@@ -15,12 +15,12 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
 
   async save(projectRoot: string, marketplace: Marketplace): Promise<void> {
     const store = marketplace.scope === "project" ? this.project : this.user;
-    store.set(this.key(projectRoot, marketplace.name), marketplace);
+    store.set(this.key(projectRoot, marketplace.name, marketplace.scope), marketplace);
   }
 
   async delete(projectRoot: string, name: string, scope: MarketplaceScope): Promise<void> {
     const store = scope === "project" ? this.project : this.user;
-    store.delete(this.key(projectRoot, name));
+    store.delete(this.key(projectRoot, name, scope));
   }
 
   async updateLastFetched(
@@ -30,7 +30,7 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
     when: string
   ): Promise<void> {
     const store = scope === "project" ? this.project : this.user;
-    const key = this.key(projectRoot, name);
+    const key = this.key(projectRoot, name, scope);
     const existing = store.get(key);
     if (existing !== undefined) {
       store.set(key, existing.withLastFetched(when));
@@ -44,7 +44,7 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
     version: string
   ): Promise<void> {
     const store = scope === "project" ? this.project : this.user;
-    const key = this.key(projectRoot, name);
+    const key = this.key(projectRoot, name, scope);
     const existing = store.get(key);
     if (existing !== undefined) {
       store.set(key, existing.withVersion(version));
@@ -60,7 +60,8 @@ export class InMemoryMarketplaceRegistry implements MarketplaceRegistry {
     return [...this.project.entries()].filter(([k]) => k.startsWith(prefix)).map(([, v]) => v);
   }
 
-  private key(projectRoot: string, name: string): string {
-    return `${projectRoot}:${name}`;
+  /** A user entry is the machine's, so it is named alone; a project entry is the project's. */
+  private key(projectRoot: string, name: string, scope: MarketplaceScope): string {
+    return scope === "user" ? name : `${projectRoot}:${name}`;
   }
 }

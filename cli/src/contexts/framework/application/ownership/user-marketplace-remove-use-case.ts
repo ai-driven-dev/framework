@@ -10,7 +10,7 @@ import {
   FRAMEWORK_MARKETPLACE_NAME,
   type Marketplace,
 } from "../../../distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
   MarketplaceRemoveOptions,

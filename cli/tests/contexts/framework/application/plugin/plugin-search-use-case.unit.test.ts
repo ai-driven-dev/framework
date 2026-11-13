@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FetchMarketplaceSourceUseCase } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source-use-case.js";
-import { ResolveMarketplaceUseCase } from "../../../../../src/contexts/distribution/application/resolve-marketplace-use-case.js";
+import { FetchMarketplaceSource } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { ResolveMarketplace } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginSearchUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-search-use-case.js";
@@ -29,8 +29,8 @@ function buildUseCase(
     [MKT1_PATH]: MKT1_PATH,
     [MKT2_PATH]: MKT2_PATH,
   });
-  const fetchMarketplaceSource = new FetchMarketplaceSourceUseCase(fetcher);
-  const resolveMarketplace = new ResolveMarketplaceUseCase(
+  const fetchMarketplaceSource = new FetchMarketplaceSource(fetcher);
+  const resolveMarketplace = new ResolveMarketplace(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );

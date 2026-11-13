@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { PluginFetchOptions } from "../../../../../src/contexts/distribution/domain/ports/plugin-fetcher.js";
+import type { PluginFetchOptions } from "../../../../../src/contexts/distribution/ports/plugin-fetcher.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { PluginUpdateUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-update-use-case.js";

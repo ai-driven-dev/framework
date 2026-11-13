@@ -10,9 +10,9 @@ import { CLI_ROOT, expectRatchet, read } from "./helpers.js";
 
 // Unit files importing the directory-reading helper. The list may only shrink.
 const BASELINE: readonly string[] = [
-  "tests/contexts/distribution/application/marketplace-add-use-case.unit.test.ts",
-  "tests/contexts/distribution/application/marketplace-refresh-progress.unit.test.ts",
-  "tests/contexts/distribution/application/marketplace-refresh-use-case.unit.test.ts",
+  "tests/contexts/distribution/application/add-marketplace.unit.test.ts",
+  "tests/contexts/distribution/application/refresh-marketplace-progress.unit.test.ts",
+  "tests/contexts/distribution/application/refresh-marketplace.unit.test.ts",
   "tests/contexts/framework/application/flows/marketplace-check-use-case.unit.test.ts",
   "tests/contexts/framework/application/plugin/plugin-add-mcp.unit.test.ts",
   "tests/contexts/framework/application/plugin/plugin-add-use-case.unit.test.ts",

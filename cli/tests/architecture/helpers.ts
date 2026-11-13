@@ -170,19 +170,12 @@ export const BASELINE: readonly {
   readonly imports: number;
   readonly files: number;
 }[] = [
-  // `marketplace add --overwrite` removes before it adds, and removing deletes installed
-  // plugin files — framework work the calling side, not distribution, should orchestrate.
-  { edge: "distribution->framework", imports: 1, files: 1 },
-  // The http client, the git token injection, the user-config directory and `atomicWriteFile`
-  // are concrete: a real dependency on runtime, resolved by inverting them into ports.
-  { edge: "distribution->runtime", imports: 3, files: 2 },
   // Three framework orchestrators still name the prompt classes they are handed, type-only.
   // Inverting them into a port is a design change, so the edge is measured rather than moved.
   { edge: "framework->presentation", imports: 4, files: 3 },
-  // Token provider, platform and latest-release resolver: interfaces a context may depend on,
-  // sitting in the wrong place — a port two contexts need belongs in the kernel. Nothing
-  // concrete crosses here.
-  { edge: "framework->runtime", imports: 6, files: 6 },
+  // Platform: an interface a context may depend on, sitting in the wrong place, a port two
+  // contexts need belongs in the kernel. Nothing concrete crosses here.
+  { edge: "framework->runtime", imports: 4, files: 4 },
 ];
 
 export function contextOf(file: string): string {

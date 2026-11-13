@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { AIDD_DIR } from "../../../kernel/paths.js";
 import type { Hasher } from "../../../kernel/ports/hasher.js";
 import { type PluginSource, serializePluginSource } from "../../../kernel/source.js";
-import type { MarketplaceTrustStore } from "../domain/ports/marketplace-trust-store.js";
+import type { MarketplaceTrustStore } from "../ports/marketplace-trust-store.js";
 
 const TRUST_STORE_FILENAME = "trusted-marketplaces.json";
 const SCHEMA_VERSION = 1;

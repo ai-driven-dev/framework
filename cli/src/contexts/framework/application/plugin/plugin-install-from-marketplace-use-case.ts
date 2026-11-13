@@ -6,10 +6,10 @@ import {
 import type { Logger } from "../../../../kernel/ports/logger.js";
 import type { Prompter } from "../../../../kernel/ports/prompter.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
-import type { ResolveMarketplaceUseCase } from "../../../distribution/application/resolve-marketplace-use-case.js";
+import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../distribution/domain/ports/marketplace-registry.js";
+import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { resolvePluginSourceFromMarketplace } from "../../domain/plugins/plugin-source-resolver.js";
 import {
@@ -51,7 +51,7 @@ export interface PluginInstallFromMarketplace {
 
 export class PluginInstallFromMarketplaceUseCase implements PluginInstallFromMarketplace {
   constructor(
-    private readonly resolveMarketplace: ResolveMarketplaceUseCase,
+    private readonly resolveMarketplace: ResolveMarketplace,
     private readonly registry: MarketplaceRegistry,
     private readonly pluginAddUseCase: PluginAdd,
     private readonly prompter: Prompter,

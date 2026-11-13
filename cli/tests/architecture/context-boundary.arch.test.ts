@@ -23,21 +23,23 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // file's own context, so a `tools` file is only ever checked against `tools`.
   ],
   // Measured with the composition root excluded, and not one entry is an adapter: the
-  // adapters are wired from `runtime/wiring/` alone, so they stay internal.
+  // adapters are wired from `composition/` and `runtime/wiring/` alone, so they stay internal.
   distribution: [
     // what a marketplace is, and where it can be read from
     "src/contexts/distribution/domain/marketplace.ts",
     "src/contexts/distribution/domain/marketplace-source-mode.ts",
     "src/contexts/distribution/domain/catalog.ts",
     // the ports its callers hold, so they can be given an implementation
-    "src/contexts/distribution/domain/ports/marketplace-registry.ts",
-    "src/contexts/distribution/domain/ports/marketplace-trust-store.ts",
-    "src/contexts/distribution/domain/ports/plugin-catalog-repository.ts",
-    "src/contexts/distribution/domain/ports/plugin-fetcher.ts",
+    "src/contexts/distribution/ports/marketplace-registry.ts",
+    "src/contexts/distribution/ports/marketplace-trust-store.ts",
+    "src/contexts/distribution/ports/plugin-catalog-repository.ts",
+    "src/contexts/distribution/ports/plugin-fetcher.ts",
+    "src/contexts/distribution/ports/release-lister.ts",
+    "src/contexts/distribution/ports/repository-visibility.ts",
     // the three operations other contexts genuinely ask for
-    "src/contexts/distribution/application/resolve-marketplace-use-case.ts",
-    "src/contexts/distribution/application/marketplace-refresh-use-case.ts",
-    "src/contexts/distribution/application/marketplace-register-framework-use-case.ts",
+    "src/contexts/distribution/application/resolve-marketplace.ts",
+    "src/contexts/distribution/application/refresh-marketplace.ts",
+    "src/contexts/distribution/application/register-framework-marketplace.ts",
   ],
   // The largest context: while it had no entry the mechanism below skipped every framework
   // file, so its interior was reached unchecked. Measured, composition root excluded.
