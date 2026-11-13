@@ -417,17 +417,59 @@ if (sides) sides.addEventListener("click", () => {
 `;
 
 /** What the review skill reads back from a copy: each record with a state decided, its decided states in
- * the order given, as fenced JSON. One record is one object, as a record's page always copied it; several
- * are a list of the same objects, as the overview copied them. Nothing decided copies nothing. Embedded in
+ * the order given, and each set with a variant decided, as fenced JSON. One entry is one object, as a
+ * record's page always copied it and the comparison page copied a set; several are a list of the same
+ * objects. A set keeps its variants all, the undecided as null. Nothing decided copies nothing. Embedded in
  * the pages as its own source, so the test and the page run the same function. */
 function copiedOf(entries) {
-  const body = entries.filter((entry) => entry.verdicts.length).map((entry) => ({
-    record: entry.record,
-    version: Number(entry.version),
-    verdicts: entry.verdicts.map((each) => ({ state: each.state, verdict: each.verdict, comment: String(each.comment || "").trim() })),
-  }));
+  const body = entries.flatMap((entry) => {
+    if (entry.variants) {
+      if (!entry.variants.some((each) => each.verdict)) return [];
+      return [{ set: entry.set, variants: entry.variants.map((each) => ({ name: each.name, verdict: each.verdict || null, comment: String(each.comment || "").trim() })) }];
+    }
+    if (!entry.verdicts.length) return [];
+    return [{
+      record: entry.record,
+      version: Number(entry.version),
+      verdicts: entry.verdicts.map((each) => ({ state: each.state, verdict: each.verdict, comment: String(each.comment || "").trim() })),
+    }];
+  });
   if (!body.length) return "";
   return "```json\n" + JSON.stringify(body.length === 1 ? body[0] : body, null, 2) + "\n```\n";
+}
+
+/** The entries of a copy from the page's `model` and its `choices`: `model.records` each `{key, record,
+ * version, states: [{state, settled}]}`, `model.sets` each `{key, set, variants: [name]}`, `choices` by key
+ * then by state or variant name. A variant with no choice is null. Records come first, then sets. */
+function entriesOf(model, choices) {
+  const records = model.records.map((each) => ({
+    record: each.record,
+    version: each.version,
+    verdicts: each.states.filter((one) => (choices[each.key] || {})[one.state]).map((one) => {
+      const choice = choices[each.key][one.state];
+      return { state: one.state, verdict: choice.verdict, comment: choice.comment || "" };
+    }),
+  }));
+  const sets = model.sets.map((each) => ({
+    set: each.set,
+    variants: each.variants.map((name) => {
+      const choice = (choices[each.key] || {})[name];
+      return { name, verdict: choice ? choice.verdict : null, comment: choice ? choice.comment || "" : "" };
+    }),
+  }));
+  return records.concat(sets);
+}
+
+/** Whether a verdict to revise has no comment, in a state or in a variant: the copy waits for it. */
+function blockedOf(entries) {
+  const bare = (each) => each.verdict === "revise" && !String(each.comment || "").trim();
+  return entries.some((entry) => (entry.variants || entry.verdicts).some(bare));
+}
+
+/** The states a click on "all OK" marks: each record state with no choice that is not settled already, as
+ * `{key, state}`. A variant is a choice between options, never one of these. */
+function remainingOf(model, choices) {
+  return model.records.flatMap((each) => each.states.filter((one) => !one.settled && !(choices[each.key] || {})[one.state]).map((one) => ({ key: each.key, state: one.state })));
 }
 
 /** The verdicts kept in the browser, limited to the records at the versions `keys` names (`id@version`):
@@ -444,6 +486,9 @@ function keptOf(store, keys) {
 const PANEL = `${DELIVER}
 ${copiedOf.toString()}
 ${keptOf.toString()}
+${entriesOf.toString()}
+${blockedOf.toString()}
+${remainingOf.toString()}
 const STORE = "aidd-ui-review";
 const drawer = document.getElementById("review");
 const opener = document.getElementById("open-review");
@@ -452,8 +497,11 @@ const clear = document.getElementById("clear");
 const allOk = document.getElementById("all-ok");
 const note = document.getElementById("note");
 const items = [...drawer.querySelectorAll("details.item")];
+const sets = [...drawer.querySelectorAll("details.choice")];
 const keyOf = (item) => item.dataset.record + "@" + item.dataset.version;
+const setKeyOf = (set) => "set:" + set.dataset.set + "@" + set.dataset.fingerprint;
 const rowsOf = (item) => [...item.querySelectorAll("li.pstate")];
+const variantsOf = (set) => [...set.querySelectorAll("li.pvariant")];
 function stored(name) {
   try { return window.localStorage.getItem(name); } catch (error) { return null; }
 }
@@ -464,24 +512,23 @@ function keep(name, value) {
   } catch (error) { /* no shared storage: the review holds for this page alone */ }
 }
 let choices = {};
-try { choices = keptOf(JSON.parse(stored(STORE) || "{}"), items.map(keyOf)); } catch (error) { choices = {}; }
-const choiceOf = (item, state) => (choices[keyOf(item)] || {})[state];
-function choose(item, state, choice) {
-  const own = Object.assign({}, choices[keyOf(item)]);
-  if (choice) own[state] = choice;
-  else delete own[state];
-  if (Object.keys(own).length) choices[keyOf(item)] = own;
-  else delete choices[keyOf(item)];
+try { choices = keptOf(JSON.parse(stored(STORE) || "{}"), items.map(keyOf).concat(sets.map(setKeyOf))); } catch (error) { choices = {}; }
+const choiceOf = (key, name) => (choices[key] || {})[name];
+function choose(key, name, choice) {
+  const own = Object.assign({}, choices[key]);
+  if (choice) own[name] = choice;
+  else delete own[name];
+  if (Object.keys(own).length) choices[key] = own;
+  else delete choices[key];
   keep(STORE, Object.keys(choices).length ? JSON.stringify(choices) : null);
 }
 const settled = (row) => row.dataset.current === "ok" || row.dataset.current === "revise";
-const remaining = () => items.flatMap((item) => rowsOf(item).filter((row) => !choiceOf(item, row.dataset.state) && !settled(row)).map((row) => ({ item, row })));
-const entries = () => items.map((item) => ({
-  record: item.dataset.record,
-  version: item.dataset.version,
-  verdicts: rowsOf(item).filter((row) => choiceOf(item, row.dataset.state)).map((row) => ({ state: row.dataset.state, verdict: choiceOf(item, row.dataset.state).verdict, comment: choiceOf(item, row.dataset.state).comment || "" })),
-}));
-const blocked = () => entries().some((entry) => entry.verdicts.some((each) => each.verdict === "revise" && !each.comment.trim()));
+const model = () => ({
+  records: items.map((item) => ({ key: keyOf(item), record: item.dataset.record, version: item.dataset.version, states: rowsOf(item).map((row) => ({ state: row.dataset.state, settled: settled(row) })) })),
+  sets: sets.map((set) => ({ key: setKeyOf(set), set: set.dataset.set, variants: variantsOf(set).map((row) => row.dataset.variant) })),
+});
+const entries = () => entriesOf(model(), choices);
+const blocked = () => blockedOf(entries());
 function paint() {
   let done = 0;
   let total = 0;
@@ -489,7 +536,7 @@ function paint() {
     const rows = rowsOf(item);
     let own = 0;
     for (const row of rows) {
-      const choice = choiceOf(item, row.dataset.state);
+      const choice = choiceOf(keyOf(item), row.dataset.state);
       const verdict = choice ? choice.verdict : "";
       if (verdict) row.dataset.choice = verdict;
       else delete row.dataset.choice;
@@ -511,9 +558,22 @@ function paint() {
     total += rows.length;
   }
   document.querySelectorAll(".tally").forEach((each) => { each.textContent = done + "/" + total; });
+  for (const set of sets) {
+    let decided = 0;
+    for (const row of variantsOf(set)) {
+      const choice = choiceOf(setKeyOf(set), row.dataset.variant);
+      const verdict = choice ? choice.verdict : "";
+      if (verdict) { row.dataset.choice = verdict; decided += 1; } else delete row.dataset.choice;
+      row.querySelectorAll(".vote").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.verdict === verdict)));
+      const field = row.querySelector(".comment");
+      field.hidden = verdict !== "revise";
+      if (document.activeElement !== field) field.value = (choice && choice.comment) || "";
+    }
+    set.querySelector(".done").textContent = decided + "/" + variantsOf(set).length;
+  }
   const stuck = blocked();
-  copy.disabled = stuck || !entries().some((entry) => entry.verdicts.length);
-  allOk.disabled = remaining().length === 0;
+  copy.disabled = stuck || !copiedOf(entries());
+  allOk.disabled = remainingOf(model(), choices).length === 0;
   note.textContent = stuck ? copy.dataset.blocked : "";
 }
 /** Marks the state of the page's own record that its tabs show. */
@@ -529,15 +589,15 @@ items.forEach((item) => rowsOf(item).forEach((row) => {
   const state = row.dataset.state;
   const field = row.querySelector(".comment");
   row.querySelectorAll(".verdict").forEach((button) => button.addEventListener("click", () => {
-    const now = choiceOf(item, state);
+    const now = choiceOf(keyOf(item), state);
     const again = now && now.verdict === button.dataset.verdict;
     const revise = button.dataset.verdict === "revise";
-    choose(item, state, again ? null : { verdict: button.dataset.verdict, comment: revise && now ? now.comment || "" : "" });
+    choose(keyOf(item), state, again ? null : { verdict: button.dataset.verdict, comment: revise && now ? now.comment || "" : "" });
     paint();
     if (!again && revise) field.focus();
   }));
   field.addEventListener("input", () => {
-    choose(item, state, { verdict: "revise", comment: field.value });
+    choose(keyOf(item), state, { verdict: "revise", comment: field.value });
     paint();
   });
   const tab = item.hasAttribute("data-here") ? document.getElementById("tab-" + state) : null;
@@ -546,10 +606,26 @@ items.forEach((item) => rowsOf(item).forEach((row) => {
     openTab(tab);
   });
 }));
+sets.forEach((set) => variantsOf(set).forEach((row) => {
+  const name = row.dataset.variant;
+  const field = row.querySelector(".comment");
+  row.querySelectorAll(".vote").forEach((button) => button.addEventListener("click", () => {
+    const now = choiceOf(setKeyOf(set), name);
+    const again = now && now.verdict === button.dataset.verdict;
+    const revise = button.dataset.verdict === "revise";
+    choose(setKeyOf(set), name, again ? null : { verdict: button.dataset.verdict, comment: revise && now ? now.comment || "" : "" });
+    paint();
+    if (!again && revise) field.focus();
+  }));
+  field.addEventListener("input", () => {
+    choose(setKeyOf(set), name, { verdict: "revise", comment: field.value });
+    paint();
+  });
+}));
 opener.addEventListener("click", () => show(true));
 document.getElementById("close-review").addEventListener("click", () => show(false));
 allOk.addEventListener("click", () => {
-  for (const { item, row } of remaining()) choose(item, row.dataset.state, { verdict: "ok", comment: "" });
+  for (const { key, state } of remainingOf(model(), choices)) choose(key, state, { verdict: "ok", comment: "" });
   paint();
 });
 copy.addEventListener("click", () => {
@@ -912,7 +988,7 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
 /** The review panel, the same on every page but for the record it stands on, which starts open: every record
  * with states and a render, each state with a link to its tab, its verdict pair and a comment field, then
  * one copy of all that is decided. Opened by the button at the top of the page, which tallies the states settled. */
-function drawerOf({ project, reviewable, rows, labels, current }) {
+function drawerOf({ project, reviewable, rows, labels, current, sets = [] }) {
   let settled = 0;
   let total = 0;
   const item = (record) => {
@@ -930,13 +1006,19 @@ function drawerOf({ project, reviewable, rows, labels, current }) {
     ].join("");
     return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${id === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record))}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
   };
+  const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
+  const choice = (set) => {
+    const row = (variant) => `<li class="pvariant" data-variant="${escaped(variant.name)}"><span class="pick">${escaped(variant.name)}</span><span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(vote).join("")}</span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></li>`;
+    return `<details class="choice" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.id)}</span><span class="done">0/${set.variants.length}</span></summary><ol>${set.variants.map(row).join("")}</ol></details>`;
+  };
+  const choices = sets.length ? `<section class="choices" data-group="choose"><h3>${labels.choose}</h3>${sets.map(choice).join("")}</section>` : "";
   const items = reviewable.map(item).join("\n");
   const tally = `<span class="tally">${settled}/${total}</span>`;
   return [
     `<button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} ${tally}</button>`,
     `<aside class="drawer" id="review" aria-label="${escaped(labels.review)}" hidden>`,
     `<div class="drawer-head"><h2>${labels.review}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
-    `<div class="drawer-body">${items || `<p>${labels.nothing}</p>`}</div>`,
+    `<div class="drawer-body">${choices}${items || (choices ? "" : `<p>${labels.nothing}</p>`)}</div>`,
     `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="all-ok">${labels.allOk}</button><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}">${labels.copy}</button></div>`,
     "</aside>",
   ].join("\n");
@@ -1038,7 +1120,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   const journeys = records.filter((record) => fm(record).kind === "journey");
   const system = project.records.find((record) => fm(record).kind === "system");
   const reviewable = records.filter((record) => hasRender(project, record)).sort((a, b) => GROUPS.indexOf(groupOf(a)) - GROUPS.indexOf(groupOf(b)) || byLevel(a, b));
-  const drawer = (current) => drawerOf({ project, reviewable, rows, labels, current });
+  const drawer = (current) => drawerOf({ project, reviewable, rows, labels, current, sets });
   const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, overviewOf({ project, records, recordsById, rows, tokens, labels })].join("\n");
   const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
@@ -1069,4 +1151,4 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   return pages;
 }
 
-module.exports = { showcaseOf, copiedOf, keptOf, languageOf, LABELS };
+module.exports = { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, languageOf, LABELS };

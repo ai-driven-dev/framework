@@ -93,6 +93,18 @@ const STYLE = `
 .axes { border-collapse: collapse; width: 100%; font-size: 13px; }
 .axes th { text-align: left; font-weight: 500; color: var(--muted); padding: 4px var(--s2) 4px 0; white-space: nowrap; vertical-align: top; }
 .axes td { padding: 4px 0; overflow-wrap: anywhere; }
+.choices h3 { margin: var(--s3) var(--s5) var(--s1); font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.choice { border-bottom: 1px solid var(--line); }
+.choice summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: 13px; font-weight: 600; }
+.choice .done { margin-left: auto; color: var(--faint); font-weight: 500; font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
+.choice ol { padding: 0 var(--s3) var(--s3); }
+.pvariant { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding: 6px var(--s2); border-radius: var(--r1); }
+.pvariant .pick { min-width: 0; flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pvariant .comment { flex-basis: 100%; }
+.choose .vote { height: 24px; padding: 0 var(--s2); border: 0; background: transparent; color: var(--muted); font-size: var(--t-xs); }
+.vote[aria-pressed="true"] { background: var(--surface); box-shadow: var(--shadow-1); color: var(--text); }
+.vote[data-verdict="keep"][aria-pressed="true"] { color: var(--ok); }
+.vote[data-verdict="revise"][aria-pressed="true"] { color: var(--revise); }
 .axes .swatch { display: inline-block; inline-size: 14px; block-size: 14px; margin-inline-end: 4px; vertical-align: -2px; }
 .axes td code { margin-inline-end: 6px; }
 .same { margin: 0; color: var(--muted); font-size: var(--t-sm); }

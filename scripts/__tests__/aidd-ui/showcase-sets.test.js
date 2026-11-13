@@ -4,7 +4,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, LIB, makeTmp, removeTmp, engine, writeProject, put } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
-const { showcaseOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
+const { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
 // The sets of variants are chosen inside the showcase: a page per set, in the navigation and the
 // review panel beside the records. The pages are judged as text, the command as a subprocess.
@@ -68,8 +68,8 @@ describe("aidd-ui showcase sets", () => {
       const pages = pagesOf([SET({ id: "brand" })]);
       assert.ok(pages["brand.html"] && pages["_set-brand.html"]);
       assert.notEqual(pages["brand.html"], pages["_set-brand.html"]);
-      assert.match(pages["_set-brand.html"], /data-variant="a"/);
-      assert.doesNotMatch(pages["brand.html"], /data-variant="a"/);
+      assert.match(pages["_set-brand.html"], /<section class="variant" data-variant="a">/);
+      assert.doesNotMatch(pages["brand.html"], /<section class="variant" data-variant="a">/);
     });
 
     it("shows one column per variant: its name, its intent and its axes", () => {
@@ -124,7 +124,7 @@ describe("aidd-ui showcase sets", () => {
       assert.match(html, /<li data-rule="D4"><b>D4<\/b> variants share every axis value/);
       assert.match(html, /make them differ/);
       assert.doesNotMatch(html, /<iframe/);
-      assert.doesNotMatch(html, /data-variant=/);
+      assert.doesNotMatch(html, /<section class="variant"/);
     });
 
     it("escapes what the variants say", () => {
@@ -161,6 +161,88 @@ describe("aidd-ui showcase sets", () => {
 
     it("leaves a cell without colour as escaped text", () => {
       assert.deepEqual(cellsOf([["Tone", "<b>calm</b> #12345"]]), ["&lt;b&gt;calm&lt;/b&gt; #12345"]);
+    });
+  });
+
+  describe("the drawer", () => {
+    const drawerOf = (html) => html.match(/<aside class="drawer"[\s\S]*?<\/aside>/)[0];
+    const groupOfSets = (html) => drawerOf(html).match(/<section class="choices" data-group="choose">[\s\S]*?<\/section>/)?.[0];
+
+    it("holds a group to choose, one row per variant with its three verdicts and a comment, on every page", () => {
+      for (const html of Object.values(pagesOf([SET()]))) {
+        const group = groupOfSets(html);
+        assert.ok(group, "a group in the drawer");
+        assert.match(group, new RegExp(`<h3>${LABELS.en.choose}</h3>`));
+        assert.match(group, /<details class="choice" data-set="layout" data-fingerprint="f1" open>/);
+        const rows = [...group.matchAll(/<li class="pvariant" data-variant="([^"]+)">([\s\S]*?)<\/li>/g)];
+        assert.deepEqual(rows.map((row) => row[1]), ["a", "b"]);
+        for (const [, , row] of rows) {
+          assert.deepEqual([...row.matchAll(/class="vote" data-verdict="(\w+)"[^>]*>([^<]+)</g)].map((match) => [match[1], match[2]]), [["keep", "Keep"], ["revise", "Revise"], ["discard", "Discard"]]);
+          assert.match(row, /<textarea class="comment"[^>]* hidden>/);
+        }
+      }
+    });
+
+    it("keeps the sets out of what the records read, and the group out of a page without sets", () => {
+      const drawer = drawerOf(pagesOf([SET()])["index.html"]);
+      assert.doesNotMatch(groupOfSets(pagesOf([SET()])["index.html"]), /class="item"|data-record=|class="pstate"/);
+      assert.equal(groupOfSets(pagesOf([])["index.html"]), undefined);
+      assert.ok(drawer.includes('class="drawer-body"'));
+    });
+
+    it("says the group in French, and carries the pure functions of the copy in every script", () => {
+      assert.match(groupOfSets(pagesOf([SET()], { lang: "fr" })["index.html"]), /<h3>À choisir<\/h3>/);
+      for (const html of Object.values(pagesOf([SET()]))) {
+        const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+        assert.doesNotThrow(() => new Function(script));
+        for (const fn of [copiedOf, keptOf, entriesOf, blockedOf, remainingOf]) assert.ok(script.includes(fn.toString()), fn.name);
+      }
+    });
+  });
+
+  describe("the copy of a set", () => {
+    const LONE = '```json\n{\n  "set": "layout",\n  "variants": [\n    {\n      "name": "a",\n      "verdict": "revise",\n      "comment": "calm"\n    },\n    {\n      "name": "b",\n      "verdict": null,\n      "comment": ""\n    }\n  ]\n}\n```\n';
+    const decided = { set: "layout", variants: [{ name: "a", verdict: "revise", comment: " calm " }, { name: "b", verdict: null, comment: "" }] };
+    const home = { record: "home", version: "1", verdicts: [{ state: "default", verdict: "ok", comment: "" }] };
+
+    it("copies a set alone as the comparison page copied it: one object, undecided variants null", () => {
+      assert.equal(copiedOf([decided]), LONE);
+    });
+
+    it("copies nothing for a set whose variants are all undecided", () => {
+      assert.equal(copiedOf([{ set: "layout", variants: [{ name: "a", verdict: null, comment: "" }] }]), "");
+    });
+
+    it("copies records and sets together as a list, in the order given", () => {
+      const copy = copiedOf([home, decided]);
+      assert.deepEqual(JSON.parse(copy.replace(/^```json\n|\n```\n$/g, "")), [{ record: "home", version: 1, verdicts: [{ state: "default", verdict: "ok", comment: "" }] }, { set: "layout", variants: [{ name: "a", verdict: "revise", comment: "calm" }, { name: "b", verdict: null, comment: "" }] }]);
+    });
+
+    const model = { records: [{ key: "home@1", record: "home", version: "1", states: [{ state: "default", settled: false }, { state: "loading", settled: true }] }], sets: [{ key: "set:layout@f1", set: "layout", variants: ["a", "b"] }] };
+
+    it("builds the entries from the choices, a variant with none being null", () => {
+      const entries = entriesOf(model, { "home@1": { default: { verdict: "ok" } }, "set:layout@f1": { a: { verdict: "keep", comment: "" } } });
+      assert.deepEqual(entries, [
+        { record: "home", version: "1", verdicts: [{ state: "default", verdict: "ok", comment: "" }] },
+        { set: "layout", variants: [{ name: "a", verdict: "keep", comment: "" }, { name: "b", verdict: null, comment: "" }] },
+      ]);
+    });
+
+    it("never marks a variant when the rest is marked OK", () => {
+      assert.deepEqual(remainingOf(model, {}), [{ key: "home@1", state: "default" }]);
+      assert.deepEqual(remainingOf({ records: [], sets: model.sets }, {}), []);
+    });
+
+    it("blocks the copy on a variant to revise without a comment, as on a state", () => {
+      const revise = (comment) => [{ set: "layout", variants: [{ name: "a", verdict: "revise", comment }, { name: "b", verdict: "keep", comment: "" }] }];
+      assert.equal(blockedOf(revise("  ")), true);
+      assert.equal(blockedOf(revise("bolder")), false);
+      assert.equal(blockedOf([{ set: "layout", variants: [{ name: "a", verdict: "discard", comment: "" }] }]), false);
+      assert.equal(blockedOf([{ record: "home", version: "1", verdicts: [{ state: "default", verdict: "revise", comment: "" }] }]), true);
+    });
+
+    it("keeps the choices of a set at its fingerprint only", () => {
+      assert.deepEqual(keptOf({ "set:layout@f1": { a: { verdict: "keep" } }, "set:layout@f0": { a: { verdict: "keep" } } }, ["set:layout@f1"]), { "set:layout@f1": { a: { verdict: "keep" } } });
     });
   });
 
