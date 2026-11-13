@@ -50,3 +50,62 @@ Each phase: write the test, see it red, implement, see it green, apply the liste
 - Stale `drafts/<set>/compare.html` files, removed by `keep` with the set.
 - The K/R/D/C and arrow keyboard shortcuts of the compare page.
 - Frame scaling needs one check in a real browser.
+
+## Next: choosing a brand as a funnel
+
+Asked by the person after the fifth blank walkthrough: three directions, then nothing. Other tools go further after the first pick.
+
+### What others do
+
+| Product | Move we lack |
+| --- | --- |
+| Google Stitch | variants around a chosen screen; a range Refine, Explore, Reimagine; 1 to 5 options, 3 by default; every round kept side by side |
+| Claude Design | builds the brand from a site, screenshots, a logo or the code, then shows it on the product's own prototypes |
+| Figma Make | combines the best parts of several variations |
+| Relume, Realtime Colors | lock one axis, shuffle the others; the palette shown on a real page, not as swatches |
+| Midjourney | Vary subtle or strong from a pick; the remix changes the prompt while varying |
+
+### What 02 does today
+
+- Scratch: asks the person for references and anti-references, in words. Tested on blank4: Whoop, Oura, apnea gear.
+- From the code: reads the README, manifest and visible copy. Run by the pilot on a Kairos copy, with no human answering.
+- Missing: reading a site or screenshots, mixing directions, a second round, previews on the project's own screens.
+
+### The journey, as the person lives it
+
+1. **Start.** One question: "What do you start from?" Several answers combine.
+   - Existing: the code, a site address, or screenshots.
+   - References: two or three products liked, one or two disliked. For each, what to take or avoid.
+   - Nothing: the current questions.
+2. **Round 1, far apart.** Three directions by default, two to five on request.
+   - Each column says which reference each choice comes from.
+   - Each direction is shown on one or two of the project's own wireframes, not on a sample screen.
+3. **Pick per axis.** The axis table is the control.
+   - Click a cell to take that choice: palette of A, type of B.
+   - A whole column can still be kept, revised or discarded as today.
+   - The copy carries the picks.
+4. **Round 2, close.** The mix, plus two variants around it.
+   - Picked axes are locked; only the others move.
+   - The cells that changed from round 1 are marked.
+   - "Go further" asks for a wider range.
+5. **Stop.** One direction kept with no revise. Earlier rounds stay on the set page, folded.
+
+### Phases
+
+8. **Previews on the project's screens.** The preview of a direction dresses one or two existing wireframes in its colours and type. Wireframes are bare semantic HTML (`h1`, `p`, `button`, `data-zone`), so element styles suffice; the structure stays as written. Without wireframes, today's sample screen. Guard: a set with wireframes shows a wireframe's title in each frame. Mutation: always render the sample.
+9. **Pick per axis.** Set page cells are choosable; the drawer counts them; the copy gains `picks: {axis: variant}`, absent when none. A lone set copy without picks stays byte-identical. Guards: a pick reaches the copy (mutation: drop picks); two picks on one axis keep the last (mutation: keep the first).
+10. **Rounds.** `variants.md` gains a `Round` column and a parent per variant. The set page shows the latest round open and earlier ones folded, and marks cells that differ from the parent. Guards: a round 2 variant marks its changed cells only (mutation: mark all); round 1 is folded (mutation: open all). `keep` removes every round.
+11. **Skill 02.**
+    - Prepare asks what the person starts from; a site is read with the host's fetch tool, screenshots by the model. No address is fetched without the person giving it.
+    - Propose says, per axis, which reference it draws on; range far in round 1.
+    - Choose reads picks, builds the mix, proposes round 2 close around it with picked axes locked; "go further" widens the range.
+    - Guard on the start question and on the lock rule.
+
+### Limits
+
+- A site behind a login or a script-only page reads as empty: ask for screenshots instead.
+- Sources on the other tools are vendor pages and blogs, not tested by hand.
+
+### Order
+
+Phases 4 and 5 land, then 6 and 7. The person walks 02 again on blank4 in the set page. Only then phases 8 to 11: that walk shows whether picks and rounds are wanted as written.
