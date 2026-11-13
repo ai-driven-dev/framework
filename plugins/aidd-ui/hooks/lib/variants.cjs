@@ -114,6 +114,7 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
     return `${head}\n<section class="checks"><h2>${labels.checks}</h2><ul>${items.join("")}</ul></section>`;
   }
   const rounds = [...new Set(set.variants.map((variant) => variant.round ?? 1))].sort((a, b) => a - b);
+  const note = wireframes.length && set.variants.some(lookOf) ? `<p class="preview-note">${escaped(labels.preview)}</p>` : "";
   const roundBody = (round) => {
     const own = set.variants.filter((variant) => (variant.round ?? 1) === round);
     const shared = sharedOf(own);
@@ -122,7 +123,7 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
     const body = [same.join("\n"), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
     return rounds.length > 1 ? `<details class="round" data-round="${round}"${round === rounds.at(-1) ? " open" : ""}><summary>${escaped(filled(labels.round, { round }))}</summary>${body}</details>` : body;
   };
-  return [head, ...rounds.map(roundBody)].join("\n");
+  return [head, note, ...rounds.map(roundBody)].filter(Boolean).join("\n");
 }
 
 /** The look of a set's page, added to the shell's. */
@@ -154,6 +155,7 @@ const STYLE = `
 .vote[data-verdict="revise"][aria-pressed="true"] { color: var(--revise); }
 .axes .swatch { display: inline-block; inline-size: 14px; block-size: 14px; margin-inline-end: 4px; vertical-align: -2px; }
 .axes td code { margin-inline-end: 6px; }
+.preview-note { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 .same { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 .file { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; }
 .variant .doc { padding: var(--s3) var(--s4); max-width: none; box-shadow: none; }

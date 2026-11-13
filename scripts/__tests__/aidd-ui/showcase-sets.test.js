@@ -199,6 +199,17 @@ describe("aidd-ui showcase sets", () => {
       });
     });
 
+    it("says above the frames what the preview shows, in the page language, only when wireframes are dressed", () => {
+      const page = (set, lang) => pagesOf([set], { lang })["_set-layout.html"];
+      const note = (html) => html.match(/<p class="preview-note">([^<]*)<\/p>/)?.[1];
+      const look = dressed([["Palette", "#0b0f14 #e8eef3 #7fd4f2"]]);
+      assert.equal(note(page(look, "fr")), LABELS.fr.preview);
+      assert.equal(note(page(look, "en")), LABELS.en.preview);
+      assert.equal(LABELS.fr.preview, "Les aperçus montrent les couleurs, les lettres et les tailles. La mise en page reste celle des maquettes.");
+      assert.ok(page(look, "en").indexOf('class="preview-note"') < page(look, "en").indexOf('class="variants"'), "above the frames");
+      assert.equal(note(page(dressed([["Palette", "nuit profonde"]]), "fr")), undefined, "the preview fallback says nothing");
+    });
+
     it("keeps the structure of the wireframe as written", () => {
       const [frame] = framesOf(dressed([["Palette", "#0b0f14 #e8eef3 #7fd4f2"]]));
       assert.match(frame, /<div data-zone="query">Query<\/div>/);
