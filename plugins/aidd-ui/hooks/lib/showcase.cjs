@@ -56,7 +56,6 @@ const LABELS = {
     preview: "The previews show the colours, the letters and the sizes. The layout stays that of the wireframes.",
     keep: "Keep",
     discard: "Discard",
-    pick: "Pick a record in the list.",
     home: "Overview",
     contents: "Contents",
     list: "Records",
@@ -75,8 +74,8 @@ const LABELS = {
     allOk: "All OK",
     close: "Close",
     nothing: "Nothing to review.",
-    overviewProgress: "Progress",
-    overviewDone: "{done} of {total} steps done",
+    overviewNext: "{count} to review, in {steps}.",
+    start: "Start the review",
     overviewTodo: "To review ({count})",
     overviewRevise: "To rework ({count})",
     blocked: "Write what should change on each state to revise.",
@@ -146,7 +145,6 @@ const LABELS = {
     preview: "Les aperçus montrent les couleurs, les lettres et les tailles. La mise en page reste celle des maquettes.",
     keep: "Garder",
     discard: "Écarter",
-    pick: "Choisissez une fiche dans la liste.",
     home: "Aperçu",
     contents: "Sommaire",
     list: "Fiches",
@@ -165,8 +163,8 @@ const LABELS = {
     allOk: "Tout OK",
     close: "Fermer",
     nothing: "Rien à relire.",
-    overviewProgress: "Avancement",
-    overviewDone: "{done} étapes sur {total} terminées",
+    overviewNext: "{count} à relire, dans {steps}.",
+    start: "Commencer la revue",
     overviewTodo: "À relire ({count})",
     overviewRevise: "À reprendre ({count})",
     blocked: "Écrivez ce qu'il faut changer sur chaque état à revoir.",
@@ -399,7 +397,18 @@ textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: va
 .overview ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .overview li { display: flex; align-items: center; gap: var(--s2); padding: 4px 0; border-bottom: 1px solid var(--line); }
 .overview li a { flex: 1; }
-.advance { inline-size: 240px; }
+.stepper { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.stepper li > a, .stepper li > .cell { display: flex; align-items: center; gap: var(--s3); min-block-size: 44px; padding: var(--s2) var(--s4); border: 1px solid var(--line); border-radius: var(--r2); background: var(--surface); color: var(--text); text-decoration: none; }
+.stepper li > a:hover { background: var(--sunken); }
+.stepper .no { flex: none; inline-size: 24px; block-size: 24px; display: grid; place-items: center; border-radius: 999px; background: var(--sunken); font-size: var(--t-xs); font-weight: 600; }
+.stepper .name { font-weight: 600; }
+.stepper .state { margin-left: auto; color: var(--muted); font-size: var(--t-sm); }
+.stepper li[data-state="todo"] .state { color: var(--revise); font-weight: 600; }
+.stepper li[data-state="empty"] > .cell { color: var(--muted); background: transparent; }
+.start-row { margin: var(--s3) 0 0; }
+.start { display: inline-flex; align-items: center; min-block-size: 44px; padding: 0 var(--s5); border-radius: var(--r2); background: var(--accent); color: #fff; font-weight: 600; text-decoration: none; }
+.start:hover { background: var(--accent-hover); }
+@media (min-width: 900px) { .stepper { flex-direction: row; } .stepper li { flex: 1 1 0; min-width: 0; } .stepper li > a, .stepper li > .cell { flex-direction: column; align-items: flex-start; block-size: 100%; gap: var(--s2); } .stepper .state { margin-left: 0; } }
 .progress { margin-left: auto; color: var(--faint); font-variant-numeric: tabular-nums; }
 .progress[data-complete="true"] { color: var(--ok); }
 .appears { display: flex; flex-direction: column; gap: var(--s3); padding-top: var(--s5); border-top: 1px solid var(--line); }
@@ -1268,6 +1277,34 @@ const headOf = ({ record, title, description, persona, labels }) => `<header cla
 
 /** The home page: how many steps are done, what awaits review by step, then the records to rework. Links and
  * counts only, no card: what to open next is a list, not a gallery. */
+/** The first thing to open of a step: the first record awaiting review, else its first record, else its first set. */
+const firstOf = (each) => each.awaiting[0] ?? [...each.records].sort(byRecordId)[0] ?? null;
+const hrefOf = (each) => {
+  const record = firstOf(each);
+  if (record) return `${fm(record).id}.html`;
+  return each.sets.length ? variants.setFileOf(each.sets[0].id) : null;
+};
+
+/** The five steps as a stepper in order, each a link to the first thing to open, with its state in words. */
+function stepperOf(held, labels) {
+  const item = (each, at) => {
+    const state = each.todo ? "todo" : each.records.length || each.sets.length ? "done" : "empty";
+    const word = each.todo ? filled(labels.toReview, { count: each.todo }) : state === "done" ? labels.stepDone : labels.stepEmpty;
+    const href = hrefOf(each);
+    const inner = `<span class="no">${at + 1}</span><span class="name">${labels.stepNames[each.step]}</span><span class="state">${escaped(word)}</span>`;
+    return `<li data-step="${each.step}" data-state="${state}">${href ? `<a href="${escaped(href)}">${inner}</a>` : `<span class="cell">${inner}</span>`}</li>`;
+  };
+  return `<ol class="stepper">${held.map(item).join("")}</ol>`;
+}
+
+/** The line that says what awaits review, with the way in: a primary link to the first step that has work. */
+function reviewLineOf(held, labels) {
+  const waiting = held.filter((each) => each.todo);
+  if (!waiting.length) return `<p class="lede">${labels.nothing}</p>`;
+  const text = filled(labels.overviewNext, { count: waiting.reduce((sum, each) => sum + each.todo, 0), steps: waiting.map((each) => labels.stepNames[each.step]).join(", ") });
+  return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(waiting[0]))}">${labels.start}</a></p>`;
+}
+
 function overviewOf({ project, held, records, rows, labels }) {
   const progressOf = (record) => {
     const states = orderedStates(rows, record);
@@ -1286,10 +1323,9 @@ function overviewOf({ project, held, records, rows, labels }) {
     return `<section class="todo-step" data-step="${each.step}"><h3>${labels.stepNames[each.step]}<span>${each.todo}</span></h3>${each.awaiting.length ? body : ""}${open}</section>`;
   };
   const todo = held.reduce((sum, each) => sum + each.todo, 0);
-  const done = held.filter((each) => !each.todo && (each.records.length || each.sets.length)).length;
   const reworked = records.filter((record) => hasRender(project, record) && orderedStates(rows, record).some(({ verdict }) => verdict.current === "revise"));
   return [
-    `<section class="overview" data-overview="progress"><h2>${labels.overviewProgress}</h2><meter class="advance" min="0" max="${STEPS.length}" value="${done}">${done}/${STEPS.length}</meter><p>${escaped(filled(labels.overviewDone, { done, total: STEPS.length }))}</p></section>`,
+    stepperOf(held, labels),
     todo
       ? `<section class="overview" data-overview="todo"><h2>${escaped(filled(labels.overviewTodo, { count: todo }))}</h2>${held.filter((each) => each.todo).map(stepBlock).join("")}</section>`
       : `<section class="overview" data-overview="todo"><p class="none">${labels.nothing}</p></section>`,
@@ -1349,7 +1385,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   };
   const sectionsById = new Map(records.flatMap((record) => { const own = sectionsOf(record); return own ? [[fm(record).id, own]] : []; }));
   const drawer = (current) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, sets });
-  const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, overviewOf({ project, held, records, rows, labels })].join("\n");
+  const home = [`<header class="head"><h1>${labels.title}</h1>${reviewLineOf(held, labels)}</header>`, overviewOf({ project, held, records, rows, labels })].join("\n");
   const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows, sectionsById), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
     const id = fm(record).id;

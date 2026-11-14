@@ -750,16 +750,33 @@ describe("aidd-ui showcase", () => {
       assert.ok(block.match(/<h4 /g).length >= 1);
     });
 
-    it("draws the progress meter from the steps done, not from the steps that hold something", () => {
+    it("draws the steps as a stepper in order, each with its state in words, replacing the meter", () => {
       const index = pagesOf()["index.html"];
-      assert.match(index, /<meter class="advance" min="0" max="5" value="\d">/);
-      const value = Number(index.match(/<meter class="advance"[^>]* value="(\d)"/)[1]);
+      assert.doesNotMatch(index, /<meter/);
+      const stepper = index.match(/<ol class="stepper">[\s\S]*?<\/ol>/)[0];
+      const items = [...stepper.matchAll(/<li data-step="(\w+)" data-state="(\w+)">([\s\S]*?)<\/li>/g)];
+      assert.deepEqual(items.map((match) => match[1]), ["journeys", "identity", "foundations", "components", "screens"]);
       const steps = stepsOf(index);
-      const holding = steps.filter((each) => each.mark !== "\u2014");
-      const done = holding.filter((each) => each.todo === "0");
-      assert.equal(value, done.length);
-      assert.ok(holding.length > done.length, "a step with work left is held but not done");
+      for (const [, step, state, html] of items) {
+        const held = steps.find((each) => each.step === step);
+        assert.equal(state, held.todo !== "0" ? "todo" : held.mark === "\u2014" ? "empty" : "done", step);
+        assert.match(html, /<span class="state">[^<]+<\/span>/, step);
+      }
+      assert.match(items.find((match) => match[1] === "components")[3], /<a href="[^"]+\.html">/);
     });
+
+    it("says what awaits review and starts the review on the first record awaiting, by step order", () => {
+      for (const [lang, word, status] of [["en", "Start the review", /\d+ to review, in /], ["fr", "Commencer la revue", /\d+ à relire, dans /]]) {
+        const index = pagesOf({ lang })["index.html"];
+        const start = index.match(/<a class="start" href="([^"]+)">([^<]*)<\/a>/);
+        assert.equal(start[2], word, lang);
+        assert.match(index.match(/<p class="lede">[\s\S]*?<\/p>/)[0], status, lang);
+        const links = [...todoOf(index).matchAll(/<li data-id="[^"]+"><a href="([^"]+)">/g)].map((match) => match[1]);
+        assert.ok(links.length > 1, "more than one record awaits");
+        assert.equal(start[1], links[0], lang);
+      }
+    });
+
 
     it("lists a record with a state to rework under its own heading, hidden when there is none", () => {
       const revise = (html) => html.match(/<section class="overview" data-overview="revise">[\s\S]*?<\/section>/)?.[0];
