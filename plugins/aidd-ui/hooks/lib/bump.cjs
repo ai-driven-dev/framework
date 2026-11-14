@@ -3,7 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { list, table, cells, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, byId, isSystem, fm, verdictRows, stateVerdict, REVIEW_KIND, VERDICTS_SECTION, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING } = require("./model.cjs");
+const { placed, byId, isSystem, fm, verdictRows, stateVerdict, REVIEW_KIND, VERDICTS_SECTION, SYSTEM_ID, INTEGER_VERSION, STATUS_DEPRECATED, BREAKING, NOT_BREAKING, SEMVER, reviewStatesOf } = require("./model.cjs");
 const { Refusal, required, withoutTrailingSeparators, HISTORY_FILE, CODE_DEBT_FILE } = require("./project.cjs");
 const { usages } = require("./graph.cjs");
 const { citations, tokenNameOf } = require("./tokens.cjs");
@@ -77,21 +77,28 @@ const rowAt = (lines, id, version) => lines.findIndex((line) => {
   return rowId === id && rowVersion === String(version);
 });
 
-/** Writes the first row of each record named, its version 1 and its task `folder`: the system's
- * first publication is 1.0.0. */
+/** Writes the first row of each record named, its version 1 and its task `folder`. The system has
+ * two kinds of row: the integer ones, its content, written here as 1; and the semver ones, its
+ * publications, of which this writes the first, 1.0.0, only when it has none. */
 function create(root, folder, ids) {
   const project = required(root);
   const index = byId(project);
   const files = editing(root);
   const { lines, end } = historyIn(files);
+  let fresh = false; // a system never published: its code debt is written from now on
   for (const id of new Set(ids)) {
     const record = index.get(id);
-    if (!record || fm(record).kind === "brand") throw new Refusal(`no versioned record named "${id}"`);
-    if (project.history.some((row) => row.Id === id)) throw new Refusal(`"${id}" already has history`);
-    addRow(lines, null, rowOf(id, isSystem(record) ? FIRST_SYSTEM_VERSION : FIRST_VERSION, CREATED, NOT_BREAKING, folder, ""), end, HISTORY_FILE);
+    if (!record) throw new Refusal(`no versioned record named "${id}"`);
+    const rows = project.history.filter((row) => row.Id === id);
+    if ((isSystem(record) ? rows.filter((row) => !SEMVER.test(row.Version)) : rows).length) throw new Refusal(`"${id}" already has history`);
+    addRow(lines, null, rowOf(id, FIRST_VERSION, CREATED, NOT_BREAKING, folder, ""), end, HISTORY_FILE);
+    if (isSystem(record) && !rows.length) {
+      addRow(lines, null, rowOf(id, FIRST_SYSTEM_VERSION, CREATED, NOT_BREAKING, folder, ""), end, HISTORY_FILE);
+      fresh = true;
+    }
   }
   const changed = files.save();
-  if (!ids.includes(SYSTEM_ID)) return { changed };
+  if (!fresh) return { changed };
   fs.writeFileSync(path.join(root, CODE_DEBT_FILE), jsonText(colourDebt(project))); // the debt C4 holds the code to from now on
   return { changed: [...changed, CODE_DEBT_FILE].sort() };
 }
@@ -131,7 +138,7 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
   const records = placed(project);
   // A wireframe or a journey names what it holds: it changes only when it is the one changed.
   const named = (ids) => ids.filter((id) => refs.includes(id));
-  const reached = new Set([...report.elements, ...report.screens, ...named(report.wireframes), ...named(report.journeys)]);
+  const reached = new Set([...report.elements, ...report.screens, ...named(report.wireframes), ...named(report.journeys), ...named(["brand", SYSTEM_ID])]);
   // A deprecated element follows a rename or a deletion: it cites the token, or uses what does.
   const cites = citations(project);
   const viaTokens = breaking ? usages(project, refs.filter((ref) => cites.has(tokenNameOf(project, ref)))) : { elements: [], screens: [] };
@@ -168,7 +175,7 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
     for (const id of list(fm(review).screens).filter((screen) => raised.has(screen))) {
       const screen = records.find((each) => fm(each).id === id);
       const { lines, end } = files.editOf(review.file);
-      for (const state of list(fm(screen).states)) addRow(lines, VERDICTS_HEADING, rowOf(id, state, raised.get(id), "pending", ""), end, review.file);
+      for (const state of reviewStatesOf(screen)) addRow(lines, VERDICTS_HEADING, rowOf(id, state, raised.get(id), "pending", ""), end, review.file);
     }
   }
 
@@ -183,8 +190,9 @@ function publish(root, { breaking }) {
   const project = required(root);
   const last = byVersion(rowsOf(project, SYSTEM_ID), true).at(-1);
   if (!last) throw new Refusal(`${HISTORY_FILE} has no system row, write the first with bump --created system`);
-  const published = new Set(rowsOf(project, SYSTEM_ID).flatMap((row) => taskList(row.Task)));
-  const tasks = [...new Set(project.history.filter((row) => row.Id !== SYSTEM_ID).map((row) => row.Task))].filter((task) => !published.has(task)).sort();
+  const publications = rowsOf(project, SYSTEM_ID).filter((row) => SEMVER.test(row.Version)); // the integer rows are the system's content, not publications
+  const published = new Set(publications.flatMap((row) => taskList(row.Task)));
+  const tasks = [...new Set(project.history.filter((row) => row.Id !== SYSTEM_ID || !SEMVER.test(row.Version)).map((row) => row.Task))].filter((task) => !published.has(task)).sort();
   if (!tasks.length) throw new Refusal("no unpublished task, nothing to publish");
   const broken = brokenTasks(project);
   const breaks = breaking || tasks.some((task) => broken.has(task));
@@ -200,7 +208,7 @@ function publish(root, { breaking }) {
 /** The first state of `record` no review holds an ok verdict for at its current version, as `{state, verdict}` (`state` undefined for a record without states, `verdict` undefined when no row decides it), or null. A revise at that version blocks it. */
 function unreviewedState(project, record) {
   const rows = verdictRows(placed(project));
-  const states = list(fm(record).states);
+  const states = reviewStatesOf(record);
   const decided = (state) => stateVerdict(rows, record, state)?.Verdict;
   const blocked = (states.length ? states : [undefined]).filter((each) => decided(each) !== OK);
   return blocked.length ? { state: blocked[0], verdict: decided(blocked[0]) } : null;

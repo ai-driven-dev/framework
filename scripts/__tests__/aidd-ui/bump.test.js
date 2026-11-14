@@ -126,6 +126,20 @@ describe("aidd-ui bump", () => {
       assert.equal(/\r/.test(read(`${UI}/components/dialog.md`)), false);
     });
 
+    it("raises the brand and the system only when named, proposed, with a pending row in a review that names them", () => {
+      assert.deepEqual(change("color.action.default").report.changed.filter((file) => /brand|system/.test(file)), []);
+      edit(tmp, `${UI}/reviews/first-pass.md`, "screens: [home]", "screens: [home, brand]");
+      const { report } = bump("--task", TASK, "--change", "plainer tone", "brand", "system");
+      assert.deepEqual(report.changed, [`${UI}/brand.md`, HISTORY, `${UI}/reviews/first-pass.md`, `${UI}/system.md`]);
+      for (const id of ["brand", "system"]) {
+        assert.ok(read(`${UI}/${id}.md`).includes("\nversion: 2\n"), id);
+        assert.ok(read(`${UI}/${id}.md`).includes("\nstatus: proposed\n"), id);
+        assert.ok(read(HISTORY).includes(`| ${id} | 2 | plainer tone | no | ${TASK} | |\n`), id);
+      }
+      assert.ok(read(`${UI}/reviews/first-pass.md`).includes("| brand | default | 2 | pending | |"));
+      assert.equal(read(`${UI}/reviews/first-pass.md`).includes("| system |"), false);
+    });
+
     it("raises a wireframe named itself, with its row in history.md", () => {
       const { code, report } = bump("--task", TASK, "--change", "adds a filter zone", "search-flow");
       assert.deepEqual([code, report.changed], [0, [`${UI}/history.md`, `${UI}/wireframes/search-flow.md`]]);
@@ -247,10 +261,27 @@ describe("aidd-ui bump", () => {
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
-    it("writes the first publication of the system as 1.0.0, and builds history.md when there is none", () => {
+    it("writes the system's content row, 1, then its first publication, 1.0.0, and builds history.md when there is none", () => {
       fs.rmSync(path.join(tmp, HISTORY));
       create("system");
-      assert.equal(read(HISTORY), `# History\n\n| Id | Version | Change | Breaking | Task | Fingerprint |\n| --- | --- | --- | --- | --- | --- |\n| system | 1.0.0 | created | no | ${TASK} | |\n`);
+      assert.equal(read(HISTORY), `# History\n\n| Id | Version | Change | Breaking | Task | Fingerprint |\n| --- | --- | --- | --- | --- | --- |\n| system | 1 | created | no | ${TASK} | |\n| system | 1.0.0 | created | no | ${TASK} | |\n`);
+    });
+
+    it("writes only the content row of a system already published, and leaves its code debt as it was", () => {
+      edit(tmp, HISTORY, "| system | 1 | created | no | aidd_docs/tasks/ds-init | |\n", "");
+      const debt = read(DEBT);
+      assert.deepEqual(create("system").report, { changed: [HISTORY] });
+      assert.equal(read(HISTORY).split("\n").filter((line) => line.startsWith("| system |")).length, 3);
+      assert.ok(read(HISTORY).includes(`| system | 1 | created | no | ${TASK} | |\n`));
+      assert.equal(read(DEBT), debt);
+      assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
+    });
+
+    it("writes the first row of the brand, its version 1", () => {
+      edit(tmp, HISTORY, "| brand | 1 | created | no | aidd_docs/tasks/ds-init | |\n", "");
+      assert.deepEqual(create("brand").report, { changed: [HISTORY] });
+      assert.ok(read(HISTORY).includes(`| brand | 1 | created | no | ${TASK} | |\n`));
+      assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
     it("writes the code's colour literals as its debt when it creates the system, files and literals sorted", () => {
@@ -279,7 +310,7 @@ describe("aidd-ui bump", () => {
     });
 
     it("names an id that is no versioned record, or already has history, writing nothing", () => {
-      const refusals = [["ghost", 'no versioned record named "ghost"'], ["brand", 'no versioned record named "brand"'], ["button", '"button" already has history']];
+      const refusals = [["ghost", 'no versioned record named "ghost"'], ["brand", '"brand" already has history'], ["system", '"system" already has history'], ["button", '"button" already has history']];
       for (const [id, message] of refusals) {
         const before = snapshot();
         const done = create(id);

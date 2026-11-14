@@ -4,7 +4,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, HISTORY, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, addHistory, edit, editTokens, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
-const { byId } = require(path.join(LIB, "model.cjs"));
+const { byId, reviewStatesOf } = require(path.join(LIB, "model.cjs"));
 const { list } = require(path.join(LIB, "markdown.cjs"));
 
 // The publish command is driven as a subprocess, as the skill calls it, after bump has raised
@@ -35,8 +35,9 @@ const GATE = `${UI}/reviews/gate.md`;
 const reviewed = (dir, ...ids) => {
   const index = byId(load(dir));
   const rows = ids.flatMap((id) => {
-    const { version, states } = index.get(id).frontMatter;
-    return (list(states).length ? list(states) : [""]).map((state) => `| ${id} | ${state} | ${version} | ok | |`);
+    const states = reviewStatesOf(index.get(id));
+    const { version } = index.get(id).frontMatter;
+    return (states.length ? states : [""]).map((state) => `| ${id} | ${state} | ${version} | ok | |`);
   });
   const verdicts = ["## Verdicts", "", "| Screen | State | Version | Verdict | Comment |", "| --- | --- | --- | --- | --- |", ...rows].join("\n");
   const first = !fs.existsSync(path.join(dir, GATE));
@@ -76,6 +77,14 @@ describe("aidd-ui publish", () => {
     assert.deepEqual(publish().report, { version: "2.2.0", tasks: [RELABEL] });
   });
 
+  it("lists a task whose system content row is no publication, so an element row beside it stays unpublished", () => {
+    bump(RECOLOUR);
+    edit(tmp, `${UI}/system.md`, "version: 1", "version: 2");
+    addHistory(tmp, ["system", "2", "tokens recoloured", "no", RECOLOUR]);
+    assert.deepEqual(publish().report, { version: "2.1.0", tasks: [RECOLOUR] });
+    assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
+  });
+
   it("is a new major version, breaking, when a task it lists broke an element", () => {
     bump(RETHEME);
     bump(RECOLOUR, "--breaking");
@@ -106,6 +115,19 @@ describe("aidd-ui publish", () => {
       assert.ok(read(BUTTON).includes("\nstatus: validated\n"));
       assert.equal(rowOf("button", 2), `| button | 2 | new action colour | no | ${RECOLOUR} | ${report.validated[0].fingerprint} |`);
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
+    });
+
+    it("validates the brand and the system, reviewed ok in their one state", () => {
+      unsealed();
+      reviewed(tmp, "brand", "system");
+      const { code, report, err } = publish("brand", "system");
+      assert.deepEqual([code, err], [0, ""]);
+      assert.deepEqual(report.validated.map(({ id, version }) => [id, version]), [["brand", "1"], ["system", "1"]]);
+      assert.ok(read(`${UI}/brand.md`).includes("\nstatus: validated\n"));
+      assert.equal(rowOf("system", 1), `| system | 1 | created | no | aidd_docs/tasks/ds-init | ${report.validated[1].fingerprint} |`);
+      assert.equal(validate(tmp).out.some((line) => /(brand|system)\.md/.test(line)), false); // the elements left unsealed are the others'
+      edit(tmp, `${UI}/brand.md`, "## Project\n\nA search tool.", "## Project\n\nA search tool, for analysts.");
+      assert.ok(validate(tmp).out.some((line) => line.includes("brand.md H8")));
     });
 
     it("validates an asset with no state given one ok verdict", () => {
