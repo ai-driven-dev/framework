@@ -908,34 +908,14 @@ describe("aidd-ui showcase", () => {
   });
 
   describe("the copy of a review", () => {
-    const HOME_COPY = [
-      "```json",
-      "{",
-      '  "record": "home",',
-      '  "version": 1,',
-      '  "verdicts": [',
-      "    {",
-      '      "state": "default",',
-      '      "verdict": "ok",',
-      '      "comment": ""',
-      "    },",
-      "    {",
-      '      "state": "loading",',
-      '      "verdict": "revise",',
-      '      "comment": "spinner too small"',
-      "    }",
-      "  ]",
-      "}",
-      "```",
-      "",
-    ].join("\n");
+    const HOME_COPY = "```json\n" + JSON.stringify([{ record: "home", version: 1, verdicts: [{ state: "default", verdict: "ok", comment: "" }, { state: "loading", verdict: "revise", comment: "spinner too small" }] }], null, 2) + "\n```\n";
     const home = { record: "home", version: "1", verdicts: [{ state: "default", verdict: "ok", comment: "" }, { state: "loading", verdict: "revise", comment: "  spinner too small " }] };
 
-    it("copies one record as the page copy did: one object, its decided states in order, the comments trimmed", () => {
+    it("copies one record as a list of one: its decided states in order, the comments trimmed", () => {
       assert.equal(copiedOf([home, { record: "button", version: "1", verdicts: [] }]), HOME_COPY);
     });
 
-    it("copies several records as the overview copy did: a list of the same objects, in the order given", () => {
+    it("copies several records as a list of the same objects, in the order given", () => {
       const button = { record: "button", version: "1", verdicts: [{ state: "hover", verdict: "ok", comment: "" }] };
       const expected = "```json\n" + JSON.stringify([{ record: "button", version: 1, verdicts: [{ state: "hover", verdict: "ok", comment: "" }] }, { record: "home", version: 1, verdicts: [{ state: "default", verdict: "ok", comment: "" }, { state: "loading", verdict: "revise", comment: "spinner too small" }] }], null, 2) + "\n```\n";
       assert.equal(copiedOf([button, home]), expected);

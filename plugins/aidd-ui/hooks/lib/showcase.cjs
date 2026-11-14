@@ -583,9 +583,8 @@ if (sides) sides.addEventListener("click", () => {
 `;
 
 /** What the review skill reads back from a copy: each record with a state decided, its decided states in
- * the order given, and each set with a variant decided, as fenced JSON. One entry is one object, as a
- * record's page always copied it and the comparison page copied a set; several are a list of the same
- * objects. A set keeps its variants all, the undecided as null. Nothing decided copies nothing. Embedded in
+ * the order given, and each set with a variant decided, as fenced JSON: always a list, even of one entry, so
+ * what reads it never tells an object from a list. A set keeps its variants all, the undecided as null. Nothing decided copies nothing. Embedded in
  * the pages as its own source, so the test and the page run the same function. */
 function copiedOf(entries) {
   const body = entries.flatMap((entry) => {
@@ -602,7 +601,7 @@ function copiedOf(entries) {
     }];
   });
   if (!body.length) return "";
-  return "```json\n" + JSON.stringify(body.length === 1 ? body[0] : body, null, 2) + "\n```\n";
+  return "```json\n" + JSON.stringify(body, null, 2) + "\n```\n";
 }
 
 /** The entries of a copy from the page's `model` and its `choices`: `model.records` each `{key, record,

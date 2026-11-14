@@ -728,7 +728,7 @@ describe("aidd-ui showcase sets", () => {
         new Function("document", "window", "navigator", "setTimeout", script)(document, window, navigator, () => {});
         return { rows, columns, by, written };
       };
-      const verdictsOf = (text) => JSON.parse(text.replace(/^```json\n|\n```\n$/g, "")).variants.map((each) => [each.name, each.verdict, each.comment]);
+      const verdictsOf = (text) => JSON.parse(text.replace(/^```json\n|\n```\n$/g, ""))[0].variants.map((each) => [each.name, each.verdict, each.comment]);
 
       it("carries a verdict set in the column to the copy, and presses it in the drawer's row too", async () => {
         const page = open();
@@ -823,11 +823,11 @@ describe("aidd-ui showcase sets", () => {
   });
 
   describe("the copy of a set", () => {
-    const LONE = '```json\n{\n  "set": "layout",\n  "variants": [\n    {\n      "name": "a",\n      "verdict": "revise",\n      "comment": "calm"\n    },\n    {\n      "name": "b",\n      "verdict": null,\n      "comment": ""\n    }\n  ]\n}\n```\n';
+    const LONE = "```json\n" + JSON.stringify([{ set: "layout", variants: [{ name: "a", verdict: "revise", comment: "calm" }, { name: "b", verdict: null, comment: "" }] }], null, 2) + "\n```\n";
     const decided = { set: "layout", variants: [{ name: "a", verdict: "revise", comment: " calm " }, { name: "b", verdict: null, comment: "" }] };
     const home = { record: "home", version: "1", verdicts: [{ state: "default", verdict: "ok", comment: "" }] };
 
-    it("copies a set alone as the comparison page copied it: one object, undecided variants null", () => {
+    it("copies a set alone as a list of one, undecided variants null", () => {
       assert.equal(copiedOf([decided]), LONE);
     });
 
@@ -889,14 +889,14 @@ describe("aidd-ui showcase sets", () => {
     const parsed = (copy) => JSON.parse(copy.replace(/^```json\n|\n```\n$/g, ""));
 
     it("copies the picks of a set after its variants, and nothing more without a pick", () => {
-      assert.deepEqual(parsed(copiedOf([{ ...plain, picks: { Tone: "a", Density: "b" } }])), { ...plain, picks: { Tone: "a", Density: "b" } });
+      assert.deepEqual(parsed(copiedOf([{ ...plain, picks: { Tone: "a", Density: "b" } }])), [{ ...plain, picks: { Tone: "a", Density: "b" } }]);
       assert.equal(copiedOf([{ ...plain, picks: {} }]), copiedOf([plain]));
       assert.doesNotMatch(copiedOf([plain]), /picks/);
     });
 
     it("copies a set with picks and no verdict yet", () => {
       const copy = copiedOf([{ set: "layout", variants: [{ name: "a", verdict: null, comment: "" }], picks: { Tone: "a" } }]);
-      assert.deepEqual(parsed(copy).picks, { Tone: "a" });
+      assert.deepEqual(parsed(copy)[0].picks, { Tone: "a" });
     });
 
     it("reads the picks of a set from its choices, never as a variant", () => {

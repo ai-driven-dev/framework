@@ -72,7 +72,7 @@ describe("the verdicts beside the state tabs", () => {
     const copiedStates = async (page) => {
       page.by.copy.listeners.click();
       await new Promise((resolve) => setImmediate(resolve));
-      return JSON.parse(page.written[0].replace(/^```json\n|\n```\n$/g, "")).verdicts.map((each) => [each.state, each.verdict, each.comment]);
+      return JSON.parse(page.written[0].replace(/^```json\n|\n```\n$/g, ""))[0].verdicts.map((each) => [each.state, each.verdict, each.comment]);
     };
 
     it("gives the verdict of the shown state under the key and the values the drawer keeps", () => {
