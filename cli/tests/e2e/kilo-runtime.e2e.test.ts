@@ -11,10 +11,12 @@ import { createTestEnv, execFileAsync, runCli, sandboxedEnv } from "./helpers.js
 
 const describeKiloRuntime = process.env.KILO_RUNTIME_SMOKE === "1" ? describe : describe.skip;
 // Windows and macOS can need more time for artifact discovery and the full
-// scenario. Keep Linux at 120s and allow 300s elsewhere while child operations
-// remain individually bounded.
-const KILO_RUNTIME_TIMEOUT_MS = process.platform === "linux" ? 120_000 : 300_000;
+// scenario. Keep Linux at 120s, macOS at 300s, and allow Windows extra room for
+// the MCP fixture discovery before the bounded local model turn and cleanup.
+const KILO_RUNTIME_TIMEOUT_MS =
+  process.platform === "linux" ? 120_000 : process.platform === "win32" ? 360_000 : 300_000;
 const KILO_DISCOVERY_TIMEOUT_MS = 90_000;
+const KILO_MCP_AGENT_DISCOVERY_TIMEOUT_MS = process.platform === "win32" ? 150_000 : 90_000;
 const KILO_QUICK_COMMAND_TIMEOUT_MS = 30_000;
 const KILO_CLEANUP_TIMEOUT_MS = 10_000;
 const phase = (name: string) =>
@@ -318,7 +320,7 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
           cwd: mcpProject,
           env,
           shell: KILO_SHELL,
-          timeout: KILO_DISCOVERY_TIMEOUT_MS,
+          timeout: KILO_MCP_AGENT_DISCOVERY_TIMEOUT_MS,
           maxBuffer: 8 * 1024 * 1024,
         });
         expect(fixtureAgents.stdout).toContain("aidd-test-code-reviewer");
