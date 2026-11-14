@@ -34,6 +34,7 @@ The version-control conventions this project follows: branches, commits, and the
 
 ## Pull requests
 
+- Contributors without push access must push to their fork and explicitly target the original repository's `next` branch: `gh pr create --repo ai-driven-dev/framework --base next --head YOUR-USERNAME:your-branch-name`. Omitting `--base next` targets the default `main` branch.
 - A pull request stacked on another targets that branch, not `next`. Before merging the base, retarget the dependent one: `gh pr edit <n> --base next`. GitHub closes a pull request whose base branch is deleted, unless the deletion is the merge's own, so never delete a branch another open pull request targets.
 - A squash merge of the base leaves the dependent branch carrying the base's original commits, and it conflicts with `next`. Replay only its own commits: `git rebase --onto origin/next <base's last commit>`, then push with `--force-with-lease`.
 
