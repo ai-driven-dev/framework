@@ -59,6 +59,7 @@ const LABELS = {
     discard: "Discard",
     pick: "Pick a record in the list.",
     home: "Overview",
+    contents: "Contents",
     list: "Records",
     uses: "Uses",
     appearsIn: "Appears in",
@@ -128,6 +129,7 @@ const LABELS = {
     discard: "Écarter",
     pick: "Choisissez une fiche dans la liste.",
     home: "Aperçu",
+    contents: "Sommaire",
     list: "Fiches",
     uses: "Utilise",
     appearsIn: "Apparaît dans",
@@ -224,6 +226,7 @@ select { appearance: none; font: inherit; font-size: var(--t-sm); color: var(--t
 .shell { display: grid; grid-template-columns: 264px minmax(0, 1fr); min-height: 100vh; }
 .shell > nav { position: sticky; top: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--line); padding: var(--s4); }
 .nav-scroll { flex: 1; min-height: 0; overflow: auto; }
+.nav-bar { display: none; }
 .shell > main { min-width: 0; padding: var(--s6) var(--s7); display: flex; flex-direction: column; gap: var(--s5); max-width: 1320px; }
 .shell > main.wide { max-width: none; }
 nav .brand { display: flex; align-items: center; gap: var(--s1); padding: var(--s1) 0 var(--s4); font-size: var(--t-sm); font-weight: 600; }
@@ -407,6 +410,20 @@ textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: va
 #note:empty { display: none; }
 textarea.out { width: 100%; min-height: 8rem; font: var(--t-sm) var(--mono); border: 1px solid var(--control); border-radius: var(--r2); padding: var(--s2); }
 ${rowBoards()}
+@media (max-width: 768px) {
+  .shell { display: block; }
+  .shell > nav { position: fixed; inset: 0 0 auto 0; z-index: 40; block-size: 56px; flex-direction: row; align-items: center; gap: var(--s3); padding: 0 var(--s4); border-right: 0; border-bottom: 1px solid var(--line); }
+  .nav-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex: 1; min-width: 0; }
+  .nav-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nav-scroll { display: none; }
+  .shell > nav[data-open] .nav-scroll { display: block; position: fixed; inset: 56px 0 0 0; padding: var(--s4); background: var(--surface); }
+  .nav-scroll .brand { display: none; }
+  .review-foot { padding: 0; }
+  .open-review { inline-size: auto; gap: var(--s3); }
+  .shell > main { padding: calc(56px + var(--s4)) var(--s4) var(--s6); }
+  .pair { padding: var(--s3); }
+  .state .render iframe[data-platform="mobile"] { flex: 0 1 390px; min-inline-size: 0; }
+}
 `;
 /** The delivery of a copy, shared by the pages that hand a review back: the clipboard, else a text area to copy from. */
 const DELIVER = `
@@ -897,7 +914,8 @@ function navigationOf(project, records, labels, current, sets = [], rows = []) {
     return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark" role="img" aria-label="${escaped(markName)}">${mark}</span></summary>${alone ? "" : bodyOf(each) + setsOf(each.sets)}</details></li>`;
   };
   const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} ${pendingOf(labels, total)}</button></div>`;
-  return `<nav aria-label="${escaped(labels.list)}"><div class="nav-scroll"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol></div>${foot}</nav>`;
+  const bar = `<div class="nav-bar"><span class="nav-title">${labels.title}</span><button type="button" id="nav-toggle" aria-controls="nav-sheet" aria-expanded="false">${labels.contents}</button></div>`;
+  return `<nav aria-label="${escaped(labels.list)}">${bar}<div class="nav-scroll" id="nav-sheet"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol></div>${foot}</nav>`;
 }
 
 /** The state a miniature shows: `default` when the record has it, else its first. */
@@ -1289,7 +1307,24 @@ function overviewOf({ project, held, records, rows, labels }) {
   ].filter(Boolean).join("\n");
 }
 
-const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${SHELL}${variants.STYLE}</style>`, "</head>", "<body>", '<div class="shell">', navigation, wide ? '<main class="wide">' : "<main>", body, "</main>", "</div>", drawer, `<script>${script}</script>`, "</body>", "</html>", ""].join("\n");
+/** The script of the navigation sheet a narrow page opens from its top bar: Escape closes it and gives the focus back to the button. */
+const NAVIGATION = `
+const navToggle = document.getElementById("nav-toggle");
+function sheet(on) {
+  navToggle.setAttribute("aria-expanded", String(on));
+  navToggle.closest("nav").toggleAttribute("data-open", on);
+}
+if (navToggle) {
+  navToggle.addEventListener("click", () => sheet(navToggle.getAttribute("aria-expanded") !== "true"));
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || navToggle.getAttribute("aria-expanded") !== "true") return;
+    sheet(false);
+    navToggle.focus();
+  });
+}
+`;
+
+const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${SHELL}${variants.STYLE}</style>`, "</head>", "<body>", '<div class="shell">', navigation, wide ? '<main class="wide">' : "<main>", body, "</main>", "</div>", drawer, `<script>${script}${NAVIGATION}</script>`, "</body>", "</html>", ""].join("\n");
 
 /** The pages of the showcase by file name: `index.html`, one page per record that is not a review and one per set of variants.
  * `problems` are the engine's, `tokens` the stylesheet text or null, `captures` the png paths beside

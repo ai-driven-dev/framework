@@ -778,6 +778,20 @@ describe("aidd-ui showcase", () => {
       }
     });
 
+    it("opens the navigation from a button that names the sheet it controls, in the language", () => {
+      for (const lang of ["en", "fr"]) {
+        const html = pagesOf({ lang })["home.html"];
+        const toggle = html.match(/<button [^>]*id="nav-toggle"[^>]*>([^<]*)</);
+        assert.ok(toggle, "a toggle");
+        assert.equal(toggle[1], LABELS[lang].contents);
+        assert.equal(attributeOf(toggle[0], "aria-expanded"), "false");
+        const target = attributeOf(toggle[0], "aria-controls");
+        assert.ok(target && html.includes(`id="${target}"`), `the sheet ${target} exists`);
+        assert.ok(navOf(html).includes(`id="${target}"`), "inside the navigation");
+      }
+      assert.match(pagesOf()["home.html"], /@media \(max-width: 768px\)/);
+    });
+
     it("writes the status of a chip, a card and the navigation in the language, the stored value staying", () => {
       const pages = pagesOf({ lang: "fr" });
       assert.match(headerOf(pages["search-flow.html"]), /<span class="chip" data-status="proposed">proposé<\/span>/);
@@ -1021,7 +1035,7 @@ describe("aidd-ui showcase", () => {
       assert.match(ruleOf(html, ".nav-scroll"), /overflow: auto/);
       assert.match(ruleOf(html, ".nav-scroll"), /flex: 1/);
       const nav = navOf(html);
-      const scroll = nav.match(/<div class="nav-scroll">([\s\S]*)<\/div><div class="review-foot">/);
+      const scroll = nav.match(/<div class="nav-scroll"[^>]*>([\s\S]*)<\/div><div class="review-foot">/);
       assert.ok(scroll, "the list in its own area, the button after it");
       assert.ok(scroll[1].includes('<ol class="steps">') && !scroll[1].includes("open-review"));
       assert.doesNotMatch(ruleOf(html, ".review-foot"), /sticky/);
