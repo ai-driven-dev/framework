@@ -313,6 +313,18 @@ test("opencode shares the codex index line and never touches opencode.json", (t)
   assert.ok(!f.has(CLAUDE));
 });
 
+test("kilo shares the codex index line and never touches kilo config", (t) => {
+  const f = fixture(t);
+  f.put("kilo.jsonc", "{}\n");
+  assert.equal(f.run(rule, "kilo").status, 0);
+  const index = f.read("AGENTS.md");
+  assert.equal(f.run(rule, "codex,kilo").status, 0);
+  assert.equal(f.read("AGENTS.md"), index);
+  assert.equal(index.match(/1-naming\.md/g).length, 1);
+  assert.equal(f.read("kilo.jsonc"), "{}\n");
+  assert.ok(!f.has(".kilo"));
+});
+
 test("antigravity output over 24000 bytes refuses", (t) => {
   const f = fixture(t);
   const before = f.snapshot();

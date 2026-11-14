@@ -28,5 +28,5 @@ flowchart LR
 
 ## Transversal rules
 
-- If a cited reference cannot be read, stop and name it.
+- If a cited reference cannot be read, stop and report the missing file.
 - Write only after the user approves the candidate shown last.

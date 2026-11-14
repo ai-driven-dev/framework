@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 // Usage: node write-rule.cjs --project <abs dir> (--input <request.json> --tools <ids> | --remove <category>/<slug> | --publish [--tools <ids>]) [--plan | --check] [--force]
-// Tool ids: claude,cursor,copilot,antigravity,codex,opencode. --tools adds hosts to the rules it publishes; --check takes none.
+// Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo. --tools adds hosts to the rules it publishes; --check takes none.
 // Publishes aidd_docs/rules sources as native copies.
 // Exit 0 ok, 1 refusal/conflict/drift/unexpected error, 2 usage error, 3 filesystem blocked or failed.
 // Every non-zero exit prints a JSON object on stdout.
@@ -9,11 +9,11 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createHash } = require("node:crypto");
 
-const TOOLS = ["claude", "cursor", "copilot", "antigravity", "codex", "opencode"];
+const TOOLS = ["claude", "cursor", "copilot", "antigravity", "codex", "opencode", "kilo"];
 const CATEGORIES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"].map((name, index) => `0${index}-${name}`);
 const SOURCE_DIR = "aidd_docs/rules";
 // Hosts without native rules read a line of the root AGENTS.md index instead of a copy.
-const INDEX_TOOLS = ["codex", "opencode"];
+const INDEX_TOOLS = ["codex", "opencode", "kilo"];
 const FLAG_OPTIONS = ["--publish", "--plan", "--check", "--force"];
 const VALUE_OPTIONS = ["--project", "--tools", "--input", "--remove"];
 const REQUEST_KEYS = ["category", "slug", "description", "body", "paths"];
