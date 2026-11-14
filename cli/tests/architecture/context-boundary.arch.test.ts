@@ -237,6 +237,7 @@ describe("the guard itself", () => {
       "src/contexts/acme/contract/wired.ts",
       "src/contexts/acme/contract/shown.ts",
       "src/contexts/acme/contract/shared.ts",
+      "src/contexts/acme/contract/scenario.ts",
       "src/contexts/acme/domain/inner.ts",
     ];
     const importers = new Map([
@@ -244,6 +245,7 @@ describe("the guard itself", () => {
       ["src/contexts/acme/contract/wired.ts", new Set(["src/composition/framework.ts"])],
       ["src/contexts/acme/contract/shown.ts", new Set(["src/presentation/display/x.ts"])],
       ["src/contexts/acme/contract/shared.ts", new Set(["src/contexts/other/domain/y.ts"])],
+      ["src/contexts/acme/contract/scenario.ts", new Set(["src/orchestration/setup/z.ts"])],
     ]);
 
     expect(orphanContractFiles(files, importers)).toEqual([
