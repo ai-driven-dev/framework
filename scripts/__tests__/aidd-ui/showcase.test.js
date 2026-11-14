@@ -120,6 +120,12 @@ describe("aidd-ui showcase", () => {
       assert.equal(page.match(/An analyst opening the product/g).length, 1);
     });
 
+    it("writes the persona line from one template per language, a narrow no-break space before the French colon", () => {
+      assert.equal(LABELS.en.persona, "For {name}: {said}");
+      assert.equal(LABELS.fr.persona, "Pour {name}\u202f: {said}");
+      assert.match(headerOf(pagesOf({ lang: "fr" })["onboarding.html"]), /<p class="persona">Pour a first-time analyst\u202f: An analyst/);
+    });
+
     it("writes the persona line as its text alone when the text already opens with the persona's name", () => {
       edit(tmp, `${UI}/journeys/onboarding.md`, "An analyst opening", "A first-time analyst opening");
       assert.match(headerOf(pagesOf()["onboarding.html"]), /<p class="persona">A first-time analyst opening the product for the first time, looking for one answer\.<\/p>/);
@@ -616,6 +622,27 @@ describe("aidd-ui showcase", () => {
       assert.match(pages["home.html"], /<li data-rule="V1">/);
     });
 
+    describe("the order of a record page", () => {
+      const problems = [{ rule: "V1", severity: "error", file: `${UI}/screens/home.md`, message: "m", fix: "f" }];
+      const positions = (html) => ["<section class=\"review\"", "<article class=\"doc\"", "<section class=\"appears\"", "<details class=\"checks\""].map((marker) => html.indexOf(marker));
+
+      it("puts the review, then the prose, then where it appears, then the checks for developers last", () => {
+        for (const id of ["button", "home"]) {
+          const at = positions(pagesOf({ problems: [{ ...problems[0], file: `${UI}/${id === "home" ? "screens" : "components"}/${id}.md` }] })[`${id}.html`]);
+          assert.ok(at.every((place) => place >= 0), `${id} holds all four: ${at}`);
+          assert.deepEqual([...at].sort((a, b) => a - b), at, id);
+        }
+      });
+
+      it("sets the prose bare, at the width of a line, and where it appears as a grid of cards", () => {
+        const html = pagesOf()["button.html"];
+        const ruleOf = (selector) => html.match(new RegExp(`\\n${selector.replaceAll(".", "\\.")} \\{([^}]*)\\}`))[1];
+        assert.match(ruleOf(".doc"), /max-width: 68ch/);
+        assert.doesNotMatch(ruleOf(".doc"), /background|border: 1px/);
+        assert.match(ruleOf(".appears ul"), /grid-template-columns: repeat\(auto-fill, minmax\(200px, 1fr\)\)/);
+      });
+    });
+
     it("folds the engine checks into a closed block named for developers, with their count", () => {
       const problems = [
         { rule: "V1", severity: "error", file: `${UI}/screens/home.md`, message: "home record problem", fix: "f" },
@@ -976,9 +1003,17 @@ describe("aidd-ui showcase", () => {
     it("switches to the vertical list below a readable card, the threshold following the step count", () => {
       const html = pagesOf()["onboarding.html"];
       const threshold = (n) => Number(html.match(new RegExp(`@container \\(min-width: (\\d+)px\\) \\{ \\.board\\[data-steps="${n}"\\]`))[1]);
-      assert.equal(threshold(4), 4 * 160 + 3 * 48);
+      assert.equal(threshold(4), 4 * 240 + 3 * 48);
       assert.ok(threshold(5) > threshold(4));
-      assert.match(rule(html, ".board .card"), /grid-template-columns: 200px minmax\(0, 1fr\)/);
+      assert.match(rule(html, ".board .card"), /grid-template-columns: 280px minmax\(0, 1fr\)/);
+    });
+
+    it("stacks a card's miniature above its text when the board is too narrow for the two side by side", () => {
+      const html = pagesOf()["onboarding.html"];
+      const narrow = html.match(/@container \(max-width: (\d+)px\) \{([^@]*)\}\n/);
+      assert.ok(narrow, "a narrow rule");
+      assert.ok(Number(narrow[1]) < 2 * 240 + 48, "below the first width the row of cards needs");
+      assert.match(narrow[2], /\.board \.card \{ grid-template-columns: minmax\(0, 1fr\)/);
     });
 
     it("holds the review button at the foot of the sidebar instead of floating over the page", () => {

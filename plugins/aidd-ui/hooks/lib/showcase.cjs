@@ -105,6 +105,7 @@ const LABELS = {
       defaultOnly: "default",
     },
     forPersona: "For",
+    persona: "For {name}: {said}",
     states: "States",
     stateNames: {},
     sections: {},
@@ -194,6 +195,7 @@ const LABELS = {
       defaultOnly: "par défaut",
     },
     forPersona: "Pour",
+    persona: "Pour {name}\u202f: {said}",
     states: "États",
     stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur", hover: "survol", disabled: "désactivé", pressed: "appuyé", selected: "sélectionné", checked: "coché" },
     sections: { Usage: "Utilisation", Keyboard: "Clavier", Steps: "Étapes", Persona: "Persona", Users: "Utilisateurs", Domain: "Domaine", "Personality and tone": "Personnalité et ton", "Anti-references": "Anti-références", References: "Références", Breakpoints: "Points de rupture", Project: "Projet", Glossary: "Glossaire" },
@@ -219,7 +221,7 @@ const byRecordId = (a, b) => byCode(fm(a).id, fm(b).id);
 /** The narrowest readable card of a storyboard, the widest one, so a short journey keeps small cards, the gap that holds the arrow between two cards, and the
  * longest journey that can stand on one row: a container query cannot read a variable, so the width that
  * a count of steps needs is written out for each count. Longer, or narrower, a journey reads as a list. */
-const CARD_MIN = 160;
+const CARD_MIN = 240;
 const CARD_MAX = 320;
 const CARD_GAP = 48;
 const ROW_MAX_STEPS = 12;
@@ -307,13 +309,13 @@ nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 .links h2 { font-size: var(--t-sm); color: var(--muted); font-weight: 500; min-width: 4rem; }
 .links ul { display: flex; gap: 6px; flex-wrap: wrap; }
 .links a { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); font-size: var(--t-sm); }
-.checks, .doc { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); }
+.checks { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); }
 .checks { padding: var(--s3) var(--s5); }
 .checks summary { cursor: pointer; font-size: var(--t-sm); font-weight: 500; color: var(--muted); }
 .checks li { padding: var(--s2) 0; border-top: 1px solid var(--line); color: var(--muted); }
 .checks li b { display: inline-block; margin-right: var(--s2); padding: 0 6px; border-radius: 4px; background: var(--revise-soft); color: var(--revise); font: 600 var(--t-xs)/18px var(--mono); }
 .checks .fix { display: block; color: var(--faint); font-size: var(--t-sm); }
-.doc { padding: var(--s5) var(--s6); color: var(--text); max-width: 72ch; }
+.doc { color: var(--text); max-width: 68ch; }
 .doc:empty { display: none; }
 .doc h1, .doc h2, .doc h3 { margin: var(--s5) 0 var(--s2); line-height: 1.3; }
 .doc h2 { font-size: var(--t-lg); }
@@ -333,8 +335,8 @@ nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 .journey-bar small { color: var(--faint); font-size: var(--t-xs); }
 .journey { padding: var(--s2) 0 var(--s4); container-type: inline-size; }
 .board { list-style: none; margin: 0; padding: 0 0 var(--s4); display: flex; flex-direction: column; gap: var(--s5); }
-.board .card { position: relative; display: grid; grid-template-columns: 200px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--s4); row-gap: var(--s1); align-items: start; }
-.board .card:not(:first-child)::before { content: ""; position: absolute; left: 94px; top: calc(var(--s5) * -1); inline-size: 12px; block-size: var(--s5); background: ${ARROW_DOWN} center / contain no-repeat; }
+.board .card { position: relative; display: grid; grid-template-columns: 280px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--s4); row-gap: var(--s1); align-items: start; }
+.board .card:not(:first-child)::before { content: ""; position: absolute; left: 134px; top: calc(var(--s5) * -1); inline-size: 12px; block-size: var(--s5); background: ${ARROW_DOWN} center / contain no-repeat; }
 .board .step { display: contents; }
 .board .mini { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
 .board .screen { grid-column: 2; grid-row: 1; align-self: end; }
@@ -412,7 +414,7 @@ textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: va
 .progress { margin-left: auto; color: var(--faint); font-variant-numeric: tabular-nums; }
 .progress[data-complete="true"] { color: var(--ok); }
 .appears { display: flex; flex-direction: column; gap: var(--s3); padding-top: var(--s5); border-top: 1px solid var(--line); }
-.appears ul { display: flex; flex-wrap: wrap; gap: var(--s3); }
+.appears ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--s3); }
 .mini-card { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-inline-size: 180px; padding: var(--s3) var(--s4); color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r2); transition: border-color 120ms, box-shadow 120ms; }
 .mini-card:hover { text-decoration: none; border-color: #c7cdfb; }
 .mini-card b { font-size: var(--t-md); font-weight: 600; }
@@ -454,6 +456,7 @@ textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: va
 #note { flex-basis: 100%; margin: 0; color: var(--revise); font-size: var(--t-sm); }
 #note:empty { display: none; }
 textarea.out { width: 100%; min-height: 8rem; font: var(--t-sm) var(--mono); border: 1px solid var(--control); border-radius: var(--r2); padding: var(--s2); }
+@container (max-width: 527px) { .board .card { grid-template-columns: minmax(0, 1fr); } .board .mini, .board .screen, .board .action { grid-column: 1; grid-row: auto; } .board .card:not(:first-child)::before { left: 12px; } }
 ${rowBoards()}
 @media (max-width: 768px) {
   .shell { display: block; }
@@ -980,7 +983,7 @@ function personaOf(record, labels) {
   const name = String(fm(record).persona ?? "").trim();
   if (!said && !name) return "";
   const opensWithName = name && said.toLowerCase().startsWith(name.toLowerCase());
-  const line = !said ? `${labels.forPersona} ${name}` : !name ? said : opensWithName ? said : `${labels.forPersona} ${name}: ${said}`;
+  const line = !said ? `${labels.forPersona} ${name}` : !name ? said : opensWithName ? said : filled(labels.persona, { name, said });
   return `<p class="persona">${escaped(line)}</p>`;
 }
 
@@ -1401,9 +1404,9 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
       journey ? "" : linksOf("uses", labels.uses, uses, (each) => titleOf(project, recordsById.get(each), labels)),
       journey ? journeyOf({ project, record, recordsById, tokens, labels }) : "",
       reviewed ? reviewOf({ project, system, record, rows, tokens, captures, labels }) : "",
-      checksOf(problems, record, labels),
       sectionsById.has(id) ? sectionsById.get(id).map(sectionHtml).join("\n") : specOf(project, record, labels),
       appearsOf({ project, ids: usedBy, recordsById, labels }),
+      checksOf(problems, record, labels),
     ].filter(Boolean).join("\n");
     const script = (reviewed ? FRAMES + PANEL + TABS : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");
     pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id, sets, rows, sectionsById), body, drawer: drawer(id), script, wide: journey });
