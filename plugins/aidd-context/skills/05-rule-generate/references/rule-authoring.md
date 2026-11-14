@@ -1,5 +1,7 @@
 # Rule authoring
 
+How to write and name a rule.
+
 ## Rules
 
 - R1. One topic per file; split multiple topics.
@@ -7,24 +9,20 @@
 - R3. Explicit scope or all files.
 - R4. English unless asked otherwise.
 - R5. Distinct bullets: none repeats, weakens or contradicts another.
+- R6. Group themes under `## <group>`, at most one tiny good-code example each.
+- R7. File it in the most specific category; slug is its prefix, then a kebab-case name.
 
-## Naming
+## Categories
 
-`#-slug[@version][-specificity]`: single-digit category prefix, no zero-padding.
-
-| Index | Category | Covers |
+| Category | Prefix | Covers |
 | --- | --- | --- |
-| 00 | architecture | system design |
-| 01 | standards | style/naming |
-| 02 | programming-languages | language rules |
-| 03 | frameworks-and-libraries | framework/library patterns |
-| 04 | tooling | tools/configuration |
-| 05 | testing | test patterns |
-| 06 | design-patterns | code design patterns |
-| 07 | quality | performance/security |
-| 08 | domain | business logic |
-| 09 | other | miscellaneous |
-
-Pick in order: `03`, `02`, `01`, `00`, `04`–`08`, else `09`.
-
-- Themes: `## group`, at most one tiny good-code example each.
+| `00-architecture` | `0-` | system design |
+| `01-standards` | `1-` | style/naming |
+| `02-programming-languages` | `2-` | language rules |
+| `03-frameworks-and-libraries` | `3-` | framework/library patterns |
+| `04-tooling` | `4-` | tools/configuration |
+| `05-testing` | `5-` | test patterns |
+| `06-design-patterns` | `6-` | code design patterns |
+| `07-quality` | `7-` | performance/security |
+| `08-domain` | `8-` | business logic |
+| `09-other` | `9-` | miscellaneous |

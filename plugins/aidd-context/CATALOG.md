@@ -123,15 +123,18 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-capture-rule.md](skills/05-rule-generate/actions/01-capture-rule.md) | - |
-| `actions` | [02-write-rule.md](skills/05-rule-generate/actions/02-write-rule.md) | - |
+| `actions` | [01-frame.md](skills/05-rule-generate/actions/01-frame.md) | - |
+| `actions` | [02-draft.md](skills/05-rule-generate/actions/02-draft.md) | - |
+| `actions` | [03-plan.md](skills/05-rule-generate/actions/03-plan.md) | - |
+| `actions` | [04-write.md](skills/05-rule-generate/actions/04-write.md) | - |
 | `assets` | [rule-template.md](skills/05-rule-generate/assets/rule-template.md) | - |
+| `references` | [hosts.md](skills/05-rule-generate/references/hosts.md) | - |
+| `references` | [policy-discovery.md](skills/05-rule-generate/references/policy-discovery.md) | - |
 | `references` | [rule-assessment.md](skills/05-rule-generate/references/rule-assessment.md) | - |
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
-| `references` | [rule-discovery.md](skills/05-rule-generate/references/rule-discovery.md) | - |
-| `references` | [rule-publication.md](skills/05-rule-generate/references/rule-publication.md) | - |
+| `references` | [writer.md](skills/05-rule-generate/references/writer.md) | - |
 | `scripts` | [write-rule.cjs](skills/05-rule-generate/scripts/write-rule.cjs) | - |
-| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Create, update, publish or delete a coding rule across host AI tools. Use when adding, changing or removing a rule, convention or coding standard. Not for skills, agents or hooks.` |
+| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Creates, updates, publishes or removes a coding rule across AI tools when a convention is set, changed or dropped, not for skills, agents or hooks.` |
 
 #### `skills/06-agent-generate`
 
