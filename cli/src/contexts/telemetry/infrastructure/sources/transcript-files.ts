@@ -122,13 +122,16 @@ export async function listTranscripts(
   return found.sort();
 }
 
-export async function oldestModifiedOf(paths: readonly string[]): Promise<string | null> {
-  let oldest: number | null = null;
-  for (const path of paths) {
-    const modified = await modifiedAtIfPresent(path);
-    if (modified !== null && (oldest === null || modified < oldest)) oldest = modified;
-  }
-  return oldest === null ? null : new Date(oldest).toISOString();
+/** What reading a file's lines reports: `read` adds when the file was last written. */
+export type LinesRead = Omit<TranscriptRead, "modifiedAt">;
+
+/** What `read` of one file reports besides its lines: when the file was last written. */
+export async function withModifiedAt(
+  path: string,
+  read: Promise<LinesRead>
+): Promise<TranscriptRead> {
+  const result = await read;
+  return { ...result, modifiedAt: await modifiedAtIfPresent(path) };
 }
 
 /** How one tool's file is read once opened: where a skipped one ends, and its lines. */
@@ -148,7 +151,7 @@ export async function readTranscript(
   since: TranscriptPosition | null,
   writtenFrom: number,
   reading: TranscriptReading
-): Promise<TranscriptRead> {
+): Promise<LinesRead> {
   const handle = await open(path, constants.O_RDONLY).catch(absentIsNothing);
   if (handle === null) return { position: since ?? NOWHERE, restarted: false, skipped: false };
   try {

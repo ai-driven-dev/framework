@@ -1,7 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import type { UsageRecord } from "../../../../../../src/contexts/telemetry/contract/usage-record.js";
-import { codexUsageReader } from "../../../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.js";
+import { decodeCodexLine } from "../../../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.js";
 
 const SESSION = "11111111-1111-4111-8111-111111111111";
 const THREAD = "22222222-2222-4222-8222-222222222222";
@@ -58,8 +58,12 @@ function call(payload: Record<string, unknown> = {}, root: Record<string, unknow
 
 /** What a file read in order gives, line by line. */
 function readAll(lines: readonly string[]) {
-  const read = codexUsageReader();
-  return lines.map((line) => read(line));
+  let context: unknown;
+  return lines.map((line) => {
+    const outcome = decodeCodexLine(line, context);
+    context = outcome.context ?? context;
+    return outcome;
+  });
 }
 
 function only(lines: readonly string[]): UsageRecord {
@@ -154,14 +158,6 @@ describe("a Codex session file to usage records", () => {
     ]);
   });
 
-  it("starts each file read with no context", () => {
-    const read = codexUsageReader();
-    read(meta());
-    read(turn());
-    const fresh = codexUsageReader()(call());
-    expect(fresh.records[0]?.cwd).toBeNull();
-  });
-
   it("reads only the call's own usage, never the running totals", () => {
     const record = only([meta(), turn(), call()]);
     expect([record.input, record.output]).toEqual([200, 90]);
@@ -180,7 +176,7 @@ describe("a Codex session file to usage records", () => {
   });
 
   it("gives nothing, and names nothing, for every line that is no call", () => {
-    for (const outcome of readAll([meta(), turn(), "", "[]", "7", '{"type":"response_item"}'])) {
+    for (const outcome of readAll(["", "[]", "7", '{"type":"response_item"}'])) {
       expect(outcome).toEqual({ records: [], unrecognised: [] });
     }
   });

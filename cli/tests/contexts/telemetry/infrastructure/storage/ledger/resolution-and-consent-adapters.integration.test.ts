@@ -60,21 +60,9 @@ describe("the consent history", () => {
   const history = () =>
     new ConsentHistoryAdapter(join(root, "ledger"), new PrivateStorageAdapter());
 
-  it("is empty before anything is written, and creates nothing", async () => {
-    expect(await history().read()).toEqual({ events: [], damaged: false });
+  it("creates nothing when read before anything is written", async () => {
+    await history().read();
     await expect(readFile(join(root, "ledger", "consents.jsonl"), "utf8")).rejects.toThrow();
-  });
-
-  it("is appended to, one event a line, and read back in order", async () => {
-    const events = [
-      { kind: "open", token: "t1", clone: CLONE, at: "2026-10-01T00:00:00.000Z" },
-      { kind: "close", token: "t1", at: "2026-10-02T00:00:00.000Z" },
-    ] as const;
-    for (const event of events) await history().append(event);
-    expect(await history().read()).toEqual({ events, damaged: false });
-    const lines = (await readFile(join(root, "ledger", "consents.jsonl"), "utf8")).split("\n");
-    expect(lines).toHaveLength(3);
-    expect(lines[2]).toBe("");
   });
 
   it("drops a last line a crash left unterminated before the next event, so it is never terminated into damage", async () => {

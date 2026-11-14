@@ -13,26 +13,28 @@ export interface TranscriptRead {
   /** Shapes met that could not be handed on as lines, such as a file this runtime cannot
    * decompress. */
   readonly unrecognised?: readonly string[];
+  /** When the file was last written, in milliseconds, or `null` when it is gone: how far back
+   * the tool still keeps its transcripts, since it deletes one by its last write. */
+  readonly modifiedAt: number | null;
 }
 
-/** One tool's format: the billed calls one transcript line holds, and the shapes it did not
+/** What one transcript line says: the billed calls it holds, and the shapes it did not
  * recognise. */
-export type ReadUsageLine = (line: string) => {
+export interface LineUsage {
   readonly records: readonly UsageRecord[];
   readonly unrecognised: readonly string[];
   /** For a line that is no usage line: the directory and time it names, when it names any. */
   readonly named?: LineNames;
-};
+  /** What the next line of the file is decoded with, when this one changed it. Only the format
+   * that wrote it reads it; absent, the context the line was decoded with stands. */
+  readonly context?: unknown;
+}
 
 /** One tool's measured usage: where its transcripts are, how they are read, and what a line
  * of them says. */
 export interface UsageSource {
   /** Every transcript the tool keeps, set-asides and sub-agents included. */
   list(): Promise<readonly string[]>;
-  /** When the oldest of these transcripts was last written, or `null` when none can be
-   * told. The tool deletes a transcript by its last write, so this is how far back it can
-   * still be read. */
-  oldestModified(paths: readonly string[]): Promise<string | null>;
   /** Hands `each` every complete line after the position, in order, one at a time so a long
    * transcript is never held whole; an unterminated last line is left for next time. A tool
    * whose lines need what came before them may hand earlier lines too, as not `counted`: they
@@ -44,7 +46,7 @@ export interface UsageSource {
     writtenFrom: number,
     each: (line: string, counted: boolean) => void
   ): Promise<TranscriptRead>;
-  /** A reader for the lines of one file, made fresh for each: a format may hold what earlier
-   * lines of the file said. */
-  decode(): ReadUsageLine;
+  /** What one line of this tool's transcripts says, given the context earlier lines of the
+   * same file left. */
+  decode(line: string, context?: unknown): LineUsage;
 }

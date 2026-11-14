@@ -1,12 +1,12 @@
 import type { TranscriptPosition } from "../../../domain/transcript-position.js";
-import type { ReadUsageLine, TranscriptRead, UsageSource } from "../../../ports/usage-source.js";
+import type { LineUsage, TranscriptRead, UsageSource } from "../../../ports/usage-source.js";
 import {
   type EachLine,
   eachLine,
   lastLineEnd,
   listTranscripts,
-  oldestModifiedOf,
   readTranscript,
+  withModifiedAt,
 } from "../transcript-files.js";
 import { readClaudeUsageLine } from "./claude-transcript-usage.js";
 
@@ -25,24 +25,23 @@ export class ClaudeTranscriptSourceAdapter implements UsageSource {
     return listTranscripts([this.projectsRoot], TRANSCRIPT_NAME);
   }
 
-  oldestModified(paths: readonly string[]): Promise<string | null> {
-    return oldestModifiedOf(paths);
-  }
-
   read(
     path: string,
     since: TranscriptPosition | null,
     writtenFrom: number,
     each: EachLine
   ): Promise<TranscriptRead> {
-    return readTranscript(path, since, writtenFrom, {
-      skippedEnd: lastLineEnd,
-      lines: (handle, now, { offset }) =>
-        eachLine(handle, offset, offset, now.size, this.blockBytes, each),
-    });
+    return withModifiedAt(
+      path,
+      readTranscript(path, since, writtenFrom, {
+        skippedEnd: lastLineEnd,
+        lines: (handle, now, { offset }) =>
+          eachLine(handle, offset, offset, now.size, this.blockBytes, each),
+      })
+    );
   }
 
-  decode(): ReadUsageLine {
-    return readClaudeUsageLine;
+  decode(line: string): LineUsage {
+    return readClaudeUsageLine(line);
   }
 }

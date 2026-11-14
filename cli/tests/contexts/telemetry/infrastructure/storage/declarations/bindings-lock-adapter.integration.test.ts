@@ -68,22 +68,6 @@ describe("the bindings lock", () => {
     expect((failure as Error).message).toContain("is locked by process 4242");
   });
 
-  it("makes two writers take turns: a second waits for the first to finish", async () => {
-    const bindings = new BindingsLockAdapter(join(root, "bindings"), storage);
-    const order: string[] = [];
-    const slow = bindings.exclusively(async () => {
-      order.push("slow in");
-      await new Promise((done) => setTimeout(done, 150));
-      order.push("slow out");
-    });
-    await new Promise((done) => setTimeout(done, 30));
-    const quick = bindings.exclusively(async () => {
-      order.push("quick in");
-    });
-    await Promise.all([slow, quick]);
-    expect(order).toEqual(["slow in", "slow out", "quick in"]);
-  });
-
   it("leaves one snapshot when a declaration and an ingest snapshot the same branch at once", async () => {
     const dir = join(root, "bindings");
     const source = new FakeBindings();

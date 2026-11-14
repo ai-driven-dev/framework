@@ -4,18 +4,19 @@ import { pipeline } from "node:stream/promises";
 import * as zlib from "node:zlib";
 import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import type { TranscriptPosition } from "../../../domain/transcript-position.js";
-import type { ReadUsageLine, TranscriptRead, UsageSource } from "../../../ports/usage-source.js";
+import type { LineUsage, TranscriptRead, UsageSource } from "../../../ports/usage-source.js";
 import {
   type EachLine,
   eachLine,
   LineSplitter,
+  type LinesRead,
   lastLineEnd,
   listTranscripts,
   NOWHERE,
-  oldestModifiedOf,
   readTranscript,
+  withModifiedAt,
 } from "../transcript-files.js";
-import { codexUsageReader } from "./codex-transcript-usage.js";
+import { decodeCodexLine } from "./codex-transcript-usage.js";
 import { declaredContentSize, FRAME_HEADER_BYTES } from "./zstd-frame.js";
 
 const SESSION_FILE = /^rollout-.*\.jsonl(\.zst)?$/;
@@ -27,7 +28,7 @@ const UNDECOMPRESSABLE = /^Z(STD)?_/;
 /** A stream that decompressed to another size than its frame declares. */
 class FrameSizeMismatch extends Error {}
 
-function unread(since: TranscriptPosition | null, reason: string): TranscriptRead {
+function unread(since: TranscriptPosition | null, reason: string): LinesRead {
   return { position: since ?? NOWHERE, restarted: false, skipped: false, unrecognised: [reason] };
 }
 
@@ -55,16 +56,21 @@ export class CodexTranscriptSourceAdapter implements UsageSource {
     return listTranscripts(this.roots, SESSION_FILE);
   }
 
-  oldestModified(paths: readonly string[]): Promise<string | null> {
-    return oldestModifiedOf(paths);
-  }
-
-  async read(
+  read(
     path: string,
     since: TranscriptPosition | null,
     writtenFrom: number,
     each: EachLine
   ): Promise<TranscriptRead> {
+    return withModifiedAt(path, this.readLines(path, since, writtenFrom, each));
+  }
+
+  private async readLines(
+    path: string,
+    since: TranscriptPosition | null,
+    writtenFrom: number,
+    each: EachLine
+  ): Promise<LinesRead> {
     if (!path.endsWith(COMPRESSED)) {
       return readTranscript(path, since, writtenFrom, {
         skippedEnd: lastLineEnd,
@@ -114,7 +120,7 @@ export class CodexTranscriptSourceAdapter implements UsageSource {
     });
   }
 
-  decode(): ReadUsageLine {
-    return codexUsageReader();
+  decode(line: string, context?: unknown): LineUsage {
+    return decodeCodexLine(line, context);
   }
 }

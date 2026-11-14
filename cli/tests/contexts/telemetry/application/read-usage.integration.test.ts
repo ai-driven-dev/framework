@@ -7,10 +7,7 @@ import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-u
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
-import type {
-  ReadUsageLine,
-  UsageSource,
-} from "../../../../src/contexts/telemetry/ports/usage-source.js";
+import type { UsageSource } from "../../../../src/contexts/telemetry/ports/usage-source.js";
 
 const FIXTURES = resolve(import.meta.dirname, "../../../fixtures/claude-usage/projects");
 
@@ -29,10 +26,9 @@ afterEach(async () => {
 });
 
 /** The same source reading its lines with another format. */
-function decodedBy(source: UsageSource, decode: () => ReadUsageLine): UsageSource {
+function decodedBy(source: UsageSource, decode: UsageSource["decode"]): UsageSource {
   return {
     list: () => source.list(),
-    oldestModified: (paths) => source.oldestModified(paths),
     read: (path, since, writtenFrom, each) => source.read(path, since, writtenFrom, each),
     decode,
   };
@@ -41,9 +37,8 @@ function decodedBy(source: UsageSource, decode: () => ReadUsageLine): UsageSourc
 function reversed(source: UsageSource): UsageSource {
   return {
     list: async () => [...(await source.list())].reverse(),
-    oldestModified: (paths) => source.oldestModified(paths),
     read: (path, since, writtenFrom, each) => source.read(path, since, writtenFrom, each),
-    decode: () => source.decode(),
+    decode: (line, context) => source.decode(line, context),
   };
 }
 
@@ -195,6 +190,26 @@ describe("reading Claude usage from the fixture transcripts", () => {
   });
 });
 
+describe("what earlier lines of a file leave for the next", () => {
+  it("hands a line the context its file's earlier lines left, and no file another's", async () => {
+    const alone = join(root, "contexts");
+    await mkdir(alone, { recursive: true });
+    await writeFile(join(alone, "a.jsonl"), "set\nkeep\nset-again\n");
+    await writeFile(join(alone, "b.jsonl"), "keep\n");
+    const seen: unknown[] = [];
+    await new ReadUsage(
+      decodedBy(new ClaudeTranscriptSourceAdapter(alone), (line, context) => {
+        seen.push(context);
+        // A line that leaves nothing keeps what the lines before it left.
+        return line.startsWith("set")
+          ? { records: [], unrecognised: [], context: `after ${line}` }
+          : { records: [], unrecognised: [] };
+      })
+    ).execute({ since: new Map() });
+    expect(seen).toEqual([undefined, "after set", "after set", undefined]);
+  });
+});
+
 describe("reading a long transcript", () => {
   it("hands its first lines to the line reader before the rest of it is read", async () => {
     const alone = join(root, "alone");
@@ -206,7 +221,7 @@ describe("reading a long transcript", () => {
     let readsBeforeFirstLine: number | null = null;
     let lines = 0;
     await new ReadUsage(
-      decodedBy(new ClaudeTranscriptSourceAdapter(alone), () => () => {
+      decodedBy(new ClaudeTranscriptSourceAdapter(alone), () => {
         readsBeforeFirstLine ??= reads.mock.calls.length;
         lines += 1;
         return { records: [], unrecognised: [] };
@@ -243,7 +258,7 @@ describe("reading a transcript that changes under the read", () => {
     await writeFile(path, `${usage(1)}\n{torn\n${usage(2)}\n`);
     let seen = 0;
     const reading = await new ReadUsage(
-      decodedBy(new ClaudeTranscriptSourceAdapter(alone, 16), () => (line) => {
+      decodedBy(new ClaudeTranscriptSourceAdapter(alone, 16), (line) => {
         if (++seen === 2) truncateSync(path, 0);
         return readClaudeUsageLine(line);
       })

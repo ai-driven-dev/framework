@@ -47,18 +47,19 @@ export class ReadUsage {
     const dropped: DroppedLine[] = [];
     const fileOf = new Map<UsageRecord, string>();
     const positions = new Map<string, TranscriptPosition>();
-    const paths = await this.source.list();
-    for (const path of paths) {
+    let oldest: number | null = null;
+    for (const path of await this.source.list()) {
       const records: UsageRecord[] = [];
       const lines: DroppedLine[] = [];
       const reasons: string[] = [];
-      const readLine = this.source.decode();
+      let context: unknown;
       const read = await this.source.read(
         path,
         since.get(path) ?? null,
         writtenFrom,
         (line, counted) => {
-          const outcome = readLine(line);
+          const outcome = this.source.decode(line, context);
+          if ("context" in outcome) context = outcome.context;
           // A line read again only to know what came before: its calls were counted already.
           if (!counted) return;
           records.push(...outcome.records);
@@ -68,6 +69,9 @@ export class ReadUsage {
         }
       );
       reasons.push(...(read.unrecognised ?? []).map((reason) => `${path}: ${reason}`));
+      if (read.modifiedAt !== null && (oldest === null || read.modifiedAt < oldest)) {
+        oldest = read.modifiedAt;
+      }
       if (read.skipped) skipped.add(path);
       // Changed under the read: what it handed over may be spliced from two versions, so none
       // of it counts and the file keeps its position, to be read again.
@@ -86,7 +90,7 @@ export class ReadUsage {
       unrecognised,
       dropped,
       fileOf,
-      oldestTranscriptAt: await this.source.oldestModified(paths),
+      oldestTranscriptAt: oldest === null ? null : new Date(oldest).toISOString(),
       skipped,
     };
   }
