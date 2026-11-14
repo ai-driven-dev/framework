@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "skills": [
+    "/trusted/.claude/skills",
+    "/trusted/.agents/skills",
+    "/trusted/.opencode/skills"
+  ],
+  "policies": [
+    { "action": "plugin.use", "resource": "*", "effect": "deny" },
+    { "action": "mcp.use", "resource": "*", "effect": "deny" },
+    { "action": "tool.use", "resource": "shell:*", "effect": "deny" },
+    { "action": "tool.use", "resource": "execute:*", "effect": "deny" },
+    { "action": "tool.use", "resource": "webfetch:*", "effect": "deny" },
+    { "action": "tool.use", "resource": "websearch:*", "effect": "deny" },
+    { "action": "tool.use", "resource": "external_directory:*", "effect": "deny" },
+    { "action": "tool.use", "resource": "external_directory:/root/.claude/skills/*", "effect": "allow" },
+    { "action": "tool.use", "resource": "external_directory:/root/.config/opencode/skills/*", "effect": "allow" },
+    { "action": "tool.use", "resource": "external_directory:/trusted/.claude/skills/*", "effect": "allow" },
+    { "action": "tool.use", "resource": "external_directory:/trusted/.agents/skills/*", "effect": "allow" },
+    { "action": "tool.use", "resource": "external_directory:/trusted/.opencode/skills/*", "effect": "allow" },
+    { "action": "tool.use", "resource": "edit:/root/.claude/skills/*", "effect": "deny" },
+    { "action": "tool.use", "resource": "edit:.git/*", "effect": "deny" },
+    { "action": "tool.use", "resource": "edit:.opencode/*", "effect": "deny" },
+    { "action": "tool.use", "resource": "edit:opencode.json*", "effect": "deny" }
+  ]
+}

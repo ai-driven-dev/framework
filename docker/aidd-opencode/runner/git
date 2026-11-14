@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Let OpenCode discover the repository and restrict reviews to the submitted diff.
+[[ ${REVIEW_BASE:-} =~ ^[0-9a-f]{40}$ && ${REVIEW_HEAD:-} =~ ^[0-9a-f]{40}$ && -d ${REVIEW_REPO:-} ]] || {
+  echo 'Review repository metadata is missing' >&2; exit 2;
+}
+run_git() {
+  if env -i PATH=/usr/bin:/bin HOME=/nonexistent GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null \
+    GIT_NO_REPLACE_OBJECTS=1 /usr/bin/git -C "$REVIEW_REPO" \
+    -c safe.directory="$REVIEW_REPO" -c core.hooksPath=/dev/null -c core.attributesFile=/dev/null "$@" 2>/dev/null; then
+    return 0
+  fi
+  echo 'Git operation failed' >&2
+  return 1
+}
+if [[ "$*" == 'rev-parse --git-dir --git-common-dir --show-toplevel' ]]; then
+  run_git "$@"
+  exit
+fi
+[[ ${1:-} == diff ]] || {
+  echo 'Only the submitted git diff is available' >&2; exit 2;
+}
+shift
+args=() paths=() revisions=() in_paths=0
+for arg in "$@"; do
+  if [[ $in_paths == 1 ]]; then paths+=("$arg"); continue; fi
+  case "$arg" in
+    --) in_paths=1 ;;
+    --stat|--name-only|--name-status|--numstat|--no-color|--color=never|--no-ext-diff|--no-textconv|--patch|-p) args+=("$arg") ;;
+    --unified=[0-9]*|-U[0-9]*) args+=("$arg") ;;
+    "$REVIEW_BASE"|"$REVIEW_HEAD") revisions+=("$arg") ;;
+    *) echo 'Unsupported git diff argument' >&2; exit 2 ;;
+  esac
+done
+if ((${#revisions[@]})); then
+  [[ ${#revisions[@]} == 2 && ${revisions[0]} == "$REVIEW_BASE" && ${revisions[1]} == "$REVIEW_HEAD" ]] || {
+    echo 'Only the submitted commits may be compared' >&2; exit 2;
+  }
+fi
+run_git diff --no-ext-diff --no-textconv \
+  "${args[@]}" "$REVIEW_BASE" "$REVIEW_HEAD" -- "${paths[@]}"
