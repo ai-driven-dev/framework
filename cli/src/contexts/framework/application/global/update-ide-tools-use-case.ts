@@ -10,8 +10,8 @@ export class UpdateIdeToolsUseCase extends UpdateToolsUseCase<IdeToolId> {
     versionReader: VersionReader,
     updateOneToolUseCase: UpdateOneToolUseCase
   ) {
-    super(manifestRepo, versionReader, updateOneToolUseCase, (tools, id): id is IdeToolId =>
-      tools.isIdeTool(id)
+    super(manifestRepo, versionReader, updateOneToolUseCase, (tools) =>
+      tools.idsInCanonicalOrder("ide")
     );
   }
 }

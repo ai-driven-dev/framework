@@ -19,6 +19,10 @@ describe("setup-tools-prompt smart recommendations", () => {
       expect(recommendAiTools(undefined)).toEqual(["claude"]);
     });
 
+    it("recommends claude alone for an unrecognised stack", () => {
+      expect(recommendAiTools(ctx())).toEqual(["claude"]);
+    });
+
     it("returns nothing when framework already installed", () => {
       expect(recommendAiTools(ctx({ hasFramework: true }))).toEqual([]);
     });

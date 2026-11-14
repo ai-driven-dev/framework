@@ -6,6 +6,7 @@ import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/pl
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -16,19 +17,21 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+
+const { claude, codex, copilot } = TOOL;
 
 describe("native catalogue source provenance", () => {
   async function hostPluginProofFixture(
     reading?: HostPluginRegistryReading,
     options: {
-      toolId?: "claude" | "codex";
+      toolId?: AiToolId;
       catalogue?: HostMarketplaceRegistryReading;
       marketplaceScope?: "project" | "user";
       plugin?: boolean;
     } = {}
   ) {
-    const toolId = options.toolId ?? "codex";
+    const toolId = options.toolId ?? codex;
     const builtDir = `/built/${toolId}`;
     const project = Manifest.create();
     project.addTool(toolId, "1.0.0", []);
@@ -103,7 +106,7 @@ describe("native catalogue source provenance", () => {
       const f = await hostPluginProofFixture(
         { location: "/host/plugins.json", refs: new Map() },
         {
-          toolId: "claude",
+          toolId: claude,
           marketplaceScope,
           catalogue: { location: "/host/catalogues.json", unreadable: "permission denied" },
         }
@@ -114,10 +117,8 @@ describe("native catalogue source provenance", () => {
       expect(f.activator.addedMarketplaces).toEqual([]);
       expect(f.activator.enabledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
-      expect(f.machineRepo.getCurrent()?.getNativeRegistrations("claude")).toBeUndefined();
-      expect(f.projectRepo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual(
-        []
-      );
+      expect(f.machineRepo.getCurrent()?.getNativeRegistrations(claude)).toBeUndefined();
+      expect(f.projectRepo.getCurrent()?.getNativeRegistrations(claude)?.marketplaces).toEqual([]);
       expect(f.machineRepo.saveCount).toBe(0);
       expect(f.fs.getFile("/foreign/cache/marker.json")).toBe("foreign bytes");
     }
@@ -129,7 +130,7 @@ describe("native catalogue source provenance", () => {
       const f = await hostPluginProofFixture(
         { location: "/host/plugins.json", refs: new Map() },
         {
-          toolId: "claude",
+          toolId: claude,
           marketplaceScope,
           catalogue: {
             location: "/host/catalogues.json",
@@ -145,14 +146,14 @@ describe("native catalogue source provenance", () => {
       const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
       expect(result.errors).toEqual([]);
       expect(result.warnings.join(" ")).toContain("without a canonical AIDD claim");
-      expect(f.projectRepo.getCurrent()?.getNativeRegistrations("claude")).toMatchObject({
+      expect(f.projectRepo.getCurrent()?.getNativeRegistrations(claude)).toMatchObject({
         marketplaces: [],
         pluginRefs: [],
       });
       expect(f.activator.addedMarketplaces).toEqual([]);
       expect(f.activator.enabledPlugins).toEqual([]);
       expect(f.activator.removedMarketplaces).toEqual([]);
-      expect(f.machineRepo.getCurrent()?.getNativeRegistrations("claude")).toBeUndefined();
+      expect(f.machineRepo.getCurrent()?.getNativeRegistrations(claude)).toBeUndefined();
       expect(f.machineRepo.saveCount).toBe(0);
       expect(f.fs.getFile("/foreign/claude/.claude-plugin/marketplace.json")).toBe(foreignCatalog);
     }
@@ -160,32 +161,37 @@ describe("native catalogue source provenance", () => {
 
   it.each([
     {
-      toolId: "claude",
+      toolId: claude,
       marketplaceScope: "user",
       machineCatalogue: true,
       otherHost: "other-catalog",
     },
     {
-      toolId: "claude",
+      toolId: claude,
       marketplaceScope: "project",
       machineCatalogue: false,
       otherHost: "other-catalog",
     },
     {
-      toolId: "codex",
+      toolId: codex,
       marketplaceScope: "user",
       machineCatalogue: true,
       otherHost: "other-catalog",
     },
     {
-      toolId: "codex",
+      toolId: codex,
       marketplaceScope: "project",
       machineCatalogue: true,
       otherHost: "other-catalog",
     },
-    { toolId: "claude", marketplaceScope: "user", machineCatalogue: true, otherHost: "same-name" },
     {
-      toolId: "codex",
+      toolId: claude,
+      marketplaceScope: "user",
+      machineCatalogue: true,
+      otherHost: "same-name",
+    },
+    {
+      toolId: codex,
       marketplaceScope: "project",
       machineCatalogue: true,
       otherHost: "same-name",
@@ -262,7 +268,7 @@ describe("native catalogue source provenance", () => {
     }
   );
 
-  it.each(["claude", "codex"] as const)(
+  it.each([claude, codex] as const)(
     "initializes a fresh %s machine tool record for a catalogue without claiming its available plugins",
     async (toolId) => {
       const f = await hostPluginProofFixture(
@@ -288,21 +294,21 @@ describe("native catalogue source provenance", () => {
   it("allows fresh Claude registration when the catalogue registry is explicitly absent", async () => {
     const f = await hostPluginProofFixture(
       { location: "/host/plugins.json", absent: true },
-      { toolId: "claude", catalogue: { location: "/host/catalogues.json", absent: true } }
+      { toolId: claude, catalogue: { location: "/host/catalogues.json", absent: true } }
     );
     const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
     expect(result.errors).toEqual([]);
     expect(result.warnings).toEqual([]);
     expect(f.activator.addedMarketplaces).toEqual(["/built/claude"]);
     expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations("claude")?.marketplaces).toEqual([
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(claude)?.marketplaces).toEqual([
       {
         alias: "alias",
         hostName: "same-name",
         provenance: { kind: "registry", source: "/built/claude" },
       },
     ]);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations("claude")).toBeUndefined();
+    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(claude)).toBeUndefined();
   });
 
   it.each([
@@ -326,11 +332,11 @@ describe("native catalogue source provenance", () => {
     expect(f.activator.enabledPlugins).toEqual([]);
     expect(f.activator.removedMarketplaces).toEqual([]);
     expect(f.activator.upgradeCount).toBe(0);
-    expect(f.projectRepo.getCurrent()?.getNativeRegistrations("codex")).toMatchObject({
+    expect(f.projectRepo.getCurrent()?.getNativeRegistrations(codex)).toMatchObject({
       marketplaces: [],
       pluginRefs: [],
     });
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")).toBeUndefined();
+    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)).toBeUndefined();
     expect(f.machineRepo.saveCount).toBe(0);
     expect(f.fs.getFile("/foreign/cache/marker.json")).toBe("foreign bytes");
   });
@@ -342,10 +348,10 @@ describe("native catalogue source provenance", () => {
     expect(result.warnings).toEqual([]);
     expect(f.activator.addedMarketplaces).toEqual(["/built/codex"]);
     expect(f.activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: "test-plugin@same-name", dependents: ["/A"] },
     ]);
-    expect(f.machineRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces).toEqual([
+    expect(f.machineRepo.getCurrent()?.getNativeRegistrations(codex)?.marketplaces).toEqual([
       {
         alias: "alias",
         hostName: "same-name",
@@ -370,9 +376,9 @@ describe("native catalogue source provenance", () => {
     "keeps foreign bytes and records no claim or enablement when post-add Codex proof is %s",
     async (proof) => {
       const project = Manifest.create();
-      project.addTool("codex", "1.0.0", []);
+      project.addTool(codex, "1.0.0", []);
       project.addPlugin(
-        "codex",
+        codex,
         InstalledPlugin.fromMetadata(
           "test-plugin",
           "1.0.0",
@@ -436,7 +442,7 @@ describe("native catalogue source provenance", () => {
         registry,
         new DeterministicHasher(),
         new CapturingLogger(),
-        new Map([["codex", activator]]),
+        new Map([[codex, activator]]),
         fakeEnsureBuiltMarketplace(),
         new Map(),
         () => "",
@@ -444,10 +450,10 @@ describe("native catalogue source provenance", () => {
         undefined,
         undefined,
         new Map([
-          ["codex", new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
+          [codex, new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
         ]),
         machineRepo,
-        new Map([["codex", source]])
+        new Map([[codex, source]])
       );
       const result = await sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
       expect(result.warnings.join(" ")).toMatch(
@@ -455,12 +461,12 @@ describe("native catalogue source provenance", () => {
       );
       expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
       expect(activator.enabledPlugins).toEqual([]);
-      expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")).toBeUndefined();
+      expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)).toBeUndefined();
       expect(
-        projectRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces ?? []
+        projectRepo.getCurrent()?.getNativeRegistrations(codex)?.marketplaces ?? []
       ).toStrictEqual([]);
       expect(
-        projectRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginRefs ?? []
+        projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs ?? []
       ).toStrictEqual([]);
       expect(activator.removedMarketplaces).toStrictEqual([]);
       expect(activator.upgradeCount).toBe(0);
@@ -500,9 +506,9 @@ describe("native catalogue source provenance", () => {
     async ({ reading, reason }) => {
       const projectRoot = "/A";
       const project = Manifest.create();
-      project.addTool("copilot", "1.0.0", []);
+      project.addTool(copilot, "1.0.0", []);
       project.addPlugin(
-        "copilot",
+        copilot,
         InstalledPlugin.fromMetadata(
           "test-plugin",
           "1.0.0",
@@ -546,7 +552,7 @@ describe("native catalogue source provenance", () => {
         registry,
         new DeterministicHasher(),
         new CapturingLogger(),
-        new Map([["copilot", activator]]),
+        new Map([[copilot, activator]]),
         fakeEnsureBuiltMarketplace(),
         new Map(),
         () => "",
@@ -554,26 +560,26 @@ describe("native catalogue source provenance", () => {
         undefined,
         undefined,
         new Map([
-          ["copilot", new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
+          [copilot, new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
         ]),
         machineRepo,
-        new Map([["copilot", source]])
+        new Map([[copilot, source]])
       );
       const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
       expect(result.warnings.join(" ")).toContain(reason);
       expect(activator.addedMarketplaces).toEqual([]);
       expect(activator.enabledPlugins).toEqual([]);
       expect(activator.upgradeCount).toBe(0);
-      expect(machineRepo.getCurrent()?.getNativeRegistrations("copilot")).toBeUndefined();
+      expect(machineRepo.getCurrent()?.getNativeRegistrations(copilot)).toBeUndefined();
       expect(await fs.readFile(settingsPath)).toBe(foreignSettings);
     }
   );
   it("claims a fresh Codex source after post-read and attaches B without replacing it", async () => {
     const projectRoot = "/A";
     const project = Manifest.create();
-    project.addTool("codex", "1.0.0", []);
+    project.addTool(codex, "1.0.0", []);
     project.addPlugin(
-      "codex",
+      codex,
       InstalledPlugin.fromMetadata(
         "test-plugin",
         "1.0.0",
@@ -627,25 +633,23 @@ describe("native catalogue source provenance", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]]),
+      new Map([[codex, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
       undefined,
       undefined,
       undefined,
-      new Map([
-        ["codex", new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
-      ]),
+      new Map([[codex, new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })]]),
       machineRepo,
-      new Map([["codex", source]])
+      new Map([[codex, source]])
     );
     const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
     expect(result.errors).toEqual([]);
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
     expect(activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
     expect(
-      machineRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces[0].provenance
+      machineRepo.getCurrent()?.getNativeRegistrations(codex)?.marketplaces[0].provenance
     ).toEqual({
       kind: "effective-list",
       root: "/built/codex",
@@ -653,9 +657,9 @@ describe("native catalogue source provenance", () => {
       source: "/built/codex",
     });
     const projectB = Manifest.create();
-    projectB.addTool("codex", "1.0.0", []);
+    projectB.addTool(codex, "1.0.0", []);
     projectB.addPlugin(
-      "codex",
+      codex,
       InstalledPlugin.fromMetadata(
         "test-plugin",
         "1.0.0",
@@ -681,7 +685,7 @@ describe("native catalogue source provenance", () => {
       registryB,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]]),
+      new Map([[codex, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -690,7 +694,7 @@ describe("native catalogue source provenance", () => {
       undefined,
       new Map([
         [
-          "codex",
+          codex,
           new FakeHostPluginRegistry({
             location: "host-plugins",
             refs: new Map([["test-plugin@same-name", { enabled: true }]]),
@@ -698,20 +702,20 @@ describe("native catalogue source provenance", () => {
         ],
       ]),
       machineRepo,
-      new Map([["codex", source]])
+      new Map([[codex, source]])
     );
     await syncB.execute({ tools: registeredCatalog(), projectRoot: "/B" });
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
-    expect(machineRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims).toEqual([
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: "test-plugin@same-name", dependents: ["/A", "/B"] },
     ]);
   });
   it("does not add, upgrade, or enable a foreign same-name Codex catalogue with a stale AIDD claim and empty host refs", async () => {
     const projectRoot = "/A";
     const project = Manifest.create();
-    project.addTool("codex", "1.0.0", []);
+    project.addTool(codex, "1.0.0", []);
     project.addPlugin(
-      "codex",
+      codex,
       InstalledPlugin.fromMetadata(
         "test-plugin",
         "1.0.0",
@@ -723,8 +727,8 @@ describe("native catalogue source provenance", () => {
     );
     const projectRepo = new InMemoryManifestRepository(project);
     const machine = Manifest.create();
-    machine.addTool("codex", "1.0.0", []);
-    machine.setNativeRegistrations("codex", {
+    machine.addTool(codex, "1.0.0", []);
+    machine.setNativeRegistrations(codex, {
       binary: "codex",
       marketplaces: [
         {
@@ -772,18 +776,16 @@ describe("native catalogue source provenance", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["codex", activator]]),
+      new Map([[codex, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
       undefined,
       undefined,
       undefined,
-      new Map([
-        ["codex", new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
-      ]),
+      new Map([[codex, new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })]]),
       machineRepo,
-      new Map([["codex", source]])
+      new Map([[codex, source]])
     );
     const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
     expect(result.warnings.join(" ")).toMatch(/same-name.*source.*reconcile manually/i);
@@ -792,7 +794,7 @@ describe("native catalogue source provenance", () => {
     expect(activator.upgradeCount).toBe(0);
     expect(await fs.readFile("/foreign/marker.json")).toBe("foreign bytes");
     expect(
-      machineRepo.getCurrent()?.getNativeRegistrations("codex")?.marketplaces[0].provenance?.source
+      machineRepo.getCurrent()?.getNativeRegistrations(codex)?.marketplaces[0].provenance?.source
     ).toBe("/old");
   });
 });

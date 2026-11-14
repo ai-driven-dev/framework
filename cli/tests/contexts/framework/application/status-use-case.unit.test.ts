@@ -11,7 +11,7 @@ import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, registeredAiConfig } from "../../tools/testing/catalog-of.js";
+import { catalogOf, registeredAiConfig, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const TRACKED = ".claude/rules/one.md";
@@ -28,7 +28,7 @@ function tracking(manifest: Manifest, toolId: ToolId, relativePath: string, cont
 
 function merging(manifest: Manifest) {
   manifest.addTool(
-    "vscode",
+    TOOL.vscode,
     "test",
     [],
     [{ relativePath: MERGE_PATH, sectionKey: null, entries: { [KEY]: hasher.hash("true") } }]
@@ -65,30 +65,30 @@ describe("StatusUseCase", () => {
 
     it("refuses a filter naming a tool that is not installed", async () => {
       const manifest = Manifest.create();
-      manifest.addTool("claude", "test", []);
+      manifest.addTool(TOOL.claude, "test", []);
 
       await expect(
         statusOver({}, manifest).execute({
           tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
-          filterToolId: "cursor",
+          filterToolId: TOOL.cursor,
         })
       ).rejects.toThrow(ToolNotInstalledError);
     });
 
     it("reports only the filtered tool", async () => {
       const manifest = Manifest.create();
-      manifest.addTool("claude", "test", []);
-      manifest.addTool("vscode", "test", []);
+      manifest.addTool(TOOL.claude, "test", []);
+      manifest.addTool(TOOL.vscode, "test", []);
 
       const report = await statusOver({}, manifest).execute({
         tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
-        filterToolId: "claude",
+        filterToolId: TOOL.claude,
       });
 
       expect(report).toStrictEqual({
-        tools: [inSyncTool("claude")],
+        tools: [inSyncTool(TOOL.claude)],
         pluginDrift: [],
         inSync: true,
       });
@@ -96,8 +96,8 @@ describe("StatusUseCase", () => {
 
     it("reports only the tools of the requested category", async () => {
       const manifest = Manifest.create();
-      manifest.addTool("claude", "test", []);
-      manifest.addTool("vscode", "test", []);
+      manifest.addTool(TOOL.claude, "test", []);
+      manifest.addTool(TOOL.vscode, "test", []);
 
       const report = await statusOver({}, manifest).execute({
         tools: catalogOf(),
@@ -106,7 +106,7 @@ describe("StatusUseCase", () => {
       });
 
       expect(report).toStrictEqual({
-        tools: [inSyncTool("vscode")],
+        tools: [inSyncTool(TOOL.vscode)],
         pluginDrift: [],
         inSync: true,
       });
@@ -114,7 +114,7 @@ describe("StatusUseCase", () => {
 
     it("reports a tool whose directory is absent from disk as in sync", async () => {
       const manifest = Manifest.create();
-      manifest.addTool("claude", "test", []);
+      manifest.addTool(TOOL.claude, "test", []);
 
       const report = await statusOver({}, manifest).execute({
         tools: catalogOf(),
@@ -122,7 +122,7 @@ describe("StatusUseCase", () => {
       });
 
       expect(report).toStrictEqual({
-        tools: [inSyncTool("claude")],
+        tools: [inSyncTool(TOOL.claude)],
         pluginDrift: [],
         inSync: true,
       });
@@ -132,7 +132,7 @@ describe("StatusUseCase", () => {
   describe("tracked files", () => {
     function manifestTracking() {
       const manifest = Manifest.create();
-      tracking(manifest, "claude", TRACKED, CONTENT);
+      tracking(manifest, TOOL.claude, TRACKED, CONTENT);
       return manifest;
     }
 
@@ -143,7 +143,7 @@ describe("StatusUseCase", () => {
       });
 
       expect(report).toStrictEqual({
-        tools: [inSyncTool("claude")],
+        tools: [inSyncTool(TOOL.claude)],
         pluginDrift: [],
         inSync: true,
       });
@@ -158,7 +158,7 @@ describe("StatusUseCase", () => {
       expect(report).toStrictEqual({
         tools: [
           {
-            toolId: "claude",
+            toolId: TOOL.claude,
             version: "test",
             drifted: [{ relativePath: TRACKED, status: "modified" }],
           },
@@ -176,7 +176,7 @@ describe("StatusUseCase", () => {
 
       expect(report.tools).toStrictEqual([
         {
-          toolId: "claude",
+          toolId: TOOL.claude,
           version: "test",
           drifted: [{ relativePath: TRACKED, status: "deleted" }],
         },
@@ -191,7 +191,7 @@ describe("StatusUseCase", () => {
 
       expect(report.tools).toStrictEqual([
         {
-          toolId: "claude",
+          toolId: TOOL.claude,
           version: "test",
           drifted: [{ relativePath: ".claude/rules/two.md", status: "added" }],
         },
@@ -204,7 +204,7 @@ describe("StatusUseCase", () => {
         manifestTracking()
       ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
 
-      expect(report.tools).toStrictEqual([inSyncTool("claude")]);
+      expect(report.tools).toStrictEqual([inSyncTool(TOOL.claude)]);
     });
   });
 
@@ -224,7 +224,7 @@ describe("StatusUseCase", () => {
       ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
 
       expect(report).toStrictEqual({
-        tools: [inSyncTool("vscode")],
+        tools: [inSyncTool(TOOL.vscode)],
         pluginDrift: [],
         inSync: true,
       });
@@ -238,7 +238,7 @@ describe("StatusUseCase", () => {
 
       expect(report.tools).toStrictEqual([
         {
-          toolId: "vscode",
+          toolId: TOOL.vscode,
           version: "test",
           drifted: [{ relativePath: DRIFT_PATH, status: "deleted" }],
         },
@@ -253,7 +253,7 @@ describe("StatusUseCase", () => {
 
       expect(report.tools).toStrictEqual([
         {
-          toolId: "vscode",
+          toolId: TOOL.vscode,
           version: "test",
           drifted: [{ relativePath: DRIFT_PATH, status: "deleted" }],
         },
@@ -268,7 +268,7 @@ describe("StatusUseCase", () => {
 
       expect(report.tools).toStrictEqual([
         {
-          toolId: "vscode",
+          toolId: TOOL.vscode,
           version: "test",
           drifted: [{ relativePath: DRIFT_PATH, status: "modified" }],
         },
@@ -308,18 +308,18 @@ describe("status", () => {
     });
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest missing");
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
     await deps.manifestRepo.save(manifest);
 
     // Written by the CLI on purpose and never tracked. Reading the exclusion off
     // `machineLocalFilesOf` is what keeps it matching the path the profile declares.
-    for (const relativePath of registeredAiConfig("claude")
+    for (const relativePath of registeredAiConfig(TOOL.claude)
       .marketplaceRegistration()
       ?.machineLocalFiles() ?? []) {
       await deps.fs.writeFile(`${PROJECT_ROOT}/${relativePath}`, "{}");
     }
     expect(
-      (registeredAiConfig("claude").marketplaceRegistration()?.machineLocalFiles() ?? []).length
+      (registeredAiConfig(TOOL.claude).marketplaceRegistration()?.machineLocalFiles() ?? []).length
     ).toBeGreaterThan(0);
 
     const report = await new StatusUseCase(

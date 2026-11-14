@@ -23,7 +23,7 @@ description: >
 ## Add a tool
 
 1. One folder `domain/profiles/<tool>/` with `profile.ts` (the declaration), and `build.ts` when the tool is a build target.
-2. One line in `REGISTERED_PROFILES` (`domain/profiles/registered-profiles.ts`), AI tools before IDE tools, and the id in `shared/domain/tool.ts` until it becomes an opaque `ToolId` (M-T1 in `reference-context.md` section 9). A file listed in `BASELINE` or `IDENTIFIER_BASELINE` (`tests/architecture/tool-addition-cost.arch.test.ts`) may also need the tool. A tool running hooks adds its `hooks.ts`, a host adapter in `assets/hooks-runtime/` and one payload fixture per relayed event.
+2. One line in `REGISTERED_PROFILES` (`domain/profiles/registered-profiles.ts`), AI tools before IDE tools; the id is written only in the profile, which mints the opaque `ToolId`. A file listed in `BASELINE` or `IDENTIFIER_BASELINE` (`tests/architecture/tool-addition-cost.arch.test.ts`) may also need the tool. A tool running hooks adds its `hooks.ts`, a host adapter in `assets/hooks-runtime/` and one payload fixture per relayed event.
 3. The conformance suite (`tests/contexts/tools/testing/`) walks that list and checks the new profile: it has no test of its own for declared data.
 
 A string transform used by one profile stays in its folder; one shared by two goes to `domain/formats/`. A missing section is a missing declaration.
@@ -40,5 +40,5 @@ A string transform used by one profile stays in its folder; one shared by two go
 ## How it's tested
 
 - `tests/contexts/tools/` mirrors the source. A rule over what every profile declares is a conformance check; a profile's declared data gets no test.
-- `tests/architecture/tool-addition-cost.arch.test.ts` guards the cost of adding a tool: a tool id appears only in its own profile, the registration list and the shared vocabulary.
+- `tests/architecture/tool-addition-cost.arch.test.ts` guards the cost of adding a tool: a tool id appears only in its own profile and the registration list.
 - See the `test` skill for tier conventions.

@@ -8,6 +8,7 @@ import {
 } from "../../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { sourceOf, supported } from "../../../testing/build-artifacts.js";
+import { TOOL } from "../../../testing/catalog-of.js";
 
 const HOOKS_JSON = JSON.stringify({
   hooks: { Stop: [{ hooks: [{ type: "command", command: "node journal.cjs" }] }] },
@@ -237,7 +238,7 @@ describe("buildCodexFlatContract()", () => {
   it("reads the project's own config.toml before writing it", () => {
     expect(configArtifactOf().reads(["aidd-dev"])).toStrictEqual([".codex/config.toml"]);
     expect(configArtifactOf().probes(["aidd-dev"])).toStrictEqual([]);
-    expect(configArtifactOf().assets).toStrictEqual({ tool: "codex", names: [] });
+    expect(configArtifactOf().assets).toStrictEqual({ tool: TOOL.codex, names: [] });
   });
 
   it("writes one config.toml holding every built plugin's mcp servers, under its plugin prefix", () => {

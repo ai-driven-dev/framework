@@ -9,6 +9,7 @@ import {
   printRefreshResults,
   printRegisteredMarketplaces,
 } from "../../../src/presentation/display/marketplace-display.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 function marketplace(name: string, version?: string): Marketplace {
@@ -161,7 +162,7 @@ describe("printMarketplaceCheck", () => {
 
     printMarketplaceCheck(output, {
       stale: [marketplace("acme")],
-      upstreamRemoved: [{ marketplace: "beta", plugin: "widget", toolId: "claude" }],
+      upstreamRemoved: [{ marketplace: "beta", plugin: "widget", toolId: TOOL.claude }],
       skipped: [{ marketplace: "gamma", error: "unreachable" }],
     });
 
@@ -189,7 +190,7 @@ describe("printMarketplaceCheck", () => {
 
     printMarketplaceCheck(output, {
       stale: [],
-      upstreamRemoved: [{ marketplace: "beta", plugin: "widget", toolId: "claude" }],
+      upstreamRemoved: [{ marketplace: "beta", plugin: "widget", toolId: TOOL.claude }],
       skipped: [],
     });
 

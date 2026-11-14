@@ -8,20 +8,18 @@ import {
   NoManifestError,
   ToolNotInstalledError,
 } from "../../../../src/shared/domain/errors.js";
-import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
 describe("uninstall", () => {
-  it.each(["cursor", "codex"] as const)(
+  it.each([TOOL.cursor, TOOL.codex] as const)(
     "detaches only the selected %s tool's shared claims after local removal",
     async (selected) => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      for (const toolId of ["cursor", "codex"] as const)
-        await installTool(deps, PROJECT_ROOT, toolId);
+      for (const toolId of [TOOL.cursor, TOOL.codex]) await installTool(deps, PROJECT_ROOT, toolId);
       const project = deps.manifestRepo.getCurrent();
       if (project === null) throw new Error("fixture missing project");
       const record = (name: string, scope: "user" | "project") =>
@@ -32,25 +30,25 @@ describe("uninstall", () => {
           false,
           scope
         );
-      project.addPlugin("cursor", record("shared", "user"));
-      project.addPlugin("cursor", record("local-only", "project"));
+      project.addPlugin(TOOL.cursor, record("shared", "user"));
+      project.addPlugin(TOOL.cursor, record("local-only", "project"));
       const registration = {
         binary: "codex",
         marketplaces: [{ alias: "aidd", hostName: "aidd" }],
         pluginRefs: ["native@aidd"],
       };
-      project.setNativeRegistrations("codex", registration);
+      project.setNativeRegistrations(TOOL.codex, registration);
       const machine = Manifest.create();
-      machine.addTool("cursor", "1.0.0", []);
+      machine.addTool(TOOL.cursor, "1.0.0", []);
       for (const name of ["shared", "local-only"])
-        machine.addPlugin("cursor", record(name, "user").withDependents([PROJECT_ROOT, "/B"]));
-      machine.addTool("codex", "1.0.0", []);
-      machine.setNativeRegistrations("codex", {
+        machine.addPlugin(TOOL.cursor, record(name, "user").withDependents([PROJECT_ROOT, "/B"]));
+      machine.addTool(TOOL.codex, "1.0.0", []);
+      machine.setNativeRegistrations(TOOL.codex, {
         ...registration,
         pluginClaims: [{ ref: "native@aidd", dependents: [PROJECT_ROOT, "/B"] }],
       });
       await deps.userManifestRepo.save(machine);
-      const retainedTool = selected === "cursor" ? "codex" : "cursor";
+      const retainedTool = selected === TOOL.cursor ? TOOL.codex : TOOL.cursor;
 
       await new UninstallUseCase(
         deps.fs,
@@ -68,7 +66,7 @@ describe("uninstall", () => {
       expect(
         deps.userManifestRepo
           .getCurrent()
-          ?.getPlugins("cursor")
+          ?.getPlugins(TOOL.cursor)
           .map((plugin) => ({
             name: plugin.name,
             dependents: plugin.dependents,
@@ -78,7 +76,7 @@ describe("uninstall", () => {
         { name: "local-only", dependents: [PROJECT_ROOT, "/B"] },
       ]);
       expect(
-        deps.userManifestRepo.getCurrent()?.getNativeRegistrations("codex")?.pluginClaims
+        deps.userManifestRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims
       ).toEqual([
         { ref: "native@aidd", dependents: selected === "codex" ? ["/B"] : [PROJECT_ROOT, "/B"] },
       ]);
@@ -88,12 +86,12 @@ describe("uninstall", () => {
   it("no longer tracks removed tool files", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, "claude" as ToolId);
+    await installTool(deps, PROJECT_ROOT, TOOL.claude);
 
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude" as ToolId],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
@@ -104,7 +102,7 @@ describe("uninstall", () => {
   it("completes without error when files were already deleted from disk", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, "claude" as ToolId);
+    await installTool(deps, PROJECT_ROOT, TOOL.claude);
 
     const claudeFiles = deps.fs.listUnder(join(PROJECT_ROOT, ".claude"));
     for (const f of claudeFiles) {
@@ -115,7 +113,7 @@ describe("uninstall", () => {
     await expect(
       useCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude" as ToolId],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       })
     ).resolves.not.toThrow();
@@ -124,8 +122,8 @@ describe("uninstall", () => {
   it("does not delete shared files when one of two tools sharing them is uninstalled", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, "claude" as ToolId);
-    await installTool(deps, PROJECT_ROOT, "vscode" as ToolId);
+    await installTool(deps, PROJECT_ROOT, TOOL.claude);
+    await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
     const sharedFile = join(PROJECT_ROOT, ".vscode", "settings.json");
     expect(deps.fs.has(sharedFile)).toBe(true);
@@ -133,7 +131,7 @@ describe("uninstall", () => {
     const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
     await useCase.execute({
       tools: catalogOf(),
-      toolIds: ["claude" as ToolId],
+      toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
 
@@ -144,7 +142,7 @@ describe("uninstall", () => {
     it("deletes settings.json when empty after stripping all AIDD-managed keys", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode" as ToolId);
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const settingsPath = join(PROJECT_ROOT, ".vscode", "settings.json");
       expect(deps.fs.has(settingsPath)).toBe(true);
@@ -152,7 +150,7 @@ describe("uninstall", () => {
       const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
       await useCase.execute({
         tools: catalogOf(),
-        toolIds: ["vscode" as ToolId],
+        toolIds: [TOOL.vscode],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -162,7 +160,7 @@ describe("uninstall", () => {
     it("deletes keybindings.json on uninstall — whole-file ownership, no zombie", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode" as ToolId);
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const keybindingsPath = join(PROJECT_ROOT, ".vscode", "keybindings.json");
       expect(deps.fs.has(keybindingsPath)).toBe(true);
@@ -170,7 +168,7 @@ describe("uninstall", () => {
       const useCase = new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger);
       await useCase.execute({
         tools: catalogOf(),
-        toolIds: ["vscode" as ToolId],
+        toolIds: [TOOL.vscode],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -203,7 +201,7 @@ describe("uninstall — refusals", () => {
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow(NoManifestError);
@@ -216,7 +214,7 @@ describe("uninstall — refusals", () => {
     await expect(
       new UninstallUseCase(deps.fs, deps.manifestRepo, deps.logger).execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow(ToolNotInstalledError);

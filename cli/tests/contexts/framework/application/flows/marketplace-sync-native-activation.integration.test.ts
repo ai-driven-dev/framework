@@ -24,7 +24,9 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+
+const { claude } = TOOL;
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -42,9 +44,9 @@ function marketplace(): Marketplace {
 
 function manifestWithPlugin(marketplace: string = MARKETPLACE): InMemoryManifestRepository {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
+  manifest.addTool(claude, "test", []);
   manifest.addPlugin(
-    "claude",
+    claude,
     InstalledPlugin.fromMetadata(
       PLUGIN,
       "1.0.0",
@@ -72,7 +74,7 @@ function seededBuiltCatalog(): InMemoryFileAdapter {
 function readableHostPlugins(refs: readonly string[] = []) {
   return new Map([
     [
-      "claude" as const,
+      claude,
       new FakeHostPluginRegistry({
         location: "/home/dev/.claude/plugins/installed_plugins.json",
         refs: new Map(refs.map((ref) => [ref, { enabled: true }])),
@@ -88,7 +90,7 @@ function nativeSource(
 ) {
   return new Map([
     [
-      "claude" as const,
+      claude,
       new FakeHostMarketplaceSources(
         activator,
         "registry",
@@ -101,8 +103,8 @@ function nativeSource(
 
 function ownedMachineCatalog(hostName: string, source: string): InMemoryManifestRepository {
   const machine = Manifest.create();
-  machine.addTool("claude", "test", []);
-  machine.setNativeRegistrations("claude", {
+  machine.addTool(claude, "test", []);
+  machine.setNativeRegistrations(claude, {
     binary: "claude",
     marketplaces: [{ alias: MARKETPLACE, hostName, provenance: { kind: "registry", source } }],
     pluginRefs: [],
@@ -127,7 +129,7 @@ function buildSync(activator: FakeHostActions, pluginMarketplace?: string) {
       registry,
       hasher,
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -216,7 +218,7 @@ describe("syncing settings registers the plugin with the host's own CLI", () => 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.enabledPlugins).toEqual([]);
-    const answered = answeredRegistry("claude", { location: "/registry", refs: new Map() }, true);
+    const answered = answeredRegistry(claude, { location: "/registry", refs: new Map() }, true);
 
     expect("refs" in answered && answered.refs.has(`${PLUGIN}@a-marketplace-nobody-added`)).toBe(
       false
@@ -233,7 +235,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     const reloaded = await manifestRepo.load();
-    expect(reloaded?.getNativeRegistrations("claude")).toEqual({
+    expect(reloaded?.getNativeRegistrations(claude)).toEqual({
       binary: "claude",
       marketplaces: [
         {
@@ -254,14 +256,14 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     const reloaded = await manifestRepo.load();
-    expect(reloaded?.getNativeRegistrations("claude")).toBeUndefined();
+    expect(reloaded?.getNativeRegistrations(claude)).toBeUndefined();
   });
 
   it("re-registers through the host CLI when the manifest's record has gone stale", async () => {
     const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo } = buildSync(activator);
     const staleManifest = await manifestRepo.load();
-    staleManifest?.setNativeRegistrations("claude", {
+    staleManifest?.setNativeRegistrations(claude, {
       binary: "claude",
       marketplaces: [
         {
@@ -279,7 +281,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
 
     expect(activator.enabledPlugins).toContain(REF);
     const reloaded = await manifestRepo.load();
-    expect(reloaded?.getNativeRegistrations("claude")).toEqual({
+    expect(reloaded?.getNativeRegistrations(claude)).toEqual({
       binary: "claude",
       marketplaces: [
         {
@@ -313,7 +315,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
       registry,
       hasher,
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -331,7 +333,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     expect(activator.enabledPlugins).toEqual([`${PLUGIN}@${CATALOG_NAME}`]);
     expect(activator.enabledPlugins).not.toContain(REF);
     const reloaded = await manifestRepo.load();
-    expect(reloaded?.getNativeRegistrations("claude")).toEqual({
+    expect(reloaded?.getNativeRegistrations(claude)).toEqual({
       binary: "claude",
       marketplaces: [
         {
@@ -353,7 +355,7 @@ describe("registering a marketplace does not wait for a plugin to point at it", 
     const registry = new InMemoryMarketplaceRegistry();
     const fs = seededBuiltCatalog();
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(claude, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
     const hasher = new DeterministicHasher();
     const useCase = new MarketplaceSyncSettingsUseCase(
@@ -362,7 +364,7 @@ describe("registering a marketplace does not wait for a plugin to point at it", 
       registry,
       hasher,
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -397,7 +399,7 @@ describe("what native activation leaves behind is not reported as the user's dri
       registry,
       hasher,
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -417,7 +419,7 @@ describe("what native activation leaves behind is not reported as the user's dri
 
     const onDisk = await fs.readFile(settingsAbsolutePath);
     const manifest = await manifestRepo.load();
-    const tracked = manifest?.getToolFiles("claude") ?? [];
+    const tracked = manifest?.getToolFiles(claude) ?? [];
     const entry = tracked.find((file) => file.relativePath === SETTINGS_PATH);
 
     expect(entry, "the settings file is tracked at all").toBeDefined();
@@ -438,13 +440,13 @@ describe("what native activation leaves behind is not reported as the user's dri
       hasher,
       new CapturingLogger(),
       // Not available: the binary is not on the PATH, so nothing of the host's is written.
-      new Map([["claude", new FakeHostActions({ available: false })]]),
+      new Map([[claude, new FakeHostActions({ available: false })]]),
       fakeEnsureBuiltMarketplace()
     );
     await registry.save(PROJECT_ROOT, marketplace());
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
     const hashAfterSync = (await manifestRepo.load())
-      ?.getToolFiles("claude")
+      ?.getToolFiles(claude)
       .find((file) => file.relativePath === SETTINGS_PATH)?.hash;
 
     const edited = `${await fs.readFile(settingsAbsolutePath)}\n`;
@@ -452,7 +454,7 @@ describe("what native activation leaves behind is not reported as the user's dri
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     const tracked = (await manifestRepo.load())
-      ?.getToolFiles("claude")
+      ?.getToolFiles(claude)
       .find((file) => file.relativePath === SETTINGS_PATH);
     expect(hashAfterSync, "the settings file is tracked at all").toBeDefined();
     expect(tracked?.hash).toEqual(hashAfterSync);
@@ -486,11 +488,11 @@ describe("reclaiming a dead registration asks and acts on the host's own name", 
       registry,
       hasher,
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map([
         [
-          "claude",
+          claude,
           {
             read: async () => ({
               location: "/home/.claude/plugins/known_marketplaces.json",
@@ -505,7 +507,7 @@ describe("reclaiming a dead registration asks and acts on the host's own name", 
       undefined,
       undefined,
       undefined,
-      new Map([["claude", { read: async () => hostReadingOf([]) }]]),
+      new Map([[claude, { read: async () => hostReadingOf([]) }]]),
       ownedMachineCatalog(CATALOG_NAME, builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")),
       nativeSource(
         activator,
@@ -553,8 +555,8 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
     const doctorRegistration = new DoctorRegistrationUseCase(
       fs,
       registry,
-      new Map([["claude", activator]]),
-      new Map([["claude", new RegistryBoundToActivator(activator)]]),
+      new Map([[claude, activator]]),
+      new Map([[claude, new RegistryBoundToActivator(activator)]]),
       new Map(),
       () => "/user-cache",
       { get: () => "1.0.0" }
@@ -612,9 +614,9 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
       }),
     });
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(claude, "test", []);
     manifest.addPlugin(
-      "claude",
+      claude,
       InstalledPlugin.fromMetadata(
         LIVE_PLUGIN,
         "1.0.0",
@@ -632,7 +634,7 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
       registry,
       hasher,
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -651,7 +653,7 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
     const { useCase, registry, manifestRepo } = buildLiveSync(activator);
     await registry.save(PROJECT_ROOT, liveMarketplace());
     const staleManifest = await manifestRepo.load();
-    staleManifest?.setNativeRegistrations("claude", {
+    staleManifest?.setNativeRegistrations(claude, {
       binary: "claude",
       marketplaces: [{ alias: "market-dead", hostName: "host-dead" }],
       pluginRefs: ["plugin-dead@host-dead"],
@@ -661,7 +663,7 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
     // Unnarrowed — no `marketplaceNames`, the shape `sync` and `setup` both run.
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
-    const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
     expect(recorded?.pluginRefs).not.toContain("plugin-dead@host-dead");
     expect(recorded?.marketplaces).not.toContainEqual({
       alias: "market-dead",
@@ -709,9 +711,9 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
       }),
     });
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(claude, "test", []);
     manifest.addPlugin(
-      "claude",
+      claude,
       InstalledPlugin.fromMetadata(
         PLUGIN_X,
         "1.0.0",
@@ -722,7 +724,7 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
       )
     );
     manifest.addPlugin(
-      "claude",
+      claude,
       InstalledPlugin.fromMetadata(
         PLUGIN_Y,
         "1.0.0",
@@ -740,7 +742,7 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
       registry,
       hasher,
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       ensureBuiltSharedCatalog(),
       new Map(),
       () => "",
@@ -751,7 +753,7 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
       undefined,
       new Map([
         [
-          "claude",
+          claude,
           new FakeHostMarketplaceSources(
             activator,
             "registry",
@@ -765,7 +767,7 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
     await registry.save(PROJECT_ROOT, aliasMarketplace(ALIAS_Y));
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
-    const beforeNarrow = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    const beforeNarrow = (await manifestRepo.load())?.getNativeRegistrations(claude);
     expect(beforeNarrow?.pluginRefs, "both refs recorded before the narrowed run").toEqual(
       expect.arrayContaining([`${PLUGIN_X}@${SHARED_HOST_NAME}`, `${PLUGIN_Y}@${SHARED_HOST_NAME}`])
     );
@@ -776,7 +778,7 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
       marketplaceNames: [ALIAS_X],
     });
 
-    const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
     expect(recorded?.pluginRefs).toContain(`${PLUGIN_Y}@${SHARED_HOST_NAME}`);
     expect(recorded?.marketplaces).toContainEqual({
       alias: ALIAS_Y,
@@ -818,11 +820,11 @@ describe("what reclaiming a dead registration says", () => {
       registry,
       new DeterministicHasher(),
       logger,
-      new Map([["claude", activator]]),
+      new Map([[claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map([
         [
-          "claude",
+          claude,
           {
             read: async () => ({
               location: "/home/.claude/plugins/known_marketplaces.json",
@@ -835,7 +837,7 @@ describe("what reclaiming a dead registration says", () => {
       undefined,
       undefined,
       undefined,
-      new Map([["claude", { read: async () => hostReadingOf([]) }]]),
+      new Map([[claude, { read: async () => hostReadingOf([]) }]]),
       ownedMachineCatalog(
         CATALOG_NAME,
         hostSource === "/foreign/cache"
@@ -967,8 +969,8 @@ function buildSyncReadingHost(
   const logger = new CapturingLogger();
   const machine = catalogOwned ? Manifest.create() : undefined;
   if (machine !== undefined) {
-    machine.addTool("claude", "test", []);
-    machine.setNativeRegistrations("claude", {
+    machine.addTool(claude, "test", []);
+    machine.setNativeRegistrations(claude, {
       binary: "claude",
       marketplaces: [
         {
@@ -987,14 +989,14 @@ function buildSyncReadingHost(
     registry,
     new DeterministicHasher(),
     logger,
-    new Map([["claude", activator]]),
+    new Map([[claude, activator]]),
     fakeEnsureBuiltMarketplace(),
     new Map(),
     () => "",
     undefined,
     undefined,
     undefined,
-    new Map([["claude", hostRegistry]]),
+    new Map([[claude, hostRegistry]]),
     machine === undefined ? undefined : new InMemoryManifestRepository(machine),
     nativeSource(
       activator,
@@ -1024,7 +1026,7 @@ describe("a ref the host had enabled before this project asked belongs to the pe
     expect(activator.addedMarketplaces).toEqual([]);
     expect(result.warnings.join("\n")).toContain(`foreign host ref '${REF}'`);
     expect(logger.warnMessages).toEqual(result.warnings);
-    const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
     expect(recorded?.pluginRefs).toEqual([]);
   });
 
@@ -1042,7 +1044,7 @@ describe("a ref the host had enabled before this project asked belongs to the pe
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
-    const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
     expect(recorded?.pluginRefs).toEqual([REF]);
   });
 
@@ -1069,7 +1071,7 @@ describe("a ref the host had enabled before this project asked belongs to the pe
     expect(result.warnings.some((warning) => warning.includes("registration left untouched"))).toBe(
       true
     );
-    const recorded = (await manifestRepo.load())?.getNativeRegistrations("claude");
+    const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
     expect(recorded?.pluginRefs).toEqual([]);
   });
 });

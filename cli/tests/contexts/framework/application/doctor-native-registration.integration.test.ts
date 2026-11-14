@@ -4,7 +4,7 @@ import type { HostPluginRegistry } from "../../../../src/contexts/host-registrat
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { buildDoctorUseCase, buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/dev/.claude/plugins/installed_plugins.json";
@@ -13,8 +13,8 @@ const DEV_REF = "aidd-dev@aidd-framework";
 
 async function manifestWithTwoNativePlugins(): Promise<Manifest> {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
-  manifest.setNativeRegistrations("claude", {
+  manifest.addTool(TOOL.claude, "test", []);
+  manifest.setNativeRegistrations(TOOL.claude, {
     binary: "claude",
     marketplaces: [{ alias: "aidd-framework", hostName: "aidd-framework" }],
     pluginRefs: [CONTEXT_REF, DEV_REF],
@@ -29,7 +29,7 @@ describe("doctor represents what claude's own registry answers", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await deps.manifestRepo.save(await manifestWithTwoNativePlugins());
     const hostRegistries = new Map<AiToolId, HostPluginRegistry>([
-      ["claude", new FakeHostPluginRegistry({ location: REGISTRY_LOCATION, refs: new Map() })],
+      [TOOL.claude, new FakeHostPluginRegistry({ location: REGISTRY_LOCATION, refs: new Map() })],
     ]);
 
     const useCase = buildDoctorUseCase(deps, undefined, hostRegistries);
@@ -52,7 +52,7 @@ describe("doctor represents what claude's own registry answers", () => {
     await deps.manifestRepo.save(await manifestWithTwoNativePlugins());
     const hostRegistries = new Map<AiToolId, HostPluginRegistry>([
       [
-        "claude",
+        TOOL.claude,
         new FakeHostPluginRegistry({
           location: REGISTRY_LOCATION,
           refs: new Map([

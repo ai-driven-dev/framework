@@ -11,6 +11,7 @@ import {
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const makePlugin = (name: string, version = "1.0.0"): InstalledPlugin =>
   InstalledPlugin.fromJSON({
@@ -24,7 +25,7 @@ const makePlugin = (name: string, version = "1.0.0"): InstalledPlugin =>
 
 const makeEntry = (plugins: InstalledPlugin[]): ToolEntry =>
   createToolEntry({
-    toolId: "claude",
+    toolId: TOOL.claude,
     version: "3.0.0",
     files: [
       new InstallationFile({
@@ -99,7 +100,7 @@ describe("a tool's manifest entry", () => {
         marketplaces: [{ alias: "aidd-framework", hostName: "ai-driven-dev" }],
         pluginRefs: ["aidd-context@ai-driven-dev"],
       });
-      expect(parseToolEntry("claude", data).nativeRegistrations).toStrictEqual(
+      expect(parseToolEntry(TOOL.claude, data).nativeRegistrations).toStrictEqual(
         entry.nativeRegistrations
       );
     });

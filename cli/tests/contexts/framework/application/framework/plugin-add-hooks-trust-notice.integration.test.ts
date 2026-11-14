@@ -6,19 +6,20 @@ import { PluginAddUseCase } from "../../../../../src/contexts/framework/applicat
 import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { codex } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { nativeOf } from "../../../tools/testing/plugin-mode.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
 
-async function installWithLogger(toolId: "codex" | "claude") {
+async function installWithLogger(toolId: AiToolId) {
   const deps = await buildUnitDeps(PROJECT_ROOT);
   await initAndInstall(deps, PROJECT_ROOT, toolId);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
@@ -48,7 +49,7 @@ async function installWithLogger(toolId: "codex" | "claude") {
 
 describe("PluginAddUseCase hook trust notice", () => {
   it("names what Codex still requires, on the info channel, when the plugin delivers hooks", async () => {
-    const logger = await installWithLogger("codex");
+    const logger = await installWithLogger(TOOL.codex);
 
     expect(logger.infoMessages).toHaveLength(1);
     expect(logger.infoMessages[0]).toBe(
@@ -58,7 +59,7 @@ describe("PluginAddUseCase hook trust notice", () => {
   });
 
   it("says nothing for a tool with no trust gate on its hooks", async () => {
-    const logger = await installWithLogger("claude");
+    const logger = await installWithLogger(TOOL.claude);
 
     expect(logger.infoMessages).toEqual([]);
   });

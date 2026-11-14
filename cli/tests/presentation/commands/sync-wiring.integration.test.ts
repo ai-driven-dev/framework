@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
+import { UnregisteredToolError } from "../../../src/shared/domain/errors.js";
+import { catalogOf, registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const restoreAll = vi.fn();
@@ -58,7 +59,7 @@ beforeEach(() => {
   });
   restoreAll.mockResolvedValue(NOTHING_RESTORED);
   restoreOne.mockResolvedValue({
-    tools: [{ nothingToRestore: true }],
+    tools: [{ toolId: TOOL.claude, nothingToRestore: true }],
     totalRestored: 0,
     totalKept: 0,
     unrestorable: [],
@@ -152,7 +153,7 @@ describe("aidd sync — the whole project", () => {
 
   it("warns about a binary off PATH without failing the run", async () => {
     activation.mockResolvedValue({
-      binaryMissing: [{ toolId: "claude", binary: "claude" }],
+      binaryMissing: [{ toolId: TOOL.claude, binary: "claude" }],
       errors: [],
       activated: [],
     });
@@ -198,10 +199,16 @@ describe("aidd sync --tool", () => {
     expect(restoreOne).toHaveBeenCalledWith(expect.objectContaining({ version: "5.2.2" }));
   });
 
-  it("hands a tool no profile declares to the restore, which refuses it", async () => {
-    await run("--tool", "nope");
+  it("hands a tool no profile declares to the restore, which refuses it before any activation", async () => {
+    restoreOne.mockRejectedValue(new UnregisteredToolError("nope"));
+    vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+
+    await expect(run("--tool", "nope")).rejects.toThrow("exited");
 
     expect(restoreOne).toHaveBeenCalledWith(expect.objectContaining({ toolIds: ["nope"] }));
+    expect(activation).not.toHaveBeenCalled();
   });
 
   it("narrows to the files and the plugin that were named", async () => {
@@ -275,7 +282,7 @@ describe("aidd sync --scope user", () => {
   it("rebuilds the global files a tool owns before driving activation, under --global", async () => {
     loadUserManifest.mockResolvedValue({
       getInstalledToolIds: () => ["claude", "opencode"],
-      getPlugins: (toolId: string) => (toolId === "opencode" ? [{ scope: "user" }] : []),
+      getPlugins: (toolId: string) => [{ scope: toolId === "opencode" ? "user" : "project" }],
     });
     userPluginUpdate.mockResolvedValue(["aidd-dev", "aidd-dev"]);
 
@@ -294,6 +301,23 @@ describe("aidd sync --scope user", () => {
     await run("--scope", "user", "--tool", "claude");
 
     expect(activation).toHaveBeenCalledWith(expect.objectContaining({ toolIds: ["claude"] }));
+  });
+
+  it.each(["vscode", "bogus"])("narrows to nothing for %s, an AI tool it is not", async (name) => {
+    await run("--scope", "user", "--tool", name);
+
+    expect(userPluginUpdate).not.toHaveBeenCalled();
+    expect(activation).toHaveBeenCalledWith(expect.objectContaining({ toolIds: [] }));
+  });
+
+  it("refreshes no file and still activates when the machine records no manifest", async () => {
+    loadUserManifest.mockResolvedValue(null);
+
+    await run("--scope", "user");
+    await run("--scope", "user", "--tool", "claude");
+
+    expect(userPluginUpdate).not.toHaveBeenCalled();
+    expect(activation).toHaveBeenCalledTimes(2);
   });
 
   it("refuses a plugin filter it tracks nothing to narrow", async () => {

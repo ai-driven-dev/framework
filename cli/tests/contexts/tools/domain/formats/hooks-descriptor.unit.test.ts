@@ -12,6 +12,7 @@ import {
   projectHooksSupport,
 } from "../../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
 import { CapabilityConfigError } from "../../../../../src/shared/domain/errors.js";
+import { TOOL } from "../../testing/catalog-of.js";
 
 const SOURCE = { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" };
 const LOADER = { dir: ".tool/plugin/", baseName: "tool-plugin.js" };
@@ -70,7 +71,7 @@ describe("the host adapter a build puts behind a plugin's hooks", () => {
   it("replaces it on a flat build", () => {
     const artifact = supported(
       flatHooksArtifact(routed({ runtime: RUNTIME, flat: { scriptsDir: ".tool/hooks/" } }), {
-        tool: "cursor",
+        tool: TOOL.cursor,
       })
     );
 
@@ -101,7 +102,7 @@ describe("the host adapter a build puts behind a plugin's hooks", () => {
 describe("a flat build's hooks artifact", () => {
   it("puts each plugin's scripts in a folder of its own, and its hooks file beside them", () => {
     const artifact = supported(
-      flatHooksArtifact(routed({ flat: { scriptsDir: ".tool/hooks/" } }), { tool: "cursor" })
+      flatHooksArtifact(routed({ flat: { scriptsDir: ".tool/hooks/" } }), { tool: TOOL.cursor })
     );
 
     expect(artifact.source).toStrictEqual(SOURCE);
@@ -125,7 +126,7 @@ describe("a flat build's hooks artifact", () => {
           undeclaredEvents: "skipped",
           flat: { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" },
         }),
-        { tool: "cursor" }
+        { tool: TOOL.cursor }
       )
     );
 
@@ -149,7 +150,7 @@ describe("a flat build's hooks artifact", () => {
           file: FLAT_FILE,
           flat: { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" },
         }),
-        { tool: "cursor" }
+        { tool: TOOL.cursor }
       )
     );
     const existing = JSON.stringify({
@@ -165,7 +166,7 @@ describe("a flat build's hooks artifact", () => {
   it("writes a plugin's own file where the route shares none", () => {
     const artifact = supported(
       flatHooksArtifact(routed({ file: FLAT_FILE, flat: { scriptsDir: ".tool/hooks/" } }), {
-        tool: "cursor",
+        tool: TOOL.cursor,
       })
     );
 
@@ -189,7 +190,7 @@ describe("a flat build's hooks artifact", () => {
     const artifact = supported(
       flatHooksArtifact(
         routed({ flat: { scriptsDir: ".tool/hooks/", sharedFile: ".tool/hooks.json" } }),
-        { tool: "cursor" },
+        { tool: TOOL.cursor },
         ownMerge
       )
     );
@@ -214,7 +215,7 @@ describe("a flat build's hooks artifact", () => {
   it("writes no hooks file for a tool that reads none", () => {
     expect(
       supported(
-        flatHooksArtifact(routed({ flat: { scriptsDir: ".tool/hooks/" } }), { tool: "cursor" })
+        flatHooksArtifact(routed({ flat: { scriptsDir: ".tool/hooks/" } }), { tool: TOOL.cursor })
       ).hooksFile
     ).toBeUndefined();
   });
@@ -222,7 +223,7 @@ describe("a flat build's hooks artifact", () => {
   it("delivers a loader's own module beside the loader, and every other script per plugin", () => {
     const artifact = supported(
       flatHooksArtifact(routed({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } }), {
-        tool: "cursor",
+        tool: TOOL.cursor,
       })
     );
 
@@ -246,7 +247,7 @@ describe("a flat build's hooks artifact", () => {
   it("keeps the hooks file without a bridge", () => {
     const noBridge = supported(
       flatHooksArtifact(routed({ flat: { scriptsDir: ".tool/hooks/", loaderEntry: LOADER } }), {
-        tool: "cursor",
+        tool: TOOL.cursor,
       })
     );
 

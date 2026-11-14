@@ -24,7 +24,7 @@ import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
-import { catalogOf, registeredToolIds } from "../../tools/testing/catalog-of.js";
+import { catalogOf, flowTools } from "../../tools/testing/catalog-of.js";
 
 function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
   return {
@@ -133,7 +133,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null), false);
 
     const flow = new SetupFlow({
-      registeredToolIds: registeredToolIds(),
+      ...flowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.remote(),
@@ -147,7 +147,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null), true);
 
     const flow = new SetupFlow({
-      registeredToolIds: registeredToolIds(),
+      ...flowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.remote(),
@@ -161,7 +161,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider("ghp_valid-token"));
 
     const flow = new SetupFlow({
-      registeredToolIds: registeredToolIds(),
+      ...flowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.remote(),
@@ -175,7 +175,7 @@ describe("SetupUseCase — auth guard for remote source", () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null));
 
     const flow = new SetupFlow({
-      registeredToolIds: registeredToolIds(),
+      ...flowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
       source: MarketplaceSourceMode.local("/some/path"),

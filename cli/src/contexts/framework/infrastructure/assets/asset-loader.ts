@@ -2,12 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { AssetNotFoundError } from "../../../../shared/domain/errors.js";
 import type { ConfigAsset, SchemaName } from "../../../../shared/domain/file.js";
-import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 
 /** The one thing the loader asks of a tool catalog: a profile that can hand back a shipped config. */
 interface ConfigAssetCatalog {
-  profile(id: ToolId): {
+  profile(id: string): {
     configAsset(name: string): { readonly content: ConfigAsset } | undefined;
   };
 }
@@ -31,7 +30,7 @@ export class BundledAssetProviderAdapter implements AssetProvider {
 
   constructor(private readonly tools: ConfigAssetCatalog) {}
 
-  loadConfigAsset(toolId: ToolId, fileName: string): ConfigAsset {
+  loadConfigAsset(toolId: string, fileName: string): ConfigAsset {
     const shipped = this.tools.profile(toolId).configAsset(fileName);
     if (shipped === undefined) {
       throw new AssetNotFoundError(`${toolId}/${fileName}`);

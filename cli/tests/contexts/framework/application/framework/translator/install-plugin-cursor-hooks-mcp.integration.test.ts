@@ -7,7 +7,7 @@ import { Manifest } from "../../../../../../src/contexts/framework/domain/manife
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
 
 const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";
@@ -62,7 +62,7 @@ const MCP_CONTENT = JSON.stringify({
 function buildDist(): PluginDistribution {
   return new PluginDistribution({
     manifest: { name: PLUGIN_NAME, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [
       { relativePath: "hooks/hooks.json", content: HOOKS_CONTENT },
       { relativePath: ".mcp.json", content: MCP_CONTENT },
@@ -87,11 +87,11 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
     const hasher = new DeterministicHasher();
     const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
 
     const { skipped } = await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -115,11 +115,11 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
     const hasher = new DeterministicHasher();
     const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -138,11 +138,11 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
     const hasher = new DeterministicHasher();
     const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -162,18 +162,18 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
     const hasher = new DeterministicHasher();
     const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
       undefined
     );
 
-    const plugins = manifest.getPlugins("cursor");
+    const plugins = manifest.getPlugins(TOOL.cursor);
     const installed = plugins.find((p) => p.name === PLUGIN_NAME);
     expect(installed).toBeDefined();
     const keys = [...(installed?.files.keys() ?? [])];
@@ -186,11 +186,11 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
     const hasher = new DeterministicHasher();
     const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
 
     const { skipped } = await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

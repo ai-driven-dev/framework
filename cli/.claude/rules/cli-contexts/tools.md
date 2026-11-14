@@ -21,7 +21,7 @@ paths:
 - Outside callers import `tools/contract/` only. `domain/` and `application/` are the composition root's, held by Biome (`HELD_BY_BIOME`, `APPLICATION_CLOSED` in `tests/architecture/helpers.ts`).
 - Use cases receive a `ToolCatalog`, built once by `wireTools()` in `src/composition/tools.ts`; none reaches a profile by import.
 - A caller asks a profile a question and never reads its structure.
-- Adding a tool is one profile folder under `domain/profiles/` and one line in `REGISTERED_PROFILES`, plus its id in `shared/domain/tool.ts` (M-T1); the conformance suite checks it. The files still in `BASELINE` and `IDENTIFIER_BASELINE` (`tests/architecture/tool-addition-cost.arch.test.ts`) name a tool outside its profile and may need it too; both lists only shrink. A tool that runs hooks also brings its `hooks.ts` descriptor, its host adapter in `assets/hooks-runtime/` and one payload fixture per relayed event, all checked by conformance.
+- Adding a tool is one profile folder under `domain/profiles/` and one line in `REGISTERED_PROFILES`. Its id is written once, in its profile; the conformance suite checks it. The files still in `BASELINE` and `IDENTIFIER_BASELINE` (`tests/architecture/tool-addition-cost.arch.test.ts`) name a tool outside its profile and may need it too; both lists only shrink. A tool that runs hooks also brings its `hooks.ts` descriptor, its host adapter in `assets/hooks-runtime/` and one payload fixture per relayed event, all checked by conformance.
 - Only `src/composition/` reads `domain/`: `tools.ts`, `native-registrations.ts` and `host-registration.ts`.
 
 ## Exceptions in force
@@ -34,8 +34,8 @@ paths:
 - E-T10: the profile folders keep their `*-paths.ts`, `*-agent.ts` and `build.ts` files.
 - E-T11: each hooks bridge template keeps its own run, stop and answer functions, which differ in bytes.
 - E-T12: `contract/config-refs.ts` names config entries after a tool, read by `framework`'s restore.
-- M-T1 to M-T3: the written id union, the catalog passed to a use case at call time, and other contexts' tests importing this context's kit (migration state).
-- Each is in section 9 of `reference-context.md`, with the line it deviates from and when it goes; the ambiguities this context settled are rows T-A1 to T-A13 there, T-A9 having become E-T11.
+- M-T2 and M-T3: the catalog passed to a use case at call time, and other contexts' tests importing this context's kit (migration state).
+- Each is in section 9 of `reference-context.md`, with the line it deviates from and when it goes; the ambiguities this context settled are rows T-A1 to T-A14 there, T-A9 having become E-T11.
 
 ## Tests
 

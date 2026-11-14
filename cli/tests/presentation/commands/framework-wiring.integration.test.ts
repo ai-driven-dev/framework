@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const installAiTool = vi.fn();
@@ -62,12 +62,12 @@ beforeEach(() => {
   });
   installIdeTool.mockResolvedValue({
     skipped: false,
-    toolId: "vscode",
+    toolId: TOOL.vscode,
     fileCount: 2,
     warnings: [],
   });
-  uninstallAiTools.mockResolvedValue([{ toolId: "claude", fileCount: 4 }]);
-  uninstallIdeTool.mockResolvedValue({ toolId: "vscode", fileCount: 1 });
+  uninstallAiTools.mockResolvedValue([{ toolId: TOOL.claude, fileCount: 4 }]);
+  uninstallIdeTool.mockResolvedValue({ toolId: TOOL.vscode, fileCount: 1 });
   updateAiTools.mockResolvedValue({ updatedTools: [], errors: [] });
   updateIdeTools.mockResolvedValue({ updatedTools: [], errors: [] });
   listInstalledRules.mockResolvedValue({ rules: [] });
@@ -93,7 +93,7 @@ describe("aidd framework install", () => {
   it("installs an AI tool at the version the graph reports, plugins carried along", async () => {
     expect(await run("install", "--tool", "claude")).toEqual(["Installed claude (5 files)"]);
     expect(installAiTool).toHaveBeenCalledWith({
-      toolId: "claude",
+      toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       force: false,
       version: "5.2.2",
@@ -157,7 +157,7 @@ describe("aidd framework install", () => {
     expect(await run("install", "--tool", "vscode")).toEqual(["Installed vscode (2 files)"]);
     expect(installIdeTool).toHaveBeenCalledWith({
       tools: catalogOf(),
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest: expect.anything(),
       force: false,
@@ -169,7 +169,7 @@ describe("aidd framework install", () => {
   it("leaves an already-installed IDE tool alone too", async () => {
     installIdeTool.mockResolvedValue({
       skipped: true,
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       fileCount: 0,
       warnings: [],
     });
@@ -197,8 +197,8 @@ describe("aidd framework install", () => {
 describe("aidd framework remove", () => {
   it("removes one AI tool, and counts every file that went", async () => {
     uninstallAiTools.mockResolvedValue([
-      { toolId: "claude", fileCount: 4 },
-      { toolId: "claude", fileCount: 3 },
+      { toolId: TOOL.claude, fileCount: 4 },
+      { toolId: TOOL.claude, fileCount: 3 },
     ]);
 
     expect(await run("remove", "--tool", "claude")).toEqual(["Removed claude (7 files removed)"]);
@@ -225,7 +225,7 @@ describe("aidd framework remove", () => {
   it("sends an IDE tool down its own removal", async () => {
     expect(await run("remove", "--tool", "vscode")).toEqual(["Removed vscode (1 files removed)"]);
     expect(uninstallIdeTool).toHaveBeenCalledWith({
-      toolId: "vscode",
+      toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       tools: catalogOf(),
     });
@@ -236,11 +236,11 @@ describe("aidd framework remove", () => {
 describe("aidd framework update", () => {
   it("fans out across both categories when no tool was named", async () => {
     updateAiTools.mockResolvedValue({
-      updatedTools: [{ toolId: "claude", fileCount: 5 }],
+      updatedTools: [{ toolId: TOOL.claude, fileCount: 5 }],
       errors: [],
     });
     updateIdeTools.mockResolvedValue({
-      updatedTools: [{ toolId: "vscode", fileCount: 2 }],
+      updatedTools: [{ toolId: TOOL.vscode, fileCount: 2 }],
       errors: [{ scope: "vscode", message: "one file was kept" }],
     });
 
@@ -345,7 +345,7 @@ describe("aidd framework rules", () => {
 
   it("prints the inventory as text a person reads", async () => {
     listInstalledRules.mockResolvedValue({
-      rules: [{ tool: "claude", path: ".claude/rules/a.md", description: "", paths: undefined }],
+      rules: [{ tool: TOOL.claude, path: ".claude/rules/a.md", description: "", paths: undefined }],
     });
 
     expect(await run("rules")).toEqual([
@@ -357,7 +357,7 @@ describe("aidd framework rules", () => {
 
   it("prints the same inventory as the JSON a program reads", async () => {
     const rules = [
-      { tool: "claude", path: ".claude/rules/a.md", description: "a rule", paths: ["src/**"] },
+      { tool: TOOL.claude, path: ".claude/rules/a.md", description: "a rule", paths: ["src/**"] },
     ];
     listInstalledRules.mockResolvedValue({ rules });
 

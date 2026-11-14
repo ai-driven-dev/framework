@@ -5,6 +5,7 @@ import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections
 import { HooksConfigPart } from "../../../../../src/contexts/tools/domain/sections/hooks-section.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { stubAiTool } from "../../../../helpers/ports/stub-ai-tool.js";
+import { TOOL } from "../../testing/catalog-of.js";
 
 const mcp = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
 const hooks = new HooksConfigPart({ outputPath: ".claude/settings.json" });
@@ -20,7 +21,7 @@ const extensions = new ConfigSection({
 
 function ideTool(declared: ConfigSection[]): IdeToolConfig {
   return defineIdeTool({
-    toolId: "vscode",
+    toolId: TOOL.vscode,
     directory: ".vscode/",
     signalDir: null,
     capabilities: () => ({ config: declared }),
@@ -45,7 +46,7 @@ describe("configWrites, the config files a tool writes in the order they claim a
 
   describe("an AI tool", () => {
     it("lists mcp, hooks and settings in that order", () => {
-      const tool = stubAiTool("claude", {
+      const tool = stubAiTool(TOOL.claude, {
         mcp: { config: mcp },
         hooks: hooksSection,
         config: [settings],
@@ -59,7 +60,7 @@ describe("configWrites, the config files a tool writes in the order they claim a
     });
 
     it("lists each settings file of a tool declaring several", () => {
-      const tool = stubAiTool("claude", { config: [extensions, settings] });
+      const tool = stubAiTool(TOOL.claude, { config: [extensions, settings] });
 
       expect(tool.configWrites()).toStrictEqual([
         { kind: "settings", capability: extensions },
@@ -68,7 +69,7 @@ describe("configWrites, the config files a tool writes in the order they claim a
     });
 
     it("adds no write for an mcp section that only carries a plugin part", () => {
-      const tool = stubAiTool("claude", {
+      const tool = stubAiTool(TOOL.claude, {
         mcp: { plugin: { accepts: true, relativePath: ".mcp.json" } },
       });
 
@@ -76,13 +77,13 @@ describe("configWrites, the config files a tool writes in the order they claim a
     });
 
     it("adds no write for a hooks section that only carries a delivery", () => {
-      const tool = stubAiTool("claude", { hooks: { delivery: { kind: "plugin-file" } } });
+      const tool = stubAiTool(TOOL.claude, { hooks: { delivery: { kind: "plugin-file" } } });
 
       expect(tool.configWrites()).toStrictEqual([]);
     });
 
     it("lists nothing for a tool declaring no config capability", () => {
-      expect(stubAiTool("claude", {}).configWrites()).toStrictEqual([]);
+      expect(stubAiTool(TOOL.claude, {}).configWrites()).toStrictEqual([]);
     });
   });
 });

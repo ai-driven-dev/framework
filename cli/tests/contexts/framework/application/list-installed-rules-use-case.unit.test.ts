@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ListInstalledRulesUseCase } from "../../../../src/contexts/framework/application/list-installed-rules-use-case.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const ROOT = "/project";
 
@@ -62,7 +62,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
 
     expect(rules).toEqual([
       {
-        tool: "codex",
+        tool: TOOL.codex,
         path: ".codex/rules/1-naming.md",
         name: "1-naming",
         description: "Names",

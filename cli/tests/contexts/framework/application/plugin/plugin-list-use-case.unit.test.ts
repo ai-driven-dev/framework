@@ -3,11 +3,11 @@ import { PluginListUseCase } from "../../../../../src/contexts/framework/applica
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../../src/contexts/framework/domain/ports/manifest-repository.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 function makeManifestWithPlugin(): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "1.0.0", []);
+  manifest.addTool(TOOL.claude, "1.0.0", []);
   const plugin = InstalledPlugin.fromJSON({
     name: "sample-plugin",
     source: { kind: "local", path: "./sample" },
@@ -16,7 +16,7 @@ function makeManifestWithPlugin(): Manifest {
     files: {},
     scope: "project",
   });
-  manifest.addPlugin("claude", plugin);
+  manifest.addPlugin(TOOL.claude, plugin);
   return manifest;
 }
 
@@ -35,9 +35,9 @@ describe("PluginListUseCase", () => {
       const manifest = makeManifestWithPlugin();
       const repo = makeManifestRepository(manifest);
       const useCase = new PluginListUseCase(repo);
-      const result = await useCase.execute({ toolIds: ["claude"], tools: registeredCatalog() });
-      expect(result.has("claude")).toBe(true);
-      const plugins = result.get("claude") ?? [];
+      const result = await useCase.execute({ toolIds: [TOOL.claude], tools: registeredCatalog() });
+      expect(result.has(TOOL.claude)).toBe(true);
+      const plugins = result.get(TOOL.claude) ?? [];
       expect(plugins).toHaveLength(1);
       expect(plugins[0].name).toBe("sample-plugin");
       expect(plugins[0].version).toBe("1.0.0");
@@ -45,11 +45,11 @@ describe("PluginListUseCase", () => {
 
     it("returns empty list for tool with no plugins", async () => {
       const manifest = Manifest.create();
-      manifest.addTool("claude", "1.0.0", []);
+      manifest.addTool(TOOL.claude, "1.0.0", []);
       const repo = makeManifestRepository(manifest);
       const useCase = new PluginListUseCase(repo);
-      const result = await useCase.execute({ toolIds: ["claude"], tools: registeredCatalog() });
-      expect(result.get("claude")).toHaveLength(0);
+      const result = await useCase.execute({ toolIds: [TOOL.claude], tools: registeredCatalog() });
+      expect(result.get(TOOL.claude)).toHaveLength(0);
     });
   });
 });

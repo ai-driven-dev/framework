@@ -8,7 +8,7 @@ import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const ROOT = "/test-project";
 const FIXTURE = join(REPOSITORY_ROOT, "cli/tests/fixtures/plugins/claude-format/sample-plugin");
@@ -32,7 +32,7 @@ async function existingProject(configPath: string) {
   );
   const setupOptions = {
     projectRoot: ROOT,
-    aiTools: ["kilo" as const],
+    aiTools: [TOOL.kilo],
     ideTools: [],
     force: false,
     version: "test",
@@ -59,7 +59,7 @@ async function existingProject(configPath: string) {
     add.execute({
       tools: catalogOf(),
       source: { kind: "local", path: FIXTURE },
-      toolIds: ["kilo"],
+      toolIds: [TOOL.kilo],
       projectRoot: ROOT,
       interactive: false,
     });
@@ -80,7 +80,7 @@ describe.each(["kilo.jsonc", ".kilo/kilo.jsonc"])(
     it("keeps the exact JSONC bytes during first and repeated tool setup", async () => {
       const { deps, setup, setupOptions } = await existingProject(configPath);
       expect(await deps.fs.readFile(join(ROOT, configPath))).toBe(USER_CONFIG);
-      expect(deps.manifestRepo.getCurrent()?.hasTool("kilo")).toBe(true);
+      expect(deps.manifestRepo.getCurrent()?.hasTool(TOOL.kilo)).toBe(true);
       await setup.execute(setupOptions);
       expect(await deps.fs.readFile(join(ROOT, configPath))).toBe(USER_CONFIG);
       const other = configPath === "kilo.jsonc" ? ".kilo/kilo.jsonc" : "kilo.jsonc";
@@ -95,7 +95,7 @@ describe.each(["kilo.jsonc", ".kilo/kilo.jsonc"])(
         await deps.fs.readFile(join(FIXTURE, "hooks/update_memory.js"))
       );
       expect(await deps.fs.readFile(join(ROOT, BRIDGE))).toContain('id: "sample-plugin-hooks"');
-      expect(deps.manifestRepo.getCurrent()?.getPlugins("kilo")[0]?.version).toBe("1.0.0");
+      expect(deps.manifestRepo.getCurrent()?.getPlugins(TOOL.kilo)[0]?.version).toBe("1.0.0");
     });
 
     it("updates the hook and bridge while retaining the exact user configuration", async () => {
@@ -111,14 +111,14 @@ describe.each(["kilo.jsonc", ".kilo/kilo.jsonc"])(
       expect(
         await update.execute({
           tools: catalogOf(),
-          toolIds: ["kilo"],
+          toolIds: [TOOL.kilo],
           projectRoot: ROOT,
         })
       ).toEqual(["sample-plugin"]);
       expect(await deps.fs.readFile(join(ROOT, configPath))).toBe(USER_CONFIG);
       expect(await deps.fs.readFile(join(ROOT, HOOK))).toBe(upgradedHook);
       expect(await deps.fs.readFile(join(ROOT, BRIDGE))).toContain('id: "sample-plugin-hooks"');
-      expect(deps.manifestRepo.getCurrent()?.getPlugins("kilo")[0]?.version).toBe("2.0.0");
+      expect(deps.manifestRepo.getCurrent()?.getPlugins(TOOL.kilo)[0]?.version).toBe("2.0.0");
     });
   }
 );

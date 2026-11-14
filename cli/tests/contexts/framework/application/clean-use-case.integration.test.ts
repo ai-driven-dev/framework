@@ -9,7 +9,7 @@ import { HasherAdapter } from "../../../../src/contexts/framework/infrastructure
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 let projectRoot: string;
 
@@ -24,7 +24,7 @@ afterEach(async () => {
 function buildUseCase(logger: CapturingLogger): CleanUseCase {
   const fs = new FileAdapter(new HasherAdapter(), logger);
   const manifest = Manifest.create();
-  manifest.addTool("claude", "1.0.0", []);
+  manifest.addTool(TOOL.claude, "1.0.0", []);
   return new CleanUseCase(
     fs,
     new InMemoryManifestRepository(manifest, projectRoot),

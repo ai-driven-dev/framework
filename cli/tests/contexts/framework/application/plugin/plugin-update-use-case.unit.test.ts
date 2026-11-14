@@ -11,7 +11,7 @@ import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-u
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -67,7 +67,7 @@ async function addLocal(addUseCase: PluginAddUseCase, path = PLUGIN_FIXTURE): Pr
   await addUseCase.execute({
     tools: catalogOf(),
     source: { kind: "local", path },
-    toolIds: ["claude"],
+    toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,
     interactive: false,
   });
@@ -76,28 +76,28 @@ async function addLocal(addUseCase: PluginAddUseCase, path = PLUGIN_FIXTURE): Pr
 async function recordVersion(deps: Deps, name: string, version: string): Promise<void> {
   const manifest = await deps.manifestRepo.load();
   if (manifest === null) throw new Error("manifest not found");
-  const plugin = manifest.getPlugins("claude").find((p) => p.name === name);
+  const plugin = manifest.getPlugins(TOOL.claude).find((p) => p.name === name);
   if (plugin === undefined) throw new Error("plugin not found");
-  manifest.updatePlugin("claude", plugin.withVersion(version));
+  manifest.updatePlugin(TOOL.claude, plugin.withVersion(version));
   await deps.manifestRepo.save(manifest);
 }
 
 function installed(deps: Deps, name: string) {
   return deps.manifestRepo
     .getCurrent()
-    ?.getPlugins("claude")
+    ?.getPlugins(TOOL.claude)
     .find((p) => p.name === name);
 }
 
 describe("PluginUpdateUseCase", () => {
   it("skips machine-owned Cursor plugins in an unnamed project sweep", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const { addUseCase, updateUseCase } = await setup(deps);
     await addUseCase.execute({
       tools: catalogOf(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
-      toolIds: ["cursor"],
+      toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
       interactive: false,
     });
@@ -105,7 +105,7 @@ describe("PluginUpdateUseCase", () => {
     expect(
       await updateUseCase.execute({
         tools: catalogOf(),
-        toolIds: ["cursor"],
+        toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       })
     ).toEqual([]);
@@ -114,12 +114,12 @@ describe("PluginUpdateUseCase", () => {
 
   it("refuses an explicitly named Cursor plugin at project scope", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const { addUseCase, updateUseCase } = await setup(deps);
     await addUseCase.execute({
       tools: catalogOf(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
-      toolIds: ["cursor"],
+      toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
       interactive: false,
     });
@@ -127,7 +127,7 @@ describe("PluginUpdateUseCase", () => {
       updateUseCase.execute({
         tools: catalogOf(),
         pluginNames: ["sample-plugin"],
-        toolIds: ["cursor"],
+        toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow(/does not support scope 'project'/);
@@ -136,13 +136,13 @@ describe("PluginUpdateUseCase", () => {
   describe("same version", () => {
     it("does not re-write files when version is equal", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps);
 
       await addUseCase.execute({
         tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -152,7 +152,7 @@ describe("PluginUpdateUseCase", () => {
 
       await updateUseCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -164,13 +164,13 @@ describe("PluginUpdateUseCase", () => {
   describe("newer version available", () => {
     it("re-writes files and updates manifest version", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps);
 
       await addUseCase.execute({
         tools: catalogOf(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
@@ -178,19 +178,21 @@ describe("PluginUpdateUseCase", () => {
       // Lower the recorded version so the fixture appears newer
       const manifest = await deps.manifestRepo.load();
       if (manifest === null) throw new Error("manifest not found");
-      const plugin = manifest.getPlugins("claude").find((p) => p.name === "sample-plugin");
+      const plugin = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
       if (plugin === undefined) throw new Error("plugin not found");
-      manifest.updatePlugin("claude", plugin.withVersion("0.0.1"));
+      manifest.updatePlugin(TOOL.claude, plugin.withVersion("0.0.1"));
       await deps.manifestRepo.save(manifest);
 
       await updateUseCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
 
       const updated = await deps.manifestRepo.load();
-      const updatedPlugin = updated?.getPlugins("claude").find((p) => p.name === "sample-plugin");
+      const updatedPlugin = updated
+        ?.getPlugins(TOOL.claude)
+        .find((p) => p.name === "sample-plugin");
       expect(updatedPlugin?.version).toBe("1.0.0");
     });
   });
@@ -198,13 +200,13 @@ describe("PluginUpdateUseCase", () => {
   describe("what it reports", () => {
     it("reports nothing when the installed version is current", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps);
       await addLocal(addUseCase);
 
       const updated = await updateUseCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -213,14 +215,14 @@ describe("PluginUpdateUseCase", () => {
 
     it("reports exactly the plugin it updated", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps);
       await addLocal(addUseCase);
       await recordVersion(deps, "sample-plugin", "0.0.1");
 
       const updated = await updateUseCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -229,7 +231,7 @@ describe("PluginUpdateUseCase", () => {
 
     it("updates only the plugins named", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps);
       await seedFromDirectory(deps.fs, EXTRA_PLUGIN_FIXTURE, { useAbsolutePaths: true });
       await addLocal(addUseCase);
@@ -240,7 +242,7 @@ describe("PluginUpdateUseCase", () => {
       const updated = await updateUseCase.execute({
         tools: catalogOf(),
         pluginNames: ["extra-plugin"],
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -255,14 +257,14 @@ describe("PluginUpdateUseCase", () => {
   describe("how it fetches", () => {
     it("fetches the plugin source with a forced refresh", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const fetcher = new RecordingFetcher();
       const { addUseCase, updateUseCase } = await setup(deps, { fetcher });
       await addLocal(addUseCase);
 
       await updateUseCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
 
@@ -273,7 +275,7 @@ describe("PluginUpdateUseCase", () => {
   describe("a plugin installed from a local path", () => {
     it("re-writes its files on disk even when built-tree deps are wired", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { addUseCase, updateUseCase } = await setup(deps, {
         builtDeps: {
           ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -286,7 +288,7 @@ describe("PluginUpdateUseCase", () => {
 
       await updateUseCase.execute({
         tools: catalogOf(),
-        toolIds: ["claude"],
+        toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
 

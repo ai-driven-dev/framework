@@ -13,7 +13,11 @@ import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { registeredAiConfig, registeredAiProfile } from "../../../../tools/testing/catalog-of.js";
+import {
+  registeredAiConfig,
+  registeredAiProfile,
+  TOOL,
+} from "../../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const HOME = "/home/u";
@@ -34,7 +38,7 @@ const HOOKS_CONTENT = JSON.stringify({
 function dist(): PluginDistribution {
   return new PluginDistribution({
     manifest: { name: PLUGIN_NAME, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [{ relativePath: "hooks/hooks.json", content: HOOKS_CONTENT }],
     components: {
       commands: [],
@@ -70,7 +74,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/hooks.json`, HOOKS_CONTENT);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -81,7 +85,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
 
     const { skipped } = await translator.addPlugin(
       dist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -100,7 +104,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/hooks.json`, HOOKS_CONTENT);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -111,7 +115,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
 
     await translator.addPlugin(
       dist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -128,7 +132,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
   async function installViaLocal(): Promise<InMemoryFileAdapter> {
     const fs = new InMemoryFileAdapter();
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
     const translator: PluginTranslator = new ModeBFlatMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -136,7 +140,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     );
     await translator.addPlugin(
       dist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -150,7 +154,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/hooks.json`, HOOKS_CONTENT);
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "test", []);
+    manifest.addTool(TOOL.cursor, "test", []);
     const translator: PluginTranslator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
@@ -160,7 +164,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     );
     await translator.addPlugin(
       dist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -176,7 +180,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
   }
 
   it("both routes write to the destination cursor.ts declares — a plugin.hooksDestination change breaks this", async () => {
-    expect(declaredHooksDestination("cursor")).toBe("project");
+    expect(declaredHooksDestination(TOOL.cursor)).toBe("project");
 
     const viaLocal = await installViaLocal();
     const viaMarketplace = await installViaMarketplace();

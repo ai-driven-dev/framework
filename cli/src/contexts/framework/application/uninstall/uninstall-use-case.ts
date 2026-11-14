@@ -10,14 +10,12 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import { UninstallPluginUseCase } from "./uninstall-plugin-use-case.js";
 import { UninstallToolsUseCase } from "./uninstall-tools-use-case.js";
 
 interface UninstallOptions {
   toolIds: ToolId[];
   projectRoot: string;
   tools: ToolCatalog;
-  pluginName?: string;
 }
 
 interface UninstallToolResult {
@@ -27,7 +25,6 @@ interface UninstallToolResult {
 }
 
 export class UninstallUseCase {
-  private readonly pluginUninstall: UninstallPluginUseCase;
   private readonly toolsUninstall: UninstallToolsUseCase;
 
   constructor(
@@ -36,16 +33,11 @@ export class UninstallUseCase {
     logger: Logger,
     userManifestRepo?: ManifestRepository
   ) {
-    this.pluginUninstall = new UninstallPluginUseCase(fs, manifestRepo, userManifestRepo);
     this.toolsUninstall = new UninstallToolsUseCase(fs, logger, userManifestRepo);
   }
 
   async execute(options: UninstallOptions): Promise<UninstallToolResult[]> {
-    const { toolIds, projectRoot, pluginName, tools } = options;
-
-    if (pluginName !== undefined) {
-      return this.pluginUninstall.execute({ pluginName, toolIds, projectRoot, tools });
-    }
+    const { toolIds, projectRoot, tools } = options;
 
     if (toolIds.length === 0) {
       throw new InputRequiredError(

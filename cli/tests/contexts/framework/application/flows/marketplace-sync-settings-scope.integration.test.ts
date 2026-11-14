@@ -14,7 +14,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -30,7 +30,7 @@ function marketplace(): Marketplace {
 
 function manifestWithTool(): InMemoryManifestRepository {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
+  manifest.addTool(TOOL.claude, "test", []);
   return new InMemoryManifestRepository(manifest);
 }
 
@@ -48,7 +48,7 @@ function freshHostProof(activator: FakeHostActions) {
   return {
     plugins: new Map([
       [
-        "claude" as const,
+        TOOL.claude,
         new FakeHostPluginRegistry({
           location: "/host/installed_plugins.json",
           refs: new Map(),
@@ -57,7 +57,7 @@ function freshHostProof(activator: FakeHostActions) {
     ]),
     sources: new Map([
       [
-        "claude" as const,
+        TOOL.claude,
         new FakeHostMarketplaceSources(
           activator,
           "registry",
@@ -102,7 +102,7 @@ describe("settings synchronization under the machine ownership lock", () => {
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -184,7 +184,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -208,12 +208,12 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
     const { InstalledPlugin } = await import(
       "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js"
     );
     manifest.addPlugin(
-      "claude",
+      TOOL.claude,
       InstalledPlugin.fromMetadata(
         "aidd-telemetry",
         "1.0.0",
@@ -237,7 +237,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -265,12 +265,12 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     manifestRepo: InMemoryManifestRepository;
   }> {
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
     const { InstalledPlugin } = await import(
       "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js"
     );
     manifest.addPlugin(
-      "claude",
+      TOOL.claude,
       InstalledPlugin.fromMetadata(
         "aidd-telemetry",
         "1.0.0",
@@ -301,7 +301,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       fakeEnsureBuiltMarketplace()
     );
 
@@ -327,7 +327,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       fakeEnsureBuiltMarketplace()
     );
 
@@ -351,7 +351,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       fakeEnsureBuiltMarketplace()
     );
 
@@ -363,8 +363,8 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     });
 
     expect(result.activated).toEqual(["claude"]);
-    expect(overrideRepo.getCurrent()?.getNativeRegistrations("claude")).toBeDefined();
-    expect(constructedRepo.getCurrent()?.getNativeRegistrations("claude")).toBeUndefined();
+    expect(overrideRepo.getCurrent()?.getNativeRegistrations(TOOL.claude)).toBeDefined();
+    expect(constructedRepo.getCurrent()?.getNativeRegistrations(TOOL.claude)).toBeUndefined();
   });
 
   it("records no shared-source reference at user scope — no project-scope manifest exists for a later clean to ever decrement it from", async () => {
@@ -385,7 +385,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",
@@ -422,7 +422,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",

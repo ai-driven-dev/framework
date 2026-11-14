@@ -22,8 +22,7 @@ export function distributionProbesOf(
   kind: "manifest" | "marketplace"
 ): readonly DistributionProbe[] {
   const probes: DistributionProbe[] = [];
-  for (const id of tools.inHelpOrder("ai")) {
-    const format = id as AiToolId;
+  for (const format of tools.inHelpOrder("ai")) {
     for (const relativePath of tools.aiProfile(format).distributionPaths(kind)) {
       probes.push({ format, relativePath });
     }

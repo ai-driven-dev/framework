@@ -5,16 +5,16 @@ import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js"
 import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const HASH_A = "abc123abc123abc123abc123abc123ab";
 const HASH_B = "def456def456def456def456def456de";
 
 function cursorManifestWithFiles(files: Record<string, string>): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("cursor", "1.0.0", []);
+  manifest.addTool(TOOL.cursor, "1.0.0", []);
   manifest.addPlugin(
-    "cursor",
+    TOOL.cursor,
     InstalledPlugin.fromJSON({
       name: "aidd-test",
       source: { kind: "local", path: "/some/path" },
@@ -52,7 +52,7 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
       tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
-      toolIds: ["cursor"],
+      toolIds: [TOOL.cursor],
     });
 
     expect(drifts).toHaveLength(1);
@@ -70,7 +70,7 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
       tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
-      toolIds: ["cursor"],
+      toolIds: [TOOL.cursor],
     });
 
     expect(drifts).toHaveLength(1);
@@ -81,9 +81,9 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
 
   it("does not collapse an all-missing plugin for a project-scope tool", async () => {
     const manifest = Manifest.create();
-    manifest.addTool("claude", "1.0.0", []);
+    manifest.addTool(TOOL.claude, "1.0.0", []);
     manifest.addPlugin(
-      "claude",
+      TOOL.claude,
       InstalledPlugin.fromJSON({
         name: "aidd-test",
         source: { kind: "local", path: "/some/path" },
@@ -100,7 +100,7 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
       tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
     });
 
     expect(drifts).toHaveLength(1);
@@ -112,9 +112,9 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
 describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over the profile", () => {
   it("checks a cursor plugin under projectRoot, not ~/.cursor/plugins/local, when scope: project disagrees with cursor's profile", async () => {
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "1.0.0", []);
+    manifest.addTool(TOOL.cursor, "1.0.0", []);
     manifest.addPlugin(
-      "cursor",
+      TOOL.cursor,
       InstalledPlugin.fromJSON({
         name: "aidd-test",
         source: { kind: "local", path: "/some/path" },
@@ -144,7 +144,7 @@ describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over t
       tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
-      toolIds: ["cursor"],
+      toolIds: [TOOL.cursor],
     });
 
     expect(drifts).toHaveLength(0);
@@ -156,9 +156,9 @@ describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over t
   // has not populated; what it measures is the manifest's recorded scope, not the profile's.
   it("reports real per-file drift, not a collapsed not-installed entry, for a cursor plugin recorded scope: project", async () => {
     const manifest = Manifest.create();
-    manifest.addTool("cursor", "1.0.0", []);
+    manifest.addTool(TOOL.cursor, "1.0.0", []);
     manifest.addPlugin(
-      "cursor",
+      TOOL.cursor,
       InstalledPlugin.fromJSON({
         name: "aidd-test",
         source: { kind: "local", path: "/some/path" },
@@ -175,7 +175,7 @@ describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over t
       tools: catalogOf(),
       manifest,
       projectRoot: "/proj",
-      toolIds: ["cursor"],
+      toolIds: [TOOL.cursor],
     });
 
     expect(drifts).toHaveLength(1);

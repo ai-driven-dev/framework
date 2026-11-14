@@ -16,7 +16,7 @@ import {
 } from "../../../../helpers/ports/build-unit-deps.js";
 import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 function toolsWithCursor(cursorProfile: BuiltToolConfig) {
   return catalogOf(
@@ -49,7 +49,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     const result = await buildUseCase(deps, assets).execute({
       tools: catalogOf(),
-      toolId: "claude",
+      toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -67,7 +67,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     expect(result.fileCount).toBe(1);
     expect(result.skipped).toBe(false);
     expect(result.warnings).toStrictEqual([]);
-    expect(manifest.getToolFiles("claude")).toStrictEqual([
+    expect(manifest.getToolFiles(TOOL.claude)).toStrictEqual([
       { relativePath: ".claude/settings.json", hash: deps.hasher.hash(content) },
     ]);
   });
@@ -79,7 +79,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     const result = await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "claude",
+      toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -91,7 +91,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     expect(deps.fs.has(join(PROJECT_ROOT, ".claude/settings.json"))).toBe(true);
 
     const saved = await deps.manifestRepo.load();
-    expect(saved?.hasTool("claude")).toBe(true);
+    expect(saved?.hasTool(TOOL.claude)).toBe(true);
   });
 
   it("returns skipped without writing when already installed and no force", async () => {
@@ -101,7 +101,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "claude",
+      toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -111,7 +111,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "claude",
+      toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
       force: false,
@@ -119,7 +119,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     });
 
     expect(result).toStrictEqual({
-      toolId: "claude",
+      toolId: TOOL.claude,
       fileCount: 0,
       files: [],
       skipped: true,
@@ -130,14 +130,14 @@ describe("InstallRuntimeConfigUseCase", () => {
   it("tracks a file the caller chose to skip under the hash it has on disk", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, "claude");
+    await installTool(deps, PROJECT_ROOT, TOOL.claude);
     const userContent = '{"user": true}';
     await deps.fs.writeFile(join(PROJECT_ROOT, ".claude/settings.json"), userContent);
 
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "claude",
+      toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: true,
@@ -146,7 +146,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     });
 
     expect(deps.fs.getFile(join(PROJECT_ROOT, ".claude/settings.json"))).toBe(userContent);
-    expect(manifest.getToolFiles("claude")).toStrictEqual([
+    expect(manifest.getToolFiles(TOOL.claude)).toStrictEqual([
       { relativePath: ".claude/settings.json", hash: deps.hasher.hash(userContent) },
     ]);
   });
@@ -158,7 +158,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "claude",
+      toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -171,7 +171,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "claude",
+      toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
       force: true,
@@ -193,7 +193,7 @@ describe("InstallRuntimeConfigUseCase", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "claude",
+      toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -213,7 +213,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "kilo",
+      toolId: TOOL.kilo,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -232,7 +232,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
     await buildUseCase(deps).execute({
       tools: catalogOf(),
-      toolId: "kilo",
+      toolId: TOOL.kilo,
       projectRoot: PROJECT_ROOT,
       manifest,
       force: false,
@@ -245,8 +245,8 @@ describe("InstallRuntimeConfigUseCase", () => {
   });
 
   it.each([
-    ["opencode", "opencode.json"],
-    ["kilo", ".kilo/kilo.jsonc"],
+    [TOOL.opencode, "opencode.json"],
+    [TOOL.kilo, ".kilo/kilo.jsonc"],
   ] as const)("preserves %s MCP entries when updating its runtime config", async (toolId, path) => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
@@ -295,7 +295,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
       await buildUseCase(deps).execute({
         tools: catalogOf(),
-        toolId: "copilot",
+        toolId: TOOL.copilot,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -308,13 +308,13 @@ describe("InstallRuntimeConfigUseCase", () => {
     it("creates .vscode/settings.json with copilot keys when vscode is already installed", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
         tools: catalogOf(),
-        toolId: "copilot",
+        toolId: TOOL.copilot,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -331,12 +331,12 @@ describe("InstallRuntimeConfigUseCase", () => {
     it("records the merged settings file with a hash per top-level key", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
         tools: catalogOf(),
-        toolId: "copilot",
+        toolId: TOOL.copilot,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -344,7 +344,7 @@ describe("InstallRuntimeConfigUseCase", () => {
       });
 
       const onDisk = deps.fs.getFile(join(PROJECT_ROOT, ".vscode/settings.json")) ?? "";
-      expect(manifest.getMergeFiles("copilot")).toStrictEqual([
+      expect(manifest.getMergeFiles(TOOL.copilot)).toStrictEqual([
         {
           relativePath: ".vscode/settings.json",
           sectionKey: null,
@@ -390,7 +390,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
       const result = await buildUseCase(deps).execute({
         tools: toolsWithCursor(cursorProfile),
-        toolId: "cursor",
+        toolId: TOOL.cursor,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -405,7 +405,7 @@ describe("InstallRuntimeConfigUseCase", () => {
         ".cursor/aidd-static.json",
       ]);
       expect(result.warnings).toStrictEqual([]);
-      expect(manifest.getMergeFiles("cursor")).toStrictEqual([
+      expect(manifest.getMergeFiles(TOOL.cursor)).toStrictEqual([
         {
           relativePath: ".cursor/aidd-static.json",
           sectionKey: null,
@@ -422,7 +422,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
       const result = await buildUseCase(deps).execute({
         tools: toolsWithCursor(cursorProfile),
-        toolId: "cursor",
+        toolId: TOOL.cursor,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -450,7 +450,7 @@ describe("InstallRuntimeConfigUseCase", () => {
 
       await buildUseCase(deps, assets).execute({
         tools: toolsWithCursor(cursorProfile),
-        toolId: "cursor",
+        toolId: TOOL.cursor,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,

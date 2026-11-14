@@ -9,17 +9,18 @@ import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/pl
 import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf, registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
 
-function sourceFor(toolId: "codex" | "copilot", catalogue: string): NativeMarketplaceSource {
+function sourceFor(toolId: AiToolId, catalogue: string): NativeMarketplaceSource {
   return toolId === "codex"
     ? {
         kind: "effective-list",
@@ -30,7 +31,7 @@ function sourceFor(toolId: "codex" | "copilot", catalogue: string): NativeMarket
     : { kind: "registry", source: `https://github.com/ai-driven-dev/${catalogue}.git` };
 }
 
-for (const toolId of ["codex", "copilot"] as const) {
+for (const toolId of [TOOL.codex, TOOL.copilot]) {
   describe(`${toolId} targeted user plugin removal`, () => {
     function fixture(
       options: {
@@ -311,9 +312,9 @@ for (const toolId of ["codex", "copilot"] as const) {
 describe("Cursor user plugin boundary", () => {
   it("removes exactly an AIDD-owned file and its canonical user record", async () => {
     const machine = Manifest.create();
-    machine.addTool("cursor", "1.0.0", []);
+    machine.addTool(TOOL.cursor, "1.0.0", []);
     machine.addPlugin(
-      "cursor",
+      TOOL.cursor,
       InstalledPlugin.fromJSON({
         name: "sample-plugin",
         source: { kind: "local", path: "/fixture" },
@@ -345,31 +346,31 @@ describe("Cursor user plugin boundary", () => {
       remove.execute({
         tools: catalogOf(),
         pluginName: "sample-plugin",
-        toolIds: ["cursor"],
+        toolIds: [TOOL.cursor],
         projectRoot: "/A",
         scope: "user",
       })
     ).rejects.toThrow(/edited.*plugin.json|plugin.json.*edited/);
     expect(fs.getFile(path)).toBe("user-edited plugin.json");
-    expect(repo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
+    expect(repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
     fs.setFile(path, "owned bytes");
     await remove.execute({
       tools: catalogOf(),
       pluginName: "sample-plugin",
-      toolIds: ["cursor"],
+      toolIds: [TOOL.cursor],
       projectRoot: "/A",
       scope: "user",
     });
     expect(fs.getFile(path)).toBeUndefined();
-    expect(repo.getCurrent()?.getPlugins("cursor")).toEqual([]);
+    expect(repo.getCurrent()?.getPlugins(TOOL.cursor)).toEqual([]);
   });
 
   it("keeps its canonical record and foreign bytes if a tracked file resolves outside the plugin directory", async () => {
     const relativePath = "sample-plugin/skills/demo/SKILL.md";
     const machine = Manifest.create();
-    machine.addTool("cursor", "1.0.0", []);
+    machine.addTool(TOOL.cursor, "1.0.0", []);
     machine.addPlugin(
-      "cursor",
+      TOOL.cursor,
       InstalledPlugin.fromJSON({
         name: "sample-plugin",
         source: { kind: "local", path: "/fixture" },
@@ -386,7 +387,7 @@ describe("Cursor user plugin boundary", () => {
     const foreignPath = "/foreign/sample-plugin";
     fs.setFile(join(foreignPath, "skills/demo/SKILL.md"), "foreign bytes");
     fs.setSymlink(pluginDir, foreignPath);
-    const owned = machine.getPlugins("cursor")[0];
+    const owned = machine.getPlugins(TOOL.cursor)[0];
     expect(owned.files.size).toBe(1);
     expect(
       (
@@ -394,7 +395,7 @@ describe("Cursor user plugin boundary", () => {
           fs,
           new CapturingLogger(),
           owned,
-          registeredAiProfile("cursor"),
+          registeredAiProfile(TOOL.cursor),
           resolveHomeDir()
         )
       ).size
@@ -413,12 +414,12 @@ describe("Cursor user plugin boundary", () => {
       remove.execute({
         tools: catalogOf(),
         pluginName: "sample-plugin",
-        toolIds: ["cursor"],
+        toolIds: [TOOL.cursor],
         projectRoot: "/A",
         scope: "user",
       })
     ).rejects.toThrow(/tracked file escaped its boundary/);
     expect(fs.getFile(join(foreignPath, "skills/demo/SKILL.md"))).toBe("foreign bytes");
-    expect(repo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
+    expect(repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
   });
 });

@@ -40,15 +40,19 @@ export class RegisteredToolCatalog implements ToolCatalog {
     return profile?.kind === "ai" ? profile.toolId : null;
   }
 
-  isAiTool(id: ToolId): id is AiToolId {
-    return this.#byId.get(id)?.kind === "ai";
+  isAiTool(id: ToolId): id is AiToolId;
+  isAiTool(raw: string): boolean;
+  isAiTool(raw: string): boolean {
+    return this.#byId.get(raw)?.kind === "ai";
   }
 
-  isIdeTool(id: ToolId): id is IdeToolId {
-    return this.#byId.get(id)?.kind === "ide";
+  isIdeTool(id: ToolId): id is IdeToolId;
+  isIdeTool(raw: string): boolean;
+  isIdeTool(raw: string): boolean {
+    return this.#byId.get(raw)?.kind === "ide";
   }
 
-  profile(id: ToolId): ToolProfile {
+  profile(id: string): ToolProfile {
     const profile = this.#byId.get(id);
     if (profile === undefined) throw new UnregisteredToolError(id);
     return profile;

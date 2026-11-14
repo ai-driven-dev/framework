@@ -1,5 +1,5 @@
 import { dirname, join, normalize } from "node:path";
-import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import {
@@ -33,7 +33,7 @@ export class DoctorReferencesUseCase {
     const result = [...trackedFiles];
     for (const toolId of manifest.getInstalledToolIds()) {
       if (allowedIds && !allowedIds.has(toolId)) continue;
-      for (const plugin of manifest.getPlugins(toolId as AiToolId)) {
+      for (const plugin of manifest.getPlugins(toolId)) {
         for (const relativePath of plugin.files.keys()) {
           result.push({ relativePath, toolId });
         }

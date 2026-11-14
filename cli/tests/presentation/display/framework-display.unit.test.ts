@@ -6,13 +6,14 @@ import {
   printToolRemoved,
   printUpdateResult,
 } from "../../../src/presentation/display/framework-display.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 describe("printToolAlreadyInstalled", () => {
   it("warns that the tool is there and names the flag that reinstalls it", () => {
     const output = new CapturingOutput(false);
 
-    printToolAlreadyInstalled(output, "claude");
+    printToolAlreadyInstalled(output, TOOL.claude);
 
     expect(output.at("warn")).toEqual(["claude is already installed. Use `--force` to reinstall."]);
   });
@@ -22,7 +23,7 @@ describe("printToolInstalled", () => {
   it("announces the tool and its file count when nothing warned", () => {
     const output = new CapturingOutput(false);
 
-    printToolInstalled(output, "cursor", 12, []);
+    printToolInstalled(output, TOOL.cursor, 12, []);
 
     expect(output.at("success")).toEqual(["Installed cursor (12 files)"]);
   });
@@ -30,7 +31,7 @@ describe("printToolInstalled", () => {
   it("puts every warning before the success line, in the order given", () => {
     const output = new CapturingOutput(false);
 
-    printToolInstalled(output, "codex", 3, ["first", "second"]);
+    printToolInstalled(output, TOOL.codex, 3, ["first", "second"]);
 
     expect(output.captured).toEqual([
       { level: "warn", message: "first" },
@@ -44,7 +45,7 @@ describe("printToolRemoved", () => {
   it("announces the tool and how many files went with it", () => {
     const output = new CapturingOutput(false);
 
-    printToolRemoved(output, "claude", 7);
+    printToolRemoved(output, TOOL.claude, 7);
 
     expect(output.at("success")).toEqual(["Removed claude (7 files removed)"]);
   });
@@ -65,8 +66,8 @@ describe("printUpdateResult", () => {
     printUpdateResult(
       output,
       [
-        { toolId: "claude", fileCount: 4 },
-        { toolId: "cursor", fileCount: 1 },
+        { toolId: TOOL.claude, fileCount: 4 },
+        { toolId: TOOL.cursor, fileCount: 1 },
       ],
       [{ scope: "codex", message: "binary missing" }]
     );
@@ -81,7 +82,7 @@ describe("printUpdateResult", () => {
   it("stays silent about missing tools once an update alone came back", () => {
     const output = new CapturingOutput(false);
 
-    printUpdateResult(output, [{ toolId: "claude", fileCount: 2 }], []);
+    printUpdateResult(output, [{ toolId: TOOL.claude, fileCount: 2 }], []);
 
     expect(output.captured).toEqual([{ level: "success", message: "Updated claude (2 files)" }]);
   });

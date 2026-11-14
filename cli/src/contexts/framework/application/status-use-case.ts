@@ -39,7 +39,7 @@ export interface StatusReport {
 
 export interface StatusOptions {
   projectRoot: string;
-  filterToolId?: ToolId;
+  filterToolId?: string;
   category?: ToolCategory;
   pluginName?: string;
   tools: ToolCatalog;
@@ -82,12 +82,12 @@ export class StatusUseCase implements StatusQuery {
   }
 
   private resolveToolIds(
-    filterToolId: ToolId | undefined,
+    filterToolId: string | undefined,
     category: ToolCategory | undefined,
     manifest: Manifest,
     profiles: ToolCatalog
   ): ToolId[] {
-    if (filterToolId) return [filterToolId];
+    if (filterToolId) return manifest.getInstalledToolIds().filter((id) => id === filterToolId);
     if (category) {
       const allowed: readonly string[] = profiles.idsInCanonicalOrder(category);
       return manifest.getInstalledToolIds().filter((id) => allowed.includes(id));

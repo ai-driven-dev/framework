@@ -4,6 +4,7 @@ import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencod
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
@@ -15,7 +16,7 @@ const HOOKS_CONTENT = JSON.stringify({
 function buildDistWithNoHooksMcp(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [
       { relativePath: "commands/greet.md", content: "---\nname: aidd:01:greet\n---\n# Greet" },
     ],
@@ -35,7 +36,7 @@ function buildDistWithNoHooksMcp(name = "test-plugin"): PluginDistribution {
 function buildDistWithHooks(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [
       { relativePath: "hooks/hooks.json", content: HOOKS_CONTENT },
       { relativePath: "hooks/pre.js", content: "module.exports = () => {};" },

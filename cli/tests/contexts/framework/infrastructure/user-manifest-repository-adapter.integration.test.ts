@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import { UserManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { atomicWriteFile } from "../../../../src/shared/infrastructure/atomic-write.js";
-import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
+import { resolveRegisteredToolId, TOOL } from "../../tools/testing/catalog-of.js";
 
 describe("UserManifestRepositoryAdapter", () => {
   let userConfigDir: string;
@@ -109,7 +109,7 @@ describe("UserManifestRepositoryAdapter", () => {
       });
       const firstMutation = adapter.withExclusiveAccess(async () => {
         const manifest = (await adapter.load()) ?? Manifest.create();
-        manifest.addTool("cursor", "1.0.0", []);
+        manifest.addTool(TOOL.cursor, "1.0.0", []);
         await adapter.save(manifest);
         ready();
         await held;
@@ -122,7 +122,7 @@ describe("UserManifestRepositoryAdapter", () => {
         secondMutation = second.withExclusiveAccess(async () => {
           secondEntered = true;
           const manifest = (await second.load()) ?? Manifest.create();
-          manifest.addTool("codex", "1.0.0", []);
+          manifest.addTool(TOOL.codex, "1.0.0", []);
           await second.save(manifest);
         });
         await pause(150);
@@ -137,7 +137,7 @@ describe("UserManifestRepositoryAdapter", () => {
 
     it("keeps the old JSON and releases the lock when the atomic writer fails", async () => {
       const baseline = Manifest.create();
-      baseline.addTool("cursor", "1.0.0", []);
+      baseline.addTool(TOOL.cursor, "1.0.0", []);
       await adapter.save(baseline);
       const failing = new UserManifestRepositoryAdapter(
         () => userConfigDir,
@@ -147,7 +147,7 @@ describe("UserManifestRepositoryAdapter", () => {
         resolveRegisteredToolId
       );
       const replacement = Manifest.create();
-      replacement.addTool("codex", "1.0.0", []);
+      replacement.addTool(TOOL.codex, "1.0.0", []);
       await expect(failing.withExclusiveAccess(() => failing.save(replacement))).rejects.toThrow(
         "write failed before rename"
       );

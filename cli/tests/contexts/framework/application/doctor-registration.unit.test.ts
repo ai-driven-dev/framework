@@ -12,7 +12,7 @@ import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapt
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
 const LOCAL_SETTINGS = `${PROJECT_ROOT}/.claude/settings.local.json`;
@@ -36,7 +36,7 @@ async function issuesFor(
     machine?: boolean;
   } = {}
 ) {
-  const { toolId = "claude", toolInstalled = true, allowedIds = null, machine } = options;
+  const { toolId = TOOL.claude, toolInstalled = true, allowedIds = null, machine } = options;
   const fs = new InMemoryFileAdapter();
   if (settings !== null) await fs.writeFile(LOCAL_SETTINGS, settings);
   const registry = new InMemoryMarketplaceRegistry();
@@ -52,7 +52,7 @@ async function issuesFor(
   const manifest = Manifest.create();
   manifest.addTool(toolId, "test", []);
   const activators = new Map([
-    ["claude", new FakeHostActions({ available: toolInstalled, enablesPlugins: false })],
+    [TOOL.claude, new FakeHostActions({ available: toolInstalled, enablesPlugins: false })],
   ]);
   return new DoctorRegistrationUseCase(
     fs,
@@ -108,17 +108,17 @@ describe("DoctorRegistrationUseCase", () => {
   });
 
   it("stays silent for a tool that keeps its registrations in a tracked file", async () => {
-    expect(await issuesFor(null, { toolId: "cursor" })).toStrictEqual([]);
+    expect(await issuesFor(null, { toolId: TOOL.cursor })).toStrictEqual([]);
   });
 
   // Copilot declares no place at all rather than a path, and a guard rejecting only `undefined`
   // lets `null` reach `join(root, null)`, which throws and takes `plugin doctor` down.
   it("stays silent, and does not throw, for a tool that declares no place at all", async () => {
-    await expect(issuesFor(null, { toolId: "copilot" })).resolves.toStrictEqual([]);
+    await expect(issuesFor(null, { toolId: TOOL.copilot })).resolves.toStrictEqual([]);
   });
 
   it("stays silent, and does not throw, for an IDE tool", async () => {
-    await expect(issuesFor(null, { toolId: "vscode" })).resolves.toStrictEqual([]);
+    await expect(issuesFor(null, { toolId: TOOL.vscode })).resolves.toStrictEqual([]);
   });
 
   describe("narrowed to a set of tools", () => {
@@ -144,12 +144,12 @@ function manifestWithNativeRegistrations(
   ]
 ): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
-  manifest.setNativeRegistrations("claude", { binary: "claude", marketplaces, pluginRefs });
+  manifest.addTool(TOOL.claude, "test", []);
+  manifest.setNativeRegistrations(TOOL.claude, { binary: "claude", marketplaces, pluginRefs });
   return manifest;
 }
 
-function manifestWithPlugin(marketplace?: string, toolId: AiToolId = "claude"): Manifest {
+function manifestWithPlugin(marketplace?: string, toolId: AiToolId = TOOL.claude): Manifest {
   const manifest = Manifest.create();
   manifest.addTool(toolId, "test", []);
   manifest.addPlugin(
@@ -173,11 +173,11 @@ async function nativeIssuesFor(
   const fs = new InMemoryFileAdapter();
   const registry = new InMemoryMarketplaceRegistry();
   const activators = new Map([
-    ["claude", new FakeHostActions({ available: true, enablesPlugins: true })],
+    [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: true })],
   ]);
   const hostRegistries = new Map<AiToolId, HostPluginRegistry>();
   if (reading !== "unreachable") {
-    hostRegistries.set("claude", new FakeHostPluginRegistry(reading));
+    hostRegistries.set(TOOL.claude, new FakeHostPluginRegistry(reading));
   }
   return new DoctorRegistrationUseCase(
     fs,
@@ -298,7 +298,7 @@ describe("DoctorRegistrationUseCase — native registrations against the host's 
   });
 
   it("says nothing for a tool whose plugins are enabled by a file this CLI writes", async () => {
-    const issues = await nativeIssuesFor(manifestWithPlugin("aidd-framework", "cursor"), {
+    const issues = await nativeIssuesFor(manifestWithPlugin("aidd-framework", TOOL.cursor), {
       location: REGISTRY_LOCATION,
       refs: new Map(),
     });

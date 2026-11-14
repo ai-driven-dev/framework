@@ -6,7 +6,6 @@
 // biome-ignore lint/correctness/noUnresolvedImports: a source text the bundler inlines, never run here
 import adapter from "../../../../../assets/hooks-runtime/host-bridge.cjs";
 import type { FlatHooksLoaderEntry } from "../../../../shared/domain/materialization/flat-paths.js";
-import type { AiToolId } from "../../../../shared/domain/tool.js";
 import {
   declareHooks,
   type HookEventRoute,
@@ -173,7 +172,7 @@ export function declareBridgeHooks<
     readonly bridgeRuntime?: HooksDescriptor["bridgeRuntime"];
   },
 >(
-  toolId: AiToolId,
+  toolId: string,
   directory: string,
   [sessionStart, postToolUse, stop]: BridgeNativeEvents,
   { loaderEntry, ...rest }: L

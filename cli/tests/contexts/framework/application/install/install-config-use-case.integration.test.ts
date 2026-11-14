@@ -10,6 +10,7 @@ import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domai
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 import { linuxPlatform, win32Platform } from "../helpers.js";
 
 const PROJECT_ROOT = "/test-project";
@@ -84,7 +85,7 @@ describe("InstallConfigUseCase — staticContent", () => {
       projectRoot: PROJECT_ROOT,
       platform: linuxPlatform,
       assetProvider,
-      toolId: "copilot",
+      toolId: TOOL.copilot,
     });
 
     const settingsFile = results.find((f) => f.relativePath === ".vscode/settings.json");
@@ -132,7 +133,7 @@ describe("InstallConfigUseCase — staticContent", () => {
       projectRoot: PROJECT_ROOT,
       platform: linuxPlatform,
       assetProvider: new BundledAssetProviderAdapter(wireTools()),
-      toolId: "copilot",
+      toolId: TOOL.copilot,
     });
 
     expect(results).toStrictEqual([]);
@@ -154,7 +155,7 @@ describe("InstallConfigUseCase — staticContent", () => {
         contentFiles: new Map(),
         projectRoot: PROJECT_ROOT,
         platform: linuxPlatform,
-        toolId: "copilot",
+        toolId: TOOL.copilot,
       });
 
       expect(results).toStrictEqual([]);
@@ -186,7 +187,7 @@ describe("InstallConfigUseCase — staticContent", () => {
         projectRoot: PROJECT_ROOT,
         platform: linuxPlatform,
         assetProvider: new StubAssetProvider({ "copilot/vscode-settings.json": text }),
-        toolId: "copilot",
+        toolId: TOOL.copilot,
       });
 
       expect(results.map((f) => f.content)).toStrictEqual([text]);

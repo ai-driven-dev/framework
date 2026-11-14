@@ -83,14 +83,14 @@ type AiToolFields = Omit<
 >;
 
 export interface AiToolSpec<C extends ProfileSections> extends AiToolFields {
-  readonly toolId: AiToolId;
+  readonly toolId: string;
   /** The config files the tool ships, each with its content imported where it is declared. */
   readonly configAssets?: readonly ShippedConfig[];
   readonly capabilities: (bound: BoundTool) => C;
 }
 
 export interface IdeToolSpec<C extends ProfileSections> {
-  readonly toolId: IdeToolId;
+  readonly toolId: string;
   readonly configAssets?: readonly ShippedConfig[];
   readonly directory: string;
   readonly signalDir: string | null;
@@ -280,7 +280,7 @@ export function defineAiTool<C extends ProfileSections>(
   const profile = {
     ...fields,
     kind: "ai",
-    toolId,
+    toolId: toolId as AiToolId,
     section: sectionReader(capabilities),
     frameworkBuildMode: (): FrameworkBuildMode =>
       capabilities.layout?.mode === "flat" ? "flat" : "marketplace",
@@ -340,7 +340,7 @@ export function defineIdeTool<C extends ProfileSections>(
   const profile = {
     ...fields,
     kind: "ide",
-    toolId,
+    toolId: toolId as IdeToolId,
     section: sectionReader(capabilities),
     configWrites: () => settingsWrites(capabilities),
     settingsFiles: () => settingsOf(capabilities),

@@ -5,7 +5,7 @@ import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { registeredConfig } from "../../../../tools/testing/catalog-of.js";
+import { registeredConfig, TOOL } from "../../../../tools/testing/catalog-of.js";
 
 function deps(): TranslatorDeps {
   return {
@@ -19,6 +19,6 @@ function deps(): TranslatorDeps {
 
 describe("resolvePluginTranslator", () => {
   it("answers nothing for a tool that is not an AI tool", () => {
-    expect(resolvePluginTranslator(registeredConfig("vscode"), deps())).toBeNull();
+    expect(resolvePluginTranslator(registeredConfig(TOOL.vscode), deps())).toBeNull();
   });
 });

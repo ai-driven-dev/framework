@@ -61,5 +61,29 @@ export function registeredFlatContract(id: ToolId): ToolBuildContract | null {
 /** What the code under test asks to turn a written id into a registered one. */
 export const resolveRegisteredToolId: ToolIdResolver = (raw) => catalogOf().toolId(raw);
 
-/** The ids a setup is told are registered, in the order a refusal names them. */
-export const registeredToolIds = (): readonly string[] => catalogOf().idsInCanonicalOrder();
+export const flowTools = () => ({
+  registeredToolIds: catalogOf().idsInCanonicalOrder(),
+  aiToolIds: catalogOf().idsInCanonicalOrder("ai"),
+  ideToolIds: catalogOf().idsInCanonicalOrder("ide"),
+});
+
+function named<T extends ToolId>(ids: readonly T[], name: string): T {
+  const found = ids.find((id) => id === name);
+  if (found === undefined) throw new UnregisteredToolError(name);
+  return found;
+}
+
+const ai = (name: string) => named(catalogOf().idsInCanonicalOrder("ai"), name);
+const ide = (name: string) => named(catalogOf().idsInCanonicalOrder("ide"), name);
+
+/** The registered ids, minted by the catalog: a test never writes a tool id as a string. */
+export const TOOL = {
+  claude: ai("claude"),
+  cursor: ai("cursor"),
+  copilot: ai("copilot"),
+  opencode: ai("opencode"),
+  kilo: ai("kilo"),
+  codex: ai("codex"),
+  antigravity: ai("antigravity"),
+  vscode: ide("vscode"),
+} as const;

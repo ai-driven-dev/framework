@@ -9,7 +9,7 @@ import type { PluginInstallMode } from "../../../../../src/contexts/framework/do
 import type { AiToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const FRAMEWORK = Marketplace.create({
   name: "aidd-framework",
@@ -37,8 +37,8 @@ const HASH = "0".repeat(32);
 
 function setup(marketplaces: Marketplace[] = [FRAMEWORK]) {
   const manifest = Manifest.create();
-  manifest.addTool("opencode", "1.0.0", []);
-  manifest.addTool("claude", "1.0.0", []);
+  manifest.addTool(TOOL.opencode, "1.0.0", []);
+  manifest.addTool(TOOL.claude, "1.0.0", []);
   const planUpdate = vi.fn(
     async (plugin: InstalledPlugin, tool: AiToolProfile): Promise<PlannedUserPluginFileUpdate> => {
       const relativePath = `agents/${plugin.name}-reviewer.md`;
@@ -80,7 +80,7 @@ function run(
     {
       tools: catalogOf(),
       projectRoot: "/project",
-      toolIds: ["claude", "opencode"],
+      toolIds: [TOOL.claude, TOOL.opencode],
       mode,
       pluginNames,
     },
@@ -96,37 +96,37 @@ describe("InstallGlobalPluginsUseCase", () => {
 
     expect(result.plugins).toEqual(["aidd-dev", "aidd-pm"]);
     expect(
-      manifest.getPlugins("opencode").map((p) => [p.name, p.scope, [...p.files.keys()]])
+      manifest.getPlugins(TOOL.opencode).map((p) => [p.name, p.scope, [...p.files.keys()]])
     ).toEqual([
       ["aidd-dev", "user", ["agents/aidd-dev-reviewer.md"]],
       ["aidd-pm", "user", ["agents/aidd-pm-reviewer.md"]],
     ]);
-    expect(manifest.getPlugins("claude")).toEqual([]);
+    expect(manifest.getPlugins(TOOL.claude)).toEqual([]);
     expect(planUpdate).toHaveBeenCalledTimes(2);
   });
 
   it("also writes the plugins of a tool installing into a user plugins directory", async () => {
     const { manifest, useCase, planUpdate } = setup();
-    manifest.addTool("cursor", "1.0.0", []);
+    manifest.addTool(TOOL.cursor, "1.0.0", []);
 
     await useCase.execute(
       manifest,
       {
         tools: catalogOf(),
         projectRoot: "/project",
-        toolIds: ["cursor"],
+        toolIds: [TOOL.cursor],
         mode: "recommended",
         pluginNames: [],
       },
       async () => {}
     );
 
-    expect(manifest.getPlugins("cursor").map((p) => [p.name, p.scope])).toEqual([
+    expect(manifest.getPlugins(TOOL.cursor).map((p) => [p.name, p.scope])).toEqual([
       ["aidd-dev", "user"],
     ]);
     expect(planUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ name: "aidd-dev" }),
-      expect.objectContaining({ toolId: "cursor" }),
+      expect.objectContaining({ toolId: TOOL.cursor }),
       "/project",
       expect.anything(),
       true
@@ -136,7 +136,7 @@ describe("InstallGlobalPluginsUseCase", () => {
   it("takes the source this run resolved for a plugin it already owns, and keeps its files", async () => {
     const { manifest, useCase, planUpdate } = setup();
     manifest.addPlugin(
-      "opencode",
+      TOOL.opencode,
       InstalledPlugin.fromMetadata(
         "aidd-dev",
         "1.0.0",
@@ -152,7 +152,7 @@ describe("InstallGlobalPluginsUseCase", () => {
       {
         tools: catalogOf(),
         projectRoot: "/project",
-        toolIds: ["opencode"],
+        toolIds: [TOOL.opencode],
         mode: "recommended",
         pluginNames: [],
       },
@@ -188,12 +188,12 @@ describe("InstallGlobalPluginsUseCase", () => {
         {
           tools: catalogOf(),
           projectRoot: "/project",
-          toolIds: ["opencode"],
+          toolIds: [TOOL.opencode],
           mode: "all",
           pluginNames: [],
         },
         async (saved) => {
-          recorded.push(saved.getPlugins("opencode").map((plugin) => plugin.name));
+          recorded.push(saved.getPlugins(TOOL.opencode).map((plugin) => plugin.name));
         }
       )
     ).rejects.toThrow("disk full");

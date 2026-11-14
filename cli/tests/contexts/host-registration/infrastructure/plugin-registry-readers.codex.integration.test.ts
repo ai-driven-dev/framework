@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 import { PROJECT, registryHome } from "../testing/registry-home.js";
 
 const { write, readerFor } = registryHome();
@@ -25,7 +26,7 @@ describe("Codex's own config.toml", () => {
       ].join("\n")
     );
 
-    const reading = await readerFor("codex").read(PROJECT);
+    const reading = await readerFor(TOOL.codex).read(PROJECT);
 
     expect(reading.refs?.get("aidd-telemetry@aidd-framework")).toEqual({ enabled: true });
     expect(reading.refs?.get("aidd-dev@aidd-framework")).toEqual({ enabled: false });
@@ -41,7 +42,7 @@ describe("Codex's own config.toml", () => {
     );
 
     expect(
-      (await readerFor("codex").read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
+      (await readerFor(TOOL.codex).read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
     ).toEqual({ enabled: true });
   });
 
@@ -54,7 +55,7 @@ describe("Codex's own config.toml", () => {
     await write(PATH, `[plugins."aidd-telemetry@aidd-framework"]\n${body}`);
 
     expect(
-      (await readerFor("codex").read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
+      (await readerFor(TOOL.codex).read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
     ).toEqual({ enabled: false });
   });
 
@@ -65,7 +66,7 @@ describe("Codex's own config.toml", () => {
     );
 
     expect(
-      (await readerFor("codex").read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
+      (await readerFor(TOOL.codex).read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
     ).toEqual({ enabled: true });
   });
 
@@ -86,7 +87,7 @@ describe("Codex's own config.toml", () => {
     await write(PATH, content);
 
     expect(
-      (await readerFor("codex").read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
+      (await readerFor(TOOL.codex).read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
     ).toEqual({ enabled: false });
   });
 
@@ -97,21 +98,21 @@ describe("Codex's own config.toml", () => {
     );
 
     expect(
-      (await readerFor("codex").read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
+      (await readerFor(TOOL.codex).read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
     ).toEqual({ enabled: false });
   });
 
   it("does not read the next table's enabled as this table's", async () => {
     await write(PATH, '[plugins."a@m"]\n[plugins."b@m"]\nenabled = false\n');
 
-    const refs = (await readerFor("codex").read(PROJECT)).refs;
+    const refs = (await readerFor(TOOL.codex).read(PROJECT)).refs;
 
     expect(refs?.get("a@m")).toEqual({ enabled: true });
     expect(refs?.get("b@m")).toEqual({ enabled: false });
   });
 
   it("distinguishes an absent config from an unreadable one", async () => {
-    const reading = await readerFor("codex").read(PROJECT);
+    const reading = await readerFor(TOOL.codex).read(PROJECT);
 
     expect(reading.refs).toBeUndefined();
     expect(reading.absent).toBe(true);
@@ -125,7 +126,7 @@ describe("Codex's config.toml, at the edges of its shape", () => {
   it("reads a plugin table whose header is indented", async () => {
     await write(PATH, '  [plugins."a@m"]\n  enabled = false\n');
 
-    const reading = await readerFor("codex").read(PROJECT);
+    const reading = await readerFor(TOOL.codex).read(PROJECT);
 
     expect(reading.refs?.get("a@m")).toStrictEqual({ enabled: false });
   });
@@ -133,7 +134,7 @@ describe("Codex's config.toml, at the edges of its shape", () => {
   it("reads no table off a line that only contains a header, or carries text after one", async () => {
     await write(PATH, 'x[plugins."a@m"]\n[plugins."b@m"] junk\n');
 
-    const reading = await readerFor("codex").read(PROJECT);
+    const reading = await readerFor(TOOL.codex).read(PROJECT);
 
     expect(reading.refs?.size).toBe(0);
   });
@@ -144,7 +145,7 @@ describe("Codex's config.toml, at the edges of its shape", () => {
       '[plugins."a@m"]\nenabled=false\n[plugins."b@m"]\nenabled  =  false\n[plugins."c@m"]\nenabled =false # off\n'
     );
 
-    const reading = await readerFor("codex").read(PROJECT);
+    const reading = await readerFor(TOOL.codex).read(PROJECT);
 
     expect([...(reading.refs ?? [])]).toStrictEqual([
       ["a@m", { enabled: false }],
@@ -156,7 +157,7 @@ describe("Codex's config.toml, at the edges of its shape", () => {
   it("reads a value that is not a bare boolean as no answer, so the default stands", async () => {
     await write(PATH, '[plugins."a@m"]\nenabled = falsey\n');
 
-    const reading = await readerFor("codex").read(PROJECT);
+    const reading = await readerFor(TOOL.codex).read(PROJECT);
 
     expect(reading.refs?.get("a@m")).toStrictEqual({ enabled: true });
   });
@@ -164,7 +165,7 @@ describe("Codex's config.toml, at the edges of its shape", () => {
   it("does not mistake a bracket inside a value for the next table", async () => {
     await write(PATH, '[plugins."a@m"]\nargs = ["x"]\nenabled = false\n');
 
-    const reading = await readerFor("codex").read(PROJECT);
+    const reading = await readerFor(TOOL.codex).read(PROJECT);
 
     expect(reading.refs?.get("a@m")).toStrictEqual({ enabled: false });
   });
@@ -175,7 +176,7 @@ describe("Codex's config.toml, at the edges of its shape", () => {
       '[plugins."a@m"]\nnote = """\n[plugins."fake@m"]\nenabled = true\n"""\nenabled = false\n'
     );
 
-    const reading = await readerFor("codex").read(PROJECT);
+    const reading = await readerFor(TOOL.codex).read(PROJECT);
 
     expect([...(reading.refs ?? [])]).toStrictEqual([["a@m", { enabled: false }]]);
   });
@@ -183,7 +184,7 @@ describe("Codex's config.toml, at the edges of its shape", () => {
   it("treats the last table in the file as enabled when it declares nothing", async () => {
     await write(PATH, '[projects."/x"]\ntrust = "trusted"\n[plugins."a@m"]\n');
 
-    const reading = await readerFor("codex").read(PROJECT);
+    const reading = await readerFor(TOOL.codex).read(PROJECT);
 
     expect(reading.refs?.get("a@m")).toStrictEqual({ enabled: true });
   });
@@ -193,7 +194,7 @@ describe("Codex's config.toml, keys that merely end in enabled", () => {
   it("does not read another key ending in enabled as the plugin's own flag", async () => {
     await write(".codex/config.toml", '[plugins."a@m"]\nauto_enabled = false\n');
 
-    const reading = await readerFor("codex").read(PROJECT);
+    const reading = await readerFor(TOOL.codex).read(PROJECT);
 
     expect(reading.refs?.get("a@m")).toStrictEqual({ enabled: true });
   });

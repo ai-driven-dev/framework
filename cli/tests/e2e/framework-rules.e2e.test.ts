@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { TOOL } from "../contexts/tools/testing/catalog-of.js";
 import { cliPath, execFileAsync } from "./helpers.js";
 
 /**
@@ -36,13 +37,13 @@ describe("aidd framework rules — the inventory a rule scan reads", () => {
 
     expect(JSON.parse(stdout)).toEqual([
       {
-        tool: "claude",
+        tool: TOOL.claude,
         path: ".claude/rules/01-standards/1-naming.md",
         name: "1-naming",
         description: "Names files",
         paths: ["src/**/*.ts"],
       },
-      { tool: "codex", path: ".codex/rules/2-imports.md", name: "2-imports", description: "" },
+      { tool: TOOL.codex, path: ".codex/rules/2-imports.md", name: "2-imports", description: "" },
     ]);
   });
 });

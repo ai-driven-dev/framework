@@ -11,7 +11,7 @@ import { PluginContentTranslator } from "../../../../src/contexts/translate/doma
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
-import { catalogOf, registeredAiConfig } from "../../tools/testing/catalog-of.js";
+import { catalogOf, registeredAiConfig, TOOL } from "../../tools/testing/catalog-of.js";
 
 /**
  * Prose — a skill, an agent, a rule — is translated: frontmatter converted, paths rewritten.
@@ -65,7 +65,7 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
     ];
     return new PluginDistribution({
       manifest: { name: "aidd-context", version: "0.1.0" },
-      format: "claude",
+      format: TOOL.claude,
       files: [...skills, ...hooks],
       components: { skills, commands: [], agents: [], rules: [], hooks, mcp: [] },
     });
@@ -109,7 +109,7 @@ describe("installing the plugin carries a skill's own script, on every tool", ()
     ];
     return new PluginDistribution({
       manifest: { name: "aidd-context", version: "0.1.0" },
-      format: "claude",
+      format: TOOL.claude,
       files: skills,
       components: { skills, commands: [], agents: [], rules: [], hooks: [], mcp: [] },
     });

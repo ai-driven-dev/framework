@@ -5,6 +5,7 @@ import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencod
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 import { nativeOf } from "../../tools/testing/plugin-mode.js";
 
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
@@ -18,7 +19,7 @@ function buildDist(hasHooks: boolean, name = "test-plugin"): PluginDistribution 
   const hooksFile = { relativePath: "hooks/hooks.json", content: HOOKS_CONTENT };
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: hasHooks ? [hooksFile] : [],
     components: {
       commands: [],
@@ -39,7 +40,7 @@ describe("PluginContentTranslator hook trust notice", () => {
     expect(result.notices[0]).toMatchObject({
       pluginName: "test-plugin",
       component: "hooks",
-      toolId: "codex",
+      toolId: TOOL.codex,
       message: nativeOf(codex.plugins()).trustNotice(),
     });
   });

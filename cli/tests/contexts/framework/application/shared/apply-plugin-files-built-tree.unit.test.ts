@@ -10,7 +10,7 @@ import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-u
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -83,7 +83,7 @@ async function installMarketplacePlugin(
   ).execute({
     tools: catalogOf(),
     source: GIT_SUBDIR_SOURCE,
-    toolIds: ["cursor"],
+    toolIds: [TOOL.cursor],
     projectRoot: PROJECT_ROOT,
     marketplace: "aidd-framework",
     interactive: false,
@@ -94,7 +94,7 @@ async function installMarketplacePlugin(
 describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
   it("does not re-materialize a shared user plugin during project restore", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);
 
@@ -102,7 +102,7 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
     if (manifestBefore === null) throw new Error("manifest not found");
     const installedRelPaths = [
       ...(manifestBefore
-        .getPlugins("cursor")
+        .getPlugins(TOOL.cursor)
         .find((p) => p.name === "sample-plugin")
         ?.files.keys() ?? []),
     ];
@@ -128,14 +128,14 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
       expect(deps.fs.getFile(join(PROJECT_ROOT, relativePath))).toBeUndefined();
     }
 
-    const plugins = manifest.getPlugins("cursor").filter((p) => p.name === "sample-plugin");
+    const plugins = manifest.getPlugins(TOOL.cursor).filter((p) => p.name === "sample-plugin");
     expect(plugins).toHaveLength(1);
     expect(plugins[0].files.size).toBe(0);
   });
 
   it("reports zero files restored when a built-tree restore finds nothing drifted", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);
 
@@ -144,7 +144,7 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
     const installedRelPaths = [
       ...(deps.userManifestRepo
         .getCurrent()
-        ?.getPlugins("cursor")
+        ?.getPlugins(TOOL.cursor)
         .find((p) => p.name === "sample-plugin")
         ?.files.keys() ?? []),
     ];
@@ -170,13 +170,13 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
 
   it("keeps the manifest's single entry for the plugin after restore (no duplicate registration)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "cursor");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const registry = await makeRegistry();
     await installMarketplacePlugin(deps, registry);
 
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
-    const before = manifest.getPlugins("cursor").filter((p) => p.name === "sample-plugin");
+    const before = manifest.getPlugins(TOOL.cursor).filter((p) => p.name === "sample-plugin");
     expect(before).toHaveLength(1);
 
     await makeRestoreUseCase(deps, registry).execute({
@@ -186,7 +186,7 @@ describe("RestoreAllPluginsUseCase — built-tree materialization", () => {
       fileFilter: null,
     });
 
-    const after = manifest.getPlugins("cursor").filter((p) => p.name === "sample-plugin");
+    const after = manifest.getPlugins(TOOL.cursor).filter((p) => p.name === "sample-plugin");
     expect(after).toHaveLength(1);
     expect(after[0].marketplace).toBe("aidd-framework");
   });

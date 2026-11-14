@@ -15,7 +15,6 @@ import {
   flatHooksPathWithLoaderEntry,
   genericFlatHooksFile,
 } from "../../../../shared/domain/materialization/flat-paths.js";
-import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ArtifactContract, FlatHooksBridge } from "../../contract/build-contract.js";
 import type { HookScript, ProjectHooksFormat } from "../../contract/tool-vocabulary.js";
 import {
@@ -165,7 +164,7 @@ export function pluginTreeHooksArtifact(descriptor: HooksRouting): ArtifactContr
  * are reported for. */
 export function flatHooksArtifact(
   descriptor: HooksRouting & { readonly flat: FlatHooksRoute },
-  reader: { readonly tool: AiToolId },
+  reader: { readonly tool: string },
   /** The tool's own merge, for a hooks file no `HooksFileFormat` describes. */
   ownMerge?: HooksFileMerge
 ): ArtifactContract;
@@ -181,7 +180,7 @@ export function flatHooksArtifact(
 export function flatHooksArtifact(
   descriptor: HooksRouting & { readonly flat: FlatHooksRoute },
   /** The tool a hooks file's warnings are reported under, or the bridge a loader imports. */
-  reader: { readonly tool: AiToolId } | { readonly bridge: FlatHooksBridge["generate"] },
+  reader: { readonly tool: string } | { readonly bridge: FlatHooksBridge["generate"] },
   /** The tool's own merge, for a hooks file no `HooksFileFormat` describes. */
   ownMerge?: HooksFileMerge
 ): ArtifactContract {
@@ -410,7 +409,7 @@ function ownPaths(declaration: HooksDeclaration): readonly string[] {
   ].filter((path): path is string => path !== undefined);
 }
 
-function stamped(toolId: AiToolId, adapter: string, refuse: Refuse): HooksRuntime {
+function stamped(toolId: string, adapter: string, refuse: Refuse): HooksRuntime {
   const stamp = `const HOST = "${toolId}";`;
   const stampedAdapter = adapter.replace('const HOST = "unstamped";', stamp);
   return stampedAdapter.includes(stamp)
@@ -432,7 +431,7 @@ type DeclaredHooks<D extends HooksDeclaration> = Omit<
 /** The one door to a descriptor: refuses what no tool could run, and derives what the readers
  * of a descriptor need from the events it declares. */
 export function declareHooks<const D extends HooksDeclaration>(
-  toolId: AiToolId,
+  toolId: string,
   directory: string,
   adapter: string,
   declaration: D

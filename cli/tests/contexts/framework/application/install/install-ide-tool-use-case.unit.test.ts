@@ -15,7 +15,7 @@ import {
 } from "../../../../helpers/ports/build-unit-deps.js";
 import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 function toolsWithCursor(cursorProfile: BuiltToolConfig) {
   return catalogOf(
@@ -44,12 +44,12 @@ describe("InstallIdeToolUseCase", () => {
   describe("copilot installed before vscode", () => {
     it("merges copilot static keys into .vscode/settings.json when vscode is installed", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "copilot");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.copilot);
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
         tools: catalogOf(),
-        toolId: "vscode",
+        toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -65,12 +65,12 @@ describe("InstallIdeToolUseCase", () => {
 
     it("tracks copilot's vscode merge entries in manifest after install", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "copilot");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.copilot);
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       await buildUseCase(deps).execute({
         tools: catalogOf(),
-        toolId: "vscode",
+        toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -78,7 +78,7 @@ describe("InstallIdeToolUseCase", () => {
       });
 
       const saved = await deps.manifestRepo.load();
-      const mergeFiles = saved?.getMergeFiles("copilot") ?? [];
+      const mergeFiles = saved?.getMergeFiles(TOOL.copilot) ?? [];
       const hasSettingsEntry = mergeFiles.some((m) => m.relativePath === ".vscode/settings.json");
       expect(hasSettingsEntry).toBe(true);
     });
@@ -87,12 +87,12 @@ describe("InstallIdeToolUseCase", () => {
   describe("no AI tool depends on the installing IDE", () => {
     it("performs only the IDE install with no extra mergeJsonFile calls for copilot settings", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
         tools: catalogOf(),
-        toolId: "vscode",
+        toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -112,13 +112,13 @@ describe("InstallIdeToolUseCase", () => {
     it("returns skipped and does not re-propagate AI settings", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
-      await installTool(deps, PROJECT_ROOT, "copilot");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
+      await installTool(deps, PROJECT_ROOT, TOOL.copilot);
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
         tools: catalogOf(),
-        toolId: "vscode",
+        toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -132,12 +132,12 @@ describe("InstallIdeToolUseCase", () => {
   describe("integration: copilot then vscode — full end state", () => {
     it("settings.json has both copilot and vscode keys", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "copilot");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.copilot);
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       await buildUseCase(deps).execute({
         tools: catalogOf(),
-        toolId: "vscode",
+        toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -157,7 +157,7 @@ describe("InstallIdeToolUseCase", () => {
       outputPath: ".vscode/aidd-a.json",
       mergeStrategy: "framework-prime",
       staticContent: '{"a": 1}',
-      requiresTool: "vscode",
+      requiresTool: TOOL.vscode,
     });
     const consumesOnly = new ConfigSection({
       outputPath: ".vscode/aidd-b.json",
@@ -173,7 +173,7 @@ describe("InstallIdeToolUseCase", () => {
       outputPath: ".vscode/aidd-d.json",
       mergeStrategy: "framework-prime",
       staticContentAssetFile: "d.json",
-      requiresTool: "vscode",
+      requiresTool: TOOL.vscode,
     });
 
     let cursorProfile: BuiltToolConfig = cursor;
@@ -191,7 +191,7 @@ describe("InstallIdeToolUseCase", () => {
       mergeFiles: Parameters<Manifest["addTool"]>[3] = []
     ): Promise<Manifest> {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-      manifest.addTool("cursor", VERSION, [], mergeFiles);
+      manifest.addTool(TOOL.cursor, VERSION, [], mergeFiles);
       await deps.manifestRepo.save(manifest);
       return manifest;
     }
@@ -202,7 +202,7 @@ describe("InstallIdeToolUseCase", () => {
     ) {
       return buildUseCase(deps).execute({
         tools: toolsWithCursor(cursorProfile),
-        toolId: "vscode",
+        toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -241,7 +241,7 @@ describe("InstallIdeToolUseCase", () => {
 
       await installVscode(deps, manifest);
 
-      expect(manifest.getMergeFiles("cursor")).toStrictEqual([
+      expect(manifest.getMergeFiles(TOOL.cursor)).toStrictEqual([
         mcpEntry,
         {
           relativePath: ".vscode/aidd-a.json",
@@ -255,7 +255,7 @@ describe("InstallIdeToolUseCase", () => {
       registerCursorWith([forIde]);
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      await installTool(deps, PROJECT_ROOT, "vscode");
+      await installTool(deps, PROJECT_ROOT, TOOL.vscode);
       const manifest = await withCursorRegistered(deps);
       await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/aidd-a.json"), '{"user": true}');
 
@@ -274,7 +274,7 @@ describe("InstallIdeToolUseCase", () => {
 
       await buildUseCase(deps, assets).execute({
         tools: toolsWithCursor(cursorProfile),
-        toolId: "vscode",
+        toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,
@@ -292,7 +292,7 @@ describe("InstallIdeToolUseCase", () => {
 
       await buildUseCase(deps, null).execute({
         tools: toolsWithCursor(cursorProfile),
-        toolId: "vscode",
+        toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
         force: false,

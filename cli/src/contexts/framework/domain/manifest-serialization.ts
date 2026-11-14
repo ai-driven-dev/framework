@@ -19,7 +19,7 @@ export interface ManifestData {
 }
 
 export function serializeManifestTools(
-  tools: ReadonlyMap<ToolId, ToolEntry>
+  tools: ReadonlyMap<string, ToolEntry>
 ): Record<string, ToolEntryData> {
   const out: Record<string, ToolEntryData> = {};
   for (const [toolId, entry] of tools) {

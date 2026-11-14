@@ -13,7 +13,7 @@ import {
 } from "../../../src/contexts/translate/domain/plugin-distribution.js";
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile } from "./testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "./testing/catalog-of.js";
 
 /**
  * Every route that merges a plugin's hooks into a file the project already holds. The file
@@ -205,7 +205,7 @@ describe("plugin install merging a plugin into the project's hooks file again", 
     ];
     return new PluginDistribution({
       manifest: { name: PLUGIN, version: "1.0.0" },
-      format: "claude",
+      format: TOOL.claude,
       files: hooks,
       components: { commands: [], agents: [], rules: [], skills: [], hooks, mcp: [] },
     });
@@ -225,13 +225,13 @@ describe("plugin install merging a plugin into the project's hooks file again", 
     const materializer = new ProjectHooksMaterializer(fs);
     const first = await materializer.materializeWithProvenance(
       dist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT
     );
 
     await materializer.materializeWithProvenance(
       dist(),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       PROJECT,
       first.projectHooks
     );

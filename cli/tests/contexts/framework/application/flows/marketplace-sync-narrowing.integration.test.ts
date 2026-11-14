@@ -16,7 +16,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -58,9 +58,9 @@ function seededCatalogs(): InMemoryFileAdapter {
 
 function manifestWithTwoPlugins(): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
+  manifest.addTool(TOOL.claude, "test", []);
   manifest.addPlugin(
-    "claude",
+    TOOL.claude,
     InstalledPlugin.fromMetadata(
       "plugin-a",
       "1.0.0",
@@ -71,7 +71,7 @@ function manifestWithTwoPlugins(): Manifest {
     )
   );
   manifest.addPlugin(
-    "claude",
+    TOOL.claude,
     InstalledPlugin.fromMetadata(
       "plugin-b",
       "1.0.0",
@@ -101,7 +101,7 @@ function build(activator: FakeHostActions) {
       registry,
       hasher,
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       ensureBuiltPerMarketplace(),
       new Map(),
       () => "",
@@ -110,7 +110,7 @@ function build(activator: FakeHostActions) {
       undefined,
       new Map([
         [
-          "claude",
+          TOOL.claude,
           new FakeHostPluginRegistry({
             location: "/host/installed_plugins.json",
             refs: new Map(),
@@ -120,7 +120,7 @@ function build(activator: FakeHostActions) {
       undefined,
       new Map([
         [
-          "claude",
+          TOOL.claude,
           new FakeHostMarketplaceSources(
             activator,
             "registry",
@@ -170,7 +170,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     });
 
     const reloaded = await manifestRepo.load();
-    const registrations = reloaded?.getNativeRegistrations("claude");
+    const registrations = reloaded?.getNativeRegistrations(TOOL.claude);
     expect(registrations?.marketplaces).toEqual(
       expect.arrayContaining([
         {
@@ -186,7 +186,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
   it("drops a stale ref for the touched marketplace by its hostName suffix, keeping the untouched marketplace's own refs", async () => {
     const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifest, manifestRepo } = build(activator);
-    manifest.setNativeRegistrations("claude", {
+    manifest.setNativeRegistrations(TOOL.claude, {
       binary: "claude",
       marketplaces: [
         { alias: "market-a", hostName: "market-a" },
@@ -205,7 +205,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
     });
 
     const reloaded = await manifestRepo.load();
-    const registrations = reloaded?.getNativeRegistrations("claude");
+    const registrations = reloaded?.getNativeRegistrations(TOOL.claude);
     expect(registrations?.pluginRefs).toContain("plugin-a@market-a");
     expect(registrations?.pluginRefs).toContain("plugin-b@market-b");
     expect(registrations?.pluginRefs).not.toContain("plugin-b-old@market-b");
@@ -252,7 +252,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       marketplaceNames: ["market-b"],
     });
 
-    expect((await manifestRepo.load())?.getNativeRegistrations("claude")).toStrictEqual({
+    expect((await manifestRepo.load())?.getNativeRegistrations(TOOL.claude)).toStrictEqual({
       binary: "claude",
       marketplaces: [
         {
@@ -268,7 +268,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
   it("drops a stale ref of either touched marketplace when narrowed to both", async () => {
     const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifest, manifestRepo } = build(activator);
-    manifest.setNativeRegistrations("claude", {
+    manifest.setNativeRegistrations(TOOL.claude, {
       binary: "claude",
       marketplaces: [
         {
@@ -294,7 +294,7 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       marketplaceNames: ["market-a", "market-b"],
     });
 
-    expect((await manifestRepo.load())?.getNativeRegistrations("claude")).toStrictEqual({
+    expect((await manifestRepo.load())?.getNativeRegistrations(TOOL.claude)).toStrictEqual({
       binary: "claude",
       marketplaces: [
         {

@@ -15,6 +15,7 @@ import type { LayoutSection } from "../../../../src/contexts/tools/domain/sectio
 import type { ManifestSection } from "../../../../src/contexts/tools/domain/sections/manifest-section.js";
 import type { McpSection } from "../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
+import { TOOL } from "./catalog-of.js";
 import { flatPlugins, type PluginSet } from "./plugin-mode.js";
 
 /** The capabilities a synthetic profile may carry: enough for the derivations under test. */
@@ -156,7 +157,7 @@ export class ProfileBuilder {
   }
 }
 
-export function aProfile(toolId: AiToolId = "claude"): ProfileBuilder {
+export function aProfile(toolId: AiToolId = TOOL.claude): ProfileBuilder {
   return new ProfileBuilder(toolId);
 }
 

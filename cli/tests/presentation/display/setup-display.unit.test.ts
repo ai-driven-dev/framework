@@ -5,10 +5,11 @@ import {
   printSetupOutcome,
   printWelcomeBanner,
 } from "../../../src/presentation/display/setup-display.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 const CLAUDE_INSTALLED = {
-  toolId: "claude",
+  toolId: TOOL.claude,
   fileCount: 2,
   files: [{ relativePath: "skills/plan.md" }, { relativePath: "skills/test.md" }],
   skipped: false,
@@ -169,7 +170,7 @@ describe("printSetupOutcome", () => {
         install: {
           results: [
             CLAUDE_INSTALLED,
-            { ...CLAUDE_INSTALLED, toolId: "cursor", fileCount: 3, files: [] },
+            { ...CLAUDE_INSTALLED, toolId: TOOL.cursor, fileCount: 3, files: [] },
           ],
         },
       },

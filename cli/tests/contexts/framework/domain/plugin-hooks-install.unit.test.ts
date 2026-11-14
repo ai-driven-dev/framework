@@ -8,6 +8,7 @@ import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencod
 import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 import { flatOf, hooksAcceptanceOf, nativeOf } from "../../tools/testing/plugin-mode.js";
 
 /** A hook that arrives is not a hook that runs: every failure this covers installed cleanly
@@ -37,7 +38,7 @@ function pluginWithHookAndScript(): PluginDistribution {
   const mcp = [{ relativePath: ".mcp.json", content: MCP_JSON }];
   return new PluginDistribution({
     manifest: { name: "aidd-telemetry", version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files: [...hooks, ...mcp],
     components: { commands: [], agents: [], rules: [], skills: [], hooks, mcp },
   });

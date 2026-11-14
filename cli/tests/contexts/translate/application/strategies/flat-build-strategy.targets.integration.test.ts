@@ -14,7 +14,7 @@ import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapt
 import { FRAMEWORK_REAL } from "../../../../helpers/fixture-setup.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
 // Avoid biome noTemplateCurlyInString: split literal for the placeholder.
@@ -71,7 +71,7 @@ async function hashTree(dir: string): Promise<Map<string, string>> {
 
 describe("a flat build of the fixture framework, per target", () => {
   it("claude materializes .claude/skills, .claude/agents and .mcp.json", async () => {
-    await buildFlat("claude");
+    await buildFlat(TOOL.claude);
 
     expect(existsSync(join(out, ".claude", "agents"))).toBe(true);
     expect(existsSync(join(out, ".claude", "skills"))).toBe(true);
@@ -83,7 +83,7 @@ describe("a flat build of the fixture framework, per target", () => {
   });
 
   it("cursor materializes .cursor/skills, .cursor/agents without tools or color, and .cursor/mcp.json", async () => {
-    await buildFlat("cursor");
+    await buildFlat(TOOL.cursor);
 
     expect(existsSync(join(out, ".cursor", "agents"))).toBe(true);
     expect(existsSync(join(out, ".cursor", "skills"))).toBe(true);
@@ -95,7 +95,7 @@ describe("a flat build of the fixture framework, per target", () => {
   });
 
   it("codex emits TOML agents, skills under .agents/skills and a config.toml with mcp_servers", async () => {
-    await buildFlat("codex");
+    await buildFlat(TOOL.codex);
 
     expect(existsSync(join(out, ".codex", "agents"))).toBe(true);
     // Codex scans `.agents/skills/` for workspace skills, never `.codex/skills/`.
@@ -108,7 +108,7 @@ describe("a flat build of the fixture framework, per target", () => {
   });
 
   it("opencode emits .opencode/skills, .opencode/agents and an opencode.json with mcp", async () => {
-    await buildFlat("opencode");
+    await buildFlat(TOOL.opencode);
 
     expect(existsSync(join(out, ".opencode", "agents"))).toBe(true);
     expect(existsSync(join(out, ".opencode", "skills"))).toBe(true);
@@ -123,7 +123,7 @@ describe("a flat build of the fixture framework, per target", () => {
   });
 
   it("kilo emits its agents, skills, generated hooks bridge and project config", async () => {
-    await buildFlat("kilo");
+    await buildFlat(TOOL.kilo);
 
     expect(existsSync(join(out, ".kilo", "agents"))).toBe(true);
     expect(existsSync(join(out, ".kilo", "skills"))).toBe(true);
@@ -140,15 +140,15 @@ describe("a flat build of the fixture framework, per target", () => {
 
 describe("a flat build into a tree a first build already wrote", () => {
   it("is byte-identical when forced, and halts when not", async () => {
-    await buildFlat("copilot");
+    await buildFlat(TOOL.copilot);
     const first = await hashTree(out);
 
-    await buildFlat("copilot", { force: true });
+    await buildFlat(TOOL.copilot, { force: true });
     const second = await hashTree(out);
 
     expect(first.size).toBeGreaterThan(0);
     expect(second).toEqual(first);
-    await expect(buildFlat("copilot")).rejects.toBeInstanceOf(FlatTargetExistsError);
+    await expect(buildFlat(TOOL.copilot)).rejects.toBeInstanceOf(FlatTargetExistsError);
   });
 });
 
@@ -160,7 +160,7 @@ describe("a flat build into a project that already holds a server of the person'
     };
     await writeFile(join(out, ".vscode", "mcp.json"), JSON.stringify(existingMcp, null, 2));
 
-    await buildFlat("copilot");
+    await buildFlat(TOOL.copilot);
 
     const agent = join(out, ".github", "agents", "aidd-test-code-reviewer.agent.md");
     expect(await readFile(agent, "utf-8")).not.toContain(CLAUDE_ROOT_VAR);
@@ -185,7 +185,7 @@ describe("a flat build for antigravity into a hooks file that is not JSON", () =
     const hooksFile = join(out, ".agents", "hooks.json");
     await writeFile(hooksFile, "{ not json");
 
-    const build = buildFlat("antigravity", { source: FRAMEWORK_REAL });
+    const build = buildFlat(TOOL.antigravity, { source: FRAMEWORK_REAL });
 
     await expect(build).rejects.toThrow(".agents/hooks.json is not valid JSON");
     await expect(build).rejects.toThrow("left untouched");

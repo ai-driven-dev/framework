@@ -5,7 +5,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
 const CLAUDE_COMMAND = ".claude/commands/plan.md";
@@ -14,7 +14,7 @@ const hasher = new DeterministicHasher();
 
 function manifestTrackingClaude(): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("claude", "1.0.0", [
+  manifest.addTool(TOOL.claude, "1.0.0", [
     new InstallationFile({
       relativePath: CLAUDE_COMMAND,
       content: SIGNAL,

@@ -9,7 +9,7 @@ import {
   FaultingFileAdapter,
 } from "../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredProfile } from "../../../tools/testing/catalog-of.js";
+import { registeredProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const DIR = "/marketplace";
 const CATALOG_PATH = join(DIR, ".claude-plugin", "marketplace.json");
@@ -23,7 +23,7 @@ describe("readMarketplaceCatalogIdentity", () => {
     expect(
       await readMarketplaceCatalogIdentity(
         new InMemoryFileAdapter(),
-        registeredProfile("claude"),
+        registeredProfile(TOOL.claude),
         DIR
       )
     ).toBeUndefined();
@@ -36,7 +36,7 @@ describe("readMarketplaceCatalogIdentity", () => {
     fs.failOn("readFile", CATALOG_PATH, errnoError("EACCES"));
 
     expect(
-      await readMarketplaceCatalogIdentity(fs, registeredProfile("claude"), DIR)
+      await readMarketplaceCatalogIdentity(fs, registeredProfile(TOOL.claude), DIR)
     ).toBeUndefined();
   });
 
@@ -46,7 +46,7 @@ describe("readMarketplaceCatalogIdentity", () => {
       const fs = new InMemoryFileAdapter({ [CATALOG_PATH]: content });
 
       expect(
-        await readMarketplaceCatalogIdentity(fs, registeredProfile("claude"), DIR)
+        await readMarketplaceCatalogIdentity(fs, registeredProfile(TOOL.claude), DIR)
       ).toBeUndefined();
     }
   );
@@ -58,11 +58,11 @@ describe("readMarketplaceCatalogIdentity", () => {
       JSON.stringify({ name: "opencode-catalog", plugins: [{ name: "opencode-plugin" }] })
     );
 
-    expect(marketplaceCatalogProbePath(registeredProfile("opencode"), DIR)).toBe(
+    expect(marketplaceCatalogProbePath(registeredProfile(TOOL.opencode), DIR)).toBe(
       join(DIR, "opencode.json")
     );
     expect(
-      await readMarketplaceCatalogIdentity(fs, registeredProfile("opencode"), DIR)
+      await readMarketplaceCatalogIdentity(fs, registeredProfile(TOOL.opencode), DIR)
     ).toStrictEqual({
       name: "opencode-catalog",
       pluginNames: ["opencode-plugin"],
@@ -72,7 +72,7 @@ describe("readMarketplaceCatalogIdentity", () => {
   it("reads the name and plugin names the tool's own catalog file declares", async () => {
     const fs = fsWithCatalog({ name: "aidd-framework", plugins: [{ name: "a" }, { name: "b" }] });
 
-    const identity = await readMarketplaceCatalogIdentity(fs, registeredProfile("claude"), DIR);
+    const identity = await readMarketplaceCatalogIdentity(fs, registeredProfile(TOOL.claude), DIR);
 
     expect(identity).toStrictEqual({ name: "aidd-framework", pluginNames: ["a", "b"] });
   });
@@ -80,7 +80,7 @@ describe("readMarketplaceCatalogIdentity", () => {
   it("answers no plugin names for a catalog that declares none", async () => {
     const fs = fsWithCatalog({ name: "aidd-framework" });
 
-    const identity = await readMarketplaceCatalogIdentity(fs, registeredProfile("claude"), DIR);
+    const identity = await readMarketplaceCatalogIdentity(fs, registeredProfile(TOOL.claude), DIR);
 
     expect(identity).toStrictEqual({ name: "aidd-framework", pluginNames: [] });
   });
@@ -91,7 +91,7 @@ describe("readMarketplaceCatalogIdentity", () => {
       plugins: [null, "text", { name: 3 }, { version: "1.0.0" }, { name: "a" }],
     });
 
-    const identity = await readMarketplaceCatalogIdentity(fs, registeredProfile("claude"), DIR);
+    const identity = await readMarketplaceCatalogIdentity(fs, registeredProfile(TOOL.claude), DIR);
 
     expect(identity).toStrictEqual({ name: "aidd-framework", pluginNames: ["a"] });
   });
@@ -100,7 +100,7 @@ describe("readMarketplaceCatalogIdentity", () => {
     const fs = fsWithCatalog({ name: 5, plugins: [{ name: "a" }] });
 
     expect(
-      await readMarketplaceCatalogIdentity(fs, registeredProfile("claude"), DIR)
+      await readMarketplaceCatalogIdentity(fs, registeredProfile(TOOL.claude), DIR)
     ).toBeUndefined();
   });
 
@@ -108,13 +108,13 @@ describe("readMarketplaceCatalogIdentity", () => {
     const fs = fsWithCatalog({ name: "aidd-framework" });
 
     expect(
-      await readMarketplaceCatalogIdentity(fs, registeredProfile("vscode"), DIR)
+      await readMarketplaceCatalogIdentity(fs, registeredProfile(TOOL.vscode), DIR)
     ).toBeUndefined();
   });
 });
 
 describe("marketplaceCatalogProbePath", () => {
   it("names nothing for a tool that is not an AI tool", () => {
-    expect(marketplaceCatalogProbePath(registeredProfile("vscode"), DIR)).toBeUndefined();
+    expect(marketplaceCatalogProbePath(registeredProfile(TOOL.vscode), DIR)).toBeUndefined();
   });
 });

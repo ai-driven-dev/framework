@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 
 const cleanProject = vi.fn();
 const cleanUserScope = vi.fn();
@@ -16,7 +16,7 @@ const PROJECT_ROOT = process.cwd();
 const CATALOG = catalogOf();
 
 const EMPTY_PREVIEW = {
-  tools: [{ toolId: "claude", fileCount: 3 }],
+  tools: [{ toolId: TOOL.claude, fileCount: 3 }],
   nativeRegistrations: [],
   totalFileCount: 3,
 };

@@ -122,13 +122,14 @@ export class SetupUseCase {
     context: ProjectContext | undefined,
     tools: ToolCatalog
   ): Promise<{ aiTools: readonly AiToolId[]; ideTools: readonly IdeToolId[] }> {
+    const { aiTools, ideTools } = flow;
     if (this.setupToolsPromptUseCase === undefined) {
-      return { aiTools: flow.aiTools as AiToolId[], ideTools: flow.ideTools as IdeToolId[] };
+      return { aiTools, ideTools };
     }
     return this.setupToolsPromptUseCase.execute({
       interactive: flow.interactive,
-      aiTools: flow.aiTools as AiToolId[],
-      ideTools: flow.ideTools as IdeToolId[],
+      aiTools,
+      ideTools,
       tools,
       context,
     });

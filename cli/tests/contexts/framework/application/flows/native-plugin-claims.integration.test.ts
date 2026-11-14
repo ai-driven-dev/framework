@@ -28,12 +28,13 @@ import {
   catalogOf,
   registeredAiConfig,
   registeredCatalog,
+  TOOL,
 } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 for (const [toolId, catalogPath] of [
-  ["codex", ".agents/plugins/marketplace.json"],
-  ["copilot", ".plugin/marketplace.json"],
+  [TOOL.codex, ".agents/plugins/marketplace.json"],
+  [TOOL.copilot, ".plugin/marketplace.json"],
 ] as const) {
   const effectiveSource = (hostName: string, source: string) =>
     new Map<AiToolId, HostMarketplaceSources>([

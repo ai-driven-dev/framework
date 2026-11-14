@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 import { PROJECT, registryHome } from "../testing/registry-home.js";
 
 const { write, readerFor } = registryHome();
@@ -20,7 +21,7 @@ describe("Copilot's own settings.json", () => {
     );
 
     expect(
-      (await readerFor("copilot").read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
+      (await readerFor(TOOL.copilot).read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
     ).toEqual({ enabled: true });
   });
 
@@ -33,7 +34,7 @@ describe("Copilot's own settings.json", () => {
     );
 
     expect(
-      (await readerFor("copilot").read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
+      (await readerFor(TOOL.copilot).read(PROJECT)).refs?.get("aidd-telemetry@aidd-framework")
     ).toEqual({ enabled: false });
   });
 
@@ -42,14 +43,14 @@ describe("Copilot's own settings.json", () => {
   it("reads a settings file with no enabledPlugins as carrying none", async () => {
     await write(PATH, JSON.stringify({ extraKnownMarketplaces: {} }));
 
-    const reading = await readerFor("copilot").read(PROJECT);
+    const reading = await readerFor(TOOL.copilot).read(PROJECT);
 
     expect(reading.refs?.size).toBe(0);
     expect(reading.unreadable).toBeUndefined();
   });
 
   it("distinguishes an absent settings file from an unreadable one", async () => {
-    const reading = await readerFor("copilot").read(PROJECT);
+    const reading = await readerFor(TOOL.copilot).read(PROJECT);
     expect(reading.refs).toBeUndefined();
     expect(reading.absent).toBe(true);
     expect(reading.unreadable).toBeUndefined();
@@ -60,7 +61,7 @@ describe("Copilot's settings.json, at the edges of its shape", () => {
   it("reads malformed JSON as unreadable, never as carrying no plugins", async () => {
     await write(".copilot/settings.json", "// comment\n{ not json");
 
-    const reading = await readerFor("copilot").read(PROJECT);
+    const reading = await readerFor(TOOL.copilot).read(PROJECT);
 
     expect(reading.refs).toBeUndefined();
     expect(reading.unreadable).toBeDefined();

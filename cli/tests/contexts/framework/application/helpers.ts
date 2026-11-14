@@ -19,7 +19,7 @@ import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framew
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../../../src/presentation/terminal/prompter-adapter.js";
 
-import type { ToolId } from "../../../../src/shared/domain/tool.js";
+import type { AiToolId, IdeToolId } from "../../../../src/shared/domain/tool.js";
 import { CurrentVersionAdapter } from "../../../../src/shared/infrastructure/current-version-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import type { Prompter } from "../../../../src/shared/ports/prompter.js";
@@ -269,7 +269,7 @@ export async function initProject(
 export async function installTool(
   deps: ReturnType<typeof buildDeps>,
   projectRoot: string,
-  toolId: ToolId
+  toolId: AiToolId | IdeToolId
 ) {
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = "test";
@@ -296,7 +296,7 @@ export async function installTool(
 export async function initAndInstall(
   deps: ReturnType<typeof buildDeps>,
   projectRoot: string,
-  toolId: ToolId
+  toolId: AiToolId | IdeToolId
 ) {
   await initProject(deps, projectRoot);
   return installTool(deps, projectRoot, toolId);

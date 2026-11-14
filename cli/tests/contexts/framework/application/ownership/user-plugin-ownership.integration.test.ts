@@ -4,12 +4,13 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 function fixture(scope: "project" | "user" = "user", dependents: readonly string[] = ["/A", "/B"]) {
   const manifest = Manifest.create();
-  manifest.addTool("cursor", "1.0.0", []);
+  manifest.addTool(TOOL.cursor, "1.0.0", []);
   manifest.addPlugin(
-    "cursor",
+    TOOL.cursor,
     InstalledPlugin.fromJSON({
       name: "sample-plugin",
       source: { kind: "local", path: "/fixture" },
@@ -27,16 +28,16 @@ describe("one project's canonical user plugin claim", () => {
   it("detaches only A's realpath, retaining B and the owned plugin bytes/record", async () => {
     const f = fixture();
     f.fs.setSymlink("/link-to-A", "/A");
-    await detachUserPlugin(f.repo, f.fs, "cursor", "sample-plugin", "/link-to-A");
-    expect(f.repo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual(["/B"]);
-    expect(f.repo.getCurrent()?.getPlugins("cursor")).toHaveLength(1);
+    await detachUserPlugin(f.repo, f.fs, TOOL.cursor, "sample-plugin", "/link-to-A");
+    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
+    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
     expect(f.repo.saveCount).toBe(1);
   });
 
   it("does not drop B or save for an unrelated project", async () => {
     const f = fixture();
-    await detachUserPlugin(f.repo, f.fs, "cursor", "sample-plugin", "/C");
-    expect(f.repo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual(["/A", "/B"]);
+    await detachUserPlugin(f.repo, f.fs, TOOL.cursor, "sample-plugin", "/C");
+    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/A", "/B"]);
     expect(f.repo.saveCount).toBe(0);
   });
 
@@ -46,17 +47,17 @@ describe("one project's canonical user plugin claim", () => {
       ["project", "sample-plugin"],
     ] as const) {
       const f = fixture(scope);
-      await detachUserPlugin(f.repo, f.fs, "cursor", name, "/A");
-      expect(f.repo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual(["/A", "/B"]);
+      await detachUserPlugin(f.repo, f.fs, TOOL.cursor, name, "/A");
+      expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/A", "/B"]);
       expect(f.repo.saveCount).toBe(0);
     }
   });
 
   it("ignores a missing repo or manifest without inventing ownership", async () => {
     const fs = new InMemoryFileAdapter();
-    await detachUserPlugin(undefined, fs, "cursor", "sample-plugin", "/A");
+    await detachUserPlugin(undefined, fs, TOOL.cursor, "sample-plugin", "/A");
     const repo = new InMemoryManifestRepository();
-    await detachUserPlugin(repo, fs, "cursor", "sample-plugin", "/A");
+    await detachUserPlugin(repo, fs, TOOL.cursor, "sample-plugin", "/A");
     expect(repo.getCurrent()).toBeNull();
     expect(repo.saveCount).toBe(0);
   });
@@ -81,7 +82,7 @@ describe("one project's canonical user plugin claim", () => {
         }
       },
     };
-    await detachUserPlugin(locked, f.fs, "cursor", "sample-plugin", "/A");
-    expect(f.repo.getCurrent()?.getPlugins("cursor")[0]?.dependents).toEqual(["/B"]);
+    await detachUserPlugin(locked, f.fs, TOOL.cursor, "sample-plugin", "/A");
+    expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
   });
 });

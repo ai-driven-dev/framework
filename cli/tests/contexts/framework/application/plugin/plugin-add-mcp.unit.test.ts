@@ -13,7 +13,7 @@ import {
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -32,7 +32,7 @@ async function buildOpencodeProject(): Promise<{
   useCase: PluginAddUseCase;
 }> {
   const deps = await buildUnitDeps(PROJECT_ROOT);
-  await initAndInstall(deps, PROJECT_ROOT, "opencode");
+  await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
   deps.fs.setFile(
     join(MCP_PLUGIN_DIR, ".claude-plugin/plugin.json"),
     JSON.stringify({ name: "mcp-plugin", version: "1.0.0" })
@@ -63,7 +63,7 @@ function addLocal(useCase: PluginAddUseCase, path: string, replace?: boolean): P
   return useCase.execute({
     tools: catalogOf(),
     source: { kind: "local", path },
-    toolIds: ["opencode"],
+    toolIds: [TOOL.opencode],
     projectRoot: PROJECT_ROOT,
     interactive: false,
     replace,
@@ -73,7 +73,7 @@ function addLocal(useCase: PluginAddUseCase, path: string, replace?: boolean): P
 function installedMcpPlugin(deps: Deps): InstalledPlugin | undefined {
   return deps.manifestRepo
     .getCurrent()
-    ?.getPlugins("opencode")
+    ?.getPlugins(TOOL.opencode)
     .find((p) => p.name === "mcp-plugin");
 }
 
@@ -114,7 +114,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
 
   it("uses the selected Cursor plugin's hook provenance when another hook plugin was installed first", async () => {
     const { deps, useCase } = await buildOpencodeProject();
-    await installTool(deps, PROJECT_ROOT, "cursor");
+    await installTool(deps, PROJECT_ROOT, TOOL.cursor);
     const otherDir = "/plugins/other-hook-plugin";
     for (const [name, dir] of [
       ["other-hook-plugin", otherDir],
@@ -139,14 +139,14 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
       await useCase.execute({
         tools: catalogOf(),
         source: { kind: "local", path: dir },
-        toolIds: ["cursor"],
+        toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
         interactive: false,
       });
     }
     const otherBefore = deps.manifestRepo
       .getCurrent()
-      ?.getPlugins("cursor")
+      ?.getPlugins(TOOL.cursor)
       .find((p) => p.name === "other-hook-plugin")
       ?.toJSON();
     deps.fs.setFile(join(MCP_PLUGIN_DIR, "hooks/pre.js"), "mcp-plugin updated script");
@@ -154,7 +154,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
     await useCase.execute({
       tools: catalogOf(),
       source: { kind: "local", path: MCP_PLUGIN_DIR },
-      toolIds: ["cursor"],
+      toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
       interactive: false,
       replace: true,
@@ -174,14 +174,14 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
     expect(
       deps.manifestRepo
         .getCurrent()
-        ?.getPlugins("cursor")
+        ?.getPlugins(TOOL.cursor)
         .find((p) => p.name === "other-hook-plugin")
         ?.toJSON()
     ).toStrictEqual(otherBefore);
     expect(
       deps.manifestRepo
         .getCurrent()
-        ?.getPlugins("cursor")
+        ?.getPlugins(TOOL.cursor)
         .find((p) => p.name === "mcp-plugin")?.projectHooks?.scripts.size
     ).toBe(1);
   });
@@ -190,7 +190,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
     "explains hook trust after a Codex install via %s",
     async (marketplace) => {
       const { deps, logger, useCase } = await buildOpencodeProject();
-      await installTool(deps, PROJECT_ROOT, "codex");
+      await installTool(deps, PROJECT_ROOT, TOOL.codex);
       deps.fs.setFile(join(MCP_PLUGIN_DIR, "hooks/pre.js"), "console.log('hook');");
       deps.fs.setFile(
         join(MCP_PLUGIN_DIR, "hooks/hooks.json"),
@@ -206,7 +206,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
       await useCase.execute({
         tools: catalogOf(),
         source: { kind: "local", path: MCP_PLUGIN_DIR },
-        toolIds: ["codex"],
+        toolIds: [TOOL.codex],
         projectRoot: PROJECT_ROOT,
         interactive: false,
         marketplace,
@@ -218,7 +218,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
       expect(logger.warnMessages).toStrictEqual([]);
       const installed = deps.manifestRepo
         .getCurrent()
-        ?.getPlugins("codex")
+        ?.getPlugins(TOOL.codex)
         .find((p) => p.name === "mcp-plugin");
       expect(installed).toBeDefined();
       expect(installed?.marketplace).toBe(marketplace);
@@ -266,7 +266,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
         useCase.execute({
           tools: catalogOf(),
           source: { kind: "local", path: MCP_PLUGIN_DIR },
-          toolIds: ["opencode"],
+          toolIds: [TOOL.opencode],
           projectRoot: PROJECT_ROOT,
           interactive: false,
           replace: true,
@@ -312,7 +312,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
     deps.fs.setFile(OPENCODE_JSON, JSON.stringify(current));
     const otherBefore = deps.manifestRepo
       .getCurrent()
-      ?.getPlugins("opencode")
+      ?.getPlugins(TOOL.opencode)
       .find((plugin) => plugin.name === "other-mcp-plugin");
 
     await addLocal(useCase, MCP_PLUGIN_DIR, true);
@@ -323,7 +323,7 @@ describe("PluginAddUseCase and opencode MCP servers", () => {
     expect(
       deps.manifestRepo
         .getCurrent()
-        ?.getPlugins("opencode")
+        ?.getPlugins(TOOL.opencode)
         .find((plugin) => plugin.name === "other-mcp-plugin")
     ).toEqual(otherBefore);
     expect(installedMcpPlugin(deps)?.mcpEntries.size).toBe(1);

@@ -4,6 +4,7 @@ import {
   printPluginDrift,
   printScopeReport,
 } from "../../../src/presentation/display/status-display.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
 describe("printScopeReport", () => {
@@ -18,7 +19,7 @@ describe("printScopeReport", () => {
   it("names a tool and its version as in sync when no file drifted", () => {
     const output = new CapturingOutput(false);
 
-    printScopeReport(output, { tools: [{ toolId: "claude", version: "7.0.0", drifted: [] }] });
+    printScopeReport(output, { tools: [{ toolId: TOOL.claude, version: "7.0.0", drifted: [] }] });
 
     expect(output.lines).toEqual(["  claude (v7.0.0): in sync"]);
   });
@@ -29,7 +30,7 @@ describe("printScopeReport", () => {
     printScopeReport(output, {
       tools: [
         {
-          toolId: "claude",
+          toolId: TOOL.claude,
           version: "7.0.0",
           drifted: [
             { status: "modified", relativePath: "a.md" },
@@ -55,7 +56,7 @@ describe("printScopeReport", () => {
     printScopeReport(output, {
       tools: [
         {
-          toolId: "cursor",
+          toolId: TOOL.cursor,
           version: "7.0.0",
           drifted: [{ status: "renamed", relativePath: "d.md" }],
         },
@@ -102,7 +103,7 @@ describe("printPluginDrift", () => {
     printPluginDrift(output, {
       pluginDrift: [
         {
-          toolId: "cursor",
+          toolId: TOOL.cursor,
           pluginName: "aidd-test",
           driftedFiles: [],
           notInstalledOnMachine: true,
@@ -121,7 +122,7 @@ describe("printPluginDrift", () => {
     printPluginDrift(output, {
       pluginDrift: [
         {
-          toolId: "claude",
+          toolId: TOOL.claude,
           pluginName: "my-plugin",
           driftedFiles: ["commands/cmd.md"],
           notInstalledOnMachine: false,

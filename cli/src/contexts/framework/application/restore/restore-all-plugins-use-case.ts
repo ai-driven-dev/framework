@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
-import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
@@ -21,7 +21,7 @@ interface RestoreAllPluginsOptions {
   fileFilter: ((p: string) => boolean) | null;
   pluginName?: string;
   /** Restrict which AI tools' plugins get touched. Undefined means every installed AI tool (unscoped). */
-  toolIds?: readonly ToolId[];
+  toolIds?: readonly string[];
   force?: boolean;
   /** The tool profiles the restore asks. */
   tools: ToolCatalog;

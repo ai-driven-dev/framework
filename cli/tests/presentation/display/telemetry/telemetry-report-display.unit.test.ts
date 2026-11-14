@@ -12,6 +12,7 @@ import {
   type Tally,
 } from "../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import { printUsageReport } from "../../../../src/presentation/display/telemetry/telemetry-report-display.js";
+import { TOOL } from "../../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../../helpers/ports/capturing-output.js";
 
 const sum = (known: number, unknownRecords = 0) => ({ known, unknownRecords });
@@ -361,7 +362,7 @@ describe("printing a usage report", () => {
       session: "a1b2c3d4-0000-4000-8000-000000000001",
       repository: "f".repeat(64),
       agent: "subagent",
-      tool: "codex",
+      tool: TOOL.codex,
       absent: "model",
       person: "p-1",
     };

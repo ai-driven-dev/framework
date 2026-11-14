@@ -3,7 +3,7 @@ import { mkdir, readdir, readFile, realpath } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Manifest } from "../../src/contexts/framework/domain/manifest.js";
-import { resolveRegisteredToolId } from "../contexts/tools/testing/catalog-of.js";
+import { resolveRegisteredToolId, TOOL } from "../contexts/tools/testing/catalog-of.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
 const FRAMEWORK_REAL_PATH = resolve(process.cwd(), "tests/fixtures/framework-real");
@@ -46,13 +46,13 @@ describe("E2E: two projects on one HOME install the same cursor plugin", () => {
       expect(secondSetup.exitCode).toBe(0);
       expect(await hooksOf(second)).toContain("update_memory");
       const machine = await manifestAt(join(test.fakeHome, ".config", "aidd", "manifest.json"));
-      const owned = machine.getPlugins("cursor").find((plugin) => plugin.name === PLUGIN);
+      const owned = machine.getPlugins(TOOL.cursor).find((plugin) => plugin.name === PLUGIN);
       expect(owned?.files.size).toBeGreaterThan(0);
       expect(owned?.dependents).toEqual([await realpath(test.projectDir), await realpath(second)]);
       for (const cwd of [test.projectDir, second]) {
         const project = await manifestAt(join(cwd, ".aidd", "manifest.json"));
         expect(
-          project.getPlugins("cursor").find((plugin) => plugin.name === PLUGIN)?.files.size
+          project.getPlugins(TOOL.cursor).find((plugin) => plugin.name === PLUGIN)?.files.size
         ).toBe(0);
       }
       const prematureGlobalClean = await runCli(

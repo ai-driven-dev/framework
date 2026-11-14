@@ -6,7 +6,7 @@ import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const USER_PLUGINS_DIR = join(homedir(), ".cursor", "plugins", "local");
@@ -16,10 +16,10 @@ const HASH_OF_TWO = HASHER.hash("two").value;
 
 function manifestWith(plugins: Record<string, Record<string, string>>): Manifest {
   const manifest = Manifest.create();
-  manifest.addTool("cursor", "1.0.0", []);
+  manifest.addTool(TOOL.cursor, "1.0.0", []);
   for (const [name, files] of Object.entries(plugins)) {
     manifest.addPlugin(
-      "cursor",
+      TOOL.cursor,
       InstalledPlugin.fromJSON({
         name,
         source: { kind: "local", path: "/some/path" },
@@ -45,12 +45,12 @@ describe("DetectPluginDriftUseCase", () => {
       tools: catalogOf(),
       manifest,
       projectRoot: PROJECT_ROOT,
-      toolIds: ["cursor"],
+      toolIds: [TOOL.cursor],
       pluginName: "aidd-two",
     });
 
     expect(drifts).toStrictEqual([
-      { toolId: "cursor", pluginName: "aidd-two", files: [], notInstalledOnMachine: true },
+      { toolId: TOOL.cursor, pluginName: "aidd-two", files: [], notInstalledOnMachine: true },
     ]);
   });
 
@@ -68,13 +68,13 @@ describe("DetectPluginDriftUseCase", () => {
       tools: catalogOf(),
       manifest,
       projectRoot: PROJECT_ROOT,
-      toolIds: ["cursor"],
+      toolIds: [TOOL.cursor],
     });
 
     expect(HASH_OF_TWO).not.toBe(HASH_OF_ONE);
     expect(drifts).toStrictEqual([
       {
-        toolId: "cursor",
+        toolId: TOOL.cursor,
         pluginName: "aidd-one",
         files: [
           { relativePath: "aidd-one/gone.md", kind: "missing" },

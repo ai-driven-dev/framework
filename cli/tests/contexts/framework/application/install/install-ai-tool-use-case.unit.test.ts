@@ -9,7 +9,7 @@ import {
   initAndInstall,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -81,7 +81,7 @@ describe("InstallAiToolUseCase", () => {
 
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -97,12 +97,12 @@ describe("InstallAiToolUseCase", () => {
   describe("installed tools without plugins", () => {
     it("runs no activation when nothing was propagated", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const { useCase, syncSettingsMock } = buildUseCase(deps);
 
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -120,14 +120,14 @@ describe("InstallAiToolUseCase", () => {
 
     it("propagates nothing when the manifest vanished right after the install", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const loaded = await deps.manifestRepo.load();
       vi.spyOn(deps.manifestRepo, "load").mockResolvedValueOnce(loaded).mockResolvedValueOnce(null);
       const { useCase } = buildUseCase(deps);
 
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -145,13 +145,13 @@ describe("InstallAiToolUseCase", () => {
   describe("manifest with plugins on another tool", () => {
     it("propagates with the exact non-interactive replace request", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
       const { useCase, pluginInstallMock } = buildUseCase(deps);
 
       await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -174,14 +174,14 @@ describe("InstallAiToolUseCase", () => {
 
     it("does not propagate the tool's own plugins back onto it on a forced reinstall", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
-      await installTool(deps, PROJECT_ROOT, "opencode");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+      await installTool(deps, PROJECT_ROOT, TOOL.opencode);
       await addPlugin(deps, "opencode", makeMockPlugin("own-plugin"));
       const { useCase, pluginInstallMock } = buildUseCase(deps);
 
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: true,
         version: VERSION,
@@ -194,14 +194,14 @@ describe("InstallAiToolUseCase", () => {
 
     it("propagates plugins from existing tools onto the new tool", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
 
       const { useCase, pluginInstallMock } = buildUseCase(deps);
 
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -222,13 +222,13 @@ describe("InstallAiToolUseCase", () => {
 
     it("runs settings sync after propagation", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
 
       const { useCase, syncSettingsMock } = buildUseCase(deps);
       await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -244,7 +244,7 @@ describe("InstallAiToolUseCase", () => {
 
     it("surfaces the sync's own errors in its result rather than discarding them", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
 
       const conflictError = { scope: "opencode", message: "different catalog" };
@@ -263,7 +263,7 @@ describe("InstallAiToolUseCase", () => {
 
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -275,13 +275,13 @@ describe("InstallAiToolUseCase", () => {
 
     it("skips propagation and sync when --no-plugins flag is set", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
 
       const { useCase, pluginInstallMock, syncSettingsMock } = buildUseCase(deps);
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -295,18 +295,18 @@ describe("InstallAiToolUseCase", () => {
 
     it("deduplicates plugins appearing on multiple source tools", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-      manifest.addTool("cursor", VERSION, []);
-      manifest.addPlugin("claude", makeMockPlugin("shared-plugin"));
-      manifest.addPlugin("cursor", makeMockPlugin("shared-plugin"));
+      manifest.addTool(TOOL.cursor, VERSION, []);
+      manifest.addPlugin(TOOL.claude, makeMockPlugin("shared-plugin"));
+      manifest.addPlugin(TOOL.cursor, makeMockPlugin("shared-plugin"));
       await deps.manifestRepo.save(manifest);
 
       const { useCase, pluginInstallMock } = buildUseCase(deps);
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -321,16 +321,16 @@ describe("InstallAiToolUseCase", () => {
   describe("tool already installed (skipped)", () => {
     it("returns skipped without propagation when tool is already installed", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("some-plugin"));
 
       // Pre-install opencode so the next orchestrator call will skip
-      await installTool(deps, PROJECT_ROOT, "opencode");
+      await installTool(deps, PROJECT_ROOT, TOOL.opencode);
 
       const { useCase, pluginInstallMock } = buildUseCase(deps);
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -344,12 +344,12 @@ describe("InstallAiToolUseCase", () => {
 
     it("answers the skipped install alone, with nothing propagated and no warning", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "opencode");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
       const { useCase } = buildUseCase(deps);
 
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -357,7 +357,13 @@ describe("InstallAiToolUseCase", () => {
       });
 
       expect(result).toStrictEqual({
-        runtimeResult: { toolId: "opencode", fileCount: 0, files: [], skipped: true, warnings: [] },
+        runtimeResult: {
+          toolId: TOOL.opencode,
+          fileCount: 0,
+          files: [],
+          skipped: true,
+          warnings: [],
+        },
         propagatedPlugins: [],
         propagationWarnings: [],
       });
@@ -367,14 +373,14 @@ describe("InstallAiToolUseCase", () => {
   describe("orphaned plugin (no marketplace)", () => {
     it("emits a warning and does not throw when plugin has no marketplace", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockOrphanPlugin("orphan-plugin"));
 
       const warnSpy = vi.spyOn(deps.logger, "warn");
       const { useCase, pluginInstallMock } = buildUseCase(deps);
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -391,14 +397,14 @@ describe("InstallAiToolUseCase", () => {
   describe("propagation version policy", () => {
     it("passes prefer-catalog policy to pluginInstallFromMarketplace on propagation", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("my-plugin"));
 
       const { useCase, pluginInstallMock } = buildUseCase(deps);
 
       await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,
@@ -414,7 +420,7 @@ describe("InstallAiToolUseCase", () => {
   describe("propagation failure", () => {
     it("records a warning and continues when plugin installation fails", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initAndInstall(deps, PROJECT_ROOT, "claude");
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await addPlugin(deps, "claude", makeMockPlugin("fail-plugin"));
       await addPlugin(deps, "claude", makeMockPlugin("ok-plugin"));
 
@@ -427,7 +433,7 @@ describe("InstallAiToolUseCase", () => {
 
       const result = await useCase.execute({
         tools: catalogOf(),
-        toolId: "opencode",
+        toolId: TOOL.opencode,
         projectRoot: PROJECT_ROOT,
         force: false,
         version: VERSION,

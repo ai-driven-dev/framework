@@ -17,7 +17,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, registeredCatalog } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const SHARED_SETTINGS = resolve(PROJECT_ROOT, ".claude/settings.json");
@@ -26,7 +26,7 @@ function distribution(name: string): PluginDistribution {
   const files = [{ relativePath: "commands/hello.md", content: "# Hello" }];
   return new PluginDistribution({
     manifest: { name, version: "1.0.0" },
-    format: "claude",
+    format: TOOL.claude,
     files,
     components: { commands: files, agents: [], rules: [], skills: [], hooks: [], mcp: [] },
   });
@@ -77,7 +77,7 @@ function seededBuiltCatalog(name = "aidd-framework"): InMemoryFileAdapter {
 function readableClaudePluginRegistry() {
   return new Map([
     [
-      "claude" as const,
+      TOOL.claude,
       new FakeHostPluginRegistry({
         location: "/home/.claude/plugins/installed_plugins.json",
         refs: new Map(),
@@ -89,7 +89,7 @@ function readableClaudePluginRegistry() {
 function freshClaudeSource(activator: FakeHostActions, name = "aidd-framework") {
   return new Map([
     [
-      "claude" as const,
+      TOOL.claude,
       new FakeHostMarketplaceSources(
         activator,
         "registry",
@@ -113,11 +113,11 @@ async function sync(setup: SyncSetup = {}) {
   const registry = new InMemoryMarketplaceRegistry();
   const logger = new CapturingLogger();
   const manifest = Manifest.create();
-  manifest.addTool("claude", "test", []);
+  manifest.addTool(TOOL.claude, "test", []);
 
   await new ModeAMarketplaceTranslator().addPlugin(
     distribution("aidd-context"),
-    registeredAiProfile("claude"),
+    registeredAiProfile(TOOL.claude),
     { kind: "local", path: "/plugin-source" },
     PROJECT_ROOT,
     manifest,
@@ -147,8 +147,8 @@ async function sync(setup: SyncSetup = {}) {
     });
   const machine = setup.ownedCatalog ? Manifest.create() : undefined;
   if (machine !== undefined) {
-    machine.addTool("claude", "test", []);
-    machine.setNativeRegistrations("claude", {
+    machine.addTool(TOOL.claude, "test", []);
+    machine.setNativeRegistrations(TOOL.claude, {
       binary: "claude",
       marketplaces: [
         {
@@ -167,7 +167,7 @@ async function sync(setup: SyncSetup = {}) {
     registry,
     new DeterministicHasher(),
     logger,
-    new Map([["claude", activator]]),
+    new Map([[TOOL.claude, activator]]),
     setup.ensureBuilt ?? {
       execute: async ({ marketplace, target }) => ({
         builtDir:
@@ -187,7 +187,7 @@ async function sync(setup: SyncSetup = {}) {
     machine === undefined ? undefined : new InMemoryManifestRepository(machine),
     new Map([
       [
-        "claude",
+        TOOL.claude,
         new FakeHostMarketplaceSources(
           activator,
           "registry",
@@ -357,7 +357,7 @@ describe("what execute reports about activation", () => {
     const { result } = await sync({ available: false });
 
     expect(result.activated).toEqual([]);
-    expect(result.binaryMissing).toEqual([{ toolId: "claude", binary: "claude" }]);
+    expect(result.binaryMissing).toEqual([{ toolId: TOOL.claude, binary: "claude" }]);
   });
 
   it("collects a best-effort failure in `warnings`, the same content the logger gets", async () => {
@@ -390,11 +390,11 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new InMemoryMarketplaceRegistry();
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
-    manifest.addTool("codex", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(TOOL.codex, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       distribution("aidd-context"),
-      registeredAiProfile("claude"),
+      registeredAiProfile(TOOL.claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -419,8 +419,8 @@ describe("toolIds narrows which tool's CLI is driven", () => {
       new DeterministicHasher(),
       new CapturingLogger(),
       new Map([
-        ["claude", claudeActivator],
-        ["codex", codexActivator],
+        [TOOL.claude, claudeActivator],
+        [TOOL.codex, codexActivator],
       ]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
@@ -436,7 +436,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     const result = await useCase.execute({
       tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
     });
 
     expect(claudeActivator.addedMarketplaces).not.toEqual([]);
@@ -451,8 +451,8 @@ describe("toolIds narrows which tool's CLI is driven", () => {
       JSON.stringify({ name: "aidd-framework", version: "1.0.0", plugins: [] })
     );
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
-    manifest.addTool("codex", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(TOOL.codex, "test", []);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
       PROJECT_ROOT,
@@ -472,8 +472,8 @@ describe("toolIds narrows which tool's CLI is driven", () => {
       new DeterministicHasher(),
       new CapturingLogger(),
       new Map([
-        ["claude", claudeActivator],
-        ["codex", codexActivator],
+        [TOOL.claude, claudeActivator],
+        [TOOL.codex, codexActivator],
       ]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
@@ -489,7 +489,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     const result = await useCase.execute({
       tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
-      toolIds: ["claude"],
+      toolIds: [TOOL.claude],
     });
 
     expect(claudeActivator.addedMarketplaces).toStrictEqual(["/built/claude"]);
@@ -584,8 +584,8 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
   it("syncs the other tools and reports only the one whose CLI ran", async () => {
     const fs = seededBuiltCatalog();
     const manifest = Manifest.create();
-    manifest.addTool("claude", "test", []);
-    manifest.addTool("vscode", "test", []);
+    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(TOOL.vscode, "test", []);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
       PROJECT_ROOT,
@@ -603,7 +603,7 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
       registry,
       new DeterministicHasher(),
       new CapturingLogger(),
-      new Map([["claude", activator]]),
+      new Map([[TOOL.claude, activator]]),
       fakeEnsureBuiltMarketplace(),
       new Map(),
       () => "",

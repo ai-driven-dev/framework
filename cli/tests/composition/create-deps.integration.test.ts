@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/framework.js";
 import { CLIOutput } from "../../src/presentation/output.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
 
 describe("createDeps", () => {
   const tools = catalogOf();
@@ -121,7 +121,7 @@ describe("createDeps", () => {
     await frameworkBuild({ target: "copilot", mode: "flat", outDir: root, force: false })?.execute({
       sourceDir: fixture,
       outDir: root,
-      target: "copilot",
+      target: TOOL.copilot,
     });
 
     expect(

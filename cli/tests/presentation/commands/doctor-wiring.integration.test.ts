@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import { registeredAiConfig } from "../../contexts/tools/testing/catalog-of.js";
+import { registeredAiConfig, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const doctorAll = vi.fn();
@@ -114,13 +114,13 @@ describe("aidd doctor — every tool at once", () => {
   it("names each equipped tool with its version and what it carries", async () => {
     doctorAll.mockResolvedValue({
       errors: [],
-      ai: { toolHealth: [{ toolId: "claude", fileCount: 12, mergeFileCount: 1 }], issues: [] },
+      ai: { toolHealth: [{ toolId: TOOL.claude, fileCount: 12, mergeFileCount: 1 }], issues: [] },
       ide: HEALTHY_SCOPE,
       pluginIssues: [],
       healthy: true,
     });
     statusAll.mockResolvedValue({
-      aiTools: { tools: [{ toolId: "claude", version: "5.2.2", drifted: [] }] },
+      aiTools: { tools: [{ toolId: TOOL.claude, version: "5.2.2", drifted: [] }] },
       ideTools: { tools: [] },
       pluginDrift: [],
     });
@@ -209,7 +209,7 @@ describe("aidd doctor — every tool at once", () => {
       pluginIssues: [
         {
           pluginName: "aidd-dev",
-          toolId: "claude",
+          toolId: TOOL.claude,
           issue: "drifted",
           filePath: ".claude/a.md",
         },
@@ -234,11 +234,11 @@ describe("aidd doctor — the two categories, told apart", () => {
     doctorAll.mockResolvedValue({
       errors: [],
       ai: {
-        toolHealth: [{ toolId: "claude", fileCount: 1, mergeFileCount: 0 }],
+        toolHealth: [{ toolId: TOOL.claude, fileCount: 1, mergeFileCount: 0 }],
         issues: [{ severity: "info", message: "claude has never run", fix: "run claude" }],
       },
       ide: {
-        toolHealth: [{ toolId: "vscode", fileCount: 2, mergeFileCount: 0 }],
+        toolHealth: [{ toolId: TOOL.vscode, fileCount: 2, mergeFileCount: 0 }],
         issues: [{ severity: "info", message: "vscode has never run", fix: "run vscode" }],
       },
       pluginIssues: [],
@@ -278,15 +278,15 @@ describe("aidd doctor --tool", () => {
   it("asks the category the tool belongs to, then narrows the inventory to that tool", async () => {
     doctorScoped.mockResolvedValue({
       toolHealth: [
-        { toolId: "claude", fileCount: 12, mergeFileCount: 1 },
-        { toolId: "codex", fileCount: 9, mergeFileCount: 0 },
+        { toolId: TOOL.claude, fileCount: 12, mergeFileCount: 1 },
+        { toolId: TOOL.codex, fileCount: 9, mergeFileCount: 0 },
       ],
       issues: [],
       pluginIssues: [],
       healthy: true,
     });
     statusScoped.mockResolvedValue({
-      tools: [{ toolId: "claude", version: "5.2.2", drifted: [] }],
+      tools: [{ toolId: TOOL.claude, version: "5.2.2", drifted: [] }],
       pluginDrift: [],
     });
 
@@ -390,7 +390,7 @@ describe("aidd doctor --tool with a plugin named", () => {
       toolHealth: [],
       issues: [],
       pluginIssues: [
-        { pluginName: "aidd-dev", toolId: "claude", issue: "not-installed-on-machine" },
+        { pluginName: "aidd-dev", toolId: TOOL.claude, issue: "not-installed-on-machine" },
       ],
       healthy: true,
     });
@@ -410,7 +410,7 @@ describe("aidd doctor --scope user", () => {
   it("reads the machine-wide manifest and checks registrations alone", async () => {
     expect(await run("--scope", "user")).toEqual([
       "User-scope tools:",
-      `  claude (v5.2.2): expects activation in ${registeredAiConfig("claude")
+      `  claude (v5.2.2): expects activation in ${registeredAiConfig(TOOL.claude)
         .nativeActivation()
         ?.userSettingsFile("/home/dev", () => undefined)}`,
       "",

@@ -2,18 +2,20 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { detectToolSignals } from "../../../../src/contexts/framework/application/init-use-case.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/index.js";
-import { registeredAiProfile } from "../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
 
 describe("a tool's own files as a signal it is in use", () => {
   it("answers nothing for a tool declaring no signal directory", async () => {
     const fs = new InMemoryFileAdapter({ "/p/.antigravity/commands/a.md": "name: aidd:x" });
 
-    expect(await detectToolSignals(fs, registeredAiProfile("antigravity"), "/p")).toStrictEqual([]);
+    expect(await detectToolSignals(fs, registeredAiProfile(TOOL.antigravity), "/p")).toStrictEqual(
+      []
+    );
   });
 
   it("answers nothing when the signal directory does not exist", async () => {
     expect(
-      await detectToolSignals(new InMemoryFileAdapter(), registeredAiProfile("cursor"), "/p")
+      await detectToolSignals(new InMemoryFileAdapter(), registeredAiProfile(TOOL.cursor), "/p")
     ).toStrictEqual([]);
   });
 
@@ -27,16 +29,16 @@ describe("a tool's own files as a signal it is in use", () => {
       "/p/.cursor/commands/notes.txt": "name: aidd:plan",
     });
 
-    expect((await detectToolSignals(fs, registeredAiProfile("cursor"), "/p")).sort()).toStrictEqual(
-      ["colon.md", "quoted.md", "tight.md"].map((f) => join(".cursor/commands", f))
-    );
+    expect(
+      (await detectToolSignals(fs, registeredAiProfile(TOOL.cursor), "/p")).sort()
+    ).toStrictEqual(["colon.md", "quoted.md", "tight.md"].map((f) => join(".cursor/commands", f)));
   });
 
   it("reads the directory the profile names, not another tool's", async () => {
     const fs = new InMemoryFileAdapter({ "/p/.claude/commands/a.md": "name: aidd:x" });
 
-    expect(await detectToolSignals(fs, registeredAiProfile("cursor"), "/p")).toStrictEqual([]);
-    expect(await detectToolSignals(fs, registeredAiProfile("claude"), "/p")).toStrictEqual([
+    expect(await detectToolSignals(fs, registeredAiProfile(TOOL.cursor), "/p")).toStrictEqual([]);
+    expect(await detectToolSignals(fs, registeredAiProfile(TOOL.claude), "/p")).toStrictEqual([
       join(".claude/commands", "a.md"),
     ]);
   });

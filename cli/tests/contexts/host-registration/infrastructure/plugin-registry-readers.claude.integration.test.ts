@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 import { PROJECT, registryHome } from "../testing/registry-home.js";
 
 const { write, readerFor } = registryHome();
@@ -18,7 +19,7 @@ describe("Claude Code's own installed_plugins.json", () => {
       })
     );
 
-    const reading = await readerFor("claude").read(PROJECT);
+    const reading = await readerFor(TOOL.claude).read(PROJECT);
 
     expect(reading.refs?.get("aidd-telemetry@aidd-framework")).toEqual({
       enabled: true,
@@ -39,7 +40,7 @@ describe("Claude Code's own installed_plugins.json", () => {
       })
     );
 
-    const reading = await readerFor("claude").read(PROJECT);
+    const reading = await readerFor(TOOL.claude).read(PROJECT);
 
     expect(reading.refs?.has("aidd-telemetry@aidd-framework")).toBe(false);
     // A ref absent from a map that exists is `not-registered`, never the `unanswerable` an
@@ -61,7 +62,7 @@ describe("Claude Code's own installed_plugins.json", () => {
       })
     );
 
-    expect((await readerFor("claude").read(PROJECT)).refs?.size).toBe(1);
+    expect((await readerFor(TOOL.claude).read(PROJECT)).refs?.size).toBe(1);
   });
 
   it("ignores an entry that names neither a scope nor a project", async () => {
@@ -73,20 +74,20 @@ describe("Claude Code's own installed_plugins.json", () => {
       })
     );
 
-    expect((await readerFor("claude").read(PROJECT)).refs?.size).toBe(0);
+    expect((await readerFor(TOOL.claude).read(PROJECT)).refs?.size).toBe(0);
   });
 
   it("reads an empty registry as an empty answer, not as unreadable", async () => {
     await write(PATH, JSON.stringify({ version: 1, plugins: {} }));
 
-    const reading = await readerFor("claude").read(PROJECT);
+    const reading = await readerFor(TOOL.claude).read(PROJECT);
 
     expect(reading.refs?.size).toBe(0);
     expect(reading.unreadable).toBeUndefined();
   });
 
   it("distinguishes an absent registry from an unreadable one", async () => {
-    const reading = await readerFor("claude").read(PROJECT);
+    const reading = await readerFor(TOOL.claude).read(PROJECT);
 
     expect(reading.refs).toBeUndefined();
     expect(reading.absent).toBe(true);
@@ -100,7 +101,7 @@ describe("Claude Code's own installed_plugins.json", () => {
   it("reads a JSONC registry as unreadable, never as carrying no plugins", async () => {
     await write(PATH, '// managed automatically\n{ "version": 1, "plugins": {} }\n');
 
-    const reading = await readerFor("claude").read(PROJECT);
+    const reading = await readerFor(TOOL.claude).read(PROJECT);
 
     expect(reading.refs).toBeUndefined();
     expect(reading.unreadable).toBeDefined();
@@ -109,7 +110,7 @@ describe("Claude Code's own installed_plugins.json", () => {
   it("reads a registry with no plugins object as unreadable rather than empty", async () => {
     await write(PATH, JSON.stringify({ version: 1 }));
 
-    const reading = await readerFor("claude").read(PROJECT);
+    const reading = await readerFor(TOOL.claude).read(PROJECT);
 
     expect(reading.refs).toBeUndefined();
   });
@@ -121,7 +122,7 @@ describe("Claude Code's registry, at the edges of its shape", () => {
   it("reads a plugins field that is not an object as unreadable, naming what was expected", async () => {
     await write(PATH, JSON.stringify({ version: 1, plugins: 5 }));
 
-    const reading = await readerFor("claude").read(PROJECT);
+    const reading = await readerFor(TOOL.claude).read(PROJECT);
 
     expect(reading.refs).toBeUndefined();
     expect(reading.unreadable).toBe("no `plugins` object");
@@ -130,7 +131,7 @@ describe("Claude Code's registry, at the edges of its shape", () => {
   it("ignores a ref whose entries are not a list", async () => {
     await write(PATH, JSON.stringify({ version: 1, plugins: { "a@m": { scope: "user" } } }));
 
-    const reading = await readerFor("claude").read(PROJECT);
+    const reading = await readerFor(TOOL.claude).read(PROJECT);
 
     expect(reading.refs?.size).toBe(0);
   });
@@ -146,7 +147,7 @@ describe("Claude Code's registry, at the edges of its shape", () => {
       })
     );
 
-    const reading = await readerFor("claude").read(PROJECT);
+    const reading = await readerFor(TOOL.claude).read(PROJECT);
 
     expect(reading.refs?.get("a@m")).toStrictEqual({ enabled: true, scope: "user" });
   });

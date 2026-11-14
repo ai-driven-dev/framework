@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SetupToolsPromptUseCase } from "../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
-import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
+import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 
 describe("SetupToolsPromptUseCase", () => {
@@ -28,7 +28,7 @@ describe("SetupToolsPromptUseCase", () => {
 
       const result = await useCase.execute({
         interactive: true,
-        aiTools: ["claude"],
+        aiTools: [TOOL.claude],
         ideTools: [],
         tools: registeredCatalog(),
       });
@@ -44,7 +44,7 @@ describe("SetupToolsPromptUseCase", () => {
       const result = await useCase.execute({
         interactive: true,
         aiTools: [],
-        ideTools: ["vscode"],
+        ideTools: [TOOL.vscode],
         tools: registeredCatalog(),
       });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
+import { TOOL } from "../../testing/catalog-of.js";
 
 describe("ConfigSection", () => {
   describe("constructor", () => {
@@ -102,7 +103,7 @@ describe("ConfigSection", () => {
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContent: '{"key": true}',
-        requiresTool: "vscode",
+        requiresTool: TOOL.vscode,
       });
       expect(cap.requiredTool()).toBe("vscode");
     });
@@ -113,7 +114,7 @@ describe("ConfigSection", () => {
           new ConfigSection({
             outputPath: ".vscode/settings.json",
             mergeStrategy: "framework-prime",
-            requiresTool: "vscode",
+            requiresTool: TOOL.vscode,
           })
       ).toThrow("ConfigSection: 'requiresTool' is only meaningful with 'staticContent'.");
     });
@@ -123,7 +124,7 @@ describe("ConfigSection", () => {
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
         staticContentAssetFile: "vscode-settings.json",
-        requiresTool: "vscode",
+        requiresTool: TOOL.vscode,
       });
       expect(cap.resolveStaticContent()).toBeNull();
       expect(cap.requiredTool()).toBe("vscode");

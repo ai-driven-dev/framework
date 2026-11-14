@@ -13,7 +13,7 @@ import {
   FaultingFileAdapter,
 } from "../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const HOME = "/home/u";
 const BOUNDARY = join(HOME, ".cursor", "plugins", "local");
@@ -39,7 +39,7 @@ describe("userScopeFilesSafeToDelete", () => {
       new InMemoryFileAdapter(),
       logger,
       plugin({ "aidd-test/a.md": HASH }),
-      registeredAiProfile("claude"),
+      registeredAiProfile(TOOL.claude),
       HOME
     );
 
@@ -54,7 +54,7 @@ describe("userScopeFilesSafeToDelete", () => {
       new InMemoryFileAdapter(),
       logger,
       plugin({ "../escape.md": HASH }),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       HOME
     );
 
@@ -73,7 +73,7 @@ describe("userScopeFilesSafeToDelete", () => {
       fs,
       logger,
       plugin({ "aidd-test/a.md": HASH }),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       HOME
     );
 
@@ -91,7 +91,7 @@ describe("userScopeFilesSafeToDelete", () => {
       fs,
       logger,
       plugin({ "aidd-test/gone.md": HASH, "aidd-test/a.md": HASH }),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       HOME
     );
 
@@ -110,7 +110,7 @@ describe("userScopeFilesSafeToDelete", () => {
         fs,
         new CapturingLogger(),
         plugin({ "aidd-test/a.md": HASH }),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         HOME
       )
     ).rejects.toThrow("EACCES: planted by the test");
@@ -124,7 +124,7 @@ describe("userScopeFilesSafeToDelete", () => {
         fs,
         new CapturingLogger(),
         plugin({ "aidd-test/plugin.json": HASH }),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         HOME
       )
     ).rejects.toThrow(/edited.*plugin.json|plugin.json.*edited/);
@@ -140,7 +140,7 @@ describe("userScopeFilesSafeToDelete", () => {
         fs,
         new CapturingLogger(),
         plugin({ "aidd-test/script.js": "" }),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         HOME
       )
     ).rejects.toThrow(/unproven.*script.js|script.js.*unproven/);
@@ -150,7 +150,7 @@ describe("userScopeFilesSafeToDelete", () => {
         fs,
         new CapturingLogger(),
         plugin({ "aidd-test/script.js": HASH }),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         HOME
       )
     ).rejects.toThrow(/EACCES/);
@@ -169,7 +169,7 @@ describe("assertUserScopeWriteBoundary", () => {
     await expect(
       assertUserScopeWriteBoundary(
         new InMemoryFileAdapter(),
-        registeredAiProfile("claude"),
+        registeredAiProfile(TOOL.claude),
         "aidd-test",
         [file("aidd-test/a.md")],
         HOME
@@ -187,7 +187,7 @@ describe("assertUserScopeWriteBoundary", () => {
       await expect(
         assertUserScopeWriteBoundary(
           fs,
-          registeredAiProfile("cursor"),
+          registeredAiProfile(TOOL.cursor),
           "aidd-test",
           [file("aidd-test/a.md")],
           HOME
@@ -204,7 +204,7 @@ describe("assertUserScopeWriteBoundary", () => {
     await expect(
       assertUserScopeWriteBoundary(
         fs,
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         "aidd-test",
         [file("aidd-test/skills/new/SKILL.md")],
         HOME
@@ -225,7 +225,7 @@ describe("assertUserScopeWriteBoundary", () => {
     await expect(
       assertUserScopeWriteBoundary(
         fs,
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         "aidd-test",
         [file("aidd-test/skills/new/SKILL.md")],
         HOME
@@ -238,7 +238,7 @@ describe("assertUserScopeWriteBoundary", () => {
     await expect(
       assertUserScopeWriteBoundary(
         fs,
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         "aidd-test",
         [file("aidd-test/skills/demo/SKILL.md")],
         HOME
@@ -256,7 +256,7 @@ describe("assertUserScopeWriteBoundary", () => {
     await expect(
       assertUserScopeWriteBoundary(
         new InMemoryFileAdapter(),
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         "aidd-test",
         [file(relativePath)],
         HOME
@@ -270,7 +270,7 @@ describe("assertUserScopeWriteBoundary", () => {
     await expect(
       assertUserScopeWriteBoundary(
         fs,
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         "aidd-test",
         [file("aidd-test/skills/demo/SKILL.md")],
         HOME
@@ -284,7 +284,7 @@ describe("assertUserScopeWriteBoundary", () => {
     await expect(
       assertUserScopeWriteBoundary(
         fs,
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         "aidd-test",
         [file("aidd-test/skills/demo/SKILL.md")],
         HOME
@@ -298,7 +298,7 @@ describe("assertUserScopeWriteBoundary", () => {
     await expect(
       assertUserScopeWriteBoundary(
         fs,
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         "aidd-test",
         [file("aidd-test/skills/demo/SKILL.md")],
         HOME
@@ -324,7 +324,7 @@ describe("user-scope boundaries on a filesystem that rejects a missing path", ()
       strict(),
       logger,
       plugin({ "aidd-test/a.md": HASH }),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       HOME
     );
 
@@ -340,7 +340,7 @@ describe("user-scope boundaries on a filesystem that rejects a missing path", ()
       fs,
       logger,
       plugin({ "aidd-test/gone.md": HASH, "aidd-test/a.md": HASH }),
-      registeredAiProfile("cursor"),
+      registeredAiProfile(TOOL.cursor),
       HOME
     );
 
@@ -356,7 +356,7 @@ describe("user-scope boundaries on a filesystem that rejects a missing path", ()
     await expect(
       assertUserScopeWriteBoundary(
         fs,
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         "aidd-test",
         [file("aidd-test/a.md")],
         HOME
@@ -370,7 +370,7 @@ describe("user-scope boundaries on a filesystem that rejects a missing path", ()
     await expect(
       assertUserScopeWriteBoundary(
         fs,
-        registeredAiProfile("cursor"),
+        registeredAiProfile(TOOL.cursor),
         "aidd-test",
         [file("aidd-test/skills/new/a.md")],
         HOME

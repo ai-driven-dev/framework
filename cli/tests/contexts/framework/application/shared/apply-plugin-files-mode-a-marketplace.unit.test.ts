@@ -9,7 +9,7 @@ import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-u
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf } from "../../../tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -83,7 +83,7 @@ async function installGithubPlugin(
   ).execute({
     tools: catalogOf(),
     source: GIT_SUBDIR_SOURCE,
-    toolIds: ["claude"],
+    toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,
     marketplace: "aidd-framework",
     interactive: false,
@@ -94,13 +94,13 @@ async function installGithubPlugin(
 describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/copilot)", () => {
   it("cleans up files a pre-fix update/restore materialized, leaving the manifest entry empty", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installGithubPlugin(deps, registry);
 
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
-    const plugin = manifest.getPlugins("claude").find((p) => p.name === "sample-plugin");
+    const plugin = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
     if (plugin === undefined) throw new Error("plugin not found");
 
     // Files materialized and recorded on the manifest entry, though Mode A's own contract
@@ -109,7 +109,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
       [".claude/plugins/sample-plugin/commands/greet.md", "stray-hash-1"],
       [".claude/plugins/sample-plugin/agents/reviewer.md", "stray-hash-2"],
     ]);
-    manifest.updatePlugin("claude", plugin.withFiles(strayFiles));
+    manifest.updatePlugin(TOOL.claude, plugin.withFiles(strayFiles));
     for (const relativePath of strayFiles.keys()) {
       await deps.fs.writeFile(join(PROJECT_ROOT, relativePath), "stray content");
     }
@@ -124,25 +124,25 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     for (const relativePath of strayFiles.keys()) {
       expect(deps.fs.getFile(join(PROJECT_ROOT, relativePath))).toBeUndefined();
     }
-    const after = manifest.getPlugins("claude").find((p) => p.name === "sample-plugin");
+    const after = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
     expect(after?.files.size).toBe(0);
     expect(result.totalFiles).toBe(0);
   });
 
   it("leaves a file the manifest never tracked untouched, even inside the plugin's own directory", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installGithubPlugin(deps, registry);
 
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
-    const plugin = manifest.getPlugins("claude").find((p) => p.name === "sample-plugin");
+    const plugin = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
     if (plugin === undefined) throw new Error("plugin not found");
 
     const trackedPath = ".claude/plugins/sample-plugin/commands/greet.md";
     const untrackedPath = ".claude/plugins/sample-plugin/notes.md";
-    manifest.updatePlugin("claude", plugin.withFiles(new Map([[trackedPath, "stray-hash"]])));
+    manifest.updatePlugin(TOOL.claude, plugin.withFiles(new Map([[trackedPath, "stray-hash"]])));
     await deps.fs.writeFile(join(PROJECT_ROOT, trackedPath), "stray content");
     // Not in the manifest entry — a file placed alongside the plugin's tracked ones, which
     // the cleanup must never delete, since it only iterates the manifest's own keys.
@@ -161,13 +161,13 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
 
   it("restores a github-sourced marketplace plugin on claude without materializing any files", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, "claude");
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const registry = await makeGithubRegistry();
     await installGithubPlugin(deps, registry);
 
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
-    const before = manifest.getPlugins("claude").find((p) => p.name === "sample-plugin");
+    const before = manifest.getPlugins(TOOL.claude).find((p) => p.name === "sample-plugin");
     expect(before?.files.size).toBe(0);
 
     const result = await makeRestoreUseCase(deps, registry).execute({
@@ -182,7 +182,7 @@ describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/co
     expect(result.totalFiles).toBe(0);
     expect(deps.fs.listAll().some((p) => p.includes(".claude/plugins/"))).toBe(false);
 
-    const plugins = manifest.getPlugins("claude").filter((p) => p.name === "sample-plugin");
+    const plugins = manifest.getPlugins(TOOL.claude).filter((p) => p.name === "sample-plugin");
     expect(plugins).toHaveLength(1);
     expect(plugins[0]?.files.size).toBe(0);
     expect(plugins[0]?.marketplace).toBe("aidd-framework");

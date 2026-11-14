@@ -43,7 +43,7 @@ export interface ManifestFileContext {
 }
 
 export class Manifest {
-  private readonly _tools: Map<ToolId, ToolEntry>;
+  private readonly _tools: Map<string, ToolEntry>;
 
   private constructor(params: { tools: Map<ToolId, ToolEntry> }) {
     this._tools = new Map(params.tools);
@@ -73,16 +73,16 @@ export class Manifest {
   }
 
   getInstalledToolIds(): ToolId[] {
-    return [...this._tools.keys()];
+    return [...this._tools.values()].map((entry) => entry.toolId);
   }
 
   getToolFiles(
-    toolId: ToolId
+    toolId: string
   ): ReadonlyArray<{ relativePath: string; hash: FileHash; frameworkPath?: string }> {
     return this._tools.get(toolId)?.files ?? [];
   }
 
-  getMergeFiles(toolId: ToolId): readonly MergeFileEntry[] {
+  getMergeFiles(toolId: string): readonly MergeFileEntry[] {
     return this._tools.get(toolId)?.mergeFiles ?? [];
   }
 
@@ -127,11 +127,11 @@ export class Manifest {
     this._tools.delete(toolId);
   }
 
-  hasTool(toolId: ToolId): boolean {
+  hasTool(toolId: string): boolean {
     return this._tools.has(toolId);
   }
 
-  getPlugins(toolId: ToolId): readonly InstalledPlugin[] {
+  getPlugins(toolId: string): readonly InstalledPlugin[] {
     return this._tools.get(toolId)?.plugins ?? [];
   }
 
@@ -170,7 +170,7 @@ export class Manifest {
     return false;
   }
 
-  getToolVersion(toolId: ToolId): string | undefined {
+  getToolVersion(toolId: string): string | undefined {
     return this._tools.get(toolId)?.version;
   }
 

@@ -190,6 +190,13 @@ export const PROFILE_CHECKS: readonly ConformanceCheck<ConformanceSubject>[] = [
     if (config === undefined) return;
     expect(config.consumes(CONFIG_MCP)).toBe(true);
   }),
+  aiCheck("asks, in each settings file, for a registered tool", (profile, { registration }) => {
+    const registered = registration.map((other) => other.toolId);
+    for (const file of profile.settingsFiles()) {
+      const required = file.requiredTool();
+      if (required !== null) expect(registered).toContain(required);
+    }
+  }),
   aiCheck("routes a numbered command and its references to the same folder", (profile) => {
     expectNumberedCommandsRouted(profile);
   }),

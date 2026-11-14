@@ -6,7 +6,11 @@ import { McpConfigError } from "../../../../../src/shared/domain/errors.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredCatalog, registeredFlatContract } from "../../../tools/testing/catalog-of.js";
+import {
+  registeredCatalog,
+  registeredFlatContract,
+  TOOL,
+} from "../../../tools/testing/catalog-of.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-plugin-root");
@@ -106,7 +110,7 @@ describe("a flat build resolves every plugin-root reference to a file it writes"
 });
 
 describe("a flat build that folds MCP servers into the tool's own config", () => {
-  it.each(["codex", "kilo", "opencode"] as const)(
+  it.each([TOOL.codex, TOOL.kilo, TOOL.opencode] as const)(
     "names the plugin whose MCP config %s cannot parse",
     async (tool) => {
       const fs = seeded(["hooks/server.js"]);
