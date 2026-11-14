@@ -142,7 +142,9 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-validate.md](skills/06-agent-generate/actions/03-validate.md) | - |
 | `assets` | [agent-template.md](skills/06-agent-generate/assets/agent-template.md) | `<what it does>. Use to <when to call it>.` |
 | `references` | [agent-authoring.md](skills/06-agent-generate/references/agent-authoring.md) | - |
-| `references` | [tool-paths.md](skills/06-agent-generate/references/tool-paths.md) | - |
+| `references` | [hosts.md](skills/06-agent-generate/references/hosts.md) | - |
+| `references` | [writer.md](skills/06-agent-generate/references/writer.md) | - |
+| `scripts` | [write-agent.cjs](skills/06-agent-generate/scripts/write-agent.cjs) | - |
 | `-` | [SKILL.md](skills/06-agent-generate/SKILL.md) | `Creates or updates an agent, a focused role, across the host AI tools, when the user wants a new agent or to refactor one.` |
 
 #### `skills/07-command-generate`

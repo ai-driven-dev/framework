@@ -8,9 +8,9 @@ The files written.
 
 ## Process
 
-1. Check each file against its tool's path, frontmatter and format in [tool-paths.md](../references/tool-paths.md), and list its breaches, even none.
-2. Check each file against [agent-authoring.md](../references/agent-authoring.md), and list its breaches, even none.
-3. Fix each breach and repeat from step 1 until every list is empty.
+1. Host tools: run the writer with `--check` on the same input, and list each drifted file as a breach.
+2. Check the canonical agent against [agent-authoring.md](../references/agent-authoring.md), and list its breaches, even none.
+3. Fix each breach in the input or the canonical agent, rerun the writer, and repeat from step 1 until every list is empty.
    - Fix declined or impossible: report the blocker and stop.
 4. Report each file as passed, or with its breaches.
 
