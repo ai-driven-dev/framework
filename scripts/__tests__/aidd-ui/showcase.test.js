@@ -1117,6 +1117,16 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(pagesOf()["icon-search.html"], /secret/);
     });
 
+    it("does not mark a step done while an asset in it is still proposed", () => {
+      for (const name of ["button", "search-field", "dialog", "old-button"]) fs.rmSync(path.join(tmp, UI, `components/${name}.md`));
+      assert.equal(stepOf(pagesOf()["index.html"], "components").mark, "\u2713");
+      edit(tmp, `${UI}/assets/icon-search.md`, "status: validated", "status: proposed");
+      const index = pagesOf()["index.html"];
+      assert.equal(stepOf(index, "components").mark, "1");
+      assert.match(index, /<li data-step="components" data-state="todo">/);
+      assert.match(index, /<span class="state">1 to review<\/span>/);
+    });
+
     it("opens the step of the page, and on the overview the first step with work", () => {
       const pages = pagesOf();
       assert.deepEqual(stepsOf(pages["index.html"]).filter((each) => each.open).map((each) => each.step), ["components"]);

@@ -949,6 +949,9 @@ const hasRender = (project, record) => list(fm(record).states).length > 0 && pro
 /** Whether the drawer reviews the record: one with a render, or a brand or a system, which has a version and no render. */
 const reviewable = (project, record) => hasRender(project, record) || (["brand", SYSTEM_ID].includes(fm(record).kind) && fm(record).version !== undefined);
 
+/** Whether the record is an asset still proposed: it has no state to review in the drawer, so it is judged on its page. */
+const unvalidated = (record) => fm(record).kind === "asset" && fm(record).status === "proposed";
+
 /** Whether a screen's code is at its version: its states then each need a capture. */
 const isCoded = (record) => fm(record).kind === "screen" && list(fm(record).code).some((link) => parseLink(link)?.version === fm(record).version);
 
@@ -970,15 +973,20 @@ function hereOf(held, records, sets, current) {
 /** The count of what awaits review, as the button and the drawer write it: the page script rewrites it as verdicts are given. */
 const pendingOf = (labels, count) => `<span class="tally pending" data-template="${escaped(labels.toReview)}">${escaped(filled(labels.toReview, { count }))}</span>`;
 
+/** What a step still asks of the person: what the drawer reviews and the assets still proposed. A step with none is done. */
+const leftOf = (each) => each.todo + each.proposed.length;
+
 /** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
- * not settled, and the open sets. `todo` counts records and open sets, never states. */
+ * not settled, the open sets, and the assets still proposed. `todo` counts records and open sets, never states, and
+ * leaves the assets out: the drawer cannot clear them. */
 function stepsOf({ project, records, rows, sets }) {
   return STEPS.map((step) => {
     const own = records.filter((record) => stepOf(record) === step);
     const ownSets = sets.filter((set) => setStepOf(set) === step);
     const awaiting = own.filter((record) => reviewable(project, record) && awaitingOf(rows, record).length).sort(byCategory);
     const open = ownSets.filter((set) => !set.problems.length);
-    return { step, records: own, sets: ownSets, awaiting, open, todo: awaiting.length + open.length };
+    const proposed = own.filter((record) => !reviewable(project, record) && unvalidated(record));
+    return { step, records: own, sets: ownSets, awaiting, open, proposed, todo: awaiting.length + open.length };
   });
 }
 
@@ -1036,8 +1044,9 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
   const here = hereOf(held, records, sets, current);
   const total = held.reduce((sum, each) => sum + each.todo, 0);
   const stepItem = (each, at) => {
-    const mark = each.todo ? each.todo : each.records.length || each.sets.length ? "\u2713" : "\u2014";
-    const markName = each.todo ? filled(labels.toReview, { count: each.todo }) : each.records.length || each.sets.length ? labels.stepDone : labels.stepEmpty;
+    const left = leftOf(each);
+    const mark = left ? left : each.records.length || each.sets.length ? "\u2713" : "\u2014";
+    const markName = left ? filled(labels.toReview, { count: left }) : each.records.length || each.sets.length ? labels.stepDone : labels.stepEmpty;
     const alone = (each.step === "identity" || each.step === "foundations") && each.records.length === 1 && !each.sets.length ? each.records[0] : null;
     const name = alone
       ? `<a class="step-name" href="${escaped(fm(alone).id)}.html"${fm(alone).id === current ? ' aria-current="page"' : ""}>${labels.stepNames[each.step]}</a>`
@@ -1401,8 +1410,9 @@ const hrefOf = (each) => {
 /** The five steps as a stepper in order, each a link to the first thing to open, with its state in words. */
 function stepperOf(held, labels) {
   const item = (each, at) => {
-    const state = each.todo ? "todo" : each.records.length || each.sets.length ? "done" : "empty";
-    const word = each.todo ? filled(labels.toReview, { count: each.todo }) : state === "done" ? labels.stepDone : labels.stepEmpty;
+    const left = leftOf(each);
+    const state = left ? "todo" : each.records.length || each.sets.length ? "done" : "empty";
+    const word = left ? filled(labels.toReview, { count: left }) : state === "done" ? labels.stepDone : labels.stepEmpty;
     const href = hrefOf(each);
     const inner = `<span class="no">${at + 1}</span><span class="name">${labels.stepNames[each.step]}</span><span class="state">${escaped(word)}</span>`;
     return `<li data-step="${each.step}" data-state="${state}">${href ? `<a href="${escaped(href)}">${inner}</a>` : `<span class="cell">${inner}</span>`}</li>`;
