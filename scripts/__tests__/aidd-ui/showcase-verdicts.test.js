@@ -48,7 +48,15 @@ describe("the verdicts beside the state tabs", () => {
     };
     // A record page as the script sees it: one review of home at version 1 with two tabs, the drawer holding the
     // row of `empty` only, as a state already settled has none there.
-    const open = (memory = {}, { drawerHoldsIt = true } = {}) => {
+    // A drawer item with one state not settled, naming the screen that dresses it when it is a wireframe.
+    const pending = (record, dressedBy) => {
+      const row = element({ state: "default", current: "pending" }, { below: { ".verdict": ["ok", "revise"].map((verdict) => element({ verdict })), ".comment": [element()], ".pick": [element()] } });
+      const own = element(dressedBy ? { record, version: "1", dressedBy } : { record, version: "1" }, { below: { "li.pstate": [row], ".done": [element()] } });
+      own.hasAttribute = () => false;
+      own.closest = () => ({ dataset: { step: "screens" } });
+      return own;
+    };
+    const open = (memory = {}, { drawerHoldsIt = true, beside = [] } = {}) => {
       const script = pagesOf()["index.html"].match(/<script>([\s\S]*)<\/script>/)[1];
       const tabs = [["default", "pending"], ["empty", "pending"]].map(([state, current]) => element({ tab: state, current }));
       const field = element();
@@ -61,19 +69,27 @@ describe("the verdicts beside the state tabs", () => {
       const item = element({ record: "home", version: "1" }, { below: { "li.pstate": [row], ".done": [element()] } });
       item.hasAttribute = () => false;
       item.closest = () => ({ dataset: { step: "screens" } });
-      const by = { scrim: element(), review: element({}, { hidden: true, below: { "details.item": drawerHoldsIt ? [item] : [], "details.choice": [], ".step-ok": [] } }), "open-review": element(), copy: element({ blocked: "blocked", hint: "hint" }), clear: element(), note: element(), "close-review": element() };
-      const document = { body: { dataset: {} }, addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === "section.review[data-record]" ? [review] : []), querySelector: () => null };
+      const tally = element({ template: "{count} to review" });
+      const by = { scrim: element(), review: element({}, { hidden: true, below: { "details.item": drawerHoldsIt ? [item, ...beside.map(([record, dressedBy]) => pending(record, dressedBy))] : [], "details.choice": [], ".step-ok": [] } }), "open-review": element(), copy: element({ blocked: "blocked", hint: "hint" }), clear: element(), note: element(), "close-review": element() };
+      const document = { body: { dataset: {} }, addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === "section.review[data-record]" ? [review] : selector === ".tally[data-template]" ? [tally] : []), querySelector: () => null };
       const written = [];
       const window = { addEventListener() {}, localStorage: { getItem: (key) => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; }, removeItem: (key) => { delete memory[key]; } } };
       const navigator = { clipboard: { writeText: async (content) => { written.push(content); } } };
       const api = new Function("document", "window", "navigator", "setTimeout", `${script}\nreturn { marked };`)(document, window, navigator, () => {});
-      return { votes, field, rowVotes, rowField, tabs, review, by, memory, written, api };
+      return { tally, votes, field, rowVotes, rowField, tabs, review, by, memory, written, api };
     };
     const copiedStates = async (page) => {
       page.by.copy.listeners.click();
       await new Promise((resolve) => setImmediate(resolve));
       return JSON.parse(page.written[0].replace(/^```json\n|\n```\n$/g, ""))[0].verdicts.map((each) => [each.state, each.verdict, each.comment]);
     };
+
+    it("counts a wireframe awaiting beside the screen that dresses it once, and alone once that screen is settled", () => {
+      const page = open({}, { beside: [["wire", "screen"], ["screen"], ["bare"]] });
+      assert.equal(page.tally.textContent, "3 to review", "home, screen and bare count, the wireframe the screen dresses does not");
+      const settledScreen = open({}, { beside: [["wire", "screen"], ["bare"]] });
+      assert.equal(settledScreen.tally.textContent, "3 to review", "with no awaiting screen beside it the wireframe counts for itself");
+    });
 
     it("gives the verdict of the shown state under the key and the values the drawer keeps", () => {
       const page = open();

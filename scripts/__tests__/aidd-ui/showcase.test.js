@@ -862,6 +862,21 @@ describe("aidd-ui showcase", () => {
       assert.match(index, /<h2>To review \(7\)<\/h2>/);
     });
 
+    it("counts a screen and the wireframe it dresses once in the drawer too, and still lists both for a verdict", () => {
+      const render = "<html><head></head><body><main data-state=\"default\">x</main></body></html>";
+      put(tmp, `${UI}/wireframes/start.md`, record(["id: start", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/wireframes/start.html`, render);
+      put(tmp, `${UI}/screens/start-screen.md`, record(["id: start-screen", "kind: screen", "status: proposed", "version: 1", "wireframe: start", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/screens/start-screen.html`, render);
+      put(tmp, `${UI}/wireframes/bare.md`, record(["id: bare", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Bare"));
+      put(tmp, `${UI}/wireframes/bare.html`, render);
+      const drawer = pagesOf()["index.html"].match(/<aside class="drawer"[\s\S]*?<\/aside>/)[0];
+      assert.match(drawer, /data-step="screens"[^>]*>(?:(?!<\/summary>)[\s\S])*<span class="step-count">\(3\)<\/span>/);
+      for (const id of ["start", "start-screen", "bare"]) assert.match(drawer, new RegExp(`<details class="item" data-record="${id}"`), id);
+      assert.match(drawer, /data-record="start" data-version="1" data-dressed-by="start-screen"/);
+      assert.doesNotMatch(drawer, /data-record="(start-screen|bare)"[^>]*data-dressed-by/);
+    });
+
     it("splits the elements awaiting review by category on the overview", () => {
       const index = pagesOf()["index.html"];
       const block = index.match(/<section class="todo-step" data-step="components">[\s\S]*?<\/section>/)[0];
@@ -915,8 +930,8 @@ describe("aidd-ui showcase", () => {
     it("groups the drawer by step, only the steps with something left, the step of the page open", () => {
       const groupsOf = (html) => [...drawerOf(html).matchAll(/<details class="step-group" data-step="(\w+)"( open)?><summary><span class="step-name">([^<]*)<\/span><span class="step-count">\((\d+)\)<\/span>/g)].map((match) => [match[1], Boolean(match[2]), match[3], match[4]]);
       const pages = pagesOf();
-      assert.deepEqual(groupsOf(pages["index.html"]), [["components", true, "Elements", "4"], ["screens", false, "Screens", "2"]]);
-      assert.deepEqual(groupsOf(pages["home.html"]), [["components", false, "Elements", "4"], ["screens", true, "Screens", "2"]]);
+      assert.deepEqual(groupsOf(pages["index.html"]), [["components", true, "Elements", "4"], ["screens", false, "Screens", "1"]]);
+      assert.deepEqual(groupsOf(pages["home.html"]), [["components", false, "Elements", "4"], ["screens", true, "Screens", "1"]]);
       assert.deepEqual(groupsOf(pagesOf({ lang: "fr" })["button.html"]).map(([step, open, name]) => [step, open, name]), [["components", true, "\u00c9l\u00e9ments"], ["screens", false, "\u00c9crans"]]);
     });
 

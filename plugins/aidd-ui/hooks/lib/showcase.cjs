@@ -756,6 +756,7 @@ const entries = () => entriesOf(model(), choices);
 const blocked = () => blockedOf(entries());
 function paint() {
   let left = 0;
+  const unsettled = [];
   for (const item of items) {
     const rows = rowsOf(item);
     let own = 0;
@@ -776,8 +777,9 @@ function paint() {
       each.textContent = settledNow + "/" + each.dataset.total;
       each.dataset.complete = String(settledNow === Number(each.dataset.total));
     });
-    if (own < rows.length) left += 1;
+    if (own < rows.length) unsettled.push(item);
   }
+  left += unsettled.filter((item) => !(item.dataset.dressedBy && unsettled.some((other) => other.dataset.record === item.dataset.dressedBy))).length;
   for (const set of sets) {
     let decided = 0;
     for (const row of variantsOf(set)) {
@@ -1017,17 +1019,18 @@ const leftWordOf = (labels, each) => (each.todo ? filled(labels.toReview, { coun
 
 /** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
  * not settled, the open sets, and the records the drawer cannot review that are still proposed. `todo` counts records
- * and open sets, never states, a wireframe awaiting beside the awaiting screen that dresses it once, and leaves the proposed ones out: the drawer cannot clear them. */
+ * and open sets, never states, a wireframe awaiting beside the awaiting screen that dresses it once (`dressedBy` names
+ * that screen, `counted` is what is left), and leaves the proposed ones out: the drawer cannot clear them. */
 function stepsOf({ project, records, rows, sets }) {
   return STEPS.map((step) => {
     const own = records.filter((record) => stepOf(record) === step);
     const ownSets = sets.filter((set) => setStepOf(set) === step);
     const awaiting = own.filter((record) => reviewable(project, record) && awaitingOf(rows, record).length).sort(byCategory);
     const open = ownSets.filter((set) => !set.problems.length);
-    const dressed = new Set(awaiting.filter((record) => fm(record).kind === "screen" && fm(record).wireframe).map((record) => fm(record).wireframe));
-    const counted = awaiting.filter((record) => !(fm(record).kind === "wireframe" && dressed.has(fm(record).id)));
+    const dressedBy = new Map(awaiting.filter((record) => fm(record).kind === "screen" && fm(record).wireframe).map((record) => [fm(record).wireframe, fm(record).id]));
+    const counted = awaiting.filter((record) => !(fm(record).kind === "wireframe" && dressedBy.has(fm(record).id)));
     const proposed = own.filter((record) => !reviewable(project, record) && unvalidated(record));
-    return { step, records: own, sets: ownSets, awaiting, open, proposed, todo: counted.length + open.length };
+    return { step, records: own, sets: ownSets, awaiting, counted, dressedBy, open, proposed, todo: counted.length + open.length };
   });
 }
 
@@ -1344,10 +1347,11 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
       `<textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea>`,
       "</li>",
     ].join("");
-    return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${id === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record, labels))}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
+    const screen = held.map((each) => each.dressedBy.get(id)).find(Boolean);
+    return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${screen ? ` data-dressed-by="${escaped(screen)}"` : ""}${id === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record, labels))}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
   };
   const shown = held.reduce((sum, each) => sum + each.awaiting.length, 0);
-  const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.awaiting.length})</span><button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button></summary>${each.awaiting.map(item).join("\n")}</details>`;
+  const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.counted.length})</span><button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button></summary>${each.awaiting.map(item).join("\n")}</details>`;
   const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
   const choice = (set) => {
     const row = (variant) => `<li class="pvariant" data-variant="${escaped(variant.name)}"><span class="pick">${escaped(variant.name)}</span><span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(vote).join("")}</span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></li>`;
