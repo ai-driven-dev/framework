@@ -2,16 +2,68 @@
 
 How this package is tested: the layers, the tools, the conventions.
 
+## Policy
+
+### What earns a test
+
+- A test pins one behaviour a caller or a user can observe, once, at the lowest level that proves it.
+- A behaviour proven at one level is not proven again at another.
+- Tested: domain rules and decisions, parsing at a boundary, every error a user can reach.
+- Not tested: wiring, delegation, getters, re-exports, static declarations (a tool profile's data), and states the types already forbid.
+- A test that would only restate the implementation is not written.
+
+### Levels
+
+A level higher up costs more per test: measured on the whole suite, a unit test runs in about a millisecond, an integration test in several, an e2e test in about a hundred, since each spawns the built binary. Place each behaviour by the table below, at the first level that can prove it.
+
+| Behaviour | Level | Count |
+| --- | --- | --- |
+| a domain rule or invariant: a refusal, a computed answer, an order | unit | one per rule, cases in a table |
+| a use case's decision: what it writes, skips, reports, and each error it raises | unit, with in-memory doubles | one per decision or error |
+| a command's parsing of its flags and the message of a user error | unit | one per flag rule or error |
+| what every implementation of a port must do | contract, on the double and the real adapter | one suite per port |
+| how an adapter talks to a real system: file system, git, a host CLI, the network | integration | the cases that system can produce |
+| a main user journey, through the built binary | e2e | the main journeys only |
+| a failure only the binary shows: exit code, stderr, an unknown command or flag | e2e | one per failure family, never one per case |
+| exact output bytes | golden | help text and generated distributions only |
+| a rule about `src/` structure | arch | one per rule |
+| a profile's declared data, wiring, delegation | none | none |
+
+Unit holds the bulk of the suite and reads no disk, process or network. A failure whose message a use case decides is a unit test; e2e only checks that some failure of that family reaches the user with its exit code.
+
+### When to write it
+
+- Bug fix: the failing test first, red for the reason its name gives.
+- New domain rule: test first.
+- Refactor, move, rename, wiring: no new test. Existing tests move with the code.
+- Characterization: only for moved code that no test covers. It is deleted at the end of the refactor, or kept as that behaviour's one test.
+- A new check (arch test, lint rule) is proven once in its PR by a planted break, written in the PR. The planted break is not kept as a test.
+
+### Thresholds
+
+| Gate | Value | Where |
+| --- | --- | --- |
+| Mutation floor | 80, domain scopes only (`src/kernel/**`, `src/contexts/*/domain/**` except `tools/domain/profiles/**`) | `mutation-scopes.json` |
+| Mutation elsewhere | no scope, no floor | `mutation-scopes.json` |
+| Mutation ratchet | none: a floor is not raised to the measured score | `mutation-scopes.json` |
+| Coverage | reported in CI, gates nothing | `vitest.config.ts` |
+| Test file size | 400 lines fails; files over it today sit in a shrink-only baseline | `test-file-size.arch.test.ts` |
+| PR size | a reviewer challenges a feature whose test lines outgrow its source lines (`git diff --shortstat <base> -- src tests`) | review |
+
+### Review
+
+- A reviewer's test findings are: a duplicate across levels, a test of wiring, a missing test of an error a user can reach.
+- "Add a test" needs the behaviour it pins, not a coverage line.
+
 ## Strategy
 
 - Four vitest projects (`vitest.config.ts` → `test.projects`): `unit`, `integration`, `e2e` select by extension anywhere under `tests/`; `architecture` selects `tests/architecture/**/*.arch.test.ts` only, so a stray `*.arch.test.ts` runs nowhere.
-- Unit: pure logic. Integration: a use case or adapter, ports substituted. E2E: the real built binary. Architecture: ratchets over source text.
-- A pyramid; read the split live.
+- What each level holds, and how many tests it gets: the Levels table in the Policy above.
 
 ## Tools
 
 - `vitest`, `fast-check` for properties, `ink-testing-library` for terminal views.
-- `stryker` for mutation, per scope, a gate in CI on the scopes a change touches.
+- `stryker` for mutation, on the domain scopes only, a gate in CI on the scopes a change touches.
 - Vitest 5 uses canonical `fullTestName` values for filtered runs. The pnpm patch for `@stryker-mutator/vitest-runner@10.0.0` uses that same name in runner IDs and worker coverage IDs. It is specific to Vitest 5; remove or reassess it when upgrading the runner. The canary checks nested hierarchy collisions, literal spaces and regex characters, and that each dynamic mutant runs exactly its covering test.
 - `knip`, `jscpd`, `biome`.
 
@@ -22,7 +74,7 @@ How this package is tested: the layers, the tools, the conventions.
 - Doubles from `tests/helpers/ports/`. Substitute at the seam; never mock functional behaviour.
 - Fixtures in `tests/fixtures/`, read-only, excluded from JSON and link checks. Mutate a copy in a temp directory.
 - `.gitattributes`'s `tests/fixtures/** text eol=lf` keeps byte-for-byte comparisons (`manifest-round-trip.unit.test.ts`) passing on Windows.
-- A temp directory: `await mkdtemp(join(tmpdir(), "aidd-<thing>-"))`, never a fixed name (a plantable symlink). The prefix is what `scripts/sweep-stale-test-dirs.cjs` reclaims.
+- A temp directory: `await mkdtemp(join(tmpdir(), "aidd-<thing>-"))`, never a fixed name (a plantable symlink). The prefix is what the repository-root `scripts/sweep-stale-test-dirs.cjs` reclaims.
 - A test name is a phrase of observable behaviour; nested `describe` reads as a sentence. `E2E:` is a recurring legacy prefix, not one to copy.
 - A golden snapshot is machine-independent, never derived from an absolute path: [`golden-machine-independence.md`](../../.claude/skills/test/references/golden-machine-independence.md).
 - `describe.concurrent` appears in no unit or integration file; in e2e the golden and command-matrix suites use it. An observed split, not a rule.
@@ -37,7 +89,7 @@ How this package is tested: the layers, the tools, the conventions.
 - `pnpm smoke` drives the real binary over the command matrix, hermetically. `pnpm smoke:full` adds the remote fetch.
 - `pnpm smoke:real` reaches real host registries: [`smoke-real.md`](internal/smoke-real.md).
 - `pnpm smoke:collision` runs the real `codex` and `copilot` binaries in a throwaway HOME against a person's own install under the keys aidd uses, and checks `setup` and `clean` leave it as seeded. `smoke:real`'s unique names cannot meet that case.
-- `pnpm test:mutation:<scope>`; `mutation-scopes.json` declares each scope's globs (a leading `!` excludes) and the floor its score must hold. `tools` is split one scope per tool profile (`tools-claude`, `tools-codex`, …): a profile is a static declaration whose every mutant reruns each test that loads it, and the profiles together outlasted every other scope on a two-core runner. A weekly scheduled run replays every mutant with `--force`, so drift through a dependency an incremental run never replays is bounded to a week. `scripts/run-mutation.mjs` fails under the floor and keeps one incremental file per scope under `reports/mutation/<scope>/`; `--force` reruns every mutant. Before a run the runner prunes the incremental file to kills alone: stryker reuses a result unless the mutant's file or a test that covered it changed, so a test written after the fact never reaches a mutant recorded as survived, uncovered or static, and a scope measured 74 read 67 in CI until it did. Raise a floor to the measured score after a run; never lower one without the reason in that file.
+- `pnpm test:mutation:<scope>`; `mutation-scopes.json` declares each scope's globs (a leading `!` excludes) and the floor its score must hold. A weekly scheduled run replays every mutant with `--force`, so drift through a dependency an incremental run never replays is bounded to a week. `scripts/run-mutation.mjs` fails under the floor and keeps one incremental file per scope under `reports/mutation/<scope>/`; `--force` reruns every mutant. Before a run the runner prunes the incremental file to kills alone: stryker reuses a result unless the mutant's file or a test that covered it changed, so a test written after the fact never reaches a mutant recorded as survived, uncovered or static, and a scope measured 74 read 67 in CI until it did.
 - `node scripts/run-mutation.mjs --changed [<base>]` mutates only the lines changed since `<base>` (default `origin/next`) and names each survivor with its file and line. It holds no floor and writes no scope's incremental file, so it checks a branch before a push without moving any gate.
 - A mutation run orders test files through `tests/helpers/mutation-sequencer.ts`: unit before integration, smallest file first. Stryker stops a mutant at its first failure, so the cheap killer runs first; the ordinary `pnpm test` keeps Vitest's order.
 - A unit or integration test never calls product code while it is collected (file top level, a `describe` body, an `it.each` table): Stryker scores code reached outside a test as static and reruns every related test for each of its mutants. Compute the value inside each test that uses it, not in `beforeAll` and not memoised.

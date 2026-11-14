@@ -4,15 +4,14 @@ The checks that must pass for code to count as done. Minimal, run after every ch
 
 ## Before the code
 
-**Write the test first, and watch it fail for the reason it names.** A test written after the
-code it covers confirms what was built. Only one that failed first can tell you it is
-checking anything at all.
+Whether a test is written, and when, is the Policy in [`cli/aidd_docs/memory/testing.md`](../../cli/aidd_docs/memory/testing.md):
 
-Three consequences, all learned by paying for them:
+- A bug fix and a new domain rule start with the test, watched red for the reason its name gives.
+- A refactor, move, rename or wiring change adds no test; a characterization test is deleted when the refactor ends.
+- A new check is proven once in its PR by a planted break, written in the PR and not kept as a test.
 
-- **A guard ships with the mutation that proves it.** Break the thing the test is named for
-  and watch that test — not another — go red. A guard nothing fails for is not a guard, and
-  it is indistinguishable from a comment.
+Two more habits, learned by paying for them:
+
 - **After any scripted edit, read the file back before running anything.** A replacement
   whose anchor drifted applies to nothing and reports nothing, which is how a field can be
   declared in a type, believed by a display and produced by no code. An inconsistent state is
