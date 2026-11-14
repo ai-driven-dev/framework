@@ -83,6 +83,12 @@ function firstStateOf(html) {
   return states.includes("default") ? "default" : (states[0] ?? null);
 }
 
+/** The states a render names, each once, in the order it first names them. */
+const statesOf = (html) => [...new Set([...html.matchAll(STATE_ATTRIBUTE)].map((match) => match[1]))];
+
+/** A state as the page names it: a known name in the language, any other as written. */
+const stateNameOf = (labels, state) => (Object.hasOwn(labels.stateNames, state) ? labels.stateNames[state] : state);
+
 const NAMED_FONT = /([A-Z][\w-]*(?: [A-Z0-9][\w-]*)*)\s*,?\s*$/;
 
 /** The font stack a cell names: the font written just before its generic family, then that family's fallbacks.
@@ -129,13 +135,16 @@ function dressedOf(html, { background, text, accent, font, sizes }) {
   return html.includes("</head>") ? html.replace("</head>", () => `${style}</head>`) : style + html;
 }
 
-/** A frame of a document at a size, scaled by the script to the width of its column. */
-const frameOf = ({ variant, path, doc, label, size: [size, width, height] }) => `<figure class="frame"><figcaption>${escaped(label)}</figcaption><div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${variant.name} ${path} ${size}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(doc)}"></iframe></div></figure>`;
+/** A frame of a document at a size, scaled by the script to the width of its column. A frame with no label has no caption. */
+const frameOf = ({ variant, path, doc, label, size: [size, width, height] }) => `<figure class="frame">${label ? `<figcaption>${escaped(label)}</figcaption>` : ""}<div class="fit" data-size="${size}" data-width="${width}" data-height="${height}" style="height: ${height}px"><iframe title="${escaped(`${variant.name} ${path} ${size}`)}" style="width: ${width}px; height: ${height}px" srcdoc="${escaped(doc)}"></iframe></div></figure>`;
 
-/** A render in the frames of each size. */
+/** A render in one mobile frame, whole: the script of the bar above the columns picks its state and its size. It names the
+ * states the render holds, and keeps a note, hidden until the chosen state is one it lacks. */
 function framesOf({ variant, file, tokens, labels }) {
   const doc = inlined(file.text, tokens);
-  return `<div class="file" data-path="${escaped(file.path)}"><h3><code>${escaped(file.path)}</code></h3><div class="frames">${SIZES.map((size) => frameOf({ variant, path: file.path, doc, label: labels[size[0]], size })).join("")}</div></div>`;
+  const named = statesOf(file.text);
+  const own = named.length ? ` data-states="${escaped(named.join(" "))}"` : "";
+  return `<div class="file rendering" data-path="${escaped(file.path)}"${own}><h3><code>${escaped(file.path)}</code></h3>${frameOf({ variant, path: file.path, doc, size: MOBILE })}<p class="no-state" hidden>${escaped(labels.noState)}</p></div>`;
 }
 
 const DESKTOP = SIZES.find(([size]) => size === "desktop");
@@ -165,9 +174,20 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, sib
     return text ? [`<div class="file" data-path="${escaped(file.path)}"><h3><code>${escaped(file.path)}</code></h3>${documentOf(text)}</div>`] : [];
   });
   const full = documents.length ? `<details class="fulltext"><summary>${escaped(labels.full)}</summary>${documents.join("")}</details>` : "";
-  const large = screens ? `<button type="button" class="large" data-variant="${escaped(variant.name)}">${escaped(labels.large)}</button>` : "";
+  const large = screens || renders.length ? `<button type="button" class="large" data-variant="${escaped(variant.name)}">${escaped(labels.large)}</button>` : "";
   const votes = voting ? `<span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(([verdict, label]) => `<button type="button" class="colvote" data-verdict="${verdict}" data-variant="${escaped(variant.name)}" aria-pressed="false">${escaped(label)}</button>`).join("")}</span>` : "";
   return `<section class="variant" data-variant="${escaped(variant.name)}"><header class="column-head"><h2>${escaped(titleOf(variant.name))}</h2><p class="intent">${escaped(variant.intent ?? "")}</p>${votes}</header><table class="axes"><tbody>${axes}</tbody></table>${renders.concat(screens ?? [], large, full).join("")}</section>`;
+}
+
+/** The bar above a round's columns: a tab per state the renders of the round show (none when they show one or none)
+ * and the size to see them at, so the variants compare on the same state at the same size. Empty when no variant has a render. */
+function compareOf({ variants, labels }) {
+  const files = variants.flatMap((variant) => variant.files.filter((file) => RENDER_FILE.test(file.path)));
+  if (!files.length) return "";
+  const named = [...new Set(files.flatMap((file) => statesOf(file.text)))];
+  const states = named.length > 1 ? `<div class="seg" role="group" aria-label="${escaped(labels.states)}">${named.map((state, at) => `<button type="button" class="tab" data-show-state="${escaped(state)}" aria-pressed="${at === 0}">${escaped(stateNameOf(labels, state))}</button>`).join("")}</div>` : "";
+  const sizes = `<div class="seg size" role="group" aria-label="${escaped(labels.size)}">${SIZES.slice().reverse().map(([size, width]) => `<button type="button" class="tab" data-show-size="${size}" data-width="${width}" aria-pressed="${size === MOBILE[0]}">${escaped(labels[size])}</button>`).join("")}</div>`;
+  return `<div class="compare tabs" data-state="${escaped(named.length > 1 ? named[0] : "")}" data-width="${MOBILE[1]}">${states}${sizes}</div>`;
 }
 
 /** The dialog that shows the screen of a variant at desktop width, one script for all the columns. */
@@ -187,16 +207,17 @@ function setBodyOf({ set, tokens, labels, wireframes = [] }) {
   const rounds = [...new Set(set.variants.map((variant) => variant.round ?? 1))].sort((a, b) => a - b);
   const options = wireframes.map((wireframe) => `<option value="${escaped(wireframe.path)}">${escaped(wireframe.title ?? wireframe.path)}</option>`).join("");
   const dressed = wireframes.length && set.variants.some(lookOf);
+  const shown = (variant) => !(wireframes.length && lookOf(variant)) && variant.files.some((file) => RENDER_FILE.test(file.path));
   const note = wireframes.length && set.variants.some(lookOf) ? `<div class="preview-bar"><p class="preview-note">${escaped(labels.preview)}</p><label class="screen-pick">${escaped(labels.screen)} <select id="screen-pick">${options}</select></label></div>` : "";
   const roundBody = (round) => {
     const own = set.variants.filter((variant) => (variant.round ?? 1) === round);
     const shared = sharedOf(own);
     const same = [...shared].filter(([, each]) => each.same.length).map(([path, each]) => `<p class="same" data-path="${escaped(path)}"><code>${escaped(path)}</code> ${escaped(filled(labels.same, { sections: each.same.join(JOINER) }))}</p>`);
     const columns = own.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes, siblings: own, voting: round === rounds.at(-1), parent: set.variants.find((each) => each.name === variant.parent && (each.round ?? 1) < round) }));
-    const body = [same.join("\n"), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
+    const body = [same.join("\n"), compareOf({ variants: own.filter(shown), labels }), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
     return rounds.length > 1 ? `<details class="round" data-round="${round}"${round === rounds.at(-1) ? " open" : ""}><summary>${escaped(filled(labels.round, { round }))}</summary>${body}</details>` : body;
   };
-  return [head, note, ...rounds.map(roundBody), dressed ? largeOf(labels) : ""].filter(Boolean).join("\n");
+  return [head, note, ...rounds.map(roundBody), dressed || set.variants.some(shown) ? largeOf(labels) : ""].filter(Boolean).join("\n");
 }
 
 /** The look of a set's page, added to the shell's. */
@@ -252,7 +273,11 @@ main.wide { padding-bottom: 72px; }
 .same { margin: 0; color: var(--muted); font-size: var(--t-sm); }
 .file { display: flex; flex-direction: column; gap: var(--s2); min-width: 0; }
 .variant .doc { padding: var(--s3) var(--s4); max-width: none; box-shadow: none; }
-.frames { display: flex; flex-direction: column; gap: var(--s3); }
+.compare { padding: 0; margin: 0 0 var(--s4); flex-wrap: wrap; align-items: center; row-gap: 0; }
+.compare .seg { display: flex; gap: var(--s1); min-width: 0; overflow-x: auto; }
+.compare .size { margin-left: auto; }
+.compare .tab[aria-pressed="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+.no-state { margin: 0; padding: var(--s5) var(--s3); border: 1px dashed var(--line-strong); border-radius: var(--r2); color: var(--muted); font-size: var(--t-sm); text-align: center; }
 .frame { margin: 0; display: flex; flex-direction: column; gap: var(--s1); }
 .frame figcaption { font-size: var(--t-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); }
 .fit { position: relative; overflow: hidden; margin-inline: auto; border: 1px solid var(--line-strong); border-radius: var(--r2); background: #fff; }
@@ -291,6 +316,52 @@ function alignRows() {
 alignRows();
 window.addEventListener("resize", alignRows);
 document.querySelectorAll("details.round").forEach((round) => round.addEventListener("toggle", alignRows));
+/* The bar above a round: its state and its size apply to every render of the round. A frame is as wide as the size, as tall as the content of the state shown, then scaled to its column by fitFrames. */
+function showState(frame, state) {
+  const doc = frame.contentDocument;
+  if (!doc || !doc.head) return;
+  const style = doc.getElementById("compare-state") || doc.createElement("style");
+  style.id = "compare-state";
+  style.textContent = state ? "[data-state]:not([data-state=" + JSON.stringify(state) + "]) { display: none !important; }" : "";
+  if (!style.parentNode) doc.head.append(style);
+}
+function measure(box) {
+  const frame = box.firstElementChild;
+  const root = frame.contentDocument && frame.contentDocument.documentElement;
+  frame.style.width = box.dataset.width + "px";
+  frame.style.height = "0px";
+  const height = root ? Math.ceil(root.getBoundingClientRect().height) : 0;
+  box.dataset.height = String(height > 0 ? height : Number(box.dataset.height));
+  frame.style.height = box.dataset.height + "px";
+}
+for (const bar of document.querySelectorAll(".compare")) {
+  const round = bar.nextElementSibling;
+  const render = () => {
+    for (const holder of round.querySelectorAll(".rendering")) {
+      const box = holder.querySelector(".fit");
+      const states = holder.dataset.states ? holder.dataset.states.split(" ") : [];
+      const missing = states.length > 0 && bar.dataset.state !== "" && !states.includes(bar.dataset.state);
+      box.hidden = missing;
+      holder.querySelector(".no-state").hidden = !missing;
+      box.dataset.width = bar.dataset.width;
+      showState(box.firstElementChild, bar.dataset.state);
+      measure(box);
+    }
+    fitFrames();
+  };
+  for (const button of bar.querySelectorAll("button")) button.addEventListener("click", () => {
+    if (button.dataset.showState !== undefined) bar.dataset.state = button.dataset.showState;
+    else bar.dataset.width = button.dataset.width;
+    for (const other of button.parentElement.children) other.setAttribute("aria-pressed", String(other === button));
+    render();
+  });
+  for (const frame of round.querySelectorAll(".rendering iframe")) frame.addEventListener("load", () => {
+    render();
+    const root = frame.contentDocument && frame.contentDocument.documentElement;
+    if (root && typeof ResizeObserver === "function") new ResizeObserver(render).observe(root);
+  });
+  render();
+}
 const large = document.getElementById("large");
 if (large) {
   const frame = large.querySelector("iframe");
@@ -298,7 +369,7 @@ if (large) {
   const width = Number(large.dataset.width);
   const height = Number(large.dataset.height);
   let column = null;
-  const round = () => [...column.closest(".variants").querySelectorAll(".variant")].filter((each) => each.querySelector(".screen"));
+  const round = () => [...column.closest(".variants").querySelectorAll(".variant")].filter((each) => each.querySelector(".screen, .rendering"));
   function showLarge() {
     const scale = Math.min(1, (window.innerWidth * 0.9) / width, (window.innerHeight * 0.8) / height);
     frame.style.width = width + "px";
@@ -306,7 +377,11 @@ if (large) {
     frame.style.transform = "scale(" + scale + ")";
     box.style.width = Math.ceil(width * scale) + "px";
     box.style.height = Math.ceil(height * scale) + "px";
-    frame.srcdoc = column.querySelector(".screen iframe").srcdoc;
+    const own = column.querySelector(".screen iframe");
+    const bar = column.closest(".variants").previousElementSibling;
+    const state = !own && bar && bar.classList.contains("compare") ? bar.dataset.state : null;
+    frame.onload = state === null ? null : () => showState(frame, state);
+    frame.srcdoc = (own || column.querySelector(".rendering iframe")).srcdoc;
     document.getElementById("large-title").textContent = column.querySelector("h2").textContent;
   }
   document.querySelectorAll("button.large").forEach((button) => button.addEventListener("click", () => {
@@ -331,4 +406,4 @@ if (pick) pick.addEventListener("change", () => {
 if (typeof ResizeObserver === "function") new ResizeObserver(fitFrames).observe(document.querySelector("main"));
 `;
 
-module.exports = { latestOf, setBodyOf, setFileOf, sectionsOf, STYLE, SCRIPT };
+module.exports = { stateNameOf, latestOf, setBodyOf, setFileOf, sectionsOf, STYLE, SCRIPT };

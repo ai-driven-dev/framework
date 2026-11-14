@@ -89,10 +89,10 @@ describe("aidd-ui showcase sets", () => {
       assert.match(columns[1].html, /<th>Density <small class="same-tag">same<\/small><\/th><td><button[^>]*>roomy<\/button><\/td>/);
     });
 
-    it("shows each html of a variant in a desktop frame of 1280 and a mobile frame of 390, with the tokens inline", () => {
+    it("shows each html of a variant in one mobile frame of 390, with the tokens inline", () => {
       const [a] = columnsOf(pagesOf([SET()])["_set-layout.html"]);
       const frames = [...a.html.matchAll(/<div class="fit" data-size="(\w+)" data-width="(\d+)" data-height="(\d+)"[^>]*><iframe[^>]*srcdoc="([^"]*)"/g)];
-      assert.deepEqual(frames.map((frame) => [frame[1], frame[2], frame[3]]), [["desktop", "1280", "800"], ["mobile", "390", "844"]]);
+      assert.deepEqual(frames.map((frame) => [frame[1], frame[2], frame[3]]), [["mobile", "390", "844"]]);
       for (const frame of frames) {
         assert.match(unescaped(frame[4]), /--accent: #123456/);
         assert.match(unescaped(frame[4]), /<p>A<\/p>/);
@@ -356,11 +356,162 @@ describe("aidd-ui showcase sets", () => {
       assert.match(html, /1280/);
     });
 
-    it("has neither dialog nor button when the preview is the fallback", () => {
-      const set = SET();
+    it("has neither dialog nor button when no variant has a screen or a render", () => {
+      const set = SET({ variants: [variant("a", "calm", [file("brand.md", SECTIONS("calm"))]), variant("b", "bold", [file("brand.md", SECTIONS("bold"))])] });
       const html = pagesOf([set])["_set-layout.html"];
       assert.doesNotMatch(html, /<dialog/);
       assert.doesNotMatch(html, /class="large"/);
+    });
+  });
+
+  describe("the comparison of renders", () => {
+    const { SCRIPT } = require(path.join(LIB, "variants.cjs"));
+    const states = (names) => `<html><head></head><body>${names.map((name) => `<section data-state="${name}"><p>shows ${name}</p></section>`).join("")}</body></html>`;
+    const compared = (a, b) => SET({ variants: [variant("a", "calm", [file("preview.html", a)]), variant("b", "bold", [file("preview.html", b)])] });
+    const barOf = (html) => html.match(/<div class="compare tabs"[^>]*>[\s\S]*?<\/div><\/div>/)?.[0];
+    const stateButtons = (bar) => [...bar.matchAll(/<button type="button" class="tab" data-show-state="([^"]*)" aria-pressed="(\w+)">([^<]*)<\/button>/g)].map((match) => [match[1], match[2], match[3]]);
+    const sizeButtons = (bar) => [...bar.matchAll(/<button type="button" class="tab" data-show-size="(\w+)" data-width="(\d+)" aria-pressed="(\w+)">([^<]*)<\/button>/g)].map((match) => [match[1], match[2], match[3], match[4]]);
+
+    it("puts one bar above the columns, its state tabs the union of the states of the renders in first-seen order, the first selected", () => {
+      const html = pagesOf([compared(states(["default", "empty", "loading"]), states(["default", "error", "empty"]))], { lang: "en" })["_set-layout.html"];
+      assert.equal([...html.matchAll(/class="compare tabs"/g)].length, 1);
+      assert.ok(html.indexOf('class="compare tabs"') < html.indexOf('class="variants"'), "above the columns");
+      assert.deepEqual(stateButtons(barOf(html)), [["default", "true", "default"], ["empty", "false", "empty"], ["loading", "false", "loading"], ["error", "false", "error"]]);
+    });
+
+    it("names a state in the language of the page, as the record pages do", () => {
+      const html = pagesOf([compared(states(["default", "error"]), states(["default"]))], { lang: "fr" })["_set-layout.html"];
+      assert.deepEqual(stateButtons(barOf(html)).map((tab) => tab[2]), ["par défaut", "erreur"]);
+    });
+
+    it("offers the sizes as Mobile then Ordinateur, mobile selected, in the language", () => {
+      for (const lang of ["en", "fr"]) {
+        const html = pagesOf([compared(states(["default"]), states(["default"]))], { lang })["_set-layout.html"];
+        assert.deepEqual(sizeButtons(barOf(html)), [["mobile", "390", "true", LABELS[lang].mobile], ["desktop", "1280", "false", LABELS[lang].desktop]]);
+      }
+    });
+
+    it("hides the state tabs when the renders show a single state or none, and keeps the sizes", () => {
+      const one = barOf(pagesOf([compared(states(["default"]), "<html><body><p>B</p></body></html>")])["_set-layout.html"]);
+      const none = barOf(pagesOf([SET()])["_set-layout.html"]);
+      for (const bar of [one, none]) {
+        assert.deepEqual(stateButtons(bar), []);
+        assert.equal(sizeButtons(bar).length, 2);
+      }
+    });
+
+    it("has no bar when no variant has a render", () => {
+      const set = SET({ variants: [variant("a", "calm", [file("brand.md", SECTIONS("calm"))]), variant("b", "bold", [file("brand.md", SECTIONS("bold"))])] });
+      assert.doesNotMatch(pagesOf([set])["_set-layout.html"], /class="compare tabs"/);
+    });
+
+    it("renders each html once, in a mobile frame, whole, with the states it holds named for the script", () => {
+      const html = pagesOf([compared(states(["default", "empty"]), "<html><body><p>B</p></body></html>")])["_set-layout.html"];
+      const [a, b] = columnsOf(html);
+      assert.equal([...a.html.matchAll(/<div class="fit"/g)].length, 1);
+      assert.match(a.html, /<div class="fit" data-size="mobile" data-width="390"/);
+      assert.doesNotMatch(a.html, /data-size="desktop"/);
+      assert.match(unescaped(a.html), /shows default[\s\S]*shows empty/);
+      assert.match(a.html, /class="file rendering"[^>]*data-states="default empty"/);
+      assert.doesNotMatch(b.html, /data-states/);
+    });
+
+    it("says of a render that lacks the chosen state that it has none, in a note kept hidden until then", () => {
+      for (const lang of ["en", "fr"]) {
+        const [a] = columnsOf(pagesOf([compared(states(["default"]), states(["default", "error"]))], { lang })["_set-layout.html"]);
+        assert.match(a.html, new RegExp(`<p class="no-state" hidden>${LABELS[lang].noState}</p>`));
+      }
+    });
+
+    it("has a size label and a missing-state label in both languages", () => {
+      assert.deepEqual([LABELS.en.size, LABELS.fr.size], ["Size", "Taille"]);
+      assert.ok(LABELS.en.noState && LABELS.fr.noState);
+    });
+
+    it("gives a render column the button to open it large, with the dialog", () => {
+      const html = pagesOf([compared(states(["default"]), states(["default"]))])["_set-layout.html"];
+      assert.match(html, /<dialog id="large"/);
+      assert.deepEqual(columnsOf(html).map((column) => [...column.html.matchAll(/<button type="button" class="large"/g)].length), [1, 1]);
+    });
+
+    describe("the script", () => {
+      const listener = () => {
+        const handlers = {};
+        return { handlers, addEventListener: (type, handler) => { handlers[type] = handler; } };
+      };
+      const button = (dataset, group) => ({ ...listener(), dataset, attributes: {}, parentElement: group, setAttribute(name, value) { this.attributes[name] = value; } });
+      const rig = ({ rendered }) => {
+        const group = (items) => ({ children: items });
+        const stateGroup = group([]);
+        const sizeGroup = group([]);
+        const tabs = ["default", "empty"].map((name) => button({ showState: name }, stateGroup));
+        const sizes = [button({ showSize: "mobile", width: "390" }, sizeGroup), button({ showSize: "desktop", width: "1280" }, sizeGroup)];
+        stateGroup.children.push(...tabs);
+        sizeGroup.children.push(...sizes);
+        const holders = rendered.map(({ listed, height }) => {
+          const doc = { style: null, getElementById: () => doc.style, createElement: () => ({}), head: { append(style) { doc.style = style; } }, documentElement: { getBoundingClientRect: () => ({ height }) } };
+          const frame = { ...listener(), style: {}, contentDocument: doc };
+          const box = { dataset: { width: "390", height: "844" }, parentElement: { clientWidth: 500 }, clientWidth: 500, firstElementChild: frame, style: {}, hidden: false };
+          const note = { hidden: true };
+          return { dataset: listed ? { states: listed } : {}, box, note, frame, doc, querySelector: (selector) => (selector === ".fit" ? box : note) };
+        });
+        const round = { querySelectorAll: (selector) => (selector === ".rendering" ? holders : selector === ".rendering iframe" ? holders.map((holder) => holder.frame) : []) };
+        const bar = { dataset: { state: "default", width: "390" }, nextElementSibling: round, querySelectorAll: () => [...tabs, ...sizes] };
+        const boxes = holders.map((holder) => holder.box);
+        const all = (selector) => (selector === ".compare" ? [bar] : selector === ".fit" ? boxes : []);
+        new Function("document", "window", SCRIPT)({ querySelectorAll: all, querySelector: () => null, getElementById: () => null }, { addEventListener() {} });
+        return { bar, tabs, sizes, holders };
+      };
+
+      it("shows the first state, then only the state a tab selects, in every frame", () => {
+        const { tabs, holders } = rig({ rendered: [{ listed: "default empty", height: 600 }, { listed: "default empty", height: 300 }] });
+        for (const holder of holders) assert.match(holder.doc.style.textContent, /\[data-state\]:not\(\[data-state="default"\]\) \{ display: none !important; \}/);
+        tabs[1].handlers.click();
+        for (const holder of holders) assert.match(holder.doc.style.textContent, /:not\(\[data-state="empty"\]\)/);
+        assert.deepEqual(tabs.map((tab) => tab.attributes["aria-pressed"]), ["false", "true"]);
+      });
+
+      it("shows a render without states whole, and says so of a render that lacks the chosen state", () => {
+        const { tabs, holders } = rig({ rendered: [{ listed: "", height: 600 }, { listed: "default", height: 300 }] });
+        tabs[1].handlers.click();
+        assert.equal(holders[0].doc.style.textContent, '[data-state]:not([data-state="empty"]) { display: none !important; }');
+        assert.deepEqual([holders[0].box.hidden, holders[0].note.hidden], [false, true]);
+        assert.deepEqual([holders[1].box.hidden, holders[1].note.hidden], [true, false]);
+        tabs[0].handlers.click();
+        assert.deepEqual([holders[1].box.hidden, holders[1].note.hidden], [false, true]);
+      });
+
+      it("opens a render large at desktop width showing the state selected in the bar", () => {
+        const doc = { style: null, getElementById: () => doc.style, createElement: () => ({}), head: { append(style) { doc.style = style; } } };
+        const shown = { style: {}, srcdoc: "", contentDocument: doc };
+        const dialog = { dataset: { width: "1280", height: "800" }, showModal() { this.opened = true; }, querySelector: (selector) => (selector === "iframe" ? shown : { style: {} }), querySelectorAll: () => [] };
+        const bar = { classList: { contains: (name) => name === "compare" }, dataset: { state: "empty" } };
+        const column = { querySelector: (selector) => (selector === ".rendering iframe" ? { srcdoc: "RENDER" } : selector === "h2" ? { textContent: "A" } : null), closest: () => ({ previousElementSibling: bar, querySelectorAll: () => [column] }) };
+        const opener = { ...listener(), closest: () => column };
+        const elements = { large: dialog, "large-title": {}, "large-close": listener() };
+        const all = (selector) => (selector === "button.large" ? [opener] : []);
+        new Function("document", "window", SCRIPT)({ querySelectorAll: all, querySelector: () => null, getElementById: (id) => elements[id] ?? null }, { addEventListener() {}, innerWidth: 1000, innerHeight: 800 });
+        opener.handlers.click();
+        assert.equal(shown.srcdoc, "RENDER");
+        assert.equal(shown.style.width, "1280px");
+        assert.equal(dialog.opened, true);
+        shown.onload();
+        assert.match(doc.style.textContent, /:not\(\[data-state="empty"\]\)/);
+      });
+
+      it("fits each frame to the height of its content times the scale, never upscaled, again when the size changes", () => {
+        const { sizes, holders } = rig({ rendered: [{ listed: "default", height: 600 }] });
+        const [{ box, frame }] = holders;
+        assert.equal(frame.style.height, "600px");
+        assert.equal(box.firstElementChild.style.transform, "scale(1)");
+        assert.equal(box.style.height, "600px");
+        sizes[1].handlers.click();
+        assert.equal(box.dataset.width, "1280");
+        assert.equal(frame.style.width, "1280px");
+        assert.equal(frame.style.transform, "scale(0.390625)");
+        assert.equal(box.style.height, String(Math.ceil(600 * 0.390625)) + "px");
+        assert.deepEqual(sizes.map((size) => size.attributes["aria-pressed"]), ["false", "true"]);
+      });
     });
   });
 

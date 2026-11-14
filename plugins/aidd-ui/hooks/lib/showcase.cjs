@@ -49,6 +49,8 @@ const LABELS = {
     specimenHeading: "Heading",
     specimenBody: "A line of text to judge the letters.",
     identical: "same",
+    size: "Size",
+    noState: "This render has no such state.",
     large: "View large",
     previousVariant: "Previous variant",
     nextVariant: "Next variant",
@@ -140,6 +142,8 @@ const LABELS = {
     specimenHeading: "Titre",
     specimenBody: "Une ligne de texte pour juger les lettres.",
     identical: "identique",
+    size: "Taille",
+    noState: "Ce rendu n'a pas cet état.",
     large: "Voir en grand",
     previousVariant: "Variante précédente",
     nextVariant: "Variante suivante",
@@ -210,8 +214,7 @@ const LABELS = {
   },
 };
 
-/** A state as the page names it: a known name in the language, any other as written. */
-const stateNameOf = (labels, state) => (Object.hasOwn(labels.stateNames, state) ? labels.stateNames[state] : state);
+const { stateNameOf } = variants;
 
 /** The language `code` names, English when there is no table for it. */
 const languageOf = (code) => (Object.hasOwn(LABELS, code) ? code : DEFAULT_LANGUAGE);
