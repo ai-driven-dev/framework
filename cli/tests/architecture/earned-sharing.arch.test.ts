@@ -30,6 +30,8 @@ function areaOf(file: string): string {
   if (contextRoot) return `use-case:${contextRoot[1]}-root`;
   const contextInner = /^src\/contexts\/([^/]+)\/(domain|infrastructure)\//.exec(file);
   if (contextInner) return `${contextInner[2]}:${contextInner[1]}`;
+  const scenario = /^src\/orchestration\/([^/]+)\//.exec(file);
+  if (scenario) return `scenario:${scenario[1]}`;
   if (file.startsWith("src/presentation/commands/")) return "commands";
   if (file.startsWith("src/presentation/prompts/")) return "prompts";
   if (file.startsWith("src/presentation/")) return "presentation";
@@ -37,7 +39,7 @@ function areaOf(file: string): string {
   return "other";
 }
 
-const NON_AREAS = new Set(["use-case:shared", "composition-root"]);
+const NON_AREAS = new Set(["use-case:shared", "scenario:shared", "composition-root"]);
 
 /**
  * Only a file sitting directly inside a `shared/` directory is offered to callers; one nested
@@ -197,6 +199,7 @@ describe("the guard itself", () => {
     );
     expect(areaOf("src/contexts/tools/domain/registry.ts")).toBe("domain:tools");
     expect(areaOf("src/contexts/tools/infrastructure/a.ts")).toBe("infrastructure:tools");
+    expect(areaOf("src/orchestration/setup/a.ts"), "one area per scenario").toBe("scenario:setup");
     expect(areaOf("src/presentation/commands/doctor.ts")).toBe("commands");
     expect(areaOf("src/presentation/display/a.ts")).toBe("presentation");
     expect(areaOf("src/shared/domain/tool.ts")).toBe("shared");
