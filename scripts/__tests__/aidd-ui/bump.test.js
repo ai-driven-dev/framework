@@ -64,6 +64,19 @@ describe("aidd-ui bump", () => {
       assert.equal(read(`${UI}/reviews/first-pass.md`).split("| home | default | 2 | pending | |").length, 2);
     });
 
+    it("raises again a version this task raised once a review has judged it, so no verdict is read on reworked content", () => {
+      change("color.action.default");
+      const review = `${UI}/reviews/first-pass.md`;
+      edit(tmp, review, "| home | default | 2 | pending | |", "| home | default | 2 | revise | too dark |");
+      const { report } = bump("--task", TASK, "--change", "lighter", "color.action.default");
+      assert.ok(report.changed.includes(`${UI}/screens/home.md`));
+      assert.ok(!report.left.some(({ id }) => id === "home"));
+      assert.ok(read(`${UI}/screens/home.md`).includes("\nversion: 3\n"));
+      assert.ok(read(HISTORY).includes(`| home | 3 | lighter | no | ${TASK} | |\n`));
+      assert.ok(read(review).includes(["| home | default | 3 | pending | |", "| home | empty | 3 | pending | |"].join("\n")));
+      assert.ok(read(`${UI}/components/button.md`).includes("\nversion: 2\n"));
+    });
+
     it("turns the row of an element already raised for the task to breaking when a later change breaks, appending the change", () => {
       change("color.action.default");
       const { report } = bump("--task", TASK, "--change", "renamed", "--breaking", "color.action.default");

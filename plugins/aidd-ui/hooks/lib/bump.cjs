@@ -147,12 +147,15 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
   const left = [];
   const files = editing(root);
   const historyOf = () => historyIn(files);
+  const verdicts = verdictRows(records);
+  // A version a review has judged is never edited in place: its verdicts would be read on the rework.
+  const judged = (record) => ["ok", "revise"].includes(stateVerdict(verdicts, record)?.Verdict);
   for (const record of records.filter((each) => reached.has(fm(each).id))) {
     const { id } = fm(record);
     const held = fm(record).status === STATUS_DEPRECATED;
     const current = project.history.find((row) => row.Id === id && row.Version === fm(record).version);
     if (held && !followed.has(id)) left.push({ id, why: STATUS_DEPRECATED });
-    else if (current?.Task === folder && !current.Fingerprint) { // a sealed version is never edited, even in its own task
+    else if (current?.Task === folder && !current.Fingerprint && !judged(record)) { // a sealed version is never edited, even in its own task
       if (!breaking || current.Breaking === BREAKING) left.push({ id, why: ALREADY_RAISED });
       else {
         const { lines, end } = historyOf();
