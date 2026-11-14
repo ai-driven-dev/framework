@@ -15,7 +15,7 @@ The constraints every generated skill satisfies, this generator included. `scaff
 | R7 | Keep action detail in its action, and a judgment or looked-up fact (path, format, per-tool value) in a reference. | The router loads on every call. |
 | R8 | Steps are imperative, one sentence each, cases as dash sub-items. A loop names the step it returns to. A check ends in validate, fix, repeat until it passes. | One sentence per step keeps each step checkable. |
 | R9 | `## Output` is one line: what exists when the action is done. `## Input` names what it uses. Add a check step only when the action changes files or state. | Carried items repeat the action before. |
-| R10 | `## Rules` holds whole-action constraints, one per line. | A step-level constraint belongs to its step. |
+| R10 | `## Rules` holds whole-action constraints, and every rule list holds one rule per line, its case inside the sentence, no sub-items. | A step-level constraint belongs to its step. |
 | R11 | A reference answers one question, stands alone, and names a sibling in backticks without a link. | A reference loads whole, and a link chain loads files the task does not need. |
 | R12 | Use tables, Mermaid diagrams or lists, one fact per row; prose only when none fits. | A row is checked on its own. |
 | R13 | An asset is a template an action fills. A slot holds the name of its value; one note states what to remove. | A leftover placeholder ships as a bug. |

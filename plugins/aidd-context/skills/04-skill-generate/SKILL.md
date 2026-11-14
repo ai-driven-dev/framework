@@ -26,15 +26,8 @@ flowchart LR
 ## Transversal rules
 
 - If a cited reference cannot be read, stop and report the missing file.
-- Confirm every target and name with the user.
 - Announce intended writes before editing.
-- Keep the meaning of each rule, step, branch, wait, loop and stop of an existing skill.
-  - Changed by the request: apply the change.
-  - Wording: follow the authoring rules.
-- Add nothing beyond the request, the frame and the existing skill.
-  - Confirmed by the user: add it.
+- Keep the meaning of each rule, step, branch, wait, loop and stop of an existing skill, unless the request changes it.
+- Add nothing the request, the frame, the existing skill or the user did not confirm.
 - Leave each file the plan does not name byte-identical.
-- In a subagent:
-  - Propose each confirmation to the caller instead of asking.
-  - Write only inside the workspace.
-  - Report runtime unverified.
+- In a subagent, propose each confirmation to the caller instead of asking.

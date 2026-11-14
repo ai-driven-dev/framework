@@ -21,5 +21,4 @@ The skill tree at the target, and the list of files written.
 
 ## Rules
 
-- Write only relative paths inside the workspace, outside the plugin install directory, under the target.
-  - Any other path: stop and report it.
+- Write only relative paths inside the workspace, outside the plugin install directory, under the target, and stop on any other path.

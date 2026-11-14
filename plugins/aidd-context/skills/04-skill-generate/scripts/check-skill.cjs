@@ -215,15 +215,18 @@ function withoutFalseBreaks(text) {
   return text.replace(LINK, "").replace(ABBREVIATION, "");
 }
 
-/** Each numbered or dash item of a step or rule list holds one sentence, its cases as dash sub-items. */
+/** Each numbered or dash item of a step or rule list holds one sentence; a step's cases are dash sub-items, a rule has none. */
 function checkItems(file, text, report) {
   const lines = text.split("\n");
-  let inside = false;
+  let section = null;
   proseLines(text).forEach((line, index) => {
     const heading = SECTION_HEADING.exec(line);
-    if (heading) inside = ITEM_SECTIONS.includes(heading[1]);
-    const item = inside && LIST_ITEM.exec(line);
-    if (item && CLAUSE_BREAK.test(withoutFalseBreaks(item[1]))) report.error(file, index + 1, "sentence", lines[index], "split it: one sentence per item, cases as dash sub-items, or put exact text in backticks");
+    if (heading) section = ITEM_SECTIONS.includes(heading[1]) ? heading[1] : null;
+    const item = section && LIST_ITEM.exec(line);
+    if (!item) return;
+    const rule = section !== "Process";
+    if (rule && /^\s/u.test(line)) report.error(file, index + 1, "rule-line", lines[index], "write the rule on one line, its case inside the sentence");
+    else if (CLAUSE_BREAK.test(withoutFalseBreaks(item[1]))) report.error(file, index + 1, "sentence", lines[index], rule ? "keep one sentence per rule, or put exact text in backticks" : "split it: one sentence per item, cases as dash sub-items, or put exact text in backticks");
   });
 }
 
