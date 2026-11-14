@@ -2,7 +2,7 @@
 // draws and the navigation links, so a link can never name a section the page lacks. Pure: values, names
 // and labels come in, markup goes out.
 const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./html.cjs");
-const { charteOf } = require("./charte.cjs");
+const { charteOf, contrastOf } = require("./charte.cjs");
 const { LINE_BREAK } = require("./markdown.cjs");
 
 const PATH_SEPARATOR = ".";
@@ -11,6 +11,7 @@ const PILL_PX = 999;
 const LENGTH = /^(-?\d*\.?\d+)(rem|px)$/;
 const ALPHA_COLOUR = /^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+) \/ ([\d.]+)\)$/;
 const ROLE_LEAVES = ["family", "size", "weight", "line-height"];
+const SAMPLE = "Aa";
 const SECTION_LINE = /^## +(.+?)\s*$/;
 
 const lastOf = (name) => name.slice(name.lastIndexOf(PATH_SEPARATOR) + 1);
@@ -39,10 +40,26 @@ const list = (kind, items) => (items.length ? `<ul class="${kind}">${items.join(
 
 const paletteOf = (entries, values) => list("swatches", entries.map((entry) => item(entry, swatchOf(values.get(entry.name) ?? ""), nameOf(entry), valueOf(shownValue(values.get(entry.name) ?? "")))));
 
-const rolesOf = (entries, values) => list("swatches roles", entries.map((entry) => {
+const ratioText = (ratio, labels) => `${ratio.toFixed(2).replace(".", labels.charte.decimal)}:1`;
+const WORDS = { aa: "aa", large: "aaLarge", fail: "fail" };
+
+/** The grid of contrast under the roles: a row per text colour, a column per ground, each cell the pair in its own colours with its ratio and its verdict in words. */
+function contrastGridOf(entries, values, labels) {
+  const { columns, rows } = contrastOf(entries, values);
+  if (!rows.length) return "";
+  const cell = (fg, bg, found) => {
+    if (!found) return `<td data-fg="${escaped(fg)}" data-bg="${escaped(bg)}"></td>`;
+    return `<td data-fg="${escaped(fg)}" data-bg="${escaped(bg)}" data-verdict="${found.verdict}"><span class="pair-sample" style="color: ${escaped(values.get(fg))}; background: ${escaped(values.get(bg))}">${SAMPLE}</span><span class="ratio">${ratioText(found.ratio, labels)}</span><span class="verdict">${labels.charte[WORDS[found.verdict]]}</span></td>`;
+  };
+  const head = columns.map((bg) => `<th scope="col">${escaped(bg)}</th>`).join("");
+  const body = rows.map((row) => `<tr><th scope="row">${escaped(row.fg)}</th>${row.cells.map((found, at) => cell(row.fg, columns[at], found)).join("")}</tr>`).join("");
+  return `<div class="scroll"><table class="contrast"><caption>${escaped(labels.charte.contrast)}</caption><thead><tr><td></td>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+const rolesOf = (entries, values, labels) => list("swatches roles", entries.map((entry) => {
   const cites = entry.cites.length ? `<span class="cites">= ${escaped(entry.cites.join(", "))}</span>` : "";
   return item(entry, swatchOf(values.get(entry.name) ?? ""), nameOf(entry), cites, valueOf(shownValue(values.get(entry.name) ?? "")));
-}));
+})) + contrastGridOf(entries, values, labels);
 
 const spaceOf = (entries, values) => list("squares", entries.map((entry) => {
   const value = values.get(entry.name) ?? "";
@@ -110,7 +127,7 @@ function charteSectionsOf({ entries, values, citations, primitives, rows, notes,
   const held = charteOf(entries, primitives, citations);
   const bodies = {
     palette: () => paletteOf(held.palette, values),
-    roles: () => rolesOf(held.roles, values),
+    roles: () => rolesOf(held.roles, values, labels),
     typographie: () => (held.typographie.length ? typographyFrame(held.typographie, labels, language, tokens) : ""),
     espacements: () => spaceOf(held.espacements, values),
     arrondis: () => radiusOf(held.arrondis, values, labels),
@@ -168,6 +185,18 @@ main section[id] li { min-width: 0; }
 .size-pair { display: flex; align-items: flex-end; gap: var(--s2); }
 .box { display: block; inline-size: 96px; background: var(--sunken); border: 1px solid var(--text); border-radius: var(--r1); }
 .reference { display: block; block-size: ${REFERENCE_PX}px; inline-size: 0; border-left: 2px dashed var(--faint); }
+.scroll { overflow-x: auto; }
+.contrast { border-collapse: collapse; font-size: var(--t-sm); }
+.contrast caption { text-align: left; color: var(--muted); padding-bottom: var(--s2); }
+.contrast th, .contrast td { border: 1px solid var(--line); padding: var(--s2) var(--s3); text-align: left; vertical-align: top; font-weight: 400; }
+.contrast thead th, .contrast tbody th { font: 12px var(--mono); color: var(--faint); background: var(--surface); }
+.contrast td { background: var(--surface); }
+.contrast td[data-verdict] { display: table-cell; }
+.pair-sample { display: inline-block; padding: 2px var(--s3); border-radius: var(--r1); border: 1px solid var(--line-strong); font-size: var(--t-lg); font-weight: 600; }
+.ratio, .verdict { display: block; }
+.ratio { margin-top: var(--s1); font-variant-numeric: tabular-nums; color: var(--text); }
+.verdict { color: var(--muted); }
+.contrast td[data-verdict="fail"] .verdict { color: var(--revise); font-weight: 600; }
 .plain li { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s4); padding: var(--s2) 0; border-top: 1px solid var(--line); }
 .plain li:first-child { border-top: 0; }
 section[id] .render { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); padding: var(--s4) var(--s5); }

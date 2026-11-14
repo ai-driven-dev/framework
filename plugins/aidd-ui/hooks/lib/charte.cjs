@@ -2,6 +2,8 @@
 // its navigation read one answer. A token is judged by its type and the words of its name, in the
 // order of SECTIONS; whatever no section claims is "autres". "points-de-rupture" claims no token: the page
 // fills it from the breakpoints system.md declares.
+const { parse, over, contrast } = require("./colour.cjs");
+
 const PATH_SEPARATOR = ".";
 const WORD_SEPARATOR = /[.-]/;
 
@@ -42,4 +44,49 @@ function charteOf(entries, primitives, citations) {
   return held;
 }
 
-module.exports = { charteOf, SECTIONS };
+const COLOUR_GROUP = /^color\./;
+const TEXT_ROLE = /^text([.-]|$)/;
+const TEXT_ON = /^text-on-(.+)$/;
+const NON_TEXT_ROLE = /^(border|focus)([.-]|$)/;
+const GROUNDS = ["background", "surface"];
+const TEXT_RATIO = 4.5;
+const LARGE_TEXT_RATIO = 3;
+const NON_TEXT_RATIO = 3;
+
+const keyOf = (name) => name.replace(COLOUR_GROUP, "");
+
+/** What a ratio earns: "aa", "large" (AA for large text only) or "fail"; a non-text colour has no large-text step. */
+const verdictOf = (ratio, nonText) => {
+  if (ratio >= (nonText ? NON_TEXT_RATIO : TEXT_RATIO)) return "aa";
+  return !nonText && ratio >= LARGE_TEXT_RATIO ? "large" : "fail";
+};
+
+/** The contrast of the roles, read from their names: a `text-on-X` role on the role `X`, any other `text` role and
+ * any `border` or `focus` role on the background and the surface. `roles` are the entries of the roles section, `values`
+ * the colour of each by name. `{columns, rows}`: the grounds in order of appearance, each text or non-text role as `{fg, cells}`
+ * with a `{ratio, verdict}` per column, null where the pair is not one or a colour cannot be read. */
+function contrastOf(roles, values) {
+  const byKey = new Map(roles.map(({ name }) => [keyOf(name), name]));
+  const pairs = roles.flatMap(({ name }) => {
+    const key = keyOf(name);
+    const on = TEXT_ON.exec(key);
+    if (on) return byKey.has(on[1]) ? [{ fg: name, bgs: [byKey.get(on[1])], nonText: false }] : [];
+    const nonText = NON_TEXT_ROLE.test(key);
+    if (!nonText && !TEXT_ROLE.test(key)) return [];
+    return [{ fg: name, bgs: GROUNDS.filter((ground) => byKey.has(ground)).map((ground) => byKey.get(ground)), nonText }];
+  }).filter((pair) => pair.bgs.length);
+  const columns = [...new Set(pairs.flatMap((pair) => pair.bgs))];
+  const rows = pairs.map(({ fg, bgs, nonText }) => ({
+    fg,
+    cells: columns.map((bg) => {
+      if (!bgs.includes(bg)) return null;
+      const [front, back] = [parse(values.get(fg) ?? ""), parse(values.get(bg) ?? "")];
+      if (!front || !back || back.a < 1) return null;
+      const ratio = contrast(over(front, back), back);
+      return { ratio, verdict: verdictOf(ratio, nonText) };
+    }),
+  }));
+  return { columns, rows };
+}
+
+module.exports = { charteOf, contrastOf, SECTIONS };

@@ -329,6 +329,37 @@ describe("aidd-ui showcase", () => {
       assert.equal(veil.match(/<span class="value">([^<]*)</)[1], "#ff6b35 \u00b7 8%");
     });
 
+    describe("the contrast grid", () => {
+      const withRoles = () => editTokens(tmp, (tree) => {
+        const hex = (value) => ({ $type: "color", $value: { colorSpace: "srgb", components: [0, 0, 0], hex: value } });
+        Object.assign(tree.color, { background: hex("#ffffff"), "text-soft": hex("#7f7f7f"), accent: hex("#e4572e"), "text-on-accent": hex("#1f1a17"), border: hex("#cccccc"), focus: hex("#1f5fd1") });
+      });
+      const cellOf = (html, fg, bg) => sectionOf(html, "roles").match(new RegExp(`<td data-fg="color\\.${fg}" data-bg="color\\.${bg}"[^>]*>[\\s\\S]*?</td>`))[0];
+
+      it("reads a text colour on its ground in words and a ratio, a comma for decimals in French", () => {
+        withRoles();
+        const fr = systemPage({ lang: "fr" });
+        assert.match(cellOf(fr, "text-soft", "background"), /data-verdict="large"[\s\S]*>4,00:1<[\s\S]*>AA gros texte</);
+        assert.match(cellOf(fr, "text-on-accent", "accent"), /data-verdict="aa"[\s\S]*>4,68:1<[\s\S]*>AA</);
+        assert.match(cellOf(systemPage(), "text-on-accent", "accent"), />4\.68:1</);
+        assert.match(cellOf(fr, "border", "background"), /data-verdict="fail"[\s\S]*>insuffisant</);
+        assert.match(cellOf(fr, "focus", "background"), /data-verdict="aa"/);
+      });
+
+      it("shows each pair in its own colours, rows for the text, columns for the grounds, in a table with a caption", () => {
+        withRoles();
+        const roles = sectionOf(systemPage({ lang: "fr" }), "roles");
+        assert.match(roles, /<table class="contrast"><caption>Contraste des couleurs de texte sur leurs fonds<\/caption>/);
+        assert.match(cellOf(systemPage(), "text-on-accent", "accent"), /style="color: #1f1a17; background: #e4572e"[^>]*>Aa</);
+        assert.match(roles, /<th scope="row">color\.text-soft<\/th>/);
+        assert.match(roles, /<th scope="col">color\.accent<\/th>/);
+      });
+
+      it("draws no grid when no role is a text colour", () => {
+        assert.doesNotMatch(sectionOf(systemPage(), "roles").replace(/color\.text\.default/g, ""), /<table class="contrast"/);
+      });
+    });
+
     it("keeps the breakpoints and no token section without a stylesheet", () => {
       const html = systemPage({ tokens: null });
       assert.deepEqual(idsIn(html), ["points-de-rupture"]);
