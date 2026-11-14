@@ -225,6 +225,13 @@ run "telemetry forget (preview)" 0 "Nothing was removed" "$P_TEL" -- telemetry f
 run "telemetry forget --yes" 0 "Removed" "$P_TEL" -- telemetry forget --yes
 run "telemetry off (after forget)" 0 "Measurement was not on" "$P_TEL" -- telemetry off
 
+# The provider lands in the sandboxed $AIDD_USER_CONFIG_DIR, never the real profile's.
+section "setup --provider (sandboxed profile)"
+P_AGENTS=$(new_project)
+SETUP_OC=(setup --source local --path "$FRAMEWORK_FIXTURE" --ide opencode --plugins none --yes)
+run "setup --provider" 0 "Models on mistral" "$P_AGENTS" -- "${SETUP_OC[@]}" --provider mistral
+run "setup --provider none" 0 "run on the IDE's model again" "$P_AGENTS" -- "${SETUP_OC[@]}" --provider none
+
 section "update --check"
 out=$(cd "$ROOT" && node "$CLI" update --check 2>&1); rc=$?
 if [[ "$rc" -eq 0 || "$rc" -eq 1 ]]; then mark_covered "update"; ok "update --check (exit $rc)"; else bad "update crashed (exit $rc)" "$out"; fi
