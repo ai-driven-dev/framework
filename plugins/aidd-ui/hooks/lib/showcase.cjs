@@ -65,7 +65,7 @@ const LABELS = {
     list: "Records",
     uses: "Uses",
     appearsIn: "Appears in",
-    review: "Review",
+    myReview: "My review",
     ok: "OK",
     revise: "Revise",
     comment: "What should change?",
@@ -160,7 +160,7 @@ const LABELS = {
     list: "Fiches",
     uses: "Utilise",
     appearsIn: "Apparaît dans",
-    review: "Revue",
+    myReview: "Ma revue",
     ok: "OK",
     revise: "À revoir",
     comment: "Que faut-il changer ?",
@@ -1040,7 +1040,7 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
     const body = alone ? subNavigationOf(fm(alone).id, anchors.get(fm(alone).id) ?? []) : bodyOf(each) + setsOf(each.sets);
     return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark" role="img" aria-label="${escaped(markName)}">${mark}</span></summary>${body}</details></li>`;
   };
-  const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} ${pendingOf(labels, total)}</button></div>`;
+  const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.myReview} · ${pendingOf(labels, total)}</button></div>`;
   const bar = `<div class="nav-bar"><span class="nav-title">${labels.title}</span><button type="button" id="nav-toggle" aria-controls="nav-sheet" aria-expanded="false">${labels.contents}</button></div>`;
   return `<nav aria-label="${escaped(labels.list)}">${bar}<div class="nav-scroll" id="nav-sheet"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol></div>${foot}</nav>`;
 }
@@ -1303,8 +1303,8 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
   const tally = pendingOf(labels, held.reduce((sum, each) => sum + each.todo, 0));
   return [
     '<div class="scrim" id="scrim"></div>',
-    `<aside class="drawer" id="review" aria-label="${escaped(labels.review)}" hidden>`,
-    `<div class="drawer-head"><h2>${labels.review}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
+    `<aside class="drawer" id="review" aria-label="${escaped(labels.myReview)}" hidden>`,
+    `<div class="drawer-head"><h2>${labels.myReview}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
     `<div class="drawer-body">${choices}${groups || (choices ? "" : `<p>${labels.nothing}</p>`)}</div>`,
     `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}" data-hint="${escaped(labels.copyHint)}">${labels.copy}</button></div>`,
     "</aside>",
