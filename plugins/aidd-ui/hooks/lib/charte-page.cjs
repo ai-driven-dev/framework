@@ -43,16 +43,25 @@ const paletteOf = (entries, values) => list("swatches", entries.map((entry) => i
 const ratioText = (ratio, labels) => `${ratio.toFixed(2).replace(".", labels.charte.decimal)}:1`;
 const WORDS = { aa: "aa", large: "aaLarge", fail: "fail" };
 
+const FOCUS_ROLE = /^color\.focus([.-]|$)/;
+/** A pair as its colours draw it: the text sample for a text colour, a line for a border and a ring for a focus colour, on the ground. */
+function sampleOf(fg, bg, values, nonText) {
+  const [front, back] = [escaped(values.get(fg)), escaped(values.get(bg))];
+  if (!nonText) return `<span class="pair-sample" style="color: ${front}; background: ${back}">${SAMPLE}</span>`;
+  if (FOCUS_ROLE.test(fg)) return `<span class="pair-ring" style="background: ${back}"><i style="border-color: ${front}"></i></span>`;
+  return `<span class="pair-line" style="background: ${back}"><i style="background: ${front}"></i></span>`;
+}
+
 /** The grid of contrast under the roles: a row per text colour, a column per ground, each cell the pair in its own colours with its ratio and its verdict in words. */
 function contrastGridOf(entries, values, labels) {
   const { columns, rows } = contrastOf(entries, values);
   if (!rows.length) return "";
-  const cell = (fg, bg, found) => {
+  const cell = (fg, bg, found, nonText) => {
     if (!found) return `<td data-fg="${escaped(fg)}" data-bg="${escaped(bg)}"></td>`;
-    return `<td data-fg="${escaped(fg)}" data-bg="${escaped(bg)}" data-verdict="${found.verdict}"><span class="pair-sample" style="color: ${escaped(values.get(fg))}; background: ${escaped(values.get(bg))}">${SAMPLE}</span><span class="ratio">${ratioText(found.ratio, labels)}</span><span class="verdict">${labels.charte[WORDS[found.verdict]]}</span></td>`;
+    return `<td data-fg="${escaped(fg)}" data-bg="${escaped(bg)}" data-verdict="${found.verdict}">${sampleOf(fg, bg, values, nonText)}<span class="ratio">${ratioText(found.ratio, labels)}</span><span class="verdict">${labels.charte[WORDS[found.verdict]]}</span></td>`;
   };
   const head = columns.map((bg) => `<th scope="col">${escaped(bg)}</th>`).join("");
-  const body = rows.map((row) => `<tr><th scope="row">${escaped(row.fg)}</th>${row.cells.map((found, at) => cell(row.fg, columns[at], found)).join("")}</tr>`).join("");
+  const body = rows.map((row) => `<tr><th scope="row">${escaped(row.fg)}</th>${row.cells.map((found, at) => cell(row.fg, columns[at], found, row.nonText)).join("")}</tr>`).join("");
   return `<div class="scroll"><table class="contrast"><caption>${escaped(labels.charte.contrast)}</caption><thead><tr><td></td>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
@@ -96,6 +105,8 @@ const TYPE_STYLE = `
 body { margin: 0; padding: 0 0 4px; color: #1d1d1b; font: 14px/1.4 system-ui, sans-serif; }
 .row { display: grid; grid-template-columns: minmax(7rem, 14rem) minmax(0, 1fr); gap: 4px 16px; align-items: baseline; padding: 8px 0; border-top: 1px solid #e4e4df; }
 .row:first-child { border-top: 0; }
+.row span { min-width: 0; overflow-wrap: break-word; }
+@media (max-width: 600px) { .row { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: #6b6b64; overflow-wrap: anywhere; }
 h3 { margin: 16px 0 0; font: 600 12px/16px system-ui, sans-serif; color: #5c5c55; }
 `;
@@ -115,7 +126,7 @@ function typographyFrame(entries, labels, language, tokens) {
     ...rest.filter((entry) => entry.type === "number").map((entry) => row(entry.name, "", "")),
   ];
   const doc = ["<!doctype html>", `<html lang="${language}">`, "<head>", '<meta charset="utf-8">', STYLESHEET_LINK, `<style>${TYPE_STYLE}</style>`, "</head>", "<body>", ...blocks, "</body>", "</html>"].join("\n");
-  return `<div class="render"><iframe data-combo="a" title="${escaped(labels.charte.typographie.title)}" srcdoc="${escaped(inlined(doc, tokens))}"></iframe></div>`;
+  return `<div class="render bare"><iframe data-combo="a" title="${escaped(labels.charte.typographie.title)}" srcdoc="${escaped(inlined(doc, tokens))}"></iframe></div>`;
 }
 
 const MIN_WIDTH = /min-width:\s*([\d.]+(?:rem|em|px))/;
@@ -200,7 +211,8 @@ main section[id] li { min-width: 0; }
 .size-pair { display: flex; align-items: flex-end; gap: var(--s2); }
 .box { display: block; inline-size: 96px; background: var(--sunken); border: 1px solid var(--text); border-radius: var(--r1); }
 .reference { display: block; block-size: ${REFERENCE_PX}px; inline-size: 0; border-left: 2px dashed var(--faint); }
-.scroll { overflow-x: auto; }
+.scroll { overflow-x: auto; max-inline-size: 100%; }
+section[id] .render.bare { background: none; border: 0; border-radius: 0; padding: 0; }
 .contrast { border-collapse: collapse; font-size: var(--t-sm); }
 .contrast caption { text-align: left; color: var(--muted); padding-bottom: var(--s2); }
 .contrast th, .contrast td { border: 1px solid var(--line); padding: var(--s2) var(--s3); text-align: left; vertical-align: top; font-weight: 400; }
@@ -208,6 +220,9 @@ main section[id] li { min-width: 0; }
 .contrast td { background: var(--surface); }
 .contrast td[data-verdict] { display: table-cell; }
 .pair-sample { display: inline-block; padding: 2px var(--s3); border-radius: var(--r1); border: 1px solid var(--line-strong); font-size: var(--t-lg); font-weight: 600; }
+.pair-line, .pair-ring { display: flex; align-items: center; justify-content: center; inline-size: 4.5rem; block-size: 2.25rem; border-radius: var(--r1); border: 1px solid var(--line-strong); }
+.pair-line i { display: block; inline-size: 70%; block-size: 3px; }
+.pair-ring i { display: block; inline-size: 70%; block-size: 1rem; border: 2px solid; border-radius: var(--r1); }
 .ratio, .verdict { display: block; }
 .ratio { margin-top: var(--s1); font-variant-numeric: tabular-nums; color: var(--text); }
 .verdict { color: var(--muted); }

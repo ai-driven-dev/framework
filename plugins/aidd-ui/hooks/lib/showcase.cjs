@@ -736,7 +736,6 @@ function marked(state) {
 function show(on) {
   drawer.hidden = !on;
   opener.setAttribute("aria-expanded", String(on));
-  keep(STORE + "-open", on ? "1" : null);
 }
 items.forEach((item) => rowsOf(item).forEach((row) => {
   const state = row.dataset.state;
@@ -813,7 +812,6 @@ clear.addEventListener("click", () => {
   if (out) out.remove();
   paint();
 });
-if (drawer.dataset.start !== "closed" && stored(STORE + "-open") === "1") show(true);
 paint();
 `;
 
@@ -1171,7 +1169,7 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
  * with something left to review, each record awaiting review with only its states not settled, each state with a
  * link to its tab, its verdict pair and a comment field, then one copy of all that is decided. A group carries its
  * own "all OK". Opened by the button at the foot of the sidebar, which counts what awaits review. */
-function drawerOf({ project, held, here, rows, labels, current, sets = [], closed = false }) {
+function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
   const item = (record) => {
     const { id, version } = fm(record);
     const wanted = awaitingOf(rows, record);
@@ -1199,7 +1197,7 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [], close
   const groups = held.filter((each) => each.awaiting.length).map(group).join("\n");
   const tally = pendingOf(labels, held.reduce((sum, each) => sum + each.todo, 0));
   return [
-    `<aside class="drawer" id="review" aria-label="${escaped(labels.review)}"${closed ? ' data-start="closed"' : ""} hidden>`,
+    `<aside class="drawer" id="review" aria-label="${escaped(labels.review)}" hidden>`,
     `<div class="drawer-head"><h2>${labels.review}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
     `<div class="drawer-body">${choices}${groups || (choices ? "" : `<p>${labels.nothing}</p>`)}</div>`,
     `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}">${labels.copy}</button></div>`,
@@ -1350,7 +1348,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
     return charteSectionsOf({ entries: tokens === null ? [] : catalog(project), values: resolvedValues(project).get(BASE_CONTEXT) ?? new Map(), citations: citations(project), primitives: list(fm(record).primitives), rows: breakpointRows(record), notes, tokens, labels, language });
   };
   const sectionsById = new Map(records.flatMap((record) => { const own = sectionsOf(record); return own ? [[fm(record).id, own]] : []; }));
-  const drawer = (current, closed = false) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, sets, closed });
+  const drawer = (current) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, sets });
   const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, overviewOf({ project, held, records, rows, labels })].join("\n");
   const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows, sectionsById), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
@@ -1379,7 +1377,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
     return { path: file.slice(WIREFRAMES_DIR.length), title: record ? titleOf(project, record) : undefined, text: text(project, file) ?? "" };
   });
   for (const set of sets) {
-    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets, rows, sectionsById), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null, true), script: variants.SCRIPT + PANEL, wide: true });
+    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets, rows, sectionsById), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null), script: variants.SCRIPT + PANEL, wide: true });
   }
   return pages;
 }

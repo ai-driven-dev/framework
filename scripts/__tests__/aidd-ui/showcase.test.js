@@ -314,6 +314,20 @@ describe("aidd-ui showcase", () => {
       assert.match(frame, /font-weight: var\(--font-weight-bold\)/);
     });
 
+    it("stacks the label above the sample in a narrow frame, so a sample never wraps one word per line", () => {
+      const frame = unescaped(systemPage().match(/<iframe [^>]*srcdoc="([^"]*)"/)[1]);
+      assert.match(frame, /@media \(max-width: 600px\) \{[^}]*\.row \{ grid-template-columns: minmax\(0, 1fr\)/);
+    });
+
+    it("sets the typography frame bare, on the left edge of the other sections, not inside a second card", () => {
+      const html = systemPage();
+      assert.match(sectionOf(html, "typographie"), /<div class="render bare"><iframe/);
+      const rule = html.match(/section\[id\] \.render\.bare \{([^}]*)\}/)[1];
+      assert.match(rule, /border: 0/);
+      assert.match(rule, /padding: 0/);
+      assert.match(rule, /background: none/);
+    });
+
     it("lists what no section claims in a plain name and value list, the token type never a heading", () => {
       editTokens(tmp, (tree) => (tree.misc = { ring: { $extensions: { "dev.ai-driven.css": "0 0 0 2px red" } } }));
       const html = systemPage();
@@ -344,6 +358,22 @@ describe("aidd-ui showcase", () => {
         assert.match(cellOf(systemPage(), "text-on-accent", "accent"), />4\.68:1</);
         assert.match(cellOf(fr, "border", "background"), /data-verdict="fail"[\s\S]*>insuffisant</);
         assert.match(cellOf(fr, "focus", "background"), /data-verdict="aa"/);
+      });
+
+      it("shows a border or a focus colour as a line or a ring on the ground, never as text, judged at 3:1", () => {
+        withRoles();
+        const html = systemPage({ lang: "fr" });
+        const border = cellOf(html, "border", "background");
+        const focus = cellOf(html, "focus", "background");
+        assert.match(border, /<span class="pair-line" style="background: #ffffff"><i style="background: #cccccc"><\/i><\/span>/);
+        assert.match(focus, /<span class="pair-ring" style="background: #ffffff"><i style="border-color: #1f5fd1"><\/i><\/span>/);
+        for (const cell of [border, focus]) assert.doesNotMatch(cell, />Aa</);
+        assert.match(border, /insuffisant/);
+        assert.match(cellOf(html, "text-soft", "background"), />Aa</);
+      });
+
+      it("lets the grid scroll inside its own wrapper", () => {
+        assert.match(systemPage(), /\.scroll \{ overflow-x: auto; max-inline-size: 100%; \}/);
       });
 
       it("shows each pair in its own colours, rows for the text, columns for the grounds, in a table with a caption", () => {

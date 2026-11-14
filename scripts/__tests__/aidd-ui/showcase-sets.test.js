@@ -298,13 +298,13 @@ describe("aidd-ui showcase sets", () => {
   describe("the review drawer", () => {
     const startOf = (html) => /<aside class="drawer" id="review"([^>]*)>/.exec(html)[1];
 
-    it("starts closed on a set page whatever it was left at, and keeps its memory on the other pages", () => {
+    it("starts closed on every page, whatever it was left at, and only the button opens it", () => {
       const pages = pagesOf([SET()]);
-      assert.match(startOf(pages["_set-layout.html"]), /data-start="closed"/);
-      assert.doesNotMatch(startOf(pages["index.html"]), /data-start/);
-      assert.doesNotMatch(startOf(pages["home.html"]), /data-start/);
-      const restore = /if \(([^)]*)stored\(STORE \+ "-open"\) === "1"\) show\(true\);/.exec(pages["_set-layout.html"]);
-      assert.ok(restore && restore[1].includes('drawer.dataset.start !== "closed"'), "the restore of the open drawer stands down on that attribute");
+      for (const name of ["_set-layout.html", "index.html", "home.html"]) {
+        assert.doesNotMatch(startOf(pages[name]), /data-start/, name);
+        assert.doesNotMatch(pages[name], /STORE \+ "-open"/, `${name} reads no memory of an open drawer`);
+        assert.match(startOf(pages[name]), / hidden$/, name);
+      }
     });
   });
 

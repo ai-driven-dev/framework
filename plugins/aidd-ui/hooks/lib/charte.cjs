@@ -78,6 +78,7 @@ function contrastOf(roles, values) {
   const columns = [...new Set(pairs.flatMap((pair) => pair.bgs))];
   const rows = pairs.map(({ fg, bgs, nonText }) => ({
     fg,
+    nonText,
     cells: columns.map((bg) => {
       if (!bgs.includes(bg)) return null;
       const [front, back] = [parse(values.get(fg) ?? ""), parse(values.get(bg) ?? "")];
