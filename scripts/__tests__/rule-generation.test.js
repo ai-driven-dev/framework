@@ -138,17 +138,19 @@ test("updating a rule rewrites its own previous copies without conflict", (t) =>
   assert.ok(f.read(CLAUDE).endsWith("- New.\n"));
 });
 
-test("--plan writes nothing and lists files, conflicts and legacy", (t) => {
+test("--plan writes nothing and lists files to create, update or delete, conflicts and legacy", (t) => {
   const f = fixture(t);
   const before = f.snapshot();
   const r = f.run(rule, NATIVE + ",opencode", ["--plan", ...input(f)]);
   assert.equal(r.status, 0, r.stderr);
   const p = json(r);
   assert.equal(p.plan, true);
-  assert.deepEqual(paths(p.files, "write"), [SRC, CLAUDE, CURSOR, COPILOT, AGY, "AGENTS.md"].sort());
+  assert.deepEqual(paths(p.files, "create"), [SRC, CLAUDE, CURSOR, COPILOT, AGY, "AGENTS.md"].sort());
   assert.deepEqual([p.conflicts, p.legacy], [[], []]);
   assert.deepEqual(f.snapshot(), before);
   assert.equal(f.run().status, 0);
+  const edit = f.run({ ...rule, body: "# Naming\n\n- Keep names short.\n" }, NATIVE, ["--plan", ...input(f)]);
+  assert.deepEqual(paths(json(edit).files, "update"), [SRC, CLAUDE, CURSOR, COPILOT, AGY].sort());
   const del = f.run(null, null, ["--plan", "--remove", "01-standards/1-naming"]);
   assert.equal(del.status, 0);
   assert.deepEqual(paths(json(del).files, "delete"), [SRC, CLAUDE, CURSOR, COPILOT, AGY].sort());
@@ -340,7 +342,7 @@ test("unwritable target blocks everything before any write", { skip: asRoot && "
   assert.deepEqual(out.written, []);
   assert.equal(out.blocked.length, 1);
   assert.equal(out.blocked[0].path, CURSOR);
-  assert.equal(out.blocked[0].operation, "write");
+  assert.equal(out.blocked[0].operation, "create");
   assert.match(out.blocked[0].code, /^(EACCES|EPERM)$/);
   assert.ok(out.blocked[0].message);
   assert.deepEqual(f.snapshot(), before);
@@ -380,7 +382,7 @@ fs.renameSync = (from, to) => { if (String(to).endsWith(".mdc")) throw Object.as
   const out = json(r);
   assert.deepEqual(out.written, [SRC, CLAUDE]);
   assert.equal(out.failed.path, CURSOR);
-  assert.equal(out.failed.operation, "write");
+  assert.equal(out.failed.operation, "create");
   assert.ok(out.failed.code && out.failed.message);
   assert.deepEqual(out.pending, [COPILOT, AGY]);
   assert.ok(f.has(SRC) && f.has(CLAUDE) && !f.has(COPILOT) && !f.has(AGY));

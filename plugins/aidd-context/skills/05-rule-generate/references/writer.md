@@ -24,7 +24,7 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 
 | Field | Means |
 | --- | --- |
-| `files` | `{path, operation}` per path a run writes or deletes. |
+| `files` | `{path, operation}` per path, `operation` being `create`, `update` or `delete`. |
 | `conflicts` | Copies whose content the writer did not produce; never `AGENTS.md`. |
 | `legacy` | Files in the old AIDD format it converts. |
 | `drift` | Copies that differ from their source's rendering. |

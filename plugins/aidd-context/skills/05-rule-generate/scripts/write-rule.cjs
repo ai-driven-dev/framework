@@ -353,13 +353,16 @@ function planAgentsIndex(plan, project, finalSources) {
 
 // ---------- effects: preflight, apply ----------
 
+function operationOf(file, text) {
+  if (text === null) return "delete";
+  return fs.existsSync(file) ? "update" : "create";
+}
+
 function toOperations(project, writes) {
-  return [...writes].map(([relativePath, text]) => ({
-    path: relativePath,
-    file: project.resolve(relativePath),
-    operation: text === null ? "delete" : "write",
-    text,
-  }));
+  return [...writes].map(([relativePath, text]) => {
+    const file = project.resolve(relativePath);
+    return { path: relativePath, file, operation: operationOf(file, text), text };
+  });
 }
 
 function nearestExisting(file) {
@@ -456,7 +459,7 @@ function execute(argv) {
   const options = parseArgs(argv);
   const project = openProject(options["--project"]);
   const plan = planChanges(project, options);
-  const files = [...plan.writes].map(([relativePath, text]) => ({ path: relativePath, operation: text === null ? "delete" : "write" }));
+  const files = toOperations(project, plan.writes).map(({ path: relativePath, operation }) => ({ path: relativePath, operation }));
   const summary = { files, conflicts: plan.conflicts, legacy: [...plan.legacy] };
   if (options["--plan"]) return { payload: { plan: true, ...summary }, exitCode: EXIT.OK };
   if (options["--check"]) {
