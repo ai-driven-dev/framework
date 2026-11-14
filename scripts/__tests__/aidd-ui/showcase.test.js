@@ -265,75 +265,105 @@ describe("aidd-ui showcase", () => {
     });
   });
 
-  describe("the token gallery", () => {
+  describe("the charte page", () => {
     const sheet = () => read(`${UI}/tokens.css`);
     const systemPage = (options = {}) => pagesOf({ tokens: sheet(), ...options })["system.html"];
-    const unescaped = (text) => text.replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
-    const frameOf = (html) => unescaped(html.match(/<iframe [^>]*srcdoc="([^"]*)"/)[1]);
-    const typesIn = (frame) => [...frame.matchAll(/<section data-type="([^"]+)"/g)].map((match) => match[1]);
-    const rowOf = (frame, name) => frame.match(new RegExp(`<li data-token="${name.replaceAll(".", "\\.")}">[\\s\\S]*?</li>`))[0];
+    const idsIn = (html) => [...html.matchAll(/<section id="([^"]+)" aria-labelledby="([^"]+)"/g)].map((match) => match[1]);
+    const sectionOf = (html, id) => html.match(new RegExp(`<section id="${id}" aria-labelledby[\\s\\S]*?</section>`))[0];
+    const subOf = (html, page) => [...navOf(html).matchAll(new RegExp(`<a href="${page}\\.html#([^"]+)"`, "g"))].map((match) => match[1]);
 
-    it("shows one row per token, in a frame, with its value in the base context", () => {
-      const frame = frameOf(systemPage());
-      assert.equal([...frame.matchAll(/<li data-token="/g)].length, 8);
-      assert.ok(rowOf(frame, "space.md").includes("1rem"));
-      assert.ok(!rowOf(frame, "space.md").includes("1.5rem"));
-      assert.ok(frame.includes("--space-md: 1rem"));
-    });
-
-    it("sections the tokens by type in the order of the types", () => {
-      assert.deepEqual(typesIn(frameOf(systemPage())), ["color", "dimension", "fontFamily", "fontWeight", "duration"]);
-    });
-
-    it("gives a color a swatch, a dimension a bar capped to the frame, a font its sample", () => {
-      const frame = frameOf(systemPage());
-      assert.ok(rowOf(frame, "color.brand.primary").includes("background: var(--color-brand-primary)"));
-      assert.ok(rowOf(frame, "space.md").includes("inline-size: min(var(--space-md), 100%)"));
-      assert.match(rowOf(frame, "font.body"), /font-family: var\(--font-body\)[^>]*>Aa</);
-      assert.match(rowOf(frame, "font.weight.bold"), /font-weight: var\(--font-weight-bold\)[^>]*>Aa</);
-    });
-
-    it("shows a token with raw CSS and no type under css, last, by its value alone", () => {
-      editTokens(tmp, (tree) => (tree.misc = { ring: { $extensions: { "dev.ai-driven.css": "0 0 0 2px red" } } }));
-      const frame = frameOf(systemPage());
-      assert.equal(typesIn(frame).at(-1), "css");
-      assert.ok(frame.match(/<section data-type="css">[\s\S]*?<\/section>/)[0].includes("misc.ring"));
-      assert.ok(rowOf(frame, "misc.ring").includes("0 0 0 2px red"));
-    });
-
-    it("holds the label, the theme and platform bar, and a frame marked with the platform", () => {
+    it("builds one native section per kind of token, each with its heading, in the order of the page", () => {
       const html = systemPage();
-      assert.ok(frameOf(html).includes(">Tokens<"));
-      assert.match(html, /<div class="toolbar">/);
-      assert.match(html.match(/<iframe [^>]*>/)[0], /data-platform="web"/);
-      assert.ok(frameOf(html).includes(":where(html) { font-family: system-ui, sans-serif; }"));
+      assert.deepEqual(idsIn(html), ["palette", "roles", "typographie", "espacements", "points-de-rupture", "autres"]);
+      for (const [, id, labelled] of html.matchAll(/<section id="([^"]+)" aria-labelledby="([^"]+)"/g)) assert.match(html, new RegExp(`<h2 id="${labelled}">[^<]+</h2>`), id);
     });
 
-    it("lays the colors out as a grid of swatches, an alpha shown as hex and percent", () => {
+    it("writes each section a French heading and one plain sentence under it", () => {
+      const html = systemPage({ lang: "fr" });
+      for (const [id, title] of [["palette", "Palette"], ["roles", "Rôles"], ["typographie", "Typographie"], ["espacements", "Espacements"], ["points-de-rupture", "Points de rupture"], ["autres", "Autres réglages"]]) {
+        assert.match(sectionOf(html, id), new RegExp(`<h2 id="${id}-title">${title}</h2><p class="lead">[^<]+\\.</p>`), id);
+      }
+    });
+
+    it("shows a colour as a swatch of its resolved value, its token name after it", () => {
+      const palette = sectionOf(systemPage(), "palette");
+      assert.match(palette, /<li data-token="color\.brand\.primary"><i class="swatch" style="background: #336699"><\/i>/);
+      assert.ok(palette.indexOf("swatch") < palette.indexOf("color.brand.primary</"), "the visual comes first");
+    });
+
+    it("keeps the roles apart from the palette, and says which token a role reads", () => {
+      const html = systemPage();
+      const roles = sectionOf(html, "roles");
+      assert.ok(roles.includes('data-token="color.text.default"') && !roles.includes('data-token="color.brand.primary"'));
+      assert.match(roles, /<li data-token="color\.text\.default">[\s\S]*?= color\.brand\.primary/);
+    });
+
+    it("draws a space as a square of its real size, in rem and in pixels", () => {
+      const spaces = sectionOf(systemPage(), "espacements");
+      assert.match(spaces, /<li data-token="space\.md"><i class="square" style="inline-size: 1rem; block-size: 1rem"><\/i>/);
+      assert.ok(spaces.includes("1rem \u00b7 16 px"));
+    });
+
+    it("sets typography in one small frame that holds the stylesheet, and nothing else in a frame", () => {
+      const html = systemPage();
+      assert.equal([...html.matchAll(/<iframe /g)].length, 1);
+      assert.ok(sectionOf(html, "typographie").includes("<iframe"));
+      const frame = unescaped(html.match(/<iframe [^>]*srcdoc="([^"]*)"/)[1]);
+      assert.ok(frame.includes("--space-md: 1rem"));
+      assert.match(frame, /font-family: var\(--font-body\)/);
+      assert.match(frame, /font-weight: var\(--font-weight-bold\)/);
+    });
+
+    it("lists what no section claims in a plain name and value list, the token type never a heading", () => {
+      editTokens(tmp, (tree) => (tree.misc = { ring: { $extensions: { "dev.ai-driven.css": "0 0 0 2px red" } } }));
+      const html = systemPage();
+      const others = sectionOf(html, "autres");
+      for (const name of ["border.thin", "motion.fast", "misc.ring"]) assert.ok(others.includes(`data-token="${name}"`), name);
+      assert.ok(others.includes("0 0 0 2px red"));
+      assert.doesNotMatch(html, />(color|dimension|fontFamily|fontWeight|duration)</);
+    });
+
+    it("shows an alpha colour as its hex and its opacity", () => {
       editTokens(tmp, (tree) => (tree.color.brand.veil = { $type: "color", $value: { colorSpace: "srgb", components: [1, 0.4196, 0.2078], alpha: 0.0784, hex: "#ff6b35" } }));
-      const frame = frameOf(systemPage());
-      assert.match(frame, /<section data-type="color"><h3>color<\/h3><ul class="swatches">/);
-      assert.match(frame, /<section data-type="dimension"><h3>dimension<\/h3><ul>/);
-      assert.ok(rowOf(frame, "color.brand.veil").includes("#ff6b35 · 8%"));
-      assert.ok(!rowOf(frame, "color.brand.veil").includes("color(srgb"));
+      const veil = sectionOf(systemPage(), "palette").match(/<li data-token="color\.brand\.veil">[\s\S]*?<\/li>/)[0];
+      assert.equal(veil.match(/<span class="value">([^<]*)</)[1], "#ff6b35 \u00b7 8%");
     });
 
-    it("shows the theme and platform bar only for an axis that has more than one value", () => {
-      const axes = (html) => [...html.matchAll(/<select data-axis="(\w+)">/g)].map((match) => match[1]);
-      const declare = (themes, platforms) => put(tmp, `${UI}/system.md`, read(`${UI}/system.md`).replace(/themes: \[[^\]]*\]/, `themes: ${themes}`).replace(/platforms: \[[^\]]*\]/, `platforms: ${platforms}`));
-      declare("[light]", "[web]");
-      assert.doesNotMatch(systemPage(), /class="toolbar"|data-axis=/);
-      assert.ok(systemPage().includes("<iframe"), "the gallery stays");
-      declare("[light]", "[web, mobile]");
-      assert.deepEqual([...new Set(axes(systemPage()))], ["platform"]);
-      declare("[light, dark]", "[web]");
-      assert.deepEqual([...new Set(axes(systemPage()))], ["theme"]);
-    });
-
-    it("shows no gallery without a stylesheet", () => {
+    it("keeps the breakpoints and no token section without a stylesheet", () => {
       const html = systemPage({ tokens: null });
+      assert.deepEqual(idsIn(html), ["points-de-rupture"]);
       assert.ok(!html.includes("<iframe"));
-      assert.ok(!html.includes('class="toolbar"'));
+    });
+
+    it("holds no theme and platform bar: every value shown is the base one", () => {
+      assert.doesNotMatch(systemPage(), /class="toolbar"|data-axis=/);
+    });
+
+    it("links each section from the navigation under its step, and each link to a section, for the charte and the identity", () => {
+      for (const lang of ["en", "fr"]) {
+        const pages = pagesOf({ tokens: sheet(), lang });
+        const nav = navOf(pages["home.html"]);
+        for (const page of ["system", "brand"]) {
+          const linked = subOf(pages["home.html"], page);
+          assert.ok(linked.length > 0, `${page} has anchors`);
+          assert.deepEqual(linked, idsIn(pages[`${page}.html`]), `${page}: nav and page list the same sections in the same order`);
+        }
+        assert.match(nav, /<ul class="sub">/);
+      }
+    });
+
+    it("gives the identity a section per heading of the brand, named in the language", () => {
+      const html = pagesOf({ lang: "fr" })["brand.html"];
+      assert.deepEqual(idsIn(html).slice(0, 3), ["project", "users", "domain"]);
+      assert.match(html, /<h2 id="project-title">Projet<\/h2>/);
+      assert.match(navOf(pagesOf({ lang: "fr" })["home.html"]), /<a href="brand\.html#project">Projet<\/a>/);
+    });
+
+    it("highlights the section being read: the script sets aria-current to location from an observer", () => {
+      const script = systemPage().match(/<script>([\s\S]*?)<\/script>/)[1];
+      assert.match(script, /new IntersectionObserver\(/);
+      assert.match(script, /"aria-current", "location"/);
+      assert.match(script, /rootMargin: "0px 0px -70% 0px"/);
     });
   });
 
@@ -1014,12 +1044,12 @@ describe("aidd-ui showcase", () => {
       assert.match(headerOf(pagesOf({ lang: "fr" })["button.html"]), /<h1>Button<\/h1>/);
     });
 
-    it("makes the step summary the link of a step that holds one record and no set, with no child list", () => {
+    it("makes the step summary the link of a step that holds one record and no set, with no child list of records, only the anchors of its sections", () => {
       const html = pagesOf({ lang: "fr" })["index.html"];
       for (const [step, id, name] of [["identity", "brand", "Identité"], ["foundations", "system", "Charte"]]) {
         const each = stepOf(html, step);
         assert.match(each.html, new RegExp(`<summary><span class="stepno">\\d</span><a class="step-name" href="${id}.html">${name}</a>`), step);
-        assert.doesNotMatch(each.html, /<ul>|<li/, step);
+        assert.doesNotMatch(each.html, /<ul>|<li data-/, step);
       }
       assert.match(stepsOf(pagesOf({ lang: "fr" })["brand.html"]).find((each) => each.step === "identity").html, /<a class="step-name" href="brand.html" aria-current="page">/);
       assert.match(stepOf(html, "components").html, /<ul>/);
@@ -1049,9 +1079,9 @@ describe("aidd-ui showcase", () => {
       assert.equal(LABELS.fr.sections.Project, "Projet");
       assert.equal(LABELS.fr.sections.Glossary, "Glossaire");
       const brand = pagesOf({ lang: "fr" })["brand.html"];
-      assert.match(brand, /<h2>Projet<\/h2>/);
-      assert.doesNotMatch(brand, /<h2>Project<\/h2>/);
-      assert.match(pagesOf()["brand.html"], /<h2>Project<\/h2>/);
+      assert.match(brand, /<h2[^>]*>Projet<\/h2>/);
+      assert.doesNotMatch(brand, /<h2[^>]*>Project<\/h2>/);
+      assert.match(pagesOf()["brand.html"], /<h2[^>]*>Project<\/h2>/);
     });
 
     it("names the one state of the brand and of the system as the whole, linking the page with no anchor", () => {

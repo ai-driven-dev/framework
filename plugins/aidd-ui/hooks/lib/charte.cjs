@@ -1,11 +1,12 @@
 // The charte of a design system: which section of the page each token belongs to. Pure, so the page and
 // its navigation read one answer. A token is judged by its type and the words of its name, in the
-// order of SECTIONS; whatever no section claims is "autres".
+// order of SECTIONS; whatever no section claims is "autres". "points-de-rupture" claims no token: the page
+// fills it from the breakpoints system.md declares.
 const PATH_SEPARATOR = ".";
 const WORD_SEPARATOR = /[.-]/;
 
 /** The sections a token can land in, in the order a page shows them and the order they claim a token. */
-const SECTIONS = ["palette", "roles", "typographie", "espacements", "arrondis", "tailles", "autres"];
+const SECTIONS = ["palette", "roles", "typographie", "espacements", "arrondis", "tailles", "points-de-rupture", "autres"];
 
 const TYPE_WORDS = ["font", "type", "text"];
 const SPACE_WORDS = ["space", "spacing", "gap", "inset", "padding", "margin"];

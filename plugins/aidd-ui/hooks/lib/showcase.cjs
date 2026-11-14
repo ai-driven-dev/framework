@@ -3,13 +3,14 @@
 // the command reads the files and writes the pages. Each page holds the review of its record,
 // handed back as one copy.
 const { list, table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, fm, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, reviewStatesOf, REVIEW_KIND, SYSTEM_ID } = require("./model.cjs");
+const { placed, fm, BREAKPOINTS_SECTION, breakpointRows, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, reviewStatesOf, REVIEW_KIND, SYSTEM_ID } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
 const { text, UI_DIR } = require("./project.cjs");
 const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./html.cjs");
-const { catalog, resolvedValues, TYPES } = require("./tokens.cjs");
+const { catalog, citations, resolvedValues } = require("./tokens.cjs");
+const { charteSectionsOf, identitySectionsOf, sectionHtml, subNavigationOf, CHARTE_STYLE } = require("./charte-page.cjs");
 const variants = require("./variants.cjs");
 const { STEPS, CATEGORIES, stepOf, categoryOf, setStepOf, awaitingOf } = require("./steps.cjs");
 
@@ -19,8 +20,6 @@ const WIREFRAMES_SHOWN = 2;
 const DEFAULT_LANGUAGE = "en";
 const UNRESOLVED = ["none", "pending"]; // a state still to review
 const BASE_CONTEXT = ""; // the key of `resolvedValues` for the base
-const UNTYPED = "css"; // the section of the tokens that hold raw CSS and no `$type`
-const SAMPLE = "Aa";
 const EXPECTED_COMPONENT = "R18";
 const FEW_ITEMS = 3; // a drawer holding this many records or fewer opens every group
 const SET_CURRENT = "set:"; // what a page of a set passes the navigation as its current page
@@ -85,7 +84,27 @@ const LABELS = {
     platform: "Platform",
     sides: "Side by side",
     combination: "Combination",
-    tokens: "Tokens",
+    charte: {
+      palette: { title: "Palette", lead: "The raw colours of the project: every other colour is chosen among them." },
+      roles: { title: "Roles", lead: "What each colour is used for: text, backgrounds, borders. Screens use these, never the palette directly." },
+      typographie: { title: "Typography", lead: "The fonts, the sizes and the weights that every text of the project is set in." },
+      espacements: { title: "Spacing", lead: "The gaps between and inside things, drawn at their real size." },
+      arrondis: { title: "Corner radii", lead: "How round the corners of the controls and the surfaces are." },
+      tailles: { title: "Sizes", lead: "The fixed sizes of the controls, set against the 44 px a finger needs." },
+      "points-de-rupture": { title: "Breakpoints", lead: "The screen widths where the layout changes." },
+      autres: { title: "Other settings", lead: "The remaining values: durations, shadows and whatever has no picture of its own." },
+      notes: { title: "Notes", lead: "What the design system says besides its tokens." },
+      contrast: "Contrast of the text colours on their backgrounds",
+      aa: "AA",
+      aaLarge: "AA large text",
+      fail: "insufficient",
+      decimal: ".",
+      pill: "pill",
+      reference: "reference 44 px",
+      sample: "The quick brown fox jumps over the lazy dog",
+      defaultQuery: "default (under {min})",
+      defaultOnly: "default",
+    },
     forPersona: "For",
     states: "States",
     stateNames: {},
@@ -155,7 +174,27 @@ const LABELS = {
     platform: "Plateforme",
     sides: "Côte à côte",
     combination: "Combinaison",
-    tokens: "Tokens",
+    charte: {
+      palette: { title: "Palette", lead: "Les couleurs brutes du projet : toutes les autres sont choisies parmi elles." },
+      roles: { title: "Rôles", lead: "À quoi sert chaque couleur : texte, fonds, bordures. Les écrans utilisent les rôles, jamais la palette directement." },
+      typographie: { title: "Typographie", lead: "Les polices, les tailles et les graisses dans lesquelles tout texte du projet est écrit." },
+      espacements: { title: "Espacements", lead: "Les écarts entre les éléments et à l'intérieur, dessinés à leur taille réelle." },
+      arrondis: { title: "Arrondis", lead: "À quel point les angles des contrôles et des surfaces sont arrondis." },
+      tailles: { title: "Tailles", lead: "Les tailles fixes des contrôles, comparées aux 44 px qu'il faut à un doigt." },
+      "points-de-rupture": { title: "Points de rupture", lead: "Les largeurs d'écran où la mise en page change." },
+      autres: { title: "Autres réglages", lead: "Les valeurs restantes : durées, ombres et tout ce qui n'a pas d'image propre." },
+      notes: { title: "Notes", lead: "Ce que le design system dit en plus de ses tokens." },
+      contrast: "Contraste des couleurs de texte sur leurs fonds",
+      aa: "AA",
+      aaLarge: "AA gros texte",
+      fail: "insuffisant",
+      decimal: ",",
+      pill: "pilule",
+      reference: "repère 44 px",
+      sample: "Portez ce vieux whisky au juge blond qui fume",
+      defaultQuery: "par défaut (moins de {min})",
+      defaultOnly: "par défaut",
+    },
     forPersona: "Pour",
     states: "États",
     stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur", hover: "survol", disabled: "désactivé", pressed: "appuyé", selected: "sélectionné", checked: "coché" },
@@ -314,8 +353,7 @@ nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 .review { display: flex; flex-direction: column; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); overflow: hidden; }
 .bar-top { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; padding: var(--s3) var(--s4) var(--s3) var(--s5); border-bottom: 1px solid var(--line); }
 .toolbar { display: flex; gap: var(--s3); align-items: center; flex-wrap: wrap; padding: var(--s2) var(--s5); border-bottom: 1px solid var(--line); background: var(--bg); }
-.gallery .toolbar { border: 1px solid var(--line); border-radius: var(--r2); }
-.review fieldset, .gallery fieldset { border: 0; display: flex; gap: var(--s2); align-items: center; padding: 0; margin: 0; }
+.review fieldset { border: 0; display: flex; gap: var(--s2); align-items: center; padding: 0; margin: 0; }
 legend { float: left; margin-right: var(--s2); font-size: var(--t-sm); font-weight: 600; color: var(--muted); }
 label { font-size: var(--t-sm); color: var(--muted); }
 #sides[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
@@ -352,8 +390,6 @@ textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: va
 .capture { flex: 1 1 24rem; margin: 0; min-width: 0; }
 .capture img { display: block; max-width: 100%; border: 1px solid var(--line-strong); border-radius: var(--r2); }
 .capture.missing { display: flex; align-items: center; justify-content: center; min-block-size: 160px; border: 1.5px dashed var(--line-strong); border-radius: var(--r2); color: var(--muted); padding: var(--s4); font-size: var(--t-sm); text-align: center; }
-.gallery { display: flex; flex-direction: column; gap: var(--s3); }
-.gallery .pair { border: 1px solid var(--line); border-radius: var(--r3); }
 .overview { display: flex; flex-direction: column; gap: var(--s3); }
 .overview h2 { display: flex; align-items: center; gap: var(--s2); }
 .overview h2 span { font-size: var(--t-xs); font-weight: 600; color: var(--muted); background: var(--sunken); border-radius: 999px; padding: 0 7px; line-height: 18px; }
@@ -881,7 +917,7 @@ function screenGroupsOf(records, journeys) {
 }
 
 /** The navigation, the same on every page: the five steps in order, each folded, the Review button at its foot. */
-function navigationOf(project, records, labels, current, sets = [], rows = []) {
+function navigationOf(project, records, labels, current, sets = [], rows = [], anchors = new Map()) {
   const journeys = records.filter((record) => fm(record).kind === "journey");
   const item = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, titleOf(project, record, labels))}</li>`;
   const named = (record, step) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, labels.stepNames[step])}</li>`;
@@ -911,7 +947,8 @@ function navigationOf(project, records, labels, current, sets = [], rows = []) {
     const name = alone
       ? `<a class="step-name" href="${escaped(fm(alone).id)}.html"${fm(alone).id === current ? ' aria-current="page"' : ""}>${labels.stepNames[each.step]}</a>`
       : `<span class="step-name">${labels.stepNames[each.step]}</span>`;
-    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark" role="img" aria-label="${escaped(markName)}">${mark}</span></summary>${alone ? "" : bodyOf(each) + setsOf(each.sets)}</details></li>`;
+    const body = alone ? subNavigationOf(fm(alone).id, anchors.get(fm(alone).id) ?? []) : bodyOf(each) + setsOf(each.sets);
+    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark" role="img" aria-label="${escaped(markName)}">${mark}</span></summary>${body}</details></li>`;
   };
   const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} ${pendingOf(labels, total)}</button></div>`;
   const bar = `<div class="nav-bar"><span class="nav-title">${labels.title}</span><button type="button" id="nav-toggle" aria-controls="nav-sheet" aria-expanded="false">${labels.contents}</button></div>`;
@@ -1104,56 +1141,6 @@ function tabsOf(states, labels) {
   return `<div class="tabs" role="tablist" aria-label="${escaped(labels.states)}">${states.map(tab).join("")}</div>`;
 }
 
-const GALLERY_STYLE = `
-body { margin: 0; padding: 16px; font-size: 13px; }
-h2 { font-size: 15px; margin: 0 0 8px; }
-h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.6; margin: 16px 0 4px; }
-ul { list-style: none; margin: 0; padding: 0; }
-li { display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(6rem, 1fr) 2fr; gap: 12px; align-items: center; padding: 4px 0; border-bottom: 1px solid #8884; }
-code, .value { overflow-wrap: anywhere; }
-.value { opacity: 0.7; }
-.swatch { display: block; inline-size: 100%; block-size: 56px; border-radius: 6px; border: 1px solid #8886; }
-.bar { display: block; block-size: 12px; background: #888; border-radius: 2px; }
-.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: 16px 12px; }
-.swatches li { display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 0; border: 0; }
-.swatches .specimen { order: -1; margin-bottom: 4px; border-radius: 6px; background: repeating-conic-gradient(#8883 0 25%, transparent 0 50%) 0 0 / 12px 12px; }
-`;
-
-const ALPHA_COLOUR = /^color\(srgb ([\d.]+) ([\d.]+) ([\d.]+) \/ ([\d.]+)\)$/;
-
-/** A value as a person reads it: a colour with alpha as its hex and its opacity, anything else as is. */
-function shownValue(value) {
-  const match = ALPHA_COLOUR.exec(value);
-  if (!match) return value;
-  const hex = match.slice(1, 4).map((part) => Math.round(Number(part) * 255).toString(16).padStart(2, "0")).join("");
-  return `#${hex} · ${Math.round(Number(match[4]) * 100)}%`;
-}
-
-/** What shows a token in the gallery: a swatch, a bar, a sample of text, or nothing beside its value. */
-function specimenOf({ type, property }) {
-  const use = `var(${escaped(property)})`;
-  if (type === "color") return `<i class="swatch" style="background: ${use}"></i>`;
-  if (type === "dimension") return `<i class="bar" style="inline-size: min(${use}, 100%)"></i>`;
-  if (type === "fontFamily") return `<span style="font-family: ${use}">${SAMPLE}</span>`;
-  if (type === "fontWeight") return `<span style="font-weight: ${use}">${SAMPLE}</span>`;
-  return "";
-}
-
-/** The gallery of the system page: every token by type in a frame that holds the stylesheet, with the
- * value it has in the base context. Nothing without a stylesheet. */
-function galleryOf({ project, system, tokens, labels, language }) {
-  const entries = tokens === null ? [] : catalog(project);
-  if (!entries.length) return "";
-  const values = resolvedValues(project).get(BASE_CONTEXT) ?? new Map();
-  const row = (entry) => `<li data-token="${escaped(entry.name)}"><code>${escaped(entry.name)}</code><span class="value">${escaped(shownValue(values.get(entry.name) ?? ""))}</span><span class="specimen">${specimenOf(entry)}</span></li>`;
-  const sections = [...TYPES, UNTYPED].flatMap((type) => {
-    const own = entries.filter((entry) => (entry.type ?? UNTYPED) === type);
-    return own.length ? [`<section data-type="${type}"><h3>${type}</h3><ul${type === "color" ? ' class="swatches"' : ""}>${own.map(row).join("")}</ul></section>`] : [];
-  });
-  const doc = ["<!doctype html>", `<html lang="${language}">`, "<head>", '<meta charset="utf-8">', STYLESHEET_LINK, `<style>${GALLERY_STYLE}</style>`, "</head>", "<body>", `<h2>${labels.tokens}</h2>`, ...sections, "</body>", "</html>"].join("\n");
-  return `<section class="gallery">${toolbarOf(system, labels)}<div class="pair"><div class="render"><iframe data-combo="a"${platformOf(system)} title="${escaped(labels.tokens)}" srcdoc="${escaped(inlined(doc, tokens))}"></iframe></div></div></section>`;
-}
-
 /** The `data-platform` attribute of a frame: the first platform the system declares, none without one. */
 const platformOf = (system) => (system && list(fm(system).platforms).length ? ` data-platform="${escaped(list(fm(system).platforms)[0])}"` : "");
 
@@ -1233,7 +1220,7 @@ function bodyLines(project, record) {
 const titleOf = (project, record, labels) => (labels && Object.hasOwn(labels.kindNames, fm(record).kind) ? labels.kindNames[fm(record).kind] : bodyLines(project, record).map((line) => TITLE_LINE.exec(line)?.[1]).find(Boolean) ?? fm(record).id);
 
 /** The `## ` sections a page already shows in its own shape, so its text leaves them out. */
-const SHOWN_SECTIONS = { journey: [PERSONA_SECTION, STEPS_SECTION] };
+const SHOWN_SECTIONS = { journey: [PERSONA_SECTION, STEPS_SECTION], system: [BREAKPOINTS_SECTION] };
 const SECTION_LINE = /^## +(.+?)\s*$/;
 
 /** Where the record's description stands among its body lines: the first paragraph under its title, before
@@ -1256,18 +1243,23 @@ function descriptionOf(project, record) {
 
 /** The record as text under its title, without its front matter, its title and its description, which the
  * page heading shows, and the sections the page draws otherwise. */
-function specOf(project, record, labels) {
+function specLines(project, record) {
   const shown = SHOWN_SECTIONS[fm(record).kind] ?? [];
   const lines = bodyLines(project, record);
   const title = lines.findIndex((line) => TITLE_LINE.test(line));
   const description = descriptionAt(lines);
   let skipping = false;
-  const kept = lines.filter((line, at) => {
+  return lines.filter((line, at) => {
     if (at === title || (description && at >= description.start && at < description.end)) return false;
     const section = SECTION_LINE.exec(line);
     if (section) skipping = shown.includes(section[1]);
     return !skipping;
   });
+}
+
+/** The record as html under its title: its `specLines`, their headings named in the language. */
+function specOf(project, record, labels) {
+  const kept = specLines(project, record);
   const named = kept.map((line) => line.replace(SECTION_LINE, (whole, name) => (Object.hasOwn(labels.sections, name) ? `## ${labels.sections[name]}` : whole)));
   return documentOf(named.join(LINE_BREAK));
 }
@@ -1314,6 +1306,18 @@ function sheet(on) {
   navToggle.setAttribute("aria-expanded", String(on));
   navToggle.closest("nav").toggleAttribute("data-open", on);
 }
+const here = [...document.querySelectorAll("nav .sub a")].filter((link) => link.pathname === location.pathname);
+if (here.length && "IntersectionObserver" in window) {
+  const byId = new Map(here.map((link) => [link.hash.slice(1), link]));
+  const observer = new IntersectionObserver((seen) => {
+    for (const each of seen) {
+      if (!each.isIntersecting) continue;
+      here.forEach((link) => link.removeAttribute("aria-current"));
+      byId.get(each.target.id).setAttribute("aria-current", "location");
+    }
+  }, { rootMargin: "0px 0px -70% 0px" });
+  document.querySelectorAll("main section[id]").forEach((section) => { if (byId.has(section.id)) observer.observe(section); });
+}
 if (navToggle) {
   navToggle.addEventListener("click", () => sheet(navToggle.getAttribute("aria-expanded") !== "true"));
   document.addEventListener("keydown", (event) => {
@@ -1324,7 +1328,7 @@ if (navToggle) {
 }
 `;
 
-const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${SHELL}${variants.STYLE}</style>`, "</head>", "<body>", '<div class="shell">', navigation, wide ? '<main class="wide">' : "<main>", body, "</main>", "</div>", drawer, `<script>${script}${NAVIGATION}</script>`, "</body>", "</html>", ""].join("\n");
+const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${SHELL}${variants.STYLE}${CHARTE_STYLE}</style>`, "</head>", "<body>", '<div class="shell">', navigation, wide ? '<main class="wide">' : "<main>", body, "</main>", "</div>", drawer, `<script>${script}${NAVIGATION}</script>`, "</body>", "</html>", ""].join("\n");
 
 /** The pages of the showcase by file name: `index.html`, one page per record that is not a review and one per set of variants.
  * `problems` are the engine's, `tokens` the stylesheet text or null, `captures` the png paths beside
@@ -1339,9 +1343,16 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   const journeys = records.filter((record) => fm(record).kind === "journey");
   const system = project.records.find((record) => fm(record).kind === "system");
   const held = stepsOf({ project, records, rows, sets });
+  const sectionsOf = (record) => {
+    if (fm(record).kind === "brand") return identitySectionsOf(specLines(project, record), labels);
+    if (fm(record).kind !== SYSTEM_ID) return null;
+    const notes = specLines(project, record).some((line) => line.trim()) ? specOf(project, record, labels) : "";
+    return charteSectionsOf({ entries: tokens === null ? [] : catalog(project), values: resolvedValues(project).get(BASE_CONTEXT) ?? new Map(), citations: citations(project), primitives: list(fm(record).primitives), rows: breakpointRows(record), notes, tokens, labels, language });
+  };
+  const sectionsById = new Map(records.flatMap((record) => { const own = sectionsOf(record); return own ? [[fm(record).id, own]] : []; }));
   const drawer = (current, closed = false) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, sets, closed });
   const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, overviewOf({ project, held, records, rows, labels })].join("\n");
-  const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows), body: home, drawer: drawer(null), script: PANEL }) };
+  const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows, sectionsById), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
     const id = fm(record).id;
     const uses = [...new Set(cited(record))].filter((each) => each !== id && recordsById.has(each)).sort(byCode);
@@ -1355,21 +1366,20 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
       ...bars,
       journey ? "" : linksOf("uses", labels.uses, uses, (each) => titleOf(project, recordsById.get(each), labels)),
       journey ? journeyOf({ project, record, recordsById, tokens, labels }) : "",
-      id === SYSTEM_ID ? galleryOf({ project, system, tokens, labels, language }) : "",
       reviewed ? reviewOf({ project, system, record, rows, tokens, captures, labels }) : "",
       checksOf(problems, record, labels),
-      specOf(project, record, labels),
+      sectionsById.has(id) ? sectionsById.get(id).map(sectionHtml).join("\n") : specOf(project, record, labels),
       appearsOf({ project, ids: usedBy, recordsById, labels }),
     ].filter(Boolean).join("\n");
     const script = (reviewed ? FRAMES + PANEL + TABS : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");
-    pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id, sets, rows), body, drawer: drawer(id), script, wide: journey });
+    pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id, sets, rows, sectionsById), body, drawer: drawer(id), script, wide: journey });
   }
   const wireframes = project.renders.filter((file) => file.startsWith(WIREFRAMES_DIR)).sort().slice(0, WIREFRAMES_SHOWN).map((file) => {
     const record = records.find((candidate) => renderOf(candidate) === file);
     return { path: file.slice(WIREFRAMES_DIR.length), title: record ? titleOf(project, record) : undefined, text: text(project, file) ?? "" };
   });
   for (const set of sets) {
-    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets, rows), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null, true), script: variants.SCRIPT + PANEL, wide: true });
+    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets, rows, sectionsById), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null, true), script: variants.SCRIPT + PANEL, wide: true });
   }
   return pages;
 }
