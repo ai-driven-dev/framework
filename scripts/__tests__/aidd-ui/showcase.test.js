@@ -948,7 +948,7 @@ describe("aidd-ui showcase", () => {
 
     it("lists each record in the navigation by its title, the id staying in the address", () => {
       const home = pagesOf()["home.html"];
-      assert.match(itemOf(home, "search-flow"), /<a href="search-flow\.html">Search flow<\/a>/);
+      assert.match(itemOf(home, "search-flow"), /<a href="search-flow\.html">Search flow \(wireframe\)<\/a>/);
       assert.match(itemOf(home, "home"), /<a href="home\.html" aria-current="page">Home<\/a>/);
       assert.doesNotMatch(itemOf(home, "search-flow"), />search-flow</);
     });
@@ -1102,6 +1102,20 @@ describe("aidd-ui showcase", () => {
       const after = stepOf(pagesOf()["index.html"], "screens").html;
       assert.match(after, /<h3 data-journey="onboarding">[^<]*<\/h3><ul><li data-id="home">/);
       assert.match(after, /<h3 data-journey="">Out of journey<\/h3><ul><li data-id="search-flow">/);
+    });
+
+    it("puts a screen at the journey step of the wireframe it dresses, the wireframe beside it under a name of its own", () => {
+      put(tmp, `${UI}/wireframes/start.md`, record(["id: start", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/screens/start-screen.md`, record(["id: start-screen", "kind: screen", "status: proposed", "version: 1", "wireframe: start", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/screens/lonely.md`, record(["id: lonely", "kind: screen", "status: proposed", "version: 1", "wireframe: elsewhere", "states: [default]"], "# Lonely"));
+      edit(tmp, `${UI}/journeys/onboarding.md`, "| search-flow | narrows the results |", "| search-flow | narrows the results |\n| start | begins |");
+      for (const lang of ["en", "fr"]) {
+        const body = stepOf(pagesOf({ lang })["index.html"], "screens").html;
+        const groups = [...body.matchAll(/<h3 data-journey="([^"]*)">[^<]*<\/h3><ul>([\s\S]*?)<\/ul>/g)].map((match) => [match[1], [...match[2].matchAll(/data-id="([^"]+)"/g)].map((each) => each[1])]);
+        assert.deepEqual(groups, [["onboarding", ["home", "search-flow", "start-screen", "start"]], ["", ["lonely"]]]);
+        const labels = [...body.matchAll(/<li data-id="(start|start-screen)">[\s\S]*?<a [^>]*>([^<]*)<\/a>/g)].map((match) => match[2]);
+        assert.deepEqual(labels, ["Start", lang === "en" ? "Start (wireframe)" : "Start (maquette)"]);
+      }
     });
 
     it("reads the description in the text color, and the persona darker than the faint grey", () => {

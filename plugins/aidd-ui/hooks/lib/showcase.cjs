@@ -34,6 +34,7 @@ const LABELS = {
     stepNames: { journeys: "Journeys", identity: "Identity", foundations: "Foundations", components: "Elements", screens: "Screens" },
     categories: { input: "Input", action: "Actions", display: "Display", navigation: "Navigation", group: "Groups", asset: "Assets" },
     outOfJourney: "Out of journey",
+    wireframeOf: "{title} (wireframe)",
     toReview: "{count} to review",
     stepDone: "complete",
     stepEmpty: "no content",
@@ -127,6 +128,7 @@ const LABELS = {
     stepNames: { journeys: "Parcours", identity: "Identité", foundations: "Charte", components: "Éléments", screens: "Écrans" },
     categories: { input: "Saisie", action: "Actions", display: "Affichage", navigation: "Navigation", group: "Ensembles", asset: "Ressources" },
     outOfJourney: "Hors parcours",
+    wireframeOf: "{title} (maquette)",
     toReview: "{count} à relire",
     stepDone: "terminé",
     stepEmpty: "vide",
@@ -919,24 +921,31 @@ function stepsOf({ project, records, rows, sets }) {
 }
 
 /** The records of the screens step, grouped under the first journey whose Steps table names them, in step order;
- * the rest under an empty journey id. One group with no journey when none names any. */
+ * the rest under an empty journey id. One group with no journey when none names any. A step that names a wireframe
+ * is held by the screens that dress it, the wireframe following as a `sketches` record, so a step reads once. */
 function screenGroupsOf(records, journeys) {
   const byId = new Map(records.map((record) => [fm(record).id, record]));
   const placedIds = new Set();
   const groups = [];
   for (const journey of [...journeys].sort(byRecordId)) {
     const own = [];
+    const sketches = new Set();
+    const place = (record) => {
+      placedIds.add(fm(record).id);
+      own.push(record);
+    };
     for (const row of table(journey.sections[STEPS_SECTION])) {
       const target = byId.get(row.Screen);
-      if (target && !placedIds.has(row.Screen)) {
-        placedIds.add(row.Screen);
-        own.push(target);
-      }
+      if (!target || placedIds.has(row.Screen)) continue;
+      const dressers = records.filter((record) => fm(record).kind === "screen" && fm(record).wireframe === row.Screen && !placedIds.has(fm(record).id)).sort(byRecordId);
+      dressers.forEach(place);
+      if (dressers.length || own.some((record) => fm(record).wireframe === row.Screen)) sketches.add(row.Screen);
+      place(target);
     }
-    if (own.length) groups.push({ journey, records: own });
+    if (own.length) groups.push({ journey, records: own, sketches });
   }
   const rest = records.filter((record) => !placedIds.has(fm(record).id)).sort(byRecordId);
-  if (rest.length) groups.push({ journey: null, records: rest });
+  if (rest.length) groups.push({ journey: null, records: rest, sketches: new Set() });
   return groups;
 }
 
@@ -944,6 +953,7 @@ function screenGroupsOf(records, journeys) {
 function navigationOf(project, records, labels, current, sets = [], rows = [], anchors = new Map()) {
   const journeys = records.filter((record) => fm(record).kind === "journey");
   const item = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, titleOf(project, record, labels))}</li>`;
+  const sketch = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, filled(labels.wireframeOf, { title: titleOf(project, record, labels) }))}</li>`;
   const named = (record, step) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, labels.stepNames[step])}</li>`;
   const ul = (items) => `<ul>${items.join("")}</ul>`;
   const setsOf = (held) => (held.length ? `<section data-group="choose"><h3>${labels.choose}</h3><ul>${held.map((set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}"${current === `${SET_CURRENT}${set.id}` ? ' aria-current="page"' : ""}>${escaped(set.id)}</a></li>`).join("")}</ul></section>` : "");
@@ -957,7 +967,7 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
     if (step === "screens") {
       const groups = screenGroupsOf(own, journeys);
       if (!groups.some((group) => group.journey)) return ul(sorted.map(item));
-      return groups.map((group) => `<h3 data-journey="${group.journey ? escaped(fm(group.journey).id) : ""}">${group.journey ? escaped(titleOf(project, group.journey)) : labels.outOfJourney}</h3>${ul(group.records.map(item))}`).join("");
+      return groups.map((group) => `<h3 data-journey="${group.journey ? escaped(fm(group.journey).id) : ""}">${group.journey ? escaped(titleOf(project, group.journey)) : labels.outOfJourney}</h3>${ul(group.records.map((record) => (group.sketches.has(fm(record).id) ? sketch(record) : item(record))))}`).join("");
     }
     return ul(sorted.map(item));
   };
