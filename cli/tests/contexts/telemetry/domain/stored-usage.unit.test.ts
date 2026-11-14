@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   dayOf,
   daysAround,
+  isRequestless,
   parseStoredUsage,
   partitionByDay,
+  requestlessCallOf,
   type StoredUsage,
   upsertUsage,
 } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
@@ -294,5 +296,32 @@ describe("a stored line is read back or refused", () => {
     ["a non-finite counter", '{"tool":"claude-code","agent":"main","input":1e999}'],
   ])("refuses %s", (_name, line) => {
     expect(parseStoredUsage(line)).toBeNull();
+  });
+});
+
+describe("a call with no request id", () => {
+  const call = (key: string, tool: "claude-code" | "codex" = "claude-code") => ({
+    tool,
+    key,
+    session_id: "s-1",
+  });
+
+  it("is told by its key naming its own session, as this version or cli-v5.5.0 keyed it", () => {
+    expect(isRequestless(call("msg_A:s-1"))).toBe(true);
+    expect(isRequestless(call("msg_A:s-1#advisor3"))).toBe(true);
+    expect(isRequestless(call("msg_A:s-1#advisor10"))).toBe(true);
+    expect(isRequestless(call("msg_A:s-1:2026-10-07T23:59:59.000Z"))).toBe(true);
+    expect(isRequestless(call("msg_A:s-1:2026-10-07T23:59:59.000Z#advisor0"))).toBe(true);
+    expect(isRequestless(call("msg_A:req_A"))).toBe(false);
+    expect(isRequestless(call("msg_A:xs-1"))).toBe(false);
+    expect(isRequestless(call("msg_A:s-1x"))).toBe(false);
+    expect(isRequestless(call("s-1:req_A"))).toBe(false);
+    expect(isRequestless(call("msg_A:s-1", "codex"))).toBe(false);
+  });
+
+  it("is left out as one call, whatever copy or iteration", () => {
+    const one = requestlessCallOf(call("msg_A:s-1"));
+    expect(requestlessCallOf(call("msg_A:s-1:2026-10-07T23:59:59.000Z#advisor0"))).toBe(one);
+    expect(one).toBe("claude-code\u0000msg_A:s-1");
   });
 });

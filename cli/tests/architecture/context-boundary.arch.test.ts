@@ -64,46 +64,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // marketplace and this context forgets the plugins that came from it
     "src/contexts/framework/application/flows/marketplace-remove-use-case.ts",
   ],
-  // Measured with the composition root excluded: the adapter is wired from `composition/`
-  // alone, so it stays internal.
-  telemetry: [
-    // the common record every tool's reader produces
-    "src/contexts/telemetry/domain/usage-record.ts",
-    // where a transcript root is
-    "src/contexts/telemetry/infrastructure/sources/claude/claude-projects-root.ts",
-    // the operation another layer asks for, one per tool, and Claude's format it is given
-    "src/contexts/telemetry/application/read-usage-use-case.ts",
-    "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts",
-    // the ingest a command drives, and the result it prints
-    "src/contexts/telemetry/application/ingest-usage-use-case.ts",
-    // why a call was not stored, which the result names and a display words
-    "src/contexts/telemetry/domain/repository-resolution.ts",
-    // the declaration a person makes: what `task` validates and sends, and the two results it
-    // prints, with the reasons a declaration is refused
-    "src/contexts/telemetry/domain/declaration/task-declaration.ts",
-    "src/contexts/telemetry/application/declare-task-use-case.ts",
-    "src/contexts/telemetry/application/telemetry-status-use-case.ts",
-    "src/contexts/telemetry/application/consented-repositories.ts",
-    // the report a command asks for, the days it is asked over, the axes it splits by, the
-    // filters it is narrowed to, and the JSON envelope it prints; the display words the same
-    // result
-    "src/contexts/telemetry/application/report/report-usage-use-case.ts",
-    "src/contexts/telemetry/application/report/report-envelope.ts",
-    "src/contexts/telemetry/domain/report/period.ts",
-    "src/contexts/telemetry/domain/report/usage-report.ts",
-    "src/contexts/telemetry/domain/report/report-filter.ts",
-    // who, if anyone, the measurement names, the rule an identifier the command is given must
-    // meet before anything is asked, and the result the command prints
-    "src/contexts/telemetry/domain/identity/person-identity.ts",
-    "src/contexts/telemetry/application/identity/manage-identity-use-case.ts",
-    // opting in, out and forgetting: the use cases a command drives and the results it prints,
-    // the retention the display words, and what a forget lists
-    "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts",
-    "src/contexts/telemetry/application/switch/telemetry-off-use-case.ts",
-    "src/contexts/telemetry/application/forget/forget-telemetry-use-case.ts",
-    "src/contexts/telemetry/domain/switch/claude-retention.ts",
-    "src/contexts/telemetry/ports/forget/measurement-erasure.ts",
-  ],
 };
 
 function contextsOnDisk(files: readonly string[]): string[] {

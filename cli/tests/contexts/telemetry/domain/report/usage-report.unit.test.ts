@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
+import {
+  type AxisValue,
+  REPORT_AXES,
+  type ReportAxis,
+} from "../../../../../src/contexts/telemetry/contract/usage-report.js";
 import { snapshotKey } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
 import type { SessionDeclaration } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { AttributionFacts } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
-import {
-  type AxisValue,
-  buildReport,
-  REPORT_AXES,
-  type ReportAxis,
-} from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
+import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
 
 let counter = 0;

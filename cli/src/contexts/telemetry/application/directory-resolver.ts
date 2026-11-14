@@ -1,8 +1,8 @@
+import type { NotStoredReason } from "../contract/repository-resolution.js";
 import { type CloneIdentity, cloneKey, sameClone } from "../domain/consent/clone-identity.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
 import {
   cwdKey,
-  type NotStoredReason,
   ownerAt,
   type RepositoryResolution,
   resolutionKey,

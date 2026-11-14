@@ -10,8 +10,8 @@ import type {
 import {
   RETENTION_DEFAULT_DAYS,
   RETENTION_WANTED_DAYS,
-} from "../../../contexts/telemetry/domain/switch/claude-retention.js";
-import type { ErasureKind } from "../../../contexts/telemetry/ports/forget/measurement-erasure.js";
+} from "../../../contexts/telemetry/contract/claude-retention.js";
+import type { ErasureKind } from "../../../contexts/telemetry/contract/measurement-erasure.js";
 import type { CLIOutput } from "../../output.js";
 import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON, IDENTITY_RULE } from "../telemetry-display.js";
 

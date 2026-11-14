@@ -3,7 +3,7 @@ import type { DeclareResult } from "../../contexts/telemetry/application/declare
 import type { IdentityResult } from "../../contexts/telemetry/application/identity/manage-identity-use-case.js";
 import type { IngestResult } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
 import type { StatusResult } from "../../contexts/telemetry/application/telemetry-status-use-case.js";
-import type { NotStoredReason } from "../../contexts/telemetry/domain/repository-resolution.js";
+import type { NotStoredReason } from "../../contexts/telemetry/contract/repository-resolution.js";
 import type { CLIOutput } from "../output.js";
 
 export const IDENTITY_RULE = "An identity is one non-empty line of at most 128 characters.";

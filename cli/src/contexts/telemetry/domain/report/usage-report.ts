@@ -1,55 +1,16 @@
+import {
+  type AxisValue,
+  COUNTERS,
+  type CounterSum,
+  type ReportAxis,
+  type ReportRow,
+  type Tally,
+  UNATTRIBUTED_REASONS,
+  type UsageReport,
+} from "../../contract/usage-report.js";
 import type { StoredUsage } from "../stored-usage.js";
 import { compareText } from "../text-order.js";
-import {
-  type Attribution,
-  type AttributionFacts,
-  attribute,
-  UNATTRIBUTED_REASONS,
-  type UnattributedReason,
-} from "./attribution.js";
-
-export const REPORT_AXES = [
-  "total",
-  "person",
-  "session",
-  "model",
-  "agent",
-  "day",
-  "repository",
-  "task",
-  "ticket",
-  "tool",
-] as const;
-export type ReportAxis = (typeof REPORT_AXES)[number];
-
-export const COUNTERS = ["input", "output", "cache_read", "cache_write"] as const;
-export type Counter = (typeof COUNTERS)[number];
-
-export interface CounterSum {
-  readonly known: number;
-  readonly unknownRecords: number;
-}
-
-export type AxisValue =
-  | { readonly kind: "value"; readonly value: string }
-  | { readonly kind: "unattributed"; readonly reason: UnattributedReason }
-  | { readonly kind: "absent" };
-
-export interface Tally {
-  readonly records: number;
-  readonly counters: Readonly<Record<Counter, CounterSum>>;
-  readonly total: CounterSum;
-}
-
-export interface ReportRow extends Tally {
-  readonly value: AxisValue;
-}
-
-export interface UsageReport {
-  readonly axis: ReportAxis;
-  readonly rows: readonly ReportRow[];
-  readonly totals: Tally;
-}
+import { type Attribution, type AttributionFacts, attribute } from "./attribution.js";
 
 const ABSENT: AxisValue = { kind: "absent" };
 

@@ -16,7 +16,6 @@ import { SnapshotBindingsUseCase } from "../contexts/telemetry/application/snaps
 import { TelemetryOffUseCase } from "../contexts/telemetry/application/switch/telemetry-off-use-case.js";
 import { TelemetryOnUseCase } from "../contexts/telemetry/application/switch/telemetry-on-use-case.js";
 import { TelemetryStatusUseCase } from "../contexts/telemetry/application/telemetry-status-use-case.js";
-import { readClaudeUsageLine } from "../contexts/telemetry/domain/formats/claude-transcript-usage.js";
 import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { refusedByEnvironment as refusedByEnvironmentValue } from "../contexts/telemetry/domain/telemetry-consent.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
@@ -32,6 +31,7 @@ import {
 } from "../contexts/telemetry/infrastructure/sources/claude/claude-projects-root.js";
 import { ClaudeSettingsAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.js";
 import { ClaudeTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import { readClaudeUsageLine } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import {
   CodexTranscriptSourceAdapter,
   codexSessionRoots,

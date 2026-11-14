@@ -83,7 +83,7 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/tools/domain/profile/foreign-suffix-filter.ts", named: 7 },
   // The record's tool vocabulary is the contract's: `codex` is admitted so a second tool's
   // reader needs no change to the record, and is not a list a new tool joins.
-  { path: "src/contexts/telemetry/domain/usage-record.ts", named: 1 },
+  { path: "src/contexts/telemetry/contract/usage-record.ts", named: 1 },
   // Where Claude Code keeps its transcripts, named for the one tool whose directory it is.
   {
     path: "src/contexts/telemetry/infrastructure/sources/claude/claude-projects-root.ts",

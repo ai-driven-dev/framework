@@ -1,5 +1,18 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import {
+  NO_FILTERS,
+  type ReportFilters,
+} from "../../../../../src/contexts/telemetry/contract/report-filter.js";
+import {
+  USAGE_AGENTS,
+  USAGE_TOOLS,
+} from "../../../../../src/contexts/telemetry/contract/usage-record.js";
+import {
+  type AxisValue,
+  REPORT_AXES,
+  type ReportAxis,
+} from "../../../../../src/contexts/telemetry/contract/usage-report.js";
 import type { SessionDeclaration } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import {
   type Attribution,
@@ -9,21 +22,10 @@ import {
 import {
   conflictsOf,
   matchesFilter,
-  NO_FILTERS,
-  type ReportFilters,
   resolveId,
 } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
-import {
-  type AxisValue,
-  buildReport,
-  REPORT_AXES,
-  type ReportAxis,
-} from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
+import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import {
-  USAGE_AGENTS,
-  USAGE_TOOLS,
-} from "../../../../../src/contexts/telemetry/domain/usage-record.js";
 
 const call = (over: Partial<StoredUsage> = {}): StoredUsage => ({
   tool: "claude-code",

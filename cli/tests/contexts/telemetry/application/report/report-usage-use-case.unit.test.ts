@@ -8,19 +8,19 @@ import {
   type RequestedFilters,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
+import {
+  NO_FILTERS,
+  type ReportFilters,
+} from "../../../../../src/contexts/telemetry/contract/report-filter.js";
+import type { ReportAxis } from "../../../../../src/contexts/telemetry/contract/usage-report.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import {
   declarationOf,
   type SessionCarry,
 } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
-import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
-import {
-  NO_FILTERS,
-  type ReportFilters,
-} from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
-import type { ReportAxis } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
+import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import {
   AUTUMN,
   cloneOf,

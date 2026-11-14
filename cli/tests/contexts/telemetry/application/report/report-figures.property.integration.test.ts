@@ -15,18 +15,16 @@ import {
   type ReportRequest,
   ReportUsageUseCase,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
-import {
-  conflictsOf,
-  type ReportFilters,
-} from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
-import { REPORT_AXES } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
-import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
+import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
+import type { ReportFilters } from "../../../../../src/contexts/telemetry/contract/report-filter.js";
 import {
   USAGE_AGENTS,
   USAGE_TOOLS,
-} from "../../../../../src/contexts/telemetry/domain/usage-record.js";
+} from "../../../../../src/contexts/telemetry/contract/usage-record.js";
+import { REPORT_AXES } from "../../../../../src/contexts/telemetry/contract/usage-report.js";
+import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+import { conflictsOf } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
+import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { LeftOutEntry } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";

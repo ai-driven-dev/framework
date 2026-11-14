@@ -1,6 +1,6 @@
-import type { UnattributedReason } from "../../domain/report/attribution.js";
-import type { Period } from "../../domain/report/period.js";
-import { filtersOf, type ReportFilters } from "../../domain/report/report-filter.js";
+import type { Period } from "../../contract/period.js";
+import type { ReportFilters } from "../../contract/report-filter.js";
+import type { NotStoredReason } from "../../contract/repository-resolution.js";
 import {
   COUNTERS,
   type Counter,
@@ -8,8 +8,9 @@ import {
   type ReportAxis,
   type ReportRow,
   type Tally,
-} from "../../domain/report/usage-report.js";
-import type { NotStoredReason } from "../../domain/repository-resolution.js";
+  type UnattributedReason,
+} from "../../contract/usage-report.js";
+import { filtersOf } from "../../domain/report/report-filter.js";
 import type { LeftOutReason } from "../../ports/usage-ledger.js";
 import type { ReportResult } from "./report-usage-use-case.js";
 

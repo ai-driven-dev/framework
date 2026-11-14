@@ -3,11 +3,8 @@ import type {
   ReportResult,
   ReportRun,
 } from "../../../contexts/telemetry/application/report/report-usage-use-case.js";
-import type { Period } from "../../../contexts/telemetry/domain/report/period.js";
-import {
-  type ReportFilters,
-  selectorsOf,
-} from "../../../contexts/telemetry/domain/report/report-filter.js";
+import type { Period } from "../../../contexts/telemetry/contract/period.js";
+import type { ReportFilters } from "../../../contexts/telemetry/contract/report-filter.js";
 import {
   type AxisValue,
   COUNTERS,
@@ -15,7 +12,8 @@ import {
   type ReportAxis,
   type ReportRow,
   type Tally,
-} from "../../../contexts/telemetry/domain/report/usage-report.js";
+} from "../../../contexts/telemetry/contract/usage-report.js";
+import { selectorsOf } from "../../../contexts/telemetry/domain/report/report-filter.js";
 import type { CLIOutput } from "../../output.js";
 import { count, grouped, leftOutLines } from "../telemetry-display.js";
 

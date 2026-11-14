@@ -6,10 +6,10 @@
 
 | Edit | Where |
 | --- | --- |
-| its line format, made once per file read when a line needs what came before it | `contexts/telemetry/domain/formats/` (Claude) or `infrastructure/sources/codex/` (Codex) |
+| its line format, made once per file read when a line needs what came before it | `contexts/telemetry/infrastructure/sources/claude/` (Claude) or `infrastructure/sources/codex/` (Codex) |
 | its transcript source, on the block reader in `infrastructure/sources/transcript-files.ts` | `contexts/telemetry/infrastructure/` |
 | one reader in the ingest list | `composition/telemetry.ts` |
-| its name | `USAGE_TOOLS` in `domain/usage-record.ts` |
+| its name | `USAGE_TOOLS` in `contract/usage-record.ts` |
 | its home relocated in every sandbox that runs the CLI | `tests/e2e/helpers.ts`, `tests/helpers/telemetry-sandbox.ts`, `scripts/check-claude-tokens-end-to-end.cjs`, `scripts/probe-identifier-join.cjs` |
 
 Storage, attribution and the report need nothing. Task and ticket come only from `aidd telemetry task`, whoever runs it. The plugin's hooks invoke it from Claude Code and the Codex TUI. They name the session with `AIDD_TELEMETRY_SESSION_ID` where the tool sets no variable of its own. Another tool's calls are attributed by branch. Rules: [usage contract](../../../aidd_docs/product/usage-contract.md#attribution).
@@ -50,7 +50,7 @@ flowchart LR
 
 | Question | File |
 | --- | --- |
-| What a Claude Code line becomes | `domain/formats/claude-transcript-usage.ts` |
+| What a Claude Code line becomes | `infrastructure/sources/claude/claude-transcript-usage.ts` |
 | Why a call is counted once | `domain/usage-fold.ts` |
 | Where a call's repository comes from | `application/directory-resolver.ts`, `domain/repository-identity.ts` |
 | How a call, a root or a branch snapshot stored under an id an earlier version gave a repository joins the history of its id of now: at read; a re-ided partition is rewritten on save, branch snapshots never | `domain/legacy/repository-aliases.ts`, `infrastructure/legacy/repository-alias-store-adapter.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md) |

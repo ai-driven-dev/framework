@@ -1,5 +1,15 @@
+import type { UsageRecord } from "../contract/usage-record.js";
 import { compareText } from "./text-order.js";
-import { type UsageRecord, usageTotal } from "./usage-record.js";
+
+/** What the fold ranks snapshots of one call by: a streamed call only ever grows. */
+export function usageTotal(record: UsageRecord): number {
+  return (
+    (record.input ?? 0) +
+    (record.output ?? 0) +
+    (record.cache_read ?? 0) +
+    (record.cache_write ?? 0)
+  );
+}
 
 function instant(at: string): number {
   return Date.parse(at);

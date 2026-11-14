@@ -4,7 +4,7 @@ import {
   reportEnvelopeOf,
 } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import type { ReportResult } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import type { Tally } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
+import type { Tally } from "../../../../../src/contexts/telemetry/contract/usage-report.js";
 
 const tally = (records: number, unknown: number): Tally => ({
   records,

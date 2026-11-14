@@ -1,8 +1,12 @@
-import { isRequestless, requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
-import type { NotStoredReason } from "../domain/repository-resolution.js";
-import { dayOf, type StoredUsage } from "../domain/stored-usage.js";
+import type { NotStoredReason } from "../contract/repository-resolution.js";
+import type { UsageRecord } from "../contract/usage-record.js";
+import {
+  dayOf,
+  isRequestless,
+  requestlessCallOf,
+  type StoredUsage,
+} from "../domain/stored-usage.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
-import type { UsageRecord } from "../domain/usage-record.js";
 import type { LeftOutEntry, UsageLedger } from "../ports/usage-ledger.js";
 import type { DirectoryOutcome, DirectoryResolver, ResolutionRun } from "./directory-resolver.js";
 import { storeCalls } from "./ledger-upkeep.js";

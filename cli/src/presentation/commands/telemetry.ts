@@ -6,24 +6,23 @@ import {
 import type { RequestedFilters } from "../../contexts/telemetry/application/report/report-usage-use-case.js";
 import type { IdentityChoice } from "../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
 import {
+  ABSENT_AXES,
+  type ReportFilters,
+  UNATTRIBUTED_SELECTORS,
+} from "../../contexts/telemetry/contract/report-filter.js";
+import {
   DECLARED_BY,
   type DeclaredBy,
+} from "../../contexts/telemetry/contract/task-declaration.js";
+import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/contract/usage-record.js";
+import { REPORT_AXES, type ReportAxis } from "../../contexts/telemetry/contract/usage-report.js";
+import {
   requestOf,
   textOrNull,
 } from "../../contexts/telemetry/domain/declaration/task-declaration.js";
 import { personIdOf } from "../../contexts/telemetry/domain/identity/person-identity.js";
 import { periodOf } from "../../contexts/telemetry/domain/report/period.js";
-import {
-  ABSENT_AXES,
-  filtersOf,
-  type ReportFilters,
-  UNATTRIBUTED_SELECTORS,
-} from "../../contexts/telemetry/domain/report/report-filter.js";
-import {
-  REPORT_AXES,
-  type ReportAxis,
-} from "../../contexts/telemetry/domain/report/usage-report.js";
-import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/domain/usage-record.js";
+import { filtersOf } from "../../contexts/telemetry/domain/report/report-filter.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 import type { Deps, DepsSliceFactory, TelemetryDeps } from "../deps.js";
 import {

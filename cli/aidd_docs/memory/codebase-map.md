@@ -76,14 +76,14 @@ src/
 │   │   │   ├── identity/    # who, if anyone, the measurement names
 │   │   │   ├── report/    # what the stored calls consumed in a period, along one axis
 │   │   │   └── switch/    # opting a repository in or out
+│   │   ├── contract/    # what a command and a display read: the periods, the filters, the report, the record, the declaration request
 │   │   ├── domain/
-│   │   │   ├── declaration/    # the task a person declares, and whether work is bound to one
-│   │   │   ├── formats/
 │   │   │   ├── consent/    # a clone's identity, and when it consented
-│   │   │   ├── identity/    # the identifier a person chose to be named by
+│   │   │   ├── declaration/    # the task a person declares, and whether work is bound to one
+│   │   │   ├── identity/    # the person a measurement names, and how it is stored
 │   │   │   ├── legacy/    # where an earlier version wrote what forget erases, and the table of ids it gave repositories
 │   │   │   ├── report/    # attribution of a call, the days of a report, the axes it splits by
-│   │   │   └── switch/    # Claude's retention
+│   │   │   └── switch/    # how long Claude Code keeps a transcript, and what that means for opting in
 │   │   ├── ports/
 │   │   │   ├── bindings/    # the declarations kept beside the ledger, and the lock their writers share
 │   │   │   ├── forget/

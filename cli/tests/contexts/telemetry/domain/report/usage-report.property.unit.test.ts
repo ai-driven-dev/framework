@@ -1,6 +1,10 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
+  COUNTERS,
+  REPORT_AXES,
+} from "../../../../../src/contexts/telemetry/contract/usage-report.js";
+import {
   type BranchSnapshot,
   snapshotKey,
 } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
@@ -9,11 +13,7 @@ import type {
   SessionDeclaration,
 } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { AttributionFacts } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
-import {
-  buildReport,
-  COUNTERS,
-  REPORT_AXES,
-} from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
+import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
 
 const SESSIONS = ["s-a", "s-b", "s-c", "s-d"];

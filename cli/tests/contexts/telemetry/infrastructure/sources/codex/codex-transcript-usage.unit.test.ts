@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import type { UsageRecord } from "../../../../../../src/contexts/telemetry/domain/usage-record.js";
+import type { UsageRecord } from "../../../../../../src/contexts/telemetry/contract/usage-record.js";
 import { codexUsageReader } from "../../../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.js";
 
 const SESSION = "11111111-1111-4111-8111-111111111111";

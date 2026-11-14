@@ -2,10 +2,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  conflictsOf,
-  type ReportFilters,
-} from "../../../src/contexts/telemetry/domain/report/report-filter.js";
+import type { ReportFilters } from "../../../src/contexts/telemetry/contract/report-filter.js";
+import { conflictsOf } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
 import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const ingest = vi.fn();

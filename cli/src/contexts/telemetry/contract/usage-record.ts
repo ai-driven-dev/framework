@@ -31,20 +31,3 @@ export interface UsageRecord {
   /** Raw, never parsed: it only looks up the declaration of the branch it names. */
   readonly git_branch: string | null;
 }
-
-/** What the fold ranks snapshots of one call by: a streamed call only ever grows. */
-export function usageTotal(record: UsageRecord): number {
-  return (
-    (record.input ?? 0) +
-    (record.output ?? 0) +
-    (record.cache_read ?? 0) +
-    (record.cache_write ?? 0)
-  );
-}
-
-/** What a transcript line that is no usage line names of where and when it was written, so it
- * can be tied to a clone's consent. */
-export interface LineNames {
-  readonly cwd: string | null;
-  readonly at: string | null;
-}

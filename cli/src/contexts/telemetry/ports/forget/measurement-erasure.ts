@@ -1,9 +1,4 @@
-export type ErasureKind =
-  | "ledger"
-  | "bindings"
-  | "identity"
-  | "previous-day-file"
-  | "previous-identity";
+import type { ErasureKind } from "../../contract/measurement-erasure.js";
 
 export interface ErasureEntry {
   readonly kind: ErasureKind;

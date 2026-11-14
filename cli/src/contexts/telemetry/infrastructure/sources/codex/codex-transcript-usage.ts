@@ -1,6 +1,7 @@
 import { asPlainObject } from "../../../../../shared/domain/reading/plain-object.js";
-import { expected, type Json, text } from "../../../domain/formats/line-values.js";
-import type { LineNames, UsageRecord } from "../../../domain/usage-record.js";
+import type { UsageRecord } from "../../../contract/usage-record.js";
+import type { LineNames } from "../../../domain/transcript-position.js";
+import { expected, type Json, text } from "../line-values.js";
 
 export interface CodexUsageLine {
   readonly records: readonly UsageRecord[];

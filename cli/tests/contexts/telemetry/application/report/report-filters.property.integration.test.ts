@@ -14,22 +14,22 @@ import {
   ReportUsageUseCase,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
-import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
+import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import {
-  conflictsOf,
   NO_FILTERS,
   type ReportFilters,
-} from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
-import {
-  REPORT_AXES,
-  type ReportAxis,
-} from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
-import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
+} from "../../../../../src/contexts/telemetry/contract/report-filter.js";
 import {
   USAGE_AGENTS,
   USAGE_TOOLS,
-} from "../../../../../src/contexts/telemetry/domain/usage-record.js";
+} from "../../../../../src/contexts/telemetry/contract/usage-record.js";
+import {
+  REPORT_AXES,
+  type ReportAxis,
+} from "../../../../../src/contexts/telemetry/contract/usage-report.js";
+import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+import { conflictsOf } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
+import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
 import {
   FakeBindings,
   FakeConsents,

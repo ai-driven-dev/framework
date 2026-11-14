@@ -3,10 +3,8 @@ import { BranchDeclarations } from "../../../../src/contexts/telemetry/applicati
 import { ConsentedRepositories } from "../../../../src/contexts/telemetry/application/consented-repositories.js";
 import { DeclareTaskUseCase } from "../../../../src/contexts/telemetry/application/declare-task-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
-import {
-  type DeclarationRequest,
-  HOOK_LOCK_WAIT_MS,
-} from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+import type { DeclarationRequest } from "../../../../src/contexts/telemetry/contract/task-declaration.js";
+import { HOOK_LOCK_WAIT_MS } from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
 import {
   cloneOf,

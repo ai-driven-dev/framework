@@ -1,6 +1,6 @@
-import type { TranscriptPosition } from "../domain/transcript-position.js";
+import type { UsageRecord } from "../contract/usage-record.js";
+import type { LineNames, TranscriptPosition } from "../domain/transcript-position.js";
 import { foldUsage } from "../domain/usage-fold.js";
-import type { LineNames, UsageRecord } from "../domain/usage-record.js";
 import type { TranscriptSource } from "../ports/transcript-source.js";
 
 /** One tool's format: the billed calls one transcript line holds, and the shapes it did not
