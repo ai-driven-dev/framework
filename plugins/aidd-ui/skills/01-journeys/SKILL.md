@@ -25,6 +25,7 @@ Each box is a file: read it, then do what it says.
 ## Transversal rules
 
 - Speak only to ask or to give the final reply.
+- Write each question, option and label in the person's language.
 - Ask with a concrete proposal, unless nothing describes the product.
 - Never offer an option that only says to type an answer.
 - After asking, wait for the answer.

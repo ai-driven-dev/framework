@@ -29,6 +29,7 @@ Each box is a file: read it, then do what it says.
 ## Transversal rules
 
 - Speak only to ask or to give the final reply.
+- Give every question, option and label in the language the person writes.
 - Name a record by its title and a state by its label.
 - Say what the person will see, in their words.
 - Never show a path, file name, id, rule code or size.

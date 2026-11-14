@@ -12,7 +12,10 @@ The request.
 2. Read `aidd_docs/ui/` and the UI code, whatever its platforms. Name the [case](../references/cases.md).
 3. If `aidd_docs/ui/brand.md` is missing, stop and say so.
 4. Read its personality, references and anti-references: the tokens' direction.
-5. Take the task folder the user named, else ask.
+5. Take the task folder the user named.
+   - Else the one the latest `history.md` rows of this project name.
+   - Else one under `aidd_docs/tasks/`, from the product name. Say it in one plain line.
+   - Never ask the user for it.
    - It need not exist: only `history.md` rows cite it.
 6. For a change only:
    - If vague, ask which token changes, and to which value.

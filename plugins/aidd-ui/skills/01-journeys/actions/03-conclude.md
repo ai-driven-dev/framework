@@ -29,7 +29,6 @@ The engine and the files written.
    - the journeys agreed, and those still awaiting their agreement
    - how to open the showcase, once
    - the single next step: set the brand
-   - the components the wireframes expect, for the design system
    - leave out the review wait and any warning count
    - an error another skill owes is not a failure: leave it out
 

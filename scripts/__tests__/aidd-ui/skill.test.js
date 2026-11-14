@@ -641,9 +641,7 @@ describe("aidd-ui journeys templates", () => {
 
 describe("aidd-ui journeys skill", () => {
   it("ends naming the components the design system lacks", () => {
-    const conclude = fs.readFileSync(path.join(JOURNEYS, "actions/03-conclude.md"), "utf8");
     assert.ok(fs.readFileSync(path.join(JOURNEYS, "references/wireframes.md"), "utf8").includes("warning R18"));
-    assert.ok(conclude.includes("the components the wireframes expect, for the design system"));
   });
 
   it("stops for the persona, then for the journeys, and keeps the task folder silent", () => {

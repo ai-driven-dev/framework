@@ -11,7 +11,10 @@ The request.
 1. Find the engine per [engine](../references/engine.md). If missing, stop and say so.
 2. Read `aidd_docs/ui/` and the UI code, whatever its platforms. Name the [case](../references/cases.md).
 3. If `aidd_docs/ui/system.md` is missing, stop and say so.
-4. Take the task folder the user named, else ask.
+4. Take the task folder the user named.
+   - Else the one the latest `history.md` rows name.
+   - Else one under `aidd_docs/tasks/`, from the product name. Say it in one line.
+   - Never ask the user for it.
    - It need not exist: only `history.md` rows cite it.
 5. For a change only:
    - A `revise` comment in a review is the request.

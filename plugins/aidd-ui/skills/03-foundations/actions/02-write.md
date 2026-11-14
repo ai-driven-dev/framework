@@ -23,7 +23,9 @@ The output of [prepare](01-prepare.md).
 3. If no `system.md` exists, write `aidd_docs/ui/system.md` from the [system](../assets/system-template.md) template.
    - Code: answer from step 1's reading.
    - Ask what [extraction](../references/extraction.md) names no source for.
-   - Scratch: ask the user for each answer.
+   - Scratch: ask the user for each answer, but never about sizes.
+   - Pick sizes from the platforms: phone and desktop for the web.
+   - Ask only if the product needs a third size. Name it by device, such as tablet at a desk.
 4. With a token file in the code, extract its tokens per [engine](../references/engine.md).
    - Settle what is left per [extraction](../references/extraction.md).
 5. For a change, raise the versions per [versions](../references/versions.md).
