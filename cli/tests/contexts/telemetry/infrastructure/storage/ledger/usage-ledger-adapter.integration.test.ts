@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { StoredUsage } from "../../../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { aUsageRecord } from "../../../testing/usage-record-builder.js";
 
 let root: string;
 let dir: string;
@@ -19,27 +20,8 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-function stored(overrides: Partial<StoredUsage> = {}): StoredUsage {
-  return {
-    tool: "claude-code",
-    tool_version: "2.1.0",
-    key: "msg_A:req_A",
-    session_id: "s-1",
-    agent: "main",
-    at: "2026-10-07T10:00:00.000Z",
-    model: "m",
-    input: 1,
-    output: 10,
-    cache_read: 0,
-    cache_write: 0,
-    cache_write_1h: null,
-    reasoning: null,
-    cwd: null,
-    git_branch: null,
-    repository_id: "repo-1",
-    ...overrides,
-  };
-}
+const stored = (overrides: Partial<StoredUsage> = {}): StoredUsage =>
+  aUsageRecord().with(overrides).build();
 
 const PARTITION_NAME = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 

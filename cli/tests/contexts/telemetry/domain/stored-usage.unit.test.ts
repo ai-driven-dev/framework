@@ -9,28 +9,10 @@ import {
   type StoredUsage,
   upsertUsage,
 } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
+import { aUsageRecord } from "../testing/usage-record-builder.js";
 
-function stored(overrides: Partial<StoredUsage> = {}): StoredUsage {
-  return {
-    tool: "claude-code",
-    tool_version: "2.1.0",
-    key: "msg_A:req_A",
-    session_id: "s-1",
-    agent: "main",
-    at: "2026-10-07T10:00:00.000Z",
-    model: "m",
-    input: 1,
-    output: 10,
-    cache_read: 0,
-    cache_write: 0,
-    cache_write_1h: null,
-    reasoning: null,
-    cwd: null,
-    git_branch: null,
-    repository_id: "repo-1",
-    ...overrides,
-  };
-}
+const stored = (overrides: Partial<StoredUsage> = {}): StoredUsage =>
+  aUsageRecord().with(overrides).build();
 
 describe("a record belongs to the day of its own time, in UTC", () => {
   it("reads the day from the instant", () => {

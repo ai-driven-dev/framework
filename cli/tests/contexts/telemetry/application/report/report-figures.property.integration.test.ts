@@ -28,12 +28,10 @@ import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/s
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { LeftOutEntry } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";
-import {
-  FakeLocator,
-  InMemoryIdentity,
-  InMemorySessions,
-  InMemorySnapshots,
-} from "../../../../helpers/ports/in-memory-telemetry.js";
+import { FakeLocator } from "../../testing/fake-locator.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
 
 /* The figures of a report, every field of its envelope but `run`, depend on what is stored,
  * declared and asked, and on nothing else: not on how the calls reached the ledger, not on what

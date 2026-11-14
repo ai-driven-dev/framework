@@ -3,9 +3,9 @@ import { open } from "node:fs/promises";
 import {
   resumeOffset,
   type TranscriptPosition,
-} from "../../src/contexts/telemetry/domain/transcript-position.js";
-import { ClaudeTranscriptSourceAdapter } from "../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import type { TranscriptRead } from "../../src/contexts/telemetry/ports/transcript-source.js";
+} from "../../../../src/contexts/telemetry/domain/transcript-position.js";
+import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import type { TranscriptRead } from "../../../../src/contexts/telemetry/ports/transcript-source.js";
 
 /** The oracle: how a transcript's unread tail was read before it was read as a stream, the
  * whole tail in one buffer and one string. Copied from before the stream; only the lines

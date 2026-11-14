@@ -32,17 +32,15 @@ import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/s
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageLedger } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";
-import {
-  FakeBindings,
-  FakeConsents,
-  FakeLocator,
-  InMemoryBindingsLock,
-  InMemoryConsentHistory,
-  InMemoryIdentity,
-  InMemoryResolutions,
-  InMemorySessions,
-  InMemorySnapshots,
-} from "../../../../helpers/ports/in-memory-telemetry.js";
+import { FakeBindings } from "../../testing/fake-bindings.js";
+import { FakeConsents } from "../../testing/fake-consents.js";
+import { FakeLocator } from "../../testing/fake-locator.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
 
 let root: string;
 let runs = 0;

@@ -8,7 +8,7 @@ import {
 } from "../../../../../../src/contexts/telemetry/domain/branch-binding.js";
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { NO_ALIASES } from "../../../../../helpers/ports/in-memory-telemetry.js";
+import { NO_ALIASES } from "../../../testing/no-aliases.js";
 
 let root: string;
 let dir: string;

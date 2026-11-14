@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { TranscriptPosition } from "../../../../../../src/contexts/telemetry/domain/transcript-position.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
 import type { TranscriptSource } from "../../../../../../src/contexts/telemetry/ports/transcript-source.js";
-import { WholeTranscriptReader } from "../../../../../helpers/whole-transcript-reader.js";
+import { WholeTranscriptReader } from "../../../testing/whole-transcript-reader.js";
 
 const EVERYTHING = Number.NEGATIVE_INFINITY;
 

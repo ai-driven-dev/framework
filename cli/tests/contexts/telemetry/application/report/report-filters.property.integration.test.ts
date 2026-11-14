@@ -30,18 +30,16 @@ import {
 import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { conflictsOf } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
-import {
-  FakeBindings,
-  FakeConsents,
-  FakeLocator,
-  InMemoryBindingsLock,
-  InMemoryConsentHistory,
-  InMemoryIdentity,
-  InMemoryLedger,
-  InMemoryResolutions,
-  InMemorySessions,
-  InMemorySnapshots,
-} from "../../../../helpers/ports/in-memory-telemetry.js";
+import { FakeBindings } from "../../testing/fake-bindings.js";
+import { FakeConsents } from "../../testing/fake-consents.js";
+import { FakeLocator } from "../../testing/fake-locator.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
+import { InMemoryLedger } from "../../testing/in-memory-ledger.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
 
 /** Two sessions share a start, so a prefix can name one, the other, or both. */
 const SESSIONS = [

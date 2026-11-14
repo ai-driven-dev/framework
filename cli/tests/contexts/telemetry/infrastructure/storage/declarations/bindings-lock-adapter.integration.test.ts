@@ -7,7 +7,8 @@ import { BindingsLockAdapter } from "../../../../../../src/contexts/telemetry/in
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { FakeBindings, NO_ALIASES } from "../../../../../helpers/ports/in-memory-telemetry.js";
+import { FakeBindings } from "../../../testing/fake-bindings.js";
+import { NO_ALIASES } from "../../../testing/no-aliases.js";
 
 let root: string;
 const storage = new PrivateStorageAdapter();

@@ -12,6 +12,7 @@ import {
 } from "../../../../src/contexts/telemetry/domain/stored-usage.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import { aUsageRecord } from "../testing/usage-record-builder.js";
 
 let root: string;
 
@@ -22,26 +23,8 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-function stored(key: string, at: string, output: number): StoredUsage {
-  return {
-    tool: "claude-code",
-    tool_version: "2.1.0",
-    key,
-    session_id: "s-1",
-    agent: "main",
-    at,
-    model: "m",
-    input: 1,
-    output,
-    cache_read: 0,
-    cache_write: 0,
-    cache_write_1h: null,
-    reasoning: null,
-    cwd: null,
-    git_branch: null,
-    repository_id: "repo-1",
-  };
-}
+const stored = (key: string, at: string, output: number): StoredUsage =>
+  aUsageRecord().withKey(key).withAt(at).withOutput(output).build();
 
 const CALLS = [
   stored("a", "2026-09-01T08:00:00.000Z", 10),

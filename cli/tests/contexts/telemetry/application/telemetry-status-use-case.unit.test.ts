@@ -4,19 +4,16 @@ import { ConsentedRepositories } from "../../../../src/contexts/telemetry/applic
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { TelemetryStatusUseCase } from "../../../../src/contexts/telemetry/application/telemetry-status-use-case.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
-import {
-  cloneOf,
-  FakeBindings,
-  FakeBranchStore,
-  FakeConsents,
-  FakeLocator,
-  grantedBy,
-  InMemoryBindingsLock,
-  InMemoryConsentHistory,
-  InMemoryIdentity,
-  InMemorySessions,
-  InMemorySnapshots,
-} from "../../../helpers/ports/in-memory-telemetry.js";
+import { cloneOf, grantedBy } from "../testing/clone-builders.js";
+import { FakeBindings } from "../testing/fake-bindings.js";
+import { FakeBranchStore } from "../testing/fake-branch-store.js";
+import { FakeConsents } from "../testing/fake-consents.js";
+import { FakeLocator } from "../testing/fake-locator.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.js";
+import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.js";
+import { InMemoryIdentity } from "../testing/in-memory-identity.js";
+import { InMemorySessions } from "../testing/in-memory-sessions.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.js";
 
 const CWD = "/work/repo";
 const REPOSITORY: LocatedDirectory = {

@@ -13,18 +13,15 @@ import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastr
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { TranscriptSource } from "../../../../src/contexts/telemetry/ports/transcript-source.js";
-import {
-  cloneOf,
-  FakeBindings,
-  FakeConsents,
-  FakeLocator,
-  grantedBy,
-  InMemoryBindingsLock,
-  InMemoryConsentHistory,
-  InMemoryResolutions,
-  InMemorySnapshots,
-} from "../../../helpers/ports/in-memory-telemetry.js";
-import { WholeTranscriptReader } from "../../../helpers/whole-transcript-reader.js";
+import { cloneOf, grantedBy } from "../testing/clone-builders.js";
+import { FakeBindings } from "../testing/fake-bindings.js";
+import { FakeConsents } from "../testing/fake-consents.js";
+import { FakeLocator } from "../testing/fake-locator.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.js";
+import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.js";
+import { InMemoryResolutions } from "../testing/in-memory-resolutions.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.js";
+import { WholeTranscriptReader } from "../testing/whole-transcript-reader.js";
 
 let root: string;
 let runs = 0;

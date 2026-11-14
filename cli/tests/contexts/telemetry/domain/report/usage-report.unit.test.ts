@@ -9,29 +9,23 @@ import type { SessionDeclaration } from "../../../../../src/contexts/telemetry/d
 import type { AttributionFacts } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
 import { buildReport } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
+import { aUsageRecord } from "../../testing/usage-record-builder.js";
 
 let counter = 0;
 const call = (over: Partial<StoredUsage> = {}): StoredUsage => {
   counter += 1;
-  return {
-    tool: "claude-code",
-    tool_version: null,
-    key: `k${counter}`,
-    session_id: "s-1",
-    agent: "main",
-    at: "2026-10-02T10:00:00.000Z",
-    model: "m-1",
-    input: 1,
-    output: 10,
-    cache_read: 100,
-    cache_write: 1000,
-    cache_write_1h: null,
-    reasoning: null,
-    cwd: null,
-    git_branch: null,
-    repository_id: "repo-a",
-    ...over,
-  };
+  return aUsageRecord()
+    .with({
+      tool_version: null,
+      key: `k${counter}`,
+      at: "2026-10-02T10:00:00.000Z",
+      model: "m-1",
+      cache_read: 100,
+      cache_write: 1000,
+      repository_id: "repo-a",
+      ...over,
+    })
+    .build();
 };
 const declaration = (session: string, task: string | null, ticket: string | null = null) =>
   ({
