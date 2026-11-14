@@ -36,6 +36,8 @@ const LABELS = {
     categories: { input: "Input", action: "Actions", display: "Display", navigation: "Navigation", group: "Groups", asset: "Assets" },
     outOfJourney: "Out of journey",
     toReview: "{count} to review",
+    stepDone: "complete",
+    stepEmpty: "no content",
     decided: "chosen",
     picks: "axes picked",
     round: "Round {round}",
@@ -103,6 +105,8 @@ const LABELS = {
     categories: { input: "Saisie", action: "Actions", display: "Affichage", navigation: "Navigation", group: "Ensembles", asset: "Ressources" },
     outOfJourney: "Hors parcours",
     toReview: "{count} à relire",
+    stepDone: "terminé",
+    stepEmpty: "vide",
     decided: "choisies",
     picks: "axes pris",
     round: "Tour {round}",
@@ -217,33 +221,32 @@ button:disabled { background: var(--sunken); border-color: var(--line); color: v
 #copy:hover:not(:disabled) { background: var(--accent-hover); }
 #copy:disabled { background: var(--sunken); border-color: var(--line); color: var(--muted); }
 select { appearance: none; font: inherit; font-size: var(--t-sm); color: var(--text); background: var(--surface); border: 1px solid var(--control); border-radius: var(--r2); height: 32px; padding: 0 var(--s5) 0 var(--s2); }
-.shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
-.shell > nav { position: sticky; top: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--line); padding: var(--s4) var(--s3) var(--s4); }
+.shell { display: grid; grid-template-columns: 264px minmax(0, 1fr); min-height: 100vh; }
+.shell > nav { position: sticky; top: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--line); padding: var(--s4); }
 .nav-scroll { flex: 1; min-height: 0; overflow: auto; }
 .shell > main { min-width: 0; padding: var(--s6) var(--s7); display: flex; flex-direction: column; gap: var(--s5); max-width: 1320px; }
 .shell > main.wide { max-width: none; }
-nav .brand { display: flex; align-items: center; gap: var(--s2); padding: var(--s1) var(--s2) var(--s4); font-size: var(--t-sm); font-weight: 600; }
-nav .mark { inline-size: 18px; block-size: 18px; border-radius: 5px; background: var(--text); flex: none; }
+nav .brand { display: flex; align-items: center; gap: var(--s1); padding: var(--s1) 0 var(--s4); font-size: var(--t-sm); font-weight: 600; }
+nav .mark { inline-size: 20px; block-size: 20px; border-radius: var(--r1); background: var(--text); flex: none; }
 nav .home { margin: 0; }
 nav .steps { list-style: none; margin: var(--s3) 0 var(--s4); padding: 0; }
 nav .steps > li { display: block; }
-nav summary { display: flex; align-items: center; gap: var(--s2); padding: 6px var(--s2); cursor: pointer; font-size: var(--t-md); font-weight: 600; border-radius: var(--r2); list-style: none; }
+nav summary { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: var(--s2); padding: 6px var(--s2) 6px var(--s5); background: var(--surface); cursor: pointer; font-size: var(--t-md); font-weight: 600; border-radius: var(--r2); list-style: none; }
 nav summary::-webkit-details-marker { display: none; }
 nav summary:hover { background: var(--sunken); }
-nav .stepno { inline-size: 18px; block-size: 18px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); text-align: center; line-height: 18px; flex: none; }
+nav .stepno { position: absolute; left: 0; inline-size: 20px; block-size: 20px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); text-align: center; line-height: 20px; }
 nav .step-name { flex: 1; }
 nav summary a.step-name { padding: 0; font-weight: 600; color: inherit; }
 nav .step-mark { color: var(--muted); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
-nav details > ul, nav details > section > ul { padding-left: var(--s4); }
-nav h2 { font-size: var(--t-sm); font-weight: 600; color: var(--muted); margin: var(--s5) var(--s2) var(--s1); }
-nav h3 { font-size: var(--t-sm); font-weight: 600; color: var(--muted); margin: var(--s3) var(--s2) 2px; }
+nav h2 { font-size: var(--t-sm); font-weight: 600; color: var(--muted); margin: var(--s5) 0 var(--s1); padding-left: var(--s5); }
+nav h3 { font-size: var(--t-sm); font-weight: 600; color: var(--muted); margin: var(--s3) 0 var(--s1); padding-left: var(--s5); }
 nav ul, .links ul, .checks ul, .appears ul, .drawer ol { list-style: none; margin: 0; padding: 0; }
 nav li, nav .home { display: flex; align-items: center; gap: var(--s2); border-radius: var(--r2); }
-nav li a, nav .home a { flex: 1; min-width: 0; padding: 5px var(--s2); color: var(--text); font-size: var(--t-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+nav li a, nav .home a { flex: 1; min-width: 0; padding: 5px var(--s2) 5px var(--s5); color: var(--muted); font-size: var(--t-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 nav li:hover, nav .home:hover { background: var(--sunken); }
 nav a:hover { text-decoration: none; }
-nav li:has(a[aria-current="page"]), nav .home:has(a[aria-current="page"]) { background: var(--accent-soft); }
-nav a[aria-current="page"] { color: var(--accent-text); font-weight: 600; }
+nav li:has(a[aria-current="page"]), nav .home:has(a[aria-current="page"]) { background: var(--sunken); box-shadow: inset 2px 0 0 var(--text); }
+nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 .head { display: flex; flex-direction: column; gap: var(--s2); }
 .head > .stamp { display: flex; align-items: center; gap: var(--s2); }
 .crumb { margin: 0; font-size: var(--t-sm); font-weight: 500; color: var(--faint); }
@@ -886,11 +889,12 @@ function navigationOf(project, records, labels, current, sets = [], rows = []) {
   const total = held.reduce((sum, each) => sum + each.todo, 0);
   const stepItem = (each, at) => {
     const mark = each.todo ? each.todo : each.records.length || each.sets.length ? "\u2713" : "\u2014";
+    const markName = each.todo ? filled(labels.toReview, { count: each.todo }) : each.records.length || each.sets.length ? labels.stepDone : labels.stepEmpty;
     const alone = (each.step === "identity" || each.step === "foundations") && each.records.length === 1 && !each.sets.length ? each.records[0] : null;
     const name = alone
       ? `<a class="step-name" href="${escaped(fm(alone).id)}.html"${fm(alone).id === current ? ' aria-current="page"' : ""}>${labels.stepNames[each.step]}</a>`
       : `<span class="step-name">${labels.stepNames[each.step]}</span>`;
-    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark">${mark}</span></summary>${alone ? "" : bodyOf(each) + setsOf(each.sets)}</details></li>`;
+    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark" role="img" aria-label="${escaped(markName)}">${mark}</span></summary>${alone ? "" : bodyOf(each) + setsOf(each.sets)}</details></li>`;
   };
   const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} ${pendingOf(labels, total)}</button></div>`;
   return `<nav aria-label="${escaped(labels.list)}"><div class="nav-scroll"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol></div>${foot}</nav>`;

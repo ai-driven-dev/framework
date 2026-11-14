@@ -42,7 +42,7 @@ const verdicts = (...all) => {
 const statesIn = (html) => [...html.matchAll(/<article class="state" data-state="([^"]+)"/g)].map((match) => match[1]);
 const articleOf = (html, state) => html.match(new RegExp(`<article class="state" data-state="${state}"[\\s\\S]*?</article>`))[0];
 const navOf = (html) => html.match(/<nav aria-label="[^"]*">[\s\S]*?<\/nav>/)[0];
-const stepsOf = (html) => [...navOf(html).matchAll(/<li data-step="(\w+)" data-todo="(\d+)"><details( open)?>([\s\S]*?)<\/details><\/li>/g)].map((match) => ({ step: match[1], todo: match[2], open: Boolean(match[3]), html: match[4], mark: match[4].match(/class="step-mark">([^<]*)</)[1] }));
+const stepsOf = (html) => [...navOf(html).matchAll(/<li data-step="(\w+)" data-todo="(\d+)"><details( open)?>([\s\S]*?)<\/details><\/li>/g)].map((match) => ({ step: match[1], todo: match[2], open: Boolean(match[3]), html: match[4], mark: match[4].match(/class="step-mark"[^>]*>([^<]*)</)[1] }));
 const todoOf = (html) => html.slice(html.indexOf('data-overview="todo"')).split('data-overview="revise"')[0];
 const stepOf = (html, step) => stepsOf(html).find((each) => each.step === step);
 const linksOf = (html, kind) => [...html.match(new RegExp(`<section class="links" data-links="${kind}">[\\s\\S]*?</section>`))[0].matchAll(/href="([^"]+)\.html"/g)].map((match) => match[1]);
@@ -761,6 +761,21 @@ describe("aidd-ui showcase", () => {
       assert.match(itemOf(home, "search-flow"), /<a href="search-flow\.html">Search flow<\/a>/);
       assert.match(itemOf(home, "home"), /<a href="home\.html" aria-current="page">Home<\/a>/);
       assert.doesNotMatch(itemOf(home, "search-flow"), />search-flow</);
+    });
+
+    it("names the mark of each step in words, from the labels of the language", () => {
+      for (const lang of ["en", "fr"]) {
+        const labels = LABELS[lang];
+        const marks = [...navOf(pagesOf({ lang })["index.html"]).matchAll(/<span class="step-mark"([^>]*)>([^<]*)</g)];
+        assert.equal(marks.length, 5);
+        const names = marks.map((match) => attributeOf(match[1], "aria-label"));
+        assert.ok(names.every(Boolean), "every mark has a name");
+        assert.deepEqual(names, ["journeys", "identity", "foundations", "components", "screens"].map((step) => {
+          const own = stepOf(pagesOf({ lang })["index.html"], step);
+          return own.todo !== "0" ? labels.toReview.replace("{count}", own.todo) : own.mark === "\u2713" ? labels.stepDone : labels.stepEmpty;
+        }));
+        assert.ok(labels.stepDone && labels.stepEmpty && labels.stepDone !== labels.stepEmpty);
+      }
     });
 
     it("writes the status of a chip, a card and the navigation in the language, the stored value staying", () => {
