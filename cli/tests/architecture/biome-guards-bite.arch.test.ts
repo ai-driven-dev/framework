@@ -400,18 +400,12 @@ describe("the guard itself", () => {
     ] as const) {
       writeFileSync(join(planted, file), reachesSharedInfrastructure(up));
     }
-    writeFileSync(
-      join(planted, "src/shared/ports/reaches-context.ts"),
-      'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
-    );
-    writeFileSync(
-      join(planted, "src/shared/infrastructure/reaches-context.ts"),
-      'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
-    );
-    writeFileSync(
-      join(planted, "src/shared/domain/reaches-context.ts"),
-      'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
-    );
+    for (const folder of ["ports", "infrastructure", "domain"]) {
+      writeFileSync(
+        join(planted, `src/shared/${folder}/reaches-context.ts`),
+        'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
+      );
+    }
     writeFileSync(
       join(planted, "src/shared/ports/env.ts"),
       "export const home = (): string | undefined => process.env.HOME;\n"
