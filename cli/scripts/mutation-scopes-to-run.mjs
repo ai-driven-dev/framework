@@ -27,11 +27,15 @@ export function scopesToRun(changed, scopes, { all = false } = {}) {
     .filter(([, { mutate }]) =>
       [mutate].flat().some((glob) => {
         if (glob.startsWith("!")) return false;
-        const source = `cli/${glob.slice(0, glob.indexOf("/**"))}/`;
-        const tests = source.replace("cli/src/", "cli/tests/");
-        return (
-          everything || changed.some((file) => file.startsWith(source) || file.startsWith(tests))
+        const wild = glob.indexOf("/**");
+        // A glob with no `/**` names one file: its tests are the files named after it.
+        const source = wild === -1 ? `cli/${glob}` : `cli/${glob.slice(0, wild)}/`;
+        const tests = (wild === -1 ? source.replace(/\.ts$/, ".") : source).replace(
+          "cli/src/",
+          "cli/tests/"
         );
+        const own = (file) => (wild === -1 ? file === source : file.startsWith(source));
+        return everything || changed.some((file) => own(file) || file.startsWith(tests));
       })
     )
     .map(([name]) => name);
