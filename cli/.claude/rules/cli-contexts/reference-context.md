@@ -219,6 +219,8 @@ Written rules no tool checks: the glossary, a kit imported by its own context on
 
 Not exceptions of the model: each vanishes when the old layout moves in stage C, and the old-layout counter (`old-layout-count.arch.test.ts`) only lets it go down.
 
+A ratchet row is keyed by path. A row's path may change with `git mv` when its file moves; its count may not rise, and a move is never a reason to raise it.
+
 | # | Deviation | Vanishes when |
 | --- | --- | --- |
 | M5 | `composition/framework.ts` imports `src/composition/auth.ts`, `src/composition/distribution.ts`, `src/composition/recipes.ts` and `src/composition/update.ts`, where the target has nobody import `composition/` | `composition/framework.ts` stops composing the other modules by import |
