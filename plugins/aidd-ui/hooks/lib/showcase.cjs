@@ -11,6 +11,7 @@ const { text, UI_DIR } = require("./project.cjs");
 const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./html.cjs");
 const { catalog, resolvedValues, TYPES } = require("./tokens.cjs");
 const variants = require("./variants.cjs");
+const { STEPS, CATEGORIES, stepOf, categoryOf, setStepOf, awaitingOf } = require("./steps.cjs");
 
 const WIREFRAMES_DIR = `${UI_DIR}/wireframes/`; // the screens a set of variants is shown on
 const WIREFRAMES_SHOWN = 2;
@@ -31,6 +32,10 @@ const LABELS = {
   en: {
     title: "Design system showcase",
     choose: "Variants",
+    stepNames: { journeys: "Journeys", identity: "Identity", foundations: "Foundations", components: "Elements", screens: "Screens" },
+    categories: { input: "Input", action: "Actions", display: "Display", navigation: "Navigation", group: "Groups", asset: "Assets" },
+    outOfJourney: "Out of journey",
+    toReview: "{count} to review",
     decided: "chosen",
     picks: "axes picked",
     round: "Round {round}",
@@ -97,6 +102,10 @@ const LABELS = {
   fr: {
     title: "Vitrine du système de design",
     choose: "Variantes",
+    stepNames: { journeys: "Parcours", identity: "Identité", foundations: "Charte", components: "Éléments", screens: "Écrans" },
+    categories: { input: "Saisie", action: "Actions", display: "Affichage", navigation: "Navigation", group: "Ensembles", asset: "Ressources" },
+    outOfJourney: "Hors parcours",
+    toReview: "{count} à relire",
     decided: "choisies",
     picks: "axes pris",
     round: "Tour {round}",
@@ -217,12 +226,21 @@ button:disabled { opacity: 0.45; cursor: default; }
 #copy:hover:not(:disabled) { background: var(--accent-hover); }
 select { appearance: none; font: inherit; font-size: var(--t-sm); color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r1); height: 32px; padding: 0 var(--s5) 0 var(--s2); }
 .shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
-.shell > nav { position: sticky; top: 0; height: 100vh; overflow: auto; background: var(--surface); border-right: 1px solid var(--line); padding: var(--s4) var(--s3) var(--s6); }
-.shell > main { min-width: 0; padding: var(--s6) var(--s7) calc(var(--s7) + 34px + var(--s5)); display: flex; flex-direction: column; gap: var(--s5); max-width: 1320px; }
+.shell > nav { position: sticky; top: 0; height: 100vh; overflow: auto; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--line); padding: var(--s4) var(--s3) var(--s6); }
+.shell > main { min-width: 0; padding: var(--s6) var(--s7); display: flex; flex-direction: column; gap: var(--s5); max-width: 1320px; }
 .shell > main.wide { max-width: none; }
 nav .brand { display: flex; align-items: center; gap: var(--s2); padding: var(--s1) var(--s2) var(--s4); font-size: var(--t-sm); font-weight: 600; }
 nav .mark { inline-size: 18px; block-size: 18px; border-radius: 5px; background: linear-gradient(135deg, var(--accent), #8b5cf6); flex: none; }
 nav .home { margin: 0; }
+nav .steps { list-style: none; margin: var(--s3) 0 var(--s4); padding: 0; }
+nav .steps > li { display: block; }
+nav summary { display: flex; align-items: center; gap: var(--s2); padding: 6px var(--s2); cursor: pointer; font-size: 13px; font-weight: 600; border-radius: var(--r1); list-style: none; }
+nav summary::-webkit-details-marker { display: none; }
+nav summary:hover { background: var(--sunken); }
+nav .stepno { inline-size: 18px; block-size: 18px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); text-align: center; line-height: 18px; flex: none; }
+nav .step-name { flex: 1; }
+nav .step-mark { color: var(--muted); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
+nav details > ul, nav details > section > ul { padding-left: var(--s4); }
 nav h2 { font-size: var(--t-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); margin: var(--s5) var(--s2) var(--s1); }
 nav h3 { font-size: var(--t-xs); font-weight: 500; color: var(--muted); margin: var(--s3) var(--s2) 2px; }
 nav ul, .links ul, .checks ul, .appears ul, .drawer ol { list-style: none; margin: 0; padding: 0; }
@@ -348,7 +366,7 @@ a.card .mini { border: 0; border-bottom: 1px solid var(--line); border-radius: 0
 .card-body b { font-size: var(--t-md); font-weight: 600; }
 .meta { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-sm); color: var(--muted); }
 .meta .chip { line-height: 18px; padding: 0 8px; font-size: var(--t-xs); }
-.steps, .progress { margin-left: auto; color: var(--faint); }
+.meta .steps, .progress { margin-left: auto; color: var(--faint); }
 .progress { font-variant-numeric: tabular-nums; }
 .progress[data-complete="true"] { color: var(--ok); }
 .appears { display: flex; flex-direction: column; gap: var(--s3); padding-top: var(--s5); border-top: 1px solid var(--line); }
@@ -357,10 +375,11 @@ a.card .mini { border: 0; border-bottom: 1px solid var(--line); border-radius: 0
 .mini-card:hover { text-decoration: none; border-color: #c7cdfb; box-shadow: var(--shadow-2); }
 .mini-card b { font-size: 13px; font-weight: 600; }
 .mini-card .chip { line-height: 18px; padding: 0 8px; font-size: var(--t-xs); }
-.open-review { position: fixed; bottom: var(--s5); right: var(--s5); z-index: 20; display: inline-flex; align-items: center; gap: var(--s2); height: 34px; padding: 0 var(--s4); background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; box-shadow: var(--shadow-2); }
+.open-review { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); inline-size: 100%; height: 34px; padding: 0 var(--s4); background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .open-review:hover { background: var(--accent-hover); }
-.open-review .tally { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.open-review .pending { padding: 0 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); font-size: var(--t-xs); line-height: 18px; font-variant-numeric: tabular-nums; }
 .open-review[aria-expanded="true"] { display: none; }
+.review-foot { position: sticky; bottom: 0; margin-top: auto; padding: var(--s3) 0 0; background: var(--surface); }
 .tally { padding: 0 7px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); line-height: 18px; font-variant-numeric: tabular-nums; }
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 30; inline-size: var(--drawer); display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--line); box-shadow: -12px 0 32px rgba(24, 24, 20, 0.08); }
 .drawer-head { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s3) var(--s3) var(--s5); border-bottom: 1px solid var(--line); }
@@ -791,21 +810,70 @@ const link = (id, current, shown = id) => `<a href="${escaped(id)}.html"${curren
 /** A status in the language of the page; one the table does not know is shown as written. */
 const statusLabel = (labels, status) => (Object.hasOwn(labels.statuses, status) ? labels.statuses[status] : String(status));
 
-/** The navigation, the same on every page: each group in the order of the paths. */
-function navigationOf(project, records, labels, current, sets = []) {
-  const item = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, titleOf(project, record))}${fm(record).status === "proposed" ? `<span class="tag">${escaped(statusLabel(labels, "proposed"))}</span>` : ""}</li>`;
-  const choose = sets.length ? [`<section data-group="choose"><h2>${labels.choose}</h2><ul>${sets.map((set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}"${current === `${SET_CURRENT}${set.id}` ? ' aria-current="page"' : ""}>${escaped(set.id)}</a></li>`).join("")}</ul></section>`] : [];
-  const sections = GROUPS.flatMap((group) => {
-    const own = records.filter((record) => groupOf(record) === group);
-    if (!own.length) return [];
-    if (group !== "components") return [`<section data-group="${group}"><h2>${labels[group]}</h2><ul>${own.sort(byRecordId).map(item).join("")}</ul></section>`];
-    const levels = LEVELS.flatMap((level) => {
-      const inLevel = own.filter((record) => fm(record).kind === level);
-      return inLevel.length ? [`<h3>${labels[level]}</h3><ul data-level="${level}">${inLevel.sort(byRecordId).map(item).join("")}</ul>`] : [];
-    });
-    return [`<section data-group="${group}"><h2>${labels[group]}</h2>${levels.join("")}</section>`];
+/** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
+ * not settled, and the open sets. `todo` counts records and open sets, never states. */
+function stepsOf({ project, records, rows, sets }) {
+  return STEPS.map((step) => {
+    const own = records.filter((record) => stepOf(record) === step);
+    const ownSets = sets.filter((set) => setStepOf(set) === step);
+    const awaiting = own.filter((record) => hasRender(project, record) && awaitingOf(rows, record).length);
+    const open = ownSets.filter((set) => !set.problems.length);
+    return { step, records: own, sets: ownSets, awaiting, open, todo: awaiting.length + open.length };
   });
-  return `<nav aria-label="${escaped(labels.list)}"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p>${[...choose, ...sections].join("")}</nav>`;
+}
+
+/** The records of the screens step, grouped under the first journey whose Steps table names them, in step order;
+ * the rest under an empty journey id. One group with no journey when none names any. */
+function screenGroupsOf(records, journeys) {
+  const byId = new Map(records.map((record) => [fm(record).id, record]));
+  const placedIds = new Set();
+  const groups = [];
+  for (const journey of [...journeys].sort(byRecordId)) {
+    const own = [];
+    for (const row of table(journey.sections[STEPS_SECTION])) {
+      const target = byId.get(row.Screen);
+      if (target && !placedIds.has(row.Screen)) {
+        placedIds.add(row.Screen);
+        own.push(target);
+      }
+    }
+    if (own.length) groups.push({ journey, records: own });
+  }
+  const rest = records.filter((record) => !placedIds.has(fm(record).id)).sort(byRecordId);
+  if (rest.length) groups.push({ journey: null, records: rest });
+  return groups;
+}
+
+/** The navigation, the same on every page: the five steps in order, each folded, the Review button at its foot. */
+function navigationOf(project, records, labels, current, sets = [], rows = []) {
+  const journeys = records.filter((record) => fm(record).kind === "journey");
+  const item = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, titleOf(project, record))}</li>`;
+  const named = (record, step) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, labels.stepNames[step])}</li>`;
+  const ul = (items) => `<ul>${items.join("")}</ul>`;
+  const setsOf = (held) => (held.length ? `<section data-group="choose"><h3>${labels.choose}</h3><ul>${held.map((set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}"${current === `${SET_CURRENT}${set.id}` ? ' aria-current="page"' : ""}>${escaped(set.id)}</a></li>`).join("")}</ul></section>` : "");
+  const bodyOf = ({ step, records: own }) => {
+    const sorted = [...own].sort(byRecordId);
+    if (step === "identity" || step === "foundations") return ul(sorted.map((record) => named(record, step)));
+    if (step === "components") return CATEGORIES.flatMap((category) => {
+      const inCategory = sorted.filter((record) => categoryOf(record) === category);
+      return inCategory.length ? [`<h3 data-category="${category}">${labels.categories[category]}</h3>${ul(inCategory.map(item))}`] : [];
+    }).join("");
+    if (step === "screens") {
+      const groups = screenGroupsOf(own, journeys);
+      if (!groups.some((group) => group.journey)) return ul(sorted.map(item));
+      return groups.map((group) => `<h3 data-journey="${group.journey ? escaped(fm(group.journey).id) : ""}">${group.journey ? escaped(titleOf(project, group.journey)) : labels.outOfJourney}</h3>${ul(group.records.map(item))}`).join("");
+    }
+    return ul(sorted.map(item));
+  };
+  const held = stepsOf({ project, records, rows, sets });
+  const here = current === null ? held.find((each) => each.todo)?.step : current.startsWith(SET_CURRENT) ? setStepOf(sets.find((set) => `${SET_CURRENT}${set.id}` === current) ?? {}) : stepOf(records.find((record) => fm(record).id === current) ?? {});
+  const total = held.reduce((sum, each) => sum + each.todo, 0);
+  const stepItem = (each, at) => {
+    const mark = each.todo ? each.todo : each.records.length || each.sets.length ? "\u2713" : "\u2014";
+    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-mark">${mark}</span></summary>${bodyOf(each)}${setsOf(each.sets)}</details></li>`;
+  };
+  const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} <span class="pending">${escaped(filled(labels.toReview, { count: total }))}</span></button></div>`;
+  return `<nav aria-label="${escaped(labels.list)}"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol>${foot}</nav>`;
 }
 
 /** The state a miniature shows: `default` when the record has it, else its first. */
@@ -1101,7 +1169,6 @@ function drawerOf({ project, reviewable, rows, labels, current, sets = [], close
   const items = reviewable.map(item).join("\n");
   const tally = `<span class="tally">${settled}/${total}</span>`;
   return [
-    `<button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} ${tally}</button>`,
     `<aside class="drawer" id="review" aria-label="${escaped(labels.review)}"${closed ? ' data-start="closed"' : ""} hidden>`,
     `<div class="drawer-head"><h2>${labels.review}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
     `<div class="drawer-body">${choices}${items || (choices ? "" : `<p>${labels.nothing}</p>`)}</div>`,
@@ -1162,7 +1229,7 @@ function specOf(project, record) {
 
 /** The heading of a record's page: its group, its title, its status and version under the title, clear of the
  * review button at the top right, then its description, a journey's persona, its route and code. */
-const headOf = ({ record, title, description, persona, labels }) => `<header class="head"><p class="crumb">${labels[groupOf(record)]}</p><h1>${escaped(title)}</h1>${stampOf(record, labels)}${description ? `<p class="lede">${escaped(description)}</p>` : ""}${persona}${chipsOf(record)}</header>`;
+const headOf = ({ record, title, description, persona, labels }) => `<header class="head"><p class="crumb">${labels.stepNames[stepOf(record)]}</p><h1>${escaped(title)}</h1>${stampOf(record, labels)}${description ? `<p class="lede">${escaped(description)}</p>` : ""}${persona}${chipsOf(record)}</header>`;
 
 /** The record a card or a journey shows first: a journey's first step that names a record with a render, else the record itself. */
 function shownRecordOf(project, record, recordsById) {
@@ -1208,7 +1275,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   const reviewable = records.filter((record) => hasRender(project, record)).sort((a, b) => GROUPS.indexOf(groupOf(a)) - GROUPS.indexOf(groupOf(b)) || byLevel(a, b));
   const drawer = (current, closed = false) => drawerOf({ project, reviewable, rows, labels, current, sets, closed });
   const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, overviewOf({ project, records, recordsById, rows, tokens, labels })].join("\n");
-  const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets), body: home, drawer: drawer(null), script: PANEL }) };
+  const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
     const id = fm(record).id;
     const uses = [...new Set(cited(record))].filter((each) => each !== id && recordsById.has(each)).sort(byCode);
@@ -1229,14 +1296,14 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
       appearsOf({ project, ids: usedBy, recordsById, labels }),
     ].filter(Boolean).join("\n");
     const script = (reviewed ? FRAMES + PANEL + TABS : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");
-    pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id, sets), body, drawer: drawer(id), script, wide: journey });
+    pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id, sets, rows), body, drawer: drawer(id), script, wide: journey });
   }
   const wireframes = project.renders.filter((file) => file.startsWith(WIREFRAMES_DIR)).sort().slice(0, WIREFRAMES_SHOWN).map((file) => {
     const record = records.find((candidate) => renderOf(candidate) === file);
     return { path: file.slice(WIREFRAMES_DIR.length), title: record ? titleOf(project, record) : undefined, text: text(project, file) ?? "" };
   });
   for (const set of sets) {
-    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null, true), script: variants.SCRIPT + PANEL, wide: true });
+    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets, rows), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null, true), script: variants.SCRIPT + PANEL, wide: true });
   }
   return pages;
 }

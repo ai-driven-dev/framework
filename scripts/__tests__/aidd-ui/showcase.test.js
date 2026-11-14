@@ -38,7 +38,9 @@ const verdicts = (...rows) => {
 };
 const statesIn = (html) => [...html.matchAll(/<article class="state" data-state="([^"]+)"/g)].map((match) => match[1]);
 const articleOf = (html, state) => html.match(new RegExp(`<article class="state" data-state="${state}"[\\s\\S]*?</article>`))[0];
-const groupOf = (html, group) => html.match(new RegExp(`<section data-group="${group}">[\\s\\S]*?</section>`))[0];
+const navOf = (html) => html.match(/<nav aria-label="[^"]*">[\s\S]*?<\/nav>/)[0];
+const stepsOf = (html) => [...navOf(html).matchAll(/<li data-step="(\w+)" data-todo="(\d+)"><details( open)?>([\s\S]*?)<\/details><\/li>/g)].map((match) => ({ step: match[1], todo: match[2], open: Boolean(match[3]), html: match[4], mark: match[4].match(/class="step-mark">([^<]*)</)[1] }));
+const stepOf = (html, step) => stepsOf(html).find((each) => each.step === step);
 const linksOf = (html, kind) => [...html.match(new RegExp(`<section class="links" data-links="${kind}">[\\s\\S]*?</section>`))[0].matchAll(/href="([^"]+)\.html"/g)].map((match) => match[1]);
 const capture = (name) => put(tmp, `${UI}/screens/${name}`, PNG);
 const unescaped = (text) => text.replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">").replaceAll("&amp;", "&");
@@ -63,19 +65,18 @@ describe("aidd-ui showcase", () => {
       for (const id of PAGE_IDS) assert.ok(index.includes(`href="${id}.html"`), id);
     });
 
-    it("lists a wireframe under templates and a screen under pages", () => {
+    it("lists a wireframe and a screen under the screens step, and a journey under its own", () => {
       const index = pagesOf()["index.html"];
-      assert.ok(groupOf(index, "templates").includes('href="search-flow.html"'));
-      assert.ok(groupOf(index, "pages").includes('href="home.html"'));
-      assert.ok(!groupOf(index, "pages").includes("search-flow"));
+      assert.ok(stepOf(index, "screens").html.includes('href="search-flow.html"'));
+      assert.ok(stepOf(index, "screens").html.includes('href="home.html"'));
+      assert.ok(!stepOf(index, "journeys").html.includes("search-flow"));
+      assert.ok(stepOf(index, "journeys").html.includes('href="onboarding.html"'));
     });
 
-    it("labels the wireframe group Wireframes, not Templates, in both languages", () => {
-      for (const lang of ["en", "fr"]) {
-        const group = groupOf(pagesOf({ lang })["index.html"], "templates");
-        assert.match(group, /<h2>Wireframes<\/h2>/);
-        assert.doesNotMatch(group, /Templates|Modèles/);
-      }
+    it("names the five steps in the language, in both languages", () => {
+      const names = (lang) => stepsOf(pagesOf({ lang })["index.html"]).map((each) => each.html.match(/<span class="step-name">([^<]*)</)[1]);
+      assert.deepEqual(names("en"), ["Journeys", "Identity", "Foundations", "Elements", "Screens"]);
+      assert.deepEqual(names("fr"), ["Parcours", "Identité", "Charte", "Éléments", "Écrans"]);
     });
 
     it("draws a wireframe state as labelled grey boxes, and no other record's", () => {
@@ -136,15 +137,10 @@ describe("aidd-ui showcase", () => {
       for (const id of ["brand", "system"]) assert.doesNotMatch(cards[id], /<iframe/, id);
     });
 
-    it("orders the navigation brand and system, components by level, journeys, templates, pages", () => {
+    it("orders the navigation by step, one li per step", () => {
       const index = pagesOf()["index.html"];
-      const order = [...index.matchAll(/<section data-group="([^"]+)">/g)].map((match) => match[1]);
-      assert.deepEqual(order, ["system", "components", "journeys", "templates", "pages"]);
-      const components = groupOf(index, "components");
-      const levels = [...components.matchAll(/data-level="([^"]+)"/g)].map((match) => match[1]);
-      assert.deepEqual(levels, ["asset", "atom", "molecule", "organism"]);
-      assert.ok(components.match(/data-level="atom"[\s\S]*?<\/ul>/)[0].includes('href="button.html"'));
-      assert.ok(components.match(/data-level="molecule"[\s\S]*?<\/ul>/)[0].includes('href="search-field.html"'));
+      assert.match(navOf(index), /<ol class="steps">/);
+      assert.deepEqual(stepsOf(index).map((each) => each.step), ["journeys", "identity", "foundations", "components", "screens"]);
     });
 
     it("lists what a record uses at the top, and where it appears at the bottom, from every field that cites an id", () => {
@@ -164,11 +160,10 @@ describe("aidd-ui showcase", () => {
       assert.match(main, /<section class="appears">[\s\S]*<\/section>\s*$/);
     });
 
-    it("marks a proposed record on its page and in the navigation, and a validated one nowhere", () => {
+    it("marks a proposed record on its page, a validated one nowhere, and tags none in the navigation", () => {
       const pages = pagesOf();
       assert.match(pages["search-flow.html"], /<span class="chip" data-status="proposed">/);
-      assert.match(pages["home.html"].match(/<li data-id="search-flow">[\s\S]*?<\/li>/)[0], /class="tag"/);
-      assert.doesNotMatch(pages["home.html"].match(/<li data-id="home">[\s\S]*?<\/li>/)[0], /class="tag"/);
+      assert.doesNotMatch(navOf(pages["home.html"]), /class="tag"/);
       assert.match(pages["home.html"], /<span class="chip" data-status="validated">/);
     });
 
@@ -499,11 +494,11 @@ describe("aidd-ui showcase", () => {
   });
 
   describe("the review panel", () => {
-    it("opens from a Review button on every page, the overview included, with the tally of every state reviewed", () => {
+    it("opens from a Review button at the foot of the sidebar on every page, naming how many records await review", () => {
       verdicts(["home", "default", "1", "ok", ""], ["home", "loading", "1", "revise", "too small"], ["home", "error", "1", "pending", ""], ["button", "default", "0", "ok", ""]);
-      const total = REVIEWABLE.reduce((sum, [, count]) => sum + count, 0);
       for (const [name, html] of Object.entries(pagesOf())) {
-        assert.equal(html.match(/<button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">Review <span class="tally">2\/(\d+)<\/span><\/button>/)?.[1], String(total), name);
+        assert.match(navOf(html), /<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">Review <span class="pending">\d+ to review<\/span><\/button><\/div><\/nav>$/, name);
+        assert.equal(html.match(/id="open-review"/g).length, 1, name);
         assert.equal(html.match(/<aside class="drawer" id="review"/g).length, 1, name);
         assert.equal(html.match(/id="copy"/g).length, 1, name);
       }
@@ -608,7 +603,7 @@ describe("aidd-ui showcase", () => {
   });
 
   describe("the sidebar and the header", () => {
-    const itemOf = (html, id) => html.match(new RegExp(`<li data-id="${id}">[\\s\\S]*?</li>`))[0];
+    const itemOf = (html, id) => navOf(html).match(new RegExp(`<li data-id="${id}">[\\s\\S]*?</li>`))[0];
     const rule = (html, selector) => html.match(new RegExp(`(?:^|\\n)${selector.replaceAll(".", "\\.")} \\{([^}]*)\\}`))[1];
 
     it("lists each record in the navigation by its title, the id staying in the address", () => {
@@ -620,7 +615,6 @@ describe("aidd-ui showcase", () => {
 
     it("writes the status of a chip, a card and the navigation in the language, the stored value staying", () => {
       const pages = pagesOf({ lang: "fr" });
-      assert.match(itemOf(pages["home.html"], "search-flow"), /<span class="tag">proposé<\/span>/);
       assert.match(headerOf(pages["search-flow.html"]), /<span class="chip" data-status="proposed">proposé<\/span>/);
       assert.match(headerOf(pages["home.html"]), /<span class="chip" data-status="validated">validé<\/span>/);
       assert.match(pages["index.html"], /<span class="chip" data-status="validated">validé<\/span>/);
@@ -680,15 +674,44 @@ describe("aidd-ui showcase", () => {
       assert.match(rule(html, ".board .card"), /grid-template-columns: 200px minmax\(0, 1fr\)/);
     });
 
-    it("floats the review button at the bottom right, clear of the stamp, and keeps the last content above it", () => {
+    it("sticks the review button to the foot of the sidebar instead of floating over the page", () => {
       const html = pagesOf()["onboarding.html"];
-      const opener = rule(html, ".open-review");
-      assert.match(opener, /bottom: var\(--s5\)/);
-      assert.match(opener, /right: var\(--s5\)/);
-      assert.doesNotMatch(opener, /top:/);
-      assert.match(opener, /background: var\(--accent\)/);
-      assert.match(opener, /color: #fff/);
-      assert.match(rule(html, ".shell > main"), /padding: var\(--s6\) var\(--s7\) calc\(var\(--s7\) \+ 34px \+ var\(--s5\)\)/);
+      assert.match(rule(html, ".review-foot"), /position: sticky/);
+      assert.match(rule(html, ".review-foot"), /bottom: 0/);
+      assert.doesNotMatch(rule(html, ".open-review"), /position: fixed/);
+      assert.doesNotMatch(rule(html, ".shell > main"), /34px/);
+    });
+
+    it("splits the elements by category, in the order of the table, a record under its role", () => {
+      const html = pagesOf()["index.html"];
+      const body = stepOf(html, "components").html;
+      const categories = [...body.matchAll(/<h3 data-category="(\w+)">[\s\S]*?<\/h3><ul>([\s\S]*?)<\/ul>/g)].map((match) => [match[1], [...match[2].matchAll(/data-id="([^"]+)"/g)].map((each) => each[1])]);
+      assert.deepEqual(categories, [["input", ["search-field"]], ["action", ["button", "old-button"]], ["group", ["dialog"]], ["asset", ["icon-search"]]]);
+    });
+
+    it("counts the records awaiting review on each step, and marks a step with nothing awaiting done, or empty", () => {
+      const index = pagesOf()["index.html"];
+      assert.deepEqual(stepsOf(index).map((each) => [each.step, each.todo, each.mark]), [["journeys", "0", "\u2713"], ["identity", "0", "\u2713"], ["foundations", "0", "\u2713"], ["components", "4", "4"], ["screens", "2", "2"]]);
+      fs.rmSync(path.join(tmp, UI, "journeys/onboarding.md"));
+      assert.equal(stepOf(pagesOf()["index.html"], "journeys").mark, "\u2014");
+    });
+
+    it("opens the step of the page, and on the overview the first step with work", () => {
+      const pages = pagesOf();
+      assert.deepEqual(stepsOf(pages["index.html"]).filter((each) => each.open).map((each) => each.step), ["components"]);
+      assert.deepEqual(stepsOf(pages["home.html"]).filter((each) => each.open).map((each) => each.step), ["screens"]);
+      assert.deepEqual(stepsOf(pages["button.html"]).filter((each) => each.open).map((each) => each.step), ["components"]);
+    });
+
+    it("groups the screens under the first journey that names them, the rest out of journey", () => {
+      const body = stepOf(pagesOf()["index.html"], "screens").html;
+      const groups = [...body.matchAll(/<h3 data-journey="([^"]*)">[^<]*<\/h3><ul>([\s\S]*?)<\/ul>/g)].map((match) => [match[1], [...match[2].matchAll(/data-id="([^"]+)"/g)].map((each) => each[1])]);
+      assert.deepEqual(groups, [["onboarding", ["home", "search-flow"]]]);
+      const file = path.join(tmp, UI, "journeys/onboarding.md");
+      fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("| search-flow |", "| ghost |"));
+      const after = stepOf(pagesOf()["index.html"], "screens").html;
+      assert.match(after, /<h3 data-journey="onboarding">[^<]*<\/h3><ul><li data-id="home">/);
+      assert.match(after, /<h3 data-journey="">Out of journey<\/h3><ul><li data-id="search-flow">/);
     });
 
     it("reads the description in the text color, and the persona darker than the faint grey", () => {

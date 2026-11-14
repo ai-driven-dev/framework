@@ -40,15 +40,23 @@ const columnsOf = (html) => [...html.matchAll(/<section class="variant" data-var
 
 describe("aidd-ui showcase sets", () => {
   describe("the navigation", () => {
-    it("opens with a group to choose, one link per set, on every page", () => {
+    it("lists the sets as a group to choose inside their step, one link per set, on every page", () => {
       const pages = pagesOf([SET(), SET({ id: "palette" })]);
       for (const html of Object.values(pages)) {
         const group = groupOf(html, "choose");
         assert.ok(group, "a group to choose");
-        assert.ok(html.indexOf('data-group="choose"') < html.indexOf('data-group="system"'), "first of the groups");
+        const identity = html.match(/<li data-step="identity"[\s\S]*?<\/details><\/li>/)[0];
+        assert.ok(identity.includes(group), "inside the step of its files");
         assert.deepEqual([...group.matchAll(/href="([^"]+)"/g)].map((match) => match[1]), ["_set-layout.html", "_set-palette.html"]);
-        assert.match(group, new RegExp(`<h2>${LABELS.en.choose}</h2>`));
+        assert.match(group, new RegExp(`<h3>${LABELS.en.choose}</h3>`));
       }
+    });
+
+    it("puts a set in the step of its first file, and opens that step on the page of the set", () => {
+      const set = SET({ id: "shapes", variants: SET().variants.map((each) => ({ ...each, files: [file("wireframes/x.md", "x"), ...each.files] })) });
+      const pages = pagesOf([set]);
+      assert.match(pages["index.html"].match(/<li data-step="screens"[\s\S]*?<\/details><\/li>/)[0], /data-set="shapes"/);
+      assert.match(pages["_set-shapes.html"], /<li data-step="screens" data-todo="3"><details open>/);
     });
 
     it("marks the set the page stands on, and no group without sets", () => {
@@ -59,7 +67,7 @@ describe("aidd-ui showcase sets", () => {
     });
 
     it("says it in French on a French page", () => {
-      assert.match(groupOf(pagesOf([SET()], { lang: "fr" })["index.html"], "choose"), /<h2>Variantes<\/h2>/);
+      assert.match(groupOf(pagesOf([SET()], { lang: "fr" })["index.html"], "choose"), /<h3>Variantes<\/h3>/);
     });
   });
 
