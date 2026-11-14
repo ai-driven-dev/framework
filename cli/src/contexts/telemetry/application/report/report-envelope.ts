@@ -1,4 +1,3 @@
-import type { LeftOutReason } from "../../domain/ports/usage-ledger.js";
 import type { UnattributedReason } from "../../domain/report/attribution.js";
 import type { Period } from "../../domain/report/period.js";
 import { filtersOf, type ReportFilters } from "../../domain/report/report-filter.js";
@@ -11,6 +10,7 @@ import {
   type Tally,
 } from "../../domain/report/usage-report.js";
 import type { NotStoredReason } from "../../domain/repository-resolution.js";
+import type { LeftOutReason } from "../../ports/usage-ledger.js";
 import type { ReportResult } from "./report-usage-use-case.js";
 
 /** A counter: the sum of the calls that reported it, and how many calls did not. A call that

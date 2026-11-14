@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { ClaudeSettingsSource } from "../../domain/ports/switch/claude-settings-source.js";
+import type { ClaudeSettingsSource } from "../../ports/switch/claude-settings-source.js";
 import { readTextIfPresent } from "../reading/text-file.js";
 
 /** Read only: nothing is ever written into a Claude profile. */

@@ -6,8 +6,8 @@ import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
-import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
+import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
 import {
   AUTUMN,
   cloneOf,

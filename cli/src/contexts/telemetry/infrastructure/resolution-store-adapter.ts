@@ -1,11 +1,11 @@
 import { join } from "node:path";
-import type { PrivateStorage } from "../domain/ports/private-storage.js";
-import type { ResolutionStore } from "../domain/ports/resolution-store.js";
 import {
   parseResolutions,
   type RepositoryResolution,
   renderResolutions,
 } from "../domain/repository-resolution.js";
+import type { PrivateStorage } from "../ports/private-storage.js";
+import type { ResolutionStore } from "../ports/resolution-store.js";
 import { RepositoryAliasStoreAdapter } from "./legacy/repository-alias-store-adapter.js";
 import { readTextIfPresent } from "./reading/text-file.js";
 

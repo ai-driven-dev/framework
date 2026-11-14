@@ -6,9 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
 import { codexUsageReader } from "../../../../src/contexts/telemetry/domain/formats/codex-transcript-usage.js";
-import type { TranscriptSource } from "../../../../src/contexts/telemetry/domain/ports/transcript-source.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
+import type { TranscriptSource } from "../../../../src/contexts/telemetry/ports/transcript-source.js";
 
 const FIXTURES = resolve(import.meta.dirname, "../../../fixtures/claude-usage/projects");
 

@@ -4,11 +4,11 @@ import { rememberOwnRoot } from "../../../../../src/contexts/telemetry/applicati
 import { TelemetryOffUseCase } from "../../../../../src/contexts/telemetry/application/switch/telemetry-off-use-case.js";
 import { TelemetryOnUseCase } from "../../../../../src/contexts/telemetry/application/switch/telemetry-on-use-case.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import {
   type RepositoryResolution,
   resolutionKey,
 } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
+import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
 import {
   cloneOf,
   FakeConsents,

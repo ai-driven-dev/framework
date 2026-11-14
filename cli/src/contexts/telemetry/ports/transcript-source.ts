@@ -1,4 +1,4 @@
-import type { TranscriptPosition } from "../transcript-position.js";
+import type { TranscriptPosition } from "../domain/transcript-position.js";
 
 export interface TranscriptRead {
   /** `null`: the file shrank while it was read. The lines handed over

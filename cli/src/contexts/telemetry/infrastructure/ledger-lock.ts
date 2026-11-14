@@ -2,7 +2,7 @@ import { rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException, tryParseJson } from "../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
-import type { PrivateStorage } from "../domain/ports/private-storage.js";
+import type { PrivateStorage } from "../ports/private-storage.js";
 import { modifiedAtIfPresent, readTextIfPresent } from "./reading/text-file.js";
 
 export interface LockOptions {

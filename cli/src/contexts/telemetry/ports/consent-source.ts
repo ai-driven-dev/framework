@@ -1,5 +1,5 @@
-import type { CloneIdentity } from "../consent/clone-identity.js";
-import type { CloneConsentReading, ConsentReading } from "../telemetry-consent.js";
+import type { CloneIdentity } from "../domain/consent/clone-identity.js";
+import type { CloneConsentReading, ConsentReading } from "../domain/telemetry-consent.js";
 
 /** A clone's own word on whether it is measured. */
 export interface ConsentSource {

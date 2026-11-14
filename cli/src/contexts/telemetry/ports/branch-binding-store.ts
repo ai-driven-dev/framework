@@ -1,4 +1,4 @@
-import type { TaskDeclaration } from "../declaration/task-declaration.js";
+import type { TaskDeclaration } from "../domain/declaration/task-declaration.js";
 
 /** Where `HEAD` and the remote's head point, as git names them. */
 export interface BranchHeads {

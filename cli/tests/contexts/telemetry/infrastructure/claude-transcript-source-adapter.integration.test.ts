@@ -13,9 +13,9 @@ import {
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { TranscriptSource } from "../../../../src/contexts/telemetry/domain/ports/transcript-source.js";
 import type { TranscriptPosition } from "../../../../src/contexts/telemetry/domain/transcript-position.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
+import type { TranscriptSource } from "../../../../src/contexts/telemetry/ports/transcript-source.js";
 
 /** Read every file, whatever its age. */
 const EVERYTHING = Number.NEGATIVE_INFINITY;

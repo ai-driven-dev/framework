@@ -1,15 +1,12 @@
-import type { BindingSnapshotStore } from "../../domain/ports/bindings/binding-snapshot-store.js";
-import type { ConsentHistory } from "../../domain/ports/consent-history.js";
-import type {
-  ErasureEntry,
-  MeasurementErasure,
-} from "../../domain/ports/forget/measurement-erasure.js";
+import type { BindingSnapshotStore } from "../../ports/bindings/binding-snapshot-store.js";
+import type { ConsentHistory } from "../../ports/consent-history.js";
+import type { ErasureEntry, MeasurementErasure } from "../../ports/forget/measurement-erasure.js";
 import type {
   RepositoryDeclarations,
   RepositoryKeys,
-} from "../../domain/ports/forget/repository-declarations.js";
-import type { ResolutionStore } from "../../domain/ports/resolution-store.js";
-import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
+} from "../../ports/forget/repository-declarations.js";
+import type { ResolutionStore } from "../../ports/resolution-store.js";
+import type { UsageLedger } from "../../ports/usage-ledger.js";
 
 export interface ForgetPlan {
   readonly entries: readonly ErasureEntry[];

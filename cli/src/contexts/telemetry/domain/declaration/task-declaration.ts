@@ -1,6 +1,6 @@
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
-import type { LockWait } from "../ports/bindings/bindings-lock.js";
+import type { LockWait } from "../../ports/bindings/bindings-lock.js";
 
 export const DECLARED_BY = ["command", "hook-intercept"] as const;
 export type DeclaredBy = (typeof DECLARED_BY)[number];

@@ -102,7 +102,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/telemetry/application/switch/telemetry-off-use-case.ts",
     "src/contexts/telemetry/application/forget/forget-telemetry-use-case.ts",
     "src/contexts/telemetry/domain/switch/claude-retention.ts",
-    "src/contexts/telemetry/domain/ports/forget/measurement-erasure.ts",
+    "src/contexts/telemetry/ports/forget/measurement-erasure.ts",
   ],
 };
 

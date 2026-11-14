@@ -1,4 +1,4 @@
-import type { BranchConfigBinding } from "../branch-binding.js";
+import type { BranchConfigBinding } from "../domain/branch-binding.js";
 
 /** What a repository's git keeps about its branch declarations. */
 export interface BranchBindingSource {

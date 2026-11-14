@@ -1,5 +1,5 @@
-import type { StoredUsage } from "../stored-usage.js";
-import type { TranscriptPosition } from "../transcript-position.js";
+import type { StoredUsage } from "../domain/stored-usage.js";
+import type { TranscriptPosition } from "../domain/transcript-position.js";
 
 /** A partition is a day, named `YYYY-MM-DD`. */
 export interface LoadedLedger {

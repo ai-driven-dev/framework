@@ -3,9 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { TranscriptSource } from "../../../../src/contexts/telemetry/domain/ports/transcript-source.js";
 import type { TranscriptPosition } from "../../../../src/contexts/telemetry/domain/transcript-position.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
+import type { TranscriptSource } from "../../../../src/contexts/telemetry/ports/transcript-source.js";
 import { WholeTranscriptReader } from "../../../helpers/whole-transcript-reader.js";
 
 const EVERYTHING = Number.NEGATIVE_INFINITY;

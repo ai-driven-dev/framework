@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { parseRepositoryAliases } from "../../domain/legacy/repository-aliases.js";
-import type { RepositoryAliasStore } from "../../domain/ports/repository-alias-store.js";
+import type { RepositoryAliasStore } from "../../ports/repository-alias-store.js";
 import { readTextIfPresent } from "../reading/text-file.js";
 
 /** `repository-ids.json`, beside the ledger: read, never written. */

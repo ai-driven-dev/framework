@@ -7,7 +7,7 @@ import {
   type DeclarationRequest,
   HOOK_LOCK_WAIT_MS,
 } from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
+import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
 import {
   cloneOf,
   FakeBindings,

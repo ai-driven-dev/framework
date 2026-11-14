@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import type { PrivateStorage } from "../../domain/ports/private-storage.js";
-import type { LeftOutEntry, LeftOutReason, LeftOutStore } from "../../domain/ports/usage-ledger.js";
 import { compareText } from "../../domain/text-order.js";
+import type { PrivateStorage } from "../../ports/private-storage.js";
+import type { LeftOutEntry, LeftOutReason, LeftOutStore } from "../../ports/usage-ledger.js";
 import { readTextIfPresent } from "../reading/text-file.js";
 
 /** What ingests measured and could not store, in one file beside the ledger: `<reason> <hash>`

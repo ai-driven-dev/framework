@@ -4,8 +4,8 @@ import {
   parsePersonIdentity,
   renderPersonIdentity,
 } from "../../domain/identity/person-identity.js";
-import type { PersonIdentityStore } from "../../domain/ports/identity/person-identity-store.js";
-import type { PrivateStorage } from "../../domain/ports/private-storage.js";
+import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
+import type { PrivateStorage } from "../../ports/private-storage.js";
 import { readTextIfPresent } from "../reading/text-file.js";
 
 /** `identity.json` in the telemetry directory, owner-only. It is looked for nowhere else:

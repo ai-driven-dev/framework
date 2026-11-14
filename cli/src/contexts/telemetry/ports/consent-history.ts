@@ -1,4 +1,4 @@
-import type { ConsentEvent, ConsentRecords } from "../consent/consent-history.js";
+import type { ConsentEvent, ConsentRecords } from "../domain/consent/consent-history.js";
 
 /** When each clone consented, kept apart from the clone so that it outlives it. */
 export interface ConsentHistory {

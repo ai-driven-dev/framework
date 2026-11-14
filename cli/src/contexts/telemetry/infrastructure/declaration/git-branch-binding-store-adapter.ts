@@ -1,5 +1,5 @@
 import type { TaskDeclaration } from "../../domain/declaration/task-declaration.js";
-import type { BranchBindingStore, BranchHeads } from "../../domain/ports/branch-binding-store.js";
+import type { BranchBindingStore, BranchHeads } from "../../ports/branch-binding-store.js";
 import { runGit } from "../run-git.js";
 
 const NOT_SYMBOLIC = 1;

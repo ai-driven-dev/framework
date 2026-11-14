@@ -1,5 +1,5 @@
 import { personIdOf } from "../../domain/identity/person-identity.js";
-import type { GitUserSource } from "../../domain/ports/identity/git-user-source.js";
+import type { GitUserSource } from "../../ports/identity/git-user-source.js";
 
 /** The identifier offered to a person who has none yet, or `null` when there is none to offer. */
 export class ProposeIdentityUseCase {

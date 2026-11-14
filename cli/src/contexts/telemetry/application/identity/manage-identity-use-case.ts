@@ -1,5 +1,5 @@
 import { personIdOf } from "../../domain/identity/person-identity.js";
-import type { PersonIdentityStore } from "../../domain/ports/identity/person-identity-store.js";
+import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
 
 export type IdentityResult =
   | { readonly status: "set"; readonly personId: string }

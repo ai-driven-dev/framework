@@ -3,7 +3,7 @@ import {
   branchCreatedAt,
   parseBranchConfig,
 } from "../domain/branch-binding.js";
-import type { BranchBindingSource } from "../domain/ports/branch-binding-source.js";
+import type { BranchBindingSource } from "../ports/branch-binding-source.js";
 import { runGit } from "./run-git.js";
 
 const NO_MATCH = 1;

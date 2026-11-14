@@ -1,6 +1,3 @@
-import type { PersonIdentityStore } from "../../domain/ports/identity/person-identity-store.js";
-import type { RepositoryLocator } from "../../domain/ports/repository-locator.js";
-import type { LeftOutReason, UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { attribute } from "../../domain/report/attribution.js";
 import { inPeriod, type Period, windowOf } from "../../domain/report/period.js";
 import {
@@ -19,6 +16,9 @@ import {
 } from "../../domain/report/usage-report.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 import type { StoredUsage } from "../../domain/stored-usage.js";
+import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
+import type { RepositoryLocator } from "../../ports/repository-locator.js";
+import type { LeftOutReason, UsageLedger } from "../../ports/usage-ledger.js";
 import type { IngestResult, IngestUsageUseCase } from "../ingest-usage-use-case.js";
 import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";

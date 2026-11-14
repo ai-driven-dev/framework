@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { type BranchSnapshot, parseBranchSnapshot, snapshotKey } from "../domain/branch-binding.js";
-import type { BindingSnapshotStore } from "../domain/ports/bindings/binding-snapshot-store.js";
-import type { PrivateStorage } from "../domain/ports/private-storage.js";
-import type { RepositoryAliasStore } from "../domain/ports/repository-alias-store.js";
+import type { BindingSnapshotStore } from "../ports/bindings/binding-snapshot-store.js";
+import type { PrivateStorage } from "../ports/private-storage.js";
+import type { RepositoryAliasStore } from "../ports/repository-alias-store.js";
 import { readTextIfPresent } from "./reading/text-file.js";
 
 /** `branches.jsonl`: append-only, one snapshot per line, the latest line of a branch being its

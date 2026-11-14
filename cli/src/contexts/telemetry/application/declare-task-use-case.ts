@@ -5,8 +5,8 @@ import {
   declarationOf,
   lockWaitFor,
 } from "../domain/declaration/task-declaration.js";
-import type { BindingsLock } from "../domain/ports/bindings/bindings-lock.js";
-import type { SessionBindingStore } from "../domain/ports/bindings/session-binding-store.js";
+import type { BindingsLock } from "../ports/bindings/bindings-lock.js";
+import type { SessionBindingStore } from "../ports/bindings/session-binding-store.js";
 import type { BranchDeclarations, BranchOutcome } from "./branch-declarations.js";
 import type { ConsentedRepositories, RefusalReason } from "./consented-repositories.js";
 

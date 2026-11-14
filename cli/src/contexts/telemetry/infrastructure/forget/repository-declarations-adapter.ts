@@ -1,10 +1,10 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { CONSENT_KEY } from "../../domain/telemetry-consent.js";
 import type {
   RepositoryDeclarations,
   RepositoryKeys,
-} from "../../domain/ports/forget/repository-declarations.js";
-import { CONSENT_KEY } from "../../domain/telemetry-consent.js";
+} from "../../ports/forget/repository-declarations.js";
 import { runGit } from "../run-git.js";
 
 /** `git config` finds nothing: not a failure. */

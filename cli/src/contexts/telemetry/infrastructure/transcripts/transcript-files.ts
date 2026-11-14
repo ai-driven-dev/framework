@@ -2,12 +2,12 @@ import { constants, type Stats } from "node:fs";
 import { type FileHandle, open, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../../shared/domain/reading/json-file.js";
-import type { TranscriptRead } from "../../domain/ports/transcript-source.js";
 import {
   resumeOffset,
   type TranscriptPosition,
   type TranscriptStat,
 } from "../../domain/transcript-position.js";
+import type { TranscriptRead } from "../../ports/transcript-source.js";
 import { modifiedAtIfPresent } from "../reading/text-file.js";
 
 const NEWLINE = 0x0a;

@@ -1,4 +1,4 @@
-import type { RepositoryResolution } from "../repository-resolution.js";
+import type { RepositoryResolution } from "../domain/repository-resolution.js";
 
 /** The repository each working directory was found to be, kept for the directories that
  * are gone by the time their lines are read. */

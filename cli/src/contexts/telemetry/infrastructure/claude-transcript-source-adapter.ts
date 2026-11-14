@@ -1,5 +1,5 @@
-import type { TranscriptRead, TranscriptSource } from "../domain/ports/transcript-source.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
+import type { TranscriptRead, TranscriptSource } from "../ports/transcript-source.js";
 import {
   type EachLine,
   eachLine,

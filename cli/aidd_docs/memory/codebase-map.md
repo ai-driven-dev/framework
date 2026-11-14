@@ -82,13 +82,13 @@ src/
 │   │   │   ├── consent/    # a clone's identity, and when it consented
 │   │   │   ├── identity/    # the identifier a person chose to be named by
 │   │   │   ├── legacy/    # where an earlier version wrote what forget erases, and the table of ids it gave repositories
-│   │   │   ├── ports/
-│   │   │   │   ├── bindings/    # the declarations kept beside the ledger, and the lock their writers share
-│   │   │   │   ├── forget/
-│   │   │   │   ├── identity/
-│   │   │   │   └── switch/
 │   │   │   ├── report/    # attribution of a call, the days of a report, the axes it splits by
 │   │   │   └── switch/    # Claude's retention
+│   │   ├── ports/
+│   │   │   ├── bindings/    # the declarations kept beside the ledger, and the lock their writers share
+│   │   │   ├── forget/
+│   │   │   ├── identity/
+│   │   │   └── switch/
 │   │   └── infrastructure/
 │   │       ├── consent/    # reading a clone's identity from the file system, and the consent history file
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir

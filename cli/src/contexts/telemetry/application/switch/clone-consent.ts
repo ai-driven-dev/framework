@@ -1,5 +1,5 @@
-import type { ConsentSource } from "../../domain/ports/consent-source.js";
-import type { LocatedDirectory, RepositoryLocator } from "../../domain/ports/repository-locator.js";
+import type { ConsentSource } from "../../ports/consent-source.js";
+import type { LocatedDirectory, RepositoryLocator } from "../../ports/repository-locator.js";
 
 export type CloneConsent =
   | { readonly status: "refused"; readonly reason: "outside-repository" | "unreadable-git-config" }

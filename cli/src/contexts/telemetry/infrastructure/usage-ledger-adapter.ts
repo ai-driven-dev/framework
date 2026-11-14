@@ -1,8 +1,6 @@
 import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
-import type { PrivateStorage } from "../domain/ports/private-storage.js";
-import type { LeftOutStore, LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
 import { parseStoredUsage, partitionByDay, type StoredUsage } from "../domain/stored-usage.js";
 import { compareText } from "../domain/text-order.js";
 import {
@@ -11,6 +9,8 @@ import {
   type TranscriptPosition,
 } from "../domain/transcript-position.js";
 import { foldUsage } from "../domain/usage-fold.js";
+import type { PrivateStorage } from "../ports/private-storage.js";
+import type { LeftOutStore, LoadedLedger, UsageLedger } from "../ports/usage-ledger.js";
 import { DirectoryLock, type LockOptions } from "./ledger-lock.js";
 import { LeftOutAdapter } from "./left-out/left-out-adapter.js";
 import { RepositoryAliasStoreAdapter } from "./legacy/repository-alias-store-adapter.js";

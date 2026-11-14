@@ -7,7 +7,7 @@ import {
   foldConsent,
   isOpen,
 } from "../domain/consent/consent-history.js";
-import type { ConsentHistory } from "../domain/ports/consent-history.js";
+import type { ConsentHistory } from "../ports/consent-history.js";
 
 /** When each clone consented, read once and kept current as it is written. Callers hold the
  * ledger's lock, so what was read is what is there, except for a hook that closed an interval

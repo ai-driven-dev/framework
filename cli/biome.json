@@ -3305,6 +3305,43 @@
       }
     },
     {
+      "includes": ["src/contexts/telemetry/ports/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "a port must not import application, infrastructure or presentation"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/tools/**",
+                      "**/auth/**",
+                      "**/host-registration/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/contexts/telemetry/application/**/*.ts"],
       "linter": {
         "rules": {

@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { chmod, mkdir, open, rename, rm, writeFile } from "node:fs/promises";
-import type { PrivateStorage } from "../../domain/ports/private-storage.js";
+import type { PrivateStorage } from "../../ports/private-storage.js";
 
 const NEWLINE = 0x0a;
 

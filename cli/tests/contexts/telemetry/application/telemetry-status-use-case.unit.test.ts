@@ -3,7 +3,7 @@ import { BranchDeclarations } from "../../../../src/contexts/telemetry/applicati
 import { ConsentedRepositories } from "../../../../src/contexts/telemetry/application/consented-repositories.js";
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { TelemetryStatusUseCase } from "../../../../src/contexts/telemetry/application/telemetry-status-use-case.js";
-import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
+import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
 import {
   cloneOf,
   FakeBindings,

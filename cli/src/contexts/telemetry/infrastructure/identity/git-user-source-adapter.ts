@@ -1,4 +1,4 @@
-import type { GitUserSource } from "../../domain/ports/identity/git-user-source.js";
+import type { GitUserSource } from "../../ports/identity/git-user-source.js";
 import { runGit } from "../run-git.js";
 
 export class GitUserSourceAdapter implements GitUserSource {

@@ -1,10 +1,10 @@
 import { sameClone } from "../../domain/consent/clone-identity.js";
-import type { ConsentHistory } from "../../domain/ports/consent-history.js";
-import type { ConsentSource } from "../../domain/ports/consent-source.js";
-import type { RepositoryLocator } from "../../domain/ports/repository-locator.js";
-import type { ConsentWriter } from "../../domain/ports/switch/consent-writer.js";
-import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { CONSENT_WITHDRAWN, tokenOfKey } from "../../domain/telemetry-consent.js";
+import type { ConsentHistory } from "../../ports/consent-history.js";
+import type { ConsentSource } from "../../ports/consent-source.js";
+import type { RepositoryLocator } from "../../ports/repository-locator.js";
+import type { ConsentWriter } from "../../ports/switch/consent-writer.js";
+import type { UsageLedger } from "../../ports/usage-ledger.js";
 import { ConsentLog } from "../consent-log.js";
 import { readCloneConsent } from "./clone-consent.js";
 

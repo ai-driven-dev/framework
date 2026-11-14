@@ -13,7 +13,6 @@ import { DeclaredBindings } from "../../../../../src/contexts/telemetry/applicat
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
-import type { UsageLedger } from "../../../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import { attribute } from "../../../../../src/contexts/telemetry/domain/report/attribution.js";
 import {
   inPeriod,
@@ -37,6 +36,7 @@ import {
 } from "../../../../../src/contexts/telemetry/domain/usage-record.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
+import type { UsageLedger } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";
 import {
   FakeBindings,
   FakeConsents,

@@ -1,5 +1,5 @@
-import type { BindingsLock, LockWait } from "../domain/ports/bindings/bindings-lock.js";
-import type { PrivateStorage } from "../domain/ports/private-storage.js";
+import type { BindingsLock, LockWait } from "../ports/bindings/bindings-lock.js";
+import type { PrivateStorage } from "../ports/private-storage.js";
 import { DirectoryLock, type LockOptions } from "./ledger-lock.js";
 
 /** `.lock` in the bindings directory: the same lock as the ledger's, on its own file. */

@@ -1,5 +1,3 @@
-import type { LocatedDirectory } from "../../domain/ports/repository-locator.js";
-import type { ResolutionStore } from "../../domain/ports/resolution-store.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 import {
   cwdKey,
@@ -7,6 +5,8 @@ import {
   resolutionKey,
   sameResolution,
 } from "../../domain/repository-resolution.js";
+import type { LocatedDirectory } from "../../ports/repository-locator.js";
+import type { ResolutionStore } from "../../ports/resolution-store.js";
 
 type Located = Extract<LocatedDirectory, { status: "repository" }>;
 

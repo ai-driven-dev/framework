@@ -9,10 +9,10 @@ import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
-import type { TranscriptSource } from "../../../../src/contexts/telemetry/domain/ports/transcript-source.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
+import type { TranscriptSource } from "../../../../src/contexts/telemetry/ports/transcript-source.js";
 import {
   cloneOf,
   FakeBindings,

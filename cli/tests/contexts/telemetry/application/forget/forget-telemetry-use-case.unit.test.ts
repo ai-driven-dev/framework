@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { ForgetTelemetryUseCase } from "../../../../../src/contexts/telemetry/application/forget/forget-telemetry-use-case.js";
 import type { BranchSnapshot } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
-import type { ErasureEntry } from "../../../../../src/contexts/telemetry/domain/ports/forget/measurement-erasure.js";
-import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
 import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
+import type { ErasureEntry } from "../../../../../src/contexts/telemetry/ports/forget/measurement-erasure.js";
+import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
 import {
   cloneOf,
   InMemoryConsentHistory,

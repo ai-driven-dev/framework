@@ -7,8 +7,8 @@ import {
   type SessionDeclaration,
   type TaskDeclaration,
 } from "../../domain/declaration/task-declaration.js";
-import type { SessionBindingStore } from "../../domain/ports/bindings/session-binding-store.js";
-import type { PrivateStorage } from "../../domain/ports/private-storage.js";
+import type { SessionBindingStore } from "../../ports/bindings/session-binding-store.js";
+import type { PrivateStorage } from "../../ports/private-storage.js";
 import { readTextIfPresent } from "../reading/text-file.js";
 
 /** `sessions.jsonl` and `carries.jsonl` under the bindings directory: append-only, one line

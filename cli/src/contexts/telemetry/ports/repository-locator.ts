@@ -1,4 +1,4 @@
-import type { CloneIdentity } from "../consent/clone-identity.js";
+import type { CloneIdentity } from "../domain/consent/clone-identity.js";
 
 export type LocatedDirectory =
   | { readonly status: "gone" }

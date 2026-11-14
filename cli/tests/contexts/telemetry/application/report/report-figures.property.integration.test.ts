@@ -16,7 +16,6 @@ import {
   ReportUsageUseCase,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import type { LeftOutEntry } from "../../../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
 import {
   conflictsOf,
@@ -30,6 +29,7 @@ import {
 } from "../../../../../src/contexts/telemetry/domain/usage-record.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
+import type { LeftOutEntry } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";
 import {
   FakeLocator,
   InMemoryIdentity,

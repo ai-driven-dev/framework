@@ -338,9 +338,7 @@ describe("the guard itself", () => {
   it("reads a contract folder as ports, and a folder merely ending in ports as none", () => {
     expect(isPortFile("src/contexts/auth/contract/token-provider.ts")).toBe(true);
     expect(isPortFile("src/contexts/auth/ports/identity-verifier.ts")).toBe(true);
-    expect(isPortFile("src/contexts/telemetry/domain/ports/forget/measurement-erasure.ts")).toBe(
-      true
-    );
+    expect(isPortFile("src/contexts/telemetry/ports/forget/measurement-erasure.ts")).toBe(true);
     expect(isPortFile("src/presentation/reports/summary.ts")).toBe(false);
     expect(isPortFile("src/contexts/auth/domain/credential-record.ts")).toBe(false);
   });

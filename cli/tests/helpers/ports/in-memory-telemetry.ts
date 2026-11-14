@@ -16,37 +16,6 @@ import type {
   SessionDeclaration,
   TaskDeclaration,
 } from "../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import type { BindingSnapshotStore } from "../../../src/contexts/telemetry/domain/ports/bindings/binding-snapshot-store.js";
-import type {
-  BindingsLock,
-  LockWait,
-} from "../../../src/contexts/telemetry/domain/ports/bindings/bindings-lock.js";
-import type { SessionBindingStore } from "../../../src/contexts/telemetry/domain/ports/bindings/session-binding-store.js";
-import type { BranchBindingSource } from "../../../src/contexts/telemetry/domain/ports/branch-binding-source.js";
-import type {
-  BranchBindingStore,
-  BranchHeads,
-} from "../../../src/contexts/telemetry/domain/ports/branch-binding-store.js";
-import type { ConsentHistory } from "../../../src/contexts/telemetry/domain/ports/consent-history.js";
-import type { ConsentSource } from "../../../src/contexts/telemetry/domain/ports/consent-source.js";
-import type { PersonIdentityStore } from "../../../src/contexts/telemetry/domain/ports/identity/person-identity-store.js";
-import type { RepositoryAliasStore } from "../../../src/contexts/telemetry/domain/ports/repository-alias-store.js";
-import type {
-  LocatedDirectory,
-  RepositoryLocator,
-} from "../../../src/contexts/telemetry/domain/ports/repository-locator.js";
-import type { ResolutionStore } from "../../../src/contexts/telemetry/domain/ports/resolution-store.js";
-import type {
-  TranscriptRead,
-  TranscriptSource,
-} from "../../../src/contexts/telemetry/domain/ports/transcript-source.js";
-import type {
-  LeftOutEntry,
-  LeftOutReason,
-  LeftOutStore,
-  LoadedLedger,
-  UsageLedger,
-} from "../../../src/contexts/telemetry/domain/ports/usage-ledger.js";
 import type { RepositoryResolution } from "../../../src/contexts/telemetry/domain/repository-resolution.js";
 import { dayOf, type StoredUsage } from "../../../src/contexts/telemetry/domain/stored-usage.js";
 import {
@@ -56,6 +25,37 @@ import {
 } from "../../../src/contexts/telemetry/domain/telemetry-consent.js";
 import type { TranscriptPosition } from "../../../src/contexts/telemetry/domain/transcript-position.js";
 import { foldUsage } from "../../../src/contexts/telemetry/domain/usage-fold.js";
+import type { BindingSnapshotStore } from "../../../src/contexts/telemetry/ports/bindings/binding-snapshot-store.js";
+import type {
+  BindingsLock,
+  LockWait,
+} from "../../../src/contexts/telemetry/ports/bindings/bindings-lock.js";
+import type { SessionBindingStore } from "../../../src/contexts/telemetry/ports/bindings/session-binding-store.js";
+import type { BranchBindingSource } from "../../../src/contexts/telemetry/ports/branch-binding-source.js";
+import type {
+  BranchBindingStore,
+  BranchHeads,
+} from "../../../src/contexts/telemetry/ports/branch-binding-store.js";
+import type { ConsentHistory } from "../../../src/contexts/telemetry/ports/consent-history.js";
+import type { ConsentSource } from "../../../src/contexts/telemetry/ports/consent-source.js";
+import type { PersonIdentityStore } from "../../../src/contexts/telemetry/ports/identity/person-identity-store.js";
+import type { RepositoryAliasStore } from "../../../src/contexts/telemetry/ports/repository-alias-store.js";
+import type {
+  LocatedDirectory,
+  RepositoryLocator,
+} from "../../../src/contexts/telemetry/ports/repository-locator.js";
+import type { ResolutionStore } from "../../../src/contexts/telemetry/ports/resolution-store.js";
+import type {
+  TranscriptRead,
+  TranscriptSource,
+} from "../../../src/contexts/telemetry/ports/transcript-source.js";
+import type {
+  LeftOutEntry,
+  LeftOutReason,
+  LeftOutStore,
+  LoadedLedger,
+  UsageLedger,
+} from "../../../src/contexts/telemetry/ports/usage-ledger.js";
 
 /** Every UTC day of an autumn, September to November, to read a window as the days it holds. */
 export const AUTUMN: readonly string[] = Array.from({ length: 91 }, (_, n) =>

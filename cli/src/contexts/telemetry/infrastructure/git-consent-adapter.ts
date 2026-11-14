@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import { type CloneIdentity, sameClone } from "../domain/consent/clone-identity.js";
-import type { ConsentSource } from "../domain/ports/consent-source.js";
-import type { ConsentWriter } from "../domain/ports/switch/consent-writer.js";
 import {
   type CloneConsentReading,
   CONSENT_KEY,
   type ConsentReading,
 } from "../domain/telemetry-consent.js";
+import type { ConsentSource } from "../ports/consent-source.js";
+import type { ConsentWriter } from "../ports/switch/consent-writer.js";
 import { type CloneIdentityReader, readCloneIdentity } from "./consent/clone-identity-reader.js";
 import { type GitRun, runGit } from "./run-git.js";
 
