@@ -438,12 +438,25 @@ function dress(frame) {
   for (const axis in pick) root.dataset[axis] = pick[axis];
   if (pick.platform) frame.dataset.platform = pick.platform;
   fit(frame);
+  follow(frame, root);
 }
 function fit(frame) {
   const root = frame.contentDocument && frame.contentDocument.documentElement;
   const height = root ? Math.ceil(root.getBoundingClientRect().height) : 0;
   if (height > 0) frame.style.height = height + "px";
 }
+/* A frame's content reflows after it loads (a window resize, a late font, a panel shown): the height follows the root of its document, which a load replaces. */
+const followed = new WeakMap();
+function follow(frame, root) {
+  if (typeof ResizeObserver !== "function") return;
+  const own = followed.get(frame);
+  if (own && own.root === root) return;
+  if (own) own.observer.disconnect();
+  const observer = new ResizeObserver(() => fit(frame));
+  observer.observe(root);
+  followed.set(frame, { root, observer });
+}
+window.addEventListener("resize", () => frames().forEach(fit));
 function watch(frame) {
   frame.addEventListener("load", () => dress(frame));
   dress(frame);

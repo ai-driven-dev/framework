@@ -228,6 +228,17 @@ describe("aidd-ui showcase", () => {
     });
   });
 
+  describe("the height of a frame", () => {
+    const scriptOf = (html) => html.match(/<script>([\s\S]*)<\/script>/)[1];
+
+    it("fits again when the content of a frame changes size and when the window resizes", () => {
+      const script = scriptOf(pagesOf()["home.html"]);
+      assert.match(script, /new ResizeObserver\(/);
+      assert.match(script, /\.observe\(root\)/);
+      assert.match(script, /addEventListener\("resize"/);
+    });
+  });
+
   describe("the token gallery", () => {
     const sheet = () => read(`${UI}/tokens.css`);
     const systemPage = (options = {}) => pagesOf({ tokens: sheet(), ...options })["system.html"];
