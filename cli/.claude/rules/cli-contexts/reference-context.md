@@ -208,6 +208,12 @@ Written rules no tool checks: the glossary, a kit imported by its own context on
 | T-A12 | `target/04-tools-and-translate.md:63,83`, `configCandidates` and `onMultipleCandidates` | no such input in the source | no code for an input never observed: written as a limit |
 | T-A13 | `target/04-tools-and-translate.md:124`, `SourceMarketplaceRef` and `SourcePluginEntryRef` move to translate | `target/04-tools-and-translate.md:15,115`, `tools` imports no other context, and the build contract's own signatures take both types | both stay in `src/contexts/tools/contract/build-contract.ts`, the shape the build contract consumes |
 | T-A14 | `target/00-overview.md:238`, one opaque `ToolId` for every tool | `target/01-installation.md:143`, `framework` reads `AiToolId` next to `ToolId` | `AiToolId` and `IdeToolId` are the two brands `ToolId` is the union of; `ToolCatalog.aiToolId` is the lookup that turns a raw string into the first, as `toolId` does into the union | the two targets agree on a single shape |
+| Tel-A1 | `target/00-overview.md:243`, the four commands at 6 are split | `target/06-telemetry.md:76`, not assumed to split | the overview wins: all five rows go to zero, or the cap changes once in the reference with evidence |
+| Tel-A2 | `target/06-telemetry.md:112,153`, presentation imports `application/` only | section 2, types live in `contract/`; E6 | presentation types go in `contract/` |
+| Tel-A3 | `target/06-telemetry.md:178`, `PrivateStorage` goes to `shared` | `target/00-overview.md:69`, rule 8: a module enters `shared` only if two contexts import it; E9 | stays in telemetry; vanishes when E9 closes |
+| Tel-A4 | the 13 files the storage adapters amount to (`ls` of `infrastructure/storage/` recursively) | section 2, at most 10 direct files | subfolders of `storage/` by aggregate: `ledger/`, `declarations/`, `consent/` |
+| Tel-A5 | `target/06-telemetry.md:173`, three commands | `code-map/src-telemetry.md:59`, two | two after the deletion |
+| Tel-A6 | `target/06-telemetry.md:55`, line formats are pure domain services | `target/06-telemetry.md:169`, they move to infrastructure | `:169` wins: the format is an external boundary |
 
 ### Migration state
 

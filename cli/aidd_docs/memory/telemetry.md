@@ -6,7 +6,7 @@
 
 | Edit | Where |
 | --- | --- |
-| its line format, made once per file read when a line needs what came before it | `contexts/telemetry/infrastructure/sources/claude/` (Claude) or `infrastructure/sources/codex/` (Codex) |
+| its line format, a pure `decode(line, context?)` that returns the context a later line needs | `contexts/telemetry/infrastructure/sources/claude/` (Claude) or `infrastructure/sources/codex/` (Codex) |
 | its transcript source, on the block reader in `infrastructure/sources/transcript-files.ts` | `contexts/telemetry/infrastructure/` |
 | one reader in the ingest list | `composition/telemetry.ts` |
 | its name | `USAGE_TOOLS` in `contract/usage-record.ts` |
@@ -77,6 +77,8 @@ flowchart LR
 ## Tests
 
 - Unit and integration tests mirror `src/` under `tests/contexts/telemetry/`.
+- Each stateful port has one contract suite (`tests/contexts/telemetry/ports/*.contract.test.ts`), run against its fake and its real adapter.
+- Each tool's line format is pinned by real, anonymized records in `tests/fixtures/claude-usage/` and `tests/fixtures/codex-usage/`, one per observed format change; the grouping rule is in the Codex README. A line no reader classifies fails the replay: a Claude line by its unrecognised note, a Codex line by the declared list of line types.
 - The `telemetry` end-to-end tests under `tests/e2e/` run the built binary; `tests/e2e/telemetry-journey.e2e.test.ts` drives the plugin's real hooks through a shim to it and checks that every axis adds up to the total.
 - `pnpm test:foreign-clock` (`scripts/test-foreign-clock.mjs`) runs the telemetry tests with the clock in `Pacific/Kiritimati` and the locale `ar_SA.UTF-8`, after checking that a child Node really sees both. CI runs it in `cli-coverage`. A test that compares figures across zones sets `TZ` itself; the locale is fixed at process start, so only a child process can vary it.
 - The skills' commands are checked against the help golden by `scripts/__tests__/telemetry-skills-name-real-commands.test.js`.
