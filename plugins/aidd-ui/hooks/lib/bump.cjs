@@ -174,15 +174,25 @@ function bump(root, { task, change, breaking, created, removed, refs }) {
     }
   }
 
-  for (const review of records.filter((each) => fm(each).kind === REVIEW_KIND)) {
-    for (const id of list(fm(review).screens).filter((screen) => raised.has(screen))) {
-      const screen = records.find((each) => fm(each).id === id);
-      const { lines, end } = files.editOf(review.file);
-      for (const state of reviewStatesOf(screen)) addRow(lines, VERDICTS_HEADING, rowOf(id, state, raised.get(id), "pending", ""), end, review.file);
-    }
+  // Only the newest review naming a screen holds its pending rows: older ones are rounds already closed.
+  const reviews = records.filter((each) => fm(each).kind === REVIEW_KIND);
+  const newest = (id) => newestOf(project, reviews.filter((review) => list(fm(review).screens).includes(id)));
+  for (const [id, version] of raised) {
+    const review = newest(id);
+    if (!review) continue;
+    const screen = records.find((each) => fm(each).id === id);
+    const { lines, end } = files.editOf(review.file);
+    for (const state of reviewStatesOf(screen)) addRow(lines, VERDICTS_HEADING, rowOf(id, state, version, "pending", ""), end, review.file);
   }
 
   return { changed: files.save(), left: left.sort((a, b) => (a.id < b.id ? -1 : 1)) };
+}
+
+/** The newest of `reviews`: the one whose own row comes last in history.md, a review with no row older than any with one,
+ * and of two equal the one loaded later. */
+function newestOf(project, reviews) {
+  const rank = (review) => project.history.findLastIndex((row) => row.Id === fm(review).id);
+  return reviews.reduce((best, review) => (best === undefined || rank(review) >= rank(best) ? review : best), undefined);
 }
 
 /** Appends the system's next publication to history.md: its Task lists every task folder with an

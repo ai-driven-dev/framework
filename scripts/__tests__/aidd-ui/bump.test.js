@@ -48,6 +48,40 @@ describe("aidd-ui bump", () => {
       assert.ok(read(`${UI}/reviews/first-pass.md`).includes(["| home | error | 1 | pending | |", "| home | default | 2 | pending | |", "| home | empty | 2 | pending | |", "| home | loading | 2 | pending | |", "| home | error | 2 | pending | |"].join("\n")));
     });
 
+    describe("with several reviews that name the raised screen", () => {
+      const SECOND = `${UI}/reviews/second-pass.md`;
+      const PENDING = "| home | default | 2 | pending | |";
+      /** Adds a second review of `home` and its history row, placed after or before the row of first-pass. */
+      const addSecond = (order) => {
+        put(tmp, SECOND, record(["id: second-pass", "kind: review", "status: proposed", "version: 1", "scope: system", "screens: [home]"], "# Second", "## Verdicts\n\n| Screen | State | Version | Verdict | Comment |\n| --- | --- | --- | --- | --- |\n"));
+        const row = "| second-pass | 1 | created | no | aidd_docs/tasks/ds-init | |";
+        const first = "| first-pass | 1 | created | no | aidd_docs/tasks/ds-init | |";
+        edit(tmp, HISTORY, first, order === "after" ? `${first}\n${row}` : `${row}\n${first}`);
+      };
+
+      it("adds the pending rows to the review whose history row comes last, and to no other", () => {
+        addSecond("after");
+        change("color.action.default");
+        assert.equal(read(`${UI}/reviews/first-pass.md`).includes(PENDING), false);
+        assert.ok(read(SECOND).includes(PENDING));
+      });
+
+      it("reads the order from history.md, not from the review file names", () => {
+        addSecond("before");
+        change("color.action.default");
+        assert.ok(read(`${UI}/reviews/first-pass.md`).includes(PENDING));
+        assert.equal(read(SECOND).includes(PENDING), false);
+      });
+
+      it("still reaches an older review for a screen the newest does not name", () => {
+        addSecond("after");
+        edit(tmp, SECOND, "screens: [home]", "screens: [about]");
+        change("color.action.default");
+        assert.ok(read(`${UI}/reviews/first-pass.md`).includes(PENDING));
+        assert.equal(read(SECOND).includes(PENDING), false);
+      });
+    });
+
     it("leaves a review that names no raised screen, a deprecated element, and the system, as they were", () => {
       edit(tmp, `${UI}/reviews/first-pass.md`, "screens: [home]", "screens: [about]");
       const before = Object.fromEntries(["reviews/first-pass", "components/old-button", "system"].map((name) => [name, read(`${UI}/${name}.md`)]));
