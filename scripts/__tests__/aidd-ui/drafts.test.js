@@ -145,6 +145,20 @@ describe("aidd-ui drafts", () => {
       assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
     });
 
+    it("keeps the version of the record it replaces, never the variant's", () => {
+      writeSet("brand");
+      fs.writeFileSync(path.join(tmp, PATHS.BRAND), read(PATHS.BRAND).replace("version: 1", "version: 3"));
+      const run = keep("brand", "b");
+      assert.deepEqual([run.code, run.err], [0, ""]);
+      assert.equal(read(PATHS.BRAND), brandOf("Tone of b").replace("version: 1", "version: 3"));
+    });
+
+    it("keeps the variant's own version for a record the design system does not hold yet", () => {
+      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": "---\nid: x\nversion: 4\n---\n", "preview.html": "<p>p</p>\n" }) });
+      keep("button", "b");
+      assert.equal(read(`${UI}/components/x.md`), "---\nid: x\nversion: 4\n---\n");
+    });
+
     it("removes every round of the set with the kept variant", () => {
       writeSet("brand", { header: [...HEADER, "Round", "Parent"], rows: [[...ROWS[0], "1", ""], [...ROWS[1], "1", ""], [...ROWS[2], "2", "a"]] });
       const run = keep("brand", "c");

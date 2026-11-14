@@ -2,7 +2,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { Refusal, NO_UI_FOLDER, walk, clean, relative, UI_DIR, DRAFTS_DIR, ERROR } = require("./project.cjs");
-const { table, LINE_BREAK } = require("./markdown.cjs");
+const { table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
 const { fingerprintOf } = require("./html.cjs");
 
 const VARIANTS_FILE = "variants.md";
@@ -88,7 +88,23 @@ function setsOf(root) {
     });
 }
 
-/** Copies the variant's folder into the design system, `preview.html` aside, then deletes the set. */
+/** The index of the `version:` line of the front matter of `lines`, -1 when there is none. */
+const versionLineOf = (lines) => {
+  const close = frontMatterEnd(lines);
+  return close < 0 ? -1 : lines.findIndex((line, index) => index > 0 && index < close && line.startsWith("version:"));
+};
+
+/** A variant's record as text, with the `version:` line of the record it replaces: a version is the design system's, not a variant's. */
+function withVersionOf(variantText, existingText) {
+  const lines = variantText.split(LINE_BREAK);
+  const [at, kept] = [versionLineOf(lines), versionLineOf(existingText.split(LINE_BREAK))];
+  if (at < 0 || kept < 0) return variantText;
+  const existing = existingText.split(LINE_BREAK)[kept].replace(/\r$/, "");
+  lines[at] = existing + (lines[at].endsWith("\r") ? "\r" : "");
+  return lines.join(LINE_BREAK);
+}
+
+/** Copies the variant's folder into the design system, `preview.html` aside, then deletes the set. A record replaced keeps its version. */
 function keep(root, id, variant) {
   const set = setOf(root, id);
   const problems = check(set);
@@ -101,7 +117,8 @@ function keep(root, id, variant) {
     .map((file) => {
       const target = path.join(root, UI_DIR, file);
       fs.mkdirSync(path.dirname(target), { recursive: true });
-      fs.copyFileSync(path.join(from, file), target);
+      if (file.endsWith(".md") && fs.existsSync(target)) fs.writeFileSync(target, withVersionOf(fs.readFileSync(path.join(from, file), "utf8"), fs.readFileSync(target, "utf8")));
+      else fs.copyFileSync(path.join(from, file), target);
       return `${UI_DIR}/${file}`;
     });
   fs.rmSync(set.dir, { recursive: true });
