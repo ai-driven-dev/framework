@@ -14,6 +14,8 @@ Find Chrome, Chromium or Edge on the machine.
 Take one screenshot per state and per width, into a temp folder.
 
 - Widths: 390 for mobile, 1280 for desktop.
+- A capture wider than asked is no defect. Say nothing.
+- The page's width switch shows the phone.
 - Only you open these captures. Never hand one to the person.
 - Never write screenshots under `aidd_docs/`.
 - Command, with the absolute path of the render:

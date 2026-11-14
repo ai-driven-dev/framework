@@ -22,13 +22,13 @@ The screens kept.
    - Hand back only when all are looked at.
 6. Write the showcase per [engine](../references/engine.md), in the project memory's language.
 7. Reply with:
-   - the screens created, each with the wireframe it dresses
+   - the screens created, by title
    - the screens you picked yourself
    - each screen left without `code`, and why
    - an error left, in plain words, never a warning count
    - that no browser was found, if so
    - that the code is untouched
-   - that each screen is `proposed` until its review
+   - that each screen awaits a verdict
    - the single next step: give a verdict in the showcase
 
 ## Output
