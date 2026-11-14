@@ -802,6 +802,7 @@ function paint() {
       const choice = choiceOf(setKeyOf(holder), column.dataset.variant);
       column.querySelectorAll(".colvote").forEach((button) => button.setAttribute("aria-pressed", String(!!choice && button.dataset.verdict === choice.verdict)));
       const field = column.querySelector(".colcomment");
+      if (!field) continue;
       field.hidden = !choice || choice.verdict !== "revise";
       if (document.activeElement !== field) field.value = (choice && choice.comment) || "";
     }
@@ -875,6 +876,7 @@ function vote(key, name, verdict) {
 pickers.forEach((holder) => holder.querySelectorAll(".variant").forEach((column) => {
   const name = column.dataset.variant;
   const field = column.querySelector(".colcomment");
+  if (!field) return;
   column.querySelectorAll(".colvote").forEach((button) => button.addEventListener("click", () => {
     if (vote(setKeyOf(holder), name, button.dataset.verdict)) field.focus();
   }));

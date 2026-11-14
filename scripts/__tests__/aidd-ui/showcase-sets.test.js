@@ -704,7 +704,7 @@ describe("aidd-ui showcase sets", () => {
         return node;
       };
       // The page as the script sees it: a drawer row per variant, a header per column, one copy button.
-      const open = () => {
+      const open = ({ past = false } = {}) => {
         const html = pagesOf([SET()])["_set-layout.html"];
         const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
         const rows = ["a", "b"].map((name) => {
@@ -719,8 +719,11 @@ describe("aidd-ui showcase sets", () => {
           return element({ variant: name }, { below: { ".colvote": votes, ".colcomment": [field] }, votes, field });
         });
         const holder = element({ set: "layout", fingerprint: "f1" }, { below: { ".variant": columns, ".colvote": columns.flatMap((column) => column.votes) } });
+        // A folded earlier round holds columns with no verdict and no comment box, under the same set.
+        const folded = element({ set: "layout", fingerprint: "f1" }, { below: { ".variant": [element({ variant: "old" })], ".colvote": [] } });
+        const holders = past ? [folded, holder] : [holder];
         const by = { scrim: element(), review: element({}, { hidden: true, below: { "details.choice": [set], "details.item": [] } }), "open-review": element(), copy: element({ blocked: "blocked" }), clear: element(), "all-ok": element(), note: element(), "close-review": element() };
-        const document = { body: { dataset: {} }, addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === ".variants[data-set]" ? [holder] : []), querySelector: () => null };
+        const document = { body: { dataset: {} }, addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === ".variants[data-set]" ? holders : []), querySelector: () => null };
         const written = [];
         const memory = {};
         const window = { addEventListener() {}, localStorage: { getItem: (key) => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; }, removeItem: (key) => { delete memory[key]; } } };
@@ -738,6 +741,13 @@ describe("aidd-ui showcase sets", () => {
         page.by.copy.listeners.click();
         await new Promise((resolve) => setImmediate(resolve));
         assert.deepEqual(verdictsOf(page.written[0]), [["a", "keep", ""], ["b", null, ""]]);
+      });
+
+      it("gives the columns of the latest round their handlers when an earlier round's column has no comment box", () => {
+        const page = open({ past: true });
+        page.columns[0].votes[1].listeners.click();
+        assert.equal(page.columns[0].votes[1].attrs["aria-pressed"], "true");
+        assert.equal(page.columns[0].field.hidden, false);
       });
 
       it("shows a verdict set in the drawer on the column too, and takes it back on a second click", () => {
