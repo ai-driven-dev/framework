@@ -843,9 +843,23 @@ describe("aidd-ui showcase", () => {
       const index = pagesOf()["index.html"];
       const count = (step) => index.match(new RegExp(`<section class="todo-step" data-step="${step}"><h3>[^<]*<span>(\\d+)</span>`))[1];
       assert.equal(count("components"), "4");
-      assert.equal(count("screens"), "2");
-      assert.match(index, /<h2>To review \(6\)<\/h2>/);
+      assert.equal(count("screens"), "1");
+      assert.match(index, /<h2>To review \(5\)<\/h2>/);
       assert.doesNotMatch(index, /data-step="(journeys|identity|foundations)"><h3>/);
+    });
+
+    it("counts a screen and the wireframe it dresses once on the overview, a wireframe no screen dresses still apart", () => {
+      const render = "<html><head></head><body><main data-state=\"default\">x</main></body></html>";
+      put(tmp, `${UI}/wireframes/start.md`, record(["id: start", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/wireframes/start.html`, render);
+      put(tmp, `${UI}/screens/start-screen.md`, record(["id: start-screen", "kind: screen", "status: proposed", "version: 1", "wireframe: start", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/screens/start-screen.html`, render);
+      put(tmp, `${UI}/wireframes/bare.md`, record(["id: bare", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Bare"));
+      put(tmp, `${UI}/wireframes/bare.html`, render);
+      const index = pagesOf()["index.html"];
+      const count = (step) => index.match(new RegExp(`<section class="todo-step" data-step="${step}"><h3>[^<]*<span>(\\d+)</span>`))[1];
+      assert.equal(count("screens"), "3");
+      assert.match(index, /<h2>To review \(7\)<\/h2>/);
     });
 
     it("splits the elements awaiting review by category on the overview", () => {
@@ -916,7 +930,7 @@ describe("aidd-ui showcase", () => {
 
     it("counts the records and open sets awaiting review, not the states, in the button and in the drawer, in the language", () => {
       verdicts(["home", "default", "1", "ok", ""]);
-      for (const [lang, text] of [["en", "6 to review"], ["fr", "6 \u00e0 relire"]]) {
+      for (const [lang, text] of [["en", "5 to review"], ["fr", "5 \u00e0 relire"]]) {
         const index = pagesOf({ lang })["index.html"];
         assert.equal(index.match(new RegExp(`<span class="tally pending" data-template="[^"]+">${text}</span>`, "g")).length, 2, lang);
       }
@@ -1138,7 +1152,7 @@ describe("aidd-ui showcase", () => {
 
     it("counts the records awaiting review on each step, and marks a step with nothing awaiting done, or empty", () => {
       const index = pagesOf()["index.html"];
-      assert.deepEqual(stepsOf(index).map((each) => [each.step, each.todo, each.mark]), [["journeys", "0", "\u2713"], ["identity", "0", "\u2713"], ["foundations", "0", "\u2713"], ["components", "4", "4"], ["screens", "2", "2"]]);
+      assert.deepEqual(stepsOf(index).map((each) => [each.step, each.todo, each.mark]), [["journeys", "0", "\u2713"], ["identity", "0", "\u2713"], ["foundations", "0", "\u2713"], ["components", "4", "4"], ["screens", "1", "1"]]);
       fs.rmSync(path.join(tmp, UI, "journeys/onboarding.md"));
       assert.equal(stepOf(pagesOf()["index.html"], "journeys").mark, "\u2014");
     });

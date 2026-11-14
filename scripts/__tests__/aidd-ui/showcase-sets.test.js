@@ -56,7 +56,7 @@ describe("aidd-ui showcase sets", () => {
       const set = SET({ id: "shapes", variants: SET().variants.map((each) => ({ ...each, files: [file("wireframes/x.md", "x"), ...each.files] })) });
       const pages = pagesOf([set]);
       assert.match(pages["index.html"].match(/<li data-step="screens"[\s\S]*?<\/details><\/li>/)[0], /data-set="shapes"/);
-      assert.match(pages["_set-shapes.html"], /<li data-step="screens" data-todo="3"><details open>/);
+      assert.match(pages["_set-shapes.html"], /<li data-step="screens" data-todo="2"><details open>/);
     });
 
     it("marks the set the page stands on, and no group without sets", () => {

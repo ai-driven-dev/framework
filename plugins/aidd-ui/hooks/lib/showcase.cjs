@@ -1017,15 +1017,17 @@ const leftWordOf = (labels, each) => (each.todo ? filled(labels.toReview, { coun
 
 /** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
  * not settled, the open sets, and the records the drawer cannot review that are still proposed. `todo` counts records
- * and open sets, never states, and leaves the proposed ones out: the drawer cannot clear them. */
+ * and open sets, never states, a wireframe awaiting beside the awaiting screen that dresses it once, and leaves the proposed ones out: the drawer cannot clear them. */
 function stepsOf({ project, records, rows, sets }) {
   return STEPS.map((step) => {
     const own = records.filter((record) => stepOf(record) === step);
     const ownSets = sets.filter((set) => setStepOf(set) === step);
     const awaiting = own.filter((record) => reviewable(project, record) && awaitingOf(rows, record).length).sort(byCategory);
     const open = ownSets.filter((set) => !set.problems.length);
+    const dressed = new Set(awaiting.filter((record) => fm(record).kind === "screen" && fm(record).wireframe).map((record) => fm(record).wireframe));
+    const counted = awaiting.filter((record) => !(fm(record).kind === "wireframe" && dressed.has(fm(record).id)));
     const proposed = own.filter((record) => !reviewable(project, record) && unvalidated(record));
-    return { step, records: own, sets: ownSets, awaiting, open, proposed, todo: awaiting.length + open.length };
+    return { step, records: own, sets: ownSets, awaiting, open, proposed, todo: counted.length + open.length };
   });
 }
 
