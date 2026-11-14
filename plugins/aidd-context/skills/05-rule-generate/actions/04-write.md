@@ -12,7 +12,7 @@ The approved candidate, paths and overwrites.
    - Approved overwrites: add `--force`.
 2. Run the writer with `--check --publish`, and require no drift.
 3. Report the written files.
-   - Non-zero exit: quote the writer's output verbatim, naming each blocked, failed and written path, then stop.
+   - Non-zero exit: quote the writer's output verbatim, then stop.
 
 ## Output
 

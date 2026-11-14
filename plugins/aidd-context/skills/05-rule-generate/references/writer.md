@@ -2,17 +2,19 @@
 
 How to run `scripts/write-rule.cjs` and read its result.
 
-- `$writer`: `scripts/write-rule.cjs` beside the loaded `SKILL.md`, as an absolute path.
-- Write the request JSON to a temporary file outside the project: `category`, `slug`, `description`, `body`, and `paths`, omitted for all files.
-
 ```sh
 node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$request_json"
 ```
 
+| Variable | Value |
+| --- | --- |
+| `$writer` | Absolute path of `scripts/write-rule.cjs` beside the loaded `SKILL.md`. |
+| `$request_json` | Temporary file outside the project: `category`, `slug`, `description`, `body`, and `paths`, omitted for all files. |
+
 | Option | Effect |
 | --- | --- |
 | `--project` | Real absolute project directory. |
-| `--tools` | Comma-separated confirmed host IDs, added to the source's `targets`: required with `--input`, optional with `--publish`, refused with `--remove` and `--check`. |
+| `--tools` | Comma-separated host IDs added to the source's `targets`, never removed: required with `--input`, optional with `--publish`. |
 | `--input <file>` | Writes the source `aidd_docs/rules/<category>/<slug>.md`, then publishes it. |
 | `--remove <category>/<slug>` | Deletes the source, its copies and its index line. |
 | `--publish` | Republishes every source to its own `targets`. |
@@ -39,5 +41,3 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | 2 | Usage error. | `error` |
 | 3 | Unwritable path found before writing, nothing written. | `blocked` |
 | 3 | File operation failed while writing. | `written`, `failed`, `pending` |
-
-- `targets` only grow: drop a host by removing the rule, then adding it again.
