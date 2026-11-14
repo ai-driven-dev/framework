@@ -6,13 +6,13 @@ import type { SessionBindingStore } from "../ports/bindings/session-binding-stor
 import type { BranchDeclarations, BranchOutcome } from "./branch-declarations.js";
 import type { ConsentedRepositories, RefusalReason } from "./consented-repositories.js";
 
-export interface DeclareInput {
+export interface DeclareTaskCommand {
   readonly cwd: string;
   readonly request: DeclarationRequest;
   readonly by: DeclaredBy;
 }
 
-export type DeclareResult =
+export type DeclareTaskResult =
   | { readonly status: "refused"; readonly reason: RefusalReason }
   | {
       readonly status: "declared";
@@ -35,7 +35,7 @@ export interface DeclareOptions {
  * branch for good. The session line is appended under the bindings lock, and the snapshot that
  * follows a branch declaration takes it for itself: never the ledger's lock, which an ingest
  * holds for as long as it reads, and a person is waiting on this. */
-export class DeclareTaskUseCase {
+export class DeclareTask {
   constructor(
     private readonly repositories: ConsentedRepositories,
     private readonly sessions: SessionBindingStore,
@@ -44,7 +44,7 @@ export class DeclareTaskUseCase {
     private readonly options: DeclareOptions
   ) {}
 
-  async execute(input: DeclareInput): Promise<DeclareResult> {
+  async execute(input: DeclareTaskCommand): Promise<DeclareTaskResult> {
     if (this.options.refusedByEnvironment) return { status: "refused", reason: "environment" };
     const repository = await this.repositories.open(input.cwd);
     if (repository.status === "refused") return repository;

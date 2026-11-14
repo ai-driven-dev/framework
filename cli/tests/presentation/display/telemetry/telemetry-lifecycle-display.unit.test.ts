@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ForgetResult } from "../../../../src/contexts/telemetry/application/forget/forget-telemetry-use-case.js";
-import type { OnResult } from "../../../../src/contexts/telemetry/application/switch/telemetry-on-use-case.js";
+import type { ForgetTelemetryResult } from "../../../../src/contexts/telemetry/application/forget/forget-telemetry.js";
+import type { EnableTelemetryResult } from "../../../../src/contexts/telemetry/application/switch/enable-telemetry.js";
 import {
   printForgetResult,
   printOffResult,
@@ -8,7 +8,7 @@ import {
 } from "../../../../src/presentation/display/telemetry/telemetry-lifecycle-display.js";
 import { CapturingOutput } from "../../../helpers/ports/capturing-output.js";
 
-const ON: Extract<OnResult, { status: "on" }> = {
+const ON: Extract<EnableTelemetryResult, { status: "on" }> = {
   status: "on",
   consentWritten: true,
   retention: { days: 3650, short: false },
@@ -145,7 +145,7 @@ const PLAN = {
   unlocated: 1,
 } as const;
 
-function forgotten(result: ForgetResult): CapturingOutput {
+function forgotten(result: ForgetTelemetryResult): CapturingOutput {
   const output = new CapturingOutput(false);
   printForgetResult(output, result);
   return output;

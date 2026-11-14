@@ -1,7 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
-import { IngestUsageUseCase } from "../../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
+import { IngestUsage } from "../../../../../src/contexts/telemetry/application/ingest-usage.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import {
   type EnvelopeRow,
@@ -10,10 +10,10 @@ import {
   reportEnvelopeOf,
 } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import {
-  type ReportRequest,
-  ReportUsageUseCase,
-} from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+  ReportUsage,
+  type ReportUsageCommand,
+} from "../../../../../src/contexts/telemetry/application/report/report-usage.js";
+import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import {
   NO_FILTERS,
@@ -122,8 +122,8 @@ async function reporterOf({ calls, declarations, person }: Ledger) {
   identity.personId = person;
   const now = () => new Date("2026-10-09T00:00:00.000Z");
   const snapshots = new InMemorySnapshots();
-  const use = new ReportUsageUseCase(
-    new IngestUsageUseCase(
+  const use = new ReportUsage(
+    new IngestUsage(
       [],
       ledger,
       new DirectoryResolver(
@@ -133,7 +133,7 @@ async function reporterOf({ calls, declarations, person }: Ledger) {
         new InMemoryConsentHistory(),
         { caseInsensitiveFileSystem: false, now }
       ),
-      new SnapshotBindingsUseCase(new FakeBindings(), snapshots, new InMemoryBindingsLock(), now),
+      new SnapshotBindings(new FakeBindings(), snapshots, new InMemoryBindingsLock(), now),
       { refusedByEnvironment: false }
     ),
     ledger,
@@ -142,7 +142,7 @@ async function reporterOf({ calls, declarations, person }: Ledger) {
     new FakeLocator(),
     { refusedByEnvironment: false }
   );
-  return async (request: ReportRequest): Promise<ReportEnvelope> => {
+  return async (request: ReportUsageCommand): Promise<ReportEnvelope> => {
     const result = await use.execute(request);
     if (result.status !== "reported") throw new Error(`not reported: ${result.status}`);
     return reportEnvelopeOf(result);
@@ -175,7 +175,7 @@ function sumOf(rows: readonly EnvelopeRow[]): EnvelopeTally {
 }
 
 /** What a person types to select one row, as the usage contract lists it. */
-function selectionOf(axis: ReportAxis, row: EnvelopeRow): Partial<ReportRequest> {
+function selectionOf(axis: ReportAxis, row: EnvelopeRow): Partial<ReportUsageCommand> {
   if (axis === "total") return {};
   if (axis === "day") return { period: { from: row.key, to: row.key } };
   if (row.kind === "absent") {

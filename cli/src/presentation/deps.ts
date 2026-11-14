@@ -40,15 +40,15 @@ import type { FileMerger } from "../contexts/framework/domain/ports/file-merger.
 import type { ManifestRepository } from "../contexts/framework/domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../contexts/framework/domain/ports/user-source-references.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
-import type { DeclareTaskUseCase } from "../contexts/telemetry/application/declare-task-use-case.js";
-import type { ForgetTelemetryUseCase } from "../contexts/telemetry/application/forget/forget-telemetry-use-case.js";
-import type { ManageIdentityUseCase } from "../contexts/telemetry/application/identity/manage-identity-use-case.js";
-import type { ProposeIdentityUseCase } from "../contexts/telemetry/application/identity/propose-identity-use-case.js";
-import type { IngestUsageUseCase } from "../contexts/telemetry/application/ingest-usage-use-case.js";
-import type { ReportUsageUseCase } from "../contexts/telemetry/application/report/report-usage-use-case.js";
-import type { TelemetryOffUseCase } from "../contexts/telemetry/application/switch/telemetry-off-use-case.js";
-import type { TelemetryOnUseCase } from "../contexts/telemetry/application/switch/telemetry-on-use-case.js";
-import type { TelemetryStatusUseCase } from "../contexts/telemetry/application/telemetry-status-use-case.js";
+import type { DeclareTask } from "../contexts/telemetry/application/declare-task.js";
+import type { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
+import type { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
+import type { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
+import type { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
+import type { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.js";
+import type { ReportUsage } from "../contexts/telemetry/application/report/report-usage.js";
+import type { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
+import type { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
 import type { FrameworkBuildMode } from "../contexts/tools/contract/tool-profile.js";
 import type { FrameworkBuildUseCase } from "../contexts/translate/application/translate-source.js";
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
@@ -71,15 +71,15 @@ export interface FactoryOptions {
 }
 
 export interface TelemetryDeps {
-  declareTaskUseCase: Pick<DeclareTaskUseCase, "execute">;
-  telemetryStatusUseCase: Pick<TelemetryStatusUseCase, "execute">;
-  ingestUsageUseCase: Pick<IngestUsageUseCase, "execute">;
-  reportUsageUseCase: Pick<ReportUsageUseCase, "execute">;
-  manageIdentityUseCase: Pick<ManageIdentityUseCase, "show" | "set" | "off">;
-  proposeIdentityUseCase: Pick<ProposeIdentityUseCase, "execute">;
-  telemetryOnUseCase: Pick<TelemetryOnUseCase, "execute">;
-  telemetryOffUseCase: Pick<TelemetryOffUseCase, "execute">;
-  forgetTelemetryUseCase: Pick<ForgetTelemetryUseCase, "execute">;
+  declareTask: Pick<DeclareTask, "execute">;
+  readTelemetryStatus: Pick<ReadTelemetryStatus, "execute">;
+  ingestUsage: Pick<IngestUsage, "execute">;
+  reportUsage: Pick<ReportUsage, "execute">;
+  manageIdentity: Pick<ManageIdentity, "execute">;
+  proposeIdentity: Pick<ProposeIdentity, "execute">;
+  enableTelemetry: Pick<EnableTelemetry, "execute">;
+  disableTelemetry: Pick<DisableTelemetry, "execute">;
+  forgetTelemetry: Pick<ForgetTelemetry, "execute">;
 }
 
 /** What a build for a target and mode asks of its caller. */

@@ -8,7 +8,11 @@ import type { UsageLedger } from "../../ports/usage-ledger.js";
 import { ConsentLog } from "../consent-log.js";
 import { readCloneConsent } from "./clone-consent.js";
 
-export type OffResult =
+export interface DisableTelemetryCommand {
+  readonly cwd: string;
+}
+
+export type DisableTelemetryResult =
   | {
       readonly status: "refused";
       readonly reason: "outside-repository" | "unreadable-git-config" | "damaged-consent-log";
@@ -17,7 +21,7 @@ export type OffResult =
 
 /** Stops measuring this clone: its interval ends now, and the calls it made while on stay
  * stored, whenever the next ingest runs. What was already measured stays until `forget`. */
-export class TelemetryOffUseCase {
+export class DisableTelemetry {
   constructor(
     private readonly locator: RepositoryLocator,
     private readonly consents: ConsentSource,
@@ -27,7 +31,7 @@ export class TelemetryOffUseCase {
     private readonly now: () => Date
   ) {}
 
-  async execute(cwd: string): Promise<OffResult> {
+  async execute({ cwd }: DisableTelemetryCommand): Promise<DisableTelemetryResult> {
     const clone = await readCloneConsent(this.locator, this.consents, cwd);
     if (clone.status === "refused") return clone;
     const { located } = clone;

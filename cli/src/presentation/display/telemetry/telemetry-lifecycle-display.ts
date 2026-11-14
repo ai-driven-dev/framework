@@ -1,12 +1,12 @@
 import type {
   ForgetPlan,
-  ForgetResult,
-} from "../../../contexts/telemetry/application/forget/forget-telemetry-use-case.js";
-import type { OffResult } from "../../../contexts/telemetry/application/switch/telemetry-off-use-case.js";
+  ForgetTelemetryResult,
+} from "../../../contexts/telemetry/application/forget/forget-telemetry.js";
+import type { DisableTelemetryResult } from "../../../contexts/telemetry/application/switch/disable-telemetry.js";
 import type {
+  EnableTelemetryResult,
   OnIdentity,
-  OnResult,
-} from "../../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
+} from "../../../contexts/telemetry/application/switch/enable-telemetry.js";
 import {
   RETENTION_DEFAULT_DAYS,
   RETENTION_WANTED_DAYS,
@@ -44,7 +44,7 @@ export function printIdentityRule(output: CLIOutput): void {
   output.warn(IDENTITY_RULE);
 }
 
-export function printOnResult(output: CLIOutput, result: OnResult): void {
+export function printOnResult(output: CLIOutput, result: EnableTelemetryResult): void {
   if (result.status === "refused") {
     output.error(REFUSALS[result.reason]);
     return;
@@ -72,7 +72,7 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
   );
 }
 
-export function printOffResult(output: CLIOutput, result: OffResult): void {
+export function printOffResult(output: CLIOutput, result: DisableTelemetryResult): void {
   if (result.status === "refused") {
     output.error(REFUSALS[result.reason]);
     return;
@@ -125,7 +125,7 @@ function empty(plan: ForgetPlan): boolean {
   );
 }
 
-export function printForgetResult(output: CLIOutput, result: ForgetResult): void {
+export function printForgetResult(output: CLIOutput, result: ForgetTelemetryResult): void {
   if (empty(result.plan)) {
     output.info("Nothing measured is kept on this machine.");
     warnSkipped(output, result.plan);

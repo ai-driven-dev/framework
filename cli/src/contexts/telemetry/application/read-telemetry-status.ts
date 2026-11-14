@@ -5,7 +5,11 @@ import type { PersonIdentityStore } from "../ports/identity/person-identity-stor
 import type { BranchDeclarations } from "./branch-declarations.js";
 import type { ConsentedRepositories, RefusalReason } from "./consented-repositories.js";
 
-export type StatusResult =
+export interface ReadTelemetryStatusCommand {
+  readonly cwd: string;
+}
+
+export type ReadTelemetryStatusResult =
   | { readonly status: "refused"; readonly reason: RefusalReason }
   | {
       readonly status: "shown";
@@ -26,7 +30,7 @@ export interface StatusOptions {
 }
 
 /** What the work being done now is bound to, and where that comes from. Reads only. */
-export class TelemetryStatusUseCase {
+export class ReadTelemetryStatus {
   constructor(
     private readonly repositories: ConsentedRepositories,
     private readonly sessions: SessionBindingStore,
@@ -35,7 +39,7 @@ export class TelemetryStatusUseCase {
     private readonly identities: PersonIdentityStore
   ) {}
 
-  async execute(cwd: string): Promise<StatusResult> {
+  async execute({ cwd }: ReadTelemetryStatusCommand): Promise<ReadTelemetryStatusResult> {
     if (this.options.refusedByEnvironment) return { status: "refused", reason: "environment" };
     const repository = await this.repositories.open(cwd);
     if (repository.status === "refused") return repository;

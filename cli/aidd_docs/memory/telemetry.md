@@ -60,15 +60,15 @@ flowchart LR
 | Whether a call is stored | `application/directory-resolver.ts` |
 | What a clone is | `domain/consent/clone-identity.ts` |
 | When a clone consented | `domain/consent/consent-history.ts`, `application/consent-log.ts` |
-| Which transcripts are read | `application/ingest-usage-use-case.ts`, `application/read-usage-use-case.ts` |
+| Which transcripts are read | `application/ingest-usage.ts`, `application/read-usage.ts` |
 | How one is read: from its saved offset, a block at a time, up to its last complete line | `infrastructure/sources/claude/claude-transcript-source-adapter.ts`, `infrastructure/sources/transcript-files.ts` (shared by every tool), `domain/transcript-position.ts` |
 | What a Codex line becomes, and why a Codex file that moved is read from its start | `infrastructure/sources/codex/codex-transcript-usage.ts`, `infrastructure/sources/codex/codex-transcript-source-adapter.ts` |
 | How the ledger lies on disk, and what an ingest or a report reads | `infrastructure/storage/ledger/usage-ledger-adapter.ts`, `domain/stored-usage.ts`, `application/ledger-upkeep.ts`, `domain/report/period.ts` |
-| What an ingest measured and could not store, kept for every report (`ledger/left-out.txt`), and why a ledger line no reader knows is kept | `infrastructure/storage/ledger/left-out-adapter.ts`, `infrastructure/storage/ledger/usage-ledger-adapter.ts`, `application/ingest-usage-use-case.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md#left-out) |
+| What an ingest measured and could not store, kept for every report (`ledger/left-out.txt`), and why a ledger line no reader knows is kept | `infrastructure/storage/ledger/left-out-adapter.ts`, `infrastructure/storage/ledger/usage-ledger-adapter.ts`, `application/ingest-usage.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md#left-out) |
 | What `forget` erases of an earlier measurement | `domain/legacy/legacy-locations.ts`, `application/forget/` |
 | The report axes and the envelope | `domain/report/usage-report.ts`, `application/report/report-envelope.ts` |
 | Who the measurement names, and what `on` offers | `domain/identity/person-identity.ts`, `application/identity/`, `infrastructure/git/git-user-source-adapter.ts`; the question is the `on` command's |
-| What a report's `filters` select, and where a start of an id or `.` is resolved | `domain/report/report-filter.ts`, `application/report/report-usage-use-case.ts`; flags in the [usage contract](../../../aidd_docs/product/usage-contract.md#filters) |
+| What a report's `filters` select, and where a start of an id or `.` is resolved | `domain/report/report-filter.ts`, `application/report/report-usage.ts`; flags in the [usage contract](../../../aidd_docs/product/usage-contract.md#filters) |
 
 ## The plugin side
 

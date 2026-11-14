@@ -3,7 +3,7 @@ import {
   REFUSED_ENVELOPE,
   reportEnvelopeOf,
 } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
-import type { ReportResult } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
+import type { ReportUsageResult } from "../../../../../src/contexts/telemetry/application/report/report-usage.js";
 import type { Tally } from "../../../../../src/contexts/telemetry/contract/usage-report.js";
 
 const tally = (records: number, unknown: number): Tally => ({
@@ -16,7 +16,7 @@ const tally = (records: number, unknown: number): Tally => ({
   },
   total: { known: 10, unknownRecords: unknown },
 });
-const reported: Extract<ReportResult, { status: "reported" }> = {
+const reported: Extract<ReportUsageResult, { status: "reported" }> = {
   status: "reported",
   period: { from: "2026-10-01", to: null },
   // Given out of order: the envelope prints its own order, whatever the object's.

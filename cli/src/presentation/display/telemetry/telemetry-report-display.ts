@@ -1,8 +1,8 @@
 import type {
   ReportCoverage,
-  ReportResult,
   ReportRun,
-} from "../../../contexts/telemetry/application/report/report-usage-use-case.js";
+  ReportUsageResult,
+} from "../../../contexts/telemetry/application/report/report-usage.js";
 import type { Period } from "../../../contexts/telemetry/contract/period.js";
 import type { ReportFilters } from "../../../contexts/telemetry/contract/report-filter.js";
 import {
@@ -64,7 +64,7 @@ function selectionLine(filters: ReportFilters): string | null {
 }
 
 /** Two flags given that select on one axis, as they were typed. */
-function conflictWords(result: Extract<ReportResult, { status: "conflicting" }>): string {
+function conflictWords(result: Extract<ReportUsageResult, { status: "conflicting" }>): string {
   const [first, second] = result.flags.map((flag) =>
     flag === "absent" ? `--absent ${result.absent}` : `--${flag}`
   );
@@ -139,7 +139,7 @@ function coverageLines(coverage: ReportCoverage, run: ReportRun): string[] {
   ];
 }
 
-export function printUsageReport(output: CLIOutput, result: ReportResult): void {
+export function printUsageReport(output: CLIOutput, result: ReportUsageResult): void {
   if (result.status === "refused") {
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing is reported.");
     return;

@@ -12,7 +12,7 @@ import {
 } from "../../contract/usage-report.js";
 import { filtersOf } from "../../domain/report/report-filter.js";
 import type { LeftOutReason } from "../../ports/usage-ledger.js";
-import type { ReportResult } from "./report-usage-use-case.js";
+import type { ReportUsageResult } from "./report-usage.js";
 
 /** A counter: the sum of the calls that reported it, and how many calls did not. A call that
  * did not report a counter is left out of the sum, never counted as zero. */
@@ -90,7 +90,7 @@ function rowOf(row: ReportRow): EnvelopeRow {
 }
 
 export function reportEnvelopeOf(
-  result: Extract<ReportResult, { status: "reported" }>
+  result: Extract<ReportUsageResult, { status: "reported" }>
 ): ReportEnvelope {
   const { period, filters, report, coverage, run } = result;
   return {

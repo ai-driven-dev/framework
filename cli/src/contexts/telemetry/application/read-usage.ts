@@ -39,18 +39,23 @@ export interface UsageReading {
   readonly skipped: ReadonlySet<string>;
 }
 
+export interface ReadUsageCommand {
+  readonly since: ReadonlyMap<string, TranscriptPosition>;
+  /** Files last written before it are not read; none, by default. */
+  readonly writtenFrom?: number;
+}
+
 /** Reads one tool's usage: its transcripts, from `source`, line by line in its format. */
-export class ReadUsageUseCase {
+export class ReadUsage {
   constructor(
     private readonly source: TranscriptSource,
     private readonly format: UsageFormat
   ) {}
 
-  /** `writtenFrom`: files last written before it are not read; none, by default. */
-  async execute(
-    since: ReadonlyMap<string, TranscriptPosition>,
-    writtenFrom = Number.NEGATIVE_INFINITY
-  ): Promise<UsageReading> {
+  async execute({
+    since,
+    writtenFrom = Number.NEGATIVE_INFINITY,
+  }: ReadUsageCommand): Promise<UsageReading> {
     const candidates: UsageRecord[] = [];
     const skipped = new Set<string>();
     const unrecognised: string[] = [];

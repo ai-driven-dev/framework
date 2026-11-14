@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ReportResult } from "../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
+import type { ReportUsageResult } from "../../../../src/contexts/telemetry/application/report/report-usage.js";
 import type { Period } from "../../../../src/contexts/telemetry/contract/period.js";
 import {
   NO_FILTERS,
@@ -36,7 +36,7 @@ const NOT_STORED = {
   "no-cwd": 0,
   undated: 0,
 };
-type Reported = Extract<ReportResult, { status: "reported" }>;
+type Reported = Extract<ReportUsageResult, { status: "reported" }>;
 /** What the figures rest on and what the read found, given flat: `result` splits them. */
 type Coverage = Reported["coverage"] & Reported["run"];
 const COVERAGE: Coverage = {
@@ -58,7 +58,7 @@ function result(
   coverage: Partial<Coverage> = {},
   period: Period = BOTH,
   filters: ReportFilters = NO_FILTERS
-): ReportResult {
+): ReportUsageResult {
   return {
     status: "reported",
     period,
@@ -70,7 +70,7 @@ function result(
 function split({ records, leftOut, ...run }: Coverage): Pick<Reported, "coverage" | "run"> {
   return { coverage: { records, leftOut }, run };
 }
-const printed = (r: ReportResult): string[] => {
+const printed = (r: ReportUsageResult): string[] => {
   const output = new CapturingOutput(false);
   printUsageReport(output, r);
   return output.lines;

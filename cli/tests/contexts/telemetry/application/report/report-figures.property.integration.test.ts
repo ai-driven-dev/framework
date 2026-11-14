@@ -5,16 +5,16 @@ import { isMainThread } from "node:worker_threads";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type {
-  IngestResult,
-  IngestUsageUseCase,
-} from "../../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
+  IngestUsage,
+  IngestUsageResult,
+} from "../../../../../src/contexts/telemetry/application/ingest-usage.js";
 import { storeCalls } from "../../../../../src/contexts/telemetry/application/ledger-upkeep.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import {
-  type ReportRequest,
-  ReportUsageUseCase,
-} from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
+  ReportUsage,
+  type ReportUsageCommand,
+} from "../../../../../src/contexts/telemetry/application/report/report-usage.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import type { ReportFilters } from "../../../../../src/contexts/telemetry/contract/report-filter.js";
 import {
@@ -209,7 +209,7 @@ async function ledgerWith(
   return new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
 }
 
-function ingestResultOf(facts: Run): IngestResult {
+function ingestResultOf(facts: Run): IngestUsageResult {
   return {
     refused: false,
     filesRead: facts.filesRead,
@@ -220,7 +220,7 @@ function ingestResultOf(facts: Run): IngestResult {
     snapshots: 0,
     notStored: Object.fromEntries(
       NOT_STORED_REASONS.map((reason, n) => [reason, facts.notStored[n]])
-    ) as IngestResult["notStored"],
+    ) as IngestUsageResult["notStored"],
     consentLogDamaged: facts.consentLogDamaged,
     oldestTranscriptAt: facts.oldestTranscriptAt,
   };
@@ -247,7 +247,7 @@ async function inZone<T>(zone: Zone, work: () => Promise<T>): Promise<T> {
 async function report(
   held: Scenario,
   ledger: UsageLedgerAdapter,
-  request: ReportRequest,
+  request: ReportUsageCommand,
   facts: Run,
   zone: Zone
 ) {
@@ -264,11 +264,11 @@ async function report(
   }
   const identity = new InMemoryIdentity();
   identity.personId = held.person;
-  const ingest: Pick<IngestUsageUseCase, "execute"> = {
+  const ingest: Pick<IngestUsage, "execute"> = {
     execute: async () => ingestResultOf(facts),
   };
   return inZone(zone, async () => {
-    const result = await new ReportUsageUseCase(
+    const result = await new ReportUsage(
       ingest,
       ledger,
       new DeclaredBindings(sessions, new InMemorySnapshots()),
@@ -355,7 +355,7 @@ describe("the figures of a report", () => {
       { day: "2026-10-01", text: "x" },
       { day: "2026-10-01", text: "x" },
     ]);
-    const request: ReportRequest = {
+    const request: ReportUsageCommand = {
       axis: "day",
       period: { from: "2026-10-01", to: "2026-10-01" },
     };

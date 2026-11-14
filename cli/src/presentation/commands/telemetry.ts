@@ -3,8 +3,8 @@ import {
   REFUSED_ENVELOPE,
   reportEnvelopeOf,
 } from "../../contexts/telemetry/application/report/report-envelope.js";
-import type { RequestedFilters } from "../../contexts/telemetry/application/report/report-usage-use-case.js";
-import type { IdentityChoice } from "../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
+import type { RequestedFilters } from "../../contexts/telemetry/application/report/report-usage.js";
+import type { IdentityChoice } from "../../contexts/telemetry/application/switch/enable-telemetry.js";
 import {
   ABSENT_AXES,
   type ReportFilters,
@@ -78,9 +78,9 @@ async function identityChoice(
 ): Promise<IdentityChoice | null> {
   if (options.as !== undefined) return { set: options.as };
   if (options.anonymous) return "none";
-  if ((await telemetry.manageIdentityUseCase.show()).status === "set") return "keep";
+  if ((await telemetry.manageIdentity.execute({ action: "show" })).status === "set") return "keep";
   if (options.yes) return null;
-  const proposal = await telemetry.proposeIdentityUseCase.execute(cwd);
+  const proposal = await telemetry.proposeIdentity.execute({ cwd });
   const answer = await prompter.select<IdentityChoice | "another">(
     "How should your own measurement name you? The identity stays on this machine.",
     [
@@ -174,7 +174,7 @@ export function registerTelemetryCommand(
           );
           process.exit(1);
         }
-        const result = await deps.telemetry.telemetryOnUseCase.execute(projectRoot, choice);
+        const result = await deps.telemetry.enableTelemetry.execute({ cwd: projectRoot, choice });
         printOnResult(output, result);
         if (result.status === "refused") process.exit(1);
       });
@@ -186,7 +186,7 @@ export function registerTelemetryCommand(
     .action(async () => {
       const { output, projectRoot, run } = commandOf(program, createDeps);
       await run(async (deps) => {
-        const result = await deps.telemetry.telemetryOffUseCase.execute(projectRoot);
+        const result = await deps.telemetry.disableTelemetry.execute({ cwd: projectRoot });
         printOffResult(output, result);
         if (result.status === "refused") process.exit(1);
       });
@@ -201,7 +201,7 @@ export function registerTelemetryCommand(
       await run(async (deps) => {
         printForgetResult(
           output,
-          await deps.telemetry.forgetTelemetryUseCase.execute(cmdOptions.yes)
+          await deps.telemetry.forgetTelemetry.execute({ confirmed: cmdOptions.yes })
         );
       });
     });
@@ -213,7 +213,7 @@ export function registerTelemetryCommand(
     .action(async (cmdOptions: { quiet: boolean }) => {
       const { output, run } = commandOf(program, createDeps);
       await run(async (deps) => {
-        const result = await deps.telemetry.ingestUsageUseCase.execute();
+        const result = await deps.telemetry.ingestUsage.execute();
         if (!cmdOptions.quiet) printIngestResult(output, result);
       });
     });
@@ -249,7 +249,7 @@ export function registerTelemetryCommand(
           process.exit(1);
         }
         await run(async (deps) => {
-          const result = await deps.telemetry.declareTaskUseCase.execute({
+          const result = await deps.telemetry.declareTask.execute({
             cwd: projectRoot,
             request,
             by: cmdOptions.by,
@@ -268,7 +268,7 @@ export function registerTelemetryCommand(
       await run(async (deps) => {
         printTelemetryStatus(
           output,
-          await deps.telemetry.telemetryStatusUseCase.execute(projectRoot)
+          await deps.telemetry.readTelemetryStatus.execute({ cwd: projectRoot })
         );
       });
     });
@@ -330,7 +330,7 @@ export function registerTelemetryCommand(
         const filters: RequestedFilters =
           given.repository === "." ? { ...given, repository: null, here: projectRoot } : given;
         await run(async (deps) => {
-          const result = await deps.telemetry.reportUsageUseCase.execute({
+          const result = await deps.telemetry.reportUsage.execute({
             axis: cmdOptions.axis,
             period: period.period,
             filters,
@@ -366,12 +366,14 @@ export function registerTelemetryCommand(
         process.exit(1);
       }
       await run(async (deps) => {
-        const use = deps.telemetry.manageIdentityUseCase;
-        const result = cmdOptions.off
-          ? await use.off()
-          : id === undefined
-            ? await use.show()
-            : await use.set(id);
+        const use = deps.telemetry.manageIdentity;
+        const result = await use.execute(
+          cmdOptions.off
+            ? { action: "off" }
+            : id === undefined
+              ? { action: "show" }
+              : { action: "set", typed: id }
+        );
         printIdentityResult(output, result);
         if (result.status === "refused") process.exit(1);
       });

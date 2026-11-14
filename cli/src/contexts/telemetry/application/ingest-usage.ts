@@ -10,10 +10,10 @@ import type { TranscriptPosition } from "../domain/transcript-position.js";
 import type { LeftOutEntry, UsageLedger } from "../ports/usage-ledger.js";
 import type { DirectoryOutcome, DirectoryResolver, ResolutionRun } from "./directory-resolver.js";
 import { storeCalls } from "./ledger-upkeep.js";
-import type { ReadUsageUseCase, UsageReading } from "./read-usage-use-case.js";
-import type { SnapshotBindingsUseCase } from "./snapshot-bindings-use-case.js";
+import type { ReadUsage, UsageReading } from "./read-usage.js";
+import type { SnapshotBindings } from "./snapshot-bindings.js";
 
-export interface IngestResult {
+export interface IngestUsageResult {
   /** `AIDD_TELEMETRY=0`: nothing was read, nothing was written. */
   readonly refused: boolean;
   /** Transcripts that were new or had grown since the last ingest. */
@@ -68,17 +68,17 @@ function moved(before: TranscriptPosition | undefined, now: TranscriptPosition):
 /** Reads what every transcript gained since the last ingest and stores the billed calls of the
  * projects that opted in, one record per call. Safe to run any number of times, from any
  * number of processes. */
-export class IngestUsageUseCase {
+export class IngestUsage {
   constructor(
     /** One per tool measured: adding a tool is its format and its transcripts, here. */
-    private readonly readers: readonly ReadUsageUseCase[],
+    private readonly readers: readonly ReadUsage[],
     private readonly ledger: UsageLedger,
     private readonly directories: DirectoryResolver,
-    private readonly snapshots: SnapshotBindingsUseCase,
+    private readonly snapshots: SnapshotBindings,
     private readonly options: IngestOptions
   ) {}
 
-  async execute(): Promise<IngestResult> {
+  async execute(): Promise<IngestUsageResult> {
     if (this.options.refusedByEnvironment) {
       return {
         refused: true,
@@ -96,7 +96,7 @@ export class IngestUsageUseCase {
     return this.ledger.exclusively(() => this.ingest());
   }
 
-  private async ingest(): Promise<IngestResult> {
+  private async ingest(): Promise<IngestUsageResult> {
     const before = await this.ledger.positions();
     // The consent log first: a transcript last written before any interval opened is not read.
     const resolver = await this.directories.open();
@@ -163,7 +163,7 @@ export class IngestUsageUseCase {
 
     let snapshots = 0;
     for (const [repositoryId, root] of live) {
-      snapshots += await this.snapshots.execute(repositoryId, root);
+      snapshots += await this.snapshots.execute({ repositoryId, root });
     }
 
     // Last, so a crash before it only means the same lines are read again.
@@ -196,7 +196,7 @@ export class IngestUsageUseCase {
     coveredFrom: number
   ): Promise<UsageReading> {
     const readings = await Promise.all(
-      this.readers.map((reader) => reader.execute(before, coveredFrom))
+      this.readers.map((reader) => reader.execute({ since: before, writtenFrom: coveredFrom }))
     );
     const oldest = readings.flatMap((reading) => reading.oldestTranscriptAt ?? []).sort();
     return {

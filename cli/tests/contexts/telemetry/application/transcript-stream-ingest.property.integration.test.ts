@@ -4,9 +4,9 @@ import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
-import { IngestUsageUseCase } from "../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.js";
+import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.js";
+import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
@@ -128,14 +128,14 @@ function machine(source: TranscriptSource) {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const ingest = new IngestUsageUseCase(
-    [new ReadUsageUseCase(source, () => readClaudeUsageLine)],
+  const ingest = new IngestUsage(
+    [new ReadUsage(source, () => readClaudeUsageLine)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,
       now: () => NOW,
     }),
-    new SnapshotBindingsUseCase(
+    new SnapshotBindings(
       new FakeBindings(),
       new InMemorySnapshots(),
       new InMemoryBindingsLock(),

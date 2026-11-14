@@ -4,12 +4,12 @@ import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
-import { IngestUsageUseCase } from "../../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadUsageUseCase } from "../../../../../src/contexts/telemetry/application/read-usage-use-case.js";
+import { IngestUsage } from "../../../../../src/contexts/telemetry/application/ingest-usage.js";
+import { ReadUsage } from "../../../../../src/contexts/telemetry/application/read-usage.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
-import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { ReportUsage } from "../../../../../src/contexts/telemetry/application/report/report-usage.js";
+import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
@@ -183,14 +183,14 @@ function machine() {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const snapshots = new SnapshotBindingsUseCase(
+  const snapshots = new SnapshotBindings(
     new FakeBindings(),
     new InMemorySnapshots(),
     new InMemoryBindingsLock(),
     () => NOW
   );
-  const ingest = new IngestUsageUseCase(
-    [new ReadUsageUseCase(transcripts, () => readClaudeUsageLine)],
+  const ingest = new IngestUsage(
+    [new ReadUsage(transcripts, () => readClaudeUsageLine)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,
@@ -199,7 +199,7 @@ function machine() {
     snapshots,
     { refusedByEnvironment: false }
   );
-  const report = new ReportUsageUseCase(
+  const report = new ReportUsage(
     ingest,
     ledger,
     new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots()),

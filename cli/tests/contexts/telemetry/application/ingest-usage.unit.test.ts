@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
-import { IngestUsageUseCase } from "../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { IngestUsage } from "../../../../src/contexts/telemetry/application/ingest-usage.js";
+import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.js";
+import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
@@ -88,17 +88,17 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   const history = new InMemoryConsentHistory();
   const bindings = new FakeBindings();
   const snapshotStore = new InMemorySnapshots();
-  const snapshots = new SnapshotBindingsUseCase(
+  const snapshots = new SnapshotBindings(
     bindings,
     snapshotStore,
     new InMemoryBindingsLock(),
     () => new Date()
   );
-  const ingest = new IngestUsageUseCase(
+  const ingest = new IngestUsage(
     [
-      new ReadUsageUseCase(transcripts, () => readClaudeUsageLine),
+      new ReadUsage(transcripts, () => readClaudeUsageLine),
       // Another tool's format: the same lines, its own name on every record.
-      new ReadUsageUseCase(other, () => (text) => {
+      new ReadUsage(other, () => (text) => {
         const read = readClaudeUsageLine(text);
         return { ...read, records: read.records.map((r) => ({ ...r, tool: "codex" as const })) };
       }),
@@ -120,10 +120,10 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   optIn(A.path);
   /** The same ingest, with readers that read every transcript whatever its age. */
   const ingestReadingAll = () =>
-    new IngestUsageUseCase(
+    new IngestUsage(
       [transcripts, other].map((source) => {
-        const reader = new ReadUsageUseCase(source, () => readClaudeUsageLine);
-        return { execute: (since) => reader.execute(since) } as ReadUsageUseCase;
+        const reader = new ReadUsage(source, () => readClaudeUsageLine);
+        return { execute: (since) => reader.execute(since) } as ReadUsage;
       }),
       ledger,
       new DirectoryResolver(locator, consents, resolutions, history, {

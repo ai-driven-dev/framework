@@ -26,7 +26,12 @@ export interface OnIdentity {
   readonly previous: string | null;
 }
 
-export type OnResult =
+export interface EnableTelemetryCommand {
+  readonly cwd: string;
+  readonly choice: IdentityChoice;
+}
+
+export type EnableTelemetryResult =
   | {
       readonly status: "refused";
       /** `unidentified-clone`: the file system gives the clone's git dir no identity, so
@@ -52,7 +57,7 @@ export type OnResult =
 
 /** Opts a clone in, in its own git config. Measurement starts here: nothing made before is read
  * back. */
-export class TelemetryOnUseCase {
+export class EnableTelemetry {
   constructor(
     private readonly locator: RepositoryLocator,
     private readonly consents: ConsentSource,
@@ -67,7 +72,7 @@ export class TelemetryOnUseCase {
     private readonly identities: PersonIdentityStore
   ) {}
 
-  async execute(cwd: string, choice: IdentityChoice): Promise<OnResult> {
+  async execute({ cwd, choice }: EnableTelemetryCommand): Promise<EnableTelemetryResult> {
     const previous = await this.identities.read();
     const chosen = typeof choice === "object" ? personIdOf(choice.set) : null;
     if (typeof choice === "object" && chosen === null)

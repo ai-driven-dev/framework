@@ -19,7 +19,11 @@ export interface ForgetPlan {
   readonly unlocated: number;
 }
 
-export type ForgetResult =
+export interface ForgetTelemetryCommand {
+  readonly confirmed: boolean;
+}
+
+export type ForgetTelemetryResult =
   | { readonly status: "preview"; readonly plan: ForgetPlan }
   | { readonly status: "forgotten"; readonly plan: ForgetPlan };
 
@@ -31,7 +35,7 @@ function nothingToForget(plan: ForgetPlan): boolean {
 }
 
 /** Erases what measurement kept: previews by default, and removes only on confirmation. */
-export class ForgetTelemetryUseCase {
+export class ForgetTelemetry {
   constructor(
     private readonly erasure: MeasurementErasure,
     private readonly declarations: RepositoryDeclarations,
@@ -41,7 +45,7 @@ export class ForgetTelemetryUseCase {
     private readonly ledger: UsageLedger
   ) {}
 
-  async execute(confirmed: boolean): Promise<ForgetResult> {
+  async execute({ confirmed }: ForgetTelemetryCommand): Promise<ForgetTelemetryResult> {
     const plan = await this.plan();
     if (!confirmed) return { status: "preview", plan };
     if (nothingToForget(plan)) return { status: "forgotten", plan };

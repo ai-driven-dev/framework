@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BranchDeclarations } from "../../../../src/contexts/telemetry/application/branch-declarations.js";
 import { ConsentedRepositories } from "../../../../src/contexts/telemetry/application/consented-repositories.js";
-import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
-import { TelemetryStatusUseCase } from "../../../../src/contexts/telemetry/application/telemetry-status-use-case.js";
+import { ReadTelemetryStatus } from "../../../../src/contexts/telemetry/application/read-telemetry-status.js";
+import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
 import { cloneOf, grantedBy } from "../testing/clone-builders.js";
 import { FakeBindings } from "../testing/fake-bindings.js";
@@ -36,13 +36,13 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
   const branches = new FakeBranchStore();
   const source = new FakeBindings();
   const identities = new InMemoryIdentity();
-  const useCase = new TelemetryStatusUseCase(
+  const useCase = new ReadTelemetryStatus(
     new ConsentedRepositories(locator, consents, history),
     sessions,
     new BranchDeclarations(
       branches,
       source,
-      new SnapshotBindingsUseCase(
+      new SnapshotBindings(
         source,
         new InMemorySnapshots(),
         new InMemoryBindingsLock(),
@@ -66,14 +66,14 @@ const branchBinding = {
 describe("showing what the work is bound to", () => {
   it("names the person the measurement names, or nobody", async () => {
     const { useCase, identities } = setup();
-    expect(await useCase.execute(CWD)).toMatchObject({ status: "shown", personId: null });
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({ status: "shown", personId: null });
     identities.personId = "Ada Example";
-    expect(await useCase.execute(CWD)).toMatchObject({ personId: "Ada Example" });
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({ personId: "Ada Example" });
   });
 
   it("says since when the clone is measured: the start of the interval its key names", async () => {
     const { useCase } = setup();
-    expect(await useCase.execute(CWD)).toMatchObject({
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
       status: "shown",
       since: "2026-01-01T00:00:00.000Z",
     });
@@ -90,7 +90,7 @@ describe("showing what the work is bound to", () => {
       declared_at: "2026-10-09T11:00:00.000Z",
       by: "command",
     });
-    expect(await useCase.execute(CWD)).toMatchObject({
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
       status: "shown",
       branch: "feat/x",
       role: "working",
@@ -104,7 +104,7 @@ describe("showing what the work is bound to", () => {
       { ...branchBinding, branch: "other", task: "elsewhere" },
       branchBinding,
     ]);
-    expect(await useCase.execute(CWD)).toMatchObject({
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
       binding: { source: "branch", task: "on-branch" },
     });
   });
@@ -124,7 +124,7 @@ describe("showing what the work is bound to", () => {
       from: "earlier",
       at: "2026-10-09T10:00:00.000Z",
     });
-    expect(await useCase.execute(CWD)).toMatchObject({
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
       binding: { source: "session-carried", task: "carried-task", carriedFrom: "earlier" },
     });
   });
@@ -133,19 +133,19 @@ describe("showing what the work is bound to", () => {
     const { useCase, branches, source } = setup();
     source.bindingsByRoot.set(CWD, [{ ...branchBinding, branch: "main" }]);
     branches.heads_ = { head: "refs/heads/main", originHead: "refs/remotes/origin/main" };
-    expect(await useCase.execute(CWD)).toMatchObject({
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
       role: "default",
       binding: { state: "unbound" },
     });
     branches.heads_ = { head: null, originHead: null };
-    expect(await useCase.execute(CWD)).toMatchObject({
+    expect(await useCase.execute({ cwd: CWD })).toMatchObject({
       role: "detached",
       binding: { state: "unbound" },
     });
   });
 
   it("is unbound when nothing is declared", async () => {
-    expect(await setup(null).useCase.execute(CWD)).toMatchObject({
+    expect(await setup(null).useCase.execute({ cwd: CWD })).toMatchObject({
       status: "shown",
       sessionId: null,
       binding: { state: "unbound" },
@@ -155,11 +155,11 @@ describe("showing what the work is bound to", () => {
   it("refuses like a declaration does", async () => {
     const optedOut = setup();
     optedOut.consents.values.set(CWD, "{}");
-    expect(await optedOut.useCase.execute(CWD)).toEqual({
+    expect(await optedOut.useCase.execute({ cwd: CWD })).toEqual({
       status: "refused",
       reason: "no-consent",
     });
-    expect(await setup("s", true).useCase.execute(CWD)).toEqual({
+    expect(await setup("s", true).useCase.execute({ cwd: CWD })).toEqual({
       status: "refused",
       reason: "environment",
     });
@@ -168,21 +168,24 @@ describe("showing what the work is bound to", () => {
   it("says a clone turned off was turned off", async () => {
     const off = setup();
     off.consents.values.set(CWD, "off");
-    expect(await off.useCase.execute(CWD)).toEqual({ status: "refused", reason: "turned-off" });
+    expect(await off.useCase.execute({ cwd: CWD })).toEqual({
+      status: "refused",
+      reason: "turned-off",
+    });
   });
 
   it("says a clone turned off cannot be read, not to run on, when on would refuse", async () => {
     const damaged = setup();
     damaged.consents.values.set(CWD, "off");
     damaged.history.damaged = true;
-    expect(await damaged.useCase.execute(CWD)).toEqual({
+    expect(await damaged.useCase.execute({ cwd: CWD })).toEqual({
       status: "refused",
       reason: "unreadable-consent",
     });
     const unidentified = setup();
     unidentified.consents.values.set(CWD, "off");
     unidentified.locator.directories.set(CWD, { ...REPOSITORY, clone: null });
-    expect(await unidentified.useCase.execute(CWD)).toEqual({
+    expect(await unidentified.useCase.execute({ cwd: CWD })).toEqual({
       status: "refused",
       reason: "unreadable-consent",
     });
@@ -191,11 +194,17 @@ describe("showing what the work is bound to", () => {
   it("never says a clone with no key, or a key that grants nothing, was turned off", async () => {
     const never = setup();
     never.consents.values.delete(CWD);
-    expect(await never.useCase.execute(CWD)).toEqual({ status: "refused", reason: "no-consent" });
+    expect(await never.useCase.execute({ cwd: CWD })).toEqual({
+      status: "refused",
+      reason: "no-consent",
+    });
     for (const key of ["2", "true", "{}", "OFF"]) {
       const other = setup();
       other.consents.values.set(CWD, key);
-      expect(await other.useCase.execute(CWD)).toEqual({ status: "refused", reason: "no-consent" });
+      expect(await other.useCase.execute({ cwd: CWD })).toEqual({
+        status: "refused",
+        reason: "no-consent",
+      });
     }
   });
 });
