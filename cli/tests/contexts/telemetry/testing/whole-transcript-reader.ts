@@ -41,6 +41,7 @@ export class WholeTranscriptReader extends ClaudeTranscriptSourceAdapter {
         position: { offset: offset + end, size: now.size, identity: now.identity },
         restarted,
         skipped: false,
+        modifiedAt: stats.mtimeMs,
       };
     } finally {
       await handle.close();

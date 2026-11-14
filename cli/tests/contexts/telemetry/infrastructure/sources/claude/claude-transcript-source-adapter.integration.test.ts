@@ -200,40 +200,16 @@ describe("reading a transcript from a byte offset", () => {
     expect(read.restarted).toBe(false);
   });
 
-  it("tells when the oldest of the given transcripts was last written, in any order", async () => {
-    const at = (name: string, iso: string) => ({ path: join(projects, name), time: new Date(iso) });
-    const files = [
-      at("mid.jsonl", "2026-09-25T08:00:00.000Z"),
-      at("old.jsonl", "2026-09-20T08:00:00.000Z"),
-      at("recent.jsonl", "2026-10-01T08:00:00.000Z"),
-    ];
-    for (const file of files) {
-      await writeFile(file.path, "{}\n");
-      await utimes(file.path, file.time, file.time);
-    }
-    const paths = files.map((file) => file.path);
-    expect(await adapter.oldestModified(paths)).toBe("2026-09-20T08:00:00.000Z");
-    expect(await adapter.oldestModified([...paths].reverse())).toBe("2026-09-20T08:00:00.000Z");
-    expect(await adapter.oldestModified([paths[1] as string, paths[0] as string])).toBe(
-      "2026-09-20T08:00:00.000Z"
+  it("tells when a transcript was last written, and nothing for one that vanished", async () => {
+    const path = join(projects, "old.jsonl");
+    await writeFile(path, "{}\n");
+    await utimes(path, new Date("2026-09-20T08:00:00.000Z"), new Date("2026-09-20T08:00:00.000Z"));
+    expect((await readLines(adapter, path, null, EVERYTHING)).modifiedAt).toBe(
+      Date.parse("2026-09-20T08:00:00.000Z")
     );
-    expect(await adapter.oldestModified([paths[0] as string, paths[2] as string])).toBe(
-      "2026-09-25T08:00:00.000Z"
-    );
-  });
-
-  it("is not moved by a transcript that vanished", async () => {
-    const old = join(projects, "old.jsonl");
-    await writeFile(old, "{}\n");
-    await utimes(old, new Date("2026-09-20T08:00:00.000Z"), new Date("2026-09-20T08:00:00.000Z"));
-    const gone = join(projects, "gone.jsonl");
-    expect(await adapter.oldestModified([old, gone])).toBe("2026-09-20T08:00:00.000Z");
-    expect(await adapter.oldestModified([gone, old])).toBe("2026-09-20T08:00:00.000Z");
-  });
-
-  it("skips a transcript that vanished, and has no date for none", async () => {
-    expect(await adapter.oldestModified([join(projects, "gone.jsonl")])).toBeNull();
-    expect(await adapter.oldestModified([])).toBeNull();
+    expect(
+      (await readLines(adapter, join(projects, "gone.jsonl"), null, EVERYTHING)).modifiedAt
+    ).toBeNull();
   });
 });
 

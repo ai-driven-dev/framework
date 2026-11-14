@@ -90,19 +90,18 @@ describe("listing Codex session files", () => {
     expect(await source().list()).toEqual([]);
   });
 
-  it("says when the oldest of its files was last written", async () => {
-    const [older, newer] = [
-      join(sessions, "rollout-a.jsonl"),
-      join(archived, "rollout-b.jsonl.zst"),
-    ];
-    for (const [path, at] of [
-      [older, "2026-09-01T00:00:00.000Z"],
-      [newer, "2026-10-01T00:00:00.000Z"],
-    ] as const) {
+  it("says when a file was last written, plain or compressed", async () => {
+    for (const path of [join(sessions, "rollout-a.jsonl"), join(archived, "rollout-b.jsonl.zst")]) {
       await writeFile(path, "");
-      await utimes(path, new Date(at), new Date(at));
+      await utimes(
+        path,
+        new Date("2026-09-01T00:00:00.000Z"),
+        new Date("2026-09-01T00:00:00.000Z")
+      );
+      expect((await source().read(path, null, Number.NEGATIVE_INFINITY, () => {})).modifiedAt).toBe(
+        Date.parse("2026-09-01T00:00:00.000Z")
+      );
     }
-    expect(await source().oldestModified([newer, older])).toBe("2026-09-01T00:00:00.000Z");
   });
 });
 
@@ -285,6 +284,7 @@ describe.skipIf(NO_ZSTD)("reading a compressed Codex session file", () => {
       position: { offset: 0, size: 0, identity: "" },
       restarted: false,
       skipped: false,
+      modifiedAt: expect.any(Number),
       unrecognised: ["a compressed session file does not decompress: ZSTD_error_prefix_unknown"],
     };
     expect(first.read).toEqual(expected);
@@ -315,6 +315,7 @@ describe("a Node with no zstd", () => {
       position: { offset: 0, size: 0, identity: "" },
       restarted: false,
       skipped: false,
+      modifiedAt: expect.any(Number),
       unrecognised: ["a compressed session file is not read: this Node has no zstd"],
     });
   });

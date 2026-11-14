@@ -78,7 +78,7 @@ export function setup(options: { refused?: boolean; caseInsensitive?: boolean } 
   /** A second tool's transcripts, read in the same ingest. */
   const other = new InMemoryTranscripts();
   // Another tool's format: the same lines, its own name on every record.
-  other.decode = () => (text) => {
+  other.decode = (text) => {
     const read = readClaudeUsageLine(text);
     return { ...read, records: read.records.map((r) => ({ ...r, tool: "codex" as const })) };
   };

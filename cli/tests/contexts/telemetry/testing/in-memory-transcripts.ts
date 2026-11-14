@@ -1,7 +1,6 @@
 import type { TranscriptPosition } from "../../../../src/contexts/telemetry/domain/transcript-position.js";
 import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import type {
-  ReadUsageLine,
   TranscriptRead,
   UsageSource,
 } from "../../../../src/contexts/telemetry/ports/usage-source.js";
@@ -15,15 +14,10 @@ export class InMemoryTranscripts implements UsageSource {
   readonly modified = new Map<string, string>();
 
   /** Reads lines as Claude does unless a test gives this source another format. */
-  decode: () => ReadUsageLine = () => readClaudeUsageLine;
+  decode: UsageSource["decode"] = readClaudeUsageLine;
 
   async list(): Promise<readonly string[]> {
     return [...this.files.keys()].sort();
-  }
-
-  async oldestModified(paths: readonly string[]): Promise<string | null> {
-    const times = paths.flatMap((path) => this.modified.get(path) ?? []).sort();
-    return times[0] ?? null;
   }
 
   async read(
@@ -34,9 +28,10 @@ export class InMemoryTranscripts implements UsageSource {
   ): Promise<TranscriptRead> {
     const all = this.files.get(path) ?? [];
     const modified = this.modified.get(path);
-    if (modified !== undefined && Date.parse(modified) < writtenFrom) {
+    const modifiedAt = modified === undefined ? null : Date.parse(modified);
+    if (modifiedAt !== null && modifiedAt < writtenFrom) {
       const position = { offset: all.length, size: all.length, identity: "inode" };
-      return { position, restarted: false, skipped: true };
+      return { position, restarted: false, skipped: true, modifiedAt };
     }
     for (const line of all.slice(since?.offset ?? 0)) each(line, true);
     return {
@@ -47,6 +42,7 @@ export class InMemoryTranscripts implements UsageSource {
       },
       restarted: false,
       skipped: false,
+      modifiedAt,
     };
   }
 }
