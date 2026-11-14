@@ -18,14 +18,21 @@ export class InMemoryLedger implements UsageLedger {
   failSave = false;
   exclusiveRuns = 0;
 
+  /** The turn of the writer ahead: one at a time, as the real lock lets them in. */
+  private turn: Promise<unknown> = Promise.resolve();
+
   async exclusively<T>(work: () => Promise<T>): Promise<T> {
-    this.exclusiveRuns += 1;
-    this.events.push("lock");
-    try {
-      return await work();
-    } finally {
-      this.events.push("unlock");
-    }
+    const run = this.turn.then(async () => {
+      this.exclusiveRuns += 1;
+      this.events.push("lock");
+      try {
+        return await work();
+      } finally {
+        this.events.push("unlock");
+      }
+    });
+    this.turn = run.catch(() => undefined);
+    return run;
   }
 
   /** The window the last load was given; `undefined` when it read everything. */

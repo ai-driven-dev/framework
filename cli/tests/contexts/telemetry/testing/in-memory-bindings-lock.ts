@@ -10,13 +10,20 @@ export class InMemoryBindingsLock implements BindingsLock {
   /** The wait each use asked for: `undefined` is the lock's own. */
   readonly waits: (number | undefined)[] = [];
 
+  /** The turn of the writer ahead: one at a time, as the real lock lets them in. */
+  private turn: Promise<unknown> = Promise.resolve();
+
   async exclusively<T>(work: () => Promise<T>, wait?: LockWait): Promise<T> {
     this.waits.push(wait?.waitMs);
-    this.events.push("bindings-lock");
-    try {
-      return await work();
-    } finally {
-      this.events.push("bindings-unlock");
-    }
+    const run = this.turn.then(async () => {
+      this.events.push("bindings-lock");
+      try {
+        return await work();
+      } finally {
+        this.events.push("bindings-unlock");
+      }
+    });
+    this.turn = run.catch(() => undefined);
+    return run;
   }
 }

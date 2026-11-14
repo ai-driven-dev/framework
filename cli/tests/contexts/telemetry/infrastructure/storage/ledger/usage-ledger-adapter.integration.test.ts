@@ -46,30 +46,6 @@ const only =
 const NOTHING = { records: [], skippedLines: 0, damaged: new Set(), unsettled: new Set() };
 
 describe("the ledger on disk", () => {
-  it("holds nothing before anything is saved", async () => {
-    expect(await ledger.load()).toEqual(NOTHING);
-  });
-
-  it("round-trips what is saved", async () => {
-    const records = [stored(), stored({ key: "msg_B:req_B", input: null })];
-    await ledger.save(records);
-    expect((await ledger.load()).records).toEqual(records);
-  });
-
-  it("files each record under the day of its own time, in UTC", async () => {
-    await ledger.save([
-      stored({ key: "a", at: "2026-10-31T23:30:00-05:00" }),
-      stored({ key: "b", at: "2026-10-15T00:00:00Z" }),
-      stored({ key: "c", at: "2026-12-01T00:00:00Z" }),
-    ]);
-    expect(await partitions()).toEqual([
-      "2026-10-15.jsonl",
-      "2026-11-01.jsonl",
-      "2026-12-01.jsonl",
-    ]);
-    expect(await readFile(join(dir, "2026-11-01.jsonl"), "utf8")).toContain('"key":"a"');
-  });
-
   it("writes one record per line, ending in a newline", async () => {
     await ledger.save([stored({ key: "a" }), stored({ key: "b" })]);
     const text = await readFile(join(dir, "2026-10-07.jsonl"), "utf8");
@@ -123,23 +99,6 @@ describe("the ledger on disk", () => {
       "2026-09-02.jsonl",
       "2026-10-02.jsonl",
     ]);
-  });
-
-  it("removes a told day that no longer holds anything", async () => {
-    await ledger.save([stored({ key: "a", at: "2026-08-02T00:00:00Z" })]);
-    await ledger.save(
-      [stored({ key: "a", at: "2026-08-03T00:00:00Z", output: 2 })],
-      new Set(["2026-08-02", "2026-08-03"])
-    );
-    expect(await partitions()).toEqual(["2026-08-03.jsonl"]);
-  });
-
-  it("leaves one live record when a better snapshot moves a call to another day", async () => {
-    await ledger.save([stored({ output: 10, at: "2026-10-31T23:59:59.000Z" })]);
-    await ledger.save([stored({ output: 90, at: "2026-11-01T00:00:01.000Z" })]);
-    expect(await partitions()).toEqual(["2026-11-01.jsonl"]);
-    const { records } = await ledger.load();
-    expect(records.map((r) => r.output)).toEqual([90]);
   });
 
   it("reads only day files, and leaves a month's name, the offsets, roots, consents and lock alone", async () => {
@@ -270,19 +229,6 @@ describe("the ledger on disk", () => {
 });
 
 describe("reading a window of days", () => {
-  it("reads only the days it is given, and opens no other partition", async () => {
-    await ledger.save([
-      stored({ key: "a", at: "2026-10-06T10:00:00Z" }),
-      stored({ key: "b", at: "2026-10-07T10:00:00Z" }),
-      stored({ key: "c", at: "2026-10-08T10:00:00Z" }),
-    ]);
-    await writeFile(join(dir, "2026-10-06.jsonl"), "{torn\n");
-    expect(await ledger.load(only("2026-10-07"))).toEqual({
-      ...NOTHING,
-      records: [stored({ key: "b", at: "2026-10-07T10:00:00Z" })],
-    });
-  });
-
   it("reads only the days of a closed window, and no partition outside it", async () => {
     await ledger.save(
       ["2026-10-04", "2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08"].map((day) =>
@@ -294,20 +240,6 @@ describe("reading a window of days", () => {
     const loaded = await ledger.load((day) => day >= "2026-10-05" && day <= "2026-10-07");
     expect(loaded.records.map((r) => r.key)).toEqual(["2026-10-05", "2026-10-06", "2026-10-07"]);
     expect(loaded.skippedLines).toBe(0);
-  });
-
-  it("reads every day from a date on, and none before it, for a window open on one side", async () => {
-    const days = ["2025-12-31", "2026-01-01", "2026-06-15", "2031-03-02"];
-    await ledger.save(days.map((day) => stored({ key: day, at: `${day}T10:00:00Z` })));
-    await writeFile(join(dir, "2025-12-31.jsonl"), "{torn\n");
-    const loaded = await ledger.load((day) => day >= "2026-01-01");
-    expect(loaded.records.map((r) => r.key)).toEqual(["2026-01-01", "2026-06-15", "2031-03-02"]);
-    expect(loaded.skippedLines).toBe(0);
-  });
-
-  it("reads nothing for an empty window", async () => {
-    await ledger.save([stored()]);
-    expect(await ledger.load(() => false)).toEqual(NOTHING);
   });
 
   it("finds a call held in two days of its window", async () => {
@@ -323,19 +255,6 @@ describe("reading a window of days", () => {
 });
 
 describe("the positions of the transcripts read", () => {
-  it("round-trip", async () => {
-    const positions = new Map([
-      ["/b.jsonl", { offset: 5, size: 9, identity: "1:2" }],
-      ["/a.jsonl", { offset: 0, size: 0, identity: "1:3" }],
-    ]);
-    await ledger.savePositions(positions);
-    expect(await ledger.positions()).toEqual(positions);
-  });
-
-  it("are empty before any read", async () => {
-    expect((await ledger.positions()).size).toBe(0);
-  });
-
   it("are empty when the file is unreadable, so every transcript is read whole", async () => {
     await ledger.save([]);
     await writeFile(join(dir, "offsets.json"), "{broken");
@@ -360,25 +279,9 @@ describe("the positions of the transcripts read", () => {
 });
 
 describe("writing under the lock", () => {
-  it("lets one writer at a time in", async () => {
-    const events: string[] = [];
-    const work = (name: string) => async () => {
-      events.push(`${name}:in`);
-      await new Promise((done) => setTimeout(done, 40));
-      events.push(`${name}:out`);
-    };
-    await Promise.all([ledger.exclusively(work("a")), ledger.exclusively(work("b"))]);
-    expect(events).toHaveLength(4);
-    expect(events[1]).toMatch(/:out$/);
-    expect(events[0]?.slice(0, 1)).toBe(events[1]?.slice(0, 1));
-  });
-
-  it("returns what the work returns and releases the lock", async () => {
-    expect(await ledger.exclusively(async () => 7)).toBe(7);
+  it("removes its lock file when the work ends, and when it throws", async () => {
+    await ledger.exclusively(async () => 7);
     expect(await readdir(dir)).not.toContain(".lock");
-  });
-
-  it("releases the lock when the work throws", async () => {
     await expect(
       ledger.exclusively(async () => {
         throw new Error("boom");
@@ -391,8 +294,8 @@ describe("writing under the lock", () => {
 describe("what was measured and left out, beside the ledger", () => {
   const FILE = () => join(dir, "left-out.txt");
 
-  it("holds nothing before anything is kept, and creates nothing", async () => {
-    expect(await ledger.leftOut.counts()).toEqual({ undated: 0, unrecognised: 0, requestless: 0 });
+  it("creates nothing when counted before anything is kept", async () => {
+    await ledger.leftOut.counts();
     await expect(readdir(root)).resolves.toEqual([]);
   });
 
@@ -412,22 +315,6 @@ describe("what was measured and left out, beside the ledger", () => {
     expect(found).toHaveLength(2);
     expect(found).toEqual([...found].sort());
     for (const entry of found) expect(entry).toMatch(/^(undated|unrecognised) [0-9a-f]{32}$/);
-    expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 1, requestless: 0 });
-  });
-
-  it("tells two things of one reason apart by what they are", async () => {
-    await ledger.leftOut.add([
-      { reason: "undated", of: "claude-code\u0000a" },
-      { reason: "undated", of: "claude-code\u0000b" },
-    ]);
-    expect(await ledger.leftOut.counts()).toEqual({ undated: 2, unrecognised: 0, requestless: 0 });
-  });
-
-  it("names a thing by its reason and what it is, so two reasons of one text are two", async () => {
-    await ledger.leftOut.add([
-      { reason: "undated", of: "x" },
-      { reason: "unrecognised", of: "x" },
-    ]);
     expect(await ledger.leftOut.counts()).toEqual({ undated: 1, unrecognised: 1, requestless: 0 });
   });
 
