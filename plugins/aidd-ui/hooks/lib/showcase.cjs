@@ -41,6 +41,7 @@ const LABELS = {
     desktop: "Desktop",
     phone: "Phone",
     toReview: "{count} to review",
+    proposedCount: "{count} proposed",
     stepDone: "complete",
     stepEmpty: "no content",
     decided: "chosen",
@@ -84,7 +85,7 @@ const LABELS = {
     close: "Close",
     nothing: "Nothing to review.",
     overviewNext: "{count} to review, in {steps}.",
-    overviewProposed: "Nothing to review. {count} still proposed, in {steps}.",
+    overviewProposed: "Nothing to review here. {count} proposed, in {steps}, to agree with the assistant in the conversation.",
     overviewStillProposed: "Still proposed ({count})",
     start: "Start the review",
     overviewTodo: "To review ({count})",
@@ -142,6 +143,7 @@ const LABELS = {
     desktop: "Ordinateur",
     phone: "Téléphone",
     toReview: "{count} à relire",
+    proposedCount: "{count} proposé(s)",
     stepDone: "terminé",
     stepEmpty: "vide",
     decided: "choisies",
@@ -185,7 +187,7 @@ const LABELS = {
     close: "Fermer",
     nothing: "Rien à relire.",
     overviewNext: "{count} à relire, dans {steps}.",
-    overviewProposed: "Rien à relire. {count} à l'état proposé, dans {steps}.",
+    overviewProposed: "Rien à relire ici. {count} proposé(s), dans {steps}, à valider avec l'assistant dans la conversation.",
     overviewStillProposed: "Encore proposés ({count})",
     start: "Commencer la revue",
     overviewTodo: "À relire ({count})",
@@ -1008,6 +1010,9 @@ const pendingOf = (labels, count) => `<span class="tally pending" data-template=
 /** What a step still asks of the person: what the drawer reviews and the records it cannot review that are still proposed. A step with none is done. */
 const leftOf = (each) => each.todo + each.proposed.length;
 
+/** What a step still asks, in words: what the drawer reviews first, else the records it cannot review, which are proposed, not to review. */
+const leftWordOf = (labels, each) => (each.todo ? filled(labels.toReview, { count: each.todo }) : filled(labels.proposedCount, { count: each.proposed.length }));
+
 /** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
  * not settled, the open sets, and the records the drawer cannot review that are still proposed. `todo` counts records
  * and open sets, never states, and leaves the proposed ones out: the drawer cannot clear them. */
@@ -1077,8 +1082,8 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
   const total = held.reduce((sum, each) => sum + each.todo, 0);
   const stepItem = (each, at) => {
     const left = leftOf(each);
-    const mark = left ? left : each.records.length || each.sets.length ? "\u2713" : "\u2014";
-    const markName = left ? filled(labels.toReview, { count: left }) : each.records.length || each.sets.length ? labels.stepDone : labels.stepEmpty;
+    const mark = left ? each.todo || left : each.records.length || each.sets.length ? "\u2713" : "\u2014";
+    const markName = left ? leftWordOf(labels, each) : each.records.length || each.sets.length ? labels.stepDone : labels.stepEmpty;
     const alone = (each.step === "identity" || each.step === "foundations") && each.records.length === 1 && !each.sets.length ? each.records[0] : null;
     const name = alone
       ? `<a class="step-name" href="${escaped(fm(alone).id)}.html"${fm(alone).id === current ? ' aria-current="page"' : ""}>${labels.stepNames[each.step]}</a>`
@@ -1445,7 +1450,7 @@ function stepperOf(held, labels) {
   const item = (each, at) => {
     const left = leftOf(each);
     const state = left ? "todo" : each.records.length || each.sets.length ? "done" : "empty";
-    const word = left ? filled(labels.toReview, { count: left }) : state === "done" ? labels.stepDone : labels.stepEmpty;
+    const word = left ? leftWordOf(labels, each) : state === "done" ? labels.stepDone : labels.stepEmpty;
     const href = hrefOf(each);
     const inner = `<span class="no">${at + 1}</span><span class="name">${labels.stepNames[each.step]}</span><span class="state">${escaped(word)}</span>`;
     return `<li data-step="${each.step}" data-state="${state}">${href ? `<a href="${escaped(href)}">${inner}</a>` : `<span class="cell">${inner}</span>`}</li>`;
@@ -1459,7 +1464,7 @@ function reviewLineOf(held, labels) {
   const proposed = held.filter((each) => each.proposed.length);
   if (!waiting.length && proposed.length) {
     const text = filled(labels.overviewProposed, { count: proposed.reduce((sum, each) => sum + each.proposed.length, 0), steps: proposed.map((each) => labels.stepNames[each.step]).join(", ") });
-    return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(proposed[0]))}">${labels.start}</a></p>`;
+    return `<p class="lede">${escaped(text)}</p>`;
   }
   if (!waiting.length) return `<p class="lede">${labels.nothing}</p>`;
   const text = filled(labels.overviewNext, { count: waiting.reduce((sum, each) => sum + each.todo, 0), steps: waiting.map((each) => labels.stepNames[each.step]).join(", ") });

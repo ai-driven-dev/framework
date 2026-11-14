@@ -1171,14 +1171,24 @@ describe("aidd-ui showcase", () => {
       const index = pagesOf()["index.html"];
       assert.equal(stepOf(index, "components").mark, "1");
       assert.match(index, /<li data-step="components" data-state="todo">/);
-      assert.match(index, /<span class="state">1 to review<\/span>/);
+      assert.match(index, /<span class="state">1 proposed<\/span>/);
+      assert.match(stepOf(index, "components").html, /aria-label="1 proposed"/);
+    });
+
+    it("counts what the drawer reviews, not the proposed assets, in a step holding both", () => {
+      const before = stepOf(pagesOf()["index.html"], "components");
+      edit(tmp, `${UI}/assets/icon-search.md`, "status: validated", "status: proposed");
+      const index = pagesOf()["index.html"];
+      assert.deepEqual([stepOf(index, "components").todo, stepOf(index, "components").mark], [before.todo, before.todo]);
+      assert.match(index, new RegExp(`<li data-step="components" data-state="todo">[\\s\\S]*?<span class="state">${before.todo} to review</span>`));
     });
 
     it("does not mark a step done while a journey in it is still proposed, and leaves the drawer count alone", () => {
       edit(tmp, `${UI}/journeys/onboarding.md`, "status: validated", "status: proposed");
       const index = pagesOf()["index.html"];
       assert.deepEqual([stepOf(index, "journeys").todo, stepOf(index, "journeys").mark], ["0", "1"]);
-      assert.match(index, /<li data-step="journeys" data-state="todo">[\s\S]*?<span class="state">1 to review<\/span>/);
+      assert.match(index, /<li data-step="journeys" data-state="todo">[\s\S]*?<span class="state">1 proposed<\/span>/);
+      assert.match(index, /<li data-step="components" data-state="todo">[\s\S]*?<span class="state">\d+ to review<\/span>/);
       assert.ok(!itemsOf(index).some((item) => item.record === "onboarding"));
     });
 
@@ -1186,12 +1196,12 @@ describe("aidd-ui showcase", () => {
       for (const file of ["components/button", "components/search-field", "components/dialog", "components/old-button", "screens/home", "wireframes/search-flow"]) fs.rmSync(path.join(tmp, UI, `${file}.md`));
       assert.match(pagesOf()["index.html"], /<p class="none">Nothing to review\.<\/p>/);
       edit(tmp, `${UI}/journeys/onboarding.md`, "status: validated", "status: proposed");
-      const words = { en: "Nothing to review\\. 1 still proposed, in Journeys\\.", fr: "Rien à relire\\. 1 à l'état proposé, dans Parcours\\." };
+      const words = { en: "Nothing to review here\\. 1 proposed, in Journeys, to agree with the assistant in the conversation\\.", fr: "Rien à relire ici\\. 1 proposé\\(s\\), dans Parcours, à valider avec l'assistant dans la conversation\\." };
       for (const lang of ["en", "fr"]) {
         const index = pagesOf({ lang })["index.html"];
         assert.doesNotMatch(index, /<p class="none">/, lang);
         assert.match(index, new RegExp(`<p class="lede">${words[lang]}</p>`), lang);
-        assert.match(index, /<a class="start" href="onboarding\.html">/, lang);
+        assert.doesNotMatch(index, /class="start"/, lang);
         assert.match(index, /data-overview="todo"[\s\S]*?<a href="onboarding\.html">/, lang);
       }
     });
