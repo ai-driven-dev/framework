@@ -182,12 +182,14 @@ export function contextOf(file: string): string {
   if (file.startsWith("src/shared/")) return "shared";
   if (file.startsWith("src/presentation/")) return "presentation";
   if (file.startsWith("src/composition/")) return "composition";
+  if (file.startsWith("src/orchestration/")) return "orchestration";
   return "outside";
 }
 
 /** A layer a context may not depend on: the arrows run towards shared, never back. The
- * composition wires every context and is imported by the composition root alone. */
-export const BELOW_NOTHING = new Set(["presentation", "composition"]);
+ * composition wires every context and is imported by the composition root alone; the
+ * orchestration chains contexts and is reached from presentation and the composition. */
+export const BELOW_NOTHING = new Set(["presentation", "composition", "orchestration"]);
 
 export function isContext(name: string): boolean {
   return !BELOW_NOTHING.has(name) && !["shared", "outside"].includes(name);
