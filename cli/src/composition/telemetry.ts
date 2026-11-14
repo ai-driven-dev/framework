@@ -31,12 +31,10 @@ import {
 } from "../contexts/telemetry/infrastructure/sources/claude/claude-projects-root.js";
 import { ClaudeSettingsAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.js";
 import { ClaudeTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import { readClaudeUsageLine } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import {
   CodexTranscriptSourceAdapter,
   codexSessionRoots,
 } from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
-import { codexUsageReader } from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.js";
 import { ConsentHistoryAdapter } from "../contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
 import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { RepositoryDeclarationsAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/repository-declarations-adapter.js";
@@ -47,6 +45,7 @@ import { UsageLedgerAdapter } from "../contexts/telemetry/infrastructure/storage
 import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
 import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
 import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
+import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
 import type { TelemetryDeps } from "../presentation/deps.js";
 import { userConfigDirOf } from "../shared/infrastructure/user-config-dir.js";
 
@@ -128,19 +127,13 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     declaration,
     identity
   );
+  // The measured tools, registered once: a tool is one source here and nowhere else.
+  const usageSources: readonly UsageSource[] = [
+    new ClaudeTranscriptSourceAdapter(claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())),
+    new CodexTranscriptSourceAdapter(codexSessionRoots(process.env.CODEX_HOME, homedir())),
+  ];
   const ingestUsage = new IngestUsage(
-    [
-      new ReadUsage(
-        new ClaudeTranscriptSourceAdapter(
-          claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())
-        ),
-        () => readClaudeUsageLine
-      ),
-      new ReadUsage(
-        new CodexTranscriptSourceAdapter(codexSessionRoots(process.env.CODEX_HOME, homedir())),
-        codexUsageReader
-      ),
-    ],
+    usageSources.map((source) => new ReadUsage(source)),
     ledger,
     new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
     snapshotBindings,

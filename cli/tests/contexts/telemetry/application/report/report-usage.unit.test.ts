@@ -20,7 +20,6 @@ import {
   type SessionCarry,
 } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
-import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { AUTUMN } from "../../testing/autumn.js";
 import { cloneOf, grantedBy } from "../../testing/clone-builders.js";
 import { FakeBindings } from "../../testing/fake-bindings.js";
@@ -71,7 +70,7 @@ function setup(options: { refused?: boolean } = {}) {
   const sessions = new InMemorySessions(events);
   const identity = new InMemoryIdentity();
   const ingest = new IngestUsage(
-    [new ReadUsage(transcripts, () => readClaudeUsageLine)],
+    [new ReadUsage(transcripts)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,

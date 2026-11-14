@@ -81,6 +81,11 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   const transcripts = new InMemoryTranscripts();
   /** A second tool's transcripts, read in the same ingest. */
   const other = new InMemoryTranscripts();
+  // Another tool's format: the same lines, its own name on every record.
+  other.decode = () => (text) => {
+    const read = readClaudeUsageLine(text);
+    return { ...read, records: read.records.map((r) => ({ ...r, tool: "codex" as const })) };
+  };
   const ledger = new InMemoryLedger();
   const resolutions = new InMemoryResolutions();
   const locator = new FakeLocator();
@@ -96,12 +101,9 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   );
   const ingest = new IngestUsage(
     [
-      new ReadUsage(transcripts, () => readClaudeUsageLine),
+      new ReadUsage(transcripts),
       // Another tool's format: the same lines, its own name on every record.
-      new ReadUsage(other, () => (text) => {
-        const read = readClaudeUsageLine(text);
-        return { ...read, records: read.records.map((r) => ({ ...r, tool: "codex" as const })) };
-      }),
+      new ReadUsage(other),
     ],
     ledger,
     new DirectoryResolver(locator, consents, resolutions, history, {
@@ -122,7 +124,7 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
   const ingestReadingAll = () =>
     new IngestUsage(
       [transcripts, other].map((source) => {
-        const reader = new ReadUsage(source, () => readClaudeUsageLine);
+        const reader = new ReadUsage(source);
         return { execute: (since) => reader.execute(since) } as ReadUsage;
       }),
       ledger,

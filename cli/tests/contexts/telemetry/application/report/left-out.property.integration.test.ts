@@ -12,7 +12,6 @@ import { ReportUsage } from "../../../../../src/contexts/telemetry/application/r
 import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { cloneOf, grantedBy } from "../../testing/clone-builders.js";
@@ -190,7 +189,7 @@ function machine() {
     () => NOW
   );
   const ingest = new IngestUsage(
-    [new ReadUsage(transcripts, () => readClaudeUsageLine)],
+    [new ReadUsage(transcripts)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,

@@ -9,10 +9,9 @@ import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-u
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import type { TranscriptSource } from "../../../../src/contexts/telemetry/ports/transcript-source.js";
+import type { UsageSource } from "../../../../src/contexts/telemetry/ports/usage-source.js";
 import { cloneOf, grantedBy } from "../testing/clone-builders.js";
 import { FakeBindings } from "../testing/fake-bindings.js";
 import { FakeConsents } from "../testing/fake-consents.js";
@@ -105,7 +104,7 @@ const transcript = fc
     });
   });
 
-function machine(source: TranscriptSource) {
+function machine(source: UsageSource) {
   runs += 1;
   const dir = join(root, `ledger-${runs}`);
   const ledger = new UsageLedgerAdapter(dir, new PrivateStorageAdapter());
@@ -129,7 +128,7 @@ function machine(source: TranscriptSource) {
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
   const ingest = new IngestUsage(
-    [new ReadUsage(source, () => readClaudeUsageLine)],
+    [new ReadUsage(source)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,

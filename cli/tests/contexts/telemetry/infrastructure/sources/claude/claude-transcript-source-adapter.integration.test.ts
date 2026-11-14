@@ -15,7 +15,7 @@ import { join, relative, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TranscriptPosition } from "../../../../../../src/contexts/telemetry/domain/transcript-position.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import type { TranscriptSource } from "../../../../../../src/contexts/telemetry/ports/transcript-source.js";
+import type { UsageSource } from "../../../../../../src/contexts/telemetry/ports/usage-source.js";
 
 /** Read every file, whatever its age. */
 const EVERYTHING = Number.NEGATIVE_INFINITY;
@@ -39,7 +39,7 @@ afterEach(async () => {
 
 /** A read, with the lines it handed over. */
 async function readLines(
-  source: TranscriptSource,
+  source: UsageSource,
   path: string,
   since: TranscriptPosition | null,
   writtenFrom: number

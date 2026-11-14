@@ -7,7 +7,7 @@ import {
   type TranscriptPosition,
   type TranscriptStat,
 } from "../../domain/transcript-position.js";
-import type { TranscriptRead } from "../../ports/transcript-source.js";
+import type { TranscriptRead } from "../../ports/usage-source.js";
 import { modifiedAtIfPresent } from "../reading/text-file.js";
 
 const NEWLINE = 0x0a;

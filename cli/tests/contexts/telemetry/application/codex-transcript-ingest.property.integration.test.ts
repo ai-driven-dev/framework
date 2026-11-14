@@ -12,9 +12,7 @@ import {
 import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.js";
 import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
-import { codexUsageReader } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { cloneOf, grantedBy } from "../testing/clone-builders.js";
@@ -67,10 +65,10 @@ function machine(sessions: string, projects?: string) {
   locator.directories.set("/work/none", { status: "outside-repository" });
   const ingest = new IngestUsage(
     [
-      new ReadUsage(new CodexTranscriptSourceAdapter([sessions]), codexUsageReader),
+      new ReadUsage(new CodexTranscriptSourceAdapter([sessions])),
       ...(projects === undefined
         ? []
-        : [new ReadUsage(new ClaudeTranscriptSourceAdapter(projects), () => readClaudeUsageLine)]),
+        : [new ReadUsage(new ClaudeTranscriptSourceAdapter(projects))]),
     ],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {

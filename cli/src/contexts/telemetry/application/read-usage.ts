@@ -1,19 +1,7 @@
 import type { UsageRecord } from "../contract/usage-record.js";
 import type { LineNames, TranscriptPosition } from "../domain/transcript-position.js";
 import { foldUsage } from "../domain/usage-fold.js";
-import type { TranscriptSource } from "../ports/transcript-source.js";
-
-/** One tool's format: the billed calls one transcript line holds, and the shapes it did not
- * recognise. */
-export type ReadUsageLine = (line: string) => {
-  readonly records: readonly UsageRecord[];
-  readonly unrecognised: readonly string[];
-  /** For a line that is no usage line: the directory and time it names, when it names any. */
-  readonly named?: LineNames;
-};
-
-/** A tool's format, made once per file read: it may hold what earlier lines of the file said. */
-export type UsageFormat = () => ReadUsageLine;
+import type { UsageSource } from "../ports/usage-source.js";
 
 /** A line that gave no call, the directory and time it names, and its file. */
 export interface DroppedLine extends LineNames {
@@ -47,10 +35,7 @@ export interface ReadUsageCommand {
 
 /** Reads one tool's usage: its transcripts, from `source`, line by line in its format. */
 export class ReadUsage {
-  constructor(
-    private readonly source: TranscriptSource,
-    private readonly format: UsageFormat
-  ) {}
+  constructor(private readonly source: UsageSource) {}
 
   async execute({
     since,
@@ -67,7 +52,7 @@ export class ReadUsage {
       const records: UsageRecord[] = [];
       const lines: DroppedLine[] = [];
       const reasons: string[] = [];
-      const readLine = this.format();
+      const readLine = this.source.decode();
       const read = await this.source.read(
         path,
         since.get(path) ?? null,
