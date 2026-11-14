@@ -244,27 +244,42 @@ describe("aidd telemetry report, narrowed", () => {
     expect(asked()).toEqual({ ...NO_FILTERS, unattributed: "declared-none" });
   });
 
+  const twice = (flag: string) => `error: ${flag} is given twice: give it once.\n`;
+  const empty = (flags: string, value: string) =>
+    `error: option '${flags}' argument '${value}' is invalid. It is empty.\n`;
+  const notAllowed = (flags: string, value: string, allowed: string) =>
+    `error: option '${flags}' argument '${value}' is invalid. Allowed choices are ${allowed}.\n`;
   it.each([
-    ["an open flag given twice", ["--task", "a", "--task", "b"], "--task"],
-    ["a closed flag given twice", ["--agent", "main", "--agent", "main"], "--agent"],
-    ["a bare flag given twice", ["--unattributed", "--unattributed"], "--unattributed"],
-    ["a value empty once trimmed", ["--ticket", "   "], "--ticket"],
-    ["a model empty once trimmed", ["--model", "   "], "--model"],
-    ["an agent no call can have", ["--agent", "robot"], "--agent"],
-    ["a tool no call can have", ["--tool", "robot"], "--tool"],
-    ["a tool given twice", ["--tool", "codex", "--tool", "codex"], "--tool"],
-    ["an axis no call lacks", ["--absent", "session"], "--absent"],
-    ["a reason no call has", ["--unattributed", "no-task"], "--unattributed"],
-  ])("refuses %s with exit 1, naming the flag, before reading anything", async (_, args, flag) => {
+    ["an open flag given twice", ["--task", "a", "--task", "b"], twice("--task")],
+    ["a closed flag given twice", ["--agent", "main", "--agent", "main"], twice("--agent")],
+    ["a bare flag given twice", ["--unattributed", "--unattributed"], twice("--unattributed")],
+    ["a value empty once trimmed", ["--ticket", "   "], empty("--ticket <ref>", "   ")],
+    ["a model empty once trimmed", ["--model", "   "], empty("--model <id>", "   ")],
+    [
+      "an agent no call can have",
+      ["--agent", "robot"],
+      notAllowed("--agent <agent>", "robot", "main, subagent, advisor"),
+    ],
+    [
+      "a tool no call can have",
+      ["--tool", "robot"],
+      notAllowed("--tool <tool>", "robot", "claude-code, codex"),
+    ],
+    ["a tool given twice", ["--tool", "codex", "--tool", "codex"], twice("--tool")],
+    [
+      "an axis no call lacks",
+      ["--absent", "session"],
+      notAllowed("--absent <axis>", "session", "person, model, ticket"),
+    ],
+    [
+      "a reason no call has",
+      ["--unattributed", "no-task"],
+      notAllowed("--unattributed [reason]", "no-task", "no-binding, declared-none, any"),
+    ],
+  ])("refuses %s with exit 1, saying why, before reading anything", async (_, args, message) => {
     expect(await refused(...args)).toBe(1);
-    expect(stderr()).toContain(flag);
+    expect(stderr()).toBe(message);
     expect(report).not.toHaveBeenCalled();
-  });
-
-  it("refuses a bare flag given twice by its name, not by the value it was preset to", async () => {
-    expect(await refused("--unattributed", "--unattributed")).toBe(1);
-    expect(stderr()).toContain("--unattributed is given twice: give it once.");
-    expect(stderr()).not.toContain("null");
   });
 
   it.each([
@@ -329,7 +344,7 @@ describe("aidd telemetry identity", () => {
 
   it("refuses --off together with an identifier, touching nothing", async () => {
     expect(await run("identity", "person-a", "--off")).toBe(1);
-    expect(stderr()).toContain("--off removes the identity");
+    expect(stderr()).toBe("Error: --off removes the identity: give it no identifier.\n");
     expect(identity.off).not.toHaveBeenCalled();
     expect(identity.set).not.toHaveBeenCalled();
   });
@@ -399,21 +414,20 @@ describe("aidd telemetry task", () => {
     });
   });
 
-  it("refuses to declare nothing, and points at status", async () => {
-    expect(await run("task")).toBe(1);
-    expect(stderr()).toContain("aidd telemetry status");
-    expect(show).not.toHaveBeenCalled();
-    expect(declare).not.toHaveBeenCalled();
-  });
-
+  const NONE_TAKES_NOTHING =
+    "Error: --none declares no task: give it neither a name nor --ticket.\n";
+  const NEEDS_A_NAME =
+    "Error: A task needs a name: aidd telemetry task <name> [--ticket <ref>], or --none. See what the work is bound to with aidd telemetry status.\n";
   it.each([
-    [["--none", "t"], "--none declares no task"],
-    [["--none", "--ticket", "P-1"], "--none declares no task"],
-    [["--ticket", "P-1"], "A task needs a name"],
-    [["   "], "A task needs a name"],
+    [[], NEEDS_A_NAME],
+    [["--none", "t"], NONE_TAKES_NOTHING],
+    [["--none", "--ticket", "P-1"], NONE_TAKES_NOTHING],
+    [["--ticket", "P-1"], NEEDS_A_NAME],
+    [["   "], NEEDS_A_NAME],
   ])("refuses %j before declaring anything, and says why", async (args, message) => {
     expect(await run("task", ...args)).toBe(1);
-    expect(stderr()).toContain(message);
+    expect(stderr()).toBe(message);
+    expect(show).not.toHaveBeenCalled();
     expect(declare).not.toHaveBeenCalled();
   });
 
@@ -470,12 +484,17 @@ describe("aidd telemetry on", () => {
     expect(await run("on", "--yes")).toBe(1);
     expect(turnOn).not.toHaveBeenCalled();
     expect(propose).not.toHaveBeenCalled();
-    expect(stderr()).toContain("--as <id>");
-    expect(stderr()).toContain("--anonymous");
+    // The second line is the stubbed `process.exit` reaching the action's own catch.
+    expect(stderr()).toBe(
+      "Error: No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody.\nError: exit 1\n"
+    );
   });
 
   it("refuses --as with --anonymous, before asking anything", async () => {
     expect(await run("on", "--yes", "--as", "Ada Example", "--anonymous")).toBe(1);
+    expect(stderr()).toBe(
+      "Error: --as names you and --anonymous names nobody: give one of them.\n"
+    );
     expect(identity.show).not.toHaveBeenCalled();
     expect(turnOn).not.toHaveBeenCalled();
   });
@@ -484,8 +503,8 @@ describe("aidd telemetry on", () => {
     expect(await run("on", "--as", "a".repeat(129))).toBe(1);
     expect(confirm).not.toHaveBeenCalled();
     expect(turnOn).not.toHaveBeenCalled();
-    expect(stderr()).toContain(
-      "An identity is one non-empty line of at most 128 characters. Nothing was changed."
+    expect(stderr()).toBe(
+      "Error: An identity is one non-empty line of at most 128 characters. Nothing was changed.\n"
     );
   });
 
@@ -499,7 +518,9 @@ describe("aidd telemetry on", () => {
     }
     expect(turnOn).not.toHaveBeenCalled();
     expect(confirm).not.toHaveBeenCalled();
-    expect(stderr()).toContain("pass --yes");
+    expect(stderr()).toBe(
+      "Error: Nothing to ask in a non-interactive run: pass --yes to turn measurement on.\n"
+    );
   });
 
   describe("where a person can be asked", () => {
