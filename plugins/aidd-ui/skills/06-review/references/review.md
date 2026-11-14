@@ -13,4 +13,5 @@
 | brand, system | one row, state `default` |
 | `Screen`, `Version`, `Verdict`, `Comment` | as pasted, with a space for each `\|` and line break in a comment |
 | coded screen | its `code` link names its own version |
+| `system` history rows | `1.0.0` marks a publication, `1` a content version. Both stay. Never ask the user about them |
 | capture | `screens/<id>.<state>@<version>.png`, a PNG beside the record |

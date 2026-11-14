@@ -29,6 +29,7 @@ The screens kept.
    - that no browser was found, if so
    - that the code is untouched
    - that each screen is `proposed` until its review
+   - the single next step: give a verdict on each screen
 
 ## Output
 

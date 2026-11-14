@@ -25,6 +25,8 @@ Each box is a file: read it, then do what it says.
 ## Transversal rules
 
 - Speak only to ask or to give the final reply.
+- Name a record by its title and a state by its label.
+- Never show a file name, id, heading level or rule code.
 - After asking, wait for the answer.
 - Otherwise call tools.
 - Run the engine from the project root; never read its source.

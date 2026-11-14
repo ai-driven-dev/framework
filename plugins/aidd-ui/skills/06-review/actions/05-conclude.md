@@ -23,6 +23,7 @@ The review written.
    - the captures the user still saves, with their paths
    - what the validation still prints
    - that the code is untouched
+   - the single next step: rework sent-back records, else the next missing part
 
 ## Output
 

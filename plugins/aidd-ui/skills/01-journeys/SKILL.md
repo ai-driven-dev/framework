@@ -26,7 +26,8 @@ Each box is a file: read it, then do what it says.
 - Ask with a concrete proposal, unless nothing describes the product.
 - Never offer an option that only says to type an answer.
 - After asking, wait for the answer.
-- Speak plainly: no rule codes, no file mechanics.
+- Name a record by its title and a state by its label.
+- Never show a file name, id, heading level or rule code.
 - Otherwise call tools.
 - Run the engine from the project root; never read its source.
 - Write only under `aidd_docs/ui/journeys/` and `aidd_docs/ui/wireframes/`.

@@ -23,6 +23,7 @@ The output of [write](02-write.md).
    - the `code` files listed, still holding old values, for a change
    - that the code is untouched
    - that each element created or raised is `proposed` until its review
+   - the single next step: draw the parts screens reuse
 
 ## Output
 

@@ -17,7 +17,8 @@ The engine and the brand kept.
    - the brand written
    - the brand's version, to review in the showcase
    - what the validation still prints
-   - that the code is untouched.
+   - that the code is untouched
+   - the single next step: set the colours, type and spacing
 
 ## Output
 
