@@ -57,7 +57,6 @@ const LABELS = {
     list: "Records",
     uses: "Uses",
     appearsIn: "Appears in",
-    checks: "Engine checks",
     review: "Review",
     ok: "OK",
     revise: "Revise",
@@ -84,6 +83,8 @@ const LABELS = {
     forPersona: "For",
     states: "States",
     stateNames: {},
+    sections: {},
+    checksFolded: "For developers ({count})",
     noRender: "No render",
     statuses: { proposed: "proposed", validated: "validated", deprecated: "deprecated" },
     stepOf: "Step {at} of {count}",
@@ -121,7 +122,6 @@ const LABELS = {
     list: "Fiches",
     uses: "Utilise",
     appearsIn: "Apparaît dans",
-    checks: "Contrôles du moteur",
     review: "Revue",
     ok: "OK",
     revise: "À revoir",
@@ -147,7 +147,9 @@ const LABELS = {
     tokens: "Tokens",
     forPersona: "Pour",
     states: "États",
-    stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur" },
+    stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur", hover: "survol", disabled: "désactivé", pressed: "appuyé", selected: "sélectionné", checked: "coché" },
+    sections: { Usage: "Utilisation", Keyboard: "Clavier", Steps: "Étapes", Persona: "Persona", Users: "Utilisateurs", Domain: "Domaine", "Personality and tone": "Personnalité et ton", "Anti-references": "Anti-références", References: "Références", Breakpoints: "Points de rupture" },
+    checksFolded: "Pour les développeurs ({count})",
     noRender: "Aucun rendu",
     statuses: { proposed: "proposé", validated: "validé", deprecated: "déprécié" },
     stepOf: "Étape {at} sur {count}",
@@ -250,12 +252,13 @@ nav a[aria-current="page"] { color: var(--accent-text); font-weight: 600; }
 .chip[data-status="validated"] { background: var(--ok-soft); color: var(--ok); }
 .chip[data-status]::before { content: ""; inline-size: 6px; block-size: 6px; border-radius: 50%; background: currentColor; }
 .links { display: flex; gap: var(--s3); flex-wrap: wrap; align-items: center; }
-.links h2, .checks h2, .bar-top h2, .overview h2, .appears h2 { font-size: var(--t-md); font-weight: 600; margin: 0; }
+.links h2, .bar-top h2, .overview h2, .appears h2 { font-size: var(--t-md); font-weight: 600; margin: 0; }
 .links h2 { font-size: var(--t-sm); color: var(--muted); font-weight: 500; min-width: 4rem; }
 .links ul { display: flex; gap: 6px; flex-wrap: wrap; }
 .links a { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); font-size: var(--t-sm); }
 .checks, .doc { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-1); }
-.checks { padding: var(--s4) var(--s5); display: flex; flex-direction: column; gap: var(--s2); }
+.checks { padding: var(--s3) var(--s5); }
+.checks summary { cursor: pointer; font-size: var(--t-sm); font-weight: 500; color: var(--muted); }
 .checks li { padding: var(--s2) 0; border-top: 1px solid var(--line); color: var(--muted); }
 .checks li b { display: inline-block; margin-right: var(--s2); padding: 0 6px; border-radius: 4px; background: var(--revise-soft); color: var(--revise); font: 600 var(--t-xs)/18px var(--mono); }
 .checks .fix { display: block; color: var(--faint); font-size: var(--t-sm); }
@@ -952,7 +955,7 @@ function chipsOf(record) {
   return chips ? `<div class="chips">${chips}</div>` : "";
 }
 
-const linksOf = (kind, label, ids) => (ids.length ? `<section class="links" data-links="${kind}"><h2>${label}</h2><ul>${ids.map((id) => `<li>${link(id, false)}</li>`).join("")}</ul></section>` : "");
+const linksOf = (kind, label, ids, shown = (id) => id) => (ids.length ? `<section class="links" data-links="${kind}"><h2>${label}</h2><ul>${ids.map((id) => `<li>${link(id, false, shown(id))}</li>`).join("")}</ul></section>` : "");
 
 /** Where a record appears, at the bottom of its page: a small card per record that cites it, its title and status. */
 function appearsOf({ project, ids, recordsById, labels }) {
@@ -966,7 +969,7 @@ function checksOf(problems, record, labels) {
   const own = problems.filter((each) => each.rule !== EXPECTED_COMPONENT && (each.file === record.file || each.file === renderOf(record)));
   if (!own.length) return "";
   const items = own.map((each) => `<li data-rule="${escaped(each.rule)}"><b>${escaped(each.rule)}</b> ${escaped(each.message)} <span class="fix">${escaped(each.fix)}</span></li>`);
-  return `<section class="checks"><h2>${labels.checks}</h2><ul>${items.join("")}</ul></section>`;
+  return `<details class="checks"><summary>${escaped(filled(labels.checksFolded, { count: own.length }))}</summary><ul>${items.join("")}</ul></details>`;
 }
 
 /** How a wireframe looks in the showcase: a lo-fi sketch on paper. Text in a readable scale, buttons as
@@ -1016,7 +1019,7 @@ const optionsOf = (values, second) => values.map((value, at) => `<option value="
 
 /** The theme and platform pickers: a combination A, a combination B shown beside it on request. */
 function toolbarOf(system, labels) {
-  const axes = [["theme", labels.theme, list(system && fm(system).themes)], ["platform", labels.platform, list(system && fm(system).platforms)]].filter(([, , values]) => values.length);
+  const axes = [["theme", labels.theme, list(system && fm(system).themes)], ["platform", labels.platform, list(system && fm(system).platforms)]].filter(([, , values]) => values.length > 1);
   if (!axes.length) return "";
   const combo = (name, second) => `<fieldset data-combo="${name}"${second ? " hidden" : ""}><legend>${labels.combination} ${name.toUpperCase()}</legend>${axes.map(([axis, label, values]) => `<label>${label} <select data-axis="${axis}">${optionsOf(values, second)}</select></label>`).join("")}</fieldset>`;
   return `<div class="toolbar">${combo("a", false)}${combo("b", true)}<button type="button" id="sides" aria-pressed="false">${labels.sides}</button></div>`;
@@ -1200,7 +1203,7 @@ function descriptionOf(project, record) {
 
 /** The record as text under its title, without its front matter, its title and its description, which the
  * page heading shows, and the sections the page draws otherwise. */
-function specOf(project, record) {
+function specOf(project, record, labels) {
   const shown = SHOWN_SECTIONS[fm(record).kind] ?? [];
   const lines = bodyLines(project, record);
   const title = lines.findIndex((line) => TITLE_LINE.test(line));
@@ -1212,7 +1215,8 @@ function specOf(project, record) {
     if (section) skipping = shown.includes(section[1]);
     return !skipping;
   });
-  return documentOf(kept.join(LINE_BREAK));
+  const named = kept.map((line) => line.replace(SECTION_LINE, (whole, name) => (Object.hasOwn(labels.sections, name) ? `## ${labels.sections[name]}` : whole)));
+  return documentOf(named.join(LINE_BREAK));
 }
 
 /** The heading of a record's page: its group, its title, its status and version under the title, clear of the
@@ -1279,12 +1283,12 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
     const body = [
       headOf({ record, title, description: descriptionOf(project, record), persona: journey ? personaOf(record, labels) : "", labels }),
       ...bars,
-      journey ? "" : linksOf("uses", labels.uses, uses),
+      journey ? "" : linksOf("uses", labels.uses, uses, (each) => titleOf(project, recordsById.get(each))),
       journey ? journeyOf({ project, record, recordsById, tokens, labels }) : "",
       id === SYSTEM_ID ? galleryOf({ project, system, tokens, labels, language }) : "",
       reviewed ? reviewOf({ project, system, record, rows, tokens, captures, labels }) : "",
       checksOf(problems, record, labels),
-      specOf(project, record),
+      specOf(project, record, labels),
       appearsOf({ project, ids: usedBy, recordsById, labels }),
     ].filter(Boolean).join("\n");
     const script = (reviewed ? FRAMES + PANEL + TABS : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");

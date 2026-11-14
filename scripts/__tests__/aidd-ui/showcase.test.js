@@ -279,6 +279,18 @@ describe("aidd-ui showcase", () => {
       assert.ok(!rowOf(frame, "color.brand.veil").includes("color(srgb"));
     });
 
+    it("shows the theme and platform bar only for an axis that has more than one value", () => {
+      const axes = (html) => [...html.matchAll(/<select data-axis="(\w+)">/g)].map((match) => match[1]);
+      const declare = (themes, platforms) => put(tmp, `${UI}/system.md`, read(`${UI}/system.md`).replace(/themes: \[[^\]]*\]/, `themes: ${themes}`).replace(/platforms: \[[^\]]*\]/, `platforms: ${platforms}`));
+      declare("[light]", "[web]");
+      assert.doesNotMatch(systemPage(), /class="toolbar"|data-axis=/);
+      assert.ok(systemPage().includes("<iframe"), "the gallery stays");
+      declare("[light]", "[web, mobile]");
+      assert.deepEqual([...new Set(axes(systemPage()))], ["platform"]);
+      declare("[light, dark]", "[web]");
+      assert.deepEqual([...new Set(axes(systemPage()))], ["theme"]);
+    });
+
     it("shows no gallery without a stylesheet", () => {
       const html = systemPage({ tokens: null });
       assert.ok(!html.includes("<iframe"));
@@ -455,6 +467,33 @@ describe("aidd-ui showcase", () => {
       assert.ok(!pages["home.html"].includes("button problem"));
       assert.ok(pages["button.html"].includes("button problem") && !pages["button.html"].includes("home record problem"));
       assert.match(pages["home.html"], /<li data-rule="V1">/);
+    });
+
+    it("folds the engine checks into a closed block named for developers, with their count", () => {
+      const problems = [
+        { rule: "V1", severity: "error", file: `${UI}/screens/home.md`, message: "home record problem", fix: "f" },
+        { rule: "V2", severity: "error", file: `${UI}/screens/home.html`, message: "home render problem", fix: "f" },
+      ];
+      const block = (html) => html.match(/<details class="checks"[^>]*>[\s\S]*?<\/details>/)[0];
+      assert.match(block(pagesOf({ problems })["home.html"]), /^<details class="checks"><summary>For developers \(2\)<\/summary>/);
+      assert.match(block(pagesOf({ problems, lang: "fr" })["home.html"]), /^<details class="checks"><summary>Pour les d\u00e9veloppeurs \(2\)<\/summary>/);
+      assert.doesNotMatch(pagesOf({ problems })["button.html"], /class="checks"/);
+    });
+
+    it("shows what a record uses by title, not by id", () => {
+      const home = pagesOf()["home.html"];
+      const block = home.match(/<section class="links" data-links="uses">[\s\S]*?<\/section>/)[0];
+      const shown = [...block.matchAll(/<a href="([^"]+)\.html">([^<]*)<\/a>/g)].map((match) => [match[1], match[2]]);
+      assert.deepEqual(shown, [["dialog", "Dialog"], ["search-field", "Search field"]]);
+    });
+
+    it("writes the section headings of a record in the language, the record staying in English", () => {
+      const keep = "## Usage\n\ntext\n\n## Keyboard\n\ntext\n\n## Breakpoints\n\ntext\n\n## Something else\n\ntext\n";
+      put(tmp, `${UI}/components/button.md`, `${read(`${UI}/components/button.md`)}\n${keep}`);
+      const headings = (html) => [...html.match(/<article class="doc">[\s\S]*?<\/article>/)[0].matchAll(/<h2>([^<]*)<\/h2>/g)].map((match) => match[1]);
+      assert.deepEqual(headings(pagesOf()["button.html"]).slice(-4), ["Usage", "Keyboard", "Breakpoints", "Something else"]);
+      assert.deepEqual(headings(pagesOf({ lang: "fr" })["button.html"]).slice(-4), ["Utilisation", "Clavier", "Points de rupture", "Something else"]);
+      assert.ok(read(`${UI}/components/button.md`).includes("## Usage"));
     });
 
     it("leaves the expected-component check out of a page, the engine still reports it", () => {
@@ -688,7 +727,11 @@ describe("aidd-ui showcase", () => {
       assert.match(rowOf(fr["home.html"], "home", "error"), /<a class="pick" href="home\.html#tab-error">erreur<\/a>/);
       assert.match(rowOf(fr["home.html"], "home", "error"), /data-state="error"/);
       assert.deepEqual(["default", "loading", "error"].map((state) => tab(fr["home.html"], state).match(/>([^<]*)<\/button>$/)[1]), ["par défaut", "chargement", "erreur"]);
-      assert.match(rowOf(fr["button.html"], "button", "hover"), /class="pick"[^>]*>hover</, "an unknown name as written");
+      put(tmp, `${UI}/components/button.md`, read(`${UI}/components/button.md`).replace("states: [default, hover, focus, disabled]", "states: [default, hover, focus, disabled, pressed, selected, checked, ghost]"));
+      const button = pagesOf({ lang: "fr" })["button.html"];
+      const picked = (state) => rowOf(button, "button", state).match(/class="pick"[^>]*>([^<]*)</)[1];
+      assert.deepEqual(["hover", "focus", "disabled", "pressed", "selected", "checked"].map(picked), ["survol", "focus", "d\u00e9sactiv\u00e9", "appuy\u00e9", "s\u00e9lectionn\u00e9", "coch\u00e9"]);
+      assert.equal(picked("ghost"), "ghost", "an unknown name as written");
       assert.match(rowOf(pagesOf()["home.html"], "home", "error"), /class="pick"[^>]*>error</);
       assert.equal(copiedOf([{ record: "home", version: 1, verdicts: [{ state: "empty", verdict: "ok", comment: "" }] }]).includes('"state": "empty"'), true);
     });
