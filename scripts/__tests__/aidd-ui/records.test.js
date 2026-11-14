@@ -166,12 +166,25 @@ describe("aidd-ui records and history", () => {
     it("names an id two records hold", () => {
       const screen = ["id: brand", "kind: screen", "status: proposed", "version: 1", "uses: []", "tokens: []", "states: [default]", "breakpoints: [mobile]", "route: /brand", "wireframe: search-flow"];
       put(tmp, `${UI}/screens/brand.md`, record(screen));
-      addHistory(tmp, ["brand", "1", "created", "no", "aidd_docs/tasks/ds-init"]);
       assert.deepEqual(problems(), [`${UI}/screens/brand.md: id "brand" already belongs to ${BRAND}`]);
     });
   });
 
+  describe("R3 brand and system versions", () => {
+    for (const [file, id] of [[BRAND, "brand"], [SYSTEM, "system"]]) {
+      it(`names status and version missing from ${id}.md, with the line to add`, () => {
+        change(file, "status: proposed\nversion: 1\n", "");
+        assert.deepEqual(problems(), [`${file}: missing key "status"`, `${file}: missing key "version"`]);
+        assert.deepEqual(records.check(load(tmp)).filter((each) => each.file === file).map((each) => each.fix), ["add status: proposed", "add version: 1"]);
+      });
+    }
+  });
+
   describe("R5 version", () => {
+    it("accepts an integer system row beside the semver ones", () => {
+      assert.deepEqual(problems(), []);
+    });
+
     for (const bad of ["0", "v2"]) {
       it(`names element version ${bad}`, () => {
         change(JOURNEY, "version: 1", `version: ${bad}`);
@@ -480,8 +493,20 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${JOURNEY}: no row in history.md`]);
     });
 
-    it("names the system without a publication row", () => {
+    it("accepts the system without a publication row: its content row is enough", () => {
       change(HISTORY, "| system | 1.0.0 | first system | no | aidd_docs/tasks/ds-init | |\n| system | 2.0.0 | old-button retired | yes | aidd_docs/tasks/retire-old-button | |\n", "");
+      assert.deepEqual(problems(), []);
+    });
+  });
+
+  describe("H1 brand and system content history", () => {
+    it("names a brand without a row in history.md", () => {
+      change(HISTORY, "| brand | 1 | created | no | aidd_docs/tasks/ds-init | |\n", "");
+      assert.deepEqual(problems(), [`${BRAND}: no row in history.md`]);
+    });
+
+    it("names a system with publications but no integer row", () => {
+      change(HISTORY, "| system | 1 | created | no | aidd_docs/tasks/ds-init | |\n", "");
       assert.deepEqual(problems(), [`${SYSTEM}: no row in history.md`]);
     });
   });
@@ -507,6 +532,18 @@ describe("aidd-ui records and history", () => {
       change(BUTTON, "version: 1", "version: 3");
       addHistory(tmp, ["button", "3", "larger", "no", "aidd_docs/tasks/ds-init"]);
       assert.deepEqual(problems(), [`${BUTTON}: history jumps from 1 to 3`]);
+    });
+  });
+
+  describe("H3 brand and system versions", () => {
+    it("names a system version above its highest integer row", () => {
+      change(SYSTEM, "version: 1", "version: 2");
+      assert.deepEqual(problems(), [`${SYSTEM}: version 2 is not the highest history row, 1`]);
+    });
+
+    it("names a brand version above its highest row", () => {
+      change(BRAND, "version: 1", "version: 2");
+      assert.deepEqual(problems(), [`${BRAND}: version 2 is not the highest history row, 1`]);
     });
   });
 
@@ -778,6 +815,7 @@ describe("aidd-ui records and history", () => {
 // Every rule case above notes the problems it saw; each carries a fix, and this table pins the rule, message, excerpt
 // and fix of all of them (`-` for no excerpt). It reads what the cases before it saw, so it runs with the whole file.
 const FIXES = [
+  "H1 | no row in history.md | - | run bump --task <folder> --created brand",
   "H1 | no row in history.md | - | run bump --task <folder> --created onboarding",
   "H1 | no row in history.md | - | run bump --task <folder> --created system",
   "H2 | two changes claim version 2 of old-button, renumber one | \"old-button 2\" | renumber one of the rows",
@@ -835,6 +873,7 @@ const FIXES = [
   "R2 | unknown kind \"toString\" | \"toString\" | set kind to system, brand, atom, molecule, organism, screen, journey, wireframe, asset or review",
   "R2 | unknown kind \"widget\" | \"widget\" | set kind to system, brand, atom, molecule, organism, screen, journey, wireframe, asset or review",
   "R3 | missing key \"alt\" | - | add the key \"alt\" to the front matter",
+  "R3 | missing key \"status\" | - | add status: proposed",
   "R3 | missing key \"format\" | - | add the key \"format\" to the front matter",
   "R3 | missing key \"locales\" | - | add the key \"locales\" to the front matter",
   "R3 | missing key \"persona\" | - | add the key \"persona\" to the front matter",
@@ -844,6 +883,7 @@ const FIXES = [
   "R3 | missing key \"states\" | - | add the key \"states\" to the front matter",
   "R3 | missing key \"uses\" | - | add the key \"uses\" to the front matter",
   "R3 | missing key \"version\" | - | add the key \"version\" to the front matter",
+  "R3 | missing key \"version\" | - | add version: 1",
   "R3 | missing key \"zones\" | - | add the key \"zones\" to the front matter",
   "R3 | status \"done\" must be proposed, validated or deprecated | \"done\" | set status to proposed, validated or deprecated",
   "R3 | type \"photo\" must be icon, image or illustration | \"photo\" | set type to icon, image or illustration",

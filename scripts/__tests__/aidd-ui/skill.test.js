@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, edit, editTokens, propose, put } = require("../fixtures/aidd-ui/project.js");
+const { UI, HISTORY, history, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, edit, editTokens, propose, put } = require("../fixtures/aidd-ui/project.js");
 
 // The record templates are what the skill's model starts from, so each is filled the way an
 // action says and the design system around it must still validate. A placeholder the table does
@@ -158,13 +158,12 @@ describe("aidd-ui design system templates", () => {
     assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
   });
 
-  it("start every element as proposed at version 1, the system and the brand with neither status nor version", () => {
-    for (const name of ["component", "asset"]) {
+  it("start every element, the system and the brand as proposed at version 1", () => {
+    for (const name of ["component", "asset", "system", "brand"]) {
       const text = filled(name);
       assert.ok(text.includes("status: proposed\n"), name);
       assert.ok(text.includes("version: 1\n"), name);
     }
-    for (const name of ["system", "brand"]) assert.equal(/^(status|version):/m.test(filled(name)), false, name);
   });
 
   it("hold no history section: history.md is the engine's", () => {
@@ -569,6 +568,7 @@ describe("aidd-ui owed problems", () => {
   it("name, for the brand alone, the one rule it leaves, and none while no element needs a token", () => {
     for (const entry of fs.readdirSync(path.join(tmp, UI))) if (entry !== "brand.md") fs.rmSync(path.join(tmp, UI, entry), { recursive: true });
     fs.rmSync(path.join(tmp, "src"), { recursive: true });
+    put(tmp, HISTORY, history(["brand", "1", "created", "no", "aidd_docs/tasks/ds-init"]));
     assert.deepEqual(rulesOf(tmp), []);
     assert.deepEqual(owed("02-brand"), ["T1 another skill"]);
   });

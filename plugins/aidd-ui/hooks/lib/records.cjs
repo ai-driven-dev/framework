@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { list, table } = require("./markdown.cjs");
 const { checkOf, ERROR, WARNING, HISTORY_FILE } = require("./project.cjs");
-const { breakpointsOf, STEPS_SECTION, PERSONA_SECTION, REVIEW_KIND, VERDICTS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf } = require("./model.cjs");
+const { breakpointsOf, STEPS_SECTION, PERSONA_SECTION, REVIEW_KIND, VERDICTS_SECTION, STATUS_DEPRECATED, SYSTEM_ID, AXIS_SEPARATOR, variantOf, IMPLEMENTED_KINDS, LEVELS, INTEGER_VERSION, SEMVER, problem, fm, isElement, isComponent, isSystem, belongs, readable, placed, byId, systemOf, reviewStatesOf } = require("./model.cjs");
 
 const STATUSES = ["proposed", "validated", STATUS_DEPRECATED];
 const REVIEW_STATUSES = ["proposed", "validated"]; // R16: a review is never deprecated
@@ -21,11 +21,12 @@ const DEPRECATION_SECTION = "Deprecation";
 const BRAND_HEADINGS = ["Project", "Users", "Domain", "Personality and tone", "References", "Anti-references"];
 
 const COMMON_KEYS = ["id", "kind"];
-const VERSIONED_KEYS = ["status", "version"]; // all but the system, whose versions are its publications, and the brand
+const VERSIONED_KEYS = ["status", "version"];
+const DEFAULT_LINES = { status: "add status: proposed", version: "add version: 1" }; // what a brand or a system lacking one is told to write
 const COMPONENT_KEYS = [...VERSIONED_KEYS, "uses", "tokens", "variants", "states", "role"];
 const KIND_KEYS = {
-  system: ["format", "platforms", "themes", "locales", "primitives", "code-roots", "ignore"],
-  brand: [],
+  system: [...VERSIONED_KEYS, "format", "platforms", "themes", "locales", "primitives", "code-roots", "ignore"],
+  brand: VERSIONED_KEYS,
   atom: COMPONENT_KEYS,
   molecule: COMPONENT_KEYS,
   organism: COMPONENT_KEYS,
@@ -76,7 +77,8 @@ function requiredKeyProblems(project) {
   const placedRecords = new Set(placed(project));
   return readable(project).flatMap((record) => {
     const keys = [...COMMON_KEYS, ...(placedRecords.has(record) ? KIND_KEYS[fm(record).kind] : [])];
-    const missing = keys.filter((key) => !(key in fm(record))).map((key) => problem(record, `missing key "${key}"`, `add the key "${key}" to the front matter`));
+    const fixes = ["brand", SYSTEM_ID].includes(fm(record).kind) ? DEFAULT_LINES : {};
+    const missing = keys.filter((key) => !(key in fm(record))).map((key) => problem(record, `missing key "${key}"`, fixes[key] ?? `add the key "${key}" to the front matter`));
     return [...missing, ...(placedRecords.has(record) ? valueProblems(record) : [])];
   });
 }
@@ -93,7 +95,7 @@ function identityProblems(project) {
 }
 
 function versionProblems(project) {
-  const published = project.history.filter((row) => row.Id === SYSTEM_ID && !SEMVER.test(row.Version));
+  const published = project.history.filter((row) => row.Id === SYSTEM_ID && !SEMVER.test(row.Version) && !INTEGER_VERSION.test(row.Version));
   return [
     ...placed(project).flatMap((record) => {
       const version = fm(record).version;
@@ -210,7 +212,7 @@ function reviewProblems(project) {
       const missing = list(fm(record).screens).flatMap((id) => {
         const screen = index.get(id);
         const version = screen && fm(screen).version;
-        return list(screen && fm(screen).states)
+        return (screen ? reviewStatesOf(screen) : [])
           .filter((state) => !rows.some((row) => row.Screen === id && row.State === state && row.Version === version))
           .map((state) => problem(record, `no verdict row for ${id} / ${state} at version ${version}`, `add a row for ${id} / ${state} at version ${version} to "## ${VERDICTS_SECTION}"`));
       });

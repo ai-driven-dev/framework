@@ -5,7 +5,7 @@ const crypto = require("node:crypto");
 const fs = require("node:fs");
 const nodePath = require("node:path");
 const { list, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, systemOf, byId, tokensUsedBy, isElement, isSystem, problem, fm, SYSTEM_ID, INTEGER_VERSION, SEMVER, STATUS_DEPRECATED, BREAKING, BREAKING_VALUES } = require("./model.cjs");
+const { placed, systemOf, byId, tokensUsedBy, isElement, problem, fm, SYSTEM_ID, INTEGER_VERSION, SEMVER, STATUS_DEPRECATED, BREAKING, BREAKING_VALUES } = require("./model.cjs");
 const { checkOf, text, unreadable, HISTORY_FILE } = require("./project.cjs");
 const { customProperty, declarationsOf, layered, contextsOf, resolved } = require("./css.cjs");
 const { cssFileOf } = require("./tokens.cjs");
@@ -19,10 +19,12 @@ const FINGERPRINT_LENGTH = 12;
 const WIREFRAME = "wireframe";
 const REMOVED = "removed"; // the Change of the row that takes an id out of the design system
 
-/** What a review judges, and a history rule holds once validated: an element or a wireframe. */
-const isReviewed = (record) => isElement(record) || fm(record).kind === WIREFRAME;
+/** What a review judges, and a history rule holds once validated: an element, a wireframe, the brand or the system. */
+const isReviewed = (record) => isElement(record) || [WIREFRAME, "brand", SYSTEM_ID].includes(fm(record).kind);
 const rowsOf = (project, id) => project.history.filter((row) => row.Id === id);
 const inHistory = (message, fix, excerpt) => problem({ file: HISTORY_FILE }, message, fix, excerpt);
+/** The rows of an id that say its content changed: all of them, but for the system's semver ones, which are publications. */
+const contentRows = (project, id) => rowsOf(project, id).filter((row) => id !== SYSTEM_ID || !SEMVER.test(row.Version));
 /** A system row's Task cell: the tasks one publication lists, comma-separated. */
 const taskList = (cell) => list(cell?.split(",").map((task) => task.trim()).filter(Boolean));
 
@@ -47,12 +49,12 @@ const byVersion = (rows, system) =>
     .filter((entry) => entry.parts)
     .sort((a, b) => compare(a.parts, b.parts));
 
-/** Records that carry a history, which every history rule reads: all but the brand. */
-const versioned = (project) => placed(project).filter((record) => fm(record).id === record.name && fm(record).kind !== "brand");
+/** Records that carry a history, which every history rule reads. */
+const versioned = (project) => placed(project).filter((record) => fm(record).id === record.name);
 
 function presenceProblems(project) {
   return versioned(project)
-    .filter((record) => rowsOf(project, fm(record).id).length === 0)
+    .filter((record) => contentRows(project, fm(record).id).length === 0)
     .map((record) => problem(record, "no row in history.md", `run bump --task <folder> --created ${fm(record).id}`));
 }
 
@@ -70,7 +72,7 @@ function duplicateProblems(project) {
 function currentProblems(project) {
   const removed = removedIds(project);
   return versioned(project)
-    .filter((record) => !isSystem(record) && !removed.has(fm(record).id))
+    .filter((record) => !removed.has(fm(record).id))
     .flatMap((record) => {
       const current = parts(fm(record).version, false);
       const rows = byVersion(rowsOf(project, fm(record).id), false);

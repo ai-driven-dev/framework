@@ -57,6 +57,8 @@ const TASK = "aidd_docs/tasks/ds-init";
 const created = (id) => [id, "1", "created", "no", TASK];
 
 const ROWS = [
+  ["system", "1", "created", "no", TASK],
+  ["brand", "1", "created", "no", TASK],
   ["system", "1.0.0", "first system", "no", TASK],
   ["system", "2.0.0", "old-button retired", "yes", "aidd_docs/tasks/retire-old-button"],
   ...["icon-search", "button", "search-field", "dialog", "old-button", "home", "onboarding", "first-pass", "search-flow"].map(created),
@@ -75,6 +77,8 @@ const SYSTEM = record(
   [
     "id: system",
     "kind: system",
+    "status: proposed",
+    "version: 1",
     "format: 1",
     "platforms: [web]",
     "themes: [light, dark]",
@@ -89,7 +93,7 @@ const SYSTEM = record(
 );
 
 const BRAND = record(
-  ["id: brand", "kind: brand"],
+  ["id: brand", "kind: brand", "status: proposed", "version: 1"],
   "# Brand",
   "## Project\n\nA search tool.",
   "## Users\n\nAnalysts.",
