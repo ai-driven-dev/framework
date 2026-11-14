@@ -28,4 +28,4 @@ Slug: the category index without its leading `0`, then a kebab-case name, such a
 | 08 | domain | business logic |
 | 09 | other | miscellaneous |
 
-Several categories fit: take the most specific, in the order `03`, `02`, `01`, `00`, then `04` to `08`, else `09`.
+Several fit: take the first of `03`, `02`, `01`, `00`, `04`–`08`, `09`.

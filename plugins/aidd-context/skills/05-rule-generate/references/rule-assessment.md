@@ -11,12 +11,6 @@ How a candidate compares with each found policy, and what to offer.
 | overlap | a policy repeats or extends part of it, compatibly |
 | conflict | a policy requires the opposite, or the candidate weakens one |
 
-## Comparison
-
-- Compare obligations, prohibitions, scopes, conditions and exceptions.
-- Skip a policy only when its scope cannot overlap the candidate's.
-- Cite each finding's source path and decisive quote.
-
 ## Choices
 
 | Label | Offer |

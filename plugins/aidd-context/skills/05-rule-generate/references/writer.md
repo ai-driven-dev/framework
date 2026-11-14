@@ -40,6 +40,4 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | 3 | Unwritable path found before writing, nothing written. | `blocked` |
 | 3 | File operation failed while writing. | `written`, `failed`, `pending` |
 
-- Every non-zero exit prints JSON on stdout.
 - `targets` only grow: drop a host by removing the rule, then adding it again.
-- It refuses an `AGENTS.md` index block it cannot trust, an unknown host, a category or slug outside `rule-authoring.md`, a comma in a path, a symlink or a path outside the project, invalid UTF-8, and an Antigravity copy over 24,000 bytes.

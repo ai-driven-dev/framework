@@ -9,5 +9,4 @@ Where to look for the policies a candidate rule may repeat or contradict.
 | Instruction files | `AGENTS.md`, `AGENTS.override.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.local.md`, `GEMINI.md`, `.github/copilot-instructions.md`, at the root and in folders the scope reaches |
 | Configured sources | files listed in `instructions` of `opencode.json` |
 
-- Skip the `aidd_rules` block of `AGENTS.md`: it only links rule sources already read.
-- Skip a native copy identical to its source.
+- Skip the `aidd_rules` block of `AGENTS.md` and native copies: they repeat the sources.
