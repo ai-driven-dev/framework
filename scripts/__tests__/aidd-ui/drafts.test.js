@@ -110,6 +110,14 @@ describe("aidd-ui drafts", () => {
       assert.match(assertFlags(["D5"]), / D5 "b"/);
     });
 
+    it("D6 flags a variant render that loads the tokens from elsewhere than its record will, naming the file", () => {
+      const screen = (href) => `<!doctype html>\n<html lang="en">\n<head>\n<link rel="stylesheet" href="${href}">\n</head>\n<body></body>\n</html>\n`;
+      writeSet("brand", { files: (name) => ({ "brand.md": brandOf(`Tone of ${name}`), "screens/home.html": screen("../tokens.css"), "preview.html": `<p>${name}</p>\n` }) });
+      assert.equal(showcase().code, 0);
+      put(`${DRAFTS}/brand/b/screens/home.html`, screen("../../../../tokens.css"));
+      assert.match(assertFlags(["D6"]), / D6 "b\/screens\/home.html"/);
+    });
+
     it("D5 flags a table without a Variant column, and a variant named like a path, naming the row", () => {
       writeSet("brand", { header: ["Direction", "Intent", "Tone"], rows: ROWS.map(([name, intent, tone]) => [name, intent, tone]) });
       const run = showcase();
@@ -168,11 +176,11 @@ describe("aidd-ui drafts", () => {
     });
 
     it("lands each file where the variant's folder mirrors it", () => {
-      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": `md ${name}\n`, "components/x.html": `<p>${name}</p>\n`, "preview.html": "<p>p</p>\n" }) });
+      writeSet("button", { rows: ROWS.slice(0, 2), files: (name) => ({ "components/x.md": `md ${name}\n`, "components/x.html": `<link rel="stylesheet" href="../tokens.css"><p>${name}</p>\n`, "preview.html": "<p>p</p>\n" }) });
       const run = keep("button", "b");
       assert.deepEqual(JSON.parse(run.out).written, [`${UI}/components/x.html`, `${UI}/components/x.md`]);
       assert.equal(read(`${UI}/components/x.md`), "md b\n");
-      assert.equal(read(`${UI}/components/x.html`), "<p>b</p>\n");
+      assert.equal(read(`${UI}/components/x.html`), '<link rel="stylesheet" href="../tokens.css"><p>b</p>\n');
     });
 
     it("refuses a name that leaves the drafts folder, nothing written", () => {

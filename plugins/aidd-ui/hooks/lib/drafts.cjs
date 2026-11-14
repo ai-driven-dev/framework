@@ -4,6 +4,7 @@ const path = require("node:path");
 const { Refusal, NO_UI_FOLDER, walk, clean, relative, UI_DIR, DRAFTS_DIR, ERROR } = require("./project.cjs");
 const { table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
 const { fingerprintOf } = require("./html.cjs");
+const { loadsStylesheet, STYLESHEET_HREF } = require("./renders.cjs");
 
 const VARIANTS_FILE = "variants.md";
 const PREVIEW_FILE = "preview.html"; // a variant's own look, shown while choosing and never kept
@@ -36,7 +37,13 @@ const valueOf = (cell) => (cell ?? "").toLowerCase().replace(WHITESPACE, " ").tr
 /** A variant name is a folder name of its own, as a set's is. */
 const isName = (name) => typeof name === "string" && SET_NAME.test(name);
 
-/** The problems of a set, D1 to D5, each naming its variant. */
+/** The renders of a variant that load the tokens from another path than the record they become. */
+const strayRenders = (from) =>
+  walk(from)
+    .map((file) => relative(from, file))
+    .filter((file) => file.endsWith(".html") && path.basename(file) !== PREVIEW_FILE && !loadsStylesheet(fs.readFileSync(path.join(from, file), "utf8")));
+
+/** The problems of a set, D1 to D6, each naming its variant. */
 function check({ dir, file, rows, axes }) {
   const found = [];
   const flag = (rule, message, fix, excerpt) => found.push({ rule, severity: ERROR, file, message, fix, ...(excerpt === undefined ? {} : { excerpt }) });
@@ -48,6 +55,7 @@ function check({ dir, file, rows, axes }) {
     for (const axis of axes) if (!row[axis]) flag("D3", `variant "${names[at]}" has no value for ${axis}`, `write its ${axis}`, names[at]);
     if (!isName(names[at])) flag("D5", `variant "${names[at]}" is no folder name`, "name it with lowercase letters, digits and hyphens", String(names[at]));
     else if (!walk(path.join(dir, names[at])).length) flag("D5", `variant "${names[at]}" has no files`, `write its files in ${DRAFTS_DIR}/${path.basename(dir)}/${names[at]}/`, names[at]);
+    else for (const render of strayRenders(path.join(dir, names[at]))) flag("D6", `${names[at]}/${render} does not load ${STYLESHEET_HREF}, as its record will`, `link ${STYLESHEET_HREF}, the path from aidd_docs/ui/`, `${names[at]}/${render}`);
   });
   rows.forEach((row, at) => {
     rows.slice(at + 1).forEach((other, offset) => {

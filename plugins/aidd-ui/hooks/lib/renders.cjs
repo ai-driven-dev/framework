@@ -380,4 +380,4 @@ const RULES = {
 /** Every broken render rule, in rule order. */
 const check = checkOf(RULES);
 
-module.exports = { check, renderOf };
+module.exports = { check, renderOf, loadsStylesheet, STYLESHEET_HREF };

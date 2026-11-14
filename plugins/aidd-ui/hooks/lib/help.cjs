@@ -176,6 +176,7 @@ const HELP = {
       "D3 no axis column, or an empty axis cell.",
       "D4 two variants alike on every axis.",
       "D5 a variant with no folder, or an empty one.",
+      "D6 a variant render not linking `../tokens.css` as its record will.",
     ],
     exits: ["0 the pages are written.", "1 a set has problems: every page is written.", "2 an unknown argument, or a request refused, nothing written."],
   },
