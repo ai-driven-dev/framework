@@ -28,16 +28,25 @@ import {
 const SESSION = "00000000-0000-4000-8000-0000000000bb";
 const BARE = '{"telemetry":{"enabled":true},"keep":{"me":1}}';
 const DELEGATE_FILE = "aidd-session-trailer.sh";
-/** What the previous version installed, as it wrote it. */
+/** What the previous version installed, verbatim. */
 const DELEGATE = `#!/bin/sh
 # Installed by \`aidd telemetry on\`, removed by \`aidd telemetry off\`.
+#
+# Names the AI session that authored this commit, so what a session cost can be read
+# per commit. Writes nothing when no session made the commit.
 set -u
+
 message_file="\${1:-}"
+
 [ -n "$message_file" ] || exit 0
+
 session_id="\${CODEX_THREAD_ID:-\${CLAUDE_CODE_SESSION_ID:-}}"
 [ -n "$session_id" ] || exit 0
+
+# --if-exists doNothing keeps an amend, or a second run of this hook, from writing it twice.
 git interpret-trailers --in-place --if-exists doNothing \\
   --trailer "AIDD-Session-Id=$session_id" "$message_file" || exit 0
+
 exit 0
 `;
 
