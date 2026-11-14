@@ -9,16 +9,16 @@ argument-hint: request
 ```mermaid
 flowchart LR
   entry([request]) -->|"new skill"| scope["actions/01-scope.md"]
-  entry -->|"skill folder exists"| plan
-  scope --> plan["actions/02-plan.md"] --> write["actions/03-write.md"] --> validate["actions/04-validate.md"]
+  entry -->|"skill folder exists"| plan["actions/02-plan.md"]
+  scope --> plan --> write["actions/03-write.md"] --> validate["actions/04-validate.md"]
   scope <-->|"frame to confirm"| user((user answers))
   plan <-->|"table to confirm"| user
   validate <-->|"trial or out-of-plan breach to confirm"| user
-  plan -->|"nothing to change"| stopped((stopped))
   validate -->|"breach or failed trial"| validate
   validate -->|"trial passed"| done((validated))
   validate -->|"trial declined or unavailable"| unverified((runtime unverified))
   validate -->|"fix declined or impossible"| blocked((blocked))
+  plan -->|"nothing to change"| stopped((stopped))
   write -->|"path outside the workspace"| stopped
 ```
 
