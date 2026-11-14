@@ -12,7 +12,7 @@ The request.
 2. Read `aidd_docs/ui/`. Name the [case](../references/cases.md).
 3. If `aidd_docs/ui/system.md` is missing, stop and say so.
 4. Take the records the request names.
-   - Else take each `proposed` one with states and a render.
+   - Else take each `proposed` one the showcase lists to review.
    - If there is none, stop and say so.
 5. For each coded screen, list the captures it needs, per [review](../references/review.md).
 6. Take the task folder the user named, else ask.

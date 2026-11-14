@@ -15,6 +15,7 @@ The engine and the brand kept.
 5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
 6. Reply with:
    - the brand written
+   - the brand's version, to review in the showcase
    - what the validation still prints
    - that the code is untouched.
 

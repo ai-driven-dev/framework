@@ -22,6 +22,8 @@ The set, in the showcase.
    - Picks: each picked axis comes from its variant. Together they make the mix.
    - Several kept: ask which one. The user makes the choice.
 4. One kept, no revise, no picks: keep it per [engine](../references/engine.md).
+   - Then raise the brand's version per [engine](../references/engine.md).
+   - A new brand is recorded the same way.
    - Then read [conclude](04-conclude.md).
 5. Otherwise read [propose](02-propose.md) with the mix and the comments.
 
