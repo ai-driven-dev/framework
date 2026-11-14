@@ -90,17 +90,16 @@ src/
 │   │   │   ├── identity/
 │   │   │   └── switch/
 │   │   └── infrastructure/
-│   │       ├── consent/    # reading a clone's identity from the file system, and the consent history file
-│   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
-│   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
-│   │       ├── git/    # the environment a git child process runs in
-│   │       ├── identity/    # the identity file in the telemetry dir
+│   │       ├── git/    # every git child process: the executor, its environment, and what git config and branches answer
 │   │       ├── legacy/    # the table of ids an earlier version wrote beside the ledger, read and never written
 │   │       ├── reading/    # reading a text file safely, for the stores under the telemetry dir
-│   │       ├── left-out/    # what ingests measured and could not store, by hash, beside the ledger
-│   │       ├── storage/    # the owner-only private storage under the telemetry dir
-│   │       ├── switch/    # the project config, what an earlier measurement left in a repository, and Claude settings; the clone's consent in git config is `git-consent-adapter.ts`, beside this folder
-│   │       └── transcripts/    # reading each tool's session files a block at a time; the Codex source
+│   │       ├── sources/    # a tool's own session files and settings, one folder per tool
+│   │       │   ├── claude/    # Claude Code: the journal files, the projects root, the retention setting
+│   │       │   └── codex/    # Codex: the session files, their zstd frames and their line format
+│   │       └── storage/    # the owner-only files under the telemetry dir
+│   │           ├── consent/    # a clone's identity read from the file system, and the consent history file
+│   │           ├── declarations/    # the declarations kept beside the ledger, and the lock their writers share
+│   │           └── ledger/    # the calls, their resolution, the branch snapshots and what an ingest left out
 │   ├── translate/    # canonical source to target-native content
 │   │   ├── application/
 │   │   │   └── strategies/

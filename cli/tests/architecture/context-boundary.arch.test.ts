@@ -70,7 +70,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the common record every tool's reader produces
     "src/contexts/telemetry/domain/usage-record.ts",
     // where a transcript root is
-    "src/contexts/telemetry/domain/claude-projects-root.ts",
+    "src/contexts/telemetry/infrastructure/sources/claude/claude-projects-root.ts",
     // the operation another layer asks for, one per tool, and Claude's format it is given
     "src/contexts/telemetry/application/read-usage-use-case.ts",
     "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts",

@@ -34,8 +34,8 @@ import {
   USAGE_AGENTS,
   USAGE_TOOLS,
 } from "../../../../../src/contexts/telemetry/domain/usage-record.js";
+import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import type { UsageLedger } from "../../../../../src/contexts/telemetry/ports/usage-ledger.js";
 import {
   FakeBindings,
