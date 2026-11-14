@@ -7,7 +7,7 @@ import {
 import { lockWaitFor, type TaskDeclaration } from "../domain/declaration/task-declaration.js";
 import type { BranchBindingSource } from "../ports/branch-binding-source.js";
 import type { BranchBindingStore } from "../ports/branch-binding-store.js";
-import type { SnapshotBindingsUseCase } from "./snapshot-bindings-use-case.js";
+import type { SnapshotBindings } from "./snapshot-bindings.js";
 
 export interface CurrentBranch {
   /** `null` when `HEAD` is detached. */
@@ -30,7 +30,7 @@ export class BranchDeclarations {
   constructor(
     private readonly store: BranchBindingStore,
     private readonly source: BranchBindingSource,
-    private readonly snapshots: SnapshotBindingsUseCase
+    private readonly snapshots: SnapshotBindings
   ) {}
 
   async current(root: string): Promise<CurrentBranch> {
@@ -62,7 +62,11 @@ export class BranchDeclarations {
       };
     }
     await this.store.declare(root, branch, declaration);
-    await this.snapshots.execute(repositoryId, root, lockWaitFor(declaration.by));
+    await this.snapshots.execute({
+      repositoryId,
+      root,
+      wait: lockWaitFor(declaration.by),
+    });
     return { status: "bound", branch };
   }
 }

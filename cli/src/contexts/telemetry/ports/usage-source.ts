@@ -1,4 +1,5 @@
-import type { TranscriptPosition } from "../domain/transcript-position.js";
+import type { UsageRecord } from "../contract/usage-record.js";
+import type { LineNames, TranscriptPosition } from "../domain/transcript-position.js";
 
 export interface TranscriptRead {
   /** `null`: the file shrank while it was read. The lines handed over
@@ -14,7 +15,18 @@ export interface TranscriptRead {
   readonly unrecognised?: readonly string[];
 }
 
-export interface TranscriptSource {
+/** One tool's format: the billed calls one transcript line holds, and the shapes it did not
+ * recognise. */
+export type ReadUsageLine = (line: string) => {
+  readonly records: readonly UsageRecord[];
+  readonly unrecognised: readonly string[];
+  /** For a line that is no usage line: the directory and time it names, when it names any. */
+  readonly named?: LineNames;
+};
+
+/** One tool's measured usage: where its transcripts are, how they are read, and what a line
+ * of them says. */
+export interface UsageSource {
   /** Every transcript the tool keeps, set-asides and sub-agents included. */
   list(): Promise<readonly string[]>;
   /** When the oldest of these transcripts was last written, or `null` when none can be
@@ -32,4 +44,7 @@ export interface TranscriptSource {
     writtenFrom: number,
     each: (line: string, counted: boolean) => void
   ): Promise<TranscriptRead>;
+  /** A reader for the lines of one file, made fresh for each: a format may hold what earlier
+   * lines of the file said. */
+  decode(): ReadUsageLine;
 }

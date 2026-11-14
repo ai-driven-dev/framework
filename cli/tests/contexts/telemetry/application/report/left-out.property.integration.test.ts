@@ -4,15 +4,14 @@ import { join } from "node:path";
 import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
-import { IngestUsageUseCase } from "../../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadUsageUseCase } from "../../../../../src/contexts/telemetry/application/read-usage-use-case.js";
+import { IngestUsage } from "../../../../../src/contexts/telemetry/application/ingest-usage.js";
+import { ReadUsage } from "../../../../../src/contexts/telemetry/application/read-usage.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
-import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { ReportUsage } from "../../../../../src/contexts/telemetry/application/report/report-usage.js";
+import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { cloneOf, grantedBy } from "../../testing/clone-builders.js";
@@ -183,29 +182,28 @@ function machine() {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const snapshots = new SnapshotBindingsUseCase(
+  const snapshots = new SnapshotBindings(
     new FakeBindings(),
     new InMemorySnapshots(),
     new InMemoryBindingsLock(),
     () => NOW
   );
-  const ingest = new IngestUsageUseCase(
-    [new ReadUsageUseCase(transcripts, () => readClaudeUsageLine)],
+  const ingest = new IngestUsage(
+    [new ReadUsage(transcripts)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,
       now: () => NOW,
     }),
     snapshots,
-    { refusedByEnvironment: false }
+    { environment: { get: () => undefined } }
   );
-  const report = new ReportUsageUseCase(
+  const report = new ReportUsage(
     ingest,
     ledger,
-    new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots()),
-    new InMemoryIdentity(),
+    new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots(), new InMemoryIdentity()),
     locator,
-    { refusedByEnvironment: false }
+    { get: () => undefined }
   );
   const locked = cloneKey(cloneOf("/work/locked/.git", { ino: "/work/locked" }));
   /** Git refuses, or reads again, the clone at `/work/locked`. */

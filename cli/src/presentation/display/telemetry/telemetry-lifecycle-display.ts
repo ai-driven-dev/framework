@@ -1,12 +1,13 @@
 import type {
   ForgetPlan,
-  ForgetResult,
-} from "../../../contexts/telemetry/application/forget/forget-telemetry-use-case.js";
-import type { OffResult } from "../../../contexts/telemetry/application/switch/telemetry-off-use-case.js";
+  ForgetTelemetryResult,
+} from "../../../contexts/telemetry/application/forget/forget-telemetry.js";
+import type { DisableTelemetryResult } from "../../../contexts/telemetry/application/switch/disable-telemetry.js";
 import type {
+  EnableTelemetryResult,
   OnIdentity,
-  OnResult,
-} from "../../../contexts/telemetry/application/switch/telemetry-on-use-case.js";
+} from "../../../contexts/telemetry/application/switch/enable-telemetry.js";
+import type { ReadTranscriptRetentionResult } from "../../../contexts/telemetry/application/switch/read-transcript-retention.js";
 import {
   RETENTION_DEFAULT_DAYS,
   RETENTION_WANTED_DAYS,
@@ -15,6 +16,9 @@ import type { ErasureKind } from "../../../contexts/telemetry/contract/measureme
 import type { CLIOutput } from "../../output.js";
 import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON, IDENTITY_RULE } from "../telemetry-display.js";
 
+/** What `telemetry on` says of an identifier that cannot name a person. */
+export const INVALID_IDENTITY_REFUSAL = `${IDENTITY_RULE} Nothing was changed.`;
+
 const REFUSALS = {
   "outside-repository": "This directory is not inside a git repository.",
   "unreadable-git-config":
@@ -22,7 +26,7 @@ const REFUSALS = {
   "damaged-consent-log": `${DAMAGED_CONSENT_LOG} nothing was changed. ${FORGET_THEN_ON} again: nothing from before is stored.`,
   "unidentified-clone":
     "This file system gives the clone's git directory no identity, so nothing measured here could be told to be its own. Nothing was changed.",
-  "invalid-identity": `${IDENTITY_RULE} Nothing was changed.`,
+  "invalid-identity": INVALID_IDENTITY_REFUSAL,
   "identity-set":
     "An identity is set, so this clone cannot be measured anonymously. Remove it with `aidd telemetry identity --off`, then run this again. Nothing was changed.",
 } as const;
@@ -44,7 +48,11 @@ export function printIdentityRule(output: CLIOutput): void {
   output.warn(IDENTITY_RULE);
 }
 
-export function printOnResult(output: CLIOutput, result: OnResult): void {
+export function printOnResult(
+  output: CLIOutput,
+  result: EnableTelemetryResult,
+  retention?: ReadTranscriptRetentionResult
+): void {
   if (result.status === "refused") {
     output.error(REFUSALS[result.reason]);
     return;
@@ -57,8 +65,8 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
   output.info(
     "That setting is shared by this clone's linked worktrees and is never committed: a teammate is measured only after running `aidd telemetry on` in their own clone."
   );
-  if (result.retention.short) {
-    const days = result.retention.days;
+  if (retention?.short) {
+    const days = retention.days;
     output.warn(
       `Claude Code keeps transcripts for ${days} day${days === 1 ? "" : "s"}` +
         `${days === RETENTION_DEFAULT_DAYS ? " (its default)" : ""}. A call is measured only if it is read before then. ` +
@@ -72,7 +80,7 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
   );
 }
 
-export function printOffResult(output: CLIOutput, result: OffResult): void {
+export function printOffResult(output: CLIOutput, result: DisableTelemetryResult): void {
   if (result.status === "refused") {
     output.error(REFUSALS[result.reason]);
     return;
@@ -125,7 +133,7 @@ function empty(plan: ForgetPlan): boolean {
   );
 }
 
-export function printForgetResult(output: CLIOutput, result: ForgetResult): void {
+export function printForgetResult(output: CLIOutput, result: ForgetTelemetryResult): void {
   if (empty(result.plan)) {
     output.info("Nothing measured is kept on this machine.");
     warnSkipped(output, result.plan);

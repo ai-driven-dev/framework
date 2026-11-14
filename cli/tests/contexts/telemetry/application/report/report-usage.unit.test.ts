@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
-import { IngestUsageUseCase } from "../../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadUsageUseCase } from "../../../../../src/contexts/telemetry/application/read-usage-use-case.js";
+import { IngestUsage } from "../../../../../src/contexts/telemetry/application/ingest-usage.js";
+import { ReadUsage } from "../../../../../src/contexts/telemetry/application/read-usage.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import {
-  ReportUsageUseCase,
+  ReportUsage,
   type RequestedFilters,
-} from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+} from "../../../../../src/contexts/telemetry/application/report/report-usage.js";
+import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import {
   NO_FILTERS,
@@ -20,7 +20,6 @@ import {
   type SessionCarry,
 } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
-import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { AUTUMN } from "../../testing/autumn.js";
 import { cloneOf, grantedBy } from "../../testing/clone-builders.js";
 import { FakeBindings } from "../../testing/fake-bindings.js";
@@ -70,20 +69,20 @@ function setup(options: { refused?: boolean } = {}) {
   const snapshotStore = new InMemorySnapshots(events);
   const sessions = new InMemorySessions(events);
   const identity = new InMemoryIdentity();
-  const ingest = new IngestUsageUseCase(
-    [new ReadUsageUseCase(transcripts, () => readClaudeUsageLine)],
+  const ingest = new IngestUsage(
+    [new ReadUsage(transcripts)],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,
       now: () => new Date("2026-10-09T00:00:00.000Z"),
     }),
-    new SnapshotBindingsUseCase(
+    new SnapshotBindings(
       bindings,
       snapshotStore,
       new InMemoryBindingsLock(),
       () => new Date("2026-10-09T00:00:00.000Z")
     ),
-    { refusedByEnvironment: options.refused ?? false }
+    { environment: { get: () => (options.refused ? "0" : undefined) } }
   );
   locator.directories.set("/work/a", {
     status: "repository",
@@ -95,13 +94,12 @@ function setup(options: { refused?: boolean } = {}) {
   });
   consents.cloneSays(cloneOf("/work/a/.git"), grantedBy(cloneOf("/work/a/.git")));
   history.consented(cloneOf("/work/a/.git"));
-  const report = new ReportUsageUseCase(
+  const report = new ReportUsage(
     ingest,
     ledger,
-    new DeclaredBindings(sessions, snapshotStore),
-    identity,
+    new DeclaredBindings(sessions, snapshotStore, identity),
     locator,
-    { refusedByEnvironment: options.refused ?? false }
+    { get: (name) => (name === "AIDD_TELEMETRY" && options.refused ? "0" : undefined) }
   );
   return { transcripts, ledger, bindings, sessions, identity, report, events, locator, consents };
 }

@@ -1,6 +1,7 @@
 import { platform } from "node:os";
 import { Command } from "commander";
 import { bindCatalog, createMenuDeps as createFrameworkMenuDeps } from "./composition/framework.js";
+import { wireTelemetryRequests } from "./composition/telemetry.js";
 import { wireTools } from "./composition/tools.js";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
 import { registerCleanCommand } from "./presentation/commands/clean.js";
@@ -49,7 +50,7 @@ registerSyncCommand(program, tools, createDeps);
 registerUpdateCommand(program, createDeps);
 registerDoctorCommand(program, tools, createDeps);
 registerCleanCommand(program, tools, createDeps);
-registerTelemetryCommand(program, createDeps);
+registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
 
 registerUpdateNoticeHooks(program, createDeps);
 

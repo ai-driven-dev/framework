@@ -433,11 +433,7 @@
       }
     },
     {
-      "includes": [
-        "src/presentation/**/*.ts",
-        "!src/presentation/commands/telemetry.ts",
-        "!src/presentation/display/telemetry/telemetry-report-display.ts"
-      ],
+      "includes": ["src/presentation/**/*.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -468,65 +464,6 @@
                       "**/telemetry/infrastructure/**"
                     ],
                     "message": "telemetry publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
-                  },
-                  {
-                    "group": [
-                      "**/update/domain/**",
-                      "**/update/ports/**",
-                      "**/update/infrastructure/**"
-                    ],
-                    "message": "update publishes its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
-                  },
-                  {
-                    "group": [
-                      "**/recipes/domain/**",
-                      "**/recipes/ports/**",
-                      "**/recipes/infrastructure/**"
-                    ],
-                    "message": "recipes publishes its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "includes": [
-        "src/presentation/commands/telemetry.ts",
-        "src/presentation/display/telemetry/telemetry-report-display.ts"
-      ],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": ["**/shared/infrastructure/**"],
-                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
-                  },
-                  {
-                    "group": ["**/composition/**"],
-                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/host-registration/infrastructure/**"],
-                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/telemetry/ports/**", "**/telemetry/infrastructure/**"],
-                    "message": "telemetry publishes its contract and its commands only: its ports and infrastructure belong to the composition root. The parsing these two files still do reads its domain until P9 moves it behind the command (reference-context.md, E-M3)"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],

@@ -23,9 +23,27 @@ function toolIds(files: readonly string[]): string[] {
  * tool wired into one of them is caught by the count, never exempted by the admission.
  */
 const REGISTRATION_SITES: readonly { readonly path: string; readonly named: number }[] = [
-  // The wiring of the two measured tools: each reader sits in a folder named for its tool.
+  // The one list of measured tools: each source sits in a folder named for its tool.
   { path: "src/composition/telemetry.ts", named: 2 },
 ];
+
+/**
+ * A measured tool is a few files of readers. A file listed here names its own tool and no other,
+ * so a tool is added by new files and one registration, never by an edit to a neighbour. A new
+ * file naming a tool is red until written down here; a listed one naming none, until removed.
+ */
+const SOURCE_DIR = "src/contexts/telemetry/infrastructure/sources";
+const OWN_TOOL_FILES: Readonly<Record<string, string>> = {
+  [`${SOURCE_DIR}/claude/claude-projects-root.ts`]: "claude",
+  [`${SOURCE_DIR}/claude/claude-settings-adapter.ts`]: "claude",
+  [`${SOURCE_DIR}/codex/codex-transcript-source-adapter.ts`]: "codex",
+  [`${SOURCE_DIR}/codex/codex-transcript-usage.ts`]: "codex",
+};
+
+function namesOnlyItsOwnTool(file: string, named: readonly string[]): boolean {
+  const own = OWN_TOOL_FILES[file];
+  return own !== undefined && named.every((id) => id === own);
+}
 
 function isAllowed(file: string, ids: readonly string[]): boolean {
   if (file === "src/contexts/tools/domain/profiles/registered-profiles.ts") return true;
@@ -84,26 +102,6 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   // The record's tool vocabulary is the contract's: `codex` is admitted so a second tool's
   // reader needs no change to the record, and is not a list a new tool joins.
   { path: "src/contexts/telemetry/contract/usage-record.ts", named: 1 },
-  // Where Claude Code keeps its transcripts, named for the one tool whose directory it is.
-  {
-    path: "src/contexts/telemetry/infrastructure/sources/claude/claude-projects-root.ts",
-    named: 1,
-  },
-  // Codex's own session-file format and where Codex keeps those files, each named for the one
-  // tool whose files it reads: a tool measured is its reader, not a list a new tool joins.
-  {
-    path: "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts",
-    named: 1,
-  },
-  {
-    path: "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts",
-    named: 1,
-  },
-  // Claude Code's own settings files, read to say how long it keeps a transcript.
-  {
-    path: "src/contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.ts",
-    named: 1,
-  },
 ];
 
 const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;
@@ -149,7 +147,6 @@ const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: num
     named: 1,
   },
   { path: "src/contexts/framework/application/restore/restore-use-case.ts", named: 4 },
-  { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", named: 2 },
   { path: "src/contexts/tools/contract/config-refs.ts", named: 4 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 1 },
 ];
@@ -165,7 +162,10 @@ describe("a tool identifier stays inside its own profile", () => {
 
     const violations = files
       .filter((file) => !isAllowed(file, ids))
-      .filter((file) => toolsNamedIn(read(file), ids).length > 0);
+      .filter((file) => {
+        const named = toolsNamedIn(read(file), ids);
+        return named.length > 0 && !namesOnlyItsOwnTool(file, named);
+      });
 
     const { added, fixed } = expectRatchet(
       violations,
@@ -173,6 +173,14 @@ describe("a tool identifier stays inside its own profile", () => {
     );
     expect(added, "tool named outside its profile — read it from the profile instead").toEqual([]);
     expect(fixed, "fixed — remove these from BASELINE").toEqual([]);
+  });
+
+  it("lists only files that still name their own tool", () => {
+    const ids = toolIds(sourceFiles());
+    const unneeded = Object.keys(OWN_TOOL_FILES).filter(
+      (file) => !toolsNamedIn(read(file), ids).includes(OWN_TOOL_FILES[file] as string)
+    );
+    expect(unneeded, "names no tool — take it off OWN_TOOL_FILES").toEqual([]);
   });
 
   it("holds each admitted file to the number of tools its reason was written around", () => {

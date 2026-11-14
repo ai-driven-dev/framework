@@ -4,7 +4,7 @@ import { pipeline } from "node:stream/promises";
 import * as zlib from "node:zlib";
 import { isErrnoException } from "../../../../../shared/domain/reading/json-file.js";
 import type { TranscriptPosition } from "../../../domain/transcript-position.js";
-import type { TranscriptRead, TranscriptSource } from "../../../ports/transcript-source.js";
+import type { ReadUsageLine, TranscriptRead, UsageSource } from "../../../ports/usage-source.js";
 import {
   type EachLine,
   eachLine,
@@ -15,6 +15,7 @@ import {
   oldestModifiedOf,
   readTranscript,
 } from "../transcript-files.js";
+import { codexUsageReader } from "./codex-transcript-usage.js";
 import { declaredContentSize, FRAME_HEADER_BYTES } from "./zstd-frame.js";
 
 const SESSION_FILE = /^rollout-.*\.jsonl(\.zst)?$/;
@@ -41,7 +42,7 @@ export function codexSessionRoots(codexHome: string | undefined, home: string): 
  * file than the call, so a file that moved is read from its start, the lines before the saved
  * offset handed on as not counted. Codex compresses a file it no longer writes to
  * `.jsonl.zst`: that one is read whole, once, as a stream. */
-export class CodexTranscriptSourceAdapter implements TranscriptSource {
+export class CodexTranscriptSourceAdapter implements UsageSource {
   constructor(
     private readonly roots: readonly string[],
     /** Absent from a Node whose zlib has no zstd. */
@@ -111,5 +112,9 @@ export class CodexTranscriptSourceAdapter implements TranscriptSource {
       if (!isErrnoException(error) || !UNDECOMPRESSABLE.test(String(error.code))) throw error;
       return unread(since, `a compressed session file does not decompress: ${error.code}`);
     });
+  }
+
+  decode(): ReadUsageLine {
+    return codexUsageReader();
   }
 }

@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { SnapshotBindingsUseCase } from "../../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { SnapshotBindings } from "../../../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import { BindingsLockAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { BindingSnapshotStoreAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
@@ -97,16 +97,16 @@ describe("the bindings lock", () => {
       },
     ]);
     const snapshotter = () =>
-      new SnapshotBindingsUseCase(
+      new SnapshotBindings(
         source,
         new BindingSnapshotStoreAdapter(dir, storage, NO_ALIASES),
         new BindingsLockAdapter(dir, storage),
         () => new Date("2026-10-09T09:00:00.000Z")
       );
     const added = await Promise.all([
-      snapshotter().execute("repo-1", "/repo"),
-      snapshotter().execute("repo-1", "/repo"),
-      snapshotter().execute("repo-1", "/repo"),
+      snapshotter().execute({ repositoryId: "repo-1", root: "/repo" }),
+      snapshotter().execute({ repositoryId: "repo-1", root: "/repo" }),
+      snapshotter().execute({ repositoryId: "repo-1", root: "/repo" }),
     ]);
     expect(added.reduce((sum, n) => sum + n, 0)).toBe(1);
     const lines = (await readFile(join(dir, "branches.jsonl"), "utf8")).split("\n").filter(Boolean);

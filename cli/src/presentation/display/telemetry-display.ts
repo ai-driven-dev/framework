@@ -1,8 +1,8 @@
 import type { RefusalReason } from "../../contexts/telemetry/application/consented-repositories.js";
-import type { DeclareResult } from "../../contexts/telemetry/application/declare-task-use-case.js";
-import type { IdentityResult } from "../../contexts/telemetry/application/identity/manage-identity-use-case.js";
-import type { IngestResult } from "../../contexts/telemetry/application/ingest-usage-use-case.js";
-import type { StatusResult } from "../../contexts/telemetry/application/telemetry-status-use-case.js";
+import type { DeclareTaskResult } from "../../contexts/telemetry/application/declaration/declare-task.js";
+import type { ManageIdentityResult } from "../../contexts/telemetry/application/identity/manage-identity.js";
+import type { IngestUsageResult } from "../../contexts/telemetry/application/ingest-usage.js";
+import type { ReadTelemetryStatusResult } from "../../contexts/telemetry/application/read-telemetry-status.js";
 import type { NotStoredReason } from "../../contexts/telemetry/contract/repository-resolution.js";
 import type { CLIOutput } from "../output.js";
 
@@ -48,7 +48,7 @@ export function count(n: number, one: string, many: string): string {
  * written it. */
 export function leftOutLines(
   left: Pick<
-    IngestResult,
+    IngestUsageResult,
     "unrecognised" | "notStored" | "consentLogDamaged" | "skippedLedgerLines"
   >
 ): { readonly warn: boolean; readonly text: string }[] {
@@ -72,7 +72,7 @@ export function leftOutLines(
   return lines;
 }
 
-export function printIngestResult(output: CLIOutput, result: IngestResult): void {
+export function printIngestResult(output: CLIOutput, result: IngestUsageResult): void {
   if (result.refused) {
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing was stored.");
     return;
@@ -126,7 +126,7 @@ function describeTask(task: string | null, ticket: string | null): string {
   return ticket === null ? `task "${task}"` : `task "${task}" (ticket ${ticket})`;
 }
 
-export function printDeclareResult(output: CLIOutput, result: DeclareResult): void {
+export function printDeclareResult(output: CLIOutput, result: DeclareTaskResult): void {
   if (result.status === "refused") {
     output.error(REFUSALS[result.reason]);
     return;
@@ -150,7 +150,7 @@ export function printDeclareResult(output: CLIOutput, result: DeclareResult): vo
   if (sessionId === null) output.warn("Nothing was bound: no session and no working branch.");
 }
 
-export function printTelemetryStatus(output: CLIOutput, result: StatusResult): void {
+export function printTelemetryStatus(output: CLIOutput, result: ReadTelemetryStatusResult): void {
   if (result.status === "refused") {
     output.info(NOT_MEASURED[result.reason]);
     return;
@@ -164,7 +164,10 @@ export function printTelemetryStatus(output: CLIOutput, result: StatusResult): v
   );
 }
 
-function printBinding(output: CLIOutput, result: Extract<StatusResult, { status: "shown" }>): void {
+function printBinding(
+  output: CLIOutput,
+  result: Extract<ReadTelemetryStatusResult, { status: "shown" }>
+): void {
   const { binding, sessionId, branch, role } = result;
   if (binding.state === "unbound") {
     const where =
@@ -189,7 +192,7 @@ function printBinding(output: CLIOutput, result: Extract<StatusResult, { status:
   }
 }
 
-export function printIdentityResult(output: CLIOutput, result: IdentityResult): void {
+export function printIdentityResult(output: CLIOutput, result: ManageIdentityResult): void {
   switch (result.status) {
     case "set":
       output.success(`Measurement names you as "${result.personId}". Stop with \`--off\`.`);

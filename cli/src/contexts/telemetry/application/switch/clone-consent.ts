@@ -1,11 +1,13 @@
 import type { ConsentSource } from "../../ports/consent-source.js";
 import type { LocatedDirectory, RepositoryLocator } from "../../ports/repository-locator.js";
 
+export type Located = Extract<LocatedDirectory, { status: "repository" }>;
+
 export type CloneConsent =
   | { readonly status: "refused"; readonly reason: "outside-repository" | "unreadable-git-config" }
   | {
       readonly status: "read";
-      readonly located: Extract<LocatedDirectory, { status: "repository" }>;
+      readonly located: Located;
       /** The value of `aidd.telemetry`, `null` when it is not set. */
       readonly value: string | null;
     };

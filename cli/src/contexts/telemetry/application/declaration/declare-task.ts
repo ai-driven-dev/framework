@@ -1,18 +1,20 @@
-import type { DeclarationRequest, DeclaredBy } from "../contract/task-declaration.js";
-import type { TaskDeclaration } from "../domain/declaration/task-declaration.js";
-import { declarationOf, lockWaitFor } from "../domain/declaration/task-declaration.js";
-import type { BindingsLock } from "../ports/bindings/bindings-lock.js";
-import type { SessionBindingStore } from "../ports/bindings/session-binding-store.js";
-import type { BranchDeclarations, BranchOutcome } from "./branch-declarations.js";
-import type { ConsentedRepositories, RefusalReason } from "./consented-repositories.js";
+import type { Environment } from "../../../../shared/ports/environment.js";
+import type { DeclarationRequest, DeclaredBy } from "../../contract/task-declaration.js";
+import type { TaskDeclaration } from "../../domain/declaration/task-declaration.js";
+import { declarationOf, lockWaitFor } from "../../domain/declaration/task-declaration.js";
+import { measurementRefused } from "../../domain/telemetry-consent.js";
+import type { BindingsLock } from "../../ports/bindings/bindings-lock.js";
+import type { SessionBindingStore } from "../../ports/bindings/session-binding-store.js";
+import type { BranchDeclarations, BranchOutcome } from "../branch-declarations.js";
+import type { ConsentedRepositories, RefusalReason } from "../consented-repositories.js";
 
-export interface DeclareInput {
+export interface DeclareTaskCommand {
   readonly cwd: string;
   readonly request: DeclarationRequest;
   readonly by: DeclaredBy;
 }
 
-export type DeclareResult =
+export type DeclareTaskResult =
   | { readonly status: "refused"; readonly reason: RefusalReason }
   | {
       readonly status: "declared";
@@ -23,8 +25,7 @@ export type DeclareResult =
     };
 
 export interface DeclareOptions {
-  /** `AIDD_TELEMETRY=0`, read by the composition root. */
-  readonly refusedByEnvironment: boolean;
+  readonly environment: Environment;
   /** `AIDD_TELEMETRY_SESSION_ID`, else `CLAUDE_CODE_SESSION_ID`, read by the composition root;
    * `null` outside a session. */
   readonly sessionId: string | null;
@@ -35,7 +36,7 @@ export interface DeclareOptions {
  * branch for good. The session line is appended under the bindings lock, and the snapshot that
  * follows a branch declaration takes it for itself: never the ledger's lock, which an ingest
  * holds for as long as it reads, and a person is waiting on this. */
-export class DeclareTaskUseCase {
+export class DeclareTask {
   constructor(
     private readonly repositories: ConsentedRepositories,
     private readonly sessions: SessionBindingStore,
@@ -44,8 +45,9 @@ export class DeclareTaskUseCase {
     private readonly options: DeclareOptions
   ) {}
 
-  async execute(input: DeclareInput): Promise<DeclareResult> {
-    if (this.options.refusedByEnvironment) return { status: "refused", reason: "environment" };
+  async execute(input: DeclareTaskCommand): Promise<DeclareTaskResult> {
+    if (measurementRefused(this.options.environment))
+      return { status: "refused", reason: "environment" };
     const repository = await this.repositories.open(input.cwd);
     if (repository.status === "refused") return repository;
     const declaration = declarationOf(input.request, this.options.now(), input.by);

@@ -3,21 +3,28 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { BranchDeclarations } from "../contexts/telemetry/application/branch-declarations.js";
 import { ConsentedRepositories } from "../contexts/telemetry/application/consented-repositories.js";
-import { DeclareTaskUseCase } from "../contexts/telemetry/application/declare-task-use-case.js";
+import { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
+import { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
 import { DirectoryResolver } from "../contexts/telemetry/application/directory-resolver.js";
-import { ForgetTelemetryUseCase } from "../contexts/telemetry/application/forget/forget-telemetry-use-case.js";
-import { ManageIdentityUseCase } from "../contexts/telemetry/application/identity/manage-identity-use-case.js";
-import { ProposeIdentityUseCase } from "../contexts/telemetry/application/identity/propose-identity-use-case.js";
-import { IngestUsageUseCase } from "../contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadUsageUseCase } from "../contexts/telemetry/application/read-usage-use-case.js";
+import { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
+import { RememberedClones } from "../contexts/telemetry/application/forget/remembered-clones.js";
+import { CheckIdentity } from "../contexts/telemetry/application/identity/check-identity.js";
+import { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
+import { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
+import { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
+import { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.js";
+import { ReadUsage } from "../contexts/telemetry/application/read-usage.js";
 import { DeclaredBindings } from "../contexts/telemetry/application/report/declared-bindings.js";
-import { ReportUsageUseCase } from "../contexts/telemetry/application/report/report-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../contexts/telemetry/application/snapshot-bindings-use-case.js";
-import { TelemetryOffUseCase } from "../contexts/telemetry/application/switch/telemetry-off-use-case.js";
-import { TelemetryOnUseCase } from "../contexts/telemetry/application/switch/telemetry-on-use-case.js";
-import { TelemetryStatusUseCase } from "../contexts/telemetry/application/telemetry-status-use-case.js";
+import { ReportUsage } from "../contexts/telemetry/application/report/report-usage.js";
+import { RequestReport } from "../contexts/telemetry/application/report/request-report.js";
+import { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.js";
+import { SnapshotBindings } from "../contexts/telemetry/application/snapshot-bindings.js";
+import { ConsentSwitch } from "../contexts/telemetry/application/switch/consent-switch.js";
+import { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
+import { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
+import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
+import { OwnRoots } from "../contexts/telemetry/application/switch/remember-own-root.js";
 import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
-import { refusedByEnvironment as refusedByEnvironmentValue } from "../contexts/telemetry/domain/telemetry-consent.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
 import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git/git-consent-adapter.js";
@@ -31,12 +38,10 @@ import {
 } from "../contexts/telemetry/infrastructure/sources/claude/claude-projects-root.js";
 import { ClaudeSettingsAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.js";
 import { ClaudeTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import { readClaudeUsageLine } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import {
   CodexTranscriptSourceAdapter,
   codexSessionRoots,
 } from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
-import { codexUsageReader } from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.js";
 import { ConsentHistoryAdapter } from "../contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
 import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
 import { RepositoryDeclarationsAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/repository-declarations-adapter.js";
@@ -47,8 +52,19 @@ import { UsageLedgerAdapter } from "../contexts/telemetry/infrastructure/storage
 import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
 import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
 import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import type { TelemetryDeps } from "../presentation/deps.js";
+import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
+import type { TelemetryDeps, TelemetryRequests } from "../presentation/deps.js";
+import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { userConfigDirOf } from "../shared/infrastructure/user-config-dir.js";
+
+/** The requests a command checks before anything is wired: no file, no process, only the clock. */
+export function wireTelemetryRequests(): TelemetryRequests {
+  return {
+    resolveTaskRequest: new ResolveTaskRequest(),
+    resolveReportRequest: new ResolveReportRequest(() => new Date()),
+    checkIdentity: new CheckIdentity(),
+  };
+}
 
 /** Where a person's measurement lives. `AIDD_TELEMETRY_DIR` moves it outright; otherwise it is
  * a subdirectory of the user configuration, apart from the files that live at its root. */
@@ -88,7 +104,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   const aliases = new RepositoryAliasStoreAdapter(ledgerDir);
   const snapshotStore = new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases);
   const bindingsLock = new BindingsLockAdapter(bindingsDir, storage);
-  const snapshotBindingsUseCase = new SnapshotBindingsUseCase(
+  const snapshotBindings = new SnapshotBindings(
     branchSource,
     snapshotStore,
     bindingsLock,
@@ -105,15 +121,15 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   };
   const sessions = new SessionBindingStoreAdapter(bindingsDir, storage);
   const sessionId = declaringSessionOf(process.env);
-  const refusedByEnvironment = refusedByEnvironmentValue(process.env.AIDD_TELEMETRY);
+  const processEnvironment = new EnvironmentAdapter();
   const repositories = new ConsentedRepositories(locator, consents, consentHistory);
   const branchDeclarations = new BranchDeclarations(
     new GitBranchBindingStoreAdapter(gitEnv),
     branchSource,
-    snapshotBindingsUseCase
+    snapshotBindings
   );
-  const declaration = { refusedByEnvironment, sessionId, now: () => new Date() };
-  const declareTaskUseCase = new DeclareTaskUseCase(
+  const declaration = { environment: processEnvironment, sessionId, now: () => new Date() };
+  const declareTask = new DeclareTask(
     repositories,
     sessions,
     branchDeclarations,
@@ -121,78 +137,57 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     declaration
   );
   const identity = new PersonIdentityAdapter(root, storage);
-  const telemetryStatusUseCase = new TelemetryStatusUseCase(
+  const readTelemetryStatus = new ReadTelemetryStatus(
     repositories,
     sessions,
     branchDeclarations,
     declaration,
     identity
   );
-  const ingestUsageUseCase = new IngestUsageUseCase(
-    [
-      new ReadUsageUseCase(
-        new ClaudeTranscriptSourceAdapter(
-          claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())
-        ),
-        () => readClaudeUsageLine
-      ),
-      new ReadUsageUseCase(
-        new CodexTranscriptSourceAdapter(codexSessionRoots(process.env.CODEX_HOME, homedir())),
-        codexUsageReader
-      ),
-    ],
+  // The measured tools, registered once: a tool is one source here and nowhere else.
+  const usageSources: readonly UsageSource[] = [
+    new ClaudeTranscriptSourceAdapter(claudeProjectsRoot(process.env.CLAUDE_CONFIG_DIR, homedir())),
+    new CodexTranscriptSourceAdapter(codexSessionRoots(process.env.CODEX_HOME, homedir())),
+  ];
+  const ingestUsage = new IngestUsage(
+    usageSources.map((source) => new ReadUsage(source)),
     ledger,
     new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
-    snapshotBindingsUseCase,
-    { refusedByEnvironment }
+    snapshotBindings,
+    { environment: processEnvironment }
   );
+  const consentSwitch = new ConsentSwitch(locator, consents, consents, consentHistory, ledger);
   const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
   return {
-    declareTaskUseCase,
-    telemetryStatusUseCase,
-    ingestUsageUseCase,
-    reportUsageUseCase: new ReportUsageUseCase(
-      ingestUsageUseCase,
-      ledger,
-      new DeclaredBindings(sessions, snapshotStore),
-      identity,
-      locator,
-      { refusedByEnvironment }
+    declareTask,
+    readTelemetryStatus,
+    ingestUsage,
+    requestReport: new RequestReport(
+      new ReportUsage(
+        ingestUsage,
+        ledger,
+        new DeclaredBindings(sessions, snapshotStore, identity),
+        locator,
+        processEnvironment
+      )
     ),
-    manageIdentityUseCase: new ManageIdentityUseCase(identity),
-    proposeIdentityUseCase: new ProposeIdentityUseCase(
-      new GitUserSourceAdapter(gitEnv),
-      refusedByEnvironment
-    ),
-    telemetryOnUseCase: new TelemetryOnUseCase(
-      locator,
-      consents,
-      consents,
-      ledger,
-      resolutionStore,
-      consentHistory,
-      new ClaudeSettingsAdapter(claudeDir),
-      environment,
-      randomUUID,
+    manageIdentity: new ManageIdentity(identity),
+    proposeIdentity: new ProposeIdentity(new GitUserSourceAdapter(gitEnv), processEnvironment),
+    readTranscriptRetention: new ReadTranscriptRetention(new ClaudeSettingsAdapter(claudeDir)),
+    enableTelemetry: new EnableTelemetry(
+      consentSwitch,
+      new OwnRoots(ledger, resolutionStore, environment),
+      () => ({ token: randomUUID(), at: environment.now() }),
       identity
     ),
-    telemetryOffUseCase: new TelemetryOffUseCase(
-      locator,
-      consents,
-      consents,
-      ledger,
-      consentHistory,
-      environment.now
-    ),
-    forgetTelemetryUseCase: new ForgetTelemetryUseCase(
+    disableTelemetry: new DisableTelemetry(consentSwitch, environment.now),
+    forgetTelemetry: new ForgetTelemetry(
       new MeasurementErasureAdapter(
         root,
         legacyLocations(process.env, homedir(), process.platform, root)
       ),
       new RepositoryDeclarationsAdapter(gitEnv),
-      snapshotStore,
-      resolutionStore,
-      consentHistory,
+      new RememberedClones(resolutionStore, consentHistory, snapshotStore),
       ledger
     ),
   };

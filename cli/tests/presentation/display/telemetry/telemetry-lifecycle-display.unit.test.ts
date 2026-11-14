@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ForgetResult } from "../../../../src/contexts/telemetry/application/forget/forget-telemetry-use-case.js";
-import type { OnResult } from "../../../../src/contexts/telemetry/application/switch/telemetry-on-use-case.js";
+import type { ForgetTelemetryResult } from "../../../../src/contexts/telemetry/application/forget/forget-telemetry.js";
+import type { EnableTelemetryResult } from "../../../../src/contexts/telemetry/application/switch/enable-telemetry.js";
 import {
   printForgetResult,
   printOffResult,
@@ -8,16 +8,19 @@ import {
 } from "../../../../src/presentation/display/telemetry/telemetry-lifecycle-display.js";
 import { CapturingOutput } from "../../../helpers/ports/capturing-output.js";
 
-const ON: Extract<OnResult, { status: "on" }> = {
+const ON: Extract<EnableTelemetryResult, { status: "on" }> = {
   status: "on",
   consentWritten: true,
-  retention: { days: 3650, short: false },
+  root: "/w/repo",
   identity: { personId: null, previous: null },
 };
 
-function on(overrides: Partial<typeof ON>): CapturingOutput {
+function on(
+  overrides: Partial<typeof ON>,
+  retention = { days: 3650, short: false }
+): CapturingOutput {
   const output = new CapturingOutput(false);
-  printOnResult(output, { ...ON, ...overrides });
+  printOnResult(output, { ...ON, ...overrides }, retention);
   return output;
 }
 
@@ -60,19 +63,15 @@ describe("printOnResult", () => {
   });
 
   it("prints the one line to add when Claude keeps transcripts too briefly", () => {
-    const warning = on({ retention: { days: 30, short: true } }).at("warn")[0] ?? "";
+    const warning = on({}, { days: 30, short: true }).at("warn")[0] ?? "";
     expect(warning).toContain("30 days (its default)");
     expect(warning).toContain('"cleanupPeriodDays": 3650');
     expect(warning).not.toContain("older history");
   });
 
   it("does not call a chosen retention the default, and keeps singular", () => {
-    expect(on({ retention: { days: 7, short: true } }).at("warn")[0]).toContain(
-      "for 7 days. A call"
-    );
-    expect(on({ retention: { days: 1, short: true } }).at("warn")[0]).toContain(
-      "for 1 day. A call"
-    );
+    expect(on({}, { days: 7, short: true }).at("warn")[0]).toContain("for 7 days. A call");
+    expect(on({}, { days: 1, short: true }).at("warn")[0]).toContain("for 1 day. A call");
   });
 
   it("explains each refusal", () => {
@@ -145,7 +144,7 @@ const PLAN = {
   unlocated: 1,
 } as const;
 
-function forgotten(result: ForgetResult): CapturingOutput {
+function forgotten(result: ForgetTelemetryResult): CapturingOutput {
   const output = new CapturingOutput(false);
   printForgetResult(output, result);
   return output;

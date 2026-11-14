@@ -21,7 +21,7 @@ const BASELINE: readonly string[] = [
   "tests/contexts/framework/application/plugin/plugin-add-use-case.unit.test.ts",
   "tests/contexts/framework/application/plugin/plugin-remove-native-activation.integration.test.ts",
   "tests/contexts/framework/application/plugin/plugin-update-built-tree.unit.test.ts",
-  "tests/contexts/telemetry/application/ingest-usage-use-case.unit.test.ts",
+  "tests/contexts/telemetry/application/ingest-usage.unit.test.ts",
   "tests/contexts/telemetry/consent-scenarios.integration.test.ts",
   "tests/contexts/translate/application/strategies/flat-build-strategy.integration.test.ts",
 ];

@@ -5,14 +5,14 @@ import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
 import {
-  type IngestResult,
-  IngestUsageUseCase,
-} from "../../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
+  IngestUsage,
+  type IngestUsageResult,
+} from "../../../../../src/contexts/telemetry/application/ingest-usage.js";
 import { storeCalls } from "../../../../../src/contexts/telemetry/application/ledger-upkeep.js";
 import { DeclaredBindings } from "../../../../../src/contexts/telemetry/application/report/declared-bindings.js";
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
-import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import { ReportUsage } from "../../../../../src/contexts/telemetry/application/report/report-usage.js";
+import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import type { ReportFilters } from "../../../../../src/contexts/telemetry/contract/report-filter.js";
 import {
@@ -181,7 +181,7 @@ async function ledgerWith(files: ReadonlyMap<string, string>): Promise<UsageLedg
 }
 
 /** An ingest that finds nothing new, so the report reads the ledger as laid out. */
-const NOTHING_NEW: IngestResult = {
+const NOTHING_NEW: IngestUsageResult = {
   refused: false,
   filesRead: 0,
   added: 0,
@@ -202,9 +202,9 @@ const NOTHING_NEW: IngestResult = {
   oldestTranscriptAt: null,
 };
 /** An ingest that reads no tool, so it finds nothing new: `NOTHING_NEW`. */
-function ingestOf(ledger: UsageLedger): IngestUsageUseCase {
+function ingestOf(ledger: UsageLedger): IngestUsage {
   const now = () => new Date("2026-10-09T00:00:00.000Z");
-  return new IngestUsageUseCase(
+  return new IngestUsage(
     [],
     ledger,
     new DirectoryResolver(
@@ -214,13 +214,13 @@ function ingestOf(ledger: UsageLedger): IngestUsageUseCase {
       new InMemoryConsentHistory(),
       { caseInsensitiveFileSystem: false, now }
     ),
-    new SnapshotBindingsUseCase(
+    new SnapshotBindings(
       new FakeBindings(),
       new InMemorySnapshots(),
       new InMemoryBindingsLock(),
       now
     ),
-    { refusedByEnvironment: false }
+    { environment: { get: () => undefined } }
   );
 }
 
@@ -229,19 +229,22 @@ describe("a report on a bounded period", () => {
     await fc.assert(
       fc.asyncProperty(scenario, async ({ calls, leftOut, period, axis, filters }) => {
         const files = filesOf(calls);
-        const declared = new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots());
         const identity = new InMemoryIdentity();
         identity.personId = "person-a";
+        const declared = new DeclaredBindings(
+          new InMemorySessions(),
+          new InMemorySnapshots(),
+          identity
+        );
 
         const settled = await ledgerWith(files);
         await settled.leftOut.add(leftOut);
-        const bounded = await new ReportUsageUseCase(
+        const bounded = await new ReportUsage(
           ingestOf(settled),
           settled,
           declared,
-          identity,
           new FakeLocator(),
-          { refusedByEnvironment: false }
+          { get: () => undefined }
         ).execute({ axis, period, filters });
 
         const fullLedger = await ledgerWith(files);
@@ -264,8 +267,7 @@ describe("a report on a bounded period", () => {
           if (found.kind === "found") resolved[flag] = found.id;
         }
         if (bounded.status !== "reported") throw new Error(bounded.status);
-        const facts = await declared.read();
-        const person = await identity.read();
+        const { facts, person } = await declared.read();
         const selected = kept.filter((record) =>
           matchesFilter(resolved, record, attribute(record, facts), person)
         );

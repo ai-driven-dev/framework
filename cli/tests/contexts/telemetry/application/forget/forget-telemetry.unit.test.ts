@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ForgetTelemetryUseCase } from "../../../../../src/contexts/telemetry/application/forget/forget-telemetry-use-case.js";
+import { ForgetTelemetry } from "../../../../../src/contexts/telemetry/application/forget/forget-telemetry.js";
+import { RememberedClones } from "../../../../../src/contexts/telemetry/application/forget/remembered-clones.js";
 import type { BranchSnapshot } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
 import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
@@ -46,7 +47,7 @@ function setup(entries: ErasureEntry[] = [ENTRY]) {
   /** The clones that exist, with the task keys they hold. */
   const keys = new Map<string, number>();
   const consented = new Set<string>();
-  const use = new ForgetTelemetryUseCase(
+  const use = new ForgetTelemetry(
     {
       async inventory() {
         events.push("inventory");
@@ -67,9 +68,7 @@ function setup(entries: ErasureEntry[] = [ENTRY]) {
         return { taskKeys: keys.get(clone) ?? 0, consent: consented.has(clone) };
       },
     },
-    snapshots,
-    resolutions,
-    history,
+    new RememberedClones(resolutions, history, snapshots),
     ledger
   );
   return { use, events, history, snapshots, resolutions, ledger, cleared, keys, consented };
@@ -106,7 +105,7 @@ describe("forget without confirmation", () => {
   it("previews what would go and takes no lock and removes nothing", async () => {
     const s = setup();
     declaredAt(s);
-    const result = await s.use.execute(false);
+    const result = await s.use.execute({ confirmed: false });
     expect(result).toEqual({
       status: "preview",
       plan: {
@@ -126,7 +125,7 @@ describe("forget with confirmation", () => {
   it("holds the ledger lock, clears the declarations, then erases, and reports what it found under the lock", async () => {
     const s = setup();
     declaredAt(s);
-    const result = await s.use.execute(true);
+    const result = await s.use.execute({ confirmed: true });
     const locked = s.events.slice(s.events.indexOf("lock"));
     expect(locked).toEqual(["lock", "inventory", `clear ${CLONE}`, "erase", "unlock"]);
     expect(result.status).toBe("forgotten");
@@ -137,7 +136,7 @@ describe("forget with confirmation", () => {
     const s = setup();
     remember(s, "/w/repo", CLONE, { consenting: true });
     s.consented.add(CLONE);
-    const result = await s.use.execute(true);
+    const result = await s.use.execute({ confirmed: true });
     expect(s.cleared).toEqual([CLONE]);
     expect(result.plan.repositories).toEqual([{ clone: CLONE, taskKeys: 0, consent: true }]);
   });
@@ -146,13 +145,13 @@ describe("forget with confirmation", () => {
     const s = setup();
     remember(s, "/w/repo", CLONE, { consenting: false });
     s.consented.add(CLONE);
-    await s.use.execute(true);
+    await s.use.execute({ confirmed: true });
     expect(s.cleared).toEqual([CLONE]);
   });
 
   it("takes no lock when there is nothing to forget", async () => {
     const s = setup([]);
-    const result = await s.use.execute(true);
+    const result = await s.use.execute({ confirmed: true });
     expect(result.status).toBe("forgotten");
     expect(s.events).not.toContain("lock");
   });
@@ -160,14 +159,14 @@ describe("forget with confirmation", () => {
   it("forgets declarations alone when no file is kept", async () => {
     const s = setup([]);
     declaredAt(s);
-    await s.use.execute(true);
+    await s.use.execute({ confirmed: true });
     expect(s.cleared).toEqual([CLONE]);
   });
 
   it("does not take a clone with no key for something to forget", async () => {
     const s = setup([]);
     declaredAt(s, 0);
-    await s.use.execute(true);
+    await s.use.execute({ confirmed: true });
     expect(s.events).not.toContain("lock");
   });
 
@@ -175,7 +174,7 @@ describe("forget with confirmation", () => {
     const s = setup([]);
     remember(s, "/w/main", CLONE, { taskKeys: 2 });
     remember(s, "/w/wt", CLONE, { taskKeys: 2 });
-    const result = await s.use.execute(false);
+    const result = await s.use.execute({ confirmed: false });
     expect(result.plan.repositories).toEqual([{ clone: CLONE, taskKeys: 2, consent: false }]);
   });
 
@@ -184,7 +183,7 @@ describe("forget with confirmation", () => {
     remember(s, "/w/a", "/gone/.git", { consenting: true });
     remember(s, "/w/b", "/gone/.git");
     s.keys.delete("/gone/.git");
-    const result = await s.use.execute(true);
+    const result = await s.use.execute({ confirmed: true });
     expect(result.plan.missing).toEqual(["/gone/.git"]);
     expect(result.plan.repositories).toEqual([]);
     expect(s.cleared).toEqual([]);
@@ -194,13 +193,13 @@ describe("forget with confirmation", () => {
     const s = setup([]);
     remember(s, "/w/a", "/gone/.git");
     s.keys.delete("/gone/.git");
-    expect((await s.use.execute(false)).plan.missing).toEqual([]);
+    expect((await s.use.execute({ confirmed: false })).plan.missing).toEqual([]);
   });
 
   it("names a gone clone that consented though no directory of it was ever remembered", async () => {
     const s = setup([]);
     s.history.consented(cloneOf("/gone/.git"));
-    expect((await s.use.execute(false)).plan.missing).toEqual(["/gone/.git"]);
+    expect((await s.use.execute({ confirmed: false })).plan.missing).toEqual(["/gone/.git"]);
   });
 
   it("finds the clone of a consent no directory was remembered with", async () => {
@@ -208,7 +207,7 @@ describe("forget with confirmation", () => {
     s.history.consented(cloneOf(CLONE));
     s.keys.set(CLONE, 1);
     s.consented.add(CLONE);
-    expect((await s.use.execute(false)).plan.repositories).toEqual([
+    expect((await s.use.execute({ confirmed: false })).plan.repositories).toEqual([
       { clone: CLONE, taskKeys: 1, consent: true },
     ]);
   });
@@ -217,7 +216,7 @@ describe("forget with confirmation", () => {
     const s = setup([]);
     remember(s, "/w/main", CLONE, { taskKeys: 2 });
     s.history.consented(cloneOf(CLONE, { ino: "99" }));
-    expect((await s.use.execute(false)).plan.repositories).toEqual([
+    expect((await s.use.execute({ confirmed: false })).plan.repositories).toEqual([
       { clone: CLONE, taskKeys: 2, consent: false },
     ]);
   });
@@ -225,25 +224,25 @@ describe("forget with confirmation", () => {
   it("counts the repositories that declared a task and were never located", async () => {
     const s = setup([]);
     s.snapshots.appended.push(snapshot(repositoryId()), snapshot("other-id"));
-    expect((await s.use.execute(false)).plan.unlocated).toBe(2);
+    expect((await s.use.execute({ confirmed: false })).plan.unlocated).toBe(2);
   });
 
   it("does not count a repository whose directory was remembered", async () => {
     const s = setup([]);
     declaredAt(s);
     s.snapshots.appended.push(snapshot("other-id"));
-    expect((await s.use.execute(false)).plan.unlocated).toBe(1);
+    expect((await s.use.execute({ confirmed: false })).plan.unlocated).toBe(1);
   });
 
   it("leaves alone the keys of a clone nothing was remembered of", async () => {
     const s = setup([]);
     s.keys.set(CLONE, 4);
-    expect((await s.use.execute(false)).plan.repositories).toEqual([]);
+    expect((await s.use.execute({ confirmed: false })).plan.repositories).toEqual([]);
   });
 
   it("locks and erases when files are kept and no clone holds anything", async () => {
     const s = setup();
-    await s.use.execute(true);
+    await s.use.execute({ confirmed: true });
     expect(s.events).toContain("lock");
     expect(s.events).toContain("erase");
   });
@@ -256,7 +255,7 @@ describe("forget with confirmation", () => {
     remember(s, "/g/a", "/g/a/.git", { consenting: true });
     s.keys.delete("/g/b/.git");
     s.keys.delete("/g/a/.git");
-    const plan = (await s.use.execute(false)).plan;
+    const plan = (await s.use.execute({ confirmed: false })).plan;
     expect(plan.repositories.map((r) => r.clone)).toEqual(["/w/a/.git", "/w/b/.git"]);
     expect(plan.missing).toEqual(["/g/a/.git", "/g/b/.git"]);
   });

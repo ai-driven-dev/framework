@@ -5,7 +5,7 @@ import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { TranscriptPosition } from "../../../../../../src/contexts/telemetry/domain/transcript-position.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import type { TranscriptSource } from "../../../../../../src/contexts/telemetry/ports/transcript-source.js";
+import type { UsageSource } from "../../../../../../src/contexts/telemetry/ports/usage-source.js";
 import { WholeTranscriptReader } from "../../../testing/whole-transcript-reader.js";
 
 const EVERYTHING = Number.NEGATIVE_INFINITY;
@@ -35,7 +35,7 @@ const piece = fc.oneof(
 );
 const content = fc.array(piece, { maxLength: 40 }).map((pieces) => Buffer.concat(pieces));
 
-async function readLines(source: TranscriptSource, path: string, since: TranscriptPosition | null) {
+async function readLines(source: UsageSource, path: string, since: TranscriptPosition | null) {
   const lines: string[] = [];
   const read = await source.read(path, since, EVERYTHING, (line) => {
     lines.push(line);

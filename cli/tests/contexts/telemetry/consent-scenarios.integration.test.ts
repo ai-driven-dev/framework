@@ -158,12 +158,12 @@ class World {
 
   async on(dir: string, seconds: number) {
     this.at(seconds);
-    return deps.telemetryOnUseCase.execute(dir, "keep");
+    return deps.enableTelemetry.execute({ cwd: dir, choice: "keep" });
   }
 
   async off(dir: string, seconds: number) {
     this.at(seconds);
-    return deps.telemetryOffUseCase.execute(dir);
+    return deps.disableTelemetry.execute({ cwd: dir });
   }
 
   /** The last line of the consent log cut short, as a crash in the middle of a write would. */
@@ -175,7 +175,7 @@ class World {
 
   async ingest(seconds: number) {
     this.at(seconds);
-    return deps.ingestUsageUseCase.execute();
+    return deps.ingestUsage.execute();
   }
 
   /** The ids of the calls the ledger holds. */
@@ -421,7 +421,7 @@ const ROWS: readonly Row[] = [
       vi.stubEnv("AIDD_TELEMETRY", "0");
       deps = wireTelemetry(() => w.sandbox.home);
       w.at(HOUR + 200);
-      expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ refused: true });
+      expect(await deps.ingestUsage.execute()).toMatchObject({ refused: true });
       expect(w.stored()).toEqual([]);
       vi.stubEnv("AIDD_TELEMETRY", "");
       deps = wireTelemetry(() => w.sandbox.home);
@@ -438,7 +438,7 @@ const ROWS: readonly Row[] = [
       expect(existsSync(w.consentsFile())).toBe(true);
       await w.ingest(HOUR + 100);
       w.at(2 * HOUR);
-      await deps.forgetTelemetryUseCase.execute(true);
+      await deps.forgetTelemetry.execute({ confirmed: true });
       expect(() =>
         execFileSync("git", ["config", "--local", "--get", "aidd.telemetry"], {
           cwd: a,
@@ -588,7 +588,7 @@ const ROWS: readonly Row[] = [
       await w.off(a, 2 * HOUR);
       w.call(a, "c2", 2 * HOUR + 100);
       w.at(3 * HOUR);
-      await deps.forgetTelemetryUseCase.execute(true);
+      await deps.forgetTelemetry.execute({ confirmed: true });
       await w.on(a, 4 * HOUR);
       w.call(a, "c3", 4 * HOUR + 100);
       await w.ingest(5 * HOUR);
@@ -748,7 +748,7 @@ const ROWS: readonly Row[] = [
       await w.ingest(HOUR + 200);
       expect(w.blocks(a)).toBe(false);
       expect(
-        await deps.declareTaskUseCase.execute({
+        await deps.declareTask.execute({
           cwd: a,
           request: { kind: "task", task: "t1", ticket: null },
           by: "command",
@@ -815,7 +815,7 @@ const ROWS: readonly Row[] = [
       expect(await w.on(a, 3 * HOUR)).toMatchObject({ status: "refused" });
       w.call(a, "c3", 3 * HOUR + 100);
       w.at(4 * HOUR);
-      await deps.forgetTelemetryUseCase.execute(true);
+      await deps.forgetTelemetry.execute({ confirmed: true });
       expect(await w.on(a, 5 * HOUR)).toMatchObject({ status: "on" });
       w.call(a, "c4", 5 * HOUR + 100);
       await w.ingest(6 * HOUR);

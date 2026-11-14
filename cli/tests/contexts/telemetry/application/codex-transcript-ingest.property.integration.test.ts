@@ -6,15 +6,13 @@ import * as fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../src/contexts/telemetry/application/directory-resolver.js";
 import {
-  type IngestResult,
-  IngestUsageUseCase,
-} from "../../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
-import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+  IngestUsage,
+  type IngestUsageResult,
+} from "../../../../src/contexts/telemetry/application/ingest-usage.js";
+import { ReadUsage } from "../../../../src/contexts/telemetry/application/read-usage.js";
+import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
 import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
-import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
-import { codexUsageReader } from "../../../../src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { cloneOf, grantedBy } from "../testing/clone-builders.js";
@@ -65,30 +63,25 @@ function machine(sessions: string, projects?: string) {
     }
   }
   locator.directories.set("/work/none", { status: "outside-repository" });
-  const ingest = new IngestUsageUseCase(
+  const ingest = new IngestUsage(
     [
-      new ReadUsageUseCase(new CodexTranscriptSourceAdapter([sessions]), codexUsageReader),
+      new ReadUsage(new CodexTranscriptSourceAdapter([sessions])),
       ...(projects === undefined
         ? []
-        : [
-            new ReadUsageUseCase(
-              new ClaudeTranscriptSourceAdapter(projects),
-              () => readClaudeUsageLine
-            ),
-          ]),
+        : [new ReadUsage(new ClaudeTranscriptSourceAdapter(projects))]),
     ],
     ledger,
     new DirectoryResolver(locator, consents, new InMemoryResolutions(), history, {
       caseInsensitiveFileSystem: false,
       now: () => NOW,
     }),
-    new SnapshotBindingsUseCase(
+    new SnapshotBindings(
       new FakeBindings(),
       new InMemorySnapshots(),
       new InMemoryBindingsLock(),
       () => NOW
     ),
-    { refusedByEnvironment: false }
+    { environment: { get: () => undefined } }
   );
   return { dir, ingest };
 }
@@ -105,13 +98,16 @@ async function bytes(dir: string): Promise<Record<string, string>> {
 }
 
 /** What runs say that adds up across them. */
-function counts(results: readonly IngestResult[]) {
+function counts(results: readonly IngestUsageResult[]) {
   return {
     unrecognised: results.reduce((all, r) => all + r.unrecognised, 0),
     notStored: Object.fromEntries(
       Object.keys(results[0]?.notStored ?? {}).map((reason) => [
         reason,
-        results.reduce((all, r) => all + r.notStored[reason as keyof IngestResult["notStored"]], 0),
+        results.reduce(
+          (all, r) => all + r.notStored[reason as keyof IngestUsageResult["notStored"]],
+          0
+        ),
       ])
     ),
   };
@@ -197,7 +193,7 @@ describe("ingesting a Codex session file as it grows (P1)", () => {
         await mkdir(sessions, { recursive: true });
         const path = join(sessions, "rollout-a.jsonl");
         const growing = machine(sessions);
-        const results: IngestResult[] = [];
+        const results: IngestUsageResult[] = [];
         for (const cut of [...cuts, content.length]) {
           await writeFile(path, content.subarray(0, cut));
           results.push(await growing.ingest.execute());

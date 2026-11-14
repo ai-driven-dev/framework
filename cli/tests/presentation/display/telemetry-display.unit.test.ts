@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { DeclareResult } from "../../../src/contexts/telemetry/application/declare-task-use-case.js";
-import type { IngestResult } from "../../../src/contexts/telemetry/application/ingest-usage-use-case.js";
-import type { StatusResult } from "../../../src/contexts/telemetry/application/telemetry-status-use-case.js";
+import type { DeclareTaskResult } from "../../../src/contexts/telemetry/application/declaration/declare-task.js";
+import type { IngestUsageResult } from "../../../src/contexts/telemetry/application/ingest-usage.js";
+import type { ReadTelemetryStatusResult } from "../../../src/contexts/telemetry/application/read-telemetry-status.js";
 import {
   printDeclareResult,
   printIdentityResult,
@@ -51,7 +51,7 @@ const NOT_STORED = {
   "no-cwd": 0,
   undated: 0,
 };
-const INGESTED: IngestResult = {
+const INGESTED: IngestUsageResult = {
   refused: false,
   filesRead: 1,
   added: 1,
@@ -182,8 +182,8 @@ describe("printDeclareResult", () => {
     by: "command" as const,
   };
   const declared = (
-    over: Partial<Extract<DeclareResult, { status: "declared" }>>
-  ): DeclareResult => ({
+    over: Partial<Extract<DeclareTaskResult, { status: "declared" }>>
+  ): DeclareTaskResult => ({
     status: "declared",
     declaration,
     sessionId: "0123456789",
@@ -227,7 +227,7 @@ describe("printDeclareResult", () => {
   });
 
   it("explains each refusal", () => {
-    const refusal = (reason: Extract<DeclareResult, { status: "refused" }>["reason"]) =>
+    const refusal = (reason: Extract<DeclareTaskResult, { status: "refused" }>["reason"]) =>
       linesOf((o) => printDeclareResult(o, { status: "refused", reason }))[0];
     expect(refusal("environment")).toBe("AIDD_TELEMETRY=0: nothing was declared.");
     expect(refusal("no-consent")).toBe(
@@ -243,7 +243,9 @@ describe("printDeclareResult", () => {
 });
 
 describe("printTelemetryStatus", () => {
-  const shown = (over: Partial<Extract<StatusResult, { status: "shown" }>>): StatusResult => ({
+  const shown = (
+    over: Partial<Extract<ReadTelemetryStatusResult, { status: "shown" }>>
+  ): ReadTelemetryStatusResult => ({
     status: "shown",
     since: "2026-10-01T08:30:00.000Z",
     sessionId: "0123456789",
@@ -256,7 +258,7 @@ describe("printTelemetryStatus", () => {
   const bound = (
     source: "branch" | "session-declared" | "session-carried",
     over: { none?: boolean; task?: string | null } = {}
-  ): StatusResult =>
+  ): ReadTelemetryStatusResult =>
     shown({
       binding: {
         state: "bound",

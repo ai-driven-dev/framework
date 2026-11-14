@@ -1,3 +1,4 @@
+import type { Environment } from "../../../../shared/ports/environment.js";
 import type { Period } from "../../contract/period.js";
 import {
   type AbsentAxis,
@@ -12,10 +13,10 @@ import { conflictsOf, matchesFilter, resolveId } from "../../domain/report/repor
 import { buildReport } from "../../domain/report/usage-report.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 import type { StoredUsage } from "../../domain/stored-usage.js";
-import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
+import { measurementRefused } from "../../domain/telemetry-consent.js";
 import type { RepositoryLocator } from "../../ports/repository-locator.js";
 import type { LeftOutReason, UsageLedger } from "../../ports/usage-ledger.js";
-import type { IngestResult, IngestUsageUseCase } from "../ingest-usage-use-case.js";
+import type { IngestUsage, IngestUsageResult } from "../ingest-usage.js";
 import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";
 
@@ -26,7 +27,7 @@ export type RequestedFilters =
   | (ReportFilters & { readonly here?: undefined })
   | (ReportFilters & { readonly repository: null; readonly here: string });
 
-export interface ReportRequest {
+export interface ReportUsageCommand {
   readonly axis: ReportAxis;
   readonly period: Period;
   /** None given: every call of the period. */
@@ -50,7 +51,7 @@ export interface ReportCoverage {
  * different things. */
 export interface ReportRun
   extends Pick<
-    IngestResult,
+    IngestUsageResult,
     "filesRead" | "unrecognised" | "notStored" | "consentLogDamaged" | "oldestTranscriptAt"
   > {
   /** Lines of the partitions read that were not records, counted before the report settled
@@ -58,7 +59,7 @@ export interface ReportRun
   readonly skippedLedgerLines: number;
 }
 
-export type ReportResult =
+export type ReportUsageResult =
   | { readonly status: "refused" }
   /** Two flags given select on one axis, so together they would keep nothing. */
   | {
@@ -97,24 +98,23 @@ export type ReportResult =
  * the report they give adds up to the row of the unfiltered one they select. Flags that select
  * on one axis are refused first, then the environment's refusal, then `.` is located, before
  * anything is read: refusal means no git is run either. */
-export class ReportUsageUseCase {
+export class ReportUsage {
   constructor(
     /** Only its run is used: whatever it found is the report's `run`, never a figure. */
-    private readonly ingest: Pick<IngestUsageUseCase, "execute">,
+    private readonly ingest: Pick<IngestUsage, "execute">,
     private readonly ledger: UsageLedger,
     private readonly declared: DeclaredBindings,
-    private readonly identity: PersonIdentityStore,
     private readonly locator: RepositoryLocator,
-    private readonly options: { readonly refusedByEnvironment: boolean }
+    private readonly environment: Environment
   ) {}
 
-  async execute(request: ReportRequest): Promise<ReportResult> {
+  async execute(request: ReportUsageCommand): Promise<ReportUsageResult> {
     const { here, ...asked }: RequestedFilters = request.filters ?? NO_FILTERS;
     const [conflict] = conflictsOf(asked);
     if (conflict !== undefined) {
       return { status: "conflicting", flags: conflict, absent: asked.absent };
     }
-    if (this.options.refusedByEnvironment) return { status: "refused" };
+    if (measurementRefused(this.environment)) return { status: "refused" };
     const located = here === undefined ? undefined : await this.repositoryIn(here);
     if (located === null) return { status: "not-a-repository" };
     const { filesRead, unrecognised, notStored, consentLogDamaged, oldestTranscriptAt } =
@@ -131,8 +131,7 @@ export class ReportUsageUseCase {
       located === undefined ? resolvedIn(records, "repository", asked.repository) : { id: located };
     if ("status" in repository) return repository;
     const filters: ReportFilters = { ...asked, session: session.id, repository: repository.id };
-    const facts = await this.declared.read();
-    const person = await this.identity.read();
+    const { facts, person } = await this.declared.read();
     const selected = records.filter((record) =>
       matchesFilter(filters, record, attribute(record, facts), person)
     );
@@ -166,7 +165,7 @@ function resolvedIn(
   records: readonly StoredUsage[],
   flag: PrefixFlag,
   typed: string | null
-): { readonly id: string | null } | Extract<ReportResult, { status: "ambiguous" }> {
+): { readonly id: string | null } | Extract<ReportUsageResult, { status: "ambiguous" }> {
   if (typed === null) return { id: null };
   const found = resolveId(
     typed,
