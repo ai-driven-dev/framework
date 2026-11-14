@@ -330,6 +330,26 @@ describe("skill check", () => {
     expectError("sentence");
   });
 
+  it("rule-line: a sub-item under a transversal rule", () => {
+    mutate("SKILL.md", "- Speak only to ask.", "- Speak only to ask.\n  - In a subagent: ask the caller.");
+    expectError("rule-line");
+  });
+
+  it("rule-line: a sub-item under an action rule", () => {
+    mutate("actions/02-second.md", "The answer.\n", "The answer.\n\n## Rules\n\n- Answer once.\n  - Asked twice: repeat it.\n");
+    expectError("rule-line");
+  });
+
+  it("a case of a step as a dash sub-item is no finding", () => {
+    mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per the rubric.\n   - No rubric: ask for one.");
+    assert.deepEqual(run(), { code: 0, out: "", err: "" });
+  });
+
+  it("sentence: two sentences in a rule are never told to split into sub-items", () => {
+    mutate("SKILL.md", "- Speak only to ask.", "- Speak only to ask. Wait after.");
+    assert.doesNotMatch(run().out, /sub-items/u);
+  });
+
   it("sentence: an abbreviation like e.g. ends no sentence", () => {
     mutate("actions/02-second.md", "1. Answer per the rubric.", "1. Answer per a rubric (e.g. the team's, i.e. the shared one).");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
