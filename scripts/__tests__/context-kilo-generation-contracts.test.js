@@ -19,7 +19,11 @@ for (const file of contracts) {
   test(`${file}: names all Kilo detection signals and excludes shared false positives`, () => {
     const text = fs.readFileSync(path.join(ROOT, file), "utf8");
     for (const signal of SIGNALS) assert.ok(text.includes(`\`${signal}\``), `missing ${signal}`);
-    assert.match(text, /AGENTS\.md.{0,80}(?:alone|only).{0,40}(?:not|do not).{0,30}Kilo|(?:not|do not).{0,30}Kilo.{0,40}AGENTS\.md/isu);
+    assert.ok(
+      text.includes("Every tool reads `AGENTS.md`, so it signals none.") ||
+      /AGENTS\.md.{0,80}(?:alone|only).{0,40}(?:not|do not).{0,30}Kilo|(?:not|do not).{0,30}Kilo.{0,40}AGENTS\.md/isu.test(text),
+      `${file}: AGENTS.md alone must not identify Kilo`,
+    );
     assert.match(text, /opencode\.json.{0,35}(?:alone|not|does not)|(?:not|does not).{0,35}opencode\.json/isu);
   });
 }
@@ -34,6 +38,10 @@ test("Kilo generation contracts use native destinations and require consent for 
   assert.match(skill, /never write the same skill to both locations/u);
   assert.match(agent, /\.kilo\/agents\/<name>\.md/u);
   assert.match(agent, /mode: subagent/u);
+  assert.match(agent, /Agents are supported on every listed tool\./u);
+  assert.ok(agent.includes("~/.config/kilo/agents/"));
+  assert.match(agent, /KILO_CONFIG_DIR/u);
+  assert.match(agent, /AIDD's generator writes project-level agents only/u);
   assert.match(command, /\.kilo\/commands\/<name>\.md/u);
 });
 

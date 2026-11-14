@@ -14,9 +14,11 @@ The per-tool agent path and the gate every run executes before writing. Agent sl
 | Antigravity CLI | `.agents/agents/<name>/agent.md` | markdown + frontmatter |
 | Kilo           | `.kilo/agents/<name>.md`         | markdown + frontmatter |
 
+Agents are supported on every listed tool.
+
 Kilo sources agents from `.kilo/agents/`; the filename defines the name. See the [custom subagent contract](https://kilo.ai/docs/customize/custom-subagents) for path and frontmatter fields.
 
-User-level agents, for every project of the user: Claude Code `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`), Codex `~/.codex/agents/` (`CODEX_HOME`), OpenCode `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`), Copilot `~/.copilot/agents/<name>.agent.md` (`COPILOT_HOME`). Cursor documents `~/.cursor/agents/`; prefer the project path. Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode](https://opencode.ai/docs/agents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Cursor](https://cursor.com/docs/subagents).
+User-level agents, for every project of the user: Claude Code `~/.claude/agents/` (`CLAUDE_CONFIG_DIR`), Codex `~/.codex/agents/` (`CODEX_HOME`), OpenCode `~/.config/opencode/agents/` (`XDG_CONFIG_HOME`), Copilot `~/.copilot/agents/<name>.agent.md` (`COPILOT_HOME`), Kilo `~/.config/kilo/agents/`. Kilo also loads agents from an additional directory set with `KILO_CONFIG_DIR`; AIDD's generator writes project-level agents only. Cursor documents `~/.cursor/agents/`; prefer the project path. Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode](https://opencode.ai/docs/agents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference), [Kilo](https://kilo.ai/docs/customize/custom-subagents), [Kilo CLI config](https://github.com/Kilo-Org/kilocode/blob/v7.7.5/packages/opencode/src/kilocode/skills/kilo-config.md), [Cursor](https://cursor.com/docs/subagents).
 
 Cursor keeps single quotes as part of a frontmatter value: quote Cursor values with `"double quotes"` or not at all.
 
