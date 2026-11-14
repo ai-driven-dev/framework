@@ -107,7 +107,7 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
 const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;
 const IDENTIFIER = /[A-Za-z_$][A-Za-z0-9_$]*/g;
 const ISOLATED_FROM_TOOLS =
-  /^src\/contexts\/(?:[^/]+\/(?:application\/|domain\/formats\/)|tools\/domain\/(?:(?:sections|hooks|bridges|native-registration|profile)\/|profile\.ts$|marketplace-(?:catalog|entry)\.ts$)|tools\/contract\/)/;
+  /^src\/(?:orchestration\/|contexts\/(?:[^/]+\/(?:application\/|domain\/formats\/)|tools\/domain\/(?:(?:sections|hooks|bridges|native-registration|profile)\/|profile\.ts$|marketplace-(?:catalog|entry)\.ts$)|tools\/contract\/))/;
 
 function words(identifier: string): string[] {
   return identifier
@@ -270,6 +270,10 @@ describe("a tool never names an identifier outside its profile, in the code ever
     );
 
     expect(actual, "a listed file took on another tool-named identifier").toEqual(recorded);
+  });
+
+  it("scopes the scenarios of src/orchestration", () => {
+    expect(ISOLATED_FROM_TOOLS.test("src/orchestration/setup/setup.ts")).toBe(true);
   });
 
   it("sees a tool as one word of a camelCase, PascalCase or upper-case identifier", () => {
