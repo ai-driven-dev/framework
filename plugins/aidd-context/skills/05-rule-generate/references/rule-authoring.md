@@ -13,7 +13,7 @@ How to write and name a rule.
 
 ## Naming
 
-`#-slug[@version][-specificity]`: single-digit category prefix, no zero-padding.
+Slug: the category index without its leading `0`, then a kebab-case name, such as `1-naming` in `01-standards`.
 
 | Index | Category | Covers |
 | --- | --- | --- |
@@ -28,4 +28,4 @@ How to write and name a rule.
 | 08 | domain | business logic |
 | 09 | other | miscellaneous |
 
-Pick in order: `03`, `02`, `01`, `00`, `04`–`08`, else `09`.
+Several categories fit: take the most specific, in the order `03`, `02`, `01`, `00`, then `04` to `08`, else `09`.

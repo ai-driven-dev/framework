@@ -14,7 +14,7 @@ How a candidate compares with each found policy, and what to offer.
 ## Comparison
 
 - Compare obligations, prohibitions, scopes, conditions and exceptions.
-- Exclude only scopes proven disjoint.
+- Skip a policy only when its scope cannot overlap the candidate's.
 - Cite each finding's source path and decisive quote.
 
 ## Choices
@@ -23,5 +23,5 @@ How a candidate compares with each found policy, and what to offer.
 | --- | --- |
 | new | create, cancel |
 | covered | cancel |
-| overlap | create, merge, cancel |
+| overlap | create, merge into it, cancel |
 | conflict | rescope the candidate, cancel |

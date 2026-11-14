@@ -2,8 +2,8 @@
 
 How to run `scripts/write-rule.cjs` and read its result.
 
-- Resolve it to an absolute path beside the loaded installed `SKILL.md`. Assume no checkout, project-relative or CLI path.
-- Write the request JSON outside the destinations: `category`, `slug`, `description`, `body`, and `paths`, omitted for all files.
+- `$writer`: `scripts/write-rule.cjs` beside the loaded `SKILL.md`, as an absolute path.
+- Write the request JSON to a temporary file outside the project: `category`, `slug`, `description`, `body`, and `paths`, omitted for all files.
 
 ```sh
 node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$request_json"
@@ -24,7 +24,7 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | --- | --- |
 | `files` | `{path, operation}` per path a run writes or deletes. |
 | `conflicts` | Copies whose content the writer did not produce; never `AGENTS.md`. |
-| `legacy` | Signed copies, `aidd_rule` headers or a signed `AGENTS.md` block it converts. |
+| `legacy` | Files in the old AIDD format it converts. |
 | `drift` | Copies that differ from their source's rendering. |
 | `error` | `{code, message}`: `REFUSED`, `USAGE` or the system error code. |
 | `blocked` | `{path, operation, code, message}` per unwritable path. |
@@ -42,4 +42,4 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 
 - Every non-zero exit prints JSON on stdout.
 - `targets` only grow: drop a host by removing the rule, then adding it again.
-- It refuses an `AGENTS.md` index block it cannot trust, an unknown host, a category or slug outside `rule-authoring.md`, a comma in a path, a symlink or a path outside the project, invalid UTF-8, and an Antigravity copy over the size `hosts.md` states.
+- It refuses an `AGENTS.md` index block it cannot trust, an unknown host, a category or slug outside `rule-authoring.md`, a comma in a path, a symlink or a path outside the project, invalid UTF-8, and an Antigravity copy over 24,000 bytes.
