@@ -57,36 +57,6 @@ export function printOnResult(output: CLIOutput, result: OnResult): void {
   output.info(
     "That setting is shared by this clone's linked worktrees and is never committed: a teammate is measured only after running `aidd telemetry on` in their own clone."
   );
-  if (result.legacyConfig === "block-removed") {
-    output.info(
-      "Removed the previous version's telemetry block from .aidd/config.json. If that file is tracked, commit the change."
-    );
-  }
-  if (result.legacyConfig === "file-deleted") {
-    output.info(
-      "Deleted .aidd/config.json: it held only the previous version's telemetry block. If it was tracked, commit the deletion."
-    );
-  }
-  if (result.legacyConfig === "unparseable") {
-    output.warn(
-      ".aidd/config.json cannot be parsed, so it was left as it is. Remove its telemetry key by hand."
-    );
-  }
-  const { hook, journal } = result;
-  if (hook.lineRemoved) output.info("Removed the commit hook line the previous version added.");
-  if (hook.delegateRemoved) output.info("Removed the script that line called.");
-  if (hook.stillCalledBy.length > 0) {
-    output.warn(
-      `The previous version's commit script is kept because ${hook.stillCalledBy.join(", ")} still calls it. ` +
-        "Remove that call, then delete the aidd-session-trailer.sh script from the hooks directory."
-    );
-  }
-  if (journal.journalRemoved)
-    output.info("Removed aidd_docs/runs/, the previous version's journal.");
-  if (journal.trackedKept) {
-    output.warn("aidd_docs/runs/ is tracked by git, so it was left in place.");
-  }
-  if (journal.ignoreEntryRemoved) output.info("Removed its aidd_docs/runs/ entry from .gitignore.");
   if (result.retention.short) {
     const days = result.retention.days;
     output.warn(

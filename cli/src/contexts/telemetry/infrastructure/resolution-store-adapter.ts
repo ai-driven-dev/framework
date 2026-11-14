@@ -20,12 +20,12 @@ export class ResolutionStoreAdapter implements ResolutionStore {
   ) {
     this.path = join(ledgerDir, "roots.json");
     // Its own directory's table, read at every load: no wiring can leave it out.
-    this.aliases = new RepositoryAliasStoreAdapter(ledgerDir, storage);
+    this.aliases = new RepositoryAliasStoreAdapter(ledgerDir);
   }
 
   /** Each repository by its id of now (see `RepositoryAliasStore`). */
   async load(): Promise<Map<string, RepositoryResolution>> {
-    const ids = (await this.aliases.load())?.ids;
+    const ids = await this.aliases.load();
     const held = parseResolutions(await readTextIfPresent(this.path));
     for (const [key, resolution] of held) {
       const id = ids?.get(resolution.repository_id);

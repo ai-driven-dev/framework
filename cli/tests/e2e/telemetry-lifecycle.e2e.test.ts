@@ -17,7 +17,6 @@ import {
 } from "../helpers/telemetry-sandbox.js";
 import { runCli } from "./helpers.js";
 
-const SESSION = "00000000-0000-4000-8000-0000000000cc";
 const DELEGATE = `#!/bin/sh
 # Installed by \`aidd telemetry on\`, removed by \`aidd telemetry off\`.
 session_id="\${CODEX_THREAD_ID:-\${CLAUDE_CODE_SESSION_ID:-}}"
@@ -39,19 +38,6 @@ afterEach(() => {
 
 const cli = (args: string[], extra: Record<string, string> = {}) =>
   runCli(["telemetry", ...args], repo, box.home, { env: box.env(extra) });
-const commit = () => {
-  git(
-    repo,
-    { ...box.gitEnv, CLAUDE_CODE_SESSION_ID: SESSION },
-    "commit",
-    "-q",
-    "--allow-empty",
-    "-m",
-    "work"
-  );
-  return git(repo, box.gitEnv, "log", "-1", "--format=%B");
-};
-
 function leaveV1(): void {
   const hooks = join(repo, ".git", "hooks");
   mkdirSync(hooks, { recursive: true });
@@ -70,9 +56,8 @@ function leaveV1(): void {
 }
 
 describe("aidd telemetry on", () => {
-  it("leaves a repository that commits without a trailer, and prints what it removed", async () => {
+  it("turns measurement on and prints nothing about what a previous version installed", async () => {
     leaveV1();
-    expect(commit()).toContain(`AIDD-Session-Id: ${SESSION}`);
 
     const run = await cli(["on", "--yes", "--anonymous"]);
 
@@ -80,16 +65,10 @@ describe("aidd telemetry on", () => {
     expect(run.stdout).toContain("Measurement is on for this clone");
     expect(run.stdout).toContain("never committed");
     expect(run.stdout).toContain("Next: declare what you work on");
-    expect(run.stdout).toContain("Removed the commit hook line");
-    expect(run.stdout).toContain("Removed aidd_docs/runs/");
     expect(run.stderr).toContain('"cleanupPeriodDays": 3650');
     expect(git(repo, box.gitEnv, "config", "--local", "--get", "aidd.telemetry").trim()).toMatch(
       /^2:[0-9a-f-]{36}$/u
     );
-    expect(existsSync(join(repo, ".aidd", "config.json"))).toBe(false);
-    expect(run.stdout).toContain("Deleted .aidd/config.json");
-    expect(commit()).not.toContain("AIDD-Session-Id");
-    expect(existsSync(join(repo, "aidd_docs", "runs"))).toBe(false);
   });
 
   it("asks nothing it cannot ask: without --yes and a terminal it changes nothing and exits 1", async () => {

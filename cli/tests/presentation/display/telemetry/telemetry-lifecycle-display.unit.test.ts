@@ -11,9 +11,6 @@ import { CapturingOutput } from "../../../helpers/ports/capturing-output.js";
 const ON: Extract<OnResult, { status: "on" }> = {
   status: "on",
   consentWritten: true,
-  legacyConfig: "none",
-  hook: { lineRemoved: false, delegateRemoved: false, stillCalledBy: [] },
-  journal: { journalRemoved: false, trackedKept: false, ignoreEntryRemoved: false },
   retention: { days: 3650, short: false },
   identity: { personId: null, previous: null },
 };
@@ -60,47 +57,6 @@ describe("printOnResult", () => {
     expect(on({ consentWritten: false }).at("success")[0]).toBe(
       "Measurement was already on for this clone."
     );
-  });
-
-  it("says what became of .aidd/config.json, and that the change may need committing", () => {
-    expect(on({ legacyConfig: "block-removed" }).at("info")[1]).toContain("commit the change");
-    expect(on({ legacyConfig: "file-deleted" }).at("info")[1]).toContain("commit the deletion");
-    expect(on({ legacyConfig: "unparseable" }).at("warn")[0]).toContain("left as it is");
-    expect(on({ legacyConfig: "none" }).lines.join("\n")).not.toContain(".aidd/config.json");
-  });
-
-  it("names each leftover it removed", () => {
-    const output = on({
-      hook: { lineRemoved: true, delegateRemoved: true, stillCalledBy: [] },
-      journal: { journalRemoved: true, trackedKept: false, ignoreEntryRemoved: true },
-    });
-    expect(output.at("info").slice(1, 5)).toEqual([
-      "Removed the commit hook line the previous version added.",
-      "Removed the script that line called.",
-      "Removed aidd_docs/runs/, the previous version's journal.",
-      "Removed its aidd_docs/runs/ entry from .gitignore.",
-    ]);
-  });
-
-  it("prints the manual step when a manager still calls the script", () => {
-    const output = on({
-      hook: {
-        lineRemoved: true,
-        delegateRemoved: false,
-        stillCalledBy: ["lefthook.yml", ".husky/prepare-commit-msg"],
-      },
-    });
-    const warning = output.at("warn")[0] ?? "";
-    expect(warning).toContain("lefthook.yml, .husky/prepare-commit-msg");
-    expect(warning).toContain("aidd-session-trailer.sh");
-  });
-
-  it("says a tracked journal was left", () => {
-    expect(
-      on({ journal: { journalRemoved: false, trackedKept: true, ignoreEntryRemoved: false } }).at(
-        "warn"
-      )[0]
-    ).toContain("tracked by git");
   });
 
   it("prints the one line to add when Claude keeps transcripts too briefly", () => {

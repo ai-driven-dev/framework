@@ -74,29 +74,28 @@ src/
 │   │   ├── application/
 │   │   │   ├── forget/    # what measurement keeps on a machine, shown and erased
 │   │   │   ├── identity/    # who, if anyone, the measurement names
-│   │   │   ├── legacy/    # bringing what an earlier version stored to today's key and id rules
 │   │   │   ├── report/    # what the stored calls consumed in a period, along one axis
-│   │   │   └── switch/    # opting a repository in or out, and leaving it clean of the previous version
+│   │   │   └── switch/    # opting a repository in or out
 │   │   ├── domain/
 │   │   │   ├── declaration/    # the task a person declares, and whether work is bound to one
 │   │   │   ├── formats/
 │   │   │   ├── consent/    # a clone's identity, and when it consented
 │   │   │   ├── identity/    # the identifier a person chose to be named by
-│   │   │   ├── legacy/    # what the previous version wrote, by name and location, and its key and id rules
+│   │   │   ├── legacy/    # where an earlier version wrote what forget erases, and the table of ids it gave repositories
 │   │   │   ├── ports/
 │   │   │   │   ├── bindings/    # the declarations kept beside the ledger, and the lock their writers share
 │   │   │   │   ├── forget/
 │   │   │   │   ├── identity/
 │   │   │   │   └── switch/
 │   │   │   ├── report/    # attribution of a call, the days of a report, the axes it splits by
-│   │   │   └── switch/    # the previous version's config block, Claude's retention
+│   │   │   └── switch/    # Claude's retention
 │   │   └── infrastructure/
 │   │       ├── consent/    # reading a clone's identity from the file system, and the consent history file
 │   │       ├── declaration/    # where a declaration is kept: git config and the telemetry dir
 │   │       ├── forget/    # erasing the telemetry dir, the previous version's files, git config keys
 │   │       ├── git/    # the environment a git child process runs in
 │   │       ├── identity/    # the identity file in the telemetry dir
-│   │       ├── legacy/    # the table of ids an earlier version gave repositories, beside the ledger
+│   │       ├── legacy/    # the table of ids an earlier version wrote beside the ledger, read and never written
 │   │       ├── reading/    # reading a text file safely, for the stores under the telemetry dir
 │   │       ├── left-out/    # what ingests measured and could not store, by hash, beside the ledger
 │   │       ├── storage/    # the owner-only private storage under the telemetry dir

@@ -40,7 +40,7 @@ export class BindingSnapshotStoreAdapter implements BindingSnapshotStore {
    * under an id an earlier version gave joins the history of the id it has now, and the file
    * is never rewritten. */
   private async read(): Promise<BranchSnapshot[]> {
-    const ids = (await this.aliases.load())?.ids;
+    const ids = await this.aliases.load();
     const snapshots: BranchSnapshot[] = [];
     for (const line of ((await readTextIfPresent(this.path)) ?? "").split("\n")) {
       const snapshot = parseBranchSnapshot(line);

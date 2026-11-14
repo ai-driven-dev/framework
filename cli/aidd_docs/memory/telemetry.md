@@ -53,7 +53,7 @@ flowchart LR
 | What a Claude Code line becomes | `domain/formats/claude-transcript-usage.ts` |
 | Why a call is counted once | `domain/usage-fold.ts` |
 | Where a call's repository comes from | `application/directory-resolver.ts`, `domain/repository-identity.ts` |
-| How data an earlier version stored is brought to today's key and id rules: read-time in every store reader, rewritten by the first ingest and again when a root left pending adds an id | `application/legacy/stored-usage-migration.ts`, `domain/legacy/` (key, id and table rules), `infrastructure/legacy/repository-alias-store-adapter.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md#stores) |
+| How a call, a root or a branch snapshot stored under an id an earlier version gave a repository joins the history of its id of now: at read; a re-ided partition is rewritten on save, branch snapshots never | `domain/legacy/repository-aliases.ts`, `infrastructure/legacy/repository-alias-store-adapter.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md) |
 | Which task a call belongs to | `domain/report/attribution.ts`, `domain/declaration/binding-resolution.ts` |
 | Whether a branch is declared; the hook's twin is `plugins/aidd-telemetry/hooks/lib/git.cjs` | `domain/branch-binding.ts` `parseBranchConfig`; rule and limits in the [usage contract](../../../aidd_docs/product/usage-contract.md#branch-declaration) |
 | What counts as consent | `domain/telemetry-consent.ts`, `infrastructure/git-consent-adapter.ts` |
@@ -65,7 +65,7 @@ flowchart LR
 | What a Codex line becomes, and why a Codex file that moved is read from its start | `domain/formats/codex-transcript-usage.ts`, `infrastructure/transcripts/codex-transcript-source-adapter.ts` |
 | How the ledger lies on disk, and what an ingest or a report reads | `infrastructure/usage-ledger-adapter.ts`, `domain/stored-usage.ts`, `application/ledger-upkeep.ts`, `domain/report/period.ts` |
 | What an ingest measured and could not store, kept for every report (`ledger/left-out.txt`), and why a ledger line no reader knows is kept | `infrastructure/left-out/left-out-adapter.ts`, `infrastructure/usage-ledger-adapter.ts`, `application/ingest-usage-use-case.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md#left-out) |
-| What `on` and `forget` clean up from an earlier measurement | `domain/legacy/`, `application/switch/`, `application/forget/` |
+| What `forget` erases of an earlier measurement | `domain/legacy/legacy-locations.ts`, `application/forget/` |
 | The report axes and the envelope | `domain/report/usage-report.ts`, `application/report/report-envelope.ts` |
 | Who the measurement names, and what `on` offers | `domain/identity/person-identity.ts`, `application/identity/`, `infrastructure/identity/git-user-source-adapter.ts`; the question is the `on` command's |
 | What a report's `filters` select, and where a start of an id or `.` is resolved | `domain/report/report-filter.ts`, `application/report/report-usage-use-case.ts`; flags in the [usage contract](../../../aidd_docs/product/usage-contract.md#filters) |

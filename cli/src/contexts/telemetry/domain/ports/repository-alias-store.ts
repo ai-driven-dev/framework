@@ -1,8 +1,5 @@
-import type { RepositoryAliases } from "../legacy/repository-aliases.js";
-
-/** The table of ids an earlier version gave repositories, beside the ledger. */
+/** The table of ids an earlier version gave repositories, as it wrote it beside the ledger. */
 export interface RepositoryAliasStore {
-  /** `null` when there is none yet. */
-  load(): Promise<RepositoryAliases | null>;
-  save(aliases: RepositoryAliases): Promise<void>;
+  /** `null` when there is none. */
+  load(): Promise<ReadonlyMap<string, string> | null>;
 }

@@ -14,7 +14,6 @@ import { ClaudeTranscriptSourceAdapter } from "../../../../src/contexts/telemetr
 import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import {
-  ALREADY_MIGRATED,
   cloneOf,
   FakeBindings,
   FakeConsents,
@@ -145,8 +144,7 @@ function machine(source: TranscriptSource) {
       new InMemoryBindingsLock(),
       () => NOW
     ),
-    { refusedByEnvironment: false },
-    ALREADY_MIGRATED
+    { refusedByEnvironment: false }
   );
   const locked = cloneKey(cloneOf("/work/locked/.git", { ino: "/work/locked" }));
   const lock = (refused: boolean) =>
