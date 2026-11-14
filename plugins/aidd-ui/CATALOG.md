@@ -89,6 +89,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [elements.md](skills/04-components/references/elements.md) | - |
 | `references` | [engine.md](skills/04-components/references/engine.md) | - |
 | `references` | [extraction.md](skills/04-components/references/extraction.md) | - |
+| `references` | [look.md](skills/04-components/references/look.md) | - |
 | `references` | [variants.md](skills/04-components/references/variants.md) | - |
 | `references` | [versions.md](skills/04-components/references/versions.md) | - |
 | `-` | [SKILL.md](skills/04-components/SKILL.md) | `Write a project's components and assets, from nothing or from its code, or carry a component change to its new versions. Use when the user wants to add, extract, or change a component or an asset. Not for the brand, tokens, screens, or journeys.` |
@@ -121,6 +122,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [review-template.md](skills/06-review/assets/review-template.md) | - |
 | `references` | [cases.md](skills/06-review/references/cases.md) | - |
 | `references` | [engine.md](skills/06-review/references/engine.md) | - |
+| `references` | [look.md](skills/06-review/references/look.md) | - |
 | `references` | [review.md](skills/06-review/references/review.md) | - |
 | `-` | [SKILL.md](skills/06-review/SKILL.md) | `Review a project's wireframes, screens, and components in the showcase, then publish the ones every state of which is OK. Use when the user wants to review, approve, or publish them. Not for writing or changing them.` |
 

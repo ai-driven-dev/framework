@@ -14,8 +14,11 @@ The output of [write](02-write.md).
 4. Validate again per [engine](../references/engine.md), and repeat until only these remain:
    - errors the [engine](../references/engine.md) says are about the code
    - `warning` lines, which are not errors
-5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
-6. Reply with:
+5. Look at every element the change reached per [look](../references/look.md), and fix it.
+   - A change reaches each record `bump` lists in `changed`.
+   - Hand back only when all are looked at.
+6. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+7. Reply with:
    - the elements and screens created or raised, with their versions
    - the ones the raise left, for a change
    - what the validation still prints

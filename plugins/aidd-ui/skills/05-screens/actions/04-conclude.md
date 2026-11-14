@@ -15,8 +15,11 @@ The screens kept.
 4. Validate again per [engine](../references/engine.md), and repeat until only these remain:
    - errors the [engine](../references/engine.md) says are about the code
    - `warning` lines, which are not errors
-5. Look at each screen created or changed per [look](../references/look.md), and fix it.
+5. Look at every screen the change reached per [look](../references/look.md), and fix it.
+   - A change reaches each screen `bump` lists in `changed`.
+   - Look on each platform the screen targets.
    - Skip those already looked at and unchanged since.
+   - Hand back only when all are looked at.
 6. Write the showcase per [engine](../references/engine.md), in the project memory's language.
 7. Reply with:
    - the screens created, each with the wireframe it dresses
