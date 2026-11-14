@@ -260,6 +260,8 @@ const REVIEW = record(
     "",
     "| Screen | State | Version | Verdict | Comment |",
     "| --- | --- | --- | --- | --- |",
+    "| brand | default | 1 | ok | |",
+    "| system | default | 1 | ok | |",
     "| home | default | 1 | ok | |",
     "| home | empty | 1 | ok | |",
     "| home | loading | 1 | revise | spinner too small |",

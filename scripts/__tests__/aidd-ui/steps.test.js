@@ -82,7 +82,12 @@ describe("aidd-ui steps", () => {
     });
 
     it("lists nothing for a record with no state", () => {
-      assert.deepEqual(awaitingOf(rows, rec({ id: "brand", kind: "brand" })), []);
+      assert.deepEqual(awaitingOf(rows, rec({ id: "x", kind: "atom", version: 1 })), []);
+    });
+
+    it("lists the one `default` state of a brand or a system, until a verdict at its version", () => {
+      assert.deepEqual(awaitingOf(rows, rec({ id: "brand", kind: "brand", version: 1 })), ["default"]);
+      assert.deepEqual(awaitingOf([{ Screen: "brand", State: "default", Version: "1", Verdict: "ok" }], rec({ id: "brand", kind: "brand", version: 1 })), []);
     });
 
     it("does not read the status", () => {

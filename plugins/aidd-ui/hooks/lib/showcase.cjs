@@ -3,7 +3,7 @@
 // the command reads the files and writes the pages. Each page holds the review of its record,
 // handed back as one copy.
 const { list, table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, fm, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, REVIEW_KIND, SYSTEM_ID } = require("./model.cjs");
+const { placed, fm, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, reviewStatesOf, REVIEW_KIND, SYSTEM_ID } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
@@ -781,6 +781,9 @@ function verdictOf(rows, record, state) {
 /** Whether the record has a render to show state by state. */
 const hasRender = (project, record) => list(fm(record).states).length > 0 && project.renders.includes(renderOf(record)) && text(project, renderOf(record)) !== null;
 
+/** Whether the drawer reviews the record: one with a render, or a brand or a system, which has a version and no render. */
+const reviewable = (project, record) => hasRender(project, record) || (["brand", SYSTEM_ID].includes(fm(record).kind) && fm(record).version !== undefined);
+
 /** Whether a screen's code is at its version: its states then each need a capture. */
 const isCoded = (record) => fm(record).kind === "screen" && list(fm(record).code).some((link) => parseLink(link)?.version === fm(record).version);
 
@@ -808,7 +811,7 @@ function stepsOf({ project, records, rows, sets }) {
   return STEPS.map((step) => {
     const own = records.filter((record) => stepOf(record) === step);
     const ownSets = sets.filter((set) => setStepOf(set) === step);
-    const awaiting = own.filter((record) => hasRender(project, record) && awaitingOf(rows, record).length).sort(byCategory);
+    const awaiting = own.filter((record) => reviewable(project, record) && awaitingOf(rows, record).length).sort(byCategory);
     const open = ownSets.filter((set) => !set.problems.length);
     return { step, records: own, sets: ownSets, awaiting, open, todo: awaiting.length + open.length };
   });
@@ -1109,7 +1112,7 @@ const platformOf = (system) => (system && list(fm(system).platforms).length ? ` 
 
 /** The states of a record with what the review says of each: the ones still to review first, the others in the record's order. */
 function orderedStates(rows, record) {
-  const states = list(fm(record).states).map((state) => ({ state, verdict: verdictOf(rows, record, state) }));
+  const states = reviewStatesOf(record).map((state) => ({ state, verdict: verdictOf(rows, record, state) }));
   return [...states.filter(({ verdict }) => UNRESOLVED.includes(verdict.current)), ...states.filter(({ verdict }) => !UNRESOLVED.includes(verdict.current))];
 }
 

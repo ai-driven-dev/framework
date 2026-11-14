@@ -31,8 +31,10 @@ const written = (...args) => {
   const run = engine("showcase", "--root", tmp, ...args);
   return { code: run.status, out: run.stdout, err: run.stderr };
 };
-/** Rewrites the review of the fixture with these rows, `[screen, state, version, verdict, comment]`. */
-const verdicts = (...rows) => {
+/** Rewrites the review of the fixture with these rows, `[screen, state, version, verdict, comment]`, after the
+ * brand and the system reviewed at their version. */
+const verdicts = (...all) => {
+  const rows = [["brand", "default", "1", "ok", ""], ["system", "default", "1", "ok", ""], ...all];
   const table = ["## Verdicts", "", "| Screen | State | Version | Verdict | Comment |", "| --- | --- | --- | --- | --- |", ...rows.map((cells) => `| ${cells.join(" | ")} |`)].join("\n");
   put(tmp, REVIEW_FILE, record(["id: first-pass", "kind: review", "status: proposed", "version: 1", "scope: system", "screens: [home]"], "# First pass", table));
 };
@@ -550,6 +552,19 @@ describe("aidd-ui showcase", () => {
       const open = itemsOf(pages["home.html"]).filter((item) => / open/.test(item.attributes)).map((item) => item.record);
       assert.deepEqual(open, ["home"]);
       assert.match(itemsOf(pages["home.html"]).find((item) => item.record === "home").attributes, /data-here/);
+    });
+
+    it("lists a brand with a version as one `default` row, until a verdict at that version settles it", () => {
+      edit(tmp, `${UI}/brand.md`, "version: 1", "version: 2");
+      const before = pagesOf()["index.html"];
+      const item = itemsOf(before).find((each) => each.record === "brand");
+      assert.equal(item.version, "2");
+      assert.deepEqual([...item.html.matchAll(/<li class="pstate" data-state="([^"]+)"/g)].map((match) => match[1]), ["default"]);
+      assert.equal(stepOf(before, "identity").mark, "1");
+      verdicts(["brand", "default", "2", "ok", ""]);
+      const after = pagesOf()["index.html"];
+      assert.ok(!itemsOf(after).some((each) => each.record === "brand"));
+      assert.equal(stepOf(after, "identity").mark, "\u2713");
     });
 
     it("gives each state of a record a verdict pair, a comment field and a link to its tab, in the order of the tabs", () => {

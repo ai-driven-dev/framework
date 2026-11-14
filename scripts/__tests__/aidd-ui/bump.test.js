@@ -137,7 +137,7 @@ describe("aidd-ui bump", () => {
         assert.ok(read(HISTORY).includes(`| ${id} | 2 | plainer tone | no | ${TASK} | |\n`), id);
       }
       assert.ok(read(`${UI}/reviews/first-pass.md`).includes("| brand | default | 2 | pending | |"));
-      assert.equal(read(`${UI}/reviews/first-pass.md`).includes("| system |"), false);
+      assert.equal(read(`${UI}/reviews/first-pass.md`).includes("| system | default | 2 | pending |"), false);
     });
 
     it("raises a wireframe named itself, with its row in history.md", () => {

@@ -2,7 +2,7 @@
 // which step holds a record, which category an element shows under, and what of a record still
 // awaits review. Pure: the showcase draws from these, nothing here reads a file.
 const { list } = require("./markdown.cjs");
-const { fm, stateVerdict } = require("./model.cjs");
+const { fm, stateVerdict, reviewStatesOf } = require("./model.cjs");
 
 const STEPS = ["journeys", "identity", "foundations", "components", "screens"];
 const CATEGORIES = ["input", "action", "display", "navigation", "group", "asset"];
@@ -38,7 +38,7 @@ function setStepOf(set) {
 }
 
 /** The states of a record with no ok or revise at its current version, in the record's order. The status is not read. */
-const awaitingOf = (rows, record) => list(fm(record).states).filter((state) => {
+const awaitingOf = (rows, record) => reviewStatesOf(record).filter((state) => {
   const now = stateVerdict(rows, record, state);
   return !now || (now.Verdict !== "ok" && now.Verdict !== "revise");
 });
