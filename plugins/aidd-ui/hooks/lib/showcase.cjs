@@ -1040,7 +1040,7 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
     const body = alone ? subNavigationOf(fm(alone).id, anchors.get(fm(alone).id) ?? []) : bodyOf(each) + setsOf(each.sets);
     return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark" role="img" aria-label="${escaped(markName)}">${mark}</span></summary>${body}</details></li>`;
   };
-  const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.myReview} · ${pendingOf(labels, total)}</button></div>`;
+  const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false"><span class="label">${labels.myReview}</span>${pendingOf(labels, total)}</button></div>`;
   const bar = `<div class="nav-bar"><span class="nav-title">${labels.title}</span><button type="button" id="nav-toggle" aria-controls="nav-sheet" aria-expanded="false">${labels.contents}</button></div>`;
   return `<nav aria-label="${escaped(labels.list)}">${bar}<div class="nav-scroll" id="nav-sheet"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol></div>${foot}</nav>`;
 }

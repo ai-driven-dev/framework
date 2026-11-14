@@ -712,7 +712,7 @@ describe("aidd-ui showcase", () => {
     it("opens from a My review button at the foot of the sidebar on every page, naming how many records await review", () => {
       verdicts(["home", "default", "1", "ok", ""], ["home", "loading", "1", "revise", "too small"], ["home", "error", "1", "pending", ""], ["button", "default", "0", "ok", ""]);
       for (const [name, html] of Object.entries(pagesOf())) {
-        assert.match(navOf(html), /<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">My review \u00b7 <span class="tally pending" data-template="\{count\} to review">\d+ to review<\/span><\/button><\/div><\/nav>$/, name);
+        assert.match(navOf(html), /<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false"><span class="label">My review<\/span><span class="tally pending" data-template="\{count\} to review">\d+ to review<\/span><\/button><\/div><\/nav>$/, name);
         assert.equal(html.match(/id="open-review"/g).length, 1, name);
         assert.equal(html.match(/<aside class="drawer" id="review"/g).length, 1, name);
         assert.equal(html.match(/id="copy"/g).length, 1, name);
@@ -723,7 +723,7 @@ describe("aidd-ui showcase", () => {
 
     it("names the recap in French as Ma revue, beside the count", () => {
       for (const html of Object.values(pagesOf({ lang: "fr" }))) {
-        assert.match(navOf(html), /id="open-review"[^>]*>Ma revue \u00b7 <span class="tally pending" data-template="\{count\} \u00e0 relire">/);
+        assert.match(navOf(html), /id="open-review"[^>]*><span class="label">Ma revue<\/span><span class="tally pending" data-template="\{count\} \u00e0 relire">/);
         assert.match(html, /<aside class="drawer" id="review" aria-label="Ma revue" hidden>\s*<div class="drawer-head"><h2>Ma revue<\/h2>/);
       }
     });
