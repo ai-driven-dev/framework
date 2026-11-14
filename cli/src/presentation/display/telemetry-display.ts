@@ -1,5 +1,5 @@
 import type { RefusalReason } from "../../contexts/telemetry/application/consented-repositories.js";
-import type { DeclareTaskResult } from "../../contexts/telemetry/application/declare-task.js";
+import type { DeclareTaskResult } from "../../contexts/telemetry/application/declaration/declare-task.js";
 import type { ManageIdentityResult } from "../../contexts/telemetry/application/identity/manage-identity.js";
 import type { IngestUsageResult } from "../../contexts/telemetry/application/ingest-usage.js";
 import type { ReadTelemetryStatusResult } from "../../contexts/telemetry/application/read-telemetry-status.js";

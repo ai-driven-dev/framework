@@ -16,6 +16,9 @@ import type { ErasureKind } from "../../../contexts/telemetry/contract/measureme
 import type { CLIOutput } from "../../output.js";
 import { DAMAGED_CONSENT_LOG, FORGET_THEN_ON, IDENTITY_RULE } from "../telemetry-display.js";
 
+/** What `telemetry on` says of an identifier that cannot name a person. */
+export const INVALID_IDENTITY_REFUSAL = `${IDENTITY_RULE} Nothing was changed.`;
+
 const REFUSALS = {
   "outside-repository": "This directory is not inside a git repository.",
   "unreadable-git-config":
@@ -23,7 +26,7 @@ const REFUSALS = {
   "damaged-consent-log": `${DAMAGED_CONSENT_LOG} nothing was changed. ${FORGET_THEN_ON} again: nothing from before is stored.`,
   "unidentified-clone":
     "This file system gives the clone's git directory no identity, so nothing measured here could be told to be its own. Nothing was changed.",
-  "invalid-identity": `${IDENTITY_RULE} Nothing was changed.`,
+  "invalid-identity": INVALID_IDENTITY_REFUSAL,
   "identity-set":
     "An identity is set, so this clone cannot be measured anonymously. Remove it with `aidd telemetry identity --off`, then run this again. Nothing was changed.",
 } as const;

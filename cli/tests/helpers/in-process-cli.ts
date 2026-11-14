@@ -77,7 +77,9 @@ const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
     const { registerTelemetryCommand } = await import(
       "../../src/presentation/commands/telemetry.js"
     );
-    return (program, _tools, createDeps) => registerTelemetryCommand(program, createDeps);
+    const { wireTelemetryRequests } = await import("../../src/composition/telemetry.js");
+    return (program, _tools, createDeps) =>
+      registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
   },
 ];
 

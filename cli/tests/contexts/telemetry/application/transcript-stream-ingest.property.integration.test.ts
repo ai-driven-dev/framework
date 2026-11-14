@@ -140,7 +140,7 @@ function machine(source: UsageSource) {
       new InMemoryBindingsLock(),
       () => NOW
     ),
-    { refusedByEnvironment: false }
+    { environment: { get: () => undefined } }
   );
   const locked = cloneKey(cloneOf("/work/locked/.git", { ino: "/work/locked" }));
   const lock = (refused: boolean) =>

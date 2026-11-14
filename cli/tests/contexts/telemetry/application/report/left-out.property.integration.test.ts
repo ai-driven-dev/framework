@@ -196,7 +196,7 @@ function machine() {
       now: () => NOW,
     }),
     snapshots,
-    { refusedByEnvironment: false }
+    { environment: { get: () => undefined } }
   );
   const report = new ReportUsage(
     ingest,

@@ -3,10 +3,12 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { BranchDeclarations } from "../contexts/telemetry/application/branch-declarations.js";
 import { ConsentedRepositories } from "../contexts/telemetry/application/consented-repositories.js";
-import { DeclareTask } from "../contexts/telemetry/application/declare-task.js";
+import { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
+import { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
 import { DirectoryResolver } from "../contexts/telemetry/application/directory-resolver.js";
 import { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
 import { RememberedClones } from "../contexts/telemetry/application/forget/remembered-clones.js";
+import { CheckIdentity } from "../contexts/telemetry/application/identity/check-identity.js";
 import { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
 import { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
 import { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
@@ -14,6 +16,8 @@ import { ReadTelemetryStatus } from "../contexts/telemetry/application/read-tele
 import { ReadUsage } from "../contexts/telemetry/application/read-usage.js";
 import { DeclaredBindings } from "../contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsage } from "../contexts/telemetry/application/report/report-usage.js";
+import { RequestReport } from "../contexts/telemetry/application/report/request-report.js";
+import { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.js";
 import { SnapshotBindings } from "../contexts/telemetry/application/snapshot-bindings.js";
 import { ConsentSwitch } from "../contexts/telemetry/application/switch/consent-switch.js";
 import { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
@@ -21,7 +25,6 @@ import { EnableTelemetry } from "../contexts/telemetry/application/switch/enable
 import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
 import { OwnRoots } from "../contexts/telemetry/application/switch/remember-own-root.js";
 import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
-import { refusedByEnvironment as refusedByEnvironmentValue } from "../contexts/telemetry/domain/telemetry-consent.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
 import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
 import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git/git-consent-adapter.js";
@@ -50,9 +53,18 @@ import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/
 import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
 import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
-import type { TelemetryDeps } from "../presentation/deps.js";
+import type { TelemetryDeps, TelemetryRequests } from "../presentation/deps.js";
 import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { userConfigDirOf } from "../shared/infrastructure/user-config-dir.js";
+
+/** The requests a command checks before anything is wired: no file, no process, only the clock. */
+export function wireTelemetryRequests(): TelemetryRequests {
+  return {
+    resolveTaskRequest: new ResolveTaskRequest(),
+    resolveReportRequest: new ResolveReportRequest(() => new Date()),
+    checkIdentity: new CheckIdentity(),
+  };
+}
 
 /** Where a person's measurement lives. `AIDD_TELEMETRY_DIR` moves it outright; otherwise it is
  * a subdirectory of the user configuration, apart from the files that live at its root. */
@@ -109,14 +121,14 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   };
   const sessions = new SessionBindingStoreAdapter(bindingsDir, storage);
   const sessionId = declaringSessionOf(process.env);
-  const refusedByEnvironment = refusedByEnvironmentValue(process.env.AIDD_TELEMETRY);
+  const processEnvironment = new EnvironmentAdapter();
   const repositories = new ConsentedRepositories(locator, consents, consentHistory);
   const branchDeclarations = new BranchDeclarations(
     new GitBranchBindingStoreAdapter(gitEnv),
     branchSource,
     snapshotBindings
   );
-  const declaration = { refusedByEnvironment, sessionId, now: () => new Date() };
+  const declaration = { environment: processEnvironment, sessionId, now: () => new Date() };
   const declareTask = new DeclareTask(
     repositories,
     sessions,
@@ -142,7 +154,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     ledger,
     new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
     snapshotBindings,
-    { refusedByEnvironment }
+    { environment: processEnvironment }
   );
   const consentSwitch = new ConsentSwitch(locator, consents, consents, consentHistory, ledger);
   const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
@@ -150,15 +162,17 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     declareTask,
     readTelemetryStatus,
     ingestUsage,
-    reportUsage: new ReportUsage(
-      ingestUsage,
-      ledger,
-      new DeclaredBindings(sessions, snapshotStore, identity),
-      locator,
-      new EnvironmentAdapter()
+    requestReport: new RequestReport(
+      new ReportUsage(
+        ingestUsage,
+        ledger,
+        new DeclaredBindings(sessions, snapshotStore, identity),
+        locator,
+        processEnvironment
+      )
     ),
     manageIdentity: new ManageIdentity(identity),
-    proposeIdentity: new ProposeIdentity(new GitUserSourceAdapter(gitEnv), refusedByEnvironment),
+    proposeIdentity: new ProposeIdentity(new GitUserSourceAdapter(gitEnv), processEnvironment),
     readTranscriptRetention: new ReadTranscriptRetention(new ClaudeSettingsAdapter(claudeDir)),
     enableTelemetry: new EnableTelemetry(
       consentSwitch,

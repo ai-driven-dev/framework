@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { BranchDeclarations } from "../../../../src/contexts/telemetry/application/branch-declarations.js";
-import { ConsentedRepositories } from "../../../../src/contexts/telemetry/application/consented-repositories.js";
-import { DeclareTask } from "../../../../src/contexts/telemetry/application/declare-task.js";
-import { SnapshotBindings } from "../../../../src/contexts/telemetry/application/snapshot-bindings.js";
-import type { DeclarationRequest } from "../../../../src/contexts/telemetry/contract/task-declaration.js";
-import { HOOK_LOCK_WAIT_MS } from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
-import { cloneOf, grantedBy } from "../testing/clone-builders.js";
-import { FakeBindings } from "../testing/fake-bindings.js";
-import { FakeBranchStore } from "../testing/fake-branch-store.js";
-import { FakeConsents } from "../testing/fake-consents.js";
-import { FakeLocator } from "../testing/fake-locator.js";
-import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.js";
-import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.js";
-import { InMemorySessions } from "../testing/in-memory-sessions.js";
-import { InMemorySnapshots } from "../testing/in-memory-snapshots.js";
+import { BranchDeclarations } from "../../../../../src/contexts/telemetry/application/branch-declarations.js";
+import { ConsentedRepositories } from "../../../../../src/contexts/telemetry/application/consented-repositories.js";
+import { DeclareTask } from "../../../../../src/contexts/telemetry/application/declaration/declare-task.js";
+import { SnapshotBindings } from "../../../../../src/contexts/telemetry/application/snapshot-bindings.js";
+import type { DeclarationRequest } from "../../../../../src/contexts/telemetry/contract/task-declaration.js";
+import { HOOK_LOCK_WAIT_MS } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
+import { cloneOf, grantedBy } from "../../testing/clone-builders.js";
+import { FakeBindings } from "../../testing/fake-bindings.js";
+import { FakeBranchStore } from "../../testing/fake-branch-store.js";
+import { FakeConsents } from "../../testing/fake-consents.js";
+import { FakeLocator } from "../../testing/fake-locator.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
 
 const CWD = "/work/repo";
 const REPOSITORY: LocatedDirectory = {
@@ -52,7 +52,7 @@ function setup(options: { refusedByEnvironment?: boolean; sessionId?: string | n
     new BranchDeclarations(branches, source, snapshots),
     lock,
     {
-      refusedByEnvironment: options.refusedByEnvironment ?? false,
+      environment: { get: () => (options.refusedByEnvironment ? "0" : undefined) },
       sessionId: options.sessionId === undefined ? "sess-1234567890" : options.sessionId,
       now: () => new Date("2026-10-09T10:00:00.000Z"),
     }

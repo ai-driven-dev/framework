@@ -220,7 +220,7 @@ function ingestOf(ledger: UsageLedger): IngestUsage {
       new InMemoryBindingsLock(),
       now
     ),
-    { refusedByEnvironment: false }
+    { environment: { get: () => undefined } }
   );
 }
 

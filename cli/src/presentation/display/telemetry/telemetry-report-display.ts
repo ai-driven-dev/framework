@@ -3,8 +3,9 @@ import type {
   ReportRun,
   ReportUsageResult,
 } from "../../../contexts/telemetry/application/report/report-usage.js";
+import type { RequestReportResult } from "../../../contexts/telemetry/application/report/request-report.js";
 import type { Period } from "../../../contexts/telemetry/contract/period.js";
-import type { ReportFilters } from "../../../contexts/telemetry/contract/report-filter.js";
+import type { Selector } from "../../../contexts/telemetry/contract/report-filter.js";
 import {
   type AxisValue,
   COUNTERS,
@@ -13,7 +14,6 @@ import {
   type ReportRow,
   type Tally,
 } from "../../../contexts/telemetry/contract/usage-report.js";
-import { selectorsOf } from "../../../contexts/telemetry/domain/report/report-filter.js";
 import type { CLIOutput } from "../../output.js";
 import { count, grouped, leftOutLines } from "../telemetry-display.js";
 
@@ -55,8 +55,8 @@ function labelOf(axis: ReportAxis, value: AxisValue): string {
 }
 
 /** Each filter given, as the row it selects is labelled; `null` when none is. */
-function selectionLine(filters: ReportFilters): string | null {
-  const parts = selectorsOf(filters).map(
+function selectionLine(selected: readonly (readonly [ReportAxis, Selector])[]): string | null {
+  const parts = selected.map(
     ([axis, selector]) =>
       `${axis} = ${selector.kind === "unattributed-any" ? "unattributed, either reason" : labelOf(axis, selector)}`
   );
@@ -139,7 +139,7 @@ function coverageLines(coverage: ReportCoverage, run: ReportRun): string[] {
   ];
 }
 
-export function printUsageReport(output: CLIOutput, result: ReportUsageResult): void {
+export function printUsageReport(output: CLIOutput, result: RequestReportResult): void {
   if (result.status === "refused") {
     output.info("AIDD_TELEMETRY=0: nothing was read and nothing is reported.");
     return;
@@ -162,9 +162,9 @@ export function printUsageReport(output: CLIOutput, result: ReportUsageResult): 
     );
     return;
   }
-  const { report, coverage, run, period, filters } = result;
+  const { report, coverage, run, period, selected } = result;
   output.print(`Usage, ${periodWords(period)}, by ${report.axis}`);
-  const selection = selectionLine(filters);
+  const selection = selectionLine(selected);
   if (selection !== null) output.print(selection);
   if (report.totals.records === 0) {
     output.print(

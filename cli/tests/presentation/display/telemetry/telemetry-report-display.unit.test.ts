@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ReportUsageResult } from "../../../../src/contexts/telemetry/application/report/report-usage.js";
+import type { RequestReportResult } from "../../../../src/contexts/telemetry/application/report/request-report.js";
 import type { Period } from "../../../../src/contexts/telemetry/contract/period.js";
 import {
   NO_FILTERS,
@@ -11,6 +12,7 @@ import {
   type ReportAxis,
   type Tally,
 } from "../../../../src/contexts/telemetry/contract/usage-report.js";
+import { selectorsOf } from "../../../../src/contexts/telemetry/domain/report/report-filter.js";
 import { printUsageReport } from "../../../../src/presentation/display/telemetry/telemetry-report-display.js";
 import { TOOL } from "../../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../../helpers/ports/capturing-output.js";
@@ -58,11 +60,12 @@ function result(
   coverage: Partial<Coverage> = {},
   period: Period = BOTH,
   filters: ReportFilters = NO_FILTERS
-): ReportUsageResult {
+): RequestReportResult {
   return {
     status: "reported",
     period,
     filters,
+    selected: selectorsOf(filters),
     report: { axis, rows: rows.map(([value, t]) => ({ value, ...t })), totals },
     ...split({ ...COVERAGE, ...coverage }),
   };
@@ -70,7 +73,7 @@ function result(
 function split({ records, leftOut, ...run }: Coverage): Pick<Reported, "coverage" | "run"> {
   return { coverage: { records, leftOut }, run };
 }
-const printed = (r: ReportUsageResult): string[] => {
+const printed = (r: RequestReportResult): string[] => {
   const output = new CapturingOutput(false);
   printUsageReport(output, r);
   return output.lines;

@@ -81,7 +81,7 @@ function machine(sessions: string, projects?: string) {
       new InMemoryBindingsLock(),
       () => NOW
     ),
-    { refusedByEnvironment: false }
+    { environment: { get: () => undefined } }
   );
   return { dir, ingest };
 }

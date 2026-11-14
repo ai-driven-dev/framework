@@ -1,4 +1,6 @@
+import type { Environment } from "../../../../shared/ports/environment.js";
 import { personIdOf } from "../../domain/identity/person-identity.js";
+import { measurementRefused } from "../../domain/telemetry-consent.js";
 import type { GitUserSource } from "../../ports/identity/git-user-source.js";
 
 export interface ProposeIdentityCommand {
@@ -9,11 +11,11 @@ export interface ProposeIdentityCommand {
 export class ProposeIdentity {
   constructor(
     private readonly git: GitUserSource,
-    private readonly refusedByEnvironment: boolean
+    private readonly environment: Environment
   ) {}
 
   async execute({ cwd }: ProposeIdentityCommand): Promise<string | null> {
-    if (this.refusedByEnvironment) return null;
+    if (measurementRefused(this.environment)) return null;
     const user = await this.git.userIn(cwd);
     return user === null ? null : personIdOf(user);
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DeclareTaskResult } from "../../../src/contexts/telemetry/application/declare-task.js";
+import type { DeclareTaskResult } from "../../../src/contexts/telemetry/application/declaration/declare-task.js";
 import type { IngestUsageResult } from "../../../src/contexts/telemetry/application/ingest-usage.js";
 import type { ReadTelemetryStatusResult } from "../../../src/contexts/telemetry/application/read-telemetry-status.js";
 import {

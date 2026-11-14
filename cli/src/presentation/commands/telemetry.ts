@@ -3,7 +3,6 @@ import {
   REFUSED_ENVELOPE,
   reportEnvelopeOf,
 } from "../../contexts/telemetry/application/report/report-envelope.js";
-import type { RequestedFilters } from "../../contexts/telemetry/application/report/report-usage.js";
 import type { IdentityChoice } from "../../contexts/telemetry/application/switch/enable-telemetry.js";
 import {
   ABSENT_AXES,
@@ -17,15 +16,15 @@ import {
 import { USAGE_AGENTS, USAGE_TOOLS } from "../../contexts/telemetry/contract/usage-record.js";
 import { REPORT_AXES, type ReportAxis } from "../../contexts/telemetry/contract/usage-report.js";
 import {
-  requestOf,
-  textOrNull,
-} from "../../contexts/telemetry/domain/declaration/task-declaration.js";
-import { personIdOf } from "../../contexts/telemetry/domain/identity/person-identity.js";
-import { periodOf } from "../../contexts/telemetry/domain/report/period.js";
-import { filtersOf } from "../../contexts/telemetry/domain/report/report-filter.js";
+  ConflictingIdentityFlagsError,
+  IdentityOffWithIdentifierError,
+  InputRequiredError,
+  InvalidIdentityError,
+} from "../../shared/domain/errors.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
-import type { Deps, DepsSliceFactory, TelemetryDeps } from "../deps.js";
+import type { Deps, DepsSliceFactory, TelemetryDeps, TelemetryRequests } from "../deps.js";
 import {
+  INVALID_IDENTITY_REFUSAL,
   printForgetResult,
   printIdentityRule,
   printOffResult,
@@ -45,20 +44,30 @@ import { parseGlobalOptions } from "./global-options.js";
 /** What this command reads of the graph. */
 type TelemetryCommandKeys = "prompter" | "telemetry";
 
-/** A command's output and directory, and `run`, which wires its dependencies for some work
- * and reports any failure the one way. */
+/** A command's output and directory, and how it runs: `run` wires the dependencies for some
+ * work, `runChecked` first checks what the request alone can answer, before any are wired. Both
+ * report any failure the one way. */
 function commandOf(program: Command, createDeps: DepsSliceFactory<TelemetryCommandKeys>) {
   const { verbose, output, projectRoot } = parseGlobalOptions(program);
-  const run = async (
-    work: (deps: Pick<Deps, TelemetryCommandKeys>) => Promise<void>
-  ): Promise<void> => {
+  const attempt = async (body: () => Promise<void>): Promise<void> => {
     try {
-      await work(await createDeps(projectRoot, { verbose }, output));
+      await body();
     } catch (error) {
       new ErrorHandler(output).handle(error);
     }
   };
-  return { output, projectRoot, run };
+  const wire = () => createDeps(projectRoot, { verbose }, output);
+  const run = (work: (deps: Pick<Deps, TelemetryCommandKeys>) => Promise<void>) =>
+    attempt(async () => work(await wire()));
+  const runChecked = <Checked>(
+    validate: () => Checked,
+    work: (deps: Pick<Deps, TelemetryCommandKeys>, checked: Checked) => Promise<void>
+  ) =>
+    attempt(async () => {
+      const checked = validate();
+      await work(await wire(), checked);
+    });
+  return { output, projectRoot, run, runChecked };
 }
 
 interface OnOptions {
@@ -71,6 +80,7 @@ interface OnOptions {
  * answer. `null` when none of them can be had. */
 async function identityChoice(
   telemetry: TelemetryDeps,
+  checkIdentity: TelemetryRequests["checkIdentity"],
   prompter: Prompter,
   output: CLIOutput,
   cwd: string,
@@ -94,7 +104,7 @@ async function identityChoice(
   if (answer !== "another") return answer;
   for (;;) {
     const typed = await prompter.input("Identifier (one non-empty line, at most 128 characters):");
-    if (personIdOf(typed) !== null) return { set: typed };
+    if (checkIdentity.execute({ typed }).status === "valid") return { set: typed };
     printIdentityRule(output);
   }
 }
@@ -115,8 +125,8 @@ function filterOption(
       if (previous !== undefined) {
         command.error(`error: ${option.long} is given twice: give it once.`);
       }
-      const text = textOrNull(value);
-      if (text === null) throw new InvalidArgumentError("It is empty.");
+      const text = value.trim();
+      if (text === "") throw new InvalidArgumentError("It is empty.");
       if (choices !== undefined && !choices.includes(text)) {
         throw new InvalidArgumentError(`Allowed choices are ${choices.join(", ")}.`);
       }
@@ -127,7 +137,8 @@ function filterOption(
 
 export function registerTelemetryCommand(
   program: Command,
-  createDeps: DepsSliceFactory<TelemetryCommandKeys>
+  createDeps: DepsSliceFactory<TelemetryCommandKeys>,
+  requests: TelemetryRequests
 ): void {
   const telemetry = program
     .command("telemetry")
@@ -140,48 +151,54 @@ export function registerTelemetryCommand(
     .option("--as <id>", "Name you by this identifier on your own measurement")
     .option("--anonymous", "Name nobody on your own measurement", false)
     .action(async (cmdOptions: OnOptions) => {
-      const { output, projectRoot, run } = commandOf(program, createDeps);
-      if (cmdOptions.as !== undefined && cmdOptions.anonymous) {
-        output.error("--as names you and --anonymous names nobody: give one of them.");
-        process.exit(1);
-      }
-      if (cmdOptions.as !== undefined && personIdOf(cmdOptions.as) === null) {
-        printOnResult(output, { status: "refused", reason: "invalid-identity" });
-        process.exit(1);
-      }
-      if (!cmdOptions.yes && !process.stdout.isTTY) {
-        output.error("Nothing to ask in a non-interactive run: pass --yes to turn measurement on.");
-        process.exit(1);
-      }
-      await run(async (deps) => {
-        const confirmed =
-          cmdOptions.yes ||
-          (await deps.prompter.confirm("Measure what this clone consumes?", false));
-        if (!confirmed) {
-          output.info("Nothing changed.");
-          return;
-        }
-        const choice = await identityChoice(
-          deps.telemetry,
-          deps.prompter,
-          output,
-          projectRoot,
-          cmdOptions
-        );
-        if (choice === null) {
-          output.error(
-            "No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody."
+      const { output, projectRoot, runChecked } = commandOf(program, createDeps);
+      await runChecked(
+        () => {
+          if (cmdOptions.as !== undefined && cmdOptions.anonymous) {
+            throw new ConflictingIdentityFlagsError();
+          }
+          if (
+            cmdOptions.as !== undefined &&
+            requests.checkIdentity.execute({ typed: cmdOptions.as }).status === "refused"
+          ) {
+            throw new InvalidIdentityError(INVALID_IDENTITY_REFUSAL);
+          }
+          if (!cmdOptions.yes && !process.stdout.isTTY) {
+            throw new InputRequiredError(
+              "Nothing to ask in a non-interactive run: pass --yes to turn measurement on."
+            );
+          }
+        },
+        async (deps) => {
+          const confirmed =
+            cmdOptions.yes ||
+            (await deps.prompter.confirm("Measure what this clone consumes?", false));
+          if (!confirmed) {
+            output.info("Nothing changed.");
+            return;
+          }
+          const choice = await identityChoice(
+            deps.telemetry,
+            requests.checkIdentity,
+            deps.prompter,
+            output,
+            projectRoot,
+            cmdOptions
           );
-          process.exit(1);
+          if (choice === null) {
+            throw new InputRequiredError(
+              "No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody."
+            );
+          }
+          const result = await deps.telemetry.enableTelemetry.execute({ cwd: projectRoot, choice });
+          const retention =
+            result.status === "on"
+              ? await deps.telemetry.readTranscriptRetention.execute({ root: result.root })
+              : undefined;
+          printOnResult(output, result, retention);
+          if (result.status === "refused") process.exit(1);
         }
-        const result = await deps.telemetry.enableTelemetry.execute({ cwd: projectRoot, choice });
-        const retention =
-          result.status === "on"
-            ? await deps.telemetry.readTranscriptRetention.execute({ root: result.root })
-            : undefined;
-        printOnResult(output, result, retention);
-        if (result.status === "refused") process.exit(1);
-      });
+      );
     });
 
   telemetry
@@ -238,29 +255,24 @@ export function registerTelemetryCommand(
         name: string | undefined,
         cmdOptions: { ticket?: string; none: boolean; by: DeclaredBy }
       ) => {
-        const { output, projectRoot, run } = commandOf(program, createDeps);
-        const request = cmdOptions.none
-          ? { kind: "none" as const }
-          : requestOf(name, cmdOptions.ticket);
-        if (cmdOptions.none && (name !== undefined || cmdOptions.ticket !== undefined)) {
-          output.error("--none declares no task: give it neither a name nor --ticket.");
-          process.exit(1);
-        }
-        if (request === null) {
-          output.error(
-            "A task needs a name: aidd telemetry task <name> [--ticket <ref>], or --none. See what the work is bound to with aidd telemetry status."
-          );
-          process.exit(1);
-        }
-        await run(async (deps) => {
-          const result = await deps.telemetry.declareTask.execute({
-            cwd: projectRoot,
-            request,
-            by: cmdOptions.by,
-          });
-          printDeclareResult(output, result);
-          if (result.status === "refused") process.exit(1);
-        });
+        const { output, projectRoot, runChecked } = commandOf(program, createDeps);
+        await runChecked(
+          () =>
+            requests.resolveTaskRequest.execute({
+              name,
+              ticket: cmdOptions.ticket,
+              none: cmdOptions.none,
+            }),
+          async (deps, { request }) => {
+            const result = await deps.telemetry.declareTask.execute({
+              cwd: projectRoot,
+              request,
+              by: cmdOptions.by,
+            });
+            printDeclareResult(output, result);
+            if (result.status === "refused") process.exit(1);
+          }
+        );
       }
     );
 
@@ -324,38 +336,37 @@ export function registerTelemetryCommand(
           json: boolean;
         } & Partial<ReportFilters>
       ) => {
-        const { output, projectRoot, run } = commandOf(program, createDeps);
-        const period = periodOf(cmdOptions, new Date());
-        if (!period.ok) {
-          output.error(period.message);
-          process.exit(1);
-        }
-        const given = filtersOf(cmdOptions);
-        const filters: RequestedFilters =
-          given.repository === "." ? { ...given, repository: null, here: projectRoot } : given;
-        await run(async (deps) => {
-          const result = await deps.telemetry.reportUsage.execute({
-            axis: cmdOptions.axis,
-            period: period.period,
-            filters,
-          });
-          if (
-            result.status === "conflicting" ||
-            result.status === "not-a-repository" ||
-            result.status === "ambiguous"
-          ) {
-            printUsageReport(output, result);
-            process.exit(1);
+        const { output, projectRoot, runChecked } = commandOf(program, createDeps);
+        await runChecked(
+          () =>
+            requests.resolveReportRequest.execute({
+              axis: cmdOptions.axis,
+              from: cmdOptions.from,
+              to: cmdOptions.to,
+              days: cmdOptions.days,
+              filters: cmdOptions,
+              cwd: projectRoot,
+            }),
+          async (deps, { request }) => {
+            const result = await deps.telemetry.requestReport.execute(request);
+            if (
+              result.status === "conflicting" ||
+              result.status === "not-a-repository" ||
+              result.status === "ambiguous"
+            ) {
+              printUsageReport(output, result);
+              process.exit(1);
+            }
+            if (!cmdOptions.json) return printUsageReport(output, result);
+            output.print(
+              JSON.stringify(
+                result.status === "refused" ? REFUSED_ENVELOPE : reportEnvelopeOf(result),
+                null,
+                2
+              )
+            );
           }
-          if (!cmdOptions.json) return printUsageReport(output, result);
-          output.print(
-            JSON.stringify(
-              result.status === "refused" ? REFUSED_ENVELOPE : reportEnvelopeOf(result),
-              null,
-              2
-            )
-          );
-        });
+        );
       }
     );
 
@@ -364,22 +375,23 @@ export function registerTelemetryCommand(
     .description("Choose to be named on your own measurement, or show or remove that choice")
     .option("--off", "Stop naming you and remove the identity", false)
     .action(async (id: string | undefined, cmdOptions: { off: boolean }) => {
-      const { output, run } = commandOf(program, createDeps);
-      if (cmdOptions.off && id !== undefined) {
-        output.error("--off removes the identity: give it no identifier.");
-        process.exit(1);
-      }
-      await run(async (deps) => {
-        const use = deps.telemetry.manageIdentity;
-        const result = await use.execute(
-          cmdOptions.off
-            ? { action: "off" }
-            : id === undefined
-              ? { action: "show" }
-              : { action: "set", typed: id }
-        );
-        printIdentityResult(output, result);
-        if (result.status === "refused") process.exit(1);
-      });
+      const { output, runChecked } = commandOf(program, createDeps);
+      await runChecked(
+        () => {
+          if (cmdOptions.off && id !== undefined) throw new IdentityOffWithIdentifierError();
+        },
+        async (deps) => {
+          const use = deps.telemetry.manageIdentity;
+          const result = await use.execute(
+            cmdOptions.off
+              ? { action: "off" }
+              : id === undefined
+                ? { action: "show" }
+                : { action: "set", typed: id }
+          );
+          printIdentityResult(output, result);
+          if (result.status === "refused") process.exit(1);
+        }
+      );
     });
 }

@@ -1,3 +1,5 @@
+import type { Environment } from "../../../shared/ports/environment.js";
+
 /** The key of the repository's own git config that holds a clone's consent. */
 export const CONSENT_KEY = "aidd.telemetry";
 /** What a granting key starts with: this version of measurement, then the token of the interval
@@ -50,8 +52,8 @@ export function turnedOff(reading: ConsentReading): boolean {
   return reading.kind === "value" && reading.value === CONSENT_WITHDRAWN;
 }
 
-/** `AIDD_TELEMETRY` set to exactly `0` refuses measurement, whatever a clone granted. Reading
- * the environment is the composition root's job; this is only what its value means. */
-export function refusedByEnvironment(value: string | undefined): boolean {
-  return value === "0";
+/** `AIDD_TELEMETRY` set to exactly `0` in the environment given refuses measurement, whatever a
+ * clone granted. */
+export function measurementRefused(environment: Environment): boolean {
+  return environment.get("AIDD_TELEMETRY") === "0";
 }

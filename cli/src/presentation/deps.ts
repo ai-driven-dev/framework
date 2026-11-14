@@ -40,13 +40,16 @@ import type { FileMerger } from "../contexts/framework/domain/ports/file-merger.
 import type { ManifestRepository } from "../contexts/framework/domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../contexts/framework/domain/ports/user-source-references.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
-import type { DeclareTask } from "../contexts/telemetry/application/declare-task.js";
+import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
+import type { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
 import type { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
+import type { CheckIdentity } from "../contexts/telemetry/application/identity/check-identity.js";
 import type { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
 import type { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
 import type { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
 import type { ReadTelemetryStatus } from "../contexts/telemetry/application/read-telemetry-status.js";
-import type { ReportUsage } from "../contexts/telemetry/application/report/report-usage.js";
+import type { RequestReport } from "../contexts/telemetry/application/report/request-report.js";
+import type { ResolveReportRequest } from "../contexts/telemetry/application/report/resolve-report-request.js";
 import type { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import type { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
 import type { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
@@ -75,13 +78,21 @@ export interface TelemetryDeps {
   declareTask: Pick<DeclareTask, "execute">;
   readTelemetryStatus: Pick<ReadTelemetryStatus, "execute">;
   ingestUsage: Pick<IngestUsage, "execute">;
-  reportUsage: Pick<ReportUsage, "execute">;
+  requestReport: Pick<RequestReport, "execute">;
   manageIdentity: Pick<ManageIdentity, "execute">;
   proposeIdentity: Pick<ProposeIdentity, "execute">;
   readTranscriptRetention: Pick<ReadTranscriptRetention, "execute">;
   enableTelemetry: Pick<EnableTelemetry, "execute">;
   disableTelemetry: Pick<DisableTelemetry, "execute">;
   forgetTelemetry: Pick<ForgetTelemetry, "execute">;
+}
+
+/** What a telemetry command's request alone can answer, built with no I/O so a refusal comes
+ * before the dependencies are wired. */
+export interface TelemetryRequests {
+  resolveTaskRequest: Pick<ResolveTaskRequest, "execute">;
+  resolveReportRequest: Pick<ResolveReportRequest, "execute">;
+  checkIdentity: Pick<CheckIdentity, "execute">;
 }
 
 /** What a build for a target and mode asks of its caller. */

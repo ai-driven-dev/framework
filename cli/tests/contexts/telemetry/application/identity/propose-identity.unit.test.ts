@@ -10,7 +10,7 @@ function setup(user: string | null, refusedByEnvironment = false) {
         return user;
       },
     },
-    refusedByEnvironment
+    { get: () => (refusedByEnvironment ? "0" : undefined) }
   );
   return { asked, use };
 }

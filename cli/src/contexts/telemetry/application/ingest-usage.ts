@@ -1,3 +1,4 @@
+import type { Environment } from "../../../shared/ports/environment.js";
 import type { NotStoredReason } from "../contract/repository-resolution.js";
 import type { UsageRecord } from "../contract/usage-record.js";
 import {
@@ -6,6 +7,7 @@ import {
   requestlessCallOf,
   type StoredUsage,
 } from "../domain/stored-usage.js";
+import { measurementRefused } from "../domain/telemetry-consent.js";
 import type { TranscriptPosition } from "../domain/transcript-position.js";
 import type { LeftOutEntry, UsageLedger } from "../ports/usage-ledger.js";
 import type { DirectoryOutcome, DirectoryResolver, ResolutionRun } from "./directory-resolver.js";
@@ -52,8 +54,7 @@ const NOT_STORED: Readonly<Record<NotStoredReason, number>> = {
 const FILE_CLOCK_MARGIN_MS = 24 * 60 * 60 * 1000;
 
 export interface IngestOptions {
-  /** `AIDD_TELEMETRY=0`, read by the composition root. */
-  readonly refusedByEnvironment: boolean;
+  readonly environment: Environment;
 }
 
 function moved(before: TranscriptPosition | undefined, now: TranscriptPosition): boolean {
@@ -79,7 +80,7 @@ export class IngestUsage {
   ) {}
 
   async execute(): Promise<IngestUsageResult> {
-    if (this.options.refusedByEnvironment) {
+    if (measurementRefused(this.options.environment)) {
       return {
         refused: true,
         filesRead: 0,

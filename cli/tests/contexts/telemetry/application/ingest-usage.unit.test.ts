@@ -111,7 +111,7 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
       now: () => NOW,
     }),
     snapshots,
-    { refusedByEnvironment: options.refused ?? false }
+    { environment: { get: () => (options.refused ? "0" : undefined) } }
   );
   locator.directories.set("/work/a", repository("/work/a"));
   /** The clone at `path` consents: it says so now, and it opted in once. */
@@ -133,7 +133,7 @@ function setup(options: { refused?: boolean; caseInsensitive?: boolean } = {}) {
         now: () => NOW,
       }),
       snapshots,
-      { refusedByEnvironment: false }
+      { environment: { get: () => undefined } }
     );
   return {
     ingestReadingAll,

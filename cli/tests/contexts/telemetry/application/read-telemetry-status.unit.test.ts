@@ -25,7 +25,10 @@ const REPOSITORY: LocatedDirectory = {
   rootCommit: "abc",
 };
 
-function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironment = false) {
+function setup(
+  sessionId: string | null = "sess-1234567890",
+  environment = { get: (): string | undefined => undefined }
+) {
   const locator = new FakeLocator();
   locator.directories.set(CWD, REPOSITORY);
   const consents = new FakeConsents();
@@ -49,7 +52,7 @@ function setup(sessionId: string | null = "sess-1234567890", refusedByEnvironmen
         () => new Date()
       )
     ),
-    { refusedByEnvironment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") },
+    { environment, sessionId, now: () => new Date("2026-10-09T12:00:00.000Z") },
     identities
   );
   return { useCase, locator, consents, history, sessions, branches, source, identities };
@@ -159,7 +162,7 @@ describe("showing what the work is bound to", () => {
       status: "refused",
       reason: "no-consent",
     });
-    expect(await setup("s", true).useCase.execute({ cwd: CWD })).toEqual({
+    expect(await setup("s", { get: () => "0" }).useCase.execute({ cwd: CWD })).toEqual({
       status: "refused",
       reason: "environment",
     });

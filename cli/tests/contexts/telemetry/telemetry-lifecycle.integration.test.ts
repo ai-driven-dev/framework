@@ -98,6 +98,8 @@ async function configure(text: string): Promise<void> {
   writeFileSync(join(repo, ".aidd", "config.json"), text);
 }
 
+const retentionOf = (root: string) => deps.readTranscriptRetention.execute({ root });
+
 describe("opting in to a repository a previous version measured", () => {
   it("leaves what a previous version installed as it found it, and the repository still commits", async () => {
     const delegate = install("#!/bin/sh\n<CALL>\n");
@@ -261,7 +263,7 @@ describe("the wiring of a declaration", () => {
     expect(await deps.declareTask.execute({ ...declare, cwd: repo })).toEqual(refused);
     expect(await deps.readTelemetryStatus.execute({ cwd: repo })).toEqual(refused);
     expect(
-      await deps.reportUsage.execute({ axis: "day", period: { from: null, to: null } })
+      await deps.requestReport.execute({ axis: "day", period: { from: null, to: null } })
     ).toEqual({ status: "refused" });
   });
 
@@ -342,10 +344,7 @@ describe("how long Claude Code keeps what is measured", () => {
 
     await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
 
-    expect(await deps.readTranscriptRetention.execute({ root: repo })).toEqual({
-      days: 30,
-      short: true,
-    });
+    expect(await retentionOf(repo)).toEqual({ days: 30, short: true });
     expect(read(settings)).toBe('{"theme":"dark"}');
     expect(read(project)).toBe("{}");
     expect([statSync(settings).mtimeMs, statSync(project).mtimeMs]).toEqual(stat);
@@ -355,16 +354,10 @@ describe("how long Claude Code keeps what is measured", () => {
   it("is satisfied by 3650 in the user's settings, and overridden by a project's shorter one", async () => {
     await configure(BARE);
     writeFileSync(join(box.claude, "settings.json"), '{"cleanupPeriodDays":3650}');
-    expect(await deps.readTranscriptRetention.execute({ root: repo })).toEqual({
-      days: 3650,
-      short: false,
-    });
+    expect(await retentionOf(repo)).toEqual({ days: 3650, short: false });
     mkdirSync(join(repo, ".claude"));
     writeFileSync(join(repo, ".claude", "settings.local.json"), '{"cleanupPeriodDays":7}');
-    expect(await deps.readTranscriptRetention.execute({ root: repo })).toEqual({
-      days: 7,
-      short: true,
-    });
+    expect(await retentionOf(repo)).toEqual({ days: 7, short: true });
   });
 });
 

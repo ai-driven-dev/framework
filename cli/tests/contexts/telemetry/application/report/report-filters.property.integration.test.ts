@@ -134,7 +134,7 @@ async function reporterOf({ calls, declarations, person }: Ledger) {
         { caseInsensitiveFileSystem: false, now }
       ),
       new SnapshotBindings(new FakeBindings(), snapshots, new InMemoryBindingsLock(), now),
-      { refusedByEnvironment: false }
+      { environment: { get: () => undefined } }
     ),
     ledger,
     new DeclaredBindings(sessions, snapshots, identity),

@@ -82,7 +82,7 @@ function setup(options: { refused?: boolean } = {}) {
       new InMemoryBindingsLock(),
       () => new Date("2026-10-09T00:00:00.000Z")
     ),
-    { refusedByEnvironment: options.refused ?? false }
+    { environment: { get: () => (options.refused ? "0" : undefined) } }
   );
   locator.directories.set("/work/a", {
     status: "repository",

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { RequestReport } from "../../../src/contexts/telemetry/application/report/request-report.js";
 import type { ReportFilters } from "../../../src/contexts/telemetry/contract/report-filter.js";
 import { conflictsOf } from "../../../src/contexts/telemetry/domain/report/report-filter.js";
 import { prompterAnswering } from "../../helpers/ports/index.js";
@@ -30,12 +31,13 @@ const createDeps = vi.fn(async () => ({
     ingestUsage: { execute: ingest },
     declareTask: { execute: declare },
     readTelemetryStatus: { execute: show },
-    reportUsage: { execute: report },
+    requestReport: new RequestReport({ execute: report }),
     manageIdentity: identity,
     proposeIdentity: { execute: propose },
   },
 }));
 
+const { wireTelemetryRequests } = await import("../../../src/composition/telemetry.js");
 const { registerTelemetryCommand } = await import(
   "../../../src/presentation/commands/telemetry.js"
 );
@@ -73,7 +75,7 @@ async function run(...args: string[]): Promise<number | null> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerTelemetryCommand(program, createDeps);
+  registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
   try {
     await program.parseAsync(["node", "aidd", "telemetry", ...args]);
     return null;
@@ -491,9 +493,8 @@ describe("aidd telemetry on", () => {
     expect(await run("on", "--yes")).toBe(1);
     expect(turnOn).not.toHaveBeenCalled();
     expect(propose).not.toHaveBeenCalled();
-    // The second line is the stubbed `process.exit` reaching the action's own catch.
     expect(stderr()).toBe(
-      "Error: No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody.\nError: exit 1\n"
+      "Error: No identity is set, and --yes asks nothing: pass --as <id> to be named, or --anonymous to name nobody.\n"
     );
   });
 
@@ -627,6 +628,7 @@ describe("aidd telemetry on", () => {
     turnOn.mockResolvedValue({ status: "refused", reason: "identity-set" });
     expect(await run("on", "--yes", "--anonymous")).toBe(1);
     expect(stderr()).toContain("aidd telemetry identity --off");
+    expect(retention).not.toHaveBeenCalled();
   });
 });
 
@@ -668,7 +670,7 @@ describe("the telemetry command surface", () => {
 
   it("prints each subcommand's help as the golden pins it", () => {
     const program = new Command().name("aidd");
-    registerTelemetryCommand(program, createDeps);
+    registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
     const telemetry = program.commands.find((command) => command.name() === "telemetry");
     const helps = [telemetry, ...(telemetry?.commands ?? [])].map((command) => ({
       invocation: command === telemetry ? "aidd telemetry" : `aidd telemetry ${command?.name()}`,
@@ -677,6 +679,17 @@ describe("the telemetry command surface", () => {
     for (const { invocation, help } of helps) {
       expect(help, invocation).toBe(golden.find((entry) => entry.invocation === invocation)?.help);
     }
+  });
+
+  it.each([
+    [["on", "--yes", "--as", "Ada", "--anonymous"], "--as names you"],
+    [["task", "--none", "Name"], "--none declares no task"],
+    [["report", "--days", "x"], "days"],
+  ])("refuses %s before the graph is built", async (args, message) => {
+    createDeps.mockRejectedValueOnce(new Error("graph built"));
+    expect(await run(...args)).toBe(1);
+    createDeps.mockReset();
+    expect(stderr()).toContain(message);
   });
 
   it.each([

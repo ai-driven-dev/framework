@@ -72,6 +72,7 @@ src/
 │   │   └── infrastructure/
 │   ├── telemetry/    # what each billed model call consumed, read from a tool's own transcripts
 │   │   ├── application/
+│   │   │   ├── declaration/    # declaring a task: what a person typed as the request, and the declaration of it
 │   │   │   ├── forget/    # what measurement keeps on a machine, shown and erased
 │   │   │   ├── identity/    # who, if anyone, the measurement names
 │   │   │   ├── report/    # what the stored calls consumed in a period, along one axis
