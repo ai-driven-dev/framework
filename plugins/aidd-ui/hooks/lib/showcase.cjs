@@ -28,7 +28,7 @@ const SET_CURRENT = "set:"; // what a page of a set passes the navigation as its
 /** The words of the page chrome, one table per language: the same keys in each. */
 const LABELS = {
   en: {
-    title: "Your designs",
+    title: "Showcase",
     choose: "Variants",
     kindNames: { brand: "Brand identity", system: "Design system" },
     whole: "Whole",
@@ -130,7 +130,7 @@ const LABELS = {
     nextStep: "Next step",
   },
   fr: {
-    title: "Vos maquettes",
+    title: "La vitrine",
     choose: "Variantes",
     kindNames: { brand: "Identité visuelle", system: "Charte graphique" },
     whole: "L'ensemble",
@@ -1348,7 +1348,7 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
       "</li>",
     ].join("");
     const screen = held.map((each) => each.dressedBy.get(id)).find(Boolean);
-    return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${screen ? ` data-dressed-by="${escaped(screen)}"` : ""}${id === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record, labels))}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
+    return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${screen ? ` data-dressed-by="${escaped(screen)}"` : ""}${id === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record, labels))}${screen ? ` \u00b7 ${escaped(labels.wireframe)}` : ""}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
   };
   const shown = held.reduce((sum, each) => sum + each.awaiting.length, 0);
   const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.counted.length})</span><button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button></summary>${each.awaiting.map(item).join("\n")}</details>`;

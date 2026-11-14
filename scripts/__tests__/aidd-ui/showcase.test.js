@@ -214,6 +214,12 @@ describe("aidd-ui showcase", () => {
   });
 
   describe("the title of the showcase", () => {
+    it("calls the page the showcase, never the wireframe kind, in both languages", () => {
+      assert.equal(LABELS.en.title, "Showcase");
+      assert.equal(LABELS.fr.title, "La vitrine");
+      for (const lang of ["en", "fr"]) assert.notEqual(LABELS[lang].title, LABELS[lang].wireframe, lang);
+    });
+
     it("names the page in plain words, with no design system jargon, in both languages", () => {
       for (const lang of ["en", "fr"]) {
         const index = pagesOf({ lang })["index.html"];
@@ -884,6 +890,19 @@ describe("aidd-ui showcase", () => {
       for (const id of ["start", "start-screen", "bare"]) assert.match(drawer, new RegExp(`<details class="item" data-record="${id}"`), id);
       assert.match(drawer, /data-record="start" data-version="1" data-dressed-by="start-screen"/);
       assert.doesNotMatch(drawer, /data-record="(start-screen|bare)"[^>]*data-dressed-by/);
+    });
+
+    it("tells the dressed wireframe from its screen by the kind in its drawer title", () => {
+      const render = "<html><head></head><body><main data-state=\"default\">x</main></body></html>";
+      put(tmp, `${UI}/wireframes/start.md`, record(["id: start", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/wireframes/start.html`, render);
+      put(tmp, `${UI}/screens/start-screen.md`, record(["id: start-screen", "kind: screen", "status: proposed", "version: 1", "wireframe: start", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/screens/start-screen.html`, render);
+      for (const lang of ["en", "fr"]) {
+        const drawer = pagesOf({ lang })["index.html"].match(/<aside class="drawer"[\s\S]*?<\/aside>/)[0];
+        assert.match(drawer, new RegExp(`data-record="start-screen"[^>]*><summary><span>Start</span>`), lang);
+        assert.match(drawer, new RegExp(`data-record="start"[^>]*><summary><span>Start \u00b7 ${LABELS[lang].wireframe}</span>`), lang);
+      }
     });
 
     it("splits the elements awaiting review by category on the overview", () => {
