@@ -28,16 +28,25 @@ import {
 const SESSION = "00000000-0000-4000-8000-0000000000bb";
 const BARE = '{"telemetry":{"enabled":true},"keep":{"me":1}}';
 const DELEGATE_FILE = "aidd-session-trailer.sh";
-/** What the previous version installed, as it wrote it. */
+/** What the previous version installed, verbatim. */
 const DELEGATE = `#!/bin/sh
 # Installed by \`aidd telemetry on\`, removed by \`aidd telemetry off\`.
+#
+# Names the AI session that authored this commit, so what a session cost can be read
+# per commit. Writes nothing when no session made the commit.
 set -u
+
 message_file="\${1:-}"
+
 [ -n "$message_file" ] || exit 0
+
 session_id="\${CODEX_THREAD_ID:-\${CLAUDE_CODE_SESSION_ID:-}}"
 [ -n "$session_id" ] || exit 0
+
+# --if-exists doNothing keeps an amend, or a second run of this hook, from writing it twice.
 git interpret-trailers --in-place --if-exists doNothing \\
   --trailer "AIDD-Session-Id=$session_id" "$message_file" || exit 0
+
 exit 0
 `;
 
@@ -89,109 +98,21 @@ async function configure(text: string): Promise<void> {
   writeFileSync(join(repo, ".aidd", "config.json"), text);
 }
 
-describe("opting in to a repository the previous version measured", () => {
-  it("leaves a repository that still commits, with no trailer, and no line without its script", async () => {
-    install("#!/bin/sh\n<CALL>\n");
-    await configure(BARE);
-    expect(commit("before")).toContain(`AIDD-Session-Id: ${SESSION}`);
-
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
-
-    expect(result).toMatchObject({
-      status: "on",
-      hook: { lineRemoved: true, delegateRemoved: true, stillCalledBy: [] },
-    });
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(false);
-    expect(existsSync(join(hooksDir(), "prepare-commit-msg"))).toBe(false);
-    expect(commit("after")).not.toContain("AIDD-Session-Id");
-  });
-
-  it("keeps a hook's other content byte for byte, and its mode", async () => {
-    const foreign = '#!/bin/sh\n# mine\r\n  echo "a"  \n<CALL>\necho end';
-    install(foreign);
-    await configure(BARE);
-
-    await deps.telemetryOnUseCase.execute(repo, "keep");
-
+describe("opting in to a repository a previous version measured", () => {
+  it("leaves what a previous version installed as it found it, and the repository still commits", async () => {
+    const delegate = install("#!/bin/sh\n<CALL>\n");
     const hook = join(hooksDir(), "prepare-commit-msg");
-    expect(read(hook)).toBe('#!/bin/sh\n# mine\r\n  echo "a"  \necho end');
-    // Windows has no execute bit to keep.
-    if (process.platform !== "win32") expect(statSync(hook).mode & 0o111).not.toBe(0);
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(false);
-    expect(commit("after")).not.toContain("AIDD-Session-Id");
-  });
-
-  it("keeps the script while a lefthook job still calls it, says so, and edits no manager file", async () => {
-    install("#!/bin/sh\n<CALL>\n");
-    const lefthook = [
-      "prepare-commit-msg:",
-      "  commands:",
-      "    aidd-session-trailer:",
-      "      run: |",
-      '        delegate="$(git rev-parse --git-common-dir)/hooks/aidd-session-trailer.sh"',
-      '        if [ -f "$delegate" ]; then sh "$delegate" {1} {2}; fi',
-      "",
-    ].join("\n");
-    writeFileSync(join(repo, "lefthook.yml"), lefthook);
     await configure(BARE);
-
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
-
-    expect(result).toMatchObject({
-      hook: { lineRemoved: true, delegateRemoved: false, stillCalledBy: ["lefthook.yml"] },
-    });
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(true);
-    expect(read(join(repo, "lefthook.yml"))).toBe(lefthook);
-  });
-
-  it("keeps the script while a husky hook still calls it", async () => {
-    install(null);
-    const husky =
-      'delegate="$(git rev-parse --git-common-dir)/hooks/aidd-session-trailer.sh"\n[ -f "$delegate" ] && sh "$delegate" "$@"\n';
-    mkdirSync(join(repo, ".husky"));
-    writeFileSync(join(repo, ".husky", "prepare-commit-msg"), husky);
-    await configure(BARE);
-
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
-
-    expect(result).toMatchObject({
-      hook: { delegateRemoved: false, stillCalledBy: [".husky/prepare-commit-msg"] },
-    });
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(true);
-    expect(read(join(repo, ".husky", "prepare-commit-msg"))).toBe(husky);
-  });
-
-  it("leaves a script of somebody else's under that name alone", async () => {
-    mkdirSync(hooksDir(), { recursive: true });
-    writeFileSync(join(hooksDir(), DELEGATE_FILE), "#!/bin/sh\necho mine\n");
-    await configure(BARE);
-    await deps.telemetryOnUseCase.execute(repo, "keep");
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(true);
-  });
-
-  it("removes the run journal and its ignore entry, and nothing else of the ignore file", async () => {
     mkdirSync(join(repo, "aidd_docs", "runs"), { recursive: true });
     writeFileSync(join(repo, "aidd_docs", "runs", "a.jsonl"), "{}\n");
-    writeFileSync(join(repo, ".gitignore"), "dist/\naidd_docs/runs/\nnode_modules/\n");
-    await configure(BARE);
+    const before = [hook, delegate, join(repo, ".aidd", "config.json")].map(read);
 
     const result = await deps.telemetryOnUseCase.execute(repo, "keep");
 
-    expect(result).toMatchObject({ journal: { journalRemoved: true, ignoreEntryRemoved: true } });
-    expect(existsSync(join(repo, "aidd_docs", "runs"))).toBe(false);
-    expect(read(join(repo, ".gitignore"))).toBe("dist/\nnode_modules/\n");
-  });
-
-  it("leaves a journal git tracks where it is", async () => {
-    mkdirSync(join(repo, "aidd_docs", "runs"), { recursive: true });
-    writeFileSync(join(repo, "aidd_docs", "runs", "a.jsonl"), "{}\n");
-    git(repo, box.gitEnv, "add", "-f", "aidd_docs/runs/a.jsonl");
-    await configure(BARE);
-
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
-
-    expect(result).toMatchObject({ journal: { journalRemoved: false, trackedKept: true } });
+    expect(result).toMatchObject({ status: "on", consentWritten: true });
+    expect([hook, delegate, join(repo, ".aidd", "config.json")].map(read)).toEqual(before);
     expect(existsSync(join(repo, "aidd_docs", "runs", "a.jsonl"))).toBe(true);
+    expect(commit("after")).toContain(`AIDD-Session-Id: ${SESSION}`);
   });
 
   const consentOf = () =>
@@ -228,23 +149,6 @@ describe("opting in to a repository the previous version measured", () => {
     ]);
   });
 
-  it("removes the previous version's block, every V1 key with it, and keeps every other byte", async () => {
-    await configure(
-      '{\n  "keep": { "me": 1 },\n  "telemetry": { "enabled": true, "endpoint": "x" }\n}\n'
-    );
-    const result = await deps.telemetryOnUseCase.execute(repo, "keep");
-    expect(result).toMatchObject({ legacyConfig: "block-removed" });
-    expect(read(join(repo, ".aidd", "config.json"))).toBe('{\n  "keep": { "me": 1 }\n}\n');
-  });
-
-  it("deletes .aidd/config.json when the block was all it held", async () => {
-    await configure('{"telemetry":{"enabled":true,"endpoint":"x"}}');
-    expect(await deps.telemetryOnUseCase.execute(repo, "keep")).toMatchObject({
-      legacyConfig: "file-deleted",
-    });
-    expect(existsSync(join(repo, ".aidd", "config.json"))).toBe(false);
-  });
-
   it("is not opted in by a committed .aidd/config.json that says version 2", async () => {
     await configure('{"telemetry":{"enabled":true,"version":2}}');
     git(repo, box.gitEnv, "add", ".aidd/config.json");
@@ -271,18 +175,6 @@ describe("opting in to a repository the previous version measured", () => {
     await deps.telemetryOnUseCase.execute(repo, "keep");
     writeTranscript(linked, ["b"], "s-2", soon());
     expect(await deps.ingestUsageUseCase.execute()).toMatchObject({ added: 1 });
-  });
-
-  it("leaves a config that does not parse as it is, and still turns measurement on", async () => {
-    await configure("{nope");
-    install("#!/bin/sh\n<CALL>\n");
-    expect(await deps.telemetryOnUseCase.execute(repo, "keep")).toMatchObject({
-      status: "on",
-      legacyConfig: "unparseable",
-    });
-    expect(read(join(repo, ".aidd", "config.json"))).toBe("{nope");
-    expect(consentOf()).toMatch(TOKEN_KEY);
-    expect(existsSync(join(hooksDir(), DELEGATE_FILE))).toBe(false);
   });
 
   it("refuses outside a repository", async () => {

@@ -9,7 +9,6 @@ import { ForgetTelemetryUseCase } from "../contexts/telemetry/application/forget
 import { ManageIdentityUseCase } from "../contexts/telemetry/application/identity/manage-identity-use-case.js";
 import { ProposeIdentityUseCase } from "../contexts/telemetry/application/identity/propose-identity-use-case.js";
 import { IngestUsageUseCase } from "../contexts/telemetry/application/ingest-usage-use-case.js";
-import { StoredUsageMigration } from "../contexts/telemetry/application/legacy/stored-usage-migration.js";
 import { ReadUsageUseCase } from "../contexts/telemetry/application/read-usage-use-case.js";
 import { DeclaredBindings } from "../contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsageUseCase } from "../contexts/telemetry/application/report/report-usage-use-case.js";
@@ -43,9 +42,6 @@ import { RepositoryAliasStoreAdapter } from "../contexts/telemetry/infrastructur
 import { ResolutionStoreAdapter } from "../contexts/telemetry/infrastructure/resolution-store-adapter.js";
 import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { ClaudeSettingsAdapter } from "../contexts/telemetry/infrastructure/switch/claude-settings-adapter.js";
-import { LegacyHookAdapter } from "../contexts/telemetry/infrastructure/switch/legacy-hook-adapter.js";
-import { ProjectConfigAdapter } from "../contexts/telemetry/infrastructure/switch/project-config-adapter.js";
-import { RunJournalAdapter } from "../contexts/telemetry/infrastructure/switch/run-journal-adapter.js";
 import {
   CodexTranscriptSourceAdapter,
   codexSessionRoots,
@@ -89,7 +85,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
   const gitEnv = environmentWithoutGitVariables();
   const bindingsDir = join(root, "bindings");
   const branchSource = new GitBranchBindingSourceAdapter(gitEnv);
-  const aliases = new RepositoryAliasStoreAdapter(ledgerDir, storage);
+  const aliases = new RepositoryAliasStoreAdapter(ledgerDir);
   const snapshotStore = new BindingSnapshotStoreAdapter(bindingsDir, storage, aliases);
   const bindingsLock = new BindingsLockAdapter(bindingsDir, storage);
   const snapshotBindingsUseCase = new SnapshotBindingsUseCase(
@@ -148,8 +144,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     ledger,
     new DirectoryResolver(locator, consents, resolutionStore, consentHistory, environment),
     snapshotBindingsUseCase,
-    { refusedByEnvironment },
-    new StoredUsageMigration(locator, resolutionStore, aliases, ledger)
+    { refusedByEnvironment }
   );
   const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
   return {
@@ -173,9 +168,6 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
       locator,
       consents,
       consents,
-      new ProjectConfigAdapter(),
-      new LegacyHookAdapter(gitEnv),
-      new RunJournalAdapter(gitEnv),
       ledger,
       resolutionStore,
       consentHistory,

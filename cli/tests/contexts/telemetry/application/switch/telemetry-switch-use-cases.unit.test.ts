@@ -19,8 +19,6 @@ import {
   InMemoryResolutions,
 } from "../../../../helpers/ports/in-memory-telemetry.js";
 
-const NO_HOOK = { lineRemoved: false, delegateRemoved: false, stillCalledBy: [] };
-const NO_JOURNAL = { journalRemoved: false, trackedKept: false, ignoreEntryRemoved: false };
 const repository = (
   root: string,
   mainRoot = root,
@@ -56,13 +54,6 @@ function setup(settings: (string | null)[] = []) {
   const history = new InMemoryConsentHistory();
   const clock = { now: new Date(T1) };
   const writes: { root: string; value: string }[] = [];
-  const config = {
-    texts: new Map<string, string>(),
-    written: [] as { root: string; text: string }[],
-    removed: [] as string[],
-  };
-  const hooksSeen: string[] = [];
-  const journalSeen: string[] = [];
   const identities = new InMemoryIdentity();
   const writer = {
     async set(root: string, value: string) {
@@ -79,33 +70,6 @@ function setup(settings: (string | null)[] = []) {
     locator,
     consents,
     writer,
-    {
-      async read(root) {
-        return config.texts.get(root) ?? null;
-      },
-      async write(root, text) {
-        events.push("config");
-        config.written.push({ root, text });
-      },
-      async remove(root) {
-        events.push("config-removed");
-        config.removed.push(root);
-      },
-    },
-    {
-      async clean(root) {
-        events.push("hooks");
-        hooksSeen.push(root);
-        return { ...NO_HOOK, lineRemoved: true };
-      },
-    },
-    {
-      async clean(root) {
-        events.push("journal");
-        journalSeen.push(root);
-        return NO_JOURNAL;
-      },
-    },
     ledger,
     resolutions,
     history,
@@ -126,37 +90,26 @@ function setup(settings: (string | null)[] = []) {
     history,
     clock,
     writes,
-    config,
     events,
-    hooksSeen,
-    journalSeen,
     identities,
   };
 }
 
 describe("aidd telemetry on", () => {
-  it("writes consent before it cleans, and cleans the repository it was run in", async () => {
+  it("writes consent for the repository it was run in", async () => {
     const s = setup();
     const result = await s.on.execute("/w/repo", "keep");
-    expect(s.events.slice(0, 5)).toEqual(["lock", "consent", "unlock", "hooks", "journal"]);
+    expect(s.events.slice(0, 3)).toEqual(["lock", "consent", "unlock"]);
     expect(s.writes).toEqual([{ root: "/w/repo", value: "2:tok-1" }]);
-    expect(s.hooksSeen).toEqual(["/w/repo"]);
-    expect(s.journalSeen).toEqual(["/w/repo"]);
-    expect(result).toMatchObject({
-      status: "on",
-      consentWritten: true,
-      legacyConfig: "none",
-      hook: { lineRemoved: true },
-    });
+    expect(result).toMatchObject({ status: "on", consentWritten: true });
   });
 
-  it("still cleans, and writes no consent, when the clone already granted this version", async () => {
+  it("writes no consent when the clone already granted this version", async () => {
     const s = setup();
     await s.on.execute("/w/repo", "keep");
     s.writes.length = 0;
     const result = await s.on.execute("/w/repo", "keep");
     expect(s.writes).toEqual([]);
-    expect(s.hooksSeen).toEqual(["/w/repo", "/w/repo"]);
     expect(result).toMatchObject({ status: "on", consentWritten: false });
   });
 
@@ -186,45 +139,6 @@ describe("aidd telemetry on", () => {
     };
     await s.on.execute("/w/repo", "keep");
     expect(s.events.slice(0, 4)).toEqual(["lock", "consent", "interval-open", "unlock"]);
-  });
-
-  it("removes the previous version's block from .aidd/config.json and keeps the rest", async () => {
-    const s = setup();
-    s.config.texts.set(
-      "/w/repo",
-      '{\n  "keep": 1,\n  "telemetry": { "enabled": true, "endpoint": "x" }\n}\n'
-    );
-    const result = await s.on.execute("/w/repo", "keep");
-    expect(result).toMatchObject({ legacyConfig: "block-removed" });
-    expect(s.config.written).toEqual([{ root: "/w/repo", text: '{\n  "keep": 1\n}\n' }]);
-    expect(s.config.removed).toEqual([]);
-  });
-
-  it("deletes .aidd/config.json when the block was all it held", async () => {
-    const s = setup();
-    s.config.texts.set("/w/repo", '{"telemetry":{"enabled":true,"endpoint":"x"}}');
-    expect(await s.on.execute("/w/repo", "keep")).toMatchObject({ legacyConfig: "file-deleted" });
-    expect(s.config.removed).toEqual(["/w/repo"]);
-    expect(s.config.written).toEqual([]);
-  });
-
-  it("leaves a config that does not parse alone, and still turns measurement on", async () => {
-    const s = setup();
-    s.config.texts.set("/w/repo", "{nope");
-    expect(await s.on.execute("/w/repo", "keep")).toMatchObject({
-      consentWritten: true,
-      legacyConfig: "unparseable",
-    });
-    expect(s.config.written).toEqual([]);
-    expect(s.config.removed).toEqual([]);
-  });
-
-  it("never reads .aidd/config.json as consent", async () => {
-    const s = setup();
-    s.config.texts.set("/w/repo", '{"telemetry":{"enabled":true,"version":2}}');
-    const result = await s.on.execute("/w/repo", "keep");
-    expect(result).toMatchObject({ consentWritten: true });
-    expect(s.writes).toEqual([{ root: "/w/repo", value: "2:tok-1" }]);
   });
 
   it("refuses outside a repository without touching anything", async () => {
@@ -266,7 +180,7 @@ describe("aidd telemetry on", () => {
     s.ledger.stored.set("/t", { offset: 9, size: 9, identity: "i" });
     await s.on.execute("/w/repo", "keep");
     expect(s.ledger.stored.size).toBe(1);
-    expect(s.events.slice(5)).toEqual(["lock", "unlock"]);
+    expect(s.events.slice(3)).toEqual(["lock", "unlock"]);
   });
 
   it("remembers its own root, seen alive, so forget can find the clone later", async () => {

@@ -51,9 +51,6 @@ export interface UsageLedger {
    * caller vouches that the rest is as it was. A line that is not a record is never removed:
    * it stays in its day, after the records, in text order and once. */
   save(records: readonly StoredUsage[], partitions?: ReadonlySet<string>): Promise<void>;
-  /** Moves every call with no request id an earlier version stored into `leftOut`, out of its
-   * day: the migration's one pass over the whole ledger. */
-  leaveOutRequestless(): Promise<void>;
   positions(): Promise<ReadonlyMap<string, TranscriptPosition>>;
   savePositions(positions: ReadonlyMap<string, TranscriptPosition>): Promise<void>;
 }

@@ -28,7 +28,7 @@ Measurement is on for the project, or nothing changed and the reason is stated. 
    - a name typed: `aidd telemetry on --yes --as '<id>'`, with exactly the text typed, single-quoted for the shell, each `'` it holds written as `'\''` (`O'Brien` becomes `'O'\''Brien'`);
    - anonymous: `aidd telemetry on --yes --anonymous`. Staying anonymous is not stored: the next `on`, in another clone, asks again.
    - Outside a git repository, with a git config git cannot read, or with an identifier that is not one non-empty line of at most 128 characters, the command refuses: show its message and stop.
-5. **Report.** Relay everything the command printed, the removals and the warnings included, in the person's words rather than pasted.
+5. **Report.** Relay everything the command printed, the warnings included, in the person's words rather than pasted.
    - When it warned that Claude Code keeps session files only briefly, say that a call is measured only if it is read before the files are removed, and give the setting it named.
 6. **Prove.** Run `aidd telemetry report --days 1`, and state what it shows.
    - No calls yet is a normal answer for a project that has just opted in: say so, and that the next Claude Code or Codex session in this project will be counted.
@@ -39,8 +39,8 @@ Measurement is on for the project, or nothing changed and the reason is stated. 
 | Case | Pass |
 | --- | --- |
 | The person says no | No `aidd telemetry on` was run and the project is unchanged |
-| The person says yes, with no identity set | They were asked to type an identifier or stay anonymous, no name was suggested and git was not read, exactly one of `aidd telemetry on --yes --as '<id>'`, with the text they typed, or `aidd telemetry on --yes --anonymous` ran, and the person was told that measurement starts now, that earlier history is not counted, and, if the command removed or deleted a block in `.aidd/config.json`, that the file may need committing |
-| The person says yes, with an identity set | They were asked nothing about a name, were told the one they are measured under, `aidd telemetry on --yes` ran once, and the person was told the same as above about when measurement starts and `.aidd/config.json` |
+| The person says yes, with no identity set | They were asked to type an identifier or stay anonymous, no name was suggested and git was not read, exactly one of `aidd telemetry on --yes --as '<id>'`, with the text they typed, or `aidd telemetry on --yes --anonymous` ran, and the person was told that measurement starts now, that earlier history is not counted |
+| The person says yes, with an identity set | They were asked nothing about a name, were told the one they are measured under, `aidd telemetry on --yes` ran once, and the person was told the same as above about when measurement starts |
 | The CLI's `on` has no `--anonymous` | The skill said to update `@ai-driven-dev/cli` and ran nothing else |
 | `aidd` has no `telemetry` | The skill said so and ran nothing else |
 | Run outside a git repository | The refusal was shown and nothing was written |

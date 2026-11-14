@@ -31,7 +31,6 @@ import {
   USAGE_TOOLS,
 } from "../../../../../src/contexts/telemetry/domain/usage-record.js";
 import {
-  ALREADY_MIGRATED,
   FakeBindings,
   FakeConsents,
   FakeLocator,
@@ -137,8 +136,7 @@ async function reporterOf({ calls, declarations, person }: Ledger) {
         { caseInsensitiveFileSystem: false, now }
       ),
       new SnapshotBindingsUseCase(new FakeBindings(), snapshots, new InMemoryBindingsLock(), now),
-      { refusedByEnvironment: false },
-      ALREADY_MIGRATED
+      { refusedByEnvironment: false }
     ),
     ledger,
     new DeclaredBindings(sessions, snapshots),

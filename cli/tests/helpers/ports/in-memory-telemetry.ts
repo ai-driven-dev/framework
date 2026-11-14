@@ -165,10 +165,6 @@ export class InMemoryLedger implements UsageLedger {
     for (const partition of partitions ?? [...this.unsettled]) this.unsettled.delete(partition);
   }
 
-  async leaveOutRequestless(): Promise<void> {
-    this.events.push("leave-out-requestless");
-  }
-
   async positions(): Promise<ReadonlyMap<string, TranscriptPosition>> {
     return new Map(this.stored);
   }
@@ -421,11 +417,7 @@ export class InMemoryIdentity implements PersonIdentityStore {
   }
 }
 
-/** A ledger already under today's key and id rules: the migration finds nothing to do. */
-export const ALREADY_MIGRATED = { execute: async (): Promise<void> => {} };
-
 /** No table of ids an earlier version gave repositories: every id is read as stored. */
 export const NO_ALIASES: RepositoryAliasStore = {
   load: async () => null,
-  save: async () => {},
 };

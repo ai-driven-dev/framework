@@ -1,15 +1,9 @@
 import { readdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { isErrnoException } from "../../../shared/domain/reading/json-file.js";
-import { requestlessCallOf } from "../domain/formats/claude-transcript-usage.js";
 import type { PrivateStorage } from "../domain/ports/private-storage.js";
 import type { LeftOutStore, LoadedLedger, UsageLedger } from "../domain/ports/usage-ledger.js";
-import {
-  parseStoredUsage,
-  partitionByDay,
-  requestlessIn,
-  type StoredUsage,
-} from "../domain/stored-usage.js";
+import { parseStoredUsage, partitionByDay, type StoredUsage } from "../domain/stored-usage.js";
 import { compareText } from "../domain/text-order.js";
 import {
   parsePositions,
@@ -56,7 +50,7 @@ export class UsageLedgerAdapter implements UsageLedger {
   ) {
     this.leftOut = new LeftOutAdapter(join(dir, "left-out.txt"), dir, storage);
     // Its own directory's table, read at every load: no wiring can leave it out.
-    this.aliases = new RepositoryAliasStoreAdapter(dir, storage);
+    this.aliases = new RepositoryAliasStoreAdapter(dir);
   }
 
   exclusively<T>(work: () => Promise<T>): Promise<T> {
@@ -72,7 +66,7 @@ export class UsageLedgerAdapter implements UsageLedger {
     const heldIn = new Map<string, string>();
     // Every read applies the rules of now, so a call an earlier version named otherwise is
     // still a call of one repository, and its partition is rewritten.
-    const ids = (await this.aliases.load())?.ids ?? new Map<string, string>();
+    const ids = (await this.aliases.load()) ?? new Map<string, string>();
     for (const name of names) {
       const partition = partitionOf(name);
       if (holds !== undefined && !holds(partition)) continue;
@@ -131,24 +125,6 @@ export class UsageLedgerAdapter implements UsageLedger {
     // After the writes: a record whose better snapshot moved to another day can leave its old
     // day empty.
     for (const path of emptied) await rm(path);
-  }
-
-  /** The day it empties stays, empty, for the `save` that follows to remove. */
-  async leaveOutRequestless(): Promise<void> {
-    for (const name of await this.partitions()) {
-      const path = join(this.dir, name);
-      const lines = ((await readTextIfPresent(path)) ?? "").split("\n");
-      const calls = lines.flatMap((line) => requestlessIn(line) ?? []);
-      if (calls.length === 0) continue;
-      // Kept before the line goes, so a run stopped between them loses nothing.
-      await this.leftOut.add(
-        calls.map((call) => ({ reason: "requestless", of: requestlessCallOf(call) }))
-      );
-      await this.storage.replace(
-        path,
-        lines.filter((line) => requestlessIn(line) === null).join("\n")
-      );
-    }
   }
 
   async positions(): Promise<ReadonlyMap<string, TranscriptPosition>> {

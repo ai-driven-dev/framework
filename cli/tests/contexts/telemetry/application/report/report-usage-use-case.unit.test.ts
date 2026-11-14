@@ -22,7 +22,6 @@ import {
 import type { ReportAxis } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
 import {
-  ALREADY_MIGRATED,
   AUTUMN,
   cloneOf,
   FakeBindings,
@@ -87,8 +86,7 @@ function setup(options: { refused?: boolean } = {}) {
       new InMemoryBindingsLock(),
       () => new Date("2026-10-09T00:00:00.000Z")
     ),
-    { refusedByEnvironment: options.refused ?? false },
-    ALREADY_MIGRATED
+    { refusedByEnvironment: options.refused ?? false }
   );
   locator.directories.set("/work/a", {
     status: "repository",

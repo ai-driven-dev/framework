@@ -434,9 +434,6 @@ describe("aidd telemetry task", () => {
 const ON = {
   status: "on",
   consentWritten: true,
-  legacyConfig: "none",
-  hook: { lineRemoved: false, delegateRemoved: false, stillCalledBy: [] },
-  journal: { journalRemoved: false, trackedKept: false, ignoreEntryRemoved: false },
   retention: { days: 3650, short: false },
   identity: { personId: null, previous: null },
 };

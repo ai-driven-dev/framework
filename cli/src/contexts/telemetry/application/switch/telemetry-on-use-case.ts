@@ -7,18 +7,8 @@ import type { LocatedDirectory, RepositoryLocator } from "../../domain/ports/rep
 import type { ResolutionStore } from "../../domain/ports/resolution-store.js";
 import type { ClaudeSettingsSource } from "../../domain/ports/switch/claude-settings-source.js";
 import type { ConsentWriter } from "../../domain/ports/switch/consent-writer.js";
-import type {
-  HookCleanup,
-  LegacyHookCleaner,
-} from "../../domain/ports/switch/legacy-hook-cleaner.js";
-import type { ProjectConfigFile } from "../../domain/ports/switch/project-config-file.js";
-import type {
-  JournalCleanup,
-  RunJournalCleaner,
-} from "../../domain/ports/switch/run-journal-cleaner.js";
 import type { UsageLedger } from "../../domain/ports/usage-ledger.js";
 import { effectiveRetentionDays, retentionShort } from "../../domain/switch/claude-retention.js";
-import { withoutPreviousTelemetry } from "../../domain/switch/legacy-config.js";
 import { consentValue, tokenOfKey } from "../../domain/telemetry-consent.js";
 import { ConsentLog } from "../consent-log.js";
 import type { ResolutionEnvironment } from "../directory-resolver.js";
@@ -26,8 +16,6 @@ import { readCloneConsent } from "./clone-consent.js";
 import { rememberOwnRoot } from "./remember-own-root.js";
 
 type Located = Extract<LocatedDirectory, { status: "repository" }>;
-
-export type LegacyConfigOutcome = "none" | "block-removed" | "file-deleted" | "unparseable";
 
 /** Who the clone is measured as: the identity already set, none, or the one the person chose. */
 export type IdentityChoice = "keep" | "none" | { readonly set: string };
@@ -56,27 +44,19 @@ export type OnResult =
       readonly status: "on";
       /** `false` when the clone already granted this version. */
       readonly consentWritten: boolean;
-      /** What was done to the previous version's block in `.aidd/config.json`, a file a team
-       * may track. */
-      readonly legacyConfig: LegacyConfigOutcome;
-      readonly hook: HookCleanup;
-      readonly journal: JournalCleanup;
       /** How long Claude Code keeps a transcript, and whether that is short of what history
        * needs. */
       readonly retention: { readonly days: number; readonly short: boolean };
       readonly identity: OnIdentity;
     };
 
-/** Opts a clone in, in its own git config, and leaves it as if the previous measurement had
- * never run. Measurement starts here: nothing made before is read back. */
+/** Opts a clone in, in its own git config. Measurement starts here: nothing made before is read
+ * back. */
 export class TelemetryOnUseCase {
   constructor(
     private readonly locator: RepositoryLocator,
     private readonly consents: ConsentSource,
     private readonly writer: ConsentWriter,
-    private readonly config: ProjectConfigFile,
-    private readonly hooks: LegacyHookCleaner,
-    private readonly journal: RunJournalCleaner,
     private readonly ledger: UsageLedger,
     private readonly resolutions: ResolutionStore,
     private readonly history: ConsentHistory,
@@ -103,39 +83,15 @@ export class TelemetryOnUseCase {
     if (consentWritten === "damaged") return { status: "refused", reason: "damaged-consent-log" };
     // Written only once the clone is on: a refused `on` leaves the identity as it was.
     if (chosen !== null) await this.identities.write(chosen);
-    const legacyConfig = await this.clearLegacyConfig(located.root);
-
-    // Pairing and removal live in one adapter call: the line and its script go together.
-    const hook = await this.hooks.clean(located.root);
-    const journal = await this.journal.clean(located.root);
     await this.rememberRoot(located);
 
     const days = effectiveRetentionDays(await this.claudeSettings.texts(located.root));
     return {
       status: "on",
       consentWritten,
-      legacyConfig,
-      hook,
-      journal,
       retention: { days, short: retentionShort(days) },
       identity: { personId: choice === "keep" ? previous : chosen, previous },
     };
-  }
-
-  /** The block the previous version wrote in `.aidd/config.json` means nothing to this one:
-   * removed, the rest of the file as it was, and the file itself only when nothing else is
-   * in it. */
-  private async clearLegacyConfig(root: string): Promise<LegacyConfigOutcome> {
-    const cleaning = withoutPreviousTelemetry(await this.config.read(root));
-    if (cleaning.status === "block-removed") {
-      await this.config.write(root, cleaning.text);
-      return "block-removed";
-    }
-    if (cleaning.status === "file-emptied") {
-      await this.config.remove(root);
-      return "file-deleted";
-    }
-    return cleaning.status;
   }
 
   /** Under the ledger's lock, so an ingest sees the key and the interval together. A key that

@@ -16,7 +16,6 @@ import type { Period } from "../../../../../src/contexts/telemetry/domain/report
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import {
-  ALREADY_MIGRATED,
   cloneOf,
   FakeBindings,
   FakeConsents,
@@ -201,8 +200,7 @@ function machine() {
       now: () => NOW,
     }),
     snapshots,
-    { refusedByEnvironment: false },
-    ALREADY_MIGRATED
+    { refusedByEnvironment: false }
   );
   const report = new ReportUsageUseCase(
     ingest,

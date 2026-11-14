@@ -38,7 +38,6 @@ import {
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import {
-  ALREADY_MIGRATED,
   FakeBindings,
   FakeConsents,
   FakeLocator,
@@ -228,8 +227,7 @@ function ingestOf(ledger: UsageLedger): IngestUsageUseCase {
       new InMemoryBindingsLock(),
       now
     ),
-    { refusedByEnvironment: false },
-    ALREADY_MIGRATED
+    { refusedByEnvironment: false }
   );
 }
 

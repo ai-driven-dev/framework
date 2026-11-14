@@ -136,7 +136,7 @@ export function registerTelemetryCommand(
 
   telemetry
     .command("on")
-    .description("Measure this clone, and remove what the previous version left in it")
+    .description("Measure this clone")
     .option("--yes", "Do not ask first", false)
     .option("--as <id>", "Name you by this identifier on your own measurement")
     .option("--anonymous", "Name nobody on your own measurement", false)
@@ -157,10 +157,7 @@ export function registerTelemetryCommand(
       await run(async (deps) => {
         const confirmed =
           cmdOptions.yes ||
-          (await deps.prompter.confirm(
-            "Measure what this clone consumes, and remove what the previous version left in it?",
-            false
-          ));
+          (await deps.prompter.confirm("Measure what this clone consumes?", false));
         if (!confirmed) {
           output.info("Nothing changed.");
           return;

@@ -18,7 +18,6 @@ import { PrivateStorageAdapter } from "../../../../src/contexts/telemetry/infras
 import { CodexTranscriptSourceAdapter } from "../../../../src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
 import { UsageLedgerAdapter } from "../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
 import {
-  ALREADY_MIGRATED,
   cloneOf,
   FakeBindings,
   FakeConsents,
@@ -92,8 +91,7 @@ function machine(sessions: string, projects?: string) {
       new InMemoryBindingsLock(),
       () => NOW
     ),
-    { refusedByEnvironment: false },
-    ALREADY_MIGRATED
+    { refusedByEnvironment: false }
   );
   return { dir, ingest };
 }
