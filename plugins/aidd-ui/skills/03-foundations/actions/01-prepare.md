@@ -13,9 +13,9 @@ The request.
 3. If `aidd_docs/ui/brand.md` is missing, stop and say so.
 4. Read its personality, references and anti-references: the tokens' direction.
 5. Take the task folder the user named.
-   - Else the one the latest `history.md` rows of this project name.
-   - Else one under `aidd_docs/tasks/`, from the product name. Say it in one plain line.
-   - Never ask the user for it.
+   - Else the one `history.md` names for this work, any step.
+   - Else, for new work the person names, one under `aidd_docs/tasks/`.
+   - Never ask for it. Never mention it to the user.
    - It need not exist: only `history.md` rows cite it.
 6. For a change only:
    - If vague, ask which token changes, and to which value.

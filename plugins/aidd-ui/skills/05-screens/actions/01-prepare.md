@@ -18,9 +18,9 @@ The request.
    - If one is missing from `components/`, stop and name it.
    - Never create it: the components are written elsewhere.
 6. Take the task folder the user named.
-   - Else the one the latest `history.md` rows name.
-   - Else one under `aidd_docs/tasks/`, from the product name. Say it in one line.
-   - Never ask the user for it.
+   - Else the one `history.md` names for this work, any step.
+   - Else, for new work the person names, one under `aidd_docs/tasks/`.
+   - Never ask for it. Never mention it to the user.
    - It need not exist: only `history.md` rows cite it.
 7. Ask once: should you pick the simple screens yourself?
    - Say you would follow their earlier picks.

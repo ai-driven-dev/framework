@@ -33,8 +33,10 @@ Each box is a file: read it, then do what it says.
 - Name a record by its title and a state by its label.
 - Say what the person will see, in their words.
 - Never show a path, file name, id, rule code or size.
+- Never show a version number, skill name, history or changelog.
 - Never give a unit, or a count of warnings.
 - Never use jargon: no wireframe, design system, token or hex code. Say what it is.
+- Name a step by what it does, never by its skill name.
 - Name the showcase plainly, « la vitrine » in French.
 - Say once how to open it: double-click `index.html` in `aidd_docs/ui/showcase/`. Give no other path.
 - To show a page, point to it in the showcase.
@@ -49,4 +51,5 @@ Each box is a file: read it, then do what it says.
 - Never write a capture: the user saves it.
 - After each write, fix what the hook or the validation reports.
 - Never bypass a hook.
-- Commit and push only when asked.
+- Record the history without asking. Change only what was named, and never offer more.
+- Saving means writing the design files. Never branch, commit or push unless the person asks for git.

@@ -12,9 +12,9 @@ The request.
 2. Read `aidd_docs/ui/` and the UI code, whatever its platforms. Name the [case](../references/cases.md).
 3. If `aidd_docs/ui/system.md` is missing, stop and say so.
 4. Take the task folder the user named.
-   - Else the one the latest `history.md` rows name.
-   - Else one under `aidd_docs/tasks/`, from the product name. Say it in one line.
-   - Never ask the user for it.
+   - Else the one `history.md` names for this work, any step.
+   - Else, for new work the person names, one under `aidd_docs/tasks/`.
+   - Never ask for it. Never mention it to the user.
    - It need not exist: only `history.md` rows cite it.
 5. For a change only:
    - A `revise` comment in a review is the request.

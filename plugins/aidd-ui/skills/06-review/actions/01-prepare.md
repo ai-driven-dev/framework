@@ -19,9 +19,9 @@ The request.
    - If there is none, stop and say so.
 6. For each coded screen, list the captures it needs, per [review](../references/review.md).
 7. Take the task folder the user named.
-   - Else the one the latest `history.md` rows name.
-   - Else one under `aidd_docs/tasks/`, from the product name. Say it in one line.
-   - Never ask the user for it.
+   - Else the one `history.md` names for this work, any step.
+   - Else, for new work the person names, one under `aidd_docs/tasks/`.
+   - Never ask for it. Never mention it to the user.
    - It need not exist: only `history.md` rows cite it.
 8. Read [propose](02-propose.md).
 

@@ -10,9 +10,10 @@ The request.
 
 1. Find the engine per [engine](../references/engine.md). If missing, stop and say so.
 2. Read `aidd_docs/ui/` and the UI code. Name the [case](../references/cases.md).
-3. Take the task folder the user named. Never mention it to the user.
-   - Else the one the latest `history.md` rows name.
-   - Else one under `aidd_docs/tasks/`, from the product name.
+3. Take the task folder the user named.
+   - Else the one `history.md` names for this work, any step.
+   - Else, for new work the person names, one under `aidd_docs/tasks/`.
+   - Never ask for it. Never mention it to the user.
    - It need not exist: only `history.md` rows cite it.
 4. Settle the persona:
    - A brief under `aidd_docs/` describing one: propose it as written.
