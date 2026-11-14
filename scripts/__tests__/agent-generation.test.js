@@ -44,7 +44,7 @@ test("renders each host's native file from the CLI mapping", (t) => {
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const body = "# Role\n\nReview the diff.\n";
   const desc = "Reviews a diff for defects. Use to check a change before merge.";
-  assert.equal(read(".claude/agents/code-reviewer.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: sonnet\neffort: high\ntools: Read, Grep\n---\n\n${body}`);
+  assert.equal(read(".claude/agents/code-reviewer.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: sonnet\neffort: high\ntools: Read, Grep\ncolor: blue\n---\n\n${body}`);
   assert.equal(read(".cursor/agents/code-reviewer.md"), `---\nname: code-reviewer\ndescription: ${desc}\nmodel: "sonnet[effort=high]"\n---\n\n${body}`);
   assert.equal(read(".opencode/agents/code-reviewer.md"), `---\ndescription: ${desc}\nmodel: "sonnet#high"\nmode: subagent\n---\n\n${body}`);
   assert.equal(read(".kilo/agents/code-reviewer.md"), `---\ndescription: ${desc}\nmodel: sonnet\nvariant: high\nmode: subagent\n---\n\n${body}`);
@@ -58,11 +58,25 @@ test("reports every field a host drops", (t) => {
   const r = run(agent, "claude,antigravity");
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(json(r).dropped, [
-    { tool: "claude", field: "color" },
     { tool: "antigravity", field: "model" },
     { tool: "antigravity", field: "effort" },
     { tool: "antigravity", field: "color" },
   ]);
+});
+
+test("keeps the Claude-only keys of an existing agent", (t) => {
+  const { run, read } = fixture(t);
+  const r = run({ name: "scout", description: "Finds files. Use to locate code.", permissionMode: "plan", disallowedTools: "Write", body: "x\n" }, "claude");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(read(".claude/agents/scout.md"), "---\nname: scout\ndescription: Finds files. Use to locate code.\npermissionMode: plan\ndisallowedTools: Write\n---\n\nx\n");
+  assert.deepEqual(json(r).dropped, []);
+});
+
+test("reports an effort a host cannot carry without a model", (t) => {
+  const { run } = fixture(t);
+  const r = run({ name: "scout", description: "Finds files. Use to locate code.", effort: "high", body: "x\n" }, "cursor,opencode,kilo");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(json(r).dropped, [{ tool: "cursor", field: "effort" }, { tool: "opencode", field: "effort" }]);
 });
 
 test("a minimal agent carries only name and description", (t) => {
@@ -137,9 +151,20 @@ test("rejects bad usage with exit 2", (t) => {
   assert.equal(json(unknown).error.code, "REFUSED");
 });
 
+test("accepts a project path with a trailing slash", (t) => {
+  const { exec, run, project, read } = fixture(t);
+  run(agent, "claude", ["--plan"]);
+  const r = exec("--project", `${project}/`, "--tools", "claude", "--input", "input.json");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(read(".claude/agents/code-reviewer.md"), /^name: code-reviewer$/m);
+});
+
 test("refuses a relative project and a symlink on the way to a target", (t) => {
   const { exec, run, dir, project } = fixture(t);
-  assert.equal(exec("--project", "project", "--tools", "claude", "--input", "input.json").status, 1);
+  run(agent, "claude", ["--plan"]);
+  const relative = exec("--project", "project", "--tools", "claude", "--input", "input.json");
+  assert.equal(relative.status, 1);
+  assert.match(json(relative).error.message, /absolute/);
   const outside = path.join(dir, "outside");
   fs.mkdirSync(outside);
   fs.symlinkSync(outside, path.join(project, ".claude"));
@@ -148,10 +173,22 @@ test("refuses a relative project and a symlink on the way to a target", (t) => {
   assert.deepEqual(fs.readdirSync(outside), []);
 });
 
-test("exits 3 when a target cannot be written", (t) => {
+test("refuses a target file that is a symlink", (t) => {
+  const { run, dir, project } = fixture(t);
+  const outside = path.join(dir, "outside.md");
+  fs.writeFileSync(outside, "keep\n");
+  fs.mkdirSync(path.join(project, ".claude/agents"), { recursive: true });
+  fs.symlinkSync(outside, path.join(project, ".claude/agents/code-reviewer.md"));
+  const r = run(agent, "claude");
+  assert.equal(r.status, 1);
+  assert.equal(fs.readFileSync(outside, "utf8"), "keep\n");
+});
+
+test("exits 3 before writing anything when one target cannot be written", (t) => {
   const { run, project } = fixture(t);
   fs.writeFileSync(path.join(project, ".codex"), "not a directory");
-  const r = run(agent, "codex");
+  const r = run(agent, "claude,codex");
   assert.equal(r.status, 3);
   assert.ok(json(r).error.code);
+  assert.equal(fs.existsSync(path.join(project, ".claude/agents/code-reviewer.md")), false);
 });

@@ -20,4 +20,4 @@ description: <what it does>. Use to <when to call it>.
 **<field>:** <value>
 ```
 
-<!-- Replace each <slot> and remove this note. -->
+> Fill every `<...>` and delete this line.

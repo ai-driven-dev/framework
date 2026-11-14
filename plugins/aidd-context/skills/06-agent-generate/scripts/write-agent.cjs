@@ -12,15 +12,16 @@ const FLAGS = ["--plan", "--check"];
 const VALUES = ["--project", "--tools", "--input"];
 
 // Each host keeps its own keys only. `effort` becomes the host's own spelling of it.
-// Claude also keeps `tools`, which the CLI drops: an existing agent's tool list survives a rewrite.
+// Claude also keeps the keys only it reads, which the CLI drops, so an existing agent survives a rewrite.
+// A host that spells effort inside the model value loses an effort given without a model.
 const withEffort = (open, close = "") => (a) => (a.model && a.effort ? `${a.model}${open}${a.effort}${close}` : a.model);
 const HOSTS = {
-  claude: { path: (n) => `.claude/agents/${n}.md`, fields: (a) => ({ name: a.name, description: a.description, model: a.model, effort: a.effort, tools: a.tools }), uses: ["model", "effort", "tools"] },
-  cursor: { path: (n) => `.cursor/agents/${n}.md`, fields: (a) => ({ name: a.name, description: a.description, model: withEffort("[effort=", "]")(a) }), uses: ["model", "effort"] },
+  claude: { path: (n) => `.claude/agents/${n}.md`, fields: (a) => ({ name: a.name, description: a.description, model: a.model, effort: a.effort, tools: a.tools, color: a.color, permissionMode: a.permissionMode, disallowedTools: a.disallowedTools }), uses: ["model", "effort", "tools", "color", "permissionMode", "disallowedTools"] },
+  cursor: { path: (n) => `.cursor/agents/${n}.md`, fields: (a) => ({ name: a.name, description: a.description, model: withEffort("[effort=", "]")(a) }), uses: ["model", "effort"], effortNeedsModel: true },
   copilot: { path: (n) => `.github/agents/${n}.agent.md`, fields: (a) => ({ name: a.name, description: a.description, model: a.model, reasoningEffort: a.effort, "include-custom-instructions": a["include-custom-instructions"] ?? true }), uses: ["model", "effort", "include-custom-instructions"] },
   antigravity: { path: (n) => `.agents/agents/${n}/agent.md`, fields: (a) => ({ name: a.name, description: a.description, model: "inherit", tools: toolList(a.tools) }), uses: ["tools"] },
   codex: { path: (n) => `.codex/agents/${n}.toml`, fields: (a) => ({ name: a.name, description: a.description, model: a.model, model_reasoning_effort: a.effort }), uses: ["model", "effort"], toml: true },
-  opencode: { path: (n) => `.opencode/agents/${n}.md`, fields: (a) => ({ description: a.description, model: withEffort("#")(a), mode: "subagent" }), uses: ["model", "effort"] },
+  opencode: { path: (n) => `.opencode/agents/${n}.md`, fields: (a) => ({ description: a.description, model: withEffort("#")(a), mode: "subagent" }), uses: ["model", "effort"], effortNeedsModel: true },
   kilo: { path: (n) => `.kilo/agents/${n}.md`, fields: (a) => ({ description: a.description, model: a.model, variant: a.effort, mode: "subagent" }), uses: ["model", "effort"] },
 };
 const TOOLS = Object.keys(HOSTS);
@@ -74,14 +75,16 @@ function render(host, agent) {
 }
 
 function dropped(tool, agent) {
-  const kept = ["name", "description", "body", ...HOSTS[tool].uses];
-  return Object.keys(agent).filter((key) => !kept.includes(key)).map((field) => ({ tool, field }));
+  const host = HOSTS[tool];
+  const kept = ["name", "description", "body", ...host.uses];
+  const lost = (key) => !kept.includes(key) || (key === "effort" && host.effortNeedsModel && !agent.model);
+  return Object.keys(agent).filter(lost).map((field) => ({ tool, field }));
 }
 
-// No symlink between the project and a target: a linked `.claude` would write outside it.
+// No symlink from the project to a target, the target included: a link would write outside it.
 function assertNoSymlink(project, relative) {
   let current = project;
-  for (const part of path.dirname(relative).split("/")) {
+  for (const part of relative.split("/")) {
     current = path.join(current, part);
     try { if (fs.lstatSync(current).isSymbolicLink()) refuse(`Symlink on the way to ${relative}.`); } catch (error) { if (error instanceof Refusal) throw error; return; }
   }
@@ -93,8 +96,8 @@ function readOrNull(file) {
 
 function main(argv) {
   const options = parseArgs(argv);
-  const project = options["--project"];
-  if (!path.isAbsolute(project) || !fs.existsSync(project) || fs.realpathSync(project) !== project) refuse("--project must be an absolute real directory.");
+  const project = path.resolve(options["--project"]);
+  if (!path.isAbsolute(options["--project"]) || !fs.existsSync(project) || fs.realpathSync(project) !== project) refuse("--project must be an absolute real directory.");
   const tools = options["--tools"].split(",");
   if (tools.some((tool) => !TOOLS.includes(tool))) refuse(`Unknown tool; expected ${TOOLS.join(",")}.`);
   let agent;
@@ -113,11 +116,10 @@ function main(argv) {
   }
   const result = { files: plan.map(({ path: p, operation }) => ({ path: p, operation })), dropped: plan.flatMap((file) => dropped(file.tool, agent)) };
   if (!options["--plan"]) {
-    for (const file of plan.filter((f) => f.operation !== "unchanged")) {
-      const target = path.join(project, file.path);
-      fs.mkdirSync(path.dirname(target), { recursive: true });
-      fs.writeFileSync(target, file.content);
-    }
+    // Every directory first, so a path that cannot exist fails before any file is written.
+    const changed = plan.filter((f) => f.operation !== "unchanged");
+    for (const file of changed) fs.mkdirSync(path.dirname(path.join(project, file.path)), { recursive: true });
+    for (const file of changed) fs.writeFileSync(path.join(project, file.path), file.content);
   }
   return { code: EXIT.OK, result };
 }

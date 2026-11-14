@@ -14,7 +14,7 @@ Where each host AI tool keeps a project's agents, and how to tell it is installe
 
 Every host reads `AGENTS.md`, so it signals none. When no signal matches, confirm the host.
 
-A plugin source is one canonical agent at `plugins/<plugin>/agents/<name>.md`, in the Claude Code format, with no per-host copy.
+A plugin source is one canonical agent, in the Claude Code format, where the target tool's plugin format puts agents, with no per-host copy.
 
 The writer renders each host's frontmatter keys and the Codex TOML. Two facts it cannot enforce:
 
