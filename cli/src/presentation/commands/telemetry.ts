@@ -175,7 +175,11 @@ export function registerTelemetryCommand(
           process.exit(1);
         }
         const result = await deps.telemetry.enableTelemetry.execute({ cwd: projectRoot, choice });
-        printOnResult(output, result);
+        const retention =
+          result.status === "on"
+            ? await deps.telemetry.readTranscriptRetention.execute({ root: result.root })
+            : undefined;
+        printOnResult(output, result, retention);
         if (result.status === "refused") process.exit(1);
       });
     });

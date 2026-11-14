@@ -137,10 +137,9 @@ async function reporterOf({ calls, declarations, person }: Ledger) {
       { refusedByEnvironment: false }
     ),
     ledger,
-    new DeclaredBindings(sessions, snapshots),
-    identity,
+    new DeclaredBindings(sessions, snapshots, identity),
     new FakeLocator(),
-    { refusedByEnvironment: false }
+    { get: () => undefined }
   );
   return async (request: ReportUsageCommand): Promise<ReportEnvelope> => {
     const result = await use.execute(request);

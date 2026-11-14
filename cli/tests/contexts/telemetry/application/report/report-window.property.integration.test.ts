@@ -229,9 +229,13 @@ describe("a report on a bounded period", () => {
     await fc.assert(
       fc.asyncProperty(scenario, async ({ calls, leftOut, period, axis, filters }) => {
         const files = filesOf(calls);
-        const declared = new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots());
         const identity = new InMemoryIdentity();
         identity.personId = "person-a";
+        const declared = new DeclaredBindings(
+          new InMemorySessions(),
+          new InMemorySnapshots(),
+          identity
+        );
 
         const settled = await ledgerWith(files);
         await settled.leftOut.add(leftOut);
@@ -239,9 +243,8 @@ describe("a report on a bounded period", () => {
           ingestOf(settled),
           settled,
           declared,
-          identity,
           new FakeLocator(),
-          { refusedByEnvironment: false }
+          { get: () => undefined }
         ).execute({ axis, period, filters });
 
         const fullLedger = await ledgerWith(files);
@@ -264,8 +267,7 @@ describe("a report on a bounded period", () => {
           if (found.kind === "found") resolved[flag] = found.id;
         }
         if (bounded.status !== "reported") throw new Error(bounded.status);
-        const facts = await declared.read();
-        const person = await identity.read();
+        const { facts, person } = await declared.read();
         const selected = kept.filter((record) =>
           matchesFilter(resolved, record, attribute(record, facts), person)
         );

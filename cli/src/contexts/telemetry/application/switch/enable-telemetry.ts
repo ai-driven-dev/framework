@@ -1,21 +1,7 @@
-import type { CloneIdentity } from "../../domain/consent/clone-identity.js";
 import { personIdOf } from "../../domain/identity/person-identity.js";
-import { effectiveRetentionDays, retentionShort } from "../../domain/switch/claude-retention.js";
-import { consentValue, tokenOfKey } from "../../domain/telemetry-consent.js";
-import type { ConsentHistory } from "../../ports/consent-history.js";
-import type { ConsentSource } from "../../ports/consent-source.js";
 import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
-import type { LocatedDirectory, RepositoryLocator } from "../../ports/repository-locator.js";
-import type { ResolutionStore } from "../../ports/resolution-store.js";
-import type { ClaudeSettingsSource } from "../../ports/switch/claude-settings-source.js";
-import type { ConsentWriter } from "../../ports/switch/consent-writer.js";
-import type { UsageLedger } from "../../ports/usage-ledger.js";
-import { ConsentLog } from "../consent-log.js";
-import type { ResolutionEnvironment } from "../directory-resolver.js";
-import { readCloneConsent } from "./clone-consent.js";
-import { rememberOwnRoot } from "./remember-own-root.js";
-
-type Located = Extract<LocatedDirectory, { status: "repository" }>;
+import type { ConsentSwitch, NewInterval } from "./consent-switch.js";
+import type { OwnRoots } from "./remember-own-root.js";
 
 /** Who the clone is measured as: the identity already set, none, or the one the person chose. */
 export type IdentityChoice = "keep" | "none" | { readonly set: string };
@@ -49,9 +35,8 @@ export type EnableTelemetryResult =
       readonly status: "on";
       /** `false` when the clone already granted this version. */
       readonly consentWritten: boolean;
-      /** How long Claude Code keeps a transcript, and whether that is short of what history
-       * needs. */
-      readonly retention: { readonly days: number; readonly short: boolean };
+      /** The clone's root, where Claude Code's project settings are read. */
+      readonly root: string;
       readonly identity: OnIdentity;
     };
 
@@ -59,16 +44,10 @@ export type EnableTelemetryResult =
  * back. */
 export class EnableTelemetry {
   constructor(
-    private readonly locator: RepositoryLocator,
-    private readonly consents: ConsentSource,
-    private readonly writer: ConsentWriter,
-    private readonly ledger: UsageLedger,
-    private readonly resolutions: ResolutionStore,
-    private readonly history: ConsentHistory,
-    private readonly claudeSettings: ClaudeSettingsSource,
-    private readonly environment: ResolutionEnvironment,
-    /** A fresh random token for each interval. */
-    private readonly newToken: () => string,
+    private readonly consent: ConsentSwitch,
+    private readonly roots: OwnRoots,
+    /** A fresh token and its moment for each interval. */
+    private readonly newInterval: NewInterval,
     private readonly identities: PersonIdentityStore
   ) {}
 
@@ -79,58 +58,22 @@ export class EnableTelemetry {
       return { status: "refused", reason: "invalid-identity" };
     if (choice === "none" && previous !== null)
       return { status: "refused", reason: "identity-set" };
-    const clone = await readCloneConsent(this.locator, this.consents, cwd);
+    const clone = await this.consent.read(cwd);
     if (clone.status === "refused") return clone;
     const { located } = clone;
     const identity = located.clone;
     if (identity === null) return { status: "refused", reason: "unidentified-clone" };
-    const consentWritten = await this.ledger.exclusively(() => this.grant(located.root, identity));
+    const consentWritten = await this.consent.grant(located.root, identity, this.newInterval);
     if (consentWritten === "damaged") return { status: "refused", reason: "damaged-consent-log" };
     // Written only once the clone is on: a refused `on` leaves the identity as it was.
     if (chosen !== null) await this.identities.write(chosen);
-    await this.rememberRoot(located);
+    await this.roots.remember(located);
 
-    const days = effectiveRetentionDays(await this.claudeSettings.texts(located.root));
     return {
       status: "on",
       consentWritten,
-      retention: { days, short: retentionShort(days) },
+      root: located.root,
       identity: { personId: choice === "keep" ? previous : chosen, previous },
     };
-  }
-
-  /** Under the ledger's lock, so an ingest sees the key and the interval together. A key that
-   * names an interval open for this very clone is already consent. Any other is replaced by a
-   * fresh token: the key first, so that a crash between the two leaves a key with no interval,
-   * which measures nothing, and not an interval its own key does not name, which a hook would
-   * close. */
-  private async grant(root: string, identity: CloneIdentity): Promise<boolean | "damaged"> {
-    const log = await ConsentLog.load(this.history);
-    // A log that cannot be trusted is not added to: an interval opened over it could span a
-    // window the lost lines closed.
-    if (log.damaged) return "damaged";
-    // Read again under the lock: another `on` may have written it since the first look.
-    const reading = await this.consents.read(root);
-    const held = reading.kind === "value" ? tokenOfKey(reading.value) : null;
-    const open = log.openFor(identity);
-    if (held !== null && open.some((interval) => interval.token === held)) return false;
-    const at = this.environment.now();
-    for (const stale of open) await log.close(stale.token, at);
-    const token = this.newToken();
-    await this.writer.set(root, consentValue(token));
-    await log.open(identity, token, at);
-    return true;
-  }
-
-  /** Under the ledger's lock, which every writer of `roots.json` holds. */
-  private async rememberRoot(located: Located): Promise<void> {
-    await this.ledger.exclusively(() =>
-      rememberOwnRoot(
-        this.resolutions,
-        located,
-        this.environment.caseInsensitiveFileSystem,
-        this.environment.now()
-      )
-    );
   }
 }

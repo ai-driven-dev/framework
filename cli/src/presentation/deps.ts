@@ -49,6 +49,7 @@ import type { ReadTelemetryStatus } from "../contexts/telemetry/application/read
 import type { ReportUsage } from "../contexts/telemetry/application/report/report-usage.js";
 import type { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import type { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
+import type { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
 import type { FrameworkBuildMode } from "../contexts/tools/contract/tool-profile.js";
 import type { FrameworkBuildUseCase } from "../contexts/translate/application/translate-source.js";
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
@@ -77,6 +78,7 @@ export interface TelemetryDeps {
   reportUsage: Pick<ReportUsage, "execute">;
   manageIdentity: Pick<ManageIdentity, "execute">;
   proposeIdentity: Pick<ProposeIdentity, "execute">;
+  readTranscriptRetention: Pick<ReadTranscriptRetention, "execute">;
   enableTelemetry: Pick<EnableTelemetry, "execute">;
   disableTelemetry: Pick<DisableTelemetry, "execute">;
   forgetTelemetry: Pick<ForgetTelemetry, "execute">;

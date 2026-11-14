@@ -12,6 +12,7 @@ const show = vi.fn();
 const report = vi.fn();
 const identity = { execute: vi.fn() };
 const turnOn = vi.fn();
+const retention = vi.fn();
 const turnOff = vi.fn();
 const forget = vi.fn();
 const confirm = vi.fn();
@@ -22,6 +23,7 @@ const propose = vi.fn();
 const createDeps = vi.fn(async () => ({
   prompter: prompterAnswering({ confirm, select, input }),
   telemetry: {
+    readTranscriptRetention: { execute: retention },
     enableTelemetry: { execute: turnOn },
     disableTelemetry: { execute: turnOff },
     forgetTelemetry: { execute: forget },
@@ -445,7 +447,7 @@ describe("aidd telemetry task", () => {
 const ON = {
   status: "on",
   consentWritten: true,
-  retention: { days: 3650, short: false },
+  root: "/w/repo",
   identity: { personId: null, previous: null },
 };
 
@@ -455,6 +457,14 @@ describe("aidd telemetry on", () => {
   beforeEach(() => {
     identity.execute.mockResolvedValue(ANONYMOUS);
     turnOn.mockResolvedValue(ON);
+    retention.mockResolvedValue({ days: 3650, short: false });
+  });
+
+  it("warns of a short retention, read from the root of the clone it turned on", async () => {
+    retention.mockResolvedValue({ days: 30, short: true });
+    expect(await run("on", "--yes", "--anonymous")).toBeNull();
+    expect(retention).toHaveBeenCalledWith({ root: ON.root });
+    expect(stderr()).toContain("Claude Code keeps transcripts for 30 days");
   });
 
   it("turns measurement on in the directory it was run from, without asking, with --yes and a choice", async () => {

@@ -147,7 +147,6 @@ const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: num
     named: 1,
   },
   { path: "src/contexts/framework/application/restore/restore-use-case.ts", named: 4 },
-  { path: "src/contexts/telemetry/application/switch/enable-telemetry.ts", named: 2 },
   { path: "src/contexts/tools/contract/config-refs.ts", named: 4 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 1 },
 ];

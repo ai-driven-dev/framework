@@ -97,10 +97,9 @@ function setup(options: { refused?: boolean } = {}) {
   const report = new ReportUsage(
     ingest,
     ledger,
-    new DeclaredBindings(sessions, snapshotStore),
-    identity,
+    new DeclaredBindings(sessions, snapshotStore, identity),
     locator,
-    { refusedByEnvironment: options.refused ?? false }
+    { get: (name) => (name === "AIDD_TELEMETRY" && options.refused ? "0" : undefined) }
   );
   return { transcripts, ledger, bindings, sessions, identity, report, events, locator, consents };
 }

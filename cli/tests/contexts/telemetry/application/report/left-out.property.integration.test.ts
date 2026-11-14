@@ -201,10 +201,9 @@ function machine() {
   const report = new ReportUsage(
     ingest,
     ledger,
-    new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots()),
-    new InMemoryIdentity(),
+    new DeclaredBindings(new InMemorySessions(), new InMemorySnapshots(), new InMemoryIdentity()),
     locator,
-    { refusedByEnvironment: false }
+    { get: () => undefined }
   );
   const locked = cloneKey(cloneOf("/work/locked/.git", { ino: "/work/locked" }));
   /** Git refuses, or reads again, the clone at `/work/locked`. */

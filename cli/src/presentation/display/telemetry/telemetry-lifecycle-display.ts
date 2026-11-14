@@ -7,6 +7,7 @@ import type {
   EnableTelemetryResult,
   OnIdentity,
 } from "../../../contexts/telemetry/application/switch/enable-telemetry.js";
+import type { ReadTranscriptRetentionResult } from "../../../contexts/telemetry/application/switch/read-transcript-retention.js";
 import {
   RETENTION_DEFAULT_DAYS,
   RETENTION_WANTED_DAYS,
@@ -44,7 +45,11 @@ export function printIdentityRule(output: CLIOutput): void {
   output.warn(IDENTITY_RULE);
 }
 
-export function printOnResult(output: CLIOutput, result: EnableTelemetryResult): void {
+export function printOnResult(
+  output: CLIOutput,
+  result: EnableTelemetryResult,
+  retention?: ReadTranscriptRetentionResult
+): void {
   if (result.status === "refused") {
     output.error(REFUSALS[result.reason]);
     return;
@@ -57,8 +62,8 @@ export function printOnResult(output: CLIOutput, result: EnableTelemetryResult):
   output.info(
     "That setting is shared by this clone's linked worktrees and is never committed: a teammate is measured only after running `aidd telemetry on` in their own clone."
   );
-  if (result.retention.short) {
-    const days = result.retention.days;
+  if (retention?.short) {
+    const days = retention.days;
     output.warn(
       `Claude Code keeps transcripts for ${days} day${days === 1 ? "" : "s"}` +
         `${days === RETENTION_DEFAULT_DAYS ? " (its default)" : ""}. A call is measured only if it is read before then. ` +

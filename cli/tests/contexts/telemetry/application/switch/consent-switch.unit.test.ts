@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { DirectoryResolver } from "../../../../../src/contexts/telemetry/application/directory-resolver.js";
+import { ConsentSwitch } from "../../../../../src/contexts/telemetry/application/switch/consent-switch.js";
 import { DisableTelemetry } from "../../../../../src/contexts/telemetry/application/switch/disable-telemetry.js";
 import { EnableTelemetry } from "../../../../../src/contexts/telemetry/application/switch/enable-telemetry.js";
-import { rememberOwnRoot } from "../../../../../src/contexts/telemetry/application/switch/remember-own-root.js";
+import {
+  OwnRoots,
+  rememberOwnRoot,
+} from "../../../../../src/contexts/telemetry/application/switch/remember-own-root.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import {
   type RepositoryResolution,
@@ -42,7 +46,7 @@ function deleted(clone = MAIN, dir = "/gone/x"): RepositoryResolution {
   return { dir, repository_id: ID, root: dir, clone, seen_at: "2026-09-01T00:00:00.000Z" };
 }
 
-function setup(settings: (string | null)[] = []) {
+function setup() {
   const events: string[] = [];
   let minted = 0;
   const locator = new FakeLocator();
@@ -64,19 +68,14 @@ function setup(settings: (string | null)[] = []) {
       }
     },
   };
+  const consent = new ConsentSwitch(locator, consents, writer, history, ledger);
   const on = new EnableTelemetry(
-    locator,
-    consents,
-    writer,
-    ledger,
-    resolutions,
-    history,
-    { texts: async () => settings },
-    { caseInsensitiveFileSystem: false, now: () => clock.now },
-    () => `tok-${++minted}`,
+    consent,
+    new OwnRoots(ledger, resolutions, { caseInsensitiveFileSystem: false, now: () => clock.now }),
+    () => ({ token: `tok-${++minted}`, at: clock.now }),
     identities
   );
-  const off = new DisableTelemetry(locator, consents, writer, ledger, history, () => clock.now);
+  const off = new DisableTelemetry(consent, () => clock.now);
   locator.directories.set("/w/repo", repository("/w/repo", "/w/main"));
   return {
     on,
@@ -335,17 +334,6 @@ describe("aidd telemetry on", () => {
     await s.on.execute({ cwd: "/w/repo", choice: "keep" });
     await s.on.execute({ cwd: "/w/repo", choice: "keep" });
     expect(s.resolutions.saves).toBe(1);
-  });
-
-  it.each([
-    [[null, null, null], 30, true],
-    [[null, '{"cleanupPeriodDays":3650}', null], 3650, false],
-    [['{"cleanupPeriodDays":3649}', '{"cleanupPeriodDays":3650}'], 3649, true],
-  ])("reports retention from %j", async (settings, days, short) => {
-    const s = setup(settings as (string | null)[]);
-    expect(await s.on.execute({ cwd: "/w/repo", choice: "keep" })).toMatchObject({
-      retention: { days, short },
-    });
   });
 });
 

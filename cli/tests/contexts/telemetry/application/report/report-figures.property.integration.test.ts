@@ -271,10 +271,9 @@ async function report(
     const result = await new ReportUsage(
       ingest,
       ledger,
-      new DeclaredBindings(sessions, new InMemorySnapshots()),
-      identity,
+      new DeclaredBindings(sessions, new InMemorySnapshots(), identity),
       new FakeLocator(),
-      { refusedByEnvironment: false }
+      { get: () => undefined }
     ).execute(request);
     const envelope = result.status === "reported" ? reportEnvelopeOf(result) : result;
     return { envelope, figures: figuresOf(envelope) };

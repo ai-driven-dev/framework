@@ -67,28 +67,6 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   // Carries `clean`'s shared-source guard and the separate current-source witness so a
   // targeted remove cannot disable another project's plugin or a repointed catalogue.
   { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", dependencies: 9 },
-  // A report reads what is new, settles the ledger, and attributes by what was declared and
-  // who is named. The fifth locates `.` for `--repository .`, and the sixth is the
-  // environment's refusal: it must come before `.` runs git, so it cannot be left to ingest.
-  { path: "src/contexts/telemetry/application/report/report-usage.ts", dependencies: 6 },
-  // Opting in is one act with several effects, each in its own collaborator: the consent, with
-  // its history and the token that names the interval, the ledger and the roots it remembers,
-  // and Claude's retention, beside the repository it is run in. The count is mostly ports; the
-  // effects share an order (consent first, the ledger's lock last) that no collaborator knows.
-  // The person's identity is written only once the consent is, so a refused `on` leaves it as
-  // it was.
-  { path: "src/contexts/telemetry/application/switch/enable-telemetry.ts", dependencies: 10 },
-  // Opting out is the consent's write, then the end of the clone's consent interval, under the
-  // ledger's lock so an ingest sees the key and the interval change together. The order is only
-  // this class's to hold; the clock is the sixth.
-  { path: "src/contexts/telemetry/application/switch/disable-telemetry.ts", dependencies: 6 },
-  // Forgetting reads what was declared where (snapshots, remembered roots, the clones that
-  // consented), clears it, and erases the files, all under the ledger's lock. The declarations
-  // go before the files that lead to them, an order only this class holds.
-  {
-    path: "src/contexts/telemetry/application/forget/forget-telemetry.ts",
-    dependencies: 6,
-  },
 ];
 
 /**

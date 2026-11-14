@@ -1,12 +1,10 @@
-import type { BindingSnapshotStore } from "../../ports/bindings/binding-snapshot-store.js";
-import type { ConsentHistory } from "../../ports/consent-history.js";
 import type { ErasureEntry, MeasurementErasure } from "../../ports/forget/measurement-erasure.js";
 import type {
   RepositoryDeclarations,
   RepositoryKeys,
 } from "../../ports/forget/repository-declarations.js";
-import type { ResolutionStore } from "../../ports/resolution-store.js";
 import type { UsageLedger } from "../../ports/usage-ledger.js";
+import type { RememberedClones } from "./remembered-clones.js";
 
 export interface ForgetPlan {
   readonly entries: readonly ErasureEntry[];
@@ -39,9 +37,7 @@ export class ForgetTelemetry {
   constructor(
     private readonly erasure: MeasurementErasure,
     private readonly declarations: RepositoryDeclarations,
-    private readonly snapshots: BindingSnapshotStore,
-    private readonly resolutions: ResolutionStore,
-    private readonly history: ConsentHistory,
+    private readonly remembered: RememberedClones,
     private readonly ledger: UsageLedger
   ) {}
 
@@ -63,7 +59,7 @@ export class ForgetTelemetry {
 
   private async plan(): Promise<ForgetPlan> {
     const entries = await this.erasure.inventory();
-    const found = await this.clonesRemembered();
+    const found = await this.remembered.read();
     const repositories: ({ clone: string } & RepositoryKeys)[] = [];
     const missing: string[] = [];
     for (const clone of found.clones) {
@@ -76,31 +72,6 @@ export class ForgetTelemetry {
       repositories,
       missing,
       unlocated: found.unlocated,
-    };
-  }
-
-  /** The clones something was kept in: every one a directory was seen alive in, whatever
-   * consent it found there (a clone that ran `off` still holds its key), and every one that
-   * consented, whether or not any session ever ran there. A snapshot carries no path of its
-   * own. */
-  private async clonesRemembered(): Promise<{
-    clones: string[];
-    consenting: Set<string>;
-    unlocated: number;
-  }> {
-    const remembered = [...(await this.resolutions.load()).values()];
-    const consenting = new Set(
-      (await this.history.read()).events.flatMap((event) =>
-        event.kind === "open" ? [event.clone.path] : []
-      )
-    );
-    const clones = new Set([...remembered.map((r) => r.clone.path), ...consenting]);
-    const located = new Set(remembered.map((resolution) => resolution.repository_id));
-    const ids = new Set([...(await this.snapshots.latest()).values()].map((s) => s.repository_id));
-    return {
-      clones: [...clones].sort(),
-      consenting,
-      unlocated: [...ids].filter((id) => !located.has(id)).length,
     };
   }
 }

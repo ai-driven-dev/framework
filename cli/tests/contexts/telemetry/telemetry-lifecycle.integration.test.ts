@@ -340,9 +340,12 @@ describe("how long Claude Code keeps what is measured", () => {
     const stat = [statSync(settings).mtimeMs, statSync(project).mtimeMs];
     const names = claudeFiles();
 
-    const result = await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
+    await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" });
 
-    expect(result).toMatchObject({ retention: { days: 30, short: true } });
+    expect(await deps.readTranscriptRetention.execute({ root: repo })).toEqual({
+      days: 30,
+      short: true,
+    });
     expect(read(settings)).toBe('{"theme":"dark"}');
     expect(read(project)).toBe("{}");
     expect([statSync(settings).mtimeMs, statSync(project).mtimeMs]).toEqual(stat);
@@ -352,13 +355,15 @@ describe("how long Claude Code keeps what is measured", () => {
   it("is satisfied by 3650 in the user's settings, and overridden by a project's shorter one", async () => {
     await configure(BARE);
     writeFileSync(join(box.claude, "settings.json"), '{"cleanupPeriodDays":3650}');
-    expect(await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" })).toMatchObject({
-      retention: { days: 3650, short: false },
+    expect(await deps.readTranscriptRetention.execute({ root: repo })).toEqual({
+      days: 3650,
+      short: false,
     });
     mkdirSync(join(repo, ".claude"));
     writeFileSync(join(repo, ".claude", "settings.local.json"), '{"cleanupPeriodDays":7}');
-    expect(await deps.enableTelemetry.execute({ cwd: repo, choice: "keep" })).toMatchObject({
-      retention: { days: 7, short: true },
+    expect(await deps.readTranscriptRetention.execute({ root: repo })).toEqual({
+      days: 7,
+      short: true,
     });
   });
 });

@@ -1,3 +1,4 @@
+import type { Environment } from "../../../../shared/ports/environment.js";
 import type { Period } from "../../contract/period.js";
 import {
   type AbsentAxis,
@@ -12,7 +13,7 @@ import { conflictsOf, matchesFilter, resolveId } from "../../domain/report/repor
 import { buildReport } from "../../domain/report/usage-report.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 import type { StoredUsage } from "../../domain/stored-usage.js";
-import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
+import { refusedByEnvironment } from "../../domain/telemetry-consent.js";
 import type { RepositoryLocator } from "../../ports/repository-locator.js";
 import type { LeftOutReason, UsageLedger } from "../../ports/usage-ledger.js";
 import type { IngestUsage, IngestUsageResult } from "../ingest-usage.js";
@@ -103,9 +104,8 @@ export class ReportUsage {
     private readonly ingest: Pick<IngestUsage, "execute">,
     private readonly ledger: UsageLedger,
     private readonly declared: DeclaredBindings,
-    private readonly identity: PersonIdentityStore,
     private readonly locator: RepositoryLocator,
-    private readonly options: { readonly refusedByEnvironment: boolean }
+    private readonly environment: Environment
   ) {}
 
   async execute(request: ReportUsageCommand): Promise<ReportUsageResult> {
@@ -114,7 +114,7 @@ export class ReportUsage {
     if (conflict !== undefined) {
       return { status: "conflicting", flags: conflict, absent: asked.absent };
     }
-    if (this.options.refusedByEnvironment) return { status: "refused" };
+    if (refusedByEnvironment(this.environment.get("AIDD_TELEMETRY"))) return { status: "refused" };
     const located = here === undefined ? undefined : await this.repositoryIn(here);
     if (located === null) return { status: "not-a-repository" };
     const { filesRead, unrecognised, notStored, consentLogDamaged, oldestTranscriptAt } =
@@ -131,8 +131,7 @@ export class ReportUsage {
       located === undefined ? resolvedIn(records, "repository", asked.repository) : { id: located };
     if ("status" in repository) return repository;
     const filters: ReportFilters = { ...asked, session: session.id, repository: repository.id };
-    const facts = await this.declared.read();
-    const person = await this.identity.read();
+    const { facts, person } = await this.declared.read();
     const selected = records.filter((record) =>
       matchesFilter(filters, record, attribute(record, facts), person)
     );

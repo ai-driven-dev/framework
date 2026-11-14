@@ -6,6 +6,7 @@ import { ConsentedRepositories } from "../contexts/telemetry/application/consent
 import { DeclareTask } from "../contexts/telemetry/application/declare-task.js";
 import { DirectoryResolver } from "../contexts/telemetry/application/directory-resolver.js";
 import { ForgetTelemetry } from "../contexts/telemetry/application/forget/forget-telemetry.js";
+import { RememberedClones } from "../contexts/telemetry/application/forget/remembered-clones.js";
 import { ManageIdentity } from "../contexts/telemetry/application/identity/manage-identity.js";
 import { ProposeIdentity } from "../contexts/telemetry/application/identity/propose-identity.js";
 import { IngestUsage } from "../contexts/telemetry/application/ingest-usage.js";
@@ -14,8 +15,11 @@ import { ReadUsage } from "../contexts/telemetry/application/read-usage.js";
 import { DeclaredBindings } from "../contexts/telemetry/application/report/declared-bindings.js";
 import { ReportUsage } from "../contexts/telemetry/application/report/report-usage.js";
 import { SnapshotBindings } from "../contexts/telemetry/application/snapshot-bindings.js";
+import { ConsentSwitch } from "../contexts/telemetry/application/switch/consent-switch.js";
 import { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
+import { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
+import { OwnRoots } from "../contexts/telemetry/application/switch/remember-own-root.js";
 import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
 import { refusedByEnvironment as refusedByEnvironmentValue } from "../contexts/telemetry/domain/telemetry-consent.js";
 import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
@@ -47,6 +51,7 @@ import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/stor
 import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { UsageSource } from "../contexts/telemetry/ports/usage-source.js";
 import type { TelemetryDeps } from "../presentation/deps.js";
+import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
 import { userConfigDirOf } from "../shared/infrastructure/user-config-dir.js";
 
 /** Where a person's measurement lives. `AIDD_TELEMETRY_DIR` moves it outright; otherwise it is
@@ -139,6 +144,7 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     snapshotBindings,
     { refusedByEnvironment }
   );
+  const consentSwitch = new ConsentSwitch(locator, consents, consents, consentHistory, ledger);
   const claudeDir = claudeConfigDir(process.env.CLAUDE_CONFIG_DIR, homedir());
   return {
     declareTask,
@@ -147,42 +153,27 @@ export function wireTelemetry(homedir: () => string): TelemetryDeps {
     reportUsage: new ReportUsage(
       ingestUsage,
       ledger,
-      new DeclaredBindings(sessions, snapshotStore),
-      identity,
+      new DeclaredBindings(sessions, snapshotStore, identity),
       locator,
-      { refusedByEnvironment }
+      new EnvironmentAdapter()
     ),
     manageIdentity: new ManageIdentity(identity),
     proposeIdentity: new ProposeIdentity(new GitUserSourceAdapter(gitEnv), refusedByEnvironment),
+    readTranscriptRetention: new ReadTranscriptRetention(new ClaudeSettingsAdapter(claudeDir)),
     enableTelemetry: new EnableTelemetry(
-      locator,
-      consents,
-      consents,
-      ledger,
-      resolutionStore,
-      consentHistory,
-      new ClaudeSettingsAdapter(claudeDir),
-      environment,
-      randomUUID,
+      consentSwitch,
+      new OwnRoots(ledger, resolutionStore, environment),
+      () => ({ token: randomUUID(), at: environment.now() }),
       identity
     ),
-    disableTelemetry: new DisableTelemetry(
-      locator,
-      consents,
-      consents,
-      ledger,
-      consentHistory,
-      environment.now
-    ),
+    disableTelemetry: new DisableTelemetry(consentSwitch, environment.now),
     forgetTelemetry: new ForgetTelemetry(
       new MeasurementErasureAdapter(
         root,
         legacyLocations(process.env, homedir(), process.platform, root)
       ),
       new RepositoryDeclarationsAdapter(gitEnv),
-      snapshotStore,
-      resolutionStore,
-      consentHistory,
+      new RememberedClones(resolutionStore, consentHistory, snapshotStore),
       ledger
     ),
   };
