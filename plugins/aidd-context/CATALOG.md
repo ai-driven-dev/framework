@@ -134,7 +134,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [rule-authoring.md](skills/05-rule-generate/references/rule-authoring.md) | - |
 | `references` | [writer.md](skills/05-rule-generate/references/writer.md) | - |
 | `scripts` | [write-rule.cjs](skills/05-rule-generate/scripts/write-rule.cjs) | - |
-| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Creates, updates, publishes or removes a coding rule across host AI tools when the user adds or changes a convention, not for skills, agents or hooks.` |
+| `-` | [SKILL.md](skills/05-rule-generate/SKILL.md) | `Creates, updates, publishes or removes a coding rule across AI tools when a convention is set, changed or dropped, not for skills, agents or hooks.` |
 
 #### `skills/06-agent-generate`
 

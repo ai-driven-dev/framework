@@ -1,5 +1,5 @@
-# <Title>
+# <title>
 
-- <Requirement.>
+- <requirement>
 
 > Fill every `<...>` and delete this line.
