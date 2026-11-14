@@ -474,4 +474,3 @@ test("copilot-instructions.md linked to AGENTS.md is never given the pointer", (
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
-

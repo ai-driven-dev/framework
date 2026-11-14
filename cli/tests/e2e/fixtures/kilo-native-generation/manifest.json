@@ -1,0 +1,16 @@
+{
+  ".kilo/agents/assets/agent-payload.txt": "9c3390da19f19eb9b6a2c18d39507968645b9f72a39994fdd3106fae88e896d2",
+  ".kilo/agents/verify-agent.md": "56c2594c982078fd9ee1d5d97876f7aca64c0d477efd28e3601469097a812559",
+  ".kilo/commands/assets/workflow-payload.txt": "0a78981384c13c40dacca78620f032effb4e4ae4ed32793e8f840174ae7a9029",
+  ".kilo/commands/verify-workflow.md": "294ea171924f5f8c9f845eaf7d2fc111c4a7a6b727c81512926ead00b2a7671e",
+  ".kilo/kilo.jsonc": "a4255bc07e3b98e49e1274e0c1cc798e1de19e3f101147d672333efddd2ad16d",
+  ".kilo/rules/01-standards/1-naming.md": "bc4dfe2d38cd1579331d629ffdd19227a23bd2e873ca73f731262bb8c2c58461",
+  ".kilo/skills/verify-payload/SKILL.md": "ebab5bcc394e82d96a3d128872adb909fcedbeb0b29ef40ac45c16798afa7aff",
+  ".kilo/skills/verify-payload/actions/01-verify.md": "60a386a114507203fd59706de5ba0b9ca541cd30b0a0b074e16c8289b25d6c68",
+  ".kilo/skills/verify-payload/actions/02-user.md": "126a3488d7e981c0fe9ac0211bbebceb6799ec14e03bc02d2acb2e6d44b3ef95",
+  ".kilo/skills/verify-payload/assets/payload.txt": "7c9e202409a70393756a0ab9c0203c49f8d2c3862ab787b7d2879b3dc80e12b8",
+  ".kilo/skills/verify-payload/assets/user.txt": "2f80347010a4451aed834ff0923f837e069fd5f5f3bf79d48c28fe060a0a5f59",
+  "AGENTS.md": "fd08a2f1f2ad59ed834dd22177fb56d355dcd1a8ee8d7b89eb3a290db84a08f5",
+  "aidd_docs/memory/architecture.md": "a2145c9822239ade675c57b230e9655c4ad70b29cc86c4250102b48e86a3ded0",
+  "negative-config.jsonc": "7c241f295ed17c6992ce2e672b75d318a89a5a02d8e00bf18e0bc457ee023811"
+}

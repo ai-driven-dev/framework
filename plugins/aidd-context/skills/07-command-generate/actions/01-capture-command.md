@@ -19,6 +19,7 @@ In-context: the command name and one-line goal, its location, its arguments, the
 5. **Arguments.** Note any arguments it takes. If it takes input, `$ARGUMENTS` carries it. A no-argument command needs none.
 6. **Write mode.** Ask where the command goes:
    - **Host project**: detect the installed tools ([tool-paths.md](../references/tool-paths.md)), propose the supported ones, and confirm which to target. Never pick one silently.
+   - **Kilo**: propose `.kilo/commands/<name>.md` with no nested location; capture only requested `agent`, `model`, `variant`, and `subtask`.
    - **Plugin source**: confirm or create `plugins/<plugin>/commands/`.
 
 ## Test

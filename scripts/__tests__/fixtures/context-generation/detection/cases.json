@@ -1,0 +1,15 @@
+[
+  { "name": "canonical directory", "project": "canonical", "kilo": true, "signals": [".kilo/"] },
+  { "name": "legacy directory", "project": "legacy", "kilo": true, "signals": [".kilocode/"] },
+  { "name": "root JSON", "project": "root-json", "kilo": true, "signals": ["kilo.json"] },
+  { "name": "root JSONC", "project": "root-jsonc", "kilo": true, "signals": ["kilo.jsonc"] },
+  { "name": "nested JSON", "project": "nested-json", "kilo": true, "signals": [".kilo/kilo.json"] },
+  { "name": "nested JSONC", "project": "nested-jsonc", "kilo": true, "signals": [".kilo/kilo.jsonc"] },
+  { "name": "shared AGENTS alone", "project": "agents-only", "kilo": false },
+  { "name": "OpenCode JSON alone", "project": "opencode-json", "kilo": false },
+  { "name": "OpenCode JSONC alone", "project": "opencode-jsonc", "kilo": false },
+  { "name": "OpenCode JSON with shared AGENTS.md", "project": "opencode-json-agents", "kilo": false, "signals": ["opencode.json", "AGENTS.md"] },
+  { "name": "OpenCode JSONC with shared AGENTS.md", "project": "opencode-jsonc-agents", "kilo": false, "signals": ["opencode.jsonc", "AGENTS.md"] },
+  { "name": "OpenCode JSON with a real Kilo signal", "project": "opencode-plus-kilo", "kilo": true, "tools": ["opencode", "kilo"], "signals": ["opencode.json", ".kilo/"] },
+  { "name": "multiple tools share memory", "project": "multi-tool", "kilo": true, "tools": ["kilo", "codex", "opencode", "cursor"] }
+]

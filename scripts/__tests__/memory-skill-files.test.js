@@ -39,6 +39,22 @@ function tableOf(file) {
   return { header: rows[0], rows: rows.slice(1) };
 }
 
+test("the Kilo memory row lists native project signals and the shared context target", () => {
+  const { header, rows } = tableOf(path.join(SKILL, "references/tools.md"));
+  const detectedAt = header.indexOf("Detected when");
+  const contextAt = header.indexOf("Context file");
+  const kilo = rows.find(([tool]) => tool.replaceAll("`", "") === "kilo");
+
+  assert.ok(kilo, "the tools table has no Kilo row");
+  assert.notEqual(detectedAt, -1, "the tools table has no detection column");
+  assert.notEqual(contextAt, -1, "the tools table has no context target column");
+  const signals = kilo[detectedAt].replaceAll("`", "");
+  for (const signal of [".kilo/", "kilo.json", "kilo.jsonc", ".kilo/kilo.json", ".kilo/kilo.jsonc", ".kilocode/"]) {
+    assert.ok(signals.includes(signal), `the Kilo row omits ${signal}`);
+  }
+  assert.equal(kilo[contextAt].replaceAll("`", "").trim(), "AGENTS.md");
+});
+
 test("the README template is finished and passes the memory engine under another name", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "readme-probe-"));
   try {

@@ -1,0 +1,3 @@
+# Naming fixture
+
+KILO_RULE_FIXTURE_MARKER

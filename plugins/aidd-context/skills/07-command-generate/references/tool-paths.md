@@ -11,10 +11,12 @@ The per-tool command path and write targets. Command slice only, nothing about s
 | OpenCode       | `.opencode/commands/<location>/<slug>.md` | yes                                  |
 | GitHub Copilot | `.github/prompts/<slug>.prompt.md`        | yes (flat)                           |
 | Codex CLI      | -                                         | no                                   |
+| Kilo           | `.kilo/commands/<name>.md`                | yes                                  |
 
 `<location>` is whatever the user chose: a flat folder, a namespace, or an opt-in `<NN>_<phase>/` from the taxonomy. Copilot is flat: no subfolder, so fold any location prefix into the filename.
 
 - **Codex CLI**: no custom slash commands, only built-ins. Skip it. Suggest a skill if a reusable workflow is needed.
+- **Kilo**: the filename is the workflow name; use no nested location.
 
 ## Frontmatter per tool
 
@@ -26,6 +28,9 @@ Drop a field a tool does not support. Never invent a substitute.
 | Cursor         | none (plain markdown), input via `$ARGUMENTS`                                         |
 | OpenCode       | `description`, input via `$ARGUMENTS` or `$1`, `$2`                                   |
 | GitHub Copilot | `description`, `applyTo` (no `model`)                                                 |
+| Kilo           | `description`, optional requested `agent`, `model`, `variant`, `subtask`              |
+
+For Kilo, use documented frontmatter only; omit Claude-only fields. Source: [workflows](https://kilo.ai/docs/customize/workflows).
 
 ## Detect (which tools are installed)
 
@@ -35,6 +40,9 @@ Drop a field a tool does not support. Never invent a substitute.
 | `.cursor/`                        | Cursor         |
 | `.opencode/`                      | OpenCode       |
 | `.github/copilot-instructions.md` | GitHub Copilot |
+| `.kilo/`, `kilo.json`, `kilo.jsonc`, `.kilo/kilo.json`, `.kilo/kilo.jsonc`, or `.kilocode/` | Kilo |
+
+`.kilocode/` is legacy detection only; new output uses `.kilo/commands/`. AIDD does not infer Kilo from `AGENTS.md` or `opencode.json[c]` alone, though Kilo may read legacy OpenCode-named config for compatibility. Source: [Kilo settings](https://kilo.ai/docs/getting-started/settings).
 
 ## Write targets
 

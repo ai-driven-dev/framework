@@ -206,6 +206,21 @@ test("wire maps antigravity to AGENTS.md", () => {
   });
 });
 
+test("wire maps Kilo to shared AGENTS.md, preserves team content, and is repeatable", () => {
+  const team = "# Team rules\n\n- Keep this.\n";
+  within({ "AGENTS.md": team }, (root) => {
+    const first = run(root, "wire", "kilo");
+    assert.equal(first.status, 0, first.stderr);
+    const once = read(root, "AGENTS.md");
+    assert.ok(once.startsWith(team), "user-authored content stays intact");
+    assert.ok(once.includes(OPEN) && once.includes(CLOSE), "the managed memory block is added");
+
+    const second = run(root, "wire", "kilo");
+    assert.equal(second.status, 0, second.stderr);
+    assert.equal(read(root, "AGENTS.md"), once);
+  });
+});
+
 test("wire refuses an unknown tool or no tool, and writes nothing", () => {
   within({}, (root) => {
     const unknown = run(root, "wire", "claude", "emacs");
@@ -371,6 +386,11 @@ test("the script's tool map is the tools table's", () => {
   const { TOOL_FILES } = require(SCRIPT);
   const rows = tableRows("tools.md").filter((cells) => cells.length === 5 && cells[1] !== "Tool");
   assert.deepEqual(TOOL_FILES, Object.fromEntries(rows.map((cells) => [cells[1], namesIn(cells[3])[0]])));
+});
+
+test("Kilo project memory wires through the shared root AGENTS.md", () => {
+  const { TOOL_FILES } = require(SCRIPT);
+  assert.equal(TOOL_FILES.kilo, "AGENTS.md");
 });
 
 test("the script and the hook spell the markers and the copilot pointer alike", () => {

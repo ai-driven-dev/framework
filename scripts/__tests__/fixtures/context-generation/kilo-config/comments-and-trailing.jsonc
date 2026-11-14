@@ -1,0 +1,9 @@
+{
+  // Keep this URL and its comment exactly.
+  "endpoint": "https://example.test/a//b",
+  "instructions": [
+    "docs/first.md", // existing first entry
+    "docs/first.md",
+  ],
+  "nested": { "instructions": [".kilo/rules/01-standards/1-naming.md"] },
+}
