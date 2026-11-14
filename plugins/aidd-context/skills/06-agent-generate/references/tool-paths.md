@@ -21,7 +21,7 @@ Cursor keeps single quotes as part of a frontmatter value: quote Cursor values w
 
 ## Frontmatter per tool
 
-The canonical agent carries `name` and `description` and no tool list: every host gives an agent all tools by default. Emit those a row accepts, drop the rest. Add model or effort settings only when requested and supported.
+The canonical agent carries `name` and `description` and no tool list: every host gives an agent all tools by default. Emit those a row accepts, plus each field an existing agent sets, and drop the rest. Add model or effort settings only when requested and supported.
 
 | Tool           | Accepts                                                      |
 | -------------- | ----------------------------------------------------------- |
@@ -61,12 +61,7 @@ Resolve shared paths from declared tools or the AIDD manifest; otherwise confirm
 
 ## Write targets
 
-- **Host project**: one file per confirmed tool, at the paths above.
-- **Plugin source**: one canonical agent at `plugins/<plugin>/agents/<name>.md`. No per-tool fan-out.
+- Host project: one file per confirmed tool, at the paths above.
+- Plugin source: one canonical agent at `plugins/<plugin>/agents/<name>.md`. No per-tool fan-out.
 
-The mode is chosen in the capture action. Never pick one silently.
-
-## Safety checks
-
-- **Asset-access precheck.** Before writing, confirm this reference is readable. If not, stop: the plugin is not installed in this host.
-- **Write-target validation.** After writing, confirm every path is relative, under the workspace, and at the chosen scope. Otherwise stop and report the bad path.
+The user confirms the target in the frame action. Never pick one silently.

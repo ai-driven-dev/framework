@@ -1,21 +1,23 @@
 # 03 - Validate
 
-Check each written agent file.
+Check each written agent file and report.
 
 ## Input
 
-The list of files written (from 02).
-
-## Output
-
-A short pass or fail line per agent file.
+The files written.
 
 ## Process
 
-1. **Exists.** Confirm each file is on disk at its expected path.
-2. **Shape.** Confirm each file matches its target format ([tool-paths.md](../references/tool-paths.md)).
-3. **Authoring.** Confirm the file meets [agent-authoring.md](../references/agent-authoring.md).
+1. Check each file against its tool's path, frontmatter and format in [tool-paths.md](../references/tool-paths.md), and list its breaches, even none.
+2. Check each file against [agent-authoring.md](../references/agent-authoring.md), and list its breaches, even none.
+3. Fix each breach and repeat from step 1 until every list is empty.
+   - Fix declined or impossible: report the blocker and stop.
+4. Report each file as passed, or with its breaches.
 
-## Test
+## Output
 
-- Every agent file exists, identifies its role in the target format, and holds the behavior.
+One pass or fail line per agent file.
+
+## Rules
+
+- Name each breach's rule by its id, with a `file:line`.

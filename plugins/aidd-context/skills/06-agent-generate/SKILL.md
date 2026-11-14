@@ -1,29 +1,26 @@
 ---
 name: 06-agent-generate
-description: Generate an agent across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor an agent, subagent or specialized role. Not for other artifacts like skills, rules, commands, hooks.
+description: Creates or updates an agent, a focused role run in a fresh context, across the host AI tools, when the user wants a new agent or to refactor one.
 argument-hint: role
 ---
 
 # Agent Generate
 
-Write an agent once and render it as one file per confirmed host tool, or once as a plugin source.
+```mermaid
+flowchart LR
+  entry([request]) -->|"new agent"| frame["actions/01-frame.md"]
+  entry -->|"agent file exists"| frame
+  frame <-->|"role, name and targets to confirm"| user((user answers))
+  frame -->|"host tools or plugin source"| write["actions/02-write.md"]
+  write --> validate["actions/03-validate.md"]
+  write -->|"path outside the workspace"| stopped((stopped))
+  validate -->|"breach"| validate
+  validate -->|"every file passes"| done((validated))
+  validate -->|"fix declined or impossible"| blocked((blocked))
+```
 
-## Actions
+## Transversal rules
 
-| #   | Action          | Role                                           | Input        |
-| --- | --------------- | ---------------------------------------------- | ------------ |
-| 01  | `capture-agent` | Gather the role and propose names              | user request |
-| 02  | `write-agent`   | Render the agent per tool and write            | the role     |
-| 03  | `validate`      | Check each agent file                          | the files    |
-
-Run the actions in order, `01 → 03`, and run each action's `## Test` before the next.
-Before running an action, read its file in `actions/`, not only the table or assets.
-
-## References
-
-- `references/agent-authoring.md`: the contract (frontmatter, body shape, naming, quality).
-- `references/tool-paths.md`: per-tool agent path, frontmatter, format conversions, the gate.
-
-## Assets
-
-- `assets/agent-template.md`: agent file scaffold.
+- If a cited reference cannot be read, stop and report the missing file.
+- Keep the meaning of each line of an existing agent, unless the request changes it.
+- Leave each file outside the confirmed targets byte-identical.

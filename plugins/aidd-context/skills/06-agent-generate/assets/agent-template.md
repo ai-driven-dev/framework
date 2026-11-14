@@ -1,17 +1,23 @@
 ---
-name: <agent-name>                         # required
-description: <what it does + when to use>  # required, third person
+name: <name>
+description: <what it does>. Use to <when to call it>.
 ---
 
 # Role
 
-<Required. What the agent is and its single responsibility. It starts in a fresh context.>
+<responsibility>
 
 # Behavior
 
-<Required. Concise capabilities and constraints within the role's responsibility.>
+- <capability or constraint>
+- <what it keeps unchanged or leaves to the caller>
 
-<!-- Optional sections, add one only when it adds value, omit when empty:
-# Inputs:                what it receives when invoked
-# Outputs:               what it returns
--->
+# Output
+
+<how concise the result is>
+
+```markdown
+**<field>:** <value>
+```
+
+<!-- Replace each <slot> and remove this note. -->
