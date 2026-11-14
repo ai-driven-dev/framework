@@ -1,6 +1,6 @@
 ---
 name: 06-agent-generate
-description: Creates or updates an agent, a focused role run in a fresh context, across the host AI tools, when the user wants a new agent or to refactor one.
+description: Creates or updates an agent, a focused role, across the host AI tools, when the user wants a new agent or to refactor one.
 argument-hint: role
 ---
 

@@ -1,6 +1,6 @@
 # Agent authoring
 
-The constraints every generated agent satisfies. An agent is a focused role with its own system prompt, run in a fresh context, returning only a result to its caller.
+The constraints every generated agent satisfies. An agent is a focused role with its own system prompt, returning only a result to its caller.
 
 ## Rules
 
