@@ -14,12 +14,12 @@ flowchart LR
   scope <-->|"frame to confirm"| user((user answers))
   plan <-->|"table to confirm"| user
   validate <-->|"trial or out-of-plan breach to confirm"| user
-  plan -->|"nothing to change"| unchanged((unchanged))
+  plan -->|"nothing to change"| stopped((stopped))
   validate -->|"breach or failed trial"| validate
   validate -->|"trial passed"| done((validated))
   validate -->|"trial declined or unavailable"| unverified((runtime unverified))
   validate -->|"fix declined or impossible"| blocked((blocked))
-  write -->|"path outside the workspace"| stopped((stopped))
+  write -->|"path outside the workspace"| stopped
 ```
 
 ## Transversal rules
@@ -29,4 +29,3 @@ flowchart LR
 - Keep the meaning of each rule, step, branch, wait, loop and stop of an existing skill, unless the request changes it.
 - Add nothing the request, the frame, the existing skill or the user did not confirm.
 - Leave each file the plan does not name byte-identical.
-- In a subagent, propose each confirmation to the caller instead of asking.
