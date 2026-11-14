@@ -79,6 +79,7 @@ const LABELS = {
     overviewTodo: "To review ({count})",
     overviewRevise: "To rework ({count})",
     blocked: "Write what should change on each state to revise.",
+    copyHint: "Give an opinion on at least one state.",
     theme: "Theme",
     platform: "Platform",
     sides: "Side by side",
@@ -169,6 +170,7 @@ const LABELS = {
     overviewTodo: "À relire ({count})",
     overviewRevise: "À reprendre ({count})",
     blocked: "Écrivez ce qu'il faut changer sur chaque état à revoir.",
+    copyHint: "Donnez un avis sur au moins un état.",
     theme: "Thème",
     platform: "Plateforme",
     sides: "Côte à côte",
@@ -243,7 +245,7 @@ const SHELL = `
   --accent: #1d1d1b; --accent-hover: #3a3a37; --accent-soft: #efefec; --accent-text: #1d1d1b;
   --ok: #166534; --ok-soft: #e6f4ea; --revise: #9a4508; --revise-soft: #fdf2e1; --pending: #6b6b64;
   --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
-  --r1: 4px; --r2: 8px; --r3: 12px; --drawer: 380px;
+  --r1: 4px; --r2: 8px; --r3: 12px; --drawer: 400px;
   --t-xs: 12px; --t-sm: 12px; --t-md: 14px; --t-lg: 16px; --t-xl: 20px; --t-2xl: 28px;
   --shadow: 0 1px 2px rgba(24, 24, 20, 0.06), 0 8px 24px rgba(24, 24, 20, 0.08);
   --font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -425,7 +427,13 @@ textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: va
 .open-review[aria-expanded="true"] { display: none; }
 .review-foot { flex: none; padding: var(--s3) 0 0; background: var(--surface); }
 .tally { padding: 0 7px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); line-height: 18px; font-variant-numeric: tabular-nums; }
-.drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 30; inline-size: var(--drawer); display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow); }
+.scrim { display: none; }
+body[data-drawer="open"] .scrim { display: block; position: fixed; inset: 0; z-index: 25; background: rgba(29, 29, 27, 0.4); }
+@media (min-width: 1680px) {
+  .scrim { display: none !important; }
+  body[data-drawer="open"] .shell > main { padding-right: calc(var(--s7) + var(--drawer)); max-width: calc(1320px + var(--drawer)); }
+}
+.drawer { position: fixed; max-inline-size: 100vw; top: 0; right: 0; bottom: 0; z-index: 30; inline-size: var(--drawer); display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow); }
 .drawer-head { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s3) var(--s3) var(--s5); border-bottom: 1px solid var(--line); }
 .drawer-head h2 { margin: 0; font-size: var(--t-md); font-weight: 600; }
 .drawer-head .close { margin-left: auto; inline-size: 32px; padding: 0; border-color: transparent; background: transparent; color: var(--muted); font-size: var(--t-lg); }
@@ -444,7 +452,7 @@ textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: va
 .item[data-here] summary { color: var(--accent-text); }
 .item .done { margin-left: auto; color: var(--faint); font-weight: 500; font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
 .item ol { padding: 0 var(--s3) var(--s3); }
-.pstate { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding: 6px var(--s2); border-radius: var(--r2); }
+.pstate { min-block-size: 44px; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding: 6px var(--s2); border-radius: var(--r2); }
 .pstate.on { background: var(--accent-soft); }
 .pstate::before { content: ""; flex: none; inline-size: 8px; block-size: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--faint); }
 .pstate[data-current="ok"]::before, .pstate[data-choice="ok"]::before { background: var(--ok); box-shadow: none; }
@@ -739,7 +747,7 @@ function paint() {
   const stuck = blocked();
   copy.disabled = stuck || !copiedOf(entries());
   for (const button of stepButtons) button.disabled = remainingOf(model(), choices, button.dataset.step).length === 0;
-  note.textContent = stuck ? copy.dataset.blocked : "";
+  note.textContent = stuck ? copy.dataset.blocked : copy.disabled ? copy.dataset.hint : "";
 }
 /** Marks the state of the page's own record that its tabs show. */
 function marked(state) {
@@ -747,6 +755,7 @@ function marked(state) {
 }
 function show(on) {
   drawer.hidden = !on;
+  document.body.dataset.drawer = on ? "open" : "closed";
   opener.setAttribute("aria-expanded", String(on));
 }
 items.forEach((item) => rowsOf(item).forEach((row) => {
@@ -803,7 +812,9 @@ pickers.forEach((holder) => holder.querySelectorAll(".take").forEach((button) =>
   paint();
 })));
 opener.addEventListener("click", () => show(true));
-document.getElementById("close-review").addEventListener("click", () => show(false));
+document.getElementById("close-review").addEventListener("click", () => { show(false); opener.focus(); });
+document.getElementById("scrim").addEventListener("click", () => { show(false); opener.focus(); });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !drawer.hidden) { show(false); opener.focus(); } });
 stepButtons.forEach((button) => button.addEventListener("click", (event) => {
   event.preventDefault();
   for (const { key, state } of remainingOf(model(), choices, button.dataset.step)) choose(key, state, { verdict: "ok", comment: "" });
@@ -1209,10 +1220,11 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
   const groups = held.filter((each) => each.awaiting.length).map(group).join("\n");
   const tally = pendingOf(labels, held.reduce((sum, each) => sum + each.todo, 0));
   return [
+    '<div class="scrim" id="scrim"></div>',
     `<aside class="drawer" id="review" aria-label="${escaped(labels.review)}" hidden>`,
     `<div class="drawer-head"><h2>${labels.review}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
     `<div class="drawer-body">${choices}${groups || (choices ? "" : `<p>${labels.nothing}</p>`)}</div>`,
-    `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}">${labels.copy}</button></div>`,
+    `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}" data-hint="${escaped(labels.copyHint)}">${labels.copy}</button></div>`,
     "</aside>",
   ].join("\n");
 }

@@ -858,6 +858,44 @@ describe("aidd-ui showcase", () => {
     });
   });
 
+  describe("the review drawer", () => {
+    const scriptOf = (html) => html.match(/<script>([\s\S]*)<\/script>/)[1];
+    const css = () => pagesOf()["home.html"];
+
+    it("tells why the copy is disabled, in the language, in the note under it", () => {
+      assert.equal(LABELS.en.copyHint, "Give an opinion on at least one state.");
+      assert.equal(LABELS.fr.copyHint, "Donnez un avis sur au moins un \u00e9tat.");
+      for (const lang of ["en", "fr"]) {
+        const html = pagesOf({ lang })["home.html"];
+        assert.match(drawerOf(html), new RegExp(`<button type="button" id="copy"[^>]* data-hint="${LABELS[lang].copyHint.replace("\u00e9", "\u00e9")}"`), lang);
+        assert.match(drawerOf(html), /<p id="note" role="status">/);
+        assert.match(scriptOf(html), /copy\.dataset\.hint/);
+      }
+      assert.match(css(), /#copy:disabled \{[^}]*color: var\(--muted\)/);
+      assert.doesNotMatch(css().match(/#copy:disabled \{[^}]*\}/)[0], /opacity/);
+    });
+
+    it("is 400px wide, and pushes the page only where the viewport holds the page and the drawer", () => {
+      const html = css();
+      assert.match(html, /--drawer: 400px/);
+      const push = html.match(/@media \(min-width: (\d+)px\) \{[^@]*?body\[data-drawer="open"\] \.shell > main \{([^}]*)\}/);
+      assert.ok(push, "a push rule");
+      assert.equal(Number(push[1]), 1280 + 400);
+      assert.match(push[2], /padding-right: calc\(var\(--s7\) \+ var\(--drawer\)\)/);
+      assert.match(html, /\.scrim \{ display: none; \}/);
+      assert.match(html, /body\[data-drawer="open"\] \.scrim \{ display: block; position: fixed;/);
+      assert.match(html, /@media \(min-width: 1680px\) \{[^@]*\.scrim \{ display: none !important; \}/);
+      assert.match(html, /<div class="scrim" id="scrim"><\/div>/);
+    });
+
+    it("closes on Escape and on the scrim, and gives the focus back to the review button", () => {
+      const script = scriptOf(css());
+      assert.match(script, /document\.addEventListener\("keydown", \(event\) => \{ if \(event\.key === "Escape" && !drawer\.hidden\) \{ show\(false\); opener\.focus\(\); \} \}\);/);
+      assert.match(script, /getElementById\("scrim"\)\.addEventListener\("click"/);
+      assert.match(script, /document\.body\.dataset\.drawer = on \? "open" : "closed"/);
+    });
+  });
+
   describe("the copy of a review", () => {
     const HOME_COPY = [
       "```json",
