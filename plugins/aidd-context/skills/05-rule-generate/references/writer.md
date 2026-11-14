@@ -6,11 +6,19 @@ How to run `scripts/write-rule.cjs` and read its result.
 node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$request_json"
 ```
 
+| Operation | Arguments |
+| --- | --- |
+| add or update | `--tools "$confirmed_ids" --input "$request_json"` |
+| remove | `--remove <category>/<slug>` |
+| publish | `--publish`, plus `--tools` only for hosts the user added |
+| plan, any operation | the same arguments plus `--plan` |
+| check, after writing | `--publish --check` |
+
 | Variable | Value |
 | --- | --- |
 | `$project_root` | Absolute path of the session's working directory, copied, never retyped. |
 | `$writer` | Absolute path of `scripts/write-rule.cjs` beside the loaded `SKILL.md`. |
-| `$request_json` | Temporary file outside the project: `category`, `slug`, `description`, `body`, and `paths`, an array of globs omitted for all files. |
+| `$request_json` | Temporary file outside the project: `category`, `slug`, `description`, `body`, and `paths`, an array of globs omitted for all files; one-line description, no comma in a glob, so split `*.{ts,tsx}`. |
 
 | Option | Effect |
 | --- | --- |
