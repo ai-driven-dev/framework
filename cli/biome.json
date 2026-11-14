@@ -493,6 +493,46 @@
       }
     },
     {
+      "includes": ["src/orchestration/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "node:fs": "orchestration reads no file: call a command that does",
+                  "fs": "orchestration reads no file: call a command that does",
+                  "node:fs/promises": "orchestration reads no file: call a command that does",
+                  "fs/promises": "orchestration reads no file: call a command that does",
+                  "node:child_process": "orchestration runs no process: call a command that does",
+                  "child_process": "orchestration runs no process: call a command that does"
+                },
+                "patterns": [
+                  {
+                    "group": ["**/contexts/**", "!**/application/**", "!**/contract/**"],
+                    "message": "orchestration imports the application and contract of a context only, never its domain, ports or infrastructure"
+                  },
+                  {
+                    "group": ["**/tools/application/**"],
+                    "message": "tools publishes its contract only: its application belongs to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/shared/infrastructure/**"],
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["tests/helpers/**/*.ts"],
       "linter": {
         "rules": {

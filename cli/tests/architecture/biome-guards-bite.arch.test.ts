@@ -199,8 +199,22 @@ describe("the guard itself", () => {
       "src/contexts/distribution/application",
       "src/contexts/distribution/infrastructure",
       "src/composition",
+      "src/orchestration/setup",
     ]) {
       mkdirSync(join(planted, dir), { recursive: true });
+    }
+    for (const [name, specifier] of Object.entries({
+      "reaches-fs": "node:fs",
+      "reaches-process": "node:child_process",
+      "reaches-domain": "../../contexts/auth/domain/credential-record.js",
+      "reaches-infrastructure": "../../contexts/auth/infrastructure/gh-cli-adapter.js",
+      "reaches-contract": "../../contexts/auth/contract/credential.js",
+      "reaches-application": "../../contexts/auth/application/log-in.js",
+    })) {
+      writeFileSync(
+        join(planted, `src/orchestration/setup/${name}.ts`),
+        `import "${specifier}";\n`
+      );
     }
     writeFileSync(
       join(planted, "src/shared/domain/exit.ts"),
@@ -549,6 +563,20 @@ describe("the guard itself", () => {
     const findings = biomeFindings(planted);
     for (const file of distributionReaches()) {
       expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedImports`);
+    }
+  });
+
+  it("flags orchestration reaching the disk, a process or a context's interior, and clears its contract and application", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    for (const name of ["fs", "process", "domain", "infrastructure"]) {
+      expect(findings, findings.join(", ")).toContain(
+        `src/orchestration/setup/reaches-${name}.ts:${rule}`
+      );
+    }
+    for (const name of ["contract", "application"]) {
+      expect(findings).not.toContain(`src/orchestration/setup/reaches-${name}.ts:${rule}`);
     }
   });
 
