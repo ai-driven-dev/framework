@@ -6,10 +6,10 @@ Where each host AI tool keeps a project's agents, and how to tell it is installe
 | --- | --- | --- |
 | Claude Code / `claude` | `.claude/` or `CLAUDE.md` | `.claude/agents/<name>.md` |
 | Cursor / `cursor` | `.cursor/` | `.cursor/agents/<name>.md` |
-| GitHub Copilot / `copilot` | `.github/copilot-instructions.md` | `.github/agents/<name>.agent.md` |
-| Antigravity / `antigravity` | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | `.agents/agents/<name>/agent.md` |
+| GitHub Copilot / `copilot` | `.github/copilot-instructions.md` or `.github/instructions/` | `.github/agents/<name>.agent.md` |
+| Antigravity / `antigravity` | `.agents/agents/`, `.agents/rules/`, `.agent/rules/` or `.agents/hooks.json` | `.agents/agents/<name>/agent.md` |
 | Codex CLI / `codex` | `.codex/` | `.codex/agents/<name>.toml` |
-| OpenCode / `opencode` | `.opencode/` | `.opencode/agents/<name>.md` |
+| OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | `.opencode/agents/<name>.md` |
 | Kilo Code / `kilo` | `.kilo/` | `.kilo/agents/<name>.md` |
 
 Every host reads `AGENTS.md`, so it signals none. When no signal matches, confirm the host.
