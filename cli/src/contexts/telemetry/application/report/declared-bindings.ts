@@ -1,6 +1,6 @@
-import type { BindingSnapshotStore } from "../../domain/ports/bindings/binding-snapshot-store.js";
-import type { SessionBindingStore } from "../../domain/ports/bindings/session-binding-store.js";
 import type { AttributionFacts } from "../../domain/report/attribution.js";
+import type { BindingSnapshotStore } from "../../ports/bindings/binding-snapshot-store.js";
+import type { SessionBindingStore } from "../../ports/bindings/session-binding-store.js";
 
 /** Everything people declared about what their work belongs to, wherever each kind is kept:
  * session declarations, the carries across a `/clear`, and the snapshots of branch

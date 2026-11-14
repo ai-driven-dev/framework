@@ -5,24 +5,20 @@ import { IngestUsageUseCase } from "../../../../src/contexts/telemetry/applicati
 import { ReadUsageUseCase } from "../../../../src/contexts/telemetry/application/read-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import { cloneKey } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
-import type { LocatedDirectory } from "../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import { resolutionKey } from "../../../../src/contexts/telemetry/domain/repository-resolution.js";
-import {
-  AUTUMN,
-  cloneOf,
-  FakeBindings,
-  FakeConsents,
-  FakeLocator,
-  grantedBy,
-  InMemoryBindingsLock,
-  InMemoryConsentHistory,
-  InMemoryLedger,
-  InMemoryResolutions,
-  InMemorySnapshots,
-  InMemoryTranscripts,
-  tokenOf,
-} from "../../../helpers/ports/in-memory-telemetry.js";
+import { readClaudeUsageLine } from "../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
+import type { LocatedDirectory } from "../../../../src/contexts/telemetry/ports/repository-locator.js";
+import { AUTUMN } from "../testing/autumn.js";
+import { cloneOf, grantedBy, tokenOf } from "../testing/clone-builders.js";
+import { FakeBindings } from "../testing/fake-bindings.js";
+import { FakeConsents } from "../testing/fake-consents.js";
+import { FakeLocator } from "../testing/fake-locator.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.js";
+import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.js";
+import { InMemoryLedger } from "../testing/in-memory-ledger.js";
+import { InMemoryResolutions } from "../testing/in-memory-resolutions.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.js";
+import { InMemoryTranscripts } from "../testing/in-memory-transcripts.js";
 
 const sha = (text: string): string => createHash("sha256").update(text).digest("hex");
 const NOW = new Date("2026-10-09T00:00:00.000Z");

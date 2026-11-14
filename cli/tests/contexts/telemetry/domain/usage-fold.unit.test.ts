@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { foldUsage } from "../../../../src/contexts/telemetry/domain/usage-fold.js";
-import {
-  type UsageRecord,
-  usageTotal,
-} from "../../../../src/contexts/telemetry/domain/usage-record.js";
+import type { UsageRecord } from "../../../../src/contexts/telemetry/contract/usage-record.js";
+import { foldUsage, usageTotal } from "../../../../src/contexts/telemetry/domain/usage-fold.js";
 
 function record(overrides: Partial<UsageRecord> = {}): UsageRecord {
   return {

@@ -14,34 +14,32 @@ import {
   ReportUsageUseCase,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
-import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
+import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import {
-  conflictsOf,
   NO_FILTERS,
   type ReportFilters,
-} from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
-import {
-  REPORT_AXES,
-  type ReportAxis,
-} from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
-import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
+} from "../../../../../src/contexts/telemetry/contract/report-filter.js";
 import {
   USAGE_AGENTS,
   USAGE_TOOLS,
-} from "../../../../../src/contexts/telemetry/domain/usage-record.js";
+} from "../../../../../src/contexts/telemetry/contract/usage-record.js";
 import {
-  FakeBindings,
-  FakeConsents,
-  FakeLocator,
-  InMemoryBindingsLock,
-  InMemoryConsentHistory,
-  InMemoryIdentity,
-  InMemoryLedger,
-  InMemoryResolutions,
-  InMemorySessions,
-  InMemorySnapshots,
-} from "../../../../helpers/ports/in-memory-telemetry.js";
+  REPORT_AXES,
+  type ReportAxis,
+} from "../../../../../src/contexts/telemetry/contract/usage-report.js";
+import { declarationOf } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+import { conflictsOf } from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
+import type { StoredUsage } from "../../../../../src/contexts/telemetry/domain/stored-usage.js";
+import { FakeBindings } from "../../testing/fake-bindings.js";
+import { FakeConsents } from "../../testing/fake-consents.js";
+import { FakeLocator } from "../../testing/fake-locator.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
+import { InMemoryLedger } from "../../testing/in-memory-ledger.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
 
 /** Two sessions share a start, so a prefix can name one, the other, or both. */
 const SESSIONS = [

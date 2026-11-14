@@ -1,17 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { ForgetTelemetryUseCase } from "../../../../../src/contexts/telemetry/application/forget/forget-telemetry-use-case.js";
 import type { BranchSnapshot } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
-import type { ErasureEntry } from "../../../../../src/contexts/telemetry/domain/ports/forget/measurement-erasure.js";
-import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
 import { resolutionKey } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
-import {
-  cloneOf,
-  InMemoryConsentHistory,
-  InMemoryLedger,
-  InMemoryResolutions,
-  InMemorySnapshots,
-} from "../../../../helpers/ports/in-memory-telemetry.js";
+import type { ErasureEntry } from "../../../../../src/contexts/telemetry/ports/forget/measurement-erasure.js";
+import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
+import { cloneOf } from "../../testing/clone-builders.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
+import { InMemoryLedger } from "../../testing/in-memory-ledger.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
 
 const located = (
   root: string,

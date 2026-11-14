@@ -6,10 +6,10 @@
 
 | Edit | Where |
 | --- | --- |
-| its line format, made once per file read when a line needs what came before it | `contexts/telemetry/domain/formats/` |
-| its transcript source, on the block reader in `infrastructure/transcripts/transcript-files.ts` | `contexts/telemetry/infrastructure/` |
+| its line format, made once per file read when a line needs what came before it | `contexts/telemetry/infrastructure/sources/claude/` (Claude) or `infrastructure/sources/codex/` (Codex) |
+| its transcript source, on the block reader in `infrastructure/sources/transcript-files.ts` | `contexts/telemetry/infrastructure/` |
 | one reader in the ingest list | `composition/telemetry.ts` |
-| its name | `USAGE_TOOLS` in `domain/usage-record.ts` |
+| its name | `USAGE_TOOLS` in `contract/usage-record.ts` |
 | its home relocated in every sandbox that runs the CLI | `tests/e2e/helpers.ts`, `tests/helpers/telemetry-sandbox.ts`, `scripts/check-claude-tokens-end-to-end.cjs`, `scripts/probe-identifier-join.cjs` |
 
 Storage, attribution and the report need nothing. Task and ticket come only from `aidd telemetry task`, whoever runs it. The plugin's hooks invoke it from Claude Code and the Codex TUI. They name the session with `AIDD_TELEMETRY_SESSION_ID` where the tool sets no variable of its own. Another tool's calls are attributed by branch. Rules: [usage contract](../../../aidd_docs/product/usage-contract.md#attribution).
@@ -50,24 +50,24 @@ flowchart LR
 
 | Question | File |
 | --- | --- |
-| What a Claude Code line becomes | `domain/formats/claude-transcript-usage.ts` |
+| What a Claude Code line becomes | `infrastructure/sources/claude/claude-transcript-usage.ts` |
 | Why a call is counted once | `domain/usage-fold.ts` |
 | Where a call's repository comes from | `application/directory-resolver.ts`, `domain/repository-identity.ts` |
 | How a call, a root or a branch snapshot stored under an id an earlier version gave a repository joins the history of its id of now: at read; a re-ided partition is rewritten on save, branch snapshots never | `domain/legacy/repository-aliases.ts`, `infrastructure/legacy/repository-alias-store-adapter.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md) |
 | Which task a call belongs to | `domain/report/attribution.ts`, `domain/declaration/binding-resolution.ts` |
 | Whether a branch is declared; the hook's twin is `plugins/aidd-telemetry/hooks/lib/git.cjs` | `domain/branch-binding.ts` `parseBranchConfig`; rule and limits in the [usage contract](../../../aidd_docs/product/usage-contract.md#branch-declaration) |
-| What counts as consent | `domain/telemetry-consent.ts`, `infrastructure/git-consent-adapter.ts` |
+| What counts as consent | `domain/telemetry-consent.ts`, `infrastructure/git/git-consent-adapter.ts` |
 | Whether a call is stored | `application/directory-resolver.ts` |
 | What a clone is | `domain/consent/clone-identity.ts` |
 | When a clone consented | `domain/consent/consent-history.ts`, `application/consent-log.ts` |
 | Which transcripts are read | `application/ingest-usage-use-case.ts`, `application/read-usage-use-case.ts` |
-| How one is read: from its saved offset, a block at a time, up to its last complete line | `infrastructure/claude-transcript-source-adapter.ts`, `infrastructure/transcripts/transcript-files.ts` (shared by every tool), `domain/transcript-position.ts` |
-| What a Codex line becomes, and why a Codex file that moved is read from its start | `domain/formats/codex-transcript-usage.ts`, `infrastructure/transcripts/codex-transcript-source-adapter.ts` |
-| How the ledger lies on disk, and what an ingest or a report reads | `infrastructure/usage-ledger-adapter.ts`, `domain/stored-usage.ts`, `application/ledger-upkeep.ts`, `domain/report/period.ts` |
-| What an ingest measured and could not store, kept for every report (`ledger/left-out.txt`), and why a ledger line no reader knows is kept | `infrastructure/left-out/left-out-adapter.ts`, `infrastructure/usage-ledger-adapter.ts`, `application/ingest-usage-use-case.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md#left-out) |
+| How one is read: from its saved offset, a block at a time, up to its last complete line | `infrastructure/sources/claude/claude-transcript-source-adapter.ts`, `infrastructure/sources/transcript-files.ts` (shared by every tool), `domain/transcript-position.ts` |
+| What a Codex line becomes, and why a Codex file that moved is read from its start | `infrastructure/sources/codex/codex-transcript-usage.ts`, `infrastructure/sources/codex/codex-transcript-source-adapter.ts` |
+| How the ledger lies on disk, and what an ingest or a report reads | `infrastructure/storage/ledger/usage-ledger-adapter.ts`, `domain/stored-usage.ts`, `application/ledger-upkeep.ts`, `domain/report/period.ts` |
+| What an ingest measured and could not store, kept for every report (`ledger/left-out.txt`), and why a ledger line no reader knows is kept | `infrastructure/storage/ledger/left-out-adapter.ts`, `infrastructure/storage/ledger/usage-ledger-adapter.ts`, `application/ingest-usage-use-case.ts`; rules in the [usage contract](../../../aidd_docs/product/usage-contract.md#left-out) |
 | What `forget` erases of an earlier measurement | `domain/legacy/legacy-locations.ts`, `application/forget/` |
 | The report axes and the envelope | `domain/report/usage-report.ts`, `application/report/report-envelope.ts` |
-| Who the measurement names, and what `on` offers | `domain/identity/person-identity.ts`, `application/identity/`, `infrastructure/identity/git-user-source-adapter.ts`; the question is the `on` command's |
+| Who the measurement names, and what `on` offers | `domain/identity/person-identity.ts`, `application/identity/`, `infrastructure/git/git-user-source-adapter.ts`; the question is the `on` command's |
 | What a report's `filters` select, and where a start of an id or `.` is resolved | `domain/report/report-filter.ts`, `application/report/report-usage-use-case.ts`; flags in the [usage contract](../../../aidd_docs/product/usage-contract.md#filters) |
 
 ## The plugin side

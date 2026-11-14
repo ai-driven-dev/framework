@@ -4,20 +4,18 @@ import { rememberOwnRoot } from "../../../../../src/contexts/telemetry/applicati
 import { TelemetryOffUseCase } from "../../../../../src/contexts/telemetry/application/switch/telemetry-off-use-case.js";
 import { TelemetryOnUseCase } from "../../../../../src/contexts/telemetry/application/switch/telemetry-on-use-case.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/domain/ports/repository-locator.js";
 import {
   type RepositoryResolution,
   resolutionKey,
 } from "../../../../../src/contexts/telemetry/domain/repository-resolution.js";
-import {
-  cloneOf,
-  FakeConsents,
-  FakeLocator,
-  InMemoryConsentHistory,
-  InMemoryIdentity,
-  InMemoryLedger,
-  InMemoryResolutions,
-} from "../../../../helpers/ports/in-memory-telemetry.js";
+import type { LocatedDirectory } from "../../../../../src/contexts/telemetry/ports/repository-locator.js";
+import { cloneOf } from "../../testing/clone-builders.js";
+import { FakeConsents } from "../../testing/fake-consents.js";
+import { FakeLocator } from "../../testing/fake-locator.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
+import { InMemoryLedger } from "../../testing/in-memory-ledger.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
 
 const repository = (
   root: string,

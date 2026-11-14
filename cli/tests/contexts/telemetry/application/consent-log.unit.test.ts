@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ConsentLog } from "../../../../src/contexts/telemetry/application/consent-log.js";
-import { cloneOf, InMemoryConsentHistory } from "../../../helpers/ports/in-memory-telemetry.js";
+import { cloneOf } from "../testing/clone-builders.js";
+import { InMemoryConsentHistory } from "../testing/in-memory-consent-history.js";
 
 const A = cloneOf("/a/.git");
 const B = cloneOf("/a/.git", { ino: "9" });

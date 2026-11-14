@@ -1,9 +1,28 @@
 import { tryParseJson } from "../../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
-import type { LockWait } from "../ports/bindings/bindings-lock.js";
+import {
+  DECLARED_BY,
+  type DeclarationRequest,
+  type DeclaredBy,
+} from "../../contract/task-declaration.js";
+import type { LockWait } from "../../ports/bindings/bindings-lock.js";
 
-export const DECLARED_BY = ["command", "hook-intercept"] as const;
-export type DeclaredBy = (typeof DECLARED_BY)[number];
+/** Text as a person typed it, trimmed; `null` when nothing is left. A report filter is trimmed
+ * the same way, so it compares with what was stored. */
+export function textOrNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed === "" ? null : trimmed;
+}
+
+/** A task name and ticket as a person typed them, trimmed: the ticket is free text, never
+ * parsed or checked against a forge. `null` when there is no name to declare. */
+export function requestOf(
+  name: string | undefined,
+  ticket: string | undefined
+): DeclarationRequest | null {
+  const task = textOrNull(name);
+  return task === null ? null : { kind: "task", task, ticket: textOrNull(ticket) };
+}
 
 /** How long a declaration made by the hook waits on the bindings lock, each of the two times it
  * takes it. The hook gives `aidd` 20 s to answer; a wait that ends before that lets `aidd` say
@@ -36,27 +55,6 @@ export interface SessionCarry {
   readonly session_id: string;
   readonly from: string;
   readonly at: string;
-}
-
-export type DeclarationRequest =
-  | { readonly kind: "task"; readonly task: string; readonly ticket: string | null }
-  | { readonly kind: "none" };
-
-/** Text as a person typed it, trimmed; `null` when nothing is left. A report filter is trimmed
- * the same way, so it compares with what was stored. */
-export function textOrNull(value: string | null | undefined): string | null {
-  const trimmed = value?.trim() ?? "";
-  return trimmed === "" ? null : trimmed;
-}
-
-/** A task name and ticket as a person typed them, trimmed: the ticket is free text, never
- * parsed or checked against a forge. `null` when there is no name to declare. */
-export function requestOf(
-  name: string | undefined,
-  ticket: string | undefined
-): DeclarationRequest | null {
-  const task = textOrNull(name);
-  return task === null ? null : { kind: "task", task, ticket: textOrNull(ticket) };
 }
 
 export function declarationOf(

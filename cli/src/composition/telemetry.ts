@@ -16,37 +16,37 @@ import { SnapshotBindingsUseCase } from "../contexts/telemetry/application/snaps
 import { TelemetryOffUseCase } from "../contexts/telemetry/application/switch/telemetry-off-use-case.js";
 import { TelemetryOnUseCase } from "../contexts/telemetry/application/switch/telemetry-on-use-case.js";
 import { TelemetryStatusUseCase } from "../contexts/telemetry/application/telemetry-status-use-case.js";
+import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
+import { refusedByEnvironment as refusedByEnvironmentValue } from "../contexts/telemetry/domain/telemetry-consent.js";
+import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-source-adapter.js";
+import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/git/git-branch-binding-store-adapter.js";
+import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git/git-consent-adapter.js";
+import { environmentWithoutGitVariables } from "../contexts/telemetry/infrastructure/git/git-environment.js";
+import { GitRepositoryLocatorAdapter } from "../contexts/telemetry/infrastructure/git/git-repository-locator-adapter.js";
+import { GitUserSourceAdapter } from "../contexts/telemetry/infrastructure/git/git-user-source-adapter.js";
+import { RepositoryAliasStoreAdapter } from "../contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
 import {
   claudeConfigDir,
   claudeProjectsRoot,
-} from "../contexts/telemetry/domain/claude-projects-root.js";
-import { readClaudeUsageLine } from "../contexts/telemetry/domain/formats/claude-transcript-usage.js";
-import { codexUsageReader } from "../contexts/telemetry/domain/formats/codex-transcript-usage.js";
-import { legacyLocations } from "../contexts/telemetry/domain/legacy/legacy-locations.js";
-import { refusedByEnvironment as refusedByEnvironmentValue } from "../contexts/telemetry/domain/telemetry-consent.js";
-import { BindingSnapshotStoreAdapter } from "../contexts/telemetry/infrastructure/binding-snapshot-store-adapter.js";
-import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/bindings-lock-adapter.js";
-import { ClaudeTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/claude-transcript-source-adapter.js";
-import { ConsentHistoryAdapter } from "../contexts/telemetry/infrastructure/consent/consent-history-adapter.js";
-import { GitBranchBindingStoreAdapter } from "../contexts/telemetry/infrastructure/declaration/git-branch-binding-store-adapter.js";
-import { SessionBindingStoreAdapter } from "../contexts/telemetry/infrastructure/declaration/session-binding-store-adapter.js";
-import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/forget/measurement-erasure-adapter.js";
-import { RepositoryDeclarationsAdapter } from "../contexts/telemetry/infrastructure/forget/repository-declarations-adapter.js";
-import { environmentWithoutGitVariables } from "../contexts/telemetry/infrastructure/git/git-environment.js";
-import { GitBranchBindingSourceAdapter } from "../contexts/telemetry/infrastructure/git-branch-binding-source-adapter.js";
-import { GitConsentAdapter } from "../contexts/telemetry/infrastructure/git-consent-adapter.js";
-import { GitRepositoryLocatorAdapter } from "../contexts/telemetry/infrastructure/git-repository-locator-adapter.js";
-import { GitUserSourceAdapter } from "../contexts/telemetry/infrastructure/identity/git-user-source-adapter.js";
-import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/identity/person-identity-adapter.js";
-import { RepositoryAliasStoreAdapter } from "../contexts/telemetry/infrastructure/legacy/repository-alias-store-adapter.js";
-import { ResolutionStoreAdapter } from "../contexts/telemetry/infrastructure/resolution-store-adapter.js";
-import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { ClaudeSettingsAdapter } from "../contexts/telemetry/infrastructure/switch/claude-settings-adapter.js";
+} from "../contexts/telemetry/infrastructure/sources/claude/claude-projects-root.js";
+import { ClaudeSettingsAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.js";
+import { ClaudeTranscriptSourceAdapter } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-source-adapter.js";
+import { readClaudeUsageLine } from "../contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
 import {
   CodexTranscriptSourceAdapter,
   codexSessionRoots,
-} from "../contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.js";
-import { UsageLedgerAdapter } from "../contexts/telemetry/infrastructure/usage-ledger-adapter.js";
+} from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.js";
+import { codexUsageReader } from "../contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.js";
+import { ConsentHistoryAdapter } from "../contexts/telemetry/infrastructure/storage/consent/consent-history-adapter.js";
+import { BindingsLockAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/bindings-lock-adapter.js";
+import { RepositoryDeclarationsAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/repository-declarations-adapter.js";
+import { SessionBindingStoreAdapter } from "../contexts/telemetry/infrastructure/storage/declarations/session-binding-store-adapter.js";
+import { BindingSnapshotStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/binding-snapshot-store-adapter.js";
+import { ResolutionStoreAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/resolution-store-adapter.js";
+import { UsageLedgerAdapter } from "../contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
+import { MeasurementErasureAdapter } from "../contexts/telemetry/infrastructure/storage/measurement-erasure-adapter.js";
+import { PersonIdentityAdapter } from "../contexts/telemetry/infrastructure/storage/person-identity-adapter.js";
+import { PrivateStorageAdapter } from "../contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
 import type { TelemetryDeps } from "../presentation/deps.js";
 import { userConfigDirOf } from "../shared/infrastructure/user-config-dir.js";
 

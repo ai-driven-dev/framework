@@ -1,14 +1,12 @@
-import { shiftDay } from "../stored-usage.js";
+import type { Period, PeriodOutcome } from "../../contract/period.js";
 
-/** A span of whole UTC days, both ends included; `null` is open. */
-export interface Period {
-  readonly from: string | null;
-  readonly to: string | null;
+const DAY_MS = 86_400_000;
+
+/** The UTC day `days` after a `YYYY-MM-DD` day, as `toISOString` writes its first ten
+ * characters: a day past four-digit years comes out in a shape no `YYYY-MM-DD` test accepts. */
+export function shiftDay(day: string, days: number): string {
+  return new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS).toISOString().slice(0, 10);
 }
-
-export type PeriodOutcome =
-  | { readonly ok: true; readonly period: Period }
-  | { readonly ok: false; readonly message: string };
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 

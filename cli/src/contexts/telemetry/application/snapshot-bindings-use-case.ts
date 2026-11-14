@@ -4,9 +4,9 @@ import {
   nextSnapshot,
   snapshotKey,
 } from "../domain/branch-binding.js";
-import type { BindingSnapshotStore } from "../domain/ports/bindings/binding-snapshot-store.js";
-import type { BindingsLock, LockWait } from "../domain/ports/bindings/bindings-lock.js";
-import type { BranchBindingSource } from "../domain/ports/branch-binding-source.js";
+import type { BindingSnapshotStore } from "../ports/bindings/binding-snapshot-store.js";
+import type { BindingsLock, LockWait } from "../ports/bindings/bindings-lock.js";
+import type { BranchBindingSource } from "../ports/branch-binding-source.js";
 
 /** Records what a repository's branches are declared as, right now. Attribution reads only
  * these snapshots, so a branch that is deleted or renamed later keeps the work it carried. */

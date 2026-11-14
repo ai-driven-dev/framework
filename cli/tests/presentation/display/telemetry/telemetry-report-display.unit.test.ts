@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { ReportResult } from "../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
-import type { Period } from "../../../../src/contexts/telemetry/domain/report/period.js";
+import type { Period } from "../../../../src/contexts/telemetry/contract/period.js";
 import {
   NO_FILTERS,
   type ReportFilters,
-} from "../../../../src/contexts/telemetry/domain/report/report-filter.js";
+} from "../../../../src/contexts/telemetry/contract/report-filter.js";
 import {
   type AxisValue,
   REPORT_AXES,
   type ReportAxis,
   type Tally,
-} from "../../../../src/contexts/telemetry/domain/report/usage-report.js";
+} from "../../../../src/contexts/telemetry/contract/usage-report.js";
 import { printUsageReport } from "../../../../src/presentation/display/telemetry/telemetry-report-display.js";
 import { TOOL } from "../../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../../helpers/ports/capturing-output.js";

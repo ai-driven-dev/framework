@@ -1,18 +1,18 @@
+import type { NotStoredReason } from "../contract/repository-resolution.js";
 import { type CloneIdentity, cloneKey, sameClone } from "../domain/consent/clone-identity.js";
-import type { ConsentHistory } from "../domain/ports/consent-history.js";
-import type { ConsentSource } from "../domain/ports/consent-source.js";
-import type { RepositoryLocator } from "../domain/ports/repository-locator.js";
-import type { ResolutionStore } from "../domain/ports/resolution-store.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
 import {
   cwdKey,
-  type NotStoredReason,
   ownerAt,
   type RepositoryResolution,
   resolutionKey,
   sameResolution,
 } from "../domain/repository-resolution.js";
 import { tokenOfKey } from "../domain/telemetry-consent.js";
+import type { ConsentHistory } from "../ports/consent-history.js";
+import type { ConsentSource } from "../ports/consent-source.js";
+import type { RepositoryLocator } from "../ports/repository-locator.js";
+import type { ResolutionStore } from "../ports/resolution-store.js";
 import { ConsentLog } from "./consent-log.js";
 
 export type DirectoryOutcome =

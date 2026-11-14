@@ -1,8 +1,8 @@
-import type { ConsentHistory } from "../domain/ports/consent-history.js";
-import type { ConsentSource } from "../domain/ports/consent-source.js";
-import type { RepositoryLocator } from "../domain/ports/repository-locator.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
 import { consentOf, tokenOfKey, turnedOff } from "../domain/telemetry-consent.js";
+import type { ConsentHistory } from "../ports/consent-history.js";
+import type { ConsentSource } from "../ports/consent-source.js";
+import type { RepositoryLocator } from "../ports/repository-locator.js";
 import { ConsentLog } from "./consent-log.js";
 
 export type RefusalReason =

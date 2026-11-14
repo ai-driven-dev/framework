@@ -44,8 +44,8 @@
       "mutate": [
         "src/contexts/telemetry/**/*.ts",
         "src/presentation/display/telemetry/**/*.ts",
-        "!src/contexts/telemetry/infrastructure/git/**/*.ts",
-        "!src/contexts/telemetry/infrastructure/storage/**/*.ts"
+        "!src/contexts/telemetry/infrastructure/git/git-environment.ts",
+        "!src/contexts/telemetry/infrastructure/storage/private-storage-adapter.ts"
       ],
       "break": 96,
       "shards": 3
@@ -92,8 +92,8 @@
         "src/contexts/framework/infrastructure/hasher-adapter.ts",
         "src/contexts/framework/infrastructure/platform-adapter.ts",
         "src/contexts/framework/infrastructure/assets/**/*.ts",
-        "src/contexts/telemetry/infrastructure/git/**/*.ts",
-        "src/contexts/telemetry/infrastructure/storage/**/*.ts"
+        "src/contexts/telemetry/infrastructure/git/git-environment.ts",
+        "src/contexts/telemetry/infrastructure/storage/private-storage-adapter.ts"
       ],
       "break": 90
     },

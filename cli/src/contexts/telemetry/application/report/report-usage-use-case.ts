@@ -1,24 +1,20 @@
-import type { PersonIdentityStore } from "../../domain/ports/identity/person-identity-store.js";
-import type { RepositoryLocator } from "../../domain/ports/repository-locator.js";
-import type { LeftOutReason, UsageLedger } from "../../domain/ports/usage-ledger.js";
-import { attribute } from "../../domain/report/attribution.js";
-import { inPeriod, type Period, windowOf } from "../../domain/report/period.js";
+import type { Period } from "../../contract/period.js";
 import {
   type AbsentAxis,
-  conflictsOf,
   type FilterFlag,
-  matchesFilter,
   NO_FILTERS,
   type ReportFilters,
-  resolveId,
-} from "../../domain/report/report-filter.js";
-import {
-  buildReport,
-  type ReportAxis,
-  type UsageReport,
-} from "../../domain/report/usage-report.js";
+} from "../../contract/report-filter.js";
+import type { ReportAxis, UsageReport } from "../../contract/usage-report.js";
+import { attribute } from "../../domain/report/attribution.js";
+import { inPeriod, windowOf } from "../../domain/report/period.js";
+import { conflictsOf, matchesFilter, resolveId } from "../../domain/report/report-filter.js";
+import { buildReport } from "../../domain/report/usage-report.js";
 import { repositoryIdOf } from "../../domain/repository-identity.js";
 import type { StoredUsage } from "../../domain/stored-usage.js";
+import type { PersonIdentityStore } from "../../ports/identity/person-identity-store.js";
+import type { RepositoryLocator } from "../../ports/repository-locator.js";
+import type { LeftOutReason, UsageLedger } from "../../ports/usage-ledger.js";
 import type { IngestResult, IngestUsageUseCase } from "../ingest-usage-use-case.js";
 import { settleLedger } from "../ledger-upkeep.js";
 import type { DeclaredBindings } from "./declared-bindings.js";

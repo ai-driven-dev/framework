@@ -225,6 +225,28 @@ describe("the guard itself", () => {
     expect(scopesToRun([], scopes, { all: true })).toEqual(["shared", "tools"]);
   });
 
+  it("runs a scope that names a single file when that file, or its mirrored test, changed", () => {
+    const single = {
+      runtime: {
+        mutate: ["src/contexts/telemetry/infrastructure/git/git-environment.ts"],
+        break: 1,
+      },
+      tools: { mutate: "src/contexts/tools/**/*.ts", break: 1 },
+    };
+    expect(
+      scopesToRun(["cli/src/contexts/telemetry/infrastructure/git/git-environment.ts"], single)
+    ).toEqual(["runtime"]);
+    expect(
+      scopesToRun(
+        ["cli/tests/contexts/telemetry/infrastructure/git/git-environment.unit.test.ts"],
+        single
+      )
+    ).toEqual(["runtime"]);
+    expect(
+      scopesToRun(["cli/src/contexts/telemetry/infrastructure/git/git-environment.tsx"], single)
+    ).toEqual([]);
+  });
+
   it("names every harness file the tree holds, so a renamed one cannot silently stop counting", () => {
     for (const file of HARNESS) {
       expect(

@@ -1,11 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { SnapshotBindingsUseCase } from "../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
 import type { BranchConfigBinding } from "../../../../src/contexts/telemetry/domain/branch-binding.js";
-import {
-  FakeBindings,
-  InMemoryBindingsLock,
-  InMemorySnapshots,
-} from "../../../helpers/ports/in-memory-telemetry.js";
+import { FakeBindings } from "../testing/fake-bindings.js";
+import { InMemoryBindingsLock } from "../testing/in-memory-bindings-lock.js";
+import { InMemorySnapshots } from "../testing/in-memory-snapshots.js";
 
 const ROOT = "/repo";
 const binding = (overrides: Partial<BranchConfigBinding> = {}): BranchConfigBinding => ({

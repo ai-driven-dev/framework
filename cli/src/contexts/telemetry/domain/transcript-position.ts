@@ -2,6 +2,13 @@ import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
 import { compareText } from "./text-order.js";
 
+/** What a transcript line that is no usage line names of where and when it was written, so it
+ * can be tied to a clone's consent. */
+export interface LineNames {
+  readonly cwd: string | null;
+  readonly at: string | null;
+}
+
 /** Where a previous read of one transcript stopped, and the file it stopped in. */
 export interface TranscriptPosition {
   /** Bytes consumed: the end of the last complete line. */

@@ -8,35 +8,32 @@ import {
   type RequestedFilters,
 } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
+import {
+  NO_FILTERS,
+  type ReportFilters,
+} from "../../../../../src/contexts/telemetry/contract/report-filter.js";
+import type { ReportAxis } from "../../../../../src/contexts/telemetry/contract/usage-report.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import {
   declarationOf,
   type SessionCarry,
 } from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
-import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
-import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
-import {
-  NO_FILTERS,
-  type ReportFilters,
-} from "../../../../../src/contexts/telemetry/domain/report/report-filter.js";
-import type { ReportAxis } from "../../../../../src/contexts/telemetry/domain/report/usage-report.js";
 import { repositoryIdOf } from "../../../../../src/contexts/telemetry/domain/repository-identity.js";
-import {
-  AUTUMN,
-  cloneOf,
-  FakeBindings,
-  FakeConsents,
-  FakeLocator,
-  grantedBy,
-  InMemoryBindingsLock,
-  InMemoryConsentHistory,
-  InMemoryIdentity,
-  InMemoryLedger,
-  InMemoryResolutions,
-  InMemorySessions,
-  InMemorySnapshots,
-  InMemoryTranscripts,
-} from "../../../../helpers/ports/in-memory-telemetry.js";
+import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
+import { AUTUMN } from "../../testing/autumn.js";
+import { cloneOf, grantedBy } from "../../testing/clone-builders.js";
+import { FakeBindings } from "../../testing/fake-bindings.js";
+import { FakeConsents } from "../../testing/fake-consents.js";
+import { FakeLocator } from "../../testing/fake-locator.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
+import { InMemoryLedger } from "../../testing/in-memory-ledger.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
+import { InMemoryTranscripts } from "../../testing/in-memory-transcripts.js";
 
 const ANY: Period = { from: null, to: null };
 

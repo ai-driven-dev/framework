@@ -219,6 +219,37 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
   });
 });
 
+describe("the two presentation files that still parse with telemetry's domain", () => {
+  const FILES = [
+    "src/presentation/commands/telemetry.ts",
+    "src/presentation/display/telemetry/telemetry-report-display.ts",
+  ];
+  const presentation = () =>
+    biomeOverrides().find((candidate) => candidate.includes?.includes("src/presentation/**/*.ts"));
+  const exception = () =>
+    biomeOverrides().find((candidate) => candidate.includes?.some((glob) => FILES.includes(glob)));
+
+  it("are matched by the exception alone, and every other presentation file by the rule", () => {
+    expect(exception()?.includes, "the exception names exactly these files").toEqual(FILES);
+    expect(
+      presentation()?.includes?.filter((glob) => glob.startsWith("!")),
+      "and the rule takes exactly these back"
+    ).toEqual(FILES.map((file) => `!${file}`));
+  });
+
+  it("forbid what every presentation file is held to, less telemetry's domain", () => {
+    const held = new Set(
+      (restrictedImportGroups(presentation() as BiomeOverride) ?? []).map(tokenOf)
+    );
+    const excepted = new Set(
+      (restrictedImportGroups(exception() as BiomeOverride) ?? []).map(tokenOf)
+    );
+
+    held.delete("**/telemetry/domain/**");
+    expect(excepted).toEqual(held);
+  });
+});
+
 describe("the guard itself", () => {
   const twoContexts = ["framework", "tools"];
 

@@ -10,25 +10,22 @@ import { DeclaredBindings } from "../../../../../src/contexts/telemetry/applicat
 import { reportEnvelopeOf } from "../../../../../src/contexts/telemetry/application/report/report-envelope.js";
 import { ReportUsageUseCase } from "../../../../../src/contexts/telemetry/application/report/report-usage-use-case.js";
 import { SnapshotBindingsUseCase } from "../../../../../src/contexts/telemetry/application/snapshot-bindings-use-case.js";
+import type { Period } from "../../../../../src/contexts/telemetry/contract/period.js";
 import { cloneKey } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
-import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/domain/formats/claude-transcript-usage.js";
-import type { Period } from "../../../../../src/contexts/telemetry/domain/report/period.js";
+import { readClaudeUsageLine } from "../../../../../src/contexts/telemetry/infrastructure/sources/claude/claude-transcript-usage.js";
+import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/ledger/usage-ledger-adapter.js";
 import { PrivateStorageAdapter } from "../../../../../src/contexts/telemetry/infrastructure/storage/private-storage-adapter.js";
-import { UsageLedgerAdapter } from "../../../../../src/contexts/telemetry/infrastructure/usage-ledger-adapter.js";
-import {
-  cloneOf,
-  FakeBindings,
-  FakeConsents,
-  FakeLocator,
-  grantedBy,
-  InMemoryBindingsLock,
-  InMemoryConsentHistory,
-  InMemoryIdentity,
-  InMemoryResolutions,
-  InMemorySessions,
-  InMemorySnapshots,
-  InMemoryTranscripts,
-} from "../../../../helpers/ports/in-memory-telemetry.js";
+import { cloneOf, grantedBy } from "../../testing/clone-builders.js";
+import { FakeBindings } from "../../testing/fake-bindings.js";
+import { FakeConsents } from "../../testing/fake-consents.js";
+import { FakeLocator } from "../../testing/fake-locator.js";
+import { InMemoryBindingsLock } from "../../testing/in-memory-bindings-lock.js";
+import { InMemoryConsentHistory } from "../../testing/in-memory-consent-history.js";
+import { InMemoryIdentity } from "../../testing/in-memory-identity.js";
+import { InMemoryResolutions } from "../../testing/in-memory-resolutions.js";
+import { InMemorySessions } from "../../testing/in-memory-sessions.js";
+import { InMemorySnapshots } from "../../testing/in-memory-snapshots.js";
+import { InMemoryTranscripts } from "../../testing/in-memory-transcripts.js";
 
 let root: string;
 let runs = 0;

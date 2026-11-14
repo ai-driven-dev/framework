@@ -17,8 +17,19 @@ function toolIds(files: readonly string[]): string[] {
   return [...ids].sort();
 }
 
+/**
+ * Files whose job is to wire tools together, so they name them by design. Admitted from the
+ * violation scan, but each still held to the number of tools it was written around: a third
+ * tool wired into one of them is caught by the count, never exempted by the admission.
+ */
+const REGISTRATION_SITES: readonly { readonly path: string; readonly named: number }[] = [
+  // The wiring of the two measured tools: each reader sits in a folder named for its tool.
+  { path: "src/composition/telemetry.ts", named: 2 },
+];
+
 function isAllowed(file: string, ids: readonly string[]): boolean {
   if (file === "src/contexts/tools/domain/profiles/registered-profiles.ts") return true;
+  if (REGISTRATION_SITES.some((site) => site.path === file)) return true;
   return ids.some((id) => file.startsWith(`src/contexts/tools/domain/profiles/${id}/`));
 }
 
@@ -72,18 +83,27 @@ const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/tools/domain/profile/foreign-suffix-filter.ts", named: 7 },
   // The record's tool vocabulary is the contract's: `codex` is admitted so a second tool's
   // reader needs no change to the record, and is not a list a new tool joins.
-  { path: "src/contexts/telemetry/domain/usage-record.ts", named: 1 },
+  { path: "src/contexts/telemetry/contract/usage-record.ts", named: 1 },
   // Where Claude Code keeps its transcripts, named for the one tool whose directory it is.
-  { path: "src/contexts/telemetry/domain/claude-projects-root.ts", named: 1 },
+  {
+    path: "src/contexts/telemetry/infrastructure/sources/claude/claude-projects-root.ts",
+    named: 1,
+  },
   // Codex's own session-file format and where Codex keeps those files, each named for the one
   // tool whose files it reads: a tool measured is its reader, not a list a new tool joins.
-  { path: "src/contexts/telemetry/domain/formats/codex-transcript-usage.ts", named: 1 },
   {
-    path: "src/contexts/telemetry/infrastructure/transcripts/codex-transcript-source-adapter.ts",
+    path: "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-usage.ts",
+    named: 1,
+  },
+  {
+    path: "src/contexts/telemetry/infrastructure/sources/codex/codex-transcript-source-adapter.ts",
     named: 1,
   },
   // Claude Code's own settings files, read to say how long it keeps a transcript.
-  { path: "src/contexts/telemetry/infrastructure/switch/claude-settings-adapter.ts", named: 1 },
+  {
+    path: "src/contexts/telemetry/infrastructure/sources/claude/claude-settings-adapter.ts",
+    named: 1,
+  },
 ];
 
 const STRING_LITERAL = /(["'`])(?:(?!\1)[^\\\n]|\\.)*\1/g;
@@ -130,8 +150,6 @@ const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: num
   },
   { path: "src/contexts/framework/application/restore/restore-use-case.ts", named: 4 },
   { path: "src/contexts/telemetry/application/switch/telemetry-on-use-case.ts", named: 2 },
-  { path: "src/contexts/telemetry/domain/formats/claude-transcript-usage.ts", named: 2 },
-  { path: "src/contexts/telemetry/domain/formats/codex-transcript-usage.ts", named: 2 },
   { path: "src/contexts/tools/contract/config-refs.ts", named: 4 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 1 },
 ];
@@ -159,8 +177,9 @@ describe("a tool identifier stays inside its own profile", () => {
 
   it("holds each admitted file to the number of tools its reason was written around", () => {
     const ids = toolIds(sourceFiles());
-    const recorded = BASELINE.map(({ path, named }) => `${path}: ${named}`);
-    const actual = BASELINE.map(({ path }) => `${path}: ${toolsNamedIn(read(path), ids).length}`);
+    const held = [...BASELINE, ...REGISTRATION_SITES];
+    const recorded = held.map(({ path, named }) => `${path}: ${named}`);
+    const actual = held.map(({ path }) => `${path}: ${toolsNamedIn(read(path), ids).length}`);
 
     expect(actual, "an admitted file took on another tool — fix the count and its reason").toEqual(
       recorded

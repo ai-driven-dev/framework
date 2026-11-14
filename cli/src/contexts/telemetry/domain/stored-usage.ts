@@ -1,9 +1,28 @@
 import { tryParseJson } from "../../../shared/domain/reading/json-file.js";
 import { asPlainObject } from "../../../shared/domain/reading/plain-object.js";
-import { isRequestless } from "./formats/claude-transcript-usage.js";
+import { USAGE_AGENTS, USAGE_TOOLS, type UsageRecord } from "../contract/usage-record.js";
+import { shiftDay } from "./report/period.js";
 import { compareText } from "./text-order.js";
 import { foldUsage } from "./usage-fold.js";
-import { USAGE_AGENTS, USAGE_TOOLS, type UsageRecord } from "./usage-record.js";
+
+const ADVISOR = /#advisor\d+$/;
+
+/** Whether a Claude Code call has no request id: keyed by message and session, as the reader
+ * keys it, or with its own time after, as cli-v5.5.0 keyed it. Such a call is never stored, at
+ * ingest or when found in the ledger, and is counted left out instead: none was seen in real
+ * transcripts (see the usage contract), so nothing measured bounds how far apart its copies lie. */
+export function isRequestless(call: Pick<UsageRecord, "tool" | "key" | "session_id">): boolean {
+  if (call.tool !== "claude-code") return false;
+  const base = call.key.replace(ADVISOR, "");
+  const rest = base.slice(base.indexOf(":") + 1);
+  return rest === call.session_id || rest.startsWith(`${call.session_id}:`);
+}
+
+/** A requestless call as it is left out: its message and session, the same for each of its
+ * copies and iterations, whichever version keyed them. */
+export function requestlessCallOf(call: Pick<UsageRecord, "tool" | "key" | "session_id">): string {
+  return `${call.tool}\u0000${call.key.slice(0, call.key.indexOf(":"))}:${call.session_id}`;
+}
 
 /** A usage record as the ledger keeps it: the call, and the repository it was made in. The
  * repository is resolved at ingest and kept, because the working directory it came from may
@@ -35,14 +54,6 @@ export function dayOf(at: string): string | null {
   // An offset can carry the instant past year 9999 or before year 0, written `+YYYYYY`/`-YYYYYY`.
   const day = new Date(instant).toISOString().slice(0, 10);
   return day.startsWith("+") || day.startsWith("-") ? null : day;
-}
-
-const DAY_MS = 86_400_000;
-
-/** The UTC day `days` after a `YYYY-MM-DD` day, as `toISOString` writes its first ten
- * characters: a day past four-digit years comes out in a shape no `YYYY-MM-DD` test accepts. */
-export function shiftDay(day: string, days: number): string {
-  return new Date(Date.parse(`${day}T00:00:00.000Z`) + days * DAY_MS).toISOString().slice(0, 10);
 }
 
 /** The days an ingest of these records reads: each record's day and the day on each side. A

@@ -5,8 +5,8 @@ import {
   currentBranchOf,
 } from "../domain/declaration/branch-role.js";
 import { lockWaitFor, type TaskDeclaration } from "../domain/declaration/task-declaration.js";
-import type { BranchBindingSource } from "../domain/ports/branch-binding-source.js";
-import type { BranchBindingStore } from "../domain/ports/branch-binding-store.js";
+import type { BranchBindingSource } from "../ports/branch-binding-source.js";
+import type { BranchBindingStore } from "../ports/branch-binding-store.js";
 import type { SnapshotBindingsUseCase } from "./snapshot-bindings-use-case.js";
 
 export interface CurrentBranch {
