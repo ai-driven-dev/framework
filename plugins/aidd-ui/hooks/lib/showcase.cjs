@@ -289,7 +289,7 @@ nav li, nav .home { display: flex; align-items: center; gap: var(--s2); border-r
 nav li a, nav .home a { flex: 1; min-width: 0; padding: 5px var(--s2) 5px var(--s5); color: var(--muted); font-size: var(--t-md); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 nav li:hover, nav .home:hover { background: var(--sunken); }
 nav a:hover { text-decoration: none; }
-nav li:has(a[aria-current="page"]), nav .home:has(a[aria-current="page"]) { background: var(--sunken); box-shadow: inset 2px 0 0 var(--text); }
+nav li:has(> a[aria-current="page"]), nav .home:has(> a[aria-current="page"]) { background: var(--sunken); box-shadow: inset 2px 0 0 var(--text); border-radius: 0 var(--r2) var(--r2) 0; }
 nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 .head { display: flex; flex-direction: column; gap: var(--s2); }
 .head > .stamp { display: flex; align-items: center; gap: var(--s2); }
@@ -360,7 +360,7 @@ legend { float: left; margin-right: var(--s2); font-size: var(--t-sm); font-weig
 label { font-size: var(--t-sm); color: var(--muted); }
 #sides[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); }
 .tabs { display: flex; gap: var(--s1); padding: 0 var(--s4); border-bottom: 1px solid var(--line); overflow-x: auto; }
-.tab { display: inline-flex; align-items: center; gap: var(--s2); height: 42px; padding: 0 var(--s3); border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--muted); font-size: var(--t-md); }
+.tab { display: inline-flex; align-items: center; gap: var(--s2); height: 42px; white-space: nowrap; flex: none; padding: 0 var(--s3); border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--muted); font-size: var(--t-md); }
 .tab:hover { background: transparent; color: var(--text); }
 .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
 .tab .dot { inline-size: 8px; block-size: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--faint); }

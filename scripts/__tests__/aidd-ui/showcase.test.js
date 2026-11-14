@@ -953,6 +953,16 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(itemOf(home, "search-flow"), />search-flow</);
     });
 
+    it("marks only the item whose own link is the page, never the step that holds it", () => {
+      const html = pagesOf()["home.html"];
+      assert.doesNotMatch(html, /li:has\(a\[aria-current="page"\]\)/);
+      assert.match(html, /nav li:has\(> a\[aria-current="page"\]\)/);
+    });
+
+    it("keeps the mark of the current tab on one line", () => {
+      assert.match(rule(pagesOf()["home.html"], ".tab"), /white-space: nowrap/);
+    });
+
     it("names the mark of each step in words, from the labels of the language", () => {
       for (const lang of ["en", "fr"]) {
         const labels = LABELS[lang];
