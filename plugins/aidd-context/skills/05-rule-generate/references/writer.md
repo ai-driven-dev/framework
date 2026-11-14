@@ -8,12 +8,13 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 
 | Variable | Value |
 | --- | --- |
+| `$project_root` | Absolute path of the session's working directory, copied, never retyped. |
 | `$writer` | Absolute path of `scripts/write-rule.cjs` beside the loaded `SKILL.md`. |
-| `$request_json` | Temporary file outside the project: `category`, `slug`, `description`, `body`, and `paths`, omitted for all files. |
+| `$request_json` | Temporary file outside the project: `category`, `slug`, `description`, `body`, and `paths`, an array of globs omitted for all files. |
 
 | Option | Effect |
 | --- | --- |
-| `--project` | Real absolute project directory. |
+| `--project` | `$project_root`; refused unless an absolute, real directory, with no symlink in it. |
 | `--tools` | Comma-separated host IDs added to the source's `targets`, never removed: required with `--input`, optional with `--publish`. |
 | `--input <file>` | Writes the source `aidd_docs/rules/<category>/<slug>.md`, then publishes it. |
 | `--remove <category>/<slug>` | Deletes the source, its copies and its index line. |
