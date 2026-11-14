@@ -137,13 +137,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-capture-agent.md](skills/06-agent-generate/actions/01-capture-agent.md) | - |
-| `actions` | [02-write-agent.md](skills/06-agent-generate/actions/02-write-agent.md) | - |
+| `actions` | [01-frame.md](skills/06-agent-generate/actions/01-frame.md) | - |
+| `actions` | [02-write.md](skills/06-agent-generate/actions/02-write.md) | - |
 | `actions` | [03-validate.md](skills/06-agent-generate/actions/03-validate.md) | - |
-| `assets` | [agent-template.md](skills/06-agent-generate/assets/agent-template.md) | `<what it does + when to use>  # required, third person` |
+| `assets` | [agent-template.md](skills/06-agent-generate/assets/agent-template.md) | `<what it does>. Use to <when to call it>.` |
 | `references` | [agent-authoring.md](skills/06-agent-generate/references/agent-authoring.md) | - |
-| `references` | [tool-paths.md](skills/06-agent-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/06-agent-generate/SKILL.md) | `Generate an agent across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor an agent, subagent or specialized role. Not for other artifacts like skills, rules, commands, hooks.` |
+| `references` | [hosts.md](skills/06-agent-generate/references/hosts.md) | - |
+| `references` | [writer.md](skills/06-agent-generate/references/writer.md) | - |
+| `scripts` | [write-agent.cjs](skills/06-agent-generate/scripts/write-agent.cjs) | - |
+| `-` | [SKILL.md](skills/06-agent-generate/SKILL.md) | `Creates or updates an agent, a focused role, across the host AI tools, when the user wants a new agent or to refactor one.` |
 
 #### `skills/07-command-generate`
 
