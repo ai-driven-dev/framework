@@ -14,6 +14,7 @@ Find Chrome, Chromium or Edge on the machine.
 Take one screenshot per state and per width, into a temp folder.
 
 - Widths: 390 for mobile, 1280 for desktop.
+- Only you open these captures. Never hand one to the person.
 - Never write screenshots under `aidd_docs/`.
 - Command, with the absolute path of the render:
 
@@ -25,6 +26,16 @@ Take one screenshot per state and per width, into a temp folder.
 - A line about a display link in the output is harmless.
 - Use a window tall enough to show the whole state.
 - If the states share one page, read each one in the capture.
+
+## Load
+
+A browser left running slows the whole machine.
+
+- Run captures in turn, each ending before the next starts.
+- Never background a capture with `&`, nor loop in parallel.
+- Wrap each capture in a 30 second limit.
+- Kill the browser process after each one that did not exit.
+- Capture only the screens this change reached, not every page.
 
 ## Read
 
