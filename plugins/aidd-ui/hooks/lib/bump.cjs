@@ -235,7 +235,10 @@ function uncapturedState(project, record) {
   return missing === undefined ? null : { state: missing, file: `${record.folder}/${id}.${missing}@${version}.png` };
 }
 
-/** Validates each element or wireframe `ids` names, each with an ok verdict at its current version
+/** A journey is agreed in the conversation: no review judges it, so no verdict and no state stand in its way. */
+const isAgreed = (record) => fm(record).kind === "journey";
+
+/** Validates each element, wireframe or journey `ids` names, each but a journey with an ok verdict at its current version
  * for every state: sets its status to validated and writes its fingerprint in the row of its current version. Returns `{validated}`, each `{id, version, fingerprint}`; a
  * refusal is thrown before any file is written. */
 function validate(root, ids) {
@@ -243,13 +246,13 @@ function validate(root, ids) {
   const index = byId(project);
   const chosen = [...new Set(ids)].map((id) => {
     const record = index.get(id);
-    if (!record || !isReviewed(record)) throw new Refusal(`no element named "${id}"`);
+    if (!record || !(isReviewed(record) || isAgreed(record))) throw new Refusal(`no element named "${id}"`);
     if (fm(record).status === STATUS_DEPRECATED) throw new Refusal(`"${id}" is deprecated, nothing to validate`);
     const row = currentRow(project, record);
     if (!row) throw new Refusal(`"${id}" has no history row at its version ${fm(record).version}`);
     // A sealed version is never sealed again: an edit since would pass H8 without a raise.
     if (row.Fingerprint) throw new Refusal(`"${id}" version ${fm(record).version} is already validated, raise its version with bump to change it`);
-    const unreviewed = unreviewedState(project, record);
+    const unreviewed = isAgreed(record) ? null : unreviewedState(project, record);
     if (unreviewed !== null) {
       const where = `${unreviewed.state ? ` for state ${unreviewed.state}` : ""} at version ${fm(record).version}`;
       throw new Refusal(unreviewed.verdict === "revise" ? `"${id}" has a revise verdict${where}, change it first` : `"${id}" has no ok verdict${where}, review it first`);

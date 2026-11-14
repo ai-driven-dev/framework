@@ -1171,8 +1171,8 @@ describe("aidd-ui showcase", () => {
       const index = pagesOf()["index.html"];
       assert.equal(stepOf(index, "components").mark, "1");
       assert.match(index, /<li data-step="components" data-state="todo">/);
-      assert.match(index, /<span class="state">1 proposed<\/span>/);
-      assert.match(stepOf(index, "components").html, /aria-label="1 proposed"/);
+      assert.match(index, /<span class="state">1 awaiting your agreement<\/span>/);
+      assert.match(stepOf(index, "components").html, /aria-label="1 awaiting your agreement"/);
     });
 
     it("counts what the drawer reviews, not the proposed assets, in a step holding both", () => {
@@ -1187,16 +1187,17 @@ describe("aidd-ui showcase", () => {
       edit(tmp, `${UI}/journeys/onboarding.md`, "status: validated", "status: proposed");
       const index = pagesOf()["index.html"];
       assert.deepEqual([stepOf(index, "journeys").todo, stepOf(index, "journeys").mark], ["0", "1"]);
-      assert.match(index, /<li data-step="journeys" data-state="todo">[\s\S]*?<span class="state">1 proposed<\/span>/);
+      assert.match(index, /<li data-step="journeys" data-state="todo">[\s\S]*?<span class="state">1 awaiting your agreement<\/span>/);
       assert.match(index, /<li data-step="components" data-state="todo">[\s\S]*?<span class="state">\d+ to review<\/span>/);
       assert.ok(!itemsOf(index).some((item) => item.record === "onboarding"));
+      assert.match(pagesOf({ lang: "fr" })["index.html"], /<li data-step="journeys" data-state="todo">[\s\S]*?<span class="state">1 en attente de votre accord<\/span>/);
     });
 
     it("says what is still proposed on the overview when nothing awaits the drawer", () => {
       for (const file of ["components/button", "components/search-field", "components/dialog", "components/old-button", "screens/home", "wireframes/search-flow"]) fs.rmSync(path.join(tmp, UI, `${file}.md`));
       assert.match(pagesOf()["index.html"], /<p class="none">Nothing to review\.<\/p>/);
       edit(tmp, `${UI}/journeys/onboarding.md`, "status: validated", "status: proposed");
-      const words = { en: "Nothing to review here\\. 1 proposed, in Journeys, to agree with the assistant in the conversation\\.", fr: "Rien à relire ici\\. 1 proposé\\(s\\), dans Parcours, à valider avec l'assistant dans la conversation\\." };
+      const words = { en: "Nothing to review here\\. 1 awaiting your agreement, in Journeys\\. Agree with the assistant in the conversation\\.", fr: "Rien à relire ici\\. 1 en attente de votre accord, dans Parcours\\. À valider avec l'assistant dans la conversation\\." };
       for (const lang of ["en", "fr"]) {
         const index = pagesOf({ lang })["index.html"];
         assert.doesNotMatch(index, /<p class="none">/, lang);

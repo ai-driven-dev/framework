@@ -5,6 +5,7 @@ const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, HISTORY, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, addHistory, edit, editTokens, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const { byId, reviewStatesOf } = require(path.join(LIB, "model.cjs"));
+const { isReviewed } = require(path.join(LIB, "history.cjs"));
 const { list } = require(path.join(LIB, "markdown.cjs"));
 
 // The publish command is driven as a subprocess, as the skill calls it, after bump has raised
@@ -30,6 +31,7 @@ const publish = (...args) => {
 };
 const read = (name) => fs.readFileSync(path.join(tmp, name), "utf8");
 const systemRows = () => read(HISTORY).split("\n").filter((line) => line.startsWith("| system |"));
+const JOURNEY = `${UI}/journeys/onboarding.md`;
 const GATE = `${UI}/reviews/gate.md`;
 /** Writes a review holding an ok verdict for each state of each id at its current version, and its history row. */
 const reviewed = (dir, ...ids) => {
@@ -145,6 +147,26 @@ describe("aidd-ui publish", () => {
       assert.equal(rowOf("search-flow", 1), `| search-flow | 1 | created | no | aidd_docs/tasks/ds-init | ${report.validated[0].fingerprint} |`);
     });
 
+    describe("a journey", () => {
+      const proposedJourney = () => edit(tmp, JOURNEY, "status: validated", "status: proposed");
+
+      it("is validated with no review, its fingerprint in the row of its version", () => {
+        proposedJourney();
+        const { code, report, err } = publish("onboarding");
+        assert.deepEqual([code, err], [0, ""]);
+        assert.deepEqual(report.validated.map(({ id, version }) => [id, version]), [["onboarding", "1"]]);
+        assert.match(report.validated[0].fingerprint, /^[0-9a-f]{12}$/);
+        assert.ok(read(JOURNEY).includes("\nstatus: validated\n"));
+        assert.equal(rowOf("onboarding", 1), `| onboarding | 1 | created | no | aidd_docs/tasks/ds-init | ${report.validated[0].fingerprint} |`);
+        assert.deepEqual(validate(tmp), { code: 0, out: ["VALID"], err: "" });
+      });
+
+      it("is judged by no review: it holds no state, and the engine does not count it a reviewed record", () => {
+        const journey = byId(load(tmp)).get("onboarding");
+        assert.deepEqual([isReviewed(journey), reviewStatesOf(journey)], [false, []]);
+      });
+    });
+
     describe("a refusal", () => {
       const refused = (ids, message) => {
         const before = snapshot();
@@ -156,12 +178,14 @@ describe("aidd-ui publish", () => {
       it("names an id that is no element, writing nothing", () => {
         unsealed();
         reviewed(tmp, "button");
-        refused(["button", "onboarding"], 'no element named "onboarding"');
+        refused(["button", "first-pass"], 'no element named "first-pass"');
         refused(["ghost"], 'no element named "ghost"');
       });
 
-      it("names a journey, which no review judges, with the refusal of any other id", () => {
-        refused(["onboarding"], 'no element named "onboarding"');
+      it("names a journey whose version already holds a fingerprint, as it does any record", () => {
+        edit(tmp, JOURNEY, "status: validated", "status: proposed");
+        assert.equal(publish("onboarding").code, 0);
+        refused(["onboarding"], '"onboarding" version 1 is already validated, raise its version with bump to change it');
       });
 
       it("names an element no review holds, writing nothing", () => {
