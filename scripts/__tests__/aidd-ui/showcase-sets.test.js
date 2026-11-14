@@ -653,6 +653,22 @@ describe("aidd-ui showcase sets", () => {
       assert.deepEqual(remainingOf({ records: [], sets: model.sets }, {}), []);
     });
 
+    it("marks only the states of the step it is asked for, and none already chosen", () => {
+      const two = { records: [{ key: "home@1", step: "screens", states: [{ state: "default", settled: false }, { state: "empty", settled: false }] }, { key: "button@1", step: "components", states: [{ state: "hover", settled: false }] }], sets: [] };
+      assert.deepEqual(remainingOf(two, { "home@1": { empty: { verdict: "ok" } } }, "screens"), [{ key: "home@1", state: "default" }]);
+      assert.deepEqual(remainingOf(two, {}, "components"), [{ key: "button@1", state: "hover" }]);
+      assert.deepEqual(remainingOf(two, {}), [{ key: "home@1", state: "default" }, { key: "home@1", state: "empty" }, { key: "button@1", state: "hover" }]);
+    });
+
+    it("copies an entry of exactly a record, a version and verdicts, and leaves out what the drawer no longer lists", () => {
+      const listed = { records: [{ key: "home@1", step: "screens", record: "home", version: "1", states: [{ state: "default", settled: false }] }], sets: [] };
+      const stored = { "home@1": { default: { verdict: "ok" }, loading: { verdict: "revise", comment: "old" } }, "button@1": { hover: { verdict: "ok" } } };
+      const [entry, ...others] = entriesOf(listed, stored);
+      assert.deepEqual(Object.keys(entry), ["record", "version", "verdicts"]);
+      assert.deepEqual(entry.verdicts, [{ state: "default", verdict: "ok", comment: "" }]);
+      assert.deepEqual(others, []);
+    });
+
     it("blocks the copy on a variant to revise without a comment, as on a state", () => {
       const revise = (comment) => [{ set: "layout", variants: [{ name: "a", verdict: "revise", comment }, { name: "b", verdict: "keep", comment: "" }] }];
       assert.equal(blockedOf(revise("  ")), true);

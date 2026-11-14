@@ -80,7 +80,7 @@ const LABELS = {
     copy: "Finish and copy",
     copied: "Copied",
     clear: "Clear",
-    allOk: "Mark the remaining as OK",
+    allOk: "All OK",
     close: "Close",
     nothing: "Nothing to review yet.",
     blocked: "Write what should change on each state to revise.",
@@ -150,7 +150,7 @@ const LABELS = {
     copy: "Terminer et copier",
     copied: "Copié",
     clear: "Effacer",
-    allOk: "Marquer le reste OK",
+    allOk: "Tout OK",
     close: "Fermer",
     nothing: "Rien à juger pour l'instant.",
     blocked: "Écrivez ce qu'il faut changer sur chaque état à revoir.",
@@ -387,6 +387,10 @@ a.card .mini { border: 0; border-bottom: 1px solid var(--line); border-radius: 0
 .drawer-head .close { margin-left: auto; inline-size: 32px; padding: 0; border-color: transparent; background: transparent; color: var(--muted); font-size: var(--t-lg); }
 .drawer-body { flex: 1; overflow: auto; padding: var(--s2) 0; }
 .drawer-body > p { margin: var(--s4) var(--s5); color: var(--muted); font-size: 13px; }
+.step-group > summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: 13px; font-weight: 700; list-style: none; background: var(--bg); border-bottom: 1px solid var(--line); }
+.step-group > summary::-webkit-details-marker { display: none; }
+.step-group .step-count { color: var(--faint); font-weight: 500; }
+.step-group .step-ok { margin-left: auto; height: 26px; }
 .item { border-bottom: 1px solid var(--line); }
 .item summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: 13px; font-weight: 600; list-style: none; }
 .item summary::-webkit-details-marker { display: none; }
@@ -538,10 +542,11 @@ function blockedOf(entries) {
   return entries.some((entry) => (entry.variants || entry.verdicts).some(bare));
 }
 
-/** The states a click on "all OK" marks: each record state with no choice that is not settled already, as
- * `{key, state}`. A variant is a choice between options, never one of these. */
-function remainingOf(model, choices) {
-  return model.records.flatMap((each) => each.states.filter((one) => !one.settled && !(choices[each.key] || {})[one.state]).map((one) => ({ key: each.key, state: one.state })));
+/** The states a click on a step's "all OK" marks: each state of the records of that step (of every step when none
+ * is named) with no choice that is not settled already, as `{key, state}`. A variant is a choice between options,
+ * never one of these. */
+function remainingOf(model, choices, step) {
+  return model.records.filter((each) => !step || each.step === step).flatMap((each) => each.states.filter((one) => !one.settled && !(choices[each.key] || {})[one.state]).map((one) => ({ key: each.key, state: one.state })));
 }
 
 /** The verdicts kept in the browser, limited to the records at the versions `keys` names (`id@version`):
@@ -567,9 +572,9 @@ const drawer = document.getElementById("review");
 const opener = document.getElementById("open-review");
 const copy = document.getElementById("copy");
 const clear = document.getElementById("clear");
-const allOk = document.getElementById("all-ok");
 const note = document.getElementById("note");
 const items = [...drawer.querySelectorAll("details.item")];
+const stepButtons = [...drawer.querySelectorAll(".step-ok")];
 const sets = [...drawer.querySelectorAll("details.choice")];
 const pickers = [...document.querySelectorAll(".variants[data-set]")];
 const keyOf = (item) => item.dataset.record + "@" + item.dataset.version;
@@ -599,14 +604,13 @@ function choose(key, name, choice) {
 }
 const settled = (row) => row.dataset.current === "ok" || row.dataset.current === "revise";
 const model = () => ({
-  records: items.map((item) => ({ key: keyOf(item), record: item.dataset.record, version: item.dataset.version, states: rowsOf(item).map((row) => ({ state: row.dataset.state, settled: settled(row) })) })),
+  records: items.map((item) => ({ key: keyOf(item), step: item.closest("details.step-group").dataset.step, record: item.dataset.record, version: item.dataset.version, states: rowsOf(item).map((row) => ({ state: row.dataset.state, settled: settled(row) })) })),
   sets: sets.map((set) => ({ key: setKeyOf(set), set: set.dataset.set, variants: variantsOf(set).map((row) => row.dataset.variant) })),
 });
 const entries = () => entriesOf(model(), choices);
 const blocked = () => blockedOf(entries());
 function paint() {
-  let done = 0;
-  let total = 0;
+  let left = 0;
   for (const item of items) {
     const rows = rowsOf(item);
     let own = 0;
@@ -629,10 +633,8 @@ function paint() {
       each.textContent = own + "/" + rows.length;
       each.dataset.complete = String(own === rows.length);
     });
-    done += own;
-    total += rows.length;
+    if (own < rows.length) left += 1;
   }
-  document.querySelectorAll(".tally").forEach((each) => { each.textContent = done + "/" + total; });
   for (const set of sets) {
     let decided = 0;
     for (const row of variantsOf(set)) {
@@ -644,6 +646,7 @@ function paint() {
       field.hidden = verdict !== "revise";
       if (document.activeElement !== field) field.value = (choice && choice.comment) || "";
     }
+    if (!decided) left += 1;
     const total = set.querySelector(".done");
     total.textContent = decided + "/" + variantsOf(set).length + " " + total.dataset.label;
     const count = set.querySelector(".picked");
@@ -659,9 +662,10 @@ function paint() {
     const own = picksOf(holder);
     holder.querySelectorAll(".take").forEach((button) => button.setAttribute("aria-pressed", String(own[button.dataset.axis] === button.dataset.variant)));
   }
+  document.querySelectorAll(".tally[data-template]").forEach((each) => { each.textContent = each.dataset.template.replace("{count}", String(left)); });
   const stuck = blocked();
   copy.disabled = stuck || !copiedOf(entries());
-  allOk.disabled = remainingOf(model(), choices).length === 0;
+  for (const button of stepButtons) button.disabled = remainingOf(model(), choices, button.dataset.step).length === 0;
   note.textContent = stuck ? copy.dataset.blocked : "";
 }
 /** Marks the state of the page's own record that its tabs show. */
@@ -728,10 +732,11 @@ pickers.forEach((holder) => holder.querySelectorAll(".take").forEach((button) =>
 })));
 opener.addEventListener("click", () => show(true));
 document.getElementById("close-review").addEventListener("click", () => show(false));
-allOk.addEventListener("click", () => {
-  for (const { key, state } of remainingOf(model(), choices)) choose(key, state, { verdict: "ok", comment: "" });
+stepButtons.forEach((button) => button.addEventListener("click", (event) => {
+  event.preventDefault();
+  for (const { key, state } of remainingOf(model(), choices, button.dataset.step)) choose(key, state, { verdict: "ok", comment: "" });
   paint();
-});
+}));
 copy.addEventListener("click", () => {
   if (blocked()) return;
   const content = copiedOf(entries());
@@ -810,13 +815,26 @@ const link = (id, current, shown = id) => `<a href="${escaped(id)}.html"${curren
 /** A status in the language of the page; one the table does not know is shown as written. */
 const statusLabel = (labels, status) => (Object.hasOwn(labels.statuses, status) ? labels.statuses[status] : String(status));
 
+/** Elements by the order of the categories, every record by its id. */
+const byCategory = (a, b) => CATEGORIES.indexOf(categoryOf(a)) - CATEGORIES.indexOf(categoryOf(b)) || byRecordId(a, b);
+
+/** The step a page stands on: that of its record or set, on the overview the first step with work. */
+function hereOf(held, records, sets, current) {
+  if (current === null) return held.find((each) => each.todo)?.step;
+  if (current.startsWith(SET_CURRENT)) return setStepOf(sets.find((set) => `${SET_CURRENT}${set.id}` === current) ?? {});
+  return stepOf(records.find((record) => fm(record).id === current) ?? {});
+}
+
+/** The count of what awaits review, as the button and the drawer write it: the page script rewrites it as verdicts are given. */
+const pendingOf = (labels, count) => `<span class="tally pending" data-template="${escaped(labels.toReview)}">${escaped(filled(labels.toReview, { count }))}</span>`;
+
 /** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
  * not settled, and the open sets. `todo` counts records and open sets, never states. */
 function stepsOf({ project, records, rows, sets }) {
   return STEPS.map((step) => {
     const own = records.filter((record) => stepOf(record) === step);
     const ownSets = sets.filter((set) => setStepOf(set) === step);
-    const awaiting = own.filter((record) => hasRender(project, record) && awaitingOf(rows, record).length);
+    const awaiting = own.filter((record) => hasRender(project, record) && awaitingOf(rows, record).length).sort(byCategory);
     const open = ownSets.filter((set) => !set.problems.length);
     return { step, records: own, sets: ownSets, awaiting, open, todo: awaiting.length + open.length };
   });
@@ -866,13 +884,13 @@ function navigationOf(project, records, labels, current, sets = [], rows = []) {
     return ul(sorted.map(item));
   };
   const held = stepsOf({ project, records, rows, sets });
-  const here = current === null ? held.find((each) => each.todo)?.step : current.startsWith(SET_CURRENT) ? setStepOf(sets.find((set) => `${SET_CURRENT}${set.id}` === current) ?? {}) : stepOf(records.find((record) => fm(record).id === current) ?? {});
+  const here = hereOf(held, records, sets, current);
   const total = held.reduce((sum, each) => sum + each.todo, 0);
   const stepItem = (each, at) => {
     const mark = each.todo ? each.todo : each.records.length || each.sets.length ? "\u2713" : "\u2014";
     return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-mark">${mark}</span></summary>${bodyOf(each)}${setsOf(each.sets)}</details></li>`;
   };
-  const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} <span class="pending">${escaped(filled(labels.toReview, { count: total }))}</span></button></div>`;
+  const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} ${pendingOf(labels, total)}</button></div>`;
   return `<nav aria-label="${escaped(labels.list)}"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol>${foot}</nav>`;
 }
 
@@ -1138,17 +1156,15 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
   ].join("\n");
 }
 
-/** The review panel, the same on every page but for the record it stands on, which starts open: every record
- * with states and a render, each state with a link to its tab, its verdict pair and a comment field, then
- * one copy of all that is decided. Opened by the button at the top of the page, which tallies the states settled. */
-function drawerOf({ project, reviewable, rows, labels, current, sets = [], closed = false }) {
-  let settled = 0;
-  let total = 0;
+/** The review panel, the same on every page but for the step of the page, which starts open: one group per step
+ * with something left to review, each record awaiting review with only its states not settled, each state with a
+ * link to its tab, its verdict pair and a comment field, then one copy of all that is decided. A group carries its
+ * own "all OK". Opened by the button at the foot of the sidebar, which counts what awaits review. */
+function drawerOf({ project, held, here, rows, labels, current, sets = [], closed = false }) {
   const item = (record) => {
     const { id, version } = fm(record);
-    const states = orderedStates(rows, record);
-    settled += settledOf(states);
-    total += states.length;
+    const wanted = awaitingOf(rows, record);
+    const states = orderedStates(rows, record).filter(({ state }) => wanted.includes(state));
     const row = ({ state, verdict }) => [
       `<li class="pstate" data-state="${escaped(state)}" data-current="${escaped(verdict.current)}">`,
       `<a class="pick" href="${escaped(id)}.html#${escaped(tabId(state))}">${escaped(stateNameOf(labels, state))}</a>`,
@@ -1159,6 +1175,7 @@ function drawerOf({ project, reviewable, rows, labels, current, sets = [], close
     ].join("");
     return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${id === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record))}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
   };
+  const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.awaiting.length})</span><button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button></summary>${each.awaiting.map(item).join("\n")}</details>`;
   const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
   const choice = (set) => {
     const row = (variant) => `<li class="pvariant" data-variant="${escaped(variant.name)}"><span class="pick">${escaped(variant.name)}</span><span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(vote).join("")}</span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></li>`;
@@ -1166,13 +1183,13 @@ function drawerOf({ project, reviewable, rows, labels, current, sets = [], close
   };
   const open = sets.filter((set) => !set.problems.length);
   const choices = open.length ? `<section class="choices" data-group="choose"><h3>${labels.choose}</h3>${open.map(choice).join("")}</section>` : "";
-  const items = reviewable.map(item).join("\n");
-  const tally = `<span class="tally">${settled}/${total}</span>`;
+  const groups = held.filter((each) => each.awaiting.length).map(group).join("\n");
+  const tally = pendingOf(labels, held.reduce((sum, each) => sum + each.todo, 0));
   return [
     `<aside class="drawer" id="review" aria-label="${escaped(labels.review)}"${closed ? ' data-start="closed"' : ""} hidden>`,
     `<div class="drawer-head"><h2>${labels.review}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
-    `<div class="drawer-body">${choices}${items || (choices ? "" : `<p>${labels.nothing}</p>`)}</div>`,
-    `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="all-ok">${labels.allOk}</button><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}">${labels.copy}</button></div>`,
+    `<div class="drawer-body">${choices}${groups || (choices ? "" : `<p>${labels.nothing}</p>`)}</div>`,
+    `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}">${labels.copy}</button></div>`,
     "</aside>",
   ].join("\n");
 }
@@ -1272,8 +1289,8 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   const rows = verdictRows(placed(project));
   const journeys = records.filter((record) => fm(record).kind === "journey");
   const system = project.records.find((record) => fm(record).kind === "system");
-  const reviewable = records.filter((record) => hasRender(project, record)).sort((a, b) => GROUPS.indexOf(groupOf(a)) - GROUPS.indexOf(groupOf(b)) || byLevel(a, b));
-  const drawer = (current, closed = false) => drawerOf({ project, reviewable, rows, labels, current, sets, closed });
+  const held = stepsOf({ project, records, rows, sets });
+  const drawer = (current, closed = false) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, sets, closed });
   const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, overviewOf({ project, records, recordsById, rows, tokens, labels })].join("\n");
   const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {

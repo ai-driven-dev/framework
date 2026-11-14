@@ -13,8 +13,8 @@ const SHOWCASE = `${UI}/showcase`;
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const REVIEW_FILE = `${UI}/reviews/first-pass.md`;
 const HOME_STATES = ["default", "empty", "loading", "error"];
-// The records with states and a render, in the order of the navigation, and how many states each holds.
-const REVIEWABLE = [["button", 4], ["old-button", 1], ["search-field", 4], ["dialog", 4], ["search-flow", 2], ["home", 4]];
+// The records with states and a render, in the order of the drawer, and how many states each holds.
+const REVIEWABLE = [["search-field", 4], ["button", 4], ["old-button", 1], ["dialog", 4], ["home", 4], ["search-flow", 2]];
 
 let tmp;
 
@@ -497,7 +497,7 @@ describe("aidd-ui showcase", () => {
     it("opens from a Review button at the foot of the sidebar on every page, naming how many records await review", () => {
       verdicts(["home", "default", "1", "ok", ""], ["home", "loading", "1", "revise", "too small"], ["home", "error", "1", "pending", ""], ["button", "default", "0", "ok", ""]);
       for (const [name, html] of Object.entries(pagesOf())) {
-        assert.match(navOf(html), /<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">Review <span class="pending">\d+ to review<\/span><\/button><\/div><\/nav>$/, name);
+        assert.match(navOf(html), /<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">Review <span class="tally pending" data-template="\{count\} to review">\d+ to review<\/span><\/button><\/div><\/nav>$/, name);
         assert.equal(html.match(/id="open-review"/g).length, 1, name);
         assert.equal(html.match(/<aside class="drawer" id="review"/g).length, 1, name);
         assert.equal(html.match(/id="copy"/g).length, 1, name);
@@ -517,14 +517,14 @@ describe("aidd-ui showcase", () => {
       verdicts(["home", "default", "1", "ok", ""]);
       const home = pagesOf()["home.html"];
       const item = itemsOf(home).find((each) => each.record === "home").html;
-      assert.deepEqual([...item.matchAll(/<li class="pstate" data-state="([^"]+)"/g)].map((match) => match[1]), statesIn(home));
-      for (const state of HOME_STATES) {
+      assert.deepEqual([...item.matchAll(/<li class="pstate" data-state="([^"]+)"/g)].map((match) => match[1]), statesIn(home).filter((state) => state !== "default"));
+      for (const state of HOME_STATES.filter((each) => each !== "default")) {
         const row = rowOf(home, "home", state);
         assert.deepEqual([...row.matchAll(/<button type="button" class="verdict" data-verdict="(\w+)" aria-pressed="false">/g)].map((match) => match[1]), ["ok", "revise"], state);
         assert.equal(row.match(/<textarea class="comment"[^>]* hidden/g).length, 1, state);
         assert.match(row, new RegExp(`<a class="pick" href="home\\.html#tab-${state}">${state}</a>`), state);
       }
-      assert.match(rowOf(home, "home", "default"), /data-current="ok"/);
+      assert.doesNotMatch(item, /data-state="default"/);
     });
 
     it("shows the overview's progress on each card, and nothing pre-checked nor a batch to copy", () => {
@@ -536,10 +536,36 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(index, /type="checkbox"|checked|class="batch"|copy-all/);
     });
 
-    it("offers marking the remaining states OK only as an explicit action of the panel", () => {
+    it("offers marking the remaining states OK only as an explicit action of a step of the panel, never one for all", () => {
+      for (const [lang, label] of [["en", "All OK"], ["fr", "Tout OK"]]) {
+        const index = pagesOf({ lang })["index.html"];
+        assert.deepEqual([...drawerOf(index).matchAll(/<button type="button" class="step-ok" data-step="(\w+)">([^<]*)<\/button>/g)].map((match) => [match[1], match[2]]), [["components", label], ["screens", label]]);
+        assert.doesNotMatch(index, /id="all-ok"/);
+      }
+    });
+
+    it("groups the drawer by step, only the steps with something left, the step of the page open", () => {
+      const groupsOf = (html) => [...drawerOf(html).matchAll(/<details class="step-group" data-step="(\w+)"( open)?><summary><span class="step-name">([^<]*)<\/span><span class="step-count">\((\d+)\)<\/span>/g)].map((match) => [match[1], Boolean(match[2]), match[3], match[4]]);
+      const pages = pagesOf();
+      assert.deepEqual(groupsOf(pages["index.html"]), [["components", true, "Elements", "4"], ["screens", false, "Screens", "2"]]);
+      assert.deepEqual(groupsOf(pages["home.html"]), [["components", false, "Elements", "4"], ["screens", true, "Screens", "2"]]);
+      assert.deepEqual(groupsOf(pagesOf({ lang: "fr" })["button.html"]).map(([step, open, name]) => [step, open, name]), [["components", true, "\u00c9l\u00e9ments"], ["screens", false, "\u00c9crans"]]);
+    });
+
+    it("leaves a settled record out of the drawer, ok or revise alike, and its settled states out of a record kept", () => {
+      verdicts(...HOME_STATES.map((state) => ["home", state, "1", "ok", ""]), ["search-flow", "default", "1", "revise", "too pale"]);
       const index = pagesOf()["index.html"];
-      assert.match(drawerOf(index), /<button type="button" id="all-ok">Mark the remaining as OK<\/button>/);
-      assert.equal(index.match(/id="all-ok"/g).length, 1);
+      assert.ok(!itemsOf(index).some((item) => ["home"].includes(item.record)));
+      assert.equal(itemsOf(index).find((item) => item.record === "search-flow")?.html.match(/class="pstate"/g).length, 1);
+      assert.match(drawerOf(index), /data-step="screens"><summary><span class="step-name">Screens<\/span><span class="step-count">\(1\)<\/span>/);
+    });
+
+    it("counts the records and open sets awaiting review, not the states, in the button and in the drawer, in the language", () => {
+      verdicts(["home", "default", "1", "ok", ""]);
+      for (const [lang, text] of [["en", "6 to review"], ["fr", "6 \u00e0 relire"]]) {
+        const index = pagesOf({ lang })["index.html"];
+        assert.equal(index.match(new RegExp(`<span class="tally pending" data-template="[^"]+">${text}</span>`, "g")).length, 2, lang);
+      }
     });
 
     it("carries a script that compiles on every page, holding the copy the review skill reads", () => {
@@ -627,11 +653,11 @@ describe("aidd-ui showcase", () => {
       const fr = pagesOf({ lang: "fr" });
       const tab = (html, state) => html.match(new RegExp(`<button type="button" role="tab"[^>]*data-tab="${state}"[^>]*>[\\s\\S]*?</button>`))[0];
       assert.match(tab(fr["home.html"], "empty"), />vide<\/button>$/);
-      assert.match(rowOf(fr["home.html"], "home", "empty"), /<a class="pick" href="home\.html#tab-empty">vide<\/a>/);
-      assert.match(rowOf(fr["home.html"], "home", "empty"), /data-state="empty"/);
-      assert.deepEqual(["default", "empty", "loading", "error"].map((state) => rowOf(fr["home.html"], "home", state).match(/class="pick"[^>]*>([^<]*)</)[1]), ["par défaut", "vide", "chargement", "erreur"]);
+      assert.match(rowOf(fr["home.html"], "home", "error"), /<a class="pick" href="home\.html#tab-error">erreur<\/a>/);
+      assert.match(rowOf(fr["home.html"], "home", "error"), /data-state="error"/);
+      assert.deepEqual(["default", "loading", "error"].map((state) => tab(fr["home.html"], state).match(/>([^<]*)<\/button>$/)[1]), ["par défaut", "chargement", "erreur"]);
       assert.match(rowOf(fr["button.html"], "button", "hover"), /class="pick"[^>]*>hover</, "an unknown name as written");
-      assert.match(rowOf(pagesOf()["home.html"], "home", "empty"), /class="pick"[^>]*>empty</);
+      assert.match(rowOf(pagesOf()["home.html"], "home", "error"), /class="pick"[^>]*>error</);
       assert.equal(copiedOf([{ record: "home", version: 1, verdicts: [{ state: "empty", verdict: "ok", comment: "" }] }]).includes('"state": "empty"'), true);
     });
 
@@ -810,7 +836,7 @@ describe("aidd-ui showcase", () => {
 
   describe("the language", () => {
     it("labels the verdicts OK and Revise in English, by default", () => {
-      const row = rowOf(pagesOf()["home.html"], "home", "default");
+      const row = rowOf(pagesOf()["home.html"], "home", "error");
       assert.match(row, /data-verdict="ok"[^>]*>OK</);
       assert.match(row, /data-verdict="revise"[^>]*>Revise</);
       assert.match(pagesOf()["home.html"], /<html lang="en">/);
@@ -818,7 +844,7 @@ describe("aidd-ui showcase", () => {
 
     it("labels them OK and À revoir in French, the stored values staying ok and revise", () => {
       const home = pagesOf({ lang: "fr" })["home.html"];
-      const row = rowOf(home, "home", "default");
+      const row = rowOf(home, "home", "error");
       assert.match(row, /data-verdict="ok"[^>]*>OK</);
       assert.match(row, /data-verdict="revise"[^>]*>À revoir</);
       assert.match(home, /<html lang="fr">/);
