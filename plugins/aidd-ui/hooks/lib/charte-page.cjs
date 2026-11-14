@@ -118,7 +118,22 @@ function typographyFrame(entries, labels, language, tokens) {
   return `<div class="render"><iframe data-combo="a" title="${escaped(labels.charte.typographie.title)}" srcdoc="${escaped(inlined(doc, tokens))}"></iframe></div>`;
 }
 
-const breakpointsOf = (rows) => `<ul class="plain">${rows.map((row) => `<li data-breakpoint="${escaped(row.Name)}"><code class="name">${escaped(row.Name)}</code><span class="value">${escaped(row.Query)}</span></li>`).join("")}</ul>`;
+const MIN_WIDTH = /min-width:\s*([\d.]+(?:rem|em|px))/;
+const minOf = (query) => MIN_WIDTH.exec(query)?.[1] ?? null;
+
+/** The breakpoints as a ruler, narrowest first: a stop per breakpoint with its name and where it starts. An empty query is the default, up to the next width. */
+function breakpointsOf(rows, labels) {
+  const stops = rows.map((row) => ({ name: row.Name, query: row.Query, min: minOf(row.Query) }));
+  const width = (stop) => (stop.min === null ? 0 : pixelsOf(stop.min));
+  stops.sort((first, second) => width(first) - width(second));
+  const stop = (one, at) => {
+    const next = stops.slice(at + 1).find((other) => other.min !== null);
+    const text = one.query === "" ? (next ? labels.charte.defaultQuery.replace("{min}", next.min) : labels.charte.defaultOnly) : one.query;
+    const size = one.min === null ? "" : `<span class="value">${escaped(lengthText(one.min))}</span>`;
+    return `<li data-breakpoint="${escaped(one.name)}"><i class="tick"></i><code class="name">${escaped(one.name)}</code><span class="cites">${escaped(text)}</span>${size}</li>`;
+  }
+  return `<ol class="ruler">${stops.map(stop).join("")}</ol>`;
+}
 
 /** The sections of the charte page: `{id, title, html}` in the order of the page, only those with something to show.
  * `entries` are the catalog's, `values` the base values, `citations` name to the names a token reads, `rows` the
@@ -132,7 +147,7 @@ function charteSectionsOf({ entries, values, citations, primitives, rows, notes,
     espacements: () => spaceOf(held.espacements, values),
     arrondis: () => radiusOf(held.arrondis, values, labels),
     tailles: () => sizeOf(held.tailles, values, labels),
-    "points-de-rupture": () => (rows.length ? breakpointsOf(rows) : ""),
+    "points-de-rupture": () => (rows.length ? breakpointsOf(rows, labels) : ""),
     autres: () => othersOf(held.autres, values),
   };
   const sections = Object.entries(bodies).map(([id, body]) => ({ id, title: labels.charte[id].title, lead: labels.charte[id].lead, body: body() }));
@@ -197,6 +212,9 @@ main section[id] li { min-width: 0; }
 .ratio { margin-top: var(--s1); font-variant-numeric: tabular-nums; color: var(--text); }
 .verdict { color: var(--muted); }
 .contrast td[data-verdict="fail"] .verdict { color: var(--revise); font-weight: 600; }
+.ruler { list-style: none; margin: 0; padding: var(--s3) 0 0; display: flex; flex-wrap: wrap; border-top: 2px solid var(--line-strong); }
+.ruler li { position: relative; flex: 1 1 12rem; display: flex; flex-direction: column; gap: var(--s1); padding: var(--s3) var(--s3) var(--s3) 0; }
+.ruler .tick { position: absolute; inset-block-start: calc(-1 * var(--s3) - 7px); inset-inline-start: 0; inline-size: 2px; block-size: 12px; background: var(--text); }
 .plain li { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s4); padding: var(--s2) 0; border-top: 1px solid var(--line); }
 .plain li:first-child { border-top: 0; }
 section[id] .render { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); padding: var(--s4) var(--s5); }

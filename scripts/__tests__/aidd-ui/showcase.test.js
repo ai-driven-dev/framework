@@ -360,6 +360,23 @@ describe("aidd-ui showcase", () => {
       });
     });
 
+    describe("the breakpoint ruler", () => {
+      const rulerOf = (html) => sectionOf(html, "points-de-rupture");
+
+      it("draws one stop per breakpoint, in order of width, with no table words", () => {
+        const ruler = rulerOf(systemPage({ lang: "fr" }));
+        assert.match(ruler, /<ol class="ruler">/);
+        assert.deepEqual([...ruler.matchAll(/<li data-breakpoint="([^"]+)"/g)].map((match) => match[1]), ["mobile", "desktop"]);
+        assert.doesNotMatch(ruler, /\bName\b|\bQuery\b/);
+      });
+
+      it("reads an empty query as the default, up to the next width", () => {
+        const ruler = rulerOf(systemPage({ lang: "fr" }));
+        assert.match(ruler, /data-breakpoint="mobile"[\s\S]*?par défaut \(moins de 64rem\)/);
+        assert.match(ruler, /data-breakpoint="desktop"[\s\S]*?\(min-width: 64rem\)[\s\S]*?1024 px/);
+      });
+    });
+
     it("keeps the breakpoints and no token section without a stylesheet", () => {
       const html = systemPage({ tokens: null });
       assert.deepEqual(idsIn(html), ["points-de-rupture"]);
