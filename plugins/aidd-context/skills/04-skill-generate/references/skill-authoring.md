@@ -10,7 +10,7 @@ The constraints every generated skill satisfies, this generator included. `scaff
 | R2 | `description` is one third-person sentence, what then when. | It is the only always-on text. |
 | R3 | Write in English unless the user asks for another language. | The tree is maintained in one language. |
 | R4 | Emit a frontmatter field beyond those `tool-write.md` lists only when the plan needs it and the target's source supports it. | Each host reads a different set. |
-| R5 | Draw every path: an entry per case, a back-edge per loop, a terminal per outcome, a stop or confirm branch from every node that can take it. An action may run alone, from its own entry to its own outcome. | A path missing from the diagram is invisible. |
+| R5 | Draw every path: an entry per case, a back-edge per loop, a terminal per outcome, a stop or confirm branch from every node that can take it, except a stop a transversal rule already states. An action may run alone, from its own entry to its own outcome. | A path missing from the diagram is invisible. |
 | R6 | `## Transversal rules` holds the skill's own rules that more than one action follows. This generator's rules and these authoring rules stay out. | The router loads on every call. |
 | R7 | Keep action detail in its action, and a judgment or looked-up fact (path, format, per-tool value) in a reference. | The router loads on every call. |
 | R8 | Steps are imperative, one sentence each, cases as dash sub-items. A loop names the step it returns to. A check ends in validate, fix, repeat until it passes. | One sentence per step keeps each step checkable. |

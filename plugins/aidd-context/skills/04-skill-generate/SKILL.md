@@ -19,8 +19,7 @@ flowchart LR
   validate -->|"trial passed"| done((validated))
   validate -->|"trial declined or unavailable"| unverified((runtime unverified))
   validate -->|"fix declined or impossible"| blocked((blocked))
-  scope & plan & write & validate -->|"reference unreadable"| stopped((stopped))
-  write -->|"path outside the workspace"| stopped
+  write -->|"path outside the workspace"| stopped((stopped))
 ```
 
 ## Transversal rules
