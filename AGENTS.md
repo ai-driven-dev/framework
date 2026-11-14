@@ -19,6 +19,7 @@
 
 ## Action
 
+- **Framework behavior first:** when a request exposes a framework behavior to change, fix the owning framework component; documentation, tests, and one-off corrections support that change, not replace it.
 - **Surgical changes:** ship the minimum that solves the problem; touch only what the task needs, and leave the code cleaner than you found it.
 - **Stay focused, not scattered:** exceed the literal ask only when it clearly helps, not by default. When you spot an unrelated issue, note it in one line and keep going; detour only if it blocks the task.
 - **Solve your own issues first:** genuinely try to resolve it yourself before escalating to the human.
