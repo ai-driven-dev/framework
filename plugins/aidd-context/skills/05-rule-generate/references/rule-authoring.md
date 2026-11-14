@@ -6,11 +6,12 @@ How to write and name a rule.
 
 - R1. One topic per file; split multiple topics.
 - R2. Concise bullets; keep literals, conditions and exceptions.
-- R3. Explicit scope or all files.
+- R3. Scope: `paths` globs for the files the request names; omit them only for a rule on every file.
 - R4. English unless asked otherwise.
 - R5. Distinct bullets: none repeats, weakens or contradicts another.
 - R6. Group themes under `## <group>`, at most one tiny good-code example each.
 - R7. File it in the most specific category; slug is its prefix, then a kebab-case name.
+- R8. Start the body with `# <title>`, the title the `AGENTS.md` index shows.
 
 ## Categories
 

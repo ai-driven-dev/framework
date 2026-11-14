@@ -2,6 +2,8 @@
 
 Which host AI tools receive rules, how to detect them, and what each receives.
 
+Detect by listing the project root with hidden entries, since a file search misses an empty or folder-only marker.
+
 | Host / ID | Detected when | Receives |
 | --- | --- | --- |
 | Claude Code / `claude` | `.claude/` or `CLAUDE.md` | a copy in `.claude/rules/` |
