@@ -251,8 +251,20 @@ describe("aidd-ui showcase sets", () => {
         assert.doesNotMatch(column.html, /data-size="desktop"/);
         assert.match(column.html, /data-size="mobile"/);
         const [frame] = framesOf(look());
-        assert.match(frame, /\[data-state\]:not\(\[data-state="default"\]\) \{ display: none !important; \}/);
+        assert.match(frame, /\[data-state\]:not\(\[data-state="default"\]\):not\(\[data-state\] \[data-state\]\) \{ display: none !important; \}/);
         assert.match(frame, /Results, default/);
+      });
+
+      it("opens a dressed screen on its own first state, hiding no state of a component inside it", () => {
+        put(tmp, `${UI}/wireframes/search-flow.html`, "<html><head></head><body><section data-state=\"empty\"><div data-state=\"default\">C</div></section><section data-state=\"error\">E</section></body></html>");
+        const [frame] = framesOf(look());
+        assert.match(frame, /\[data-state\]:not\(\[data-state="empty"\]\):not\(\[data-state\] \[data-state\]\) \{ display: none !important; \}/);
+      });
+
+      it("opens a dressed screen on its default even when another state comes first", () => {
+        put(tmp, `${UI}/wireframes/search-flow.html`, "<html><head></head><body><section data-state=\"empty\">E</section><section data-state=\"default\">D</section></body></html>");
+        const [frame] = framesOf(look());
+        assert.match(frame, /\[data-state\]:not\(\[data-state="default"\]\)/);
       });
 
       it("opens on the first state of a screen that has no default", () => {
@@ -379,6 +391,22 @@ describe("aidd-ui showcase sets", () => {
       assert.deepEqual(stateButtons(barOf(html)), [["default", "true", "default"], ["empty", "false", "empty"], ["loading", "false", "loading"], ["error", "false", "error"]]);
     });
 
+    it("puts the default state first and selected, the others as first seen", () => {
+      const html = pagesOf([compared(states(["empty", "default", "error"]), states(["loading", "empty"]))], { lang: "en" })["_set-layout.html"];
+      assert.deepEqual(stateButtons(barOf(html)), [["default", "true", "default"], ["empty", "false", "empty"], ["error", "false", "error"], ["loading", "false", "loading"]]);
+      const apart = pagesOf([compared(states(["empty"]), states(["error", "default"]))], { lang: "en" })["_set-layout.html"];
+      assert.deepEqual(stateButtons(barOf(apart)).map((tab) => tab[0]), ["default", "empty", "error"]);
+      const without = pagesOf([compared(states(["empty", "error"]), states(["error"]))], { lang: "en" })["_set-layout.html"];
+      assert.deepEqual(stateButtons(barOf(without)), [["empty", "true", "empty"], ["error", "false", "error"]]);
+    });
+
+    it("lists only the states of the screen itself, never those of the components inside it", () => {
+      const nested = `<html><head></head><body><section data-state="default"><div data-state="empty"><p>photo</p></div></section><section data-state="error"><label data-state="error">champ</label><div data-state="loading"></div></section></body></html>`;
+      const html = pagesOf([compared(nested, nested)], { lang: "en" })["_set-layout.html"];
+      assert.deepEqual(stateButtons(barOf(html)).map((tab) => tab[0]), ["default", "error"]);
+      assert.match(html, /class="file rendering"[^>]*data-states="default error"/);
+    });
+
     it("names a state in the language of the page, as the record pages do", () => {
       const html = pagesOf([compared(states(["default", "error"]), states(["default"]))], { lang: "fr" })["_set-layout.html"];
       assert.deepEqual(stateButtons(barOf(html)).map((tab) => tab[2]), ["par défaut", "erreur"]);
@@ -465,7 +493,7 @@ describe("aidd-ui showcase sets", () => {
 
       it("shows the first state, then only the state a tab selects, in every frame", () => {
         const { tabs, holders } = rig({ rendered: [{ listed: "default empty", height: 600 }, { listed: "default empty", height: 300 }] });
-        for (const holder of holders) assert.match(holder.doc.style.textContent, /\[data-state\]:not\(\[data-state="default"\]\) \{ display: none !important; \}/);
+        for (const holder of holders) assert.match(holder.doc.style.textContent, /\[data-state\]:not\(\[data-state="default"\]\):not\(\[data-state\] \[data-state\]\) \{ display: none !important; \}/);
         tabs[1].handlers.click();
         for (const holder of holders) assert.match(holder.doc.style.textContent, /:not\(\[data-state="empty"\]\)/);
         assert.deepEqual(tabs.map((tab) => tab.attributes["aria-pressed"]), ["false", "true"]);
@@ -474,7 +502,7 @@ describe("aidd-ui showcase sets", () => {
       it("shows a render without states whole, and says so of a render that lacks the chosen state", () => {
         const { tabs, holders } = rig({ rendered: [{ listed: "", height: 600 }, { listed: "default", height: 300 }] });
         tabs[1].handlers.click();
-        assert.equal(holders[0].doc.style.textContent, '[data-state]:not([data-state="empty"]) { display: none !important; }');
+        assert.equal(holders[0].doc.style.textContent, '[data-state]:not([data-state="empty"]):not([data-state] [data-state]) { display: none !important; }');
         assert.deepEqual([holders[0].box.hidden, holders[0].note.hidden], [false, true]);
         assert.deepEqual([holders[1].box.hidden, holders[1].note.hidden], [true, false]);
         tabs[0].handlers.click();

@@ -75,16 +75,35 @@ function lookOf(variant) {
   return { background: colours[0], text: colours[1], accent: colours[2] ?? colours[1], font, sizes };
 }
 
-const STATE_ATTRIBUTE = /data-state="([^"]*)"/g;
+const TAG = /<!--[\s\S]*?-->|<(script|style)\b[\s\S]*?<\/\1\s*>|<(\/?)([a-zA-Z][\w:-]*)((?:"[^"]*"|'[^']*'|[^>"'])*)>/g;
+const VOID_TAGS = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"]);
+const STATE_VALUE = /\bdata-state="([^"]*)"/;
+
+/** The states a render names for the screen itself, each once, in the order first seen.
+ * An element inside another that names a state is a component's own state, never the screen's. */
+function statesOf(html) {
+  const found = [];
+  const open = [];
+  for (const [, , closing, name, attributes] of html.matchAll(TAG)) {
+    if (!name) continue;
+    const tag = name.toLowerCase();
+    if (closing) {
+      const at = open.map((each) => each.tag).lastIndexOf(tag);
+      if (at >= 0) open.length = at;
+      continue;
+    }
+    const state = STATE_VALUE.exec(attributes)?.[1];
+    if (state !== undefined && !open.some((each) => each.state)) found.push(state);
+    if (!VOID_TAGS.has(tag) && !attributes.endsWith("/")) open.push({ tag, state: state !== undefined });
+  }
+  return [...new Set(found)];
+}
 
 /** The state a screen opens on: its default, else the first it names. Null when it names none. */
 function firstStateOf(html) {
-  const states = [...html.matchAll(STATE_ATTRIBUTE)].map((match) => match[1]);
+  const states = statesOf(html);
   return states.includes("default") ? "default" : (states[0] ?? null);
 }
-
-/** The states a render names, each once, in the order it first names them. */
-const statesOf = (html) => [...new Set([...html.matchAll(STATE_ATTRIBUTE)].map((match) => match[1]))];
 
 /** A state as the page names it: a known name in the language, any other as written. */
 const stateNameOf = (labels, state) => (Object.hasOwn(labels.stateNames, state) ? labels.stateNames[state] : state);
@@ -130,7 +149,7 @@ function dressedOf(html, { background, text, accent, font, sizes }) {
   const headingSize = heading ? ` h1, h2 { font-size: ${heading}px; }` : "";
   const buttonSize = button ? ` min-height: ${button}px;` : "";
   const state = firstStateOf(html);
-  const hide = state === null ? "" : `[data-state]:not([data-state=${JSON.stringify(state)}]) { display: none !important; }`;
+  const hide = state === null ? "" : `[data-state]:not([data-state=${JSON.stringify(state)}]):not([data-state] [data-state]) { display: none !important; }`;
   const style = `<style>${hide}body { background: ${background}; color: ${text};${font ? ` font-family: ${font};` : ""}${bodySize} }${headingSize} button { background: ${accent}; color: ${background}; border: 0; padding: 8px 16px; border-radius: 8px; font: inherit;${buttonSize} } textarea, input { background: transparent; color: inherit; border: 1px solid ${accent}; }</style>`;
   return html.includes("</head>") ? html.replace("</head>", () => `${style}</head>`) : style + html;
 }
@@ -184,7 +203,8 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, sib
 function compareOf({ variants, labels }) {
   const files = variants.flatMap((variant) => variant.files.filter((file) => RENDER_FILE.test(file.path)));
   if (!files.length) return "";
-  const named = [...new Set(files.flatMap((file) => statesOf(file.text)))];
+  const union = [...new Set(files.flatMap((file) => statesOf(file.text)))];
+  const named = union.includes("default") ? ["default", ...union.filter((state) => state !== "default")] : union;
   const states = named.length > 1 ? `<div class="seg" role="group" aria-label="${escaped(labels.states)}">${named.map((state, at) => `<button type="button" class="tab" data-show-state="${escaped(state)}" aria-pressed="${at === 0}">${escaped(stateNameOf(labels, state))}</button>`).join("")}</div>` : "";
   const sizes = `<div class="seg size" role="group" aria-label="${escaped(labels.size)}">${SIZES.slice().reverse().map(([size, width]) => `<button type="button" class="tab" data-show-size="${size}" data-width="${width}" aria-pressed="${size === MOBILE[0]}">${escaped(labels[size])}</button>`).join("")}</div>`;
   return `<div class="compare tabs" data-state="${escaped(named.length > 1 ? named[0] : "")}" data-width="${MOBILE[1]}">${states}${sizes}</div>`;
@@ -322,7 +342,7 @@ function showState(frame, state) {
   if (!doc || !doc.head) return;
   const style = doc.getElementById("compare-state") || doc.createElement("style");
   style.id = "compare-state";
-  style.textContent = state ? "[data-state]:not([data-state=" + JSON.stringify(state) + "]) { display: none !important; }" : "";
+  style.textContent = state ? "[data-state]:not([data-state=" + JSON.stringify(state) + "]):not([data-state] [data-state]) { display: none !important; }" : "";
   if (!style.parentNode) doc.head.append(style);
 }
 function measure(box) {
