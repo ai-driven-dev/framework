@@ -35,16 +35,18 @@ Each box is a file: read it, then do what it says.
 - Never show a version number, skill name, history or changelog.
 - Never give a unit, or a count of warnings.
 - Never use jargon: no wireframe, design system, token or hex code. Say what it is.
+- Say « maquette » for a wireframe, never « plan ».
 - Name a step by what it does, never by its skill name.
 - Name the showcase plainly, « la vitrine » in French.
-- Say once how to open it: double-click `index.html` in `aidd_docs/ui/showcase/`. Give no other path.
+- Say once per conversation how to open it: double-click `index.html` in `aidd_docs/ui/showcase/`. Give no other path.
 - To show a page, point to it in the showcase.
 - Never hand over a capture or a temp file.
-- End a reply with exactly one next step or one question. Hold the others.
+- End a reply with one next step or one needed question. Hold the others.
+- Never end on an offer or a yes/no about more work.
 - Otherwise call tools.
 - Run the engine from the project root; never read its source.
 - Write only under `aidd_docs/ui/journeys/` and `aidd_docs/ui/wireframes/`.
 - After each write, fix what the hook or the validation reports.
 - Never bypass a hook.
-- Record the history without asking. Change only what was named, and never offer more.
+- Record the history without asking. Change only what was named.
 - Saving means writing the design files. Never branch, commit or push unless the person asks for git.

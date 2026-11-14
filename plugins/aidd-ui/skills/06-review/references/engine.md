@@ -12,7 +12,7 @@
 | Step | Command |
 | --- | --- |
 | propose 1, write the showcase | `node <engine> showcase --lang <code>` |
-| conclude 5, write the showcase | `node <engine> showcase --lang <code>` |
+| conclude 6, write the showcase | `node <engine> showcase --lang <code>` |
 | write 2, record the review | `node <engine> bump --task <task folder> --created <review id>` |
 | conclude 1, publish one record | `node <engine> publish <id>` |
 | conclude 2 and 4, validate | `node <engine> validate` |
