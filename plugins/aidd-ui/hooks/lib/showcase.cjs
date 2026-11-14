@@ -22,6 +22,7 @@ const BASE_CONTEXT = ""; // the key of `resolvedValues` for the base
 const UNTYPED = "css"; // the section of the tokens that hold raw CSS and no `$type`
 const SAMPLE = "Aa";
 const EXPECTED_COMPONENT = "R18";
+const FEW_ITEMS = 3; // a drawer holding this many records or fewer opens every group
 const SET_CURRENT = "set:"; // what a page of a set passes the navigation as its current page
 
 /** The words of the page chrome, one table per language: the same keys in each. */
@@ -29,6 +30,8 @@ const LABELS = {
   en: {
     title: "Design system showcase",
     choose: "Variants",
+    kindNames: { brand: "Brand identity", system: "Design system" },
+    whole: "Whole",
     stepNames: { journeys: "Journeys", identity: "Identity", foundations: "Foundations", components: "Elements", screens: "Screens" },
     categories: { input: "Input", action: "Actions", display: "Display", navigation: "Navigation", group: "Groups", asset: "Assets" },
     outOfJourney: "Out of journey",
@@ -94,6 +97,8 @@ const LABELS = {
   fr: {
     title: "Vitrine du système de design",
     choose: "Variantes",
+    kindNames: { brand: "Identité visuelle", system: "Charte graphique" },
+    whole: "L'ensemble",
     stepNames: { journeys: "Parcours", identity: "Identité", foundations: "Charte", components: "Éléments", screens: "Écrans" },
     categories: { input: "Saisie", action: "Actions", display: "Affichage", navigation: "Navigation", group: "Ensembles", asset: "Ressources" },
     outOfJourney: "Hors parcours",
@@ -148,7 +153,7 @@ const LABELS = {
     forPersona: "Pour",
     states: "États",
     stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur", hover: "survol", disabled: "désactivé", pressed: "appuyé", selected: "sélectionné", checked: "coché" },
-    sections: { Usage: "Utilisation", Keyboard: "Clavier", Steps: "Étapes", Persona: "Persona", Users: "Utilisateurs", Domain: "Domaine", "Personality and tone": "Personnalité et ton", "Anti-references": "Anti-références", References: "Références", Breakpoints: "Points de rupture" },
+    sections: { Usage: "Utilisation", Keyboard: "Clavier", Steps: "Étapes", Persona: "Persona", Users: "Utilisateurs", Domain: "Domaine", "Personality and tone": "Personnalité et ton", "Anti-references": "Anti-références", References: "Références", Breakpoints: "Points de rupture", Project: "Projet", Glossary: "Glossaire" },
     checksFolded: "Pour les développeurs ({count})",
     noRender: "Aucun rendu",
     statuses: { proposed: "proposé", validated: "validé", deprecated: "déprécié" },
@@ -212,7 +217,8 @@ button:disabled { opacity: 0.45; cursor: default; }
 #copy:hover:not(:disabled) { background: var(--accent-hover); }
 select { appearance: none; font: inherit; font-size: var(--t-sm); color: var(--text); background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r1); height: 32px; padding: 0 var(--s5) 0 var(--s2); }
 .shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
-.shell > nav { position: sticky; top: 0; height: 100vh; overflow: auto; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--line); padding: var(--s4) var(--s3) var(--s6); }
+.shell > nav { position: sticky; top: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--line); padding: var(--s4) var(--s3) var(--s4); }
+.nav-scroll { flex: 1; min-height: 0; overflow: auto; }
 .shell > main { min-width: 0; padding: var(--s6) var(--s7); display: flex; flex-direction: column; gap: var(--s5); max-width: 1320px; }
 .shell > main.wide { max-width: none; }
 nav .brand { display: flex; align-items: center; gap: var(--s2); padding: var(--s1) var(--s2) var(--s4); font-size: var(--t-sm); font-weight: 600; }
@@ -360,9 +366,9 @@ textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: va
 .mini-card .chip { line-height: 18px; padding: 0 8px; font-size: var(--t-xs); }
 .open-review { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); inline-size: 100%; height: 34px; padding: 0 var(--s4); background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .open-review:hover { background: var(--accent-hover); }
-.open-review .pending { padding: 0 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); font-size: var(--t-xs); line-height: 18px; font-variant-numeric: tabular-nums; }
+.open-review .pending { padding: 0 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); color: #fff; font-size: var(--t-xs); line-height: 18px; font-variant-numeric: tabular-nums; }
 .open-review[aria-expanded="true"] { display: none; }
-.review-foot { position: sticky; bottom: 0; margin-top: auto; padding: var(--s3) 0 0; background: var(--surface); }
+.review-foot { flex: none; padding: var(--s3) 0 0; background: var(--surface); }
 .tally { padding: 0 7px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); line-height: 18px; font-variant-numeric: tabular-nums; }
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 30; inline-size: var(--drawer); display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--line); box-shadow: -12px 0 32px rgba(24, 24, 20, 0.08); }
 .drawer-head { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s3) var(--s3) var(--s5); border-bottom: 1px solid var(--line); }
@@ -842,7 +848,7 @@ function screenGroupsOf(records, journeys) {
 /** The navigation, the same on every page: the five steps in order, each folded, the Review button at its foot. */
 function navigationOf(project, records, labels, current, sets = [], rows = []) {
   const journeys = records.filter((record) => fm(record).kind === "journey");
-  const item = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, titleOf(project, record))}</li>`;
+  const item = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, titleOf(project, record, labels))}</li>`;
   const named = (record, step) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, labels.stepNames[step])}</li>`;
   const ul = (items) => `<ul>${items.join("")}</ul>`;
   const setsOf = (held) => (held.length ? `<section data-group="choose"><h3>${labels.choose}</h3><ul>${held.map((set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}"${current === `${SET_CURRENT}${set.id}` ? ' aria-current="page"' : ""}>${escaped(set.id)}</a></li>`).join("")}</ul></section>` : "");
@@ -865,10 +871,14 @@ function navigationOf(project, records, labels, current, sets = [], rows = []) {
   const total = held.reduce((sum, each) => sum + each.todo, 0);
   const stepItem = (each, at) => {
     const mark = each.todo ? each.todo : each.records.length || each.sets.length ? "\u2713" : "\u2014";
-    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-mark">${mark}</span></summary>${bodyOf(each)}${setsOf(each.sets)}</details></li>`;
+    const alone = (each.step === "identity" || each.step === "foundations") && each.records.length === 1 && !each.sets.length ? each.records[0] : null;
+    const name = alone
+      ? `<a class="step-name" href="${escaped(fm(alone).id)}.html"${fm(alone).id === current ? ' aria-current="page"' : ""}>${labels.stepNames[each.step]}</a>`
+      : `<span class="step-name">${labels.stepNames[each.step]}</span>`;
+    return `<li data-step="${each.step}" data-todo="${each.todo}"><details${each.step === here ? " open" : ""}><summary><span class="stepno">${at + 1}</span>${name}<span class="step-mark">${mark}</span></summary>${alone ? "" : bodyOf(each) + setsOf(each.sets)}</details></li>`;
   };
   const foot = `<div class="review-foot"><button type="button" class="open-review" id="open-review" aria-controls="review" aria-expanded="false">${labels.review} ${pendingOf(labels, total)}</button></div>`;
-  return `<nav aria-label="${escaped(labels.list)}"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol>${foot}</nav>`;
+  return `<nav aria-label="${escaped(labels.list)}"><div class="nav-scroll"><div class="brand"><span class="mark"></span>${labels.title}</div><p class="home"><a href="index.html"${current === null ? ' aria-current="page"' : ""}>${labels.home}</a></p><ol class="steps">${held.map(stepItem).join("")}</ol></div>${foot}</nav>`;
 }
 
 /** The state a miniature shows: `default` when the record has it, else its first. */
@@ -963,7 +973,7 @@ const linksOf = (kind, label, ids, shown = (id) => id) => (ids.length ? `<sectio
 /** Where a record appears, at the bottom of its page: a small card per record that cites it, its title and status. */
 function appearsOf({ project, ids, recordsById, labels }) {
   if (!ids.length) return "";
-  const card = (id) => `<li><a class="mini-card" href="${escaped(id)}.html"><b>${escaped(titleOf(project, recordsById.get(id)))}</b>${statusOf(recordsById.get(id), labels)}</a></li>`;
+  const card = (id) => `<li><a class="mini-card" href="${escaped(id)}.html"><b>${escaped(titleOf(project, recordsById.get(id), labels))}</b>${statusOf(recordsById.get(id), labels)}</a></li>`;
   return `<section class="appears"><h2>${labels.appearsIn}</h2><ul>${ids.map(card).join("")}</ul></section>`;
 }
 
@@ -1142,17 +1152,19 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [], close
     const { id, version } = fm(record);
     const wanted = awaitingOf(rows, record);
     const states = orderedStates(rows, record).filter(({ state }) => wanted.includes(state));
+    const whole = Object.hasOwn(labels.kindNames, fm(record).kind);
     const row = ({ state, verdict }) => [
       `<li class="pstate" data-state="${escaped(state)}" data-current="${escaped(verdict.current)}">`,
-      `<a class="pick" href="${escaped(id)}.html#${escaped(tabId(state))}">${escaped(stateNameOf(labels, state))}</a>`,
+      `<a class="pick" href="${escaped(id)}.html${whole ? "" : `#${escaped(tabId(state))}`}">${escaped(whole ? labels.whole : stateNameOf(labels, state))}</a>`,
       `<span class="choose"><button type="button" class="verdict" data-verdict="ok" aria-pressed="false">${labels.ok}</button><button type="button" class="verdict" data-verdict="revise" aria-pressed="false">${labels.revise}</button></span>`,
       verdict.comment ? `<p class="said">${escaped(verdict.comment)}</p>` : "",
       `<textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea>`,
       "</li>",
     ].join("");
-    return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${id === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record))}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
+    return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${id === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record, labels))}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
   };
-  const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.awaiting.length})</span><button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button></summary>${each.awaiting.map(item).join("\n")}</details>`;
+  const shown = held.reduce((sum, each) => sum + each.awaiting.length, 0);
+  const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.awaiting.length})</span><button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button></summary>${each.awaiting.map(item).join("\n")}</details>`;
   const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
   const choice = (set) => {
     const row = (variant) => `<li class="pvariant" data-variant="${escaped(variant.name)}"><span class="pick">${escaped(variant.name)}</span><span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(vote).join("")}</span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></li>`;
@@ -1179,8 +1191,9 @@ function bodyLines(project, record) {
   return lines.slice(frontMatterEnd(lines) + 1);
 }
 
-/** The first `# ` heading of a record's text, else its id. */
-const titleOf = (project, record) => bodyLines(project, record).map((line) => TITLE_LINE.exec(line)?.[1]).find(Boolean) ?? fm(record).id;
+/** The title a page shows for a record: the brand and the system by the name of their kind in the language of `labels`,
+ * any other by the first `# ` heading of its text, else its id. */
+const titleOf = (project, record, labels) => (labels && Object.hasOwn(labels.kindNames, fm(record).kind) ? labels.kindNames[fm(record).kind] : bodyLines(project, record).map((line) => TITLE_LINE.exec(line)?.[1]).find(Boolean) ?? fm(record).id);
 
 /** The `## ` sections a page already shows in its own shape, so its text leaves them out. */
 const SHOWN_SECTIONS = { journey: [PERSONA_SECTION, STEPS_SECTION] };
@@ -1233,7 +1246,7 @@ function overviewOf({ project, held, records, rows, labels }) {
     const states = orderedStates(rows, record);
     return `<span class="progress" data-record="${escaped(fm(record).id)}" data-base="${settledOf(states)}" data-total="${states.length}">${settledOf(states)}/${states.length}</span>`;
   };
-  const entry = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record))}</a>${progressOf(record)}</li>`;
+  const entry = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a>${progressOf(record)}</li>`;
   const setEntry = (set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}">${escaped(set.id)}</a></li>`;
   const stepBlock = (each) => {
     const body = each.step === "components"
@@ -1280,13 +1293,13 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
     const uses = [...new Set(cited(record))].filter((each) => each !== id && recordsById.has(each)).sort(byCode);
     const usedBy = records.filter((other) => fm(other).id !== id && cited(other).includes(id)).map((other) => fm(other).id).sort(byCode);
     const reviewed = hasRender(project, record);
-    const title = titleOf(project, record);
+    const title = titleOf(project, record, labels);
     const journey = fm(record).kind === "journey";
     const bars = barsOf({ project, record, journeys, recordsById, labels });
     const body = [
       headOf({ record, title, description: descriptionOf(project, record), persona: journey ? personaOf(record, labels) : "", labels }),
       ...bars,
-      journey ? "" : linksOf("uses", labels.uses, uses, (each) => titleOf(project, recordsById.get(each))),
+      journey ? "" : linksOf("uses", labels.uses, uses, (each) => titleOf(project, recordsById.get(each), labels)),
       journey ? journeyOf({ project, record, recordsById, tokens, labels }) : "",
       id === SYSTEM_ID ? galleryOf({ project, system, tokens, labels, language }) : "",
       reviewed ? reviewOf({ project, system, record, rows, tokens, captures, labels }) : "",

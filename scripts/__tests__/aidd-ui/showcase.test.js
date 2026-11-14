@@ -77,7 +77,7 @@ describe("aidd-ui showcase", () => {
     });
 
     it("names the five steps in the language, in both languages", () => {
-      const names = (lang) => stepsOf(pagesOf({ lang })["index.html"]).map((each) => each.html.match(/<span class="step-name">([^<]*)</)[1]);
+      const names = (lang) => stepsOf(pagesOf({ lang })["index.html"]).map((each) => each.html.match(/<(?:span|a) class="step-name"[^>]*>([^<]*)</)[1]);
       assert.deepEqual(names("en"), ["Journeys", "Identity", "Foundations", "Elements", "Screens"]);
       assert.deepEqual(names("fr"), ["Parcours", "Identité", "Charte", "Éléments", "Écrans"]);
     });
@@ -790,10 +790,10 @@ describe("aidd-ui showcase", () => {
       assert.match(rule(html, ".board .card"), /grid-template-columns: 200px minmax\(0, 1fr\)/);
     });
 
-    it("sticks the review button to the foot of the sidebar instead of floating over the page", () => {
+    it("holds the review button at the foot of the sidebar instead of floating over the page", () => {
       const html = pagesOf()["onboarding.html"];
-      assert.match(rule(html, ".review-foot"), /position: sticky/);
-      assert.match(rule(html, ".review-foot"), /bottom: 0/);
+      assert.match(rule(html, ".review-foot"), /flex: none/);
+      assert.doesNotMatch(rule(html, ".review-foot"), /position: (fixed|sticky)/);
       assert.doesNotMatch(rule(html, ".open-review"), /position: fixed/);
       assert.doesNotMatch(rule(html, ".shell > main"), /34px/);
     });
@@ -921,6 +921,98 @@ describe("aidd-ui showcase", () => {
         assert.ok(html.includes("location.hash.slice(1)"));
         assert.ok(!html.slice(html.indexOf("const query = new URLSearchParams")).includes("location.hash"));
       });
+    });
+  });
+
+  describe("the brand and the system on a page of a language", () => {
+    const PLAIN = ["## Verdicts", "", "| Screen | State | Version | Verdict | Comment |", "| --- | --- | --- | --- | --- |"];
+    /** Reviews these `[record, state]` pairs at their version, and neither the brand nor the system. */
+    const settling = (pairs) => put(tmp, REVIEW_FILE, record(["id: first-pass", "kind: review", "status: proposed", "version: 1", "scope: system", "screens: [home]"], "# First pass", [...PLAIN, ...pairs.map(([id, state, version]) => `| ${id} | ${state} | ${version} | ok | |`)].join("\n")));
+    const awaitingPairs = () => itemsOf(pagesOf()["index.html"]).flatMap((item) => [...item.html.matchAll(/<li class="pstate" data-state="([^"]+)"/g)].map((match) => [item.record, match[1], item.version]));
+    const groupsOf = (html) => [...drawerOf(html).matchAll(/<details class="step-group" data-step="(\w+)"( open)?>/g)].map((match) => [match[1], Boolean(match[2])]);
+    const awaitingBrandAndSystem = (...also) => settling([...awaitingPairs().filter(([id]) => !also.includes(id) && id !== "brand" && id !== "system"), ...(also.includes("home") ? [] : HOME_STATES.map((state) => ["home", state, "1"]))]);
+    const ruleOf = (html, selector) => html.match(new RegExp(`^${selector.replaceAll(".", "\\.")} \\{([^}]*)\\}`, "m"))?.[1] ?? "";
+
+    it("names them in the language wherever a title shows, the records themselves untouched", () => {
+      awaitingBrandAndSystem();
+      for (const [lang, names] of [["en", ["Brand identity", "Design system"]], ["fr", ["Identité visuelle", "Charte graphique"]]]) {
+        const pages = pagesOf({ lang });
+        [["brand", names[0]], ["system", names[1]]].forEach(([id, name]) => {
+          assert.match(headerOf(pages[`${id}.html`]), new RegExp(`<h1>${name}</h1>`), `${lang} ${id} h1`);
+          assert.match(pages[`${id}.html`], new RegExp(`<title>${name}</title>`), `${lang} ${id} title`);
+          assert.match(todoOf(pages["index.html"]), new RegExp(`<a href="${id}.html">${name}</a>`), `${lang} ${id} overview`);
+          assert.match(itemsOf(pages["index.html"]).find((item) => item.record === id).html, new RegExp(`<summary><span>${name}</span>`), `${lang} ${id} drawer`);
+        });
+      }
+      assert.match(read(`${UI}/brand.md`), /^# Brand$/m);
+      assert.match(headerOf(pagesOf({ lang: "fr" })["button.html"]), /<h1>Button<\/h1>/);
+    });
+
+    it("makes the step summary the link of a step that holds one record and no set, with no child list", () => {
+      const html = pagesOf({ lang: "fr" })["index.html"];
+      for (const [step, id, name] of [["identity", "brand", "Identité"], ["foundations", "system", "Charte"]]) {
+        const each = stepOf(html, step);
+        assert.match(each.html, new RegExp(`<summary><span class="stepno">\\d</span><a class="step-name" href="${id}.html">${name}</a>`), step);
+        assert.doesNotMatch(each.html, /<ul>|<li/, step);
+      }
+      assert.match(stepsOf(pagesOf({ lang: "fr" })["brand.html"]).find((each) => each.step === "identity").html, /<a class="step-name" href="brand.html" aria-current="page">/);
+      assert.match(stepOf(html, "components").html, /<ul>/);
+    });
+
+    it("keeps the list of a step that holds a set beside its one record", () => {
+      const html = pagesOf({ sets: [{ id: "layout", rows: [], fingerprint: "f", axes: [], problems: [], variants: [{ name: "a", axes: [], round: 1, files: [{ path: "system.md", text: "" }] }] }] })["index.html"];
+      assert.match(stepOf(html, "foundations").html, /<li data-id="system">/);
+    });
+
+    it("keeps the review button below a scrolling list, never over it", () => {
+      const html = pagesOf()["index.html"];
+      assert.match(ruleOf(html, ".nav-scroll"), /overflow: auto/);
+      assert.match(ruleOf(html, ".nav-scroll"), /flex: 1/);
+      const nav = navOf(html);
+      const scroll = nav.match(/<div class="nav-scroll">([\s\S]*)<\/div><div class="review-foot">/);
+      assert.ok(scroll, "the list in its own area, the button after it");
+      assert.ok(scroll[1].includes('<ol class="steps">') && !scroll[1].includes("open-review"));
+      assert.doesNotMatch(ruleOf(html, ".review-foot"), /sticky/);
+    });
+
+    it("writes the count in the review button in light text", () => {
+      assert.match(ruleOf(pagesOf()["index.html"], ".open-review .pending"), /color: #fff/);
+    });
+
+    it("names the headings of the brand in French, the Project one and the Glossary", () => {
+      assert.equal(LABELS.fr.sections.Project, "Projet");
+      assert.equal(LABELS.fr.sections.Glossary, "Glossaire");
+      const brand = pagesOf({ lang: "fr" })["brand.html"];
+      assert.match(brand, /<h2>Projet<\/h2>/);
+      assert.doesNotMatch(brand, /<h2>Project<\/h2>/);
+      assert.match(pagesOf()["brand.html"], /<h2>Project<\/h2>/);
+    });
+
+    it("names the one state of the brand and of the system as the whole, linking the page with no anchor", () => {
+      awaitingBrandAndSystem();
+      for (const [lang, whole] of [["en", "Whole"], ["fr", "L'ensemble"]]) {
+        const index = pagesOf({ lang })["index.html"];
+        for (const id of ["brand", "system"]) {
+          assert.match(rowOf(index, id, "default"), new RegExp(`<a class="pick" href="${id}.html">${whole.replace("'", "(?:'|&#39;)")}</a>`), `${lang} ${id}`);
+        }
+      }
+      assert.match(rowOf(pagesOf({ lang: "fr" })["index.html"], "brand", "default"), /data-state="default"/);
+    });
+
+    it("keeps the state name and the anchor of any other record", () => {
+      assert.match(rowOf(pagesOf({ lang: "fr" })["index.html"], "button", "default"), /<a class="pick" href="button.html#tab-default">par défaut<\/a>/);
+    });
+
+    it("opens every group of the drawer when it holds three records or fewer", () => {
+      awaitingBrandAndSystem("search-flow");
+      assert.equal(itemsOf(pagesOf()["index.html"]).length, 3);
+      assert.deepEqual(groupsOf(pagesOf()["index.html"]), [["identity", true], ["foundations", true], ["screens", true]]);
+    });
+
+    it("opens only the group of the page when the drawer holds four records", () => {
+      awaitingBrandAndSystem("search-flow", "home");
+      assert.equal(itemsOf(pagesOf()["index.html"]).length, 4);
+      assert.deepEqual(groupsOf(pagesOf()["index.html"]), [["identity", true], ["foundations", false], ["screens", false]]);
     });
   });
 
