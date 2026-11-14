@@ -321,6 +321,7 @@ test("antigravity output over 24000 bytes refuses", (t) => {
 });
 
 const asRoot = process.getuid && process.getuid() === 0;
+const noModes = asRoot ? "root ignores permissions" : process.platform === "win32" && "Windows ignores directory modes";
 
 function runLocked(dirs, action) {
   for (const dir of dirs) fs.chmodSync(dir, 0o555);
@@ -331,7 +332,7 @@ function runLocked(dirs, action) {
   }
 }
 
-test("unwritable target blocks everything before any write", { skip: asRoot && "root ignores permissions" }, (t) => {
+test("unwritable target blocks everything before any write", { skip: noModes }, (t) => {
   const f = fixture(t);
   const locked = path.join(f.project, ".cursor");
   fs.mkdirSync(locked);
@@ -349,7 +350,7 @@ test("unwritable target blocks everything before any write", { skip: asRoot && "
   assert.ok(!f.has("aidd_docs"));
 });
 
-test("every blocked path is reported, not just the first", { skip: asRoot && "root ignores permissions" }, (t) => {
+test("every blocked path is reported, not just the first", { skip: noModes }, (t) => {
   const f = fixture(t);
   const locked = [".cursor", ".agents"].map((name) => path.join(f.project, name));
   for (const dir of locked) fs.mkdirSync(dir);
@@ -359,7 +360,7 @@ test("every blocked path is reported, not just the first", { skip: asRoot && "ro
   assert.ok(!f.has(SRC) && !f.has(CLAUDE));
 });
 
-test("unwritable parent blocks a delete before any removal", { skip: asRoot && "root ignores permissions" }, (t) => {
+test("unwritable parent blocks a delete before any removal", { skip: noModes }, (t) => {
   const f = fixture(t);
   assert.equal(f.run().status, 0);
   const before = f.snapshot();
@@ -372,10 +373,11 @@ test("unwritable parent blocks a delete before any removal", { skip: asRoot && "
 });
 
 test("mid-apply failure stops and reports written, failed and pending", (t) => {
-  const fault = path.join(os.tmpdir(), `aidd-rule-fault-${process.pid}.cjs`);
+  const faultDir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-rule-fault-"));
+  const fault = path.join(faultDir, "fault.cjs");
   fs.writeFileSync(fault, `const fs = require("node:fs"); const rename = fs.renameSync;
 fs.renameSync = (from, to) => { if (String(to).endsWith(".mdc")) throw Object.assign(new Error("injected"), { code: "EIO" }); return rename(from, to); };`);
-  t.after(() => fs.rmSync(fault, { force: true }));
+  t.after(() => fs.rmSync(faultDir, { recursive: true, force: true }));
   const f = fixture(t, fault);
   const r = f.run();
   assert.equal(r.status, 3, r.stdout);
