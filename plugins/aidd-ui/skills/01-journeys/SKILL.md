@@ -14,6 +14,8 @@ flowchart LR
   prepare -->|"a decision blocks"| user((user answers))
   user --> prepare
   conclude -->|"an error is left"| conclude
+  conclude -->|"journeys to agree"| user
+  user -->|"a change"| write
   conclude --> done((done))
   prepare -->|"no engine or journeys refused"| stop((stop))
 ```
