@@ -4,6 +4,7 @@ const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, put, edit, editTokens, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
+const colour = require(path.join(LIB, "colour.cjs"));
 const { showcaseOf, copiedOf, keptOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
 // The showcase is a pure module that renders pages and a command that writes them: the pages are
@@ -225,6 +226,31 @@ describe("aidd-ui showcase", () => {
       assert.match(html, /\.state \.render iframe\[data-platform="mobile"\] \{ flex: 0 0 390px; inline-size: 390px; \}/);
       assert.doesNotMatch(html, /\[data-platform="web"\] \{/);
       assert.ok(!html.includes("height: 320px"));
+    });
+  });
+
+  describe("the colours of the chrome", () => {
+    const rootOf = (html) => {
+      const block = html.match(/:root \{([^}]*)\}/)[1];
+      return Object.fromEntries([...block.matchAll(/--([\w-]+):\s*([^;]+);/g)].map((match) => [match[1], match[2].trim()]));
+    };
+    const ratio = (tokens, front, back) => colour.contrast(colour.parse(tokens[front]), colour.parse(tokens[back]));
+
+    it("keeps every text colour readable on every ground it sits on, and a control edge visible", () => {
+      const tokens = rootOf(pagesOf()["index.html"]);
+      for (const front of ["text", "muted", "faint", "accent-text"]) {
+        for (const back of ["bg", "surface", "sunken"]) assert.ok(ratio(tokens, front, back) >= 4.5, `${front} on ${back}: ${ratio(tokens, front, back).toFixed(2)}`);
+      }
+      assert.ok(ratio(tokens, "ok", "ok-soft") >= 4.5, "ok on its soft ground");
+      assert.ok(ratio(tokens, "revise", "revise-soft") >= 4.5, "revise on its soft ground");
+      assert.ok(colour.contrast(colour.parse("#ffffff"), colour.parse(tokens.accent)) >= 4.5, "a white label on the accent");
+      assert.ok(ratio(tokens, "control", "surface") >= 3, "a control's edge on its ground");
+    });
+
+    it("keeps the chrome neutral: the accent is the text colour, no gradient mark", () => {
+      const html = pagesOf()["index.html"];
+      assert.equal(rootOf(html).accent, rootOf(html).text);
+      assert.doesNotMatch(html, /linear-gradient\(135deg/);
     });
   });
 
