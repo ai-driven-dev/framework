@@ -672,6 +672,7 @@ describe("aidd-ui showcase sets", () => {
         assert.ok(top, "a header");
         assert.match(top, /<h2>A<\/h2>/);
         assert.match(top, /Intent of a/);
+      assert.match(top, /<textarea class="colcomment"[^>]* hidden>/);
         assert.deepEqual([...top.matchAll(/class="colvote" data-verdict="(\w+)" data-variant="a" aria-pressed="false">([^<]+)</g)].map((match) => [match[1], match[2]]), [["keep", words[0]], ["revise", words[1]], ["discard", words[2]]]);
       }
     });
@@ -714,10 +715,11 @@ describe("aidd-ui showcase sets", () => {
         const set = element({ set: "layout", fingerprint: "f1" }, { below: { "li.pvariant": rows, ".done": [element({ label: "chosen" })], ".picked": [element({ axes: "2", label: "picked" })] } });
         const columns = ["a", "b"].map((name) => {
           const votes = ["keep", "revise", "discard"].map((verdict) => element({ verdict, variant: name }));
-          return element({ variant: name }, { below: { ".colvote": votes }, votes });
+          const field = element();
+          return element({ variant: name }, { below: { ".colvote": votes, ".colcomment": [field] }, votes, field });
         });
         const holder = element({ set: "layout", fingerprint: "f1" }, { below: { ".variant": columns, ".colvote": columns.flatMap((column) => column.votes) } });
-        const by = { scrim: element(), review: element({}, { below: { "details.choice": [set], "details.item": [] } }), "open-review": element(), copy: element({ blocked: "blocked" }), clear: element(), "all-ok": element(), note: element(), "close-review": element() };
+        const by = { scrim: element(), review: element({}, { hidden: true, below: { "details.choice": [set], "details.item": [] } }), "open-review": element(), copy: element({ blocked: "blocked" }), clear: element(), "all-ok": element(), note: element(), "close-review": element() };
         const document = { body: { dataset: {} }, addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === ".variants[data-set]" ? [holder] : []), querySelector: () => null };
         const written = [];
         const memory = {};
@@ -747,11 +749,32 @@ describe("aidd-ui showcase sets", () => {
         assert.equal(page.rows[1].votes[2].attrs["aria-pressed"], "false");
       });
 
-      it("opens the drawer on the comment of a variant to revise", () => {
+      it("asks the comment of a variant to revise in its column, the drawer left shut over the columns", () => {
+        const page = open();
+        assert.equal(page.columns[0].field.hidden, true);
+        page.columns[0].votes[1].listeners.click();
+        assert.equal(page.columns[0].field.hidden, false);
+        assert.equal(page.columns[0].field.focused, true);
+        assert.equal(page.by.review.hidden, true);
+        assert.equal(page.columns[1].field.hidden, true);
+      });
+
+      it("keeps the comment typed in the column for the copy and for the drawer's row", async () => {
         const page = open();
         page.columns[0].votes[1].listeners.click();
-        assert.equal(page.rows[0].field.focused, true);
-        assert.equal(page.by.review.hidden, false);
+        page.columns[0].field.value = "less grey";
+        page.columns[0].field.listeners.input();
+        assert.equal(page.rows[0].field.value, "less grey");
+        page.by.copy.listeners.click();
+        await new Promise((resolve) => setImmediate(resolve));
+        assert.deepEqual(verdictsOf(page.written[0]), [["a", "revise", "less grey"], ["b", null, ""]]);
+      });
+
+      it("hides the comment of a column again once its verdict is taken back", () => {
+        const page = open();
+        page.columns[0].votes[1].listeners.click();
+        page.columns[0].votes[1].listeners.click();
+        assert.equal(page.columns[0].field.hidden, true);
       });
     });
   });

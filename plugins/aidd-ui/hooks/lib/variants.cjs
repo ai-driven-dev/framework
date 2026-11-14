@@ -194,7 +194,7 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, sib
   });
   const full = documents.length ? `<details class="fulltext"><summary>${escaped(labels.full)}</summary>${documents.join("")}</details>` : "";
   const large = screens || renders.length ? `<button type="button" class="large" data-variant="${escaped(variant.name)}">${escaped(labels.large)}</button>` : "";
-  const votes = voting ? `<span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(([verdict, label]) => `<button type="button" class="colvote" data-verdict="${verdict}" data-variant="${escaped(variant.name)}" aria-pressed="false">${escaped(label)}</button>`).join("")}</span>` : "";
+  const votes = voting ? `<span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(([verdict, label]) => `<button type="button" class="colvote" data-verdict="${verdict}" data-variant="${escaped(variant.name)}" aria-pressed="false">${escaped(label)}</button>`).join("")}</span><textarea class="colcomment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea>` : "";
   return `<section class="variant" data-variant="${escaped(variant.name)}"><header class="column-head"><h2>${escaped(titleOf(variant.name))}</h2><p class="intent">${escaped(variant.intent ?? "")}</p>${votes}</header><table class="axes"><tbody>${axes}</tbody></table>${renders.concat(screens ?? [], large, full).join("")}</section>`;
 }
 

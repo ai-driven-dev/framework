@@ -336,7 +336,7 @@ nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 .doc table { border-collapse: collapse; width: 100%; font-size: var(--t-md); }
 .doc th { text-align: left; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line-strong); padding: 6px 10px; }
 .doc td { border-bottom: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }
-.twin { display: inline-flex; margin: 0 0 var(--s4); padding: 2px; gap: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r2); font-size: var(--t-md); }
+.twin { display: flex; inline-size: fit-content; margin: 0 0 var(--s4); padding: 2px; gap: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r2); font-size: var(--t-md); }
 .twin a { padding: var(--s1) var(--s4); border-radius: var(--r1); color: var(--muted); text-decoration: none; }
 .twin a[aria-current="page"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
 .journey-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s5); padding: var(--s3) var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r2); font-size: var(--t-md); }
@@ -393,8 +393,12 @@ label { font-size: var(--t-sm); color: var(--muted); }
 .colvote:hover { color: var(--text); }
 .colvote[aria-pressed="true"] { background: var(--surface); color: var(--ok); }
 .colvote[data-verdict="revise"][aria-pressed="true"] { color: var(--revise); }
-textarea.comment { display: block; flex-basis: 100%; inline-size: 100%; font: inherit; font-size: var(--t-md); color: var(--text); background: var(--surface); border: 1px solid var(--control); border-radius: var(--r2); padding: var(--s2) var(--s3); resize: vertical; }
-textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.verdict-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); border-bottom: 1px solid var(--line); }
+.verdict-bar .choose { margin-left: 0; }
+.verdict-bar .verdict { height: 30px; padding: 0 var(--s4); font-size: var(--t-md); }
+.verdict-bar textarea.comment { max-inline-size: 520px; }
+textarea.comment, textarea.colcomment { display: block; flex-basis: 100%; inline-size: 100%; font: inherit; font-size: var(--t-md); color: var(--text); background: var(--surface); border: 1px solid var(--control); border-radius: var(--r2); padding: var(--s2) var(--s3); resize: vertical; }
+textarea.comment:focus, textarea.colcomment:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
 .pair { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-start; padding: var(--s6); background: var(--canvas) radial-gradient(#d6d6d0 1px, transparent 1px) 0 0 / 16px 16px; border-top: 1px solid var(--line); }
 .render { display: flex; gap: var(--s5); flex: 1 1 24rem; min-width: 0; align-items: flex-start; }
 .render iframe { box-sizing: content-box; flex: 1; min-width: 0; width: 100%; height: 240px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: #fff; }
@@ -666,8 +670,10 @@ const note = document.getElementById("note");
 const items = [...drawer.querySelectorAll("details.item")];
 const stepButtons = [...drawer.querySelectorAll(".step-ok")];
 const sets = [...drawer.querySelectorAll("details.choice")];
+const reviews = [...document.querySelectorAll("section.review[data-record]")];
 const pickers = [...document.querySelectorAll(".variants[data-set]")];
 const keyOf = (item) => item.dataset.record + "@" + item.dataset.version;
+const reviewKeyOf = (review) => review.dataset.record + "@" + review.dataset.version;
 const setKeyOf = (set) => "set:" + set.dataset.set + "@" + set.dataset.fingerprint;
 const rowsOf = (item) => [...item.querySelectorAll("li.pstate")];
 const picksOf = (holder) => (choices[setKeyOf(holder)] || {})["@picks"] || {};
@@ -682,7 +688,7 @@ function keep(name, value) {
   } catch (error) { /* no shared storage: the review holds for this page alone */ }
 }
 let choices = {};
-try { choices = keptOf(JSON.parse(stored(STORE) || "{}"), items.map(keyOf).concat(sets.map(setKeyOf))); } catch (error) { choices = {}; }
+try { choices = keptOf(JSON.parse(stored(STORE) || "{}"), items.map(keyOf).concat(reviews.map(reviewKeyOf), sets.map(setKeyOf))); } catch (error) { choices = {}; }
 const choiceOf = (key, name) => (choices[key] || {})[name];
 function choose(key, name, choice) {
   const own = Object.assign({}, choices[key]);
@@ -693,8 +699,19 @@ function choose(key, name, choice) {
   keep(STORE, Object.keys(choices).length ? JSON.stringify(choices) : null);
 }
 const settled = (row) => row.dataset.current === "ok" || row.dataset.current === "revise";
+/** The records the page holds a verdict for: the drawer's, each with the states of its tabs the drawer holds no row for added. */
+function recordsOf() {
+  const records = items.map((item) => ({ key: keyOf(item), step: item.closest("details.step-group").dataset.step, record: item.dataset.record, version: item.dataset.version, states: rowsOf(item).map((row) => ({ state: row.dataset.state, settled: settled(row) })) }));
+  for (const review of reviews) {
+    const key = reviewKeyOf(review);
+    let own = records.find((each) => each.key === key);
+    if (!own) { own = { key, step: "", record: review.dataset.record, version: review.dataset.version, states: [] }; records.push(own); }
+    for (const tab of review.querySelectorAll('[role="tab"]')) if (!own.states.some((one) => one.state === tab.dataset.tab)) own.states.push({ state: tab.dataset.tab, settled: tab.dataset.current === "ok" || tab.dataset.current === "revise" });
+  }
+  return records;
+}
 const model = () => ({
-  records: items.map((item) => ({ key: keyOf(item), step: item.closest("details.step-group").dataset.step, record: item.dataset.record, version: item.dataset.version, states: rowsOf(item).map((row) => ({ state: row.dataset.state, settled: settled(row) })) })),
+  records: recordsOf(),
   sets: sets.map((set) => ({ key: setKeyOf(set), set: set.dataset.set, variants: variantsOf(set).map((row) => row.dataset.variant) })),
 });
 const entries = () => entriesOf(model(), choices);
@@ -714,9 +731,6 @@ function paint() {
       field.hidden = verdict !== "revise";
       if (document.activeElement !== field) field.value = (choice && choice.comment) || "";
       if (verdict || settled(row)) own += 1;
-      const tab = item.hasAttribute("data-here") ? document.getElementById("tab-" + row.dataset.state) : null;
-      if (tab && verdict) tab.dataset.choice = verdict;
-      else if (tab) delete tab.dataset.choice;
     }
     item.querySelector(".done").textContent = own + "/" + rows.length;
     document.querySelectorAll('.progress[data-record="' + item.dataset.record + '"]').forEach((each) => {
@@ -749,19 +763,46 @@ function paint() {
     for (const column of holder.querySelectorAll(".variant")) {
       const choice = choiceOf(setKeyOf(holder), column.dataset.variant);
       column.querySelectorAll(".colvote").forEach((button) => button.setAttribute("aria-pressed", String(!!choice && button.dataset.verdict === choice.verdict)));
+      const field = column.querySelector(".colcomment");
+      field.hidden = !choice || choice.verdict !== "revise";
+      if (document.activeElement !== field) field.value = (choice && choice.comment) || "";
     }
     const own = picksOf(holder);
     holder.querySelectorAll(".take").forEach((button) => button.setAttribute("aria-pressed", String(own[button.dataset.axis] === button.dataset.variant)));
   }
+  paintBars();
   document.querySelectorAll(".tally[data-template]").forEach((each) => { each.textContent = each.dataset.template.replace("{count}", String(left)); });
   const stuck = blocked();
   copy.disabled = stuck || !copiedOf(entries());
   for (const button of stepButtons) button.disabled = remainingOf(model(), choices, button.dataset.step).length === 0;
   note.textContent = stuck ? copy.dataset.blocked : copy.disabled ? copy.dataset.hint : "";
 }
-/** Marks the state of the page's own record that its tabs show. */
+/** The state a record's tabs show, or null without tabs. */
+const shownOf = (review) => { const tab = review.querySelector('[role="tab"][aria-selected="true"]'); return tab ? tab.dataset.tab : null; };
+/** The verdict bar of each record on the page, showing the verdict of the state its tabs show, and each tab its own. */
+function paintBars() {
+  for (const review of reviews) {
+    const key = reviewKeyOf(review);
+    for (const tab of review.querySelectorAll('[role="tab"]')) {
+      const choice = choiceOf(key, tab.dataset.tab);
+      if (choice) tab.dataset.choice = choice.verdict;
+      else delete tab.dataset.choice;
+    }
+    const bar = review.querySelector(".verdict-bar");
+    const state = shownOf(review);
+    if (!bar || state === null) continue;
+    const choice = choiceOf(key, state);
+    const verdict = choice ? choice.verdict : "";
+    bar.querySelectorAll(".verdict").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.verdict === verdict)));
+    const field = bar.querySelector(".comment");
+    field.hidden = verdict !== "revise";
+    if (document.activeElement !== field) field.value = (choice && choice.comment) || "";
+  }
+}
+/** Marks the state of the page's own record that its tabs show, in the drawer and beside the tabs. */
 function marked(state) {
   for (const item of items) if (item.hasAttribute("data-here")) rowsOf(item).forEach((row) => row.classList.toggle("on", row.dataset.state === state));
+  paintBars();
 }
 function show(on) {
   drawer.hidden = !on;
@@ -772,12 +813,7 @@ items.forEach((item) => rowsOf(item).forEach((row) => {
   const state = row.dataset.state;
   const field = row.querySelector(".comment");
   row.querySelectorAll(".verdict").forEach((button) => button.addEventListener("click", () => {
-    const now = choiceOf(keyOf(item), state);
-    const again = now && now.verdict === button.dataset.verdict;
-    const revise = button.dataset.verdict === "revise";
-    choose(keyOf(item), state, again ? null : { verdict: button.dataset.verdict, comment: revise && now ? now.comment || "" : "" });
-    paint();
-    if (!again && revise) field.focus();
+    if (vote(keyOf(item), state, button.dataset.verdict)) field.focus();
   }));
   field.addEventListener("input", () => {
     choose(keyOf(item), state, { verdict: "revise", comment: field.value });
@@ -789,7 +825,7 @@ items.forEach((item) => rowsOf(item).forEach((row) => {
     openTab(tab);
   });
 }));
-/** Sets or takes back a verdict on a variant, from the drawer or from its column; true when it asks for a comment. */
+/** Sets or takes back a verdict on a state or a variant, from the drawer or in place; true when it asks for a comment. */
 function vote(key, name, verdict) {
   const now = choiceOf(key, name);
   const again = now && now.verdict === verdict;
@@ -798,13 +834,29 @@ function vote(key, name, verdict) {
   paint();
   return !again && revise;
 }
-pickers.forEach((holder) => holder.querySelectorAll(".colvote").forEach((button) => button.addEventListener("click", () => {
-  if (!vote(setKeyOf(holder), button.dataset.variant, button.dataset.verdict)) return;
-  show(true);
-  const own = sets.find((set) => setKeyOf(set) === setKeyOf(holder));
-  const row = own && variantsOf(own).find((each) => each.dataset.variant === button.dataset.variant);
-  if (row) row.querySelector(".comment").focus();
-})));
+pickers.forEach((holder) => holder.querySelectorAll(".variant").forEach((column) => {
+  const name = column.dataset.variant;
+  const field = column.querySelector(".colcomment");
+  column.querySelectorAll(".colvote").forEach((button) => button.addEventListener("click", () => {
+    if (vote(setKeyOf(holder), name, button.dataset.verdict)) field.focus();
+  }));
+  field.addEventListener("input", () => {
+    choose(setKeyOf(holder), name, { verdict: "revise", comment: field.value });
+    paint();
+  });
+}));
+reviews.forEach((review) => {
+  const bar = review.querySelector(".verdict-bar");
+  if (!bar) return;
+  const field = bar.querySelector(".comment");
+  bar.querySelectorAll(".verdict").forEach((button) => button.addEventListener("click", () => {
+    if (vote(reviewKeyOf(review), shownOf(review), button.dataset.verdict)) field.focus();
+  }));
+  field.addEventListener("input", () => {
+    choose(reviewKeyOf(review), shownOf(review), { verdict: "revise", comment: field.value });
+    paint();
+  });
+});
 sets.forEach((set) => variantsOf(set).forEach((row) => {
   const name = row.dataset.variant;
   const field = row.querySelector(".comment");
@@ -1200,6 +1252,9 @@ function orderedStates(rows, record) {
 /** How many states of a record a verdict at its version already settles, ok or revise. */
 const settledOf = (states) => states.filter(({ verdict }) => !UNRESOLVED.includes(verdict.current)).length;
 
+/** The verdict of the state the tabs show, given beside them: the same choice, key and values as the drawer's row, its comment asked in place. */
+const verdictBarOf = (labels) => `<div class="verdict-bar"><span class="choose"><button type="button" class="verdict" data-verdict="ok" aria-pressed="false">${labels.ok}</button><button type="button" class="verdict" data-verdict="revise" aria-pressed="false">${labels.revise}</button></span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></div>`;
+
 /** The review of a record: each state as a tab, the ones still to review first. */
 function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
   const render = text(project, renderOf(record));
@@ -1209,6 +1264,7 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
     `<div class="bar-top"><h2>${labels.states}</h2></div>`,
     toolbarOf(system, labels),
     tabsOf(ordered, labels),
+    verdictBarOf(labels),
     ...ordered.map(({ state, verdict }, at) => stateOf({ record, state, verdict, render, tokens, captures, labels, platform: platformOf(system), first: at === 0 })),
     "</section>",
   ].join("\n");
