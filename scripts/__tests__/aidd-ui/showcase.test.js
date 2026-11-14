@@ -40,6 +40,7 @@ const statesIn = (html) => [...html.matchAll(/<article class="state" data-state=
 const articleOf = (html, state) => html.match(new RegExp(`<article class="state" data-state="${state}"[\\s\\S]*?</article>`))[0];
 const navOf = (html) => html.match(/<nav aria-label="[^"]*">[\s\S]*?<\/nav>/)[0];
 const stepsOf = (html) => [...navOf(html).matchAll(/<li data-step="(\w+)" data-todo="(\d+)"><details( open)?>([\s\S]*?)<\/details><\/li>/g)].map((match) => ({ step: match[1], todo: match[2], open: Boolean(match[3]), html: match[4], mark: match[4].match(/class="step-mark">([^<]*)</)[1] }));
+const todoOf = (html) => html.slice(html.indexOf('data-overview="todo"')).split('data-overview="revise"')[0];
 const stepOf = (html, step) => stepsOf(html).find((each) => each.step === step);
 const linksOf = (html, kind) => [...html.match(new RegExp(`<section class="links" data-links="${kind}">[\\s\\S]*?</section>`))[0].matchAll(/href="([^"]+)\.html"/g)].map((match) => match[1]);
 const capture = (name) => put(tmp, `${UI}/screens/${name}`, PNG);
@@ -129,12 +130,11 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(pagesOf()["home.html"], /class="journey"/);
     });
 
-    it("gives the home page a card per record, with a miniature for a record that has a render and for a journey", () => {
+    it("lists on the home page what awaits review as links, with no card and no miniature", () => {
       const index = pagesOf()["index.html"];
-      const cards = Object.fromEntries([...index.matchAll(/<a class="card" href="([^"]+)\.html"[\s\S]*?<\/a>/g)].map((match) => [match[1], match[0]]));
-      assert.deepEqual(Object.keys(cards).sort(), [...PAGE_IDS].sort());
-      for (const id of ["search-flow", "home", "button", "onboarding"]) assert.match(cards[id], /<iframe [^>]*tabindex="-1"/, id);
-      for (const id of ["brand", "system"]) assert.doesNotMatch(cards[id], /<iframe/, id);
+      assert.doesNotMatch(index, /<a class="card"|<iframe/);
+      assert.deepEqual([...todoOf(index).matchAll(/<li data-id="([^"]+)">/g)].map((match) => match[1]).sort(), ["button", "dialog", "home", "old-button", "search-field", "search-flow"]);
+      assert.doesNotMatch(todoOf(index), /<li data-id="(brand|system|onboarding)">/);
     });
 
     it("orders the navigation by step, one li per step", () => {
@@ -527,13 +527,46 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(item, /data-state="default"/);
     });
 
-    it("shows the overview's progress on each card, and nothing pre-checked nor a batch to copy", () => {
+    it("shows the overview's progress on each record left, and nothing pre-checked nor a batch to copy", () => {
       verdicts(["button", "default", "1", "ok", ""], ["button", "hover", "1", "revise", "too pale"]);
       const index = pagesOf()["index.html"];
-      assert.match(index.match(/<a class="card" href="button\.html"[\s\S]*?<\/a>/)[0], /<span class="progress" data-record="button">2\/4<\/span>/);
-      assert.match(index.match(/<a class="card" href="search-flow\.html"[\s\S]*?<\/a>/)[0], /<span class="progress" data-record="search-flow">0\/2<\/span>/);
-      assert.doesNotMatch(index.match(/<a class="card" href="brand\.html"[\s\S]*?<\/a>/)[0], /class="progress"/);
+      assert.match(todoOf(index).match(/<li data-id="button">[\s\S]*?<\/li>/)[0], /<span class="progress" data-record="button" data-base="2" data-total="4">2\/4<\/span>/);
+      assert.match(todoOf(index).match(/<li data-id="search-flow">[\s\S]*?<\/li>/)[0], /<span class="progress" data-record="search-flow" data-base="0" data-total="2">0\/2<\/span>/);
       assert.doesNotMatch(index, /type="checkbox"|checked|class="batch"|copy-all/);
+    });
+
+    it("counts the records awaiting review per step on the overview, not their states", () => {
+      const index = pagesOf()["index.html"];
+      const count = (step) => index.match(new RegExp(`<section class="todo-step" data-step="${step}"><h3>[^<]*<span>(\\d+)</span>`))[1];
+      assert.equal(count("components"), "4");
+      assert.equal(count("screens"), "2");
+      assert.match(index, /<h2>To review \(6\)<\/h2>/);
+      assert.doesNotMatch(index, /data-step="(journeys|identity|foundations)"><h3>/);
+    });
+
+    it("splits the elements awaiting review by category on the overview", () => {
+      const index = pagesOf()["index.html"];
+      const block = index.match(/<section class="todo-step" data-step="components">[\s\S]*?<\/section>/)[0];
+      assert.deepEqual([...block.matchAll(/<h4 data-category="(\w+)">/g)].map((match) => match[1]).every((key) => ["input", "action", "display", "navigation", "group", "asset"].includes(key)), true);
+      assert.ok(block.match(/<h4 /g).length >= 1);
+    });
+
+    it("draws the progress meter from the steps done, not from the steps that hold something", () => {
+      const index = pagesOf()["index.html"];
+      assert.match(index, /<meter class="advance" min="0" max="5" value="\d">/);
+      const value = Number(index.match(/<meter class="advance"[^>]* value="(\d)"/)[1]);
+      const steps = stepsOf(index);
+      const holding = steps.filter((each) => each.mark !== "\u2014");
+      const done = holding.filter((each) => each.todo === "0");
+      assert.equal(value, done.length);
+      assert.ok(holding.length > done.length, "a step with work left is held but not done");
+    });
+
+    it("lists a record with a state to rework under its own heading, hidden when there is none", () => {
+      const revise = (html) => html.match(/<section class="overview" data-overview="revise">[\s\S]*?<\/section>/)?.[0];
+      assert.match(revise(pagesOf()["index.html"]), /<h2>To rework \(\d+\)<\/h2>/);
+      assert.match(revise(pagesOf()["index.html"]), /<li data-id="home">/);
+      assert.equal(revise(pagesOf({ lang: "fr" })["index.html"]).match(/<h2>([^<]*)</)[1].startsWith("\u00c0 reprendre"), true);
     });
 
     it("offers marking the remaining states OK only as an explicit action of a step of the panel, never one for all", () => {
@@ -643,7 +676,6 @@ describe("aidd-ui showcase", () => {
       const pages = pagesOf({ lang: "fr" });
       assert.match(headerOf(pages["search-flow.html"]), /<span class="chip" data-status="proposed">proposé<\/span>/);
       assert.match(headerOf(pages["home.html"]), /<span class="chip" data-status="validated">validé<\/span>/);
-      assert.match(pages["index.html"], /<span class="chip" data-status="validated">validé<\/span>/);
       assert.deepEqual(appearsOf(pages["home.html"]), [["onboarding", "Onboarding", "validated"]]);
       assert.match(pages["home.html"], /<a class="mini-card"[^>]*><b>Onboarding<\/b><span class="chip" data-status="validated">validé<\/span>/);
       assert.match(pagesOf()["search-flow.html"], /<span class="chip" data-status="proposed">proposed<\/span>/);

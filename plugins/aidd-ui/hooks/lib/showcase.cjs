@@ -3,7 +3,7 @@
 // the command reads the files and writes the pages. Each page holds the review of its record,
 // handed back as one copy.
 const { list, table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
-const { placed, fm, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, REVIEW_KIND, COMPONENT_KINDS, SYSTEM_ID } = require("./model.cjs");
+const { placed, fm, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, REVIEW_KIND, SYSTEM_ID } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
 const { cited } = require("./graph.cjs");
 const { parseLink } = require("./code.cjs");
@@ -18,13 +18,10 @@ const WIREFRAMES_SHOWN = 2;
 
 const DEFAULT_LANGUAGE = "en";
 const UNRESOLVED = ["none", "pending"]; // a state still to review
-const SYSTEM_KINDS = ["brand", "system"];
-const LEVELS = ["asset", ...COMPONENT_KINDS];
 const BASE_CONTEXT = ""; // the key of `resolvedValues` for the base
 const UNTYPED = "css"; // the section of the tokens that hold raw CSS and no `$type`
 const SAMPLE = "Aa";
 const EXPECTED_COMPONENT = "R18";
-const GROUPS = ["system", "components", "journeys", "templates", "pages"];
 const SET_CURRENT = "set:"; // what a page of a set passes the navigation as its current page
 
 /** The words of the page chrome, one table per language: the same keys in each. */
@@ -58,15 +55,6 @@ const LABELS = {
     pick: "Pick a record in the list.",
     home: "Overview",
     list: "Records",
-    system: "Brand and system",
-    components: "Components",
-    journeys: "Journeys",
-    templates: "Wireframes",
-    pages: "Pages",
-    asset: "Assets",
-    atom: "Atoms",
-    molecule: "Molecules",
-    organism: "Organisms",
     uses: "Uses",
     appearsIn: "Appears in",
     checks: "Engine checks",
@@ -82,7 +70,11 @@ const LABELS = {
     clear: "Clear",
     allOk: "All OK",
     close: "Close",
-    nothing: "Nothing to review yet.",
+    nothing: "Nothing to review.",
+    overviewProgress: "Progress",
+    overviewDone: "{done} of {total} steps done",
+    overviewTodo: "To review ({count})",
+    overviewRevise: "To rework ({count})",
     blocked: "Write what should change on each state to revise.",
     theme: "Theme",
     platform: "Platform",
@@ -92,7 +84,6 @@ const LABELS = {
     forPersona: "For",
     states: "States",
     stateNames: {},
-    steps: "{count} steps",
     noRender: "No render",
     statuses: { proposed: "proposed", validated: "validated", deprecated: "deprecated" },
     stepOf: "Step {at} of {count}",
@@ -128,15 +119,6 @@ const LABELS = {
     pick: "Choisissez une fiche dans la liste.",
     home: "Aperçu",
     list: "Fiches",
-    system: "Marque et système",
-    components: "Composants",
-    journeys: "Parcours",
-    templates: "Wireframes",
-    pages: "Pages",
-    asset: "Ressources",
-    atom: "Atomes",
-    molecule: "Molécules",
-    organism: "Organismes",
     uses: "Utilise",
     appearsIn: "Apparaît dans",
     checks: "Contrôles du moteur",
@@ -152,7 +134,11 @@ const LABELS = {
     clear: "Effacer",
     allOk: "Tout OK",
     close: "Fermer",
-    nothing: "Rien à juger pour l'instant.",
+    nothing: "Rien à relire.",
+    overviewProgress: "Avancement",
+    overviewDone: "{done} étapes sur {total} terminées",
+    overviewTodo: "À relire ({count})",
+    overviewRevise: "À reprendre ({count})",
     blocked: "Écrivez ce qu'il faut changer sur chaque état à revoir.",
     theme: "Thème",
     platform: "Plateforme",
@@ -162,7 +148,6 @@ const LABELS = {
     forPersona: "Pour",
     states: "États",
     stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur" },
-    steps: "{count} étapes",
     noRender: "Aucun rendu",
     statuses: { proposed: "proposé", validated: "validé", deprecated: "déprécié" },
     stepOf: "Étape {at} sur {count}",
@@ -180,7 +165,6 @@ const languageOf = (code) => (Object.hasOwn(LABELS, code) ? code : DEFAULT_LANGU
 const filled = (label, values) => label.replace(/\{(\w+)\}/g, (_, key) => values[key]);
 const byCode = (a, b) => (a < b ? -1 : a > b ? 1 : 0); // the same order on every machine
 const byRecordId = (a, b) => byCode(fm(a).id, fm(b).id);
-const byLevel = (a, b) => LEVELS.indexOf(fm(a).kind) - LEVELS.indexOf(fm(b).kind) || byRecordId(a, b);
 
 /** The narrowest readable card of a storyboard, the widest one, so a short journey keeps small cards, the gap that holds the arrow between two cards, and the
  * longest journey that can stand on one row: a container query cannot read a variable, so the width that
@@ -250,7 +234,6 @@ nav li:hover, nav .home:hover { background: var(--sunken); }
 nav a:hover { text-decoration: none; }
 nav li:has(a[aria-current="page"]), nav .home:has(a[aria-current="page"]) { background: var(--accent-soft); }
 nav a[aria-current="page"] { color: var(--accent-text); font-weight: 600; }
-.tag { flex: none; margin-right: var(--s2); font-size: 10px; font-weight: 500; border-radius: 999px; padding: 1px 6px; background: var(--revise-soft); color: var(--revise); }
 .head { display: flex; flex-direction: column; gap: var(--s2); }
 .head > .stamp { display: flex; align-items: center; gap: var(--s2); }
 .crumb { margin: 0; font-size: var(--t-sm); font-weight: 500; color: var(--faint); }
@@ -357,17 +340,14 @@ textarea.comment:focus { outline: 2px solid var(--accent-soft); border-color: va
 .overview { display: flex; flex-direction: column; gap: var(--s3); }
 .overview h2 { display: flex; align-items: center; gap: var(--s2); }
 .overview h2 span { font-size: var(--t-xs); font-weight: 600; color: var(--muted); background: var(--sunken); border-radius: 999px; padding: 0 7px; line-height: 18px; }
-.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: var(--s4); }
-a.card { display: flex; flex-direction: column; overflow: hidden; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r3); box-shadow: var(--shadow-1); transition: border-color 120ms, box-shadow 120ms, transform 120ms; }
-a.card:hover { text-decoration: none; border-color: #c7cdfb; box-shadow: var(--shadow-2); transform: translateY(-1px); }
-a.card .mini { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; }
-.glyph { display: grid; place-content: center; aspect-ratio: 8 / 5; border-bottom: 1px solid var(--line); background: var(--sunken) radial-gradient(#dcdcd6 1px, transparent 1px) 0 0 / 12px 12px; color: var(--faint); font-size: var(--t-2xl); font-weight: 650; letter-spacing: -0.02em; }
-.card-body { display: flex; flex-direction: column; gap: 6px; padding: var(--s3) var(--s4) var(--s4); }
-.card-body b { font-size: var(--t-md); font-weight: 600; }
-.meta { display: flex; align-items: center; gap: var(--s2); font-size: var(--t-sm); color: var(--muted); }
-.meta .chip { line-height: 18px; padding: 0 8px; font-size: var(--t-xs); }
-.meta .steps, .progress { margin-left: auto; color: var(--faint); }
-.progress { font-variant-numeric: tabular-nums; }
+.todo-step h3 { display: flex; align-items: center; gap: var(--s2); margin: var(--s3) 0 var(--s1); font-size: var(--t-md); }
+.todo-step h3 span { font-size: var(--t-xs); font-weight: 600; color: var(--muted); background: var(--sunken); border-radius: 999px; padding: 0 7px; line-height: 18px; }
+.todo-step h4 { margin: var(--s3) 0 2px; font-size: var(--t-xs); font-weight: 500; color: var(--muted); }
+.overview ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.overview li { display: flex; align-items: center; gap: var(--s2); padding: 4px 0; border-bottom: 1px solid var(--line); }
+.overview li a { flex: 1; }
+.advance { inline-size: 240px; }
+.progress { margin-left: auto; color: var(--faint); font-variant-numeric: tabular-nums; }
 .progress[data-complete="true"] { color: var(--ok); }
 .appears { display: flex; flex-direction: column; gap: var(--s3); padding-top: var(--s5); border-top: 1px solid var(--line); }
 .appears ul { display: flex; flex-wrap: wrap; gap: var(--s3); }
@@ -630,8 +610,9 @@ function paint() {
     }
     item.querySelector(".done").textContent = own + "/" + rows.length;
     document.querySelectorAll('.progress[data-record="' + item.dataset.record + '"]').forEach((each) => {
-      each.textContent = own + "/" + rows.length;
-      each.dataset.complete = String(own === rows.length);
+      const settledNow = Number(each.dataset.base) + own;
+      each.textContent = settledNow + "/" + each.dataset.total;
+      each.dataset.complete = String(settledNow === Number(each.dataset.total));
     });
     if (own < rows.length) left += 1;
   }
@@ -799,16 +780,6 @@ const hasRender = (project, record) => list(fm(record).states).length > 0 && pro
 
 /** Whether a screen's code is at its version: its states then each need a capture. */
 const isCoded = (record) => fm(record).kind === "screen" && list(fm(record).code).some((link) => parseLink(link)?.version === fm(record).version);
-
-/** The group of the navigation a record belongs to. */
-function groupOf(record) {
-  const kind = fm(record).kind;
-  if (SYSTEM_KINDS.includes(kind)) return "system";
-  if (kind === "journey") return "journeys";
-  if (kind === "wireframe") return "templates";
-  if (kind === "screen") return "pages";
-  return "components";
-}
 
 const link = (id, current, shown = id) => `<a href="${escaped(id)}.html"${current ? ' aria-current="page"' : ""}>${escaped(shown)}</a>`;
 
@@ -1248,31 +1219,35 @@ function specOf(project, record) {
  * review button at the top right, then its description, a journey's persona, its route and code. */
 const headOf = ({ record, title, description, persona, labels }) => `<header class="head"><p class="crumb">${labels.stepNames[stepOf(record)]}</p><h1>${escaped(title)}</h1>${stampOf(record, labels)}${description ? `<p class="lede">${escaped(description)}</p>` : ""}${persona}${chipsOf(record)}</header>`;
 
-/** The record a card or a journey shows first: a journey's first step that names a record with a render, else the record itself. */
-function shownRecordOf(project, record, recordsById) {
-  if (fm(record).kind !== "journey") return record;
-  return table(record.sections[STEPS_SECTION]).map((row) => recordsById.get(row.Screen)).find((target) => target && hasRender(project, target)) ?? null;
-}
-
-/** The home page: each group of records as cards, a miniature on each that has something to show. */
-function overviewOf({ project, records, recordsById, rows, tokens, labels }) {
+/** The home page: how many steps are done, what awaits review by step, then the records to rework. Links and
+ * counts only, no card: what to open next is a list, not a gallery. */
+function overviewOf({ project, held, records, rows, labels }) {
   const progressOf = (record) => {
-    if (!hasRender(project, record)) return "";
     const states = orderedStates(rows, record);
-    return `<span class="progress" data-record="${escaped(fm(record).id)}">${settledOf(states)}/${states.length}</span>`;
+    return `<span class="progress" data-record="${escaped(fm(record).id)}" data-base="${settledOf(states)}" data-total="${states.length}">${settledOf(states)}/${states.length}</span>`;
   };
-  const card = (record) => {
-    const { id, kind } = fm(record);
-    const title = titleOf(project, record);
-    const shown = shownRecordOf(project, record, recordsById);
-    const face = shown && hasRender(project, shown) ? miniatureOf(project, shown, tokens, labels) : `<span class="glyph" aria-hidden="true">${escaped(title.slice(0, 2))}</span>`;
-    const steps = kind === "journey" ? `<span class="steps">${escaped(filled(labels.steps, { count: table(record.sections[STEPS_SECTION]).length }))}</span>` : "";
-    return `<a class="card" href="${escaped(id)}.html">${face}<span class="card-body"><b>${escaped(title)}</b><span class="meta">${statusOf(record, labels)}<span>${escaped(String(kind))}</span>${steps}${progressOf(record)}</span></span></a>`;
+  const entry = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record))}</a>${progressOf(record)}</li>`;
+  const setEntry = (set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}">${escaped(set.id)}</a></li>`;
+  const stepBlock = (each) => {
+    const body = each.step === "components"
+      ? CATEGORIES.flatMap((category) => {
+        const inCategory = each.awaiting.filter((record) => categoryOf(record) === category);
+        return inCategory.length ? [`<h4 data-category="${category}">${labels.categories[category]}</h4><ul>${inCategory.map(entry).join("")}</ul>`] : [];
+      }).join("")
+      : `<ul>${each.awaiting.map(entry).join("")}</ul>`;
+    const open = each.open.length ? `<ul>${each.open.map(setEntry).join("")}</ul>` : "";
+    return `<section class="todo-step" data-step="${each.step}"><h3>${labels.stepNames[each.step]}<span>${each.todo}</span></h3>${each.awaiting.length ? body : ""}${open}</section>`;
   };
-  return GROUPS.flatMap((group) => {
-    const own = records.filter((record) => groupOf(record) === group).sort(byLevel);
-    return own.length ? [`<section class="overview" data-overview="${group}"><h2>${labels[group]}<span>${own.length}</span></h2><div class="cards">${own.map(card).join("")}</div></section>`] : [];
-  }).join("\n");
+  const todo = held.reduce((sum, each) => sum + each.todo, 0);
+  const done = held.filter((each) => !each.todo && (each.records.length || each.sets.length)).length;
+  const reworked = records.filter((record) => hasRender(project, record) && orderedStates(rows, record).some(({ verdict }) => verdict.current === "revise"));
+  return [
+    `<section class="overview" data-overview="progress"><h2>${labels.overviewProgress}</h2><meter class="advance" min="0" max="${STEPS.length}" value="${done}">${done}/${STEPS.length}</meter><p>${escaped(filled(labels.overviewDone, { done, total: STEPS.length }))}</p></section>`,
+    todo
+      ? `<section class="overview" data-overview="todo"><h2>${escaped(filled(labels.overviewTodo, { count: todo }))}</h2>${held.filter((each) => each.todo).map(stepBlock).join("")}</section>`
+      : `<section class="overview" data-overview="todo"><p class="none">${labels.nothing}</p></section>`,
+    reworked.length ? `<section class="overview" data-overview="revise"><h2>${escaped(filled(labels.overviewRevise, { count: reworked.length }))}</h2><ul>${reworked.sort(byRecordId).map(entry).join("")}</ul></section>` : "",
+  ].filter(Boolean).join("\n");
 }
 
 const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!doctype html>", `<html lang="${lang}">`, "<head>", '<meta charset="utf-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">', `<title>${escaped(title)}</title>`, `<style>${SHELL}${variants.STYLE}</style>`, "</head>", "<body>", '<div class="shell">', navigation, wide ? '<main class="wide">' : "<main>", body, "</main>", "</div>", drawer, `<script>${script}</script>`, "</body>", "</html>", ""].join("\n");
@@ -1291,7 +1266,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   const system = project.records.find((record) => fm(record).kind === "system");
   const held = stepsOf({ project, records, rows, sets });
   const drawer = (current, closed = false) => drawerOf({ project, held, here: hereOf(held, records, sets, current), rows, labels, current, sets, closed });
-  const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, overviewOf({ project, records, recordsById, rows, tokens, labels })].join("\n");
+  const home = [`<header class="head"><h1>${labels.title}</h1><p class="lede">${labels.pick}</p></header>`, overviewOf({ project, held, records, rows, labels })].join("\n");
   const pages = { "index.html": pageOf({ title: labels.title, lang: language, navigation: navigationOf(project, records, labels, null, sets, rows), body: home, drawer: drawer(null), script: PANEL }) };
   for (const record of records) {
     const id = fm(record).id;
