@@ -28,7 +28,7 @@ const SET_CURRENT = "set:"; // what a page of a set passes the navigation as its
 /** The words of the page chrome, one table per language: the same keys in each. */
 const LABELS = {
   en: {
-    title: "Design system showcase",
+    title: "Your designs",
     choose: "Variants",
     kindNames: { brand: "Brand identity", system: "Design system" },
     whole: "Whole",
@@ -130,7 +130,7 @@ const LABELS = {
     nextStep: "Next step",
   },
   fr: {
-    title: "Vitrine du système de design",
+    title: "Vos maquettes",
     choose: "Variantes",
     kindNames: { brand: "Identité visuelle", system: "Charte graphique" },
     whole: "L'ensemble",

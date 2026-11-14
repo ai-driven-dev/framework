@@ -213,6 +213,15 @@ describe("aidd-ui showcase", () => {
     });
   });
 
+  describe("the title of the showcase", () => {
+    it("names the page in plain words, with no design system jargon, in both languages", () => {
+      for (const lang of ["en", "fr"]) {
+        const index = pagesOf({ lang })["index.html"];
+        for (const shown of [index.match(/<title>([^<]*)<\/title>/)[1], index.match(/<h1>([^<]*)<\/h1>/)[1], LABELS[lang].title]) assert.doesNotMatch(shown, /design system|syst\u00e8me de design/i, lang);
+      }
+    });
+  });
+
   describe("the frame of a platform", () => {
     const withPlatforms = (platforms) => put(tmp, `${UI}/system.md`, read(`${UI}/system.md`).replace(/platforms: \[[^\]]*\]/, `platforms: ${platforms}`));
     const platformsOf = (html) => [...html.matchAll(/<iframe [^>]*>/g)].map((match) => match[0].match(/data-platform="([^"]*)"/)?.[1]);
