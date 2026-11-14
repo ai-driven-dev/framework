@@ -81,6 +81,8 @@ const LABELS = {
     close: "Close",
     nothing: "Nothing to review.",
     overviewNext: "{count} to review, in {steps}.",
+    overviewProposed: "Nothing to review. {count} still proposed, in {steps}.",
+    overviewStillProposed: "Still proposed ({count})",
     start: "Start the review",
     overviewTodo: "To review ({count})",
     overviewRevise: "To rework ({count})",
@@ -177,6 +179,8 @@ const LABELS = {
     close: "Fermer",
     nothing: "Rien à relire.",
     overviewNext: "{count} à relire, dans {steps}.",
+    overviewProposed: "Rien à relire. {count} à l'état proposé, dans {steps}.",
+    overviewStillProposed: "Encore proposés ({count})",
     start: "Commencer la revue",
     overviewTodo: "À relire ({count})",
     overviewRevise: "À reprendre ({count})",
@@ -949,8 +953,9 @@ const hasRender = (project, record) => list(fm(record).states).length > 0 && pro
 /** Whether the drawer reviews the record: one with a render, or a brand or a system, which has a version and no render. */
 const reviewable = (project, record) => hasRender(project, record) || (["brand", SYSTEM_ID].includes(fm(record).kind) && fm(record).version !== undefined);
 
-/** Whether the record is an asset still proposed: it has no state to review in the drawer, so it is judged on its page. */
-const unvalidated = (record) => fm(record).kind === "asset" && fm(record).status === "proposed";
+/** Whether the record is still proposed: one the drawer cannot review (an asset, a journey) is validated elsewhere,
+ * so the step holding it is not done. */
+const unvalidated = (record) => fm(record).status === "proposed";
 
 /** Whether a screen's code is at its version: its states then each need a capture. */
 const isCoded = (record) => fm(record).kind === "screen" && list(fm(record).code).some((link) => parseLink(link)?.version === fm(record).version);
@@ -973,12 +978,12 @@ function hereOf(held, records, sets, current) {
 /** The count of what awaits review, as the button and the drawer write it: the page script rewrites it as verdicts are given. */
 const pendingOf = (labels, count) => `<span class="tally pending" data-template="${escaped(labels.toReview)}">${escaped(filled(labels.toReview, { count }))}</span>`;
 
-/** What a step still asks of the person: what the drawer reviews and the assets still proposed. A step with none is done. */
+/** What a step still asks of the person: what the drawer reviews and the records it cannot review that are still proposed. A step with none is done. */
 const leftOf = (each) => each.todo + each.proposed.length;
 
 /** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
- * not settled, the open sets, and the assets still proposed. `todo` counts records and open sets, never states, and
- * leaves the assets out: the drawer cannot clear them. */
+ * not settled, the open sets, and the records the drawer cannot review that are still proposed. `todo` counts records
+ * and open sets, never states, and leaves the proposed ones out: the drawer cannot clear them. */
 function stepsOf({ project, records, rows, sets }) {
   return STEPS.map((step) => {
     const own = records.filter((record) => stepOf(record) === step);
@@ -1399,8 +1404,8 @@ const headOf = ({ record, title, description, persona, labels }) => `<header cla
 
 /** The home page: how many steps are done, what awaits review by step, then the records to rework. Links and
  * counts only, no card: what to open next is a list, not a gallery. */
-/** The first thing to open of a step: the first record awaiting review, else its first record, else its first set. */
-const firstOf = (each) => each.awaiting[0] ?? [...each.records].sort(byRecordId)[0] ?? null;
+/** The first thing to open of a step: the first record awaiting review, else the first still proposed, else its first record, else its first set. */
+const firstOf = (each) => each.awaiting[0] ?? each.proposed[0] ?? [...each.records].sort(byRecordId)[0] ?? null;
 const hrefOf = (each) => {
   const record = firstOf(each);
   if (record) return `${fm(record).id}.html`;
@@ -1423,6 +1428,11 @@ function stepperOf(held, labels) {
 /** The line that says what awaits review, with the way in: a primary link to the first step that has work. */
 function reviewLineOf(held, labels) {
   const waiting = held.filter((each) => each.todo);
+  const proposed = held.filter((each) => each.proposed.length);
+  if (!waiting.length && proposed.length) {
+    const text = filled(labels.overviewProposed, { count: proposed.reduce((sum, each) => sum + each.proposed.length, 0), steps: proposed.map((each) => labels.stepNames[each.step]).join(", ") });
+    return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(proposed[0]))}">${labels.start}</a></p>`;
+  }
   if (!waiting.length) return `<p class="lede">${labels.nothing}</p>`;
   const text = filled(labels.overviewNext, { count: waiting.reduce((sum, each) => sum + each.todo, 0), steps: waiting.map((each) => labels.stepNames[each.step]).join(", ") });
   return `<p class="lede">${escaped(text)}</p><p class="start-row"><a class="start" href="${escaped(hrefOf(waiting[0]))}">${labels.start}</a></p>`;
@@ -1446,12 +1456,15 @@ function overviewOf({ project, held, records, rows, labels }) {
     return `<section class="todo-step" data-step="${each.step}"><h3>${labels.stepNames[each.step]}<span>${each.todo}</span></h3>${each.awaiting.length ? body : ""}${open}</section>`;
   };
   const todo = held.reduce((sum, each) => sum + each.todo, 0);
+  const proposedHere = held.flatMap((each) => each.proposed).sort(byRecordId);
   const reworked = records.filter((record) => hasRender(project, record) && orderedStates(rows, record).some(({ verdict }) => verdict.current === "revise"));
   return [
     stepperOf(held, labels),
     todo
       ? `<section class="overview" data-overview="todo"><h2>${escaped(filled(labels.overviewTodo, { count: todo }))}</h2>${held.filter((each) => each.todo).map(stepBlock).join("")}</section>`
-      : `<section class="overview" data-overview="todo"><p class="none">${labels.nothing}</p></section>`,
+      : proposedHere.length
+        ? `<section class="overview" data-overview="todo"><h2>${escaped(filled(labels.overviewStillProposed, { count: proposedHere.length }))}</h2><ul>${proposedHere.map((record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a></li>`).join("")}</ul></section>`
+        : `<section class="overview" data-overview="todo"><p class="none">${labels.nothing}</p></section>`,
     reworked.length ? `<section class="overview" data-overview="revise"><h2>${escaped(filled(labels.overviewRevise, { count: reworked.length }))}</h2><ul>${reworked.sort(byRecordId).map(entry).join("")}</ul></section>` : "",
   ].filter(Boolean).join("\n");
 }
