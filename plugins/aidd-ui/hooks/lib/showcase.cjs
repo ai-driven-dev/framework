@@ -37,6 +37,9 @@ const LABELS = {
     outOfJourney: "Out of journey",
     wireframe: "Wireframe",
     twin: "View",
+    width: "Width",
+    desktop: "Desktop",
+    phone: "Phone",
     toReview: "{count} to review",
     stepDone: "complete",
     stepEmpty: "no content",
@@ -135,6 +138,9 @@ const LABELS = {
     outOfJourney: "Hors parcours",
     wireframe: "Maquette",
     twin: "Vue",
+    width: "Largeur",
+    desktop: "Ordinateur",
+    phone: "Téléphone",
     toReview: "{count} à relire",
     stepDone: "terminé",
     stepEmpty: "vide",
@@ -346,6 +352,9 @@ nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 .twin { display: flex; inline-size: fit-content; margin: 0 0 var(--s4); padding: 2px; gap: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r2); font-size: var(--t-md); }
 .twin a { padding: var(--s1) var(--s4); border-radius: var(--r1); color: var(--muted); text-decoration: none; }
 .twin a[aria-current="page"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
+.review > .twin { margin: var(--s3) var(--s4) 0; }
+.twin button { height: auto; padding: var(--s1) var(--s4); border: 0; border-radius: var(--r1); background: none; color: var(--muted); font: inherit; }
+.twin button[aria-pressed="true"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
 .journey-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s5); padding: var(--s3) var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r2); font-size: var(--t-md); }
 .journey-bar .journey-title { font-weight: 600; }
 .journey-bar .where { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -410,6 +419,7 @@ textarea.comment:focus, textarea.colcomment:focus { outline: 2px solid var(--acc
 .render { display: flex; gap: var(--s5); flex: 1 1 24rem; min-width: 0; align-items: flex-start; }
 .render iframe { box-sizing: content-box; flex: 1; min-width: 0; width: 100%; height: 240px; border: 1px solid var(--line-strong); border-radius: var(--r2); background: #fff; }
 .state .render iframe[data-platform="mobile"] { flex: 0 0 390px; inline-size: 390px; }
+.review[data-width="phone"] .state .render iframe[data-platform="web"] { flex: 0 0 390px; inline-size: 390px; }
 .capture { flex: 1 1 24rem; margin: 0; min-width: 0; }
 .capture img { display: block; max-width: 100%; border: 1px solid var(--line-strong); border-radius: var(--r2); }
 .asset-image { margin: 0; }
@@ -502,6 +512,7 @@ ${rowBoards()}
   .shell > main { padding: calc(56px + var(--s4)) var(--s4) var(--s6); }
   .pair { padding: var(--s3); }
   .state .render iframe[data-platform="mobile"] { flex: 0 1 390px; min-inline-size: 0; }
+  .review[data-width="phone"] .state .render iframe[data-platform="web"] { flex: 0 1 390px; min-inline-size: 0; }
 }
 `;
 /** The delivery of a copy, shared by the pages that hand a review back: the clipboard, else a text area to copy from. */
@@ -522,6 +533,23 @@ function deliver(button, content) {
   }, () => shown(button, content));
 }
 `;
+
+/** The script of the width switch of a review: the choice pressed, and set on the review for the style to size its web frames. */
+const WIDTH = `
+const widthSwitch = document.getElementById("width");
+if (widthSwitch) widthSwitch.addEventListener("click", (event) => {
+  const choice = event.target.closest("[data-width]");
+  if (!choice) return;
+  widthSwitch.querySelectorAll("[data-width]").forEach((each) => each.setAttribute("aria-pressed", String(each === choice)));
+  widthSwitch.closest(".review").dataset.width = choice.dataset.width;
+});
+`;
+
+/** The switch between a web render at the width of a desktop and at a phone's, shown only for a system whose first platform is web. */
+function widthOf(system, labels) {
+  if (!system || list(fm(system).platforms)[0] !== "web") return "";
+  return `<div class="twin" id="width" role="group" aria-label="${escaped(labels.width)}"><button type="button" data-width="desktop" aria-pressed="true">${escaped(labels.desktop)}</button><button type="button" data-width="phone" aria-pressed="false">${escaped(labels.phone)}</button></div>`;
+}
 
 /** The script of a page that shows frames: the theme and platform dressing, the twin beside, the height of the content. */
 const FRAMES = `
@@ -1281,6 +1309,7 @@ function reviewOf({ project, system, record, rows, tokens, captures, labels }) {
     `<section class="review" data-record="${escaped(fm(record).id)}" data-version="${escaped(String(fm(record).version))}">`,
     `<div class="bar-top"><h2>${labels.states}</h2></div>`,
     toolbarOf(system, labels),
+    widthOf(system, labels),
     tabsOf(ordered, labels),
     verdictBarOf(labels),
     ...ordered.map(({ state, verdict }, at) => stateOf({ record, state, verdict, render, tokens, captures, labels, platform: platformOf(system), first: at === 0 })),
@@ -1542,7 +1571,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
       appearsOf({ project, ids: usedBy, recordsById, labels }),
       checksOf(problems, record, labels),
     ].filter(Boolean).join("\n");
-    const script = (reviewed ? FRAMES + PANEL + TABS : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");
+    const script = (reviewed ? FRAMES + PANEL + TABS + (widthOf(system, labels) ? WIDTH : "") : id === SYSTEM_ID ? FRAMES + PANEL : PANEL) + (bars.length ? JOURNEY_BARS : "");
     pages[`${id}.html`] = pageOf({ title, lang: language, navigation: navigationOf(project, records, labels, id, sets, rows, sectionsById), body, drawer: drawer(id), script, wide: journey });
   }
   const wireframes = project.renders.filter((file) => file.startsWith(WIREFRAMES_DIR)).sort().slice(0, WIREFRAMES_SHOWN).map((file) => {
@@ -1555,4 +1584,4 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
   return pages;
 }
 
-module.exports = { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, pickedOf, languageOf, LABELS };
+module.exports = { showcaseOf, copiedOf, keptOf, WIDTH, entriesOf, blockedOf, remainingOf, pickedOf, languageOf, LABELS };

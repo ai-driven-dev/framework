@@ -5,7 +5,7 @@ const { describe, it, beforeEach, afterEach } = require("node:test");
 const { UI, LIB, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, put, edit, editTokens, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const colour = require(path.join(LIB, "colour.cjs"));
-const { showcaseOf, copiedOf, keptOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
+const { showcaseOf, copiedOf, keptOf, WIDTH, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
 // The showcase is a pure module that renders pages and a command that writes them: the pages are
 // judged as text, and the command as a subprocess, as the skill calls it.
@@ -232,8 +232,75 @@ describe("aidd-ui showcase", () => {
     it("gives a mobile frame a phone's width and leaves the others fluid", () => {
       const html = pagesOf()["home.html"];
       assert.match(html, /\.state \.render iframe\[data-platform="mobile"\] \{ flex: 0 0 390px; inline-size: 390px; \}/);
-      assert.doesNotMatch(html, /\[data-platform="web"\] \{/);
+      assert.doesNotMatch(html, /^\.state \.render iframe\[data-platform="web"\] \{/m);
       assert.ok(!html.includes("height: 320px"));
+    });
+  });
+
+  describe("the width of a web screen", () => {
+    const withPlatforms = (platforms) => put(tmp, `${UI}/system.md`, read(`${UI}/system.md`).replace(/platforms: \[[^\]]*\]/, `platforms: ${platforms}`));
+    const groupOf = (html) => html.match(/<div class="twin"[^>]*role="group"[^>]*>[\s\S]*?<\/div>/)?.[0];
+    const choicesOf = (group) => [...group.matchAll(/<button type="button" data-width="(\w+)" aria-pressed="(\w+)">([^<]+)<\/button>/g)].map((match) => match.slice(1));
+
+    it("offers desktop, pressed, and phone on a record with web renders, in the language", () => {
+      for (const [lang, words] of [["en", ["Width", "Desktop", "Phone"]], ["fr", ["Largeur", "Ordinateur", "Téléphone"]]]) {
+        const group = groupOf(pagesOf({ lang })["home.html"]);
+        assert.match(group, new RegExp(`aria-label="${words[0]}"`), lang);
+        assert.deepEqual(choicesOf(group), [["desktop", "true", words[1]], ["phone", "false", words[2]]], lang);
+        assert.deepEqual([LABELS[lang].width, LABELS[lang].desktop, LABELS[lang].phone], words, lang);
+      }
+    });
+
+    it("sits inside the review, ahead of the tabs", () => {
+      const html = pagesOf()["home.html"];
+      const review = html.match(/<section class="review"[\s\S]*?<\/section>/)[0];
+      assert.ok(review.indexOf('data-width="phone"') > 0 && review.indexOf('data-width="phone"') < review.indexOf('role="tablist"'));
+    });
+
+    it("is not offered where no web render is shown", () => {
+      withPlatforms("[mobile]");
+      assert.equal(groupOf(pagesOf()["home.html"]), undefined);
+      withPlatforms("[]");
+      assert.equal(groupOf(pagesOf()["home.html"]), undefined);
+      withPlatforms("[web]");
+      const pages = pagesOf();
+      for (const name of ["index.html", "onboarding.html", "brand.html", "system.html", "icon-search.html"]) assert.equal(groupOf(pages[name]), undefined, name);
+    });
+
+    it("sets the web frames of the review to a phone's width, a fluid one on a narrow window", () => {
+      const html = pagesOf()["home.html"];
+      assert.match(html, /^\.review\[data-width="phone"\] \.state \.render iframe\[data-platform="web"\] \{ flex: 0 0 390px; inline-size: 390px; \}/m);
+      assert.match(html, /^ {2}\.review\[data-width="phone"\] \.state \.render iframe\[data-platform="web"\] \{ flex: 0 1 390px; min-inline-size: 0; \}/m);
+    });
+
+    it("runs in the page of a review, and nowhere else", () => {
+      const pages = pagesOf();
+      assert.ok(pages["home.html"].includes(WIDTH));
+      for (const name of ["index.html", "onboarding.html", "system.html"]) assert.ok(!pages[name].includes(WIDTH), name);
+    });
+
+    it("presses the chosen width and sets it on the review, going back to desktop", () => {
+      const node = (dataset = {}) => {
+        const own = { dataset, attrs: {}, listeners: {} };
+        own.setAttribute = (name, value) => { own.attrs[name] = value; };
+        own.addEventListener = (type, listener) => { own.listeners[type] = listener; };
+        own.closest = (selector) => (selector === "[data-width]" && dataset.width ? own : null);
+        return own;
+      };
+      const choices = [node({ width: "desktop" }), node({ width: "phone" })];
+      const review = node();
+      const group = node();
+      group.querySelectorAll = () => choices;
+      group.closest = (selector) => (selector === ".review" ? review : null);
+      new Function("document", WIDTH)({ getElementById: (id) => (id === "width" ? group : null) });
+      group.listeners.click({ target: choices[1] });
+      assert.equal(review.dataset.width, "phone");
+      assert.deepEqual(choices.map((each) => each.attrs["aria-pressed"]), ["false", "true"]);
+      group.listeners.click({ target: choices[0] });
+      assert.equal(review.dataset.width, "desktop");
+      assert.deepEqual(choices.map((each) => each.attrs["aria-pressed"]), ["true", "false"]);
+      group.listeners.click({ target: node() });
+      assert.equal(review.dataset.width, "desktop");
     });
   });
 
