@@ -231,6 +231,7 @@ nav summary::-webkit-details-marker { display: none; }
 nav summary:hover { background: var(--sunken); }
 nav .stepno { inline-size: 18px; block-size: 18px; border-radius: 999px; background: var(--sunken); color: var(--muted); font-size: var(--t-xs); text-align: center; line-height: 18px; flex: none; }
 nav .step-name { flex: 1; }
+nav summary a.step-name { padding: 0; font-weight: 600; color: inherit; }
 nav .step-mark { color: var(--muted); font-size: var(--t-xs); font-variant-numeric: tabular-nums; }
 nav details > ul, nav details > section > ul { padding-left: var(--s4); }
 nav h2 { font-size: var(--t-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--faint); margin: var(--s5) var(--s2) var(--s1); }
