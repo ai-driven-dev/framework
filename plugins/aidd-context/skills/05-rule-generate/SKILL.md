@@ -22,10 +22,8 @@ flowchart LR
   plan -->|"approved"| write
   plan -->|"revision or request refusal"| draft
   plan -->|"cancel"| cancelled((cancelled))
-  plan -->|"other refusal"| stopped
+  plan & write -->|"refusal, drift or blocked path"| stopped((stopped))
   write -->|"no drift"| written((written))
-  write -->|"refusal, drift or blocked path"| stopped((stopped))
-  frame & draft & plan & write -->|"reference unreadable"| stopped
 ```
 
 ## Transversal rules
