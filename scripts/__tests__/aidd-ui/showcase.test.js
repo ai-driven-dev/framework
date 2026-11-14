@@ -1096,6 +1096,27 @@ describe("aidd-ui showcase", () => {
       assert.equal(stepOf(pagesOf()["index.html"], "journeys").mark, "\u2014");
     });
 
+    it("shows an asset's image on its page, at most its natural size, with the alt of its front matter", () => {
+      const html = pagesOf()["icon-search.html"];
+      assert.match(html, /<figure class="asset-image" data-file="assets\/icon-search\.svg"><img src="\.\.\/assets\/icon-search\.svg" alt="Search"><\/figure>/);
+      assert.match(rule(html, ".asset-image img"), /max-width: 100%/);
+      assert.doesNotMatch(rule(html, ".asset-image img"), /(?<!max-)width: 100%/);
+    });
+
+    it("names the path of an asset whose file is missing instead of a broken image", () => {
+      fs.rmSync(path.join(tmp, UI, "assets/icon-search.svg"));
+      const html = pagesOf()["icon-search.html"];
+      assert.doesNotMatch(html, /<figure class="asset-image"/);
+      assert.match(html, /<div class="asset-image missing" data-file="assets\/icon-search\.svg">No file\. Save it at assets\/icon-search\.svg<\/div>/);
+      assert.match(pagesOf({ lang: "fr" })["icon-search.html"], /Aucun fichier\. Enregistrez-le dans assets\/icon-search\.svg/);
+    });
+
+    it("shows no image for an asset file that points outside the design system folder", () => {
+      put(tmp, "secret.svg", "<svg/>");
+      edit(tmp, `${UI}/assets/icon-search.md`, "file: icon-search.svg", "file: ../../../secret.svg");
+      assert.doesNotMatch(pagesOf()["icon-search.html"], /secret/);
+    });
+
     it("opens the step of the page, and on the overview the first step with work", () => {
       const pages = pagesOf();
       assert.deepEqual(stepsOf(pages["index.html"]).filter((each) => each.open).map((each) => each.step), ["components"]);

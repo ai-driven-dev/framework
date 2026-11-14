@@ -2,6 +2,7 @@
 // the project, the engine's problems, the tokens stylesheet and the captures already read. Pure:
 // the command reads the files and writes the pages. Each page holds the review of its record,
 // handed back as one copy.
+const path = require("node:path");
 const { list, table, frontMatterEnd, LINE_BREAK } = require("./markdown.cjs");
 const { placed, fm, BREAKPOINTS_SECTION, breakpointRows, STEPS_SECTION, PERSONA_SECTION, verdictRows, stateVerdict, reviewStatesOf, REVIEW_KIND, SYSTEM_ID } = require("./model.cjs");
 const { renderOf } = require("./renders.cjs");
@@ -71,6 +72,7 @@ const LABELS = {
     comment: "What should change?",
     outdated: "outdated, v{version}",
     noCapture: "No capture. Save it at {path}",
+    noAssetFile: "No file. Save it at {path}",
     capture: "Capture of {state}",
     copy: "Finish and copy",
     copied: "Copied",
@@ -166,6 +168,7 @@ const LABELS = {
     comment: "Que faut-il changer ?",
     outdated: "obsolète, v{version}",
     noCapture: "Aucune capture. Enregistrez-la dans {path}",
+    noAssetFile: "Aucun fichier. Enregistrez-le dans {path}",
     capture: "Capture de {state}",
     copy: "Terminer et copier",
     copied: "Copié",
@@ -405,7 +408,9 @@ textarea.comment:focus, textarea.colcomment:focus { outline: 2px solid var(--acc
 .state .render iframe[data-platform="mobile"] { flex: 0 0 390px; inline-size: 390px; }
 .capture { flex: 1 1 24rem; margin: 0; min-width: 0; }
 .capture img { display: block; max-width: 100%; border: 1px solid var(--line-strong); border-radius: var(--r2); }
-.capture.missing { display: flex; align-items: center; justify-content: center; min-block-size: 160px; border: 1.5px dashed var(--line-strong); border-radius: var(--r2); color: var(--muted); padding: var(--s4); font-size: var(--t-sm); text-align: center; }
+.asset-image { margin: 0; }
+.asset-image img { display: block; max-width: 100%; max-height: 70vh; border: 1px solid var(--line-strong); border-radius: var(--r2); background: var(--sunken); }
+.capture.missing, .asset-image.missing { display: flex; align-items: center; justify-content: center; min-block-size: 160px; border: 1.5px dashed var(--line-strong); border-radius: var(--r2); color: var(--muted); padding: var(--s4); font-size: var(--t-sm); text-align: center; }
 .overview { display: flex; flex-direction: column; gap: var(--s3); }
 .overview h2 { display: flex; align-items: center; gap: var(--s2); }
 .overview h2 span { font-size: var(--t-xs); font-weight: 600; color: var(--muted); background: var(--sunken); border-radius: 999px; padding: 0 7px; line-height: 18px; }
@@ -1368,6 +1373,17 @@ function specOf(project, record, labels) {
   return documentOf(named.join(LINE_BREAK));
 }
 
+/** The image of an asset, under its heading: its `file` beside the record, at most its natural size, else a note naming
+ * where to save it. Nothing for another kind, for an asset without a `file`, or one whose file lies outside the design system folder. */
+function assetImageOf({ project, record, labels }) {
+  const file = fm(record).file;
+  if (fm(record).kind !== "asset" || typeof file !== "string" || !file.trim()) return "";
+  const resolved = path.posix.normalize(path.posix.join(record.folder, file.trim()));
+  if (resolved === ".." || resolved.startsWith("../")) return "";
+  if (text(project, `${UI_DIR}/${resolved}`) === null) return `<div class="asset-image missing" data-file="${escaped(resolved)}">${escaped(filled(labels.noAssetFile, { path: resolved }))}</div>`;
+  return `<figure class="asset-image" data-file="${escaped(resolved)}"><img src="../${escaped(resolved)}" alt="${escaped(String(fm(record).alt ?? ""))}"></figure>`;
+}
+
 /** The heading of a record's page: its group, its title, its status and version under the title, clear of the
  * review button at the top right, then its description, a journey's persona, its route and code. */
 const headOf = ({ record, title, description, persona, labels }) => `<header class="head"><p class="crumb">${labels.stepNames[stepOf(record)]}</p><h1>${escaped(title)}</h1>${stampOf(record, labels)}${description ? `<p class="lede">${escaped(description)}</p>` : ""}${persona}${chipsOf(record)}</header>`;
@@ -1494,6 +1510,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
     const bars = barsOf({ project, record, journeys, recordsById, labels });
     const body = [
       headOf({ record, title, description: descriptionOf(project, record), persona: journey ? personaOf(record, labels) : "", labels }),
+      assetImageOf({ project, record, labels }),
       twinOf(record, records, labels),
       ...bars,
       journey ? "" : linksOf("uses", labels.uses, uses, (each) => titleOf(project, recordsById.get(each), labels)),
