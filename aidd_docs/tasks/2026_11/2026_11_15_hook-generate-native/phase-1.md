@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Writer des hôtes à config JSON
@@ -21,7 +21,7 @@ status: pending
 ```mermaid
 flowchart TD
   A[hook.json canonique] --> B[write-hook.cjs --plan]
-  B --> C{entrée étrangère modifiée ?}
+  B --> C{sa propre entrée ou une copie changée ?}
   C -->|oui, sans --force| D[refus exit 1]
   C -->|non| E[write-hook.cjs]
   E --> F[entrée fusionnée + copie du script dans le dossier hooks de chaque hôte]
@@ -44,7 +44,7 @@ journey
   section Edge case - voisines
     config existante avec un hook étranger => écrire => hook étranger conservé: 1: cli
   section Edge case - écrasement
-    entrée du même événement et matcher sans le chemin du writer => écrire sans --force => exit 1, rien écrit: 1: cli
+    sa propre entrée changée, ou un fichier Copilot ou une clé Antigravity du même nom => écrire sans --force => exit 1, rien écrit: 1: cli
   section Edge case - copie divergente
     copie du script modifiée à la main pour un hôte => écrire sans --force => exit 1 qui nomme la copie: 1: cli
   section Edge case - événement inconnu
@@ -73,7 +73,7 @@ journey
 
 1. `HOSTS` : `claude` (`.claude/settings.json`), `codex` (`.codex/hooks.json`), `cursor` (`.cursor/hooks.json`, `version: 1`), `copilot` (`.github/hooks/<name>.json`), `antigravity` (`.agents/hooks.json`, clé `<name>`).
 2. Événements natifs acceptés par hôte, refus sinon.
-3. Commande par hôte : `"$CLAUDE_PROJECT_DIR"/…`, `"$CURSOR_PROJECT_DIR"/…`, `cwd: "."` Copilot (résolu à la racine même depuis un sous-dossier), `"$(git rev-parse --show-toplevel)"/…` Codex, chemin relatif à `.agents/` Antigravity ; `commandWindows` et `powershell` quand l'entrée donne une commande Windows.
+3. Commande par hôte : `"$CLAUDE_PROJECT_DIR"/…`, `"$CURSOR_PROJECT_DIR"/…`, `cwd: "."` Copilot (résolu à la racine même depuis un sous-dossier), `"$(git rev-parse --show-toplevel)"/…` Codex, chemin relatif à `.agents/` Antigravity ; `commandWindows` et `powershell` jamais observés en trial : limite écrite, pas de code.
 4. Timeout explicite par hôte dans son unité (`timeout` s, `timeoutSec`).
 
 ### `3)` Fusion, propriété, suppression
@@ -81,7 +81,7 @@ journey
 > Écrire sans perdre les voisines.
 
 1. Lire en LF, parser, insérer ou remplacer l'entrée dont la commande nomme `hooks/<name>.` du dossier de l'hôte ; écrire la copie du script de chaque hôte, une copie divergente comptée `update`.
-2. Refuser sans `--force` une entrée du même événement et matcher qui n'est pas la sienne.
+2. Refuser sans `--force` toute `update` : sa propre entrée changée, une copie divergente, un fichier Copilot ou une clé Antigravity du même nom. Une entrée voisine du même événement et matcher coexiste : les deux hooks tournent.
 3. `--plan` : opérations `create`, `update`, `unchanged`, `delete`, rien écrit.
 4. `--remove <name>` : retire ses entrées, supprime le fichier Copilot vidé et la copie du script de chaque hôte.
 5. Répertoires créés avant tout fichier ; erreur FS => exit 3 avec chemin et code.
@@ -98,5 +98,5 @@ journey
 | ---- | ------------------- |
 | 1 | les tests échouent avant le writer, pour la raison qu'ils nomment |
 | 2 | chaque hôte reçoit son fichier et sa forme natifs, un événement inconnu est refusé |
-| 3 | une config voisine survit à l'écriture et à la suppression ; un écrasement étranger exige `--force` |
+| 3 | une config voisine survit à l'écriture et à la suppression ; toute `update` exige `--force` |
 | 4 | chaque mutation fait rougir le test qui la nomme |
