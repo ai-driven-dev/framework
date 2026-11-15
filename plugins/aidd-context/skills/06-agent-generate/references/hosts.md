@@ -16,9 +16,10 @@ Every host reads `AGENTS.md`, so it signals none. When no signal matches, confir
 
 A plugin source is one canonical agent, in the Claude Code format, where the target tool's plugin format puts agents, with no per-host copy.
 
-The writer renders each host's frontmatter keys and the Codex TOML. Two facts it cannot enforce:
+Facts the writer cannot enforce:
 
 - OpenCode: write for V2, which reads V1 files but treats their `tools` and `permission` as legacy.
+- The Codex `workspace-write` sandbox denies writes under `.agents/`, so an Antigravity target fails when run from Codex.
 - User-level agents live outside the project: Claude Code `~/.claude/agents/`, Codex `~/.codex/agents/`, OpenCode `~/.config/opencode/agents/`, Copilot `~/.copilot/agents/`. Prefer the project path.
 
 Sources: [Claude](https://code.claude.com/docs/en/sub-agents), [Cursor](https://cursor.com/docs/subagents), [Copilot](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference#custom-agent-frontmatter-fields), [Antigravity](https://antigravity.google/docs/subagents), [Codex](https://developers.openai.com/codex/subagents), [OpenCode V2](https://opencode.ai/v2/docs/agents), [Kilo](https://kilo.ai/docs/customize/custom-subagents).

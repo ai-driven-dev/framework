@@ -138,8 +138,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-frame.md](skills/06-agent-generate/actions/01-frame.md) | - |
-| `actions` | [02-write.md](skills/06-agent-generate/actions/02-write.md) | - |
-| `actions` | [03-validate.md](skills/06-agent-generate/actions/03-validate.md) | - |
+| `actions` | [02-plan.md](skills/06-agent-generate/actions/02-plan.md) | - |
+| `actions` | [03-write.md](skills/06-agent-generate/actions/03-write.md) | - |
 | `assets` | [agent-template.md](skills/06-agent-generate/assets/agent-template.md) | `<what it does>. Use to <when to call it>.` |
 | `references` | [agent-authoring.md](skills/06-agent-generate/references/agent-authoring.md) | - |
 | `references` | [hosts.md](skills/06-agent-generate/references/hosts.md) | - |

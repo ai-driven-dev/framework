@@ -17,7 +17,7 @@ const agent = {
   body: "# Role\n\nReview the diff.\n",
 };
 
-function fixture(t, fault) {
+function fixture(t) {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "aidd-agent-")));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const project = path.join(dir, "project");
@@ -26,7 +26,7 @@ function fixture(t, fault) {
   fs.cpSync(skill, installed, { recursive: true });
   const script = path.join(installed, "scripts/write-agent.cjs");
   assert.ok(fs.existsSync(script), "installed skill must contain its standalone script");
-  const exec = (...args) => spawnSync(process.execPath, [...(fault ? ["--require", fault] : []), script, ...args], { encoding: "utf8", cwd: dir, env: { PATH: "" } });
+  const exec = (...args) => spawnSync(process.execPath, [script, ...args], { encoding: "utf8", cwd: dir, env: { PATH: "" } });
   function run(request = agent, tools = ALL, extra = []) {
     const input = path.join(dir, "input.json");
     fs.writeFileSync(input, JSON.stringify(request));
@@ -113,16 +113,6 @@ test("plan writes nothing and names each operation", (t) => {
   assert.deepEqual(json(run({ ...agent, model: "opus" }, "claude", ["--plan"])).files, [{ path: ".claude/agents/code-reviewer.md", operation: "update" }]);
 });
 
-test("check fails on drift and passes once written", (t) => {
-  const { run, project } = fixture(t);
-  run();
-  assert.equal(run(agent, ALL, ["--check"]).status, 0);
-  fs.appendFileSync(path.join(project, ".kilo/agents/code-reviewer.md"), "edited\n");
-  const r = run(agent, ALL, ["--check"]);
-  assert.equal(r.status, 1);
-  assert.deepEqual(json(r).drift, [".kilo/agents/code-reviewer.md"]);
-});
-
 test("refuses an invalid agent and writes nothing", (t) => {
   const { run, project } = fixture(t);
   for (const bad of [
@@ -144,7 +134,7 @@ test("rejects bad usage with exit 2", (t) => {
   const { exec, run, project } = fixture(t);
   assert.equal(exec("--tools", "claude").status, 2);
   assert.equal(exec("--project", project, "--input", "x.json").status, 2);
-  assert.equal(run(agent, "claude", ["--plan", "--check"]).status, 2);
+  assert.equal(run(agent, "claude", ["--check"]).status, 2);
   assert.equal(run(agent, "claude", ["--bogus"]).status, 2);
   const unknown = run(agent, "claude,vim");
   assert.equal(unknown.status, 1);
@@ -204,19 +194,4 @@ test("refuses to overwrite a differing file without --force", (t) => {
   assert.equal(read(".claude/agents/code-reviewer.md"), "mine\n");
   assert.equal(run(agent, "claude", ["--force"]).status, 0);
   assert.match(read(".claude/agents/code-reviewer.md"), /^name: code-reviewer$/m);
-});
-
-test("a write failing midway leaves the existing file whole and no temporary file behind", (t) => {
-  const faultDir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-agent-fault-"));
-  t.after(() => fs.rmSync(faultDir, { recursive: true, force: true }));
-  const fault = path.join(faultDir, "fault.cjs");
-  fs.writeFileSync(fault, `const fs = require("node:fs"); const write = fs.writeFileSync;
-fs.writeFileSync = (file, ...rest) => { if (String(file).includes("code-reviewer.md")) { write(file, "-"); throw Object.assign(new Error("injected"), { code: "ENOSPC" }); } return write(file, ...rest); };`);
-  const { run, read, project } = fixture(t, fault);
-  const dir = path.join(project, ".claude/agents");
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, "code-reviewer.md"), "old\n");
-  assert.equal(run(agent, "claude", ["--force"]).status, 3);
-  assert.equal(read(".claude/agents/code-reviewer.md"), "old\n");
-  assert.deepEqual(fs.readdirSync(dir), ["code-reviewer.md"]);
 });

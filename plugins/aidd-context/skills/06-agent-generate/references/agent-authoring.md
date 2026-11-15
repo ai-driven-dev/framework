@@ -21,4 +21,3 @@ The constraints every generated agent satisfies. An agent is a focused role with
 | --- | --- |
 | Short, a single word where possible | `executor`, `reviewer`, `explorer` |
 | The role is clear at a glance | `validator` checks, it does not fix |
-| Three options proposed, the user picks | - |
