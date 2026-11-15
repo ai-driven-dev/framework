@@ -414,12 +414,13 @@ describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () =
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
+    const logger = new CapturingLogger();
     const useCase = new MarketplaceSyncSettingsUseCase(
       new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
       new InMemoryManifestRepository(manifest),
       registry,
       new DeterministicHasher(),
-      new CapturingLogger(),
+      logger,
       new Map([[TOOL.claude, activator]]),
       fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
       new Map([
@@ -450,6 +451,7 @@ describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () =
 
     return {
       activator,
+      logger,
       result: await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT }),
     };
   }
@@ -462,10 +464,11 @@ describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () =
   });
 
   it("does not add when the host registry exists but cannot be read", async () => {
-    const { activator, result } = await syncWithHostRegistry({ unreadable: "EACCES" });
+    const { activator, logger, result } = await syncWithHostRegistry({ unreadable: "EACCES" });
 
     expect(activator.addedMarketplaces).toEqual([]);
     expect(result.warnings.join("\n")).toContain("host registry is unreadable");
+    expect(logger.warnMessages).toEqual(result.warnings);
   });
 });
 
