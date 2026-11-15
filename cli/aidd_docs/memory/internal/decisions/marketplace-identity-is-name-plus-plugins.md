@@ -17,7 +17,7 @@ Read when touching `registerMarketplace`, `checkMarketplaceSources` or `nativeRe
 
 ## The check
 
-- `MarketplaceSyncSettingsUseCase.registerMarketplace` reads `known_marketplaces.json` first (`contexts/host-registration/contract/host-marketplace-registry.ts`, through `realpath`).
+- `MarketplaceSyncSettingsUseCase.registerMarketplace` reads `known_marketplaces.json` first (`contexts/host-registration/ports/host-marketplace-registry.ts`, through `realpath`).
 - Refuses only a `hostName` registered under a *different catalog* (`contexts/host-registration/domain/marketplace-source-conflict.ts`).
 - Identity: declared name plus plugin set, from each side's `marketplace.json`. Never a path, never the version.
 - A version bump under the same name and plugins is the host repointing to a newer build: no conflict.

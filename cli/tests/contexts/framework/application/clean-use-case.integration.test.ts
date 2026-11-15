@@ -2,13 +2,14 @@ import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
+import type { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
+import { projectCleaner } from "../../../helpers/project-cleaner.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 let projectRoot: string;
@@ -26,12 +27,12 @@ function buildUseCase(logger: CapturingLogger): CleanUseCase {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "1.0.0", []);
   manifest.addTool(TOOL.vscode, "1.0.0", []);
-  return new CleanUseCase(
+  return projectCleaner({
     fs,
-    new InMemoryManifestRepository(manifest, projectRoot),
+    manifestRepo: new InMemoryManifestRepository(manifest, projectRoot),
     logger,
-    new UpdateGitignore(fs)
-  );
+    gitignore: new UpdateGitignore(fs),
+  });
 }
 
 async function exists(path: string): Promise<boolean> {

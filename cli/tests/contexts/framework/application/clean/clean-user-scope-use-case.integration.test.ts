@@ -4,9 +4,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { CleanUserScopeUseCase } from "../../../../../src/contexts/framework/application/clean/clean-user-scope-use-case.js";
-import type { HostActions } from "../../../../../src/contexts/host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostActions } from "../../../../../src/contexts/host-registration/ports/host-actions.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
@@ -17,6 +16,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { RecordingPrompter } from "../../../../helpers/ports/recording-prompter.js";
+import { userScopeCleaner } from "../../../../helpers/user-scope-cleaner.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
@@ -206,18 +206,10 @@ describe("clean --scope user", () => {
         ["aidd-pm@aidd-framework", { enabled: foreignEnabled }],
       ]);
       const activator = new FakeHostActions({ available: true });
-      const clean = new CleanUserScopeUseCase(
-        new InMemoryFileAdapter(),
+      const clean = userScopeCleaner({
         repo,
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map([[TOOL.copilot, activator]]),
-        new Map(),
-        () => HOME,
-        undefined,
-        undefined,
-        new Map([
+        activators: new Map([[TOOL.copilot, activator]]),
+        sources: new Map([
           [
             TOOL.copilot,
             {
@@ -228,10 +220,10 @@ describe("clean --scope user", () => {
             },
           ],
         ]),
-        new Map([
+        pluginRegistries: new Map([
           [TOOL.copilot, new FakeHostPluginRegistry({ location: "plugins", refs: hostRefs })],
-        ])
-      );
+        ]),
+      });
 
       const result = clean.execute({
         tools: catalogOf(),
@@ -283,20 +275,13 @@ describe("clean --scope user", () => {
     fs.setFile(fetched, "framework clone");
     fs.setFile(plugins, "plugin clone");
     const activator = new FakeHostActions({ available: true });
-    const useCase = new CleanUserScopeUseCase(
+    const useCase = userScopeCleaner({
       fs,
       repo,
-      new CapturingLogger(),
-      new InMemoryMarketplaceRegistry(),
-      () => USER_CONFIG_DIR,
-      new Map([[TOOL.claude, activator]]),
-      new Map(),
-      () => HOME,
-      undefined,
-      undefined,
-      provenClaudeSources(),
-      provenHostPlugins(machine)
-    );
+      activators: new Map([[TOOL.claude, activator]]),
+      sources: provenClaudeSources(),
+      pluginRegistries: provenHostPlugins(machine),
+    });
 
     await expect(
       useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
@@ -327,20 +312,13 @@ describe("clean --scope user", () => {
         ["foreign@aidd-framework", { enabled: true }],
       ]),
     });
-    const useCase = new CleanUserScopeUseCase(
+    const useCase = userScopeCleaner({
       fs,
       repo,
-      new CapturingLogger(),
-      new InMemoryMarketplaceRegistry(),
-      () => USER_CONFIG_DIR,
-      new Map([[TOOL.claude, activator]]),
-      new Map(),
-      () => HOME,
-      undefined,
-      undefined,
-      provenClaudeSources(),
-      new Map([[TOOL.claude, hostPlugins]])
-    );
+      activators: new Map([[TOOL.claude, activator]]),
+      sources: provenClaudeSources(),
+      pluginRegistries: new Map([[TOOL.claude, hostPlugins]]),
+    });
     await expect(
       useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/foreign.*ref.*foreign@aidd-framework/);
@@ -392,23 +370,16 @@ describe("clean --scope user", () => {
         },
       ],
     ]);
-    const useCase = new CleanUserScopeUseCase(
+    const useCase = userScopeCleaner({
       fs,
       repo,
-      new CapturingLogger(),
-      new InMemoryMarketplaceRegistry(),
-      () => USER_CONFIG_DIR,
-      new Map([
+      activators: new Map([
         [TOOL.claude, claude],
         [TOOL.codex, codex],
       ]),
-      new Map(),
-      () => HOME,
-      undefined,
-      undefined,
       sources,
-      provenHostPlugins(machine)
-    );
+      pluginRegistries: provenHostPlugins(machine),
+    });
     await expect(
       useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/current host source differs.*reconcile manually/);
@@ -447,19 +418,12 @@ describe("clean --scope user", () => {
         ]),
       }),
     };
-    const useCase = new CleanUserScopeUseCase(
+    const useCase = userScopeCleaner({
       fs,
       repo,
-      new CapturingLogger(),
-      new InMemoryMarketplaceRegistry(),
-      () => USER_CONFIG_DIR,
-      new Map([[TOOL.codex, activator]]),
-      new Map(),
-      () => HOME,
-      undefined,
-      undefined,
-      new Map([[TOOL.codex, source]])
-    );
+      activators: new Map([[TOOL.codex, activator]]),
+      sources: new Map([[TOOL.codex, source]]),
+    });
     await expect(
       useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/current host source differs.*reconcile manually/);
@@ -478,14 +442,11 @@ describe("clean --scope user", () => {
     const repo = new InMemoryManifestRepository(machine);
     const fs = new RecordingFileAdapter();
     const activator = new RecordingActivator([]);
-    const useCase = new CleanUserScopeUseCase(
+    const useCase = userScopeCleaner({
       fs,
       repo,
-      new CapturingLogger(),
-      new InMemoryMarketplaceRegistry(),
-      () => USER_CONFIG_DIR,
-      new Map([[TOOL.claude, activator]]),
-      new Map([
+      activators: new Map([[TOOL.claude, activator]]),
+      marketplaceRegistries: new Map([
         [
           TOOL.claude,
           new FakeHostMarketplaceRegistry({
@@ -494,12 +455,9 @@ describe("clean --scope user", () => {
           }),
         ],
       ]),
-      () => HOME,
-      undefined,
-      undefined,
-      provenClaudeSources(),
-      provenHostPlugins(machine)
-    );
+      sources: provenClaudeSources(),
+      pluginRegistries: provenHostPlugins(machine),
+    });
     await expect(
       useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/active projects.*\/B/);
@@ -551,16 +509,7 @@ describe("clean --scope user", () => {
         .withDependents(["/project-foreign"])
     );
     const repo = new InMemoryManifestRepository(machine);
-    const useCase = new CleanUserScopeUseCase(
-      fs,
-      repo,
-      new CapturingLogger(),
-      new InMemoryMarketplaceRegistry(),
-      () => USER_CONFIG_DIR,
-      new Map(),
-      new Map(),
-      homedir
-    );
+    const useCase = userScopeCleaner({ fs, repo, homeDir: homedir });
 
     expect(
       (await useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: false })).preview
@@ -593,13 +542,11 @@ describe("clean --scope user", () => {
       }
     }
     const repo = new InMemoryManifestRepository(Manifest.create());
-    const useCase = new CleanUserScopeUseCase(
-      new RecordingFileAdapter(),
+    const useCase = userScopeCleaner({
+      fs: new RecordingFileAdapter(),
       repo,
-      new CapturingLogger(),
-      new RefusingRegistry(),
-      () => USER_CONFIG_DIR
-    );
+      marketplaceRegistry: new RefusingRegistry(),
+    });
     await expect(
       useCase.execute({ tools: catalogOf(), projectRoot: "/A", force: true })
     ).rejects.toThrow(/registry delete failed/);
@@ -629,17 +576,14 @@ describe("clean --scope user", () => {
       fs.setFile("/project-a/marker", "");
       const activator = new RecordingActivator(order);
       const logger = new CapturingLogger();
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(null),
+        repo: new InMemoryManifestRepository(null),
         logger,
-        registry,
-        () => USER_CONFIG_DIR,
-        new Map([[TOOL.claude, activator]]),
-        new Map(),
-        () => HOME,
-        userSourceReferences
-      );
+        marketplaceRegistry: registry,
+        activators: new Map([[TOOL.claude, activator]]),
+        userSourceReferences,
+      });
 
       await expect(
         useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
@@ -669,14 +613,11 @@ describe("clean --scope user", () => {
       seedClaudeCache(fs);
       const activator = new RecordingActivator(order);
       const manifestRepo = new InMemoryManifestRepository(manifestWithClaude());
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        manifestRepo,
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map([[TOOL.claude, activator]]),
-        new Map([
+        repo: manifestRepo,
+        activators: new Map([[TOOL.claude, activator]]),
+        marketplaceRegistries: new Map([
           [
             TOOL.claude,
             new FakeHostMarketplaceRegistry({
@@ -685,12 +626,9 @@ describe("clean --scope user", () => {
             }),
           ],
         ]),
-        () => HOME,
-        undefined,
-        undefined,
-        provenClaudeSources(),
-        provenHostPlugins(manifestWithClaude())
-      );
+        sources: provenClaudeSources(),
+        pluginRegistries: provenHostPlugins(manifestWithClaude()),
+      });
 
       await useCase.execute({
         tools: catalogOf(),
@@ -725,13 +663,11 @@ describe("clean --scope user", () => {
           addedAt: "2026-01-01T00:00:00Z",
         })
       );
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
-        new CapturingLogger(),
-        registry,
-        () => USER_CONFIG_DIR
-      );
+        repo: new InMemoryManifestRepository(Manifest.create()),
+        marketplaceRegistry: registry,
+      });
 
       await useCase.execute({
         tools: catalogOf(),
@@ -754,13 +690,10 @@ describe("clean --scope user", () => {
         "framework clone"
       );
       fs.setFile(join(USER_CONFIG_DIR, "cache", "plugin-cache", "source"), "plugin clone");
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR
-      );
+        repo: new InMemoryManifestRepository(Manifest.create()),
+      });
 
       await useCase.execute({
         tools: catalogOf(),
@@ -784,13 +717,11 @@ describe("clean --scope user", () => {
         fs.setFile(marker, "external clone");
         fs.setSymlink(cache, "/elsewhere/clone");
         const logger = new CapturingLogger();
-        const useCase = new CleanUserScopeUseCase(
+        const useCase = userScopeCleaner({
           fs,
-          new InMemoryManifestRepository(Manifest.create()),
+          repo: new InMemoryManifestRepository(Manifest.create()),
           logger,
-          new InMemoryMarketplaceRegistry(),
-          () => USER_CONFIG_DIR
-        );
+        });
 
         await useCase.execute({
           tools: catalogOf(),
@@ -835,17 +766,12 @@ describe("clean --scope user", () => {
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
       await userSourceReferences.addReference("1.0.0", "/project-a");
       await userSourceReferences.removeReference("/project-a");
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        manifestRepo,
-        new CapturingLogger(),
-        registry,
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME,
-        userSourceReferences
-      );
+        repo: manifestRepo,
+        marketplaceRegistry: registry,
+        userSourceReferences,
+      });
 
       await useCase.execute({
         tools: catalogOf(),
@@ -872,13 +798,10 @@ describe("clean --scope user", () => {
       fs.setFile(join(USER_CONFIG_DIR, "cache", "update-check.json"), '{"latest":"9.9.9"}');
       // And where an older CLI wrote the same cache, before it moved under `cache/`.
       fs.setFile(join(USER_CONFIG_DIR, "update-check.json"), '{"latest":"8.0.0"}');
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR
-      );
+        repo: new InMemoryManifestRepository(Manifest.create()),
+      });
 
       await useCase.execute({
         tools: catalogOf(),
@@ -902,13 +825,11 @@ describe("clean --scope user", () => {
       // symlink pointing straight back at userConfigDir() itself.
       fs.setSymlink(join(USER_CONFIG_DIR, "references.json"), USER_CONFIG_DIR);
       const logger = new CapturingLogger();
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
+        repo: new InMemoryManifestRepository(Manifest.create()),
         logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR
-      );
+      });
 
       await useCase.execute({
         tools: catalogOf(),
@@ -949,16 +870,11 @@ describe("clean --scope user", () => {
         ).withFiles(new Map([["rogue-plugin/evil.md", "hash"]]))
       );
       const logger = new CapturingLogger();
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(manifest),
+        repo: new InMemoryManifestRepository(manifest),
         logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME
-      );
+      });
 
       await expect(
         useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
@@ -974,16 +890,13 @@ describe("clean --scope user", () => {
       const fs = new RecordingFileAdapter();
       const claudeCachePath = seedClaudeCache(fs);
       const logger = new CapturingLogger();
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(manifestWithClaude()),
+        repo: new InMemoryManifestRepository(manifestWithClaude()),
         logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(), // no activator registered for "claude" — the binary is absent
-        new Map(),
-        () => HOME
-      );
+        marketplaceRegistries: // no activator registered for "claude" — the binary is absent
+          new Map(),
+      });
 
       await expect(
         useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
@@ -1005,17 +918,11 @@ describe("clean --scope user", () => {
       fs.setFile("/project-a/marker", "");
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
       await userSourceReferences.addReference("1.2.3", "/project-a");
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME,
-        userSourceReferences
-      );
+        repo: new InMemoryManifestRepository(Manifest.create()),
+        userSourceReferences,
+      });
 
       const result = await useCase.execute({
         tools: catalogOf(),
@@ -1032,17 +939,11 @@ describe("clean --scope user", () => {
       const fs = new InMemoryFileAdapter();
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
       await userSourceReferences.addReference("1.0.0", "/gone");
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME,
-        userSourceReferences
-      );
+        repo: new InMemoryManifestRepository(Manifest.create()),
+        userSourceReferences,
+      });
 
       const result = await useCase.execute({
         tools: catalogOf(),
@@ -1059,17 +960,7 @@ describe("clean --scope user", () => {
       const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
       await userSourceReferences.addReference("1.0.0", "/project-a");
       const manifestRepo = new InMemoryManifestRepository(Manifest.create());
-      const useCase = new CleanUserScopeUseCase(
-        fs,
-        manifestRepo,
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME,
-        userSourceReferences
-      );
+      const useCase = userScopeCleaner({ fs, repo: manifestRepo, userSourceReferences });
 
       await expect(
         useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
@@ -1083,18 +974,7 @@ describe("clean --scope user", () => {
       const fs = new RecordingFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(Manifest.create());
       const prompter = new RecordingPrompter(true);
-      const useCase = new CleanUserScopeUseCase(
-        fs,
-        manifestRepo,
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME,
-        undefined,
-        prompter
-      );
+      const useCase = userScopeCleaner({ fs, repo: manifestRepo, prompter });
 
       const result = await useCase.execute({
         tools: catalogOf(),
@@ -1115,18 +995,7 @@ describe("clean --scope user", () => {
       const fs = new RecordingFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(Manifest.create());
       const prompter = new RecordingPrompter(false);
-      const useCase = new CleanUserScopeUseCase(
-        fs,
-        manifestRepo,
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME,
-        undefined,
-        prompter
-      );
+      const useCase = userScopeCleaner({ fs, repo: manifestRepo, prompter });
 
       const result = await useCase.execute({
         tools: catalogOf(),
@@ -1143,18 +1012,11 @@ describe("clean --scope user", () => {
     it("never asks outside an interactive run, even with a prompter wired in", async () => {
       const fs = new RecordingFileAdapter();
       const prompter = new RecordingPrompter(true);
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME,
-        undefined,
-        prompter
-      );
+        repo: new InMemoryManifestRepository(Manifest.create()),
+        prompter,
+      });
 
       const result = await useCase.execute({
         tools: catalogOf(),
@@ -1177,18 +1039,12 @@ describe("clean --scope user", () => {
       await userSourceReferences.addReference("1.2.3", "/project-a");
       await userSourceReferences.addReference("2.0.0", "/project-b");
       const prompter = new RecordingPrompter(false);
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME,
+        repo: new InMemoryManifestRepository(Manifest.create()),
         userSourceReferences,
-        prompter
-      );
+        prompter,
+      });
 
       await useCase.execute({
         tools: catalogOf(),
@@ -1206,14 +1062,12 @@ describe("clean --scope user", () => {
 
   describe("what the run reports", () => {
     function buildClaudeUseCase(fs: InMemoryFileAdapter, logger: CapturingLogger) {
-      return new CleanUserScopeUseCase(
+      return userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(manifestWithClaude()),
+        repo: new InMemoryManifestRepository(manifestWithClaude()),
         logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
-        new Map([
+        activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
+        marketplaceRegistries: new Map([
           [
             TOOL.claude,
             new FakeHostMarketplaceRegistry({
@@ -1222,12 +1076,9 @@ describe("clean --scope user", () => {
             }),
           ],
         ]),
-        () => HOME,
-        undefined,
-        undefined,
-        provenClaudeSources(),
-        provenHostPlugins(manifestWithClaude())
-      );
+        sources: provenClaudeSources(),
+        pluginRegistries: provenHostPlugins(manifestWithClaude()),
+      });
     }
 
     it("reports the manifest found and the tools it named, and purges the cache the host forgot", async () => {
@@ -1277,16 +1128,7 @@ describe("clean --scope user", () => {
       const fs = new InMemoryFileAdapter();
       await seedWhitelist(fs);
       const logger = new CapturingLogger();
-      const useCase = new CleanUserScopeUseCase(
-        fs,
-        new InMemoryManifestRepository(null),
-        logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME
-      );
+      const useCase = userScopeCleaner({ fs, repo: new InMemoryManifestRepository(null), logger });
 
       const result = await useCase.execute({
         tools: catalogOf(),
@@ -1318,17 +1160,12 @@ describe("clean --scope user", () => {
       await userSourceReferences.addReference("1.0.0", "/project-a");
       await userSourceReferences.addReference("1.0.0", "/project-b");
       const logger = new CapturingLogger();
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(null),
+        repo: new InMemoryManifestRepository(null),
         logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME,
-        userSourceReferences
-      );
+        userSourceReferences,
+      });
 
       await useCase.execute({
         tools: catalogOf(),
@@ -1347,17 +1184,12 @@ describe("clean --scope user", () => {
       const fs = new InMemoryFileAdapter();
       fs.setFile(join(USER_CONFIG_DIR, "references.json"), "not json");
       const logger = new CapturingLogger();
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
+        repo: new InMemoryManifestRepository(Manifest.create()),
         logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME,
-        new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR)
-      );
+        userSourceReferences: new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR),
+      });
 
       await expect(
         useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
@@ -1368,13 +1200,7 @@ describe("clean --scope user", () => {
 
   describe("the versions built on this machine", () => {
     function buildPreviewUseCase(fs: InMemoryFileAdapter) {
-      return new CleanUserScopeUseCase(
-        fs,
-        new InMemoryManifestRepository(Manifest.create()),
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR
-      );
+      return userScopeCleaner({ fs, repo: new InMemoryManifestRepository(Manifest.create()) });
     }
 
     it("lists them sorted, whatever order the cache holds them in", async () => {
@@ -1427,20 +1253,15 @@ describe("clean --scope user", () => {
       hostPlugins?: ReadonlyMap<AiToolId, FakeHostPluginRegistry>;
       activator: HostActions;
     }) {
-      return new CleanUserScopeUseCase(
-        deps.fs,
-        deps.repo ?? new InMemoryManifestRepository(deps.manifest ?? manifestWithClaude()),
-        deps.logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map([[deps.binary ?? TOOL.claude, deps.activator]]),
-        new Map(),
-        () => HOME,
-        undefined,
-        undefined,
-        deps.nativeSources ?? provenClaudeSources(),
-        deps.hostPlugins ?? provenHostPlugins(deps.manifest ?? manifestWithClaude())
-      );
+      return userScopeCleaner({
+        fs: deps.fs,
+        repo: deps.repo ?? new InMemoryManifestRepository(deps.manifest ?? manifestWithClaude()),
+        logger: deps.logger,
+        activators: new Map([[deps.binary ?? TOOL.claude, deps.activator]]),
+        sources: deps.nativeSources ?? provenClaudeSources(),
+        pluginRegistries:
+          deps.hostPlugins ?? provenHostPlugins(deps.manifest ?? manifestWithClaude()),
+      });
     }
 
     it("uninstalls every plugin ref at the user scope", async () => {
@@ -1887,16 +1708,7 @@ describe("clean --scope user", () => {
 
     async function errorsFor(manifest: Manifest): Promise<readonly string[]> {
       const logger = new CapturingLogger();
-      const useCase = new CleanUserScopeUseCase(
-        new InMemoryFileAdapter(),
-        new InMemoryManifestRepository(manifest),
-        logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME
-      );
+      const useCase = userScopeCleaner({ repo: new InMemoryManifestRepository(manifest), logger });
       try {
         await useCase.execute({
           tools: catalogOf(),
@@ -1982,16 +1794,7 @@ describe("clean --scope user", () => {
           "project"
         ).withFiles(new Map([["skills/x.md", "hash"]]))
       );
-      const useCase = new CleanUserScopeUseCase(
-        fs,
-        new InMemoryManifestRepository(manifest),
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR,
-        new Map(),
-        new Map(),
-        () => HOME
-      );
+      const useCase = userScopeCleaner({ fs, repo: new InMemoryManifestRepository(manifest) });
 
       await useCase.execute({
         tools: catalogOf(),
@@ -2011,13 +1814,7 @@ describe("clean --scope user", () => {
       fs.setFile(marker, "legacy cache");
       const logger = new CapturingLogger();
       const repo = new InMemoryManifestRepository(Manifest.create());
-      const useCase = new CleanUserScopeUseCase(
-        fs,
-        repo,
-        logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR
-      );
+      const useCase = userScopeCleaner({ fs, repo, logger });
 
       const result = await useCase.execute({
         tools: catalogOf(),
@@ -2041,13 +1838,7 @@ describe("clean --scope user", () => {
       fs.setFile(legacy, "legacy cache");
       const machine = Manifest.create();
       const repo = new InMemoryManifestRepository(machine);
-      const useCase = new CleanUserScopeUseCase(
-        fs,
-        repo,
-        new CapturingLogger(),
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR
-      );
+      const useCase = userScopeCleaner({ fs, repo });
 
       await expect(
         useCase.execute({ tools: catalogOf(), projectRoot: "/wherever", force: true })
@@ -2064,13 +1855,11 @@ describe("clean --scope user", () => {
       fs.setFile(join(cacheDir, "built", "1.0.0", "aidd-framework", "x"), "1");
       fs.setSymlink(cacheDir, "/elsewhere/cache");
       const logger = new CapturingLogger();
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
+        repo: new InMemoryManifestRepository(Manifest.create()),
         logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR
-      );
+      });
 
       await useCase.execute({
         tools: catalogOf(),
@@ -2095,13 +1884,11 @@ describe("clean --scope user", () => {
       fs.setFile(other, "{}");
       await seedWhitelist(fs);
       const logger = new CapturingLogger();
-      const useCase = new CleanUserScopeUseCase(
+      const useCase = userScopeCleaner({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
+        repo: new InMemoryManifestRepository(Manifest.create()),
         logger,
-        new InMemoryMarketplaceRegistry(),
-        () => USER_CONFIG_DIR
-      );
+      });
 
       await useCase.execute({
         tools: catalogOf(),

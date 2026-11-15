@@ -2,10 +2,10 @@ import { readFile, realpath } from "node:fs/promises";
 import { describeError } from "../../../shared/domain/describe-error.js";
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type {
-  HostPluginRegistry,
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
-} from "../contract/host-plugin-registry.js";
+} from "../domain/plugin-registry-reading.js";
+import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 
 function failedRead(location: string, error: unknown): HostPluginRegistryReading {
   if (error instanceof Error && "code" in error && error.code === "ENOENT")

@@ -11,12 +11,12 @@ export interface PluginRemoverParts {
   manifestRepo: Constructed[1];
   fs?: Constructed[0];
   logger?: Constructed[2];
-  activators?: Withdrawing[2];
-  hostPluginRegistries?: Withdrawing[3];
+  activators?: Withdrawing[2]["activators"];
+  hostPluginRegistries?: Withdrawing[2]["pluginRegistries"];
   userSourceReferences?: Constructed[4];
   marketplaceRegistry?: Constructed[5];
   userManifestRepo?: Constructed[6];
-  nativeMarketplaceSources?: Withdrawing[4];
+  nativeMarketplaceSources?: Withdrawing[2]["sources"];
 }
 
 export function pluginRemover(parts: PluginRemoverParts): PluginRemoveUseCase {
@@ -26,13 +26,12 @@ export function pluginRemover(parts: PluginRemoverParts): PluginRemoveUseCase {
     fs,
     parts.manifestRepo,
     logger,
-    new WithdrawFromHost(
-      fs,
-      logger,
-      parts.activators ?? new Map(),
-      parts.hostPluginRegistries ?? new Map(),
-      parts.nativeMarketplaceSources ?? new Map()
-    ),
+    new WithdrawFromHost(fs, logger, {
+      activators: parts.activators ?? new Map(),
+      pluginRegistries: parts.hostPluginRegistries ?? new Map(),
+      marketplaceRegistries: new Map(),
+      sources: parts.nativeMarketplaceSources ?? new Map(),
+    }),
     parts.userSourceReferences,
     parts.marketplaceRegistry,
     parts.userManifestRepo

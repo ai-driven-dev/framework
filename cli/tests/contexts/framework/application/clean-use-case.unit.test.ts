@@ -3,11 +3,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { CleanUserScopeUseCase } from "../../../../src/contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase as ProductionCleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
-import type { HostActions } from "../../../../src/contexts/host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { HostActions } from "../../../../src/contexts/host-registration/ports/host-actions.js";
+import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -22,6 +21,8 @@ import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapt
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { RecordingPrompter } from "../../../helpers/ports/recording-prompter.js";
+import { type ProjectCleanerParts, projectCleanerArgs } from "../../../helpers/project-cleaner.js";
+import { userScopeCleaner } from "../../../helpers/user-scope-cleaner.js";
 import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
@@ -78,22 +79,41 @@ function nativeRefsOnHost(): ReadonlyMap<AiToolId, HostPluginRegistry> {
   ]);
 }
 
+/** The positional order a test names its collaborators in. */
+type TestCleanArgs = [
+  fs: ProjectCleanerParts["fs"],
+  manifestRepo: ProjectCleanerParts["manifestRepo"],
+  logger: ProjectCleanerParts["logger"],
+  gitignore: ProjectCleanerParts["gitignore"],
+  activators?: ProjectCleanerParts["activators"],
+  marketplaceRegistry?: ProjectCleanerParts["marketplaceRegistry"],
+  prompter?: ProjectCleanerParts["prompter"],
+  marketplaceRegistries?: ProjectCleanerParts["marketplaceRegistries"],
+  homeDir?: ProjectCleanerParts["homeDir"],
+  userSourceReferences?: ProjectCleanerParts["userSourceReferences"],
+  pluginRegistries?: ProjectCleanerParts["pluginRegistries"],
+  userManifestRepo?: ProjectCleanerParts["userManifestRepo"],
+  sources?: ProjectCleanerParts["sources"],
+];
+
 class CleanWithKnownHostSource extends ProductionCleanUseCase {
-  constructor(...args: ConstructorParameters<typeof ProductionCleanUseCase>) {
+  constructor(...args: TestCleanArgs) {
     super(
-      args[0],
-      args[1],
-      args[2],
-      args[3],
-      args[4],
-      args[5],
-      args[6],
-      args[7],
-      args[8],
-      args[9],
-      args[10]?.size ? args[10] : nativeRefsOnHost(),
-      args[11],
-      args[12] ?? nativeSourcesOnHost()
+      ...projectCleanerArgs({
+        fs: args[0],
+        manifestRepo: args[1],
+        logger: args[2],
+        gitignore: args[3],
+        activators: args[4],
+        marketplaceRegistry: args[5],
+        prompter: args[6],
+        marketplaceRegistries: args[7],
+        homeDir: args[8],
+        userSourceReferences: args[9],
+        pluginRegistries: args[10]?.size ? args[10] : nativeRefsOnHost(),
+        userManifestRepo: args[11],
+        sources: args[12] ?? nativeSourcesOnHost(),
+      })
     );
   }
 }
@@ -1145,17 +1165,14 @@ describe("clean", () => {
           PROJECT_ROOT,
           OTHER_PROJECT_ROOT,
         ]);
-        const userClean = new CleanUserScopeUseCase(
+        const userClean = userScopeCleaner({
           fs,
-          new InMemoryManifestRepository(),
-          new CapturingLogger(),
-          registry,
-          () => "/fake-home/.config/aidd",
-          new Map(),
-          new Map(),
-          () => "/fake-home",
-          references
-        );
+          repo: new InMemoryManifestRepository(),
+          marketplaceRegistry: registry,
+          userConfigDir: () => "/fake-home/.config/aidd",
+          homeDir: () => "/fake-home",
+          userSourceReferences: references,
+        });
         await expect(userClean.execute({ ...AT_PROJECT, force: true })).rejects.toThrow(
           "the shared framework source"
         );

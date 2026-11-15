@@ -171,11 +171,17 @@ export async function createDeps(
     refreshMarketplace,
     registerFrameworkMarketplace,
   } = wireDistribution({ fs, hasher, http, tokenProvider, logger, projectRoot });
+  const withdrawFromHost = new WithdrawFromHost(fs, logger, {
+    activators: nativePluginActivators,
+    pluginRegistries: hostPluginRegistries,
+    marketplaceRegistries: hostMarketplaceRegistries,
+    sources: nativeSources,
+  });
   const pluginRemoveUseCase = new PluginRemoveUseCase(
     fs,
     manifestRepo,
     logger,
-    new WithdrawFromHost(fs, logger, nativePluginActivators, hostPluginRegistries, nativeSources),
+    withdrawFromHost,
     userSourceReferences,
     marketplaceRegistry,
     userManifestRepo
@@ -470,15 +476,12 @@ export async function createDeps(
     manifestRepo,
     logger,
     updateGitignore,
-    nativePluginActivators,
+    withdrawFromHost,
     marketplaceRegistry,
     prompter,
-    hostMarketplaceRegistries,
     undefined,
     userSourceReferences,
-    hostPluginRegistries,
-    userManifestRepo,
-    nativeSources
+    userManifestRepo
   );
   const cleanUserScopeUseCase = new CleanUserScopeUseCase(
     fs,
@@ -486,13 +489,10 @@ export async function createDeps(
     logger,
     marketplaceRegistry,
     userConfigDir,
-    nativePluginActivators,
-    hostMarketplaceRegistries,
+    withdrawFromHost,
     homedir,
     userSourceReferences,
-    prompter,
-    nativeSources,
-    hostPluginRegistries
+    prompter
   );
   const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
   const listInstalledRulesUseCase = new ListInstalledRules(fs);

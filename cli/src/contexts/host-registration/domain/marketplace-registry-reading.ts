@@ -29,7 +29,3 @@ export interface HostMarketplaceRegistryReading {
    * Present exactly when `entries` and `absent` are both absent. */
   readonly unreadable?: string;
 }
-
-export interface HostMarketplaceRegistry {
-  read(): Promise<HostMarketplaceRegistryReading>;
-}

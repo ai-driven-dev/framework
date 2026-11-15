@@ -59,7 +59,7 @@ const BASELINE: readonly string[] = [];
  * making it required means every `HostActions` test double declares it and the gate's
  * `updatePlugin === undefined` branches go. The list may only shrink. */
 const OPTIONAL_BASELINE: readonly string[] = [
-  "src/contexts/host-registration/contract/host-actions.ts",
+  "src/contexts/host-registration/ports/host-actions.ts",
 ];
 
 function uncalledMethods(bodies: ReadonlyMap<string, string>, ports: readonly string[]): string[] {

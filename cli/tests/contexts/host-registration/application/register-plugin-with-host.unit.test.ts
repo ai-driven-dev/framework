@@ -4,9 +4,9 @@ import {
   RegisterPluginWithHost,
   type RegistrationClaims,
 } from "../../../../src/contexts/host-registration/application/register-plugin-with-host.js";
-import type { HostMarketplaceRegistryReading } from "../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
 import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { HostMarketplaceRegistryReading } from "../../../../src/contexts/host-registration/domain/marketplace-registry-reading.js";
+import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";

@@ -1,9 +1,10 @@
 /** At a host that enables a plugin machine-wide (no `NativeActivation.scopeArgs` — codex,
  * copilot), a ref is left enabled while another project still references its shared source. */
+
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { CleanUseCase } from "../../../../../src/contexts/framework/application/clean-use-case.js";
+import type { CleanUseCase } from "../../../../../src/contexts/framework/application/clean-use-case.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/host-registration/contract/registration-record.js";
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
@@ -16,6 +17,7 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { projectCleaner } from "../../../../helpers/project-cleaner.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
@@ -137,18 +139,16 @@ function buildUseCase(deps: {
 }): CleanUseCase {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
   const userSourceReferences = new UserSourceReferencesAdapter(deps.fs, () => USER_CONFIG_DIR);
-  return new CleanUseCase(
-    deps.fs,
+  return projectCleaner({
+    fs: deps.fs,
     manifestRepo,
-    deps.logger,
-    deps.gitignore ?? new UpdateGitignore(deps.fs),
-    new Map([[deps.binary, deps.activator]]),
-    deps.aiddMarketplaceRegistry,
-    undefined,
-    new Map(),
-    () => "/fake-home",
+    logger: deps.logger,
+    gitignore: deps.gitignore ?? new UpdateGitignore(deps.fs),
+    activators: new Map([[deps.binary, deps.activator]]),
+    marketplaceRegistry: deps.aiddMarketplaceRegistry,
+    homeDir: () => "/fake-home",
     userSourceReferences,
-    new Map([
+    pluginRegistries: new Map([
       [
         deps.binary,
         new FakeHostPluginRegistry({
@@ -160,9 +160,9 @@ function buildUseCase(deps: {
         }),
       ],
     ]),
-    deps.userManifestRepo,
-    new Map([[deps.binary, currentHostSource(deps.binary)]])
-  );
+    userManifestRepo: deps.userManifestRepo,
+    sources: new Map([[deps.binary, currentHostSource(deps.binary)]]),
+  });
 }
 
 describe("clean guards a ref another project on this machine still needs", () => {

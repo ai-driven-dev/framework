@@ -1,8 +1,5 @@
 import { resolveHomeDir } from "../contexts/framework/domain/reading/home-dir.js";
-import type { HostActions } from "../contexts/host-registration/contract/host-actions.js";
-import type { HostMarketplaceRegistry } from "../contexts/host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistry } from "../contexts/host-registration/contract/host-plugin-registry.js";
 import { HostCliAdapter } from "../contexts/host-registration/infrastructure/host-cli-adapter.js";
 import { marketplaceListContract } from "../contexts/host-registration/infrastructure/marketplace-list-parsers.js";
 import { InstallLocationsByNameReader } from "../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
@@ -15,6 +12,9 @@ import {
   PluginEntriesByScopeReader,
   TomlPluginTablesReader,
 } from "../contexts/host-registration/infrastructure/plugin-registry-readers.js";
+import type { HostActions } from "../contexts/host-registration/ports/host-actions.js";
+import type { HostMarketplaceRegistry } from "../contexts/host-registration/ports/host-marketplace-registry.js";
+import type { HostPluginRegistry } from "../contexts/host-registration/ports/host-plugin-registry.js";
 import type {
   MarketplaceRegistryLayout,
   PluginRegistryLayout,

@@ -1,6 +1,5 @@
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolProfile } from "../../tools/contract/tool-profile.js";
-import type { HostMarketplaceRegistry } from "../contract/host-marketplace-registry.js";
 import type {
   MarketplaceSourceDrift,
   MarketplaceSourceDriftFound,
@@ -14,6 +13,7 @@ import {
   type MarketplaceSourceDriftContext,
   marketplaceSourceDrift,
 } from "../domain/marketplace-source-drift.js";
+import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import { readMarketplaceCatalogIdentity } from "./read-marketplace-catalog-identity.js";
 
 export type HostMarketplaceSourceCheck =

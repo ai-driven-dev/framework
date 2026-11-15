@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 
 /** What the registry holds when it is asked. */
 export type PluginRegistryScenario =

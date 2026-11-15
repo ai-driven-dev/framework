@@ -2,17 +2,26 @@ import { join } from "node:path";
 import { NativePluginCliError } from "../../../shared/domain/errors.js";
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
-import type { HostActions } from "../contract/host-actions.js";
-import type { HostMarketplaceSources } from "../contract/host-marketplace-sources.js";
-import type {
-  HostPluginRegistry,
-  HostPluginRegistryReading,
-} from "../contract/host-plugin-registry.js";
 import type { RegistrationRecord } from "../contract/registration-record.js";
-import { inspectNativeMarketplaceSource } from "./native-marketplace-source-proof.js";
+import {
+  judgeConfirmation,
+  judgeEmptiness,
+  judgeRegistryClearance,
+  type PurgeVerdict,
+} from "../domain/cache-purge-policy.js";
+import type { HostPluginRegistryReading } from "../domain/plugin-registry-reading.js";
+import type { HostActions } from "../ports/host-actions.js";
+import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
+import type { HostPorts } from "../ports/host-ports.js";
+import { bestEffortNativeCall } from "./best-effort-native-call.js";
+import {
+  assertNoForeignNativeRefs,
+  inspectNativeMarketplaceSource,
+} from "./native-marketplace-source-proof.js";
 import { resolveUninstallScopeOrder } from "./resolve-uninstall-scope.js";
 
 /** The facts about machine-wide ownership a withdrawal depends on, none of which this context
@@ -72,6 +81,51 @@ export interface ProvenHostRef {
   readonly scope: MarketplaceScope;
 }
 
+/** `<cacheRoot>/<relativeSegments>` once proven to sit inside `cacheRoot`, else `null`. */
+export type CacheCandidateResolver = WithdrawalClaims["resolveCacheCandidate"];
+
+/** A tool whose host holds registrations this project or machine made. */
+interface RegisteredTool {
+  readonly tool: AiToolProfile;
+  readonly registrations: RegistrationRecord;
+  /** Root of the host's own plugin cache; absent when the host keeps none. */
+  readonly cacheRoot: string | undefined;
+}
+
+export interface ProjectRegistrationWithdrawal extends RegisteredTool {
+  /** The scope this project's own manifest recorded for each plugin ref, by ref. */
+  readonly refScopes: ReadonlyMap<string, MarketplaceScope>;
+}
+
+/** One plugin ref the machine-wide record claims, with the projects that still need it. */
+export interface MachineRefClaim {
+  readonly ref: string;
+  readonly dependents: readonly string[];
+}
+
+/** What a project clean depends on that this context may not read itself. */
+export interface ProjectCleanFacts {
+  readonly projectRoot: string;
+  /** The scope each marketplace is registered at, by this project's own alias. */
+  readonly marketplaceScopes: ReadonlyMap<string, MarketplaceScope>;
+  /** The shared machine-scope source this project references, and who else does; absent when none. */
+  readonly sharedSource:
+    | { readonly alias: string; readonly otherProjects: readonly string[] }
+    | undefined;
+  /** The alias the framework's own marketplace is registered under. */
+  readonly frameworkAlias: string;
+  /** The machine-wide claims on `tool`'s refs; `undefined` when no machine record exists. */
+  machineClaims(tool: AiToolId): Promise<readonly MachineRefClaim[] | undefined>;
+  /** Runs `action` holding the machine record's lock when there is one to lock. */
+  exclusive<T>(action: () => Promise<T>): Promise<T>;
+  readonly resolveCacheCandidate: CacheCandidateResolver;
+}
+
+export interface UserRegistrationWithdrawal extends RegisteredTool {
+  /** Every ref a canonical machine claim owns for this tool. */
+  readonly claimedRefs: readonly string[];
+}
+
 /**
  * Removes a plugin ref from its host through the host's own CLI, then forgets the cache it left.
  *
@@ -80,13 +134,9 @@ export interface ProvenHostRef {
  */
 export class WithdrawFromHost {
   constructor(
-    private readonly fs: FileWriter,
+    private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,
-    /** Native plugin CLI activators keyed by `NativeActivation.hostBinary()`. */
-    private readonly activators: ReadonlyMap<string, HostActions>,
-    /** Host plugin registry readers, consulted so the scope asked for is the one the host holds. */
-    private readonly pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>,
-    private readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources>
+    private readonly ports: HostPorts
   ) {}
 
   /** Returns `undefined` when there was nothing to undo, so no cache purge applies either;
@@ -102,7 +152,7 @@ export class WithdrawFromHost {
     const toolId = tool.toolId;
     const nativeActivation = tool.nativeActivation();
     if (nativeActivation == null) return undefined;
-    const activator = this.activators.get(nativeActivation.hostBinary());
+    const activator = this.ports.activators.get(nativeActivation.hostBinary());
     if (activator === undefined) return undefined;
     if (!activator.isAvailable()) {
       const hostName = hostNameFor(registrations, plugin.marketplace) ?? plugin.marketplace;
@@ -167,7 +217,7 @@ export class WithdrawFromHost {
     const toolId = tool.toolId;
     const activation = tool.nativeActivation();
     if (activation == null) return;
-    const activator = this.activators.get(activation.hostBinary());
+    const activator = this.ports.activators.get(activation.hostBinary());
     if (activator === undefined || !activator.isAvailable()) return;
     const registration = registrations?.marketplaces.find(
       (entry) => entry.alias === plugin.marketplace
@@ -186,7 +236,7 @@ export class WithdrawFromHost {
         `${toolId}: '${ref}' is not a ref this project enabled; reconcile manually before removal.`
       );
     const proof = await inspectNativeMarketplaceSource(
-      this.sources.get(toolId),
+      this.ports.sources.get(toolId),
       projectRoot,
       registration
     );
@@ -198,7 +248,7 @@ export class WithdrawFromHost {
     }
     if (tool.pluginEnablementIsMachineGlobal() || registrations?.pluginRefs.includes(ref) !== true)
       return;
-    const reader = this.pluginRegistries.get(toolId);
+    const reader = this.ports.pluginRegistries.get(toolId);
     if (reader === undefined)
       throw new Error(
         `${toolId}: '${ref}' has no readable host plugin registry; uninstall refused before project changes.`
@@ -225,8 +275,8 @@ export class WithdrawFromHost {
     claim: ClaimedHostRef,
     projectRoot: string
   ): Promise<ProvenHostRef> {
-    const activator = this.activators.get(registrations.binary);
-    const reader = this.pluginRegistries.get(claim.tool);
+    const activator = this.ports.activators.get(registrations.binary);
+    const reader = this.ports.pluginRegistries.get(claim.tool);
     if (activator === undefined || !activator.isAvailable() || reader === undefined) {
       throw new Error(
         `Cannot prove or remove AIDD-owned native ref '${claim.ref}': ${registrations.binary} CLI or host registry is unavailable.`
@@ -246,7 +296,7 @@ export class WithdrawFromHost {
       );
     }
     const proof = await inspectNativeMarketplaceSource(
-      this.sources.get(claim.tool),
+      this.ports.sources.get(claim.tool),
       projectRoot,
       catalogues[0]
     );
@@ -280,20 +330,12 @@ export class WithdrawFromHost {
       );
       return false;
     }
-    const reader = this.pluginRegistries.get(toolId);
+    const reader = this.ports.pluginRegistries.get(toolId);
     const order = await resolveUninstallScopeOrder(reader, ref, projectRoot, manifestScope);
-    let lastMessage = "";
-    for (const scope of order) {
-      try {
-        activator.uninstallPlugin(ref, scope);
-        return true;
-      } catch (error) {
-        if (!(error instanceof NativePluginCliError)) throw error;
-        lastMessage = error.message;
-      }
-    }
+    const refusal = uninstallAtFirstAcceptedScope(activator, ref, order);
+    if (refusal === undefined) return true;
     this.logger.warn(
-      `${binary} plugin uninstall '${ref}' failed: ${lastMessage} — an entry for it may remain in ${binary}'s own plugin registry.`
+      `${binary} plugin uninstall '${ref}' failed: ${refusal} — an entry for it may remain in ${binary}'s own plugin registry.`
     );
     return false;
   }
@@ -320,12 +362,436 @@ export class WithdrawFromHost {
       label
     );
     if (candidate === null) return;
-    if (!confirmed) {
-      this.logger.warn(`${label} left in place, its own removal was not confirmed: ${candidate}`);
+    await this.deleteWhenJudged(judgeConfirmation(label, candidate, confirmed), candidate, label);
+  }
+
+  private async deleteWhenJudged(
+    verdict: PurgeVerdict,
+    candidate: string,
+    label: string
+  ): Promise<void> {
+    if (!verdict.purge) {
+      this.logger.warn(verdict.warning);
       return;
     }
     await this.fs.deleteDirectory(candidate);
     this.logger.info(`${label} purged: ${candidate}`);
+  }
+
+  /** Refuses, before any change, a project clean whose registrations the host no longer proves
+   * this project's own: a catalogue gone or foreign, or a ref another owner holds. */
+  async assertProjectRegistrationsOwned(
+    withdrawals: readonly ProjectRegistrationWithdrawal[],
+    facts: ProjectCleanFacts
+  ): Promise<void> {
+    for (const { tool, registrations } of withdrawals) {
+      const toolId = tool.toolId;
+      const activator = this.ports.activators.get(registrations.binary);
+      if (activator === undefined || !activator.isAvailable()) continue;
+      for (const registration of registrations.marketplaces) {
+        if (facts.marketplaceScopes.get(registration.alias) !== "project") continue;
+        const proof = await inspectNativeMarketplaceSource(
+          this.ports.sources.get(toolId),
+          facts.projectRoot,
+          registration
+        );
+        if (proof.status !== "owned") {
+          throw new Error(
+            proof.reason ??
+              `${toolId}: catalogue '${registration.hostName}' is absent on the host; clean refused until manual reconciliation.`
+          );
+        }
+        await assertNoForeignNativeRefs(
+          this.ports.pluginRegistries.get(toolId),
+          registration.hostName,
+          new Set([...registrations.pluginRefs, ...(await machineRefs(facts, toolId))]),
+          facts.projectRoot,
+          tool
+        );
+      }
+    }
+  }
+
+  /**
+   * Asks each tool's own CLI to forget what this project registered, then purges the cache that
+   * left behind. Every tool is undone before any cache is purged, and never by a direct edit of
+   * the host's own registry file: that file is the host's to write.
+   *
+   * A tool whose binary is absent is named and left alone, so its cache is never purged either.
+   */
+  async withdrawProjectRegistrations(
+    withdrawals: readonly ProjectRegistrationWithdrawal[],
+    facts: ProjectCleanFacts
+  ): Promise<void> {
+    const removed = new Map<RegisteredTool, ReadonlySet<string>>();
+    for (const withdrawal of withdrawals) {
+      const removedHostNames = await this.withdrawProjectTool(withdrawal, facts);
+      if (removedHostNames !== undefined) removed.set(withdrawal, removedHostNames);
+    }
+    await this.purgeMarketplaceCaches(removed, facts.resolveCacheCandidate);
+  }
+
+  private async withdrawProjectTool(
+    withdrawal: ProjectRegistrationWithdrawal,
+    facts: ProjectCleanFacts
+  ): Promise<ReadonlySet<string> | undefined> {
+    const { registrations } = withdrawal;
+    const { binary } = registrations;
+    const activator = this.ports.activators.get(binary);
+    if (activator === undefined || !activator.isAvailable()) {
+      this.logger.warn(
+        `${binary}: registration left in place, the ${binary} CLI is not on the PATH.` +
+          survivingCachePaths(withdrawal.cacheRoot, registrations)
+      );
+      return undefined;
+    }
+    // Every plugin ref uninstalled before any marketplace is removed: only Copilot
+    // declares `forceRemoveArgs`, so Claude and Codex can refuse to remove a
+    // marketplace that still has plugins installed from it.
+    for (const ref of registrations.pluginRefs) {
+      await this.uninstallProjectRef(activator, withdrawal, ref, facts);
+    }
+    const removedHostNames = new Set<string>();
+    for (const { alias, hostName } of registrations.marketplaces) {
+      if (await this.removeProjectMarketplace(activator, withdrawal, alias, hostName, facts))
+        removedHostNames.add(hostName);
+    }
+    return removedHostNames;
+  }
+
+  /**
+   * Uninstalls one plugin ref at the scope it was actually registered at, never a default:
+   * `resolveUninstallScopeOrder` asks the host's own registry first. A real `claude` binary
+   * refuses a mismatched-scope uninstall outright, so the resolved list is tried in order until
+   * one succeeds; best-effort throughout, a ref the host will not forget is named, not thrown.
+   */
+  private async uninstallProjectRef(
+    activator: HostActions,
+    withdrawal: ProjectRegistrationWithdrawal,
+    ref: string,
+    facts: ProjectCleanFacts
+  ): Promise<void> {
+    const { tool, registrations } = withdrawal;
+    const { binary } = registrations;
+    const toolId = tool.toolId;
+    const claim = (await facts.machineClaims(toolId))?.find((candidate) => candidate.ref === ref);
+    if (claim !== undefined) {
+      const others = claim.dependents.filter((dependent) => dependent !== facts.projectRoot);
+      this.logger.warn(
+        `${binary}: '${ref}' is an AIDD-owned machine plugin ref — left enabled; project claim detached after local clean.${others.length > 0 ? ` Still needed by ${others.join(", ")}.` : ""}`
+      );
+      return;
+    }
+    if (tool.pluginEnablementIsMachineGlobal()) {
+      const sharedHostName = registrations.marketplaces.find(
+        (registration) => registration.alias === facts.sharedSource?.alias
+      )?.hostName;
+      const otherProjects =
+        sharedHostName !== undefined && ref.endsWith(`@${sharedHostName}`)
+          ? (facts.sharedSource?.otherProjects ?? [])
+          : [];
+      this.logger.warn(
+        `${binary}: '${ref}' has no canonical machine claim — left enabled for manual reconciliation; project claim detached after local clean.${otherProjects.length > 0 ? ` Still needed by ${otherProjects.join(", ")}.` : ""}`
+      );
+      return;
+    }
+    const sourceRegistration = registrations.marketplaces.find((registration) =>
+      ref.endsWith(`@${registration.hostName}`)
+    );
+    if (sourceRegistration === undefined) {
+      this.logger.warn(`${binary}: '${ref}' has no recorded host catalogue — left enabled.`);
+      return;
+    }
+    const proof = await inspectNativeMarketplaceSource(
+      this.ports.sources.get(toolId),
+      facts.projectRoot,
+      sourceRegistration
+    );
+    if (proof.status !== "owned") {
+      this.logger.warn(
+        `${binary}: '${ref}' left enabled because its current host catalogue is unproven. ${proof.reason ?? "Reconcile manually."}`
+      );
+      return;
+    }
+    const reader = this.ports.pluginRegistries.get(toolId);
+    try {
+      await assertNoForeignNativeRefs(
+        reader,
+        sourceRegistration.hostName,
+        new Set([...registrations.pluginRefs, ...(await machineRefs(facts, toolId))]),
+        facts.projectRoot,
+        tool
+      );
+    } catch (error) {
+      this.logger.warn(`${binary}: '${ref}' left enabled; ${String(error)}`);
+      return;
+    }
+    const order = await resolveUninstallScopeOrder(
+      reader,
+      ref,
+      facts.projectRoot,
+      withdrawal.refScopes.get(ref) ?? "project"
+    );
+    const refusal = uninstallAtFirstAcceptedScope(activator, ref, order);
+    if (refusal !== undefined)
+      this.logger.warn(`${binary} plugin uninstall '${ref}' failed: ${refusal}`);
+  }
+
+  // `alias` resolves this project's own registry entry, the only place its `scope` is recorded;
+  // `hostName` is what reaches the host's own CLI, since a host knows a registration only by its
+  // catalog's own declared name. The two differ whenever a project registers under an alias its
+  // catalog does not declare, a supported capability: passing `alias` to a host-facing call
+  // would ask it to remove a name it never held.
+  private async removeProjectMarketplace(
+    activator: HostActions,
+    withdrawal: ProjectRegistrationWithdrawal,
+    alias: string,
+    hostName: string,
+    facts: ProjectCleanFacts
+  ): Promise<boolean> {
+    const { tool, registrations, cacheRoot } = withdrawal;
+    const { binary } = registrations;
+    const scope = facts.marketplaceScopes.get(alias);
+    if (scope === undefined) {
+      this.logger.warn(
+        `${binary}: '${alias}' is no longer a registered marketplace here, so its scope cannot be resolved — its ${binary} registration was left in place.`
+      );
+      return false;
+    }
+    if (scope === "user") {
+      // Machine-scope: every project on this machine shares this one registration, so a single
+      // project's `clean` must never unregister it. Three things survive, not one: the host's
+      // own registration, the `userConfigDir()/marketplaces.json` entry, and this tool's own
+      // plugin cache, named by its absolute path when the profile declares one.
+      this.logger.warn(
+        `${binary}: '${hostName}' is shared by every project on this machine — left registered. ` +
+          describeSharedSourceSurvival(hostName, cacheRoot, facts.sharedSource)
+      );
+      return false;
+    }
+    const remove = async (): Promise<boolean> => {
+      if (tool.pluginEnablementIsMachineGlobal()) {
+        const machine = await facts.machineClaims(tool.toolId);
+        if (machine === undefined && alias !== facts.frameworkAlias) {
+          this.logger.warn(
+            `${binary}: '${hostName}' is machine-global but no user manifest can prove no other project still uses it — left registered for manual cleanup.`
+          );
+          return false;
+        }
+        const claims = (machine ?? []).filter((claim) => claim.ref.endsWith(`@${hostName}`));
+        if (claims.length > 0) {
+          const others = [
+            ...new Set(
+              claims.flatMap((claim) =>
+                claim.dependents.filter((dependent) => dependent !== facts.projectRoot)
+              )
+            ),
+          ];
+          this.logger.warn(
+            `${binary}: '${hostName}' carries AIDD-owned machine plugin refs — left registered for explicit user-scope removal.${others.length > 0 ? ` Still needed by ${others.join(", ")}.` : ""}`
+          );
+          return false;
+        }
+      }
+      return bestEffortNativeCall(
+        this.logger,
+        () => activator.removeMarketplace(hostName, scope),
+        `${binary} marketplace remove '${hostName}'`
+      );
+    };
+    return facts.exclusive(remove);
+  }
+
+  /** Refuses, before any change, a user clean whose host CLI cannot be reached: nothing is
+   * undone for a tool whose binary is absent, and its canonical claims are kept. */
+  assertUserHostsReachable(withdrawals: readonly UserRegistrationWithdrawal[]): void {
+    for (const withdrawal of withdrawals) this.reachableUserActivator(withdrawal);
+  }
+
+  private reachableUserActivator(withdrawal: UserRegistrationWithdrawal): HostActions {
+    const activator = this.ports.activators.get(withdrawal.registrations.binary);
+    if (activator === undefined || !activator.isAvailable())
+      throw new Error(
+        `${describeBinaryAbsent(withdrawal)} User clean refused; canonical claims retained.`
+      );
+    return activator;
+  }
+
+  /** Refuses, before the first host change, a user clean whose canonical claims the host does not
+   * prove: an unclaimed or ambiguous catalogue, a source this machine does not own, a foreign ref
+   * under an owned catalogue, or an owned ref that is no longer enabled. */
+  async proveUserRegistrations(
+    withdrawals: readonly UserRegistrationWithdrawal[],
+    projectRoot: string
+  ): Promise<void> {
+    for (const { tool, registrations, claimedRefs } of withdrawals) {
+      const toolId = tool.toolId;
+      if (claimedRefs.length > 0 && registrations.marketplaces.length === 0)
+        throw new Error(
+          `${toolId}: native refs lack a canonical catalogue source; user clean refused.`
+        );
+      const hostNames = new Set<string>();
+      for (const { hostName } of registrations.marketplaces) {
+        if (hostNames.has(hostName))
+          throw new Error(
+            `${toolId}: ambiguous canonical host catalogue '${hostName}'; user clean refused.`
+          );
+        hostNames.add(hostName);
+      }
+      const claimRefs = new Set(claimedRefs);
+      if (claimRefs.size !== claimedRefs.length)
+        throw new Error(`${toolId}: duplicate canonical native ref claims; user clean refused.`);
+      const refsByHost = new Map<string, Set<string>>(
+        [...hostNames].map((hostName) => [hostName, new Set<string>()])
+      );
+      for (const ref of new Set([...registrations.pluginRefs, ...claimRefs])) {
+        const matches = [...hostNames].filter((hostName) => ref.endsWith(`@${hostName}`));
+        if (matches.length !== 1)
+          throw new Error(
+            `${toolId}: native ref '${ref}' lacks exactly one canonical catalogue; user clean refused.`
+          );
+        refsByHost.get(matches[0])?.add(ref);
+      }
+      for (const registration of registrations.marketplaces) {
+        const proof = await inspectNativeMarketplaceSource(
+          this.ports.sources.get(toolId),
+          projectRoot,
+          registration
+        );
+        if (proof.status !== "owned")
+          throw new Error(proof.reason ?? `${toolId}: catalogue source unproven.`);
+        const owned = new Set(
+          [...claimRefs].filter((ref) => ref.endsWith(`@${registration.hostName}`))
+        );
+        const hostRefs = await assertNoForeignNativeRefs(
+          this.ports.pluginRegistries.get(toolId),
+          registration.hostName,
+          owned,
+          projectRoot,
+          tool
+        );
+        for (const ref of refsByHost.get(registration.hostName) ?? []) {
+          if (hostRefs.get(ref)?.enabled !== true)
+            throw new Error(
+              `${toolId}: owned host ref '${ref}' is not enabled; user clean refused.`
+            );
+        }
+      }
+    }
+  }
+
+  /**
+   * Every claimed ref uninstalled, then every marketplace unregistered, through the host's own CLI
+   * at scope `"user"`, for every tool, before any cache is purged: a host's own CLI resolves what
+   * it is unregistering against the built tree still on disk, and the purge removes exactly that
+   * tree. A refusal from the host throws, so the claims that remain are kept.
+   */
+  async withdrawUserRegistrations(
+    withdrawals: readonly UserRegistrationWithdrawal[],
+    resolveCacheCandidate: CacheCandidateResolver
+  ): Promise<void> {
+    const removed = new Map<RegisteredTool, ReadonlySet<string>>();
+    for (const withdrawal of withdrawals) {
+      const activator = this.reachableUserActivator(withdrawal);
+      const { binary, marketplaces } = withdrawal.registrations;
+      for (const ref of withdrawal.claimedRefs) {
+        const uninstalled = bestEffortNativeCall(
+          this.logger,
+          () => activator.uninstallPlugin(ref, "user"),
+          `${binary} plugin uninstall '${ref}'`
+        );
+        if (!uninstalled)
+          throw new Error(
+            `${binary}: user clean refused after plugin uninstall '${ref}' failed; canonical claims retained.`
+          );
+      }
+      const removedHostNames = new Set<string>();
+      for (const { hostName } of marketplaces) {
+        const unregistered = bestEffortNativeCall(
+          this.logger,
+          () => activator.removeMarketplace(hostName, "user"),
+          `${binary} marketplace remove '${hostName}'`
+        );
+        if (!unregistered)
+          throw new Error(
+            `${binary}: user clean refused after marketplace remove '${hostName}' failed; canonical claims retained.`
+          );
+        removedHostNames.add(hostName);
+      }
+      removed.set(withdrawal, removedHostNames);
+    }
+    await this.purgeMarketplaceCaches(removed, resolveCacheCandidate);
+  }
+
+  /** Never a tool whose binary was absent: `removed` holds only the tools a pass ran for. A tool
+   * whose profile declares no plugin cache is not looked at: no path is invented for a tool that
+   * never named one. */
+  private async purgeMarketplaceCaches(
+    removed: ReadonlyMap<RegisteredTool, ReadonlySet<string>>,
+    resolveCacheCandidate: CacheCandidateResolver
+  ): Promise<void> {
+    for (const [{ tool, registrations, cacheRoot }, removedHostNames] of removed) {
+      if (cacheRoot === undefined) continue;
+      for (const { hostName } of registrations.marketplaces) {
+        await this.purgeMarketplaceCache(
+          this.ports.marketplaceRegistries.get(tool.toolId),
+          cacheRoot,
+          registrations.binary,
+          hostName,
+          removedHostNames.has(hostName),
+          resolveCacheCandidate
+        );
+      }
+    }
+  }
+
+  /**
+   * A host's cache directory is indexed by a name global to the machine, not to whichever caller
+   * is running, so containment alone proves the path cannot escape the declared root, never that
+   * the caller still owns what sits inside it. Two proofs, one per declaration:
+   *
+   * - a tool whose host keeps a marketplace registry (claude) also requires a confirmed host
+   *   removal, then rereads the registry: a name gone says nothing there resolves any more;
+   * - a tool with a cache directory alone (codex) drives a host that deletes the cached content
+   *   itself and leaves only an empty shell, measured. Emptiness proves no data would be lost,
+   *   never that this caller emptied it, so the host's own confirmation is required alongside it.
+   *
+   * A path failing containment, a registry still naming the tenant, or a removal never confirmed
+   * is left in place and named.
+   */
+  private async purgeMarketplaceCache(
+    reader: HostMarketplaceRegistry | undefined,
+    cacheRoot: string,
+    binary: string,
+    hostName: string,
+    removed: boolean,
+    resolveCacheCandidate: CacheCandidateResolver
+  ): Promise<void> {
+    const label = `${binary}: cache for '${hostName}'`;
+    const candidate = await resolveCacheCandidate(
+      cacheRoot,
+      hostName,
+      `${binary}: cache path for '${hostName}'`
+    );
+    if (candidate === null) return;
+    const confirmation = judgeConfirmation(label, candidate, removed);
+    if (!confirmation.purge) {
+      await this.deleteWhenJudged(confirmation, candidate, label);
+      return;
+    }
+    if (reader !== undefined) {
+      const verdict = judgeRegistryClearance(binary, hostName, candidate, await reader.read());
+      await this.deleteWhenJudged(verdict, candidate, label);
+      return;
+    }
+    let entries: string[];
+    try {
+      entries = await this.fs.listDirectory(candidate);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+      throw error;
+    }
+    await this.deleteWhenJudged(judgeEmptiness(label, candidate, entries.length), candidate, label);
   }
 }
 
@@ -336,4 +802,75 @@ function hostNameFor(
   alias: string
 ): string | undefined {
   return registrations?.marketplaces.find((m) => m.alias === alias)?.hostName;
+}
+
+async function machineRefs(facts: ProjectCleanFacts, tool: AiToolId): Promise<readonly string[]> {
+  return ((await facts.machineClaims(tool)) ?? []).map((claim) => claim.ref);
+}
+
+/** The first refusal message when the host accepted no scope in `order`, else `undefined`. */
+function uninstallAtFirstAcceptedScope(
+  activator: HostActions,
+  ref: string,
+  order: readonly MarketplaceScope[]
+): string | undefined {
+  let lastMessage = "";
+  for (const scope of order) {
+    try {
+      activator.uninstallPlugin(ref, scope);
+      return undefined;
+    } catch (error) {
+      if (!(error instanceof NativePluginCliError)) throw error;
+      lastMessage = error.message;
+    }
+  }
+  return lastMessage;
+}
+
+/** One marketplace's own surviving cache path: empty for a host that keeps no plugin cache. */
+function survivingCachePath(hostName: string, cacheRoot: string | undefined): string {
+  return cacheRoot === undefined ? "" : `, and its cache at: ${join(cacheRoot, hostName)}`;
+}
+
+/** Named for the "not on the PATH" warning: the cache a skipped tool would have had purged
+ * survives silently unless this names it. */
+function survivingCachePaths(
+  cacheRoot: string | undefined,
+  registrations: RegistrationRecord
+): string {
+  if (cacheRoot === undefined) return "";
+  const paths = registrations.marketplaces.map((m) => join(cacheRoot, m.hostName));
+  return paths.length === 0 ? "" : ` Its cache survives at: ${paths.join(", ")}.`;
+}
+
+/** What survives a shared registration this run left in place, plus which other projects still
+ * claim the shared source: purging it is a machine-scope decision, not one project's `clean`. */
+function describeSharedSourceSurvival(
+  hostName: string,
+  cacheRoot: string | undefined,
+  sharedSource: ProjectCleanFacts["sharedSource"]
+): string {
+  const base = `Its entry survives at userConfigDir()/marketplaces.json${survivingCachePath(hostName, cacheRoot)}.`;
+  if (sharedSource === undefined) return base;
+  const { otherProjects } = sharedSource;
+  if (otherProjects.length > 0) {
+    const plural = otherProjects.length === 1 ? "project" : "projects";
+    return `${base} Still referenced by ${otherProjects.length} other ${plural} on this machine.`;
+  }
+  return `${base} No project on this machine still references it — \`aidd clean --scope user\` is what purges it for the machine.`;
+}
+
+/** Named so a binary this run cannot reach still tells a person what it left standing: the
+ * marketplace and plugin-ref counts, plus the host's own cache path when it keeps one. */
+function describeBinaryAbsent(withdrawal: UserRegistrationWithdrawal): string {
+  const { registrations, cacheRoot, claimedRefs } = withdrawal;
+  const { binary } = registrations;
+  const base =
+    `${binary}: registration left in place, the ${binary} CLI is not on the PATH. ` +
+    `It would have unregistered ${registrations.marketplaces.length} marketplace(s) ` +
+    `and ${claimedRefs.length} plugin ref(s).`;
+  if (cacheRoot === undefined) return base;
+  const paths = registrations.marketplaces.map((m) => join(cacheRoot, m.hostName));
+  if (paths.length === 0) return base;
+  return `${base} Its cache survives at: ${paths.join(", ")}.`;
 }

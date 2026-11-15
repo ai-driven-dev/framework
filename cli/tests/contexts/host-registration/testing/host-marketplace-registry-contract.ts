@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { HostMarketplaceRegistry } from "../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
+import type { HostMarketplaceRegistry } from "../../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 
 /** A source no machine resolves, so a reader that compares real paths answers it unchanged. */
 export const UNRESOLVED_SOURCE = "/srv/aidd-host-registration/marketplace";

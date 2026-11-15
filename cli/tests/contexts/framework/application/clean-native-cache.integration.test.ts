@@ -7,13 +7,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
-import type {
-  HostMarketplaceRegistry,
-  HostMarketplaceRegistryReading,
-} from "../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
+import type { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostMarketplaceRegistryReading } from "../../../../src/contexts/host-registration/domain/marketplace-registry-reading.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
+import type { HostMarketplaceRegistry } from "../../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { AIDD_DIR } from "../../../../src/shared/domain/paths.js";
@@ -22,6 +20,7 @@ import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { projectCleaner } from "../../../helpers/project-cleaner.js";
 import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
@@ -212,18 +211,16 @@ function buildUseCase(deps: {
       : deps.binary === "claude" && claudeHostRegistry !== undefined
         ? new HostRegistryMarketplaceSourceReaderAdapter(claudeHostRegistry)
         : undefined;
-  return new CleanUseCase(
-    deps.fs,
+  return projectCleaner({
+    fs: deps.fs,
     manifestRepo,
-    deps.logger,
-    new UpdateGitignore(deps.fs),
-    new Map([[deps.binary, deps.activator]]),
-    deps.aiddMarketplaceRegistry,
-    undefined,
-    deps.hostMarketplaceRegistries ?? new Map(),
-    deps.homeDir ?? (() => HOME),
-    undefined,
-    new Map([
+    logger: deps.logger,
+    gitignore: new UpdateGitignore(deps.fs),
+    activators: new Map([[deps.binary, deps.activator]]),
+    marketplaceRegistry: deps.aiddMarketplaceRegistry,
+    marketplaceRegistries: deps.hostMarketplaceRegistries,
+    homeDir: deps.homeDir ?? (() => HOME),
+    pluginRegistries: new Map([
       [
         deps.binary,
         new FakeHostPluginRegistry({
@@ -232,9 +229,9 @@ function buildUseCase(deps: {
         }),
       ],
     ]),
-    deps.userManifestRepo,
-    nativeReader === undefined ? new Map() : new Map([[deps.binary, nativeReader]])
-  );
+    userManifestRepo: deps.userManifestRepo,
+    sources: nativeReader === undefined ? new Map() : new Map([[deps.binary, nativeReader]]),
+  });
 }
 
 describe("clean purges a host's own plugin cache", () => {

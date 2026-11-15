@@ -4,7 +4,7 @@ What a host (Claude Code, Codex, Copilot) says it has registered, and the calls 
 
 ## Shape
 
-- `contract/` holds the four published ports and the pure rules over their types. There is no `domain/` folder: the rules are the whole domain (exception E11).
+- `contract/` holds the types an outside caller reads. `ports/` holds the host ports, `domain/` the rules and reading types, `application/` the use cases that drive them.
 - `infrastructure/` holds every reader, parser and the CLI adapter. Only the composition root imports it.
 - `src/composition/host-registration.ts` is the one reader of `tools`' declarations. It builds every reader from each tool's declared activation.
 
@@ -40,4 +40,4 @@ What a host (Claude Code, Codex, Copilot) says it has registered, and the calls 
 - Each port has one contract suite in `tests/contexts/host-registration/testing/`, run on its fake and on its real adapter from `tests/contexts/host-registration/ports/`.
 - The real `HostActions` and `HostMarketplaceSources` arms run a `#!/bin/sh` script on a narrowed `PATH`, so they are skipped on Windows. The repository fakes no runnable `.cmd`.
 - The disabled case is skipped for a layout whose host records none (`recordsDisabled: false`).
-- Mutation: `host-registration-rules` covers `contract/`, the only check on it since coverage excludes that folder. `host-registration-application` and `host-registration-domain` cover `application/` and `domain/`. `host-registration-adapters` covers `infrastructure/`.
+- Mutation: `host-registration-application` and `host-registration-domain` cover `application/` and `domain/`; `contract/` and `ports/` hold types only. `host-registration-adapters` covers `infrastructure/`.

@@ -83,7 +83,8 @@ src/
 │   │   ├── application/    # the host-side rules a command asks: catalogue identity and source conflict, uninstall scope, best-effort calls
 │   │   ├── contract/
 │   │   ├── domain/    # when a catalogue source has drifted from the one recorded
-│   │   └── infrastructure/
+│   │   ├── infrastructure/
+│   │   └── ports/
 │   ├── telemetry/    # what each billed model call consumed, read from a tool's own transcripts
 │   │   ├── application/
 │   │   │   ├── declaration/    # declaring a task: what a person typed as the request, and the declaration of it

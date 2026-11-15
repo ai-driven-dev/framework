@@ -1,9 +1,9 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
-import type { HostActions } from "../contract/host-actions.js";
 import type { HostMarketplaceSources } from "../contract/host-marketplace-sources.js";
-import type { HostPluginRegistry } from "../contract/host-plugin-registry.js";
 import type { RegistrationRecord } from "../contract/registration-record.js";
+import type { HostActions } from "../ports/host-actions.js";
+import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import { inspectNativeMarketplaceSource } from "./native-marketplace-source-proof.js";
 
 export interface RefreshHostPluginCommand {

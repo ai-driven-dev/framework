@@ -5,10 +5,8 @@ import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
-import type {
-  HostPluginRegistry,
-  HostPluginRegistryReading,
-} from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";

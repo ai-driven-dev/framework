@@ -7,6 +7,6 @@ Read when touching `HostActions`, `plugin remove` or `clean`'s uninstall.
 - Decides `--scope local` (claude, project-bound) or `--scope user` (machine-wide).
 - Before: no scope argument, so every claude enablement landed at its implicit `user` default whatever scope `aidd` ran at.
 - A tool without `scopeArgs` (codex, copilot) is unaffected.
-- `clean` and `plugin remove` resolve the scope to uninstall from the host's registry first (`HostPluginRegistry`, `contexts/host-registration/contract/host-plugin-registry.ts`).
+- `clean` and `plugin remove` resolve the scope to uninstall from the host's registry first (`HostPluginRegistry`, `contexts/host-registration/ports/host-plugin-registry.ts`).
 - Fallback when the registry is silent: the manifest's recorded scope, then the other (`resolve-uninstall-scope.ts`).
 - Measured against the real `claude`: a mismatched-scope uninstall is refused, never silently missed.

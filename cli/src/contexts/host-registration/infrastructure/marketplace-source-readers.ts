@@ -1,10 +1,10 @@
 import { spawnSync } from "node:child_process";
-import type { HostMarketplaceRegistry } from "../contract/host-marketplace-registry.js";
 import type {
   HostMarketplaceSources,
   NativeMarketplaceSourceListContract,
   NativeMarketplaceSourceReading,
 } from "../contract/host-marketplace-sources.js";
+import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import {
   hostExecutableLookup,
   resolveExecutableOnPath,

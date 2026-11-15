@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { CleanUserScopeUseCase } from "../../../../../src/contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
@@ -9,7 +8,7 @@ import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/rea
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -24,6 +23,7 @@ import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-f
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { userScopeCleaner } from "../../../../helpers/user-scope-cleaner.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import {
   catalogOf,
@@ -94,20 +94,16 @@ for (const [toolId, catalogPath] of [
           },
         ],
       ]);
-      const clean = new CleanUserScopeUseCase(
+      const clean = userScopeCleaner({
         fs,
         repo,
-        new CapturingLogger(),
-        registry,
-        () => "/machine",
-        new Map([[toolId, failing]]),
-        new Map(),
-        () => "/home",
-        undefined,
-        undefined,
+        marketplaceRegistry: registry,
+        userConfigDir: () => "/machine",
+        activators: new Map([[toolId, failing]]),
+        homeDir: () => "/home",
         sources,
-        hostPlugins
-      );
+        pluginRegistries: hostPlugins,
+      });
       await expect(
         clean.execute({ tools: catalogOf(), projectRoot: "/B", force: true })
       ).rejects.toThrow(/active projects.*\/B/);
@@ -129,20 +125,16 @@ for (const [toolId, catalogPath] of [
         { ref, dependents: [] },
       ]);
       const working = new FakeHostActions({ available: true });
-      const finish = new CleanUserScopeUseCase(
+      const finish = userScopeCleaner({
         fs,
         repo,
-        new CapturingLogger(),
-        registry,
-        () => "/machine",
-        new Map([[toolId, working]]),
-        new Map(),
-        () => "/home",
-        undefined,
-        undefined,
+        marketplaceRegistry: registry,
+        userConfigDir: () => "/machine",
+        activators: new Map([[toolId, working]]),
+        homeDir: () => "/home",
         sources,
-        hostPlugins
-      );
+        pluginRegistries: hostPlugins,
+      });
       await finish.execute({ tools: catalogOf(), projectRoot: "/B", force: true });
       expect(working.uninstalledPlugins).toEqual([ref]);
       expect(working.removedMarketplaces).toEqual(["real-catalog"]);

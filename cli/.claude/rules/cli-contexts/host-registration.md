@@ -21,7 +21,7 @@ paths:
 
 - `HostPluginRegistry`, `HostMarketplaceRegistry`, `HostMarketplaceSources`: read what the host holds.
 - `HostActions`: drive the host's own CLI.
-- All four are published in `contract/`, with the pure rules over their types: `answeredRegistry`, `marketplaceSourceConflict`, `pluginSetDifference`, `describePluginDiff` (exception E11).
+- `HostPluginRegistry`, `HostMarketplaceRegistry` and `HostActions` live in `ports/`, with the reading types they return in `domain/`. The pure rules over them are in `domain/`: `answeredRegistry`, `marketplaceSourceConflict`, `pluginSetDifference`, `describePluginDiff`.
 
 ## Suppliers
 
@@ -32,4 +32,4 @@ paths:
 
 - Name a tool id in the context: a new layout is a union member, a reader and a table line, forced by `tsc`.
 - Spawn a host binary in a test: a stub binary on a narrowed `PATH`.
-- Import `domain/` or `infrastructure/` from outside: framework reads `contract/` only.
+- Import `domain/`, `ports/` or `infrastructure/` from outside: framework reads `contract/` only.

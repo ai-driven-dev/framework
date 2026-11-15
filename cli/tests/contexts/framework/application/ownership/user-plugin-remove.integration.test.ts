@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import type { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";

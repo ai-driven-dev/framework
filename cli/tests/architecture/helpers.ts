@@ -124,7 +124,7 @@ export const ALLOWED = new Set([
   // from the host of the doctor and setup scenarios.
   "distribution->auth",
   "framework->auth",
-  // The pure rules `contract/` publishes over its own types (reference-context.md, E10 and E11),
+  // The pure rules `contract/` publishes over its own types (reference-context.md, E10),
   // until doctor and sync registration move into host-registration commands.
   "framework->host-registration",
   // The token the changelog fetch carries (`contract/token-provider.ts`).

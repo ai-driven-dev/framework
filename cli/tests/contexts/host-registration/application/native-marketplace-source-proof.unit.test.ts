@@ -7,8 +7,8 @@ import type {
   HostMarketplaceSources,
   NativeMarketplaceSource,
 } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import type { NativeMarketplaceRegistration } from "../../../../src/contexts/host-registration/contract/registration-record.js";
+import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
 
 const SOURCE: NativeMarketplaceSource = {

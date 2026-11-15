@@ -1,14 +1,14 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { HostMarketplaceRegistry } from "../contract/host-marketplace-registry.js";
-import type { HostPluginRegistry } from "../contract/host-plugin-registry.js";
 import type {
   HostRegistrationFinding,
   InspectHostRegistrationResult,
 } from "../contract/inspect-host-registration-result.js";
 import { answeredRegistry } from "../domain/host-registration-answers.js";
 import { describePluginDiff, pluginSetDifference } from "../domain/marketplace-source-conflict.js";
+import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
+import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import { hostMarketplaceSourceConflict, isDriftFound } from "./host-marketplace-source-conflict.js";
 import { readMarketplaceCatalogIdentity } from "./read-marketplace-catalog-identity.js";
 

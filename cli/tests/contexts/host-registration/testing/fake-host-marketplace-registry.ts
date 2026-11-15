@@ -1,7 +1,5 @@
-import type {
-  HostMarketplaceRegistry,
-  HostMarketplaceRegistryReading,
-} from "../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
+import type { HostMarketplaceRegistryReading } from "../../../../src/contexts/host-registration/domain/marketplace-registry-reading.js";
+import type { HostMarketplaceRegistry } from "../../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 
 /** Stand-in for a host's own marketplace registry: one fixed reading unless a caller queues
  * several, each `read()` consuming the next and the last repeating forever. */

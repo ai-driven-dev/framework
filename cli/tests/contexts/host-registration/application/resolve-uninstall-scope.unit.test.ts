@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveUninstallScopeOrder } from "../../../../src/contexts/host-registration/application/resolve-uninstall-scope.js";
-import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { FakeHostPluginRegistry } from "../testing/fake-host-plugin-registry.js";
 
 const REF = "aidd-telemetry@aidd-framework";

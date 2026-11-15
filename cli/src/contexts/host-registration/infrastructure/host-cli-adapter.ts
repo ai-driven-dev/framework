@@ -2,7 +2,7 @@ import { type SpawnSyncReturns, spawnSync } from "node:child_process";
 import { homedir } from "node:os";
 import { NativePluginCliError } from "../../../shared/domain/errors.js";
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
-import type { HostActions } from "../contract/host-actions.js";
+import type { HostActions } from "../ports/host-actions.js";
 import {
   hostExecutableLookup,
   resolveExecutableOnPath,

@@ -4,7 +4,7 @@ import { InspectHostRegistration } from "../../../../src/contexts/host-registrat
 import { NativeHostRegistrationGate } from "../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
 import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";

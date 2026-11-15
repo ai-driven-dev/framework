@@ -456,9 +456,10 @@
                   {
                     "group": [
                       "**/host-registration/domain/**",
+                      "**/host-registration/ports/**",
                       "**/host-registration/infrastructure/**"
                     ],
-                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -2324,6 +2325,48 @@
       }
     },
     {
+      "includes": ["src/contexts/host-registration/ports/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "a port must not import application, infrastructure or presentation"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/installation/**",
+                      "**/machine-claims/**",
+                      "**/translate/**",
+                      "**/distribution/**",
+                      "**/telemetry/**",
+                      "**/auth/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "host-registration imports only shared, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/contexts/host-registration/application/**/*.ts"],
       "linter": {
         "rules": {
@@ -2828,9 +2871,10 @@
                   {
                     "group": [
                       "**/host-registration/domain/**",
+                      "**/host-registration/ports/**",
                       "**/host-registration/infrastructure/**"
                     ],
-                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -2871,9 +2915,10 @@
                   {
                     "group": [
                       "**/host-registration/domain/**",
+                      "**/host-registration/ports/**",
                       "**/host-registration/infrastructure/**"
                     ],
-                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -2919,9 +2964,10 @@
                   {
                     "group": [
                       "**/host-registration/domain/**",
+                      "**/host-registration/ports/**",
                       "**/host-registration/infrastructure/**"
                     ],
-                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -2968,9 +3014,10 @@
                   {
                     "group": [
                       "**/host-registration/domain/**",
+                      "**/host-registration/ports/**",
                       "**/host-registration/infrastructure/**"
                     ],
-                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -3018,9 +3065,10 @@
                   {
                     "group": [
                       "**/host-registration/domain/**",
+                      "**/host-registration/ports/**",
                       "**/host-registration/infrastructure/**"
                     ],
-                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -3068,9 +3116,10 @@
                   {
                     "group": [
                       "**/host-registration/domain/**",
+                      "**/host-registration/ports/**",
                       "**/host-registration/infrastructure/**"
                     ],
-                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -3117,9 +3166,10 @@
                   {
                     "group": [
                       "**/host-registration/domain/**",
+                      "**/host-registration/ports/**",
                       "**/host-registration/infrastructure/**"
                     ],
-                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                    "message": "host-registration publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],

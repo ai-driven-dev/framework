@@ -1,9 +1,7 @@
 import { readFile, realpath } from "node:fs/promises";
 import { describeError } from "../../../shared/domain/describe-error.js";
-import type {
-  HostMarketplaceRegistry,
-  HostMarketplaceRegistryReading,
-} from "../contract/host-marketplace-registry.js";
+import type { HostMarketplaceRegistryReading } from "../domain/marketplace-registry-reading.js";
+import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 
 /**
  * Reads a host's own marketplace registry: a JSON object keyed by marketplace name. Of the

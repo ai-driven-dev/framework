@@ -4,12 +4,12 @@ import type {
   NativeMarketplaceSource,
   NativeMarketplaceSourceReading,
 } from "../contract/host-marketplace-sources.js";
+import type { NativeMarketplaceRegistration } from "../contract/registration-record.js";
 import type {
-  HostPluginRegistry,
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
-} from "../contract/host-plugin-registry.js";
-import type { NativeMarketplaceRegistration } from "../contract/registration-record.js";
+} from "../domain/plugin-registry-reading.js";
+import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 
 export interface NativeMarketplaceSourceInspection {
   readonly status: "absent" | "owned" | "unproven";

@@ -2,10 +2,8 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
-import type {
-  HostPluginRegistry,
-  HostPluginRegistryReading,
-} from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
+import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";

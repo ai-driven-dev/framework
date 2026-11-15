@@ -1,7 +1,5 @@
-import type {
-  HostPluginRegistry,
-  HostPluginRegistryReading,
-} from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
+import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 
 /** A registry double whose answer is fixed at construction — never a real file, never a
  * real binary. Stands in for whichever host a doctor or telemetry test needs to ask. */
