@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DetectPluginDriftUseCase } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
-import { StatusUseCase } from "../../../../src/contexts/installation/application/status-use-case.js";
+import { DetectPluginDriftCommand } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { StatusCommand } from "../../../../src/contexts/installation/application/status-use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
@@ -58,7 +58,7 @@ const noopHasher: Hasher = {
   hash: () => new FileHash("00000000000000000000000000000000"),
 };
 
-describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
+describe("StatusCommand — cursor plugin drift (user-scope)", () => {
   describe("when cursor plugin file has drifted (base-relative key)", () => {
     it("resolves absolute path from homedir via userPluginsBaseDir before checking disk", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
@@ -76,11 +76,11 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
         listFilesRecursive: async () => [],
       };
 
-      const useCase = new StatusUseCase(
+      const useCase = new StatusCommand(
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDriftUseCase(fs)
+        new DetectPluginDriftCommand(fs)
       );
       await useCase.execute({ tools: catalogOf(), projectRoot: "/proj" });
 
@@ -91,11 +91,11 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
     it("returns plugin drift entry with the relative key", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, DRIFTED_HASH);
-      const useCase = new StatusUseCase(
+      const useCase = new StatusCommand(
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDriftUseCase(fs)
+        new DetectPluginDriftCommand(fs)
       );
 
       const report = await useCase.execute({
@@ -126,11 +126,11 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
         })
       );
       const fs = makeFs(false, EXPECTED_HASH);
-      const useCase = new StatusUseCase(
+      const useCase = new StatusCommand(
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDriftUseCase(fs)
+        new DetectPluginDriftCommand(fs)
       );
 
       const report = await useCase.execute({
@@ -148,11 +148,11 @@ describe("StatusUseCase — cursor plugin drift (user-scope)", () => {
     it("returns empty pluginDrift", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, EXPECTED_HASH);
-      const useCase = new StatusUseCase(
+      const useCase = new StatusCommand(
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDriftUseCase(fs)
+        new DetectPluginDriftCommand(fs)
       );
 
       const report = await useCase.execute({

@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { wireTools } from "../../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { GitignoreUseCase } from "../../../../src/contexts/installation/application/gitignore-use-case.js";
-import { InitUseCase } from "../../../../src/contexts/installation/application/init-use-case.js";
-import { InstallIdeConfigUseCase } from "../../../../src/contexts/installation/application/install/install-ide-config-use-case.js";
-import { InstallRuntimeConfigUseCase } from "../../../../src/contexts/installation/application/install/install-runtime-config-use-case.js";
-import { PostInstallPipelineUseCase } from "../../../../src/contexts/installation/application/install/post-install-pipeline-use-case.js";
+import { GitignoreCommand } from "../../../../src/contexts/installation/application/gitignore-use-case.js";
+import { InitCommand } from "../../../../src/contexts/installation/application/init-use-case.js";
+import { InstallIdeConfigCommand } from "../../../../src/contexts/installation/application/install/install-ide-config-use-case.js";
+import { InstallRuntimeConfigCommand } from "../../../../src/contexts/installation/application/install/install-runtime-config-use-case.js";
+import { PostInstallPipelineCommand } from "../../../../src/contexts/installation/application/install/post-install-pipeline-use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { BundledAssetProviderAdapter } from "../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
@@ -212,16 +212,16 @@ export function buildDeps(projectRoot: string) {
     registeredManifestProbes()
   );
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
-  const gitignoreUseCase = new GitignoreUseCase(fs);
-  const postInstallPipelineUseCase = new PostInstallPipelineUseCase(manifestRepo, gitignoreUseCase);
-  const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
+  const gitignoreUseCase = new GitignoreCommand(fs);
+  const postInstallPipelineUseCase = new PostInstallPipelineCommand(manifestRepo, gitignoreUseCase);
+  const installRuntimeConfigUseCase = new InstallRuntimeConfigCommand(
     fs,
     hasher,
     logger,
     assetProvider,
     postInstallPipelineUseCase
   );
-  const installIdeConfigUseCase = new InstallIdeConfigUseCase(
+  const installIdeConfigUseCase = new InstallIdeConfigCommand(
     fs,
     hasher,
     logger,
@@ -259,7 +259,7 @@ export async function initProject(
   deps: ReturnType<typeof buildDeps>,
   projectRoot: string
 ): Promise<void> {
-  const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
+  const initUseCase = new InitCommand(deps.fs, deps.manifestRepo);
   await initUseCase.execute({
     projectRoot,
     tools: catalogOf(),

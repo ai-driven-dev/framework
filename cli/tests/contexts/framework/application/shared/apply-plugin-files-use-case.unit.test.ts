@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ApplyPluginFilesUseCase } from "../../../../../src/contexts/installation/application/shared/apply-plugin-files-use-case.js";
+import { ApplyPluginFilesCommand } from "../../../../../src/contexts/installation/application/shared/apply-plugin-files-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
@@ -19,13 +19,13 @@ const SOURCE = {
 };
 
 async function makeUseCase(): Promise<{
-  useCase: ApplyPluginFilesUseCase;
+  useCase: ApplyPluginFilesCommand;
   fs: Awaited<ReturnType<typeof buildUnitDeps>>["fs"];
 }> {
   const deps = await buildUnitDeps(PROJECT_ROOT);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   deps.pluginFetcher.register(SOURCE, PLUGIN_FIXTURE);
-  const useCase = new ApplyPluginFilesUseCase(
+  const useCase = new ApplyPluginFilesCommand(
     deps.fs,
     deps.hasher,
     deps.pluginFetcher,
@@ -41,7 +41,7 @@ function manifestWith(plugin: InstalledPlugin): Manifest {
   return manifest;
 }
 
-describe("ApplyPluginFilesUseCase — without built-tree materialization wired in", () => {
+describe("ApplyPluginFilesCommand — without built-tree materialization wired in", () => {
   it("restores a marketplace plugin through the source transform and tracks what it wrote", async () => {
     const { useCase, fs } = await makeUseCase();
     const plugin = InstalledPlugin.fromMetadata(

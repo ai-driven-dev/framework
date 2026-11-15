@@ -168,7 +168,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       AiToolId,
       HostMarketplaceRegistry
     > = new Map(),
-    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplaceUseCase`'s
+    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplaceCommand`'s
      * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
      * already built before this runs, never from a path recomputed without one. */
     private readonly userCacheRoot: () => string = () => "",

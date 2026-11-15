@@ -18,7 +18,7 @@ interface InstallConfigOptions {
   toolId?: AiToolId;
 }
 
-export class InstallConfigUseCase {
+export class InstallConfigCommand {
   constructor(
     private readonly fs: FileReader,
     private readonly hasher: Hasher

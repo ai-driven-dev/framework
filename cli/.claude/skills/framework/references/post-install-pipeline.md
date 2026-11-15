@@ -2,16 +2,16 @@
 
 ## Post-install pipeline
 
-**Rule**: a use case that installs framework files ends with `PostInstallPipelineUseCase`,
+**Rule**: a use case that installs framework files ends with `PostInstallPipelineCommand`,
 never with its steps inline. A use case that only changes the manifest saves it directly.
 
-**Steps, in order**: `manifestRepo.save()`, then `GitignoreUseCase.execute()` with
+**Steps, in order**: `manifestRepo.save()`, then `GitignoreCommand.execute()` with
 `.aidd/cache/` and every installed tool's machine-local files.
 
 ```typescript
-import { PostInstallPipelineUseCase } from "../install/post-install-pipeline-use-case.js";
+import { PostInstallPipelineCommand } from "../install/post-install-pipeline-use-case.js";
 
-await new PostInstallPipelineUseCase(this.manifestRepo, this.gitignoreUseCase).execute({
+await new PostInstallPipelineCommand(this.manifestRepo, this.gitignoreUseCase).execute({
   projectRoot: options.projectRoot,
   manifest: options.manifest,
 });
@@ -38,7 +38,7 @@ receives a narrowed type.
 
 ```typescript
 if ("agents" in caps) {
-  const result = await new InstallAgentsUseCase(/* ... */).execute({
+  const result = await new InstallAgentsCommand(/* ... */).execute({
     config: toolConfig as AiTool<HasAgents>,
   });
 }

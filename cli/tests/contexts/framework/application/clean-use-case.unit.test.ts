@@ -9,7 +9,7 @@ import { UserSourceReferencesAdapter } from "../../../../src/contexts/framework/
 import type { HostActions } from "../../../../src/contexts/host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
-import { GitignoreUseCase } from "../../../../src/contexts/installation/application/gitignore-use-case.js";
+import { GitignoreCommand } from "../../../../src/contexts/installation/application/gitignore-use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { pluginScriptDir } from "../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
@@ -316,7 +316,7 @@ describe("clean", () => {
       fs,
       manifestRepo,
       new CapturingLogger(),
-      new GitignoreUseCase(fs)
+      new GitignoreCommand(fs)
     );
     await useCase.execute({ ...AT_PROJECT, force: true });
 
@@ -348,7 +348,7 @@ describe("clean", () => {
       fs,
       manifestRepo,
       new CapturingLogger(),
-      new GitignoreUseCase(fs)
+      new GitignoreCommand(fs)
     );
     await useCase.execute({ ...AT_PROJECT, force: true });
 
@@ -484,7 +484,7 @@ describe("clean", () => {
           fs,
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           logger,
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[BINARY, activator]]),
           registry,
           undefined,
@@ -548,7 +548,7 @@ describe("clean", () => {
             fs,
             projectRepo,
             logger,
-            new GitignoreUseCase(fs),
+            new GitignoreCommand(fs),
             new Map([[BINARY, activator]]),
             seedMarketplaceRegistry(),
             undefined,
@@ -594,7 +594,7 @@ describe("clean", () => {
             fs,
             new InMemoryManifestRepository(seedManifestWithNativeRegistrations(), PROJECT_ROOT),
             logger,
-            new GitignoreUseCase(fs),
+            new GitignoreCommand(fs),
             new Map([[BINARY, activator]]),
             seedMarketplaceRegistry(),
             undefined,
@@ -649,7 +649,7 @@ describe("clean", () => {
             fs,
             new InMemoryManifestRepository(seedClaudeNativeRegistrations(), PROJECT_ROOT),
             logger,
-            new GitignoreUseCase(fs),
+            new GitignoreCommand(fs),
             new Map([[TOOL.claude, activator]]),
             await sharedClaudeRegistry(),
             undefined,
@@ -685,7 +685,7 @@ describe("clean", () => {
           fs,
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           logger,
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[TOOL.claude, activator]]),
           await sharedClaudeRegistry()
         );
@@ -725,7 +725,7 @@ describe("clean", () => {
             fs,
             new InMemoryManifestRepository(seedClaudeNativeRegistrations(), PROJECT_ROOT),
             logger,
-            new GitignoreUseCase(fs),
+            new GitignoreCommand(fs),
             new Map([[TOOL.claude, activator]]),
             await sharedClaudeRegistry(),
             undefined,
@@ -798,7 +798,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
         new CapturingLogger(),
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map([[BINARY, activator]]),
         seedMarketplaceRegistry(),
         undefined,
@@ -856,7 +856,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
         new CapturingLogger(),
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map([[BINARY, activator]]),
         seedMarketplaceRegistry(),
         undefined,
@@ -884,7 +884,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         new CapturingLogger(),
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map([[BINARY, activator]]),
         seedMarketplaceRegistry()
       );
@@ -917,7 +917,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         logger,
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map([[BINARY, activator]]),
         registry,
         undefined,
@@ -1001,7 +1001,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           new CapturingLogger(),
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[CLAUDE_BINARY, activator]]),
           seedClaudeMarketplaceRegistry()
         );
@@ -1033,7 +1033,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           new CapturingLogger(),
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[CLAUDE_BINARY, activator]]),
           seedClaudeMarketplaceRegistry(),
           undefined,
@@ -1083,7 +1083,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           new CapturingLogger(),
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[BINARY, activator]]),
           registry,
           undefined,
@@ -1121,7 +1121,7 @@ describe("clean", () => {
         const references = seedReferences(fs, [PROJECT_ROOT, OTHER_PROJECT_ROOT]);
         await references.addReference("1.0.0", PROJECT_ROOT);
         await references.addReference("1.0.0", OTHER_PROJECT_ROOT);
-        const gitignore = new GitignoreUseCase(fs);
+        const gitignore = new GitignoreCommand(fs);
         gitignore.remove = async () => {
           throw new Error("gitignore cleanup failed");
         };
@@ -1184,7 +1184,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           logger,
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[BINARY, activator]]),
           registry,
           undefined,
@@ -1231,7 +1231,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           logger,
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[BINARY, activator]]),
           registry,
           undefined,
@@ -1269,7 +1269,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           logger,
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[BINARY, activator]]),
           registry,
           undefined,
@@ -1309,7 +1309,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           new CapturingLogger(),
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[BINARY, activator]]),
           registry,
           undefined,
@@ -1352,7 +1352,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           new CapturingLogger(),
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[BINARY, activator]]),
           registry,
           undefined,
@@ -1394,7 +1394,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           logger,
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[BINARY, activator]]),
           registry,
           undefined,
@@ -1441,7 +1441,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           logger,
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[BINARY, activator]]),
           registry,
           undefined,
@@ -1482,7 +1482,7 @@ describe("clean", () => {
           fs,
           manifestRepo,
           logger,
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[BINARY, activator]]),
           registry,
           undefined,
@@ -1508,7 +1508,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         logger,
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map([[BINARY, activator]]),
         seedMarketplaceRegistry()
       );
@@ -1539,7 +1539,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         new CapturingLogger(),
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map([[TOOL.claude, activator]]),
         seedMarketplaceRegistry(),
         undefined,
@@ -1576,7 +1576,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         new CapturingLogger(),
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map([[BINARY, activator]]),
         seedMarketplaceRegistry()
       );
@@ -1595,7 +1595,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         new CapturingLogger(),
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map([[BINARY, activator]]),
         seedMarketplaceRegistry()
       );
@@ -1654,7 +1654,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         new CapturingLogger(),
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map([[BINARY, activator]]),
         registry,
         undefined,
@@ -1687,7 +1687,7 @@ describe("clean", () => {
           deps.fs,
           new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT),
           deps.logger,
-          new GitignoreUseCase(deps.fs),
+          new GitignoreCommand(deps.fs),
           deps.activators,
           deps.registry,
           undefined,
@@ -1902,7 +1902,7 @@ describe("clean", () => {
           fs,
           new InMemoryManifestRepository(seedRegistrations(TOOL.copilot, "copilot"), PROJECT_ROOT),
           new CapturingLogger(),
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[TOOL.copilot, activator]]),
           seedSharedRegistry(),
           undefined,
@@ -1938,7 +1938,7 @@ describe("clean", () => {
           fs,
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           new CapturingLogger(),
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[TOOL.copilot, activator]]),
           seedSharedRegistry(),
           undefined,
@@ -1982,7 +1982,7 @@ describe("clean", () => {
           fs,
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           new CapturingLogger(),
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[TOOL.codex, activator]]),
           seedSharedRegistry(),
           undefined,
@@ -2172,7 +2172,7 @@ describe("clean", () => {
           fs,
           new InMemoryManifestRepository(manifest, PROJECT_ROOT),
           new CapturingLogger(),
-          new GitignoreUseCase(fs),
+          new GitignoreCommand(fs),
           new Map([[TOOL.claude, activator]]),
           seedMarketplaceRegistry()
         );
@@ -2223,7 +2223,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(seedManifestWithNativeRegistrations(), PROJECT_ROOT),
         new CapturingLogger(),
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map(),
         undefined,
         undefined,
@@ -2313,7 +2313,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         new CapturingLogger(),
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
       await useCase.execute({ ...AT_PROJECT, force: true });
 
@@ -2366,7 +2366,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         new CapturingLogger(),
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
       await useCase.execute({ ...AT_PROJECT, force: true });
 
@@ -2465,7 +2465,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         new CapturingLogger(),
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map([[TOOL.codex, activator]]),
         registry,
         new RecordingPrompter(true),
@@ -2540,7 +2540,7 @@ describe("clean", () => {
       fs,
       new InMemoryManifestRepository(manifest, PROJECT_ROOT),
       new CapturingLogger(),
-      new GitignoreUseCase(fs),
+      new GitignoreCommand(fs),
       new Map([[TOOL.codex, activator]]),
       undefined,
       undefined,
@@ -2583,7 +2583,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         logger,
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
 
       await useCase.execute({ ...AT_PROJECT, force: true });
@@ -2618,7 +2618,7 @@ describe("clean", () => {
         fs,
         manifestRepo,
         logger,
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
 
       await useCase.execute({ ...AT_PROJECT, force: true });
@@ -2638,7 +2638,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(null, PROJECT_ROOT),
         new CapturingLogger(),
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
 
       const result = await useCase.execute({ ...AT_PROJECT, force: true });
@@ -2661,7 +2661,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(seedTrackedFiles(fs, ["a.md"]), PROJECT_ROOT),
         new CapturingLogger(),
-        new GitignoreUseCase(fs),
+        new GitignoreCommand(fs),
         new Map(),
         undefined,
         prompter
@@ -2742,7 +2742,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
         new CapturingLogger(),
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
 
       const result = await useCase.execute({ ...AT_PROJECT, force: false });
@@ -2771,7 +2771,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
         new CapturingLogger(),
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
 
       const result = await useCase.execute({ ...AT_PROJECT, force: false });
@@ -2800,7 +2800,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
         new CapturingLogger(),
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
 
       const result = await useCase.execute({ ...AT_PROJECT, force: false });
@@ -2827,7 +2827,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(manifest, PROJECT_ROOT),
         logger,
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
     }
 
@@ -2996,7 +2996,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(seedTrackedFiles(fs, ["a.md"]), PROJECT_ROOT),
         logger,
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
 
       await useCase.execute({ ...AT_PROJECT, force: true });
@@ -3015,7 +3015,7 @@ describe("clean", () => {
         fs,
         new InMemoryManifestRepository(seedTrackedFiles(fs, ["a.md"]), PROJECT_ROOT),
         logger,
-        new GitignoreUseCase(fs)
+        new GitignoreCommand(fs)
       );
 
       await useCase.execute({ ...AT_PROJECT, force: true });

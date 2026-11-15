@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { InitUseCase } from "../../../../src/contexts/installation/application/init-use-case.js";
-import { DetectPluginDriftUseCase } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
-import { StatusUseCase } from "../../../../src/contexts/installation/application/status-use-case.js";
+import { InitCommand } from "../../../../src/contexts/installation/application/init-use-case.js";
+import { DetectPluginDriftCommand } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { StatusCommand } from "../../../../src/contexts/installation/application/status-use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { NoManifestError, ToolNotInstalledError } from "../../../../src/shared/domain/errors.js";
 import { InstallationFile } from "../../../../src/shared/domain/file.js";
@@ -43,11 +43,11 @@ function statusOver(onDisk: Record<string, string>, manifest: Manifest | null) {
     ])
   );
   const fs = new InMemoryFileAdapter(files, hasher);
-  return new StatusUseCase(
+  return new StatusCommand(
     fs,
     new InMemoryManifestRepository(manifest, PROJECT_ROOT),
     hasher,
-    new DetectPluginDriftUseCase(fs)
+    new DetectPluginDriftCommand(fs)
   );
 }
 
@@ -55,7 +55,7 @@ function inSyncTool(toolId: ToolId) {
   return { toolId, version: "test", drifted: [] };
 }
 
-describe("StatusUseCase", () => {
+describe("StatusCommand", () => {
   describe("which tools are reported", () => {
     it("fails when no manifest exists", async () => {
       await expect(
@@ -280,16 +280,16 @@ describe("StatusUseCase", () => {
 describe("status", () => {
   it("reports no drift when no tools are installed", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+    await new InitCommand(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
       tools: catalogOf(),
     });
 
-    const useCase = new StatusUseCase(
+    const useCase = new StatusCommand(
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDriftUseCase(deps.fs)
+      new DetectPluginDriftCommand(deps.fs)
     );
     const report = await useCase.execute({
       tools: catalogOf(),
@@ -302,7 +302,7 @@ describe("status", () => {
 
   it("does not call a machine-local file an addition, whatever the profile declares", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+    await new InitCommand(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
       tools: catalogOf(),
     });
@@ -322,11 +322,11 @@ describe("status", () => {
       (registeredAiConfig(TOOL.claude).marketplaceRegistration()?.machineLocalFiles() ?? []).length
     ).toBeGreaterThan(0);
 
-    const report = await new StatusUseCase(
+    const report = await new StatusCommand(
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDriftUseCase(deps.fs)
+      new DetectPluginDriftCommand(deps.fs)
     ).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT });
 
     const drifted = report.tools.flatMap((tool) => tool.drifted);

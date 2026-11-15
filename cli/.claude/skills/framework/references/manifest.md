@@ -17,7 +17,7 @@
 
 ## Saving
 
-- Installing files: save through `PostInstallPipelineUseCase`, which also updates `.gitignore` — see `references/post-install-pipeline.md`
+- Installing files: save through `PostInstallPipelineCommand`, which also updates `.gitignore` — see `references/post-install-pipeline.md`
 - Changing only the manifest (plugin add/remove, marketplace sync, restore): `manifestRepo.save()` directly
 
 ## Merge file tracking

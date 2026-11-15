@@ -44,7 +44,7 @@ function deliversHooksToProject(tool: AiToolProfile): boolean {
   return tool.plugins()?.deliversHooksToProject() ?? false;
 }
 
-export class ApplyPluginFilesUseCase {
+export class ApplyPluginFilesCommand {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly hasher: Hasher,

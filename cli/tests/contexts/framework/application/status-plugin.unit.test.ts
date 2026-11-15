@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DetectPluginDriftUseCase } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
-import { StatusUseCase } from "../../../../src/contexts/installation/application/status-use-case.js";
+import { DetectPluginDriftCommand } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { StatusCommand } from "../../../../src/contexts/installation/application/status-use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
@@ -55,16 +55,16 @@ const noopHasher: Hasher = {
   hash: () => new FileHash("00000000000000000000000000000000"),
 };
 
-describe("StatusUseCase — plugin drift", () => {
+describe("StatusCommand — plugin drift", () => {
   describe("when plugin file has drifted", () => {
     it("returns plugin drift entry for the drifted tool", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, DRIFTED_HASH);
-      const useCase = new StatusUseCase(
+      const useCase = new StatusCommand(
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDriftUseCase(fs)
+        new DetectPluginDriftCommand(fs)
       );
 
       const report = await useCase.execute({
@@ -84,11 +84,11 @@ describe("StatusUseCase — plugin drift", () => {
     it("returns empty pluginDrift and inSync true (assuming no other drift)", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, EXPECTED_HASH);
-      const useCase = new StatusUseCase(
+      const useCase = new StatusCommand(
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDriftUseCase(fs)
+        new DetectPluginDriftCommand(fs)
       );
 
       const report = await useCase.execute({
@@ -104,11 +104,11 @@ describe("StatusUseCase — plugin drift", () => {
     it("reports the file as drifted", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(false, EXPECTED_HASH);
-      const useCase = new StatusUseCase(
+      const useCase = new StatusCommand(
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDriftUseCase(fs)
+        new DetectPluginDriftCommand(fs)
       );
 
       const report = await useCase.execute({
@@ -125,11 +125,11 @@ describe("StatusUseCase — plugin drift", () => {
     it("only checks the specified plugin", async () => {
       const manifest = makeManifest(EXPECTED_HASH);
       const fs = makeFs(true, DRIFTED_HASH);
-      const useCase = new StatusUseCase(
+      const useCase = new StatusCommand(
         fs,
         makeManifestRepo(manifest),
         noopHasher,
-        new DetectPluginDriftUseCase(fs)
+        new DetectPluginDriftCommand(fs)
       );
 
       const report = await useCase.execute({

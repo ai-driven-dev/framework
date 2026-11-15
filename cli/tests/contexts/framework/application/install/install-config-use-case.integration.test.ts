@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
-import { InstallConfigUseCase } from "../../../../../src/contexts/installation/application/install/install-config-use-case.js";
+import { InstallConfigCommand } from "../../../../../src/contexts/installation/application/install/install-config-use-case.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
@@ -18,7 +18,7 @@ const PROJECT_ROOT = "/test-project";
 function buildUseCase() {
   const hasher = new DeterministicHasher();
   const fs = new InMemoryFileAdapter({}, hasher);
-  return { useCase: new InstallConfigUseCase(fs, hasher), fs };
+  return { useCase: new InstallConfigCommand(fs, hasher), fs };
 }
 
 function emptyDescriptor(): FrameworkDescriptor {
@@ -30,7 +30,7 @@ function emptyDescriptor(): FrameworkDescriptor {
   });
 }
 
-describe("InstallConfigUseCase — staticContent", () => {
+describe("InstallConfigCommand — staticContent", () => {
   it("produces an installation file for a ConfigSection with staticContent", async () => {
     const { useCase } = buildUseCase();
     const capability = new ConfigSection({
@@ -195,7 +195,7 @@ describe("InstallConfigUseCase — staticContent", () => {
   });
 });
 
-describe("InstallConfigUseCase — MCP config", () => {
+describe("InstallConfigCommand — MCP config", () => {
   const MCP_REF = { name: CONFIG_MCP, path: "config/mcp.json" };
   const HOOKS_REF = { name: "hooks", path: "config/hooks.json" };
   const NPX_SERVER = JSON.stringify(

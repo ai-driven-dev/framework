@@ -11,10 +11,10 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
+  InstallIdeConfigCommand,
   InstallIdeConfigResult,
-  InstallIdeConfigUseCase,
 } from "./install-ide-config-use-case.js";
-import type { PostInstallPipelineUseCase } from "./post-install-pipeline-use-case.js";
+import type { PostInstallPipelineCommand } from "./post-install-pipeline-use-case.js";
 
 export interface InstallIdeToolOptions {
   toolId: IdeToolId;
@@ -25,13 +25,13 @@ export interface InstallIdeToolOptions {
   tools: ToolCatalog;
 }
 
-export class InstallIdeToolUseCase {
+export class InstallIdeToolCommand {
   constructor(
-    private readonly installIdeConfigUseCase: InstallIdeConfigUseCase,
+    private readonly installIdeConfigUseCase: InstallIdeConfigCommand,
     private readonly manifestRepo: ManifestRepository,
     private readonly fs: FileReader & FileWriter & FileMerger,
     private readonly hasher: Hasher,
-    private readonly postInstallPipelineUseCase: PostInstallPipelineUseCase,
+    private readonly postInstallPipelineUseCase: PostInstallPipelineCommand,
     private readonly assetProvider?: AssetProvider
   ) {}
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
-import { GenerateToolDistributionUseCase } from "../../../../../src/contexts/installation/application/restore/generate-tool-distribution-use-case.js";
+import { GenerateToolDistributionCommand } from "../../../../../src/contexts/installation/application/restore/generate-tool-distribution-use-case.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
@@ -43,7 +43,7 @@ function generate(
   config: ToolProfile,
   assetProvider?: BundledAssetProviderAdapter
 ): Promise<InstallationFile[]> {
-  return new GenerateToolDistributionUseCase(
+  return new GenerateToolDistributionCommand(
     new InMemoryFileAdapter({}, hasher),
     hasher,
     new FakePlatform("linux"),
@@ -57,7 +57,7 @@ async function pathsFor(toolId: ToolId, assetProvider?: BundledAssetProviderAdap
     .sort();
 }
 
-describe("GenerateToolDistributionUseCase — content sections", () => {
+describe("GenerateToolDistributionCommand — content sections", () => {
   it("gives an IDE tool its config files and no content section", async () => {
     expect(await pathsFor(TOOL.vscode)).toStrictEqual([".vscode/settings.json"]);
   });
@@ -86,7 +86,7 @@ describe("GenerateToolDistributionUseCase — content sections", () => {
   });
 });
 
-describe("GenerateToolDistributionUseCase — a tool's own config assets", () => {
+describe("GenerateToolDistributionCommand — a tool's own config assets", () => {
   it("regenerates the shared OpenCode plugin runtime alongside tool configuration", async () => {
     const files = await generate(registeredConfig(TOOL.opencode), assets);
     expect(

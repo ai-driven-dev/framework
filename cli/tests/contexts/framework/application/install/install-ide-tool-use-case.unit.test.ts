@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { InstallIdeToolUseCase } from "../../../../../src/contexts/installation/application/install/install-ide-tool-use-case.js";
+import { InstallIdeToolCommand } from "../../../../../src/contexts/installation/application/install/install-ide-tool-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
@@ -30,7 +30,7 @@ function buildUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   assetProvider: AssetProvider | null = deps.assetProvider
 ) {
-  return new InstallIdeToolUseCase(
+  return new InstallIdeToolCommand(
     deps.installIdeConfigUseCase,
     deps.manifestRepo,
     deps.fs,
@@ -40,7 +40,7 @@ function buildUseCase(
   );
 }
 
-describe("InstallIdeToolUseCase", () => {
+describe("InstallIdeToolCommand", () => {
   describe("copilot installed before vscode", () => {
     it("merges copilot static keys into .vscode/settings.json when vscode is installed", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);

@@ -25,12 +25,12 @@ import type { Platform } from "../../ports/platform.js";
 import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
 import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
 import {
+  RestoreAllPluginsCommand,
   type RestoreAllPluginsResult,
-  RestoreAllPluginsUseCase,
 } from "./restore-all-plugins-use-case.js";
 import {
+  RestoreToolFilesCommand,
   type RestoreToolFilesResult,
-  RestoreToolFilesUseCase,
 } from "./restore-tool-files-use-case.js";
 
 /**
@@ -84,7 +84,7 @@ interface RestoreResult {
   nativeOnlyToolIds: AiToolId[];
 }
 
-export class RestoreUseCase {
+export class RestoreCommand {
   constructor(
     private readonly fs: FileReader & FileWriter & FileMerger,
     private readonly manifestRepo: ManifestRepository,
@@ -136,7 +136,7 @@ export class RestoreUseCase {
   }
 
   private async runToolRestores(ctx: RestoreCtx): Promise<RestoreToolFilesResult[]> {
-    const toolUseCase = new RestoreToolFilesUseCase(
+    const toolUseCase = new RestoreToolFilesCommand(
       this.fs,
       this.hasher,
       this.logger,
@@ -155,7 +155,7 @@ export class RestoreUseCase {
     if (this.pluginFetcher === undefined || this.pluginDistributionReader === undefined) {
       return { totalFiles: 0, pluginNames: [], nativeOnlyToolIds: [] };
     }
-    return new RestoreAllPluginsUseCase(
+    return new RestoreAllPluginsCommand(
       this.fs,
       this.hasher,
       this.pluginFetcher,

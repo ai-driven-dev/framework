@@ -23,7 +23,7 @@ import type { HostActions } from "../../host-registration/contract/host-actions.
 import type { HostMarketplaceRegistry } from "../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../host-registration/contract/host-plugin-registry.js";
-import type { GitignoreUseCase } from "../../installation/application/gitignore-use-case.js";
+import type { GitignoreCommand } from "../../installation/application/gitignore-use-case.js";
 import { deletePluginFilesForTool } from "../../installation/application/plugin/plugin-helpers.js";
 import {
   assertProjectHooksRemovable,
@@ -128,7 +128,7 @@ export class CleanUseCase {
     private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly logger: Logger,
-    private readonly gitignoreUseCase: GitignoreUseCase,
+    private readonly gitignoreUseCase: GitignoreCommand,
     /** Native plugin CLI activators keyed by `NativeActivation.binary`. */
     private readonly activators: ReadonlyMap<string, HostActions> = new Map(),
     /** Resolves a registered marketplace's own scope, needed to undo a native registration at

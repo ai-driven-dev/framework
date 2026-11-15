@@ -13,9 +13,9 @@ import type { FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { Platform } from "../../ports/platform.js";
-import { GenerateToolDistributionUseCase } from "./generate-tool-distribution-use-case.js";
-import { RestoreMergeFilesUseCase } from "./restore-merge-files-use-case.js";
-import { RestoreRegularFilesUseCase } from "./restore-regular-files-use-case.js";
+import { GenerateToolDistributionCommand } from "./generate-tool-distribution-use-case.js";
+import { RestoreMergeFilesCommand } from "./restore-merge-files-use-case.js";
+import { RestoreRegularFilesCommand } from "./restore-regular-files-use-case.js";
 
 export interface RestoreToolFilesOptions {
   /** Unvalidated text: the restore refuses one no profile declares. */
@@ -54,7 +54,7 @@ export interface RestoreToolFilesResult {
   unrestorable: string[];
 }
 
-export class RestoreToolFilesUseCase {
+export class RestoreToolFilesCommand {
   constructor(
     private readonly fs: FileReader & FileWriter & FileMerger,
     private readonly hasher: Hasher,
@@ -88,7 +88,7 @@ export class RestoreToolFilesUseCase {
     config: ToolProfile
   ): Promise<Map<string, InstallationFile>> {
     const { descriptor, contentFiles, projectRoot } = options;
-    const distribution = await new GenerateToolDistributionUseCase(
+    const distribution = await new GenerateToolDistributionCommand(
       this.fs,
       this.hasher,
       this.platform,
@@ -101,7 +101,7 @@ export class RestoreToolFilesUseCase {
     options: RestoreToolFilesOptions,
     distMap: Map<string, InstallationFile>
   ): Promise<SectionRestoreResult | null> {
-    return new RestoreRegularFilesUseCase(this.fs, this.prompter).execute({
+    return new RestoreRegularFilesCommand(this.fs, this.prompter).execute({
       manifestFiles: options.manifest.getToolFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,
@@ -115,7 +115,7 @@ export class RestoreToolFilesUseCase {
     options: RestoreToolFilesOptions,
     distMap: Map<string, InstallationFile>
   ): Promise<MergeSectionRestoreResult | null> {
-    return new RestoreMergeFilesUseCase(this.fs, this.hasher, this.prompter).execute({
+    return new RestoreMergeFilesCommand(this.fs, this.hasher, this.prompter).execute({
       mergeFiles: options.manifest.getMergeFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,

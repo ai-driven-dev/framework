@@ -26,7 +26,7 @@ function projectRelative(projectRoot: string, absolutePath: string): string {
  * Every rule installed in a project, across every tool that installs any. Asking each tool where it
  * installs is what makes a fifth tool, or a moved directory, impossible to miss.
  */
-export class ListInstalledRulesUseCase {
+export class ListInstalledRulesCommand {
   constructor(private readonly files: FileReader) {}
 
   async execute(input: ListInstalledRulesInput): Promise<ListInstalledRulesResult> {

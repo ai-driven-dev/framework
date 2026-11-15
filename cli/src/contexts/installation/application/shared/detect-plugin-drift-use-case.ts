@@ -38,7 +38,7 @@ export interface DetectPluginDriftOptions {
 /**
  * Single source of truth for "which of a plugin's installed files no longer match the manifest".
  */
-export class DetectPluginDriftUseCase {
+export class DetectPluginDriftCommand {
   constructor(private readonly fs: FileReader) {}
 
   async execute(options: DetectPluginDriftOptions): Promise<PluginDrift[]> {

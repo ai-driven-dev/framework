@@ -14,7 +14,7 @@ import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, inject } from "vitest";
 import { createDeps } from "../../src/composition/framework.js";
-import { InitUseCase } from "../../src/contexts/installation/application/init-use-case.js";
+import { InitCommand } from "../../src/contexts/installation/application/init-use-case.js";
 import { environmentWithoutGitVariables as withoutGitEnv } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
@@ -322,7 +322,7 @@ export async function runCliFast(
 export async function initProject(projectDir: string, _frameworkPath: string): Promise<void> {
   const output = new CLIOutput(false);
   const deps = await createDeps(projectDir, { verbose: false }, output, catalogOf());
-  await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+  await new InitCommand(deps.fs, deps.manifestRepo).execute({
     projectRoot: projectDir,
     tools: catalogOf(),
   });

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { RestoreAllPluginsUseCase } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins-use-case.js";
+import { RestoreAllPluginsCommand } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins-use-case.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -45,8 +45,8 @@ async function makeGithubRegistry(): Promise<InMemoryMarketplaceRegistry> {
 function makeRestoreUseCase(
   deps: Deps,
   registry: InMemoryMarketplaceRegistry
-): RestoreAllPluginsUseCase {
-  return new RestoreAllPluginsUseCase(
+): RestoreAllPluginsCommand {
+  return new RestoreAllPluginsCommand(
     deps.fs,
     deps.hasher,
     deps.pluginFetcher,
@@ -91,7 +91,7 @@ async function installGithubPlugin(
   });
 }
 
-describe("RestoreAllPluginsUseCase — Mode A marketplace tools (claude/codex/copilot)", () => {
+describe("RestoreAllPluginsCommand — Mode A marketplace tools (claude/codex/copilot)", () => {
   it("cleans up files a pre-fix update/restore materialized, leaving the manifest entry empty", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);

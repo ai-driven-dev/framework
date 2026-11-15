@@ -15,7 +15,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
-import type { InstallRuntimeConfigUseCase } from "../../../installation/application/install/install-runtime-config-use-case.js";
+import type { InstallRuntimeConfigCommand } from "../../../installation/application/install/install-runtime-config-use-case.js";
 import type { PluginTranslator } from "../../../installation/application/materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../../../installation/application/materialize/resolve-plugin-translator.js";
 import type { PluginDistributionLoader } from "../../../installation/application/plugin/plugin-distribution-loader.js";
@@ -71,7 +71,7 @@ export class PluginAddUseCase implements PluginAdd {
     private readonly marketplaceRegistry: MarketplaceRegistry,
     private readonly ensureBuilt: EnsureBuiltMarketplace,
     private readonly userManifestRepo: ManifestRepository,
-    private readonly pluginRuntime?: Pick<InstallRuntimeConfigUseCase, "ensurePluginRuntimeFiles">
+    private readonly pluginRuntime?: Pick<InstallRuntimeConfigCommand, "ensurePluginRuntimeFiles">
   ) {}
 
   async execute(options: PluginAddOptions): Promise<void> {

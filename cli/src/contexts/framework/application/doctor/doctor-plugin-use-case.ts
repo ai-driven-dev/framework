@@ -1,4 +1,4 @@
-import type { DetectPluginDriftUseCase } from "../../../installation/application/shared/detect-plugin-drift-use-case.js";
+import type { DetectPluginDriftCommand } from "../../../installation/application/shared/detect-plugin-drift-use-case.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { PluginIssueEntry } from "../../domain/doctor.js";
@@ -12,7 +12,7 @@ export interface DoctorPluginOptions {
 }
 
 export class DoctorPluginUseCase {
-  constructor(private readonly detectPluginDrift: DetectPluginDriftUseCase) {}
+  constructor(private readonly detectPluginDrift: DetectPluginDriftCommand) {}
 
   async execute(options: DoctorPluginOptions): Promise<PluginIssueEntry[]> {
     const { manifest, projectRoot, allowedIds, pluginName, tools } = options;

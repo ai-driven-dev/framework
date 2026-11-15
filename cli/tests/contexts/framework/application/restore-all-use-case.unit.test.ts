@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest";
 import { RestoreAllUseCase } from "../../../../src/contexts/framework/application/global/restore-all-use-case.js";
 import { PluginAddUseCase } from "../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { RestoreUseCase } from "../../../../src/contexts/installation/application/restore/restore-use-case.js";
-import { DetectPluginDriftUseCase } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
-import { StatusUseCase } from "../../../../src/contexts/installation/application/status-use-case.js";
+import { RestoreCommand } from "../../../../src/contexts/installation/application/restore/restore-use-case.js";
+import { DetectPluginDriftCommand } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { StatusCommand } from "../../../../src/contexts/installation/application/status-use-case.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { NoManifestError } from "../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
@@ -67,13 +67,13 @@ function makeRestoreAllUseCase(
   prompter: OverwritePrompter | ScriptedPrompter = new OverwritePrompter(),
   withBuiltDeps = false
 ): RestoreAllUseCase {
-  const statusUseCase = new StatusUseCase(
+  const statusUseCase = new StatusCommand(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
-    new DetectPluginDriftUseCase(deps.fs)
+    new DetectPluginDriftCommand(deps.fs)
   );
-  const restoreUseCase = new RestoreUseCase(
+  const restoreUseCase = new RestoreCommand(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
@@ -354,10 +354,10 @@ describe("RestoreAllUseCase — plugin materialization", () => {
 });
 
 describe("RestoreAllUseCase — consent to overwrite", () => {
-  type RestoreOptions = Parameters<RestoreUseCase["execute"]>[0];
+  type RestoreOptions = Parameters<RestoreCommand["execute"]>[0];
 
   /** Records what RestoreAllUseCase asks the restore to do, without doing it. */
-  function recordAsks(restoreUseCase: RestoreUseCase): RestoreOptions[] {
+  function recordAsks(restoreUseCase: RestoreCommand): RestoreOptions[] {
     const seen: RestoreOptions[] = [];
     restoreUseCase.execute = async (options: RestoreOptions) => {
       seen.push(options);
@@ -378,13 +378,13 @@ describe("RestoreAllUseCase — consent to overwrite", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
-    const statusUseCase = new StatusUseCase(
+    const statusUseCase = new StatusCommand(
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDriftUseCase(deps.fs)
+      new DetectPluginDriftCommand(deps.fs)
     );
-    const restoreUseCase = new RestoreUseCase(
+    const restoreUseCase = new RestoreCommand(
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
@@ -422,13 +422,13 @@ describe("RestoreAllUseCase — native-only tools", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
     const prompter = new OverwritePrompter();
-    const statusUseCase = new StatusUseCase(
+    const statusUseCase = new StatusCommand(
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDriftUseCase(deps.fs)
+      new DetectPluginDriftCommand(deps.fs)
     );
-    const restoreUseCase = new RestoreUseCase(
+    const restoreUseCase = new RestoreCommand(
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
@@ -457,8 +457,8 @@ describe("RestoreAllUseCase — native-only tools", () => {
   });
 });
 
-type RestoreOptions = Parameters<RestoreUseCase["execute"]>[0];
-type RestoreOutcome = Awaited<ReturnType<RestoreUseCase["execute"]>>;
+type RestoreOptions = Parameters<RestoreCommand["execute"]>[0];
+type RestoreOutcome = Awaited<ReturnType<RestoreCommand["execute"]>>;
 
 const NOTHING_RESTORED: RestoreOutcome = {
   tools: [],
@@ -475,13 +475,13 @@ function restoreAllDelegatingTo(
   prompter: Prompter,
   delegate: (options: RestoreOptions) => Promise<RestoreOutcome>
 ): RestoreAllUseCase {
-  const statusUseCase = new StatusUseCase(
+  const statusUseCase = new StatusCommand(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
-    new DetectPluginDriftUseCase(deps.fs)
+    new DetectPluginDriftCommand(deps.fs)
   );
-  const restoreUseCase = new RestoreUseCase(
+  const restoreUseCase = new RestoreCommand(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,

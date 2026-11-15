@@ -41,22 +41,22 @@ import { UninstallIdeUseCase } from "../contexts/framework/application/uninstall
 import { UninstallToolsUseCase } from "../contexts/framework/application/uninstall/uninstall-tools-use-case.js";
 import { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
 import { UserSourceReferencesAdapter } from "../contexts/framework/infrastructure/user-source-references-adapter.js";
-import { GitignoreUseCase } from "../contexts/installation/application/gitignore-use-case.js";
-import { InstallIdeConfigUseCase } from "../contexts/installation/application/install/install-ide-config-use-case.js";
-import { InstallIdeToolUseCase } from "../contexts/installation/application/install/install-ide-tool-use-case.js";
-import { InstallRuntimeConfigUseCase } from "../contexts/installation/application/install/install-runtime-config-use-case.js";
-import { PostInstallPipelineUseCase } from "../contexts/installation/application/install/post-install-pipeline-use-case.js";
-import { ListInstalledRulesUseCase } from "../contexts/installation/application/list-installed-rules-use-case.js";
+import { GitignoreCommand } from "../contexts/installation/application/gitignore-use-case.js";
+import { InstallIdeConfigCommand } from "../contexts/installation/application/install/install-ide-config-use-case.js";
+import { InstallIdeToolCommand } from "../contexts/installation/application/install/install-ide-tool-use-case.js";
+import { InstallRuntimeConfigCommand } from "../contexts/installation/application/install/install-runtime-config-use-case.js";
+import { PostInstallPipelineCommand } from "../contexts/installation/application/install/post-install-pipeline-use-case.js";
+import { ListInstalledRulesCommand } from "../contexts/installation/application/list-installed-rules-use-case.js";
 import { PluginDistributionLoader } from "../contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { PluginListUseCase } from "../contexts/installation/application/plugin/plugin-list-use-case.js";
-import { PluginUpdateUseCase } from "../contexts/installation/application/plugin/plugin-update-use-case.js";
-import { RestoreUseCase } from "../contexts/installation/application/restore/restore-use-case.js";
-import { DetectPluginDriftUseCase } from "../contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { PluginListCommand } from "../contexts/installation/application/plugin/plugin-list-use-case.js";
+import { PluginUpdateCommand } from "../contexts/installation/application/plugin/plugin-update-use-case.js";
+import { RestoreCommand } from "../contexts/installation/application/restore/restore-use-case.js";
+import { DetectPluginDriftCommand } from "../contexts/installation/application/shared/detect-plugin-drift-use-case.js";
 import {
-  EnsureBuiltMarketplaceUseCase,
+  EnsureBuiltMarketplaceCommand,
   type FrameworkBuildFor,
 } from "../contexts/installation/application/shared/ensure-built-marketplace-use-case.js";
-import { StatusUseCase } from "../contexts/installation/application/status-use-case.js";
+import { StatusCommand } from "../contexts/installation/application/status-use-case.js";
 import { BundledAssetProviderAdapter } from "../contexts/installation/infrastructure/assets/asset-loader.js";
 import { HasherAdapter } from "../contexts/installation/infrastructure/hasher-adapter.js";
 import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/json-file-merger-adapter.js";
@@ -178,7 +178,7 @@ export async function createDeps(
     userManifestRepo,
     nativeSources
   );
-  const pluginListUseCase = new PluginListUseCase(manifestRepo);
+  const pluginListUseCase = new PluginListCommand(manifestRepo);
   const nativeHostRegistrationGate = new NativeHostRegistrationGate(
     nativePluginActivators,
     hostPluginRegistries,
@@ -232,7 +232,7 @@ export async function createDeps(
       { fs, assetProvider, logger: cacheBuildLogger },
       { target, mode, outDir, force: true }
     );
-  const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplaceUseCase(
+  const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplaceCommand(
     fs,
     resolveMarketplaceUseCase,
     frameworkBuildFor,
@@ -256,9 +256,9 @@ export async function createDeps(
     userManifestRepo,
     nativeSources
   );
-  const gitignoreUseCase = new GitignoreUseCase(fs);
-  const postInstallPipelineUseCase = new PostInstallPipelineUseCase(manifestRepo, gitignoreUseCase);
-  const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
+  const gitignoreUseCase = new GitignoreCommand(fs);
+  const postInstallPipelineUseCase = new PostInstallPipelineCommand(manifestRepo, gitignoreUseCase);
+  const installRuntimeConfigUseCase = new InstallRuntimeConfigCommand(
     fs,
     hasher,
     logger,
@@ -276,14 +276,14 @@ export async function createDeps(
     userManifestRepo,
     installRuntimeConfigUseCase
   );
-  const installIdeConfigUseCase = new InstallIdeConfigUseCase(
+  const installIdeConfigUseCase = new InstallIdeConfigCommand(
     fs,
     hasher,
     logger,
     assetProvider,
     postInstallPipelineUseCase
   );
-  const installIdeToolUseCase = new InstallIdeToolUseCase(
+  const installIdeToolUseCase = new InstallIdeToolCommand(
     installIdeConfigUseCase,
     manifestRepo,
     fs,
@@ -327,7 +327,7 @@ export async function createDeps(
   const syncConflictResolverUseCase = new SyncConflictResolverUseCase(fs);
   const doctorTrackedFilesUseCase = new DoctorTrackedFilesUseCase(fs);
   const doctorMergeFilesUseCase = new DoctorMergeFilesUseCase(fs, hasher);
-  const detectPluginDriftUseCase = new DetectPluginDriftUseCase(fs);
+  const detectPluginDriftUseCase = new DetectPluginDriftCommand(fs);
   const doctorPluginUseCase = new DoctorPluginUseCase(detectPluginDriftUseCase);
   const doctorReferencesUseCase = new DoctorReferencesUseCase(fs);
   const doctorLayoutUseCase = new DoctorLayoutUseCase(fs, tokenProvider);
@@ -408,8 +408,8 @@ export async function createDeps(
       logger
     )
   );
-  const statusUseCase = new StatusUseCase(fs, manifestRepo, hasher, detectPluginDriftUseCase);
-  const pluginUpdateUseCase = new PluginUpdateUseCase(
+  const statusUseCase = new StatusCommand(fs, manifestRepo, hasher, detectPluginDriftUseCase);
+  const pluginUpdateUseCase = new PluginUpdateCommand(
     fs,
     manifestRepo,
     new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
@@ -423,7 +423,7 @@ export async function createDeps(
     logger,
     nativeHostRegistrationGate
   );
-  const restoreUseCase = new RestoreUseCase(
+  const restoreUseCase = new RestoreCommand(
     fs,
     manifestRepo,
     hasher,
@@ -491,7 +491,7 @@ export async function createDeps(
     hostPluginRegistries
   );
   const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
-  const listInstalledRulesUseCase = new ListInstalledRulesUseCase(fs);
+  const listInstalledRulesUseCase = new ListInstalledRulesCommand(fs);
   const update = wireUpdate({
     logger,
     http,

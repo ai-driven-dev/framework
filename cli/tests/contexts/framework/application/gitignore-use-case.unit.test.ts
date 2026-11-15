@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GitignoreUseCase } from "../../../../src/contexts/installation/application/gitignore-use-case.js";
+import { GitignoreCommand } from "../../../../src/contexts/installation/application/gitignore-use-case.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
 const ROOT = "/project";
@@ -7,10 +7,10 @@ const GITIGNORE = "/project/.gitignore";
 
 function build(existing?: string) {
   const fs = new InMemoryFileAdapter(existing === undefined ? {} : { [GITIGNORE]: existing });
-  return { fs, useCase: new GitignoreUseCase(fs) };
+  return { fs, useCase: new GitignoreCommand(fs) };
 }
 
-describe("GitignoreUseCase", () => {
+describe("GitignoreCommand", () => {
   describe("execute", () => {
     it("creates the file from the entries, one per line, ending with a newline", async () => {
       const { fs, useCase } = build();

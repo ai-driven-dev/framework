@@ -5,7 +5,7 @@ import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { VersionReader } from "../../../shared/ports/version-reader.js";
-import { InitUseCase } from "../../installation/application/init-use-case.js";
+import { InitCommand } from "../../installation/application/init-use-case.js";
 import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { ProjectContext } from "../domain/project-context.js";
@@ -92,7 +92,7 @@ export class SetupUseCase {
   private async initManifest(flow: SetupFlow, tools: ToolCatalog): Promise<boolean> {
     const existing = await this.manifestRepo.load();
     if (existing !== null) return false;
-    await new InitUseCase(this.fs, this.manifestRepo).execute({
+    await new InitCommand(this.fs, this.manifestRepo).execute({
       projectRoot: flow.projectRoot,
       force: false,
       tools,

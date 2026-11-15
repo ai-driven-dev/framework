@@ -14,7 +14,7 @@ import type { PluginDistribution } from "../../../translate/domain/plugin-distri
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
+import type { InstallRuntimeConfigCommand } from "../install/install-runtime-config-use-case.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
 import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
@@ -38,14 +38,14 @@ export interface PluginUpdateOptions {
   rebuild?: boolean;
 }
 
-export class PluginUpdateUseCase {
+export class PluginUpdateCommand {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly distributionLoader: PluginDistributionLoader,
     private readonly hasher: Hasher,
     private readonly builtDeps?: BuiltMaterializationDeps,
-    private readonly pluginRuntime?: Pick<InstallRuntimeConfigUseCase, "ensurePluginRuntimeFiles">
+    private readonly pluginRuntime?: Pick<InstallRuntimeConfigCommand, "ensurePluginRuntimeFiles">
   ) {}
 
   async execute(options: PluginUpdateOptions): Promise<string[]> {

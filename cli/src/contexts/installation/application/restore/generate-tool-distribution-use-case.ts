@@ -5,11 +5,11 @@ import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { ContentSection, FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Platform } from "../../ports/platform.js";
-import { InstallAgentsUseCase } from "../install/content/install-agents-use-case.js";
-import { InstallCommandsUseCase } from "../install/content/install-commands-use-case.js";
-import { InstallRulesUseCase } from "../install/content/install-rules-use-case.js";
-import { InstallSkillsUseCase } from "../install/content/install-skills-use-case.js";
-import { InstallConfigUseCase } from "../install/install-config-use-case.js";
+import { InstallAgentsCommand } from "../install/content/install-agents-use-case.js";
+import { InstallCommandsCommand } from "../install/content/install-commands-use-case.js";
+import { InstallRulesCommand } from "../install/content/install-rules-use-case.js";
+import { InstallSkillsCommand } from "../install/content/install-skills-use-case.js";
+import { InstallConfigCommand } from "../install/install-config-use-case.js";
 
 interface GenerateToolDistributionOptions {
   config: ToolProfile;
@@ -18,7 +18,7 @@ interface GenerateToolDistributionOptions {
   projectRoot: string;
 }
 
-export class GenerateToolDistributionUseCase {
+export class GenerateToolDistributionCommand {
   constructor(
     private readonly fs: FileReader,
     private readonly hasher: Hasher,
@@ -40,7 +40,7 @@ export class GenerateToolDistributionUseCase {
     contentFiles: Map<string, string>,
     projectRoot: string
   ): Promise<InstallationFile[]> {
-    const configFiles = await new InstallConfigUseCase(this.fs, this.hasher).execute({
+    const configFiles = await new InstallConfigCommand(this.fs, this.hasher).execute({
       writes: config.configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles,
@@ -57,7 +57,7 @@ export class GenerateToolDistributionUseCase {
     projectRoot: string
   ): Promise<InstallationFile[]> {
     const sectionFiles = this.generateCapabilitySectionFiles(config, descriptor, contentFiles);
-    const configFiles = await new InstallConfigUseCase(this.fs, this.hasher).execute({
+    const configFiles = await new InstallConfigCommand(this.fs, this.hasher).execute({
       writes: config.configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles,
@@ -108,13 +108,13 @@ export class GenerateToolDistributionUseCase {
     const options = { toolConfig: config, section, contentFiles };
     switch (section.name) {
       case "agents":
-        return new InstallAgentsUseCase(this.hasher).execute(options);
+        return new InstallAgentsCommand(this.hasher).execute(options);
       case "commands":
-        return new InstallCommandsUseCase(this.hasher).execute(options);
+        return new InstallCommandsCommand(this.hasher).execute(options);
       case "rules":
-        return new InstallRulesUseCase(this.hasher).execute(options);
+        return new InstallRulesCommand(this.hasher).execute(options);
       case "skills":
-        return new InstallSkillsUseCase(this.hasher).execute(options);
+        return new InstallSkillsCommand(this.hasher).execute(options);
       default:
         return [];
     }

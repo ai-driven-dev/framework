@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { InstallIdeConfigUseCase } from "../../../../../src/contexts/installation/application/install/install-ide-config-use-case.js";
+import { InstallIdeConfigCommand } from "../../../../../src/contexts/installation/application/install/install-ide-config-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit-deps.js";
@@ -14,7 +14,7 @@ function buildUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   assets: AssetProvider = deps.assetProvider
 ) {
-  return new InstallIdeConfigUseCase(
+  return new InstallIdeConfigCommand(
     deps.fs,
     deps.hasher,
     deps.logger,
@@ -23,7 +23,7 @@ function buildUseCase(
   );
 }
 
-describe("InstallIdeConfigUseCase", () => {
+describe("InstallIdeConfigCommand", () => {
   it("writes settings files on fresh install", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);

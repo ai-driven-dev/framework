@@ -3,7 +3,7 @@ import type { FileWriter } from "../../../shared/ports/file-writer.js";
 
 const GITIGNORE_FILENAME = ".gitignore";
 
-export class GitignoreUseCase {
+export class GitignoreCommand {
   constructor(private readonly fs: FileReader & FileWriter) {}
 
   /** `true` when at least one of `entries` was newly appended, `false` when every one was already

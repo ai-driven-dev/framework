@@ -4,7 +4,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries-use-case.js";
-import { RestoreDriftEntriesUseCase } from "./restore-drift-entries-use-case.js";
+import { RestoreDriftEntriesCommand } from "./restore-drift-entries-use-case.js";
 
 interface DriftEntry {
   relativePath: string;
@@ -28,14 +28,14 @@ export interface RegularFilesRestoreResult {
   updatedFiles: InstallationFile[];
 }
 
-export class RestoreRegularFilesUseCase {
-  private readonly restoreDriftEntries: RestoreDriftEntriesUseCase;
+export class RestoreRegularFilesCommand {
+  private readonly restoreDriftEntries: RestoreDriftEntriesCommand;
 
   constructor(
     private readonly fs: FileReader & FileWriter,
     prompter: Prompter
   ) {
-    this.restoreDriftEntries = new RestoreDriftEntriesUseCase(prompter);
+    this.restoreDriftEntries = new RestoreDriftEntriesCommand(prompter);
   }
 
   async execute(options: RegularFilesRestoreOptions): Promise<RegularFilesRestoreResult | null> {

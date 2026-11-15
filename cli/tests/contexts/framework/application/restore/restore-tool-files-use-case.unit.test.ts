@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  RestoreToolFilesCommand,
   type RestoreToolFilesOptions,
-  RestoreToolFilesUseCase,
 } from "../../../../../src/contexts/installation/application/restore/restore-tool-files-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
@@ -87,7 +87,7 @@ function restore(
   prompter: Prompter = new OverwritePrompter(),
   logger = new CapturingLogger()
 ) {
-  return new RestoreToolFilesUseCase(
+  return new RestoreToolFilesCommand(
     installed.fs,
     installed.hasher,
     logger,
@@ -108,7 +108,7 @@ function restore(
   });
 }
 
-describe("RestoreToolFilesUseCase — what it reports", () => {
+describe("RestoreToolFilesCommand — what it reports", () => {
   it("announces the tool it is checking", async () => {
     const installed = installedVscode();
     const logger = new CapturingLogger();
@@ -166,7 +166,7 @@ describe("RestoreToolFilesUseCase — what it reports", () => {
   });
 });
 
-describe("RestoreToolFilesUseCase — what it records", () => {
+describe("RestoreToolFilesCommand — what it records", () => {
   it("keeps the version the tool was installed at, not the one the restore runs with", async () => {
     const installed = installedVscode();
     await installed.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), "[]");

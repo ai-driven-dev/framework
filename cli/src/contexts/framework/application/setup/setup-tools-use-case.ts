@@ -1,11 +1,11 @@
 import type { AiToolId, IdeToolId } from "../../../../shared/domain/tool.js";
 import type {
+  InstallIdeConfigCommand,
   InstallIdeConfigResult,
-  InstallIdeConfigUseCase,
 } from "../../../installation/application/install/install-ide-config-use-case.js";
 import type {
+  InstallRuntimeConfigCommand,
   InstallRuntimeConfigResult,
-  InstallRuntimeConfigUseCase,
 } from "../../../installation/application/install/install-runtime-config-use-case.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
@@ -29,8 +29,8 @@ export interface SetupToolsResult {
 export class SetupToolsUseCase {
   constructor(
     private readonly manifestRepo: ManifestRepository,
-    private readonly installRuntimeConfigUseCase: InstallRuntimeConfigUseCase,
-    private readonly installIdeConfigUseCase: InstallIdeConfigUseCase
+    private readonly installRuntimeConfigUseCase: InstallRuntimeConfigCommand,
+    private readonly installIdeConfigUseCase: InstallIdeConfigCommand
   ) {}
 
   async execute(options: SetupToolsOptions): Promise<SetupToolsResult> {

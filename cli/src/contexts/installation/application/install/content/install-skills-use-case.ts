@@ -7,7 +7,7 @@ import type {
 import type { ContentSection } from "../../../../translate/domain/canon.js";
 import {
   type ContentSectionDescriptor,
-  InstallContentSectionUseCase,
+  InstallContentSectionCommand,
 } from "./install-content-section-use-case.js";
 
 const skillsDescriptor: ContentSectionDescriptor<SkillsSectionAnswers> = {
@@ -21,11 +21,11 @@ interface InstallSkillsOptions {
   contentFiles: Map<string, string>;
 }
 
-export class InstallSkillsUseCase {
-  private readonly inner: InstallContentSectionUseCase<SkillsSectionAnswers>;
+export class InstallSkillsCommand {
+  private readonly inner: InstallContentSectionCommand<SkillsSectionAnswers>;
 
   constructor(hasher: Hasher) {
-    this.inner = new InstallContentSectionUseCase(hasher, skillsDescriptor);
+    this.inner = new InstallContentSectionCommand(hasher, skillsDescriptor);
   }
 
   execute(options: InstallSkillsOptions): InstallationFile[] {

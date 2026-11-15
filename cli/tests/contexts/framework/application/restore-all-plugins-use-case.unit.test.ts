@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PluginFetcher } from "../../../../src/contexts/distribution/ports/plugin-fetcher.js";
-import { RestoreAllPluginsUseCase } from "../../../../src/contexts/installation/application/restore/restore-all-plugins-use-case.js";
+import { RestoreAllPluginsCommand } from "../../../../src/contexts/installation/application/restore/restore-all-plugins-use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../../../src/contexts/installation/ports/plugin-distribution-reader.js";
@@ -58,12 +58,12 @@ function nativePlugin(
   });
 }
 
-describe("RestoreAllPluginsUseCase — native-activation tools", () => {
+describe("RestoreAllPluginsCommand — native-activation tools", () => {
   it("names claude in nativeOnlyToolIds when its only installed plugin tracks zero files", async () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     manifest.addPlugin(TOOL.claude, nativePlugin({}));
-    const useCase = new RestoreAllPluginsUseCase(
+    const useCase = new RestoreAllPluginsCommand(
       noopFs,
       noopHasher,
       stubFetcher,
@@ -88,7 +88,7 @@ describe("RestoreAllPluginsUseCase — native-activation tools", () => {
       TOOL.cursor,
       nativePlugin({ "a/one.md": "00000000000000000000000000000000" }, "user")
     );
-    const useCase = new RestoreAllPluginsUseCase(
+    const useCase = new RestoreAllPluginsCommand(
       noopFs,
       noopHasher,
       stubFetcher,
@@ -108,7 +108,7 @@ describe("RestoreAllPluginsUseCase — native-activation tools", () => {
   it("does not name a tool that has no plugin installed at all", async () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
-    const useCase = new RestoreAllPluginsUseCase(
+    const useCase = new RestoreAllPluginsCommand(
       noopFs,
       noopHasher,
       stubFetcher,
@@ -137,7 +137,7 @@ function trackedPlugin(name: string): InstalledPlugin {
   });
 }
 
-describe("RestoreAllPluginsUseCase — restricting to one plugin", () => {
+describe("RestoreAllPluginsCommand — restricting to one plugin", () => {
   function claudeWithMixedPlugins(): Manifest {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
@@ -146,8 +146,8 @@ describe("RestoreAllPluginsUseCase — restricting to one plugin", () => {
     return manifest;
   }
 
-  function useCase(): RestoreAllPluginsUseCase {
-    return new RestoreAllPluginsUseCase(noopFs, noopHasher, stubFetcher, emptyDistributionReader);
+  function useCase(): RestoreAllPluginsCommand {
+    return new RestoreAllPluginsCommand(noopFs, noopHasher, stubFetcher, emptyDistributionReader);
   }
 
   it("names the tool when the one plugin asked for tracks zero files, whatever its others track", async () => {

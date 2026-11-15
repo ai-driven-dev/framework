@@ -32,7 +32,7 @@ export interface InstallContentSectionOptions {
   contentFiles: Map<string, string>;
 }
 
-export class InstallContentSectionUseCase<Cap extends ContentSectionCapability> {
+export class InstallContentSectionCommand<Cap extends ContentSectionCapability> {
   constructor(
     private readonly hasher: Hasher,
     private readonly descriptor: ContentSectionDescriptor<Cap>

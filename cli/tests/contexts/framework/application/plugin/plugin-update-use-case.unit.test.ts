@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { PluginFetchOptions } from "../../../../../src/contexts/distribution/ports/plugin-fetcher.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { PluginUpdateUseCase } from "../../../../../src/contexts/installation/application/plugin/plugin-update-use-case.js";
+import { PluginUpdateCommand } from "../../../../../src/contexts/installation/application/plugin/plugin-update-use-case.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/apply-plugin-files-use-case.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
@@ -53,7 +53,7 @@ async function setup(
     fakeEnsureBuiltMarketplace(),
     deps.userManifestRepo
   );
-  const updateUseCase = new PluginUpdateUseCase(
+  const updateUseCase = new PluginUpdateCommand(
     deps.fs,
     deps.manifestRepo,
     new PluginDistributionLoader(options.fetcher ?? deps.pluginFetcher, reader),
@@ -89,7 +89,7 @@ function installed(deps: Deps, name: string) {
     .find((p) => p.name === name);
 }
 
-describe("PluginUpdateUseCase", () => {
+describe("PluginUpdateCommand", () => {
   it("skips machine-owned Cursor plugins in an unnamed project sweep", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);

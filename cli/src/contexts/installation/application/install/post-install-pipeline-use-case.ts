@@ -2,7 +2,7 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { aiddGitignoreEntries } from "../../domain/manifest-gitignore-entries.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { GitignoreUseCase } from "../gitignore-use-case.js";
+import type { GitignoreCommand } from "../gitignore-use-case.js";
 
 interface PostInstallPipelineOptions {
   projectRoot: string;
@@ -11,10 +11,10 @@ interface PostInstallPipelineOptions {
   tools: ToolCatalog;
 }
 
-export class PostInstallPipelineUseCase {
+export class PostInstallPipelineCommand {
   constructor(
     private readonly manifestRepo: ManifestRepository,
-    private readonly gitignoreUseCase: GitignoreUseCase
+    private readonly gitignoreUseCase: GitignoreCommand
   ) {}
 
   async execute(options: PostInstallPipelineOptions): Promise<void> {

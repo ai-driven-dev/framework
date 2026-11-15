@@ -9,7 +9,7 @@ import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { DetectPluginDriftUseCase } from "./shared/detect-plugin-drift-use-case.js";
+import type { DetectPluginDriftCommand } from "./shared/detect-plugin-drift-use-case.js";
 
 type FileStatusKind = "modified" | "deleted" | "added";
 
@@ -53,12 +53,12 @@ export interface StatusQuery {
   execute(options: StatusOptions): Promise<StatusReport>;
 }
 
-export class StatusUseCase implements StatusQuery {
+export class StatusCommand implements StatusQuery {
   constructor(
     private readonly fs: FileReader,
     private readonly manifestRepo: ManifestRepository,
     private readonly hasher: Hasher,
-    private readonly detectPluginDrift: DetectPluginDriftUseCase
+    private readonly detectPluginDrift: DetectPluginDriftCommand
   ) {}
 
   async execute(options: StatusOptions): Promise<StatusReport> {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InstallRulesUseCase } from "../../../../../../src/contexts/installation/application/install/content/install-rules-use-case.js";
+import { InstallRulesCommand } from "../../../../../../src/contexts/installation/application/install/content/install-rules-use-case.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import type { ContentSection } from "../../../../../../src/contexts/translate/domain/canon.js";
@@ -22,11 +22,11 @@ const rulesSectionWithEntry: ContentSection = {
 
 function buildUseCase() {
   const hasher = new DeterministicHasher();
-  const useCase = new InstallRulesUseCase(hasher);
+  const useCase = new InstallRulesCommand(hasher);
   return { hasher, useCase };
 }
 
-describe("InstallRulesUseCase", () => {
+describe("InstallRulesCommand", () => {
   describe("execute", () => {
     it("produces an InstallationFile with correct relativePath for a claude rule", () => {
       const { hasher, useCase } = buildUseCase();

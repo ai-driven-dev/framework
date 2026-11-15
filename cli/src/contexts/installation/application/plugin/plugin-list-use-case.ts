@@ -13,7 +13,7 @@ export interface PluginListOptions {
 
 export type PluginListResult = Map<AiToolId, readonly InstalledPlugin[]>;
 
-export class PluginListUseCase {
+export class PluginListCommand {
   constructor(private readonly manifestRepo: ManifestRepository) {}
 
   async execute(options: PluginListOptions): Promise<PluginListResult> {

@@ -11,7 +11,7 @@ import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import { GitignoreUseCase } from "./gitignore-use-case.js";
+import { GitignoreCommand } from "./gitignore-use-case.js";
 
 /** The files of a tool's own signal directory the framework put there: markdown files whose
  * frontmatter names a framework command. Empty when the tool declares no signal directory. */
@@ -43,7 +43,7 @@ interface InitResult {
   manifest: Manifest;
 }
 
-export class InitUseCase {
+export class InitCommand {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository
@@ -98,7 +98,7 @@ export class InitUseCase {
   ): Promise<void> {
     await this.manifestRepo.save(manifest);
     if (!force) {
-      await new GitignoreUseCase(this.fs).execute(projectRoot, [`${AIDD_DIR}/cache/`]);
+      await new GitignoreCommand(this.fs).execute(projectRoot, [`${AIDD_DIR}/cache/`]);
     }
   }
 }

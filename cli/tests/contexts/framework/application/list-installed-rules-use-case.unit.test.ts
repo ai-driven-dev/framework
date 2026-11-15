@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ListInstalledRulesUseCase } from "../../../../src/contexts/installation/application/list-installed-rules-use-case.js";
+import { ListInstalledRulesCommand } from "../../../../src/contexts/installation/application/list-installed-rules-use-case.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
@@ -26,9 +26,9 @@ function readerOf(files: Readonly<Record<string, string>>): FileReader {
 
 const at = (relative: string) => join(ROOT, relative).replaceAll("\\", "/");
 
-describe("ListInstalledRulesUseCase — every tool's installed rules, in one answer", () => {
+describe("ListInstalledRulesCommand — every tool's installed rules, in one answer", () => {
   it("finds a rule under each tool's own installed directory", async () => {
-    const useCase = new ListInstalledRulesUseCase(
+    const useCase = new ListInstalledRulesCommand(
       readerOf({
         [at(".claude/rules/01-standards/1-naming.md")]: "---\ndescription: Names\n---\n",
         [at(".cursor/rules/1-naming.mdc")]: "---\n---\n",
@@ -54,7 +54,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
   // `content-translator.ts` installs a plugin's `rules/` into every tool whose capability
   // accepts them, Codex included, so a Codex project holding rules must never be told none.
   it("answers for Codex, which the script it replaces skipped outright", async () => {
-    const useCase = new ListInstalledRulesUseCase(
+    const useCase = new ListInstalledRulesCommand(
       readerOf({ [at(".codex/rules/1-naming.md")]: "---\ndescription: Names\n---\n" })
     );
 
@@ -71,7 +71,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
   });
 
   it("reports a path relative to the project, never the machine it ran on", async () => {
-    const useCase = new ListInstalledRulesUseCase(
+    const useCase = new ListInstalledRulesCommand(
       readerOf({ [at(".claude/rules/deep/nested/1-naming.md")]: "---\n---\n" })
     );
 
@@ -83,7 +83,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
   // The extension is the only thing separating a rule from a stray file beside it, and it
   // comes from the installer, never from a list written here.
   it("passes over a file whose extension is not the one that tool installs", async () => {
-    const useCase = new ListInstalledRulesUseCase(
+    const useCase = new ListInstalledRulesCommand(
       readerOf({
         [at(".cursor/rules/1-naming.mdc")]: "---\n---\n",
         [at(".cursor/rules/README.md")]: "---\n---\n",
@@ -96,7 +96,7 @@ describe("ListInstalledRulesUseCase — every tool's installed rules, in one ans
   });
 
   it("answers an empty list, never an error, for a project holding no rule at all", async () => {
-    const useCase = new ListInstalledRulesUseCase(readerOf({}));
+    const useCase = new ListInstalledRulesCommand(readerOf({}));
 
     await expect(useCase.execute({ projectRoot: ROOT, tools: catalogOf() })).resolves.toEqual({
       rules: [],

@@ -74,14 +74,16 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
 
 /**
  * Every constructor parameter counts, required or optional and whatever its type is named,
- * plus each `new XUseCase(...)` a method reaches for, deduped by class name within each.
+ * plus each `new XCommand(...)` a method reaches for, deduped by class name within each.
  */
 function constructorDependencyCount(source: string): number {
   const signature = /constructor\((.*?)\)\s*\{/s.exec(source);
   const paramCount = signature
     ? [...signature[1].matchAll(/private readonly \w+\??:\s*[\w<>[\]| ]+/g)].length
     : 0;
-  const inlineNames = new Set([...source.matchAll(/new (\w+UseCase)\(/g)].map((m) => m[1]));
+  const inlineNames = new Set(
+    [...source.matchAll(/new (\w+(?:UseCase|Command))\(/g)].map((m) => m[1])
+  );
   return paramCount + inlineNames.size;
 }
 
@@ -154,7 +156,7 @@ describe("the guard itself", () => {
     const atLimit = `constructor(
       ${Array.from({ length: MAX_CONSTRUCTOR_DEPENDENCIES }, (_, i) => `private readonly a${i}: FooUseCase,`).join("\n")}
     ) {}
-    method(): void { new BarUseCase(this.a0).execute(); }`;
+    method(): void { new BarCommand(this.a0).execute(); }`;
 
     expect(overLimit(atLimit)).toBe(true);
   });

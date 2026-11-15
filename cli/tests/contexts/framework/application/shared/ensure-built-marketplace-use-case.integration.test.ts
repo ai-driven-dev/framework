@@ -7,7 +7,7 @@ import type {
 } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import {
-  EnsureBuiltMarketplaceUseCase,
+  EnsureBuiltMarketplaceCommand,
   type FrameworkBuildFor,
 } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace-use-case.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
@@ -112,7 +112,7 @@ describe("builtMarketplaceDir", () => {
   });
 });
 
-describe("EnsureBuiltMarketplaceUseCase", () => {
+describe("EnsureBuiltMarketplaceCommand", () => {
   let fs: InMemoryFileAdapter;
   let builds: number;
   let buildFor: FrameworkBuildFor;
@@ -131,7 +131,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   });
 
   it("rebuilds and writes a sentinel when none exists", async () => {
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
       buildFor,
@@ -154,7 +154,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
     // since the code's own builtDir is resolved with a drive letter.
     const builtDir = resolve(builtMarketplaceDir(PROJECT, "aidd-framework", "codex"));
     fs.setFile(join(builtDir, ".build-version"), "5.0.0:1.0.0");
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
       buildFor,
@@ -176,7 +176,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   it("rebuilds a local source even when the sentinel matches", async () => {
     const builtDir = builtMarketplaceDir(PROJECT, "aidd-framework", "codex");
     fs.setFile(join(builtDir, ".build-version"), "5.0.0:1.0.0");
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
       buildFor,
@@ -198,7 +198,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   it("rebuilds a published source when a refresh was asked for", async () => {
     const builtDir = builtMarketplaceDir(PROJECT, "aidd-framework", "codex");
     fs.setFile(join(builtDir, ".build-version"), "5.0.0:1.0.0");
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
       buildFor,
@@ -218,7 +218,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   it("rebuilds when the CLI version changed even if catalog version is the same", async () => {
     const builtDir = builtMarketplaceDir(PROJECT, "aidd-framework", "codex");
     fs.setFile(join(builtDir, ".build-version"), "4.0.0:1.0.0");
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
       buildFor,
@@ -238,7 +238,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   it("always rebuilds when catalog version is undefined", async () => {
     const builtDir = builtMarketplaceDir(PROJECT, "aidd-framework", "codex");
     fs.setFile(join(builtDir, ".build-version"), "5.0.0:unversioned");
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", undefined),
       buildFor,
@@ -257,7 +257,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
 
   it("builds via a temp dir and copies into the cache when the cache nests under the source (dogfood)", async () => {
     // Source == project root, so builtDir (.aidd/cache/built/...) nests under source → guardPaths would throw.
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve(PROJECT, "1.0.0"),
       buildFor,
@@ -276,7 +276,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   });
 
   it("memoizes within a run: a second call for the same target/version does not rebuild", async () => {
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
       buildFor,
@@ -295,7 +295,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   });
 
   it("memoizes per target: a second target of the same marketplace builds again", async () => {
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
       buildFor,
@@ -319,7 +319,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   });
 
   it("reports the catalog version it built", async () => {
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
       buildFor,
@@ -336,7 +336,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   });
 
   it("reports a catalog without a version as unversioned", async () => {
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", undefined),
       buildFor,
@@ -360,7 +360,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
         return { marketplace: options.marketplace, localPath: "/src/framework", catalog: null };
       },
     };
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       recordingResolve,
       buildFor,
@@ -378,7 +378,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   });
 
   it("refuses a target and mode pair no build exists for", async () => {
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
       () => undefined,
@@ -396,7 +396,7 @@ describe("EnsureBuiltMarketplaceUseCase", () => {
   });
 });
 
-describe("EnsureBuiltMarketplaceUseCase — when a published source's sentinel can be believed", () => {
+describe("EnsureBuiltMarketplaceCommand — when a published source's sentinel can be believed", () => {
   let fs: InMemoryFileAdapter;
   let builds: number;
   let buildFor: FrameworkBuildFor;
@@ -416,7 +416,7 @@ describe("EnsureBuiltMarketplaceUseCase — when a published source's sentinel c
   });
 
   async function ensure(catalogVersion: string | undefined): Promise<boolean> {
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       fs,
       fakeResolve("/src/framework", catalogVersion),
       buildFor,
@@ -484,7 +484,7 @@ describe("force behavior at the cache-rebuild path", () => {
       );
     };
 
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       memFs,
       fakeResolve(FIXTURE_DIR, "1.0.0"),
       realBuildFor,
@@ -521,7 +521,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
     };
 
     // Direct path: source lives outside the cache tree → build() writes straight to builtDir.
-    const direct = new EnsureBuiltMarketplaceUseCase(
+    const direct = new EnsureBuiltMarketplaceCommand(
       memFs,
       fakeResolve("/src/framework", "1.0.0"),
       capturingBuildFor,
@@ -537,7 +537,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
 
     // Dogfood path: source is the project root, so builtDir nests under it and buildViaTemp()
     // routes the same call through a temp dir instead.
-    const dogfood = new EnsureBuiltMarketplaceUseCase(
+    const dogfood = new EnsureBuiltMarketplaceCommand(
       memFs,
       fakeResolve(PROJECT, "1.0.0"),
       capturingBuildFor,
@@ -579,7 +579,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
         },
       }) satisfies FrameworkBuild;
 
-    const uc = new EnsureBuiltMarketplaceUseCase(
+    const uc = new EnsureBuiltMarketplaceCommand(
       memFs,
       fakeResolve("/src/framework", "1.0.0"),
       capturing,
@@ -613,7 +613,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
       }) satisfies FrameworkBuild;
 
     const buildAt = async (version: string) => {
-      const uc = new EnsureBuiltMarketplaceUseCase(
+      const uc = new EnsureBuiltMarketplaceCommand(
         memFs,
         fakeResolve("/src/framework", "1.0.0"),
         capturing,

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { InitUseCase } from "../../../../src/contexts/installation/application/init-use-case.js";
+import { InitCommand } from "../../../../src/contexts/installation/application/init-use-case.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
@@ -9,7 +9,7 @@ const PROJECT_ROOT = "/test-project";
 describe("init", () => {
   it("creates a v5 manifest with no tools", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    const result = await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+    const result = await new InitCommand(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
       tools: catalogOf(),
     });
@@ -26,7 +26,7 @@ describe("init", () => {
 
   it("does not create an aidd_docs directory", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+    await new InitCommand(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
       tools: catalogOf(),
     });
@@ -40,7 +40,7 @@ describe("init", () => {
     const docFile = join(PROJECT_ROOT, ".claude", "CLAUDE.md");
     await deps.fs.writeFile(docFile, "custom content");
 
-    await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+    await new InitCommand(deps.fs, deps.manifestRepo).execute({
       projectRoot: PROJECT_ROOT,
       tools: catalogOf(),
     });
@@ -52,7 +52,7 @@ describe("init", () => {
     it("passes when directory is truly empty", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitCommand(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
@@ -67,7 +67,7 @@ describe("init", () => {
       );
 
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitCommand(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
@@ -82,7 +82,7 @@ describe("init", () => {
       );
 
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitCommand(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
@@ -91,12 +91,12 @@ describe("init", () => {
 
     it("aborts when already initialized without --force", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+      await new InitCommand(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
         tools: catalogOf(),
       });
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitCommand(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
@@ -107,18 +107,18 @@ describe("init", () => {
     // a user to run `aidd init --force` points them at something that does not exist.
     it("names a real recovery path, not the nonexistent `aidd init --force`", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+      await new InitCommand(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
         tools: catalogOf(),
       });
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitCommand(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
       ).rejects.toThrow(/aidd clean --force/);
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitCommand(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
@@ -128,7 +128,7 @@ describe("init", () => {
     it("--force: fails with guidance when no manifest exists", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitCommand(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
           force: true,
           tools: catalogOf(),
@@ -138,12 +138,12 @@ describe("init", () => {
 
     it("--force: passes when manifest exists", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+      await new InitCommand(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
         tools: catalogOf(),
       });
       await expect(
-        new InitUseCase(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitCommand(deps.fs, deps.manifestRepo).checkPreconditions({
           projectRoot: PROJECT_ROOT,
           force: true,
           tools: catalogOf(),
@@ -158,7 +158,7 @@ describe("init", () => {
       await initProject(deps, PROJECT_ROOT);
       await deps.fs.writeFile(join(PROJECT_ROOT, ".gitignore"), "# User-owned\n");
       const before = (await deps.manifestRepo.load())?.toJSON();
-      const result = await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+      const result = await new InitCommand(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
         force: true,
         tools: catalogOf(),
@@ -175,7 +175,7 @@ describe("init", () => {
       const manifestBefore = await deps.manifestRepo.load();
       const toolsBefore = manifestBefore?.getInstalledToolIds() ?? [];
 
-      await new InitUseCase(deps.fs, deps.manifestRepo).execute({
+      await new InitCommand(deps.fs, deps.manifestRepo).execute({
         projectRoot: PROJECT_ROOT,
         force: true,
         tools: catalogOf(),

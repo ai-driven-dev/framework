@@ -40,7 +40,7 @@ disk is exactly the job that needs all three.
   cache/network fallback, typed-throw translation) — see the use-case and orchestration rules in
   `.claude/rules/00-architecture/`.
 - A use case that installs framework files saves the manifest and updates `.gitignore`
-  through `PostInstallPipelineUseCase`. A use case that only changes the manifest (plugin
+  through `PostInstallPipelineCommand`. A use case that only changes the manifest (plugin
   add/remove, marketplace sync, restore) saves it directly. See `references/post-install-pipeline.md`.
 - Before writing any framework file: check `fs.fileExists(path) && !manifest.isFileTracked(path)`.
   If both are true, skip the write, warn, and never add it to the manifest — never overwrite a

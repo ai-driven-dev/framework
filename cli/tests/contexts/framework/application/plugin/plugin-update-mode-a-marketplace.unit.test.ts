@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { PluginUpdateUseCase } from "../../../../../src/contexts/installation/application/plugin/plugin-update-use-case.js";
+import { PluginUpdateCommand } from "../../../../../src/contexts/installation/application/plugin/plugin-update-use-case.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
@@ -45,8 +45,8 @@ async function makeGithubRegistry(): Promise<InMemoryMarketplaceRegistry> {
   return registry;
 }
 
-function makeUpdateUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): PluginUpdateUseCase {
-  return new PluginUpdateUseCase(
+function makeUpdateUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): PluginUpdateCommand {
+  return new PluginUpdateCommand(
     deps.fs,
     deps.manifestRepo,
     new PluginDistributionLoader(
@@ -102,7 +102,7 @@ async function installStaleGithubPlugin(
   await deps.manifestRepo.save(manifest);
 }
 
-describe("PluginUpdateUseCase — Mode A marketplace tools (claude/codex/copilot)", () => {
+describe("PluginUpdateCommand — Mode A marketplace tools (claude/codex/copilot)", () => {
   it("updates a github-sourced marketplace plugin on claude without materializing any files", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -151,7 +151,7 @@ describe("PluginUpdateUseCase — Mode A marketplace tools (claude/codex/copilot
   });
 });
 
-describe("PluginUpdateUseCase — flat-mode tools are unaffected (regression guard)", () => {
+describe("PluginUpdateCommand — flat-mode tools are unaffected (regression guard)", () => {
   it("still re-materializes opencode's flat files from the built tree on update", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);

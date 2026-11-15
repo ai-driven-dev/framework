@@ -14,7 +14,7 @@ import type {
 } from "../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
-import { GitignoreUseCase } from "../../../../src/contexts/installation/application/gitignore-use-case.js";
+import { GitignoreCommand } from "../../../../src/contexts/installation/application/gitignore-use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { AIDD_DIR } from "../../../../src/shared/domain/paths.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
@@ -216,7 +216,7 @@ function buildUseCase(deps: {
     deps.fs,
     manifestRepo,
     deps.logger,
-    new GitignoreUseCase(deps.fs),
+    new GitignoreCommand(deps.fs),
     new Map([[deps.binary, deps.activator]]),
     deps.aiddMarketplaceRegistry,
     undefined,

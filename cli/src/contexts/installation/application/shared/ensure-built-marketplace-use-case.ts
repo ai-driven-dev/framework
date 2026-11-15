@@ -47,7 +47,7 @@ export interface EnsureBuiltMarketplace {
   execute(options: EnsureBuiltMarketplaceOptions): Promise<EnsureBuiltMarketplaceResult>;
 }
 
-export class EnsureBuiltMarketplaceUseCase implements EnsureBuiltMarketplace {
+export class EnsureBuiltMarketplaceCommand implements EnsureBuiltMarketplace {
   private readonly memo = new Map<string, EnsureBuiltMarketplaceResult>();
 
   constructor(

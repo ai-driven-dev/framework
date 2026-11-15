@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InstallSkillsUseCase } from "../../../../../../src/contexts/installation/application/install/content/install-skills-use-case.js";
+import { InstallSkillsCommand } from "../../../../../../src/contexts/installation/application/install/content/install-skills-use-case.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import type { ContentSection } from "../../../../../../src/contexts/translate/domain/canon.js";
@@ -22,11 +22,11 @@ const skillsSectionWithEntry: ContentSection = {
 
 function buildUseCase() {
   const hasher = new DeterministicHasher();
-  const useCase = new InstallSkillsUseCase(hasher);
+  const useCase = new InstallSkillsCommand(hasher);
   return { hasher, useCase };
 }
 
-describe("InstallSkillsUseCase", () => {
+describe("InstallSkillsCommand", () => {
   describe("execute — flat section (no entryFile)", () => {
     it("produces an InstallationFile with correct relativePath for a claude skill", () => {
       const { hasher, useCase } = buildUseCase();

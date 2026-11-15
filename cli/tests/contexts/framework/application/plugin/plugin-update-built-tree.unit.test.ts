@@ -173,7 +173,7 @@ function attachFutureSupportedNativeClaim(deps: Deps) {
   return { machine, activator, nativeHost };
 }
 
-describe("PluginUpdateUseCase — built-tree materialization", () => {
+describe("PluginUpdateCommand — built-tree materialization", () => {
   it("refuses an absent machine manifest before touching user files", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const registry = await makeRegistry();

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RestoreUseCase } from "../../../../../src/contexts/installation/application/restore/restore-use-case.js";
+import { RestoreCommand } from "../../../../../src/contexts/installation/application/restore/restore-use-case.js";
 import {
   buildUnitDeps,
   FIXTURE_DIR,
@@ -25,7 +25,7 @@ describe("restore reads every config artifact a profile consumes", () => {
     expect(deps.fs.has(target)).toBe(true);
     await deps.fs.deleteFile(target);
 
-    await new RestoreUseCase(
+    await new RestoreCommand(
       deps.fs,
       deps.manifestRepo,
       deps.hasher,

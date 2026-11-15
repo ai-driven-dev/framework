@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DetectPluginDriftUseCase } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { DetectPluginDriftCommand } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
@@ -41,12 +41,12 @@ function makeFs(missing: Set<string>): FileReader {
   };
 }
 
-describe("DetectPluginDriftUseCase — user-scope tool never installed on this machine", () => {
+describe("DetectPluginDriftCommand — user-scope tool never installed on this machine", () => {
   it("collapses a plugin whose every tracked file is missing into one not-installed entry", async () => {
     const files = { "a/one.md": HASH_A, "a/two.md": HASH_B };
     const manifest = cursorManifestWithFiles(files);
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDriftUseCase(fs);
+    const useCase = new DetectPluginDriftCommand(fs);
 
     const drifts = await useCase.execute({
       tools: catalogOf(),
@@ -64,7 +64,7 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
     const files = { "a/one.md": HASH_A, "a/two.md": HASH_B };
     const manifest = cursorManifestWithFiles(files);
     const fs = makeFs(new Set(["one.md"]));
-    const useCase = new DetectPluginDriftUseCase(fs);
+    const useCase = new DetectPluginDriftCommand(fs);
 
     const drifts = await useCase.execute({
       tools: catalogOf(),
@@ -94,7 +94,7 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
       })
     );
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDriftUseCase(fs);
+    const useCase = new DetectPluginDriftCommand(fs);
 
     const drifts = await useCase.execute({
       tools: catalogOf(),
@@ -109,7 +109,7 @@ describe("DetectPluginDriftUseCase — user-scope tool never installed on this m
   });
 });
 
-describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over the profile", () => {
+describe("DetectPluginDriftCommand — the manifest's recorded scope wins over the profile", () => {
   it("checks a cursor plugin under projectRoot, not ~/.cursor/plugins/local, when scope: project disagrees with cursor's profile", async () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "1.0.0", []);
@@ -138,7 +138,7 @@ describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over t
       listDirectory: async () => [],
       listFilesRecursive: async () => [],
     };
-    const useCase = new DetectPluginDriftUseCase(fs);
+    const useCase = new DetectPluginDriftCommand(fs);
 
     const drifts = await useCase.execute({
       tools: catalogOf(),
@@ -169,7 +169,7 @@ describe("DetectPluginDriftUseCase — the manifest's recorded scope wins over t
       })
     );
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDriftUseCase(fs);
+    const useCase = new DetectPluginDriftCommand(fs);
 
     const drifts = await useCase.execute({
       tools: catalogOf(),

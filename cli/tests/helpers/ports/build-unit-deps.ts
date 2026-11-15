@@ -11,12 +11,12 @@ import { DoctorUseCase } from "../../../src/contexts/framework/application/docto
 import { MarketplaceSyncSettingsUseCase } from "../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
 import { UpdateOneToolUseCase } from "../../../src/contexts/framework/application/global/update-one-tool-use-case.js";
-import { GitignoreUseCase } from "../../../src/contexts/installation/application/gitignore-use-case.js";
-import { InitUseCase } from "../../../src/contexts/installation/application/init-use-case.js";
-import { InstallIdeConfigUseCase } from "../../../src/contexts/installation/application/install/install-ide-config-use-case.js";
-import { InstallRuntimeConfigUseCase } from "../../../src/contexts/installation/application/install/install-runtime-config-use-case.js";
-import { PostInstallPipelineUseCase } from "../../../src/contexts/installation/application/install/post-install-pipeline-use-case.js";
-import { DetectPluginDriftUseCase } from "../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { GitignoreCommand } from "../../../src/contexts/installation/application/gitignore-use-case.js";
+import { InitCommand } from "../../../src/contexts/installation/application/init-use-case.js";
+import { InstallIdeConfigCommand } from "../../../src/contexts/installation/application/install/install-ide-config-use-case.js";
+import { InstallRuntimeConfigCommand } from "../../../src/contexts/installation/application/install/install-runtime-config-use-case.js";
+import { PostInstallPipelineCommand } from "../../../src/contexts/installation/application/install/post-install-pipeline-use-case.js";
+import { DetectPluginDriftCommand } from "../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { BundledAssetProviderAdapter } from "../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
@@ -54,16 +54,16 @@ export async function buildUnitDeps(_projectRoot: string) {
   );
   const _pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const marketplaceRegistry = new InMemoryMarketplaceRegistry();
-  const gitignoreUseCase = new GitignoreUseCase(fs);
-  const postInstallPipelineUseCase = new PostInstallPipelineUseCase(manifestRepo, gitignoreUseCase);
-  const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
+  const gitignoreUseCase = new GitignoreCommand(fs);
+  const postInstallPipelineUseCase = new PostInstallPipelineCommand(manifestRepo, gitignoreUseCase);
+  const installRuntimeConfigUseCase = new InstallRuntimeConfigCommand(
     fs,
     hasher,
     logger,
     assetProvider,
     postInstallPipelineUseCase
   );
-  const installIdeConfigUseCase = new InstallIdeConfigUseCase(
+  const installIdeConfigUseCase = new InstallIdeConfigCommand(
     fs,
     hasher,
     logger,
@@ -112,7 +112,7 @@ export async function initProject(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   projectRoot: string
 ): Promise<void> {
-  const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
+  const initUseCase = new InitCommand(deps.fs, deps.manifestRepo);
   await initUseCase.execute({ projectRoot, tools: catalogOf() });
 }
 
@@ -177,7 +177,7 @@ export function buildDoctorUseCase(
     deps.manifestRepo,
     new DoctorTrackedFilesUseCase(deps.fs),
     new DoctorMergeFilesUseCase(deps.fs, deps.hasher),
-    new DoctorPluginUseCase(new DetectPluginDriftUseCase(deps.fs)),
+    new DoctorPluginUseCase(new DetectPluginDriftCommand(deps.fs)),
     new DoctorReferencesUseCase(deps.fs),
     new DoctorLayoutUseCase(deps.fs, authReader),
     new DoctorRegistrationUseCase(

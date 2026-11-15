@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { RestoreUseCase } from "../../../../src/contexts/installation/application/restore/restore-use-case.js";
+import { RestoreCommand } from "../../../../src/contexts/installation/application/restore/restore-use-case.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { InstallationFile } from "../../../../src/shared/domain/file.js";
@@ -74,7 +74,7 @@ function makeRestoreUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   prompter = new OverwritePrompter()
 ) {
-  return new RestoreUseCase(
+  return new RestoreCommand(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
@@ -508,8 +508,8 @@ describe("restore", () => {
   });
 });
 
-function withoutPluginSources(deps: Awaited<ReturnType<typeof buildUnitDeps>>): RestoreUseCase {
-  return new RestoreUseCase(
+function withoutPluginSources(deps: Awaited<ReturnType<typeof buildUnitDeps>>): RestoreCommand {
+  return new RestoreCommand(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
@@ -519,8 +519,8 @@ function withoutPluginSources(deps: Awaited<ReturnType<typeof buildUnitDeps>>): 
   );
 }
 
-function withFetcherOnly(deps: Awaited<ReturnType<typeof buildUnitDeps>>): RestoreUseCase {
-  return new RestoreUseCase(
+function withFetcherOnly(deps: Awaited<ReturnType<typeof buildUnitDeps>>): RestoreCommand {
+  return new RestoreCommand(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,

@@ -11,7 +11,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
 import {
-  ApplyPluginFilesUseCase,
+  ApplyPluginFilesCommand,
   type BuiltMaterializationDeps,
 } from "../shared/apply-plugin-files-use-case.js";
 
@@ -37,7 +37,7 @@ export interface RestoreAllPluginsResult {
   nativeOnlyToolIds: AiToolId[];
 }
 
-export class RestoreAllPluginsUseCase {
+export class RestoreAllPluginsCommand {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly hasher: Hasher,
@@ -115,7 +115,7 @@ export class RestoreAllPluginsUseCase {
     const pluginNames: string[] = [];
     const targets = this.targetPlugins(toolId, manifest, pluginName);
     for (const plugin of targets) {
-      const filesWritten = await new ApplyPluginFilesUseCase(
+      const filesWritten = await new ApplyPluginFilesCommand(
         this.fs,
         this.hasher,
         this.pluginFetcher,

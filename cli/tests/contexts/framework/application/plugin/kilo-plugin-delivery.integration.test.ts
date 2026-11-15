@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { SetupToolsUseCase } from "../../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { PluginUpdateUseCase } from "../../../../../src/contexts/installation/application/plugin/plugin-update-use-case.js";
+import { PluginUpdateCommand } from "../../../../../src/contexts/installation/application/plugin/plugin-update-use-case.js";
 import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -63,7 +63,7 @@ async function existingProject(configPath: string) {
       projectRoot: ROOT,
       interactive: false,
     });
-  const update = new PluginUpdateUseCase(
+  const update = new PluginUpdateCommand(
     deps.fs,
     deps.manifestRepo,
     distribution,

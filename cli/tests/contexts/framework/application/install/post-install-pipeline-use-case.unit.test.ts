@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { GitignoreUseCase } from "../../../../../src/contexts/installation/application/gitignore-use-case.js";
-import { PostInstallPipelineUseCase } from "../../../../../src/contexts/installation/application/install/post-install-pipeline-use-case.js";
+import { GitignoreCommand } from "../../../../../src/contexts/installation/application/gitignore-use-case.js";
+import { PostInstallPipelineCommand } from "../../../../../src/contexts/installation/application/install/post-install-pipeline-use-case.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
@@ -9,7 +9,7 @@ const PROJECT_ROOT = "/test-project";
 
 /** Records every `execute` call so a test can assert the pipeline batches its gitignore
  * entries into one call instead of writing the same file twice. */
-class RecordingGitignoreUseCase extends GitignoreUseCase {
+class RecordingGitignoreUseCase extends GitignoreCommand {
   readonly calls: string[][] = [];
 
   override async execute(projectRoot: string, entries: string[]): Promise<boolean> {
@@ -26,7 +26,7 @@ describe("post-install pipeline", () => {
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
 
-    await new PostInstallPipelineUseCase(deps.manifestRepo, deps.gitignoreUseCase).execute({
+    await new PostInstallPipelineCommand(deps.manifestRepo, deps.gitignoreUseCase).execute({
       tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -48,7 +48,7 @@ describe("post-install pipeline", () => {
     if (manifest === null) throw new Error("manifest not found");
 
     const recordingGitignore = new RecordingGitignoreUseCase(deps.fs);
-    await new PostInstallPipelineUseCase(deps.manifestRepo, recordingGitignore).execute({
+    await new PostInstallPipelineCommand(deps.manifestRepo, recordingGitignore).execute({
       tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -66,7 +66,7 @@ describe("post-install pipeline", () => {
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
 
-    await new PostInstallPipelineUseCase(deps.manifestRepo, deps.gitignoreUseCase).execute({
+    await new PostInstallPipelineCommand(deps.manifestRepo, deps.gitignoreUseCase).execute({
       tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,

@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { InstallRuntimeConfigUseCase } from "../../../../../src/contexts/installation/application/install/install-runtime-config-use-case.js";
+import { InstallRuntimeConfigCommand } from "../../../../../src/contexts/installation/application/install/install-runtime-config-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
@@ -30,7 +30,7 @@ function buildUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   assets: AssetProvider = deps.assetProvider
 ) {
-  return new InstallRuntimeConfigUseCase(
+  return new InstallRuntimeConfigCommand(
     deps.fs,
     deps.hasher,
     deps.logger,
@@ -39,7 +39,7 @@ function buildUseCase(
   );
 }
 
-describe("InstallRuntimeConfigUseCase", () => {
+describe("InstallRuntimeConfigCommand", () => {
   it("writes a text config asset verbatim and records its content hash without warnings", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);

@@ -12,7 +12,7 @@ interface ResolveRestoreDecisionOptions {
  * Returns true when the file should be kept (skipped), false when it should be restored.
  * Throws InputRequiredError when a modified file is encountered in non-interactive non-force mode.
  */
-export class ResolveRestoreDecisionUseCase {
+export class ResolveRestoreDecisionCommand {
   constructor(private readonly prompter: Prompter) {}
 
   async execute(options: ResolveRestoreDecisionOptions): Promise<boolean> {

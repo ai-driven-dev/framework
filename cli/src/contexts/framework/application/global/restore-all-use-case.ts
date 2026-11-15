@@ -1,8 +1,8 @@
 import { NoManifestError } from "../../../../shared/domain/errors.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
-import type { RestoreUseCase } from "../../../installation/application/restore/restore-use-case.js";
-import type { StatusUseCase } from "../../../installation/application/status-use-case.js";
+import type { RestoreCommand } from "../../../installation/application/restore/restore-use-case.js";
+import type { StatusCommand } from "../../../installation/application/status-use-case.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
@@ -23,8 +23,8 @@ export class RestoreAllUseCase {
   constructor(
     private readonly manifestRepo: ManifestRepository,
     private readonly prompter: Prompter,
-    private readonly statusUseCase: StatusUseCase,
-    private readonly restoreUseCase: RestoreUseCase
+    private readonly statusUseCase: StatusCommand,
+    private readonly restoreUseCase: RestoreCommand
   ) {}
 
   async execute(

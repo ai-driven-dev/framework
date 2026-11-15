@@ -10,7 +10,7 @@ import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { DriftCollection, DriftDescriptor } from "./restore-drift-entries-use-case.js";
-import { RestoreDriftEntriesUseCase } from "./restore-drift-entries-use-case.js";
+import { RestoreDriftEntriesCommand } from "./restore-drift-entries-use-case.js";
 
 interface MergeDriftEntry {
   relativePath: string;
@@ -36,15 +36,15 @@ export interface MergeFilesRestoreResult {
   updatedMergeFiles: MergeFileEntry[];
 }
 
-export class RestoreMergeFilesUseCase {
-  private readonly restoreDriftEntries: RestoreDriftEntriesUseCase;
+export class RestoreMergeFilesCommand {
+  private readonly restoreDriftEntries: RestoreDriftEntriesCommand;
 
   constructor(
     private readonly fs: FileReader & FileMerger,
     private readonly hasher: Hasher,
     prompter: Prompter
   ) {
-    this.restoreDriftEntries = new RestoreDriftEntriesUseCase(prompter);
+    this.restoreDriftEntries = new RestoreDriftEntriesCommand(prompter);
   }
 
   async execute(options: MergeFilesRestoreOptions): Promise<MergeFilesRestoreResult | null> {

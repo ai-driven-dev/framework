@@ -1,5 +1,5 @@
 import type { Prompter } from "../../../../shared/ports/prompter.js";
-import { ResolveRestoreDecisionUseCase } from "./resolve-restore-decision.js";
+import { ResolveRestoreDecisionCommand } from "./resolve-restore-decision.js";
 
 export interface DriftDescriptor {
   relativePath: string;
@@ -27,11 +27,11 @@ export interface RestoreDriftLeaf<TDrift extends DriftDescriptor, TResult> {
 
 /** The single place the keep/overwrite decision lives: both restore flows inject their own leaf
  * rather than duplicating the loop. */
-export class RestoreDriftEntriesUseCase {
-  private readonly resolveDecision: ResolveRestoreDecisionUseCase;
+export class RestoreDriftEntriesCommand {
+  private readonly resolveDecision: ResolveRestoreDecisionCommand;
 
   constructor(prompter: Prompter) {
-    this.resolveDecision = new ResolveRestoreDecisionUseCase(prompter);
+    this.resolveDecision = new ResolveRestoreDecisionCommand(prompter);
   }
 
   async execute<TDrift extends DriftDescriptor, TResult>(

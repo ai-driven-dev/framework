@@ -11,7 +11,7 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
-import type { PostInstallPipelineUseCase } from "./post-install-pipeline-use-case.js";
+import type { PostInstallPipelineCommand } from "./post-install-pipeline-use-case.js";
 
 export interface InstallRuntimeConfigOptions {
   toolId: AiToolId;
@@ -33,13 +33,13 @@ export interface InstallRuntimeConfigResult {
   warnings: string[];
 }
 
-export class InstallRuntimeConfigUseCase {
+export class InstallRuntimeConfigCommand {
   constructor(
     private readonly fs: FileReader & FileWriter & FileMerger,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly assets: AssetProvider,
-    private readonly postInstallPipelineUseCase: PostInstallPipelineUseCase
+    private readonly postInstallPipelineUseCase: PostInstallPipelineCommand
   ) {}
 
   async execute(options: InstallRuntimeConfigOptions): Promise<InstallRuntimeConfigResult> {
