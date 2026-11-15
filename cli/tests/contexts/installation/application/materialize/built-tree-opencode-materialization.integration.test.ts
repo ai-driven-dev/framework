@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
-import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
-import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { InstallationFile } from "../../../../../../src/shared/domain/file.js";
-import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
+import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/proj";
 const BUILT = "/built/opencode";

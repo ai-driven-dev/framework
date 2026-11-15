@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DetectPluginDriftCommand } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
-import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import { DetectPluginDriftCommand } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
+import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const HASH_A = "abc123abc123abc123abc123abc123ab";
 const HASH_B = "def456def456def456def456def456de";

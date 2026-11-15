@@ -1,0 +1,24 @@
+import { describe, expect, it } from "vitest";
+import type { TranslatorDeps } from "../../../../../src/contexts/installation/application/materialize/plugin-translator-factory.js";
+import { resolvePluginTranslator } from "../../../../../src/contexts/installation/application/materialize/resolve-plugin-translator.js";
+import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredConfig, TOOL } from "../../../tools/testing/catalog-of.js";
+
+function deps(): TranslatorDeps {
+  return {
+    fs: new InMemoryFileAdapter(),
+    hasher: new DeterministicHasher(),
+    homedir: () => "/stub-home",
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+    marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+  };
+}
+
+describe("resolvePluginTranslator", () => {
+  it("answers nothing for a tool that is not an AI tool", () => {
+    expect(resolvePluginTranslator(registeredConfig(TOOL.vscode), deps())).toBeNull();
+  });
+});

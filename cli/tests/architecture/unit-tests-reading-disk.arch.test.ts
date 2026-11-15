@@ -18,14 +18,14 @@ const BASELINE: readonly string[] = [
   "tests/contexts/framework/application/plugin/plugin-add-use-case.unit.test.ts",
   "tests/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.unit.test.ts",
   "tests/contexts/framework/application/plugin/plugin-remove-use-case.unit.test.ts",
-  "tests/contexts/framework/application/plugin/plugin-update-built-tree.unit.test.ts",
-  "tests/contexts/framework/application/plugin/plugin-update-mode-a-marketplace.unit.test.ts",
-  "tests/contexts/framework/application/plugin/plugin-update-use-case.unit.test.ts",
+  "tests/contexts/installation/application/plugin/plugin-update-built-tree.unit.test.ts",
+  "tests/contexts/installation/application/plugin/plugin-update-mode-a-marketplace.unit.test.ts",
+  "tests/contexts/installation/application/plugin/plugin-update-use-case.unit.test.ts",
   "tests/contexts/framework/application/restore-all-use-case.unit.test.ts",
-  "tests/contexts/framework/application/restore-use-case.unit.test.ts",
-  "tests/contexts/framework/application/shared/apply-plugin-files-built-tree.unit.test.ts",
-  "tests/contexts/framework/application/shared/apply-plugin-files-mode-a-marketplace.unit.test.ts",
-  "tests/contexts/framework/application/shared/apply-plugin-files-use-case.unit.test.ts",
+  "tests/contexts/installation/application/restore/restore-use-case.unit.test.ts",
+  "tests/contexts/installation/application/shared/apply-plugin-files-built-tree.unit.test.ts",
+  "tests/contexts/installation/application/shared/apply-plugin-files-mode-a-marketplace.unit.test.ts",
+  "tests/contexts/installation/application/shared/apply-plugin-files-use-case.unit.test.ts",
   "tests/presentation/prompts/plugin-pick-use-case.unit.test.ts",
 ];
 
@@ -80,7 +80,7 @@ describe("the guard itself", () => {
 
   it("walks tests/ and finds a unit file", () => {
     expect(unitFiles()).toContain(
-      "tests/contexts/framework/application/restore-use-case.unit.test.ts"
+      "tests/contexts/installation/application/restore/restore-use-case.unit.test.ts"
     );
   });
 });

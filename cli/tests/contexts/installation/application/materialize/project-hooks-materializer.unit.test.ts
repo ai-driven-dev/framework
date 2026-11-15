@@ -3,18 +3,18 @@ import { describe, expect, it, vi } from "vitest";
 import {
   ProjectHooksMaterializer,
   withoutHooks,
-} from "../../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.js";
-import { removeRecordedProjectHooks } from "../../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
+} from "../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.js";
+import { removeRecordedProjectHooks } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
-} from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
+} from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import {
   errnoError,
   FaultingFileAdapter,
-} from "../../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
+} from "../../../../helpers/ports/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_NAME = "aidd-context";

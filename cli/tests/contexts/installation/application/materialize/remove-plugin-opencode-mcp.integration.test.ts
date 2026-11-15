@@ -1,14 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginRemoveUseCase } from "../../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
-import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
-import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { CLIOutput } from "../../../../../../src/presentation/output.js";
-import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
+import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
+import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { CLIOutput } from "../../../../../src/presentation/output.js";
+import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const STUB_HOME = "/tmp/test-home";

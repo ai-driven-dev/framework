@@ -1,16 +1,16 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildOpencodeFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
-import { opencode } from "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentTranslator } from "../../../../../../src/contexts/translate/domain/content-translator.js";
+import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
+import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { PluginContentTranslator } from "../../../../../src/contexts/translate/domain/content-translator.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
-} from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../../../src/shared/domain/file.js";
-import { REPOSITORY_ROOT } from "../../../../../helpers/repository-root.js";
-import { TOOL } from "../../../../tools/testing/catalog-of.js";
+} from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PLUGINS_DIR = join(REPOSITORY_ROOT, "plugins");
 

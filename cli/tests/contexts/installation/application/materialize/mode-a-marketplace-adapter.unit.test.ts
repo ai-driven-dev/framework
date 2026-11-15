@@ -1,11 +1,11 @@
 // Idempotency and the empty-marketplace-list case live on MarketplaceSyncSettingsUseCase; this
 // translator only registers the plugin reference in the manifest, with empty files.
 import { describe, expect, it } from "vitest";
-import { ModeAMarketplaceTranslator } from "../../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
-import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
+import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 function buildDist(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({

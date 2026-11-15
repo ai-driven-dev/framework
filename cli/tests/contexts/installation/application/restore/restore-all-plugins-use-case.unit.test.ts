@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import type { PluginFetcher } from "../../../../src/contexts/distribution/ports/plugin-fetcher.js";
-import { RestoreAllPluginsCommand } from "../../../../src/contexts/installation/application/restore/restore-all-plugins-use-case.js";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type { PluginDistributionReader } from "../../../../src/contexts/installation/ports/plugin-distribution-reader.js";
-import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
-import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
-import type { Hasher } from "../../../../src/shared/ports/hasher.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import type { PluginFetcher } from "../../../../../src/contexts/distribution/ports/plugin-fetcher.js";
+import { RestoreAllPluginsCommand } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins-use-case.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin-distribution-reader.js";
+import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
+import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js";
+import type { Hasher } from "../../../../../src/shared/ports/hasher.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const noopFs: FileReader & FileWriter = {
   fileExists: async () => false,

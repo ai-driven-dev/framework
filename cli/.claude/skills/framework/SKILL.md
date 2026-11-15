@@ -67,7 +67,7 @@ exposes is reachable from `presentation`.
 
 ## How it's tested
 
-- `tests/contexts/framework/` mirrors `src/contexts/framework/` — domain models are unit-tier,
+- `tests/contexts/framework/` and `tests/contexts/installation/` mirror their `src/contexts/` folders — domain models are unit-tier,
   use-cases against in-memory ports (`tests/helpers/ports/`) are unit or integration depending on
   whether they touch a real temp filesystem.
 - `tests/e2e/` exercises full CLI invocations through `runCli()`; `tests/golden/` snapshots a

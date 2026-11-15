@@ -10,8 +10,8 @@ import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domai
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
+import { linuxPlatform, win32Platform } from "../../../framework/application/helpers.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
-import { linuxPlatform, win32Platform } from "../helpers.js";
 
 const PROJECT_ROOT = "/test-project";
 

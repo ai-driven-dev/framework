@@ -2,26 +2,22 @@
 // `~/.codex/config.toml` and plugin cache, so a project-local settings file is inert.
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { ModeAMarketplaceTranslator } from "../../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
-import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import type { PluginSource } from "../../../../../../src/shared/domain/source.js";
-import { CapturingLogger } from "../../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceSources } from "../../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../../host-registration/testing/fake-host-plugin-registry.js";
-import {
-  registeredAiProfile,
-  registeredCatalog,
-  TOOL,
-} from "../../../../tools/testing/catalog-of.js";
+import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import type { PluginSource } from "../../../../../src/shared/domain/source.js";
+import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
+import { registeredAiProfile, registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";

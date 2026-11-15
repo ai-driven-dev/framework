@@ -1,18 +1,18 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
-import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { CursorProjectScopeUnsupportedError } from "../../../../../../src/shared/domain/errors.js";
-import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
+import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { CursorProjectScopeUnsupportedError } from "../../../../../src/shared/domain/errors.js";
+import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import {
   errnoError,
   FaultingFileAdapter,
-} from "../../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../../tools/testing/catalog-of.js";
-import { unsupportedPlugins } from "../../../../tools/testing/plugin-mode.js";
-import { aProfile } from "../../../../tools/testing/profiles.js";
+} from "../../../../helpers/ports/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { unsupportedPlugins } from "../../../tools/testing/plugin-mode.js";
+import { aProfile } from "../../../tools/testing/profiles.js";
 
 const PROJECT_ROOT = "/test-project";
 
