@@ -80,6 +80,16 @@ test("all-files native copies are pure and byte exact", (t) => {
   assert.equal(f.read(SRC), `---\ndescription: "Naming"\ntargets: [claude, cursor, copilot, antigravity]\n---\n\n${rule.body}`);
 });
 
+test("a body without a final newline is written with one", (t) => {
+  const f = fixture(t);
+  const bare = { ...rule, body: rule.body.trimEnd() };
+  assert.equal(f.run(bare, "claude,kilo").status, 0);
+  assert.ok(f.read(SRC).endsWith("clear.\n"));
+  assert.equal(f.read(CLAUDE).slice(-7), "clear.\n");
+  assert.ok(f.read(".kilo/rules/01-standards-1-naming.md").endsWith("clear.\n"));
+  assert.deepEqual(json(f.run(bare, "claude,kilo")).files, []);
+});
+
 test("codex index is created, updated, removed and outside text is preserved", (t) => {
   const f = fixture(t);
   const user = "User text\r\nmore\n";

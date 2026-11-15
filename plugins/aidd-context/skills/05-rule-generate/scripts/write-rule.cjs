@@ -314,11 +314,14 @@ function collectItems(options, sources) {
   return [...sources.values()].map((prior) => ({ rule: { ...prior, targets: parseTools([...prior.targets, ...tools]) }, prior }));
 }
 
+const withFinalNewline = (text) => (text.endsWith("\n") ? text : `${text}\n`);
+
 function itemFromRequest(file, tools, sources) {
   const rule = validateRule({ paths: [], ...readRequest(file), targets: tools });
   if (!rule.body.startsWith(TITLE_PREFIX)) refuse("Body must start with a `# <title>` line.");
   const prior = sources.get(sourcePath(rule));
-  return { rule: { ...rule, targets: parseTools([...(prior ? prior.targets : []), ...tools]) }, prior };
+  const targets = parseTools([...(prior ? prior.targets : []), ...tools]);
+  return { rule: { ...rule, body: withFinalNewline(rule.body), targets }, prior };
 }
 
 function itemFromRemoval(identity, sources) {
