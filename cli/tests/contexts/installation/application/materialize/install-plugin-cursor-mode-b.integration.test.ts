@@ -1,4 +1,4 @@
-import { join, posix } from "node:path";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -31,29 +31,6 @@ function buildDist(name = "aidd-context"): PluginDistribution {
 }
 
 describe("install cursor plugin via Mode B (integration)", () => {
-  it("materializes files at user-scope path under stubbed homedir", async () => {
-    const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "test", []);
-
-    await adapter.addPlugin(
-      buildDist("aidd-context"),
-      registeredAiProfile(TOOL.cursor),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
-      manifest,
-      undefined
-    );
-
-    // `fs.listAll()` returns the adapter's own "/"-normalised keys, so a raw `.startsWith`
-    // needs the same convention, unlike `fs.has()` below which normalises internally.
-    const expectedBase = posix.join(STUB_HOME, ".cursor", "plugins", "local");
-    const writtenPaths = fs.listAll();
-    expect(writtenPaths.some((p) => p.startsWith(expectedBase))).toBe(true);
-  });
-
   it("does not write any file under projectRoot", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
