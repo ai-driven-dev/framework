@@ -92,7 +92,16 @@ function buildUseCase() {
 
 describe("MarketplaceRemoveUseCase", () => {
   it("throws MarketplaceNotFoundError when entry does not exist", async () => {
-    const { useCase } = buildUseCase();
+    const { useCase, registry } = buildUseCase();
+    await registry.save(
+      PROJECT_ROOT,
+      Marketplace.create({
+        name: "present",
+        source: { kind: "local", path: "/tmp/whatever" },
+        scope: "project",
+        addedAt: "2026-04-29T10:00:00.000Z",
+      })
+    );
     await expect(
       useCase.execute({
         tools: catalogOf(),
