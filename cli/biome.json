@@ -2150,13 +2150,16 @@
                       "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
-                      "**/tools/**",
                       "**/telemetry/**",
                       "**/auth/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
                     "message": "host-registration imports only shared, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -2337,7 +2340,6 @@
                       "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
-                      "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
                       "**/auth/**",
@@ -2345,6 +2347,10 @@
                       "**/recipes/**"
                     ],
                     "message": "host-registration imports only shared, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -2373,7 +2379,6 @@
                       "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
-                      "**/tools/**",
                       "**/telemetry/**",
                       "**/presentation/**",
                       "**/auth/**",
@@ -2381,6 +2386,10 @@
                       "**/recipes/**"
                     ],
                     "message": "host-registration imports only shared, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -2424,13 +2433,16 @@
                       "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
-                      "**/tools/**",
                       "**/telemetry/**",
                       "**/auth/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
                     "message": "host-registration imports only shared, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "host-registration reads shared, plus the contract of tools: its domain and application belong to tools, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],

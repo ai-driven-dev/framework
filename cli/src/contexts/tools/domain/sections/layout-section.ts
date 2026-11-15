@@ -1,12 +1,12 @@
 import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
+import type {
+  MarketplaceSettings,
+  NativeActivationSpec,
+} from "../../contract/native-registration-spec.js";
 import type { FlatSkillLayout } from "../../contract/tool-profile.js";
 import type { GlobalFiles } from "../../contract/tool-vocabulary.js";
 import { MarketplaceRegistration } from "../native-registration/marketplace-registration.js";
-import type { MarketplaceSettings } from "../native-registration/marketplace-settings.js";
-import {
-  NativeActivation,
-  type NativeActivationSpec,
-} from "../native-registration/native-activation.js";
+import { NativeActivation } from "../native-registration/native-activation.js";
 
 /**
  * The global-file mapping of a flat tool whose user configuration directory takes the same

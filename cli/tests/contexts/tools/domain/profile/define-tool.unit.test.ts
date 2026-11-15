@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { MarketplaceSettings } from "../../../../../src/contexts/tools/domain/native-registration/marketplace-settings.js";
-import type { NativeActivationSpec } from "../../../../../src/contexts/tools/domain/native-registration/native-activation.js";
+import type {
+  MarketplaceSettings,
+  NativeActivationSpec,
+} from "../../../../../src/contexts/tools/contract/native-registration-spec.js";
 import {
   defineAiTool,
   defineIdeTool,

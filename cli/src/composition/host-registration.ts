@@ -1,17 +1,10 @@
 import { resolveHomeDir } from "../contexts/framework/domain/reading/home-dir.js";
 import type { HostActions } from "../contexts/host-registration/contract/host-actions.js";
 import type { HostMarketplaceRegistry } from "../contexts/host-registration/contract/host-marketplace-registry.js";
-import type {
-  HostMarketplaceSources,
-  NativeMarketplaceSourceListContract,
-} from "../contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostMarketplaceSources } from "../contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../contexts/host-registration/contract/host-plugin-registry.js";
 import { HostCliAdapter } from "../contexts/host-registration/infrastructure/host-cli-adapter.js";
-import {
-  type MarketplaceListParser,
-  parseMarketplacesWithSource,
-  parseNameSourceRows,
-} from "../contexts/host-registration/infrastructure/marketplace-list-parsers.js";
+import { marketplaceListContract } from "../contexts/host-registration/infrastructure/marketplace-list-parsers.js";
 import { InstallLocationsByNameReader } from "../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
 import {
   HostRegistryMarketplaceSourceReaderAdapter,
@@ -22,14 +15,12 @@ import {
   PluginEntriesByScopeReader,
   TomlPluginTablesReader,
 } from "../contexts/host-registration/infrastructure/plugin-registry-readers.js";
-import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import type {
-  MarketplaceListLayout,
   MarketplaceRegistryLayout,
-  MarketplaceSourcesDeclaration,
-  NativeActivation,
   PluginRegistryLayout,
-} from "../contexts/tools/domain/native-registration/native-activation.js";
+} from "../contexts/tools/contract/native-registration-spec.js";
+import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
+import type { NativeActivation } from "../contexts/tools/domain/native-registration/native-activation.js";
 import { REGISTERED_PROFILES } from "../contexts/tools/domain/profiles/registered-profiles.js";
 import { UnregisteredToolError } from "../shared/domain/errors.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
@@ -45,26 +36,6 @@ const PLUGIN_READERS = {
 const MARKETPLACE_READERS = {
   "install-locations-by-name": (file) => new InstallLocationsByNameReader(file),
 } satisfies Record<MarketplaceRegistryLayout, (file: string) => HostMarketplaceRegistry>;
-
-const LIST_PARSERS = {
-  "marketplaces-with-source": parseMarketplacesWithSource,
-  "name-source-rows": parseNameSourceRows,
-} satisfies Record<MarketplaceListLayout, MarketplaceListParser>;
-
-/** The list-command contract one host's declaration describes, its parser chosen by layout. */
-export function marketplaceListContract(
-  binary: string,
-  sources: Extract<MarketplaceSourcesDeclaration, { from: "list-command" }>
-): NativeMarketplaceSourceListContract {
-  const parse = LIST_PARSERS[sources.layout];
-  return {
-    binary,
-    args: sources.args,
-    parse: (output) => parse(sources.hostLabel, output),
-    unavailableMessage: sources.unavailableMessage,
-    unverifiedMessage: sources.unverifiedMessage,
-  };
-}
 
 export interface HostRegistrationDeps {
   /** Keyed by the binary each activation declares. */

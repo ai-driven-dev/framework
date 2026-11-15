@@ -135,6 +135,10 @@ export const ALLOWED = new Set([
   // Transitional (M-I1): the exact imports and the way out are in reference-context.md.
   "installation->distribution",
   "installation->host-registration",
+  // Permanent: the target context map gives host-registration the contract of tools
+  // (target/04-tools-and-translate.md, "Others reach tools only through its application/ and
+  // contract/"). Biome keeps tools' domain and application out of reach.
+  "host-registration->tools",
   // Transitional: framework's remaining orchestrators still build on the installation record
   // and its use cases, until each moves into orchestration.
   "framework->installation",

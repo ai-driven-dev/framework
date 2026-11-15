@@ -1,4 +1,11 @@
-import type { NativeMarketplaceSource } from "../contract/host-marketplace-sources.js";
+import type {
+  MarketplaceListLayout,
+  MarketplaceSourcesDeclaration,
+} from "../../tools/contract/native-registration-spec.js";
+import type {
+  NativeMarketplaceSource,
+  NativeMarketplaceSourceListContract,
+} from "../contract/host-marketplace-sources.js";
 
 type Sources = ReadonlyMap<string, NativeMarketplaceSource | null>;
 
@@ -76,3 +83,23 @@ export const parseNameSourceRows: MarketplaceListParser = (hostLabel, output) =>
   }
   return entries;
 };
+
+const LIST_PARSERS = {
+  "marketplaces-with-source": parseMarketplacesWithSource,
+  "name-source-rows": parseNameSourceRows,
+} satisfies Record<MarketplaceListLayout, MarketplaceListParser>;
+
+/** The list-command contract one host's declaration describes, its parser chosen by layout. */
+export function marketplaceListContract(
+  binary: string,
+  sources: Extract<MarketplaceSourcesDeclaration, { from: "list-command" }>
+): NativeMarketplaceSourceListContract {
+  const parse = LIST_PARSERS[sources.layout];
+  return {
+    binary,
+    args: sources.args,
+    parse: (output) => parse(sources.hostLabel, output),
+    unavailableMessage: sources.unavailableMessage,
+    unverifiedMessage: sources.unverifiedMessage,
+  };
+}
