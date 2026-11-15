@@ -2912,7 +2912,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never framework or telemetry — see context-graph.arch.test.ts"
+                    "message": "installation may import tools, translate, distribution and host-registration, never framework or telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -2948,7 +2948,7 @@
                 "patterns": [
                   {
                     "group": ["**/infrastructure/**"],
-                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
+                    "message": "application must not import infrastructure: take a port and let the composition root supply the adapter"
                   },
                   {
                     "group": [
@@ -2958,7 +2958,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never framework, telemetry or presentation — see context-graph.arch.test.ts"
+                    "message": "installation may import tools, translate, distribution and host-registration, never framework, telemetry or presentation (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3000,7 +3000,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation/infrastructure may import tools, translate, distribution and host-registration, never framework or telemetry or presentation — see context-graph.arch.test.ts"
+                    "message": "installation/infrastructure may import tools, translate, distribution and host-registration, never framework or telemetry or presentation (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -3049,7 +3049,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never framework or telemetry — see context-graph.arch.test.ts"
+                    "message": "installation may import tools, translate, distribution and host-registration, never framework or telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
