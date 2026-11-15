@@ -30,7 +30,7 @@ function reader(
 }
 
 describe("current native marketplace source proof", () => {
-  it.each([TOOL.claude, TOOL.codex, TOOL.copilot] as const)(
+  it.each([TOOL.claude, TOOL.codex, TOOL.copilot, undefined] as const)(
     "%s protects a foreign disabled ref unless uninstall leaves that tombstone",
     async (toolId) => {
       const refs = new Map([["foreign@real-catalog", { enabled: false }]]);
@@ -39,7 +39,7 @@ describe("current native marketplace source proof", () => {
         "real-catalog",
         new Set(),
         "/project-b",
-        registeredAiProfile(toolId)
+        toolId && registeredAiProfile(toolId)
       );
       if (toolId === "copilot") await expect(result).resolves.toEqual(refs);
       else await expect(result).rejects.toThrow(/foreign host ref/);
