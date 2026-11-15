@@ -110,7 +110,7 @@ async function issuesFor(
   const useCase = new DoctorRegistrationUseCase(
     fs,
     registry,
-    new Map(),
+    () => false,
     new InspectHostRegistration(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
     () => "/user-cache",
     fakeVersion("1.0.0")
@@ -282,7 +282,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
     const useCase = new DoctorRegistrationUseCase(
       fs,
       registry,
-      new Map(),
+      () => false,
       new InspectHostRegistration(fs, new Map(), new Map()),
       () => "/user-cache",
       fakeVersion("1.0.0")
@@ -327,7 +327,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
     const useCase = new DoctorRegistrationUseCase(
       fs,
       registry,
-      new Map(),
+      () => false,
       new InspectHostRegistration(fs, new Map(), new Map([[TOOL.codex, hostReader]])),
       () => "/user-cache",
       fakeVersion("1.0.0")
@@ -381,7 +381,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
     const useCase = new DoctorRegistrationUseCase(
       fs,
       registry,
-      new Map(),
+      () => false,
       new InspectHostRegistration(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
       () => "/user-cache",
       fakeVersion("1.0.0")
@@ -430,7 +430,7 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
     const useCase = new DoctorRegistrationUseCase(
       fs,
       registry,
-      new Map(),
+      () => false,
       new InspectHostRegistration(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION)

@@ -531,7 +531,7 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
     const doctorRegistration = new DoctorRegistrationUseCase(
       fs,
       registry,
-      new Map([[claude, activator]]),
+      (binary) => binary === claude && activator.isAvailable(),
       new InspectHostRegistration(
         fs,
         new Map([[claude, new RegistryBoundToActivator(activator)]]),

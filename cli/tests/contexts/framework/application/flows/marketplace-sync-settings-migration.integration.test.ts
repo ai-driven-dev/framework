@@ -1402,7 +1402,7 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
         }),
       }),
       registry,
-      new Map(),
+      () => false,
       new InspectHostRegistration(
         new InMemoryFileAdapter({
           [`${sharedBuiltDir}/${CATALOG_RELATIVE}`]: JSON.stringify({

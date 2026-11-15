@@ -126,7 +126,7 @@ async function doctorSays(registry: HostPluginRegistryReading): Promise<string> 
   const issues = await new DoctorRegistrationUseCase(
     new InMemoryFileAdapter(),
     new InMemoryMarketplaceRegistry(),
-    new Map(),
+    () => false,
     new InspectHostRegistration(
       new InMemoryFileAdapter(),
       new Map([[copilot, new FakeHostPluginRegistry(registry)]]),

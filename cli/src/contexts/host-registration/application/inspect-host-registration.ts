@@ -8,6 +8,7 @@ import type {
   InspectHostRegistrationResult,
 } from "../contract/inspect-host-registration-result.js";
 import { answeredRegistry } from "../domain/host-registration-answers.js";
+import { describePluginDiff, pluginSetDifference } from "../domain/marketplace-source-conflict.js";
 import { hostMarketplaceSourceConflict, isDriftFound } from "./host-marketplace-source-conflict.js";
 import { readMarketplaceCatalogIdentity } from "./read-marketplace-catalog-identity.js";
 
@@ -133,7 +134,17 @@ export class InspectHostRegistration {
       findings.push(
         isDriftFound(check)
           ? { kind: "source-drift", tool, found: check }
-          : { kind: "source-conflict", tool, conflict: check }
+          : {
+              kind: "source-conflict",
+              tool,
+              name: check.name,
+              location: check.location,
+              registeredSource: check.registeredSource,
+              requestedSource: check.requestedSource,
+              pluginDiff: describePluginDiff(
+                pluginSetDifference(check.registeredIdentity, check.requestedIdentity)
+              ),
+            }
       );
     }
     return findings;

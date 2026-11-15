@@ -3,7 +3,7 @@ import {
   describePluginDiff,
   marketplaceSourceConflict,
   pluginSetDifference,
-} from "../../../../src/contexts/host-registration/contract/marketplace-source-conflict.js";
+} from "../../../../src/contexts/host-registration/domain/marketplace-source-conflict.js";
 
 const LOCATION = "/home/.claude/plugins/known_marketplaces.json";
 

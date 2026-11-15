@@ -76,7 +76,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): DoctorUseCase {
     new DoctorRegistrationUseCase(
       fs,
       new InMemoryMarketplaceRegistry(),
-      new Map(),
+      () => false,
       new InspectHostRegistration(fs, new Map(), new Map()),
       () => "/user-cache",
       { get: () => "1.0.0" }

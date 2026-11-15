@@ -1,5 +1,4 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
-import type { MarketplaceSourceConflict } from "./marketplace-source-conflict.js";
 import type { MarketplaceSourceDriftFound } from "./marketplace-source-drift.js";
 
 /**
@@ -31,7 +30,12 @@ export type HostRegistrationFinding =
   | {
       readonly kind: "source-conflict";
       readonly tool: AiToolId;
-      readonly conflict: MarketplaceSourceConflict;
+      readonly name: string;
+      readonly location: string;
+      readonly registeredSource: string;
+      readonly requestedSource: string;
+      /** Which plugins the registered catalog and the requested one differ by, already worded. */
+      readonly pluginDiff: string;
     };
 
 export interface InspectHostRegistrationResult {

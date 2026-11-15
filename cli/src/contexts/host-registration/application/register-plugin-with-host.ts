@@ -22,16 +22,16 @@ import type {
   NativeMarketplaceSource,
 } from "../contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../contract/host-plugin-registry.js";
-import {
-  describePluginDiff,
-  type MarketplaceCatalogIdentity,
-  pluginSetDifference,
-} from "../contract/marketplace-source-conflict.js";
 import type { MarketplaceSourceDriftFound } from "../contract/marketplace-source-drift.js";
 import type {
   NativeMarketplaceRegistration,
   RegistrationRecord,
 } from "../contract/registration-record.js";
+import {
+  describePluginDiff,
+  type MarketplaceCatalogIdentity,
+  pluginSetDifference,
+} from "../domain/marketplace-source-conflict.js";
 import { hostMarketplaceSourceConflict, isDriftFound } from "./host-marketplace-source-conflict.js";
 import { inspectNativeMarketplaceSource } from "./native-marketplace-source-proof.js";
 import {

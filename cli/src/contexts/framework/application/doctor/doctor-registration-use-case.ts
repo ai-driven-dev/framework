@@ -12,12 +12,7 @@ import type {
   InspectedMarketplace,
   InspectHostRegistration,
 } from "../../../host-registration/application/inspect-host-registration.js";
-import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostRegistrationFinding } from "../../../host-registration/contract/inspect-host-registration-result.js";
-import {
-  describePluginDiff,
-  pluginSetDifference,
-} from "../../../host-registration/contract/marketplace-source-conflict.js";
 import type { MarketplaceSourceDriftFound } from "../../../host-registration/contract/marketplace-source-drift.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
@@ -50,8 +45,8 @@ export class DoctorRegistrationUseCase {
   constructor(
     private readonly fs: FileReader,
     private readonly registry: MarketplaceRegistry,
-    /** Native plugin CLI activators keyed by `NativeActivation.binary`. */
-    private readonly activators: ReadonlyMap<string, HostActions> = new Map(),
+    /** Whether the host CLI behind a `NativeActivation.hostBinary()` is on the PATH. */
+    private readonly hostAvailable: (binary: string) => boolean,
     /** Asks the hosts' own registries what they carry. */
     private readonly inspectHostRegistration: InspectHostRegistration,
     /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
@@ -139,11 +134,10 @@ export class DoctorRegistrationUseCase {
       case "source-drift":
         return this.driftIssue(tool, finding.found);
       case "source-conflict": {
-        const check = finding.conflict;
-        const diff = pluginSetDifference(check.registeredIdentity, check.requestedIdentity);
+        const check = finding;
         return {
           severity: "error",
-          message: `${tool}'s marketplace registry (${check.location}) carries '${check.name}' from a different catalog (${check.registeredSource}) than this project's own (${check.requestedSource}) — plugins ${describePluginDiff(diff)}`,
+          message: `${tool}'s marketplace registry (${check.location}) carries '${check.name}' from a different catalog (${check.registeredSource}) than this project's own (${check.requestedSource}) — plugins ${finding.pluginDiff}`,
           fix: `Run \`claude plugin marketplace remove ${check.name}\`, then \`aidd sync\` to re-register it for this project — or rename this project's marketplace if it is meant to point elsewhere.`,
         };
       }
@@ -274,7 +268,7 @@ export class DoctorRegistrationUseCase {
   private canRegisterItself(tool: ToolProfile): boolean {
     const activation = tool.kind === "ai" ? tool.nativeActivation() : undefined;
     if (activation === undefined) return true;
-    return this.activators.get(activation.hostBinary())?.isAvailable() ?? false;
+    return this.hostAvailable(activation.hostBinary());
   }
 
   /** The one preamble all three passes open with, so `--tool <id>` narrows every one of them the

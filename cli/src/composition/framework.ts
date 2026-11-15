@@ -341,7 +341,7 @@ export async function createDeps(
   const doctorRegistrationUseCase = new DoctorRegistrationUseCase(
     fs,
     marketplaceRegistry,
-    nativePluginActivators,
+    (binary) => nativePluginActivators.get(binary)?.isAvailable() ?? false,
     new InspectHostRegistration(fs, hostPluginRegistries, hostMarketplaceRegistries),
     userConfigDir,
     currentVersionProvider

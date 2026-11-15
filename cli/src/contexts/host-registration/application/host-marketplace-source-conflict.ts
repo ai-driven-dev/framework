@@ -1,15 +1,15 @@
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import type { HostMarketplaceRegistry } from "../contract/host-marketplace-registry.js";
-import {
-  type MarketplaceCatalogIdentity,
-  type MarketplaceSourceConflict,
-  marketplaceSourceConflict,
-} from "../contract/marketplace-source-conflict.js";
 import type {
   MarketplaceSourceDrift,
   MarketplaceSourceDriftFound,
 } from "../contract/marketplace-source-drift.js";
+import {
+  type MarketplaceCatalogIdentity,
+  type MarketplaceSourceConflict,
+  marketplaceSourceConflict,
+} from "../domain/marketplace-source-conflict.js";
 import {
   type MarketplaceSourceDriftContext,
   marketplaceSourceDrift,

@@ -52,13 +52,13 @@ async function issuesFor(
   );
   const manifest = Manifest.create();
   manifest.addTool(toolId, "test", []);
-  const activators = new Map([
+  const activators = new Map<string, FakeHostActions>([
     [TOOL.claude, new FakeHostActions({ available: toolInstalled, enablesPlugins: false })],
   ]);
   return new DoctorRegistrationUseCase(
     fs,
     registry,
-    activators,
+    (binary) => activators.get(binary)?.isAvailable() ?? false,
     new InspectHostRegistration(fs, new Map(), new Map()),
     () => "/user-cache",
     { get: () => "1.0.0" }
@@ -172,7 +172,7 @@ async function nativeIssuesFor(
 ) {
   const fs = new InMemoryFileAdapter();
   const registry = new InMemoryMarketplaceRegistry();
-  const activators = new Map([
+  const activators = new Map<string, FakeHostActions>([
     [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: true })],
   ]);
   const hostRegistries = new Map<AiToolId, HostPluginRegistry>();
@@ -182,7 +182,7 @@ async function nativeIssuesFor(
   return new DoctorRegistrationUseCase(
     fs,
     registry,
-    activators,
+    (binary) => activators.get(binary)?.isAvailable() ?? false,
     new InspectHostRegistration(fs, hostRegistries, new Map()),
     () => "/user-cache",
     { get: () => "1.0.0" }

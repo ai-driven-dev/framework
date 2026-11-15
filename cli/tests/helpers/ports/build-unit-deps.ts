@@ -184,7 +184,9 @@ export function buildDoctorUseCase(
     new DoctorRegistrationUseCase(
       deps.fs,
       deps.marketplaceRegistry,
-      deps.nativePluginActivators,
+      (binary) =>
+        binary === TOOL.codex &&
+        deps.nativePluginActivators.get(TOOL.codex)?.isAvailable() === true,
       new InspectHostRegistration(deps.fs, hostRegistries, new Map()),
       () => "/user-cache",
       { get: () => "1.0.0" }
