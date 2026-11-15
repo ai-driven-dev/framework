@@ -8,13 +8,13 @@ flowchart LR
   composition["composition"] -.->|wiring only| contexts
   subgraph contexts["contexts"]
     direction LR
-    framework["framework"] --> translate["translate"] --> tools["tools"]
-    framework --> distribution["distribution"]
+    framework["framework"] --> installation["installation"] --> translate["translate"] --> tools["tools"]
+    installation --> distribution["distribution"]
   end
   contexts --> shared["shared"]
   classDef layer fill:#e9ddff,stroke:#8250df,color:#3b1d78
   classDef base fill:#ddf4ff,stroke:#0969da,color:#0a3069
-  class presentation,composition,framework,translate,tools,distribution layer
+  class presentation,composition,framework,installation,translate,tools,distribution layer
   class shared base
   style contexts fill:none,stroke:#8c959f
 ```
@@ -25,8 +25,8 @@ flowchart LR
 | `src/contexts/tools/` | What the project targets and how each target is configured. One directory per tool: its profile beside its build contracts. |
 | `src/contexts/translate/` | Canonical source into target-native content, at every level. |
 | `src/contexts/distribution/` | Where content comes from and how it is fetched. A leaf: knows no tool and no installation record. |
-| `src/contexts/installation/` | The installation record and the flows that write it: install, restore, uninstall, doctor, status. |
-| `src/contexts/framework/` | The orchestrators still built on the installation record. The only context allowed to reach the others. |
+| `src/contexts/installation/` | The installation record and the flows that write it: init, install, restore, plugin update, status, rule listing, gitignore upkeep and the post-install pipeline. Uninstall and doctor stay in `framework`. |
+| `src/contexts/framework/` | The orchestrators still built on the installation record: setup, doctor, clean and the plugin flows. It reaches `installation`, which no other context does. |
 | `src/presentation/` | What speaks to a human: commands, display, prompts, output. |
 | `src/composition/` | The wiring: one module per context, composed by `framework.ts`. Only `src/cli.ts` imports it; commands receive its factories typed by `presentation/deps.ts`. |
 
