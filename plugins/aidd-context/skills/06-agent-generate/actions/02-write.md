@@ -12,6 +12,7 @@ The confirmed draft, name and targets.
 2. Plugin source: write the canonical agent at its path in [hosts.md](../references/hosts.md), then read [validate](03-validate.md).
 3. Host tools: write the agent's fields and body to the input file, and run the writer with `--plan` per [writer.md](../references/writer.md).
 4. Announce each planned path and each dropped field, then run the writer without `--plan`.
+   - Planned `update`: show it, end the turn and wait for the user's own approval, then add `--force`.
    - Non-zero exit: quote the writer's output, then stop.
 5. Read [validate](03-validate.md).
 

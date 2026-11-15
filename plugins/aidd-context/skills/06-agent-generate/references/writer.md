@@ -13,15 +13,16 @@ node "$writer" --project "$project_root" --tools "$host_ids" --input "$agent_jso
 
 | Option | Effect |
 | --- | --- |
-| none | Writes each host's file. |
+| none | Writes each host's file, each replaced atomically; a failure midway leaves earlier files written, and a rerun completes them. |
 | `--plan` | Writes nothing; lists each file with `create`, `update` or `unchanged`. |
 | `--check` | Writes nothing; lists in `drift` each file that differs from its rendering. |
+| `--force` | Overwrites each file the plan lists as `update`; without it, the writer refuses. |
 
 The result is JSON. `files` lists each path and its operation, `dropped` each `{tool, field}` a host does not accept, including an `effort` that Cursor or OpenCode cannot carry without a `model`, `error` a `{code, message}`.
 
 | Exit | Means |
 | --- | --- |
 | 0 | Written, planned, or checked without drift. |
-| 1 | Invalid agent, unknown host, unsafe path, or drift. |
+| 1 | Invalid agent, unknown host, unsafe path, overwrite without `--force`, or drift. |
 | 2 | Wrong options. |
 | 3 | A file could not be written. Directories are created before any file, so a path that cannot exist fails before a write. |

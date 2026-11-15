@@ -17,7 +17,7 @@ const agent = {
   body: "# Role\n\nReview the diff.\n",
 };
 
-function fixture(t) {
+function fixture(t, fault) {
   const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "aidd-agent-")));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const project = path.join(dir, "project");
@@ -26,7 +26,7 @@ function fixture(t) {
   fs.cpSync(skill, installed, { recursive: true });
   const script = path.join(installed, "scripts/write-agent.cjs");
   assert.ok(fs.existsSync(script), "installed skill must contain its standalone script");
-  const exec = (...args) => spawnSync(process.execPath, [script, ...args], { encoding: "utf8", cwd: dir, env: { PATH: "" } });
+  const exec = (...args) => spawnSync(process.execPath, [...(fault ? ["--require", fault] : []), script, ...args], { encoding: "utf8", cwd: dir, env: { PATH: "" } });
   function run(request = agent, tools = ALL, extra = []) {
     const input = path.join(dir, "input.json");
     fs.writeFileSync(input, JSON.stringify(request));
@@ -191,4 +191,32 @@ test("exits 3 before writing anything when one target cannot be written", (t) =>
   assert.equal(r.status, 3);
   assert.ok(json(r).error.code);
   assert.equal(fs.existsSync(path.join(project, ".claude/agents/code-reviewer.md")), false);
+});
+
+test("refuses to overwrite a differing file without --force", (t) => {
+  const { run, read, project } = fixture(t);
+  fs.mkdirSync(path.join(project, ".claude/agents"), { recursive: true });
+  fs.writeFileSync(path.join(project, ".claude/agents/code-reviewer.md"), "mine\n");
+  const r = run(agent, "claude");
+  assert.equal(r.status, 1);
+  assert.equal(json(r).error.code, "REFUSED");
+  assert.match(json(r).error.message, /\.claude\/agents\/code-reviewer\.md/);
+  assert.equal(read(".claude/agents/code-reviewer.md"), "mine\n");
+  assert.equal(run(agent, "claude", ["--force"]).status, 0);
+  assert.match(read(".claude/agents/code-reviewer.md"), /^name: code-reviewer$/m);
+});
+
+test("a write failing midway leaves the existing file whole and no temporary file behind", (t) => {
+  const faultDir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-agent-fault-"));
+  t.after(() => fs.rmSync(faultDir, { recursive: true, force: true }));
+  const fault = path.join(faultDir, "fault.cjs");
+  fs.writeFileSync(fault, `const fs = require("node:fs"); const write = fs.writeFileSync;
+fs.writeFileSync = (file, ...rest) => { if (String(file).includes("code-reviewer.md")) { write(file, "-"); throw Object.assign(new Error("injected"), { code: "ENOSPC" }); } return write(file, ...rest); };`);
+  const { run, read, project } = fixture(t, fault);
+  const dir = path.join(project, ".claude/agents");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "code-reviewer.md"), "old\n");
+  assert.equal(run(agent, "claude", ["--force"]).status, 3);
+  assert.equal(read(".claude/agents/code-reviewer.md"), "old\n");
+  assert.deepEqual(fs.readdirSync(dir), ["code-reviewer.md"]);
 });

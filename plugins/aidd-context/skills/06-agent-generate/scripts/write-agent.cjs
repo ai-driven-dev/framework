@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 "use strict";
-// Usage: node write-agent.cjs --project <abs dir> --tools <ids> --input <agent.json> [--plan | --check]
+// Usage: node write-agent.cjs --project <abs dir> --tools <ids> --input <agent.json> [--plan | --check] [--force]
 // Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo.
 // Renders one canonical agent as each host's native file, with the key mapping of the aidd CLI.
 // Exit 0 ok, 1 refusal or drift, 2 usage error, 3 filesystem error. Prints one JSON object on stdout.
@@ -8,7 +8,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const EXIT = { OK: 0, REFUSED: 1, USAGE: 2, FILESYSTEM: 3 };
-const FLAGS = ["--plan", "--check"];
+const FLAGS = ["--plan", "--check", "--force"];
 const VALUES = ["--project", "--tools", "--input"];
 
 // Each host keeps its own keys only. `effort` becomes the host's own spelling of it.
@@ -94,6 +94,18 @@ function readOrNull(file) {
   try { return fs.readFileSync(file, "utf8"); } catch (error) { if (error.code === "ENOENT" || error.code === "ENOTDIR") return null; throw error; }
 }
 
+// A sibling temporary file renamed over the target never leaves the target half written.
+function writeAtomically(file, text) {
+  const temporary = `${file}.${process.pid}.tmp`;
+  try {
+    fs.writeFileSync(temporary, text);
+    fs.renameSync(temporary, file);
+  } catch (error) {
+    fs.rmSync(temporary, { force: true });
+    throw error;
+  }
+}
+
 function main(argv) {
   const options = parseArgs(argv);
   const project = path.resolve(options["--project"]);
@@ -118,8 +130,10 @@ function main(argv) {
   if (!options["--plan"]) {
     // Every directory first, so a path that cannot exist fails before any file is written.
     const changed = plan.filter((f) => f.operation !== "unchanged");
+    const overwritten = changed.filter((f) => f.operation === "update").map((f) => f.path);
+    if (overwritten.length && !options["--force"]) refuse(`Would overwrite ${overwritten.join(", ")}; rerun with --force once approved.`);
     for (const file of changed) fs.mkdirSync(path.dirname(path.join(project, file.path)), { recursive: true });
-    for (const file of changed) fs.writeFileSync(path.join(project, file.path), file.content);
+    for (const file of changed) writeAtomically(path.join(project, file.path), file.content);
   }
   return { code: EXIT.OK, result };
 }
