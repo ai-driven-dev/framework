@@ -210,6 +210,11 @@ describe("the guard itself", () => {
       "reaches-infrastructure": "../../contexts/auth/infrastructure/gh-cli-adapter.js",
       "reaches-contract": "../../contexts/auth/contract/credential.js",
       "reaches-application": "../../contexts/auth/application/log-in.js",
+      "reaches-tools-application": "../../contexts/tools/application/x.js",
+      "reaches-shared-infrastructure": "../../shared/infrastructure/http-client.js",
+      "reaches-composition": "../../composition/auth.js",
+      "reaches-presentation": "../../presentation/deps.js",
+      "reaches-bare-fs": "fs",
     })) {
       writeFileSync(
         join(planted, `src/orchestration/setup/${name}.ts`),
@@ -560,11 +565,21 @@ describe("the guard itself", () => {
     }
   });
 
-  it("flags orchestration reaching the disk, a process or a context's interior, and clears its contract and application", () => {
+  it("flags orchestration reaching the disk, a process, a context's interior or a layer above it, and clears its contract and application", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
 
-    for (const name of ["fs", "process", "domain", "infrastructure"]) {
+    for (const name of [
+      "fs",
+      "bare-fs",
+      "process",
+      "domain",
+      "infrastructure",
+      "tools-application",
+      "shared-infrastructure",
+      "composition",
+      "presentation",
+    ]) {
       expect(findings, findings.join(", ")).toContain(
         `src/orchestration/setup/reaches-${name}.ts:${rule}`
       );

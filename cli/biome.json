@@ -524,6 +524,10 @@
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/presentation/**"],
+                    "message": "presentation imports the orchestration, never the reverse"
                   }
                 ]
               }
