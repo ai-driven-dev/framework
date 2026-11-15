@@ -5,17 +5,7 @@ import { JsonParseError } from "./errors.js";
 import type { FileHash } from "./file.js";
 import { stripJsonComments } from "./reading/jsonc.js";
 
-export type PerKeyMergeStrategy = {
-  default: "framework-prime" | "user-prime";
-  /** Keys where framework always wins, overriding the default strategy. */
-  frameworkOverrideKeys: readonly string[];
-};
-
-export type MergeStrategy = "none" | "framework-prime" | "user-prime" | PerKeyMergeStrategy;
-
-export function isPerKeyMergeStrategy(s: MergeStrategy): s is PerKeyMergeStrategy {
-  return typeof s === "object" && s !== null;
-}
+export type MergeStrategy = "none" | "framework-prime" | "user-prime";
 
 export interface MergeFileEntry {
   readonly relativePath: string;
@@ -69,11 +59,7 @@ export function removeEntriesFromJson(
   for (const key of keysToRemove) delete container[key];
   // An emptied section must vanish, not linger as `{}`: a settings file sharing its top
   // level with unrelated keys must come back byte-identical once every key we own is gone.
-  if (Object.keys(container).length === 0) {
-    delete parsed[sectionKey];
-  } else {
-    parsed[sectionKey] = container;
-  }
+  if (Object.keys(container).length === 0) delete parsed[sectionKey];
   return JSON.stringify(parsed, null, 2);
 }
 
@@ -110,34 +96,9 @@ export async function mergeIntoJsonFile(
 
   const incoming = JSON.parse(stripJsonComments(content)) as Record<string, unknown>;
 
-  if (isPerKeyMergeStrategy(strategy)) {
-    await files.writeFile(path, JSON.stringify(mergePerKey(existing, incoming, strategy), null, 2));
-    return;
-  }
-
   const merged =
     strategy === "user-prime" ? deepMerge(incoming, existing) : deepMerge(existing, incoming);
   await files.writeFile(path, JSON.stringify(merged, null, 2));
-}
-
-// Intentionally shallow: a nested object is replaced wholesale, never merged into.
-function mergePerKey(
-  existing: Record<string, unknown>,
-  incoming: Record<string, unknown>,
-  strategy: PerKeyMergeStrategy
-): Record<string, unknown> {
-  const allKeys = new Set([...Object.keys(existing), ...Object.keys(incoming)]);
-  const result: Record<string, unknown> = {};
-  for (const key of allKeys) {
-    const isFrameworkPrime = strategy.frameworkOverrideKeys.includes(key);
-    const effectiveStrategy = isFrameworkPrime ? "framework-prime" : strategy.default;
-    if (effectiveStrategy === "framework-prime") {
-      result[key] = key in incoming ? incoming[key] : existing[key];
-    } else {
-      result[key] = key in existing ? existing[key] : incoming[key];
-    }
-  }
-  return result;
 }
 
 const PROTOTYPE_POLLUTION_KEYS = new Set(["__proto__", "constructor", "prototype"]);

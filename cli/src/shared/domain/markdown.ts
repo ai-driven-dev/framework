@@ -5,12 +5,12 @@ export function parseFrontmatter(content: string): {
   body: string;
 } {
   // A line ends either way: a Windows checkout hands this the same document with CRLF, and
-  // the key/value patterns below are `$`-anchored, so a trailing carriage return makes every
-  // one of them miss. Splitting on either ending is not the same as stripping every `\r`:
+  // the key-only pattern below is `$`-anchored, so a trailing carriage return makes it
+  // miss. Splitting on either ending is not the same as stripping every `\r`:
   // one inside a value is content, and stays.
   const lines = content.split(/\r?\n/);
 
-  if (lines[0]?.trim() !== FRONTMATTER_DELIMITER) {
+  if (lines[0].trim() !== FRONTMATTER_DELIMITER) {
     return { frontmatter: {}, body: content };
   }
 
@@ -41,7 +41,7 @@ function isJsonArray(s: string): boolean {
 export function serializeFrontmatter(
   frontmatter: Record<string, unknown>,
   body: string,
-  quote: "single" | "double" = "single"
+  quote?: "single" | "double"
 ): string {
   if (Object.keys(frontmatter).length === 0) {
     return body.replace(/^\n/, "");
@@ -81,16 +81,16 @@ export function serializeFrontmatter(
   return `${lines.join("\n")}\n${body}`;
 }
 
-// `[^\n]` rather than `.` throughout: `.` excludes a carriage return, so a `$`-anchored
-// value pattern silently misses any line carrying one — and splitting already removed the
-// `\r` of a CRLF ending, so what is left is content.
+// `[^\n]` rather than `.` throughout: `.` excludes a carriage return, so a value pattern
+// silently misses any line carrying one — and splitting already removed the `\r` of a CRLF
+// ending, so what is left is content.
 function parseYamlLike(lines: string[]): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
     const keyOnlyMatch = /^(\w[\w-]*):\s*$/.exec(line);
-    const keyValueMatch = /^(\w[\w-]*):\s*([^\n]+)$/.exec(line);
+    const keyValueMatch = /^(\w[\w-]*):\s*([^\n]+)/.exec(line);
     if (keyOnlyMatch) {
       const { items, next } = collectListBlock(lines, i + 1);
       result[keyOnlyMatch[1]] = items;
@@ -116,7 +116,7 @@ function collectListBlock(lines: string[], start: number): { items: string[]; ne
   const items: string[] = [];
   let i = start;
   while (i < lines.length) {
-    const match = /^\s{2,}-\s+([^\n]+)$/.exec(lines[i]);
+    const match = /^\s{2,}-\s([^\n]+)/.exec(lines[i]);
     if (!match) break;
     items.push(String(parseScalar(match[1].trim())));
     i++;
@@ -131,7 +131,7 @@ function collectScalarBlock(
 ): { value: string; next: number } {
   const collected: string[] = [];
   let i = start;
-  while (i < lines.length && /^\s+/.test(lines[i])) {
+  while (i < lines.length && /^\s/.test(lines[i])) {
     collected.push(lines[i].trim());
     i++;
   }
@@ -147,13 +147,7 @@ function parseScalar(value: string): unknown {
   if (value === "true") return true;
   if (value === "false") return false;
   if (value === "null" || value === "~") return null;
-  if (value.startsWith("[") && value.endsWith("]")) {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value;
-    }
-  }
+  if (isJsonArray(value)) return JSON.parse(value);
   if (value.length > 1 && value.startsWith("'") && value.endsWith("'")) {
     return value.slice(1, -1).replaceAll("''", "'");
   }
