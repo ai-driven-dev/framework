@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { AddMarketplace } from "../contexts/distribution/application/add-marketplace.js";
+import { PluginSearchUseCase } from "../contexts/distribution/application/plugin-search-use-case.js";
 import { CleanUserScopeUseCase } from "../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -38,7 +39,6 @@ import { PluginInstallFromMarketplaceUseCase } from "../contexts/framework/appli
 import { PluginInstallUseCase } from "../contexts/framework/application/plugin/plugin-install-use-case.js";
 import { PluginListUseCase } from "../contexts/framework/application/plugin/plugin-list-use-case.js";
 import { PluginRemoveUseCase } from "../contexts/framework/application/plugin/plugin-remove-use-case.js";
-import { PluginSearchUseCase } from "../contexts/framework/application/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../contexts/framework/application/plugin/plugin-update-use-case.js";
 import { RestoreUseCase } from "../contexts/framework/application/restore/restore-use-case.js";
 import { InstallGlobalPluginsUseCase } from "../contexts/framework/application/setup/install-global-plugins-use-case.js";

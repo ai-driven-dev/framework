@@ -10,9 +10,9 @@ vi.mock("node:path", async (importOriginal) => {
   };
 });
 
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { resolvePluginSourceFromMarketplace } from "../../../../../src/contexts/framework/domain/plugins/plugin-source-resolver.js";
-import type { PluginSource } from "../../../../../src/shared/domain/source.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { resolvePluginSourceFromMarketplace } from "../../../../src/contexts/distribution/domain/plugin-source-resolver.js";
+import type { PluginSource } from "../../../../src/shared/domain/source.js";
 
 const MARKETPLACE_LOCAL_PATH = "/home/user/.aidd/cache/marketplaces/aidd-framework";
 
