@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 // Usage: node write-rule.cjs --project <abs dir> (--input <request.json> --tools <ids> | --remove <category>/<slug> | --publish [--tools <ids>]) [--plan | --check] [--force]
-// Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo. --tools adds hosts to the rules it publishes; --check takes none.
+// Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo. --tools adds hosts to the rules it publishes.
 // Publishes aidd_docs/rules sources as native copies; codex reads an AGENTS.md index, kilo and opencode a glob in their config instructions.
 // Exit 0 ok, 1 refusal/conflict/drift/unexpected error, 2 usage error, 3 filesystem blocked or failed.
 // Every non-zero exit prints a JSON object on stdout.
@@ -39,7 +39,6 @@ function rejectUsage(message) {
 // ---------- pure helpers ----------
 
 const sha256 = (text) => createHash("sha256").update(text).digest("hex");
-const isUtf8 = (text) => Buffer.from(text).toString("utf8") === text;
 const isMissing = (error) => error.code === "ENOENT" || error.code === "ENOTDIR";
 const quote = (value) => JSON.stringify(value);
 
@@ -71,8 +70,6 @@ function assertOptionsConsistent(options) {
   const actions = ["--input", "--remove", "--publish"].filter((name) => name in options);
   if (actions.length !== 1) rejectUsage("Choose exactly one of --input, --remove, --publish.");
   if (options["--input"] && !options["--tools"]) rejectUsage("--input requires --tools.");
-  if (options["--remove"] && options["--tools"]) rejectUsage("--remove takes no --tools.");
-  if (options["--check"] && (!options["--publish"] || options["--plan"] || options["--tools"])) rejectUsage("--check applies to --publish only, without --plan or --tools.");
 }
 
 function validateRule(rule) {
@@ -82,7 +79,6 @@ function validateRule(rule) {
   if (typeof rule.description !== "string" || !rule.description.trim() || /[\r\n]/.test(rule.description)) refuse("Description must be a non-empty single line.");
   if (typeof rule.body !== "string" || !rule.body.trim()) refuse("Body must be non-empty.");
   if (!Array.isArray(rule.paths) || rule.paths.some((glob) => typeof glob !== "string" || !glob || /[,\r\n]/.test(glob))) refuse("Paths must be non-empty strings without commas or newlines.");
-  if (![rule.body, rule.description, ...rule.paths].every(isUtf8)) refuse("Text must be valid UTF-8.");
   return { ...rule, targets: parseTools(rule.targets) };
 }
 
@@ -216,13 +212,6 @@ function agentsIndexLines(sources) {
 
 // ---------- project reads ----------
 
-function readUtf8(file) {
-  const bytes = fs.readFileSync(file);
-  const text = bytes.toString("utf8");
-  if (!Buffer.from(text).equals(bytes)) refuse(`Invalid UTF-8 in ${file}.`);
-  return text;
-}
-
 function openProject(optionValue) {
   const root = path.resolve(optionValue);
   if (!path.isAbsolute(optionValue) || !fs.statSync(root).isDirectory() || fs.realpathSync(root) !== root) refuse("Project must be a real absolute directory.");
@@ -240,7 +229,7 @@ function openProject(optionValue) {
 
   function read(relativePath) {
     try {
-      return readUtf8(resolve(relativePath));
+      return fs.readFileSync(resolve(relativePath), "utf8");
     } catch (error) {
       if (isMissing(error)) return null;
       throw error;
@@ -291,7 +280,7 @@ function collectItems(options, sources) {
 }
 
 function itemFromRequest(inputFile, tools, sources) {
-  const request = parseRequest(readUtf8(path.resolve(inputFile)));
+  const request = parseRequest(fs.readFileSync(path.resolve(inputFile), "utf8"));
   const rule = validateRule({ paths: [], ...request, targets: tools });
   const prior = sources.get(sourcePath(rule));
   return { rule: { ...rule, targets: parseTools([...(prior ? prior.targets : []), ...tools]) }, prior };
@@ -414,7 +403,7 @@ function nearestExisting(file) {
   return candidate;
 }
 
-// Every write lands through a rename in its parent, so only the parent directory must be writable.
+// Only the parent directory must be writable.
 function assertWritableDirectory(directory) {
   if (!fs.statSync(directory).isDirectory()) throw Object.assign(new Error(`${directory} is not a directory`), { code: "ENOTDIR" });
   fs.accessSync(directory, fs.constants.W_OK);
@@ -447,40 +436,21 @@ function performOperation(operation) {
     return;
   }
   fs.mkdirSync(path.dirname(operation.file), { recursive: true });
-  writeAtomically(operation.file, operation.text);
-}
-
-// A crash leaves the old file or the new one, never a truncated one.
-function writeAtomically(file, text) {
-  const temporary = `${file}.${process.pid}.tmp`;
-  fs.writeFileSync(temporary, text);
-  try {
-    fs.renameSync(temporary, file);
-  } catch (error) {
-    fs.rmSync(temporary, { force: true });
-    throw error;
-  }
-}
-
-function applyOperations(operations) {
-  const written = [];
-  for (const [index, operation] of operations.entries()) {
-    try {
-      performOperation(operation);
-    } catch (error) {
-      return { written, failed: describeFailure(operation, error), pending: operations.slice(index + 1).map((pending) => pending.path) };
-    }
-    written.push(operation.path);
-  }
-  return { written };
+  fs.writeFileSync(operation.file, operation.text);
 }
 
 function publish(project, plan, summary) {
   const operations = toOperations(project, plan.writes);
   const blocked = findBlocked(operations);
-  if (blocked.length) return { payload: { blocked, written: [] }, exitCode: EXIT.FILESYSTEM, message: `${blocked.length} path(s) not writable; nothing written.` };
-  const outcome = applyOperations(operations);
-  if (outcome.failed) return { payload: outcome, exitCode: EXIT.FILESYSTEM, message: `${outcome.failed.operation} failed on ${outcome.failed.path}: ${outcome.failed.message}` };
+  if (blocked.length) return { payload: { blocked }, exitCode: EXIT.FILESYSTEM, message: `${blocked.length} path(s) not writable; nothing written.` };
+  for (const operation of operations) {
+    try {
+      performOperation(operation);
+    } catch (error) {
+      const message = `${operation.operation} failed on ${operation.path}: ${error.message}`;
+      return { payload: { error: { code: error.code ?? error.name, message } }, exitCode: EXIT.FILESYSTEM, message };
+    }
+  }
   return { payload: summary, exitCode: EXIT.OK };
 }
 

@@ -240,7 +240,6 @@ test("unknown tool refuses and bad usage exits 2", (t) => {
   const f = fixture(t);
   assert.equal(f.run(rule, "claude,nope").status, 1);
   assert.equal(f.exec("--tools", "claude").status, 2);
-  assert.equal(f.exec("--tools", "claude", "--check", "--remove", "01-standards/1-naming").status, 2);
   assert.equal(f.exec("--tools", "claude", "--plan").status, 2);
 });
 
@@ -286,7 +285,10 @@ test("publish and check keep each rule's own hosts unless --tools adds some", (t
   assert.equal(check.status, 0, check.stdout);
   assert.equal(f.run(null, null, ["--publish"]).status, 0);
   assert.deepEqual(f.snapshot(), before);
-  assert.equal(f.run(null, "claude", ["--check", "--publish"]).status, 2);
+  const withTools = f.run(null, "claude", ["--check", "--publish"]);
+  assert.ok([0, 1].includes(withTools.status), withTools.stdout);
+  assert.ok(Array.isArray(json(withTools).drift));
+  assert.deepEqual(f.snapshot(), before);
   const added = f.run(null, "copilot", ["--plan", "--publish"]);
   assert.ok(paths(json(added).files).includes(COPILOT));
 });
@@ -435,7 +437,6 @@ test("unwritable target blocks everything before any write", { skip: noModes }, 
   const r = runLocked([locked], () => f.run());
   assert.equal(r.status, 3);
   const out = json(r);
-  assert.deepEqual(out.written, []);
   assert.equal(out.blocked.length, 1);
   assert.equal(out.blocked[0].path, CURSOR);
   assert.equal(out.blocked[0].operation, "create");
@@ -462,29 +463,29 @@ test("unwritable parent blocks a delete before any removal", { skip: noModes }, 
   const r = runLocked([path.join(f.project, path.dirname(CLAUDE))], () => f.run(null, null, ["--remove", "01-standards/1-naming"]));
   assert.equal(r.status, 3);
   const out = json(r);
-  assert.deepEqual(out.written, []);
   assert.deepEqual(out.blocked.map((b) => [b.path, b.operation]), [[CLAUDE, "delete"]]);
   assert.deepEqual(f.snapshot(), before);
 });
 
-test("mid-apply failure stops and reports written, failed and pending", (t) => {
+test("a write failure exits 3 naming the path, and a rerun converges", (t) => {
   const faultDir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-rule-fault-"));
   const fault = path.join(faultDir, "fault.cjs");
-  fs.writeFileSync(fault, `const fs = require("node:fs"); const rename = fs.renameSync;
-fs.renameSync = (from, to) => { if (String(to).endsWith(".mdc")) throw Object.assign(new Error("injected"), { code: "EIO" }); return rename(from, to); };`);
+  fs.writeFileSync(fault, `const fs = require("node:fs"); const write = fs.writeFileSync;
+fs.writeFileSync = (file, ...rest) => { if (String(file).endsWith(".mdc")) throw Object.assign(new Error("injected"), { code: "EIO" }); return write(file, ...rest); };`);
   t.after(() => fs.rmSync(faultDir, { recursive: true, force: true }));
   const f = fixture(t, fault);
   const r = f.run();
   assert.equal(r.status, 3, r.stdout);
   const out = json(r);
-  assert.deepEqual(out.written, [SRC, CLAUDE]);
-  assert.equal(out.failed.path, CURSOR);
-  assert.equal(out.failed.operation, "create");
-  assert.ok(out.failed.code && out.failed.message);
-  assert.deepEqual(out.pending, [COPILOT, AGY]);
-  assert.ok(f.has(SRC) && f.has(CLAUDE) && !f.has(COPILOT) && !f.has(AGY));
-  assert.ok(!Object.keys(f.snapshot()).some((name) => name.endsWith(".tmp")));
+  assert.deepEqual(Object.keys(out), ["error"]);
+  assert.equal(out.error.code, "EIO");
+  assert.ok(out.error.message.includes(CURSOR), out.error.message);
   assert.ok(r.stderr);
+  const clean = fixture(t);
+  fs.cpSync(f.project, clean.project, { recursive: true });
+  const again = clean.run();
+  assert.equal(again.status, 0, again.stderr);
+  for (const name of [SRC, CLAUDE, CURSOR, COPILOT, AGY]) assert.ok(clean.has(name), name);
 });
 
 test("every non-zero exit prints parseable JSON on stdout", (t) => {

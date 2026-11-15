@@ -29,7 +29,7 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | `--remove <category>/<slug>` | Deletes the source, its copies and its index line; host config entries stay. |
 | `--publish` | Republishes every source to its own `targets`. |
 | `--plan` | Writes nothing, prints `{plan, files, conflicts, legacy}`. |
-| `--check` | With `--publish`: writes nothing, prints `{drift}`. |
+| `--check` | Writes nothing, prints `{drift}`. |
 | `--force` | Overwrites every copy listed in `conflicts`, all or none. |
 
 | Field | Means |
@@ -40,7 +40,6 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | `drift` | Copies that differ from their source's rendering. |
 | `error` | `{code, message}`: `REFUSED`, `USAGE` or the system error code. |
 | `blocked` | `{path, operation, code, message}` per unwritable path. |
-| `written`, `failed`, `pending` | Paths changed in order, the failed operation, paths left untouched. |
 
 | Exit | When | Fields |
 | --- | --- | --- |
@@ -51,10 +50,11 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | 1 | Drift on `--check`. | `drift` |
 | 2 | Usage error. | `error` |
 | 3 | Unwritable path found before writing, nothing written. | `blocked` |
-| 3 | File operation failed while writing. | `written`, `failed`, `pending` |
+| 3 | File operation failed while writing; rerun once the path is writable. | `error` |
 
 ## Limits
 
 - A config whose text holds the quoted glob counts as listing it, even inside a comment.
+- Text is read and written as UTF-8 without validation.
 - OpenCode configs are read only at the project root, never under `.opencode/`.
 - A project targeting both kilo and opencode loads each rule twice in Kilo, which also reads the opencode entry.
