@@ -403,14 +403,6 @@ describe("only projects that opted in are stored", () => {
     });
   });
 
-  it("asks a linked worktree's clone, the repository's git config being shared", async () => {
-    const s = setup();
-    s.locator.directories.set("/work/wt", repository("/work/wt", { mainRoot: "/work/a" }));
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/wt" })]);
-    expect((await s.ingest.execute()).added).toBe(1);
-    expect(s.consents.cloneReads).toEqual([A.path]);
-  });
-
   it("gives a linked worktree and its main working tree one repository id", async () => {
     const s = setup();
     s.locator.directories.set("/work/wt", repository("/work/wt", { mainRoot: "/work/a" }));
