@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Trials réels et PR
@@ -68,3 +68,18 @@ journey
 | ---- | ------------------- |
 | 1 | chaque hôte lancé bloque l'outil visé, et aucune session de trial ne reste |
 | 2 | la PR cible la branche de 05 et ne cite que des résultats observés |
+
+## Results
+
+| Host | Run | Observed |
+| ---- | --- | -------- |
+| Claude Code 2.1.325 | `claude -p`, Haiku | `rm -rf trash` denied by the PreToolUse hook; `echo hello` ran |
+| Codex 0.167.2 | `codex exec` from `sub/`, isolated `CODEX_HOME` | blocked after the hook was trusted in the TUI; an unreviewed hook is skipped silently |
+| Copilot 1.0.111 | `copilot -p` from `sub/` | "Denied by preToolUse hook: hook exited with code 2"; the Claude hook in `.claude/settings.json` also ran |
+| OpenCode 1.19.3 | `opencode run`, free model | `bash` call failed with the script's reason |
+| OpenCode 2.3.0 | `npx @opencode/cli@2.3.0 run`, free model | `shell` call failed with the script's reason |
+| Kilo 7.7.5 | `kilo run`, free model | `bash` call failed with the script's reason |
+| Antigravity | `agy -p` | denied; the script started in `.agents/` |
+| Cursor | not run | quota reached, and its CLI rewrites the global `cli-config.json`: format verified, run not verified |
+
+Full skill flow on Claude Code with Haiku: stopped after the plan with nothing written, then on approval wrote both files, the verifier returned `verified`, and it offered a real trial. Every session, process and folder the trials created was deleted.
