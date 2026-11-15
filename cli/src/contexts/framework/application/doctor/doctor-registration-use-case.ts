@@ -9,6 +9,7 @@ import type { MarketplaceRegistry } from "../../../distribution/ports/marketplac
 import type {
   ExpectedHostPlugin,
   InspectedHost,
+  InspectedMarketplace,
   InspectHostRegistration,
 } from "../../../host-registration/application/inspect-host-registration.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
@@ -88,10 +89,10 @@ export class DoctorRegistrationUseCase {
     const hosts: InspectedHost[] = [];
     for (const toolId of this.retainedToolIds(manifest, allowedIds)) {
       if (!tools.isAiTool(toolId)) continue;
-      const marketplaces = [];
+      const marketplaces: InspectedMarketplace[] = [];
       for (const marketplace of expected) {
         const builtDir = await this.resolvedBuiltDir(projectRoot, marketplace, toolId);
-        marketplaces.push({ name: marketplace.name, builtDir });
+        if (builtDir !== undefined) marketplaces.push({ name: marketplace.name, builtDir });
       }
       hosts.push({
         tool: toolId,
@@ -198,11 +199,7 @@ export class DoctorRegistrationUseCase {
             toolId
           )
         : builtMarketplaceDir(projectRoot, marketplace.name, toolId);
-    try {
-      return await this.fs.realpath(resolve(raw));
-    } catch {
-      return undefined;
-    }
+    return this.fs.realpath(resolve(raw)).catch(() => undefined);
   }
 
   private async checkDeclaredMarketplaces(

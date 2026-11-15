@@ -18,11 +18,11 @@ export interface ExpectedHostPlugin {
   readonly ref?: string;
 }
 
-/** A marketplace the project registers, with where this run's build of it lives. `builtDir` is
- * absent when nothing resolves there: never built, or gone since. */
+/** A marketplace the project registers, with where this run's build of it lives. A marketplace
+ * with no build, never built or gone since, is left out by the caller: nothing to compare. */
 export interface InspectedMarketplace {
   readonly name: string;
-  readonly builtDir?: string;
+  readonly builtDir: string;
 }
 
 export interface InspectedHost {
@@ -42,7 +42,7 @@ export interface InspectHostRegistrationCommand {
  * Asks each host's own registries whether they carry what aidd asked them to register, and
  * whether a marketplace they already hold points somewhere other than this project's build.
  *
- * Silent on a host with no registry reader, on a marketplace never built and on a catalog whose
+ * Silent on a host with no registry reader and on a catalog whose
  * identity cannot be read: reporting a conflict against a path nothing has ever pointed at would
  * invent the false positive the sync-time guard exists to prevent.
  */
@@ -68,7 +68,6 @@ export class InspectHostRegistration {
     host: InspectedHost
   ): Promise<HostRegistrationFinding[]> {
     const { tool } = host;
-    if (!command.tools.isAiTool(tool)) return [];
     if (command.tools.aiProfile(tool).nativeActivation() === undefined) return [];
     if (host.expectedPlugins.length === 0) return [];
     const reading = await this.pluginRegistries.get(tool)?.read(command.projectRoot);
@@ -101,14 +100,12 @@ export class InspectHostRegistration {
     host: InspectedHost
   ): Promise<HostRegistrationFinding[]> {
     const { tool } = host;
-    if (!command.tools.isAiTool(tool)) return [];
     const profile = command.tools.aiProfile(tool);
     if (profile.nativeActivation()?.keepsMarketplaceRegistry() !== true) return [];
     const reader = this.marketplaceRegistries.get(tool);
     if (reader === undefined) return [];
     const findings: HostRegistrationFinding[] = [];
     for (const marketplace of host.marketplaces) {
-      if (marketplace.builtDir === undefined) continue;
       const requestedIdentity = await readMarketplaceCatalogIdentity(
         this.fs,
         profile,
