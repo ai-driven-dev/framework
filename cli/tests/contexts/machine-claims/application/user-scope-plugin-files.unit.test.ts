@@ -1,19 +1,16 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
-} from "../../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
-import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import {
-  errnoError,
-  FaultingFileAdapter,
-} from "../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
+import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
+import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
+import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
 
 const HOME = "/home/u";
 const BOUNDARY = join(HOME, ".cursor", "plugins", "local");

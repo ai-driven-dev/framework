@@ -6,12 +6,9 @@ import {
   refAnotherProjectStillNeeds,
   resolveProjectRootForReferences,
   toleratingUnreadableSourceReferences,
-} from "../../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import {
-  errnoError,
-  FaultingFileAdapter,
-} from "../../../../helpers/ports/faulting-file-adapter.js";
+} from "../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
+import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
+import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
 
 const BASE = {
   ref: "aidd-dev@aidd-framework",

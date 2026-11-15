@@ -2,10 +2,10 @@ import { mkdir, mkdtemp, realpath, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { HasherAdapter } from "../../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
-import { resolveProjectRootForReferences } from "../../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
-import { CLIOutput } from "../../../../../src/presentation/output.js";
-import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
+import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
+import { resolveProjectRootForReferences } from "../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
+import { CLIOutput } from "../../../../src/presentation/output.js";
+import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 
 let root: string;
 

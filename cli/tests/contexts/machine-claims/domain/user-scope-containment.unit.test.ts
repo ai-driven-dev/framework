@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
+import { isStrictlyWithinUserScope } from "../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 
 const BOUNDARY = "/home/dev/.cursor/plugins/local";
 

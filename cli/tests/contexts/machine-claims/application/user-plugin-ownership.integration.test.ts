@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { detachUserPlugin } from "../../../../../src/contexts/machine-claims/application/user-plugin-ownership.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { detachUserPlugin } from "../../../../src/contexts/machine-claims/application/user-plugin-ownership.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import {
   InMemoryManifestRepository,
   loadingOnlyUnderLock,
-} from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../helpers/ports/in-memory-manifest-repository.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 
 function fixture(scope: "project" | "user" = "user", dependents: readonly string[] = ["/A", "/B"]) {
   const manifest = Manifest.create();
