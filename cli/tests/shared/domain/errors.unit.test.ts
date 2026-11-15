@@ -18,24 +18,6 @@ describe("AiddFilesDetectedError", () => {
   });
 });
 
-describe("FlatTargetExistsError", () => {
-  it("names the conflicting path, the plugin and the --force hint", () => {
-    const error = new errors.FlatTargetExistsError("/out/agents/my-plugin/foo.md", "my-plugin");
-    expect(error.message).toContain("/out/agents/my-plugin/foo.md");
-    expect(error.message).toContain("my-plugin");
-    expect(error.message).toContain("--force");
-  });
-});
-
-describe("OutDirNotDirectoryError", () => {
-  it("names the outDir path, and no source directory", () => {
-    const error = new errors.OutDirNotDirectoryError("/tmp/some-out");
-    expect(error.message).toContain("/tmp/some-out");
-    expect(error.message).not.toContain("--source");
-    expect(error.message).toContain("not a directory");
-  });
-});
-
 describe("AlreadyInitializedError", () => {
   it("has default message when no argument provided", () => {
     const error = new errors.AlreadyInitializedError();
@@ -611,8 +593,6 @@ describe("error names and messages a caller matches on", () => {
     new errors.InvalidToolProfileError("t", "unknown-section", "d"),
     new errors.KiloDualConfigError(),
     new errors.InvalidAgentFrontmatterError("a", "d"),
-    new errors.FlatTargetExistsError("/o/f.md", "p"),
-    new errors.OutDirNotDirectoryError("/o"),
     new errors.InvalidReportPeriodError("m"),
     new errors.TaskDeclaredNoneWithNameError(),
     new errors.TaskNameMissingError(),
