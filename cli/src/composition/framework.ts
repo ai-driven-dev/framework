@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { AddMarketplace } from "../contexts/distribution/application/add-marketplace.js";
-import { PluginSearchUseCase } from "../contexts/distribution/application/plugin-search-use-case.js";
+import { SearchPlugins } from "../contexts/distribution/application/search-plugins.js";
 import { CleanUserScopeUseCase } from "../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -304,10 +304,7 @@ export async function createDeps(
     prompter,
     logger
   );
-  const pluginSearchUseCase = new PluginSearchUseCase(
-    marketplaceRegistry,
-    resolveMarketplaceUseCase
-  );
+  const searchPlugins = new SearchPlugins(marketplaceRegistry, resolveMarketplaceUseCase);
   const pluginPickUseCase = new PluginPickUseCase(
     marketplaceRegistry,
     resolveMarketplaceUseCase,
@@ -533,7 +530,7 @@ export async function createDeps(
     installIdeToolUseCase,
     uninstallIdeUseCase,
     assetProvider,
-    pluginSearchUseCase,
+    searchPlugins,
     registerFrameworkMarketplace,
     pluginInstallUseCase,
     marketplaceSyncSettingsUseCase,

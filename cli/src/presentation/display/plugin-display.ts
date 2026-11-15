@@ -6,7 +6,7 @@ interface NamedPlugin {
   readonly version: string;
 }
 
-interface PluginSearchHit {
+interface SearchedPlugin {
   readonly entry: PluginCatalogEntry;
   readonly marketplace: { readonly name: string };
 }
@@ -46,7 +46,7 @@ export function printPluginInstallOutcome(output: CLIOutput, result: PluginInsta
   }
 }
 
-export function printPluginSearchHits(output: CLIOutput, hits: readonly PluginSearchHit[]): void {
+export function printSearchHits(output: CLIOutput, hits: readonly SearchedPlugin[]): void {
   if (hits.length === 0) output.info("No matches.");
   for (const hit of hits) {
     const flag = hit.entry.recommended ? " (recommended)" : "";

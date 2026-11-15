@@ -60,7 +60,7 @@
         "src/contexts/distribution/**/*.ts",
         "!src/contexts/distribution/**/plugin-source-resolver.ts",
         "!src/contexts/distribution/**/requested-version-policy.ts",
-        "!src/contexts/distribution/**/plugin-search-use-case.ts"
+        "!src/contexts/distribution/**/search-plugins.ts"
       ],
       "break": 82
     },
@@ -68,7 +68,7 @@
       "mutate": [
         "src/contexts/distribution/**/plugin-source-resolver.ts",
         "src/contexts/distribution/**/requested-version-policy.ts",
-        "src/contexts/distribution/**/plugin-search-use-case.ts"
+        "src/contexts/distribution/**/search-plugins.ts"
       ],
       "break": 92
     },

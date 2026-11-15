@@ -17,7 +17,7 @@ const createDeps = vi.fn(async () => ({
   pluginRemoveUseCase: { execute: pluginRemove },
   pluginListUseCase: { execute: pluginList },
   pluginInstallUseCase: { execute: pluginInstall },
-  pluginSearchUseCase: { execute: pluginSearch },
+  searchPlugins: { execute: pluginSearch },
   pluginUpdateUseCase: { execute: pluginUpdate },
   userPluginUpdateUseCase: { execute: userPluginUpdate },
   marketplaceSyncSettingsUseCase: { execute: activation },
