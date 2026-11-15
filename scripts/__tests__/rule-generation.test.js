@@ -305,12 +305,11 @@ const KILO = ".kilo/rules/01-standards-1-naming.md";
 const OPENCODE = ".opencode/rules/01-standards-1-naming.md";
 const scopeLine = "Applies to files matching `src/**/*.ts`, `test/**/*.ts`.\n\n";
 
-test("kilo gets rule copies and a created config entry, no AGENTS.md", (t) => {
+test("kilo gets rule copies only: no config, no AGENTS.md", (t) => {
   const f = fixture(t);
   assert.equal(f.run(rule, "kilo").status, 0);
   assert.equal(f.read(KILO), scopeLine + rule.body);
-  assert.equal(f.read("kilo.jsonc"), '{\n  "instructions": [".kilo/rules/*.md"]\n}\n');
-  assert.ok(!f.has("AGENTS.md"));
+  assert.ok(!f.has("kilo.jsonc") && !f.has("AGENTS.md"));
   assert.equal(f.run({ ...rule, slug: "1-other", paths: [] }, "kilo").status, 0);
   assert.equal(f.read(".kilo/rules/01-standards-1-other.md"), rule.body);
   const before = f.snapshot();
@@ -349,24 +348,29 @@ test("a commented config without the entry refuses and names the text to add", (
   assert.deepEqual(f.snapshot(), before);
 });
 
-test("several kilo configs without the entry refuse and write nothing", (t) => {
+test("several opencode configs without the entry refuse and write nothing", (t) => {
   const f = fixture(t);
-  f.put("kilo.json", "{}\n");
-  f.put(".kilo/kilo.jsonc", "{}\n");
+  f.put("opencode.json", "{}\n");
+  f.put("opencode.jsonc", "{}\n");
   const before = f.snapshot();
-  const r = f.run(rule, "kilo");
+  const r = f.run(rule, "opencode");
   assert.equal(r.status, 1);
-  assert.ok(json(r).error.message.includes("kilo.json") && json(r).error.message.includes(".kilo/kilo.jsonc"));
+  assert.ok(json(r).error.message.includes("opencode.json and opencode.jsonc"));
   assert.deepEqual(f.snapshot(), before);
 });
 
 test("an instructions value that is not an array refuses", (t) => {
   const f = fixture(t);
   f.put("opencode.json", '{"instructions":"x"}\n');
-  assert.equal(f.run(rule, "opencode").status, 1);
+  const before = f.snapshot();
+  const r = f.run(rule, "opencode");
+  assert.equal(r.status, 1);
+  assert.equal(json(r).error.code, "REFUSED");
+  assert.ok(json(r).error.message.includes(".opencode/rules/*.md"));
+  assert.deepEqual(f.snapshot(), before);
 });
 
-test("--check --publish covers the config entry for kilo and opencode", (t) => {
+test("--check --publish covers the opencode config entry", (t) => {
   const f = fixture(t);
   assert.equal(f.run(rule, "kilo,opencode").status, 0);
   const clean = f.run(null, null, ["--check", "--publish"]);
@@ -379,10 +383,10 @@ test("--check --publish covers the config entry for kilo and opencode", (t) => {
 
 test("removing the last rule keeps the config entry", (t) => {
   const f = fixture(t);
-  assert.equal(f.run(rule, "kilo").status, 0);
+  assert.equal(f.run(rule, "opencode").status, 0);
   assert.equal(f.run(null, null, ["--remove", "01-standards/1-naming"]).status, 0);
-  assert.ok(!f.has(KILO));
-  assert.ok(f.read("kilo.jsonc").includes(".kilo/rules/*.md"));
+  assert.ok(!f.has(OPENCODE));
+  assert.ok(f.read("opencode.json").includes(".opencode/rules/*.md"));
 });
 
 test("an old AGENTS.md index line of an opencode-only rule is dropped on publish", (t) => {

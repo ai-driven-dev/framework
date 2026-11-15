@@ -25,7 +25,7 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | `--project` | `$project_root`; refused unless an absolute, real directory, with no symlink in it. |
 | `--tools` | Comma-separated host IDs added to the source's `targets`, never removed: required with `--input`, optional with `--publish`. |
 | `--input <file>` | Writes the source `aidd_docs/rules/<category>/<slug>.md`, then publishes it. |
-| `--remove <category>/<slug>` | Deletes the source, its copies and its index line; a kilo or opencode config entry stays. |
+| `--remove <category>/<slug>` | Deletes the source, its copies and its index line; the opencode config entry stays. |
 | `--publish` | Republishes every source to its own `targets`. |
 | `--plan` | Writes nothing, prints `{plan, files, conflicts, legacy}`. |
 | `--check` | With `--publish`: writes nothing, prints `{drift}`. |
@@ -45,9 +45,14 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | --- | --- | --- |
 | 0 | Done, planned or checked clean. | the result |
 | 1 | Refusal or unexpected error. | `error` |
-| 1 | A kilo or opencode config the writer cannot edit (comments, several files, `instructions` not an array), nothing written. | `error` names the entry to add by hand |
+| 1 | An opencode config the writer cannot edit (comments, several files, `instructions` not an array), nothing written. | `error` names the entry to add by hand |
 | 1 | Conflict without `--force`, nothing written. | `conflicts` |
 | 1 | Drift on `--check`. | `drift` |
 | 2 | Usage error. | `error` |
 | 3 | Unwritable path found before writing, nothing written. | `blocked` |
 | 3 | File operation failed while writing. | `written`, `failed`, `pending` |
+
+## Limits
+
+- A config whose text holds the quoted glob counts as listing it, even inside a comment.
+- OpenCode configs are read only at the project root, never under `.opencode/`.
