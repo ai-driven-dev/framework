@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { AddMarketplace } from "../contexts/distribution/application/add-marketplace.js";
 import { SearchPlugins } from "../contexts/distribution/application/search-plugins.js";
+import type { MarketplaceRemover } from "../contexts/distribution/ports/marketplace-remover.js";
 import { CleanUserScopeUseCase } from "../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -85,7 +85,7 @@ import { HttpClient } from "../shared/infrastructure/http-client.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../shared/ports/logger.js";
 import { wireAuth } from "./auth.js";
-import { wireDistribution } from "./distribution.js";
+import { wireAddMarketplace, wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";
 import { wireRecipes } from "./recipes.js";
 import { wireTelemetry } from "./telemetry.js";
@@ -196,22 +196,20 @@ export async function createDeps(
     marketplaceRegistry,
     nativeHostRegistrationGate
   );
-  // `marketplace add --overwrite` removes before it adds, and removing deletes installed
-  // plugin files — framework work — so the orchestration belongs here rather than pulling
-  // framework into distribution's own wiring.
-  const addMarketplace = new AddMarketplace(
-    marketplaceRegistry,
-    marketplaceTrustStore,
-    resolveMarketplaceUseCase,
+  // Removing deletes installed plugin files, which is framework work: framework's two remove
+  // commands answer distribution's `MarketplaceRemover`.
+  const marketplaceRemover: MarketplaceRemover = {
+    remove: async (request) => {
+      const removal = { ...request, tools };
+      await (request.scope === "user"
+        ? userMarketplaceRemoveUseCase.execute(removal)
+        : marketplaceRemoveUseCase.execute(removal));
+    },
+  };
+  const addMarketplace = wireAddMarketplace(
+    { marketplaceRegistry, marketplaceTrustStore, resolveMarketplaceUseCase },
     prompter,
-    {
-      remove: async (request) => {
-        const removal = { ...request, tools };
-        await (request.scope === "user"
-          ? userMarketplaceRemoveUseCase.execute(removal)
-          : marketplaceRemoveUseCase.execute(removal));
-      },
-    }
+    marketplaceRemover
   );
   const marketplaceCheckUseCase = new MarketplaceCheckUseCase(
     manifestRepo,
