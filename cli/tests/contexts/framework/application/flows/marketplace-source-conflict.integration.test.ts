@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -138,20 +138,16 @@ async function sync(setup: Setup = {}) {
       pluginClaims: [],
     });
   }
-  const useCase = new MarketplaceSyncSettingsUseCase(
+  const useCase = marketplaceSync({
     fs,
     manifestRepo,
-    registry,
-    new DeterministicHasher(),
+    marketplaceRegistry: registry,
+    hasher: new DeterministicHasher(),
     logger,
-    new Map([[toolId === "claude" ? "claude" : "codex", activator]]),
-    fakeEnsureBuiltMarketplace((target) => `/built/${target}`),
-    hostRegistries,
-    () => "",
-    undefined,
-    undefined,
-    undefined,
-    new Map([
+    activators: new Map([[toolId === "claude" ? "claude" : "codex", activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace((target) => `/built/${target}`),
+    hostMarketplaceRegistries: hostRegistries,
+    hostPluginRegistries: new Map([
       [
         toolId,
         new FakeHostPluginRegistry({
@@ -160,8 +156,8 @@ async function sync(setup: Setup = {}) {
         }),
       ],
     ]),
-    machine === undefined ? undefined : new InMemoryManifestRepository(machine),
-    new Map([
+    userManifestRepo: machine === undefined ? undefined : new InMemoryManifestRepository(machine),
+    nativeSources: new Map([
       [
         toolId,
         hostReading?.unreadable !== undefined
@@ -178,8 +174,8 @@ async function sync(setup: Setup = {}) {
               currentSource === undefined ? new Map() : new Map([[catalogName, currentSource]])
             ),
       ],
-    ])
-  );
+    ]),
+  });
   const result = await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
   return { result, activator, manifestRepo, builtDir, catalogRelative };
 }

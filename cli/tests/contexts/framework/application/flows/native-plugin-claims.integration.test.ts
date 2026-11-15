@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { CleanUserScopeUseCase } from "../../../../../src/contexts/framework/application/clean/clean-user-scope-use-case.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
@@ -16,6 +15,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -211,29 +211,25 @@ for (const [toolId, catalogPath] of [
           refs: new Map(enabled ? [[ref, { enabled: true, scope: "user" as const }]] : []),
         }),
       };
-      const useCase = new MarketplaceSyncSettingsUseCase(
-        new InMemoryFileAdapter({
+      const useCase = marketplaceSync({
+        fs: new InMemoryFileAdapter({
           [`${builtDir}/${catalogPath}`]: JSON.stringify({
             name: hostName,
             version: "1.0.0",
             plugins: [],
           }),
         }),
-        a,
-        registry,
-        new DeterministicHasher(),
-        new CapturingLogger(),
-        new Map([[toolId, activator]]),
-        fakeEnsureBuiltMarketplace(() => builtDir),
-        new Map(),
-        () => "/built",
-        undefined,
-        undefined,
-        undefined,
-        new Map([[toolId, hostReader]]),
-        user,
-        sources
-      );
+        manifestRepo: a,
+        marketplaceRegistry: registry,
+        hasher: new DeterministicHasher(),
+        logger: new CapturingLogger(),
+        activators: new Map([[toolId, activator]]),
+        ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
+        userCacheRoot: () => "/built",
+        hostPluginRegistries: new Map([[toolId, hostReader]]),
+        userManifestRepo: user,
+        nativeSources: sources,
+      });
 
       await useCase.execute({
         tools: registeredCatalog(),
@@ -345,29 +341,25 @@ for (const [toolId, catalogPath] of [
       ).rejects.toThrow(/active projects/);
 
       const foreignUser = new InMemoryManifestRepository(Manifest.create());
-      const foreignUseCase = new MarketplaceSyncSettingsUseCase(
-        new InMemoryFileAdapter({
+      const foreignUseCase = marketplaceSync({
+        fs: new InMemoryFileAdapter({
           [`${builtDir}/${catalogPath}`]: JSON.stringify({
             name: hostName,
             version: "1.0.0",
             plugins: [],
           }),
         }),
-        foreign,
-        registry,
-        new DeterministicHasher(),
-        new CapturingLogger(),
-        new Map([[toolId, new FakeHostActions({ available: true })]]),
-        fakeEnsureBuiltMarketplace(() => builtDir),
-        new Map(),
-        () => "/built",
-        undefined,
-        undefined,
-        undefined,
-        new Map([[toolId, hostReader]]),
-        foreignUser,
-        sources
-      );
+        manifestRepo: foreign,
+        marketplaceRegistry: registry,
+        hasher: new DeterministicHasher(),
+        logger: new CapturingLogger(),
+        activators: new Map([[toolId, new FakeHostActions({ available: true })]]),
+        ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
+        userCacheRoot: () => "/built",
+        hostPluginRegistries: new Map([[toolId, hostReader]]),
+        userManifestRepo: foreignUser,
+        nativeSources: sources,
+      });
       await foreignUseCase.execute({
         tools: registeredCatalog(),
         projectRoot: "/foreign",

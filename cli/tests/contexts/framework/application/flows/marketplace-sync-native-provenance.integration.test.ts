@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -105,20 +105,15 @@ function makeSync(
     : options.conflictOnAdd === true || hostRefs.has(FOREIGN_REF)
       ? "/fake-home/host-catalog/aidd-framework"
       : undefined;
-  const useCase = new MarketplaceSyncSettingsUseCase(
+  const useCase = marketplaceSync({
     fs,
-    projectRepo,
-    registry,
-    new DeterministicHasher(),
+    manifestRepo: projectRepo,
+    marketplaceRegistry: registry,
+    hasher: new DeterministicHasher(),
     logger,
-    new Map([[toolId, activator]]),
-    fakeEnsureBuiltMarketplace(() => builtDir),
-    new Map(),
-    () => "",
-    undefined,
-    undefined,
-    undefined,
-    new Map([
+    activators: new Map([[toolId, activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
+    hostPluginRegistries: new Map([
       [
         toolId,
         options.hostReader ??
@@ -128,8 +123,8 @@ function makeSync(
           }),
       ],
     ]),
-    machineRepo,
-    new Map([
+    userManifestRepo: machineRepo,
+    nativeSources: new Map([
       [
         toolId,
         options.sourceReader ??
@@ -152,8 +147,8 @@ function makeSync(
                 ])
           ),
       ],
-    ])
-  );
+    ]),
+  });
   return { useCase, fs, projectRepo, machineRepo, registry, activator, logger, hostCatalogBytes };
 }
 

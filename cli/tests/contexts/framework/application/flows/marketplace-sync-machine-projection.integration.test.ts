@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -137,49 +137,47 @@ describe("native plugin ownership follows the host's activation scope", () => {
           plugins: [{ name: "test-plugin" }],
         }),
       });
-      const sync = new MarketplaceSyncSettingsUseCase(
+      const sync = marketplaceSync({
         fs,
-        projectRepo,
-        registry,
-        new DeterministicHasher(),
-        new CapturingLogger(),
-        new Map([[claude, activator]]),
-        fakeEnsureBuiltMarketplace(),
-        mode === "fresh"
-          ? freshHostCatalogs()
-          : new Map([
-              [
-                claude,
-                new FakeHostMarketplaceRegistry({
-                  location: "/home/.claude/plugins/known_marketplaces.json",
-                  entries: new Map([
-                    [hostName, "/built/claude"],
-                    ["other-catalog", "/other/claude"],
-                  ]),
-                }),
-              ],
-            ]),
-        () => "",
-        undefined,
-        undefined,
-        undefined,
-        mode === "fresh"
-          ? readableHostPlugins()
-          : new Map([
-              [
-                claude,
-                new FakeHostPluginRegistry({
-                  location: "/home/.claude/plugins/installed_plugins.json",
-                  refs: new Map([
-                    [ref, { enabled: true, scope: "project" }],
-                    [otherRef, { enabled: true, scope: "user" }],
-                    ["test-plugin@external-catalog", { enabled: true, scope: "user" }],
-                  ]),
-                }),
-              ],
-            ]),
-        machineRepo,
-        freshNativeSources(
+        manifestRepo: projectRepo,
+        marketplaceRegistry: registry,
+        hasher: new DeterministicHasher(),
+        logger: new CapturingLogger(),
+        activators: new Map([[claude, activator]]),
+        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        hostMarketplaceRegistries:
+          mode === "fresh"
+            ? freshHostCatalogs()
+            : new Map([
+                [
+                  claude,
+                  new FakeHostMarketplaceRegistry({
+                    location: "/home/.claude/plugins/known_marketplaces.json",
+                    entries: new Map([
+                      [hostName, "/built/claude"],
+                      ["other-catalog", "/other/claude"],
+                    ]),
+                  }),
+                ],
+              ]),
+        hostPluginRegistries:
+          mode === "fresh"
+            ? readableHostPlugins()
+            : new Map([
+                [
+                  claude,
+                  new FakeHostPluginRegistry({
+                    location: "/home/.claude/plugins/installed_plugins.json",
+                    refs: new Map([
+                      [ref, { enabled: true, scope: "project" }],
+                      [otherRef, { enabled: true, scope: "user" }],
+                      ["test-plugin@external-catalog", { enabled: true, scope: "user" }],
+                    ]),
+                  }),
+                ],
+              ]),
+        userManifestRepo: machineRepo,
+        nativeSources: freshNativeSources(
           claude,
           activator,
           new Map([["/built/claude", hostName]]),
@@ -189,8 +187,8 @@ describe("native plugin ownership follows the host's activation scope", () => {
                 [hostName, registration.provenance],
                 ["other-catalog", otherRegistration.provenance],
               ])
-        )
-      );
+        ),
+      });
 
       const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
 
@@ -252,23 +250,23 @@ describe("native plugin ownership follows the host's activation scope", () => {
         plugins: [{ name: "test-plugin" }],
       }),
     });
-    const sync = new MarketplaceSyncSettingsUseCase(
+    const sync = marketplaceSync({
       fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      freshHostCatalogs(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readablePlugins(claude),
-      userRepo,
-      freshNativeSources(claude, activator, new Map([["/built/claude", "real-catalog"]]))
-    );
+      manifestRepo: projectRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostMarketplaceRegistries: freshHostCatalogs(),
+      hostPluginRegistries: readablePlugins(claude),
+      userManifestRepo: userRepo,
+      nativeSources: freshNativeSources(
+        claude,
+        activator,
+        new Map([["/built/claude", "real-catalog"]])
+      ),
+    });
 
     const result = await sync.execute({
       tools: registeredCatalog(),
@@ -327,36 +325,32 @@ describe("native plugin ownership follows the host's activation scope", () => {
       }),
     });
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
-    const sync = new MarketplaceSyncSettingsUseCase(
+    const sync = marketplaceSync({
       fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      {
+      manifestRepo: projectRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: {
         execute: async ({ marketplace }) => ({
           builtDir: `/built/${marketplace.name}`,
           version: "1.0.0",
           rebuilt: true,
         }),
       },
-      freshHostCatalogs(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(),
-      machineRepo,
-      freshNativeSources(
+      hostMarketplaceRegistries: freshHostCatalogs(),
+      hostPluginRegistries: readableHostPlugins(),
+      userManifestRepo: machineRepo,
+      nativeSources: freshNativeSources(
         claude,
         activator,
         new Map([
           ["/built/user-alias", "real-user"],
           ["/built/project-alias", "real-project"],
         ])
-      )
-    );
+      ),
+    });
 
     const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
 
@@ -448,23 +442,22 @@ describe("native plugin ownership follows the host's activation scope", () => {
       }),
     });
     fs.setSymlink(projectRoot, "/resolved-codex-project");
-    const sync = new MarketplaceSyncSettingsUseCase(
+    const sync = marketplaceSync({
       fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[codex, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readablePlugins(codex),
-      machineRepo,
-      freshNativeSources(codex, activator, new Map([["/built/codex", "real-catalog"]]))
-    );
+      manifestRepo: projectRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[codex, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: readablePlugins(codex),
+      userManifestRepo: machineRepo,
+      nativeSources: freshNativeSources(
+        codex,
+        activator,
+        new Map([["/built/codex", "real-catalog"]])
+      ),
+    });
 
     const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
 
@@ -541,36 +534,31 @@ describe("native plugin ownership follows the host's activation scope", () => {
       }),
     });
     const activator = new FakeHostActions({ available: true });
-    const sync = new MarketplaceSyncSettingsUseCase(
+    const sync = marketplaceSync({
       fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[codex, activator]]),
-      {
+      manifestRepo: projectRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[codex, activator]]),
+      ensureBuilt: {
         execute: async ({ marketplace }) => ({
           builtDir: `/built/${marketplace.name}`,
           version: "1.0.0",
           rebuilt: true,
         }),
       },
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readablePlugins(codex),
-      machineRepo,
-      freshNativeSources(
+      hostPluginRegistries: readablePlugins(codex),
+      userManifestRepo: machineRepo,
+      nativeSources: freshNativeSources(
         codex,
         activator,
         new Map([
           ["/built/market-a", "real-a"],
           ["/built/market-b", "real-b"],
         ])
-      )
-    );
+      ),
+    });
 
     await sync.execute({
       tools: registeredCatalog(),
@@ -642,23 +630,22 @@ describe("native plugin ownership follows the host's activation scope", () => {
         plugins: [{ name: "test-plugin" }],
       }),
     });
-    const sync = new MarketplaceSyncSettingsUseCase(
+    const sync = marketplaceSync({
       fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[codex, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readablePlugins(codex),
-      machineRepo,
-      freshNativeSources(codex, activator, new Map([["/built/codex", "real-catalog"]]))
-    );
+      manifestRepo: projectRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[codex, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: readablePlugins(codex),
+      userManifestRepo: machineRepo,
+      nativeSources: freshNativeSources(
+        codex,
+        activator,
+        new Map([["/built/codex", "real-catalog"]])
+      ),
+    });
 
     const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
 
@@ -717,22 +704,17 @@ describe("native plugin ownership follows the host's activation scope", () => {
         throw new Error("host plugin registry unreadable");
       },
     };
-    const sync = new MarketplaceSyncSettingsUseCase(
+    const sync = marketplaceSync({
       fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[codex, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      new Map([[codex, hostReader]]),
-      machineRepo
-    );
+      manifestRepo: projectRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[codex, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: new Map([[codex, hostReader]]),
+      userManifestRepo: machineRepo,
+    });
 
     const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
 
@@ -794,22 +776,17 @@ describe("native plugin ownership follows the host's activation scope", () => {
         refs: new Map([[requestedRef, { enabled: true }]]),
       }),
     };
-    const sync = new MarketplaceSyncSettingsUseCase(
+    const sync = marketplaceSync({
       fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[codex, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      new Map([[codex, hostReader]]),
-      machineRepo
-    );
+      manifestRepo: projectRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[codex, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: new Map([[codex, hostReader]]),
+      userManifestRepo: machineRepo,
+    });
 
     const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
 

@@ -1,10 +1,11 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import type { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -26,24 +27,18 @@ function syncWithProvenFreshHost(
   hasher: DeterministicHasher,
   activator: FakeHostActions
 ): MarketplaceSyncSettingsUseCase {
-  return new MarketplaceSyncSettingsUseCase(
+  return marketplaceSync({
     fs,
     manifestRepo,
-    registry,
+    marketplaceRegistry: registry,
     hasher,
-    new CapturingLogger(),
-    new Map([[TOOL.claude, activator]]),
-    fakeEnsureBuiltMarketplace(),
-    new Map(),
-    () => "",
-    undefined,
-    undefined,
-    undefined,
-    new Map([
+    logger: new CapturingLogger(),
+    activators: new Map([[TOOL.claude, activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+    hostPluginRegistries: new Map([
       [TOOL.claude, new FakeHostPluginRegistry({ location: "fake claude", refs: new Map() })],
     ]),
-    undefined,
-    new Map([
+    nativeSources: new Map([
       [
         TOOL.claude,
         new FakeHostMarketplaceSources(
@@ -53,8 +48,8 @@ function syncWithProvenFreshHost(
           new Map()
         ),
       ],
-    ])
-  );
+    ]),
+  });
 }
 
 /** A readable catalog at the path the default `fakeEnsureBuiltMarketplace()` resolves

@@ -2,13 +2,13 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
   BUILT_CACHE_SUBDIR,
   userBuiltMarketplaceDir,
 } from "../../../../../src/shared/domain/paths.js";
 import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -90,20 +90,17 @@ async function sync(options: {
     entries:
       options.registeredPath === undefined ? new Map() : new Map([[name, options.registeredPath]]),
   });
-  const useCase = new MarketplaceSyncSettingsUseCase(
+  const useCase = marketplaceSync({
     fs,
     manifestRepo,
-    registry,
-    new DeterministicHasher(),
+    marketplaceRegistry: registry,
+    hasher: new DeterministicHasher(),
     logger,
-    new Map([[TOOL.claude, activator]]),
-    fakeEnsureBuiltMarketplace(() => builtDir),
-    new Map([[TOOL.claude, hostReader]]),
-    () => USER_CACHE_ROOT,
-    undefined,
-    undefined,
-    undefined,
-    new Map([
+    activators: new Map([[TOOL.claude, activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
+    hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+    userCacheRoot: () => USER_CACHE_ROOT,
+    hostPluginRegistries: new Map([
       [
         TOOL.claude,
         new FakeHostPluginRegistry({
@@ -112,8 +109,8 @@ async function sync(options: {
         }),
       ],
     ]),
-    new InMemoryManifestRepository(machine),
-    new Map([
+    userManifestRepo: new InMemoryManifestRepository(machine),
+    nativeSources: new Map([
       [
         TOOL.claude,
         new FakeHostMarketplaceSources(
@@ -125,8 +122,8 @@ async function sync(options: {
             : new Map([[name, { kind: "registry", source: options.registeredPath }]])
         ),
       ],
-    ])
-  );
+    ]),
+  });
   const result = await useCase.execute({
     tools: registeredCatalog(),
     projectRoot: PROJECT_ROOT,

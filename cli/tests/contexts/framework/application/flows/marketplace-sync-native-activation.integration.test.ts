@@ -2,7 +2,6 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import type {
   HostPluginRegistry,
@@ -16,6 +15,7 @@ import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
 } from "../../../../../src/shared/domain/paths.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -124,23 +124,17 @@ function buildSync(activator: FakeHostActions, pluginMarketplace?: string) {
     fs,
     manifestRepo,
     hasher,
-    useCase: new MarketplaceSyncSettingsUseCase(
+    useCase: marketplaceSync({
       fs,
       manifestRepo,
-      registry,
+      marketplaceRegistry: registry,
       hasher,
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(),
-      undefined,
-      nativeSource(activator)
-    ),
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: readableHostPlugins(),
+      nativeSources: nativeSource(activator),
+    }),
   };
 }
 
@@ -310,23 +304,17 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     });
     const manifestRepo = manifestWithPlugin();
     const hasher = new DeterministicHasher();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
+      marketplaceRegistry: registry,
       hasher,
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(),
-      undefined,
-      nativeSource(activator, CATALOG_NAME)
-    );
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: readableHostPlugins(),
+      nativeSources: nativeSource(activator, CATALOG_NAME),
+    });
     await registry.save(PROJECT_ROOT, marketplace());
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
@@ -359,23 +347,17 @@ describe("registering a marketplace does not wait for a plugin to point at it", 
     manifest.addTool(claude, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
     const hasher = new DeterministicHasher();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
+      marketplaceRegistry: registry,
       hasher,
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(),
-      undefined,
-      nativeSource(activator)
-    );
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: readableHostPlugins(),
+      nativeSources: nativeSource(activator),
+    });
     await registry.save(PROJECT_ROOT, marketplace());
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
@@ -394,23 +376,17 @@ describe("what native activation leaves behind is not reported as the user's dri
     const hasher = new DeterministicHasher();
     const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT);
     const activator = new ActivatorThatWritesSettings(fs, settingsAbsolutePath);
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
+      marketplaceRegistry: registry,
       hasher,
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(),
-      undefined,
-      nativeSource(activator)
-    );
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: readableHostPlugins(),
+      nativeSources: nativeSource(activator),
+    });
     await registry.save(PROJECT_ROOT, marketplace());
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
@@ -434,16 +410,16 @@ describe("what native activation leaves behind is not reported as the user's dri
     const manifestRepo = manifestWithPlugin();
     const hasher = new DeterministicHasher();
     const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT);
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
+      marketplaceRegistry: registry,
       hasher,
-      new CapturingLogger(),
-      // Not available: the binary is not on the PATH, so nothing of the host's is written.
-      new Map([[claude, new FakeHostActions({ available: false })]]),
-      fakeEnsureBuiltMarketplace()
-    );
+      logger: new CapturingLogger(),
+      activators: // Not available: the binary is not on the PATH, so nothing of the host's is written.
+        new Map([[claude, new FakeHostActions({ available: false })]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
     await registry.save(PROJECT_ROOT, marketplace());
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
     const hashAfterSync = (await manifestRepo.load())
@@ -483,15 +459,15 @@ describe("reclaiming a dead registration asks and acts on the host's own name", 
     });
     const manifestRepo = manifestWithPlugin();
     const hasher = new DeterministicHasher();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
+      marketplaceRegistry: registry,
       hasher,
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map([
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostMarketplaceRegistries: new Map([
         [
           claude,
           {
@@ -504,13 +480,12 @@ describe("reclaiming a dead registration asks and acts on the host's own name", 
           },
         ],
       ]),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      new Map([[claude, { read: async () => hostReadingOf([]) }]]),
-      ownedMachineCatalog(CATALOG_NAME, builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")),
-      nativeSource(
+      hostPluginRegistries: new Map([[claude, { read: async () => hostReadingOf([]) }]]),
+      userManifestRepo: ownedMachineCatalog(
+        CATALOG_NAME,
+        builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")
+      ),
+      nativeSources: nativeSource(
         activator,
         CATALOG_NAME,
         new Map([
@@ -519,8 +494,8 @@ describe("reclaiming a dead registration asks and acts on the host's own name", 
             { kind: "registry", source: builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude") },
           ],
         ])
-      )
-    );
+      ),
+    });
     await registry.save(PROJECT_ROOT, marketplace());
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
@@ -632,23 +607,17 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
     );
     const manifestRepo = new InMemoryManifestRepository(manifest);
     const hasher = new DeterministicHasher();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
+      marketplaceRegistry: registry,
       hasher,
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(),
-      undefined,
-      nativeSource(activator, LIVE_MARKETPLACE)
-    );
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: readableHostPlugins(),
+      nativeSources: nativeSource(activator, LIVE_MARKETPLACE),
+    });
     return { useCase, registry, manifestRepo };
   }
 
@@ -740,22 +709,16 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
     );
     const manifestRepo = new InMemoryManifestRepository(manifest);
     const hasher = new DeterministicHasher();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
+      marketplaceRegistry: registry,
       hasher,
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      ensureBuiltSharedCatalog(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(),
-      undefined,
-      new Map([
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: ensureBuiltSharedCatalog(),
+      hostPluginRegistries: readableHostPlugins(),
+      nativeSources: new Map([
         [
           claude,
           new FakeHostMarketplaceSources(
@@ -765,8 +728,8 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
             new Map()
           ),
         ],
-      ])
-    );
+      ]),
+    });
     await registry.save(PROJECT_ROOT, aliasMarketplace(ALIAS_X));
     await registry.save(PROJECT_ROOT, aliasMarketplace(ALIAS_Y));
 
@@ -818,15 +781,15 @@ describe("what reclaiming a dead registration says", () => {
       "/foreign/cache/marker": "foreign bytes",
     });
     const logger = new CapturingLogger();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      manifestWithPlugin(),
-      registry,
-      new DeterministicHasher(),
+      manifestRepo: manifestWithPlugin(),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map([
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostMarketplaceRegistries: new Map([
         [
           claude,
           {
@@ -837,23 +800,20 @@ describe("what reclaiming a dead registration says", () => {
           },
         ],
       ]),
-      () => userRoot,
-      undefined,
-      undefined,
-      undefined,
-      new Map([[claude, { read: async () => hostReadingOf([]) }]]),
-      ownedMachineCatalog(
+      userCacheRoot: () => userRoot,
+      hostPluginRegistries: new Map([[claude, { read: async () => hostReadingOf([]) }]]),
+      userManifestRepo: ownedMachineCatalog(
         CATALOG_NAME,
         hostSource === "/foreign/cache"
           ? builtMarketplaceDir(PROJECT_ROOT, MARKETPLACE, "claude")
           : hostSource
       ),
-      nativeSource(
+      nativeSources: nativeSource(
         activator,
         CATALOG_NAME,
         new Map([[CATALOG_NAME, { kind: "registry", source: hostSource }]])
-      )
-    );
+      ),
+    });
     return { useCase, registry, logger, fs };
   }
 
@@ -987,29 +947,24 @@ function buildSyncReadingHost(
       pluginClaims: [],
     });
   }
-  const useCase = new MarketplaceSyncSettingsUseCase(
-    seededBuiltCatalog(),
+  const useCase = marketplaceSync({
+    fs: seededBuiltCatalog(),
     manifestRepo,
-    registry,
-    new DeterministicHasher(),
+    marketplaceRegistry: registry,
+    hasher: new DeterministicHasher(),
     logger,
-    new Map([[claude, activator]]),
-    fakeEnsureBuiltMarketplace(),
-    new Map(),
-    () => "",
-    undefined,
-    undefined,
-    undefined,
-    new Map([[claude, hostRegistry]]),
-    machine === undefined ? undefined : new InMemoryManifestRepository(machine),
-    nativeSource(
+    activators: new Map([[claude, activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+    hostPluginRegistries: new Map([[claude, hostRegistry]]),
+    userManifestRepo: machine === undefined ? undefined : new InMemoryManifestRepository(machine),
+    nativeSources: nativeSource(
       activator,
       MARKETPLACE,
       catalogOwned
         ? new Map([[MARKETPLACE, { kind: "registry", source: "/built/claude" }]])
         : new Map()
-    )
-  );
+    ),
+  });
   return { useCase, registry, manifestRepo, logger };
 }
 

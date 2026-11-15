@@ -8,7 +8,6 @@ import { DoctorReferencesUseCase } from "../../../src/contexts/framework/applica
 import { DoctorRegistrationUseCase } from "../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { DoctorTrackedFilesUseCase } from "../../../src/contexts/framework/application/doctor/doctor-tracked-files-use-case.js";
 import { DoctorUseCase } from "../../../src/contexts/framework/application/doctor/doctor-use-case.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
 import { UpdateOneToolUseCase } from "../../../src/contexts/framework/application/global/update-one-tool-use-case.js";
 import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect-host-registration.js";
@@ -28,6 +27,7 @@ import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
+import { marketplaceSync } from "../marketplace-sync.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "./fake-ensure-built-marketplace.js";
@@ -76,15 +76,15 @@ export async function buildUnitDeps(_projectRoot: string) {
 
   const syncConflictResolver = new SyncConflictResolverUseCase(fs);
   const nativePluginActivators = new Map([[TOOL.codex, new FakeHostActions()]]);
-  const marketplaceSyncSettings = new MarketplaceSyncSettingsUseCase(
+  const marketplaceSyncSettings = marketplaceSync({
     fs,
     manifestRepo,
     marketplaceRegistry,
     hasher,
     logger,
-    nativePluginActivators,
-    fakeEnsureBuiltMarketplace()
-  );
+    activators: nativePluginActivators,
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+  });
 
   await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
 

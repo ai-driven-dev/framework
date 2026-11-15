@@ -1,7 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { HostMarketplaceRegistry } from "../../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
 import type {
   HostMarketplaceSources,
@@ -19,6 +18,7 @@ import {
 } from "../../../../../src/shared/domain/paths.js";
 import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -174,15 +174,15 @@ async function recovery(options: RecoveryOptions = {}) {
       return delegate.read(root);
     },
   };
-  const useCase = new MarketplaceSyncSettingsUseCase(
+  const useCase = marketplaceSync({
     fs,
-    repo,
-    registry,
+    manifestRepo: repo,
+    marketplaceRegistry: registry,
     hasher,
     logger,
-    new Map([[TOOL.claude, activator]]),
-    fakeEnsureBuiltMarketplace(),
-    new Map([
+    activators: new Map([[TOOL.claude, activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+    hostMarketplaceRegistries: new Map([
       [
         TOOL.claude,
         options.host ??
@@ -192,11 +192,8 @@ async function recovery(options: RecoveryOptions = {}) {
           }),
       ],
     ]),
-    () => options.userRoot ?? "",
-    undefined,
-    undefined,
-    undefined,
-    new Map([
+    userCacheRoot: () => options.userRoot ?? "",
+    hostPluginRegistries: new Map([
       [
         TOOL.claude,
         {
@@ -208,9 +205,8 @@ async function recovery(options: RecoveryOptions = {}) {
         },
       ],
     ]),
-    undefined,
-    new Map([[TOOL.claude, native]])
-  );
+    nativeSources: new Map([[TOOL.claude, native]]),
+  });
   const result = await useCase.execute({ tools: registeredCatalog(), projectRoot: ROOT });
   return { activator, manifest, repo, logger, fs, result, useCase };
 }
@@ -558,26 +554,21 @@ async function ownedNativeSettings(
   }
   const activator = new FakeHostActions({ available: true });
   const logger = new CapturingLogger();
-  const sync = new MarketplaceSyncSettingsUseCase(
+  const sync = marketplaceSync({
     fs,
-    projectRepo,
-    registry,
+    manifestRepo: projectRepo,
+    marketplaceRegistry: registry,
     hasher,
     logger,
-    new Map([[toolId, activator]]),
-    {
+    activators: new Map([[toolId, activator]]),
+    ensureBuilt: {
       execute: async ({ marketplace }) => ({
         builtDir: `/built/${toolId}/${marketplace.name.replace(/-alias$/, "")}`,
         version: "1.0.0",
         rebuilt: false,
       }),
     },
-    new Map(),
-    () => "",
-    undefined,
-    undefined,
-    undefined,
-    new Map([
+    hostPluginRegistries: new Map([
       [
         toolId,
         {
@@ -588,8 +579,8 @@ async function ownedNativeSettings(
         },
       ],
     ]),
-    machineRepo,
-    new Map([
+    userManifestRepo: machineRepo,
+    nativeSources: new Map([
       [
         toolId,
         new FakeHostMarketplaceSources(
@@ -599,8 +590,8 @@ async function ownedNativeSettings(
           initial
         ),
       ],
-    ])
-  );
+    ]),
+  });
   return {
     sync,
     fs,
@@ -757,28 +748,24 @@ describe("shared framework references follow any successful native tool outcome"
         removeReference: async () => undefined,
         listAllReferencingProjects: async () => [],
       };
-      const sync = new MarketplaceSyncSettingsUseCase(
+      const sync = marketplaceSync({
         fs,
-        new InMemoryManifestRepository(project),
-        registry,
-        new DeterministicHasher(),
-        new CapturingLogger(),
-        new Map([
+        manifestRepo: new InMemoryManifestRepository(project),
+        marketplaceRegistry: registry,
+        hasher: new DeterministicHasher(),
+        logger: new CapturingLogger(),
+        activators: new Map([
           [TOOL.claude, claude],
           [TOOL.codex, codex],
         ]),
-        fakeEnsureBuiltMarketplace(),
-        new Map(),
-        () => "",
-        undefined,
-        references,
-        { get: () => "2.0.0" },
-        new Map([
+        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        userSourceReferences: references,
+        currentVersionProvider: { get: () => "2.0.0" },
+        hostPluginRegistries: new Map([
           [TOOL.claude, { read: async () => ({ location: "host plugins", refs: new Map() }) }],
           [TOOL.codex, { read: async () => ({ location: "host plugins", refs: new Map() }) }],
         ]),
-        undefined,
-        new Map<AiToolId, HostMarketplaceSources>([
+        nativeSources: new Map<AiToolId, HostMarketplaceSources>([
           [
             TOOL.claude,
             new FakeHostMarketplaceSources(claude, "registry", () => "aidd-framework", new Map()),
@@ -792,8 +779,8 @@ describe("shared framework references follow any successful native tool outcome"
               }),
             },
           ],
-        ])
-      );
+        ]),
+      });
       const result = await sync.execute({ tools: registeredCatalog(), projectRoot: ROOT, scope });
       expect(result.activated).toEqual(["claude", "codex"]);
       expect(result.errors).toEqual([]);

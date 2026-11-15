@@ -1,7 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import type { NativeRegistrations } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -10,6 +9,7 @@ import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { builtMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
 import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -138,32 +138,29 @@ async function build(setup: Setup = {}) {
   }
   const machineRepo =
     machine === undefined ? undefined : new SaveCountingManifestRepository(machine);
-  const useCase = new MarketplaceSyncSettingsUseCase(
+  const useCase = marketplaceSync({
     fs,
     manifestRepo,
-    registry,
+    marketplaceRegistry: registry,
     hasher,
-    new CapturingLogger(),
-    new Map(toolIds.map((toolId) => [toolId, activator])),
-    buildPerMarketplace(setup.failingBuilds ?? []),
-    setup.hostRegisteredSource === undefined
-      ? new Map()
-      : new Map([
-          [
-            TOOL.claude,
-            {
-              read: async () => ({
-                location: "/home/.claude/plugins/known_marketplaces.json",
-                entries: new Map([[MARKETPLACE, setup.hostRegisteredSource]]),
-              }),
-            },
-          ],
-        ]),
-    () => "",
-    undefined,
-    undefined,
-    undefined,
-    new Map([
+    logger: new CapturingLogger(),
+    activators: new Map(toolIds.map((toolId) => [toolId, activator])),
+    ensureBuilt: buildPerMarketplace(setup.failingBuilds ?? []),
+    hostMarketplaceRegistries:
+      setup.hostRegisteredSource === undefined
+        ? new Map()
+        : new Map([
+            [
+              TOOL.claude,
+              {
+                read: async () => ({
+                  location: "/home/.claude/plugins/known_marketplaces.json",
+                  entries: new Map([[MARKETPLACE, setup.hostRegisteredSource]]),
+                }),
+              },
+            ],
+          ]),
+    hostPluginRegistries: new Map([
       [
         TOOL.claude,
         new FakeHostPluginRegistry({
@@ -172,8 +169,8 @@ async function build(setup: Setup = {}) {
         }),
       ],
     ]),
-    machineRepo,
-    new Map([
+    userManifestRepo: machineRepo,
+    nativeSources: new Map([
       [
         TOOL.claude,
         new FakeHostMarketplaceSources(
@@ -185,8 +182,8 @@ async function build(setup: Setup = {}) {
             : new Map([[MARKETPLACE, { kind: "registry", source: setup.hostRegisteredSource }]])
         ),
       ],
-    ])
-  );
+    ]),
+  });
   return { useCase, manifestRepo, manifest, fs, hasher, activator, machineRepo };
 }
 

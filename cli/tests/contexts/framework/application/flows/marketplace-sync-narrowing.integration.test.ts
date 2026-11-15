@@ -4,10 +4,10 @@
  */
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -95,20 +95,15 @@ function build(activator: FakeHostActions) {
     fs,
     manifest,
     manifestRepo,
-    useCase: new MarketplaceSyncSettingsUseCase(
+    useCase: marketplaceSync({
       fs,
       manifestRepo,
-      registry,
+      marketplaceRegistry: registry,
       hasher,
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      ensureBuiltPerMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      new Map([
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: ensureBuiltPerMarketplace(),
+      hostPluginRegistries: new Map([
         [
           TOOL.claude,
           new FakeHostPluginRegistry({
@@ -117,8 +112,7 @@ function build(activator: FakeHostActions) {
           }),
         ],
       ]),
-      undefined,
-      new Map([
+      nativeSources: new Map([
         [
           TOOL.claude,
           new FakeHostMarketplaceSources(
@@ -133,8 +127,8 @@ function build(activator: FakeHostActions) {
             new Map()
           ),
         ],
-      ])
-    ),
+      ]),
+    }),
   };
 }
 

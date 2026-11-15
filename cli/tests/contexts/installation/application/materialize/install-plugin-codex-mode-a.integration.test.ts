@@ -3,11 +3,12 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import type { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -30,24 +31,18 @@ function syncWithProvenFreshHost(
   logger: CapturingLogger,
   activator: FakeHostActions
 ): MarketplaceSyncSettingsUseCase {
-  return new MarketplaceSyncSettingsUseCase(
+  return marketplaceSync({
     fs,
     manifestRepo,
-    registry,
+    marketplaceRegistry: registry,
     hasher,
     logger,
-    new Map([[TOOL.codex, activator]]),
-    fakeEnsureBuiltMarketplace(),
-    new Map(),
-    () => "",
-    undefined,
-    undefined,
-    undefined,
-    new Map([
+    activators: new Map([[TOOL.codex, activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+    hostPluginRegistries: new Map([
       [TOOL.codex, new FakeHostPluginRegistry({ location: "fake codex", refs: new Map() })],
     ]),
-    undefined,
-    new Map([
+    nativeSources: new Map([
       [
         TOOL.codex,
         new FakeHostMarketplaceSources(
@@ -57,8 +52,8 @@ function syncWithProvenFreshHost(
           new Map()
         ),
       ],
-    ])
-  );
+    ]),
+  });
 }
 
 /** A readable catalog at the path `fakeEnsureBuiltMarketplace()` resolves "codex" to, at its
@@ -230,15 +225,15 @@ describe("install codex plugin via Mode A (integration)", () => {
     const activator = new FakeHostActions({ available: false });
     await seedCodexPlugin(manifestRepo, registry);
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.codex, activator]]),
-      fakeEnsureBuiltMarketplace()
-    );
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.codex, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.addedMarketplaces).toEqual([]);

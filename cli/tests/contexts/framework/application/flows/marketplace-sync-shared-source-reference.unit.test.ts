@@ -6,9 +6,9 @@ import type {
 } from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
@@ -85,23 +85,19 @@ describe("the shared source's own reference, recorded by sync", () => {
     const activator = new FakeHostActions({ available: true });
     const proof = freshHostProof(activator);
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
-      new FakeCurrentVersion(VERSION),
-      proof.pluginRegistries,
-      undefined,
-      proof.sources
-    );
+      currentVersionProvider: new FakeCurrentVersion(VERSION),
+      hostPluginRegistries: proof.pluginRegistries,
+      nativeSources: proof.sources,
+    });
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
@@ -126,23 +122,19 @@ describe("the shared source's own reference, recorded by sync", () => {
     const activator = new FakeHostActions({ available: true });
     const proof = freshHostProof(activator);
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
-      new FakeCurrentVersion(VERSION),
-      proof.pluginRegistries,
-      undefined,
-      proof.sources
-    );
+      currentVersionProvider: new FakeCurrentVersion(VERSION),
+      hostPluginRegistries: proof.pluginRegistries,
+      nativeSources: proof.sources,
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -172,20 +164,16 @@ describe("the shared source's own reference, recorded by sync", () => {
       () => "/fake-home/.config/aidd"
     );
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map(),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
-      new FakeCurrentVersion(VERSION)
-    );
+      currentVersionProvider: new FakeCurrentVersion(VERSION),
+    });
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
@@ -215,23 +203,20 @@ describe("the shared source's own reference, recorded by sync", () => {
     const activator = new FakeHostActions({ available: true });
     const proof = freshHostProof(activator);
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      registerFramework,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegisterFrameworkUseCase: registerFramework,
       userSourceReferences,
-      new FakeCurrentVersion(VERSION),
-      proof.pluginRegistries,
-      undefined,
-      proof.sources
-    );
+      currentVersionProvider: new FakeCurrentVersion(VERSION),
+      hostPluginRegistries: proof.pluginRegistries,
+      nativeSources: proof.sources,
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -252,15 +237,14 @@ describe("the shared source's own reference, recorded by sync", () => {
     const manifestRepo = await manifestRepoWithClaudeInstalled();
     const registry = new InMemoryMarketplaceRegistry();
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map(),
-      fakeEnsureBuiltMarketplace()
-    );
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -284,20 +268,17 @@ describe("the shared source's own reference, recorded by sync", () => {
       },
     };
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map(),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      registerFramework,
-      new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd"),
-      new FakeCurrentVersion(VERSION)
-    );
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegisterFrameworkUseCase: registerFramework,
+      userSourceReferences: new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd"),
+      currentVersionProvider: new FakeCurrentVersion(VERSION),
+    });
 
     // No `recreateFrameworkIfMissing` — the same call shape `syncNativeActivation` uses.
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
@@ -306,15 +287,14 @@ describe("the shared source's own reference, recorded by sync", () => {
   });
 
   it("stays a silent no-op when asked to recreate with nothing wired to do it", async () => {
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      new InMemoryFileAdapter({}, new DeterministicHasher()),
-      await manifestRepoWithClaudeInstalled(),
-      new InMemoryMarketplaceRegistry(),
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map(),
-      fakeEnsureBuiltMarketplace()
-    );
+    const useCase = marketplaceSync({
+      fs: new InMemoryFileAdapter({}, new DeterministicHasher()),
+      manifestRepo: await manifestRepoWithClaudeInstalled(),
+      marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -337,15 +317,15 @@ describe("a project with no manifest to sync", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
     const activator = new FakeHostActions({ available: true });
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      new InMemoryFileAdapter({}, new DeterministicHasher()),
-      new InMemoryManifestRepository(),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      fakeEnsureBuiltMarketplace()
-    );
+    const useCase = marketplaceSync({
+      fs: new InMemoryFileAdapter({}, new DeterministicHasher()),
+      manifestRepo: new InMemoryManifestRepository(),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -359,15 +339,15 @@ describe("a project with no manifest to sync", () => {
   it("returns the empty result when the manifest cannot be loaded", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      new InMemoryFileAdapter({}, new DeterministicHasher()),
-      new UnloadableManifestRepository(),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[claude, new FakeHostActions({ available: true })]]),
-      fakeEnsureBuiltMarketplace()
-    );
+    const useCase = marketplaceSync({
+      fs: new InMemoryFileAdapter({}, new DeterministicHasher()),
+      manifestRepo: new UnloadableManifestRepository(),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[claude, new FakeHostActions({ available: true })]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),

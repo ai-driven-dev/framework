@@ -7,7 +7,6 @@ import {
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import type { HostActions } from "../../../../../src/contexts/host-registration/contract/host-actions.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
@@ -20,6 +19,7 @@ import {
 } from "../../../../../src/shared/domain/paths.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { VersionReader } from "../../../../../src/shared/ports/version-reader.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -128,18 +128,15 @@ describe("MarketplaceSyncSettingsUseCase — sync migrates a project installed b
       projectScopeEntry({ kind: "github", repo: "ai-driven-dev/framework", ref: "v1" })
     );
     const manifest = Manifest.create();
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map(),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+    const useCase = marketplaceSync({
+      fs: new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -161,18 +158,15 @@ describe("MarketplaceSyncSettingsUseCase — sync migrates a project installed b
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, projectScopeEntry({ kind: "local", path: "/some/path" }));
     const manifest = Manifest.create();
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map(),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+    const useCase = marketplaceSync({
+      fs: new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -212,28 +206,23 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
         plugins: [],
       }),
     });
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.codex, activator]]),
-      fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(TOOL.codex),
-      new InMemoryManifestRepository(canonicallyOwned(TOOL.codex)),
-      new Map([
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.codex, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR),
+      hostPluginRegistries: readableHostPlugins(TOOL.codex),
+      userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.codex)),
+      nativeSources: new Map([
         [
           TOOL.codex,
           { read: async () => ({ location: "/host/codex/catalogues", unreadable: "EACCES" }) },
         ],
-      ])
-    );
+      ]),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -264,15 +253,15 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
       }),
     });
     const logger = new CapturingLogger();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[TOOL.codex, activator]]),
-      fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR)
-    );
+      activators: new Map([[TOOL.codex, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CODEX_BUILT_DIR),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -313,15 +302,15 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
         plugins: [],
       }),
     });
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.codex, activator]]),
-      fakeEnsureBuiltMarketplace(() => builtDir)
-    );
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.codex, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
+    });
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
@@ -353,15 +342,17 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
         plugins: [{ name: "foreign-plugin" }],
       }),
     });
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    // No `hostMarketplaceRegistries` reader for claude: `guardAgainstConflict` returns
+    // "proceed" without reading one, so the exclusion is decided in `reclaimOrReport`.
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map([
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      hostMarketplaceRegistries: new Map([
         [
           TOOL.claude,
           new FakeHostMarketplaceRegistry({
@@ -370,13 +361,8 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
           }),
         ],
       ]),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(TOOL.claude),
-      undefined,
-      new Map([
+      hostPluginRegistries: readableHostPlugins(TOOL.claude),
+      nativeSources: new Map([
         [
           TOOL.claude,
           {
@@ -391,10 +377,8 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
             }),
           },
         ],
-      ])
-      // No `hostMarketplaceRegistries` reader for claude: `guardAgainstConflict` returns
-      // "proceed" without reading one, so the exclusion is decided in `reclaimOrReport`.
-    );
+      ]),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -416,15 +400,15 @@ describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () =
     manifest.addTool(TOOL.claude, "test", []);
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const logger = new CapturingLogger();
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
+    const useCase = marketplaceSync({
+      fs: new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map([
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      hostMarketplaceRegistries: new Map([
         [
           TOOL.claude,
           new FakeHostMarketplaceRegistry({
@@ -433,11 +417,7 @@ describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () =
           }),
         ],
       ]),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      new Map([
+      hostPluginRegistries: new Map([
         [
           TOOL.claude,
           new FakeHostPluginRegistry({
@@ -446,9 +426,8 @@ describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () =
           }),
         ],
       ]),
-      undefined,
-      freshClaudeSource(activator, CLAUDE_BUILT_DIR)
-    );
+      nativeSources: freshClaudeSource(activator, CLAUDE_BUILT_DIR),
+    });
 
     return {
       activator,
@@ -524,22 +503,21 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
       entries: new Map([[FRAMEWORK_MARKETPLACE_NAME, foreignProjectCache]]),
     });
     const added: Array<{ version: string; projectRoot: string }> = [];
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
-      new Map([[TOOL.claude, hostReader]]),
-      () => USER_CACHE_ROOT,
-      undefined,
-      noSourceReferences(added),
-      fakeVersion(CURRENT_VERSION),
-      readableHostPlugins(TOOL.claude),
-      new InMemoryManifestRepository(canonicallyOwned(TOOL.claude))
-    );
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+      userCacheRoot: () => USER_CACHE_ROOT,
+      userSourceReferences: noSourceReferences(added),
+      currentVersionProvider: fakeVersion(CURRENT_VERSION),
+      hostPluginRegistries: readableHostPlugins(TOOL.claude),
+      userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.claude)),
+    });
 
     const before = await fs.readFile(`${foreignProjectCache}/${CATALOG_RELATIVE}`);
     const result = await useCase.execute({
@@ -587,22 +565,21 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
       entries: new Map([[FRAMEWORK_MARKETPLACE_NAME, foreignProjectCache]]),
     });
     const added: Array<{ version: string; projectRoot: string }> = [];
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
-      new Map([[TOOL.claude, hostReader]]),
-      () => USER_CACHE_ROOT,
-      undefined,
-      noSourceReferences(added),
-      fakeVersion(CURRENT_VERSION),
-      readableHostPlugins(TOOL.claude),
-      new InMemoryManifestRepository(canonicallyOwned(TOOL.claude))
-    );
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+      userCacheRoot: () => USER_CACHE_ROOT,
+      userSourceReferences: noSourceReferences(added),
+      currentVersionProvider: fakeVersion(CURRENT_VERSION),
+      hostPluginRegistries: readableHostPlugins(TOOL.claude),
+      userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.claude)),
+    });
 
     const before = await fs.readFile(`${sharedBuiltDir()}/${CATALOG_RELATIVE}`);
     const result = await useCase.execute({
@@ -662,22 +639,19 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
 
   it("does not repoint a legacy host entry when no reference ledger is available", async () => {
     const { fs, hostReader, registry, manifest, activator } = hostOnForeignCache();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
-      new Map([[TOOL.claude, hostReader]]),
-      () => USER_CACHE_ROOT,
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(TOOL.claude),
-      new InMemoryManifestRepository(canonicallyOwned(TOOL.claude))
-    );
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+      userCacheRoot: () => USER_CACHE_ROOT,
+      hostPluginRegistries: readableHostPlugins(TOOL.claude),
+      userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.claude)),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -693,22 +667,20 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
   it("does not repoint or record a legacy host entry when the version is unknown", async () => {
     const { fs, hostReader, registry, manifest, activator } = hostOnForeignCache();
     const added: Array<{ version: string; projectRoot: string }> = [];
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
-      new Map([[TOOL.claude, hostReader]]),
-      () => USER_CACHE_ROOT,
-      undefined,
-      noSourceReferences(added),
-      undefined,
-      readableHostPlugins(TOOL.claude),
-      new InMemoryManifestRepository(canonicallyOwned(TOOL.claude))
-    );
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => sharedBuiltDir()),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+      userCacheRoot: () => USER_CACHE_ROOT,
+      userSourceReferences: noSourceReferences(added),
+      hostPluginRegistries: readableHostPlugins(TOOL.claude),
+      userManifestRepo: new InMemoryManifestRepository(canonicallyOwned(TOOL.claude)),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -763,18 +735,16 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
         plugins: [],
       }),
     });
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -803,18 +773,16 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     const activator = new FakeHostActions({ available: false });
     const fs = new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" });
     const logger = new CapturingLogger();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -853,18 +821,16 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
         throw new Error("translator refused the source");
       },
     };
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[TOOL.claude, activator]]),
-      failingBuild,
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: failingBuild,
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -892,18 +858,16 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     // No catalog seeded at the built dir, so `registerMarketplace` throws
     // `UnreadableBuiltCatalogError`, which `activateNativeTools` collects as a genuine error.
     const fs = new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" });
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -930,18 +894,16 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       }),
     });
     fs.setSymlink(OLD_CACHE_DIR, "/etc/evil");
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -991,22 +953,17 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       }),
     });
     const activator = new OrderObservingActivator(fs, OLD_CACHE_FILE);
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry),
-      undefined,
-      undefined,
-      readableHostPlugins(TOOL.claude),
-      undefined,
-      new Map([
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+      hostPluginRegistries: readableHostPlugins(TOOL.claude),
+      nativeSources: new Map([
         [
           TOOL.claude,
           {
@@ -1025,8 +982,8 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
             }),
           },
         ],
-      ])
-    );
+      ]),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -1073,18 +1030,16 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
   it("warns with the whole message when a requested tool's binary is off PATH", async () => {
     const logger = new CapturingLogger();
     const registry = projectWithMigratableEntry();
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" }),
-      new InMemoryManifestRepository(manifestWithClaude()),
-      registry,
-      new DeterministicHasher(),
+    const useCase = marketplaceSync({
+      fs: new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" }),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[TOOL.claude, new FakeHostActions({ available: false })]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+      activators: new Map([[TOOL.claude, new FakeHostActions({ available: false })]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -1101,22 +1056,20 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
   it("warns with the whole message when a requested tool's build failed", async () => {
     const logger = new CapturingLogger();
     const registry = projectWithMigratableEntry();
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" }),
-      new InMemoryManifestRepository(manifestWithClaude()),
-      registry,
-      new DeterministicHasher(),
+    const useCase = marketplaceSync({
+      fs: new InMemoryFileAdapter({ [OLD_CACHE_FILE]: "stale content" }),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
-      {
+      activators: new Map([[TOOL.claude, new FakeHostActions({ available: true })]]),
+      ensureBuilt: {
         execute: async () => {
           throw new Error("translator refused the source");
         },
       },
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -1143,21 +1096,19 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
         return { builtDir: CLAUDE_BUILT_DIR, version: "test", rebuilt: true };
       },
     };
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([
         [TOOL.claude, activator],
         [TOOL.codex, activator],
       ]),
-      codexBuildFails,
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+      ensureBuilt: codexBuildFails,
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -1178,23 +1129,18 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     });
     fs.setSymlink(OLD_CACHE_DIR, "/etc/evil");
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifestWithClaude()),
-      registry,
-      new DeterministicHasher(),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry),
-      undefined,
-      undefined,
-      readableHostPlugins(TOOL.claude),
-      undefined,
-      freshClaudeSource(activator, CLAUDE_BUILT_DIR)
-    );
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+      hostPluginRegistries: readableHostPlugins(TOOL.claude),
+      nativeSources: freshClaudeSource(activator, CLAUDE_BUILT_DIR),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -1210,18 +1156,18 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
   it("says which tree it purged", async () => {
     const logger = new CapturingLogger();
     const registry = projectWithMigratableEntry();
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      staleCacheAndCatalog(),
-      new InMemoryManifestRepository(manifestWithClaude()),
-      registry,
-      new DeterministicHasher(),
+    const useCase = marketplaceSync({
+      fs: staleCacheAndCatalog(),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      new RegisterFrameworkMarketplace(registry)
-    );
+      activators: new Map([
+        [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })],
+      ]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -1236,15 +1182,17 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
 
   it("leaves the stale built tree alone at user scope, where no project file is this run's to touch", async () => {
     const fs = staleCacheAndCatalog();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifestWithClaude()),
-      registryWithSharedFramework(),
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR)
-    );
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      marketplaceRegistry: registryWithSharedFramework(),
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([
+        [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })],
+      ]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -1259,15 +1207,17 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
 
   it("leaves the stale built tree alone unless the caller asked to recreate the framework entry", async () => {
     const fs = staleCacheAndCatalog();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifestWithClaude()),
-      registryWithSharedFramework(),
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR)
-    );
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      marketplaceRegistry: registryWithSharedFramework(),
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([
+        [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })],
+      ]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -1280,15 +1230,17 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
 
   it("leaves the stale built tree alone while the framework entry is still at project scope", async () => {
     const fs = staleCacheAndCatalog();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(manifestWithClaude()),
-      projectWithMigratableEntry(),
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })]]),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR)
-    );
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      marketplaceRegistry: projectWithMigratableEntry(),
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([
+        [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: false })],
+      ]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -1312,18 +1264,15 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       })
     );
     const calls: RegisterFrameworkMarketplaceCommand[] = [];
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
-      new InMemoryManifestRepository(manifestWithClaude()),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map(),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      recordingRegister(calls)
-    );
+    const useCase = marketplaceSync({
+      fs: new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: recordingRegister(calls),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -1346,18 +1295,15 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
       })
     );
     const calls: RegisterFrameworkMarketplaceCommand[] = [];
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
-      new InMemoryManifestRepository(manifestWithClaude()),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map(),
-      fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
-      new Map(),
-      () => "",
-      recordingRegister(calls)
-    );
+    const useCase = marketplaceSync({
+      fs: new InMemoryFileAdapter(catalogFixture(CLAUDE_BUILT_DIR)),
+      manifestRepo: new InMemoryManifestRepository(manifestWithClaude()),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => CLAUDE_BUILT_DIR),
+      marketplaceRegisterFrameworkUseCase: recordingRegister(calls),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -1505,22 +1451,21 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
       pluginRefs: [],
       pluginClaims: [],
     });
-    const sync = new MarketplaceSyncSettingsUseCase(
-      syncFs,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(() => sharedBuiltDir),
-      new Map([[TOOL.claude, hostReader]]),
-      () => USER_CACHE_ROOT,
-      new RegisterFrameworkMarketplace(registry),
-      undefined,
-      fakeVersion(CURRENT_VERSION),
-      readableHostPlugins(TOOL.claude),
-      new InMemoryManifestRepository(machine),
-      new Map([
+    const sync = marketplaceSync({
+      fs: syncFs,
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(() => sharedBuiltDir),
+      hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+      userCacheRoot: () => USER_CACHE_ROOT,
+      marketplaceRegisterFrameworkUseCase: new RegisterFrameworkMarketplace(registry),
+      currentVersionProvider: fakeVersion(CURRENT_VERSION),
+      hostPluginRegistries: readableHostPlugins(TOOL.claude),
+      userManifestRepo: new InMemoryManifestRepository(machine),
+      nativeSources: new Map([
         [
           TOOL.claude,
           {
@@ -1535,8 +1480,8 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
             }),
           },
         ],
-      ])
-    );
+      ]),
+    });
 
     const syncResult = await sync.execute({
       tools: registeredCatalog(),

@@ -1,9 +1,9 @@
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
@@ -96,29 +96,24 @@ describe("settings synchronization under the machine ownership lock", () => {
         locked = false;
       }
     };
-    const sync = new MarketplaceSyncSettingsUseCase(
+    const sync = marketplaceSync({
       fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      proof.plugins,
-      {
+      manifestRepo: projectRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: proof.plugins,
+      userManifestRepo: {
         path: machineRepo.path,
         load: () => machineRepo.load(),
         save: (manifest) => machineRepo.save(manifest),
         delete: () => machineRepo.delete(),
         withExclusiveAccess,
       },
-      proof.sources
-    );
+      nativeSources: proof.sources,
+    });
     return { sync, fs, activator, projectRepo, machineRepo, acquireLock, accesses, load };
   }
 
@@ -178,23 +173,17 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const proof = freshHostProof(activator);
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      seededBuiltCatalog(),
-      manifestWithTool(),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      proof.plugins,
-      undefined,
-      proof.sources
-    );
+    const useCase = marketplaceSync({
+      fs: seededBuiltCatalog(),
+      manifestRepo: manifestWithTool(),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: proof.plugins,
+      nativeSources: proof.sources,
+    });
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
@@ -231,23 +220,17 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       }),
     });
     const proof = freshHostProof(activator);
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      catalog,
-      new InMemoryManifestRepository(manifest),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      proof.plugins,
-      undefined,
-      proof.sources
-    );
+    const useCase = marketplaceSync({
+      fs: catalog,
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: proof.plugins,
+      nativeSources: proof.sources,
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -295,15 +278,15 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const { fs, manifestRepo } = await pluginFixture();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace()
-    );
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -321,15 +304,15 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const { fs, manifestRepo } = await pluginFixture();
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace()
-    );
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
@@ -345,15 +328,15 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     await registry.save(PROJECT_ROOT, marketplace());
     const constructedRepo = manifestWithTool();
     const overrideRepo = manifestWithTool();
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      seededBuiltCatalog(),
-      constructedRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace()
-    );
+    const useCase = marketplaceSync({
+      fs: seededBuiltCatalog(),
+      manifestRepo: constructedRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
 
     const result = await useCase.execute({
       tools: registeredCatalog(),
@@ -379,20 +362,17 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       removeReference: async () => undefined,
       listAllReferencingProjects: async () => [],
     };
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      seededBuiltCatalog(),
-      manifestWithTool(),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
+    const useCase = marketplaceSync({
+      fs: seededBuiltCatalog(),
+      manifestRepo: manifestWithTool(),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
-      new FakeCurrentVersion()
-    );
+      currentVersionProvider: new FakeCurrentVersion(),
+    });
 
     await useCase.execute({
       tools: registeredCatalog(),
@@ -416,23 +396,19 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       removeReference: async () => undefined,
       listAllReferencingProjects: async () => [],
     };
-    const useCase = new MarketplaceSyncSettingsUseCase(
-      seededBuiltCatalog(),
-      manifestWithTool(),
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.claude, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
+    const useCase = marketplaceSync({
+      fs: seededBuiltCatalog(),
+      manifestRepo: manifestWithTool(),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.claude, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
-      new FakeCurrentVersion(),
-      proof.plugins,
-      undefined,
-      proof.sources
-    );
+      currentVersionProvider: new FakeCurrentVersion(),
+      hostPluginRegistries: proof.plugins,
+      nativeSources: proof.sources,
+    });
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 

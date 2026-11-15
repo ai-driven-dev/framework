@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { HostPluginRegistryEntry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -49,27 +49,25 @@ async function globalActivation(toolId: AiToolId) {
       plugins: [{ name: "test-plugin" }],
     }),
   });
-  const sync = new MarketplaceSyncSettingsUseCase(
+  const sync = marketplaceSync({
     fs,
-    new InMemoryManifestRepository(Manifest.create()),
-    registry,
-    new DeterministicHasher(),
-    new CapturingLogger(),
-    new Map([[toolId, activator]]),
-    fakeEnsureBuiltMarketplace(),
-    new Map([
+    manifestRepo: new InMemoryManifestRepository(Manifest.create()),
+    marketplaceRegistry: registry,
+    hasher: new DeterministicHasher(),
+    logger: new CapturingLogger(),
+    activators: new Map([[toolId, activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace(),
+    hostMarketplaceRegistries: new Map([
       [
         TOOL.claude,
         new FakeHostMarketplaceRegistry({ location: "catalogues", entries: new Map() }),
       ],
     ]),
-    () => "",
-    undefined,
-    undefined,
-    undefined,
-    new Map([[toolId, new FakeHostPluginRegistry({ location: "plugins", refs })]]),
-    userRepo,
-    new Map([
+    hostPluginRegistries: new Map([
+      [toolId, new FakeHostPluginRegistry({ location: "plugins", refs })],
+    ]),
+    userManifestRepo: userRepo,
+    nativeSources: new Map([
       [
         toolId,
         new FakeHostMarketplaceSources(
@@ -79,8 +77,8 @@ async function globalActivation(toolId: AiToolId) {
           new Map()
         ),
       ],
-    ])
-  );
+    ]),
+  });
   const options = { projectRoot: "/project", scope: "user" as const, manifestRepo: userRepo };
   const setup = await sync.execute({
     tools: registeredCatalog(),

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { HostMarketplaceRegistryReading } from "../../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -68,24 +68,24 @@ describe("native catalogue source provenance", () => {
     });
     fs.setFile("/foreign/cache/marker.json", "foreign bytes");
     const activator = new FakeHostActions({ available: true });
-    const sync = new MarketplaceSyncSettingsUseCase(
+    const sync = marketplaceSync({
       fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[toolId, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      options.catalogue === undefined
-        ? new Map()
-        : new Map([[toolId, new FakeHostMarketplaceRegistry(options.catalogue)]]),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      reading === undefined ? new Map() : new Map([[toolId, new FakeHostPluginRegistry(reading)]]),
-      machineRepo,
-      new Map([
+      manifestRepo: projectRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[toolId, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostMarketplaceRegistries:
+        options.catalogue === undefined
+          ? new Map()
+          : new Map([[toolId, new FakeHostMarketplaceRegistry(options.catalogue)]]),
+      hostPluginRegistries:
+        reading === undefined
+          ? new Map()
+          : new Map([[toolId, new FakeHostPluginRegistry(reading)]]),
+      userManifestRepo: machineRepo,
+      nativeSources: new Map([
         [
           toolId,
           new FakeHostMarketplaceSources(
@@ -95,8 +95,8 @@ describe("native catalogue source provenance", () => {
             new Map()
           ),
         ],
-      ])
-    );
+      ]),
+    });
     return { sync, fs, activator, projectRepo, machineRepo };
   }
 
@@ -436,25 +436,20 @@ describe("native catalogue source provenance", () => {
           };
         },
       };
-      const sync = new MarketplaceSyncSettingsUseCase(
+      const sync = marketplaceSync({
         fs,
-        projectRepo,
-        registry,
-        new DeterministicHasher(),
-        new CapturingLogger(),
-        new Map([[codex, activator]]),
-        fakeEnsureBuiltMarketplace(),
-        new Map(),
-        () => "",
-        undefined,
-        undefined,
-        undefined,
-        new Map([
+        manifestRepo: projectRepo,
+        marketplaceRegistry: registry,
+        hasher: new DeterministicHasher(),
+        logger: new CapturingLogger(),
+        activators: new Map([[codex, activator]]),
+        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        hostPluginRegistries: new Map([
           [codex, new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
         ]),
-        machineRepo,
-        new Map([[codex, source]])
-      );
+        userManifestRepo: machineRepo,
+        nativeSources: new Map([[codex, source]]),
+      });
       const result = await sync.execute({ tools: registeredCatalog(), projectRoot: "/A" });
       expect(result.warnings.join(" ")).toMatch(
         /post-add|add returned.*effective host source.*reconcile manually/i
@@ -546,25 +541,20 @@ describe("native catalogue source provenance", () => {
       const source: HostMarketplaceSources = {
         read: async () => reading,
       };
-      const sync = new MarketplaceSyncSettingsUseCase(
+      const sync = marketplaceSync({
         fs,
-        projectRepo,
-        registry,
-        new DeterministicHasher(),
-        new CapturingLogger(),
-        new Map([[copilot, activator]]),
-        fakeEnsureBuiltMarketplace(),
-        new Map(),
-        () => "",
-        undefined,
-        undefined,
-        undefined,
-        new Map([
+        manifestRepo: projectRepo,
+        marketplaceRegistry: registry,
+        hasher: new DeterministicHasher(),
+        logger: new CapturingLogger(),
+        activators: new Map([[copilot, activator]]),
+        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        hostPluginRegistries: new Map([
           [copilot, new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
         ]),
-        machineRepo,
-        new Map([[copilot, source]])
-      );
+        userManifestRepo: machineRepo,
+        nativeSources: new Map([[copilot, source]]),
+      });
       const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
       expect(result.warnings.join(" ")).toContain(reason);
       expect(activator.addedMarketplaces).toEqual([]);
@@ -627,23 +617,20 @@ describe("native catalogue source provenance", () => {
               ]),
       }),
     };
-    const sync = new MarketplaceSyncSettingsUseCase(
+    const sync = marketplaceSync({
       fs,
-      projectRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[codex, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      new Map([[codex, new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })]]),
-      machineRepo,
-      new Map([[codex, source]])
-    );
+      manifestRepo: projectRepo,
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[codex, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: new Map([
+        [codex, new FakeHostPluginRegistry({ location: "host-plugins", refs: new Map() })],
+      ]),
+      userManifestRepo: machineRepo,
+      nativeSources: new Map([[codex, source]]),
+    });
     const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
     expect(result.errors).toEqual([]);
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
@@ -679,20 +666,15 @@ describe("native catalogue source provenance", () => {
         addedAt: "2026-09-15T00:00:00Z",
       })
     );
-    const syncB = new MarketplaceSyncSettingsUseCase(
+    const syncB = marketplaceSync({
       fs,
-      new InMemoryManifestRepository(projectB),
-      registryB,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[codex, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      new Map([
+      manifestRepo: new InMemoryManifestRepository(projectB),
+      marketplaceRegistry: registryB,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[codex, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: new Map([
         [
           codex,
           new FakeHostPluginRegistry({
@@ -701,9 +683,9 @@ describe("native catalogue source provenance", () => {
           }),
         ],
       ]),
-      machineRepo,
-      new Map([[codex, source]])
-    );
+      userManifestRepo: machineRepo,
+      nativeSources: new Map([[codex, source]]),
+    });
     await syncB.execute({ tools: registeredCatalog(), projectRoot: "/B" });
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
     expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([

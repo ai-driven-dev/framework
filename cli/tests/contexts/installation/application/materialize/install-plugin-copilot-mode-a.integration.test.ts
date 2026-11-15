@@ -1,10 +1,10 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -108,15 +108,14 @@ describe("install copilot plugin via Mode A (integration)", () => {
     });
     await fs.writeFile(settingsPath, foreignSettings);
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
+      marketplaceRegistry: registry,
       hasher,
-      new CapturingLogger(),
-      new Map(),
-      fakeEnsureBuiltMarketplace()
-    );
+      logger: new CapturingLogger(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(await fs.readFile(settingsPath)).toBe(foreignSettings);
@@ -130,22 +129,16 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const activator = new FakeHostActions({ available: true });
     await seedCopilotPlugin(manifestRepo, registry);
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.copilot, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(),
-      undefined,
-      new Map([
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.copilot, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: readableHostPlugins(),
+      nativeSources: new Map([
         [
           TOOL.copilot,
           new FakeHostMarketplaceSources(
@@ -155,8 +148,8 @@ describe("install copilot plugin via Mode A (integration)", () => {
             new Map()
           ),
         ],
-      ])
-    );
+      ]),
+    });
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
@@ -178,22 +171,17 @@ describe("install copilot plugin via Mode A (integration)", () => {
     });
     await seedCopilotPlugin(manifestRepo, registry);
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.copilot, activator]]),
-      fakeEnsureBuiltMarketplace(),
-      new Map(),
-      () => "",
-      undefined,
-      undefined,
-      undefined,
-      readableHostPlugins(),
-      ownedMachineCatalog()
-    );
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.copilot, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: readableHostPlugins(),
+      userManifestRepo: ownedMachineCatalog(),
+    });
     const result = await useCase.execute({
       tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
@@ -217,15 +205,15 @@ describe("install copilot plugin via Mode A (integration)", () => {
       conflictOnAdd: true,
       registrationState: "dead",
     });
-    const result = await new MarketplaceSyncSettingsUseCase(
+    const result = await marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
-      new CapturingLogger(),
-      new Map([[TOOL.copilot, activator]]),
-      fakeEnsureBuiltMarketplace()
-    ).execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.copilot, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }).execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.forcedRemovals).toEqual([]);
@@ -249,15 +237,15 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const logger = new CapturingLogger();
     await seedCopilotPlugin(manifestRepo, registry);
 
-    await new MarketplaceSyncSettingsUseCase(
+    await marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[TOOL.copilot, activator]]),
-      fakeEnsureBuiltMarketplace()
-    ).execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+      activators: new Map([[TOOL.copilot, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }).execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(logger.warnMessages.some((m) => m.includes("host source unproven"))).toBe(true);
@@ -280,15 +268,15 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const logger = new CapturingLogger();
     await seedCopilotPlugin(manifestRepo, registry);
 
-    const useCase = new MarketplaceSyncSettingsUseCase(
+    const useCase = marketplaceSync({
       fs,
       manifestRepo,
-      registry,
-      new DeterministicHasher(),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
       logger,
-      new Map([[TOOL.copilot, activator]]),
-      fakeEnsureBuiltMarketplace()
-    );
+      activators: new Map([[TOOL.copilot, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    });
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);

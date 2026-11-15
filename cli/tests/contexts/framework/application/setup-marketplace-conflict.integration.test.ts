@@ -5,7 +5,6 @@ import { Marketplace } from "../../../../src/contexts/distribution/domain/market
 import { MarketplaceSourceMode } from "../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
-import { MarketplaceSyncSettingsUseCase } from "../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupToolsUseCase } from "../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
@@ -14,6 +13,7 @@ import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/fr
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
+import { marketplaceSync } from "../../../helpers/marketplace-sync.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
@@ -90,16 +90,16 @@ async function buildUseCaseWithConflict() {
     entries: new Map([["probe-mkt", "/other/src"]]),
   });
   const activator = new FakeHostActions({ available: true, enablesPlugins: false });
-  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    deps.marketplaceRegistry,
-    deps.hasher,
-    deps.logger,
-    new Map([["claude", activator]]),
-    fakeEnsureBuiltMarketplace((target) => `/built/${target}`),
-    new Map([[TOOL.claude, hostReader]])
-  );
+  const marketplaceSyncSettingsUseCase = marketplaceSync({
+    fs: deps.fs,
+    manifestRepo: deps.manifestRepo,
+    marketplaceRegistry: deps.marketplaceRegistry,
+    hasher: deps.hasher,
+    logger: deps.logger,
+    activators: new Map([["claude", activator]]),
+    ensureBuilt: fakeEnsureBuiltMarketplace((target) => `/built/${target}`),
+    hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
+  });
 
   const setupMarketplaceRegistration = new SetupMarketplaceRegistrationUseCase(
     deps.fs,
