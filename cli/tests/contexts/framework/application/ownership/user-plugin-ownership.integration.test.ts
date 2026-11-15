@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { detachUserPlugin } from "../../../../../src/contexts/framework/application/ownership/user-plugin-ownership.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { detachUserPlugin } from "../../../../../src/contexts/machine-claims/application/user-plugin-ownership.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";

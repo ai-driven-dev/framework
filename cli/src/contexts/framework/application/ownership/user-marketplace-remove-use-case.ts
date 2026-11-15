@@ -11,12 +11,12 @@ import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import { userScopeFilesSafeToDelete } from "../../../machine-claims/application/user-scope-plugin-files.js";
 import { resolveHomeDir } from "../../domain/reading/home-dir.js";
 import type {
   MarketplaceRemoveOptions,
   MarketplaceRemoveResult,
 } from "../flows/marketplace-remove-use-case.js";
-import { userScopeFilesSafeToDelete } from "../shared/user-scope-plugin-files.js";
 import type { NativeHostRegistrationGate } from "./native-host-registration-gate.js";
 
 export class UserMarketplaceRemoveUseCase {

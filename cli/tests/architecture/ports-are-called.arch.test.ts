@@ -203,7 +203,7 @@ describe("a port declares nothing nobody calls", () => {
     expect(added, "an optional method hides a second port behind a `!== undefined` branch").toEqual(
       []
     );
-    expect(fixed, "fixed — remove these from OPTIONAL_BASELINE").toEqual([]);
+    expect(fixed, "fixed, remove these from OPTIONAL_BASELINE").toEqual([]);
   });
 
   it("finds the ports of this codebase, so the rule cannot pass by selecting nothing", () => {

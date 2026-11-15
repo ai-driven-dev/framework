@@ -31,12 +31,9 @@ src/
 │   │   │   ├── setup/
 │   │   │   ├── shared/
 │   │   │   └── uninstall/
-│   │   ├── domain/
-│   │   │   ├── formats/
-│   │   │   ├── plugins/
-│   │   │   ├── ports/
-│   │   │   └── reading/    # the home directory a use case resolves when none is given
-│   │   └── infrastructure/
+│   │   └── domain/
+│   │       ├── formats/
+│   │       └── reading/    # the home directory a use case resolves when none is given
 │   ├── installation/    # the installation record, and what installs, restores and materializes it into a project
 │   │   ├── application/
 │   │   │   ├── install/
@@ -51,6 +48,11 @@ src/
 │   │   │   └── plugins/
 │   │   ├── infrastructure/
 │   │   │   └── assets/    # configs inlined at build time, schemas copied beside the binary
+│   │   └── ports/
+│   ├── machine-claims/    # which projects claim a machine-wide plugin or source, and what each user scope holds for them
+│   │   ├── application/
+│   │   ├── domain/
+│   │   ├── infrastructure/
 │   │   └── ports/
 │   ├── recipes/    # checking a recipe's structure, examples and local links
 │   │   ├── application/

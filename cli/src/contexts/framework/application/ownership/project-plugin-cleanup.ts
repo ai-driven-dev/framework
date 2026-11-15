@@ -11,9 +11,9 @@ import {
 } from "../../../installation/application/shared/remove-project-hooks.js";
 import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import { detachNativePluginRefs } from "../../../machine-claims/application/native-plugin-ownership.js";
+import { detachUserPlugin } from "../../../machine-claims/application/user-plugin-ownership.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { detachNativePluginRefs } from "./native-plugin-ownership.js";
-import { detachUserPlugin } from "./user-plugin-ownership.js";
 
 /** Read-only OpenCode MCP proof, shared by Clean and local plugin removals before any detach. */
 export async function assertProjectMcpEntriesRemovable(

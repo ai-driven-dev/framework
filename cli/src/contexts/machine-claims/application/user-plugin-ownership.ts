@@ -1,7 +1,7 @@
-import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Lock } from "../../../../shared/ports/lock.js";
-import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import type { AiToolId } from "../../../shared/domain/tool.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { Lock } from "../../../shared/ports/lock.js";
+import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
 
 /** Release only this project's claim; global files remain until explicit user cleanup. */
 export async function detachUserPlugin(

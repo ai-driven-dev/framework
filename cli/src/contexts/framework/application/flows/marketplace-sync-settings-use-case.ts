@@ -42,10 +42,15 @@ import type {
 } from "../../../installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import {
+  frameworkSourceIsShared,
+  resolveProjectRootForReferences,
+  toleratingUnreadableSourceReferences,
+} from "../../../machine-claims/application/shared-source-reference-support.js";
+import type { UserSourceReferences } from "../../../machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
-import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 import {
   inspectNativeMarketplaceSource,
   sameNativeMarketplaceSource,
@@ -60,11 +65,6 @@ import {
   marketplaceCatalogProbePath,
   readMarketplaceCatalogIdentity,
 } from "../shared/read-marketplace-catalog-identity.js";
-import {
-  frameworkSourceIsShared,
-  resolveProjectRootForReferences,
-  toleratingUnreadableSourceReferences,
-} from "../shared/shared-source-reference-support.js";
 
 export interface MarketplaceSyncSettingsOptions {
   projectRoot: string;

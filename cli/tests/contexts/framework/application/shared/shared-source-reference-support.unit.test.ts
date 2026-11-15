@@ -6,7 +6,7 @@ import {
   refAnotherProjectStillNeeds,
   resolveProjectRootForReferences,
   toleratingUnreadableSourceReferences,
-} from "../../../../../src/contexts/framework/application/shared/shared-source-reference-support.js";
+} from "../../../../../src/contexts/machine-claims/application/shared-source-reference-support.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import {
   errnoError,

@@ -7,7 +7,7 @@ import {
 } from "../../../shared/domain/paths.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
-import type { UserSourceReferences } from "../domain/ports/user-source-references.js";
+import type { UserSourceReferences } from "../ports/user-source-references.js";
 
 type ReferencesFile = Record<string, readonly string[]>;
 

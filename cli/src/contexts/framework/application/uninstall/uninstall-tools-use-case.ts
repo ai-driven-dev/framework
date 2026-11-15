@@ -12,9 +12,9 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import { detachNativePluginRefs } from "../../../machine-claims/application/native-plugin-ownership.js";
+import { detachUserPlugin } from "../../../machine-claims/application/user-plugin-ownership.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
-import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
 
 export interface UninstallToolsOptions {
   toolIds: ToolId[];

@@ -3,7 +3,7 @@ import { describeError } from "../../../../shared/domain/describe-error.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-containment.js";
+import { isStrictlyWithinUserScope } from "../../../machine-claims/domain/user-scope-containment.js";
 
 /**
  * Returns `<cacheRoot>/<relativeSegments>` once its real, `realpath`-resolved location is proven to

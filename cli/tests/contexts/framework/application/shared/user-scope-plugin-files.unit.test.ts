@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
-} from "../../../../../src/contexts/framework/application/shared/user-scope-plugin-files.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+} from "../../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import {

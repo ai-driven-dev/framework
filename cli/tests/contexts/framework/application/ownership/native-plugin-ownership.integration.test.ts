@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
   detachNativePluginRefs,
   isMachineOwnedNativeRef,
-} from "../../../../../src/contexts/framework/application/ownership/native-plugin-ownership.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+} from "../../../../../src/contexts/machine-claims/application/native-plugin-ownership.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";

@@ -36,26 +36,10 @@ import type { Manifest } from "../../installation/domain/manifest.js";
 import { aiddGitignoreEntries } from "../../installation/domain/manifest-gitignore-entries.js";
 import type { InstalledPlugin } from "../../installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
-import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
-import type { UserSourceReferences } from "../domain/ports/user-source-references.js";
-import { resolveHomeDir } from "../domain/reading/home-dir.js";
-import {
-  assertNoForeignNativeRefs,
-  inspectNativeMarketplaceSource,
-} from "./ownership/native-marketplace-source-proof.js";
 import {
   detachNativePluginRefs,
   machineNativePluginClaim,
-} from "./ownership/native-plugin-ownership.js";
-import { assertProjectMcpEntriesRemovable } from "./ownership/project-plugin-cleanup.js";
-import { detachUserPlugin } from "./ownership/user-plugin-ownership.js";
-import { bestEffortNativeCall } from "./shared/best-effort-native-call.js";
-import {
-  purgeAllNativeCaches,
-  type UndoneToolRegistrations,
-} from "./shared/purge-native-marketplace-cache.js";
-import { resolveUninstallScopeOrder } from "./shared/resolve-uninstall-scope.js";
+} from "../../machine-claims/application/native-plugin-ownership.js";
 import {
   describeGuardedPluginRefMessage,
   frameworkSourceIsShared,
@@ -63,8 +47,24 @@ import {
   refAnotherProjectStillNeeds,
   resolveProjectRootForReferences,
   toleratingUnreadableSourceReferences,
-} from "./shared/shared-source-reference-support.js";
-import { userScopeFilesSafeToDelete } from "./shared/user-scope-plugin-files.js";
+} from "../../machine-claims/application/shared-source-reference-support.js";
+import { detachUserPlugin } from "../../machine-claims/application/user-plugin-ownership.js";
+import { userScopeFilesSafeToDelete } from "../../machine-claims/application/user-scope-plugin-files.js";
+import type { UserSourceReferences } from "../../machine-claims/ports/user-source-references.js";
+import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
+import { resolveHomeDir } from "../domain/reading/home-dir.js";
+import {
+  assertNoForeignNativeRefs,
+  inspectNativeMarketplaceSource,
+} from "./ownership/native-marketplace-source-proof.js";
+import { assertProjectMcpEntriesRemovable } from "./ownership/project-plugin-cleanup.js";
+import { bestEffortNativeCall } from "./shared/best-effort-native-call.js";
+import {
+  purgeAllNativeCaches,
+  type UndoneToolRegistrations,
+} from "./shared/purge-native-marketplace-cache.js";
+import { resolveUninstallScopeOrder } from "./shared/resolve-uninstall-scope.js";
 
 /** What reading this project's shared source reference found — `undefined` only
  * when there is nothing to guard on at all: the port is absent, or no shared, machine-scope

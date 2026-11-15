@@ -8,10 +8,10 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribu
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import type { UserSourceReferences } from "../../../../../src/contexts/framework/domain/ports/user-source-references.js";
 import type { HostActions } from "../../../../../src/contexts/host-registration/contract/host-actions.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";
 import {
   BUILT_CACHE_SUBDIR,
   builtMarketplaceDir,

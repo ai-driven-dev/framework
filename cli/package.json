@@ -86,6 +86,7 @@
     "test:mutation:distribution-plugins": "node scripts/run-mutation.mjs distribution-plugins",
     "test:mutation:framework": "node scripts/run-mutation.mjs framework",
     "test:mutation:installation": "node scripts/run-mutation.mjs installation",
+    "test:mutation:machine-claims": "node scripts/run-mutation.mjs machine-claims",
     "test:mutation:presentation": "node scripts/run-mutation.mjs presentation",
     "test:mutation:runtime": "node scripts/run-mutation.mjs runtime",
     "test:mutation:shared": "node scripts/run-mutation.mjs shared",

@@ -17,12 +17,12 @@ import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framewor
 import { SetupToolsUseCase } from "../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
-import type { UserSourceReferences } from "../../../../src/contexts/framework/domain/ports/user-source-references.js";
 import { ProjectContext } from "../../../../src/contexts/framework/domain/project-context.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
-import { UserSourceReferencesAdapter } from "../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
+import { UserSourceReferencesAdapter } from "../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import type { UserSourceReferences } from "../../../../src/contexts/machine-claims/ports/user-source-references.js";
 import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../../../src/presentation/prompts/setup-tools-prompt-use-case.js";

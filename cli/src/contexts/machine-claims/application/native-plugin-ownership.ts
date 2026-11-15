@@ -1,8 +1,8 @@
-import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Lock } from "../../../../shared/ports/lock.js";
-import type { NativePluginClaim } from "../../../installation/domain/manifest/native-registrations.js";
-import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import type { ToolId } from "../../../shared/domain/tool.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { Lock } from "../../../shared/ports/lock.js";
+import type { NativePluginClaim } from "../../installation/domain/manifest/native-registrations.js";
+import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
 
 export async function machineNativePluginClaim(
   repo: ManifestRepository | undefined,

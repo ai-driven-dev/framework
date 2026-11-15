@@ -93,6 +93,17 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/domain/manifest/native-registrations.ts",
     "src/contexts/installation/domain/plugins/installed-plugin.ts",
   ],
+  "machine-claims": [
+    // Transitional (reference-context.md, M-C1): framework's orchestrators read the claims and
+    // the user source references that moved here, and leave this list as each one moves into
+    // orchestration behind a claims port.
+    "src/contexts/machine-claims/application/native-plugin-ownership.ts",
+    "src/contexts/machine-claims/application/shared-source-reference-support.ts",
+    "src/contexts/machine-claims/application/user-plugin-ownership.ts",
+    "src/contexts/machine-claims/application/user-scope-plugin-files.ts",
+    "src/contexts/machine-claims/domain/user-scope-containment.ts",
+    "src/contexts/machine-claims/ports/user-source-references.ts",
+  ],
 };
 
 function contextsOnDisk(files: readonly string[]): string[] {

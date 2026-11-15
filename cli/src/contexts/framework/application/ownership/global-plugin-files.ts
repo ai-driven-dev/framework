@@ -4,9 +4,9 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
+import { isStrictlyWithinUserScope } from "../../../machine-claims/domain/user-scope-containment.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
-import { isStrictlyWithinUserScope } from "../../domain/plugins/user-scope-containment.js";
 
 /**
  * A plugin's machine-scope files, read from the tool's built tree and keyed by their path under

@@ -30,7 +30,6 @@ import type { SetupToolsUseCase } from "../contexts/framework/application/setup/
 import type { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import type { UninstallIdeUseCase } from "../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import type { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
-import type { UserSourceReferences } from "../contexts/framework/domain/ports/user-source-references.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
 import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
@@ -39,6 +38,7 @@ import type { ReportStatus } from "../contexts/installation/application/report-s
 import type { Restore } from "../contexts/installation/application/restore/restore.js";
 import type { FileMerger } from "../contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
+import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
 import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
 import type { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
