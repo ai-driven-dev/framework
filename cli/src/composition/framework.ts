@@ -42,6 +42,7 @@ import { UninstallUseCase } from "../contexts/framework/application/uninstall/un
 import { InspectHostRegistration } from "../contexts/host-registration/application/inspect-host-registration.js";
 import { NativeHostRegistrationGate } from "../contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../contexts/host-registration/application/refresh-host-plugin.js";
+import { RegisterPluginWithHost } from "../contexts/host-registration/application/register-plugin-with-host.js";
 import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw-from-host.js";
 import { InstallIdeConfig } from "../contexts/installation/application/install/install-ide-config.js";
 import { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
@@ -246,16 +247,19 @@ export async function createDeps(
     marketplaceRegistry,
     hasher,
     logger,
-    nativePluginActivators,
+    new RegisterPluginWithHost(
+      fs,
+      nativePluginActivators,
+      hostMarketplaceRegistries,
+      hostPluginRegistries,
+      nativeSources
+    ),
     ensureBuiltMarketplaceUseCase,
-    hostMarketplaceRegistries,
     userConfigDir,
     registerFrameworkMarketplace,
     userSourceReferences,
     currentVersionProvider,
-    hostPluginRegistries,
-    userManifestRepo,
-    nativeSources
+    userManifestRepo
   );
   const updateGitignore = new UpdateGitignore(fs);
   const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore);

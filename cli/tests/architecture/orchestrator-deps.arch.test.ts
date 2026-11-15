@@ -32,7 +32,7 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   { path: "src/contexts/framework/application/clean-use-case.ts", dependencies: 13 },
   {
     path: "src/contexts/framework/application/flows/marketplace-sync-settings-use-case.ts",
-    dependencies: 15,
+    dependencies: 12,
   },
   // Machine clean also needs both witnesses: source ownership and the full host ref list,
   // because unregistering an owned catalogue could still disable a foreign installed ref.

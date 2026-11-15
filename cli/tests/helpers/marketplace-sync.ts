@@ -1,6 +1,8 @@
 import { MarketplaceSyncSettingsUseCase } from "../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import { RegisterPluginWithHost } from "../../src/contexts/host-registration/application/register-plugin-with-host.js";
 
 type Constructed = ConstructorParameters<typeof MarketplaceSyncSettingsUseCase>;
+type Hosts = ConstructorParameters<typeof RegisterPluginWithHost>;
 
 /** What a test names; the host maps and every optional collaborator default to empty or absent. */
 export interface MarketplaceSyncParts {
@@ -10,15 +12,15 @@ export interface MarketplaceSyncParts {
   hasher: Constructed[3];
   logger: Constructed[4];
   ensureBuilt: Constructed[6];
-  activators?: Constructed[5];
-  hostMarketplaceRegistries?: Constructed[7];
-  userCacheRoot?: Constructed[8];
-  marketplaceRegisterFrameworkUseCase?: Constructed[9];
-  userSourceReferences?: Constructed[10];
-  currentVersionProvider?: Constructed[11];
-  hostPluginRegistries?: Constructed[12];
-  userManifestRepo?: Constructed[13];
-  nativeSources?: Constructed[14];
+  userCacheRoot?: Constructed[7];
+  marketplaceRegisterFrameworkUseCase?: Constructed[8];
+  userSourceReferences?: Constructed[9];
+  currentVersionProvider?: Constructed[10];
+  userManifestRepo?: Constructed[11];
+  activators?: Hosts[1];
+  hostMarketplaceRegistries?: Hosts[2];
+  hostPluginRegistries?: Hosts[3];
+  nativeSources?: Hosts[4];
 }
 
 export function marketplaceSync(parts: MarketplaceSyncParts): MarketplaceSyncSettingsUseCase {
@@ -28,15 +30,18 @@ export function marketplaceSync(parts: MarketplaceSyncParts): MarketplaceSyncSet
     parts.marketplaceRegistry,
     parts.hasher,
     parts.logger,
-    parts.activators ?? new Map(),
+    new RegisterPluginWithHost(
+      parts.fs,
+      parts.activators ?? new Map(),
+      parts.hostMarketplaceRegistries ?? new Map(),
+      parts.hostPluginRegistries ?? new Map(),
+      parts.nativeSources ?? new Map()
+    ),
     parts.ensureBuilt,
-    parts.hostMarketplaceRegistries,
     parts.userCacheRoot,
     parts.marketplaceRegisterFrameworkUseCase,
     parts.userSourceReferences,
     parts.currentVersionProvider,
-    parts.hostPluginRegistries,
-    parts.userManifestRepo,
-    parts.nativeSources
+    parts.userManifestRepo
   );
 }
