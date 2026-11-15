@@ -10,12 +10,12 @@ The files written.
 
 1. Run the checker on the skill folder per [scripts.md](../references/scripts.md), and fix each finding until it exits 0.
 2. Review each written file against [skill-authoring.md](../references/skill-authoring.md), and list its breaches, even none.
-   - A breach in a file the plan does not list: add it to the plan and confirm it with the user.
+   - A breach in a file the plan does not list: ask to add it to the plan, then end the turn and wait for the user's own answer.
 3. Find each kept item and each change in the written files with its `file:line`.
    - Unconfirmed addition: list it as a breach.
 4. Fix each breach and repeat from step 1 until every list is empty.
    - Fix declined or impossible: report the blocker and stop.
-5. Propose a trial per [runtime-validation.md](../references/runtime-validation.md), then wait for approval.
+5. Offer a trial per [runtime-validation.md](../references/runtime-validation.md), then end the turn and wait for the user's own answer.
    - Declined, no subagent, or running in a subagent: go to step 7, runtime unverified.
 6. Run the approved trial in a subagent and inspect its evidence.
    - Failure: fix and repeat from step 1.
