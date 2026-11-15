@@ -19,53 +19,6 @@ export class NativeHostRegistrationGate {
     private readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map()
   ) {}
 
-  async requireTargetedUpdate<Claim extends { readonly ref: string }>(
-    tool: AiToolProfile,
-    claim: Claim,
-    projectRoot: string,
-    registrations?: RegistrationRecord
-  ): Promise<HostActions> {
-    const { toolId } = tool;
-    const activation = tool.nativeActivation();
-    if (activation?.refreshesOnePlugin() !== true) {
-      throw new Error(
-        `${toolId} does not support targeted native plugin update for '${claim.ref}'; use marketplace refresh or framework update instead.`
-      );
-    }
-    const activator = this.activators.get(activation.hostBinary());
-    const reader = this.registries.get(toolId);
-    if (
-      activator === undefined ||
-      !activator.isAvailable() ||
-      activator.updatePlugin === undefined ||
-      reader === undefined
-    ) {
-      throw new Error(
-        `${toolId}: cannot update AIDD-owned ref '${claim.ref}' without its CLI and readable host registry; canonical claims retained.`
-      );
-    }
-    if ((await reader.read(projectRoot)).refs?.get(claim.ref)?.enabled !== true) {
-      throw new Error(
-        `${toolId}: ref '${claim.ref}' is not provably enabled on the host; update refused.`
-      );
-    }
-    const registration = registrations?.marketplaces.find((marketplace) =>
-      claim.ref.endsWith(`@${marketplace.hostName}`)
-    );
-    if (registration === undefined)
-      throw new Error(
-        `${toolId}: ref '${claim.ref}' has no canonical catalogue source proof; update refused.`
-      );
-    const proof = await inspectNativeMarketplaceSource(
-      this.sources.get(toolId),
-      projectRoot,
-      registration
-    );
-    if (proof.status !== "owned")
-      throw new Error(proof.reason ?? `${toolId}: catalogue source unproven.`);
-    return activator;
-  }
-
   /** `registrations` carries the claims on its refs beside the host data: the gate reads only
    * their `ref` and hands the claims it kept back as they came. */
   async planMarketplaceRemoval<Claim extends { readonly ref: string }>(

@@ -4,7 +4,7 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
-import { NativeHostRegistrationGate } from "../../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
+import { RefreshHostPlugin } from "../../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -53,7 +53,7 @@ async function makeRegistry(): Promise<InMemoryMarketplaceRegistry> {
 function makeUpdateUseCase(
   deps: Deps,
   registry: InMemoryMarketplaceRegistry,
-  nativeHost: NativeHostRegistrationGate = new NativeHostRegistrationGate(new Map(), new Map()),
+  nativeHost: RefreshHostPlugin = new RefreshHostPlugin(new Map(), new Map()),
   ensureBuilt: BuiltMarketplaceEnsurer = fakeEnsureBuiltMarketplace()
 ): UserPluginUpdateUseCase {
   return new UserPluginUpdateUseCase(
@@ -141,7 +141,7 @@ function attachFutureSupportedNativeClaim(deps: Deps) {
     pluginClaims: [{ ref: "native-plugin@aidd-catalog", dependents: [PROJECT_ROOT] }],
   });
   const activator = new FakeHostActions({ available: true });
-  const nativeHost = new NativeHostRegistrationGate(
+  const nativeHost = new RefreshHostPlugin(
     new Map([[copilot, activator]]),
     new Map([
       [

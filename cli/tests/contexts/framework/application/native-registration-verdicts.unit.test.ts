@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import { NativeHostRegistrationGate } from "../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
+import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
@@ -102,14 +103,21 @@ async function outcomeOf(attempt: Promise<unknown>): Promise<Outcome> {
   }
 }
 
-function gateOver(registry: HostPluginRegistryReading, sources?: HostMarketplaceSources) {
-  const activator = new FakeHostActions({ available: true });
-  return new NativeHostRegistrationGate(
-    new Map([[copilot, activator]]),
+function hostOver(registry: HostPluginRegistryReading, sources?: HostMarketplaceSources) {
+  return [
+    new Map([[copilot, new FakeHostActions({ available: true })]]),
     new Map([[copilot, new FakeHostPluginRegistry(registry)]]),
-    new Map(sources === undefined ? [] : [[copilot, sources]])
-  );
+    new Map(sources === undefined ? [] : [[copilot, sources]]),
+  ] as const;
 }
+
+const refreshOf = (registry: HostPluginRegistryReading, sources?: HostMarketplaceSources) =>
+  new RefreshHostPlugin(...hostOver(registry, sources)).execute({
+    tool: registeredAiProfile(copilot),
+    ref: REF,
+    projectRoot: "/A",
+    registrations,
+  });
 
 async function doctorSays(registry: HostPluginRegistryReading): Promise<string> {
   const manifest = Manifest.create();
@@ -137,18 +145,14 @@ describe("registration verdicts across intents", () => {
     });
 
     it("targeted update", async () => {
-      const gate = gateOver(row.registry, ownedSource(provenance));
-      const attempt = gate.requireTargetedUpdate(
-        registeredAiProfile(copilot),
-        registrations.pluginClaims?.[0] ?? { ref: REF, dependents: [] },
-        "/A",
-        registrations
-      );
+      const attempt = refreshOf(row.registry, ownedSource(provenance));
       expect(await outcomeOf(attempt)).toBe(row.update);
     });
 
     it("catalogue removal", async () => {
-      const gate = gateOver(row.registry, ownedSource(provenance));
+      const gate = new NativeHostRegistrationGate(
+        ...hostOver(row.registry, ownedSource(provenance))
+      );
       const attempt = gate.planMarketplaceRemoval(
         registeredAiProfile(copilot),
         registrations,
@@ -171,16 +175,12 @@ describe("registration verdicts across intents", () => {
     const registry = { location: LOCATION, refs: new Map([[REF, enabled]]) };
 
     it.each(["targeted update", "catalogue removal"] as const)("%s", async (intent) => {
-      const gate = gateOver(registry, ownedSource(entry));
       const attempt =
         intent === "targeted update"
-          ? gate.requireTargetedUpdate(
-              registeredAiProfile(copilot),
-              { ref: REF, dependents: [] },
-              "/A",
-              registrations
-            )
-          : gate.planMarketplaceRemoval(
+          ? refreshOf(registry, ownedSource(entry))
+          : new NativeHostRegistrationGate(
+              ...hostOver(registry, ownedSource(entry))
+            ).planMarketplaceRemoval(
               registeredAiProfile(copilot),
               registrations,
               registrations.marketplaces[0],

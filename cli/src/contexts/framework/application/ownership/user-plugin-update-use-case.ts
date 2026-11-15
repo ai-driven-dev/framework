@@ -1,7 +1,7 @@
 import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { NativeHostRegistrationGate } from "../../../host-registration/application/native-host-registration-gate.js";
+import type { RefreshHostPlugin } from "../../../host-registration/application/refresh-host-plugin.js";
 import { resolvePluginToolIds } from "../../../installation/application/plugin/plugin-target-resolution.js";
 import type { UpdatePluginCommand } from "../../../installation/application/plugin/update-plugin.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
@@ -14,7 +14,7 @@ export class UserPluginUpdateUseCase {
     private readonly repo: ManifestRepository & Lock,
     private readonly fileUpdater: UserPluginFileUpdater,
     private readonly logger: Logger,
-    private readonly nativeHost: NativeHostRegistrationGate
+    private readonly refreshHostPlugin: RefreshHostPlugin
   ) {}
 
   async execute(options: UpdatePluginCommand): Promise<string[]> {
@@ -83,25 +83,21 @@ export class UserPluginUpdateUseCase {
       nativeTargets.map(async ({ toolId, claim, registrations }) => ({
         toolId,
         claim,
-        activator: await this.nativeHost.requireTargetedUpdate(
-          options.tools.aiProfile(toolId),
-          claim,
-          options.projectRoot,
-          registrations
-        ),
+        refresh: await this.refreshHostPlugin.execute({
+          tool: options.tools.aiProfile(toolId),
+          ref: claim.ref,
+          projectRoot: options.projectRoot,
+          registrations,
+        }),
       }))
     );
     const updated: string[] = [];
-    for (const { toolId, claim, activator } of nativeUpdates) {
+    for (const { toolId, claim, refresh } of nativeUpdates) {
       if (claim.dependents.length > 0)
         this.logger.warn(
           `${toolId}: updating native ref '${claim.ref}' affects ${claim.dependents.join(", ")}; projects must refresh their local integrations afterward.`
         );
-      if (activator.updatePlugin === undefined)
-        throw new Error(
-          `${toolId}: targeted native update became unavailable; canonical claims retained.`
-        );
-      activator.updatePlugin(claim.ref);
+      refresh.apply();
       updated.push(claim.ref);
     }
     for (const { toolId, plugin, plan } of filePlans) {

@@ -8,6 +8,7 @@ import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/app
 import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
+import { RefreshHostPlugin } from "../../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
@@ -264,7 +265,7 @@ for (const [toolId, catalogPath] of [
           new DeterministicHasher()
         ),
         new CapturingLogger(),
-        new NativeHostRegistrationGate(
+        new RefreshHostPlugin(
           new Map([[toolId, activator]]),
           new Map([[toolId, hostReader]]),
           sources
@@ -293,7 +294,7 @@ for (const [toolId, catalogPath] of [
             new DeterministicHasher()
           ),
           new CapturingLogger(),
-          new NativeHostRegistrationGate(
+          new RefreshHostPlugin(
             new Map([[toolId, failed]]),
             new Map([[toolId, hostReader]]),
             sources
