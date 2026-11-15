@@ -104,7 +104,7 @@ describe("InstallConfigCommand — staticContent", () => {
     const capability = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
-      consumes: ["someSignal"],
+      consumes: [{ name: "someSignal", path: "config/some.json" }],
     });
 
     const results = await useCase.execute({
@@ -123,7 +123,7 @@ describe("InstallConfigCommand — staticContent", () => {
     const capability = new ConfigSection({
       outputPath: ".vscode/settings.json",
       mergeStrategy: "framework-prime",
-      consumes: ["someSignal"],
+      consumes: [{ name: "someSignal", path: "config/some.json" }],
     });
 
     const results = await useCase.execute({
@@ -208,7 +208,7 @@ describe("InstallConfigCommand — MCP config", () => {
     return new McpConfigPart({
       outputPath: ".cursor/mcp.json",
       format: "json",
-      consumes: [CONFIG_MCP],
+      consumes: [MCP_REF],
       ...(mergeStrategy !== undefined && { mergeStrategy }),
     });
   }
@@ -234,7 +234,7 @@ describe("InstallConfigCommand — MCP config", () => {
     const both = new ConfigSection({
       outputPath: ".cursor/hooks.json",
       mergeStrategy: "user-prime",
-      consumes: [CONFIG_MCP, HOOKS_REF.name],
+      consumes: [MCP_REF, HOOKS_REF],
     });
 
     const results = await useCase.execute({

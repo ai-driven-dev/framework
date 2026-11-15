@@ -7,13 +7,13 @@ import vscodeKeybindings from "../../../../../../assets/configs/vscode/keybindin
 import vscodeSettings from "../../../../../../assets/configs/vscode/settings.json" with {
   type: "json",
 };
-import {
-  CONFIG_VSCODE_EXTENSIONS,
-  CONFIG_VSCODE_KEYBINDINGS,
-  CONFIG_VSCODE_SETTINGS,
-} from "../../../contract/config-refs.js";
 import { defineIdeTool } from "../../profile/define-tool.js";
 import { ConfigSection } from "../../sections/config-section.js";
+import {
+  VSCODE_EXTENSIONS_REF,
+  VSCODE_KEYBINDINGS_REF,
+  VSCODE_SETTINGS_REF,
+} from "./config-refs.js";
 
 const DIRECTORY = ".vscode/";
 const EXTENSIONS_PATH = ".vscode/extensions.json";
@@ -49,17 +49,17 @@ export const vscode = defineIdeTool({
       new ConfigSection({
         outputPath: EXTENSIONS_PATH,
         mergeStrategy: "user-prime",
-        consumes: [CONFIG_VSCODE_EXTENSIONS],
+        consumes: [VSCODE_EXTENSIONS_REF],
       }),
       new ConfigSection({
         outputPath: KEYBINDINGS_PATH,
         mergeStrategy: "none",
-        consumes: [CONFIG_VSCODE_KEYBINDINGS],
+        consumes: [VSCODE_KEYBINDINGS_REF],
       }),
       new ConfigSection({
         outputPath: SETTINGS_PATH,
         mergeStrategy: "user-prime",
-        consumes: [CONFIG_VSCODE_SETTINGS],
+        consumes: [VSCODE_SETTINGS_REF],
       }),
     ],
   }),

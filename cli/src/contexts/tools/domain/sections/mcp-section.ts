@@ -1,4 +1,5 @@
 import type { Hasher } from "../../../../shared/ports/hasher.js";
+import type { ConfigRef } from "../../contract/config-refs.js";
 import { mcpJsonToToml, mergeJsonUserPrime } from "../formats/mcp-format.js";
 import {
   buildTypedMcpFlatConfig,
@@ -22,7 +23,7 @@ export type McpConfigParams = {
   mergeFn?: (existing: string, incoming: string) => string;
   transformContent?: (content: string) => string;
   outputPathCandidates?: McpOutputPathCandidates;
-  consumes?: readonly string[];
+  consumes?: readonly ConfigRef[];
 };
 
 interface McpServerWin32 {
@@ -61,7 +62,12 @@ export class McpConfigPart {
   }
 
   consumes(configName: string): boolean {
-    return this.#params.consumes?.includes(configName) ?? false;
+    return this.#params.consumes?.some((ref) => ref.name === configName) ?? false;
+  }
+
+  /** Every config artifact this file takes in, with where the canonical source keeps it. */
+  consumedRefs(): readonly ConfigRef[] {
+    return (this.#params.consumes ?? []).map((ref) => ({ ...ref }));
   }
 
   outputPath(): string {

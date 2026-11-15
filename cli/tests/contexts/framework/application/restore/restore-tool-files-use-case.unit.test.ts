@@ -5,10 +5,6 @@ import {
   type RestoreToolFilesOptions,
 } from "../../../../../src/contexts/installation/application/restore/restore-tool-files-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import {
-  CONFIG_VSCODE_EXTENSIONS,
-  CONFIG_VSCODE_KEYBINDINGS,
-} from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
@@ -31,8 +27,8 @@ const descriptor = new FrameworkDescriptor({
   contentSections: [],
   templateRefs: [],
   configRefs: [
-    { name: CONFIG_VSCODE_KEYBINDINGS, path: "config/vscode/keybindings.json" },
-    { name: CONFIG_VSCODE_EXTENSIONS, path: "config/vscode/extensions.json" },
+    { name: "vscodeKeybindings", path: "config/vscode/keybindings.json" },
+    { name: "vscodeExtensions", path: "config/vscode/extensions.json" },
   ],
 });
 

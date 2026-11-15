@@ -162,7 +162,7 @@ describe("InstallIdeToolCommand", () => {
     const consumesOnly = new ConfigSection({
       outputPath: ".vscode/aidd-b.json",
       mergeStrategy: "user-prime",
-      consumes: ["something"],
+      consumes: [{ name: "something", path: "config/something.json" }],
     });
     const forItself = new ConfigSection({
       outputPath: ".cursor/aidd-c.json",

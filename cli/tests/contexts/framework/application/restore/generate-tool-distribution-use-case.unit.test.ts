@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { GenerateToolDistributionCommand } from "../../../../../src/contexts/installation/application/restore/generate-tool-distribution-use-case.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
-import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
@@ -24,7 +23,7 @@ const descriptor = new FrameworkDescriptor({
     entryFile: null,
   })),
   templateRefs: [],
-  configRefs: [{ name: CONFIG_VSCODE_SETTINGS, path: "config/vscode/settings.json" }],
+  configRefs: [{ name: "vscodeSettings", path: "config/vscode/settings.json" }],
 });
 
 const contentFiles = new Map([

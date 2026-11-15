@@ -363,7 +363,7 @@ describe("InstallRuntimeConfigCommand", () => {
     const consumesOnly = new ConfigSection({
       outputPath: ".cursor/consumed.json",
       mergeStrategy: "user-prime",
-      consumes: ["something"],
+      consumes: [{ name: "something", path: "config/something.json" }],
     });
     const fromAsset = new ConfigSection({
       outputPath: ".cursor/from-asset.json",

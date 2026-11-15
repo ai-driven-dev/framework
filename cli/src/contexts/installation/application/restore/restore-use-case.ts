@@ -8,16 +8,9 @@ import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { PluginFetcher } from "../../../distribution/ports/plugin-fetcher.js";
-import {
-  CONFIG_MCP,
-  CONFIG_OPENCODE,
-  CONFIG_VSCODE_EXTENSIONS,
-  CONFIG_VSCODE_KEYBINDINGS,
-  CONFIG_VSCODE_SETTINGS,
-  type ConfigRef,
-} from "../../../tools/contract/config-refs.js";
+import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { FRAMEWORK_CONFIG_PREFIX, FrameworkDescriptor } from "../../../translate/domain/canon.js";
+import { FrameworkDescriptor } from "../../../translate/domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -34,16 +27,20 @@ import {
 } from "./restore-tool-files-use-case.js";
 
 /**
- * Where each config artifact sits in the canonical source, keyed by the same names a tool's
- * capability declares in its `consumes` list — so restoring knows artifacts, not tools.
+ * Where each config artifact sits in the canonical source, asked of every registered profile
+ * through the artifacts its capabilities consume, so restoring knows artifacts, not tools.
+ * An artifact several tools consume is named once.
  */
-const CONFIG_REFS: readonly ConfigRef[] = [
-  { name: CONFIG_MCP, path: `${FRAMEWORK_CONFIG_PREFIX}mcp.json` },
-  { name: CONFIG_VSCODE_EXTENSIONS, path: `${FRAMEWORK_CONFIG_PREFIX}vscode/extensions.json` },
-  { name: CONFIG_VSCODE_KEYBINDINGS, path: `${FRAMEWORK_CONFIG_PREFIX}vscode/keybindings.json` },
-  { name: CONFIG_VSCODE_SETTINGS, path: `${FRAMEWORK_CONFIG_PREFIX}vscode/settings.json` },
-  { name: CONFIG_OPENCODE, path: `${FRAMEWORK_CONFIG_PREFIX}.opencode/opencode.json` },
-];
+function configRefsOf(tools: ToolCatalog): readonly ConfigRef[] {
+  const byName = new Map<string, ConfigRef>();
+  for (const profile of tools.sortedById()) {
+    for (const write of profile.configWrites()) {
+      if (write.kind === "hooks") continue;
+      for (const ref of write.capability.consumedRefs()) byName.set(ref.name, ref);
+    }
+  }
+  return [...byName.values()];
+}
 
 interface RestoreOptions {
   frameworkPath?: string;
@@ -110,11 +107,12 @@ export class RestoreCommand {
     manifest: Manifest
   ): Promise<RestoreCtx> {
     const resolvedVersion = options.version ?? "unknown";
+    const configRefs = configRefsOf(options.tools);
     return {
       manifest,
-      descriptor: this.buildStaticDescriptor(resolvedVersion),
+      descriptor: this.buildStaticDescriptor(resolvedVersion, configRefs),
       contentFiles: options.frameworkPath
-        ? await this.buildContentFiles(options.frameworkPath)
+        ? await this.buildContentFiles(options.frameworkPath, configRefs)
         : new Map(),
       projectRoot: options.projectRoot,
       version: resolvedVersion,
@@ -200,18 +198,24 @@ export class RestoreCommand {
     };
   }
 
-  private buildStaticDescriptor(version: string): FrameworkDescriptor {
+  private buildStaticDescriptor(
+    version: string,
+    configRefs: readonly ConfigRef[]
+  ): FrameworkDescriptor {
     return new FrameworkDescriptor({
       version,
       contentSections: [],
       templateRefs: [],
-      configRefs: [...CONFIG_REFS],
+      configRefs: [...configRefs],
     });
   }
 
-  private async buildContentFiles(frameworkPath: string): Promise<Map<string, string>> {
+  private async buildContentFiles(
+    frameworkPath: string,
+    configRefs: readonly ConfigRef[]
+  ): Promise<Map<string, string>> {
     const contentFiles = new Map<string, string>();
-    for (const ref of CONFIG_REFS) {
+    for (const ref of configRefs) {
       const absPath = join(frameworkPath, ref.path);
       if (await this.fs.fileExists(absPath)) {
         contentFiles.set(ref.path, await this.fs.readFile(absPath));

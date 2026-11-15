@@ -8,7 +8,7 @@ describe("ConfigSection", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
         mergeStrategy: "framework-prime",
-        consumes: ["mySignal"],
+        consumes: [{ name: "mySignal", path: "config/my.json" }],
       });
       expect(cap.consumes("mySignal")).toBe(true);
       expect(cap.consumes("other")).toBe(false);
@@ -31,7 +31,7 @@ describe("ConfigSection", () => {
           new ConfigSection({
             outputPath: ".vscode/settings.json",
             mergeStrategy: "framework-prime",
-            consumes: ["mySignal"],
+            consumes: [{ name: "mySignal", path: "config/my.json" }],
             staticContent: '{"key": true}',
           })
       ).toThrow("ConfigSection: set either 'consumes' or 'staticContent', not both.");
@@ -55,7 +55,7 @@ describe("ConfigSection", () => {
           new ConfigSection({
             outputPath: ".vscode/settings.json",
             mergeStrategy: "framework-prime",
-            consumes: ["mySignal"],
+            consumes: [{ name: "mySignal", path: "config/my.json" }],
             staticContentAssetFile: "vscode-settings.json",
           })
       ).toThrow("ConfigSection: set either 'consumes' or 'staticContent', not both.");

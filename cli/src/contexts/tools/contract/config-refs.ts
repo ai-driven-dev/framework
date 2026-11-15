@@ -1,16 +1,12 @@
 import type { IdeToolId } from "../../../shared/domain/tool.js";
 
-/** Names a config artifact a tool's capability may declare in its `consumes` list. The framework
- * descriptor's own `configRefs` is keyed by these same names, so an artifact built there is
- * matched against what a tool declares it accepts. */
-export const CONFIG_MCP = "mcp";
-export const CONFIG_VSCODE_SETTINGS = "vscodeSettings";
-export const CONFIG_VSCODE_EXTENSIONS = "vscodeExtensions";
-export const CONFIG_VSCODE_KEYBINDINGS = "vscodeKeybindings";
-export const CONFIG_OPENCODE = "opencode";
-
 export interface ConfigRef {
   readonly name: string;
   readonly path: string;
   readonly requiredIdeId?: IdeToolId;
 }
+
+/** The config artifact every tool with an mcp file takes in: named in its `consumes` list, and
+ * found in the canonical source at `path`. */
+export const CONFIG_MCP = "mcp";
+export const MCP_CONFIG_REF: ConfigRef = { name: CONFIG_MCP, path: "config/mcp.json" };
