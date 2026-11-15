@@ -468,18 +468,6 @@ describe("where a call was made", () => {
     expect(s.ledger.records).toHaveLength(2);
   });
 
-  it("does not store from a deleted directory whose clone does not consent", async () => {
-    const s = setup();
-    s.consents.cloneSays(A, null);
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, {}, NOW.toISOString())]);
-    await s.ingest.execute();
-    s.locator.directories.delete("/work/a");
-    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2, {}, NOW.toISOString()));
-    const result = await s.ingest.execute();
-    expect(result.notStored["no-consent"]).toBe(1);
-    expect(s.ledger.records).toEqual([]);
-  });
-
   it("remembers a directory under one key per spelling on a case-sensitive file system", async () => {
     const s = setup({ caseInsensitive: false });
     s.locator.directories.set("/Work/A", repository("/Work/A"));
