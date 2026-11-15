@@ -7,9 +7,9 @@ import type { ReleaseLister } from "../../../../../src/contexts/distribution/por
 import type { RepositoryVisibility } from "../../../../../src/contexts/distribution/ports/repository-visibility.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
-import type { UserSourceReferences } from "../../../../../src/contexts/framework/domain/ports/user-source-references.js";
 import { SetupFlow } from "../../../../../src/contexts/framework/domain/setup-flow.js";
-import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
+import { UserSourceReferencesAdapter } from "../../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { CatalogFetchAuthError } from "../../../../../src/shared/domain/errors.js";
 import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";

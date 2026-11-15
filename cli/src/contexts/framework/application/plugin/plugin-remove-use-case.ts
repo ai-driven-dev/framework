@@ -9,6 +9,7 @@ import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
@@ -34,19 +35,10 @@ import type { NativeRegistrations } from "../../../installation/domain/manifest/
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
-import { resolveHomeDir } from "../../domain/reading/home-dir.js";
-import { inspectNativeMarketplaceSource } from "../ownership/native-marketplace-source-proof.js";
 import {
   detachNativePluginRefs,
   isMachineOwnedNativeRef,
-} from "../ownership/native-plugin-ownership.js";
-import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
-import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
-import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
-import { resolveUninstallScopeOrder } from "../shared/resolve-uninstall-scope.js";
+} from "../../../machine-claims/application/native-plugin-ownership.js";
 import {
   describeGuardedPluginRefMessage,
   frameworkSourceIsShared,
@@ -54,8 +46,17 @@ import {
   refAnotherProjectStillNeeds,
   resolveProjectRootForReferences,
   toleratingUnreadableSourceReferences,
-} from "../shared/shared-source-reference-support.js";
-import { userScopeFilesSafeToDelete } from "../shared/user-scope-plugin-files.js";
+} from "../../../machine-claims/application/shared-source-reference-support.js";
+import { detachUserPlugin } from "../../../machine-claims/application/user-plugin-ownership.js";
+import { userScopeFilesSafeToDelete } from "../../../machine-claims/application/user-scope-plugin-files.js";
+import type { UserSourceReferences } from "../../../machine-claims/ports/user-source-references.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import { resolveHomeDir } from "../../domain/reading/home-dir.js";
+import { inspectNativeMarketplaceSource } from "../ownership/native-marketplace-source-proof.js";
+import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
+import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
+import { resolveUninstallScopeOrder } from "../shared/resolve-uninstall-scope.js";
 
 export interface PluginRemoveOptions {
   pluginName: string;
@@ -84,7 +85,7 @@ export class PluginRemoveUseCase {
      * fact `frameworkSourceIsShared` needs and a plugin record does not carry. Absent treats every
      * marketplace as not shared. */
     private readonly marketplaceRegistry?: MarketplaceRegistry,
-    private readonly userManifestRepo?: ManifestRepository,
+    private readonly userManifestRepo?: ManifestRepository & Lock,
     private readonly nativeMarketplaceSources: ReadonlyMap<
       AiToolId,
       HostMarketplaceSources
@@ -95,10 +96,7 @@ export class PluginRemoveUseCase {
     if (options.scope === "user") {
       if (this.userManifestRepo === undefined)
         throw new Error("User manifest repository is required for user-scope plugin removal.");
-      if (this.userManifestRepo.withExclusiveAccess !== undefined) {
-        return this.userManifestRepo.withExclusiveAccess(() => this.removeUserPlugin(options));
-      }
-      return this.removeUserPlugin(options);
+      return this.userManifestRepo.withExclusiveAccess(() => this.removeUserPlugin(options));
     }
     const { pluginName, toolIds, projectRoot, tools } = options;
     const manifest = await loadPluginManifest(this.manifestRepo);

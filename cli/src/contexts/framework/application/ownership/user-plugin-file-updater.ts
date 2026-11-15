@@ -22,14 +22,14 @@ import {
   InstalledPlugin,
   PLUGIN_NAME_REGEX,
 } from "../../../installation/domain/plugins/installed-plugin.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
-import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
   withoutMissingFiles,
-} from "../shared/user-scope-plugin-files.js";
+} from "../../../machine-claims/application/user-scope-plugin-files.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
+import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import { assertGlobalFilesWritable, readGlobalPluginFiles } from "./global-plugin-files.js";
 
 export interface PlannedUserPluginFileUpdate {

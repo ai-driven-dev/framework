@@ -25,7 +25,7 @@ One registration of `aidd-framework` per machine, shared by every project. Read 
 
 ## `references.json`
 
-- `userConfigDir()/references.json`: `{ "<version>": ["<projectRoot>", …] }` (`contexts/framework/domain/ports/user-source-references.ts`).
+- `userConfigDir()/references.json`: `{ "<version>": ["<projectRoot>", …] }` (`contexts/machine-claims/ports/user-source-references.ts`).
 - Written by `setup` and `sync` only after the selected native host registration is proven; a refusal does not create a new claim.
 - `clean` drops only this project's claim, once. It proves current source and host references before any project-scoped host removal; a shared registration is left untouched even if its source cannot be read. A machine-global plugin ref without a canonical machine claim is left enabled for manual reconciliation, not treated as exclusively owned by the last project in `references.json`.
 - A help, not an authority: a `projectRoot` deleted with `rm -rf` is ignored at read.

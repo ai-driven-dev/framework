@@ -7,6 +7,7 @@ import {
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
@@ -19,8 +20,10 @@ import { deletePluginFilesForTool } from "../../../installation/application/plug
 import type { NativeRegistrations } from "../../../installation/domain/manifest/native-registrations.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import { describeFullRemovalInstruction } from "../../../machine-claims/application/shared-source-reference-support.js";
+import { userScopeFilesSafeToDelete } from "../../../machine-claims/application/user-scope-plugin-files.js";
+import type { UserSourceReferences } from "../../../machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 import { resolveHomeDir } from "../../domain/reading/home-dir.js";
 import {
   assertNoForeignNativeRefs,
@@ -32,8 +35,6 @@ import {
   purgeAllNativeCaches,
   type UndoneToolRegistrations,
 } from "../shared/purge-native-marketplace-cache.js";
-import { describeFullRemovalInstruction } from "../shared/shared-source-reference-support.js";
-import { userScopeFilesSafeToDelete } from "../shared/user-scope-plugin-files.js";
 
 export interface CleanUserScopeOptions {
   /** Threaded only to `MarketplaceRegistry.delete`, whose signature takes one for the
@@ -75,7 +76,7 @@ export interface CleanUserScopeResult {
 export class CleanUserScopeUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly userManifestRepo: ManifestRepository,
+    private readonly userManifestRepo: ManifestRepository & Lock,
     private readonly logger: Logger,
     private readonly marketplaceRegistry: MarketplaceRegistry,
     private readonly userConfigDir: () => string,
@@ -97,10 +98,7 @@ export class CleanUserScopeUseCase {
   ) {}
 
   async execute(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {
-    if (this.userManifestRepo.withExclusiveAccess !== undefined) {
-      return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));
-    }
-    return this.executeLocked(options);
+    return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));
   }
 
   private async executeLocked(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {

@@ -7,13 +7,14 @@ import {
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import { detachNativePluginRefs } from "../../../machine-claims/application/native-plugin-ownership.js";
+import { detachUserPlugin } from "../../../machine-claims/application/user-plugin-ownership.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
-import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
 
 export interface UninstallToolsOptions {
   toolIds: ToolId[];
@@ -32,7 +33,7 @@ export class UninstallToolsUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,
-    private readonly userManifestRepo?: ManifestRepository
+    private readonly userManifestRepo?: ManifestRepository & Lock
   ) {}
 
   async execute(options: UninstallToolsOptions): Promise<UninstallToolsResult[]> {

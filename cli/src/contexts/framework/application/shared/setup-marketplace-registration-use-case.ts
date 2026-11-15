@@ -13,14 +13,14 @@ import type {
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { MarketplaceSourceMode } from "../../../distribution/domain/marketplace-source-mode.js";
 import type { RepositoryVisibility } from "../../../distribution/ports/repository-visibility.js";
-import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
-import type { SetupFlow } from "../../domain/setup-flow.js";
-import type { SetupMarketplaceSourceUseCase } from "../setup/setup-marketplace-source-use-case.js";
 import {
   frameworkSourceIsShared,
   resolveProjectRootForReferences,
   toleratingUnreadableSourceReferences,
-} from "./shared-source-reference-support.js";
+} from "../../../machine-claims/application/shared-source-reference-support.js";
+import type { UserSourceReferences } from "../../../machine-claims/ports/user-source-references.js";
+import type { SetupFlow } from "../../domain/setup-flow.js";
+import type { SetupMarketplaceSourceUseCase } from "../setup/setup-marketplace-source-use-case.js";
 
 /**
  * The one sequence project-scope and machine-scope setup both run, in the same order and gated the

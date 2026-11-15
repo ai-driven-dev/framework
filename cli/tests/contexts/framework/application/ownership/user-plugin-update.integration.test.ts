@@ -7,6 +7,7 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -17,7 +18,7 @@ import { FakeHostActions } from "../../../host-registration/testing/fake-host-ac
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
 
-const { copilot } = TOOL;
+const { copilot, cursor } = TOOL;
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
@@ -30,6 +31,8 @@ function fixture(
     available?: boolean;
     hostRefs?: ReadonlyMap<string, { enabled: boolean; scope?: "project" | "user" }>;
     failOnUpdate?: boolean;
+    installed?: InstalledPlugin;
+    distribution?: PluginDistribution;
   } = {}
 ) {
   const refs = options.refs ?? [REF];
@@ -45,6 +48,7 @@ function fixture(
     pluginRefs: [...refs],
     pluginClaims: refs.map((ref) => ({ ref, dependents: [...(options.dependents ?? [])] })),
   });
+  if (options.installed) machine.addPlugin(toolId, options.installed);
   const repo = new InMemoryManifestRepository(machine);
   const fs = new InMemoryFileAdapter();
   const activator = new FakeHostActions({
@@ -58,26 +62,30 @@ function fixture(
     read: async () => ({ location: "/host/registry", refs: hostRefs }),
   };
   const logger = new CapturingLogger();
+  const distribution = options.distribution;
   const update = new UserPluginUpdateUseCase(
     repo,
     new UserPluginFileUpdater(
       fs,
       new PluginDistributionLoader(
         new FixturePluginFetcher(),
-        new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
+        distribution
+          ? { read: async () => distribution }
+          : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
       ),
       new DeterministicHasher()
     ),
     logger,
     new NativeHostRegistrationGate(new Map([[toolId, activator]]), new Map([[toolId, reader]]))
   );
-  const execute = (pluginName: string | readonly string[]) =>
+  const execute = (pluginName: string | readonly string[], rebuild?: boolean) =>
     update.execute({
       tools: catalogOf(),
       pluginNames: typeof pluginName === "string" ? [pluginName] : [...pluginName],
       toolIds: [toolId],
       projectRoot: "/A",
       scope: "user",
+      rebuild,
     });
   const executeAll = () =>
     update.execute({
@@ -87,6 +95,16 @@ function fixture(
       scope: "user",
     });
   return { repo, activator, logger, execute, executeAll };
+}
+
+function currentDistribution(version: string) {
+  const skill = { relativePath: "skills/demo/SKILL.md", content: "# Skill" };
+  return new PluginDistribution({
+    manifest: { name: "sample-plugin", version },
+    format: TOOL.claude,
+    files: [skill],
+    components: { commands: [], agents: [], rules: [], skills: [skill], hooks: [], mcp: [] },
+  });
 }
 
 describe("targeted machine native plugin update", () => {
@@ -107,13 +125,20 @@ describe("targeted machine native plugin update", () => {
     expect(f.activator.updatedPlugins).toEqual([]);
   });
 
-  it("resolves a bare native plugin name but refuses update without current source proof", async () => {
-    const f = fixture(copilot, { refs: [REF], dependents: ["/B"] });
-    await expect(f.execute("test-plugin")).rejects.toThrow(/host source reader unavailable/);
+  it.each([
+    ["a bare native plugin name", [REF], "test-plugin"],
+    [
+      "a bare name beside another targeted plugin",
+      [REF, "other-plugin@real-catalog"],
+      ["test-plugin", "other-plugin"],
+    ],
+  ])("resolves %s but refuses update without current source proof", async (_why, refs, names) => {
+    const f = fixture(copilot, { refs, dependents: ["/B"] });
+    await expect(f.execute(names)).rejects.toThrow(/host source reader unavailable/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
-      { ref: REF, dependents: ["/B"] },
-    ]);
+    expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual(
+      refs.map((ref) => ({ ref, dependents: ["/B"] }))
+    );
   });
 
   it("does not adopt a foreign enabled host ref without a machine claim", async () => {
@@ -145,11 +170,14 @@ describe("targeted machine native plugin update", () => {
     }
   });
 
-  it("Codex refuses targeted update because its verified binary has no update verb", async () => {
-    const f = fixture(TOOL.codex);
+  it.each([
+    ["Codex, whose verified binary has no update verb", TOOL.codex],
+    ["Cursor, which has no native activation at all", cursor],
+  ])("refuses targeted update for %s", async (_why, toolId) => {
+    const f = fixture(toolId);
     await expect(f.execute(REF)).rejects.toThrow(/does not support targeted native plugin update/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
+    expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
       { ref: REF, dependents: [] },
     ]);
   });
@@ -219,5 +247,24 @@ describe("targeted machine native plugin update", () => {
     expect(f.repo.getCurrent()?.getNativeRegistrations(copilot)?.pluginClaims).toEqual([
       { ref: REF, dependents: [] },
     ]);
+  });
+
+  it("names the refs it cannot find when a rebuild leaves no native claim to update", async () => {
+    const f = fixture(copilot);
+    await expect(f.execute(REF, true)).rejects.toThrow(`Plugin '${REF}' is not installed.`);
+    expect(f.activator.updatedPlugins).toEqual([]);
+  });
+
+  it("rebuilds an installed user plugin that is already current, and only when asked", async () => {
+    const installed = InstalledPlugin.fromMetadata(
+      "sample-plugin",
+      "1.0.0",
+      { kind: "local", path: "/source" },
+      false,
+      "user"
+    );
+    const f = fixture(cursor, { refs: [], installed, distribution: currentDistribution("1.0.0") });
+    expect(await f.execute("sample-plugin")).toEqual([]);
+    expect(await f.execute("sample-plugin", true)).toEqual(["sample-plugin"]);
   });
 });

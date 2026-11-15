@@ -569,6 +569,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -755,6 +756,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -790,6 +792,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -833,6 +836,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1026,6 +1030,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1212,6 +1217,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1401,6 +1407,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1443,6 +1450,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1489,6 +1497,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1678,6 +1687,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1864,6 +1874,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1905,6 +1916,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1948,6 +1960,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -2134,6 +2147,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -2320,6 +2334,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -2355,6 +2370,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -2405,6 +2421,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -2598,6 +2615,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/telemetry/**",
@@ -2908,6 +2926,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -2953,6 +2972,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/machine-claims/**",
                       "**/presentation/**",
                       "**/telemetry/**",
                       "**/update/**",
@@ -2995,6 +3015,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/presentation/**",
                       "**/update/**",
@@ -3045,6 +3066,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
@@ -3075,6 +3097,180 @@
       }
     },
     {
+      "includes": ["src/contexts/machine-claims/domain/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/host-registration/**",
+                      "**/telemetry/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "machine-claims may import installation, distribution and tools, never framework or telemetry, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/**"],
+                    "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/machine-claims/application/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/infrastructure/**"],
+                    "message": "application must not import infrastructure, take a port and let the composition root supply the adapter"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/host-registration/**",
+                      "**/presentation/**",
+                      "**/telemetry/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "machine-claims may import installation, distribution and tools, never framework, telemetry or presentation, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/**"],
+                    "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/machine-claims/infrastructure/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/host-registration/**",
+                      "**/telemetry/**",
+                      "**/presentation/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "machine-claims/infrastructure may import installation, distribution and tools, never framework or telemetry or presentation, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/shared/infrastructure/**"],
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/**"],
+                    "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/machine-claims/ports/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "a port must not import application, infrastructure or presentation"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/host-registration/**",
+                      "**/telemetry/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "machine-claims may import installation, distribution and tools, never framework or telemetry, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/**"],
+                    "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/contexts/translate/domain/**/*.ts"],
       "linter": {
         "rules": {
@@ -3091,6 +3287,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/distribution/**",
                       "**/telemetry/**",
                       "**/auth/**",
@@ -3132,6 +3329,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/distribution/**",
                       "**/telemetry/**",
                       "**/auth/**",
@@ -3170,6 +3368,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/distribution/**",
                       "**/telemetry/**",
                       "**/auth/**",
@@ -3219,6 +3418,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/telemetry/**",
@@ -3297,6 +3497,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/telemetry/**",
@@ -3332,6 +3533,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/telemetry/**",
@@ -3382,6 +3584,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3571,6 +3774,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3613,6 +3817,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3654,6 +3859,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3696,6 +3902,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3742,6 +3949,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -3780,6 +3988,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -3825,6 +4034,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -4011,6 +4221,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -4046,6 +4257,7 @@
                     "group": [
                       "**/framework/**",
                       "**/installation/**",
+                      "**/machine-claims/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",

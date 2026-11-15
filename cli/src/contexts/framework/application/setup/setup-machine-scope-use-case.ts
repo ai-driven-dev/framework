@@ -1,3 +1,4 @@
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
@@ -25,7 +26,7 @@ import type { SetupToolsResult } from "./setup-tools-use-case.js";
  */
 export class SetupMachineScopeUseCase {
   constructor(
-    private readonly userManifestRepo: ManifestRepository,
+    private readonly userManifestRepo: ManifestRepository & Lock,
     private readonly setupMarketplaceRegistration: SetupMarketplaceRegistrationUseCase,
     private readonly marketplaceSyncSettingsUseCase: MarketplaceSyncSettings,
     private readonly currentVersionProvider: VersionReader,
@@ -34,12 +35,7 @@ export class SetupMachineScopeUseCase {
 
   async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
     const source = await this.setupMarketplaceRegistration.resolveSourceIfNeeded(flow);
-    if (this.userManifestRepo.withExclusiveAccess !== undefined) {
-      return this.userManifestRepo.withExclusiveAccess(() =>
-        this.executeLocked(flow, source, tools)
-      );
-    }
-    return this.executeLocked(flow, source, tools);
+    return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(flow, source, tools));
   }
 
   private async executeLocked(

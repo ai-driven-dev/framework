@@ -38,7 +38,8 @@ function portFiles(): string[] {
 }
 
 const INTERFACE_BLOCK = /^export interface (\w+) \{([\s\S]*?)\n\}/gm;
-const METHOD_SIGNATURE = /^ {2}(\w+)\(/gm;
+const METHOD_SIGNATURE = /^ {2}(\w+)\??\s*(?:<[^>]*>)?\(/gm;
+const OPTIONAL_METHOD = /^ {2}\w+\?\s*(<|\()/m;
 
 function declaredMethods(file: string, source: string): string[] {
   const declared: string[] = [];
@@ -53,6 +54,13 @@ function declaredMethods(file: string, source: string): string[] {
 /** Empty, and it stays empty: an uncalled port method is a missing caller or a dead
  * declaration, and both are closed by fixing the code rather than recording it. */
 const BASELINE: readonly string[] = [];
+
+/** Port files that still declare an optional method. `host-actions.ts` keeps `updatePlugin?`:
+ * making it required means every `HostActions` test double declares it and the gate's
+ * `updatePlugin === undefined` branches go. The list may only shrink. */
+const OPTIONAL_BASELINE: readonly string[] = [
+  "src/contexts/host-registration/contract/host-actions.ts",
+];
 
 function uncalledMethods(bodies: ReadonlyMap<string, string>, ports: readonly string[]): string[] {
   const uncalled: string[] = [];
@@ -184,6 +192,18 @@ describe("a port declares nothing nobody calls", () => {
       "a port declares a method nothing calls — an adapter implementing it is not a caller"
     ).toEqual([]);
     expect(fixed, "fixed — remove these from BASELINE").toEqual([]);
+  });
+
+  it("no port declares an optional method: a holder that needs it asks for another port", () => {
+    const optional = portFiles().filter((file) =>
+      OPTIONAL_METHOD.test(readFileSync(join(CLI_ROOT, file), "utf8"))
+    );
+
+    const { added, fixed } = expectRatchet(optional, OPTIONAL_BASELINE);
+    expect(added, "an optional method hides a second port behind a `!== undefined` branch").toEqual(
+      []
+    );
+    expect(fixed, "fixed, remove these from OPTIONAL_BASELINE").toEqual([]);
   });
 
   it("finds the ports of this codebase, so the rule cannot pass by selecting nothing", () => {

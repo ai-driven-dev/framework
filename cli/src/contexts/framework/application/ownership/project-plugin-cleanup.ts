@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import { assertProjectPathWithinRoot } from "../../../installation/application/ownership/project-path-boundary.js";
 import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
 import {
@@ -10,9 +11,9 @@ import {
 } from "../../../installation/application/shared/remove-project-hooks.js";
 import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import { detachNativePluginRefs } from "../../../machine-claims/application/native-plugin-ownership.js";
+import { detachUserPlugin } from "../../../machine-claims/application/user-plugin-ownership.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { detachNativePluginRefs } from "./native-plugin-ownership.js";
-import { detachUserPlugin } from "./user-plugin-ownership.js";
 
 /** Read-only OpenCode MCP proof, shared by Clean and local plugin removals before any detach. */
 export async function assertProjectMcpEntriesRemovable(
@@ -50,7 +51,7 @@ async function planProjectMcpRemoval(
 export class ProjectPluginCleanup {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly userManifestRepo?: ManifestRepository
+    private readonly userManifestRepo?: ManifestRepository & Lock
   ) {}
 
   async assertLocalIntegrationRemovable(

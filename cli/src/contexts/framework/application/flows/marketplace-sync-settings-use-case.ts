@@ -16,6 +16,7 @@ import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { RegisterFrameworkMarketplace } from "../../../distribution/application/register-framework-marketplace.js";
@@ -41,10 +42,15 @@ import type {
 } from "../../../installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import {
+  frameworkSourceIsShared,
+  resolveProjectRootForReferences,
+  toleratingUnreadableSourceReferences,
+} from "../../../machine-claims/application/shared-source-reference-support.js";
+import type { UserSourceReferences } from "../../../machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
-import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 import {
   inspectNativeMarketplaceSource,
   sameNativeMarketplaceSource,
@@ -59,11 +65,6 @@ import {
   marketplaceCatalogProbePath,
   readMarketplaceCatalogIdentity,
 } from "../shared/read-marketplace-catalog-identity.js";
-import {
-  frameworkSourceIsShared,
-  resolveProjectRootForReferences,
-  toleratingUnreadableSourceReferences,
-} from "../shared/shared-source-reference-support.js";
 
 export interface MarketplaceSyncSettingsOptions {
   projectRoot: string;
@@ -181,15 +182,12 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     private readonly userSourceReferences?: UserSourceReferences,
     private readonly currentVersionProvider?: VersionReader,
     private readonly hostPluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
-    private readonly userManifestRepo?: ManifestRepository,
+    private readonly userManifestRepo?: ManifestRepository & Lock,
     private readonly nativeSources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map()
   ) {}
 
   async execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
-    if (
-      (options.scope ?? "project") === "project" &&
-      this.userManifestRepo?.withExclusiveAccess !== undefined
-    ) {
+    if ((options.scope ?? "project") === "project" && this.userManifestRepo !== undefined) {
       return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));
     }
     return this.executeLocked(options);

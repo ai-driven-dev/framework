@@ -40,7 +40,6 @@ import { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/appli
 import { UninstallIdeUseCase } from "../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import { UninstallToolsUseCase } from "../contexts/framework/application/uninstall/uninstall-tools-use-case.js";
 import { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
-import { UserSourceReferencesAdapter } from "../contexts/framework/infrastructure/user-source-references-adapter.js";
 import { InstallIdeConfig } from "../contexts/installation/application/install/install-ide-config.js";
 import { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/install-runtime-config.js";
@@ -64,6 +63,7 @@ import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructu
 import { PlatformAdapter } from "../contexts/installation/infrastructure/platform-adapter.js";
 import { PluginDistributionReaderAdapter } from "../contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
+import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import type { Deps, DepsFactory, FactoryOptions, MenuDeps } from "../presentation/deps.js";

@@ -6,6 +6,7 @@ import {
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
@@ -31,7 +32,7 @@ export class UninstallUseCase {
     readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     logger: Logger,
-    userManifestRepo?: ManifestRepository
+    userManifestRepo?: ManifestRepository & Lock
   ) {
     this.toolsUninstall = new UninstallToolsUseCase(fs, logger, userManifestRepo);
   }

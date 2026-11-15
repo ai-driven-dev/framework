@@ -138,6 +138,15 @@ export const ALLOWED = new Set([
   // Transitional: framework's remaining orchestrators still build on the installation record
   // and its use cases, until each moves into orchestration.
   "framework->installation",
+  // Transitional: framework's remaining orchestrators still read the machine claims and the
+  // user source references that moved out of it, until each moves into orchestration.
+  "framework->machine-claims",
+  // Transitional (M-C1): the claim files read the installation record and its manifest port, the
+  // marketplace name and the tool profile. These rows go once the marketplace name and the tool
+  // profile arrive as arguments from orchestration; the exact imports are in reference-context.md.
+  "machine-claims->installation",
+  "machine-claims->distribution",
+  "machine-claims->tools",
 ]);
 
 /**

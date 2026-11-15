@@ -5,23 +5,24 @@ import {
 } from "../../../../shared/domain/errors.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import { userScopeFilesSafeToDelete } from "../../../machine-claims/application/user-scope-plugin-files.js";
 import { resolveHomeDir } from "../../domain/reading/home-dir.js";
 import type {
   MarketplaceRemoveOptions,
   MarketplaceRemoveResult,
 } from "../flows/marketplace-remove-use-case.js";
-import { userScopeFilesSafeToDelete } from "../shared/user-scope-plugin-files.js";
 import type { NativeHostRegistrationGate } from "./native-host-registration-gate.js";
 
 export class UserMarketplaceRemoveUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly repo: ManifestRepository,
+    private readonly repo: ManifestRepository & Lock,
     private readonly registry: MarketplaceRegistry,
     private readonly nativeHost: NativeHostRegistrationGate
   ) {}
@@ -34,7 +35,7 @@ export class UserMarketplaceRemoveUseCase {
     }
     const marketplace = await this.findOrThrow(options.projectRoot, options.name);
     const run = () => this.removeLocked(options, marketplace);
-    return this.repo.withExclusiveAccess === undefined ? run() : this.repo.withExclusiveAccess(run);
+    return this.repo.withExclusiveAccess(run);
   }
 
   private async findOrThrow(projectRoot: string, name: string): Promise<Marketplace> {

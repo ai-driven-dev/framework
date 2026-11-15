@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import {
   detachNativePluginRefs,
   isMachineOwnedNativeRef,
-} from "../../../../../src/contexts/framework/application/ownership/native-plugin-ownership.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../../src/contexts/machine-claims/application/native-plugin-ownership.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import {
+  InMemoryManifestRepository,
+  loadingOnlyUnderLock,
+} from "../../../helpers/ports/in-memory-manifest-repository.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 
 const { codex } = TOOL;
 
@@ -87,24 +90,7 @@ describe("one project's exact native host ref claim", () => {
 
   it("holds exclusive access while loading the latest machine claims", async () => {
     const f = fixture();
-    let entered = false;
-    const repo = {
-      path: f.repo.path,
-      load: () => {
-        expect(entered).toBe(true);
-        return f.repo.load();
-      },
-      save: (manifest: Manifest) => f.repo.save(manifest),
-      delete: () => f.repo.delete(),
-      withExclusiveAccess: async <T>(action: () => Promise<T>): Promise<T> => {
-        entered = true;
-        try {
-          return await action();
-        } finally {
-          entered = false;
-        }
-      },
-    };
+    const repo = loadingOnlyUnderLock(f.repo);
     await detachNativePluginRefs(repo, f.fs, "/A", new Map([[codex, [TARGET]]]));
     expect(
       f.repo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims?.[0]?.dependents

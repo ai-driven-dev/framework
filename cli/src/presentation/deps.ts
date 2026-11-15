@@ -30,7 +30,6 @@ import type { SetupToolsUseCase } from "../contexts/framework/application/setup/
 import type { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import type { UninstallIdeUseCase } from "../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import type { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
-import type { UserSourceReferences } from "../contexts/framework/domain/ports/user-source-references.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
 import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
@@ -39,6 +38,7 @@ import type { ReportStatus } from "../contexts/installation/application/report-s
 import type { Restore } from "../contexts/installation/application/restore/restore.js";
 import type { FileMerger } from "../contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
+import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
 import type { DeclareTask } from "../contexts/telemetry/application/declaration/declare-task.js";
 import type { ResolveTaskRequest } from "../contexts/telemetry/application/declaration/resolve-task-request.js";
@@ -62,6 +62,7 @@ import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
+import type { Lock } from "../shared/ports/lock.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Prompter } from "../shared/ports/prompter.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
@@ -108,7 +109,7 @@ export interface Deps {
   manifestRepo: ManifestRepository;
   /** `--scope user`'s own manifest repository: `userConfigDir()/manifest.json`, never nested
    * under a project's `.aidd/`. */
-  userManifestRepo: ManifestRepository;
+  userManifestRepo: ManifestRepository & Lock;
   /** The one home-directory resolver presentation calls, never `os.homedir()` directly, so a
    * test can point it elsewhere. */
   homedir: () => string;

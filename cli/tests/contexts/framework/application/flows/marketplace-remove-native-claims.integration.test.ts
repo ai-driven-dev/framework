@@ -55,10 +55,10 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
     project.setNativeRegistrations(codex, {
       binary: "codex",
       marketplaces: [
+        { alias: "other-alias", hostName: "other-catalog" },
         ...(options.nativeMapping === "unrelated"
           ? []
           : [{ alias: NAME, hostName: "real-catalog" }]),
-        { alias: "other-alias", hostName: "other-catalog" },
       ],
       pluginRefs: [REF, OTHER],
     });

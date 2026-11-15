@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { detachUserPlugin } from "../../../../../src/contexts/framework/application/ownership/user-plugin-ownership.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { detachUserPlugin } from "../../../../src/contexts/machine-claims/application/user-plugin-ownership.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import {
+  InMemoryManifestRepository,
+  loadingOnlyUnderLock,
+} from "../../../helpers/ports/in-memory-manifest-repository.js";
+import { TOOL } from "../../tools/testing/catalog-of.js";
 
 function fixture(scope: "project" | "user" = "user", dependents: readonly string[] = ["/A", "/B"]) {
   const manifest = Manifest.create();
@@ -64,24 +67,7 @@ describe("one project's canonical user plugin claim", () => {
 
   it("loads the latest machine record under exclusive access before detaching", async () => {
     const f = fixture();
-    let entered = false;
-    const locked = {
-      path: f.repo.path,
-      load: () => {
-        expect(entered).toBe(true);
-        return f.repo.load();
-      },
-      save: (manifest: Manifest) => f.repo.save(manifest),
-      delete: () => f.repo.delete(),
-      withExclusiveAccess: async <T>(action: () => Promise<T>): Promise<T> => {
-        entered = true;
-        try {
-          return await action();
-        } finally {
-          entered = false;
-        }
-      },
-    };
+    const locked = loadingOnlyUnderLock(f.repo);
     await detachUserPlugin(locked, f.fs, TOOL.cursor, "sample-plugin", "/A");
     expect(f.repo.getCurrent()?.getPlugins(TOOL.cursor)[0]?.dependents).toEqual(["/B"]);
   });

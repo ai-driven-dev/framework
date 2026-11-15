@@ -103,18 +103,13 @@ describe("readMarketplaceCatalogIdentity", () => {
       await readMarketplaceCatalogIdentity(fs, registeredProfile(TOOL.claude), DIR)
     ).toBeUndefined();
   });
-
-  it("answers nothing for a tool that is not an AI tool", async () => {
-    const fs = fsWithCatalog({ name: "aidd-framework" });
-
-    expect(
-      await readMarketplaceCatalogIdentity(fs, registeredProfile(TOOL.vscode), DIR)
-    ).toBeUndefined();
-  });
 });
 
 describe("marketplaceCatalogProbePath", () => {
-  it("names nothing for a tool that is not an AI tool", () => {
-    expect(marketplaceCatalogProbePath(registeredProfile(TOOL.vscode), DIR)).toBeUndefined();
+  it.each([
+    ["is not an AI tool", TOOL.vscode],
+    ["declares no marketplace catalog", TOOL.antigravity],
+  ])("names nothing for a tool that %s", (_why, tool) => {
+    expect(marketplaceCatalogProbePath(registeredProfile(tool), DIR)).toBeUndefined();
   });
 });
