@@ -8,16 +8,16 @@ argument-hint: goal
 
 ```mermaid
 flowchart LR
-  entry([request]) -->|"new command"| frame["actions/01-frame.md"]
-  entry -->|"command file exists"| frame
-  frame <-->|"goal, name and targets to confirm"| user((user answers))
-  frame -->|"host tools or plugin source"| write["actions/02-write.md"]
-  frame -->|"needs files or many steps"| skill((use a skill))
-  write --> validate["actions/03-validate.md"]
-  write -->|"writer refusal or error"| stopped((stopped))
-  validate -->|"breach"| validate
-  validate -->|"every file passes"| done((validated))
-  validate -->|"fix declined or impossible"| blocked((blocked))
+  entry([request]) --> frame["actions/01-frame.md"]
+  frame <-->|"part to ask"| user((user answers))
+  frame -->|"breaches C1 or only Codex or Antigravity"| skill((use a skill))
+  frame --> plan["actions/02-plan.md"]
+  plan <-->|"plan to approve"| user
+  plan -->|"cancelled"| cancelled((cancelled))
+  plan --> write["actions/03-write.md"]
+  write --> done((written))
+  plan -->|"writer refusal"| stopped((stopped))
+  write -->|"writer error"| stopped
 ```
 
 ## Transversal rules
