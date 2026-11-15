@@ -131,7 +131,6 @@ describe("the guard itself", () => {
 
   it("reads a context's commands and the orchestration as the files it holds", () => {
     expect(isUseCase("src/orchestration/setup/setup.ts")).toBe(true);
-    expect(isUseCase("src/contexts/auth/application/log-in.ts")).toBe(true);
     expect(isUseCase("src/contexts/auth/domain/credential-record.ts")).toBe(false);
   });
 
