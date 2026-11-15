@@ -12,6 +12,7 @@ const FLAGS = ["--plan", "--force"];
 const VALUES = ["--project", "--tools", "--input"];
 const KEBAB_CASE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const LINE_BREAK = /[\r\n]/;
+const CRLF = /\r\n/g;
 const BODY = "body";
 const TOML_DELIMITER = "'''";
 // A YAML plain scalar that reads back as the same string; anything else is double-quoted, since Cursor keeps single quotes as text.
@@ -197,7 +198,8 @@ function assertNoSymlink(project, relative) {
 
 function readOrNull(file) {
   try {
-    return fs.readFileSync(file, "utf8");
+    // A Windows checkout may turn every line ending into CRLF; the writer reads and writes LF.
+    return fs.readFileSync(file, "utf8").replace(CRLF, "\n");
   } catch (error) {
     if (MISSING.includes(error.code)) return null;
     throw error;
