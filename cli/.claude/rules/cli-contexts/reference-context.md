@@ -219,8 +219,6 @@ Written rules no tool checks: the glossary, a kit imported by its own context on
 
 Not exceptions of the model: each vanishes when the old layout moves in stage C, and the old-layout counter (`old-layout-count.arch.test.ts`) only lets it go down.
 
-A ratchet row is keyed by path. A row's path may change with `git mv` when its file moves; its count may not rise, and a move is never a reason to raise it.
-
 | # | Deviation | Vanishes when |
 | --- | --- | --- |
 | M5 | `composition/framework.ts` imports `src/composition/auth.ts`, `src/composition/distribution.ts`, `src/composition/recipes.ts` and `src/composition/update.ts`, where the target has nobody import `composition/` | `composition/framework.ts` stops composing the other modules by import |
@@ -237,6 +235,8 @@ A ratchet row is keyed by path. A row's path may change with `git mv` when its f
 | M-R7 | `resolveHomeDir` is a default parameter in `clean-use-case.ts`, `clean/clean-user-scope-use-case.ts`, `plugin/plugin-remove-use-case.ts`, `ownership/user-marketplace-remove-use-case.ts` and `composition/host-registration.ts`, so `contexts/framework/domain/reading/home-dir.ts` sits in the one context that imports it, with a single-file `biome.json` exemption of the `process` global: `shared/infrastructure` would put a context default on infrastructure the context may not import | the framework split turns the default into an injected home |
 | M-R8 | `shared/domain/paths.ts` is not split and `shared/domain/source.ts` has no owner | the framework split |
 | M-R10 | the mutation scope and script keep the name `runtime` (`mutation-scopes.json`, `test:mutation:runtime`) after the directory it named is gone | the next mutation-scopes cleanup |
+
+A path-keyed ratchet row may follow its file through `git mv`; its count never rises.
 
 ## 10. Checklist for a context's migration PR
 
