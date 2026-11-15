@@ -11,6 +11,6 @@ Detect by listing the project root with hidden entries, since a file search miss
 | GitHub Copilot / `copilot` | `.github/copilot-instructions.md` or `.github/instructions/` | a copy in `.github/instructions/` |
 | Antigravity / `antigravity` | `.agents/agents/`, `.agents/rules/`, `.agent/rules/` or `.agents/hooks.json` | a copy in `.agents/rules/` |
 | Codex CLI / `codex` | `.codex/` | a line in the root `AGENTS.md` index |
-| OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | a line in the root `AGENTS.md` index |
-| Kilo Code / `kilo` | `.kilo/` | a line in the root `AGENTS.md` index |
+| OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | a copy in `.opencode/rules/` and the `.opencode/rules/*.md` entry in opencode config `instructions` |
+| Kilo Code / `kilo` | `.kilo/` | a copy in `.kilo/rules/` and the `.kilo/rules/*.md` entry in kilo config `instructions` |
 | None detected | no marker above | the root `AGENTS.md` index through `codex`, if accepted |

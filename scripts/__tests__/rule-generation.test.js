@@ -145,7 +145,7 @@ test("--plan writes nothing and lists files to create, update or delete, conflic
   assert.equal(r.status, 0, r.stderr);
   const p = json(r);
   assert.equal(p.plan, true);
-  assert.deepEqual(paths(p.files, "create"), [SRC, CLAUDE, CURSOR, COPILOT, AGY, "AGENTS.md"].sort());
+  assert.deepEqual(paths(p.files, "create"), [SRC, CLAUDE, CURSOR, COPILOT, AGY, OPENCODE, "opencode.json"].sort());
   assert.deepEqual([p.conflicts, p.legacy], [[], []]);
   assert.deepEqual(f.snapshot(), before);
   assert.equal(f.run().status, 0);
@@ -301,28 +301,97 @@ test("a file where a directory is expected blocks before any write", (t) => {
   assert.deepEqual(f.snapshot(), before);
 });
 
-test("opencode shares the codex index line and never touches opencode.json", (t) => {
+const KILO = ".kilo/rules/01-standards-1-naming.md";
+const OPENCODE = ".opencode/rules/01-standards-1-naming.md";
+const scopeLine = "Applies to files matching `src/**/*.ts`, `test/**/*.ts`.\n\n";
+
+test("kilo gets rule copies and a created config entry, no AGENTS.md", (t) => {
   const f = fixture(t);
-  f.put("opencode.json", "{}\n");
-  assert.equal(f.run(rule, "opencode").status, 0);
-  const index = f.read("AGENTS.md");
-  assert.equal(f.run(rule, "codex,opencode").status, 0);
-  assert.equal(f.read("AGENTS.md"), index);
-  assert.equal(index.match(/1-naming\.md/g).length, 1);
-  assert.equal(f.read("opencode.json"), "{}\n");
-  assert.ok(!f.has(CLAUDE));
+  assert.equal(f.run(rule, "kilo").status, 0);
+  assert.equal(f.read(KILO), scopeLine + rule.body);
+  assert.equal(f.read("kilo.jsonc"), '{\n  "instructions": [".kilo/rules/*.md"]\n}\n');
+  assert.ok(!f.has("AGENTS.md"));
+  assert.equal(f.run({ ...rule, slug: "1-other", paths: [] }, "kilo").status, 0);
+  assert.equal(f.read(".kilo/rules/01-standards-1-other.md"), rule.body);
+  const before = f.snapshot();
+  const again = f.run(rule, "kilo");
+  assert.equal(again.status, 0);
+  assert.deepEqual(json(again).files, []);
+  assert.deepEqual(f.snapshot(), before);
 });
 
-test("kilo shares the codex index line and never touches kilo config", (t) => {
+test("opencode appends its entry to an existing config and keeps the rest", (t) => {
   const f = fixture(t);
-  f.put("kilo.jsonc", "{}\n");
+  f.put("opencode.json", '{"$schema":"x"}\n');
+  assert.equal(f.run(rule, "opencode").status, 0);
+  assert.equal(f.read(OPENCODE), scopeLine + rule.body);
+  assert.deepEqual(JSON.parse(f.read("opencode.json")), { $schema: "x", instructions: [".opencode/rules/*.md"] });
+  assert.ok(!f.has("AGENTS.md"));
+});
+
+test("an entry already in a commented config leaves it byte identical", (t) => {
+  const f = fixture(t);
+  const config = '// c\n{"instructions": [".opencode/rules/*.md"]}\n';
+  f.put("opencode.jsonc", config);
+  assert.equal(f.run(rule, "opencode").status, 0);
+  assert.equal(f.read("opencode.jsonc"), config);
+  assert.ok(!f.has("opencode.json"));
+});
+
+test("a commented config without the entry refuses and names the text to add", (t) => {
+  const f = fixture(t);
+  f.put("opencode.jsonc", "// c\n{}\n");
+  const before = f.snapshot();
+  const r = f.run(rule, "opencode");
+  assert.equal(r.status, 1);
+  assert.equal(json(r).error.code, "REFUSED");
+  assert.ok(json(r).error.message.includes(".opencode/rules/*.md"));
+  assert.deepEqual(f.snapshot(), before);
+});
+
+test("several kilo configs without the entry refuse and write nothing", (t) => {
+  const f = fixture(t);
+  f.put("kilo.json", "{}\n");
+  f.put(".kilo/kilo.jsonc", "{}\n");
+  const before = f.snapshot();
+  const r = f.run(rule, "kilo");
+  assert.equal(r.status, 1);
+  assert.ok(json(r).error.message.includes("kilo.json") && json(r).error.message.includes(".kilo/kilo.jsonc"));
+  assert.deepEqual(f.snapshot(), before);
+});
+
+test("an instructions value that is not an array refuses", (t) => {
+  const f = fixture(t);
+  f.put("opencode.json", '{"instructions":"x"}\n');
+  assert.equal(f.run(rule, "opencode").status, 1);
+});
+
+test("--check --publish covers the config entry for kilo and opencode", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run(rule, "kilo,opencode").status, 0);
+  const clean = f.run(null, null, ["--check", "--publish"]);
+  assert.equal(clean.status, 0, clean.stdout);
+  f.put("opencode.json", "{}\n");
+  const drift = f.run(null, null, ["--check", "--publish"]);
+  assert.equal(drift.status, 1);
+  assert.deepEqual(json(drift).drift, ["opencode.json"]);
+});
+
+test("removing the last rule keeps the config entry", (t) => {
+  const f = fixture(t);
   assert.equal(f.run(rule, "kilo").status, 0);
-  const index = f.read("AGENTS.md");
-  assert.equal(f.run(rule, "codex,kilo").status, 0);
-  assert.equal(f.read("AGENTS.md"), index);
-  assert.equal(index.match(/1-naming\.md/g).length, 1);
-  assert.equal(f.read("kilo.jsonc"), "{}\n");
-  assert.ok(!f.has(".kilo"));
+  assert.equal(f.run(null, null, ["--remove", "01-standards/1-naming"]).status, 0);
+  assert.ok(!f.has(KILO));
+  assert.ok(f.read("kilo.jsonc").includes(".kilo/rules/*.md"));
+});
+
+test("an old AGENTS.md index line of an opencode-only rule is dropped on publish", (t) => {
+  const f = fixture(t);
+  f.put(SRC, `---\ndescription: "Naming"\ntargets: [opencode]\n---\n\n${rule.body}`);
+  f.put("AGENTS.md", "User\n\n<!-- aidd_rules:start -->\nBefore editing a file, read each rule whose scope matches it.\n\n- all files: [Naming](aidd_docs/rules/01-standards/1-naming.md)\n<!-- aidd_rules:end -->\n");
+  assert.equal(f.run(null, null, ["--publish"]).status, 0);
+  assert.equal(f.read("AGENTS.md"), "User\n");
+  assert.equal(f.read(OPENCODE), rule.body);
 });
 
 test("antigravity output over 24000 bytes refuses", (t) => {
@@ -424,4 +493,14 @@ test("every non-zero exit prints parseable JSON on stdout", (t) => {
   const drift = f.run(null, null, ["--check", "--publish"]);
   assert.equal(drift.status, 1);
   assert.ok(Array.isArray(json(drift).drift));
+});
+
+test("an untrusted AGENTS.md block blocks only the codex index, never a copy host", (t) => {
+  const f = fixture(t);
+  const agents = "<!-- aidd_rules:start -->\nhand edit\n<!-- aidd_rules:start -->\n";
+  f.put("AGENTS.md", agents);
+  const r = f.run(rule, "claude");
+  assert.equal(r.status, 0, r.stdout);
+  assert.equal(f.read("AGENTS.md"), agents);
+  assert.equal(f.run(rule, "codex").status, 1);
 });

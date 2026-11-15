@@ -2,7 +2,7 @@
 "use strict";
 // Usage: node write-rule.cjs --project <abs dir> (--input <request.json> --tools <ids> | --remove <category>/<slug> | --publish [--tools <ids>]) [--plan | --check] [--force]
 // Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo. --tools adds hosts to the rules it publishes; --check takes none.
-// Publishes aidd_docs/rules sources as native copies.
+// Publishes aidd_docs/rules sources as native copies; codex reads an AGENTS.md index, kilo and opencode also get a glob in their config instructions.
 // Exit 0 ok, 1 refusal/conflict/drift/unexpected error, 2 usage error, 3 filesystem blocked or failed.
 // Every non-zero exit prints a JSON object on stdout.
 const fs = require("node:fs");
@@ -13,7 +13,12 @@ const TOOLS = ["claude", "cursor", "copilot", "antigravity", "codex", "opencode"
 const CATEGORIES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"].map((name, index) => `0${index}-${name}`);
 const SOURCE_DIR = "aidd_docs/rules";
 // Hosts without native rules read a line of the root AGENTS.md index instead of a copy.
-const INDEX_TOOLS = ["codex", "opencode", "kilo"];
+const INDEX_TOOLS = ["codex"];
+// Hosts that load rule copies through an instructions glob in their config; the first config is created when none exists.
+const HOST_CONFIG = {
+  kilo: { dir: ".kilo/rules", configs: ["kilo.jsonc", "kilo.json", ".kilo/kilo.jsonc", ".kilo/kilo.json"] },
+  opencode: { dir: ".opencode/rules", configs: ["opencode.json", "opencode.jsonc"] },
+};
 const FLAG_OPTIONS = ["--publish", "--plan", "--check", "--force"];
 const VALUE_OPTIONS = ["--project", "--tools", "--input", "--remove"];
 const REQUEST_KEYS = ["category", "slug", "description", "body", "paths"];
@@ -135,6 +140,7 @@ function nativePath(rule, tool) {
   if (tool === "claude") return `.claude/rules/${rule.category}/${rule.slug}.md`;
   if (tool === "cursor") return `.cursor/rules/${rule.category}/${rule.slug}.mdc`;
   if (tool === "antigravity") return `.agents/rules/${rule.slug}.md`;
+  if (HOST_CONFIG[tool]) return `${HOST_CONFIG[tool].dir}/${rule.category}-${rule.slug}.md`;
   return `.github/instructions/${rule.category.slice(0, 2)}-${rule.slug.slice(2)}.instructions.md`;
 }
 
@@ -147,7 +153,8 @@ function renderNative(rule, tool) {
     copilot: `applyTo: ${scoped ? globs : '"**"'}\n`,
     antigravity: `description: ${quote(rule.description)}\n${scoped ? `trigger: glob\nglobs: ${globs}\n` : "trigger: always_on\n"}`,
   }[tool];
-  const text = (frontmatter ? `---\n${frontmatter}---\n` : "") + rule.body;
+  const scope = HOST_CONFIG[tool] && scoped ? `Applies to files matching ${rule.paths.map((glob) => `\`${glob}\``).join(", ")}.\n\n` : "";
+  const text = (frontmatter ? `---\n${frontmatter}---\n` : "") + scope + rule.body;
   if (tool === "antigravity" && Buffer.byteLength(text) > ANTIGRAVITY_MAX_BYTES) refuse(`Antigravity rule exceeds ${ANTIGRAVITY_MAX_BYTES} bytes.`);
   return text;
 }
@@ -302,7 +309,12 @@ function planChanges(project, options) {
   const plan = { writes: new Map(), conflicts: [], legacy: new Set() };
   const force = "--force" in options;
   const finalSources = planRuleFiles(plan, project, items, sources, force);
-  if (items.some((item) => isIndexed(item.rule))) planAgentsIndex(plan, project, finalSources);
+  for (const tool of Object.keys(HOST_CONFIG)) {
+    if (items.some((item) => !item.deleting && item.rule.targets.includes(tool))) planConfig(plan, project, tool);
+  }
+  // An existing block is rebuilt too, so lines written for hosts that now take copies disappear.
+  const indexed = items.some((item) => isIndexed(item.rule));
+  if (indexed || /^<!-- aidd_rules:start/m.test(project.read("AGENTS.md") ?? "")) planAgentsIndex(plan, project, finalSources, indexed);
   return plan;
 }
 
@@ -343,12 +355,41 @@ function planCopy(plan, project, force, relativePath, wanted, previous) {
   if (force) plan.writes.set(relativePath, wanted);
 }
 
-function planAgentsIndex(plan, project, finalSources) {
+// An untrusted block refuses only a publish that must index; any other leaves it alone.
+function planAgentsIndex(plan, project, finalSources, required) {
   const current = project.read("AGENTS.md") ?? "";
   const next = reindexAgents(current, agentsIndexLines(finalSources));
+  if (!next && !required) return;
   if (!next) refuse("AGENTS.md has an aidd_rules block the writer cannot trust; repair or remove it by hand.");
   if (next.legacy) plan.legacy.add("AGENTS.md");
   if (next.text !== current) plan.writes.set("AGENTS.md", next.text || null);
+}
+
+function parseJsonObject(text) {
+  try {
+    const value = JSON.parse(text);
+    return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+// The config is never a conflict and never cleaned up: a glob matching no rule is harmless.
+function planConfig(plan, project, tool) {
+  const glob = `${HOST_CONFIG[tool].dir}/*.md`;
+  const found = HOST_CONFIG[tool].configs.map((file) => [file, project.read(file)]).filter(([, text]) => text !== null);
+  if (found.some(([, text]) => text.includes(quote(glob)))) return;
+  if (!found.length) {
+    plan.writes.set(HOST_CONFIG[tool].configs[0], `{\n  "instructions": [${quote(glob)}]\n}\n`);
+    return;
+  }
+  const [file, text] = found[0];
+  const config = found.length === 1 ? parseJsonObject(text) : null;
+  if (!config || !(config.instructions === undefined || Array.isArray(config.instructions))) {
+    refuse(`Add ${quote(glob)} to "instructions" in ${found.map(([name]) => name).join(" and ")} by hand, then rerun.`);
+  }
+  config.instructions = [...(config.instructions ?? []), glob];
+  plan.writes.set(file, `${JSON.stringify(config, null, 2)}\n`);
 }
 
 // ---------- effects: preflight, apply ----------
