@@ -31,12 +31,12 @@ import type { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/
 import type { UninstallIdeUseCase } from "../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import type { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
 import type { UserSourceReferences } from "../contexts/framework/domain/ports/user-source-references.js";
-import type { InstallIdeToolCommand } from "../contexts/installation/application/install/install-ide-tool-use-case.js";
-import type { ListInstalledRulesCommand } from "../contexts/installation/application/list-installed-rules-use-case.js";
-import type { PluginListCommand } from "../contexts/installation/application/plugin/plugin-list-use-case.js";
-import type { PluginUpdateCommand } from "../contexts/installation/application/plugin/plugin-update-use-case.js";
-import type { RestoreCommand } from "../contexts/installation/application/restore/restore-use-case.js";
-import type { StatusCommand } from "../contexts/installation/application/status-use-case.js";
+import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
+import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
+import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
+import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.js";
+import type { ReportStatus } from "../contexts/installation/application/report-status.js";
+import type { Restore } from "../contexts/installation/application/restore/restore.js";
 import type { FileMerger } from "../contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { ValidateRecipes } from "../contexts/recipes/application/validate-recipes.js";
@@ -120,8 +120,8 @@ export interface Deps {
   logOut: Pick<LogOut, "execute">;
   checkStatus: Pick<CheckStatus, "execute">;
   pluginRemoveUseCase: Pick<PluginRemoveUseCase, "execute">;
-  pluginListUseCase: Pick<PluginListCommand, "execute">;
-  pluginUpdateUseCase: Pick<PluginUpdateCommand, "execute">;
+  pluginListUseCase: Pick<ListPlugins, "execute">;
+  pluginUpdateUseCase: Pick<UpdatePlugin, "execute">;
   userPluginUpdateUseCase: Pick<UserPluginUpdateUseCase, "execute">;
   addMarketplace: Pick<AddMarketplace, "execute">;
   listMarketplaces: Pick<ListMarketplaces, "execute">;
@@ -131,7 +131,7 @@ export interface Deps {
   marketplaceCheckUseCase: Pick<MarketplaceCheckUseCase, "execute">;
   userSourceReferences: UserSourceReferences;
   installAiToolUseCase: Pick<InstallAiToolUseCase, "execute">;
-  installIdeToolUseCase: Pick<InstallIdeToolCommand, "execute">;
+  installIdeToolUseCase: Pick<InstallIdeTool, "execute">;
   uninstallIdeUseCase: Pick<UninstallIdeUseCase, "execute">;
   assetProvider: AssetProvider;
   searchPlugins: Pick<SearchPlugins, "execute">;
@@ -152,8 +152,8 @@ export interface Deps {
   >;
   setupMachineScopeUseCase: Pick<SetupMachineScopeUseCase, "execute">;
   selfUpdate: Pick<SelfUpdate, "execute">;
-  statusUseCase: Pick<StatusCommand, "execute">;
-  restoreUseCase: Pick<RestoreCommand, "execute">;
+  statusUseCase: Pick<ReportStatus, "execute">;
+  restoreUseCase: Pick<Restore, "execute">;
   uninstallUseCase: Pick<UninstallUseCase, "execute">;
   statusAllUseCase: Pick<StatusAllUseCase, "execute">;
   restoreAllUseCase: Pick<RestoreAllUseCase, "execute">;
@@ -162,7 +162,7 @@ export interface Deps {
   cleanUseCase: Pick<CleanUseCase, "execute">;
   cleanUserScopeUseCase: Pick<CleanUserScopeUseCase, "execute">;
   doctorAllUseCase: Pick<DoctorAllUseCase, "execute">;
-  listInstalledRulesUseCase: Pick<ListInstalledRulesCommand, "execute">;
+  listInstalledRulesUseCase: Pick<ListInstalledRules, "execute">;
   validateRecipes: Pick<ValidateRecipes, "execute">;
   printUpdateNotice: Pick<PrintUpdateNotice, "execute">;
   refreshUpdateCheck: Pick<RefreshUpdateCheck, "execute">;

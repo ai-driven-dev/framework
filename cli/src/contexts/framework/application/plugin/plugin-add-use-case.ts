@@ -15,7 +15,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
-import type { InstallRuntimeConfigCommand } from "../../../installation/application/install/install-runtime-config-use-case.js";
+import type { InstallRuntimeConfig } from "../../../installation/application/install/install-runtime-config.js";
 import type { PluginTranslator } from "../../../installation/application/materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../../../installation/application/materialize/resolve-plugin-translator.js";
 import type { PluginDistributionLoader } from "../../../installation/application/plugin/plugin-distribution-loader.js";
@@ -28,7 +28,7 @@ import {
   resolvePluginToolIds,
   resolveScopeForInstall,
 } from "../../../installation/application/plugin/plugin-target-resolution.js";
-import type { EnsureBuiltMarketplace } from "../../../installation/application/shared/ensure-built-marketplace-use-case.js";
+import type { BuiltMarketplaceEnsurer } from "../../../installation/application/shared/ensure-built-marketplace.js";
 import { assertProjectHooksRemovable } from "../../../installation/application/shared/remove-project-hooks.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
 import {
@@ -69,9 +69,9 @@ export class PluginAddUseCase implements PluginAdd {
     private readonly hasher: Hasher,
     private readonly logger: Logger,
     private readonly marketplaceRegistry: MarketplaceRegistry,
-    private readonly ensureBuilt: EnsureBuiltMarketplace,
+    private readonly ensureBuilt: BuiltMarketplaceEnsurer,
     private readonly userManifestRepo: ManifestRepository,
-    private readonly pluginRuntime?: Pick<InstallRuntimeConfigCommand, "ensurePluginRuntimeFiles">
+    private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
   ) {}
 
   async execute(options: PluginAddOptions): Promise<void> {

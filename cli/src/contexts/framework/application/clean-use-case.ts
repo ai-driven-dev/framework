@@ -23,13 +23,13 @@ import type { HostActions } from "../../host-registration/contract/host-actions.
 import type { HostMarketplaceRegistry } from "../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../host-registration/contract/host-plugin-registry.js";
-import type { GitignoreCommand } from "../../installation/application/gitignore-use-case.js";
 import { deletePluginFilesForTool } from "../../installation/application/plugin/plugin-helpers.js";
 import {
   assertProjectHooksRemovable,
   type ProjectHooksGuard,
   removeProjectHooks,
 } from "../../installation/application/shared/remove-project-hooks.js";
+import type { UpdateGitignore } from "../../installation/application/update-gitignore.js";
 import type { NativeRegistrations } from "../../installation/domain/manifest/native-registrations.js";
 import type { Manifest } from "../../installation/domain/manifest.js";
 import { aiddGitignoreEntries } from "../../installation/domain/manifest-gitignore-entries.js";
@@ -128,7 +128,7 @@ export class CleanUseCase {
     private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly logger: Logger,
-    private readonly gitignoreUseCase: GitignoreCommand,
+    private readonly updateGitignore: UpdateGitignore,
     /** Native plugin CLI activators keyed by `NativeActivation.binary`. */
     private readonly activators: ReadonlyMap<string, HostActions> = new Map(),
     /** Resolves a registered marketplace's own scope, needed to undo a native registration at
@@ -211,7 +211,7 @@ export class CleanUseCase {
     });
     await this.removeAiddState(options.projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
-    await this.gitignoreUseCase.remove(
+    await this.updateGitignore.remove(
       options.projectRoot,
       aiddGitignoreEntries(manifest, (toolId) => machineLocalFilesOf(options.tools, toolId))
     );

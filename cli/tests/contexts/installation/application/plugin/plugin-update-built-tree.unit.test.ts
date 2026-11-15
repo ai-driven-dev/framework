@@ -6,7 +6,7 @@ import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/app
 import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace-use-case.js";
+import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
@@ -54,7 +54,7 @@ function makeUpdateUseCase(
   deps: Deps,
   registry: InMemoryMarketplaceRegistry,
   nativeHost: NativeHostRegistrationGate = new NativeHostRegistrationGate(new Map(), new Map()),
-  ensureBuilt: EnsureBuiltMarketplace = fakeEnsureBuiltMarketplace()
+  ensureBuilt: BuiltMarketplaceEnsurer = fakeEnsureBuiltMarketplace()
 ): UserPluginUpdateUseCase {
   return new UserPluginUpdateUseCase(
     deps.userManifestRepo,
@@ -173,7 +173,7 @@ function attachFutureSupportedNativeClaim(deps: Deps) {
   return { machine, activator, nativeHost };
 }
 
-describe("PluginUpdateCommand — built-tree materialization", () => {
+describe("UpdatePlugin — built-tree materialization", () => {
   it("refuses an absent machine manifest before touching user files", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const registry = await makeRegistry();
@@ -451,7 +451,7 @@ describe("PluginUpdateCommand — built-tree materialization", () => {
     await installStalePlugin(deps, registry);
     deps.fs.setFile("/built/right/plugins/sample-plugin/skills/demo/SKILL.md", "# Right catalogue");
     deps.fs.setFile("/built/wrong/plugins/sample-plugin/skills/demo/SKILL.md", "# Wrong catalogue");
-    const ensureBuilt: EnsureBuiltMarketplace = {
+    const ensureBuilt: BuiltMarketplaceEnsurer = {
       execute: async ({ marketplace }) => ({
         builtDir: marketplace.name === "aidd-framework" ? "/built/right" : "/built/wrong",
         version: "test",

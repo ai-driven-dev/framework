@@ -17,7 +17,7 @@ async function build() {
   const useCase = new SetupToolsUseCase(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
-    deps.installIdeConfigUseCase
+    deps.installIdeConfig
   );
   return { deps, useCase };
 }

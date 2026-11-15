@@ -3,7 +3,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { PluginAnswers } from "../../../tools/contract/tool-profile.js";
-import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
+import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "./built-tree-materialization-translator.js";
 import { ModeAMarketplaceTranslator } from "./mode-a-marketplace-translator.js";
 import type { PluginTranslator } from "./plugin-translator.js";
@@ -12,7 +12,7 @@ export interface TranslatorDeps {
   fs: FileWriter & FileReader;
   hasher: Hasher;
   homedir: () => string;
-  ensureBuilt: EnsureBuiltMarketplace;
+  ensureBuilt: BuiltMarketplaceEnsurer;
   marketplaceRegistry: MarketplaceRegistry;
 }
 

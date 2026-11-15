@@ -25,7 +25,7 @@ import {
   resolveBaseDirFromRecord,
   resolveScopeForInstall,
 } from "../plugin/plugin-target-resolution.js";
-import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
+import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
 import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
 import { ModeBFlatMaterializationTranslator } from "./mode-b-flat-materialization-translator.js";
@@ -39,7 +39,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     private readonly fs: FileWriter & FileReader,
     private readonly hasher: Hasher,
     private readonly homedir: () => string,
-    private readonly ensureBuilt: EnsureBuiltMarketplace,
+    private readonly ensureBuilt: BuiltMarketplaceEnsurer,
     private readonly marketplaceRegistry: MarketplaceRegistry
   ) {
     this.projectHooks = new ProjectHooksMaterializer(fs);

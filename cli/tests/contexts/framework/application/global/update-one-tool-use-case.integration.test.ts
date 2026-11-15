@@ -38,7 +38,7 @@ function buildUseCase(
   const decisionUseCase = new ResolveUpdateDecisionUseCase(prompter);
   return new UpdateOneToolUseCase(
     deps.installRuntimeConfigUseCase,
-    deps.installIdeConfigUseCase,
+    deps.installIdeConfig,
     conflictResolver,
     decisionUseCase,
     deps.fs

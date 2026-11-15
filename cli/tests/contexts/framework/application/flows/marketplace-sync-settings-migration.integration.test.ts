@@ -10,7 +10,7 @@ import { DoctorRegistrationUseCase } from "../../../../../src/contexts/framework
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/framework/domain/ports/user-source-references.js";
 import type { HostActions } from "../../../../../src/contexts/host-registration/contract/host-actions.js";
-import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace-use-case.js";
+import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
   BUILT_CACHE_SUBDIR,
@@ -1133,7 +1133,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
     manifest.addTool(TOOL.codex, "test", []);
     const fs = staleCacheAndCatalog();
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
-    const codexBuildFails: EnsureBuiltMarketplace = {
+    const codexBuildFails: BuiltMarketplaceEnsurer = {
       execute: async (options) => {
         if (options.target === "codex") throw new Error("translator refused the source");
         return { builtDir: CLAUDE_BUILT_DIR, version: "test", rebuilt: true };

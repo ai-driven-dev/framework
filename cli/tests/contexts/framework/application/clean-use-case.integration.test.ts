@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
-import { GitignoreCommand } from "../../../../src/contexts/installation/application/gitignore-use-case.js";
+import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
@@ -29,7 +29,7 @@ function buildUseCase(logger: CapturingLogger): CleanUseCase {
     fs,
     new InMemoryManifestRepository(manifest, projectRoot),
     logger,
-    new GitignoreCommand(fs)
+    new UpdateGitignore(fs)
   );
 }
 

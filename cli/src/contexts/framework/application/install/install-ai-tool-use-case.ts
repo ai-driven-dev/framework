@@ -1,9 +1,9 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type {
-  InstallRuntimeConfigCommand,
+  InstallRuntimeConfig,
   InstallRuntimeConfigResult,
-} from "../../../installation/application/install/install-runtime-config-use-case.js";
+} from "../../../installation/application/install/install-runtime-config.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
 import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
@@ -34,7 +34,7 @@ export interface InstallAiToolResult {
 
 export class InstallAiToolUseCase {
   constructor(
-    private readonly installRuntimeConfig: InstallRuntimeConfigCommand,
+    private readonly installRuntimeConfig: InstallRuntimeConfig,
     private readonly manifestRepo: ManifestRepository,
     private readonly pluginInstallFromMarketplace: PluginInstallFromMarketplace,
     private readonly marketplaceSyncSettings: MarketplaceSyncSettings,

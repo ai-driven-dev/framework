@@ -1,7 +1,7 @@
 import { InputRequiredError } from "../../../../shared/domain/errors.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 
-interface ResolveRestoreDecisionOptions {
+interface ResolveRestoreDecisionCommand {
   relativePath: string;
   reason: "deleted" | "modified";
   force: boolean;
@@ -12,10 +12,10 @@ interface ResolveRestoreDecisionOptions {
  * Returns true when the file should be kept (skipped), false when it should be restored.
  * Throws InputRequiredError when a modified file is encountered in non-interactive non-force mode.
  */
-export class ResolveRestoreDecisionCommand {
+export class ResolveRestoreDecision {
   constructor(private readonly prompter: Prompter) {}
 
-  async execute(options: ResolveRestoreDecisionOptions): Promise<boolean> {
+  async execute(options: ResolveRestoreDecisionCommand): Promise<boolean> {
     const { relativePath, reason, force, interactive } = options;
     if (reason !== "modified") return false;
     if (!force && !interactive) {

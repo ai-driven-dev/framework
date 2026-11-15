@@ -23,10 +23,10 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   // Five section generators reached inline through a switch on section name, plus the config
   // generator. It resolves by registering a generator per section type, not by dropping one.
   {
-    path: "src/contexts/installation/application/restore/generate-tool-distribution-use-case.ts",
+    path: "src/contexts/installation/application/restore/generate-tool-distribution.ts",
     dependencies: 9,
   },
-  { path: "src/contexts/installation/application/restore/restore-use-case.ts", dependencies: 12 },
+  { path: "src/contexts/installation/application/restore/restore.ts", dependencies: 12 },
   // Host plugin registries prove ref scope/enablement; the added native source reader independently
   // proves the current catalogue before these flows mutate it. Neither witness replaces the other.
   { path: "src/contexts/framework/application/clean-use-case.ts", dependencies: 13 },
@@ -41,7 +41,7 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     dependencies: 12,
   },
   {
-    path: "src/contexts/installation/application/restore/restore-tool-files-use-case.ts",
+    path: "src/contexts/installation/application/restore/restore-tool-files.ts",
     dependencies: 9,
   },
   {
@@ -55,16 +55,16 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     dependencies: 7,
   },
   {
-    path: "src/contexts/installation/application/install/install-ide-tool-use-case.ts",
+    path: "src/contexts/installation/application/install/install-ide-tool.ts",
     dependencies: 6,
   },
   { path: "src/contexts/framework/application/plugin/plugin-install-use-case.ts", dependencies: 6 },
   {
-    path: "src/contexts/installation/application/plugin/plugin-update-use-case.ts",
+    path: "src/contexts/installation/application/plugin/update-plugin.ts",
     dependencies: 6,
   },
   {
-    path: "src/contexts/installation/application/restore/restore-all-plugins-use-case.ts",
+    path: "src/contexts/installation/application/restore/restore-all-plugins.ts",
     dependencies: 6,
   },
   // Carries `clean`'s shared-source guard and the separate current-source witness so a
@@ -72,27 +72,42 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", dependencies: 9 },
 ];
 
+function isUseCase(file: string): boolean {
+  return /^src\/(?:contexts\/[^/]+\/application|orchestration)\//.test(file);
+}
+
+/** A command is named by its verb, so no suffix finds one: it is a class with a public `execute`. */
+const COMMAND_CLASSES = new Set(
+  sourceFiles()
+    .filter(isUseCase)
+    .flatMap((file) => {
+      const source = read(file);
+      return /^\s+(?:async )?execute\(/m.test(source)
+        ? [...source.matchAll(/export (?:abstract )?class (\w+)/g)].map((m) => m[1])
+        : [];
+    })
+);
+
 /**
  * Every constructor parameter counts, required or optional and whatever its type is named,
- * plus each `new XCommand(...)` a method reaches for, deduped by class name within each.
+ * plus each `new X(...)` of a command class a method reaches for, deduped by class name within each.
  */
-function constructorDependencyCount(source: string): number {
+function constructorDependencyCount(
+  source: string,
+  commands: ReadonlySet<string> = COMMAND_CLASSES
+): number {
   const signature = /constructor\((.*?)\)\s*\{/s.exec(source);
   const paramCount = signature
     ? [...signature[1].matchAll(/private readonly \w+\??:\s*[\w<>[\]| ]+/g)].length
     : 0;
   const inlineNames = new Set(
-    [...source.matchAll(/new (\w+(?:UseCase|Command))\(/g)].map((m) => m[1])
+    [...source.matchAll(/new (\w+)\(/g)].map((m) => m[1]).filter((name) => commands.has(name))
   );
   return paramCount + inlineNames.size;
 }
 
-function isUseCase(file: string): boolean {
-  return /^src\/(?:contexts\/[^/]+\/application|orchestration)\//.test(file);
-}
-
-function overLimit(source: string): boolean {
-  return constructorDependencyCount(source) > MAX_CONSTRUCTOR_DEPENDENCIES;
+function overLimit(source: string, commands?: ReadonlySet<string>): boolean {
+  return constructorDependencyCount(source, commands) > MAX_CONSTRUCTOR_DEPENDENCIES;
 }
 
 describe("orchestrators depend on entry points, not on parts", () => {
@@ -156,9 +171,9 @@ describe("the guard itself", () => {
     const atLimit = `constructor(
       ${Array.from({ length: MAX_CONSTRUCTOR_DEPENDENCIES }, (_, i) => `private readonly a${i}: FooUseCase,`).join("\n")}
     ) {}
-    method(): void { new BarCommand(this.a0).execute(); }`;
+    method(): void { new Bar(this.a0).execute(); }`;
 
-    expect(overLimit(atLimit)).toBe(true);
+    expect(overLimit(atLimit, new Set(["Bar"]))).toBe(true);
   });
 
   it("counts a plain port too, not only a collaborator named or imported as a use case", () => {

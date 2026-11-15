@@ -34,7 +34,7 @@ import {
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
-import type { EnsureBuiltMarketplace } from "../../../installation/application/shared/ensure-built-marketplace-use-case.js";
+import type { BuiltMarketplaceEnsurer } from "../../../installation/application/shared/ensure-built-marketplace.js";
 import type {
   NativeMarketplaceRegistration,
   NativeRegistrations,
@@ -160,7 +160,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     private readonly logger: Logger,
     /** Native plugin CLI activators, keyed by the `binary` each profile declares. */
     private readonly activators: ReadonlyMap<string, HostActions>,
-    private readonly ensureBuilt: EnsureBuiltMarketplace,
+    private readonly ensureBuilt: BuiltMarketplaceEnsurer,
     /** Readers of a host's own marketplace registry, keyed by `AiToolId` — only a tool whose
      * profile declares `NativeActivation.marketplaceRegistry` is ever looked up here, so a tool
      * absent from this map still syncs. */
@@ -168,7 +168,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       AiToolId,
       HostMarketplaceRegistry
     > = new Map(),
-    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplaceCommand`'s
+    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
      * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
      * already built before this runs, never from a path recomputed without one. */
     private readonly userCacheRoot: () => string = () => "",

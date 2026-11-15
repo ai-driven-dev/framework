@@ -143,7 +143,7 @@ async function buildUseCase(
   const setupToolsUseCase = new SetupToolsUseCase(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
-    deps.installIdeConfigUseCase
+    deps.installIdeConfig
   );
   const pluginInstallFromMarketplace = makeNoOpPluginInstallFromMarketplace();
   const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(

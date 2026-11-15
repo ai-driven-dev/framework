@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DetectPluginDriftCommand } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { DetectPluginDrift } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -33,13 +33,13 @@ function manifestWith(plugins: Record<string, Record<string, string>>): Manifest
   return manifest;
 }
 
-describe("DetectPluginDriftCommand", () => {
+describe("DetectPluginDrift", () => {
   it("narrows the report to the plugin it was asked about", async () => {
     const manifest = manifestWith({
       "aidd-one": { "aidd-one/a.md": HASH_OF_ONE },
       "aidd-two": { "aidd-two/a.md": HASH_OF_ONE },
     });
-    const useCase = new DetectPluginDriftCommand(new InMemoryFileAdapter({}, HASHER));
+    const useCase = new DetectPluginDrift(new InMemoryFileAdapter({}, HASHER));
 
     const drifts = await useCase.execute({
       tools: catalogOf(),
@@ -62,7 +62,7 @@ describe("DetectPluginDriftCommand", () => {
       { [join(USER_PLUGINS_DIR, "aidd-one", "changed.md")]: "two" },
       HASHER
     );
-    const useCase = new DetectPluginDriftCommand(fs);
+    const useCase = new DetectPluginDrift(fs);
 
     const drifts = await useCase.execute({
       tools: catalogOf(),

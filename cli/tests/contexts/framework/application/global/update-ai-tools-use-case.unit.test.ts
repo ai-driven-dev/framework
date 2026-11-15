@@ -138,7 +138,7 @@ describe("UpdateAiToolsUseCase", () => {
       const decisionUseCase = new ResolveUpdateDecisionUseCase(fakePrompter);
       const updateOneTool = new UpdateOneToolUseCase(
         deps.installRuntimeConfigUseCase,
-        deps.installIdeConfigUseCase,
+        deps.installIdeConfig,
         conflictResolver,
         decisionUseCase,
         deps.fs

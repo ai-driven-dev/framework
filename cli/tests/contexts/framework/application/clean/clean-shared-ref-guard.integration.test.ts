@@ -6,7 +6,7 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import { CleanUseCase } from "../../../../../src/contexts/framework/application/clean-use-case.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import { GitignoreCommand } from "../../../../../src/contexts/installation/application/gitignore-use-case.js";
+import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
 import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -133,7 +133,7 @@ function buildUseCase(deps: {
   logger: CapturingLogger;
   aiddMarketplaceRegistry: InMemoryMarketplaceRegistry;
   userManifestRepo?: InMemoryManifestRepository;
-  gitignore?: GitignoreCommand;
+  gitignore?: UpdateGitignore;
 }): CleanUseCase {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
   const userSourceReferences = new UserSourceReferencesAdapter(deps.fs, () => USER_CONFIG_DIR);
@@ -141,7 +141,7 @@ function buildUseCase(deps: {
     deps.fs,
     manifestRepo,
     deps.logger,
-    deps.gitignore ?? new GitignoreCommand(deps.fs),
+    deps.gitignore ?? new UpdateGitignore(deps.fs),
     new Map([[deps.binary, deps.activator]]),
     deps.aiddMarketplaceRegistry,
     undefined,
@@ -203,7 +203,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
       for (const name of ["shared", "local-only", "unrelated"])
         machine.addPlugin(TOOL.cursor, record(name));
       const machineRepo = new InMemoryManifestRepository(machine);
-      const gitignore = new GitignoreCommand(fs);
+      const gitignore = new UpdateGitignore(fs);
       if (outcome === "fails")
         gitignore.remove = async () => {
           throw new Error("gitignore cleanup failed");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ResolveRestoreDecisionCommand } from "../../../../../src/contexts/installation/application/restore/resolve-restore-decision.js";
+import { ResolveRestoreDecision } from "../../../../../src/contexts/installation/application/restore/resolve-restore-decision.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
 import { ScriptedPrompter } from "../../../../helpers/ports/scripted-prompter.js";
 
@@ -9,9 +9,9 @@ function neverAsked(): ScriptedPrompter {
   return new ScriptedPrompter([]);
 }
 
-describe("ResolveRestoreDecisionCommand", () => {
+describe("ResolveRestoreDecision", () => {
   it("restores a deleted file without asking, whatever the mode", async () => {
-    const useCase = new ResolveRestoreDecisionCommand(neverAsked());
+    const useCase = new ResolveRestoreDecision(neverAsked());
 
     const keep = await useCase.execute({
       relativePath: PATH,
@@ -24,7 +24,7 @@ describe("ResolveRestoreDecisionCommand", () => {
   });
 
   it("refuses a modified file when it can neither force nor ask", async () => {
-    const useCase = new ResolveRestoreDecisionCommand(neverAsked());
+    const useCase = new ResolveRestoreDecision(neverAsked());
 
     await expect(
       useCase.execute({ relativePath: PATH, reason: "modified", force: false, interactive: false })
@@ -34,7 +34,7 @@ describe("ResolveRestoreDecisionCommand", () => {
   });
 
   it("asks about a modified file when it may ask but not force", async () => {
-    const useCase = new ResolveRestoreDecisionCommand(
+    const useCase = new ResolveRestoreDecision(
       new ScriptedPrompter([ScriptedPrompter.answer.conflict("keep")])
     );
 
@@ -49,7 +49,7 @@ describe("ResolveRestoreDecisionCommand", () => {
   });
 
   it("overwrites a modified file without asking when forced, even where it could ask", async () => {
-    const useCase = new ResolveRestoreDecisionCommand(neverAsked());
+    const useCase = new ResolveRestoreDecision(neverAsked());
 
     const keep = await useCase.execute({
       relativePath: PATH,
@@ -62,7 +62,7 @@ describe("ResolveRestoreDecisionCommand", () => {
   });
 
   it("overwrites a modified file without asking when forced with no one to ask", async () => {
-    const useCase = new ResolveRestoreDecisionCommand(neverAsked());
+    const useCase = new ResolveRestoreDecision(neverAsked());
 
     const keep = await useCase.execute({
       relativePath: PATH,

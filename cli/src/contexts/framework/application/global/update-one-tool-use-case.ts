@@ -4,8 +4,8 @@ import { InputRequiredError } from "../../../../shared/domain/errors.js";
 import type { FileHash } from "../../../../shared/domain/file.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { InstallIdeConfigCommand } from "../../../installation/application/install/install-ide-config-use-case.js";
-import type { InstallRuntimeConfigCommand } from "../../../installation/application/install/install-runtime-config-use-case.js";
+import type { InstallIdeConfig } from "../../../installation/application/install/install-ide-config.js";
+import type { InstallRuntimeConfig } from "../../../installation/application/install/install-runtime-config.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
@@ -27,8 +27,8 @@ export interface UpdateOneToolOptions {
 
 export class UpdateOneToolUseCase {
   constructor(
-    private readonly installRuntimeConfigUseCase: InstallRuntimeConfigCommand,
-    private readonly installIdeConfigUseCase: InstallIdeConfigCommand,
+    private readonly installRuntimeConfigUseCase: InstallRuntimeConfig,
+    private readonly installIdeConfig: InstallIdeConfig,
     private readonly conflictResolver: SyncConflictResolverUseCase,
     private readonly decisionUseCase: ResolveUpdateDecisionUseCase,
     private readonly fs: FileReader
@@ -115,7 +115,7 @@ export class UpdateOneToolUseCase {
     };
     const result = tools.isAiTool(toolId)
       ? await this.installRuntimeConfigUseCase.execute({ toolId, ...install })
-      : await this.installIdeConfigUseCase.execute({ toolId, ...install });
+      : await this.installIdeConfig.execute({ toolId, ...install });
     if (result.skipped) return null;
     return { toolId, fileCount: result.fileCount };
   }

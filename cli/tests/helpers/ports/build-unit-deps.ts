@@ -11,12 +11,12 @@ import { DoctorUseCase } from "../../../src/contexts/framework/application/docto
 import { MarketplaceSyncSettingsUseCase } from "../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
 import { UpdateOneToolUseCase } from "../../../src/contexts/framework/application/global/update-one-tool-use-case.js";
-import { GitignoreCommand } from "../../../src/contexts/installation/application/gitignore-use-case.js";
-import { InitCommand } from "../../../src/contexts/installation/application/init-use-case.js";
-import { InstallIdeConfigCommand } from "../../../src/contexts/installation/application/install/install-ide-config-use-case.js";
-import { InstallRuntimeConfigCommand } from "../../../src/contexts/installation/application/install/install-runtime-config-use-case.js";
-import { PostInstallPipelineCommand } from "../../../src/contexts/installation/application/install/post-install-pipeline-use-case.js";
-import { DetectPluginDriftCommand } from "../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
+import { InstallIdeConfig } from "../../../src/contexts/installation/application/install/install-ide-config.js";
+import { InstallRuntimeConfig } from "../../../src/contexts/installation/application/install/install-runtime-config.js";
+import { RunPostInstallPipeline } from "../../../src/contexts/installation/application/install/run-post-install-pipeline.js";
+import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { BundledAssetProviderAdapter } from "../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
@@ -54,21 +54,21 @@ export async function buildUnitDeps(_projectRoot: string) {
   );
   const _pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const marketplaceRegistry = new InMemoryMarketplaceRegistry();
-  const gitignoreUseCase = new GitignoreCommand(fs);
-  const postInstallPipelineUseCase = new PostInstallPipelineCommand(manifestRepo, gitignoreUseCase);
-  const installRuntimeConfigUseCase = new InstallRuntimeConfigCommand(
+  const updateGitignore = new UpdateGitignore(fs);
+  const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore);
+  const installRuntimeConfigUseCase = new InstallRuntimeConfig(
     fs,
     hasher,
     logger,
     assetProvider,
-    postInstallPipelineUseCase
+    runPostInstallPipeline
   );
-  const installIdeConfigUseCase = new InstallIdeConfigCommand(
+  const installIdeConfig = new InstallIdeConfig(
     fs,
     hasher,
     logger,
     assetProvider,
-    postInstallPipelineUseCase
+    runPostInstallPipeline
   );
 
   const currentVersionProvider = new FakeCurrentVersion();
@@ -100,9 +100,9 @@ export async function buildUnitDeps(_projectRoot: string) {
     marketplaceSyncSettings,
     nativePluginActivators,
     installRuntimeConfigUseCase,
-    installIdeConfigUseCase,
-    gitignoreUseCase,
-    postInstallPipelineUseCase,
+    installIdeConfig,
+    updateGitignore,
+    runPostInstallPipeline,
     currentVersionProvider,
     syncConflictResolver,
   };
@@ -112,7 +112,7 @@ export async function initProject(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   projectRoot: string
 ): Promise<void> {
-  const initUseCase = new InitCommand(deps.fs, deps.manifestRepo);
+  const initUseCase = new InitProject(deps.fs, deps.manifestRepo);
   await initUseCase.execute({ projectRoot, tools: catalogOf() });
 }
 
@@ -124,7 +124,7 @@ export async function installTool(
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = "test";
   if (catalogOf().isIdeTool(toolId)) {
-    return deps.installIdeConfigUseCase.execute({
+    return deps.installIdeConfig.execute({
       tools: catalogOf(),
       toolId,
       projectRoot,
@@ -161,7 +161,7 @@ export function buildUpdateOneToolUseCase(
   );
   return new UpdateOneToolUseCase(
     deps.installRuntimeConfigUseCase,
-    deps.installIdeConfigUseCase,
+    deps.installIdeConfig,
     deps.syncConflictResolver,
     resolveUpdateDecision,
     deps.fs
@@ -177,7 +177,7 @@ export function buildDoctorUseCase(
     deps.manifestRepo,
     new DoctorTrackedFilesUseCase(deps.fs),
     new DoctorMergeFilesUseCase(deps.fs, deps.hasher),
-    new DoctorPluginUseCase(new DetectPluginDriftCommand(deps.fs)),
+    new DoctorPluginUseCase(new DetectPluginDrift(deps.fs)),
     new DoctorReferencesUseCase(deps.fs),
     new DoctorLayoutUseCase(deps.fs, authReader),
     new DoctorRegistrationUseCase(

@@ -17,7 +17,7 @@ import {
   writePluginFiles,
 } from "../../../installation/application/plugin/plugin-helpers.js";
 import { resolveBaseDirFromRecord } from "../../../installation/application/plugin/plugin-target-resolution.js";
-import type { BuiltMaterializationDeps } from "../../../installation/application/shared/apply-plugin-files-use-case.js";
+import type { BuiltMaterializationDeps } from "../../../installation/application/shared/apply-plugin-files.js";
 import {
   InstalledPlugin,
   PLUGIN_NAME_REGEX,

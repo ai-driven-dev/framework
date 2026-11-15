@@ -40,7 +40,7 @@ disk is exactly the job that needs all three.
   cache/network fallback, typed-throw translation) — see the use-case and orchestration rules in
   `.claude/rules/00-architecture/`.
 - A use case that installs framework files saves the manifest and updates `.gitignore`
-  through `PostInstallPipelineCommand`. A use case that only changes the manifest (plugin
+  through `RunPostInstallPipeline`. A use case that only changes the manifest (plugin
   add/remove, marketplace sync, restore) saves it directly. See `references/post-install-pipeline.md`.
 - Before writing any framework file: check `fs.fileExists(path) && !manifest.isFileTracked(path)`.
   If both are true, skip the write, warn, and never add it to the manifest — never overwrite a
@@ -48,7 +48,7 @@ disk is exactly the job that needs all three.
 - A global chain orchestrator (`*-all-use-case.ts`) iterates every scope and must finish even if
   one fails: wrap one iteration in `try/catch`, push a typed entry to an `errors[]` array, and
   return it in the result — never let one tool's failure abort the whole run.
-- A capability-guard sub-use-case (`install-agents-use-case.ts` and its siblings) checks
+- A capability-guard sub-use-case (`install-agents.ts` and its siblings) checks
   `"name" in caps` before dispatching to a narrowed sub-use-case in `install/` — see
   `references/post-install-pipeline.md`, section "Capability sub-use-cases". These five files reach directly into `tools`'
   capability classes rather than through a declared public module; that reach is a tracked,

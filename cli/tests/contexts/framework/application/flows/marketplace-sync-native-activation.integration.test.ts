@@ -8,7 +8,7 @@ import type {
   HostPluginRegistryReading,
 } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
 import { answeredRegistry } from "../../../../../src/contexts/host-registration/contract/host-registration-answers.js";
-import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace-use-case.js";
+import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
@@ -681,7 +681,7 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
   const PLUGIN_X = "plugin-x";
   const PLUGIN_Y = "plugin-y";
 
-  function ensureBuiltSharedCatalog(): EnsureBuiltMarketplace {
+  function ensureBuiltSharedCatalog(): BuiltMarketplaceEnsurer {
     return {
       execute: async () => ({
         builtDir: "/built/by-alias/shared",

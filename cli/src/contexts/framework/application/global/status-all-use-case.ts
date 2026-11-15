@@ -1,14 +1,14 @@
 import type {
+  ReportStatusResult,
   StatusQuery,
-  StatusReport,
-} from "../../../installation/application/status-use-case.js";
+} from "../../../installation/application/report-status.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
 export interface StatusAllResult {
-  aiTools: StatusReport;
-  ideTools: StatusReport;
+  aiTools: ReportStatusResult;
+  ideTools: ReportStatusResult;
   /** Plugin drift only. Plugins hang off AI tools, so the ai scope already carries them all. */
-  pluginDrift: StatusReport["pluginDrift"];
+  pluginDrift: ReportStatusResult["pluginDrift"];
   errors: GlobalExecutionError[];
 }
 
@@ -36,7 +36,7 @@ export class StatusAllUseCase {
     projectRoot: string,
     tools: ToolCatalog,
     errors: GlobalExecutionError[]
-  ): Promise<[StatusReport | null, StatusReport | null]> {
+  ): Promise<[ReportStatusResult | null, ReportStatusResult | null]> {
     const aiTools = await this.runScope(
       () => useCase.execute({ projectRoot, category: "ai", tools }),
       "ai",

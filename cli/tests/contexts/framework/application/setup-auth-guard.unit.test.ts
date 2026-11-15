@@ -96,7 +96,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
   const setupToolsUseCase = new SetupToolsUseCase(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
-    deps.installIdeConfigUseCase
+    deps.installIdeConfig
   );
   const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
     makeNoOpPluginPick(),

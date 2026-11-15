@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace-use-case.js";
+import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import type { NativeRegistrations } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -56,7 +56,7 @@ function catalogPath(marketplace: string, target: string): string {
   return `/built/${marketplace}/${target}/${relative}`;
 }
 
-function buildPerMarketplace(failing: readonly string[]): EnsureBuiltMarketplace {
+function buildPerMarketplace(failing: readonly string[]): BuiltMarketplaceEnsurer {
   return {
     execute: async (options) => {
       if (failing.includes(options.marketplace.name)) throw new Error("no catalog at that source");
