@@ -1,6 +1,6 @@
-import type { ConfigRef } from "../../../contract/config-refs.js";
+import { CONFIG_PREFIX, type ConfigRef } from "../../../contract/config-refs.js";
 
 export const OPENCODE_CONFIG_REF: ConfigRef = {
   name: "opencode",
-  path: "config/.opencode/opencode.json",
+  path: `${CONFIG_PREFIX}.opencode/opencode.json`,
 };
