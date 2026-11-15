@@ -83,7 +83,7 @@ function constructorDependencyCount(source: string): number {
 }
 
 function isUseCase(file: string): boolean {
-  return /^src\/contexts\/[^/]+\/application\//.test(file);
+  return /^src\/(?:contexts\/[^/]+\/application|orchestration)\//.test(file);
 }
 
 function overLimit(source: string): boolean {
@@ -127,6 +127,11 @@ describe("the guard itself", () => {
 
     expect(overLimit(over)).toBe(true);
     expect(overLimit(atLimit)).toBe(false);
+  });
+
+  it("reads a context's commands and the orchestration as the files it holds", () => {
+    expect(isUseCase("src/orchestration/setup/setup.ts")).toBe(true);
+    expect(isUseCase("src/contexts/auth/domain/credential-record.ts")).toBe(false);
   });
 
   it("counts an optional constructor dependency, not just a required one", () => {

@@ -32,6 +32,7 @@ const KNOWN_SOURCE_AREAS: ReadonlySet<string> = new Set([
   "cli.ts",
   "composition",
   "contexts",
+  "orchestration",
   "presentation",
   "shared",
 ]);

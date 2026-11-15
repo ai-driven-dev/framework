@@ -236,6 +236,8 @@ Not exceptions of the model: each vanishes when the old layout moves in stage C,
 | M-R8 | `shared/domain/paths.ts` is not split and `shared/domain/source.ts` has no owner | the framework split |
 | M-R10 | the mutation scope and script keep the name `runtime` (`mutation-scopes.json`, `test:mutation:runtime`) after the directory it named is gone | the next mutation-scopes cleanup |
 
+A path-keyed ratchet row may follow its file through `git mv`; its count never rises.
+
 ## 10. Checklist for a context's migration PR
 
 - Behaviour frozen first by characterization tests, each seen red; move before rename, rename before logic change. A characterization test that hand-lists what the move derives goes with the move.

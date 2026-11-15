@@ -60,6 +60,8 @@ const PURE_FOLDERS = [
 ] as const;
 const PURE_BUILTINS: ReadonlySet<string> = new Set(["path", "crypto"]);
 
+const BARE_NODE_MODULES = ["fs", "fs/promises", "node:fs/promises", "child_process"];
+
 describe("biome carries the exit and default-export rules", () => {
   it("scopes the process.exit plugin to the layers that throw, and to nothing else", () => {
     const config = JSON.parse(read("biome.json")) as {
@@ -199,9 +201,31 @@ describe("the guard itself", () => {
       "src/contexts/distribution/application",
       "src/contexts/distribution/infrastructure",
       "src/composition",
+      "src/orchestration/setup",
     ]) {
       mkdirSync(join(planted, dir), { recursive: true });
     }
+    for (const [name, specifier] of Object.entries({
+      "reaches-fs": "node:fs",
+      "reaches-process": "node:child_process",
+      "reaches-domain": "../../contexts/auth/domain/credential-record.js",
+      "reaches-infrastructure": "../../contexts/auth/infrastructure/gh-cli-adapter.js",
+      "reaches-contract": "../../contexts/auth/contract/credential.js",
+      "reaches-application": "../../contexts/auth/application/log-in.js",
+      "reaches-tools-application": "../../contexts/tools/application/x.js",
+      "reaches-shared-infrastructure": "../../shared/infrastructure/http-client.js",
+      "reaches-composition": "../../composition/auth.js",
+      "reaches-presentation": "../../presentation/deps.js",
+    })) {
+      writeFileSync(
+        join(planted, `src/orchestration/setup/${name}.ts`),
+        `import "${specifier}";\n`
+      );
+    }
+    writeFileSync(
+      join(planted, "src/orchestration/setup/reaches-bare.ts"),
+      BARE_NODE_MODULES.map((specifier) => `import "${specifier}";\n`).join("")
+    );
     writeFileSync(
       join(planted, "src/shared/domain/exit.ts"),
       "export const stop = (): never => process.exit(1);\n"
@@ -386,18 +410,12 @@ describe("the guard itself", () => {
     ] as const) {
       writeFileSync(join(planted, file), reachesSharedInfrastructure(up));
     }
-    writeFileSync(
-      join(planted, "src/shared/ports/reaches-context.ts"),
-      'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
-    );
-    writeFileSync(
-      join(planted, "src/shared/infrastructure/reaches-context.ts"),
-      'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
-    );
-    writeFileSync(
-      join(planted, "src/shared/domain/reaches-context.ts"),
-      'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
-    );
+    for (const folder of ["ports", "infrastructure", "domain"]) {
+      writeFileSync(
+        join(planted, `src/shared/${folder}/reaches-context.ts`),
+        'import type { Registry } from "../../contexts/tools/domain/registry.js";\nexport type Reached = Registry;\n'
+      );
+    }
     writeFileSync(
       join(planted, "src/shared/ports/env.ts"),
       "export const home = (): string | undefined => process.env.HOME;\n"
@@ -549,6 +567,33 @@ describe("the guard itself", () => {
     const findings = biomeFindings(planted);
     for (const file of distributionReaches()) {
       expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedImports`);
+    }
+  });
+
+  it("flags orchestration reaching the disk, a process, a context's interior or a layer above it, and clears its contract and application", () => {
+    const findings = biomeFindings(planted);
+    const rule = "lint/style/noRestrictedImports";
+
+    for (const name of [
+      "fs",
+      "process",
+      "domain",
+      "infrastructure",
+      "tools-application",
+      "shared-infrastructure",
+      "composition",
+      "presentation",
+    ]) {
+      expect(findings, findings.join(", ")).toContain(
+        `src/orchestration/setup/reaches-${name}.ts:${rule}`
+      );
+    }
+    expect(
+      findings.filter((f) => f === `src/orchestration/setup/reaches-bare.ts:${rule}`),
+      "one finding per bare or prefixed fs and child_process module"
+    ).toHaveLength(BARE_NODE_MODULES.length);
+    for (const name of ["contract", "application"]) {
+      expect(findings).not.toContain(`src/orchestration/setup/reaches-${name}.ts:${rule}`);
     }
   });
 
