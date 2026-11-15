@@ -1,22 +1,20 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 
 /** Release only this project's claim; global files remain until explicit user cleanup. */
 export async function detachUserPlugin(
-  repo: ManifestRepository | undefined,
+  repo: (ManifestRepository & Lock) | undefined,
   fs: FileReader,
   toolId: AiToolId,
   name: string,
   projectRoot: string
 ): Promise<void> {
   if (repo === undefined) return;
-  if (repo.withExclusiveAccess !== undefined) {
-    return repo.withExclusiveAccess(() =>
-      detachUserPluginUnlocked(repo, fs, toolId, name, projectRoot)
-    );
-  }
-  return detachUserPluginUnlocked(repo, fs, toolId, name, projectRoot);
+  return repo.withExclusiveAccess(() =>
+    detachUserPluginUnlocked(repo, fs, toolId, name, projectRoot)
+  );
 }
 
 async function detachUserPluginUnlocked(

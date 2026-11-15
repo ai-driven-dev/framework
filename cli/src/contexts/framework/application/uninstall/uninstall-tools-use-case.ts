@@ -7,6 +7,7 @@ import {
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
@@ -32,7 +33,7 @@ export class UninstallToolsUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,
-    private readonly userManifestRepo?: ManifestRepository
+    private readonly userManifestRepo?: ManifestRepository & Lock
   ) {}
 
   async execute(options: UninstallToolsOptions): Promise<UninstallToolsResult[]> {

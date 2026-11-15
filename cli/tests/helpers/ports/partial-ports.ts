@@ -1,5 +1,6 @@
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
+import type { Lock } from "../../../src/shared/ports/lock.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 
 function refuse(what: string): () => never {
@@ -23,14 +24,15 @@ export function prompterAnswering(answers: Partial<Prompter>): Prompter {
   };
 }
 
-/** A full `ManifestRepository` that serves `load` and fails on a write the test did not expect. */
+/** A full `ManifestRepository` and `Lock` that serves `load` and fails on a write the test did not expect. */
 export function manifestRepositoryLoading(
   load: () => Promise<Manifest | null>
-): ManifestRepository {
+): ManifestRepository & Lock {
   return {
     path: "manifest.json",
     load,
     save: refuse("manifestRepo.save"),
     delete: refuse("manifestRepo.delete"),
+    withExclusiveAccess: refuse("manifestRepo.withExclusiveAccess"),
   };
 }

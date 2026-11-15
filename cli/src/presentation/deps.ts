@@ -62,6 +62,7 @@ import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
+import type { Lock } from "../shared/ports/lock.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Prompter } from "../shared/ports/prompter.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
@@ -108,7 +109,7 @@ export interface Deps {
   manifestRepo: ManifestRepository;
   /** `--scope user`'s own manifest repository: `userConfigDir()/manifest.json`, never nested
    * under a project's `.aidd/`. */
-  userManifestRepo: ManifestRepository;
+  userManifestRepo: ManifestRepository & Lock;
   /** The one home-directory resolver presentation calls, never `os.homedir()` directly, so a
    * test can point it elsewhere. */
   homedir: () => string;

@@ -15,6 +15,7 @@ import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../shared/ports/lock.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { Prompter } from "../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../distribution/contract/marketplace.js";
@@ -154,7 +155,7 @@ export class CleanUseCase {
      * the scope asked for is the one the host actually registered it at, never a guess. Absent
      * falls back to the manifest's own recorded scope. */
     private readonly hostPluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
-    private readonly userManifestRepo?: ManifestRepository,
+    private readonly userManifestRepo?: ManifestRepository & Lock,
     private readonly nativeSources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map()
   ) {}
 
@@ -462,7 +463,7 @@ export class CleanUseCase {
         `${binary} marketplace remove '${hostName}'`
       );
     };
-    return this.userManifestRepo?.withExclusiveAccess === undefined
+    return this.userManifestRepo === undefined
       ? removeProjectRegistration()
       : this.userManifestRepo.withExclusiveAccess(removeProjectRegistration);
   }

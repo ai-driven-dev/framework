@@ -9,6 +9,7 @@ import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
@@ -84,7 +85,7 @@ export class PluginRemoveUseCase {
      * fact `frameworkSourceIsShared` needs and a plugin record does not carry. Absent treats every
      * marketplace as not shared. */
     private readonly marketplaceRegistry?: MarketplaceRegistry,
-    private readonly userManifestRepo?: ManifestRepository,
+    private readonly userManifestRepo?: ManifestRepository & Lock,
     private readonly nativeMarketplaceSources: ReadonlyMap<
       AiToolId,
       HostMarketplaceSources
@@ -95,10 +96,7 @@ export class PluginRemoveUseCase {
     if (options.scope === "user") {
       if (this.userManifestRepo === undefined)
         throw new Error("User manifest repository is required for user-scope plugin removal.");
-      if (this.userManifestRepo.withExclusiveAccess !== undefined) {
-        return this.userManifestRepo.withExclusiveAccess(() => this.removeUserPlugin(options));
-      }
-      return this.removeUserPlugin(options);
+      return this.userManifestRepo.withExclusiveAccess(() => this.removeUserPlugin(options));
     }
     const { pluginName, toolIds, projectRoot, tools } = options;
     const manifest = await loadPluginManifest(this.manifestRepo);

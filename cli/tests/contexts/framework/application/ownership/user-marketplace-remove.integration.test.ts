@@ -372,6 +372,7 @@ for (const toolId of [TOOL.codex]) {
           },
           save: (manifest) => f.repo.save(manifest),
           delete: () => f.repo.delete(),
+          withExclusiveAccess: (action) => action(),
         },
         registry,
         new NativeHostRegistrationGate(

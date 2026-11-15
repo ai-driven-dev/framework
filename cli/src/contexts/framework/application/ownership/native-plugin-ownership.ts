@@ -1,5 +1,6 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { NativePluginClaim } from "../../../installation/domain/manifest/native-registrations.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 
@@ -22,7 +23,7 @@ export async function isMachineOwnedNativeRef(
 }
 
 export async function detachNativePluginRefs(
-  repo: ManifestRepository | undefined,
+  repo: (ManifestRepository & Lock) | undefined,
   fs: FileReader,
   projectRoot: string,
   refsByTool: ReadonlyMap<ToolId, readonly string[]>
@@ -50,6 +51,5 @@ export async function detachNativePluginRefs(
     }
     if (changed) await repo.save(machine);
   };
-  if (repo.withExclusiveAccess !== undefined) await repo.withExclusiveAccess(action);
-  else await action();
+  await repo.withExclusiveAccess(action);
 }

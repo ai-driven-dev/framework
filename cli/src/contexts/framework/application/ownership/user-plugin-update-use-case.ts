@@ -1,4 +1,5 @@
 import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import { resolvePluginToolIds } from "../../../installation/application/plugin/plugin-target-resolution.js";
 import type { UpdatePluginCommand } from "../../../installation/application/plugin/update-plugin.js";
@@ -10,7 +11,7 @@ import type { UserPluginFileUpdater } from "./user-plugin-file-updater.js";
 
 export class UserPluginUpdateUseCase {
   constructor(
-    private readonly repo: ManifestRepository,
+    private readonly repo: ManifestRepository & Lock,
     private readonly fileUpdater: UserPluginFileUpdater,
     private readonly logger: Logger,
     private readonly nativeHost: NativeHostRegistrationGate
@@ -18,7 +19,7 @@ export class UserPluginUpdateUseCase {
 
   async execute(options: UpdatePluginCommand): Promise<string[]> {
     const run = () => this.updateLocked(options);
-    return this.repo.withExclusiveAccess === undefined ? run() : this.repo.withExclusiveAccess(run);
+    return this.repo.withExclusiveAccess(run);
   }
 
   private async updateLocked(options: UpdatePluginCommand): Promise<string[]> {

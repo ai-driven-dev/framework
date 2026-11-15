@@ -3,6 +3,7 @@ import { dirname } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
 import { userManifestPath } from "../../../shared/domain/paths.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
+import type { Lock } from "../../../shared/ports/lock.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import { readManifestFile } from "./manifest-file-io.js";
@@ -16,7 +17,7 @@ import { readManifestFile } from "./manifest-file-io.js";
  * this repository owns. Pruning it once empty, as the project adapter does with `.aidd/`, would be
  * a live bug here.
  */
-export class UserManifestRepositoryAdapter implements ManifestRepository {
+export class UserManifestRepositoryAdapter implements ManifestRepository, Lock {
   constructor(
     private readonly userConfigDir: () => string,
     private readonly atomicWriter: (path: string, content: string) => Promise<void>,

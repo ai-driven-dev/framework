@@ -1,7 +1,8 @@
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
+import type { Lock } from "../../../src/shared/ports/lock.js";
 
-export class InMemoryManifestRepository implements ManifestRepository {
+export class InMemoryManifestRepository implements ManifestRepository, Lock {
   /** Derived from the root the test drives the use case with, never a fixed literal: a
    * double naming a fictional file lets a diagnostic go wrong with every test still green. */
   readonly path: string;
@@ -24,6 +25,10 @@ export class InMemoryManifestRepository implements ManifestRepository {
 
   async delete(): Promise<void> {
     this.manifest = null;
+  }
+
+  withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
+    return action();
   }
 
   getCurrent(): Manifest | null {

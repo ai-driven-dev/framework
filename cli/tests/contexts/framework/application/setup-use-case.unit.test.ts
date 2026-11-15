@@ -28,6 +28,7 @@ import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/
 import { SetupToolsPromptUseCase } from "../../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
 import { UserScopeUnavailableError } from "../../../../src/shared/domain/errors.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
+import type { Lock } from "../../../../src/shared/ports/lock.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
 import {
   buildUnitDeps,
@@ -127,7 +128,7 @@ async function buildUseCase(
   userSourceReferences?: UserSourceReferences,
   logger?: Logger,
   options?: {
-    userManifestRepo?: ManifestRepository;
+    userManifestRepo?: ManifestRepository & Lock;
     marketplaceSyncSettingsUseCase?: MarketplaceSyncSettings & {
       execute: ReturnType<typeof vi.fn>;
     };

@@ -13,6 +13,7 @@ import type { AiToolId, ToolIdResolver } from "../../../../shared/domain/tool.js
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { InstallRuntimeConfig } from "../../../installation/application/install/install-runtime-config.js";
@@ -70,15 +71,12 @@ export class PluginAddUseCase implements PluginAdd {
     private readonly logger: Logger,
     private readonly marketplaceRegistry: MarketplaceRegistry,
     private readonly ensureBuilt: BuiltMarketplaceEnsurer,
-    private readonly userManifestRepo: ManifestRepository,
+    private readonly userManifestRepo: ManifestRepository & Lock,
     private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
   ) {}
 
   async execute(options: PluginAddOptions): Promise<void> {
-    if (this.userManifestRepo.withExclusiveAccess !== undefined) {
-      return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));
-    }
-    return this.executeLocked(options);
+    return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));
   }
 
   private async executeLocked(options: PluginAddOptions): Promise<void> {

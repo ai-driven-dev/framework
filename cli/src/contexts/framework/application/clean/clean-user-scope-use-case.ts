@@ -7,6 +7,7 @@ import {
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
@@ -75,7 +76,7 @@ export interface CleanUserScopeResult {
 export class CleanUserScopeUseCase {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly userManifestRepo: ManifestRepository,
+    private readonly userManifestRepo: ManifestRepository & Lock,
     private readonly logger: Logger,
     private readonly marketplaceRegistry: MarketplaceRegistry,
     private readonly userConfigDir: () => string,
@@ -97,10 +98,7 @@ export class CleanUserScopeUseCase {
   ) {}
 
   async execute(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {
-    if (this.userManifestRepo.withExclusiveAccess !== undefined) {
-      return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));
-    }
-    return this.executeLocked(options);
+    return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));
   }
 
   private async executeLocked(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {

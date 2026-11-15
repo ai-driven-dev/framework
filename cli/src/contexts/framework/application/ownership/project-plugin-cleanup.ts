@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import type { Lock } from "../../../../shared/ports/lock.js";
 import { assertProjectPathWithinRoot } from "../../../installation/application/ownership/project-path-boundary.js";
 import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
 import {
@@ -50,7 +51,7 @@ async function planProjectMcpRemoval(
 export class ProjectPluginCleanup {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly userManifestRepo?: ManifestRepository
+    private readonly userManifestRepo?: ManifestRepository & Lock
   ) {}
 
   async assertLocalIntegrationRemovable(
