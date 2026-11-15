@@ -10,9 +10,9 @@ The confirmed plan and target.
 
 1. Create the missing folders of [skill-tree.md](../references/skill-tree.md).
 2. Write each file the plan lists per [skill-authoring.md](../references/skill-authoring.md), then fill each content slot.
-   - Missing files: run [scaffold-skill.cjs](../scripts/scaffold-skill.cjs) on the plan, written as its usage line states.
+   - Missing files: run the scaffold on the plan per [scripts.md](../references/scripts.md).
    - Existing file: edit it in place.
-3. Write once per confirmed target, per [tool-write.md](../references/tool-write.md).
+3. Write once per confirmed target, per [hosts.md](../references/hosts.md).
 4. Read [validate](04-validate.md).
 
 ## Output

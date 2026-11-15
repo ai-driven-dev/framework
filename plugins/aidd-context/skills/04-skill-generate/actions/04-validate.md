@@ -8,7 +8,7 @@ The files written.
 
 ## Process
 
-1. Run [check-skill.cjs](../scripts/check-skill.cjs) on the skill folder, and fix each finding until it exits 0.
+1. Run the checker on the skill folder per [scripts.md](../references/scripts.md), and fix each finding until it exits 0.
 2. Review each written file against [skill-authoring.md](../references/skill-authoring.md), and list its breaches, even none.
    - A breach in a file the plan does not list: add it to the plan and confirm it with the user.
 3. Find each kept item and each change in the written files with its `file:line`.

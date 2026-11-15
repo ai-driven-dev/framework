@@ -14,9 +14,8 @@ The request and its source: the confirmed frame, or the existing skill.
    - Changed by the request: list it as a change instead.
 3. List each fact of the source the rules leave no home, and each addition beyond the source and the request.
 4. Merge two actions that share most logic, so few remain.
-5. Number each action and fill its row: slug, input to output, rules, the cases that enter it, its next actions and outcomes with their condition, check step.
-   - Other file: give its path, kind and change.
-6. Ask the user for each target's extra frontmatter fields, per [tool-write.md](../references/tool-write.md).
+5. Number each action and fill its row of [plan-table.md](../assets/plan-table.md), and give each other file its row.
+6. Ask the user for each target's extra frontmatter fields, per [hosts.md](../references/hosts.md).
 7. Confirm the table with the user, then read [write](03-write.md).
 
 ## Output

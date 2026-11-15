@@ -2,9 +2,7 @@
 "use strict";
 // Usage: node scaffold-skill.cjs <plan.json> <skill-folder>
 // Fills the structural slots of ../assets/skill-template.md and ../assets/action-template.md
-// from a plan, and leaves every content slot to the model. Creates only missing files.
-// Plan: {"name", "description", "entries"?: [{"to": <slug>, "label"?}], "actions": [{"slug", "title",
-// "next": [{"to": <slug> or "end": <outcome>, "label"?}]}]}. Without entries, the request enters the first action. Exit 0 written, 1 refused plan or template, 2 usage.
+// from a plan, and leaves every content slot to the model. The plan and exits: ../references/scripts.md.
 
 const fs = require("node:fs");
 const path = require("node:path");
@@ -22,7 +20,7 @@ function template(name, slots) {
   return text;
 }
 
-/** Every reason the plan cannot be drawn as R5 asks, one per line. */
+/** Every reason the plan cannot be drawn as S5 asks, one per line. */
 function refusals(plan) {
   const slugs = new Set((plan.actions ?? []).map((action) => action.slug));
   const found = [];
