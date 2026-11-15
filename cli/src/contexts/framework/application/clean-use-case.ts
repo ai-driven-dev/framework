@@ -47,10 +47,8 @@ import {
   machineNativePluginClaim,
 } from "../../machine-claims/application/native-plugin-ownership.js";
 import {
-  describeGuardedPluginRefMessage,
   frameworkSourceIsShared,
   otherProjectsReferencing,
-  refAnotherProjectStillNeeds,
   resolveProjectRootForReferences,
   toleratingUnreadableSourceReferences,
 } from "../../machine-claims/application/shared-source-reference-support.js";
@@ -589,18 +587,6 @@ export class CleanUseCase {
       );
       return;
     }
-    const guardMessage = this.describeGuardedPluginRef(
-      binary,
-      toolId,
-      ref,
-      registrations,
-      sharedSourceOutcome,
-      tools
-    );
-    if (guardMessage !== undefined) {
-      this.logger.warn(guardMessage);
-      return;
-    }
     const sourceRegistration = registrations.marketplaces.find((registration) =>
       ref.endsWith(`@${registration.hostName}`)
     );
@@ -649,33 +635,6 @@ export class CleanUseCase {
       }
     }
     this.logger.warn(`${binary} plugin uninstall '${ref}' failed: ${lastMessage}`);
-  }
-
-  /** `undefined` when nothing guards `ref` — the ordinary case that still uninstalls it.
-   * Otherwise the message to warn with instead of ever calling `uninstallPlugin`: this host
-   * enables a plugin for the whole machine (no `scopeArgs` — codex, copilot), `ref` came from the
-   * shared source, and another project still references it, so uninstalling here would disable it
-   * there too. */
-  private describeGuardedPluginRef(
-    binary: string,
-    toolId: ToolId,
-    ref: string,
-    registrations: NativeRegistrations,
-    sharedSourceOutcome: SharedSourceReferenceOutcome | undefined,
-    tools: ToolCatalog
-  ): string | undefined {
-    const hostName = registrations.marketplaces.find(
-      (m) => m.alias === sharedSourceOutcome?.alias
-    )?.hostName;
-    const otherProjects = sharedSourceOutcome?.otherProjects ?? [];
-    const guarded = refAnotherProjectStillNeeds({
-      ref,
-      sharedSourceHostName: hostName,
-      enablementIsMachineGlobal: machineGlobalEnablement(tools, toolId),
-      otherProjects,
-    });
-    if (!guarded) return undefined;
-    return describeGuardedPluginRefMessage({ binary, ref, otherProjects });
   }
 
   /** The scope this project's own manifest recorded for the plugin behind `ref`, `"project"` when
