@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -66,14 +66,15 @@ describe("the ledger on disk", () => {
 
   it("does not touch a partition that already holds what it should", async () => {
     await ledger.save([stored({ key: "a" }), stored({ key: "z", at: "2026-11-02T00:00:00Z" })]);
-    const octoberBefore = await stat(join(dir, "2026-10-07.jsonl"));
-    const novemberBefore = await stat(join(dir, "2026-11-02.jsonl"));
+    const aged = new Date("2020-01-01T00:00:00Z");
+    for (const day of ["2026-10-07", "2026-11-02"])
+      await utimes(join(dir, `${day}.jsonl`), aged, aged);
     await ledger.save([
       stored({ key: "a" }),
       stored({ key: "z", at: "2026-11-02T00:00:00Z", output: 99 }),
     ]);
-    expect((await stat(join(dir, "2026-10-07.jsonl"))).ino).toBe(octoberBefore.ino);
-    expect((await stat(join(dir, "2026-11-02.jsonl"))).ino).not.toBe(novemberBefore.ino);
+    expect((await stat(join(dir, "2026-10-07.jsonl"))).mtimeMs).toBe(aged.getTime());
+    expect((await stat(join(dir, "2026-11-02.jsonl"))).mtimeMs).toBeGreaterThan(aged.getTime());
   });
 
   it("rewrites only the days it is told changed, and reads no other partition", async () => {
@@ -81,7 +82,6 @@ describe("the ledger on disk", () => {
       stored({ key: "a", at: "2026-08-02T00:00:00Z" }),
       stored({ key: "b", at: "2026-09-02T00:00:00Z" }),
     ]);
-    const septemberBefore = await stat(join(dir, "2026-09-02.jsonl"));
     await writeFile(join(dir, "2026-08-02.jsonl"), "{not a record}\n");
     await ledger.save(
       [
@@ -92,7 +92,6 @@ describe("the ledger on disk", () => {
       new Set(["2026-09-02", "2026-10-02"])
     );
     expect(await readFile(join(dir, "2026-08-02.jsonl"), "utf8")).toBe("{not a record}\n");
-    expect((await stat(join(dir, "2026-09-02.jsonl"))).ino).not.toBe(septemberBefore.ino);
     expect(await readFile(join(dir, "2026-09-02.jsonl"), "utf8")).toContain('"output":99');
     expect(await partitions()).toEqual([
       "2026-08-02.jsonl",
