@@ -14,7 +14,8 @@ A request for a new agent, or an existing agent file to refactor.
 3. Propose three names per [agent-authoring.md](../references/agent-authoring.md), and have the user pick one.
    - Existing agent: keep its name unless the request renames it.
 4. Ask where the agent goes, the detected host tools or a plugin source.
-5. Confirm the draft, the name and the targets with the user, then read [write](02-write.md).
+5. Present the draft, the name and the targets, then end the turn and wait for the user's own answer.
+6. Read [write](02-write.md) once confirmed.
 
 ## Output
 

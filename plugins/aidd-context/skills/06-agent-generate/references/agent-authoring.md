@@ -8,7 +8,7 @@ The constraints every generated agent satisfies. An agent is a focused role with
 | --- | --- | --- |
 | A1 | One agent, one responsibility, self-contained in one file per target. | A workflow belongs in a skill. |
 | A2 | Take the concern from the caller's brief, and name no skill, agent or companion file. | A generic agent serves every caller. |
-| A3 | Frontmatter holds `name` and `description`, plus `model` only when the user names one, and keeps each field an existing agent sets. | The host gives a new agent its tools and model by default, and a field already set restricts on purpose. |
+| A3 | Frontmatter holds `name` and `description`, plus each field the user asks for, such as `model` or a tool restriction, and keeps each field an existing agent sets. | The host gives a new agent its tools and model by default, and a field already set restricts on purpose. |
 | A4 | `description` is third person, what the agent does, then `Use to` and when to call it. | The caller picks an agent by its description. |
 | A5 | `# Role` is one sentence: the single responsibility. | The role is read first. |
 | A6 | `# Behavior` lists bounded capabilities and constraints, one per bullet, and states what the agent keeps unchanged or leaves to the caller. | An agent without a boundary drifts into the caller's work. |
