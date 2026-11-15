@@ -165,6 +165,15 @@ describe("the guard itself", () => {
     expect(unearned([lonely, earned], importers)).toEqual([lonely]);
   });
 
+  it("does not count the shared folder of the orchestration as an area", () => {
+    const helper = "src/orchestration/shared/b.ts";
+    const importers = new Map([
+      [helper, new Set(["src/orchestration/shared/a.ts", "src/orchestration/setup/x.ts"])],
+    ]);
+
+    expect(unearned([helper], importers)).toEqual([helper]);
+  });
+
   it("flags a shared file one context imports and clears one an earned adapter or two compositions reach", () => {
     const [A, B] = ["src/contexts/framework/domain/x.ts", "src/contexts/tools/domain/x.ts"];
     const [C1, C2] = ["src/composition/framework.ts", "src/composition/tools.ts"];
