@@ -11,7 +11,7 @@ node "$verifier" --project "$project_root" --input "$hook_json"
 - `$writer`, `$verifier`: the absolute paths of the two scripts, next to the loaded `SKILL.md`.
 - `$project_root`: the absolute path of the working directory, copied as the session reports it.
 - `$name`: the hook's kebab-case name.
-- `$hook_json`: a temporary file outside the project, holding the fields below.
+- `$hook_json`: a temporary file outside the project, holding the fields below, deleted with its folder when the flow ends.
 
 | Field | Holds |
 | --- | --- |
