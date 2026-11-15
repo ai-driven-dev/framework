@@ -54,6 +54,6 @@ How this package is tested: the layers, the tools, the conventions.
 - Concurrent runs are safe: each e2e run builds under `.e2e-build/`. Nothing under `tests/` resolves into `dist/`.
 - `pnpm test` does not build; `dist/` is another run's output.
 - A reproduction or manual smoke runs in a fresh temp directory, never at the repository root, which tracks `.codex/config.toml` and `.codex/environments/environment.toml` and gitignores `.vscode/`.
-- `setup`'s auto-register always names the marketplace `aidd-framework` (`FRAMEWORK_MARKETPLACE_NAME`, `contexts/distribution/domain/marketplace.ts`); no flag overrides it. Claude's own `add` silently overwrites a known name, which is why `smoke:real` never drives auto-register.
+- `setup`'s auto-register always names the marketplace `aidd-framework` (`FRAMEWORK_MARKETPLACE_NAME`, `contexts/distribution/contract/marketplace.ts`); no flag overrides it. Claude's own `add` silently overwrites a known name, which is why `smoke:real` never drives auto-register.
 - Alias versus `hostName`, and why two projects sharing one build are no conflict: [`marketplace-identity-is-name-plus-plugins.md`](internal/decisions/marketplace-identity-is-name-plus-plugins.md).
 - `pnpm smoke` shares one relocated `$HOME` while `new_project()` spins a fresh directory per cell; several cells auto-register from different paths. Identity by name plus plugin set is what makes that pass.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PluginCatalog } from "../../../src/contexts/distribution/domain/catalog.js";
+import type { PluginCatalog } from "../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import {
   printCatalogEntries,

@@ -4,10 +4,8 @@ import {
 } from "../../../../shared/domain/errors.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
-import {
-  FRAMEWORK_MARKETPLACE_NAME,
-  type Marketplace,
-} from "../../../distribution/domain/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
+import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";

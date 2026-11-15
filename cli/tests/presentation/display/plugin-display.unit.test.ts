@@ -4,8 +4,8 @@ import {
   printInstalledPlugins,
   printPluginInstallOutcome,
   printPluginRemoved,
-  printPluginSearchHits,
   printPluginsUpdated,
+  printSearchHits,
 } from "../../../src/presentation/display/plugin-display.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 
@@ -98,11 +98,11 @@ describe("printPluginInstallOutcome", () => {
   });
 });
 
-describe("printPluginSearchHits", () => {
+describe("printSearchHits", () => {
   it("says there is no match rather than printing nothing", () => {
     const output = new CapturingOutput(false);
 
-    printPluginSearchHits(output, []);
+    printSearchHits(output, []);
 
     expect(output.captured).toEqual([{ level: "info", message: "No matches." }]);
   });
@@ -110,7 +110,7 @@ describe("printPluginSearchHits", () => {
   it("prints a hit with its version, description and marketplace", () => {
     const output = new CapturingOutput(false);
 
-    printPluginSearchHits(output, [
+    printSearchHits(output, [
       {
         entry: {
           name: "widget",
@@ -132,7 +132,7 @@ describe("printPluginSearchHits", () => {
   it("marks a recommended hit and falls back to ? for a version it has none of", () => {
     const output = new CapturingOutput(false);
 
-    printPluginSearchHits(output, [
+    printSearchHits(output, [
       {
         entry: {
           name: "widget",

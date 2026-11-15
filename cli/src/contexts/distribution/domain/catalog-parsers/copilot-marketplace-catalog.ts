@@ -5,7 +5,7 @@
  */
 
 import { InvalidPluginManifestError } from "../../../../shared/domain/errors.js";
-import type { PluginCatalog, PluginCatalogEntry } from "../catalog.js";
+import type { PluginCatalog, PluginCatalogEntry } from "../../contract/catalog.js";
 
 const COPILOT_SOURCE = "copilot-catalog";
 

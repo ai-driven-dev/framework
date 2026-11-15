@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import {
-  FRAMEWORK_MARKETPLACE_NAME,
-  Marketplace,
-} from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";

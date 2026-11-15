@@ -1,10 +1,8 @@
 /** At a host that enables a plugin machine-wide (no `NativeActivation.scopeArgs` — codex,
  * copilot), a ref is left enabled while another project still references its shared source. */
 import { describe, expect, it } from "vitest";
-import {
-  FRAMEWORK_MARKETPLACE_NAME,
-  Marketplace,
-} from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { CleanUseCase } from "../../../../../src/contexts/framework/application/clean-use-case.js";
 import { GitignoreUseCase } from "../../../../../src/contexts/framework/application/gitignore-use-case.js";
 import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";

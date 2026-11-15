@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
 import {
-  FRAMEWORK_MARKETPLACE_NAME,
   MARKETPLACE_NAME_REGEX,
   Marketplace,
   type MarketplaceData,

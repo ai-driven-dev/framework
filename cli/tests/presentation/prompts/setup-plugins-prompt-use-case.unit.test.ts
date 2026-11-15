@@ -4,7 +4,7 @@ import type {
   ResolveMarketplaceCommand,
   ResolveMarketplaceResult,
 } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
-import type { PluginCatalogEntry } from "../../../src/contexts/distribution/domain/catalog.js";
+import type { PluginCatalogEntry } from "../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import type {
   PluginInstallFromMarketplace,

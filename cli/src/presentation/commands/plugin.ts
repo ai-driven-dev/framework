@@ -8,8 +8,8 @@ import {
   printInstalledPlugins,
   printPluginInstallOutcome,
   printPluginRemoved,
-  printPluginSearchHits,
   printPluginsUpdated,
+  printSearchHits,
 } from "../display/plugin-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
@@ -21,7 +21,7 @@ type PluginKeys =
   | "pluginRemoveUseCase"
   | "pluginListUseCase"
   | "pluginInstallUseCase"
-  | "pluginSearchUseCase"
+  | "searchPlugins"
   | "userPluginUpdateUseCase"
   | "pluginUpdateUseCase"
   | "marketplaceSyncSettingsUseCase";
@@ -166,13 +166,13 @@ export function registerPluginCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const { hits } = await deps.pluginSearchUseCase.execute({
+        const { hits } = await deps.searchPlugins.execute({
           query,
           recommendedOnly: cmdOptions.recommended ?? false,
           marketplace: cmdOptions.marketplace,
           projectRoot,
         });
-        printPluginSearchHits(output, hits);
+        printSearchHits(output, hits);
       } catch (error) {
         errorHandler.handle(error);
       }

@@ -3,11 +3,8 @@ import type { PluginSourceGitHub } from "../../../shared/domain/source.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import {
-  hasRelativePluginSources,
-  type PluginCatalog,
-  parsePluginCatalog,
-} from "../domain/catalog.js";
+import type { PluginCatalog } from "../contract/catalog.js";
+import { hasRelativePluginSources, parsePluginCatalog } from "../domain/catalog.js";
 import type { Marketplace } from "../domain/marketplace.js";
 import type { PluginFetcher, PluginFetchOptions } from "../ports/plugin-fetcher.js";
 import type { RawCatalogFetcher } from "../ports/raw-catalog-fetcher.js";

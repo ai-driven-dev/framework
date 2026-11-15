@@ -14,6 +14,7 @@ src/
 │   │   └── ports/
 │   ├── distribution/    # where content comes from and how it is fetched
 │   │   ├── application/
+│   │   ├── contract/
 │   │   ├── domain/
 │   │   │   └── catalog-parsers/
 │   │   ├── infrastructure/

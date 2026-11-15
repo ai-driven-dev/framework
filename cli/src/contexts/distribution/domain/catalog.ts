@@ -1,21 +1,7 @@
 import { isAbsolute } from "node:path";
 import { InvalidPluginManifestError } from "../../../shared/domain/errors.js";
-import { type PluginSource, parsePluginSource } from "../../../shared/domain/source.js";
-
-export interface PluginCatalogEntry {
-  name: string;
-  source: PluginSource;
-  description?: string;
-  version?: string;
-  recommended: boolean;
-  strict: boolean;
-}
-
-export interface PluginCatalog {
-  name?: string;
-  version?: string;
-  plugins: readonly PluginCatalogEntry[];
-}
+import { parsePluginSource } from "../../../shared/domain/source.js";
+import type { PluginCatalog, PluginCatalogEntry } from "../contract/catalog.js";
 
 function parseEntry(raw: unknown, index: number): PluginCatalogEntry {
   if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {

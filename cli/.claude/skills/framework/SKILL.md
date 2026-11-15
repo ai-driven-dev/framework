@@ -25,7 +25,7 @@ disk is exactly the job that needs all three.
 | Concept | Location |
 |---|---|
 | The manifest aggregate and its members | `domain/manifest.ts`, `domain/manifest/` (tool-entry, tracked-files, merge-files, native-registrations) |
-| A plugin's declared state | `domain/plugins/` (installed-plugin, source-resolver, requested-version-policy) |
+| A plugin's declared state | `domain/plugins/` (installed-plugin) |
 | The diagnosis shape | `domain/doctor.ts` |
 | Setup orchestration state | `domain/setup-flow.ts` |
 | A port only `framework` needs | `domain/ports/` (manifest-repository, plugin-distribution-reader, user-source-references) |

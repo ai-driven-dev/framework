@@ -28,7 +28,10 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // what a marketplace is, and where it can be read from
     "src/contexts/distribution/domain/marketplace.ts",
     "src/contexts/distribution/domain/marketplace-source-mode.ts",
-    "src/contexts/distribution/domain/catalog.ts",
+    "src/contexts/distribution/domain/plugin-source-resolver.ts",
+    "src/contexts/distribution/contract/marketplace.ts",
+    "src/contexts/distribution/contract/catalog.ts",
+    "src/contexts/distribution/contract/requested-version-policy.ts",
     // the ports its callers hold, so they can be given an implementation
     "src/contexts/distribution/ports/marketplace-registry.ts",
     "src/contexts/distribution/ports/marketplace-trust-store.ts",

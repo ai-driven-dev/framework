@@ -1,5 +1,5 @@
 import type { ResolveMarketplace } from "../../contexts/distribution/application/resolve-marketplace.js";
-import type { PluginCatalogEntry } from "../../contexts/distribution/domain/catalog.js";
+import type { PluginCatalogEntry } from "../../contexts/distribution/contract/catalog.js";
 import type { MarketplaceRegistry } from "../../contexts/distribution/ports/marketplace-registry.js";
 import type { PluginInstallFromMarketplace } from "../../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import type { PluginInstallMode } from "../../contexts/framework/domain/setup-flow.js";

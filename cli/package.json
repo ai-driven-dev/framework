@@ -83,6 +83,7 @@
     "test:mutation:telemetry": "node scripts/run-mutation.mjs telemetry",
     "test:mutation:translate": "node scripts/run-mutation.mjs translate",
     "test:mutation:distribution": "node scripts/run-mutation.mjs distribution",
+    "test:mutation:distribution-plugins": "node scripts/run-mutation.mjs distribution-plugins",
     "test:mutation:framework": "node scripts/run-mutation.mjs framework",
     "test:mutation:presentation": "node scripts/run-mutation.mjs presentation",
     "test:mutation:runtime": "node scripts/run-mutation.mjs runtime",

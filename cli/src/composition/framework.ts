@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { AddMarketplace } from "../contexts/distribution/application/add-marketplace.js";
+import { SearchPlugins } from "../contexts/distribution/application/search-plugins.js";
+import type { MarketplaceRemover } from "../contexts/distribution/ports/marketplace-remover.js";
 import { CleanUserScopeUseCase } from "../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -38,7 +39,6 @@ import { PluginInstallFromMarketplaceUseCase } from "../contexts/framework/appli
 import { PluginInstallUseCase } from "../contexts/framework/application/plugin/plugin-install-use-case.js";
 import { PluginListUseCase } from "../contexts/framework/application/plugin/plugin-list-use-case.js";
 import { PluginRemoveUseCase } from "../contexts/framework/application/plugin/plugin-remove-use-case.js";
-import { PluginSearchUseCase } from "../contexts/framework/application/plugin/plugin-search-use-case.js";
 import { PluginUpdateUseCase } from "../contexts/framework/application/plugin/plugin-update-use-case.js";
 import { RestoreUseCase } from "../contexts/framework/application/restore/restore-use-case.js";
 import { InstallGlobalPluginsUseCase } from "../contexts/framework/application/setup/install-global-plugins-use-case.js";
@@ -85,7 +85,7 @@ import { HttpClient } from "../shared/infrastructure/http-client.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../shared/ports/logger.js";
 import { wireAuth } from "./auth.js";
-import { wireDistribution } from "./distribution.js";
+import { wireAddMarketplace, wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";
 import { wireRecipes } from "./recipes.js";
 import { wireTelemetry } from "./telemetry.js";
@@ -196,22 +196,20 @@ export async function createDeps(
     marketplaceRegistry,
     nativeHostRegistrationGate
   );
-  // `marketplace add --overwrite` removes before it adds, and removing deletes installed
-  // plugin files — framework work — so the orchestration belongs here rather than pulling
-  // framework into distribution's own wiring.
-  const addMarketplace = new AddMarketplace(
-    marketplaceRegistry,
-    marketplaceTrustStore,
-    resolveMarketplaceUseCase,
+  // Removing deletes installed plugin files, which is framework work: framework's two remove
+  // commands answer distribution's `MarketplaceRemover`.
+  const marketplaceRemover: MarketplaceRemover = {
+    remove: async (request) => {
+      const removal = { ...request, tools };
+      await (request.scope === "user"
+        ? userMarketplaceRemoveUseCase.execute(removal)
+        : marketplaceRemoveUseCase.execute(removal));
+    },
+  };
+  const addMarketplace = wireAddMarketplace(
+    { marketplaceRegistry, marketplaceTrustStore, resolveMarketplaceUseCase },
     prompter,
-    {
-      remove: async (request) => {
-        const removal = { ...request, tools };
-        await (request.scope === "user"
-          ? userMarketplaceRemoveUseCase.execute(removal)
-          : marketplaceRemoveUseCase.execute(removal));
-      },
-    }
+    marketplaceRemover
   );
   const marketplaceCheckUseCase = new MarketplaceCheckUseCase(
     manifestRepo,
@@ -304,10 +302,7 @@ export async function createDeps(
     prompter,
     logger
   );
-  const pluginSearchUseCase = new PluginSearchUseCase(
-    marketplaceRegistry,
-    resolveMarketplaceUseCase
-  );
+  const searchPlugins = new SearchPlugins(marketplaceRegistry, resolveMarketplaceUseCase);
   const pluginPickUseCase = new PluginPickUseCase(
     marketplaceRegistry,
     resolveMarketplaceUseCase,
@@ -533,7 +528,7 @@ export async function createDeps(
     installIdeToolUseCase,
     uninstallIdeUseCase,
     assetProvider,
-    pluginSearchUseCase,
+    searchPlugins,
     registerFrameworkMarketplace,
     pluginInstallUseCase,
     marketplaceSyncSettingsUseCase,

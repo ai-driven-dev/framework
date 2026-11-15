@@ -1,13 +1,13 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FetchMarketplaceSource } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
-import { ResolveMarketplace } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginCatalogRepositoryAdapter } from "../../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { PluginSearchUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-search-use-case.js";
-import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
+import { SearchPlugins } from "../../../../src/contexts/distribution/application/search-plugins.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
+import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MKT1_PATH = "/mkt1";
@@ -24,7 +24,7 @@ function seedMarketplace(
 function buildUseCase(
   fs: InMemoryFileAdapter,
   registry: InMemoryMarketplaceRegistry
-): PluginSearchUseCase {
+): SearchPlugins {
   const fetcher = new FixturePluginFetcher({
     [MKT1_PATH]: MKT1_PATH,
     [MKT2_PATH]: MKT2_PATH,
@@ -34,10 +34,10 @@ function buildUseCase(
     fetchMarketplaceSource,
     new PluginCatalogRepositoryAdapter(fs)
   );
-  return new PluginSearchUseCase(registry, resolveMarketplace);
+  return new SearchPlugins(registry, resolveMarketplace);
 }
 
-describe("PluginSearchUseCase", () => {
+describe("SearchPlugins", () => {
   it("matches by name and description across marketplaces", async () => {
     const fs = new InMemoryFileAdapter();
     seedMarketplace(fs, MKT1_PATH, [

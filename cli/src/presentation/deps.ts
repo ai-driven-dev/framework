@@ -5,6 +5,7 @@ import type { AddMarketplace } from "../contexts/distribution/application/add-ma
 import type { ListMarketplaces } from "../contexts/distribution/application/list-marketplaces.js";
 import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.js";
+import type { SearchPlugins } from "../contexts/distribution/application/search-plugins.js";
 import type { CleanUserScopeUseCase } from "../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import type { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
 import type { DoctorRegistrationUseCase } from "../contexts/framework/application/doctor/doctor-registration-use-case.js";
@@ -25,7 +26,6 @@ import type { UserPluginUpdateUseCase } from "../contexts/framework/application/
 import type { PluginInstallUseCase } from "../contexts/framework/application/plugin/plugin-install-use-case.js";
 import type { PluginListUseCase } from "../contexts/framework/application/plugin/plugin-list-use-case.js";
 import type { PluginRemoveUseCase } from "../contexts/framework/application/plugin/plugin-remove-use-case.js";
-import type { PluginSearchUseCase } from "../contexts/framework/application/plugin/plugin-search-use-case.js";
 import type { PluginUpdateUseCase } from "../contexts/framework/application/plugin/plugin-update-use-case.js";
 import type { RestoreUseCase } from "../contexts/framework/application/restore/restore-use-case.js";
 import type { ProjectContextDetectorUseCase } from "../contexts/framework/application/setup/project-context-detector-use-case.js";
@@ -134,7 +134,7 @@ export interface Deps {
   installIdeToolUseCase: Pick<InstallIdeToolUseCase, "execute">;
   uninstallIdeUseCase: Pick<UninstallIdeUseCase, "execute">;
   assetProvider: AssetProvider;
-  pluginSearchUseCase: Pick<PluginSearchUseCase, "execute">;
+  searchPlugins: Pick<SearchPlugins, "execute">;
   registerFrameworkMarketplace: Pick<RegisterFrameworkMarketplace, "execute">;
   pluginInstallUseCase: Pick<PluginInstallUseCase, "execute">;
   marketplaceSyncSettingsUseCase: Pick<MarketplaceSyncSettingsUseCase, "execute">;

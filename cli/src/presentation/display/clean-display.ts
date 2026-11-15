@@ -1,4 +1,4 @@
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/domain/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import type { CLIOutput } from "../output.js";
 
 interface ProjectCleanResult {

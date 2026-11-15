@@ -1,9 +1,9 @@
-import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
-import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
-import type { Marketplace } from "../../../distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import type { PluginCatalogEntry } from "../contract/catalog.js";
+import type { Marketplace } from "../domain/marketplace.js";
+import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
+import type { ResolveMarketplace } from "./resolve-marketplace.js";
 
-export interface PluginSearchOptions {
+export interface SearchPluginsCommand {
   query: string;
   recommendedOnly: boolean;
   marketplace?: string;
@@ -15,17 +15,17 @@ export interface SearchHit {
   marketplace: Marketplace;
 }
 
-export interface PluginSearchResult {
+export interface SearchPluginsResult {
   hits: readonly SearchHit[];
 }
 
-export class PluginSearchUseCase {
+export class SearchPlugins {
   constructor(
     private readonly registry: MarketplaceRegistry,
     private readonly resolveMarketplace: ResolveMarketplace
   ) {}
 
-  async execute(options: PluginSearchOptions): Promise<PluginSearchResult> {
+  async execute(options: SearchPluginsCommand): Promise<SearchPluginsResult> {
     const all = await this.registry.list(options.projectRoot);
     const filtered = options.marketplace ? all.filter((m) => m.name === options.marketplace) : all;
     const hits: SearchHit[] = [];
@@ -35,7 +35,7 @@ export class PluginSearchUseCase {
     return { hits };
   }
 
-  private async searchOne(m: Marketplace, options: PluginSearchOptions): Promise<SearchHit[]> {
+  private async searchOne(m: Marketplace, options: SearchPluginsCommand): Promise<SearchHit[]> {
     const { catalog } = await this.resolveMarketplace.execute({
       marketplace: m,
       projectRoot: options.projectRoot,
@@ -46,10 +46,9 @@ export class PluginSearchUseCase {
       .map((entry) => ({ entry, marketplace: m }));
   }
 
-  private matches(entry: PluginCatalogEntry, options: PluginSearchOptions): boolean {
+  private matches(entry: PluginCatalogEntry, options: SearchPluginsCommand): boolean {
     if (options.recommendedOnly && !entry.recommended) return false;
     const q = options.query.toLowerCase();
-    if (q.length === 0) return true;
     const desc = entry.description?.toLowerCase() ?? "";
     return entry.name.toLowerCase().includes(q) || desc.includes(q);
   }

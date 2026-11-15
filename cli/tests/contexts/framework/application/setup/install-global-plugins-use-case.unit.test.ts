@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { PluginCatalogEntry } from "../../../../../src/contexts/distribution/domain/catalog.js";
+import type { PluginCatalogEntry } from "../../../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { InstallGlobalPluginsUseCase } from "../../../../../src/contexts/framework/application/setup/install-global-plugins-use-case.js";
