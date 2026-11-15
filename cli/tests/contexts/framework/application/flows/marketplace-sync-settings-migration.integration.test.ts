@@ -8,6 +8,7 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribu
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import type { HostActions } from "../../../../../src/contexts/host-registration/contract/host-actions.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -1456,8 +1457,16 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
       }),
       registry,
       new Map(),
-      new Map(),
-      new Map([[TOOL.claude, hostReader]]),
+      new InspectHostRegistration(
+        new InMemoryFileAdapter({
+          [`${sharedBuiltDir}/${CATALOG_RELATIVE}`]: JSON.stringify({
+            name: FRAMEWORK_MARKETPLACE_NAME,
+            plugins: [],
+          }),
+        }),
+        new Map(),
+        new Map([[TOOL.claude, hostReader]])
+      ),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION)
     );

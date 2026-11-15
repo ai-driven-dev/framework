@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
+import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import type {
   HostPluginRegistry,
   HostPluginRegistryReading,
@@ -58,8 +59,7 @@ async function issuesFor(
     fs,
     registry,
     activators,
-    new Map(),
-    new Map(),
+    new InspectHostRegistration(fs, new Map(), new Map()),
     () => "/user-cache",
     { get: () => "1.0.0" }
   ).execute({
@@ -183,8 +183,7 @@ async function nativeIssuesFor(
     fs,
     registry,
     activators,
-    hostRegistries,
-    new Map(),
+    new InspectHostRegistration(fs, hostRegistries, new Map()),
     () => "/user-cache",
     { get: () => "1.0.0" }
   ).execute({

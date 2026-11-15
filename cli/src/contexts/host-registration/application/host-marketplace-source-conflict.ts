@@ -6,24 +6,15 @@ import {
   type MarketplaceSourceConflict,
   marketplaceSourceConflict,
 } from "../contract/marketplace-source-conflict.js";
+import type {
+  MarketplaceSourceDrift,
+  MarketplaceSourceDriftFound,
+} from "../contract/marketplace-source-drift.js";
 import {
-  type MarketplaceSourceDrift,
   type MarketplaceSourceDriftContext,
   marketplaceSourceDrift,
 } from "../domain/marketplace-source-drift.js";
 import { readMarketplaceCatalogIdentity } from "./read-marketplace-catalog-identity.js";
-
-/**
- * A version or migration drift decided from the path's own segments — never a different-catalog
- * conflict, so it carries no identity at all.
- */
-export interface MarketplaceSourceDriftFound {
-  readonly name: string;
-  readonly registeredSource: string;
-  readonly requestedSource: string;
-  readonly location: string;
-  readonly drift: MarketplaceSourceDrift;
-}
 
 export type HostMarketplaceSourceCheck =
   | MarketplaceSourceConflict

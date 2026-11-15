@@ -26,7 +26,6 @@ import type { MarketplaceRegistry } from "../../../distribution/ports/marketplac
 import {
   hostMarketplaceSourceConflict,
   isDriftFound,
-  type MarketplaceSourceDriftFound,
 } from "../../../host-registration/application/host-marketplace-source-conflict.js";
 import {
   inspectNativeMarketplaceSource,
@@ -48,6 +47,7 @@ import {
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { MarketplaceSourceDriftFound } from "../../../host-registration/contract/marketplace-source-drift.js";
 import type { NativeMarketplaceRegistration } from "../../../host-registration/contract/registration-record.js";
 import type { BuiltMarketplaceEnsurer } from "../../../installation/application/shared/ensure-built-marketplace.js";
 import type { NativeRegistrations } from "../../../installation/domain/manifest/native-registrations.js";

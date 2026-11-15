@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { answeredRegistry } from "../../../../src/contexts/host-registration/contract/host-registration-answers.js";
+import { answeredRegistry } from "../../../../src/contexts/host-registration/domain/host-registration-answers.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 
 const { claude } = TOOL;

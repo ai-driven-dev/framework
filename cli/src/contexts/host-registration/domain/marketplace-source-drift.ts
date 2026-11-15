@@ -5,6 +5,7 @@ import {
   samePathSegment,
 } from "../../../shared/domain/paths.js";
 import { compareSemver, isSemver } from "../../../shared/domain/semver.js";
+import type { MarketplaceSourceDrift } from "../contract/marketplace-source-drift.js";
 
 /** Every path a caller hands `marketplaceSourceDrift` — `userCacheRoot`, `projectRoot` and the two
  * sources compared against them — is expected already `realpath`'d: this decides a migration story
@@ -15,28 +16,6 @@ export interface MarketplaceSourceDriftContext {
   readonly marketplaceName: string;
   readonly target: string;
 }
-
-export type MarketplaceSourceDrift =
-  | {
-      /** The host already follows a newer build of aidd's own shared source than
-       * this run would request — refusing to overwrite it is the rollback refusal:
-       * a lower version must never make the host follow it backward. */
-      readonly kind: "version-behind";
-      readonly registeredVersion: string;
-      readonly requestedVersion: string;
-    }
-  | {
-      /** The host still points at this project's own pre-migration, per-project
-       * cache rather than the shared, machine-scope one `requestedSource` names. */
-      readonly kind: "unmigrated-project-source";
-    }
-  | {
-      /** The host still points at *another* project's own pre-migration cache, discovered from the
-       * registered path's own segments alone. A caller that can write `references.json` uses
-       * `projectRoot` to record that project's own claim on the shared source. */
-      readonly kind: "unmigrated-foreign-project-source";
-      readonly projectRoot: string;
-    };
 
 /**
  * Whether a host's registered source names a path this project recognises as its own — one CLI

@@ -1,5 +1,8 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
-import type { HostPluginRegistryEntry, HostPluginRegistryReading } from "./host-plugin-registry.js";
+import type {
+  HostPluginRegistryEntry,
+  HostPluginRegistryReading,
+} from "../contract/host-plugin-registry.js";
 
 /**
  * Either the refs a registry actually produced, or the reason nothing did — one value, so no

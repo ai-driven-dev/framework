@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import type {
   HostPluginRegistry,
   HostPluginRegistryReading,
 } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
-import { answeredRegistry } from "../../../../../src/contexts/host-registration/contract/host-registration-answers.js";
+import { answeredRegistry } from "../../../../../src/contexts/host-registration/domain/host-registration-answers.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -556,8 +557,11 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
       fs,
       registry,
       new Map([[claude, activator]]),
-      new Map([[claude, new RegistryBoundToActivator(activator)]]),
-      new Map(),
+      new InspectHostRegistration(
+        fs,
+        new Map([[claude, new RegistryBoundToActivator(activator)]]),
+        new Map()
+      ),
       () => "/user-cache",
       { get: () => "1.0.0" }
     );

@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
+import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import {
   builtMarketplaceDir,
@@ -110,8 +111,7 @@ async function issuesFor(
     fs,
     registry,
     new Map(),
-    new Map(),
-    new Map([[TOOL.claude, hostReader]]),
+    new InspectHostRegistration(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
     () => "/user-cache",
     fakeVersion("1.0.0")
   );
@@ -283,8 +283,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       fs,
       registry,
       new Map(),
-      new Map(),
-      new Map(),
+      new InspectHostRegistration(fs, new Map(), new Map()),
       () => "/user-cache",
       fakeVersion("1.0.0")
     );
@@ -329,8 +328,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       fs,
       registry,
       new Map(),
-      new Map(),
-      new Map([[TOOL.codex, hostReader]]),
+      new InspectHostRegistration(fs, new Map(), new Map([[TOOL.codex, hostReader]])),
       () => "/user-cache",
       fakeVersion("1.0.0")
     );
@@ -384,8 +382,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       fs,
       registry,
       new Map(),
-      new Map(),
-      new Map([[TOOL.claude, hostReader]]),
+      new InspectHostRegistration(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
       () => "/user-cache",
       fakeVersion("1.0.0")
     );
@@ -434,8 +431,7 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
       fs,
       registry,
       new Map(),
-      new Map(),
-      new Map([[TOOL.claude, hostReader]]),
+      new InspectHostRegistration(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION)
     );

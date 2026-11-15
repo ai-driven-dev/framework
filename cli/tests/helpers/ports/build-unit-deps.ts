@@ -11,6 +11,7 @@ import { DoctorUseCase } from "../../../src/contexts/framework/application/docto
 import { MarketplaceSyncSettingsUseCase } from "../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
 import { UpdateOneToolUseCase } from "../../../src/contexts/framework/application/global/update-one-tool-use-case.js";
+import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
 import { InstallIdeConfig } from "../../../src/contexts/installation/application/install/install-ide-config.js";
 import { InstallRuntimeConfig } from "../../../src/contexts/installation/application/install/install-runtime-config.js";
@@ -171,7 +172,7 @@ export function buildUpdateOneToolUseCase(
 export function buildDoctorUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   authReader?: ConstructorParameters<typeof DoctorLayoutUseCase>[1],
-  hostRegistries?: ConstructorParameters<typeof DoctorRegistrationUseCase>[3]
+  hostRegistries: ConstructorParameters<typeof InspectHostRegistration>[1] = new Map()
 ): DoctorUseCase {
   return new DoctorUseCase(
     deps.manifestRepo,
@@ -184,8 +185,7 @@ export function buildDoctorUseCase(
       deps.fs,
       deps.marketplaceRegistry,
       deps.nativePluginActivators,
-      hostRegistries,
-      new Map(),
+      new InspectHostRegistration(deps.fs, hostRegistries, new Map()),
       () => "/user-cache",
       { get: () => "1.0.0" }
     )

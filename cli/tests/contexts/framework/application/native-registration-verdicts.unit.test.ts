@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
+import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import { NativeHostRegistrationGate } from "../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
@@ -118,8 +119,11 @@ async function doctorSays(registry: HostPluginRegistryReading): Promise<string> 
     new InMemoryFileAdapter(),
     new InMemoryMarketplaceRegistry(),
     new Map(),
-    new Map([[copilot, new FakeHostPluginRegistry(registry)]]),
-    new Map(),
+    new InspectHostRegistration(
+      new InMemoryFileAdapter(),
+      new Map([[copilot, new FakeHostPluginRegistry(registry)]]),
+      new Map()
+    ),
     () => "/user-cache",
     { get: () => "1.0.0" }
   ).execute({ manifest, projectRoot: "/A", allowedIds: null, tools: catalogOf() });

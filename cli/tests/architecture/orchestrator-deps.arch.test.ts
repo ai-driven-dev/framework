@@ -52,7 +52,7 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", dependencies: 7 },
   {
     path: "src/contexts/framework/application/doctor/doctor-registration-use-case.ts",
-    dependencies: 7,
+    dependencies: 6,
   },
   {
     path: "src/contexts/installation/application/install/install-ide-tool.ts",

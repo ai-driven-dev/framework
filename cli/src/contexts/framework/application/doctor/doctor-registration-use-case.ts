@@ -6,24 +6,18 @@ import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
-import {
-  type HostMarketplaceSourceCheck,
-  hostMarketplaceSourceConflict,
-  isDriftFound,
-  type MarketplaceSourceDriftFound,
-} from "../../../host-registration/application/host-marketplace-source-conflict.js";
-import { readMarketplaceCatalogIdentity } from "../../../host-registration/application/read-marketplace-catalog-identity.js";
-import type { HostActions } from "../../../host-registration/contract/host-actions.js";
-import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import type {
-  HostPluginRegistry,
-  HostPluginRegistryReading,
-} from "../../../host-registration/contract/host-plugin-registry.js";
-import { answeredRegistry } from "../../../host-registration/contract/host-registration-answers.js";
+  ExpectedHostPlugin,
+  InspectedHost,
+  InspectHostRegistration,
+} from "../../../host-registration/application/inspect-host-registration.js";
+import type { HostActions } from "../../../host-registration/contract/host-actions.js";
+import type { HostRegistrationFinding } from "../../../host-registration/contract/inspect-host-registration-result.js";
 import {
   describePluginDiff,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { MarketplaceSourceDriftFound } from "../../../host-registration/contract/marketplace-source-drift.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
@@ -39,14 +33,6 @@ export interface DoctorRegistrationOptions {
   tools: ToolCatalog;
   /** A global install declares nothing in a project's settings, so it skips that check. */
   globalInstall?: boolean;
-}
-
-/** One plugin `doctor` expects a native-activation tool's own registry to carry, and the ref to
- * look it up by — `ref` absent exactly when nothing here can build one, which is the unanswerable
- * case a missing marketplace produces. */
-interface ExpectedNativeRegistration {
-  readonly plugin: string;
-  readonly ref?: string;
 }
 
 /**
@@ -65,15 +51,8 @@ export class DoctorRegistrationUseCase {
     private readonly registry: MarketplaceRegistry,
     /** Native plugin CLI activators keyed by `NativeActivation.binary`. */
     private readonly activators: ReadonlyMap<string, HostActions> = new Map(),
-    /** Host plugin registry readers keyed by `AiToolId`, one per tool whose own CLI
-     * activates plugins. */
-    private readonly hostRegistries: ReadonlyMap<AiToolId, HostPluginRegistry> = new Map(),
-    /** Host marketplace registry readers keyed by `AiToolId`. Only a tool whose profile declares
-     * `NativeActivation.marketplaceRegistry` is ever looked up here. */
-    private readonly hostMarketplaceRegistries: ReadonlyMap<
-      AiToolId,
-      HostMarketplaceRegistry
-    > = new Map(),
+    /** Asks the hosts' own registries what they carry. */
+    private readonly inspectHostRegistration: InspectHostRegistration,
     /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
      * own `userCacheRoot` — needed to recompute the same path that use case would build, without
      * running a build. No default: a caller with nothing real to pass would silently recompute a
@@ -89,77 +68,85 @@ export class DoctorRegistrationUseCase {
   async execute(options: DoctorRegistrationOptions): Promise<DoctorIssue[]> {
     return [
       ...(options.globalInstall === true ? [] : await this.checkDeclaredMarketplaces(options)),
-      ...(await this.checkNativeRegistrations(options)),
-      ...(await this.checkMarketplaceSources(options)),
+      ...(await this.checkHostRegistrations(options)),
     ];
   }
 
   /**
-   * Whether a host's own marketplace registry already holds this project's marketplace name
-   * pointed at a source other than the one this project would register — the doctor-side half of
-   * the sync-time guard, so a conflict is visible between two `sync` runs, not only when one fails.
+   * What a host's own registries say about what this project asked them to register, worded as
+   * doctor issues. Includes whether a host's marketplace registry already holds this project's
+   * marketplace name pointed at a source other than the one this project would register — the
+   * doctor-side half of the sync-time guard, so a conflict is visible between two `sync` runs.
    *
    * The expected source is **recomputed**, never stored: `builtMarketplaceDir` /
    * `userBuiltMarketplaceDir` are the same pure functions `EnsureBuiltMarketplace` calls to
-   * decide where it builds, so nothing here triggers a build. Silent on an unreadable registry and
-   * on a source that has never been built — reporting a conflict against a path nothing has ever
-   * pointed at would invent the exact false positive this guard exists to prevent.
+   * decide where it builds, so nothing here triggers a build.
    */
-  private async checkMarketplaceSources(
-    options: DoctorRegistrationOptions
-  ): Promise<DoctorIssue[]> {
-    const { projectRoot, tools } = options;
-    const issues: DoctorIssue[] = [];
-    for await (const { toolId, expected } of this.retainedToolsWithExpectedMarketplaces(options)) {
+  private async checkHostRegistrations(options: DoctorRegistrationOptions): Promise<DoctorIssue[]> {
+    const { manifest, projectRoot, allowedIds, tools } = options;
+    const expected = await this.registry.list(projectRoot);
+    const hosts: InspectedHost[] = [];
+    for (const toolId of this.retainedToolIds(manifest, allowedIds)) {
       if (!tools.isAiTool(toolId)) continue;
-      const profile = tools.aiProfile(toolId);
-      if (profile.nativeActivation()?.keepsMarketplaceRegistry() !== true) continue;
-      const reader = this.hostMarketplaceRegistries.get(toolId);
-      if (reader === undefined) continue;
+      const marketplaces = [];
       for (const marketplace of expected) {
-        const requestedSource = await this.resolvedBuiltDir(projectRoot, marketplace, toolId);
-        if (requestedSource === undefined) continue;
-        const requestedIdentity = await readMarketplaceCatalogIdentity(
-          this.fs,
-          profile,
-          requestedSource
-        );
-        if (requestedIdentity === undefined) continue;
-        // Keyed by the catalog's own declared name, never `marketplace.name` (aidd's local
-        // alias): a host's registry only ever holds an entry under the name its own catalog
-        // declares. `resolvedBuiltDir` just above stays keyed by alias, since that path is aidd's
-        // own build location, not a host-facing lookup.
-        //
-        // The drift context is handed to every `aidd-framework` entry regardless of its own
-        // recorded `scope`: an unmigrated project-scope registration is exactly the "still points
-        // at this project's own pre-migration cache" case this decides.
-        const check: HostMarketplaceSourceCheck = await hostMarketplaceSourceConflict(
-          this.fs,
-          profile,
-          reader,
-          requestedSource,
-          requestedIdentity,
-          {
-            userCacheRoot: this.userCacheRoot(),
-            projectRoot,
-            marketplaceName: marketplace.name,
-            target: toolId,
-          }
-        );
-        if (check === undefined) continue;
-        if (isDriftFound(check)) {
-          issues.push(this.driftIssue(toolId, check));
-          continue;
-        }
-        const diff = pluginSetDifference(check.registeredIdentity, check.requestedIdentity);
-        issues.push({
+        const builtDir = await this.resolvedBuiltDir(projectRoot, marketplace, toolId);
+        marketplaces.push({ name: marketplace.name, builtDir });
+      }
+      hosts.push({
+        tool: toolId,
+        expectedPlugins: this.expectedNativeRegistrations(manifest, toolId),
+        marketplaces,
+      });
+    }
+    const { findings } = await this.inspectHostRegistration.execute({
+      projectRoot,
+      userCacheRoot: this.userCacheRoot(),
+      tools,
+      hosts,
+    });
+    return findings.map((finding) => this.issueOf(finding));
+  }
+
+  private issueOf(finding: HostRegistrationFinding): DoctorIssue {
+    const { tool } = finding;
+    switch (finding.kind) {
+      case "registry-unanswerable":
+        return {
+          severity: "info",
+          message: finding.detail,
+          fix: `The plugin does not load until ${tool}'s own CLI has run and answered this.`,
+        };
+      case "plugin-unrecorded":
+        return {
+          severity: "info",
+          message: `AIDD records no marketplace for ${finding.plugin} (${tool}), so its registry cannot be asked`,
+          fix: `${tool} will not load it until a marketplace is recorded for it.`,
+        };
+      case "plugin-missing":
+        return {
           severity: "error",
-          message: `${toolId}'s marketplace registry (${check.location}) carries '${check.name}' from a different catalog (${check.registeredSource}) than this project's own (${check.requestedSource}) — plugins ${describePluginDiff(diff)}`,
+          message: `${tool}'s registry (${finding.location}) does not carry ${finding.ref}`,
+          fix: "Run `aidd sync` to re-register it.",
+        };
+      case "plugin-disabled":
+        return {
+          severity: "error",
+          message: `${tool}'s registry (${finding.location}) carries ${finding.ref} and records it disabled`,
+          fix: `Run \`aidd framework install --tool ${tool}\`.`,
+        };
+      case "source-drift":
+        return this.driftIssue(tool, finding.found);
+      case "source-conflict": {
+        const check = finding.conflict;
+        const diff = pluginSetDifference(check.registeredIdentity, check.requestedIdentity);
+        return {
+          severity: "error",
+          message: `${tool}'s marketplace registry (${check.location}) carries '${check.name}' from a different catalog (${check.registeredSource}) than this project's own (${check.requestedSource}) — plugins ${describePluginDiff(diff)}`,
           fix: `Run \`claude plugin marketplace remove ${check.name}\`, then \`aidd sync\` to re-register it for this project — or rename this project's marketplace if it is meant to point elsewhere.`,
-        });
+        };
       }
     }
-    return issues;
   }
 
   /** Both `warning`, never `error`: neither drift is a fault this project caused, and neither
@@ -243,22 +230,6 @@ export class DoctorRegistrationUseCase {
     return issues;
   }
 
-  private async checkNativeRegistrations(
-    options: DoctorRegistrationOptions
-  ): Promise<DoctorIssue[]> {
-    const { manifest, projectRoot, allowedIds, tools } = options;
-    const issues: DoctorIssue[] = [];
-    for (const toolId of this.retainedToolIds(manifest, allowedIds)) {
-      if (!tools.isAiTool(toolId)) continue;
-      if (tools.aiProfile(toolId).nativeActivation() === undefined) continue;
-      const expected = this.expectedNativeRegistrations(manifest, toolId);
-      if (expected.length === 0) continue;
-      const reading = await this.hostRegistries.get(toolId)?.read(projectRoot);
-      issues.push(...this.compareNativeRegistrations(toolId, expected, reading));
-    }
-    return issues;
-  }
-
   /** `nativeRegistrations` when the manifest carries one, falling back to the plugins it tracks —
    * the state a `sync`-unaware installer produced. `pluginRefs` are already `<plugin>@<marketplace>`
    * strings; the fallback assembles the same shape, `ref` absent exactly when no marketplace was
@@ -266,7 +237,7 @@ export class DoctorRegistrationUseCase {
   private expectedNativeRegistrations(
     manifest: Manifest,
     toolId: AiToolId
-  ): readonly ExpectedNativeRegistration[] {
+  ): readonly ExpectedHostPlugin[] {
     const recorded = manifest.getNativeRegistrations(toolId);
     if (recorded !== undefined) {
       return recorded.pluginRefs.map((ref) => ({ plugin: ref, ref }));
@@ -275,49 +246,6 @@ export class DoctorRegistrationUseCase {
       plugin: plugin.name,
       ref: plugin.marketplace === undefined ? undefined : `${plugin.name}@${plugin.marketplace}`,
     }));
-  }
-
-  private compareNativeRegistrations(
-    toolId: AiToolId,
-    expected: readonly ExpectedNativeRegistration[],
-    reading: HostPluginRegistryReading | undefined
-  ): DoctorIssue[] {
-    const answered = answeredRegistry(toolId, reading, true);
-    if ("detail" in answered) {
-      return [
-        {
-          severity: "info",
-          message: answered.detail,
-          fix: `The plugin does not load until ${toolId}'s own CLI has run and answered this.`,
-        },
-      ];
-    }
-    const issues: DoctorIssue[] = [];
-    for (const item of expected) {
-      if (item.ref === undefined) {
-        issues.push({
-          severity: "info",
-          message: `AIDD records no marketplace for ${item.plugin} (${toolId}), so its registry cannot be asked`,
-          fix: `${toolId} will not load it until a marketplace is recorded for it.`,
-        });
-        continue;
-      }
-      const entry = answered.refs.get(item.ref);
-      if (entry === undefined) {
-        issues.push({
-          severity: "error",
-          message: `${toolId}'s registry (${answered.location}) does not carry ${item.ref}`,
-          fix: "Run `aidd sync` to re-register it.",
-        });
-      } else if (!entry.enabled) {
-        issues.push({
-          severity: "error",
-          message: `${toolId}'s registry (${answered.location}) carries ${item.ref} and records it disabled`,
-          fix: `Run \`aidd framework install --tool ${toolId}\`.`,
-        });
-      }
-    }
-    return issues;
   }
 
   private untrackedSettingsOf(

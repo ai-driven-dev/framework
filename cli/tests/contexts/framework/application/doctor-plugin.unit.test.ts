@@ -8,6 +8,7 @@ import { DoctorReferencesUseCase } from "../../../../src/contexts/framework/appl
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { DoctorTrackedFilesUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-tracked-files-use-case.js";
 import { DoctorUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-use-case.js";
+import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -76,8 +77,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): DoctorUseCase {
       fs,
       new InMemoryMarketplaceRegistry(),
       new Map(),
-      new Map(),
-      new Map(),
+      new InspectHostRegistration(fs, new Map(), new Map()),
       () => "/user-cache",
       { get: () => "1.0.0" }
     )
