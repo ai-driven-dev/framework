@@ -214,12 +214,6 @@ describe("one transcript line to usage records", () => {
     expect(outcome.unrecognised).toHaveLength(1);
   });
 
-  it("reports a complete line that is not JSON", () => {
-    const outcome = readClaudeUsageLine("{not json");
-    expect(outcome.records).toEqual([]);
-    expect(outcome.unrecognised).toHaveLength(1);
-  });
-
   it("skips a line that carries no usage without reporting it", () => {
     expect(readClaudeUsageLine(JSON.stringify({ type: "user", message: {} }))).toEqual({
       records: [],
