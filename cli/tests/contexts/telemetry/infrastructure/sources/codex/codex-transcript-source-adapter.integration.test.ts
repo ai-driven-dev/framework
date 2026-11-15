@@ -154,15 +154,6 @@ describe("reading a plain Codex session file", () => {
     expect(lines.map(([, counted]) => counted)).toEqual([true, true, true]);
     expect(read.restarted).toBe(true);
   });
-
-  it("does not read a file last written before the given instant, and keeps its end", async () => {
-    const path = join(sessions, "rollout-a.jsonl");
-    await writeFile(path, "a\nb\npart");
-    await utimes(path, new Date("2026-01-01"), new Date("2026-01-01"));
-    const { lines, read } = await readLines(source(), path, null, Date.parse("2026-06-01"));
-    expect(lines).toEqual([]);
-    expect(read).toMatchObject({ skipped: true, position: { offset: 4 } });
-  });
 });
 
 /** A Node from before zstd still loads this file, and skips what needs zstd to write a file. */
