@@ -41,6 +41,7 @@ import { UninstallToolsUseCase } from "../contexts/framework/application/uninsta
 import { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
 import { InspectHostRegistration } from "../contexts/host-registration/application/inspect-host-registration.js";
 import { NativeHostRegistrationGate } from "../contexts/host-registration/application/native-host-registration-gate.js";
+import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw-from-host.js";
 import { InstallIdeConfig } from "../contexts/installation/application/install/install-ide-config.js";
 import { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/install-runtime-config.js";
@@ -172,12 +173,10 @@ export async function createDeps(
     fs,
     manifestRepo,
     logger,
-    nativePluginActivators,
-    hostPluginRegistries,
+    new WithdrawFromHost(fs, logger, nativePluginActivators, hostPluginRegistries, nativeSources),
     userSourceReferences,
     marketplaceRegistry,
-    userManifestRepo,
-    nativeSources
+    userManifestRepo
   );
   const pluginListUseCase = new ListPlugins(manifestRepo);
   const nativeHostRegistrationGate = new NativeHostRegistrationGate(
