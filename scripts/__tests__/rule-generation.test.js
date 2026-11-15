@@ -475,7 +475,7 @@ test("a write failure exits 3 naming the path, and a rerun converges", (t) => {
   const faultDir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-rule-fault-"));
   const fault = path.join(faultDir, "fault.cjs");
   fs.writeFileSync(fault, `const fs = require("node:fs"); const write = fs.writeFileSync;
-fs.writeFileSync = (file, ...rest) => { if (String(file).endsWith(".mdc")) throw Object.assign(new Error("injected"), { code: "EIO" }); return write(file, ...rest); };`);
+fs.writeFileSync = (file, ...rest) => { if (String(file).includes(".mdc")) throw Object.assign(new Error("injected"), { code: "EIO" }); return write(file, ...rest); };`);
   t.after(() => fs.rmSync(faultDir, { recursive: true, force: true }));
   const f = fixture(t, fault);
   const r = f.run();
@@ -490,6 +490,20 @@ fs.writeFileSync = (file, ...rest) => { if (String(file).endsWith(".mdc")) throw
   const again = clean.run();
   assert.equal(again.status, 0, again.stderr);
   for (const name of [SRC, CLAUDE, CURSOR, COPILOT, AGY]) assert.ok(clean.has(name), name);
+});
+
+test("a write failing midway leaves the existing file whole and no temporary file behind", (t) => {
+  const faultDir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-rule-fault-"));
+  const fault = path.join(faultDir, "fault.cjs");
+  fs.writeFileSync(fault, `const fs = require("node:fs"); const write = fs.writeFileSync;
+fs.writeFileSync = (file, ...rest) => { if (String(file).includes("opencode.json")) { write(file, "{"); throw Object.assign(new Error("injected"), { code: "ENOSPC" }); } return write(file, ...rest); };`);
+  t.after(() => fs.rmSync(faultDir, { recursive: true, force: true }));
+  const f = fixture(t, fault);
+  const config = '{"$schema":"x"}\n';
+  f.put("opencode.json", config);
+  assert.equal(f.run(rule, "opencode").status, 3);
+  assert.equal(f.read("opencode.json"), config);
+  assert.deepEqual(fs.readdirSync(f.project).filter((name) => name.startsWith("opencode.json")), ["opencode.json"]);
 });
 
 test("every non-zero exit prints parseable JSON on stdout", (t) => {

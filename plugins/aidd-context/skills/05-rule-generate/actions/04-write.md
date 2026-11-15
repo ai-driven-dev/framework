@@ -10,14 +10,10 @@ The approved candidate, paths and overwrites.
 
 1. Run the writer per [writer.md](../references/writer.md) with the approved request.
    - Approved overwrites: add `--force`.
-2. Run the writer with `--check --publish`, and require no drift.
+2. Run the check per [writer.md](../references/writer.md), and require no drift.
 3. Report the written files.
-   - Non-zero exit: quote the writer's output verbatim, then stop.
+   - Non-zero exit: stop.
 
 ## Output
 
 The written files, checked, or the quoted writer output.
-
-## Rules
-
-- Leave rule sources and copies to the writer.

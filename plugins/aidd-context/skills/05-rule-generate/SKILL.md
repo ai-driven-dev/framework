@@ -30,3 +30,5 @@ flowchart LR
 
 - If a cited reference cannot be read, stop and report the missing file.
 - Write only after the user approves the candidate shown last.
+- Leave rule sources and copies to the writer.
+- Quote the writer's output verbatim before stopping on it.

@@ -1,10 +1,6 @@
 #!/usr/bin/env node
 "use strict";
 // Usage: node write-rule.cjs --project <abs dir> (--input <request.json> --tools <ids> | --remove <category>/<slug> | --publish [--tools <ids>]) [--plan | --check] [--force]
-// Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo. --tools adds hosts to the rules it publishes.
-// Publishes aidd_docs/rules sources as native copies; codex reads an AGENTS.md index, kilo and opencode a glob in their config instructions.
-// Exit 0 ok, 1 refusal/conflict/drift/unexpected error, 2 usage error, 3 filesystem blocked or failed.
-// Every non-zero exit prints a JSON object on stdout.
 const fs = require("node:fs");
 const path = require("node:path");
 const { createHash } = require("node:crypto");
@@ -436,7 +432,15 @@ function performOperation(operation) {
     return;
   }
   fs.mkdirSync(path.dirname(operation.file), { recursive: true });
-  fs.writeFileSync(operation.file, operation.text);
+  // A sibling temporary file renamed over the target never leaves the target half written.
+  const temporary = `${operation.file}.${process.pid}.tmp`;
+  try {
+    fs.writeFileSync(temporary, operation.text);
+    fs.renameSync(temporary, operation.file);
+  } catch (error) {
+    fs.rmSync(temporary, { force: true });
+    throw error;
+  }
 }
 
 function publish(project, plan, summary) {
