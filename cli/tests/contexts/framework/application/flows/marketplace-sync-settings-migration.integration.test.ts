@@ -4,10 +4,8 @@ import {
   RegisterFrameworkMarketplace,
   type RegisterFrameworkMarketplaceCommand,
 } from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import {
-  FRAMEWORK_MARKETPLACE_NAME,
-  Marketplace,
-} from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";

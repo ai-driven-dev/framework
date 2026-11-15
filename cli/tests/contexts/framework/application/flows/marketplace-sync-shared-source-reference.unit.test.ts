@@ -4,10 +4,8 @@ import type {
   RegisterFrameworkMarketplaceCommand,
   RegisterFrameworkMarketplaceResult,
 } from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import {
-  FRAMEWORK_MARKETPLACE_NAME,
-  Marketplace,
-} from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";

@@ -7,13 +7,13 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
-import type { PluginCatalogEntry } from "../../../distribution/domain/catalog.js";
-import type { Marketplace } from "../../../distribution/domain/marketplace.js";
-import { resolvePluginSourceFromMarketplace } from "../../../distribution/domain/plugin-source-resolver.js";
+import type { PluginCatalogEntry } from "../../../distribution/contract/catalog.js";
 import {
   DEFAULT_REQUESTED_VERSION_POLICY,
   type RequestedVersionPolicy,
-} from "../../../distribution/domain/requested-version-policy.js";
+} from "../../../distribution/contract/requested-version-policy.js";
+import type { Marketplace } from "../../../distribution/domain/marketplace.js";
+import { resolvePluginSourceFromMarketplace } from "../../../distribution/domain/plugin-source-resolver.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { PluginAdd } from "./plugin-add-use-case.js";

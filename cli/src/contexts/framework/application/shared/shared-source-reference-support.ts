@@ -3,7 +3,7 @@ import { samePathSegment } from "../../../../shared/domain/paths.js";
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 
 /** The reserved name at scope `"user"`: the one shared, machine-scope source every project's own

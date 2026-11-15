@@ -10,7 +10,7 @@ Where a plugin's content comes from: the registered marketplaces, the trust give
 
 - D2: `ListMarketplaceReleases` and `AssertMarketplaceReadable` commands, absorbing the guard in framework's `setup-marketplace-registration-use-case.ts`. Vanishes with the framework split.
 - D3: ports in `shared/ports`, once a second consumer context appears. Vanishes with a second consumer context appearing.
-- D4: a `contract/` for distribution and its place in `HELD_BY_BIOME`, with the framework split (M8). Vanishes with the framework split (M8).
+- D4: distribution in `HELD_BY_BIOME`, with the framework split (M8, M10). Vanishes with the framework split (M8).
 - D5: split `plugin-fetcher-adapter.ts` into a git source fetcher and an npm source fetcher. Vanishes with the next distribution PR.
 - D6: `catalog.ts` into `catalog-parsers/claude-marketplace-catalog.ts`, and the catalog precedence into the domain. Vanishes with the next distribution PR.
 - D7: the trust store over shared private storage. `marketplace-trust-store-adapter.ts:57-59` writes with `mkdir` and `writeFile` at the default mode, non-atomically, where `private-storage-adapter.ts:41,68-69` uses directory `0o700`, file `0o600` and temp-file-then-rename. Private storage lives in `contexts/telemetry/infrastructure/storage/` and the trust store does not import it, so no `distribution->telemetry` edge exists today. Vanishes with a dedicated PR that freezes the new mode in a characterization test first and switches the trust store to private storage; that PR makes telemetry and distribution (and auth, E9) its consumers, so private storage moves back to `shared/` in the same PR.

@@ -10,7 +10,7 @@ import type {
   RegisterFrameworkMarketplace,
   RegisterFrameworkMarketplaceCommand,
 } from "../../../distribution/application/register-framework-marketplace.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/domain/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { MarketplaceSourceMode } from "../../../distribution/domain/marketplace-source-mode.js";
 import type { RepositoryVisibility } from "../../../distribution/ports/repository-visibility.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";

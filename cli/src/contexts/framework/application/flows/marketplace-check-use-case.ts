@@ -1,10 +1,7 @@
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
-import {
-  isMarketplaceStale,
-  type Marketplace,
-  STALE_MAX_DAYS_DEFAULT,
-} from "../../../distribution/domain/marketplace.js";
+import { STALE_MAX_DAYS_DEFAULT } from "../../../distribution/contract/marketplace.js";
+import { isMarketplaceStale, type Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";

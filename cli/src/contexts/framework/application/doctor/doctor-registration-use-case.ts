@@ -3,10 +3,8 @@ import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../../shared
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
-import {
-  FRAMEWORK_MARKETPLACE_NAME,
-  type Marketplace,
-} from "../../../distribution/domain/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
+import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";

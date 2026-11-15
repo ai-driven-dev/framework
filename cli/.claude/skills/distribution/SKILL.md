@@ -20,9 +20,10 @@ plugin's own content and how it gets translated are someone else's job once it h
 
 | Concept | Location |
 |---|---|
-| A marketplace registration (name, source, scope, staleness) | `domain/marketplace.ts`, `domain/marketplace-source-mode.ts` |
+| A marketplace registration (name, source, scope, staleness) | `domain/marketplace.ts`, `domain/marketplace-source-mode.ts`; its name and staleness constants are `contract/marketplace.ts` |
+| A plugin's source and version rules over a registration | `domain/plugin-source-resolver.ts`; the version policy type is `contract/requested-version-policy.ts` |
 | A cached catalog fetch | `ports/marketplace-cache.ts` |
-| The plugin catalog shape | `domain/catalog.ts` (the Claude-shaped parser lives here too) |
+| The plugin catalog shape | `contract/catalog.ts`; its Claude-shaped parser is `domain/catalog.ts` |
 | A reader for a non-Claude catalog shape | `domain/catalog-parsers/` |
 | A port this context's callers hold | `ports/`: registry, cache, trust-store, catalog-repository, fetcher, raw-catalog-fetcher, marketplace-remover, release-lister, repository-visibility |
 | Add / list / refresh / register / resolve / fetch a marketplace source | `application/` |

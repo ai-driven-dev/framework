@@ -8,10 +8,9 @@ import {
   parsePluginSource,
   serializePluginSource,
 } from "../../../shared/domain/source.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
 
 export const MARKETPLACE_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-export const FRAMEWORK_MARKETPLACE_NAME = "aidd-framework";
-export const STALE_MAX_DAYS_DEFAULT = 7;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export interface MarketplaceData {

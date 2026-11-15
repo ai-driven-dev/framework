@@ -2,7 +2,7 @@ import type { ResolveMarketplace } from "../../contexts/distribution/application
 import type {
   PluginCatalog,
   PluginCatalogEntry,
-} from "../../contexts/distribution/domain/catalog.js";
+} from "../../contexts/distribution/contract/catalog.js";
 import type { Marketplace } from "../../contexts/distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../contexts/distribution/ports/marketplace-registry.js";
 import type { PluginAdd } from "../../contexts/framework/application/plugin/plugin-add-use-case.js";

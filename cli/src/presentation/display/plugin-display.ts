@@ -1,4 +1,4 @@
-import type { PluginCatalogEntry } from "../../contexts/distribution/domain/catalog.js";
+import type { PluginCatalogEntry } from "../../contexts/distribution/contract/catalog.js";
 import type { CLIOutput } from "../output.js";
 
 interface NamedPlugin {

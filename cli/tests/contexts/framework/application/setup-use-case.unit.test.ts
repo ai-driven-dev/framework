@@ -3,11 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import type { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import type { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
-import type { PluginCatalogEntry } from "../../../../src/contexts/distribution/domain/catalog.js";
-import {
-  FRAMEWORK_MARKETPLACE_NAME,
-  Marketplace,
-} from "../../../../src/contexts/distribution/domain/marketplace.js";
+import type { PluginCatalogEntry } from "../../../../src/contexts/distribution/contract/catalog.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSourceMode } from "../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";

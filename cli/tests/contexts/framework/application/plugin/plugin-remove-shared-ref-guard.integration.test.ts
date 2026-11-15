@@ -1,10 +1,8 @@
 /** At a host that enables a plugin machine-wide (no `NativeActivation.scopeArgs`), removing
  * it in one project must not disable it for another still referencing the shared source. */
 import { describe, expect, it } from "vitest";
-import {
-  FRAMEWORK_MARKETPLACE_NAME,
-  Marketplace,
-} from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";

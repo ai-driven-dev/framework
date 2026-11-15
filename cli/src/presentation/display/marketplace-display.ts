@@ -1,5 +1,5 @@
 import type { RefreshEntryResult } from "../../contexts/distribution/application/refresh-marketplace.js";
-import type { PluginCatalog } from "../../contexts/distribution/domain/catalog.js";
+import type { PluginCatalog } from "../../contexts/distribution/contract/catalog.js";
 import type { Marketplace } from "../../contexts/distribution/domain/marketplace.js";
 import { describePluginSource } from "../../shared/domain/source.js";
 import type { CLIOutput } from "../output.js";
