@@ -289,6 +289,10 @@ test("publish and check keep each rule's own hosts unless --tools adds some", (t
   assert.ok([0, 1].includes(withTools.status), withTools.stdout);
   assert.ok(Array.isArray(json(withTools).drift));
   assert.deepEqual(f.snapshot(), before);
+  for (const action of [["--input", path.join(f.dir, "input.json")], ["--remove", "01-standards/1-naming"]]) {
+    f.run({ ...rule, slug: "1-third" }, "claude", ["--check", ...action]);
+    assert.deepEqual(f.snapshot(), before, action[0]);
+  }
   const added = f.run(null, "copilot", ["--plan", "--publish"]);
   assert.ok(paths(json(added).files).includes(COPILOT));
 });

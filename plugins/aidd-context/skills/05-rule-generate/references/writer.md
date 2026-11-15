@@ -56,5 +56,6 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 
 - A config whose text holds the quoted glob counts as listing it, even inside a comment.
 - Text is read and written as UTF-8 without validation.
+- Writes are not atomic: a crash mid-write can truncate a host config, which the next run then refuses.
 - OpenCode configs are read only at the project root, never under `.opencode/`.
 - A project targeting both kilo and opencode loads each rule twice in Kilo, which also reads the opencode entry.
