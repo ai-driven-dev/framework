@@ -1,10 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CLIOutput } from "../../../../../src/presentation/output.js";
+import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -60,12 +60,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     );
     await manifestRepo.save(manifest);
 
-    const removeUseCase = new PluginRemoveUseCase(
-      fs,
-      manifestRepo,
-      new CLIOutput(false),
-      new Map()
-    );
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: new CLIOutput(false) });
     await removeUseCase.execute({
       tools: catalogOf(),
       pluginName: PLUGIN_NAME,
@@ -99,12 +94,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     );
     await manifestRepo.save(manifest);
 
-    const removeUseCase = new PluginRemoveUseCase(
-      fs,
-      manifestRepo,
-      new CLIOutput(false),
-      new Map()
-    );
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: new CLIOutput(false) });
     await removeUseCase.execute({
       tools: catalogOf(),
       pluginName: PLUGIN_NAME,
@@ -136,12 +126,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     await fs.deleteFile(OPENCODE_JSON);
     await manifestRepo.save(manifest);
 
-    const removeUseCase = new PluginRemoveUseCase(
-      fs,
-      manifestRepo,
-      new CLIOutput(false),
-      new Map()
-    );
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger: new CLIOutput(false) });
     await expect(
       removeUseCase.execute({
         tools: catalogOf(),

@@ -6,7 +6,6 @@ import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/fram
 import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
-import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
@@ -16,6 +15,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -386,17 +386,15 @@ for (const [toolId, catalogPath] of [
       if (cachedBytes !== undefined)
         removeFs.setFile(cachedBytes, "B still uses this cached plugin");
       const remove = (repo: InMemoryManifestRepository) =>
-        new PluginRemoveUseCase(
-          removeFs,
-          repo,
-          new CapturingLogger(),
-          new Map([[toolId, activator]]),
-          new Map([[toolId, hostReader]]),
-          undefined,
-          registry,
-          user,
-          sources
-        );
+        pluginRemover({
+          fs: removeFs,
+          manifestRepo: repo,
+          activators: new Map([[toolId, activator]]),
+          hostPluginRegistries: new Map([[toolId, hostReader]]),
+          marketplaceRegistry: registry,
+          userManifestRepo: user,
+          nativeMarketplaceSources: sources,
+        });
       await remove(a).execute({
         tools: catalogOf(),
         pluginName: "test-plugin",

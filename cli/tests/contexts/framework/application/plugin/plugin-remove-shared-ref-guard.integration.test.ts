@@ -3,10 +3,11 @@
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
+import type { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -111,17 +112,16 @@ function buildUseCase(
 } {
   const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
   const userSourceReferences = new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR);
-  const removeUseCase = new PluginRemoveUseCase(
+  const removeUseCase = pluginRemover({
     fs,
     manifestRepo,
     logger,
-    new Map([["codex", activator]]),
-    new Map(),
+    activators: new Map([["codex", activator]]),
     userSourceReferences,
     marketplaceRegistry,
     userManifestRepo,
-    new Map([[TOOL.codex, sourceReader()]])
-  );
+    nativeMarketplaceSources: new Map([[TOOL.codex, sourceReader()]]),
+  });
   return { removeUseCase, manifestRepo };
 }
 
@@ -371,17 +371,13 @@ describe("plugin remove guards a ref another project on this machine still needs
       const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
       seedReferences(fs, [OTHER_PROJECT]);
       const activator = new FakeHostActions({ available: true });
-      const removeUseCase = new PluginRemoveUseCase(
+      const removeUseCase = pluginRemover({
         fs,
-        new InMemoryManifestRepository(seedManifest(), PROJECT_ROOT),
-        new CapturingLogger(),
-        new Map([["codex", activator]]),
-        new Map(),
-        undefined,
-        seedSharedMarketplaceRegistry(),
-        undefined,
-        new Map([[TOOL.codex, sourceReader()]])
-      );
+        manifestRepo: new InMemoryManifestRepository(seedManifest(), PROJECT_ROOT),
+        activators: new Map([["codex", activator]]),
+        marketplaceRegistry: seedSharedMarketplaceRegistry(),
+        nativeMarketplaceSources: new Map([[TOOL.codex, sourceReader()]]),
+      });
 
       await expect(
         removeUseCase.execute({
@@ -399,17 +395,13 @@ describe("plugin remove guards a ref another project on this machine still needs
       const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
       seedReferences(fs, [OTHER_PROJECT]);
       const activator = new FakeHostActions({ available: true });
-      const removeUseCase = new PluginRemoveUseCase(
+      const removeUseCase = pluginRemover({
         fs,
-        new InMemoryManifestRepository(seedManifest(), PROJECT_ROOT),
-        new CapturingLogger(),
-        new Map([["codex", activator]]),
-        new Map(),
-        new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR),
-        undefined,
-        undefined,
-        new Map([[TOOL.codex, sourceReader()]])
-      );
+        manifestRepo: new InMemoryManifestRepository(seedManifest(), PROJECT_ROOT),
+        activators: new Map([["codex", activator]]),
+        userSourceReferences: new UserSourceReferencesAdapter(fs, () => USER_CONFIG_DIR),
+        nativeMarketplaceSources: new Map([[TOOL.codex, sourceReader()]]),
+      });
 
       await expect(
         removeUseCase.execute({

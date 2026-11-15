@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
+import type { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
@@ -10,6 +10,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -91,17 +92,19 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
           ),
         }),
       };
-      const remove = new PluginRemoveUseCase(
+      const remove = pluginRemover({
         fs,
-        new InMemoryManifestRepository(Manifest.create()),
-        new CapturingLogger(),
-        new Map([[toolId, activator]]),
-        options.hostRegistryUnavailable ? new Map() : new Map([[toolId, reader]]),
-        undefined,
-        new InMemoryMarketplaceRegistry(),
-        repo,
-        options.sourceUnavailable ? new Map() : new Map([[toolId, sources]])
-      );
+        manifestRepo: new InMemoryManifestRepository(Manifest.create()),
+        activators: new Map([[toolId, activator]]),
+        hostPluginRegistries: options.hostRegistryUnavailable
+          ? new Map()
+          : new Map([[toolId, reader]]),
+        marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+        userManifestRepo: repo,
+        nativeMarketplaceSources: options.sourceUnavailable
+          ? new Map()
+          : new Map([[toolId, sources]]),
+      });
       return { machine, repo, fs, activator, remove };
     }
 
@@ -331,16 +334,12 @@ describe("Cursor user plugin boundary", () => {
     const fs = new InMemoryFileAdapter();
     const path = join(homedir(), ".cursor/plugins/local/sample-plugin/plugin.json");
     fs.setFile(path, "owned bytes");
-    const remove = new PluginRemoveUseCase(
+    const remove = pluginRemover({
       fs,
-      new InMemoryManifestRepository(Manifest.create()),
-      new CapturingLogger(),
-      new Map(),
-      new Map(),
-      undefined,
-      new InMemoryMarketplaceRegistry(),
-      repo
-    );
+      manifestRepo: new InMemoryManifestRepository(Manifest.create()),
+      marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+      userManifestRepo: repo,
+    });
     fs.setFile(path, "user-edited plugin.json");
     await expect(
       remove.execute({
@@ -400,16 +399,12 @@ describe("Cursor user plugin boundary", () => {
         )
       ).size
     ).toBe(0);
-    const remove = new PluginRemoveUseCase(
+    const remove = pluginRemover({
       fs,
-      new InMemoryManifestRepository(Manifest.create()),
-      new CapturingLogger(),
-      new Map(),
-      new Map(),
-      undefined,
-      new InMemoryMarketplaceRegistry(),
-      repo
-    );
+      manifestRepo: new InMemoryManifestRepository(Manifest.create()),
+      marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+      userManifestRepo: repo,
+    });
     await expect(
       remove.execute({
         tools: catalogOf(),

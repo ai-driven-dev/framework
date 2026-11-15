@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
+import type { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import type {
   HostPluginRegistry,
   HostPluginRegistryReading,
@@ -13,6 +13,7 @@ import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installa
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/errors.js";
+import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -85,12 +86,12 @@ function buildRemoveUseCase(
 ): { removeUseCase: PluginRemoveUseCase; manifestRepo: InMemoryManifestRepository } {
   const fs = new InMemoryFileAdapter();
   const manifestRepo = new InMemoryManifestRepository();
-  const removeUseCase = new PluginRemoveUseCase(
+  const removeUseCase = pluginRemover({
     fs,
     manifestRepo,
     logger,
-    new Map([[claude, activator]]),
-    new Map([
+    activators: new Map([[claude, activator]]),
+    hostPluginRegistries: new Map([
       [
         claude,
         new FakeHostPluginRegistry({
@@ -102,11 +103,8 @@ function buildRemoveUseCase(
         }),
       ],
     ]),
-    undefined,
-    undefined,
-    undefined,
-    new Map([[claude, verifiedSourceReader()]])
-  );
+    nativeMarketplaceSources: new Map([[claude, verifiedSourceReader()]]),
+  });
   return { removeUseCase, manifestRepo };
 }
 
@@ -125,19 +123,13 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       const before = manifest.toJSON();
       const activator = new FakeHostActions({ available: true, enablesPlugins: false });
       const repo = new InMemoryManifestRepository(manifest);
-      const remove = new PluginRemoveUseCase(
-        new InMemoryFileAdapter(),
-        repo,
-        new CapturingLogger(),
-        new Map([[claude, activator]]),
-        new Map(),
-        undefined,
-        undefined,
-        undefined,
-        new Map([
+      const remove = pluginRemover({
+        manifestRepo: repo,
+        activators: new Map([[claude, activator]]),
+        nativeMarketplaceSources: new Map([
           [claude, { read: async () => ({ location: "/host/catalogue", entries: new Map() }) }],
-        ])
-      );
+        ]),
+      });
       await expect(
         remove.execute({
           tools: catalogOf(),
@@ -174,12 +166,12 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       "1.0.0/plugin.json"
     );
     await fs.writeFile(cacheFile, "keep cache");
-    const remove = new PluginRemoveUseCase(
+    const remove = pluginRemover({
       fs,
-      repo,
+      manifestRepo: repo,
       logger,
-      new Map([[claude, activator]]),
-      new Map([
+      activators: new Map([[claude, activator]]),
+      hostPluginRegistries: new Map([
         [
           claude,
           new FakeHostPluginRegistry({
@@ -188,10 +180,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
           }),
         ],
       ]),
-      undefined,
-      undefined,
-      undefined,
-      new Map([
+      nativeMarketplaceSources: new Map([
         [
           claude,
           {
@@ -201,8 +190,8 @@ describe("PluginRemoveUseCase undoes native activation", () => {
             },
           },
         ],
-      ])
-    );
+      ]),
+    });
 
     await remove.execute({
       tools: catalogOf(),
@@ -250,12 +239,11 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       const list = vi.fn(async (): Promise<readonly string[]> => {
         throw ledgerError;
       });
-      const remove = new PluginRemoveUseCase(
-        new InMemoryFileAdapter(),
-        repo,
+      const remove = pluginRemover({
+        manifestRepo: repo,
         logger,
-        new Map([[claude, activator]]),
-        new Map([
+        activators: new Map([[claude, activator]]),
+        hostPluginRegistries: new Map([
           [
             claude,
             new FakeHostPluginRegistry({
@@ -264,15 +252,14 @@ describe("PluginRemoveUseCase undoes native activation", () => {
             }),
           ],
         ]),
-        {
+        userSourceReferences: {
           addReference: async () => {},
           removeReference: async () => {},
           listAllReferencingProjects: list,
         },
-        registry,
-        undefined,
-        new Map([[claude, verifiedSourceReader()]])
-      );
+        marketplaceRegistry: registry,
+        nativeMarketplaceSources: new Map([[claude, verifiedSourceReader()]]),
+      });
 
       await remove.execute({
         tools: catalogOf(),
@@ -363,17 +350,13 @@ describe("PluginRemoveUseCase undoes native activation", () => {
         );
         await fs.writeFile(cacheFile, "cached plugin");
         const activator = new FakeHostActions({ available: true });
-        const remove = new PluginRemoveUseCase(
+        const remove = pluginRemover({
           fs,
           manifestRepo,
-          new CapturingLogger(),
-          new Map([[claude, activator]]),
-          reader === undefined ? new Map() : new Map([[claude, reader]]),
-          undefined,
-          undefined,
-          undefined,
-          new Map([[claude, verifiedSourceReader()]])
-        );
+          activators: new Map([[claude, activator]]),
+          hostPluginRegistries: reader === undefined ? new Map() : new Map([[claude, reader]]),
+          nativeMarketplaceSources: new Map([[claude, verifiedSourceReader()]]),
+        });
 
         await expect(
           remove.execute({
@@ -407,7 +390,12 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     const repo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
     const activator = new FakeHostActions({ available: false });
     const logger = new CapturingLogger();
-    const removeUseCase = new PluginRemoveUseCase(fs, repo, logger, new Map([[claude, activator]]));
+    const removeUseCase = pluginRemover({
+      fs,
+      manifestRepo: repo,
+      logger,
+      activators: new Map([[claude, activator]]),
+    });
 
     await removeUseCase.execute({
       tools: catalogOf(),
@@ -447,16 +435,11 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     });
     const repo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
     const activator = new FakeHostActions({ available: true });
-    const removeUseCase = new PluginRemoveUseCase(
+    const removeUseCase = pluginRemover({
       fs,
-      repo,
-      new CapturingLogger(),
-      new Map([[claude, activator]]),
-      new Map(),
-      undefined,
-      undefined,
-      undefined,
-      new Map([
+      manifestRepo: repo,
+      activators: new Map([[claude, activator]]),
+      nativeMarketplaceSources: new Map([
         [
           claude,
           {
@@ -468,8 +451,8 @@ describe("PluginRemoveUseCase undoes native activation", () => {
             }),
           },
         ],
-      ])
-    );
+      ]),
+    });
     await expect(
       removeUseCase.execute({
         tools: catalogOf(),
@@ -498,16 +481,13 @@ describe("PluginRemoveUseCase undoes native activation", () => {
       pluginClaims: [{ ref: REF, dependents: [PROJECT_ROOT] }],
     });
     const userRepo = new InMemoryManifestRepository(machine);
-    const removeUseCase = new PluginRemoveUseCase(
+    const removeUseCase = pluginRemover({
       fs,
       manifestRepo,
       logger,
-      new Map([[claude, activator]]),
-      new Map(),
-      undefined,
-      undefined,
-      userRepo,
-      new Map([
+      activators: new Map([[claude, activator]]),
+      userManifestRepo: userRepo,
+      nativeMarketplaceSources: new Map([
         [
           claude,
           {
@@ -519,8 +499,8 @@ describe("PluginRemoveUseCase undoes native activation", () => {
             }),
           },
         ],
-      ])
-    );
+      ]),
+    });
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
     await installViaModeA(manifest);
@@ -735,12 +715,12 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     const logger = new CapturingLogger();
     const fs = new InMemoryFileAdapter();
     const manifestRepo = new InMemoryManifestRepository();
-    const removeUseCase = new PluginRemoveUseCase(
+    const removeUseCase = pluginRemover({
       fs,
       manifestRepo,
       logger,
-      new Map([[claude, activator]]),
-      new Map([
+      activators: new Map([[claude, activator]]),
+      hostPluginRegistries: new Map([
         [
           claude,
           new FakeHostPluginRegistry({
@@ -749,11 +729,8 @@ describe("PluginRemoveUseCase undoes native activation", () => {
           }),
         ],
       ]),
-      undefined,
-      undefined,
-      undefined,
-      new Map([[claude, verifiedSourceReader()]])
-    );
+      nativeMarketplaceSources: new Map([[claude, verifiedSourceReader()]]),
+    });
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
@@ -852,12 +829,12 @@ describe("PluginRemoveUseCase undoes native activation", () => {
     const logger = new CapturingLogger();
     const fs = new InMemoryFileAdapter();
     const manifestRepo = new InMemoryManifestRepository();
-    const removeUseCase = new PluginRemoveUseCase(
+    const removeUseCase = pluginRemover({
       fs,
       manifestRepo,
       logger,
-      new Map([[claude, activator]]),
-      new Map([
+      activators: new Map([[claude, activator]]),
+      hostPluginRegistries: new Map([
         [
           claude,
           new FakeHostPluginRegistry({
@@ -866,11 +843,8 @@ describe("PluginRemoveUseCase undoes native activation", () => {
           }),
         ],
       ]),
-      undefined,
-      undefined,
-      undefined,
-      new Map([[claude, verifiedSourceReader()]])
-    );
+      nativeMarketplaceSources: new Map([[claude, verifiedSourceReader()]]),
+    });
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
     await installViaModeA(manifest);

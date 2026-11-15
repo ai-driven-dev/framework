@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
-import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
+import type { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
@@ -11,8 +11,8 @@ import {
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -109,7 +109,7 @@ function removeUseCaseOver(
   fs: InMemoryFileAdapter,
   manifestRepo: InMemoryManifestRepository
 ): PluginRemoveUseCase {
-  return new PluginRemoveUseCase(fs, manifestRepo, new CapturingLogger(), new Map());
+  return pluginRemover({ fs, manifestRepo });
 }
 
 describe("PluginRemoveUseCase", () => {
@@ -119,12 +119,12 @@ describe("PluginRemoveUseCase", () => {
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await installPlugin(deps);
 
-      const removeUseCase = new PluginRemoveUseCase(
-        deps.fs,
-        deps.manifestRepo,
-        deps.logger,
-        deps.nativePluginActivators
-      );
+      const removeUseCase = pluginRemover({
+        fs: deps.fs,
+        manifestRepo: deps.manifestRepo,
+        logger: deps.logger,
+        activators: deps.nativePluginActivators,
+      });
       await removeUseCase.execute({
         tools: catalogOf(),
         pluginName: "sample-plugin",
@@ -146,12 +146,12 @@ describe("PluginRemoveUseCase", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
-      const removeUseCase = new PluginRemoveUseCase(
-        deps.fs,
-        deps.manifestRepo,
-        deps.logger,
-        deps.nativePluginActivators
-      );
+      const removeUseCase = pluginRemover({
+        fs: deps.fs,
+        manifestRepo: deps.manifestRepo,
+        logger: deps.logger,
+        activators: deps.nativePluginActivators,
+      });
       await expect(
         removeUseCase.execute({
           tools: catalogOf(),
@@ -182,12 +182,7 @@ describe("PluginRemoveUseCase", () => {
       );
       const fs = new RecordingFileAdapter();
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-      const removeUseCase = new PluginRemoveUseCase(
-        fs,
-        manifestRepo,
-        new CapturingLogger(),
-        new Map()
-      );
+      const removeUseCase = pluginRemover({ fs, manifestRepo });
 
       await removeUseCase.execute({
         tools: catalogOf(),
@@ -212,12 +207,12 @@ describe("PluginRemoveUseCase", () => {
       const greet = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
       const bye = join(PROJECT_ROOT, ".claude/plugins/extra-plugin/commands/bye.md");
 
-      await new PluginRemoveUseCase(
-        deps.fs,
-        deps.manifestRepo,
-        deps.logger,
-        deps.nativePluginActivators
-      ).execute({
+      await pluginRemover({
+        fs: deps.fs,
+        manifestRepo: deps.manifestRepo,
+        logger: deps.logger,
+        activators: deps.nativePluginActivators,
+      }).execute({
         tools: catalogOf(),
         pluginName: "extra-plugin",
         toolIds: [TOOL.claude],

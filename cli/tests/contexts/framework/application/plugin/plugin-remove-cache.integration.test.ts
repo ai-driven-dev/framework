@@ -5,10 +5,11 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
+import type { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -74,12 +75,12 @@ function verifiedClaudeRemoval(
   logger: CapturingLogger,
   activator: FakeHostActions
 ): PluginRemoveUseCase {
-  return new PluginRemoveUseCase(
+  return pluginRemover({
     fs,
-    repo,
+    manifestRepo: repo,
     logger,
-    new Map([[TOOL.claude, activator]]),
-    new Map([
+    activators: new Map([[TOOL.claude, activator]]),
+    hostPluginRegistries: new Map([
       [
         TOOL.claude,
         new FakeHostPluginRegistry({
@@ -92,10 +93,7 @@ function verifiedClaudeRemoval(
         }),
       ],
     ]),
-    undefined,
-    undefined,
-    undefined,
-    new Map([
+    nativeMarketplaceSources: new Map([
       [
         TOOL.claude,
         {
@@ -108,8 +106,8 @@ function verifiedClaudeRemoval(
           }),
         },
       ],
-    ])
-  );
+    ]),
+  });
 }
 
 describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
@@ -258,7 +256,7 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     await fs.writeFile(cacheEntry, "{}");
     const manifestRepo = new InMemoryManifestRepository(await seedManifest(), PROJECT_ROOT);
     const logger = new CapturingLogger();
-    const removeUseCase = new PluginRemoveUseCase(fs, manifestRepo, logger, new Map());
+    const removeUseCase = pluginRemover({ fs, manifestRepo, logger });
 
     await removeUseCase.execute({
       tools: catalogOf(),
@@ -297,12 +295,12 @@ describe("PluginRemoveUseCase purges the plugin's own cache subtree", () => {
     const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
-    const removeUseCase = new PluginRemoveUseCase(
+    const removeUseCase = pluginRemover({
       fs,
       manifestRepo,
       logger,
-      new Map([[TOOL.copilot, activator]])
-    );
+      activators: new Map([[TOOL.copilot, activator]]),
+    });
 
     await expect(
       removeUseCase.execute({

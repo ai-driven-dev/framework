@@ -2,13 +2,13 @@ import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
   InstalledPlugin,
   type PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
+import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -56,16 +56,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     fs.setFile(witness, "machine bytes");
     const projectRepo = new InMemoryManifestRepository(project, ROOT);
     const userRepo = new InMemoryManifestRepository(machine);
-    const remove = new PluginRemoveUseCase(
-      fs,
-      projectRepo,
-      new CapturingLogger(),
-      new Map(),
-      new Map(),
-      undefined,
-      undefined,
-      userRepo
-    );
+    const remove = pluginRemover({ fs, manifestRepo: projectRepo, userManifestRepo: userRepo });
 
     await remove.execute({
       tools: catalogOf(),
@@ -102,16 +93,11 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       [join(ROOT, "foreign.md")]: "foreign",
     });
     const userRepo = new InMemoryManifestRepository(machine);
-    const remove = new PluginRemoveUseCase(
+    const remove = pluginRemover({
       fs,
-      new InMemoryManifestRepository(project, ROOT),
-      new CapturingLogger(),
-      new Map(),
-      new Map(),
-      undefined,
-      undefined,
-      userRepo
-    );
+      manifestRepo: new InMemoryManifestRepository(project, ROOT),
+      userManifestRepo: userRepo,
+    });
 
     await remove.execute({
       tools: catalogOf(),
@@ -139,16 +125,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const claudeBefore = machine.getPlugins(claude)[0].toJSON();
     const userRepo = new InMemoryManifestRepository(machine);
     const projectRepo = new InMemoryManifestRepository(project, ROOT);
-    const remove = new PluginRemoveUseCase(
-      new InMemoryFileAdapter(),
-      projectRepo,
-      new CapturingLogger(),
-      new Map(),
-      new Map(),
-      undefined,
-      undefined,
-      userRepo
-    );
+    const remove = pluginRemover({ manifestRepo: projectRepo, userManifestRepo: userRepo });
 
     await remove.execute({
       tools: catalogOf(),
@@ -171,16 +148,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const before = machine.toJSON();
     const userRepo = new InMemoryManifestRepository(machine);
     const projectRepo = new InMemoryManifestRepository(manifest(), ROOT);
-    const remove = new PluginRemoveUseCase(
-      new InMemoryFileAdapter(),
-      projectRepo,
-      new CapturingLogger(),
-      new Map(),
-      new Map(),
-      undefined,
-      undefined,
-      userRepo
-    );
+    const remove = pluginRemover({ manifestRepo: projectRepo, userManifestRepo: userRepo });
 
     await expect(
       remove.execute({
@@ -199,12 +167,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
   it("requires a user repository before attempting user removal", async () => {
     const projectRepo = new InMemoryManifestRepository(manifest(), ROOT);
-    const remove = new PluginRemoveUseCase(
-      new InMemoryFileAdapter(),
-      projectRepo,
-      new CapturingLogger(),
-      new Map()
-    );
+    const remove = pluginRemover({ manifestRepo: projectRepo });
 
     await expect(
       remove.execute({
@@ -232,16 +195,11 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     fs.setFile(userPath, content);
     fs.setFile(projectPath, "project bytes");
     const userRepo = new InMemoryManifestRepository(machine);
-    const remove = new PluginRemoveUseCase(
+    const remove = pluginRemover({
       fs,
-      new InMemoryManifestRepository(manifest(), ROOT),
-      new CapturingLogger(),
-      new Map(),
-      new Map(),
-      undefined,
-      undefined,
-      userRepo
-    );
+      manifestRepo: new InMemoryManifestRepository(manifest(), ROOT),
+      userManifestRepo: userRepo,
+    });
 
     await remove.execute({
       tools: catalogOf(),
@@ -270,16 +228,11 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       [join(base, "../outside.md")]: content,
     });
     const userRepo = new InMemoryManifestRepository(machine);
-    const remove = new PluginRemoveUseCase(
+    const remove = pluginRemover({
       fs,
-      new InMemoryManifestRepository(manifest(), ROOT),
-      new CapturingLogger(),
-      new Map(),
-      new Map(),
-      undefined,
-      undefined,
-      userRepo
-    );
+      manifestRepo: new InMemoryManifestRepository(manifest(), ROOT),
+      userManifestRepo: userRepo,
+    });
 
     await expect(
       remove.execute({
@@ -310,7 +263,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       [file]: "installed plugin bytes",
     });
     const repo = new InMemoryManifestRepository(project, ROOT);
-    const remove = new PluginRemoveUseCase(fs, repo, new CapturingLogger(), new Map());
+    const remove = pluginRemover({ fs, manifestRepo: repo });
 
     await expect(
       remove.execute({
@@ -342,16 +295,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     machine.setNativeRegistrations(claude, registrations);
     const repo = new InMemoryManifestRepository(project, ROOT);
     const userRepo = new InMemoryManifestRepository(machine);
-    const remove = new PluginRemoveUseCase(
-      new InMemoryFileAdapter(),
-      repo,
-      new CapturingLogger(),
-      new Map(),
-      new Map(),
-      undefined,
-      undefined,
-      userRepo
-    );
+    const remove = pluginRemover({ manifestRepo: repo, userManifestRepo: userRepo });
 
     await remove.execute({
       tools: catalogOf(),
@@ -439,12 +383,12 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     });
     const logger = new CapturingLogger();
     const repo = new InMemoryManifestRepository(record, ROOT);
-    const remove = new PluginRemoveUseCase(
+    const remove = pluginRemover({
       fs,
-      repo,
+      manifestRepo: repo,
       logger,
-      new Map([[claude, activator]]),
-      new Map([
+      activators: new Map([[claude, activator]]),
+      hostPluginRegistries: new Map([
         [
           claude,
           new FakeHostPluginRegistry({
@@ -453,10 +397,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
           }),
         ],
       ]),
-      undefined,
-      undefined,
-      undefined,
-      new Map([
+      nativeMarketplaceSources: new Map([
         [
           claude,
           {
@@ -466,8 +407,8 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
             }),
           },
         ],
-      ])
-    );
+      ]),
+    });
     return { record, fs, cache, foreignCache, activator, logger, repo, remove };
   }
 
@@ -588,16 +529,12 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const projectRepo = new InMemoryManifestRepository(project, ROOT);
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
-    const remove = new PluginRemoveUseCase(
-      new InMemoryFileAdapter(),
-      projectRepo,
+    const remove = pluginRemover({
+      manifestRepo: projectRepo,
       logger,
-      new Map([[codex, activator]]),
-      new Map(),
-      undefined,
-      undefined,
-      userRepo,
-      new Map([
+      activators: new Map([[codex, activator]]),
+      userManifestRepo: userRepo,
+      nativeMarketplaceSources: new Map([
         [
           codex,
           {
@@ -607,8 +544,8 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
             }),
           },
         ],
-      ])
-    );
+      ]),
+    });
 
     await remove.execute({
       tools: catalogOf(),
