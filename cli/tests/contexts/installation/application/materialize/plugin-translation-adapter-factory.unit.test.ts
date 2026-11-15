@@ -8,7 +8,6 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import {
   answersOf,
-  flatPlugins,
   nativePlugins,
   unsupportedPlugins,
 } from "../../../tools/testing/plugin-mode.js";
@@ -64,16 +63,6 @@ describe("resolveTranslator", () => {
           userPluginsDir: (h) => `${h}/.cursor/plugins/local`,
         })
       );
-      const adapter = resolveTranslator(plugins, deps);
-      expect(adapter).toBeInstanceOf(BuiltTreeMaterializationTranslator);
-      expect(adapter?.mode).toBe("flat");
-    });
-  });
-
-  describe("when translationMode is flat", () => {
-    it("returns BuiltTreeMaterializationTranslator", () => {
-      const deps = buildDeps();
-      const plugins = answersOf(flatPlugins("refuses", "aidd-"));
       const adapter = resolveTranslator(plugins, deps);
       expect(adapter).toBeInstanceOf(BuiltTreeMaterializationTranslator);
       expect(adapter?.mode).toBe("flat");
