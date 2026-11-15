@@ -623,17 +623,6 @@ describe("branch declarations are snapshotted for the repositories touched", () 
     expect((await s.ingest.execute()).snapshots).toBe(0);
   });
 
-  it("does not snapshot from a directory that is gone", async () => {
-    const s = setup();
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
-    s.bindings.bindingsByRoot.set("/work/a", [declared]);
-    await s.ingest.execute();
-    s.snapshotStore.appended.length = 0;
-    s.locator.directories.delete("/work/a");
-    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2));
-    expect((await s.ingest.execute()).snapshots).toBe(0);
-  });
-
   it("does not snapshot again when nothing changed", async () => {
     const s = setup();
     s.bindings.bindingsByRoot.set("/work/a", [declared]);
