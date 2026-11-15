@@ -8,27 +8,22 @@ argument-hint: add | update | remove | publish
 
 ```mermaid
 flowchart LR
-  frame["actions/01-frame.md"]
-  draft["actions/02-draft.md"]
-  plan["actions/03-plan.md"]
-  write["actions/04-write.md"]
-  entry([request]) --> frame
+  entry([request]) --> frame["actions/01-frame.md"]
   frame <-->|"operation, hosts and topic to confirm"| user((user answers))
-  plan <-->|"candidate and paths to approve"| user
-  frame -->|"add or update"| draft
-  frame -->|"remove or publish"| plan
   frame -->|"no supported host, index declined"| unsupported((unsupported))
+  frame -->|"add or update"| draft["actions/02-draft.md"]
+  frame -->|"remove or publish"| plan["actions/03-plan.md"]
   draft --> plan
-  plan -->|"approved"| write
-  plan -->|"revision or request refusal"| draft
-  plan -->|"cancel"| cancelled((cancelled))
-  plan & write -->|"refusal, drift or blocked path"| stopped((stopped))
-  write -->|"no drift"| written((written))
+  plan <-->|"plan to approve"| user
+  plan -->|"revision or writer refusal"| draft
+  plan -->|"cancelled"| cancelled((cancelled))
+  plan -->|"writer refusal on remove or publish"| stopped((stopped))
+  plan --> write["actions/04-write.md"]
+  write --> done((written))
+  write -->|"writer error"| stopped
 ```
 
 ## Transversal rules
 
 - If a cited reference cannot be read, stop and report the missing file.
-- Write only after the user approves the candidate shown last.
-- Leave rule sources and copies to the writer.
-- Quote the writer's output verbatim before stopping on it.
+- Keep the meaning of each line of an existing rule, unless the request changes it.
