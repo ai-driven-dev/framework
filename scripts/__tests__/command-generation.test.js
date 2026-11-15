@@ -156,3 +156,14 @@ test("refuses to overwrite a differing file without --force", (t) => {
   assert.equal(run(command, "claude", ["--force"]).status, 0);
   assert.match(read(".claude/commands/ship-release.md"), /^model: sonnet$/m);
 });
+
+test("a project checked out with CRLF line endings reads as its own output", (t) => {
+  const { run, read, project } = fixture(t);
+  assert.equal(run().status, 0);
+  const written = json(run(command, ALL, ["--plan"])).files.map((file) => file.path);
+  for (const name of written) fs.writeFileSync(path.join(project, name), read(name).replace(/\n/g, "\r\n"));
+  const again = run(command, ALL, ["--plan"]);
+  assert.equal(again.status, 0, again.stdout);
+  assert.deepEqual(json(again).files.map((file) => file.operation), written.map(() => "unchanged"));
+  assert.equal(run().status, 0);
+});
