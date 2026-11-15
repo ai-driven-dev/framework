@@ -1,5 +1,5 @@
 ---
-status: pending
+status: done
 ---
 
 # Instruction: Plugin passerelle Kilo et OpenCode V1/V2

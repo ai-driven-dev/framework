@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { pathToFileURL } = require("node:url");
 const { test } = require("node:test");
 
 const skill = path.resolve(__dirname, "../../plugins/aidd-context/skills/08-hook-generate");
@@ -256,4 +257,84 @@ test("remove deletes every entry, the Copilot file, the copies and a config left
   assert.deepEqual(json(remove("guard-shell")).changes, []);
   assert.equal(remove("Guard Shell").status, 1);
   assert.ok(fs.readdirSync(project).every((entry) => fs.statSync(path.join(project, entry)).isDirectory()));
+});
+
+const BLOCKING_SCRIPT = `#!/usr/bin/env node
+let input = "";
+process.stdin.on("data", (chunk) => { input += chunk; });
+process.stdin.on("end", () => {
+  const call = JSON.parse(input);
+  if (!String(call.args?.command).includes("rm -rf")) return;
+  process.stderr.write(\`no rm -rf from \${process.argv[2]}\`);
+  process.exitCode = 2;
+});
+`;
+const gatewayHook = {
+  ...hook,
+  script: BLOCKING_SCRIPT,
+  hosts: { opencode: { event: "tool.execute.before", matcher: "^(bash|shell)$" }, kilo: { event: "tool.execute.before", matcher: "^bash$" } },
+};
+const OPENCODE = ".opencode/plugins/guard-shell.js";
+const KILO = ".kilo/plugin/guard-shell.js";
+const GATEWAY_FILES = [OPENCODE, ".opencode/hooks/guard-shell.cjs", KILO, ".kilo/hooks/guard-shell.cjs"];
+const importGateway = (project, relative) => import(pathToFileURL(path.join(project, relative)).href);
+
+// What OpenCode V2 hands a plugin's setup: the project location and a tool hook registry.
+function fakeV2Context(directory) {
+  const hooks = {};
+  const tool = { hook: async (name, callback) => { hooks[name] = callback; return { dispose: async () => {} }; } };
+  return { hooks, ctx: { location: { directory }, tool } };
+}
+
+test("writes a gateway plugin per host and keeps the script out of the plugin folder", (t) => {
+  const { run } = fixture(t);
+  const r = run(gatewayHook);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(operations(r), GATEWAY_FILES.map((file) => `create ${file}`));
+  assert.ok(json(run(gatewayHook)).changes.every((change) => change.operation === "unchanged"));
+});
+
+test("the OpenCode gateway blocks through V1 and V2 on the script's answer", async (t) => {
+  const { run, project } = fixture(t);
+  assert.equal(run(gatewayHook).status, 0);
+  const gateway = (await importGateway(project, OPENCODE)).default;
+  const v1 = await gateway.server({ directory: project });
+  const before = v1["tool.execute.before"];
+  await assert.rejects(before({ tool: "bash", sessionID: "s" }, { args: { command: "rm -rf build" } }), /no rm -rf from opencode/);
+  await before({ tool: "bash", sessionID: "s" }, { args: { command: "ls" } });
+  await before({ tool: "read", sessionID: "s" }, { args: { command: "rm -rf build" } });
+  const { hooks, ctx } = fakeV2Context(project);
+  const dispose = await gateway.setup(ctx);
+  await assert.rejects(hooks["execute.before"]({ tool: "shell", sessionID: "s", input: { command: "rm -rf build" } }), /no rm -rf from opencode/);
+  await hooks["execute.before"]({ tool: "shell", sessionID: "s", input: { command: "ls" } });
+  await dispose();
+});
+
+test("the Kilo gateway blocks on the script's answer and lets a broken script through", async (t) => {
+  const { run, project } = fixture(t);
+  assert.equal(run(gatewayHook).status, 0);
+  const hooks = await (await importGateway(project, KILO)).default.server({ directory: project });
+  const call = () => hooks["tool.execute.before"]({ tool: "bash", sessionID: "s" }, { args: { command: "rm -rf build" } });
+  await assert.rejects(call(), /no rm -rf from kilo/);
+  fs.rmSync(path.join(project, ".kilo/hooks/guard-shell.cjs"));
+  await call();
+});
+
+test("remove deletes the gateways and their scripts", (t) => {
+  const { run, remove, exists } = fixture(t);
+  assert.equal(run(gatewayHook).status, 0);
+  const r = remove("guard-shell");
+  assert.equal(r.status, 0, r.stdout);
+  assert.deepEqual(operations(r), GATEWAY_FILES.map((file) => `delete ${file}`));
+  for (const file of GATEWAY_FILES) assert.equal(exists(file), false, file);
+});
+
+test("refuses a gateway event it does not render and a matcher that is not a pattern", (t) => {
+  const { run, project } = fixture(t);
+  for (const target of [{ event: "PreToolUse" }, { event: "tool.execute.before", matcher: "(" }]) {
+    const r = run({ ...gatewayHook, hosts: { opencode: target } });
+    assert.equal(r.status, 1, JSON.stringify(target));
+    assert.match(json(r).error.message, /opencode/);
+  }
+  assert.deepEqual(fs.readdirSync(project), []);
 });
