@@ -13,7 +13,7 @@ The confirmed plan and target.
    - Missing files: run [scaffold-skill.cjs](../scripts/scaffold-skill.cjs) on the plan, written as its usage line states.
    - Existing file: edit it in place.
 3. Write once per confirmed target, per [tool-write.md](../references/tool-write.md).
-4. Read [validate](04-validate.md).
+4. Read [validate](04-validate.md) and run it before any report.
 
 ## Output
 
