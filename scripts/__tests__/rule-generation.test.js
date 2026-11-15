@@ -305,11 +305,12 @@ const KILO = ".kilo/rules/01-standards-1-naming.md";
 const OPENCODE = ".opencode/rules/01-standards-1-naming.md";
 const scopeLine = "Applies to files matching `src/**/*.ts`, `test/**/*.ts`.\n\n";
 
-test("kilo gets rule copies only: no config, no AGENTS.md", (t) => {
+test("kilo gets rule copies and creates kilo.jsonc with its entry", (t) => {
   const f = fixture(t);
   assert.equal(f.run(rule, "kilo").status, 0);
   assert.equal(f.read(KILO), scopeLine + rule.body);
-  assert.ok(!f.has("kilo.jsonc") && !f.has("AGENTS.md"));
+  assert.equal(f.read("kilo.jsonc"), '{\n  "instructions": [".kilo/rules/*.md"]\n}\n');
+  assert.ok(!f.has("AGENTS.md"));
   assert.equal(f.run({ ...rule, slug: "1-other", paths: [] }, "kilo").status, 0);
   assert.equal(f.read(".kilo/rules/01-standards-1-other.md"), rule.body);
   const before = f.snapshot();
@@ -326,6 +327,14 @@ test("opencode appends its entry to an existing config and keeps the rest", (t) 
   assert.equal(f.read(OPENCODE), scopeLine + rule.body);
   assert.deepEqual(JSON.parse(f.read("opencode.json")), { $schema: "x", instructions: [".opencode/rules/*.md"] });
   assert.ok(!f.has("AGENTS.md"));
+});
+
+test("kilo appends its entry to a config under .kilo", (t) => {
+  const f = fixture(t);
+  f.put(".kilo/kilo.json", '{"$schema":"x"}\n');
+  assert.equal(f.run(rule, "kilo").status, 0);
+  assert.deepEqual(JSON.parse(f.read(".kilo/kilo.json")), { $schema: "x", instructions: [".kilo/rules/*.md"] });
+  assert.ok(!f.has("kilo.jsonc"));
 });
 
 test("an entry already in a commented config leaves it byte identical", (t) => {
@@ -370,15 +379,16 @@ test("an instructions value that is not an array refuses", (t) => {
   assert.deepEqual(f.snapshot(), before);
 });
 
-test("--check --publish covers the opencode config entry", (t) => {
+test("--check --publish covers each host config entry", (t) => {
   const f = fixture(t);
   assert.equal(f.run(rule, "kilo,opencode").status, 0);
   const clean = f.run(null, null, ["--check", "--publish"]);
   assert.equal(clean.status, 0, clean.stdout);
   f.put("opencode.json", "{}\n");
+  f.put("kilo.jsonc", "{}\n");
   const drift = f.run(null, null, ["--check", "--publish"]);
   assert.equal(drift.status, 1);
-  assert.deepEqual(json(drift).drift, ["opencode.json"]);
+  assert.deepEqual(json(drift).drift, ["kilo.jsonc", "opencode.json"]);
 });
 
 test("removing the last rule keeps the config entry", (t) => {
