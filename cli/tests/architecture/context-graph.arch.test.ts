@@ -141,8 +141,8 @@ describe("the guard itself", () => {
         contextOf("src/contexts/tools/domain/registry.ts")
       );
 
-      expect(reaching, "only the composition root imports the composition").toBe(true);
-      expect(reached, "the composition wires any context").toBe(false);
+      expect(reaching, "a context never imports a layer above it").toBe(true);
+      expect(reached, "a layer above the contexts reads any of them").toBe(false);
       expect(
         forbiddenEdges([edgeBetween("src/contexts/tools/domain/registry.ts", composition)], ALLOWED)
       ).toEqual([`tools->${contextOf(composition)}`]);
