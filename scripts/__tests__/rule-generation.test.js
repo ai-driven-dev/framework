@@ -89,8 +89,8 @@ test("codex index is created, updated, removed and outside text is preserved", (
   const first = "- `src/**/*.ts`, `test/**/*.ts`: [Naming](aidd_docs/rules/01-standards/1-naming.md)";
   assert.equal(f.read("AGENTS.md"), `${user}\n${block(first)}`);
   f.put("AGENTS.md", f.read("AGENTS.md") + "Suffix\n");
-  assert.equal(f.run({ ...rule, slug: "1-other", paths: [], body: "- No title.\n" }, "codex").status, 0);
-  assert.equal(f.read("AGENTS.md"), `${user}\n${block(`${first}\n- all files: [1-other](aidd_docs/rules/01-standards/1-other.md)`)}Suffix\n`);
+  assert.equal(f.run({ ...rule, slug: "1-other", paths: [], body: "# Other\n" }, "codex").status, 0);
+  assert.equal(f.read("AGENTS.md"), `${user}\n${block(`${first}\n- all files: [Other](aidd_docs/rules/01-standards/1-other.md)`)}Suffix\n`);
   assert.equal(f.run(null, null, ["--remove", "01-standards/1-other"]).status, 0);
   assert.equal(f.run(null, null, ["--remove", "01-standards/1-naming"]).status, 0);
   assert.equal(f.read("AGENTS.md"), `${user}Suffix\n`);
@@ -133,7 +133,7 @@ test("hand-edited copy conflicts without writing, then --force overwrites", (t) 
 test("updating a rule rewrites its own previous copies without conflict", (t) => {
   const f = fixture(t);
   assert.equal(f.run().status, 0);
-  const r = f.run({ ...rule, body: "- New.\n" });
+  const r = f.run({ ...rule, body: "# Naming\n\n- New.\n" });
   assert.equal(r.status, 0, r.stderr);
   assert.ok(f.read(CLAUDE).endsWith("- New.\n"));
 });
@@ -227,6 +227,7 @@ for (const [label, change] of [
   ["comma in path", { paths: ["src/{a,b}.ts"] }],
   ["newline in description", { description: "a\nb" }],
   ["empty body", { body: "  \n" }],
+  ["body without a title heading", { body: "Keep names clear.\n" }],
 ]) test(`${label} refuses before any write`, (t) => {
   const f = fixture(t);
   const before = f.snapshot();
@@ -417,7 +418,7 @@ test("an old AGENTS.md index line of an opencode-only rule is dropped on publish
 test("antigravity output over 24000 bytes refuses", (t) => {
   const f = fixture(t);
   const before = f.snapshot();
-  assert.equal(f.run({ ...rule, body: "x".repeat(24000) }, "antigravity").status, 1);
+  assert.equal(f.run({ ...rule, body: `# X\n${"x".repeat(24000)}` }, "antigravity").status, 1);
   assert.deepEqual(f.snapshot(), before);
 });
 

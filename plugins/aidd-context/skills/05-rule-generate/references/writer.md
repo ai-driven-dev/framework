@@ -10,7 +10,7 @@ node "$writer" --project "$project_root" --tools "$confirmed_ids" --input "$requ
 | --- | --- |
 | `$project_root` | Absolute path of the session's working directory, copied, never retyped. |
 | `$writer` | Absolute path of `scripts/write-rule.cjs` beside the loaded `SKILL.md`. |
-| `$request_json` | Temporary file outside the project: `category`, `slug`, one-line `description`, `body`, and optional `paths`. |
+| `$request_json` | Temporary file outside the project: `category`, `slug`, one-line `description`, `body` starting with `# <title>`, and optional `paths`. |
 | `paths` | Array of globs; no comma in a glob, so split `*.{ts,tsx}`. |
 
 | Option | Effect |

@@ -278,6 +278,7 @@ function collectItems(options, sources) {
 function itemFromRequest(inputFile, tools, sources) {
   const request = parseRequest(fs.readFileSync(path.resolve(inputFile), "utf8"));
   const rule = validateRule({ paths: [], ...request, targets: tools });
+  if (!rule.body.startsWith("# ")) refuse("Body must start with a `# <title>` line.");
   const prior = sources.get(sourcePath(rule));
   return { rule: { ...rule, targets: parseTools([...(prior ? prior.targets : []), ...tools]) }, prior };
 }
