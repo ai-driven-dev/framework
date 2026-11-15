@@ -380,21 +380,16 @@ export class RegisterPluginWithHost {
       proof.sourceStatus === "unproven" ||
       (proof.sourceStatus === "owned" && proof.source === undefined)
     ) {
-      if (profile.nativeActivation()?.keepsMarketplaceRegistry() === true) {
-        const existing = await this.marketplaceRegistries.get(profile.toolId)?.read();
-        if (existing?.entries?.has(hostName) === true)
-          await this.guardAgainstConflict(run, builtDir, requestedIdentity, marketplace);
-      }
+      const existing = await this.marketplaceRegistryOf(profile)?.read();
+      if (existing?.entries?.has(hostName) === true)
+        await this.guardAgainstConflict(run, builtDir, requestedIdentity, marketplace);
       this.warn(
         run,
         `${toolId}: catalogue '${hostName}' host source unproven (${proof.sourceReason ?? "unknown"}); registration left untouched.`
       );
       return undefined;
     }
-    const hostMarketplaceReading =
-      profile.nativeActivation()?.keepsMarketplaceRegistry() === true
-        ? await this.marketplaceRegistries.get(profile.toolId)?.read()
-        : undefined;
+    const hostMarketplaceReading = await this.marketplaceRegistryOf(profile)?.read();
     if (hostMarketplaceReading?.entries?.has(hostName) === true && !proof.canonical) {
       await this.guardAgainstConflict(run, builtDir, requestedIdentity, marketplace);
       this.warn(
@@ -449,6 +444,14 @@ export class RegisterPluginWithHost {
     return this.claimAdded(hostName, await this.proveAddedSource(run, hostName, builtDir));
   }
 
+  /** The host's marketplace registry, for a tool whose profile declares one: a reader a test or a
+   * caller hands for any other tool is never consulted. */
+  private marketplaceRegistryOf(profile: AiToolProfile): HostMarketplaceRegistry | undefined {
+    return profile.nativeActivation()?.keepsMarketplaceRegistry() === true
+      ? this.marketplaceRegistries.get(profile.toolId)
+      : undefined;
+  }
+
   private claimAdded(
     hostName: string,
     source: NativeMarketplaceSource | undefined
@@ -492,11 +495,10 @@ export class RegisterPluginWithHost {
     builtDir: string,
     requestedIdentity: MarketplaceCatalogIdentity,
     marketplace: RegistrationSubject
-  ): Promise<"proceed" | "skip"> {
+  ): Promise<"skip" | undefined> {
     const { profile } = run;
-    if (profile.nativeActivation()?.keepsMarketplaceRegistry() !== true) return "proceed";
-    const reader = this.marketplaceRegistries.get(profile.toolId);
-    if (reader === undefined) return "proceed";
+    const reader = this.marketplaceRegistryOf(profile);
+    if (reader === undefined) return undefined;
     const requestedSource = await this.fs.realpath(builtDir).catch(() => builtDir);
     const check = await hostMarketplaceSourceConflict(
       this.fs,
@@ -511,7 +513,7 @@ export class RegisterPluginWithHost {
         target: profile.toolId,
       }
     );
-    if (check === undefined) return "proceed";
+    if (check === undefined) return undefined;
     if (isDriftFound(check)) return this.decideOnDrift(run, check);
     const diff = pluginSetDifference(check.registeredIdentity, check.requestedIdentity);
     throw new MarketplaceSourceConflictError(
@@ -529,9 +531,8 @@ export class RegisterPluginWithHost {
    * pre-migration cache can proceed only through the separate host-source proof; discovering a
    * path here never creates a shared-source claim before registration succeeds.
    */
-  private decideOnDrift(run: Run, found: MarketplaceSourceDriftFound): "proceed" | "skip" {
-    if (found.drift.kind === "unmigrated-foreign-project-source") return "proceed";
-    if (found.drift.kind !== "version-behind") return "proceed";
+  private decideOnDrift(run: Run, found: MarketplaceSourceDriftFound): "skip" | undefined {
+    if (found.drift.kind !== "version-behind") return undefined;
     const { registeredVersion, requestedVersion } = found.drift;
     this.warn(
       run,
