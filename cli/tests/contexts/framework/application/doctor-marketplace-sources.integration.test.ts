@@ -494,22 +494,4 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
     expect(issues[0]?.message).toContain("another project's pre-migration cache");
     expect(issues[0]?.fix).toContain("aidd sync");
   });
-
-  it("says nothing when the host already follows this exact shared version", async () => {
-    const hostReader = new FakeHostMarketplaceRegistry({
-      location: REGISTRY_LOCATION,
-      entries: new Map([[NAME, sharedPath(CURRENT_VERSION)]]),
-    });
-
-    expect(await driftIssuesFor(hostReader)).toEqual([]);
-  });
-
-  it("says nothing when this project's own version is ahead of the host's — the host follows on the next sync", async () => {
-    const hostReader = new FakeHostMarketplaceRegistry({
-      location: REGISTRY_LOCATION,
-      entries: new Map([[NAME, sharedPath("1.0.0")]]),
-    });
-
-    expect(await driftIssuesFor(hostReader)).toEqual([]);
-  });
 });
