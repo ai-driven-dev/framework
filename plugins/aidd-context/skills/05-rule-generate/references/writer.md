@@ -25,6 +25,6 @@ The result is JSON: `files` lists each path and its operation, `conflicts` each 
 ## Limits
 
 - A config whose text holds the quoted glob counts as listing it, even inside a comment.
-- Text is read and written as UTF-8 without validation.
+- Text is read and written as UTF-8 without validation; CRLF line endings are read as LF, and every write uses LF.
 - A failure midway leaves earlier files written, and a rerun completes them.
 - OpenCode configs are read only at the project root, never under `.opencode/`.

@@ -18,6 +18,7 @@ const CATEGORIES = CATEGORY_NAMES.map((name, index) => `0${index}-${name}`);
 const SLUG = /^\d-[a-z0-9]+(?:[-.@][a-z0-9]+)*$/;
 const SLUG_PREFIX = /^\d-/;
 const LINE_BREAK = /[\r\n]/;
+const CRLF = /\r\n/g;
 const GLOB_FORBIDDEN = /[,\r\n]/;
 const TITLE_PREFIX = "# ";
 const MISSING = ["ENOENT", "ENOTDIR"];
@@ -276,7 +277,8 @@ function openProject(value) {
     return current;
   }
 
-  const read = (relativePath) => orWhenMissing(() => fs.readFileSync(resolve(relativePath), "utf8"), null);
+  // A Windows checkout may turn every line ending into CRLF; the writer reads and writes LF.
+  const read = (relativePath) => orWhenMissing(() => fs.readFileSync(resolve(relativePath), "utf8").replace(CRLF, "\n"), null);
   const list = (relativePath) => orWhenMissing(() => fs.readdirSync(resolve(relativePath)).sort(), []);
   return { resolve, read, list };
 }

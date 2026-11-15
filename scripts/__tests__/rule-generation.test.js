@@ -90,9 +90,22 @@ test("a body without a final newline is written with one", (t) => {
   assert.deepEqual(json(f.run(bare, "claude,kilo")).files, []);
 });
 
+test("a project checked out with CRLF line endings reads as its own output", (t) => {
+  const f = fixture(t);
+  assert.equal(f.run(rule, "claude,codex,kilo").status, 0);
+  f.put("AGENTS.md", `User text\n\n${f.read("AGENTS.md")}`);
+  for (const [name, content] of Object.entries(f.snapshot())) f.put(name, content.replace(/\n/g, "\r\n"));
+  const again = f.run(rule, "claude,codex,kilo", [...input(f), "--plan"]);
+  assert.equal(again.status, 0, again.stdout);
+  assert.deepEqual(json(again), { files: [], conflicts: [] });
+  assert.deepEqual(json(f.run(null, null, ["--publish", "--plan"])).conflicts, []);
+  assert.equal(f.run(null, null, ["--remove", "01-standards/1-naming"]).status, 0);
+  assert.equal(f.read("AGENTS.md"), "User text\n");
+});
+
 test("codex index is created, updated, removed and outside text is preserved", (t) => {
   const f = fixture(t);
-  const user = "User text\r\nmore\n";
+  const user = "User text\nmore\n";
   f.put("AGENTS.md", user);
   assert.equal(f.run(rule, "codex").status, 0);
   const block = (lines) => `<!-- aidd_rules:start -->\nBefore editing a file, read each rule whose scope matches it.\n\n${lines}\n<!-- aidd_rules:end -->\n`;
