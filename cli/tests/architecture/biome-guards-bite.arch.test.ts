@@ -60,6 +60,8 @@ const PURE_FOLDERS = [
 ] as const;
 const PURE_BUILTINS: ReadonlySet<string> = new Set(["path", "crypto"]);
 
+const BARE_NODE_MODULES = ["fs", "fs/promises", "node:fs/promises", "child_process"];
+
 describe("biome carries the exit and default-export rules", () => {
   it("scopes the process.exit plugin to the layers that throw, and to nothing else", () => {
     const config = JSON.parse(read("biome.json")) as {
@@ -214,13 +216,16 @@ describe("the guard itself", () => {
       "reaches-shared-infrastructure": "../../shared/infrastructure/http-client.js",
       "reaches-composition": "../../composition/auth.js",
       "reaches-presentation": "../../presentation/deps.js",
-      "reaches-bare-fs": "fs",
     })) {
       writeFileSync(
         join(planted, `src/orchestration/setup/${name}.ts`),
         `import "${specifier}";\n`
       );
     }
+    writeFileSync(
+      join(planted, "src/orchestration/setup/reaches-bare.ts"),
+      BARE_NODE_MODULES.map((specifier) => `import "${specifier}";\n`).join("")
+    );
     writeFileSync(
       join(planted, "src/shared/domain/exit.ts"),
       "export const stop = (): never => process.exit(1);\n"
@@ -571,7 +576,6 @@ describe("the guard itself", () => {
 
     for (const name of [
       "fs",
-      "bare-fs",
       "process",
       "domain",
       "infrastructure",
@@ -584,6 +588,10 @@ describe("the guard itself", () => {
         `src/orchestration/setup/reaches-${name}.ts:${rule}`
       );
     }
+    expect(
+      findings.filter((f) => f === `src/orchestration/setup/reaches-bare.ts:${rule}`),
+      "one finding per bare or prefixed fs and child_process module"
+    ).toHaveLength(BARE_NODE_MODULES.length);
     for (const name of ["contract", "application"]) {
       expect(findings).not.toContain(`src/orchestration/setup/reaches-${name}.ts:${rule}`);
     }
