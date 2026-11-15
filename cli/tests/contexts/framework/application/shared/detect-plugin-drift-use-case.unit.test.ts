@@ -1,9 +1,9 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DetectPluginDriftUseCase } from "../../../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { DetectPluginDriftUseCase } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";

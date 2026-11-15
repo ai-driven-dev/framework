@@ -15,31 +15,34 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import type { InstallRuntimeConfigUseCase } from "../../../installation/application/install/install-runtime-config-use-case.js";
+import type { PluginTranslator } from "../../../installation/application/materialize/plugin-translator.js";
+import { resolvePluginTranslator } from "../../../installation/application/materialize/resolve-plugin-translator.js";
+import type { PluginDistributionLoader } from "../../../installation/application/plugin/plugin-distribution-loader.js";
+import {
+  loadPluginManifest,
+  writePluginFiles,
+} from "../../../installation/application/plugin/plugin-helpers.js";
+import {
+  resolveBaseDirFromRecord,
+  resolvePluginToolIds,
+  resolveScopeForInstall,
+} from "../../../installation/application/plugin/plugin-target-resolution.js";
+import type { EnsureBuiltMarketplace } from "../../../installation/application/shared/ensure-built-marketplace-use-case.js";
+import { assertProjectHooksRemovable } from "../../../installation/application/shared/remove-project-hooks.js";
+import { Manifest } from "../../../installation/domain/manifest.js";
+import {
+  InstalledPlugin,
+  type ProjectHooksProvenance,
+} from "../../../installation/domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
-import { Manifest } from "../../domain/manifest.js";
-import {
-  InstalledPlugin,
-  type ProjectHooksProvenance,
-} from "../../domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import type { PluginTranslator } from "../framework/translator/plugin-translator.js";
-import { resolvePluginTranslator } from "../framework/translator/resolve-plugin-translator.js";
-import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
 import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
-import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
-import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
-import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
-import { loadPluginManifest, writePluginFiles } from "./plugin-helpers.js";
-import {
-  resolveBaseDirFromRecord,
-  resolvePluginToolIds,
-  resolveScopeForInstall,
-} from "./plugin-target-resolution.js";
 
 export interface PluginAddOptions {
   source: PluginSource;

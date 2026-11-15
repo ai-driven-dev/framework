@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RestoreRegularFilesUseCase } from "../../../../../src/contexts/framework/application/restore/restore-regular-files-use-case.js";
+import { RestoreRegularFilesUseCase } from "../../../../../src/contexts/installation/application/restore/restore-regular-files-use-case.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { HasherAdapter } from "../../../../src/contexts/framework/infrastructure/hasher-adapter.js";
+import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import {
   InvalidPluginManifestError,
   MalformedMarketplaceCatalogError,

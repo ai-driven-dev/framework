@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { GitignoreUseCase } from "../../../../../src/contexts/framework/application/gitignore-use-case.js";
-import { PostInstallPipelineUseCase } from "../../../../../src/contexts/framework/application/install/post-install-pipeline-use-case.js";
+import { GitignoreUseCase } from "../../../../../src/contexts/installation/application/gitignore-use-case.js";
+import { PostInstallPipelineUseCase } from "../../../../../src/contexts/installation/application/install/post-install-pipeline-use-case.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 

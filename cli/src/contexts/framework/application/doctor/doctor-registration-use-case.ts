@@ -17,13 +17,13 @@ import {
   describePluginDiff,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   MarketplaceRegistrationAnswers,
   ToolProfile,
 } from "../../../tools/contract/tool-profile.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
-import type { Manifest } from "../../domain/manifest.js";
 import {
   type HostMarketplaceSourceCheck,
   hostMarketplaceSourceConflict,

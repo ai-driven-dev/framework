@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../../src/contexts/distribution/domain/marketplace.js";
-import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/built-tree-materialization-translator.js";
-import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
+import { BuiltTreeMaterializationTranslator } from "../../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
+import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { InstallationFile } from "../../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";

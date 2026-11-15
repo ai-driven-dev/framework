@@ -9,7 +9,7 @@ import { CLI_ROOT, canonicalPath, read, sourceFiles } from "./helpers.js";
 
 /** File → how many empty catches it keeps, and why each is a deliberate best effort. */
 const BASELINE: Readonly<Record<string, { readonly count: number; readonly reason: string }>> = {
-  "src/contexts/framework/infrastructure/manifest-repository-adapter.ts": {
+  "src/contexts/installation/infrastructure/manifest-repository-adapter.ts": {
     count: 2,
     reason: "deleting a manifest, then its empty directory, must not fail an uninstall midway",
   },

@@ -568,6 +568,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -753,6 +754,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -787,6 +789,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -829,6 +832,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1021,6 +1025,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1206,6 +1211,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1394,6 +1400,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1435,6 +1442,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1480,6 +1488,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1668,6 +1677,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1853,6 +1863,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1893,6 +1904,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -1935,6 +1947,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -2120,6 +2133,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -2305,6 +2319,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -2339,6 +2354,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -2388,6 +2404,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -2580,6 +2597,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/telemetry/**",
@@ -2875,6 +2893,188 @@
       }
     },
     {
+      "includes": ["src/contexts/installation/domain/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "domain must not import application, infrastructure or presentation"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/telemetry/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "installation may import tools, translate, distribution and host-registration, never framework or telemetry — see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/**"],
+                    "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/host-registration/infrastructure/**"],
+                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/installation/application/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/infrastructure/**"],
+                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/presentation/**",
+                      "**/telemetry/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "installation may import tools, translate, distribution and host-registration, never framework, telemetry or presentation — see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/**"],
+                    "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/host-registration/infrastructure/**"],
+                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/installation/infrastructure/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/telemetry/**",
+                      "**/presentation/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "installation/infrastructure may import tools, translate, distribution and host-registration, never framework or telemetry or presentation — see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/shared/infrastructure/**"],
+                    "message": "only the composition root imports shared/infrastructure: take the port from shared/ports"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/**"],
+                    "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/host-registration/infrastructure/**"],
+                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/contexts/installation/ports/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/application/**", "**/infrastructure/**", "**/presentation/**"],
+                    "message": "a port must not import application, infrastructure or presentation"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/telemetry/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "installation may import tools, translate, distribution and host-registration, never framework or telemetry — see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/**"],
+                    "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/host-registration/infrastructure/**"],
+                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/contexts/translate/domain/**/*.ts"],
       "linter": {
         "rules": {
@@ -2890,6 +3090,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/distribution/**",
                       "**/telemetry/**",
                       "**/auth/**",
@@ -2930,6 +3131,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/distribution/**",
                       "**/telemetry/**",
                       "**/auth/**",
@@ -2967,6 +3169,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/distribution/**",
                       "**/telemetry/**",
                       "**/auth/**",
@@ -3015,6 +3218,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/telemetry/**",
@@ -3092,6 +3296,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/telemetry/**",
@@ -3126,6 +3331,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/telemetry/**",
@@ -3175,6 +3381,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3363,6 +3570,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3404,6 +3612,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3444,6 +3653,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3485,6 +3695,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/tools/**",
                       "**/telemetry/**",
@@ -3530,6 +3741,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -3567,6 +3779,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -3611,6 +3824,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -3796,6 +4010,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",
@@ -3830,6 +4045,7 @@
                   {
                     "group": [
                       "**/framework/**",
+                      "**/installation/**",
                       "**/translate/**",
                       "**/distribution/**",
                       "**/tools/**",

@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   type RestoreToolFilesOptions,
   RestoreToolFilesUseCase,
-} from "../../../../../src/contexts/framework/application/restore/restore-tool-files-use-case.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+} from "../../../../../src/contexts/installation/application/restore/restore-tool-files-use-case.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
   CONFIG_VSCODE_EXTENSIONS,
   CONFIG_VSCODE_KEYBINDINGS,

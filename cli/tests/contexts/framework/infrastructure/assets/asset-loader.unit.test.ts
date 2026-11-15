@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { parseToml } from "../../../../../src/contexts/tools/domain/formats/toml.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
 

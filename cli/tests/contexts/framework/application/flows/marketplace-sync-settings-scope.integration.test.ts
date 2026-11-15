@@ -2,8 +2,8 @@ import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import type { UserSourceReferences } from "../../../../../src/contexts/framework/domain/ports/user-source-references.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
@@ -210,7 +210,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
     const { InstalledPlugin } = await import(
-      "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js"
+      "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js"
     );
     manifest.addPlugin(
       TOOL.claude,
@@ -267,7 +267,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
     const { InstalledPlugin } = await import(
-      "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js"
+      "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js"
     );
     manifest.addPlugin(
       TOOL.claude,

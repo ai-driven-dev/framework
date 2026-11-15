@@ -4,7 +4,7 @@ import type {
   StatusOptions,
   StatusQuery,
   StatusReport,
-} from "../../../../src/contexts/framework/application/status-use-case.js";
+} from "../../../../src/contexts/installation/application/status-use-case.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";

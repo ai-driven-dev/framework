@@ -8,8 +8,8 @@ import type {
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
 } from "../../../host-registration/contract/host-plugin-registry.js";
+import type { NativeMarketplaceRegistration } from "../../../installation/domain/manifest/native-registrations.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { NativeMarketplaceRegistration } from "../../domain/manifest/native-registrations.js";
 
 export interface NativeMarketplaceSourceInspection {
   readonly status: "absent" | "owned" | "unproven";

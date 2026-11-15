@@ -4,10 +4,10 @@ import { InputRequiredError } from "../../../../shared/domain/errors.js";
 import type { FileHash } from "../../../../shared/domain/file.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { InstallIdeConfigUseCase } from "../../../installation/application/install/install-ide-config-use-case.js";
+import type { InstallRuntimeConfigUseCase } from "../../../installation/application/install/install-runtime-config-use-case.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { Manifest } from "../../domain/manifest.js";
-import type { InstallIdeConfigUseCase } from "../install/install-ide-config-use-case.js";
-import type { InstallRuntimeConfigUseCase } from "../install/install-runtime-config-use-case.js";
 import type {
   BulkConflictState,
   ResolveUpdateDecisionUseCase,

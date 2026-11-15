@@ -7,10 +7,10 @@ import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
+import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { ProjectPluginCleanup } from "../ownership/project-plugin-cleanup.js";
 
 export interface MarketplaceRemoveOptions {

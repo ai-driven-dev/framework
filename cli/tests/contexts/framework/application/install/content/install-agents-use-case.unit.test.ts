@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InstallAgentsUseCase } from "../../../../../../src/contexts/framework/application/install/content/install-agents-use-case.js";
+import { InstallAgentsUseCase } from "../../../../../../src/contexts/installation/application/install/content/install-agents-use-case.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import type { ContentSection } from "../../../../../../src/contexts/translate/domain/canon.js";

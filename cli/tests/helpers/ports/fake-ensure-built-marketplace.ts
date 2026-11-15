@@ -1,7 +1,7 @@
 import type {
   EnsureBuiltMarketplace,
   EnsureBuiltMarketplaceOptions,
-} from "../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
+} from "../../../src/contexts/installation/application/shared/ensure-built-marketplace-use-case.js";
 
 /** Stand-in for EnsureBuiltMarketplace returning a deterministic per-target built dir, so a
  * native or materialize test can consume a built tree without disk I/O. */

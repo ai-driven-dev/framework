@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RestoreUseCase } from "../../../../../src/contexts/framework/application/restore/restore-use-case.js";
+import { RestoreUseCase } from "../../../../../src/contexts/installation/application/restore/restore-use-case.js";
 import {
   buildUnitDeps,
   FIXTURE_DIR,

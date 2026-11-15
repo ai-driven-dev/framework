@@ -175,7 +175,7 @@ describe("the guard itself", () => {
     const declared = { scopes, excluded: { "src/cli.ts": "the entry point" } };
     expect(isCovered("src/shared/domain/paths.ts", declared)).toBe(true);
     expect(isCovered("src/cli.ts", declared)).toBe(true);
-    expect(isCovered("src/contexts/framework/domain/manifest.ts", declared)).toBe(false);
+    expect(isCovered("src/contexts/installation/domain/manifest.ts", declared)).toBe(false);
   });
 
   it("gives each scope its own glob and incremental file, and refuses a scope nobody declared", () => {

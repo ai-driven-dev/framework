@@ -4,8 +4,8 @@ import {
   resolveBaseDirFromRecord,
   resolvePluginToolIds,
   resolveScopeForInstall,
-} from "../../../../../src/contexts/framework/application/plugin/plugin-target-resolution.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+} from "../../../../../src/contexts/installation/application/plugin/plugin-target-resolution.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UnresolvableUserScopeError } from "../../../../../src/shared/domain/errors.js";
 import { registeredAiProfile, registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
 

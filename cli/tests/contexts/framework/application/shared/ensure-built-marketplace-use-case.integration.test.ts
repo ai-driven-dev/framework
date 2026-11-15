@@ -9,7 +9,7 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import {
   EnsureBuiltMarketplaceUseCase,
   type FrameworkBuildFor,
-} from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
+} from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace-use-case.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import {

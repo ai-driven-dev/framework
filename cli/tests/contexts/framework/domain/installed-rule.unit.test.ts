@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toInstalledRule } from "../../../../src/contexts/framework/domain/installed-rule.js";
+import { toInstalledRule } from "../../../../src/contexts/installation/domain/installed-rule.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 
 describe("toInstalledRule — one installed file, read as a rule", () => {

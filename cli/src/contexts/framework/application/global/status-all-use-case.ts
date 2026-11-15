@@ -1,5 +1,8 @@
+import type {
+  StatusQuery,
+  StatusReport,
+} from "../../../installation/application/status-use-case.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { StatusQuery, StatusReport } from "../status-use-case.js";
 import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
 export interface StatusAllResult {
   aiTools: StatusReport;

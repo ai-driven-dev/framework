@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { DetectPluginDriftUseCase } from "../../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
-import { StatusUseCase } from "../../../../src/contexts/framework/application/status-use-case.js";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../../../src/contexts/framework/domain/ports/manifest-repository.js";
+import { DetectPluginDriftUseCase } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import { StatusUseCase } from "../../../../src/contexts/installation/application/status-use-case.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { Hasher } from "../../../../src/shared/ports/hasher.js";

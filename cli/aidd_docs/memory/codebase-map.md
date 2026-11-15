@@ -19,30 +19,39 @@ src/
 │   │   │   └── catalog-parsers/
 │   │   ├── infrastructure/
 │   │   └── ports/
-│   ├── framework/    # the installation record and everything done to a project
+│   ├── framework/    # what is left of the old layout: the flows that setup, clean, doctor and plugin commands drive
 │   │   ├── application/
 │   │   │   ├── clean/
 │   │   │   ├── doctor/
 │   │   │   ├── flows/
-│   │   │   ├── framework/
-│   │   │   │   └── translator/
 │   │   │   ├── global/
 │   │   │   ├── install/
-│   │   │   │   └── content/
 │   │   │   ├── ownership/    # machine plugin claims and safe project detach
 │   │   │   ├── plugin/
-│   │   │   ├── restore/
 │   │   │   ├── setup/
 │   │   │   ├── shared/
 │   │   │   └── uninstall/
 │   │   ├── domain/
 │   │   │   ├── formats/
-│   │   │   ├── manifest/
 │   │   │   ├── plugins/
 │   │   │   ├── ports/
 │   │   │   └── reading/    # the home directory a use case resolves when none is given
 │   │   └── infrastructure/
-│   │       └── assets/    # configs inlined at build time, schemas copied beside the binary
+│   ├── installation/    # the installation record, and what installs, restores and materializes it into a project
+│   │   ├── application/
+│   │   │   ├── install/
+│   │   │   │   └── content/
+│   │   │   ├── materialize/    # a plugin's files translated for one tool and written
+│   │   │   ├── ownership/
+│   │   │   ├── plugin/
+│   │   │   ├── restore/
+│   │   │   └── shared/
+│   │   ├── domain/
+│   │   │   ├── manifest/
+│   │   │   └── plugins/
+│   │   ├── infrastructure/
+│   │   │   └── assets/    # configs inlined at build time, schemas copied beside the binary
+│   │   └── ports/
 │   ├── recipes/    # checking a recipe's structure, examples and local links
 │   │   ├── application/
 │   │   ├── domain/

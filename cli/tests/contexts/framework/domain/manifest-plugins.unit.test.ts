@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   DuplicatePluginError,
   PluginNotFoundError,

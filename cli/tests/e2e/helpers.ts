@@ -14,7 +14,7 @@ import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, inject } from "vitest";
 import { createDeps } from "../../src/composition/framework.js";
-import { InitUseCase } from "../../src/contexts/framework/application/init-use-case.js";
+import { InitUseCase } from "../../src/contexts/installation/application/init-use-case.js";
 import { environmentWithoutGitVariables as withoutGitEnv } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";

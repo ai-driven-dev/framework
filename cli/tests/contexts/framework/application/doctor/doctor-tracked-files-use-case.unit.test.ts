@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DoctorTrackedFilesUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-tracked-files-use-case.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";

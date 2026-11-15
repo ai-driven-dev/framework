@@ -8,13 +8,13 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import { resolveHomeDir } from "../../domain/reading/home-dir.js";
 import type {
   MarketplaceRemoveOptions,
   MarketplaceRemoveResult,
 } from "../flows/marketplace-remove-use-case.js";
-import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import { userScopeFilesSafeToDelete } from "../shared/user-scope-plugin-files.js";
 import type { NativeHostRegistrationGate } from "./native-host-registration-gate.js";
 

@@ -5,15 +5,15 @@ import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { VersionReader } from "../../../shared/ports/version-reader.js";
+import { InitUseCase } from "../../installation/application/init-use-case.js";
+import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { ProjectContext } from "../domain/project-context.js";
 import type { SetupFlow } from "../domain/setup-flow.js";
 import type {
   MarketplaceSyncSettings,
   MarketplaceSyncSettingsResult,
 } from "./flows/marketplace-sync-settings-use-case.js";
-import { InitUseCase } from "./init-use-case.js";
 import type { ProjectContextDetectorUseCase } from "./setup/project-context-detector-use-case.js";
 import type { SetupMachineScopeUseCase } from "./setup/setup-machine-scope-use-case.js";
 import type { SetupToolsResult, SetupToolsUseCase } from "./setup/setup-tools-use-case.js";

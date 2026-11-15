@@ -14,7 +14,6 @@ import { DoctorUseCase } from "../contexts/framework/application/doctor/doctor-u
 import { MarketplaceCheckUseCase } from "../contexts/framework/application/flows/marketplace-check-use-case.js";
 import { MarketplaceRemoveUseCase } from "../contexts/framework/application/flows/marketplace-remove-use-case.js";
 import { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { GitignoreUseCase } from "../contexts/framework/application/gitignore-use-case.js";
 import { DoctorAllUseCase } from "../contexts/framework/application/global/doctor-all-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../contexts/framework/application/global/resolve-update-decision-use-case.js";
 import { RestoreAllUseCase } from "../contexts/framework/application/global/restore-all-use-case.js";
@@ -23,47 +22,48 @@ import { UpdateAiToolsUseCase } from "../contexts/framework/application/global/u
 import { UpdateIdeToolsUseCase } from "../contexts/framework/application/global/update-ide-tools-use-case.js";
 import { UpdateOneToolUseCase } from "../contexts/framework/application/global/update-one-tool-use-case.js";
 import { InstallAiToolUseCase } from "../contexts/framework/application/install/install-ai-tool-use-case.js";
-import { InstallIdeConfigUseCase } from "../contexts/framework/application/install/install-ide-config-use-case.js";
-import { InstallIdeToolUseCase } from "../contexts/framework/application/install/install-ide-tool-use-case.js";
-import { InstallRuntimeConfigUseCase } from "../contexts/framework/application/install/install-runtime-config-use-case.js";
-import { PostInstallPipelineUseCase } from "../contexts/framework/application/install/post-install-pipeline-use-case.js";
-import { ListInstalledRulesUseCase } from "../contexts/framework/application/list-installed-rules-use-case.js";
 import { NativeHostRegistrationGate } from "../contexts/framework/application/ownership/native-host-registration-gate.js";
 import { ProjectPluginCleanup } from "../contexts/framework/application/ownership/project-plugin-cleanup.js";
 import { UserMarketplaceRemoveUseCase } from "../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { UserPluginFileUpdater } from "../contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { PluginAddUseCase } from "../contexts/framework/application/plugin/plugin-add-use-case.js";
-import { PluginDistributionLoader } from "../contexts/framework/application/plugin/plugin-distribution-loader.js";
 import { PluginInstallFromMarketplaceUseCase } from "../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../contexts/framework/application/plugin/plugin-install-use-case.js";
-import { PluginListUseCase } from "../contexts/framework/application/plugin/plugin-list-use-case.js";
 import { PluginRemoveUseCase } from "../contexts/framework/application/plugin/plugin-remove-use-case.js";
-import { PluginUpdateUseCase } from "../contexts/framework/application/plugin/plugin-update-use-case.js";
-import { RestoreUseCase } from "../contexts/framework/application/restore/restore-use-case.js";
 import { InstallGlobalPluginsUseCase } from "../contexts/framework/application/setup/install-global-plugins-use-case.js";
 import { ProjectContextDetectorUseCase } from "../contexts/framework/application/setup/project-context-detector-use-case.js";
 import { SetupMachineScopeUseCase } from "../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupToolsUseCase } from "../contexts/framework/application/setup/setup-tools-use-case.js";
-import { DetectPluginDriftUseCase } from "../contexts/framework/application/shared/detect-plugin-drift-use-case.js";
-import {
-  EnsureBuiltMarketplaceUseCase,
-  type FrameworkBuildFor,
-} from "../contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
-import { StatusUseCase } from "../contexts/framework/application/status-use-case.js";
 import { UninstallIdeUseCase } from "../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import { UninstallToolsUseCase } from "../contexts/framework/application/uninstall/uninstall-tools-use-case.js";
 import { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
-import { BundledAssetProviderAdapter } from "../contexts/framework/infrastructure/assets/asset-loader.js";
-import { HasherAdapter } from "../contexts/framework/infrastructure/hasher-adapter.js";
-import { JsonFileMergerAdapter } from "../contexts/framework/infrastructure/json-file-merger-adapter.js";
-import { ManifestRepositoryAdapter } from "../contexts/framework/infrastructure/manifest-repository-adapter.js";
-import { PlatformAdapter } from "../contexts/framework/infrastructure/platform-adapter.js";
-import { PluginDistributionReaderAdapter } from "../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
-import { UserManifestRepositoryAdapter } from "../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../contexts/framework/infrastructure/user-source-references-adapter.js";
+import { GitignoreUseCase } from "../contexts/installation/application/gitignore-use-case.js";
+import { InstallIdeConfigUseCase } from "../contexts/installation/application/install/install-ide-config-use-case.js";
+import { InstallIdeToolUseCase } from "../contexts/installation/application/install/install-ide-tool-use-case.js";
+import { InstallRuntimeConfigUseCase } from "../contexts/installation/application/install/install-runtime-config-use-case.js";
+import { PostInstallPipelineUseCase } from "../contexts/installation/application/install/post-install-pipeline-use-case.js";
+import { ListInstalledRulesUseCase } from "../contexts/installation/application/list-installed-rules-use-case.js";
+import { PluginDistributionLoader } from "../contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { PluginListUseCase } from "../contexts/installation/application/plugin/plugin-list-use-case.js";
+import { PluginUpdateUseCase } from "../contexts/installation/application/plugin/plugin-update-use-case.js";
+import { RestoreUseCase } from "../contexts/installation/application/restore/restore-use-case.js";
+import { DetectPluginDriftUseCase } from "../contexts/installation/application/shared/detect-plugin-drift-use-case.js";
+import {
+  EnsureBuiltMarketplaceUseCase,
+  type FrameworkBuildFor,
+} from "../contexts/installation/application/shared/ensure-built-marketplace-use-case.js";
+import { StatusUseCase } from "../contexts/installation/application/status-use-case.js";
+import { BundledAssetProviderAdapter } from "../contexts/installation/infrastructure/assets/asset-loader.js";
+import { HasherAdapter } from "../contexts/installation/infrastructure/hasher-adapter.js";
+import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/json-file-merger-adapter.js";
+import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
+import { PlatformAdapter } from "../contexts/installation/infrastructure/platform-adapter.js";
+import { PluginDistributionReaderAdapter } from "../contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import type { Deps, DepsFactory, FactoryOptions, MenuDeps } from "../presentation/deps.js";

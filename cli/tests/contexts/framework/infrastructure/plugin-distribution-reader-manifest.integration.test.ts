@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
+import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import {
   InvalidPluginManifestError,

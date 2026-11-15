@@ -34,21 +34,21 @@ import {
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
-import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
+import type { EnsureBuiltMarketplace } from "../../../installation/application/shared/ensure-built-marketplace-use-case.js";
 import type {
   NativeMarketplaceRegistration,
   NativeRegistrations,
-} from "../../domain/manifest/native-registrations.js";
-import { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+} from "../../../installation/domain/manifest/native-registrations.js";
+import { Manifest } from "../../../installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
+import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 import {
   inspectNativeMarketplaceSource,
   sameNativeMarketplaceSource,
 } from "../ownership/native-marketplace-source-proof.js";
-import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
 import {
   hostMarketplaceSourceConflict,
   isDriftFound,

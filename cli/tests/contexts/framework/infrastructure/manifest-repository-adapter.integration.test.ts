@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { ManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/manifest-repository-adapter.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
 import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
 
 describe("ManifestRepositoryAdapter", () => {

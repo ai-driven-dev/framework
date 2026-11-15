@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GitignoreUseCase } from "../../../../src/contexts/framework/application/gitignore-use-case.js";
+import { GitignoreUseCase } from "../../../../src/contexts/installation/application/gitignore-use-case.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
 const ROOT = "/project";

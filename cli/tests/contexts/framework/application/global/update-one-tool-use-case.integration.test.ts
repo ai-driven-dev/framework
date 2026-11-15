@@ -5,7 +5,7 @@ import {
   ResolveUpdateDecisionUseCase,
 } from "../../../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
 import { UpdateOneToolUseCase } from "../../../../../src/contexts/framework/application/global/update-one-tool-use-case.js";
-import type { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import type { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { SyncConflictResolverUseCase } from "../../../../../src/presentation/prompts/sync-conflict-resolver-use-case.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../../../src/shared/ports/prompter.js";

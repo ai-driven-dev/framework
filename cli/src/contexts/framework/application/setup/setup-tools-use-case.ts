@@ -1,15 +1,15 @@
 import type { AiToolId, IdeToolId } from "../../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
   InstallIdeConfigResult,
   InstallIdeConfigUseCase,
-} from "../install/install-ide-config-use-case.js";
+} from "../../../installation/application/install/install-ide-config-use-case.js";
 import type {
   InstallRuntimeConfigResult,
   InstallRuntimeConfigUseCase,
-} from "../install/install-runtime-config-use-case.js";
+} from "../../../installation/application/install/install-runtime-config-use-case.js";
+import { Manifest } from "../../../installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 
 export type ToolInstallResult = InstallRuntimeConfigResult | InstallIdeConfigResult;
 

@@ -4,7 +4,7 @@ import {
   getToolSupportedScope,
   isInstallScope,
   parseInstallScope,
-} from "../../../../src/contexts/framework/domain/install-scope.js";
+} from "../../../../src/contexts/installation/domain/install-scope.js";
 import { InvalidPluginScopeError } from "../../../../src/shared/domain/errors.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 

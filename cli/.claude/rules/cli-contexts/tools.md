@@ -6,6 +6,7 @@ paths:
   - "tests/contexts/tools/**/*.ts"
   - "src/contexts/translate/application/**/*.ts"
   - "src/contexts/framework/application/**/*.ts"
+  - "src/contexts/installation/application/**/*.ts"
 ---
 
 # Tools

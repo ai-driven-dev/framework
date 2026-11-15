@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   deletePluginFilesForTool,
   loadPluginManifest,
-} from "../../../../../src/contexts/framework/application/plugin/plugin-helpers.js";
+} from "../../../../../src/contexts/installation/application/plugin/plugin-helpers.js";
 import { NoManifestError } from "../../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";

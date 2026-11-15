@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { InitUseCase } from "../../../../src/contexts/framework/application/init-use-case.js";
+import { InitUseCase } from "../../../../src/contexts/installation/application/init-use-case.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 

@@ -7,8 +7,8 @@ import {
   serializeToolEntry,
   type ToolEntry,
   updatePluginInEntry,
-} from "../../../../../src/contexts/framework/domain/manifest/tool-entry.js";
-import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+} from "../../../../../src/contexts/installation/domain/manifest/tool-entry.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";

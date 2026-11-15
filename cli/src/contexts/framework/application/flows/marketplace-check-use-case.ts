@@ -3,9 +3,9 @@ import type { ResolveMarketplace } from "../../../distribution/application/resol
 import { STALE_MAX_DAYS_DEFAULT } from "../../../distribution/contract/marketplace.js";
 import { isMarketplaceStale, type Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 
 export interface MarketplaceCheckOptions {
   projectRoot: string;

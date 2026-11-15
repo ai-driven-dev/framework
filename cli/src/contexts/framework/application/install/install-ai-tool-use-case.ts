@@ -1,18 +1,18 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import type {
+  InstallRuntimeConfigResult,
+  InstallRuntimeConfigUseCase,
+} from "../../../installation/application/install/install-runtime-config-use-case.js";
+import { Manifest } from "../../../installation/domain/manifest.js";
+import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type {
   MarketplaceSyncSettings,
   MarketplaceSyncSettingsResult,
 } from "../flows/marketplace-sync-settings-use-case.js";
 import type { PluginInstallFromMarketplace } from "../plugin/plugin-install-from-marketplace-use-case.js";
-import type {
-  InstallRuntimeConfigResult,
-  InstallRuntimeConfigUseCase,
-} from "./install-runtime-config-use-case.js";
 
 export interface InstallAiToolOptions {
   toolId: AiToolId;

@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, realpath } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../src/contexts/framework/domain/manifest.js";
+import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { resolveRegisteredToolId, TOOL } from "../contexts/tools/testing/catalog-of.js";
 import { createTestEnv, runCli } from "./helpers.js";
 

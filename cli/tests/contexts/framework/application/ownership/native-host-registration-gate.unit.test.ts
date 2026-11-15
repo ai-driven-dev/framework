@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/framework/application/ownership/native-host-registration-gate.js";
-import type { NativeRegistrations } from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";
 import type { HostActions } from "../../../../../src/contexts/host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { NativeRegistrations } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 

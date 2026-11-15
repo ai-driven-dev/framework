@@ -2,12 +2,12 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type {
   NativeMarketplaceRegistration,
   NativePluginClaim,
   NativeRegistrations,
-} from "../../domain/manifest/native-registrations.js";
+} from "../../../installation/domain/manifest/native-registrations.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,

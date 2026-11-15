@@ -2,13 +2,16 @@ import { join } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import { assertProjectPathWithinRoot } from "../../../installation/application/ownership/project-path-boundary.js";
+import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
+import {
+  assertProjectHooksRemovable,
+  removeProjectHooks,
+} from "../../../installation/application/shared/remove-project-hooks.js";
+import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
-import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { detachNativePluginRefs } from "./native-plugin-ownership.js";
-import { assertProjectPathWithinRoot } from "./project-path-boundary.js";
 import { detachUserPlugin } from "./user-plugin-ownership.js";
 
 /** Read-only OpenCode MCP proof, shared by Clean and local plugin removals before any detach. */

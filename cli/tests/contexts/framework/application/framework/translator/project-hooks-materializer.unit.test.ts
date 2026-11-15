@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   ProjectHooksMaterializer,
   withoutHooks,
-} from "../../../../../../src/contexts/framework/application/framework/translator/project-hooks-materializer.js";
-import { removeRecordedProjectHooks } from "../../../../../../src/contexts/framework/application/shared/remove-project-hooks.js";
+} from "../../../../../../src/contexts/installation/application/materialize/project-hooks-materializer.js";
+import { removeRecordedProjectHooks } from "../../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
 import {
   type PluginComponentFile,
   PluginDistribution,

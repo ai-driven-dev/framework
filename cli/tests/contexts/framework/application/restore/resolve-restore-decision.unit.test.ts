@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ResolveRestoreDecisionUseCase } from "../../../../../src/contexts/framework/application/restore/resolve-restore-decision.js";
+import { ResolveRestoreDecisionUseCase } from "../../../../../src/contexts/installation/application/restore/resolve-restore-decision.js";
 import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
 import { ScriptedPrompter } from "../../../../helpers/ports/scripted-prompter.js";
 

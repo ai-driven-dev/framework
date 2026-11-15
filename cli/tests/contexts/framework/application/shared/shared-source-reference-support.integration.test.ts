@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolveProjectRootForReferences } from "../../../../../src/contexts/framework/application/shared/shared-source-reference-support.js";
-import { HasherAdapter } from "../../../../../src/contexts/framework/infrastructure/hasher-adapter.js";
+import { HasherAdapter } from "../../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { CLIOutput } from "../../../../../src/presentation/output.js";
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
 

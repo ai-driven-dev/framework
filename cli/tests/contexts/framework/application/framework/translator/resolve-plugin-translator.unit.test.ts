@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { TranslatorDeps } from "../../../../../../src/contexts/framework/application/framework/translator/plugin-translator-factory.js";
-import { resolvePluginTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/resolve-plugin-translator.js";
+import type { TranslatorDeps } from "../../../../../../src/contexts/installation/application/materialize/plugin-translator-factory.js";
+import { resolvePluginTranslator } from "../../../../../../src/contexts/installation/application/materialize/resolve-plugin-translator.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";

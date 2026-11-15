@@ -143,10 +143,10 @@ const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: num
   { path: "src/contexts/distribution/application/refresh-marketplace.ts", named: 1 },
   { path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts", named: 1 },
   {
-    path: "src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.ts",
+    path: "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts",
     named: 1,
   },
-  { path: "src/contexts/framework/application/restore/restore-use-case.ts", named: 4 },
+  { path: "src/contexts/installation/application/restore/restore-use-case.ts", named: 4 },
   { path: "src/contexts/tools/contract/config-refs.ts", named: 4 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 1 },
 ];

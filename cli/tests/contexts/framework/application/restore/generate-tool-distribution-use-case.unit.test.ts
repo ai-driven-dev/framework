@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
-import { GenerateToolDistributionUseCase } from "../../../../../src/contexts/framework/application/restore/generate-tool-distribution-use-case.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
+import { GenerateToolDistributionUseCase } from "../../../../../src/contexts/installation/application/restore/generate-tool-distribution-use-case.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { CONFIG_VSCODE_SETTINGS } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";

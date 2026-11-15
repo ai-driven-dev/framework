@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { join, posix, resolve } from "node:path";
-import type { FileMerger } from "../../../src/contexts/framework/domain/ports/file-merger.js";
+import type { FileMerger } from "../../../src/contexts/installation/ports/file-merger.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
 import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/shared/domain/merge.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";

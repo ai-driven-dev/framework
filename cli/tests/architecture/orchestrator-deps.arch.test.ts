@@ -23,10 +23,10 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   // Five section generators reached inline through a switch on section name, plus the config
   // generator. It resolves by registering a generator per section type, not by dropping one.
   {
-    path: "src/contexts/framework/application/restore/generate-tool-distribution-use-case.ts",
+    path: "src/contexts/installation/application/restore/generate-tool-distribution-use-case.ts",
     dependencies: 9,
   },
-  { path: "src/contexts/framework/application/restore/restore-use-case.ts", dependencies: 12 },
+  { path: "src/contexts/installation/application/restore/restore-use-case.ts", dependencies: 12 },
   // Host plugin registries prove ref scope/enablement; the added native source reader independently
   // proves the current catalogue before these flows mutate it. Neither witness replaces the other.
   { path: "src/contexts/framework/application/clean-use-case.ts", dependencies: 13 },
@@ -41,7 +41,7 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     dependencies: 12,
   },
   {
-    path: "src/contexts/framework/application/restore/restore-tool-files-use-case.ts",
+    path: "src/contexts/installation/application/restore/restore-tool-files-use-case.ts",
     dependencies: 9,
   },
   {
@@ -55,13 +55,16 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     dependencies: 7,
   },
   {
-    path: "src/contexts/framework/application/install/install-ide-tool-use-case.ts",
+    path: "src/contexts/installation/application/install/install-ide-tool-use-case.ts",
     dependencies: 6,
   },
   { path: "src/contexts/framework/application/plugin/plugin-install-use-case.ts", dependencies: 6 },
-  { path: "src/contexts/framework/application/plugin/plugin-update-use-case.ts", dependencies: 6 },
   {
-    path: "src/contexts/framework/application/restore/restore-all-plugins-use-case.ts",
+    path: "src/contexts/installation/application/plugin/plugin-update-use-case.ts",
+    dependencies: 6,
+  },
+  {
+    path: "src/contexts/installation/application/restore/restore-all-plugins-use-case.ts",
     dependencies: 6,
   },
   // Carries `clean`'s shared-source guard and the separate current-source witness so a

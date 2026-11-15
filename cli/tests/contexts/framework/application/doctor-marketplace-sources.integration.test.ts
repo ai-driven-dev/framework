@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,

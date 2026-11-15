@@ -5,8 +5,8 @@ import {
   assertProjectHooksRemovable,
   assertProjectHooksUnchanged,
   removeProjectHooks,
-} from "../../../../../src/contexts/framework/application/shared/remove-project-hooks.js";
-import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+} from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   errnoError,
   FaultingFileAdapter,

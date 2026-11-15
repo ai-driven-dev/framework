@@ -6,19 +6,25 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
-import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
-import { InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
 import {
   readBuiltUserPluginFiles,
   withoutHooksPrefix,
-} from "../framework/translator/built-tree-materialization-translator.js";
-import { withoutHooks } from "../framework/translator/project-hooks-materializer.js";
-import type { PluginDistributionLoader } from "../plugin/plugin-distribution-loader.js";
-import { deleteOldFiles, writePluginFiles } from "../plugin/plugin-helpers.js";
-import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";
-import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files-use-case.js";
+} from "../../../installation/application/materialize/built-tree-materialization-translator.js";
+import { withoutHooks } from "../../../installation/application/materialize/project-hooks-materializer.js";
+import type { PluginDistributionLoader } from "../../../installation/application/plugin/plugin-distribution-loader.js";
+import {
+  deleteOldFiles,
+  writePluginFiles,
+} from "../../../installation/application/plugin/plugin-helpers.js";
+import { resolveBaseDirFromRecord } from "../../../installation/application/plugin/plugin-target-resolution.js";
+import type { BuiltMaterializationDeps } from "../../../installation/application/shared/apply-plugin-files-use-case.js";
+import {
+  InstalledPlugin,
+  PLUGIN_NAME_REGEX,
+} from "../../../installation/domain/plugins/installed-plugin.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
+import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,

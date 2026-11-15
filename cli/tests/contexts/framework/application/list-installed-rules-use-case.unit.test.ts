@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ListInstalledRulesUseCase } from "../../../../src/contexts/framework/application/list-installed-rules-use-case.js";
+import { ListInstalledRulesUseCase } from "../../../../src/contexts/installation/application/list-installed-rules-use-case.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 

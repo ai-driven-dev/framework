@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { detectToolSignals } from "../../../../src/contexts/framework/application/init-use-case.js";
+import { detectToolSignals } from "../../../../src/contexts/installation/application/init-use-case.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/index.js";
 import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
 

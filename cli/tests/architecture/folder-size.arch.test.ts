@@ -21,12 +21,6 @@ const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
   // lets a command's rendering be asserted without running the binary. Fewer files would mean
   // one module rendering several commands, which is what put the printing in the actions.
   { path: "src/presentation/display", count: 15 },
-
-  // Four native-cache and host-CLI helpers are shared by `clean` at project and machine scope
-  // both, which is what `earned-sharing.arch.test.ts` means by earned; a `clean/`-only home
-  // would pass that rule by sitting outside the directory it judges. Nothing else here groups
-  // with them.
-  { path: "src/contexts/framework/application/shared", count: 13 },
 ];
 
 /** A subfolder counts toward itself, not toward its parent. */

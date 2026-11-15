@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { InstallCommandsUseCase } from "../../../../../../src/contexts/framework/application/install/content/install-commands-use-case.js";
+import { InstallCommandsUseCase } from "../../../../../../src/contexts/installation/application/install/content/install-commands-use-case.js";
 import { antigravity } from "../../../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";

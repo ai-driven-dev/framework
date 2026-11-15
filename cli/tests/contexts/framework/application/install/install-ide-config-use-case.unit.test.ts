@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { InstallIdeConfigUseCase } from "../../../../../src/contexts/framework/application/install/install-ide-config-use-case.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import { InstallIdeConfigUseCase } from "../../../../../src/contexts/installation/application/install/install-ide-config-use-case.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit-deps.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";

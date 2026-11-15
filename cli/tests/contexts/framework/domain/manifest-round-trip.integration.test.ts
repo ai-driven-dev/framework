@@ -3,7 +3,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";
 
 const FIXTURES_DIR = join(__dirname, "../../../fixtures/manifests");

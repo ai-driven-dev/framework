@@ -5,9 +5,9 @@ import type { PluginCatalogEntry } from "../../../distribution/contract/catalog.
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import { resolvePluginSourceFromMarketplace } from "../../../distribution/domain/plugin-source-resolver.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { Manifest } from "../../domain/manifest.js";
-import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginInstallMode } from "../../domain/setup-flow.js";
 import type {
   PlannedUserPluginFileUpdate,

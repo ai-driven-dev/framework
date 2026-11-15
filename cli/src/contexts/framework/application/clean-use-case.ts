@@ -23,16 +23,22 @@ import type { HostActions } from "../../host-registration/contract/host-actions.
 import type { HostMarketplaceRegistry } from "../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../host-registration/contract/host-plugin-registry.js";
+import type { GitignoreUseCase } from "../../installation/application/gitignore-use-case.js";
+import { deletePluginFilesForTool } from "../../installation/application/plugin/plugin-helpers.js";
+import {
+  assertProjectHooksRemovable,
+  type ProjectHooksGuard,
+  removeProjectHooks,
+} from "../../installation/application/shared/remove-project-hooks.js";
+import type { NativeRegistrations } from "../../installation/domain/manifest/native-registrations.js";
+import type { Manifest } from "../../installation/domain/manifest.js";
+import { aiddGitignoreEntries } from "../../installation/domain/manifest-gitignore-entries.js";
+import type { InstalledPlugin } from "../../installation/domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
-import type { NativeRegistrations } from "../domain/manifest/native-registrations.js";
-import type { Manifest } from "../domain/manifest.js";
-import { aiddGitignoreEntries } from "../domain/manifest-gitignore-entries.js";
-import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../domain/ports/user-source-references.js";
 import { resolveHomeDir } from "../domain/reading/home-dir.js";
-import type { GitignoreUseCase } from "./gitignore-use-case.js";
 import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,
@@ -43,17 +49,11 @@ import {
 } from "./ownership/native-plugin-ownership.js";
 import { assertProjectMcpEntriesRemovable } from "./ownership/project-plugin-cleanup.js";
 import { detachUserPlugin } from "./ownership/user-plugin-ownership.js";
-import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
 import { bestEffortNativeCall } from "./shared/best-effort-native-call.js";
 import {
   purgeAllNativeCaches,
   type UndoneToolRegistrations,
 } from "./shared/purge-native-marketplace-cache.js";
-import {
-  assertProjectHooksRemovable,
-  type ProjectHooksGuard,
-  removeProjectHooks,
-} from "./shared/remove-project-hooks.js";
 import { resolveUninstallScopeOrder } from "./shared/resolve-uninstall-scope.js";
 import {
   describeGuardedPluginRefMessage,

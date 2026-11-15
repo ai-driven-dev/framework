@@ -129,6 +129,17 @@ export const ALLOWED = new Set([
   "framework->host-registration",
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
+  // Installation reads the installed tools' profiles and the translation it materializes.
+  "installation->tools",
+  "installation->translate",
+  // Transitional: the two readers below leave when the restore and plugin flows split from the
+  // marketplace fetch (`installation/application/restore`, `plugin-distribution-loader`) and the
+  // native registration record moves into host-registration commands.
+  "installation->distribution",
+  "installation->host-registration",
+  // Transitional: framework's remaining orchestrators still build on the installation record
+  // and its use cases, until each moves into orchestration.
+  "framework->installation",
 ]);
 
 /**

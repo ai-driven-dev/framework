@@ -25,7 +25,8 @@ flowchart LR
 | `src/contexts/tools/` | What the project targets and how each target is configured. One directory per tool: its profile beside its build contracts. |
 | `src/contexts/translate/` | Canonical source into target-native content, at every level. |
 | `src/contexts/distribution/` | Where content comes from and how it is fetched. A leaf: knows no tool and no installation record. |
-| `src/contexts/framework/` | The installation record and everything done to a project. The only context allowed to reach the others. |
+| `src/contexts/installation/` | The installation record and the flows that write it: install, restore, uninstall, doctor, status. |
+| `src/contexts/framework/` | The orchestrators still built on the installation record. The only context allowed to reach the others. |
 | `src/presentation/` | What speaks to a human: commands, display, prompts, output. |
 | `src/composition/` | The wiring: one module per context, composed by `framework.ts`. Only `src/cli.ts` imports it; commands receive its factories typed by `presentation/deps.ts`. |
 

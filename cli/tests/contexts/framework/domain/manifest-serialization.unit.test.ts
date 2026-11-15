@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseManifestTools } from "../../../../src/contexts/framework/domain/manifest-serialization.js";
+import { parseManifestTools } from "../../../../src/contexts/installation/domain/manifest-serialization.js";
 import {
   InvalidManifestDataError,
   InvalidManifestToolIdError,

@@ -1,11 +1,11 @@
 import { NoManifestError } from "../../../../shared/domain/errors.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
+import type { RestoreUseCase } from "../../../installation/application/restore/restore-use-case.js";
+import type { StatusUseCase } from "../../../installation/application/status-use-case.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import type { RestoreUseCase } from "../restore/restore-use-case.js";
-import type { StatusUseCase } from "../status-use-case.js";
 import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
 
 export interface RestoreAllResult {

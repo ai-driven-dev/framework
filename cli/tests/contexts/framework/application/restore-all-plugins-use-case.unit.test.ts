@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { PluginFetcher } from "../../../../src/contexts/distribution/ports/plugin-fetcher.js";
-import { RestoreAllPluginsUseCase } from "../../../../src/contexts/framework/application/restore/restore-all-plugins-use-case.js";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { PluginDistributionReader } from "../../../../src/contexts/framework/domain/ports/plugin-distribution-reader.js";
+import { RestoreAllPluginsUseCase } from "../../../../src/contexts/installation/application/restore/restore-all-plugins-use-case.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { PluginDistributionReader } from "../../../../src/contexts/installation/ports/plugin-distribution-reader.js";
 import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";

@@ -4,10 +4,10 @@
  */
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";
 import { PluginRemoveUseCase } from "../../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
-import { Manifest } from "../../../../../../src/contexts/framework/domain/manifest.js";
-import type { ProjectHooksProvenance } from "../../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
+import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
+import type { ProjectHooksProvenance } from "../../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CLIOutput } from "../../../../../../src/presentation/output.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";

@@ -5,7 +5,7 @@ import {
   toTrackedFileData,
   toTrackedFiles,
   withUpdatedHash,
-} from "../../../../../src/contexts/framework/domain/manifest/tracked-files.js";
+} from "../../../../../src/contexts/installation/domain/manifest/tracked-files.js";
 import { FileHash, InstallationFile } from "../../../../../src/shared/domain/file.js";
 
 const HASH_A = new FileHash("a".repeat(32));

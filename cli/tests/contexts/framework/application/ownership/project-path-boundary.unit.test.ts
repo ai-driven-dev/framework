@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { assertProjectPathWithinRoot } from "../../../../../src/contexts/framework/application/ownership/project-path-boundary.js";
+import { assertProjectPathWithinRoot } from "../../../../../src/contexts/installation/application/ownership/project-path-boundary.js";
 import {
   errnoError,
   FaultingFileAdapter,

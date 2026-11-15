@@ -5,7 +5,7 @@ import {
   type McpDigestMap,
   type PluginEntryData,
   parsePluginSpec,
-} from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+} from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import {
   InvalidPluginNameError,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../src/composition/tools.js";
 import { createFrameworkBuildUseCase } from "../../src/composition/translate.js";
-import { BundledAssetProviderAdapter } from "../../src/contexts/framework/infrastructure/assets/asset-loader.js";
+import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import type { FrameworkBuildMode } from "../../src/contexts/tools/contract/tool-profile.js";
 import {
   buildTargetModesOf,

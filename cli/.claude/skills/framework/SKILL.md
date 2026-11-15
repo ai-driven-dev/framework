@@ -2,7 +2,7 @@
 name: framework
 description: >
   Owns the installation record and everything done to a project, under
-  src/contexts/framework/ — the manifest aggregate, and the setup/install/restore/uninstall/doctor
+  src/contexts/framework/ and src/contexts/installation/ — the manifest aggregate, and the setup/install/restore/uninstall/doctor
   orchestration built on top of it. This is the only context allowed to reach `translate` and
   `distribution`. Use when adding a use-case that touches the manifest, a
   setup/doctor/sync/uninstall flow, a new top-level CLI orchestration, or a launcher that runs an

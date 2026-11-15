@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { catalogOf, resolveRegisteredToolId } from "../../tools/testing/catalog-of.js";

@@ -4,7 +4,7 @@ import {
   type NativeRegistrationsData,
   parseNativeRegistrations,
   toNativeRegistrationsData,
-} from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";
+} from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 
 const registrations: NativeRegistrations = {
   binary: "claude",

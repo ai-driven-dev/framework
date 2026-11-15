@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { aiddGitignoreEntries } from "../../../../src/contexts/framework/domain/manifest-gitignore-entries.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { aiddGitignoreEntries } from "../../../../src/contexts/installation/domain/manifest-gitignore-entries.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 
 describe("aiddGitignoreEntries", () => {
