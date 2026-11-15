@@ -80,7 +80,9 @@ src/
 │   │       │   └── vscode/
 │   │       └── sections/    # the parts a profile is made of: one class per section it declares
 │   ├── host-registration/    # what a host's own registry says about plugins and marketplaces, and the driving of its CLI
+│   │   ├── application/    # the host-side rules a command asks: catalogue identity and source conflict, uninstall scope, best-effort calls
 │   │   ├── contract/
+│   │   ├── domain/    # when a catalogue source has drifted from the one recorded
 │   │   └── infrastructure/
 │   ├── telemetry/    # what each billed model call consumed, read from a tool's own transcripts
 │   │   ├── application/

@@ -12,6 +12,7 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import { bestEffortNativeCall } from "../../../host-registration/application/best-effort-native-call.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
@@ -29,7 +30,6 @@ import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,
 } from "../ownership/native-marketplace-source-proof.js";
-import { bestEffortNativeCall } from "../shared/best-effort-native-call.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
 import {
   purgeAllNativeCaches,

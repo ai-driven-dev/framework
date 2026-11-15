@@ -1,7 +1,7 @@
 import { join } from "node:path";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { MarketplaceCatalogIdentity } from "../../../host-registration/contract/marketplace-source-conflict.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { ToolProfile } from "../../tools/contract/tool-profile.js";
+import type { MarketplaceCatalogIdentity } from "../contract/marketplace-source-conflict.js";
 
 /**
  * What a directory's own catalog declares about itself — `name` and its plugin names, never

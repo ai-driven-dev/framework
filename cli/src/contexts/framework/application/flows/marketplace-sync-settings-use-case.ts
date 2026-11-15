@@ -23,6 +23,15 @@ import type { RegisterFrameworkMarketplace } from "../../../distribution/applica
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import {
+  hostMarketplaceSourceConflict,
+  isDriftFound,
+  type MarketplaceSourceDriftFound,
+} from "../../../host-registration/application/host-marketplace-source-conflict.js";
+import {
+  marketplaceCatalogProbePath,
+  readMarketplaceCatalogIdentity,
+} from "../../../host-registration/application/read-marketplace-catalog-identity.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import type {
@@ -55,16 +64,7 @@ import {
   inspectNativeMarketplaceSource,
   sameNativeMarketplaceSource,
 } from "../ownership/native-marketplace-source-proof.js";
-import {
-  hostMarketplaceSourceConflict,
-  isDriftFound,
-  type MarketplaceSourceDriftFound,
-} from "../shared/host-marketplace-source-conflict.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
-import {
-  marketplaceCatalogProbePath,
-  readMarketplaceCatalogIdentity,
-} from "../shared/read-marketplace-catalog-identity.js";
 
 export interface MarketplaceSyncSettingsOptions {
   projectRoot: string;

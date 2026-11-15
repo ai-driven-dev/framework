@@ -6,6 +6,13 @@ import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import {
+  type HostMarketplaceSourceCheck,
+  hostMarketplaceSourceConflict,
+  isDriftFound,
+  type MarketplaceSourceDriftFound,
+} from "../../../host-registration/application/host-marketplace-source-conflict.js";
+import { readMarketplaceCatalogIdentity } from "../../../host-registration/application/read-marketplace-catalog-identity.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import type {
@@ -24,13 +31,6 @@ import type {
   ToolProfile,
 } from "../../../tools/contract/tool-profile.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
-import {
-  type HostMarketplaceSourceCheck,
-  hostMarketplaceSourceConflict,
-  isDriftFound,
-  type MarketplaceSourceDriftFound,
-} from "../shared/host-marketplace-source-conflict.js";
-import { readMarketplaceCatalogIdentity } from "../shared/read-marketplace-catalog-identity.js";
 
 export interface DoctorRegistrationOptions {
   manifest: Manifest;

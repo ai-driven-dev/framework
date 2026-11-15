@@ -1,16 +1,16 @@
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { ToolProfile } from "../../tools/contract/tool-profile.js";
+import type { HostMarketplaceRegistry } from "../contract/host-marketplace-registry.js";
 import {
   type MarketplaceCatalogIdentity,
   type MarketplaceSourceConflict,
   marketplaceSourceConflict,
-} from "../../../host-registration/contract/marketplace-source-conflict.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
+} from "../contract/marketplace-source-conflict.js";
 import {
   type MarketplaceSourceDrift,
   type MarketplaceSourceDriftContext,
   marketplaceSourceDrift,
-} from "../../domain/marketplace-source-drift.js";
+} from "../domain/marketplace-source-drift.js";
 import { readMarketplaceCatalogIdentity } from "./read-marketplace-catalog-identity.js";
 
 /**

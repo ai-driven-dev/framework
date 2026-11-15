@@ -454,8 +454,11 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
-                    "group": ["**/host-registration/infrastructure/**"],
-                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                    "group": [
+                      "**/host-registration/domain/**",
+                      "**/host-registration/infrastructure/**"
+                    ],
+                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -2823,8 +2826,11 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
-                    "group": ["**/host-registration/infrastructure/**"],
-                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                    "group": [
+                      "**/host-registration/domain/**",
+                      "**/host-registration/infrastructure/**"
+                    ],
+                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -2863,8 +2869,11 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
-                    "group": ["**/host-registration/infrastructure/**"],
-                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                    "group": [
+                      "**/host-registration/domain/**",
+                      "**/host-registration/infrastructure/**"
+                    ],
+                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -2908,8 +2917,11 @@
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
-                    "group": ["**/host-registration/infrastructure/**"],
-                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                    "group": [
+                      "**/host-registration/domain/**",
+                      "**/host-registration/infrastructure/**"
+                    ],
+                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -2954,8 +2966,11 @@
                     "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
                   },
                   {
-                    "group": ["**/host-registration/infrastructure/**"],
-                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                    "group": [
+                      "**/host-registration/domain/**",
+                      "**/host-registration/infrastructure/**"
+                    ],
+                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -3001,8 +3016,11 @@
                     "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
                   },
                   {
-                    "group": ["**/host-registration/infrastructure/**"],
-                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                    "group": [
+                      "**/host-registration/domain/**",
+                      "**/host-registration/infrastructure/**"
+                    ],
+                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -3048,8 +3066,11 @@
                     "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
                   },
                   {
-                    "group": ["**/host-registration/infrastructure/**"],
-                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                    "group": [
+                      "**/host-registration/domain/**",
+                      "**/host-registration/infrastructure/**"
+                    ],
+                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -3094,8 +3115,11 @@
                     "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
                   },
                   {
-                    "group": ["**/host-registration/infrastructure/**"],
-                    "message": "host-registration publishes its contract and its pure rules only: its infrastructure belongs to the composition root, see context-boundary.arch.test.ts"
+                    "group": [
+                      "**/host-registration/domain/**",
+                      "**/host-registration/infrastructure/**"
+                    ],
+                    "message": "host-registration publishes its contract and its commands only: its domain and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],

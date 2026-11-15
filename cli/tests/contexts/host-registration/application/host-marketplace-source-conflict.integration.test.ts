@@ -2,15 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   hostMarketplaceSourceConflict,
   isDriftFound,
-} from "../../../../../src/contexts/framework/application/shared/host-marketplace-source-conflict.js";
-import { userBuiltMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
-import {
-  errnoError,
-  FaultingFileAdapter,
-} from "../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
-import { registeredProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../../src/contexts/host-registration/application/host-marketplace-source-conflict.js";
+import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/paths.js";
+import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredProfile, TOOL } from "../../tools/testing/catalog-of.js";
+import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.js";
 
 const NAME = "aidd-framework";
 const LOCATION = "/home/.claude/plugins/known_marketplaces.json";

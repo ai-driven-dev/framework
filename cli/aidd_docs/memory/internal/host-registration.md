@@ -40,4 +40,4 @@ What a host (Claude Code, Codex, Copilot) says it has registered, and the calls 
 - Each port has one contract suite in `tests/contexts/host-registration/testing/`, run on its fake and on its real adapter from `tests/contexts/host-registration/ports/`.
 - The real `HostActions` and `HostMarketplaceSources` arms run a `#!/bin/sh` script on a narrowed `PATH`, so they are skipped on Windows. The repository fakes no runnable `.cmd`.
 - The disabled case is skipped for a layout whose host records none (`recordsDisabled: false`).
-- Mutation: `host-registration-rules` covers `contract/`, the only check on it since coverage excludes that folder. `host-registration-adapters` covers `infrastructure/`.
+- Mutation: `host-registration-rules` covers `contract/`, the only check on it since coverage excludes that folder. `host-registration-application` and `host-registration-domain` cover `application/` and `domain/`. `host-registration-adapters` covers `infrastructure/`.

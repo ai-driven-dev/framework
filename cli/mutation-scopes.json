@@ -22,6 +22,14 @@
       "mutate": "src/contexts/host-registration/contract/**/*.ts",
       "break": 100
     },
+    "host-registration-application": {
+      "mutate": "src/contexts/host-registration/application/**/*.ts",
+      "break": 92
+    },
+    "host-registration-domain": {
+      "mutate": "src/contexts/host-registration/domain/**/*.ts",
+      "break": 100
+    },
     "host-registration-adapters": {
       "mutate": "src/contexts/host-registration/infrastructure/**/*.ts",
       "break": 90

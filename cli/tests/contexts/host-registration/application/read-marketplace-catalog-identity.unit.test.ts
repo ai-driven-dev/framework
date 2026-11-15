@@ -3,13 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   marketplaceCatalogProbePath,
   readMarketplaceCatalogIdentity,
-} from "../../../../../src/contexts/framework/application/shared/read-marketplace-catalog-identity.js";
-import {
-  errnoError,
-  FaultingFileAdapter,
-} from "../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../../src/contexts/host-registration/application/read-marketplace-catalog-identity.js";
+import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { registeredProfile, TOOL } from "../../tools/testing/catalog-of.js";
 
 const DIR = "/marketplace";
 const CATALOG_PATH = join(DIR, ".claude-plugin", "marketplace.json");

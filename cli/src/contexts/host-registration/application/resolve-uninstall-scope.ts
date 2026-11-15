@@ -1,5 +1,5 @@
-import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
-import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
+import type { MarketplaceScope } from "../../../shared/domain/scope.js";
+import type { HostPluginRegistry } from "../contract/host-plugin-registry.js";
 
 /**
  * The scope(s) worth asking a host's own CLI to uninstall `ref` at, in the order to try them.

@@ -20,6 +20,8 @@ import type { Logger } from "../../../shared/ports/logger.js";
 import type { Prompter } from "../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../distribution/contract/marketplace.js";
 import type { MarketplaceRegistry } from "../../distribution/ports/marketplace-registry.js";
+import { bestEffortNativeCall } from "../../host-registration/application/best-effort-native-call.js";
+import { resolveUninstallScopeOrder } from "../../host-registration/application/resolve-uninstall-scope.js";
 import type { HostActions } from "../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../host-registration/contract/host-marketplace-sources.js";
@@ -59,12 +61,10 @@ import {
   inspectNativeMarketplaceSource,
 } from "./ownership/native-marketplace-source-proof.js";
 import { assertProjectMcpEntriesRemovable } from "./ownership/project-plugin-cleanup.js";
-import { bestEffortNativeCall } from "./shared/best-effort-native-call.js";
 import {
   purgeAllNativeCaches,
   type UndoneToolRegistrations,
 } from "./shared/purge-native-marketplace-cache.js";
-import { resolveUninstallScopeOrder } from "./shared/resolve-uninstall-scope.js";
 
 /** What reading this project's shared source reference found — `undefined` only
  * when there is nothing to guard on at all: the port is absent, or no shared, machine-scope
