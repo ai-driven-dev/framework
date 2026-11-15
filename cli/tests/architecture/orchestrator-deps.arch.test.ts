@@ -79,13 +79,10 @@ function isUseCase(file: string): boolean {
 /** A command is named by its verb, so no suffix finds one: it is a class with a public `execute`. */
 const COMMAND_CLASSES = new Set(
   sourceFiles()
-    .filter(isUseCase)
-    .flatMap((file) => {
-      const source = read(file);
-      return /^\s+(?:async )?execute\(/m.test(source)
-        ? [...source.matchAll(/export (?:abstract )?class (\w+)/g)].map((m) => m[1])
-        : [];
-    })
+    .filter((file) => isUseCase(file) && /^\s+(?:async )?execute\(/m.test(read(file)))
+    .flatMap((file) =>
+      [...read(file).matchAll(/export (?:abstract )?class (\w+)/g)].map((m) => m[1])
+    )
 );
 
 /**
