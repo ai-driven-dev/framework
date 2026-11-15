@@ -1,7 +1,5 @@
 import type { ConfigRef } from "../../tools/contract/config-refs.js";
 
-export const FRAMEWORK_CONFIG_PREFIX = "config/";
-
 export interface ContentSection {
   readonly name: string;
   readonly directory: string;
