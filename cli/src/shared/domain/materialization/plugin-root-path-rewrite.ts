@@ -16,15 +16,13 @@ export function rewritePluginRootInJson(
 }
 
 function rewriteStringValue(value: string, substitute?: (suffix: string) => string): string {
-  if (!value.includes(SOURCE_ROOT_PREFIX)) return value;
   if (!substitute) return value.replaceAll(SOURCE_ROOT_PREFIX, DEFAULT_RELATIVE_PREFIX);
-  return value.split(SOURCE_ROOT_PREFIX).reduce((acc, segment, i) => {
-    if (i === 0) return segment;
+  return value.split(SOURCE_ROOT_PREFIX).reduce((acc, segment) => {
     const spaceIdx = segment.search(/[\s"'<>]/);
     const suffix = spaceIdx === -1 ? segment : segment.slice(0, spaceIdx);
     const rest = spaceIdx === -1 ? "" : segment.slice(spaceIdx);
     return acc + substitute(suffix) + rest;
-  }, "");
+  });
 }
 
 function rewriteObject(

@@ -119,6 +119,10 @@ describe("serializeFrontmatter, line by line", () => {
     expect(serializeFrontmatter({ a: "[open" }, "body")).toBe("---\na: '[open'\n---\nbody");
   });
 
+  it("keeps a bracketed value behind leading whitespace a quoted string", () => {
+    expect(serializeFrontmatter({ a: ' ["x"]' }, "body")).toBe("---\na: ' [\"x\"]'\n---\nbody");
+  });
+
   it("quotes a value that only ends with a bracket", () => {
     expect(serializeFrontmatter({ a: "closed]" }, "body")).toBe("---\na: 'closed]'\n---\nbody");
   });

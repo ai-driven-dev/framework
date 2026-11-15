@@ -351,9 +351,7 @@ describe("RestoreMergeFilesUseCase", () => {
             relativePath: "config.json",
             content: distContent,
             hash: deps.hasher.hash(distContent),
-            // toolPath is framework-owned and always synced; timeout defaults to
-            // user-prime, so an undrifted value on disk is left exactly as-is.
-            mergeStrategy: { default: "user-prime", frameworkOverrideKeys: ["toolPath"] },
+            mergeStrategy: "framework-prime",
           }),
         ],
       ]),
