@@ -4,15 +4,17 @@ The host AI tools that carry a hook: how to detect each, the event for a moment,
 
 Detect by listing the project root with hidden entries, since a file search misses an empty marker.
 
-| Host / ID | Detected when | Tool call on stdin | Script starts in | Docs |
-| --- | --- | --- | --- | --- |
-| Claude Code / `claude` | `.claude/` or `CLAUDE.md` | `tool_name`, `tool_input` | the project root | [Hooks](https://code.claude.com/docs/en/hooks) |
-| Codex CLI / `codex` | `.codex/` | `tool_name`, `tool_input` | the session's folder | [Hooks](https://developers.openai.com/codex/hooks) |
-| Cursor / `cursor` | `.cursor/` | `tool_name`, `tool_input` | the project root | [Hooks](https://cursor.com/docs/hooks) |
-| GitHub Copilot / `copilot` | `.github/copilot-instructions.md` or `.github/hooks/` | `toolName`, `toolArgs`, an object or a JSON string | the project root | [Hooks](https://docs.github.com/en/copilot/reference/hooks-configuration) |
-| Antigravity / `antigravity` | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | `toolCall.name`, `toolCall.args` | `.agents/` | [Hooks](https://antigravity.google/docs/hooks) |
-| OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | `tool`, `args` | the project root | [Plugins](https://opencode.ai/docs/plugins) |
-| Kilo Code / `kilo` | `.kilo/`, `kilo.jsonc` or `kilo.json` | `tool`, `args` | the project root | [Plugins](https://kilo.ai/docs) |
+| Host / ID | Detected when | Tool call on stdin |
+| --- | --- | --- |
+| Claude Code / `claude` | `.claude/` or `CLAUDE.md` | `tool_name`, `tool_input` |
+| Codex CLI / `codex` | `.codex/` | `tool_name`, `tool_input` |
+| Cursor / `cursor` | `.cursor/` | `tool_name`, `tool_input` |
+| GitHub Copilot / `copilot` | `.github/copilot-instructions.md` or `.github/hooks/` | `toolName`, `toolArgs`, an object or a JSON string |
+| Antigravity / `antigravity` | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` | `toolCall.name`, `toolCall.args` |
+| OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | `tool`, `args` |
+| Kilo Code / `kilo` | `.kilo/`, `kilo.jsonc` or `kilo.json` | `tool`, `args` |
+
+The script starts in the project root, except on Codex, in the session's folder, and on Antigravity, in `.agents/`.
 
 ## Moment to event
 

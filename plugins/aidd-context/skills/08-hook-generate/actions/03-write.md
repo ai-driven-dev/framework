@@ -13,7 +13,7 @@ The approved input file and paths, or the findings verify sent back.
    - Approved overwrite: add `--force`.
    - Non-zero exit: quote the writer's output, then stop.
 3. Report each path written with its operation.
-4. Stop on remove, or read [verify](04-verify.md).
+4. Read [verify](04-verify.md) with the input file still in place, except on remove.
 
 ## Output
 
