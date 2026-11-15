@@ -5,8 +5,8 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribu
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { CleanUseCase } from "../../../../../src/contexts/framework/application/clean-use-case.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/host-registration/contract/registration-record.js";
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
-import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";

@@ -44,11 +44,9 @@ import {
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { NativeMarketplaceRegistration } from "../../../host-registration/contract/registration-record.js";
 import type { BuiltMarketplaceEnsurer } from "../../../installation/application/shared/ensure-built-marketplace.js";
-import type {
-  NativeMarketplaceRegistration,
-  NativeRegistrations,
-} from "../../../installation/domain/manifest/native-registrations.js";
+import type { NativeRegistrations } from "../../../installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import {
