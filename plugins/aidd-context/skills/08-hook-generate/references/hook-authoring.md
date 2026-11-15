@@ -17,14 +17,11 @@ The user picks what the hook does; `hosts.md` says what each intent becomes on e
 
 ## Rules
 
-| Id | Rule | Why |
-| --- | --- | --- |
-| H1 | One hook, one purpose, at the narrowest moment that fits. | A hook that fires too broadly slows or blocks every turn. |
-| H2 | Give a tool event a matcher on the exact tool it guards. | An empty matcher runs the script on every tool. |
-| H3 | Put the logic in the script, the config only names it. | The writer renders the config; a hand edit is lost. |
-| H4 | Write the script in a runtime the project already uses. | A teammate needs that runtime on `PATH`. |
-| H5 | Read the host's own payload on stdin, and answer in its own format. | No adapter sits between the host and the script. |
-| H6 | Branch on the host ID, the script's first argument, when several hosts share the script. | Each host sends and reads different fields. |
-| H7 | Keep a stop hook to one extra turn by reading the host's flag: `stop_hook_active` on Claude and Codex, `loop_count` on Cursor. | Without it, the turn never ends. |
-| H8 | Exit 0 when the hook has nothing to say. | Any other exit is a block or an error on some host. |
-| H9 | Write in English. | The tree is maintained in one language. |
+- H1: One hook, one purpose, at the narrowest moment that fits.
+- H2: Give a tool event a matcher on the exact tool it guards, since an empty one runs on every tool.
+- H3: Put the logic in the script; the config only names it.
+- H4: Write the script in a runtime the project already uses.
+- H5: Read the host's own payload on stdin and answer in its own format.
+- H6: Branch on the host ID, the script's first argument, when several hosts share the script.
+- H7: Keep a stop hook to one extra turn by reading `stop_hook_active` on Claude and Codex, `loop_count` on Cursor.
+- H8: Exit 0 when the hook has nothing to say.

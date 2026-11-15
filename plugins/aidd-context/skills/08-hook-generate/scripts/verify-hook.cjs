@@ -4,6 +4,8 @@
 // Host ids: claude,codex,cursor,copilot,antigravity,opencode,kilo, named in the input's `hosts`.
 // Runs each host's copy of the script with a sample native payload on stdin and checks its exit code and stdout against that host's rules.
 // Exit 0 all verified, 1 a finding or a refusal, 2 usage error, 3 filesystem error. Prints one JSON object on stdout.
+// Limits: one sample payload per host and event, so it proves the answer's format, not the script's logic;
+// a shell script whose child keeps stdout open past the timeout can hold it.
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");

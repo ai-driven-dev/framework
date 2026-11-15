@@ -5,6 +5,8 @@
 // Writes one hook as each host's native config entry, or a gateway plugin for a host that runs
 // plugins, plus a copy of its script in that host's folder.
 // Exit 0 ok, 1 refusal, 2 usage error, 3 filesystem error. Prints one JSON object on stdout.
+// Limits: owns a config entry only when its command names the script under that host's hooks/ folder;
+// writes no Windows-only command; reads a config as UTF-8 JSON and refuses JSONC comments.
 const fs = require("node:fs");
 const path = require("node:path");
 
