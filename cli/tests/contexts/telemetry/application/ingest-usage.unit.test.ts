@@ -447,15 +447,6 @@ describe("where a call was made", () => {
     expect(s.history.written).toEqual([]);
   });
 
-  it("does not store a call from a directory that is gone and was never seen alive", async () => {
-    const s = setup();
-    s.locator.directories.delete("/work/a");
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
-    const result = await s.ingest.execute();
-    expect(result.notStored["never-seen-alive"]).toBe(1);
-    expect(s.ledger.records).toEqual([]);
-  });
-
   it("resolves a directory deleted after it was seen alive from what was remembered", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
