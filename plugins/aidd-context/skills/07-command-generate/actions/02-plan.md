@@ -26,3 +26,4 @@ The approved command, input file and paths.
 ## Rules
 
 - Write nothing in the project.
+- Count only an answer given after this plan as its approval.
