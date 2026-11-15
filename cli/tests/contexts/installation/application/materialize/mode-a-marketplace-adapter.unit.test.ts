@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 function buildDist(name = "test-plugin"): PluginDistribution {
@@ -17,8 +16,7 @@ function buildDist(name = "test-plugin"): PluginDistribution {
 }
 
 function buildAdapter() {
-  const fs = new InMemoryFileAdapter();
-  return { adapter: new ModeAMarketplaceTranslator(), fs };
+  return { adapter: new ModeAMarketplaceTranslator() };
 }
 
 describe("ModeAMarketplaceTranslator", () => {
@@ -87,24 +85,6 @@ describe("ModeAMarketplaceTranslator", () => {
       expect(installed).toBeDefined();
       expect(installed?.marketplace).toBeUndefined();
       expect(installed?.files.size).toBe(0);
-    });
-  });
-
-  describe("when filesystem is not written", () => {
-    it("does not write any files to the filesystem", async () => {
-      const { adapter, fs } = buildAdapter();
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "test", []);
-      const dist = buildDist("test-plugin");
-      await adapter.addPlugin(
-        dist,
-        registeredAiProfile(TOOL.claude),
-        { kind: "local", path: "/plugin-source" },
-        "/project",
-        manifest,
-        "aidd-framework"
-      );
-      expect(fs.has("/project/.claude/plugins/test-plugin/commands/hello.md")).toBe(false);
     });
   });
 });
