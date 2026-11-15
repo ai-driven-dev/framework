@@ -49,7 +49,6 @@ export class SearchPlugins {
   private matches(entry: PluginCatalogEntry, options: SearchPluginsCommand): boolean {
     if (options.recommendedOnly && !entry.recommended) return false;
     const q = options.query.toLowerCase();
-    if (q.length === 0) return true;
     const desc = entry.description?.toLowerCase() ?? "";
     return entry.name.toLowerCase().includes(q) || desc.includes(q);
   }
