@@ -13,12 +13,11 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marke
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import { sameNativeMarketplaceSource } from "../../../host-registration/application/native-marketplace-source-proof.js";
-import {
-  enablementIsMachineGlobal,
-  type HostRegistrationOutcome,
-  type RegisteredMarketplace,
-  type RegisterPluginWithHost,
-  type RegistrationClaims,
+import type {
+  HostRegistrationOutcome,
+  RegisteredMarketplace,
+  RegisterPluginWithHost,
+  RegistrationClaims,
 } from "../../../host-registration/application/register-plugin-with-host.js";
 import type { BuiltMarketplaceEnsurer } from "../../../installation/application/shared/ensure-built-marketplace.js";
 import type { NativeRegistrations } from "../../../installation/domain/manifest/native-registrations.js";
@@ -824,4 +823,9 @@ function marketplaceRegistrationsEqual(
 
 function arraysEqual(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+/** Whether enabling a plugin acts on the whole machine; true for an editor. */
+function enablementIsMachineGlobal(tools: ToolCatalog, toolId: ToolId): boolean {
+  return tools.aiProfileIfAny(toolId)?.pluginEnablementIsMachineGlobal() ?? true;
 }
