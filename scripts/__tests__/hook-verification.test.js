@@ -39,7 +39,7 @@ function fixture(t) {
   fs.cpSync(skill, installed, { recursive: true });
   const script = path.join(installed, "scripts/verify-hook.cjs");
   assert.ok(fs.existsSync(script), "installed skill must contain its verifier");
-  const env = { PATH: `${path.dirname(process.execPath)}:/bin`, CAPTURE_DIR: captured };
+  const env = { PATH: process.env.PATH, CAPTURE_DIR: captured };
   const exec = (...args) => spawnSync(process.execPath, [script, ...args], { encoding: "utf8", cwd: dir, env });
   function copy(host, content, extension = "cjs") {
     const file = path.join(project, FOLDERS[host], "hooks", `${NAME}.${extension}`);
