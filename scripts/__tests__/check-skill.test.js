@@ -242,7 +242,7 @@ describe("skill check", () => {
   });
 
   it("a reference naming a sibling in backticks, or linking a web page, is no finding", () => {
-    mutate("references/rubric.md", "| any | yes |", "| any | yes, per `glossary.md` and [the docs](https://example.com/docs) |");
+    mutate("references/rubric.md", "| any | yes |", "| any | yes, per `hosts.md` and [the docs](https://example.com/docs) |");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
   });
 
