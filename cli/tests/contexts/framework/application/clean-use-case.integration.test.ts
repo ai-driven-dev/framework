@@ -25,6 +25,7 @@ function buildUseCase(logger: CapturingLogger): CleanUseCase {
   const fs = new FileAdapter(new HasherAdapter(), logger);
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "1.0.0", []);
+  manifest.addTool(TOOL.vscode, "1.0.0", []);
   return new CleanUseCase(
     fs,
     new InMemoryManifestRepository(manifest, projectRoot),
@@ -56,7 +57,10 @@ describe("clean and the .aidd/ directory itself", () => {
     });
 
     expect(await exists(aiddDir)).toBe(false);
-    expect(logger.infoMessages).toStrictEqual(["Removing claude files..."]);
+    expect(logger.infoMessages).toStrictEqual([
+      "Removing claude files...",
+      "Removing vscode files...",
+    ]);
   });
 
   it("finishes cleanly when .aidd/ was already removed by hand before the run", async () => {

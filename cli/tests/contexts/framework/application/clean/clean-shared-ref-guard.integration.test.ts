@@ -369,6 +369,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
     const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
     seedReferences(fs, [OTHER_PROJECT]);
     const activator = new FakeHostActions({ available: true });
+    const logger = new CapturingLogger();
 
     const useCase = buildUseCase({
       fs,
@@ -382,7 +383,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
       ),
       activator,
       binary: TOOL.codex,
-      logger: new CapturingLogger(),
+      logger,
       aiddMarketplaceRegistry: seedSharedMarketplaceRegistry(true),
     });
 
@@ -396,6 +397,9 @@ describe("clean guards a ref another project on this machine still needs", () =>
     expect(activator.removedMarketplaces).toEqual([]);
     expect(fs.getFile(`${USER_CONFIG_DIR}/references.json`)).toContain(OTHER_PROJECT);
     expect(fs.getFile(`${OTHER_PROJECT}/marker`)).toBe(OTHER_PROJECT_BYTES);
+    const warning = (ref: string) => logger.warnMessages.find((m) => m.includes(`'${ref}'`));
+    expect(warning("aidd-vcs@aidd-framework")).toContain(OTHER_PROJECT);
+    expect(warning("plugin-b@other-mkt")).not.toContain(OTHER_PROJECT);
   });
 
   it("leaves both unclaimed Codex refs enabled when the project catalogue is listed first", async () => {
