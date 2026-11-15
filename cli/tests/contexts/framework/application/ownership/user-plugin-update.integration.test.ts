@@ -170,11 +170,14 @@ describe("targeted machine native plugin update", () => {
     }
   });
 
-  it("Codex refuses targeted update because its verified binary has no update verb", async () => {
-    const f = fixture(TOOL.codex);
+  it.each([
+    ["Codex, whose verified binary has no update verb", TOOL.codex],
+    ["Cursor, which has no native activation at all", cursor],
+  ])("refuses targeted update for %s", async (_why, toolId) => {
+    const f = fixture(toolId);
     await expect(f.execute(REF)).rejects.toThrow(/does not support targeted native plugin update/);
     expect(f.activator.updatedPlugins).toEqual([]);
-    expect(f.repo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.pluginClaims).toEqual([
+    expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
       { ref: REF, dependents: [] },
     ]);
   });
