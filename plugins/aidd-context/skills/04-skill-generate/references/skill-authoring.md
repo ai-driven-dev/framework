@@ -26,4 +26,5 @@ The constraints every generated skill satisfies, this generator included. `scaff
 | R18 | Point to content by purpose, not by line number or quoted anchor. | Line numbers and headings change. |
 | R19 | Prefer positive instructions. Keep a boundary the source states with never as is. | A softened boundary stops being one. |
 | R20 | Keep emitted fenced content in the format its consumer requires. | The consumer parses it as is. |
+| R21 | A script writing into the project offers `--plan` and `--check`, keeps foreign files without `--force`, and exits 0, 1 refused, 2 usage, 3 filesystem. | Every generator writes the same way, so a caller reads any of them alike. |
 
