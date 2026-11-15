@@ -1,3 +1,4 @@
+import { expect } from "vitest";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
@@ -34,4 +35,26 @@ export class InMemoryManifestRepository implements ManifestRepository, Lock {
   getCurrent(): Manifest | null {
     return this.manifest;
   }
+}
+
+/** The repository, failing any `load` made outside its `withExclusiveAccess`. */
+export function loadingOnlyUnderLock(repo: InMemoryManifestRepository): ManifestRepository & Lock {
+  let entered = false;
+  return {
+    path: repo.path,
+    load: () => {
+      expect(entered).toBe(true);
+      return repo.load();
+    },
+    save: (manifest) => repo.save(manifest),
+    delete: () => repo.delete(),
+    withExclusiveAccess: async (action) => {
+      entered = true;
+      try {
+        return await action();
+      } finally {
+        entered = false;
+      }
+    },
+  };
 }
