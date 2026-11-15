@@ -1,6 +1,6 @@
 import { join, resolve } from "node:path";
 import type { Command } from "commander";
-import { Manifest } from "../../contexts/framework/domain/manifest.js";
+import { Manifest } from "../../contexts/installation/domain/manifest.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";

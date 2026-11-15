@@ -47,12 +47,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   // The largest context: while it had no entry the mechanism below skipped every framework
   // file, so its interior was reached unchecked. Measured, composition root excluded.
   framework: [
-    // the rule inventory `framework rules` prints, one row per installed rule
-    "src/contexts/framework/domain/installed-rule.ts",
-    // the installation record, which is what this context owns
-    "src/contexts/framework/domain/manifest.ts",
-    "src/contexts/framework/domain/ports/manifest-repository.ts",
-    "src/contexts/framework/domain/install-scope.ts",
     "src/contexts/framework/domain/project-context.ts",
     // the flows a command drives end to end
     "src/contexts/framework/application/setup-use-case.ts",
@@ -66,6 +60,38 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the one operation another context genuinely asks for: `distribution` removes a
     // marketplace and this context forgets the plugins that came from it
     "src/contexts/framework/application/flows/marketplace-remove-use-case.ts",
+  ],
+  installation: [
+    // the rule inventory `framework rules` prints, one row per installed rule
+    "src/contexts/installation/domain/installed-rule.ts",
+    // the installation record, which is what this context owns
+    "src/contexts/installation/domain/manifest.ts",
+    "src/contexts/installation/ports/manifest-repository.ts",
+    "src/contexts/installation/domain/install-scope.ts",
+    // Transitional (reference-context.md, M-I1): the flows still in framework build on these,
+    // and leave this list as each one moves behind an installation command.
+    "src/contexts/installation/application/update-gitignore.ts",
+    "src/contexts/installation/application/init-project.ts",
+    "src/contexts/installation/application/install/install-ide-config.ts",
+    "src/contexts/installation/application/install/install-runtime-config.ts",
+    "src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
+    "src/contexts/installation/application/materialize/plugin-translator.ts",
+    "src/contexts/installation/application/materialize/project-hooks-materializer.ts",
+    "src/contexts/installation/application/materialize/resolve-plugin-translator.ts",
+    "src/contexts/installation/application/ownership/project-path-boundary.ts",
+    "src/contexts/installation/application/plugin/plugin-distribution-loader.ts",
+    "src/contexts/installation/application/plugin/plugin-helpers.ts",
+    "src/contexts/installation/application/plugin/plugin-target-resolution.ts",
+    "src/contexts/installation/application/plugin/update-plugin.ts",
+    "src/contexts/installation/application/restore/restore.ts",
+    "src/contexts/installation/application/shared/apply-plugin-files.ts",
+    "src/contexts/installation/application/shared/detect-plugin-drift.ts",
+    "src/contexts/installation/application/shared/ensure-built-marketplace.ts",
+    "src/contexts/installation/application/shared/remove-project-hooks.ts",
+    "src/contexts/installation/application/report-status.ts",
+    "src/contexts/installation/domain/manifest-gitignore-entries.ts",
+    "src/contexts/installation/domain/manifest/native-registrations.ts",
+    "src/contexts/installation/domain/plugins/installed-plugin.ts",
   ],
 };
 

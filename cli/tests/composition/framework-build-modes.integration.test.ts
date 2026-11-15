@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { wireTools } from "../../src/composition/tools.js";
 import { createFrameworkBuildUseCase } from "../../src/composition/translate.js";
-import { BundledAssetProviderAdapter } from "../../src/contexts/framework/infrastructure/assets/asset-loader.js";
+import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { OutDirNotDirectoryError } from "../../src/shared/domain/errors.js";
 import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../helpers/ports/capturing-logger.js";

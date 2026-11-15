@@ -2,22 +2,22 @@
 
 ## Post-install pipeline
 
-**Rule**: a use case that installs framework files ends with `PostInstallPipelineUseCase`,
+**Rule**: a use case that installs framework files ends with `RunPostInstallPipeline`,
 never with its steps inline. A use case that only changes the manifest saves it directly.
 
-**Steps, in order**: `manifestRepo.save()`, then `GitignoreUseCase.execute()` with
+**Steps, in order**: `manifestRepo.save()`, then `UpdateGitignore.execute()` with
 `.aidd/cache/` and every installed tool's machine-local files.
 
 ```typescript
-import { PostInstallPipelineUseCase } from "../install/post-install-pipeline-use-case.js";
+import { RunPostInstallPipeline } from "../install/run-post-install-pipeline.js";
 
-await new PostInstallPipelineUseCase(this.manifestRepo, this.gitignoreUseCase).execute({
+await new RunPostInstallPipeline(this.manifestRepo, this.updateGitignore).execute({
   projectRoot: options.projectRoot,
   manifest: options.manifest,
 });
 ```
 
-The source is `install/post-install-pipeline-use-case.ts`; read it before citing a step.
+The source is `install/run-post-install-pipeline.ts`; read it before citing a step.
 
 ## Shared use-cases
 
@@ -27,7 +27,7 @@ Location: `application/shared/`. Rules:
 - Same class shape as a top-level use-case: single `execute()`, typed `*Options` in, typed
   `*Result` out.
 - Create one only when the same orchestration logic is needed by ≥2 top-level use-cases — do not
-  inline equivalent logic in each caller instead. `ensure-built-marketplace-use-case.ts` is the
+  inline equivalent logic in each caller instead. `ensure-built-marketplace.ts` is the
   canonical example: both `plugin install` and `framework update` materialize a tool's build from
   the same per-target cache.
 
@@ -38,7 +38,7 @@ receives a narrowed type.
 
 ```typescript
 if ("agents" in caps) {
-  const result = await new InstallAgentsUseCase(/* ... */).execute({
+  const result = await new InstallAgents(/* ... */).execute({
     config: toolConfig as AiTool<HasAgents>,
   });
 }
@@ -52,8 +52,8 @@ if ("agents" in caps) {
 - Sub-use-cases live in subdirectories of the parent feature: `install/`, and the equivalent
   update/uninstall directories.
 
-These five files — `install-agents-use-case.ts` with its `commands`/`rules`/`skills`
-siblings, and `install-content-section-use-case.ts`, the engine they hand a descriptor to, all
+These five files — `install-agents.ts` with its `commands`/`rules`/`skills`
+siblings, and `install-content-section.ts`, the engine they hand a descriptor to, all
 under `install/content/` — are the one place `framework` reaches directly into a `tools`
 capability class instead of through a module `tools` has declared public. The exact five pairs
 are listed in that test's baseline; there is no `hooks` sibling. `context-boundary.arch.test.ts` tracks this as a

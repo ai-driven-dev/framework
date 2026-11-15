@@ -1,4 +1,4 @@
-import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
+import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 /** Installing a plugin carrying hooks/ against OpenCode delivers the script, namespaced under
  * .opencode/hooks/<plugin>/ like .claude/ and .cursor/ already are. Never .opencode/plugin/,
@@ -7,7 +7,7 @@ import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 import { join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
+import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";

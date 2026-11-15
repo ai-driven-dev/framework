@@ -1,4 +1,4 @@
-import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
+import type { ManifestRepository } from "../../contexts/installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 

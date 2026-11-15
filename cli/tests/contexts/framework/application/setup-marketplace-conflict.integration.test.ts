@@ -57,7 +57,7 @@ async function buildUseCaseWithConflict() {
   const setupToolsUseCase = new SetupToolsUseCase(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
-    deps.installIdeConfigUseCase
+    deps.installIdeConfig
   );
   const setupPluginsPromptUseCase = new SetupPluginsPromptUseCase(
     { execute: vi.fn() },

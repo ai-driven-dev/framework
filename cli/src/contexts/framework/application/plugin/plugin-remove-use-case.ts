@@ -17,12 +17,25 @@ import type {
   HostPluginRegistry,
   HostPluginRegistryReading,
 } from "../../../host-registration/contract/host-plugin-registry.js";
+import { assertProjectPathWithinRoot } from "../../../installation/application/ownership/project-path-boundary.js";
+import {
+  deletePluginFilesForTool,
+  loadPluginManifest,
+} from "../../../installation/application/plugin/plugin-helpers.js";
+import {
+  resolveBaseDirFromRecord,
+  resolvePluginToolIds,
+} from "../../../installation/application/plugin/plugin-target-resolution.js";
+import {
+  assertProjectHooksRemovable,
+  removeProjectHooks,
+} from "../../../installation/application/shared/remove-project-hooks.js";
+import type { NativeRegistrations } from "../../../installation/domain/manifest/native-registrations.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
+import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
-import type { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 import { resolveHomeDir } from "../../domain/reading/home-dir.js";
 import { inspectNativeMarketplaceSource } from "../ownership/native-marketplace-source-proof.js";
@@ -30,11 +43,9 @@ import {
   detachNativePluginRefs,
   isMachineOwnedNativeRef,
 } from "../ownership/native-plugin-ownership.js";
-import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
 import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
-import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { resolveUninstallScopeOrder } from "../shared/resolve-uninstall-scope.js";
 import {
   describeGuardedPluginRefMessage,
@@ -45,8 +56,6 @@ import {
   toleratingUnreadableSourceReferences,
 } from "../shared/shared-source-reference-support.js";
 import { userScopeFilesSafeToDelete } from "../shared/user-scope-plugin-files.js";
-import { deletePluginFilesForTool, loadPluginManifest } from "./plugin-helpers.js";
-import { resolveBaseDirFromRecord, resolvePluginToolIds } from "./plugin-target-resolution.js";
 
 export interface PluginRemoveOptions {
   pluginName: string;

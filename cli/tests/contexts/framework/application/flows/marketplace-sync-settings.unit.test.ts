@@ -2,9 +2,9 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
-import type { EnsureBuiltMarketplace } from "../../../../../src/contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { NativePluginCliError } from "../../../../../src/shared/domain/errors.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
@@ -37,7 +37,7 @@ interface SyncSetup {
   readonly settings?: string;
   /** Marketplaces to register; the first is the one plugins are attached to. */
   readonly marketplaceNames?: readonly string[];
-  readonly ensureBuilt?: EnsureBuiltMarketplace;
+  readonly ensureBuilt?: BuiltMarketplaceEnsurer;
   /** Whether the tool's own CLI enables plugins, which decides what it registers. */
   readonly enablesPlugins?: boolean;
   /** Whether claude's own CLI is on PATH. Defaults to available. */
@@ -275,7 +275,7 @@ describe("the settings file a user also edits", () => {
 /** The build runs for every tool, before the branch that decides who writes the registration
  * down, so a build that fails is on the path of every sync. */
 describe("a marketplace that will not build", () => {
-  const failingBuild = (failFor: string): EnsureBuiltMarketplace => ({
+  const failingBuild = (failFor: string): BuiltMarketplaceEnsurer => ({
     execute: async (options) => {
       if (options.marketplace.name === failFor) throw new Error("no catalog at that source");
       return { builtDir: `/built/${options.target}`, version: "test", rebuilt: true };
@@ -310,7 +310,7 @@ describe("a marketplace no plugin points at", () => {
   it("is still built", async () => {
     const built: string[] = [];
 
-    const recordingBuild: EnsureBuiltMarketplace = {
+    const recordingBuild: BuiltMarketplaceEnsurer = {
       execute: async (options) => {
         built.push(options.marketplace.name);
         return { builtDir: `/built/${options.target}`, version: "test", rebuilt: true };
@@ -549,7 +549,7 @@ describe("what a step that could not complete leaves in warnings and errors", ()
 describe("what gets built, and how", () => {
   it("asks for a marketplace-mode build of every registered tree even when the CLI is absent", async () => {
     const requests: { name: string; mode: string }[] = [];
-    const recordingBuild: EnsureBuiltMarketplace = {
+    const recordingBuild: BuiltMarketplaceEnsurer = {
       execute: async (options) => {
         requests.push({ name: options.marketplace.name, mode: options.mode });
         return { builtDir: `/built/${options.target}`, version: "test", rebuilt: true };

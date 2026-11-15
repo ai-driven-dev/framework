@@ -5,6 +5,7 @@ paths:
   - "src/composition/host-registration.ts"
   - "tests/contexts/host-registration/**/*.ts"
   - "src/contexts/framework/application/**/*.ts"
+  - "src/contexts/installation/application/**/*.ts"
 ---
 
 # Host registration

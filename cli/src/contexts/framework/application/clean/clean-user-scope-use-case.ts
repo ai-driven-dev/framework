@@ -15,17 +15,17 @@ import type { HostActions } from "../../../host-registration/contract/host-actio
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
+import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
+import type { NativeRegistrations } from "../../../installation/domain/manifest/native-registrations.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
-import type { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 import { resolveHomeDir } from "../../domain/reading/home-dir.js";
 import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,
 } from "../ownership/native-marketplace-source-proof.js";
-import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import { bestEffortNativeCall } from "../shared/best-effort-native-call.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
 import {

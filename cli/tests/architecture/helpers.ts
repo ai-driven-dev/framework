@@ -129,6 +129,15 @@ export const ALLOWED = new Set([
   "framework->host-registration",
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
+  // Installation reads the installed tools' profiles. `installation->translate` is M-S1.
+  "installation->tools",
+  "installation->translate",
+  // Transitional (M-I1): the exact imports and the way out are in reference-context.md.
+  "installation->distribution",
+  "installation->host-registration",
+  // Transitional: framework's remaining orchestrators still build on the installation record
+  // and its use cases, until each moves into orchestration.
+  "framework->installation",
 ]);
 
 /**

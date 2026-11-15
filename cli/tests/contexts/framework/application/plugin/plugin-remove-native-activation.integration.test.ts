@@ -4,13 +4,13 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/framework/application/framework/translator/mode-a-marketplace-translator.js";
 import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
 import type {
   HostPluginRegistry,
   HostPluginRegistryReading,
 } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/errors.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";

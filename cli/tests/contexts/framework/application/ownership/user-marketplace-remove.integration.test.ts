@@ -7,13 +7,13 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import type { MarketplaceRegistry } from "../../../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/framework/application/ownership/native-host-registration-gate.js";
 import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import type {
   HostMarketplaceSources,
   NativeMarketplaceSource,
 } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";

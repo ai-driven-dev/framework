@@ -3,8 +3,8 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
+import type { NativeRegistrations } from "../../../installation/domain/manifest/native-registrations.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import { purgeCacheIfEmptyAndConfirmed, resolveCacheCandidate } from "./purge-declared-cache.js";
 
 export interface UndoneToolRegistrations {

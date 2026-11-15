@@ -8,7 +8,7 @@ vi.mock("node:fs/promises", async (importOriginal) => {
   return { ...actual, rename: vi.fn(actual.rename) };
 });
 
-import { HasherAdapter } from "../../../src/contexts/framework/infrastructure/hasher-adapter.js";
+import { HasherAdapter } from "../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 

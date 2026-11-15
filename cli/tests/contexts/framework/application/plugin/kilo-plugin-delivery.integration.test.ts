@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
-import { PluginDistributionLoader } from "../../../../../src/contexts/framework/application/plugin/plugin-distribution-loader.js";
-import { PluginUpdateUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-update-use-case.js";
 import { SetupToolsUseCase } from "../../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
+import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -28,7 +28,7 @@ async function existingProject(configPath: string) {
   const setup = new SetupToolsUseCase(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
-    deps.installIdeConfigUseCase
+    deps.installIdeConfig
   );
   const setupOptions = {
     projectRoot: ROOT,
@@ -63,7 +63,7 @@ async function existingProject(configPath: string) {
       projectRoot: ROOT,
       interactive: false,
     });
-  const update = new PluginUpdateUseCase(
+  const update = new UpdatePlugin(
     deps.fs,
     deps.manifestRepo,
     distribution,

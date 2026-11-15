@@ -4,7 +4,7 @@ import opencodeJson from "../../../../../../assets/configs/opencode/opencode.jso
 };
 import opencodeEvents from "../../../../../../assets/configs/opencode/opencode-events.js.txt";
 import { OpencodeDualConfigError } from "../../../../../shared/domain/errors.js";
-import { CONFIG_MCP, CONFIG_OPENCODE } from "../../../contract/config-refs.js";
+import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -15,6 +15,7 @@ import { defineAiTool } from "../../profile/define-tool.js";
 import { flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";
 import { buildOpencodeFlatContract } from "./build.js";
+import { OPENCODE_CONFIG_REF } from "./config-refs.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
 import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
@@ -79,7 +80,7 @@ export const opencode = defineAiTool({
         format: "json",
         mergeStrategy: "framework-prime",
         transformContent: toTypedMcpSection,
-        consumes: [CONFIG_MCP, CONFIG_OPENCODE],
+        consumes: [MCP_CONFIG_REF, OPENCODE_CONFIG_REF],
         outputPathCandidates: {
           tiers: [["opencode.json", "opencode.jsonc"]],
           fallback: "opencode.json",

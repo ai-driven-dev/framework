@@ -2,7 +2,7 @@ import { join } from "node:path";
 import claudeSettings from "../../../../../../assets/configs/claude/settings.json" with {
   type: "json",
 };
-import { CONFIG_MCP } from "../../../contract/config-refs.js";
+import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { sharedMarketplaceKey } from "../../marketplace-entry.js";
@@ -82,7 +82,7 @@ export const claude = defineAiTool({
       config: new McpConfigPart({
         outputPath: ".mcp.json",
         format: "json",
-        consumes: [CONFIG_MCP],
+        consumes: [MCP_CONFIG_REF],
       }),
       plugin: PLUGIN_MCP,
     },

@@ -2,7 +2,7 @@ import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "
 import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
 import { CLAUDE_HOOKS } from "../../../src/contexts/tools/domain/profiles/claude/hooks.js";
 import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
@@ -110,10 +110,10 @@ async function deps(project: string) {
 
 async function installTool(project: string, toolId: AiToolId): Promise<void> {
   const d = await deps(project);
-  const { InitUseCase } = await import(
-    "../../../src/contexts/framework/application/init-use-case.js"
+  const { InitProject } = await import(
+    "../../../src/contexts/installation/application/init-project.js"
   );
-  await new InitUseCase(d.fs, d.manifestRepo).execute({ projectRoot: project, tools: catalogOf() });
+  await new InitProject(d.fs, d.manifestRepo).execute({ projectRoot: project, tools: catalogOf() });
   const install = { tools: catalogOf(), toolId, force: false, version: "1.0.0" };
   await d.installAiToolUseCase.execute({
     ...install,

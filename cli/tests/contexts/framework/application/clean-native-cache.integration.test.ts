@@ -8,14 +8,14 @@ import { describe, expect, it } from "vitest";
 import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
 import { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
-import { GitignoreUseCase } from "../../../../src/contexts/framework/application/gitignore-use-case.js";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
 import type {
   HostMarketplaceRegistry,
   HostMarketplaceRegistryReading,
 } from "../../../../src/contexts/host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
+import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { AIDD_DIR } from "../../../../src/shared/domain/paths.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
@@ -216,7 +216,7 @@ function buildUseCase(deps: {
     deps.fs,
     manifestRepo,
     deps.logger,
-    new GitignoreUseCase(deps.fs),
+    new UpdateGitignore(deps.fs),
     new Map([[deps.binary, deps.activator]]),
     deps.aiddMarketplaceRegistry,
     undefined,

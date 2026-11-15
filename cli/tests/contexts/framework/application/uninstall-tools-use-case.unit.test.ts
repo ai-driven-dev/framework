@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { UninstallToolsUseCase } from "../../../../src/contexts/framework/application/uninstall/uninstall-tools-use-case.js";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { type FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";

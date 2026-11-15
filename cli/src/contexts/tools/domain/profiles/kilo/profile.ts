@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import kiloJson from "../../../../../../assets/configs/kilo/kilo.json" with { type: "json" };
-import { CONFIG_MCP } from "../../../contract/config-refs.js";
+import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import {
   buildAiddCommandFilePath,
   convertCommandFrontmatterNoHint,
@@ -59,7 +59,7 @@ export const kilo = defineAiTool({
         format: "json",
         mergeStrategy: "framework-prime",
         transformContent: toTypedMcpSection,
-        consumes: [CONFIG_MCP],
+        consumes: [MCP_CONFIG_REF],
         outputPathCandidates: KILO_OUTPUT_PATH_CANDIDATES,
       }),
     },

@@ -4,7 +4,7 @@ import copilotVscodeSettings from "../../../../../../assets/configs/copilot/vsco
 };
 import { GITKEEP_FILE } from "../../../../../shared/domain/file.js";
 import { DOCS_DIR } from "../../../../../shared/domain/paths.js";
-import { CONFIG_MCP } from "../../../contract/config-refs.js";
+import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { sharedMarketplaceKey } from "../../marketplace-entry.js";
@@ -247,7 +247,7 @@ export const copilot = defineAiTool({
       config: new McpConfigPart({
         outputPath: ".vscode/mcp.json",
         format: "json",
-        consumes: [CONFIG_MCP],
+        consumes: [MCP_CONFIG_REF],
         transformContent: (content) => {
           const parsed = JSON.parse(content) as Record<string, unknown>;
           if ("mcpServers" in parsed && !("servers" in parsed)) {

@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
+import { parseInstallScope } from "../../contexts/installation/domain/install-scope.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { UnknownAiToolIdError } from "../../shared/domain/errors.js";
 import type { AiToolId } from "../../shared/domain/tool.js";

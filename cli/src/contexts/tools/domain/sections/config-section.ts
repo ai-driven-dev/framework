@@ -1,11 +1,12 @@
 import { CapabilityConfigError } from "../../../../shared/domain/errors.js";
 import type { ConfigAsset } from "../../../../shared/domain/file.js";
 import type { MergeStrategy } from "../../../../shared/domain/merge.js";
+import type { ConfigRef } from "../../contract/config-refs.js";
 
 type ConfigSectionParams = {
   outputPath: string;
   mergeStrategy: MergeStrategy;
-  consumes?: readonly string[];
+  consumes?: readonly ConfigRef[];
   staticContent?: string;
   staticContentAssetFile?: string;
   requiresTool?: string;
@@ -36,7 +37,12 @@ export class ConfigSection {
   }
 
   consumes(configName: string): boolean {
-    return this.#params.consumes?.includes(configName) ?? false;
+    return this.#params.consumes?.some((ref) => ref.name === configName) ?? false;
+  }
+
+  /** Every config artifact this section takes in, with where the canonical source keeps it. */
+  consumedRefs(): readonly ConfigRef[] {
+    return (this.#params.consumes ?? []).map((ref) => ({ ...ref }));
   }
 
   /** The tool that must be installed for this section's content to apply, or `null`. */

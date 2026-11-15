@@ -5,7 +5,7 @@
 - Tracks every installed framework file with its MD5 hash
 - Persisted at `.aidd/manifest.json`
 - Single source of truth for installed state — the version guard reads `MANIFEST_VERSION`
-  (`contexts/framework/domain/manifest-serialization.ts`) and nothing else on load, refusing an older manifest by
+  (`contexts/installation/domain/manifest-serialization.ts`) and nothing else on load, refusing an older manifest by
   naming what to do with the document (no CLI migrates one forward), and a newer one by naming
   self-update
 
@@ -17,7 +17,7 @@
 
 ## Saving
 
-- Installing files: save through `PostInstallPipelineUseCase`, which also updates `.gitignore` — see `references/post-install-pipeline.md`
+- Installing files: save through `RunPostInstallPipeline`, which also updates `.gitignore` — see `references/post-install-pipeline.md`
 - Changing only the manifest (plugin add/remove, marketplace sync, restore): `manifestRepo.save()` directly
 
 ## Merge file tracking

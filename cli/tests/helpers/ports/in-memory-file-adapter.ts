@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { join, posix, resolve } from "node:path";
-import type { FileMerger } from "../../../src/contexts/framework/domain/ports/file-merger.js";
+import type { FileMerger } from "../../../src/contexts/installation/ports/file-merger.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
 import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/shared/domain/merge.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
@@ -215,7 +215,7 @@ function norm(path: string): string {
 }
 
 // The real adapter's `stat` and `readdir` accept a trailing separator on a directory, and
-// callers spell directories that way (`status-use-case.ts` joins a tool directory ending in "/").
+// callers spell directories that way (`report-status.ts` joins a tool directory ending in "/").
 function dirKey(path: string): string {
   const key = norm(path);
   return key.length > 1 && key.endsWith("/") ? key.replace(/\/+$/, "") || "/" : key;

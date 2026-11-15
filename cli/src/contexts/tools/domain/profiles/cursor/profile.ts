@@ -2,7 +2,7 @@ import { join } from "node:path";
 import cursorSettings from "../../../../../../assets/configs/cursor/settings.json" with {
   type: "json",
 };
-import { CONFIG_MCP } from "../../../contract/config-refs.js";
+import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport, projectHooksSupport } from "../../formats/hooks-descriptor.js";
 import { defineAiTool } from "../../profile/define-tool.js";
@@ -89,7 +89,7 @@ export const cursor = defineAiTool({
       config: new McpConfigPart({
         outputPath: `${DIRECTORY}mcp.json`,
         format: "json",
-        consumes: [CONFIG_MCP],
+        consumes: [MCP_CONFIG_REF],
       }),
       plugin: PLUGIN_MCP,
     },

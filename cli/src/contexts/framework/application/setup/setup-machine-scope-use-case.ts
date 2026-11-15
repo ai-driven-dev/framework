@@ -1,7 +1,7 @@
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
+import { Manifest } from "../../../installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import type { SetupFlow } from "../../domain/setup-flow.js";
 import type {
   MarketplaceSyncSettings,

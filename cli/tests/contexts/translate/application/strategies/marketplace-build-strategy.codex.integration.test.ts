@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
+import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { parseToml } from "../../../../../src/contexts/tools/domain/formats/toml.js";
 import { buildCodexContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";

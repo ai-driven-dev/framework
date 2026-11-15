@@ -1,13 +1,13 @@
 import { dirname, join, normalize } from "node:path";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
 import {
   extractAtReferences,
   extractMarkdownLinkTargets,
   isFileReference,
 } from "../../domain/formats/markdown-references.js";
-import type { Manifest } from "../../domain/manifest.js";
 
 export interface DoctorReferencesOptions {
   manifest: Manifest;

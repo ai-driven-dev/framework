@@ -88,13 +88,12 @@ function toolsNamedIn(source: string, ids: readonly string[]): string[] {
 
 /**
  * Files naming a tool outside its profile today, with how many they name; the list may only
- * shrink, and a listed file may not take on another tool. Two are not debt:
- * `tool-recommendations.ts` and `config-refs.ts`, each naming a tool for a reason no profile
- * carries. The rest is host wiring and words shown to a user.
+ * shrink, and a listed file may not take on another tool. One is not debt:
+ * `tool-recommendations.ts`, naming a tool for a reason no profile carries. The rest is host
+ * wiring and words shown to a user.
  */
 const BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/framework/domain/tool-recommendations.ts", named: 4 },
-  { path: "src/contexts/tools/contract/config-refs.ts", named: 1 },
   { path: "src/presentation/commands/setup.ts", named: 2 },
   // The foreign-file suffix vocabulary, held equal to the registered AI profiles by conformance.
   // It vanishes when the profiles move to composition and hand each section its own filter.
@@ -135,19 +134,15 @@ function toolIdentifiersIn(source: string, ids: readonly string[]): string[] {
 /**
  * Files under `ISOLATED_FROM_TOOLS` still naming a tool in an identifier, with how many
  * distinct identifiers; the list may only shrink, and a listed file may not take on another.
- * The file under `tools/contract/` is the shared vocabulary itself: the config artifact names a
- * profile consumes.
  */
 const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/distribution/application/fetch-marketplace-source.ts", named: 1 },
   { path: "src/contexts/distribution/application/refresh-marketplace.ts", named: 1 },
   { path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts", named: 1 },
   {
-    path: "src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.ts",
+    path: "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts",
     named: 1,
   },
-  { path: "src/contexts/framework/application/restore/restore-use-case.ts", named: 4 },
-  { path: "src/contexts/tools/contract/config-refs.ts", named: 4 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", named: 1 },
 ];
 

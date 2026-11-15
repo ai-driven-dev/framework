@@ -1,5 +1,5 @@
-import type { Manifest } from "../../../src/contexts/framework/domain/manifest.js";
-import type { ManifestRepository } from "../../../src/contexts/framework/domain/ports/manifest-repository.js";
+import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
 
 export class InMemoryManifestRepository implements ManifestRepository {
   /** Derived from the root the test drives the use case with, never a fixed literal: a

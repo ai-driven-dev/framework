@@ -3,11 +3,11 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
   InstalledPlugin,
   type PluginEntryData,
-} from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+} from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";

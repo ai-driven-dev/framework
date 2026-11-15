@@ -8,12 +8,12 @@ import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 import { detachNativePluginRefs } from "../ownership/native-plugin-ownership.js";
 import { detachUserPlugin } from "../ownership/user-plugin-ownership.js";
-import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 
 export interface UninstallToolsOptions {
   toolIds: ToolId[];

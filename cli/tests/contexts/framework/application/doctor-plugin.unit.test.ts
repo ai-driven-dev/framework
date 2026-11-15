@@ -8,10 +8,10 @@ import { DoctorReferencesUseCase } from "../../../../src/contexts/framework/appl
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { DoctorTrackedFilesUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-tracked-files-use-case.js";
 import { DoctorUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-use-case.js";
-import { DetectPluginDriftUseCase } from "../../../../src/contexts/framework/application/shared/detect-plugin-drift-use-case.js";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../../../src/contexts/framework/domain/ports/manifest-repository.js";
+import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { Hasher } from "../../../../src/shared/ports/hasher.js";
@@ -69,7 +69,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): DoctorUseCase {
     makeManifestRepo(manifest),
     new DoctorTrackedFilesUseCase(fs),
     new DoctorMergeFilesUseCase(fs, noopHasher),
-    new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs)),
+    new DoctorPluginUseCase(new DetectPluginDrift(fs)),
     new DoctorReferencesUseCase(fs),
     new DoctorLayoutUseCase(fs),
     new DoctorRegistrationUseCase(
@@ -155,7 +155,7 @@ describe("DoctorUseCase — plugin integrity", () => {
   describe("when narrowed to a set of tools", () => {
     it("ignores the plugins of a tool outside the set", async () => {
       const fs = makeFs(false, EXPECTED_HASH);
-      const useCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
+      const useCase = new DoctorPluginUseCase(new DetectPluginDrift(fs));
 
       const issues = await useCase.execute({
         tools: catalogOf(),
@@ -169,7 +169,7 @@ describe("DoctorUseCase — plugin integrity", () => {
 
     it("still checks the plugins of a tool inside the set", async () => {
       const fs = makeFs(false, EXPECTED_HASH);
-      const useCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
+      const useCase = new DoctorPluginUseCase(new DetectPluginDrift(fs));
 
       const issues = await useCase.execute({
         tools: catalogOf(),
@@ -200,7 +200,7 @@ describe("DoctorUseCase — plugin integrity", () => {
         })
       );
       const fs = makeFs(false, EXPECTED_HASH);
-      const useCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
+      const useCase = new DoctorPluginUseCase(new DetectPluginDrift(fs));
 
       const issues = await useCase.execute({
         tools: catalogOf(),
@@ -246,7 +246,7 @@ describe("DoctorUseCase — plugin integrity", () => {
         listDirectory: async () => [],
         listFilesRecursive: async () => [],
       };
-      const pluginUseCase = new DoctorPluginUseCase(new DetectPluginDriftUseCase(fs));
+      const pluginUseCase = new DoctorPluginUseCase(new DetectPluginDrift(fs));
 
       await pluginUseCase.execute({
         tools: catalogOf(),

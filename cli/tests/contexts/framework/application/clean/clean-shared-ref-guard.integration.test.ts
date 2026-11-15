@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { CleanUseCase } from "../../../../../src/contexts/framework/application/clean-use-case.js";
-import { GitignoreUseCase } from "../../../../../src/contexts/framework/application/gitignore-use-case.js";
-import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/framework/infrastructure/user-source-references-adapter.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
+import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -133,7 +133,7 @@ function buildUseCase(deps: {
   logger: CapturingLogger;
   aiddMarketplaceRegistry: InMemoryMarketplaceRegistry;
   userManifestRepo?: InMemoryManifestRepository;
-  gitignore?: GitignoreUseCase;
+  gitignore?: UpdateGitignore;
 }): CleanUseCase {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
   const userSourceReferences = new UserSourceReferencesAdapter(deps.fs, () => USER_CONFIG_DIR);
@@ -141,7 +141,7 @@ function buildUseCase(deps: {
     deps.fs,
     manifestRepo,
     deps.logger,
-    deps.gitignore ?? new GitignoreUseCase(deps.fs),
+    deps.gitignore ?? new UpdateGitignore(deps.fs),
     new Map([[deps.binary, deps.activator]]),
     deps.aiddMarketplaceRegistry,
     undefined,
@@ -203,7 +203,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
       for (const name of ["shared", "local-only", "unrelated"])
         machine.addPlugin(TOOL.cursor, record(name));
       const machineRepo = new InMemoryManifestRepository(machine);
-      const gitignore = new GitignoreUseCase(fs);
+      const gitignore = new UpdateGitignore(fs);
       if (outcome === "fails")
         gitignore.remove = async () => {
           throw new Error("gitignore cleanup failed");

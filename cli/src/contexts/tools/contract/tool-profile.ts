@@ -3,6 +3,7 @@ import type { FlatHooksLoaderEntry } from "../../../shared/domain/materializatio
 import type { MergeStrategy } from "../../../shared/domain/merge.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { FlatHooksBridge, ToolBuildContract } from "./build-contract.js";
+import type { ConfigRef } from "./config-refs.js";
 import type {
   GlobalFiles,
   MarketplaceSettingsInput,
@@ -131,6 +132,8 @@ export interface McpPluginMerge {
 export interface McpConfigAnswers {
   /** Whether the tool takes the framework config artifact named `configName` into this file. */
   consumes(configName: string): boolean;
+  /** Every config artifact this file takes in, with where the canonical source keeps it. */
+  consumedRefs(): readonly ConfigRef[];
   mergeStrategy(): "user-prime" | "framework-prime" | "none";
   /** A plugin's mcp json rewritten to this tool's own shape. */
   transform(mcpJson: string): string;
@@ -165,6 +168,8 @@ export interface McpConfigAnswers {
 export interface SettingsFileAnswers {
   /** Whether the tool takes the framework config artifact named `configName` into this file. */
   consumes(configName: string): boolean;
+  /** Every config artifact this file takes in, with where the canonical source keeps it. */
+  consumedRefs(): readonly ConfigRef[];
   /** The tool that must be installed for this file to apply, or null. */
   requiredTool(): string | null;
   outputPath(): string;

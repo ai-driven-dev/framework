@@ -26,6 +26,7 @@ describe("splitting a scope into shards", () => {
   it("declares shards only where a scope is worth splitting, never on the canary", () => {
     expect(sharded.map(([name]) => name).sort()).toEqual([
       "framework",
+      "installation",
       "kernel",
       "telemetry",
       "tools",

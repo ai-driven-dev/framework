@@ -97,10 +97,15 @@ describe("McpSection declarations", () => {
     expect(new McpConfigPart({ outputPath: ".mcp.json", format: "json" }).consumes("mcp")).toBe(
       false
     );
+    expect(new McpConfigPart({ outputPath: ".mcp.json", format: "json" }).consumedRefs()).toEqual(
+      []
+    );
     expect(
-      new McpConfigPart({ outputPath: ".mcp.json", format: "json", consumes: ["mcp"] }).consumes(
-        "mcp"
-      )
+      new McpConfigPart({
+        outputPath: ".mcp.json",
+        format: "json",
+        consumes: [{ name: "mcp", path: "config/mcp.json" }],
+      }).consumes("mcp")
     ).toBe(true);
   });
 

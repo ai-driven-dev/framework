@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { StatusAllUseCase } from "../../../../src/contexts/framework/application/global/status-all-use-case.js";
 import type {
-  StatusOptions,
+  ReportStatusCommand,
+  ReportStatusResult,
   StatusQuery,
-  StatusReport,
-} from "../../../../src/contexts/framework/application/status-use-case.js";
+} from "../../../../src/contexts/installation/application/report-status.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
-type Report = StatusReport;
-type Options = StatusOptions;
+type Report = ReportStatusResult;
+type Options = ReportStatusCommand;
 
 const DRIFT = [
   {

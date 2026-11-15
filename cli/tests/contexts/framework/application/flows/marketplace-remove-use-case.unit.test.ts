@@ -5,8 +5,8 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribu
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-remove-use-case.js";
 import { ProjectPluginCleanup } from "../../../../../src/contexts/framework/application/ownership/project-plugin-cleanup.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/framework/domain/plugins/installed-plugin.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,

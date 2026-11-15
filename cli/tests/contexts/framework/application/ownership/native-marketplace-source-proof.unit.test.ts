@@ -3,12 +3,12 @@ import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,
 } from "../../../../../src/contexts/framework/application/ownership/native-marketplace-source-proof.js";
-import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/framework/domain/manifest/native-registrations.js";
 import type {
   HostMarketplaceSources,
   NativeMarketplaceSource,
 } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/contract/host-plugin-registry.js";
+import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const SOURCE: NativeMarketplaceSource = {

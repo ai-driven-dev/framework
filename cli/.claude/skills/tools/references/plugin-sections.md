@@ -23,7 +23,7 @@ cannot state, and a copied list would age at every field.
 - `null` — neutral native; no translation strategy applies.
 
 The profile only declares the mode. Routing on it at install time is `framework`'s job
-(`contexts/framework/application/framework/translator/plugin-translator-factory.ts` — a name that
+(`contexts/installation/application/materialize/plugin-translator-factory.ts` — a name that
 predates the `translate` context and should not be confused with it). `translate` itself does the
 author-side `aidd translate` build, a different pipeline reading the same capability.
 

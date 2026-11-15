@@ -34,21 +34,21 @@ import {
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
-import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
+import type { BuiltMarketplaceEnsurer } from "../../../installation/application/shared/ensure-built-marketplace.js";
 import type {
   NativeMarketplaceRegistration,
   NativeRegistrations,
-} from "../../domain/manifest/native-registrations.js";
-import { Manifest } from "../../domain/manifest.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+} from "../../../installation/domain/manifest/native-registrations.js";
+import { Manifest } from "../../../installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
+import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
 import type { UserSourceReferences } from "../../domain/ports/user-source-references.js";
 import {
   inspectNativeMarketplaceSource,
   sameNativeMarketplaceSource,
 } from "../ownership/native-marketplace-source-proof.js";
-import type { EnsureBuiltMarketplace } from "../shared/ensure-built-marketplace-use-case.js";
 import {
   hostMarketplaceSourceConflict,
   isDriftFound,
@@ -160,7 +160,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     private readonly logger: Logger,
     /** Native plugin CLI activators, keyed by the `binary` each profile declares. */
     private readonly activators: ReadonlyMap<string, HostActions>,
-    private readonly ensureBuilt: EnsureBuiltMarketplace,
+    private readonly ensureBuilt: BuiltMarketplaceEnsurer,
     /** Readers of a host's own marketplace registry, keyed by `AiToolId` — only a tool whose
      * profile declares `NativeActivation.marketplaceRegistry` is ever looked up here, so a tool
      * absent from this map still syncs. */
@@ -168,7 +168,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       AiToolId,
       HostMarketplaceRegistry
     > = new Map(),
-    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplaceUseCase`'s
+    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
      * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
      * already built before this runs, never from a path recomputed without one. */
     private readonly userCacheRoot: () => string = () => "",

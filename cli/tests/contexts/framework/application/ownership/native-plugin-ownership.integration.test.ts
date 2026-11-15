@@ -3,7 +3,7 @@ import {
   detachNativePluginRefs,
   isMachineOwnedNativeRef,
 } from "../../../../../src/contexts/framework/application/ownership/native-plugin-ownership.js";
-import { Manifest } from "../../../../../src/contexts/framework/domain/manifest.js";
+import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";

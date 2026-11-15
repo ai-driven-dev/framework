@@ -4,18 +4,18 @@ import { join } from "node:path";
 import { wireTools } from "../../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { GitignoreUseCase } from "../../../../src/contexts/framework/application/gitignore-use-case.js";
-import { InitUseCase } from "../../../../src/contexts/framework/application/init-use-case.js";
-import { InstallIdeConfigUseCase } from "../../../../src/contexts/framework/application/install/install-ide-config-use-case.js";
-import { InstallRuntimeConfigUseCase } from "../../../../src/contexts/framework/application/install/install-runtime-config-use-case.js";
-import { PostInstallPipelineUseCase } from "../../../../src/contexts/framework/application/install/post-install-pipeline-use-case.js";
-import { Manifest } from "../../../../src/contexts/framework/domain/manifest.js";
-import type { Platform } from "../../../../src/contexts/framework/domain/ports/platform.js";
-import { BundledAssetProviderAdapter } from "../../../../src/contexts/framework/infrastructure/assets/asset-loader.js";
-import { HasherAdapter } from "../../../../src/contexts/framework/infrastructure/hasher-adapter.js";
-import { JsonFileMergerAdapter } from "../../../../src/contexts/framework/infrastructure/json-file-merger-adapter.js";
-import { ManifestRepositoryAdapter } from "../../../../src/contexts/framework/infrastructure/manifest-repository-adapter.js";
-import { PluginDistributionReaderAdapter } from "../../../../src/contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
+import { InitProject } from "../../../../src/contexts/installation/application/init-project.js";
+import { InstallIdeConfig } from "../../../../src/contexts/installation/application/install/install-ide-config.js";
+import { InstallRuntimeConfig } from "../../../../src/contexts/installation/application/install/install-runtime-config.js";
+import { RunPostInstallPipeline } from "../../../../src/contexts/installation/application/install/run-post-install-pipeline.js";
+import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
+import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import { BundledAssetProviderAdapter } from "../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
+import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
+import { JsonFileMergerAdapter } from "../../../../src/contexts/installation/infrastructure/json-file-merger-adapter.js";
+import { ManifestRepositoryAdapter } from "../../../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
+import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import type { Platform } from "../../../../src/contexts/installation/ports/platform.js";
 import { CLIOutput } from "../../../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../../../src/presentation/terminal/prompter-adapter.js";
 
@@ -212,21 +212,21 @@ export function buildDeps(projectRoot: string) {
     registeredManifestProbes()
   );
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
-  const gitignoreUseCase = new GitignoreUseCase(fs);
-  const postInstallPipelineUseCase = new PostInstallPipelineUseCase(manifestRepo, gitignoreUseCase);
-  const installRuntimeConfigUseCase = new InstallRuntimeConfigUseCase(
+  const updateGitignore = new UpdateGitignore(fs);
+  const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore);
+  const installRuntimeConfigUseCase = new InstallRuntimeConfig(
     fs,
     hasher,
     logger,
     assetProvider,
-    postInstallPipelineUseCase
+    runPostInstallPipeline
   );
-  const installIdeConfigUseCase = new InstallIdeConfigUseCase(
+  const installIdeConfig = new InstallIdeConfig(
     fs,
     hasher,
     logger,
     assetProvider,
-    postInstallPipelineUseCase
+    runPostInstallPipeline
   );
   const currentVersionProvider: VersionReader = new CurrentVersionAdapter();
   return {
@@ -239,7 +239,7 @@ export function buildDeps(projectRoot: string) {
     pluginDistributionReader,
     pluginCatalogRepository,
     installRuntimeConfigUseCase,
-    installIdeConfigUseCase,
+    installIdeConfig,
     currentVersionProvider,
   };
 }
@@ -259,7 +259,7 @@ export async function initProject(
   deps: ReturnType<typeof buildDeps>,
   projectRoot: string
 ): Promise<void> {
-  const initUseCase = new InitUseCase(deps.fs, deps.manifestRepo);
+  const initUseCase = new InitProject(deps.fs, deps.manifestRepo);
   await initUseCase.execute({
     projectRoot,
     tools: catalogOf(),
@@ -274,7 +274,7 @@ export async function installTool(
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = "test";
   if (catalogOf().isIdeTool(toolId)) {
-    return deps.installIdeConfigUseCase.execute({
+    return deps.installIdeConfig.execute({
       tools: catalogOf(),
       toolId,
       projectRoot,

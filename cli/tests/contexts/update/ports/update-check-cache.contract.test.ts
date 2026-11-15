@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { HasherAdapter } from "../../../../src/contexts/framework/infrastructure/hasher-adapter.js";
+import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { UpdateCheckCacheAdapter } from "../../../../src/contexts/update/infrastructure/update-check-cache-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.js";

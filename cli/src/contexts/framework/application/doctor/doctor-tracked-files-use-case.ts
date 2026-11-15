@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
-import type { Manifest } from "../../domain/manifest.js";
 
 export interface DoctorTrackedFilesOptions {
   manifest: Manifest;

@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { parseInstallScope } from "../../contexts/framework/domain/install-scope.js";
+import { parseInstallScope } from "../../contexts/installation/domain/install-scope.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";

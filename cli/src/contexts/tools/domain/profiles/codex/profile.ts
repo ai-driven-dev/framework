@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import codexConfigToml from "../../../../../../assets/configs/codex/config.toml";
-import { CONFIG_MCP } from "../../../contract/config-refs.js";
+import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { buildAiddCommandFilePath, convertCommandFrontmatter } from "../../formats/command.js";
 import { hooksConfigPart, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { tomlAgentFrontmatter, tomlAgentToml } from "../../formats/toml-agent.js";
@@ -95,7 +95,7 @@ export const codex = defineAiTool({
         outputPath: ".codex/config.toml",
         format: "toml",
         mergeFn: mergeCodexConfigToml,
-        consumes: [CONFIG_MCP],
+        consumes: [MCP_CONFIG_REF],
       }),
       plugin: PLUGIN_MCP,
     },

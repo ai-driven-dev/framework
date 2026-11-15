@@ -17,13 +17,13 @@ import {
   describePluginDiff,
   pluginSetDifference,
 } from "../../../host-registration/contract/marketplace-source-conflict.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   MarketplaceRegistrationAnswers,
   ToolProfile,
 } from "../../../tools/contract/tool-profile.js";
 import type { DoctorIssue } from "../../domain/doctor.js";
-import type { Manifest } from "../../domain/manifest.js";
 import {
   type HostMarketplaceSourceCheck,
   hostMarketplaceSourceConflict,
@@ -74,7 +74,7 @@ export class DoctorRegistrationUseCase {
       AiToolId,
       HostMarketplaceRegistry
     > = new Map(),
-    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplaceUseCase`'s
+    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
      * own `userCacheRoot` — needed to recompute the same path that use case would build, without
      * running a build. No default: a caller with nothing real to pass would silently recompute a
      * path this run never built. */
@@ -100,7 +100,7 @@ export class DoctorRegistrationUseCase {
    * the sync-time guard, so a conflict is visible between two `sync` runs, not only when one fails.
    *
    * The expected source is **recomputed**, never stored: `builtMarketplaceDir` /
-   * `userBuiltMarketplaceDir` are the same pure functions `EnsureBuiltMarketplaceUseCase` calls to
+   * `userBuiltMarketplaceDir` are the same pure functions `EnsureBuiltMarketplace` calls to
    * decide where it builds, so nothing here triggers a build. Silent on an unreadable registry and
    * on a source that has never been built — reporting a conflict against a path nothing has ever
    * pointed at would invent the exact false positive this guard exists to prevent.

@@ -2,7 +2,7 @@
 name: framework
 description: >
   Owns the installation record and everything done to a project, under
-  src/contexts/framework/ — the manifest aggregate, and the setup/install/restore/uninstall/doctor
+  src/contexts/framework/ and src/contexts/installation/ — the manifest aggregate, and the setup/install/restore/uninstall/doctor
   orchestration built on top of it. This is the only context allowed to reach `translate` and
   `distribution`. Use when adding a use-case that touches the manifest, a
   setup/doctor/sync/uninstall flow, a new top-level CLI orchestration, or a launcher that runs an
@@ -40,7 +40,7 @@ disk is exactly the job that needs all three.
   cache/network fallback, typed-throw translation) — see the use-case and orchestration rules in
   `.claude/rules/00-architecture/`.
 - A use case that installs framework files saves the manifest and updates `.gitignore`
-  through `PostInstallPipelineUseCase`. A use case that only changes the manifest (plugin
+  through `RunPostInstallPipeline`. A use case that only changes the manifest (plugin
   add/remove, marketplace sync, restore) saves it directly. See `references/post-install-pipeline.md`.
 - Before writing any framework file: check `fs.fileExists(path) && !manifest.isFileTracked(path)`.
   If both are true, skip the write, warn, and never add it to the manifest — never overwrite a
@@ -48,7 +48,7 @@ disk is exactly the job that needs all three.
 - A global chain orchestrator (`*-all-use-case.ts`) iterates every scope and must finish even if
   one fails: wrap one iteration in `try/catch`, push a typed entry to an `errors[]` array, and
   return it in the result — never let one tool's failure abort the whole run.
-- A capability-guard sub-use-case (`install-agents-use-case.ts` and its siblings) checks
+- A capability-guard sub-use-case (`install-agents.ts` and its siblings) checks
   `"name" in caps` before dispatching to a narrowed sub-use-case in `install/` — see
   `references/post-install-pipeline.md`, section "Capability sub-use-cases". These five files reach directly into `tools`'
   capability classes rather than through a declared public module; that reach is a tracked,
@@ -67,7 +67,7 @@ exposes is reachable from `presentation`.
 
 ## How it's tested
 
-- `tests/contexts/framework/` mirrors `src/contexts/framework/` — domain models are unit-tier,
+- `tests/contexts/framework/` and `tests/contexts/installation/` mirror their `src/contexts/` folders — domain models are unit-tier,
   use-cases against in-memory ports (`tests/helpers/ports/`) are unit or integration depending on
   whether they touch a real temp filesystem.
 - `tests/e2e/` exercises full CLI invocations through `runCli()`; `tests/golden/` snapshots a

@@ -9,14 +9,14 @@ import {
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { MarketplaceTrustStore } from "../../../distribution/ports/marketplace-trust-store.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import {
   assertToolSupportsScope,
   getToolSupportedScope,
   type InstallScope,
-} from "../../domain/install-scope.js";
-import { parsePluginSpec } from "../../domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
+} from "../../../installation/domain/install-scope.js";
+import { parsePluginSpec } from "../../../installation/domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { PluginAdd } from "./plugin-add-use-case.js";
 import type { PluginInstallFromMarketplace } from "./plugin-install-from-marketplace-use-case.js";
 

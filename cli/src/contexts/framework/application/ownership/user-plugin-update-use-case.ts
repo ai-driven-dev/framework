@@ -1,10 +1,10 @@
 import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import { Manifest } from "../../domain/manifest.js";
-import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
-import { resolvePluginToolIds } from "../plugin/plugin-target-resolution.js";
-import type { PluginUpdateOptions } from "../plugin/plugin-update-use-case.js";
+import { resolvePluginToolIds } from "../../../installation/application/plugin/plugin-target-resolution.js";
+import type { UpdatePluginCommand } from "../../../installation/application/plugin/update-plugin.js";
+import { Manifest } from "../../../installation/domain/manifest.js";
+import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { NativeHostRegistrationGate } from "./native-host-registration-gate.js";
 import type { UserPluginFileUpdater } from "./user-plugin-file-updater.js";
 
@@ -16,12 +16,12 @@ export class UserPluginUpdateUseCase {
     private readonly nativeHost: NativeHostRegistrationGate
   ) {}
 
-  async execute(options: PluginUpdateOptions): Promise<string[]> {
+  async execute(options: UpdatePluginCommand): Promise<string[]> {
     const run = () => this.updateLocked(options);
     return this.repo.withExclusiveAccess === undefined ? run() : this.repo.withExclusiveAccess(run);
   }
 
-  private async updateLocked(options: PluginUpdateOptions): Promise<string[]> {
+  private async updateLocked(options: UpdatePluginCommand): Promise<string[]> {
     const loaded = await this.repo.load();
     if (loaded === null)
       throw new Error(
