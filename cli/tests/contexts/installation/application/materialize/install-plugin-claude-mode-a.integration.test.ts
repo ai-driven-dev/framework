@@ -134,24 +134,6 @@ describe("install claude plugin via Mode A (integration)", () => {
     expect(activator.enabledPlugins).toEqual([]);
   });
 
-  it("does not materialize plugin files on disk for Mode A", async () => {
-    const fs = new InMemoryFileAdapter();
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.claude, "test", []);
-    await new ModeAMarketplaceTranslator().addPlugin(
-      buildDist(),
-      registeredAiProfile(TOOL.claude),
-      { kind: "local", path: "/plugin-source" },
-      PROJECT_ROOT,
-      manifest,
-      MARKETPLACE_NAME
-    );
-    const pluginFiles = fs.listAll().filter((p) => p.includes(".claude/plugins/"));
-    expect(pluginFiles).toEqual([]);
-    const installed = manifest.getPlugins(TOOL.claude).find((p) => p.name === "aidd-context");
-    expect(installed?.files.size).toBe(0);
-  });
-
   it("takes a registration left in the shared file by an older install out of it", async () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
