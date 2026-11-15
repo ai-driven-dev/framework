@@ -13,6 +13,10 @@ import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import { bestEffortNativeCall } from "../../../host-registration/application/best-effort-native-call.js";
+import {
+  assertNoForeignNativeRefs,
+  inspectNativeMarketplaceSource,
+} from "../../../host-registration/application/native-marketplace-source-proof.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../../host-registration/contract/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
@@ -26,10 +30,6 @@ import { userScopeFilesSafeToDelete } from "../../../machine-claims/application/
 import type { UserSourceReferences } from "../../../machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { resolveHomeDir } from "../../domain/reading/home-dir.js";
-import {
-  assertNoForeignNativeRefs,
-  inspectNativeMarketplaceSource,
-} from "../ownership/native-marketplace-source-proof.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
 import {
   purgeAllNativeCaches,

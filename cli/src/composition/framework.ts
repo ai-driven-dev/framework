@@ -22,7 +22,6 @@ import { UpdateAiToolsUseCase } from "../contexts/framework/application/global/u
 import { UpdateIdeToolsUseCase } from "../contexts/framework/application/global/update-ide-tools-use-case.js";
 import { UpdateOneToolUseCase } from "../contexts/framework/application/global/update-one-tool-use-case.js";
 import { InstallAiToolUseCase } from "../contexts/framework/application/install/install-ai-tool-use-case.js";
-import { NativeHostRegistrationGate } from "../contexts/framework/application/ownership/native-host-registration-gate.js";
 import { ProjectPluginCleanup } from "../contexts/framework/application/ownership/project-plugin-cleanup.js";
 import { UserMarketplaceRemoveUseCase } from "../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { UserPluginFileUpdater } from "../contexts/framework/application/ownership/user-plugin-file-updater.js";
@@ -40,6 +39,7 @@ import { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/appli
 import { UninstallIdeUseCase } from "../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import { UninstallToolsUseCase } from "../contexts/framework/application/uninstall/uninstall-tools-use-case.js";
 import { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
+import { NativeHostRegistrationGate } from "../contexts/host-registration/application/native-host-registration-gate.js";
 import { InstallIdeConfig } from "../contexts/installation/application/install/install-ide-config.js";
 import { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/install-runtime-config.js";

@@ -1,15 +1,15 @@
+import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type {
   HostMarketplaceSources,
   NativeMarketplaceSource,
   NativeMarketplaceSourceReading,
-} from "../../../host-registration/contract/host-marketplace-sources.js";
+} from "../contract/host-marketplace-sources.js";
 import type {
   HostPluginRegistry,
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
-} from "../../../host-registration/contract/host-plugin-registry.js";
-import type { NativeMarketplaceRegistration } from "../../../host-registration/contract/registration-record.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+} from "../contract/host-plugin-registry.js";
+import type { NativeMarketplaceRegistration } from "../contract/registration-record.js";
 
 export interface NativeMarketplaceSourceInspection {
   readonly status: "absent" | "owned" | "unproven";

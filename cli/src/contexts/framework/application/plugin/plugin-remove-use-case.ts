@@ -12,6 +12,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import { inspectNativeMarketplaceSource } from "../../../host-registration/application/native-marketplace-source-proof.js";
 import { resolveUninstallScopeOrder } from "../../../host-registration/application/resolve-uninstall-scope.js";
 import type { HostActions } from "../../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
@@ -54,7 +55,6 @@ import type { UserSourceReferences } from "../../../machine-claims/ports/user-so
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { resolveHomeDir } from "../../domain/reading/home-dir.js";
-import { inspectNativeMarketplaceSource } from "../ownership/native-marketplace-source-proof.js";
 import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
 

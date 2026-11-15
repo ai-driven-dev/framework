@@ -9,6 +9,7 @@ import type { Lock } from "../../../../shared/ports/lock.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import type { NativeHostRegistrationGate } from "../../../host-registration/application/native-host-registration-gate.js";
 import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import { userScopeFilesSafeToDelete } from "../../../machine-claims/application/user-scope-plugin-files.js";
@@ -17,7 +18,6 @@ import type {
   MarketplaceRemoveOptions,
   MarketplaceRemoveResult,
 } from "../flows/marketplace-remove-use-case.js";
-import type { NativeHostRegistrationGate } from "./native-host-registration-gate.js";
 
 export class UserMarketplaceRemoveUseCase {
   constructor(

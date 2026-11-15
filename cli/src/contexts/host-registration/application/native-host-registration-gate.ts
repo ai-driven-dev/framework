@@ -1,13 +1,12 @@
-import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { HostActions } from "../../../host-registration/contract/host-actions.js";
-import type { HostMarketplaceSources } from "../../../host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistry } from "../../../host-registration/contract/host-plugin-registry.js";
-import type { NativeMarketplaceRegistration } from "../../../host-registration/contract/registration-record.js";
+import type { AiToolId } from "../../../shared/domain/tool.js";
+import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
+import type { HostActions } from "../contract/host-actions.js";
+import type { HostMarketplaceSources } from "../contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../contract/host-plugin-registry.js";
 import type {
-  NativePluginClaim,
-  NativeRegistrations,
-} from "../../../installation/domain/manifest/native-registrations.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+  NativeMarketplaceRegistration,
+  RegistrationRecord,
+} from "../contract/registration-record.js";
 import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,
@@ -20,11 +19,11 @@ export class NativeHostRegistrationGate {
     private readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources> = new Map()
   ) {}
 
-  async requireTargetedUpdate(
+  async requireTargetedUpdate<Claim extends { readonly ref: string }>(
     tool: AiToolProfile,
-    claim: NativePluginClaim,
+    claim: Claim,
     projectRoot: string,
-    registrations?: NativeRegistrations
+    registrations?: RegistrationRecord
   ): Promise<HostActions> {
     const { toolId } = tool;
     const activation = tool.nativeActivation();
@@ -67,14 +66,16 @@ export class NativeHostRegistrationGate {
     return activator;
   }
 
-  async planMarketplaceRemoval(
+  /** `registrations` carries the claims on its refs beside the host data: the gate reads only
+   * their `ref` and hands the claims it kept back as they came. */
+  async planMarketplaceRemoval<Claim extends { readonly ref: string }>(
     tool: AiToolProfile,
-    registrations: NativeRegistrations,
+    registrations: RegistrationRecord & { readonly pluginClaims?: readonly Claim[] },
     registration: NativeMarketplaceRegistration,
     projectRoot: string
   ): Promise<{
     activator: HostActions;
-    refs: readonly NativePluginClaim[];
+    refs: readonly Claim[];
     scopes: ReadonlyMap<string, "project" | "user" | undefined>;
   }> {
     const { toolId } = tool;

@@ -1,12 +1,12 @@
 import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import type { NativeHostRegistrationGate } from "../../../host-registration/application/native-host-registration-gate.js";
 import { resolvePluginToolIds } from "../../../installation/application/plugin/plugin-target-resolution.js";
 import type { UpdatePluginCommand } from "../../../installation/application/plugin/update-plugin.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
 import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
-import type { NativeHostRegistrationGate } from "./native-host-registration-gate.js";
 import type { UserPluginFileUpdater } from "./user-plugin-file-updater.js";
 
 export class UserPluginUpdateUseCase {

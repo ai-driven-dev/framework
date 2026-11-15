@@ -29,6 +29,10 @@ import {
   type MarketplaceSourceDriftFound,
 } from "../../../host-registration/application/host-marketplace-source-conflict.js";
 import {
+  inspectNativeMarketplaceSource,
+  sameNativeMarketplaceSource,
+} from "../../../host-registration/application/native-marketplace-source-proof.js";
+import {
   marketplaceCatalogProbePath,
   readMarketplaceCatalogIdentity,
 } from "../../../host-registration/application/read-marketplace-catalog-identity.js";
@@ -58,10 +62,6 @@ import type { UserSourceReferences } from "../../../machine-claims/ports/user-so
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
-import {
-  inspectNativeMarketplaceSource,
-  sameNativeMarketplaceSource,
-} from "../ownership/native-marketplace-source-proof.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
 
 export interface MarketplaceSyncSettingsOptions {

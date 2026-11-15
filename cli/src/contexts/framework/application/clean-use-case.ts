@@ -21,6 +21,10 @@ import type { Prompter } from "../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../distribution/contract/marketplace.js";
 import type { MarketplaceRegistry } from "../../distribution/ports/marketplace-registry.js";
 import { bestEffortNativeCall } from "../../host-registration/application/best-effort-native-call.js";
+import {
+  assertNoForeignNativeRefs,
+  inspectNativeMarketplaceSource,
+} from "../../host-registration/application/native-marketplace-source-proof.js";
 import { resolveUninstallScopeOrder } from "../../host-registration/application/resolve-uninstall-scope.js";
 import type { HostActions } from "../../host-registration/contract/host-actions.js";
 import type { HostMarketplaceRegistry } from "../../host-registration/contract/host-marketplace-registry.js";
@@ -56,10 +60,6 @@ import type { UserSourceReferences } from "../../machine-claims/ports/user-sourc
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import { resolveHomeDir } from "../domain/reading/home-dir.js";
-import {
-  assertNoForeignNativeRefs,
-  inspectNativeMarketplaceSource,
-} from "./ownership/native-marketplace-source-proof.js";
 import { assertProjectMcpEntriesRemovable } from "./ownership/project-plugin-cleanup.js";
 import {
   purgeAllNativeCaches,
