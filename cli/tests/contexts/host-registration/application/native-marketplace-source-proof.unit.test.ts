@@ -166,52 +166,69 @@ describe("current native marketplace source proof", () => {
       )
     ).toEqual(refs);
   });
-  it("treats a readable missing name as fresh absence, not ownership", async () => {
-    const result = await inspectNativeMarketplaceSource(reader(new Map()), "/project-b", claim);
+  /** One verdict per host source reading and recorded claim: a source is owned only when the host
+   * names exactly the one AIDD recorded; everything unreadable, unnamed or different is refused
+   * with a reason that names the catalogue. */
+  const legacy = { alias: claim.alias, hostName: claim.hostName };
+  const named = (entry: NativeMarketplaceSource | null) =>
+    reader(new Map([[claim.hostName, entry]]));
+  const VERDICTS: ReadonlyArray<
+    [string, HostMarketplaceSources | undefined, NativeMarketplaceRegistration, string, string?]
+  > = [
+    ["a name the host does not hold", reader(new Map()), claim, "absent"],
+    ["the exact recorded source", named(SOURCE), claim, "owned"],
+    [
+      "a different source",
+      named({ ...SOURCE, source: "/foreign/catalog" }),
+      claim,
+      "unproven",
+      "differs",
+    ],
+    [
+      "a different root",
+      named({ ...SOURCE, root: "/foreign/cache" }),
+      claim,
+      "unproven",
+      "differs",
+    ],
+    [
+      "a different source type",
+      named({ ...SOURCE, sourceType: "git" }),
+      claim,
+      "unproven",
+      "differs",
+    ],
+    [
+      "a different kind",
+      named({ kind: "registry", source: SOURCE.source }),
+      claim,
+      "unproven",
+      "differs",
+    ],
+    ["a legacy claim", named(SOURCE), legacy, "unproven", "legacy claim has no source proof"],
+    ["an unknown source", named(null), claim, "unproven", "current host source is unproven"],
+    ["an unreadable host", reader(), claim, "unproven", "host source unreadable"],
+    ["no reader", undefined, claim, "unproven", "reader unavailable"],
+    [
+      "a reader that throws",
+      {
+        read: async () => {
+          throw new Error("boom");
+        },
+      },
+      claim,
+      "unproven",
+      "read failed (boom)",
+    ],
+  ];
 
-    expect(result.status).toBe("absent");
-  });
+  it.each(VERDICTS)("judges %s", async (_cell, sourceReader, registration, status, reason) => {
+    const result = await inspectNativeMarketplaceSource(sourceReader, "/project-b", registration);
 
-  it("refuses a named foreign source despite an old canonical same-name claim", async () => {
-    for (const changed of [
-      { ...SOURCE, source: "/foreign/catalog" },
-      { ...SOURCE, root: "/foreign/cache" },
-      { ...SOURCE, sourceType: "git" },
-    ]) {
-      const result = await inspectNativeMarketplaceSource(
-        reader(new Map([[claim.hostName, changed]])),
-        "/project-b",
-        claim
-      );
-
-      expect(result.status).toBe("unproven");
+    expect(result.status).toBe(status);
+    if (reason !== undefined) {
       expect(result.reason).toContain("real-catalog");
-      expect(result.reason).toContain("current host source differs");
+      expect(result.reason).toContain(reason);
     }
-  });
-
-  it("refuses legacy claims, unknown named sources, and unreadable hosts", async () => {
-    const legacy = { alias: claim.alias, hostName: claim.hostName };
-    for (const [sourceReader, registration] of [
-      [reader(new Map([[claim.hostName, SOURCE]])), legacy],
-      [reader(new Map([[claim.hostName, null]])), claim],
-      [reader(), claim],
-      [undefined, claim],
-    ] as const) {
-      const result = await inspectNativeMarketplaceSource(sourceReader, "/project-b", registration);
-
-      expect(result.status).toBe("unproven");
-      expect(result.reason).toContain("real-catalog");
-    }
-  });
-
-  it("owns only an exact source measured for the requesting project", async () => {
-    const result = await inspectNativeMarketplaceSource(
-      reader(new Map([[claim.hostName, SOURCE]])),
-      "/project-b",
-      claim
-    );
-
-    expect(result).toMatchObject({ status: "owned", current: SOURCE });
   });
 });
