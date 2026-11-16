@@ -86,10 +86,21 @@ describe("buildAntigravityFlatContract", () => {
         "name: 'aidd-dev-executor'",
         "description: 'Turns a task into code.'",
         "model: 'inherit'",
+        'tools: ["read_file","edit_file","write_file","run_command","manage_task","search_web"]',
         "---",
         "Follow [SKILL.md](../../skills/aidd-dev-01-plan/SKILL.md)",
       ].join("\n")
     );
+  });
+
+  it.each([
+    ["Read, Grep, Bash, Task", 'tools: ["read_file","run_command","manage_task"]'],
+    ["Task", "tools: []"],
+  ])("writes the agy tools that cover a declared %s", (declared, line) => {
+    const agents = supported(buildAntigravityFlatContract().artifacts.agents);
+    const source = ["---", "description: d", `tools: ${declared}`, "---", "body"].join("\n");
+
+    expect(agents.transform?.(source, "aidd-dev", "executor.md")).toContain(`\n${line}\n`);
   });
 
   it.each(["mcp", "rules", "commands"] as const)("declares %s unsupported", (kind) => {

@@ -4,7 +4,7 @@ import { InvalidAgentFrontmatterError } from "../../../../kernel/errors.js";
 export function portableAgentFrontmatter(
   source: Record<string, unknown>,
   name: string
-): Record<string, unknown> {
+): { name: string; description: string; model: "inherit"; tools?: string[] } {
   const description = typeof source.description === "string" ? source.description.trim() : "";
   if (description === "") throw new InvalidAgentFrontmatterError(name, "description is empty");
   const tools = toolList(source.tools);

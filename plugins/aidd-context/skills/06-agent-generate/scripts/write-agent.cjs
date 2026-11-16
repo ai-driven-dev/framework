@@ -20,6 +20,21 @@ const PLAIN_SCALAR = /^[A-Za-z0-9][A-Za-z0-9 ._/,'()-]*$/;
 const YAML_KEYWORD = /^(true|false|null|yes|no|on|off)$/i;
 const MISSING = ["ENOENT", "ENOTDIR"];
 
+// agy 1.5.9's own Claude subagent conversion, the aidd CLI's table: agy gives an agent without `tools` a read-only set,
+// a grant with no equivalent is dropped, never widened, and an unknown name may hang the subagent.
+const AGY_TOOLS = ["read_file", "edit_file", "write_file", "run_command", "manage_task", "search_web"];
+const AGY_TOOLS_BY_CLAUDE_TOOL = new Map([
+  ["Read", ["read_file"]],
+  ["Glob", ["read_file"]],
+  ["Grep", ["read_file"]],
+  ["Edit", ["edit_file"]],
+  ["MultiEdit", ["edit_file"]],
+  ["Write", ["write_file"]],
+  ["Bash", ["run_command", "manage_task"]],
+  ["WebSearch", ["search_web"]],
+  ["WebFetch", ["search_web"]],
+]);
+
 // A host that spells effort inside the model value loses an effort given without a model.
 const withEffort = (open, close = "") => (agent) =>
   agent.model && agent.effort ? `${agent.model}${open}${agent.effort}${close}` : agent.model;
@@ -60,7 +75,7 @@ const HOSTS = {
   },
   antigravity: {
     path: (name) => `.agents/agents/${name}/agent.md`,
-    fields: (a) => ({ name: a.name, description: a.description, model: "inherit", tools: toolList(a.tools) }),
+    fields: (a) => ({ name: a.name, description: a.description, model: "inherit", tools: agyTools(toolList(a.tools)) }),
     uses: ["tools"],
   },
   codex: {
@@ -152,6 +167,12 @@ function toolList(tools) {
   return list.length ? list : undefined;
 }
 
+function agyTools(declared) {
+  if (declared === undefined) return AGY_TOOLS;
+  const granted = new Set(declared.flatMap((tool) => AGY_TOOLS_BY_CLAUDE_TOOL.get(tool) ?? []));
+  return AGY_TOOLS.filter((tool) => granted.has(tool));
+}
+
 function yamlScalar(value) {
   if (typeof value === "boolean") return String(value);
   const plain = PLAIN_SCALAR.test(value) && !value.endsWith(" ") && !YAML_KEYWORD.test(value);
@@ -160,6 +181,7 @@ function yamlScalar(value) {
 
 function yamlLine([key, value]) {
   if (!Array.isArray(value)) return `${key}: ${yamlScalar(value)}`;
+  if (!value.length) return `${key}: []`;
   return `${key}:\n${value.map((item) => `  - ${yamlScalar(item)}`).join("\n")}`;
 }
 
