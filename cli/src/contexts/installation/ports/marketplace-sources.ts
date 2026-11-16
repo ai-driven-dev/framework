@@ -9,6 +9,18 @@ export interface DeclaredMarketplace {
   readonly scope: MarketplaceScope;
 }
 
+/** A plugin chosen from a marketplace catalogue, as far as copying it reads it. The distribution
+ * owns the catalogue and the caller hands over its matches, which satisfy this shape. */
+export interface UserPluginChoice {
+  readonly marketplaceName: string;
+  readonly entry: {
+    readonly name: string;
+    readonly version?: string;
+    readonly strict: boolean;
+  };
+  readonly source: PluginSource;
+}
+
 /** The marketplaces an installation reads, and the one it lets go of at a machine purge. The
  * distribution owns the registry and hands over the real one, which satisfies this shape. */
 export interface InstallationMarketplaceRegistry {

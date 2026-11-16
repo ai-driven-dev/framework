@@ -1,9 +1,9 @@
-import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { UserPluginChoice } from "../../ports/marketplace-sources.js";
 import type {
   BoundPluginMaterializer,
   PlannedUserPluginFileUpdate,
@@ -15,18 +15,6 @@ export interface InstallUserPluginsCommand {
   readonly tools: ToolCatalog;
   /** The plugins to copy, each with the source it resolved to. */
   readonly plugins: readonly UserPluginChoice[];
-}
-
-/** A plugin chosen from a marketplace catalogue, as far as copying it reads it. The distribution
- * owns the catalogue and the caller hands over its matches, which satisfy this shape. */
-export interface UserPluginChoice {
-  readonly marketplaceName: string;
-  readonly entry: {
-    readonly name: string;
-    readonly version?: string;
-    readonly strict: boolean;
-  };
-  readonly source: PluginSource;
 }
 
 /**
