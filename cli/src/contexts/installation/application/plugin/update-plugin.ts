@@ -18,13 +18,9 @@ import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
+import { requireManifest } from "../shared/require-manifest.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
-import {
-  deleteOldFiles,
-  loadPluginManifest,
-  materializeViaTranslator,
-  writePluginFiles,
-} from "./plugin-helpers.js";
+import { deleteOldFiles, materializeViaTranslator, writePluginFiles } from "./plugin-helpers.js";
 import { resolveBaseDirFromRecord, resolvePluginToolIds } from "./plugin-target-resolution.js";
 
 export interface UpdatePluginCommand {
@@ -52,7 +48,7 @@ export class UpdatePlugin {
     if (options.scope === "user")
       throw new Error("User-scope plugin update requires UpdateUserPluginFiles.");
     const { pluginNames, toolIds, projectRoot, tools } = options;
-    const manifest = await loadPluginManifest(this.manifestRepo);
+    const manifest = await requireManifest(this.manifestRepo);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, tools);
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     const updated: string[] = [];

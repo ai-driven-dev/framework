@@ -1,9 +1,5 @@
 import { dirname, join } from "node:path";
-import {
-  InputRequiredError,
-  NoManifestError,
-  ToolNotInstalledError,
-} from "../../../shared/domain/errors.js";
+import { InputRequiredError, ToolNotInstalledError } from "../../../shared/domain/errors.js";
 import {
   isMergeContentEmpty,
   type MergeFileEntry,
@@ -17,6 +13,7 @@ import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
+import { requireManifest } from "./shared/require-manifest.js";
 
 export interface UninstallToolsCommand {
   toolIds: ToolId[];
@@ -85,8 +82,7 @@ export class UninstallTools {
   }
 
   private async loadAndValidate(toolIds: ToolId[]): Promise<Manifest> {
-    const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError();
+    const manifest = await requireManifest(this.manifestRepo);
     for (const toolId of toolIds) {
       if (!manifest.hasTool(toolId)) throw new ToolNotInstalledError(toolId);
     }

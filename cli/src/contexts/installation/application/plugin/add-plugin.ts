@@ -35,8 +35,9 @@ import { assertProjectMcpEntriesRemovable } from "../removal/remove-project-plug
 import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
 import { hashOutputFiles } from "../shared/hash-output-files.js";
 import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
+import { requireManifest } from "../shared/require-manifest.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
-import { loadPluginManifest, writePluginFiles } from "./plugin-helpers.js";
+import { writePluginFiles } from "./plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
   resolvePluginToolIds,
@@ -117,7 +118,7 @@ export class AddPlugin implements PluginAdd {
     const { source, toolIds, projectRoot, marketplace } = options;
     const resolveToolId: ToolIdResolver = (raw) => options.tools.toolId(raw);
     const manifest = Manifest.fromJSON(
-      (await loadPluginManifest(this.manifestRepo)).toJSON(),
+      (await requireManifest(this.manifestRepo)).toJSON(),
       resolveToolId
     );
     const existingMachine = await this.userManifestRepo.load();

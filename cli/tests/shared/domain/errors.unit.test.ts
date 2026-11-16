@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 import * as errors from "../../../src/shared/domain/errors.js";
 
-describe("NoManifestError", () => {
-  it("includes aidd setup hint in message", () => {
-    const error = new errors.NoManifestError();
-    expect(error.message).toContain("aidd setup");
-    expect(error.name).toBe("NoManifestError");
+describe("ManifestUnavailableError", () => {
+  it("carries its stable code and name", () => {
+    const error = new errors.ManifestUnavailableError("manifest-missing");
+    expect(error.code).toBe("manifest-missing");
+    expect(error.name).toBe("ManifestUnavailableError");
+  });
+
+  it("carries the corrupted code", () => {
+    expect(new errors.ManifestUnavailableError("manifest-corrupted").code).toBe(
+      "manifest-corrupted"
+    );
   });
 });
 
@@ -523,9 +529,14 @@ describe("every error in the catalog", () => {
       message: "Bundled asset not found: 'schema.json'",
     },
     {
-      build: () => new errors.NoManifestError(),
-      name: "NoManifestError",
+      build: () => new errors.ManifestUnavailableError("manifest-missing"),
+      name: "ManifestUnavailableError",
       message: "No AIDD manifest found. Run `aidd setup` to initialize your project.",
+    },
+    {
+      build: () => new errors.ManifestUnavailableError("manifest-corrupted"),
+      name: "ManifestUnavailableError",
+      message: "Manifest is corrupted (invalid JSON). Run `aidd clean --force` and re-initialize.",
     },
     {
       build: () => new errors.AiddFilesDetectedError(),

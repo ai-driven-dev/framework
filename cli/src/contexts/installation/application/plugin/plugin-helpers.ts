@@ -1,6 +1,5 @@
 import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
-import { NoManifestError } from "../../../../shared/domain/errors.js";
 import type { InstallationFile } from "../../../../shared/domain/file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -9,16 +8,9 @@ import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin, PluginScope } from "../../domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
 import { resolveBaseDirFromRecord } from "./plugin-target-resolution.js";
-
-export async function loadPluginManifest(manifestRepo: ManifestRepository): Promise<Manifest> {
-  const manifest = await manifestRepo.load();
-  if (manifest === null) throw new NoManifestError();
-  return manifest;
-}
 
 export async function writePluginFiles(
   files: InstallationFile[],

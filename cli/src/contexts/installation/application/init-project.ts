@@ -2,7 +2,7 @@ import { join } from "node:path";
 import {
   AiddFilesDetectedError,
   AlreadyInitializedError,
-  NoManifestError,
+  ManifestUnavailableError,
 } from "../../../shared/domain/errors.js";
 import { AIDD_DIR } from "../../../shared/domain/paths.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
@@ -49,15 +49,15 @@ export class InitProject {
     private readonly manifestRepo: ManifestRepository
   ) {}
 
-  async checkPreconditions(
+  private async refuseUnlessInitializable(
+    existing: Manifest | null,
     options: Pick<InitProjectCommand, "projectRoot" | "force" | "tools">
   ): Promise<void> {
-    const { projectRoot, force = false, tools } = options;
-    const existing = await this.manifestRepo.load();
+    const { projectRoot, force, tools } = options;
 
     if (force) {
       if (existing === null) {
-        throw new NoManifestError();
+        throw new ManifestUnavailableError("manifest-missing");
       }
       return;
     }
@@ -81,22 +81,28 @@ export class InitProject {
   }
 
   async execute(options: InitProjectCommand): Promise<InitProjectResult> {
-    const { projectRoot, force = false, tools } = options;
-
-    const existing = await this.manifestRepo.load();
-    await this.checkPreconditions({ projectRoot, force, tools });
-
-    const manifest = force && existing !== null ? existing : Manifest.create();
-    await this.persistInit(manifest, projectRoot, force);
-    return { manifest };
+    return this.initialize(await this.manifestRepo.load(), options);
   }
 
   /** Initializes a project that has no manifest yet and leaves one that has. Answers whether
    * this call created it, which a caller reports as a fresh start or an already-set-up project. */
   async initializeIfAbsent(options: Omit<InitProjectCommand, "force">): Promise<boolean> {
     if ((await this.manifestRepo.load()) !== null) return false;
-    await this.execute({ ...options, force: false });
+    await this.initialize(null, { ...options, force: false });
     return true;
+  }
+
+  private async initialize(
+    existing: Manifest | null,
+    options: InitProjectCommand
+  ): Promise<InitProjectResult> {
+    const { projectRoot, force = false, tools } = options;
+    await this.refuseUnlessInitializable(existing, { projectRoot, force, tools });
+
+    // The refusal above leaves a record exactly when `force` asked to reuse it.
+    const manifest = existing ?? Manifest.create();
+    await this.persistInit(manifest, projectRoot, force);
+    return { manifest };
   }
 
   private async persistInit(

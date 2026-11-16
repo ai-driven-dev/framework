@@ -6,7 +6,42 @@ import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
+function countingLoads(repo: { load: () => Promise<unknown> }): () => number {
+  let reads = 0;
+  const load = repo.load.bind(repo);
+  repo.load = async () => {
+    reads += 1;
+    return load();
+  };
+  return () => reads;
+}
+
 describe("init", () => {
+  it("reads the manifest once, whether it initializes or refuses", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const reads = countingLoads(deps.manifestRepo);
+    const init = new InitProject(deps.fs, deps.manifestRepo);
+    const command = { projectRoot: PROJECT_ROOT, tools: catalogOf() };
+
+    await init.execute(command);
+    expect(reads()).toBe(1);
+
+    await init.execute(command).catch(() => undefined);
+    expect(reads()).toBe(2);
+  });
+
+  it("reads the manifest once when it initializes only if absent", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    const reads = countingLoads(deps.manifestRepo);
+
+    await new InitProject(deps.fs, deps.manifestRepo).initializeIfAbsent({
+      projectRoot: PROJECT_ROOT,
+      tools: catalogOf(),
+    });
+
+    expect(reads()).toBe(1);
+  });
+
   it("creates a v5 manifest with no tools", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const result = await new InitProject(deps.fs, deps.manifestRepo).execute({
@@ -76,17 +111,7 @@ describe("init", () => {
     });
   });
 
-  describe("checkPreconditions", () => {
-    it("passes when directory is truly empty", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await expect(
-        new InitProject(deps.fs, deps.manifestRepo).checkPreconditions({
-          projectRoot: PROJECT_ROOT,
-          tools: catalogOf(),
-        })
-      ).resolves.toBeUndefined();
-    });
-
+  describe("execute refuses a project that cannot be initialized", () => {
     it("aborts with guidance when .claude/ contains AIDD frontmatter", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await deps.fs.writeFile(
@@ -95,7 +120,7 @@ describe("init", () => {
       );
 
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
@@ -110,11 +135,11 @@ describe("init", () => {
       );
 
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
-      ).resolves.toBeUndefined();
+      ).resolves.toHaveProperty("manifest");
     });
 
     it("aborts when already initialized without --force", async () => {
@@ -124,7 +149,7 @@ describe("init", () => {
         tools: catalogOf(),
       });
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
@@ -140,13 +165,13 @@ describe("init", () => {
         tools: catalogOf(),
       });
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
       ).rejects.toThrow(/aidd clean --force/);
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
           tools: catalogOf(),
         })
@@ -156,7 +181,7 @@ describe("init", () => {
     it("--force: fails with guidance when no manifest exists", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
           force: true,
           tools: catalogOf(),
@@ -171,12 +196,12 @@ describe("init", () => {
         tools: catalogOf(),
       });
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).checkPreconditions({
+        new InitProject(deps.fs, deps.manifestRepo).execute({
           projectRoot: PROJECT_ROOT,
           force: true,
           tools: catalogOf(),
         })
-      ).resolves.toBeUndefined();
+      ).resolves.toHaveProperty("manifest");
     });
   });
 

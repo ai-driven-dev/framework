@@ -16,12 +16,13 @@ import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { HostWithdrawal } from "../../ports/native-host.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
-import { deletePluginFilesForTool, loadPluginManifest } from "../plugin/plugin-helpers.js";
+import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
   resolvePluginToolIds,
 } from "../plugin/plugin-target-resolution.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
+import { requireManifest } from "../shared/require-manifest.js";
 import { assertProjectMcpEntriesRemovable, type RemovalClaims } from "./remove-project-plugin.js";
 
 /** What a removal asks the machine scope, supplied by the composition root: who else owns a ref,
@@ -78,7 +79,7 @@ export class RemovePlugin {
       return this.manifests.user.withExclusiveAccess(() => this.removeUserPlugin(options));
     }
     const { pluginName, toolIds, projectRoot, tools } = options;
-    const manifest = await loadPluginManifest(this.manifests.project);
+    const manifest = await requireManifest(this.manifests.project);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, tools);
     for (const toolId of resolvedToolIds) {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
@@ -126,7 +127,7 @@ export class RemovePlugin {
     const repo = this.manifests.user;
     if (repo === undefined)
       throw new Error("User manifest repository is required for user-scope plugin removal.");
-    const manifest = await loadPluginManifest(repo);
+    const manifest = await requireManifest(repo);
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, options.tools);
     const targets = toolIds.flatMap((toolId) => {
       const plugin = manifest

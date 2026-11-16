@@ -1,10 +1,6 @@
 import type { Command } from "commander";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import {
-  NoManifestError,
-  SyncFailedError,
-  UserScopeFilterUnsupportedError,
-} from "../../shared/domain/errors.js";
+import { SyncFailedError, UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
   printActivationOutcome,
@@ -22,9 +18,7 @@ type SyncKeys =
   | "userPluginUpdateUseCase"
   | "syncSettingsUseCase"
   | "restoreAllUseCase"
-  | "manifestRepo"
-  | "currentVersionProvider"
-  | "restoreUseCase";
+  | "restoreToolUseCase";
 
 interface SyncCmdOptions {
   force: boolean;
@@ -144,17 +138,12 @@ async function runScopedSync(
   catalog: ToolCatalog,
   toolName: string
 ): Promise<void> {
-  const manifest = await deps.manifestRepo.load();
-  if (!manifest) throw new NoManifestError();
-  const version = manifest.getToolVersion(toolName) ?? deps.currentVersionProvider.get();
-  const result = await deps.restoreUseCase.execute({
-    version,
+  const result = await deps.restoreToolUseCase.execute({
     projectRoot,
-    toolIds: [toolName],
+    toolId: toolName,
     files: fileArgs.length > 0 ? fileArgs : undefined,
     force: cmdOptions.force,
     interactive: process.stdout.isTTY,
-    manifest,
     pluginName: cmdOptions.plugin,
     tools: catalog,
   });
