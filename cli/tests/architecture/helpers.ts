@@ -121,9 +121,8 @@ export const ALLOWED = new Set([
   "distribution->auth",
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
-  // Installation reads the installed tools' profiles. `installation->translate` is M-S1, narrowed to the translate contract.
+  // Installation reads the installed tools' profiles.
   "installation->tools",
-  "installation->translate",
   // Transitional (M-I1): the exact imports and the way out are in reference-context.md.
   "installation->host-registration",
   // Permanent: the target context map gives host-registration the contract of tools
@@ -153,16 +152,6 @@ export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/native-registration.ts",
     "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/registration-record.ts",
     "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/withdrawal.ts",
-  ],
-  "installation->translate": [
-    "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts -> src/contexts/translate/contract/translate-distribution.ts",
-    "src/contexts/installation/application/plugin/add-plugin.ts -> src/contexts/translate/contract/translate-distribution.ts",
-    "src/contexts/installation/application/shared/built-materialization-deps.ts -> src/contexts/translate/contract/translate-distribution.ts",
-    "src/contexts/installation/application/shared/ensure-built-marketplace.ts -> src/contexts/translate/contract/build-native-tree.ts",
-    "src/contexts/installation/application/shared/ensure-built-marketplace.ts -> src/contexts/translate/contract/build-targets.ts",
-    "src/contexts/installation/application/shared/hash-output-files.ts -> src/contexts/translate/contract/output-file.ts",
-    "src/contexts/installation/application/sync/build-marketplace-for-tool.ts -> src/contexts/translate/contract/build-targets.ts",
-    "src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.ts -> src/contexts/translate/contract/plugin-format.ts",
   ],
 };
 

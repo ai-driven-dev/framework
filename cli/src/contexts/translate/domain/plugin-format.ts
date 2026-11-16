@@ -1,13 +1,9 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 
-/** The tool whose layout a plugin distribution follows. An alias rather than its own union: a
- * format is a tool's way of laying out a plugin, so a sixth tool is a sixth format by
- * construction. */
-export type PluginFormat = AiToolId;
-
 export interface DistributionProbe {
-  readonly format: PluginFormat;
+  /** The tool whose layout a plugin distribution follows. */
+  readonly format: AiToolId;
   readonly relativePath: string;
 }
 

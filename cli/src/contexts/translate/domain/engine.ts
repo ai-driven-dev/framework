@@ -21,9 +21,9 @@ import type {
   SkillsSectionAnswers,
   ToolProfile,
 } from "../../tools/contract/tool-profile.js";
-import type { OutputFile } from "../contract/output-file.js";
 import { flatHooksBridgeFile } from "./flat-layout.js";
 import { rewritePluginRootToken } from "./formats/plugin-root-token-rewrite.js";
+import type { OutputFile } from "./output-file.js";
 
 interface TranslatedFile {
   relativePath: string;

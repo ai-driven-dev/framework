@@ -3,7 +3,7 @@ import {
   buildTargetModesOf,
   supportedBuildTargets,
 } from "../../../../src/contexts/translate/contract/build-targets.js";
-import { distributionProbesOf } from "../../../../src/contexts/translate/contract/plugin-format.js";
+import { distributionProbesOf } from "../../../../src/contexts/translate/domain/plugin-format.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 import { anEmptyContract, aProfile } from "../../tools/testing/profiles.js";
 

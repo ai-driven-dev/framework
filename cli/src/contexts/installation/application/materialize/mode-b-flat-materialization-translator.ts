@@ -9,13 +9,13 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { TranslateDistribution } from "../../../translate/contract/translate-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
   type PluginScope,
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
+import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
 import { isPluginFileAtDesiredState } from "../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
@@ -40,7 +40,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     private readonly fs: FileWriter & FileReader,
     private readonly hasher: Hasher,
     private readonly homedir: () => string,
-    private readonly translate: TranslateDistribution
+    private readonly translate: PluginTranslation
   ) {
     this.projectHooks = new ProjectHooksMaterializer(fs);
   }

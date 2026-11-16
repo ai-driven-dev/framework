@@ -20,7 +20,6 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { TranslateDistribution } from "../../../translate/contract/translate-distribution.js";
 import { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
@@ -28,6 +27,7 @@ import {
 } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../../ports/marketplace-sources.js";
+import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
 import type { InstallRuntimeConfig } from "../install/install-runtime-config.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
@@ -79,7 +79,7 @@ export interface AddPluginSources {
   distributionLoader: PluginDistributionLoader;
   marketplaceRegistry: InstallationMarketplaceRegistry;
   ensureBuilt: BuiltMarketplaceEnsurer;
-  translate: TranslateDistribution;
+  translate: PluginTranslation;
 }
 
 export class AddPlugin implements PluginAdd {
@@ -91,7 +91,7 @@ export class AddPlugin implements PluginAdd {
   private readonly distributionLoader: PluginDistributionLoader;
   private readonly marketplaceRegistry: InstallationMarketplaceRegistry;
   private readonly ensureBuilt: BuiltMarketplaceEnsurer;
-  private readonly translate: TranslateDistribution;
+  private readonly translate: PluginTranslation;
 
   constructor(
     host: AddPluginHost,

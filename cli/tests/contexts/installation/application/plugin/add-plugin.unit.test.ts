@@ -7,7 +7,7 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin-distribution-reader.js";
+import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import {
   DuplicatePluginError,
   MissingPluginMetadataError,

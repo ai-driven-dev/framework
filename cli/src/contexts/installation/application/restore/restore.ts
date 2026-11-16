@@ -14,7 +14,7 @@ import type { FileMerger } from "../../ports/file-merger.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { PluginFetcher } from "../../ports/marketplace-sources.js";
 import type { Platform } from "../../ports/platform.js";
-import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
+import type { PluginDistributionReader } from "../../ports/plugin/plugin-distribution-reader.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import { RestoreAllPlugins, type RestoreAllPluginsResult } from "./restore-all-plugins.js";

@@ -9,7 +9,7 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginFetcher } from "../../ports/marketplace-sources.js";
-import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
+import type { PluginDistributionReader } from "../../ports/plugin/plugin-distribution-reader.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { ApplyPluginFiles } from "./apply-plugin-files.js";
 

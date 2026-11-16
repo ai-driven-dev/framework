@@ -7,7 +7,7 @@ import { PluginDistributionReaderAdapter } from "../contexts/installation/infras
 import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
-import { pluginManifestProbes } from "../contexts/translate/contract/plugin-format.js";
+import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import type { FactoryOptions } from "../presentation/deps.js";
 import { CLIOutput } from "../presentation/output.js";
 import {

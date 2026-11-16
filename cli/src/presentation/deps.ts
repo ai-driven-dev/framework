@@ -32,8 +32,10 @@ import type { ResolveReportRequest } from "../contexts/telemetry/application/rep
 import type { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import type { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
 import type { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
-import type { BuildNativeTree } from "../contexts/translate/application/translate-source.js";
-import type { FrameworkBuildContext } from "../contexts/translate/contract/build-native-tree.js";
+import type {
+  BuildNativeTree,
+  FrameworkBuildContext,
+} from "../contexts/translate/application/translate-source.js";
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
 import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";

@@ -1,4 +1,4 @@
-import { pluginManifestProbes } from "../../../../src/contexts/translate/contract/plugin-format.js";
+import { pluginManifestProbes } from "../../../../src/contexts/translate/domain/plugin-format.js";
 import { catalogOf } from "../../tools/testing/catalog-of.js";
 
 /** Where a plugin manifest can sit across the registered tools, as the composition hands them

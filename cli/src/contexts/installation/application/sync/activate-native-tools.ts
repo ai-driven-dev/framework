@@ -55,7 +55,10 @@ export class ActivateNativeTools {
           scope,
           marketplaces,
           claims: context.claimsOf(toolId),
-          build: (marketplace) => this.buildMarketplace.execute(toolId, marketplace, projectRoot),
+          build: async (marketplace) =>
+            tools.isAiTool(toolId)
+              ? this.buildMarketplace.execute(toolId, marketplace, projectRoot)
+              : null,
           refsToEnable: (hostNameByAlias) =>
             this.refsToEnableOn(
               toolId,
