@@ -4,6 +4,7 @@ import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,
   PLUGIN_MCP_RELATIVE,
+  PLUGIN_SKILL_ENTRY_FILE,
 } from "../../domain/canon-format.js";
 
 export interface PluginPresenceFlags {
@@ -19,7 +20,6 @@ export async function listAgentFiles(
   fs: FileReader,
   agentsDir: string
 ): Promise<readonly string[]> {
-  if (!(await fs.fileExists(agentsDir))) return [];
   const files = await fs.listFilesRecursive(agentsDir);
   return files
     .filter((f) => f.endsWith(PLUGIN_AGENT_INPUT_EXT))
@@ -32,16 +32,11 @@ export async function listSkillNames(
   pluginSrc: string
 ): Promise<readonly string[]> {
   const skillsDir = join(pluginSrc, "skills");
-  if (!(await fs.fileExists(skillsDir))) return [];
   const files = await fs.listFilesRecursive(skillsDir);
   const names = new Set<string>();
   for (const f of files) {
-    if (!f.endsWith("/SKILL.md") && !f.endsWith("\\SKILL.md") && !f.endsWith("SKILL.md")) {
-      continue;
-    }
-    const rel = relative(skillsDir, f);
-    const parts = rel.replace(/\\/g, "/").split("/");
-    if (parts.length >= 2) names.add(parts[0]);
+    const parts = relative(skillsDir, f).replace(/\\/g, "/").split("/");
+    if (parts.length >= 2 && parts.at(-1) === PLUGIN_SKILL_ENTRY_FILE) names.add(parts[0]);
   }
   return [...names].sort();
 }

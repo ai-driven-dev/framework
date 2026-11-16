@@ -27,9 +27,10 @@ export function distributionProbesOf(
       probes.push({ format, relativePath });
     }
   }
+  // `sort` is stable: equally deep paths keep the order the tools were registered in.
   return probes
-    .map((probe, index) => ({ probe, index, depth: probe.relativePath.split("/").length }))
-    .sort((a, b) => b.depth - a.depth || a.index - b.index)
+    .map((probe) => ({ probe, depth: probe.relativePath.split("/").length }))
+    .sort((a, b) => b.depth - a.depth)
     .map((entry) => entry.probe);
 }
 

@@ -15,7 +15,6 @@ export async function writeSkillTree(
   transform?: SkillContentTransform
 ): Promise<number> {
   const skillsSrc = join(pluginSrc, "skills");
-  if (!(await fs.fileExists(skillsSrc))) return 0;
   const files = await fs.listFilesRecursive(skillsSrc);
   let count = 0;
   for (const absPath of files) {
