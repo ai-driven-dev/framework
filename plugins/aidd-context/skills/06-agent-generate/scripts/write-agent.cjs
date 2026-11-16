@@ -199,7 +199,10 @@ function droppedFields(tool, agent) {
   const host = HOSTS[tool];
   const kept = ["name", "description", BODY, ...host.uses];
   const lost = (key) => !kept.includes(key) || (key === "effort" && host.effortNeedsModel && !agent.model);
-  return Object.keys(agent).filter(lost).map((field) => ({ tool, field }));
+  const fields = Object.keys(agent).filter(lost).map((field) => ({ tool, field }));
+  if (tool !== "antigravity") return fields;
+  const grants = (toolList(agent.tools) ?? []).filter((grant) => !AGY_TOOLS_BY_CLAUDE_TOOL.has(grant));
+  return [...fields, ...grants.map((value) => ({ tool, field: "tools", value }))];
 }
 
 // No symlink from the project to a target, the target included: a link would write outside it.

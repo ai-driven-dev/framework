@@ -86,6 +86,16 @@ test("reports every field a host drops", (t) => {
   ]);
 });
 
+test("reports each grant Antigravity drops", (t) => {
+  const { run } = fixture(t);
+  const r = run({ name: "scout", description: "Finds files. Use to locate code.", tools: "Read, Task, TodoWrite", body: "x\n" }, "claude,antigravity");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(json(r).dropped, [
+    { tool: "antigravity", field: "tools", value: "Task" },
+    { tool: "antigravity", field: "tools", value: "TodoWrite" },
+  ]);
+});
+
 test("keeps the Claude-only keys of an existing agent", (t) => {
   const { run, read } = fixture(t);
   const r = run({ name: "scout", description: "Finds files. Use to locate code.", permissionMode: "plan", disallowedTools: "Write", body: "x\n" }, "claude");
