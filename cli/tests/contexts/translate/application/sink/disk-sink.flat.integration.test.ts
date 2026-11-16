@@ -633,4 +633,44 @@ describe("where a flat layout points a plugin-root reference", () => {
     });
     expect(await mcpArgs(contract)).toEqual(args.map((a) => a.replace(ROOT, STUB_OUT)));
   });
+
+  const refs = `See @${ROOT}/agents/rev.md and @${ROOT}/skills/other/y.md`;
+
+  it("links a skill to an agent and to another skill where the layout writes them", async () => {
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/skills/hello/SKILL.md`]: `---\nname: hello\n---\n\n${refs}\n`,
+    });
+    await stubWrite(memFs, stubContract());
+    expect(memFs.getFile(`${STUB_OUT}/.stub/skills/aidd-test/hello/SKILL.md`)).toBe(
+      "---\nname: hello\n---\n\nSee [rev.md](../../../agents/aidd-test-rev.md) and [y.md](../other/y.md)\n"
+    );
+  });
+
+  it("links an agent to itself where the layout writes it, and to an unhosted skill as the plugin had it", async () => {
+    const off = { supported: false } as const;
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/agents/rev.md`]: `---\nname: rev\n---\n\n${refs}\n`,
+    });
+    await stubWrite(
+      memFs,
+      stubContract({ artifacts: { ...stubContract().artifacts, skills: off } })
+    );
+    expect(memFs.getFile(`${STUB_OUT}/.stub/agents/aidd-test-rev.md`)).toBe(
+      "---\nname: 'rev'\n---\n\nSee [rev.md](./aidd-test-rev.md) and [y.md](../../skills/other/y.md)\n"
+    );
+  });
+
+  it("links a skill to an unhosted agent as the plugin had it", async () => {
+    const off = { supported: false } as const;
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/skills/hello/SKILL.md`]: `---\nname: hello\n---\n\n${refs}\n`,
+    });
+    await stubWrite(
+      memFs,
+      stubContract({ artifacts: { ...stubContract().artifacts, agents: off } })
+    );
+    expect(memFs.getFile(`${STUB_OUT}/.stub/skills/aidd-test/hello/SKILL.md`)).toBe(
+      "---\nname: hello\n---\n\nSee [rev.md](../../../../agents/rev.md) and [y.md](../other/y.md)\n"
+    );
+  });
 });

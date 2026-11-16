@@ -106,6 +106,8 @@ describe("a command a flat target installs", () => {
   const cases = [
     { authored: "aidd:04:sub:greet", installed: "aidd-sample-plugin:sub:greet" },
     { authored: "team:greet", installed: "aidd-sample-plugin:greet" },
+    { authored: "x:y", installed: "aidd-sample-plugin:y" },
+    { authored: "xaidd:1:sub:greet", installed: "aidd-sample-plugin:greet" },
     { authored: "greet", installed: "aidd-sample-plugin:greet" },
   ];
 
