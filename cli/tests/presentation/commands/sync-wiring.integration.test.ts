@@ -264,7 +264,6 @@ describe("aidd sync --scope user", () => {
       projectRoot: PROJECT_ROOT,
       tools: registeredCatalog(),
       scope: "user",
-      manifestRepo: userManifestRepo,
       toolIds: undefined,
       recreateFrameworkIfMissing: true,
     });

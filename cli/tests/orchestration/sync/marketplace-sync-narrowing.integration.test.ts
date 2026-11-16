@@ -3,20 +3,20 @@
  * `nativeRegistrations` wholesale would erase every other marketplace's record.
  */
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { marketplaceSync } from "../../helpers/marketplace-sync.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 

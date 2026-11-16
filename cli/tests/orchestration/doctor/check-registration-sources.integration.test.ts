@@ -23,7 +23,7 @@ const NAME = "probe-mkt";
 const CATALOG_RELATIVE = ".claude-plugin/marketplace.json";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
 
-/** The exact path `MarketplaceSyncSettingsUseCase`'s own guard would compare against —
+/** The exact path `SyncSettings`'s own guard would compare against —
  * recomputed the same way `checkMarketplaceSources` does, never a value invented here. */
 function expectedBuiltDir(): string {
   return resolve(builtMarketplaceDir(PROJECT_ROOT, NAME, "claude"));

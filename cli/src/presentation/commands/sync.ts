@@ -77,7 +77,6 @@ async function runUserScopeSync(
     projectRoot,
     tools: catalog,
     scope: "user",
-    manifestRepo: deps.userManifestRepo,
     toolIds,
     recreateFrameworkIfMissing: true,
   });

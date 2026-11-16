@@ -1,4 +1,4 @@
-// Idempotency and the empty-marketplace-list case live on MarketplaceSyncSettingsUseCase; this
+// Idempotency and the empty-marketplace-list case live on SyncSettings; this
 // translator only registers the plugin reference in the manifest, with empty files.
 import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";

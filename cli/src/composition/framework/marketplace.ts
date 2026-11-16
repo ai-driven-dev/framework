@@ -5,15 +5,6 @@ import { FindMarketplaceToRemove } from "../../contexts/distribution/application
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
 import type { MarketplaceRemover } from "../../contexts/distribution/ports/marketplace-remover.js";
-import {
-  ActivateNativeTools,
-  BuildMarketplaceForTool,
-  LoadSyncContext,
-  MarketplaceSyncSettingsUseCase,
-  RecordActivation,
-  SharedFrameworkSource,
-  SyncToolSettingsFiles,
-} from "../../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
@@ -21,8 +12,15 @@ import { ListPluginSources } from "../../contexts/installation/application/marke
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.js";
 import { RemoveProjectPlugin } from "../../contexts/installation/application/removal/remove-project-plugin.js";
+import { ActivateNativeTools } from "../../contexts/installation/application/sync/activate-native-tools.js";
+import { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.js";
+import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.js";
+import { RecordActivation } from "../../contexts/installation/application/sync/record-activation.js";
+import { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.js";
+import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
+import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.js";
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove.js";
@@ -30,6 +28,7 @@ import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-us
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.js";
 import { RegisterMarketplace } from "../../orchestration/setup/register-marketplace.js";
 import { SetupMarketplaceRegistration } from "../../orchestration/setup/setup-marketplace-registration.js";
+import { SyncSettings } from "../../orchestration/sync/sync-settings.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
 import type { Base } from "./base.js";
@@ -110,7 +109,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     ensureBuiltMarketplaceUseCase,
     logger
   );
-  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
+  const marketplaceSyncSettingsUseCase = new SyncSettings(
     new LoadSyncContext(
       manifestRepo,
       marketplaceRegistry,
@@ -131,7 +130,13 @@ export function wireMarketplace(base: Base, inst: Installation) {
       userConfigDir
     ),
     new RecordActivation(fs, hasher, userManifestRepo),
-    new SharedFrameworkSource(fs, logger, userSourceReferences, currentVersionProvider)
+    new SharedFrameworkSource(
+      fs,
+      logger,
+      userSourceReferences,
+      currentVersionProvider,
+      new PurgeDeclaredCache(fs, logger)
+    )
   );
   const askMarketplaceSource = new AskMarketplaceSource(
     prompter,

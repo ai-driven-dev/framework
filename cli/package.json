@@ -85,7 +85,6 @@
     "test:mutation:translate": "node scripts/run-mutation.mjs translate",
     "test:mutation:distribution": "node scripts/run-mutation.mjs distribution",
     "test:mutation:distribution-plugins": "node scripts/run-mutation.mjs distribution-plugins",
-    "test:mutation:framework": "node scripts/run-mutation.mjs framework",
     "test:mutation:installation": "node scripts/run-mutation.mjs installation",
     "test:mutation:machine-claims": "node scripts/run-mutation.mjs machine-claims",
     "test:mutation:orchestration": "node scripts/run-mutation.mjs orchestration",

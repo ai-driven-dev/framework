@@ -45,7 +45,7 @@ function makeNoOpPluginInstallFromMarketplace(): PluginInstallFromMarketplace {
   return { execute: vi.fn() };
 }
 
-/** A REAL `MarketplaceSyncSettingsUseCase`, not the no-op double the other setup suites
+/** A REAL `SyncSettings`, not the no-op double the other setup suites
  * substitute, behind a host registry already holding a different catalog under that name. */
 async function buildUseCaseWithConflict() {
   const deps = await buildUnitDeps(PROJECT_ROOT);

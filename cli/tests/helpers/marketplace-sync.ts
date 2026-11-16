@@ -1,13 +1,12 @@
-import {
-  ActivateNativeTools,
-  BuildMarketplaceForTool,
-  LoadSyncContext,
-  MarketplaceSyncSettingsUseCase,
-  RecordActivation,
-  SharedFrameworkSource,
-  SyncToolSettingsFiles,
-} from "../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { RegisterPluginWithHost } from "../../src/contexts/host-registration/application/register-plugin-with-host.js";
+import { ActivateNativeTools } from "../../src/contexts/installation/application/sync/activate-native-tools.js";
+import { BuildMarketplaceForTool } from "../../src/contexts/installation/application/sync/build-marketplace-for-tool.js";
+import { LoadSyncContext } from "../../src/contexts/installation/application/sync/load-sync-context.js";
+import { RecordActivation } from "../../src/contexts/installation/application/sync/record-activation.js";
+import { SyncToolSettingsFiles } from "../../src/contexts/installation/application/sync/sync-tool-settings-files.js";
+import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";
+import { SharedFrameworkSource } from "../../src/contexts/machine-claims/application/shared-source/shared-framework-source.js";
+import { SyncSettings } from "../../src/orchestration/sync/sync-settings.js";
 
 type Hosts = ConstructorParameters<typeof RegisterPluginWithHost>;
 type Loader = ConstructorParameters<typeof LoadSyncContext>;
@@ -32,9 +31,9 @@ export interface MarketplaceSyncParts {
   nativeSources?: Hosts[4];
 }
 
-export function marketplaceSync(parts: MarketplaceSyncParts): MarketplaceSyncSettingsUseCase {
+export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
   const build = new BuildMarketplaceForTool(parts.ensureBuilt, parts.logger);
-  return new MarketplaceSyncSettingsUseCase(
+  return new SyncSettings(
     new LoadSyncContext(
       parts.manifestRepo,
       parts.marketplaceRegistry,
@@ -59,7 +58,8 @@ export function marketplaceSync(parts: MarketplaceSyncParts): MarketplaceSyncSet
       parts.fs,
       parts.logger,
       parts.userSourceReferences,
-      parts.currentVersionProvider
+      parts.currentVersionProvider,
+      new PurgeDeclaredCache(parts.fs, parts.logger)
     )
   );
 }

@@ -11,7 +11,7 @@ import type { PluginTranslator } from "./plugin-translator.js";
  * Mode A — a marketplace registration, for a tool with native marketplace support.
  *
  * Files are NOT materialized on disk: a plugin reference is added to the manifest with an empty
- * files set, and `MarketplaceSyncSettingsUseCase` does the rest — driving the tool's own CLI where
+ * files set, and `SyncSettings` does the rest — driving the tool's own CLI where
  * `nativeActivation` is declared, writing the enabled-plugins key directly where it is not.
  */
 export class ModeAMarketplaceTranslator implements PluginTranslator {

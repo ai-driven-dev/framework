@@ -6,7 +6,6 @@ import type { ListMarketplaces } from "../contexts/distribution/application/list
 import type { SearchPlugins } from "../contexts/distribution/application/plugin-source/search-plugins.js";
 import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.js";
-import type { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { InstallAiTool } from "../contexts/installation/application/install/install-ai-tool.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
@@ -53,6 +52,7 @@ import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
 import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
 import type { AskMarketplaceSource } from "../orchestration/setup/ask-marketplace-source.js";
 import type { RunSetup } from "../orchestration/setup/run-setup.js";
+import type { SyncSettings } from "../orchestration/sync/sync-settings.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -132,7 +132,7 @@ export interface Deps {
   searchPlugins: Pick<SearchPlugins, "execute">;
   registerFrameworkMarketplace: Pick<RegisterFrameworkMarketplace, "execute">;
   pluginInstallUseCase: Pick<InstallPlugin, "execute">;
-  marketplaceSyncSettingsUseCase: Pick<MarketplaceSyncSettingsUseCase, "execute">;
+  marketplaceSyncSettingsUseCase: Pick<SyncSettings, "execute">;
   doctorUseCase: Pick<RunDoctor, "execute">;
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: Pick<CheckRegistration, "execute">;

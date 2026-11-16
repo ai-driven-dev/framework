@@ -22,9 +22,7 @@ src/
 │   │   │   └── catalog-parsers/
 │   │   ├── infrastructure/
 │   │   └── ports/
-│   ├── framework/    # what is left of the old layout: the flows that setup, clean, doctor and plugin commands drive
-│   │   ├── application/
-│   │   │   └── flows/
+│   ├── framework/    # what is left of the old layout: the home directory a use case resolves
 │   │   └── domain/
 │   │       └── reading/    # the home directory a use case resolves when none is given
 │   ├── installation/    # the installation record, and what installs, restores and materializes it into a project
@@ -39,6 +37,7 @@ src/
 │   │   │   ├── removal/    # a plugin removed from a project, its machine claims released through injected functions
 │   │   │   ├── restore/
 │   │   │   ├── shared/
+│   │   │   ├── sync/    # a project's or the machine's manifest brought in line with the tools' settings and native registrations
 │   │   │   └── update/    # one installed tool brought to the current version
 │   │   ├── contract/    # what installation reports about a project: doctor issues and the project context
 │   │   ├── domain/
@@ -49,6 +48,7 @@ src/
 │   │   └── ports/
 │   ├── machine-claims/    # which projects claim a machine-wide plugin or source, and what each user scope holds for them
 │   │   ├── application/
+│   │   │   └── shared-source/    # the machine's shared framework source and this project's own copy of it
 │   │   ├── contract/
 │   │   ├── domain/
 │   │   ├── infrastructure/
@@ -134,7 +134,8 @@ src/
 │   ├── global/    # machine-wide runs over every installed tool
 │   ├── marketplace/    # holding what is installed against what its marketplaces list
 │   ├── plugin/    # the plugin lifecycle, add to remove
-│   └── setup/    # bringing a project from nothing to correct: the scenario, its flow, and the marketplace a setup registers
+│   ├── setup/    # bringing a project from nothing to correct: the scenario, its flow, and the marketplace a setup registers
+│   └── sync/    # a sync run in order: settings files, native activation, then what the run recorded
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
 │   │   ├── materialization/    # where content lands and how its links follow

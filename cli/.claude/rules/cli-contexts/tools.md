@@ -5,7 +5,7 @@ paths:
   - "src/composition/tools.ts"
   - "tests/contexts/tools/**/*.ts"
   - "src/contexts/translate/application/**/*.ts"
-  - "src/contexts/framework/application/**/*.ts"
+  - "src/orchestration/**/*.ts"
   - "src/contexts/installation/application/**/*.ts"
 ---
 

@@ -1,10 +1,10 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { MarketplaceSyncSettingsUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.js";
 import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -26,7 +26,7 @@ function syncWithProvenFreshHost(
   registry: InMemoryMarketplaceRegistry,
   hasher: DeterministicHasher,
   activator: FakeHostActions
-): MarketplaceSyncSettingsUseCase {
+): SyncSettings {
   return marketplaceSync({
     fs,
     manifestRepo,

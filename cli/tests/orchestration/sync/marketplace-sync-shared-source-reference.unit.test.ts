@@ -3,23 +3,23 @@ import type {
   RegisterFrameworkMarketplace,
   RegisterFrameworkMarketplaceCommand,
   RegisterFrameworkMarketplaceResult,
-} from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { UserSourceReferencesAdapter } from "../../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { marketplaceSync } from "../../helpers/marketplace-sync.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { FakeCurrentVersion } from "../../helpers/ports/fake-current-version.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 const { claude } = TOOL;
 

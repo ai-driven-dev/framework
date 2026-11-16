@@ -1,40 +1,40 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
-import { NativeHostRegistrationGate } from "../../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
-import { RefreshHostPlugin } from "../../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
-import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
-import { UpdateUserPluginFiles } from "../../../../../src/contexts/installation/application/plugin/update-user-plugin-files.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
-import { UpdateUserPlugin } from "../../../../../src/orchestration/plugin/update-user-plugin.js";
-import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
-import { pluginRemover } from "../../../../helpers/plugin-remover.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { userMarketplaceRemover } from "../../../../helpers/user-marketplace-remover.js";
-import { userScopeCleaner } from "../../../../helpers/user-scope-cleaner.js";
-import { userScopeFileGuard } from "../../../../helpers/user-scope-file-guard.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { resolveHomeDir } from "../../../src/contexts/framework/domain/reading/home-dir.js";
+import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
+import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.js";
+import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/plugin-materializer.js";
+import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
+import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import {
   catalogOf,
   registeredAiConfig,
   registeredCatalog,
   TOOL,
-} from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+} from "../../contexts/tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
+import { marketplaceSync } from "../../helpers/marketplace-sync.js";
+import { pluginRemover } from "../../helpers/plugin-remover.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { userMarketplaceRemover } from "../../helpers/user-marketplace-remover.js";
+import { userScopeCleaner } from "../../helpers/user-scope-cleaner.js";
+import { userScopeFileGuard } from "../../helpers/user-scope-file-guard.js";
 
 for (const [toolId, catalogPath] of [
   [TOOL.codex, ".agents/plugins/marketplace.json"],
@@ -206,37 +206,35 @@ for (const [toolId, catalogPath] of [
           refs: new Map(enabled ? [[ref, { enabled: true, scope: "user" as const }]] : []),
         }),
       };
-      const useCase = marketplaceSync({
-        fs: new InMemoryFileAdapter({
-          [`${builtDir}/${catalogPath}`]: JSON.stringify({
-            name: hostName,
-            version: "1.0.0",
-            plugins: [],
+      const syncOf = (manifestRepo: InMemoryManifestRepository) =>
+        marketplaceSync({
+          fs: new InMemoryFileAdapter({
+            [`${builtDir}/${catalogPath}`]: JSON.stringify({
+              name: hostName,
+              version: "1.0.0",
+              plugins: [],
+            }),
           }),
-        }),
-        manifestRepo: a,
-        marketplaceRegistry: registry,
-        hasher: new DeterministicHasher(),
-        logger: new CapturingLogger(),
-        activators: new Map([[toolId, activator]]),
-        ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
-        userCacheRoot: () => "/built",
-        hostPluginRegistries: new Map([[toolId, hostReader]]),
-        userManifestRepo: user,
-        nativeSources: sources,
-      });
-
-      await useCase.execute({
+          manifestRepo,
+          marketplaceRegistry: registry,
+          hasher: new DeterministicHasher(),
+          logger: new CapturingLogger(),
+          activators: new Map([[toolId, activator]]),
+          ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
+          userCacheRoot: () => "/built",
+          hostPluginRegistries: new Map([[toolId, hostReader]]),
+          userManifestRepo: user,
+          nativeSources: sources,
+        });
+      await syncOf(a).execute({
         tools: registeredCatalog(),
         projectRoot: "/A",
-        manifestRepo: a,
         toolIds: [toolId],
       });
       enabled = true;
-      await useCase.execute({
+      await syncOf(b).execute({
         tools: registeredCatalog(),
         projectRoot: "/B",
-        manifestRepo: b,
         toolIds: [toolId],
       });
       expect(activator.enabledPlugins).toEqual([ref]);
@@ -366,7 +364,6 @@ for (const [toolId, catalogPath] of [
       await foreignUseCase.execute({
         tools: registeredCatalog(),
         projectRoot: "/foreign",
-        manifestRepo: foreign,
         toolIds: [toolId],
       });
       expect(foreign.getCurrent()?.getNativeRegistrations(toolId)?.pluginRefs).toEqual([]);

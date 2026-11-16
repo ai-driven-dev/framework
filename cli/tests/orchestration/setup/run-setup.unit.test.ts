@@ -9,7 +9,6 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
-import type { MarketplaceSyncSettings } from "../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { DetectProjectContext } from "../../../src/contexts/installation/application/detect-project-context.js";
 import { ConfigureMachineScope } from "../../../src/contexts/installation/application/install/configure-machine-scope.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
@@ -21,6 +20,7 @@ import type { UserSourceReferences } from "../../../src/contexts/machine-claims/
 import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.js";
+import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings.js";
 import type { PluginPick } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
@@ -62,7 +62,7 @@ function makeNoOpMarketplaceRefresh(): RefreshMock {
   return { execute };
 }
 
-function makeNoOpMarketplaceSyncSettings(): MarketplaceSyncSettings {
+function makeNoOpMarketplaceSyncSettings(): Pick<SyncSettings, "execute"> {
   return { execute: vi.fn().mockResolvedValue({ updatedTools: [] }) };
 }
 
@@ -126,7 +126,7 @@ async function buildUseCase(
   logger?: Logger,
   options?: {
     userManifestRepo?: ManifestRepository & Lock;
-    marketplaceSyncSettingsUseCase?: MarketplaceSyncSettings & {
+    marketplaceSyncSettingsUseCase?: Pick<SyncSettings, "execute"> & {
       execute: ReturnType<typeof vi.fn>;
     };
     detectContext?: boolean;
@@ -695,10 +695,12 @@ describe("setup --scope user", () => {
 
   it("hands the machine-wide sync the tools it registered and the plugins it enabled", async () => {
     const userManifestRepo = new InMemoryManifestRepository();
-    const marketplaceSyncSettingsUseCase =
-      makeNoOpMarketplaceSyncSettings() as MarketplaceSyncSettings & {
-        execute: ReturnType<typeof vi.fn>;
-      };
+    const marketplaceSyncSettingsUseCase = makeNoOpMarketplaceSyncSettings() as Pick<
+      SyncSettings,
+      "execute"
+    > & {
+      execute: ReturnType<typeof vi.fn>;
+    };
     const { useCase } = await buildUseCase(undefined, undefined, undefined, {
       userManifestRepo,
       marketplaceSyncSettingsUseCase,

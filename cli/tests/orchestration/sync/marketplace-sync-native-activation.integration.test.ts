@@ -1,29 +1,26 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
-import { answeredRegistry } from "../../../../../src/contexts/host-registration/domain/host-registration-answers.js";
-import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
-import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import {
-  builtMarketplaceDir,
-  userBuiltMarketplaceDir,
-} from "../../../../../src/shared/domain/paths.js";
-import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
-import { buildCheckRegistration } from "../../../../helpers/ports/build-check-registration.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
+import { answeredRegistry } from "../../../src/contexts/host-registration/domain/host-registration-answers.js";
+import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
+import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../src/shared/domain/paths.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf, registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { marketplaceSync } from "../../helpers/marketplace-sync.js";
+import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 const { claude } = TOOL;
 
@@ -538,7 +535,7 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
       () => "/user-cache",
       { get: () => "1.0.0" }
     );
-    // `MarketplaceSyncSettingsUseCase.execute` mutates the loaded manifest in place, so one
+    // `SyncSettings.execute` mutates the loaded manifest in place, so one
     // load kept across both doctor calls sees the sync that runs in between.
     const manifest = await manifestRepo.load();
     expect(manifest, "buildSync always seeds a manifest").not.toBeNull();

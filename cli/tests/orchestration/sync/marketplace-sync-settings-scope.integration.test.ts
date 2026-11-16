@@ -1,20 +1,20 @@
 import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";
-import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { marketplaceSync } from "../../helpers/marketplace-sync.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { FakeCurrentVersion } from "../../helpers/ports/fake-current-version.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -72,7 +72,7 @@ function freshHostProof(activator: FakeHostActions) {
 describe("settings synchronization under the machine ownership lock", () => {
   async function fixture() {
     const projectRepo = manifestWithTool();
-    const machineRepo = new InMemoryManifestRepository(Manifest.create());
+    const machineRepo = manifestWithTool();
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const fs = seededBuiltCatalog();
@@ -167,7 +167,7 @@ describe("settings synchronization under the machine ownership lock", () => {
   });
 });
 
-describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks for", () => {
+describe("SyncSettings — the activation scope a caller asks for", () => {
   it("enables at project scope by default, never claude's own implicit default", async () => {
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const registry = new InMemoryMarketplaceRegistry();
@@ -199,7 +199,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
     const { InstalledPlugin } = await import(
-      "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js"
+      "../../../src/contexts/installation/domain/plugins/installed-plugin.js"
     );
     manifest.addPlugin(
       TOOL.claude,
@@ -250,7 +250,7 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
     const { InstalledPlugin } = await import(
-      "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js"
+      "../../../src/contexts/installation/domain/plugins/installed-plugin.js"
     );
     manifest.addPlugin(
       TOOL.claude,
@@ -322,15 +322,16 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
     expect(written).toContain("aidd-telemetry");
   });
 
-  it("loads and saves the manifest passed as an override, never the one it was constructed with", async () => {
+  it("loads and saves the machine manifest at user scope, never the project's", async () => {
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplace());
     const constructedRepo = manifestWithTool();
-    const overrideRepo = manifestWithTool();
+    const machineRepo = manifestWithTool();
     const useCase = marketplaceSync({
       fs: seededBuiltCatalog(),
       manifestRepo: constructedRepo,
+      userManifestRepo: machineRepo,
       marketplaceRegistry: registry,
       hasher: new DeterministicHasher(),
       logger: new CapturingLogger(),
@@ -342,11 +343,10 @@ describe("MarketplaceSyncSettingsUseCase — the activation scope a caller asks 
       tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
-      manifestRepo: overrideRepo,
     });
 
     expect(result.activated).toEqual(["claude"]);
-    expect(overrideRepo.getCurrent()?.getNativeRegistrations(TOOL.claude)).toBeDefined();
+    expect(machineRepo.getCurrent()?.getNativeRegistrations(TOOL.claude)).toBeDefined();
     expect(constructedRepo.getCurrent()?.getNativeRegistrations(TOOL.claude)).toBeUndefined();
   });
 

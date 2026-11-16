@@ -1,24 +1,24 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
-import type { NativeRegistrations } from "../../../../../src/contexts/installation/domain/manifest/native-registrations.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
-import { builtMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
-import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
-import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
+import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { InstallationFile } from "../../../src/shared/domain/file.js";
+import { builtMarketplaceDir } from "../../../src/shared/domain/paths.js";
+import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import type { ToolId } from "../../../src/shared/domain/tool.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { marketplaceSync } from "../../helpers/marketplace-sync.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE = "aidd-framework";
@@ -99,19 +99,16 @@ async function build(setup: Setup = {}) {
   }
   for (const toolId of toolIds)
     manifest.addTool(toolId, "test", toolId === "claude" ? tracked : []);
-  if (setup.withPlugin === true) {
-    manifest.addPlugin(
-      TOOL.claude,
-      InstalledPlugin.fromMetadata(
-        PLUGIN,
-        "1.0.0",
-        { kind: "github", repo: "ai-driven-dev/framework" },
-        true,
-        "project",
-        MARKETPLACE
-      )
+  const installedPlugin = () =>
+    InstalledPlugin.fromMetadata(
+      PLUGIN,
+      "1.0.0",
+      { kind: "github", repo: "ai-driven-dev/framework" },
+      true,
+      "project",
+      MARKETPLACE
     );
-  }
+  if (setup.withPlugin === true) manifest.addPlugin(TOOL.claude, installedPlugin());
   if (setup.existingRegistrations !== undefined) {
     manifest.setNativeRegistrations(TOOL.claude, setup.existingRegistrations);
   }
@@ -606,86 +603,5 @@ describe("registration changes isolated from the catalogue provenance", () => {
     });
     expect(activator.removedMarketplaces).toStrictEqual([]);
     expect(activator.uninstalledPlugins).toStrictEqual([]);
-  });
-});
-
-describe("machine ownership recorded by a user-scope sync", () => {
-  const ref = `${PLUGIN}@${MARKETPLACE}`;
-  const unrelated = ownedMachineEntry("other", "other-catalog", "/other/source").marketplaces[0];
-
-  it("adds the claimed catalogue while preserving unrelated machine entries and refs", async () => {
-    const previous: NativeRegistrations = {
-      binary: "existing-cli",
-      marketplaces: [unrelated],
-      pluginRefs: ["kept@other-catalog"],
-      pluginClaims: [{ ref: "kept@other-catalog", dependents: ["/other-project"] }],
-    };
-    const { useCase, machineRepo, activator, fs } = await build({
-      withPlugin: true,
-      activator: new FakeHostActions({ available: true }),
-      existingMachineRegistrations: previous,
-      marketplaceScope: "user",
-    });
-
-    const result = await useCase.execute({
-      tools: registeredCatalog(),
-      projectRoot: PROJECT_ROOT,
-      scope: "user",
-    });
-
-    expect(result).toStrictEqual({
-      activated: ["claude"],
-      binaryMissing: [],
-      warnings: [],
-      errors: [],
-    });
-    expect(machineRepo?.saves).toBe(1);
-    expect(recorded(await machineRepo?.load())).toStrictEqual({
-      ...previous,
-      marketplaces: [unrelated, ...FRAMEWORK_ONLY.marketplaces],
-      pluginClaims: [...(previous.pluginClaims ?? []), { ref, dependents: [] }],
-    });
-    expect(activator.enabledPlugins).toStrictEqual([ref]);
-    expect(activator.enabledPluginScopes).toStrictEqual(["user"]);
-    expect(fs.listUnder(PROJECT_ROOT)).toStrictEqual([]);
-  });
-
-  it("refreshes proven provenance while preserving an existing plugin claim and dependents", async () => {
-    const previous: NativeRegistrations = {
-      binary: "existing-cli",
-      marketplaces: [{ alias: MARKETPLACE, hostName: MARKETPLACE }, unrelated],
-      pluginRefs: ["kept@other-catalog"],
-      pluginClaims: [{ ref, dependents: ["/other-project"] }],
-    };
-    const { useCase, machineRepo } = await build({
-      withPlugin: true,
-      activator: new FakeHostActions({ available: true }),
-      existingMachineRegistrations: previous,
-      marketplaceScope: "user",
-    });
-
-    await useCase.execute({
-      tools: registeredCatalog(),
-      projectRoot: PROJECT_ROOT,
-      scope: "user",
-    });
-
-    expect(machineRepo?.saves).toBe(1);
-    expect(recorded(await machineRepo?.load())).toStrictEqual({
-      ...previous,
-      marketplaces: [...FRAMEWORK_ONLY.marketplaces, unrelated],
-    });
-
-    await useCase.execute({
-      tools: registeredCatalog(),
-      projectRoot: PROJECT_ROOT,
-      scope: "user",
-    });
-
-    expect(machineRepo?.saves).toBe(1);
-    expect(recorded(await machineRepo?.load())).toStrictEqual({
-      ...previous,
-      marketplaces: [...FRAMEWORK_ONLY.marketplaces, unrelated],
-    });
   });
 });

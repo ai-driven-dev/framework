@@ -121,6 +121,11 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/report-status.ts",
     "src/contexts/installation/domain/manifest/native-registrations.ts",
     "src/contexts/installation/domain/plugins/installed-plugin.ts",
+    // the sync run's steps, which the sync scenario chains
+    "src/contexts/installation/application/sync/activate-native-tools.ts",
+    "src/contexts/installation/application/sync/load-sync-context.ts",
+    "src/contexts/installation/application/sync/record-activation.ts",
+    "src/contexts/installation/application/sync/sync-tool-settings-files.ts",
   ],
   "machine-claims": [
     // Transitional (reference-context.md, M-C1): framework's orchestrators read the claims and
@@ -131,6 +136,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/machine-claims/application/purge-declared-cache.ts",
     "src/contexts/machine-claims/application/release-claims.ts",
     "src/contexts/machine-claims/application/shared-source-reference-support.ts",
+    "src/contexts/machine-claims/application/shared-source/shared-framework-source.ts",
     "src/contexts/machine-claims/application/user-scope-plugin-files.ts",
     "src/contexts/machine-claims/domain/user-scope-containment.ts",
     "src/contexts/machine-claims/ports/user-source-references.ts",

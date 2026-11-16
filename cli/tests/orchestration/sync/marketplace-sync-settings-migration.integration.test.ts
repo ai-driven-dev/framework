@@ -3,34 +3,34 @@ import { describe, expect, it } from "vitest";
 import {
   RegisterFrameworkMarketplace,
   type RegisterFrameworkMarketplaceCommand,
-} from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
-import type { HostActions } from "../../../../../src/contexts/host-registration/ports/host-actions.js";
-import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";
+} from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
+import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
+import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import {
   BUILT_CACHE_SUBDIR,
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
-} from "../../../../../src/shared/domain/paths.js";
-import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import type { VersionReader } from "../../../../../src/shared/ports/version-reader.js";
-import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
-import { buildCheckRegistration } from "../../../../helpers/ports/build-check-registration.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceRegistry } from "../../../host-registration/testing/fake-host-marketplace-registry.js";
-import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../src/shared/domain/paths.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
+import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf, registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { marketplaceSync } from "../../helpers/marketplace-sync.js";
+import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/project";
 const CLAUDE_BUILT_DIR = "/shared/built/claude";
@@ -120,7 +120,7 @@ function noSourceReferences(
   };
 }
 
-describe("MarketplaceSyncSettingsUseCase — sync migrates a project installed before the shared source", () => {
+describe("SyncSettings — sync migrates a project installed before the shared source", () => {
   it("preserves the existing entry's own source when migrating it from project to user scope, never falling back to the local default", async () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(
@@ -179,7 +179,7 @@ describe("MarketplaceSyncSettingsUseCase — sync migrates a project installed b
   });
 });
 
-describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same name from a different source", () => {
+describe("SyncSettings — codex and copilot refuse the same name from a different source", () => {
   function frameworkAtUserScope(): Marketplace {
     return Marketplace.create({
       name: FRAMEWORK_MARKETPLACE_NAME,
@@ -392,7 +392,7 @@ describe("MarketplaceSyncSettingsUseCase — codex and copilot refuse the same n
   });
 });
 
-describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () => {
+describe("SyncSettings — fresh Claude host provenance", () => {
   async function syncWithHostRegistry(reading: { absent?: true; unreadable?: string }) {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, projectScopeEntry({ kind: "local", path: "." }));
@@ -452,7 +452,7 @@ describe("MarketplaceSyncSettingsUseCase — fresh Claude host provenance", () =
   });
 });
 
-describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmigrated project's cache", () => {
+describe("SyncSettings — the host still tracks another, unmigrated project's cache", () => {
   const USER_CACHE_ROOT = "/user-cache";
   const CURRENT_VERSION = "2.0.0";
 
@@ -695,7 +695,7 @@ describe("MarketplaceSyncSettingsUseCase — the host still tracks another, unmi
   });
 });
 
-describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migration cache", () => {
+describe("SyncSettings — purging this project's own pre-migration cache", () => {
   const OLD_CACHE_DIR = join(PROJECT_ROOT, BUILT_CACHE_SUBDIR, FRAMEWORK_MARKETPLACE_NAME);
   const OLD_CACHE_FILE = join(OLD_CACHE_DIR, "claude", "agents", "some-agent.md");
 
@@ -1316,7 +1316,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
   });
 });
 
-describe("MarketplaceSyncSettingsUseCase + CheckRegistration — the full migration cycle", () => {
+describe("SyncSettings + CheckRegistration — the full migration cycle", () => {
   /** Reads live from a `Map` the test's own activator double mutates on `addMarketplace`, the
    * one double that lets a `doctor` call made after a `sync` see what that `sync` actually did. */
   class LiveHostMarketplaceRegistryReader {

@@ -30,7 +30,7 @@ const { registerMarketplaceCommand } = await import(
 );
 
 describe("marketplace add narrows native activation to the marketplace it just registered", () => {
-  it("passes marketplaceNames: [name] to MarketplaceSyncSettingsUseCase.execute", async () => {
+  it("passes marketplaceNames: [name] to SyncSettings.execute", async () => {
     const program = new Command();
     program.exitOverride();
     registerMarketplaceCommand(program, catalogOf(), createDeps, createMenuDeps);

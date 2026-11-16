@@ -76,12 +76,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
   const setupMachineScope = new SetupMachineScope(
     new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
     setupMarketplaceRegistration,
-    (options) =>
-      marketplaceSyncSettingsUseCase.execute({
-        ...options,
-        scope: "user",
-        manifestRepo: userManifestRepo,
-      }),
+    (options) => marketplaceSyncSettingsUseCase.execute({ ...options, scope: "user" }),
     installGlobalPlugins
   );
   const statusUseCase = new ReportStatus(fs, manifestRepo, hasher, detectPluginDriftUseCase);
