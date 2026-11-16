@@ -20,6 +20,7 @@ flowchart LR
   write -->|"remove done"| done((written))
   write --> verify["actions/04-verify.md"]
   verify -->|"finding"| plan
+  verify -->|"verifier error"| stopped
   verify <-->|"trial to approve"| user
   verify --> verified((verified))
 ```
