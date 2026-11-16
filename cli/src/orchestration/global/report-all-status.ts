@@ -1,10 +1,10 @@
-import type { GlobalExecutionError } from "../../../../shared/domain/errors.js";
 import type {
   ReportStatusResult,
   StatusQuery,
-} from "../../../installation/application/report-status.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-export interface StatusAllResult {
+} from "../../contexts/installation/application/report-status.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { GlobalExecutionError } from "../../shared/domain/errors.js";
+export interface ReportAllStatusResult {
   aiTools: ReportStatusResult;
   ideTools: ReportStatusResult;
   /** Plugin drift only. Plugins hang off AI tools, so the ai scope already carries them all. */
@@ -12,10 +12,10 @@ export interface StatusAllResult {
   errors: GlobalExecutionError[];
 }
 
-export class StatusAllUseCase {
+export class ReportAllStatus {
   constructor(private readonly statusUseCase: StatusQuery) {}
 
-  async execute(projectRoot: string, tools: ToolCatalog): Promise<StatusAllResult> {
+  async execute(projectRoot: string, tools: ToolCatalog): Promise<ReportAllStatusResult> {
     const errors: GlobalExecutionError[] = [];
     const [aiTools, ideTools] = await this.collectCategoryReports(
       this.statusUseCase,

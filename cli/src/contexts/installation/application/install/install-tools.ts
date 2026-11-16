@@ -1,19 +1,13 @@
 import type { AiToolId, IdeToolId } from "../../../../shared/domain/tool.js";
-import type {
-  InstallIdeConfig,
-  InstallIdeConfigResult,
-} from "../../../installation/application/install/install-ide-config.js";
-import type {
-  InstallRuntimeConfig,
-  InstallRuntimeConfigResult,
-} from "../../../installation/application/install/install-runtime-config.js";
-import { Manifest } from "../../../installation/domain/manifest.js";
-import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import { Manifest } from "../../domain/manifest.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { InstallIdeConfig, InstallIdeConfigResult } from "./install-ide-config.js";
+import type { InstallRuntimeConfig, InstallRuntimeConfigResult } from "./install-runtime-config.js";
 
 export type ToolInstallResult = InstallRuntimeConfigResult | InstallIdeConfigResult;
 
-export interface SetupToolsOptions {
+export interface InstallToolsOptions {
   projectRoot: string;
   aiTools: readonly AiToolId[];
   ideTools: readonly IdeToolId[];
@@ -22,18 +16,18 @@ export interface SetupToolsOptions {
   tools: ToolCatalog;
 }
 
-export interface SetupToolsResult {
+export interface InstallToolsResult {
   results: ToolInstallResult[];
 }
 
-export class SetupToolsUseCase {
+export class InstallTools {
   constructor(
     private readonly manifestRepo: ManifestRepository,
     private readonly installRuntimeConfigUseCase: InstallRuntimeConfig,
     private readonly installIdeConfig: InstallIdeConfig
   ) {}
 
-  async execute(options: SetupToolsOptions): Promise<SetupToolsResult> {
+  async execute(options: InstallToolsOptions): Promise<InstallToolsResult> {
     if (options.aiTools.length === 0 && options.ideTools.length === 0) {
       return { results: [] };
     }
@@ -51,7 +45,7 @@ export class SetupToolsUseCase {
   private async installAiTool(
     toolId: AiToolId,
     manifest: Manifest,
-    options: SetupToolsOptions
+    options: InstallToolsOptions
   ): Promise<InstallRuntimeConfigResult> {
     return this.installRuntimeConfigUseCase.execute({
       toolId,
@@ -66,7 +60,7 @@ export class SetupToolsUseCase {
   private async installIdeTool(
     toolId: IdeToolId,
     manifest: Manifest,
-    options: SetupToolsOptions
+    options: InstallToolsOptions
   ): Promise<InstallIdeConfigResult> {
     return this.installIdeConfig.execute({
       toolId,

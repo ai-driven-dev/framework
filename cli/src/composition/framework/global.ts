@@ -1,16 +1,16 @@
 import { RestoreAllUseCase } from "../../contexts/framework/application/global/restore-all-use-case.js";
-import { StatusAllUseCase } from "../../contexts/framework/application/global/status-all-use-case.js";
 import { InstallAiToolUseCase } from "../../contexts/framework/application/install/install-ai-tool-use-case.js";
 import { InstallGlobalPluginsUseCase } from "../../contexts/framework/application/setup/install-global-plugins-use-case.js";
-import { ProjectContextDetectorUseCase } from "../../contexts/framework/application/setup/project-context-detector-use-case.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
-import { SetupToolsUseCase } from "../../contexts/framework/application/setup/setup-tools-use-case.js";
+import { DetectProjectContext } from "../../contexts/installation/application/detect-project-context.js";
 import { InstallIdeTool } from "../../contexts/installation/application/install/install-ide-tool.js";
+import { InstallTools } from "../../contexts/installation/application/install/install-tools.js";
 import { ListInstalledTools } from "../../contexts/installation/application/list-installed-tools.js";
 import { ReportStatus } from "../../contexts/installation/application/report-status.js";
 import { ResolveSyncConflict } from "../../contexts/installation/application/resolve-sync-conflict.js";
 import { Restore } from "../../contexts/installation/application/restore/restore.js";
 import { UpdateTool } from "../../contexts/installation/application/update/update-tool.js";
+import { ReportAllStatus } from "../../orchestration/global/report-all-status.js";
 import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update-decision.js";
 import { UpdateTools } from "../../orchestration/global/update-tools.js";
 import type { Base } from "./base.js";
@@ -59,12 +59,12 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     marketplaceSyncSettingsUseCase,
     logger
   );
-  const setupToolsUseCase = new SetupToolsUseCase(
+  const setupToolsUseCase = new InstallTools(
     manifestRepo,
     installRuntimeConfigUseCase,
     installIdeConfig
   );
-  const projectContextDetector = new ProjectContextDetectorUseCase(fs);
+  const projectContextDetector = new DetectProjectContext(fs);
   const setupMachineScopeUseCase = new SetupMachineScopeUseCase(
     userManifestRepo,
     setupMarketplaceRegistration,
@@ -90,7 +90,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     assetProvider,
     builtMaterializationDeps
   );
-  const statusAllUseCase = new StatusAllUseCase(statusUseCase);
+  const statusAllUseCase = new ReportAllStatus(statusUseCase);
   const restoreAllUseCase = new RestoreAllUseCase(
     manifestRepo,
     prompter,

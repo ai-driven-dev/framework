@@ -1,5 +1,6 @@
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
+import type { InstallToolsResult } from "../../../installation/application/install/install-tools.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
@@ -11,7 +12,6 @@ import type {
 import type { SetupResult } from "../setup-use-case.js";
 import type { SetupMarketplaceRegistrationUseCase } from "../shared/setup-marketplace-registration-use-case.js";
 import type { InstallGlobalPluginsUseCase } from "./install-global-plugins-use-case.js";
-import type { SetupToolsResult } from "./setup-tools-use-case.js";
 
 /**
  * `--scope user`: registers the shared framework source, installs the requested plugins in each
@@ -56,7 +56,7 @@ export class SetupMachineScopeUseCase {
         enablePlugins: plugins,
         tools,
       });
-    const install: SetupToolsResult = { results: [] };
+    const install: InstallToolsResult = { results: [] };
     const outcome = { install, activation, context: undefined, globalPlugins: plugins };
     return isNew ? { kind: "initialized", ...outcome } : { kind: "up-to-date", ...outcome };
   }

@@ -15,20 +15,19 @@ import type { MarketplaceRemoveUseCase } from "../contexts/framework/application
 import type { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { DoctorAllUseCase } from "../contexts/framework/application/global/doctor-all-use-case.js";
 import type { RestoreAllUseCase } from "../contexts/framework/application/global/restore-all-use-case.js";
-import type { StatusAllUseCase } from "../contexts/framework/application/global/status-all-use-case.js";
 import type { InstallAiToolUseCase } from "../contexts/framework/application/install/install-ai-tool-use-case.js";
 import type { UserMarketplaceRemoveUseCase } from "../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import type { UserPluginUpdateUseCase } from "../contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import type { PluginInstallUseCase } from "../contexts/framework/application/plugin/plugin-install-use-case.js";
 import type { PluginRemoveUseCase } from "../contexts/framework/application/plugin/plugin-remove-use-case.js";
-import type { ProjectContextDetectorUseCase } from "../contexts/framework/application/setup/project-context-detector-use-case.js";
 import type { SetupMachineScopeUseCase } from "../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import type { SetupMarketplaceSourceUseCase } from "../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
-import type { SetupToolsUseCase } from "../contexts/framework/application/setup/setup-tools-use-case.js";
 import type { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import type { UninstallIdeUseCase } from "../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
 import type { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
+import type { DetectProjectContext } from "../contexts/installation/application/detect-project-context.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
+import type { InstallTools } from "../contexts/installation/application/install/install-tools.js";
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
 import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
 import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.js";
@@ -56,6 +55,7 @@ import type { FrameworkBuildUseCase } from "../contexts/translate/application/tr
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
 import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";
+import type { ReportAllStatus } from "../orchestration/global/report-all-status.js";
 import type { UpdateTools } from "../orchestration/global/update-tools.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
@@ -142,10 +142,10 @@ export interface Deps {
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: Pick<DoctorRegistrationUseCase, "execute">;
   setupMarketplaceSourceUseCase: Pick<SetupMarketplaceSourceUseCase, "execute">;
-  setupToolsUseCase: Pick<SetupToolsUseCase, "execute">;
+  setupToolsUseCase: Pick<InstallTools, "execute">;
   setupPluginsPromptUseCase: Pick<SetupPluginsPromptUseCase, "execute">;
   setupToolsPromptUseCase: Pick<SetupToolsPromptUseCase, "execute">;
-  projectContextDetector: Pick<ProjectContextDetectorUseCase, "execute">;
+  projectContextDetector: Pick<DetectProjectContext, "execute">;
   setupMarketplaceRegistration: Pick<
     SetupMarketplaceRegistrationUseCase,
     "resolveSourceIfNeeded" | "registerIfPresent"
@@ -155,7 +155,7 @@ export interface Deps {
   statusUseCase: Pick<ReportStatus, "execute">;
   restoreUseCase: Pick<Restore, "execute">;
   uninstallUseCase: Pick<UninstallUseCase, "execute">;
-  statusAllUseCase: Pick<StatusAllUseCase, "execute">;
+  statusAllUseCase: Pick<ReportAllStatus, "execute">;
   restoreAllUseCase: Pick<RestoreAllUseCase, "execute">;
   updateToolsUseCase: Pick<UpdateTools, "execute">;
   cleanUseCase: Pick<CleanUseCase, "execute">;

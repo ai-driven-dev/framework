@@ -11,13 +11,13 @@ import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/
 import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
 import type { MarketplaceSyncSettings } from "../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
-import { ProjectContextDetectorUseCase } from "../../../../src/contexts/framework/application/setup/project-context-detector-use-case.js";
 import { SetupMachineScopeUseCase } from "../../../../src/contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
-import { SetupToolsUseCase } from "../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
+import { DetectProjectContext } from "../../../../src/contexts/installation/application/detect-project-context.js";
+import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
 import { ProjectContext } from "../../../../src/contexts/installation/contract/project-context.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
@@ -141,7 +141,7 @@ async function buildUseCase(
     prompter,
     makeNoOpLatestResolver()
   );
-  const setupToolsUseCase = new SetupToolsUseCase(
+  const setupToolsUseCase = new InstallTools(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfig
@@ -187,7 +187,7 @@ async function buildUseCase(
     setupPluginsPromptUseCase,
     deps.currentVersionProvider,
     setupToolsPromptUseCase,
-    options?.detectContext === true ? new ProjectContextDetectorUseCase(deps.fs) : undefined,
+    options?.detectContext === true ? new DetectProjectContext(deps.fs) : undefined,
     setupMachineScopeUseCase
   );
   return {

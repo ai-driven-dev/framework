@@ -7,10 +7,10 @@ import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/
 import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
 import type { PluginInstallFromMarketplace } from "../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
-import { SetupToolsUseCase } from "../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
+import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { marketplaceSync } from "../../../helpers/marketplace-sync.js";
@@ -54,7 +54,7 @@ async function buildUseCaseWithConflict() {
     prompter,
     makeNoOpLatestResolver()
   );
-  const setupToolsUseCase = new SetupToolsUseCase(
+  const setupToolsUseCase = new InstallTools(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfig

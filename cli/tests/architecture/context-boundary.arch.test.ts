@@ -49,7 +49,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   framework: [
     // the flows a command drives end to end
     "src/contexts/framework/application/setup-use-case.ts",
-    "src/contexts/framework/application/setup/setup-tools-use-case.ts",
     "src/contexts/framework/application/plugin/plugin-add-use-case.ts",
     "src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.ts",
     // what a display or a prompt reads to render a decision it does not make
@@ -74,6 +73,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/init-project.ts",
     "src/contexts/installation/application/list-installed-tools.ts",
     "src/contexts/installation/application/update/update-tool.ts",
+    "src/contexts/installation/application/install/install-tools.ts",
+    "src/contexts/installation/application/detect-project-context.ts",
     "src/contexts/installation/application/install/install-ide-config.ts",
     "src/contexts/installation/application/install/install-runtime-config.ts",
     "src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
