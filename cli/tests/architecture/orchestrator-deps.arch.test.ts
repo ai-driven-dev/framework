@@ -44,7 +44,6 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     path: "src/contexts/framework/application/shared/setup-marketplace-registration-use-case.ts",
     dependencies: 10,
   },
-  { path: "src/contexts/installation/application/plugin/add-plugin.ts", dependencies: 9 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", dependencies: 7 },
   {
     path: "src/contexts/framework/application/doctor/doctor-registration-use-case.ts",

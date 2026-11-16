@@ -66,17 +66,16 @@ async function installGithubPlugin(
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
 
   await new AddPlugin(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
-    deps.hasher,
-    deps.logger,
-    registry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      ),
+      marketplaceRegistry: registry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   ).execute({
     tools: catalogOf(),
     source: GIT_SUBDIR_SOURCE,

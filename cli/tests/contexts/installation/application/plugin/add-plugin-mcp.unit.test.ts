@@ -44,17 +44,16 @@ async function buildOpencodeProject(): Promise<{
   );
   const logger = new CapturingLogger();
   const useCase = new AddPlugin(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
-    deps.hasher,
-    logger,
-    deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+    { fs: deps.fs, hasher: deps.hasher, logger: logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      ),
+      marketplaceRegistry: deps.marketplaceRegistry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   );
   return { deps, logger, useCase };
 }

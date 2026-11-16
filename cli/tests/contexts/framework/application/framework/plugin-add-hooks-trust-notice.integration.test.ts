@@ -25,17 +25,16 @@ async function installWithLogger(toolId: AiToolId) {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const logger = new CapturingLogger();
   const useCase = new AddPlugin(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
-    deps.hasher,
-    logger,
-    new InMemoryMarketplaceRegistry(),
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+    { fs: deps.fs, hasher: deps.hasher, logger: logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      ),
+      marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   );
   await useCase.execute({
     tools: catalogOf(),

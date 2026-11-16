@@ -59,18 +59,51 @@ export interface PluginAdd {
   execute(options: PluginAddOptions): Promise<void>;
 }
 
+/** What the plugin writes through and reports with. */
+export interface AddPluginHost {
+  fs: FileWriter & FileReader;
+  hasher: Hasher;
+  logger: Logger;
+}
+
+/** The two manifests an add touches: the project's, and the machine's, which guards the lock. */
+export interface AddPluginManifests {
+  project: ManifestRepository;
+  user: ManifestRepository & Lock;
+}
+
+/** Where a plugin's files come from. */
+export interface AddPluginSources {
+  distributionLoader: PluginDistributionLoader;
+  marketplaceRegistry: MarketplaceRegistry;
+  ensureBuilt: BuiltMarketplaceEnsurer;
+}
+
 export class AddPlugin implements PluginAdd {
+  private readonly fs: FileWriter & FileReader;
+  private readonly hasher: Hasher;
+  private readonly logger: Logger;
+  private readonly manifestRepo: ManifestRepository;
+  private readonly userManifestRepo: ManifestRepository & Lock;
+  private readonly distributionLoader: PluginDistributionLoader;
+  private readonly marketplaceRegistry: MarketplaceRegistry;
+  private readonly ensureBuilt: BuiltMarketplaceEnsurer;
+
   constructor(
-    private readonly fs: FileWriter & FileReader,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly distributionLoader: PluginDistributionLoader,
-    private readonly hasher: Hasher,
-    private readonly logger: Logger,
-    private readonly marketplaceRegistry: MarketplaceRegistry,
-    private readonly ensureBuilt: BuiltMarketplaceEnsurer,
-    private readonly userManifestRepo: ManifestRepository & Lock,
+    host: AddPluginHost,
+    manifests: AddPluginManifests,
+    sources: AddPluginSources,
     private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
-  ) {}
+  ) {
+    ({ fs: this.fs, hasher: this.hasher, logger: this.logger } = host);
+    this.manifestRepo = manifests.project;
+    this.userManifestRepo = manifests.user;
+    ({
+      distributionLoader: this.distributionLoader,
+      marketplaceRegistry: this.marketplaceRegistry,
+      ensureBuilt: this.ensureBuilt,
+    } = sources);
+  }
 
   async execute(options: PluginAddOptions): Promise<void> {
     return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));

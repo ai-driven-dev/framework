@@ -69,14 +69,13 @@ export function wirePlugin(base: Base, inst: Installation) {
     })
   );
   const pluginAddUseCase = new AddPlugin(
-    fs,
-    manifestRepo,
-    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-    hasher,
-    logger,
-    marketplaceRegistry,
-    ensureBuiltMarketplaceUseCase,
-    userManifestRepo,
+    { fs: fs, hasher: hasher, logger: logger },
+    { project: manifestRepo, user: userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+      marketplaceRegistry: marketplaceRegistry,
+      ensureBuilt: ensureBuiltMarketplaceUseCase,
+    },
     installRuntimeConfigUseCase
   );
   const pluginInstallFromMarketplaceUseCase = new InstallFromMarketplace(

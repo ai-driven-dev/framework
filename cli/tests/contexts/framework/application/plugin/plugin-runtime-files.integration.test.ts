@@ -30,14 +30,16 @@ async function legacyProject() {
   await deps.fs.writeFile(join(ROOT, "opencode.json"), USER_CONFIG);
   await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });
   const add = new AddPlugin(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-    deps.hasher,
-    deps.logger,
-    deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo,
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        deps.pluginDistributionReader
+      ),
+      marketplaceRegistry: deps.marketplaceRegistry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    },
     deps.installRuntimeConfigUseCase
   );
   const update = new UpdatePlugin(

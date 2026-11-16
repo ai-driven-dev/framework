@@ -35,14 +35,13 @@ async function installPlugin(
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const pluginReader = new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes());
   await new AddPlugin(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
-    deps.hasher,
-    deps.logger,
-    deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
+      marketplaceRegistry: deps.marketplaceRegistry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   ).execute({
     tools: catalogOf(),
     source: { kind: "local", path: PLUGIN_FIXTURE },

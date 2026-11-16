@@ -64,17 +64,16 @@ async function installPlugin(
 ): Promise<void> {
   await seedFromDirectory(deps.fs, fixture, { useAbsolutePaths: true });
   const addUseCase = new AddPlugin(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
-    deps.hasher,
-    deps.logger,
-    deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      ),
+      marketplaceRegistry: deps.marketplaceRegistry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   );
   await addUseCase.execute({
     tools: catalogOf(),

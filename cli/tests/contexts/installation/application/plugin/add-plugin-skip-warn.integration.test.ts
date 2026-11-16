@@ -26,17 +26,16 @@ describe("AddPlugin skip warnings", () => {
       const capturingLogger = new CapturingLogger();
       const registry = new InMemoryMarketplaceRegistry();
       const useCase = new AddPlugin(
-        deps.fs,
-        deps.manifestRepo,
-        new PluginDistributionLoader(
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-        ),
-        deps.hasher,
-        capturingLogger,
-        registry,
-        fakeEnsureBuiltMarketplace(),
-        deps.userManifestRepo
+        { fs: deps.fs, hasher: deps.hasher, logger: capturingLogger },
+        { project: deps.manifestRepo, user: deps.userManifestRepo },
+        {
+          distributionLoader: new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+          ),
+          marketplaceRegistry: registry,
+          ensureBuilt: fakeEnsureBuiltMarketplace(),
+        }
       );
       await useCase.execute({
         tools: catalogOf(),

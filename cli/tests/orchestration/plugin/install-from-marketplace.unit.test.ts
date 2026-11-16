@@ -51,17 +51,16 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
   const registry = new InMemoryMarketplaceRegistry();
   const catalogRepo = new PluginCatalogRepositoryAdapter(deps.fs);
   const pluginAdd = new AddPlugin(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
-    deps.hasher,
-    deps.logger,
-    registry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      ),
+      marketplaceRegistry: registry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);
   const logger = options.logger === null ? undefined : (options.logger ?? deps.logger);

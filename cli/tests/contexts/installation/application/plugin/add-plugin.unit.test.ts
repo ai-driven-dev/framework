@@ -53,17 +53,16 @@ function buildAddUseCase(
   logger: Logger = deps.logger
 ): AddPlugin {
   return new AddPlugin(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
-    deps.hasher,
-    logger,
-    registry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+    { fs: deps.fs, hasher: deps.hasher, logger: logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      ),
+      marketplaceRegistry: registry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   );
 }
 
@@ -160,17 +159,16 @@ describe("AddPlugin", () => {
       );
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
       const useCase = new AddPlugin(
-        deps.fs,
-        deps.manifestRepo,
-        new PluginDistributionLoader(
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-        ),
-        deps.hasher,
-        deps.logger,
-        registry,
-        fakeEnsureBuiltMarketplace(),
-        deps.userManifestRepo
+        { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+        { project: deps.manifestRepo, user: deps.userManifestRepo },
+        {
+          distributionLoader: new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+          ),
+          marketplaceRegistry: registry,
+          ensureBuilt: fakeEnsureBuiltMarketplace(),
+        }
       );
       await useCase.execute({
         tools: catalogOf(),
@@ -207,17 +205,16 @@ describe("AddPlugin", () => {
         })
       );
       const useCase = new AddPlugin(
-        deps.fs,
-        deps.manifestRepo,
-        new PluginDistributionLoader(
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-        ),
-        deps.hasher,
-        deps.logger,
-        registry,
-        fakeEnsureBuiltMarketplace(),
-        deps.userManifestRepo
+        { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+        { project: deps.manifestRepo, user: deps.userManifestRepo },
+        {
+          distributionLoader: new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+          ),
+          marketplaceRegistry: registry,
+          ensureBuilt: fakeEnsureBuiltMarketplace(),
+        }
       );
       await expect(
         useCase.execute({
@@ -251,17 +248,16 @@ describe("AddPlugin", () => {
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
       const useCase = new AddPlugin(
-        deps.fs,
-        deps.manifestRepo,
-        new PluginDistributionLoader(
-          deps.pluginFetcher,
-          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-        ),
-        deps.hasher,
-        deps.logger,
-        registry,
-        fakeEnsureBuiltMarketplace(),
-        deps.userManifestRepo
+        { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+        { project: deps.manifestRepo, user: deps.userManifestRepo },
+        {
+          distributionLoader: new PluginDistributionLoader(
+            deps.pluginFetcher,
+            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+          ),
+          marketplaceRegistry: registry,
+          ensureBuilt: fakeEnsureBuiltMarketplace(),
+        }
       );
       await useCase.execute({
         tools: catalogOf(),
@@ -312,17 +308,16 @@ describe("AddPlugin", () => {
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const useCase = new AddPlugin(
-          deps.fs,
-          deps.manifestRepo,
-          new PluginDistributionLoader(
-            deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-          ),
-          deps.hasher,
-          deps.logger,
-          await makeGithubRegistry(PROJECT_ROOT),
-          fakeEnsureBuiltMarketplace(),
-          deps.userManifestRepo
+          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { project: deps.manifestRepo, user: deps.userManifestRepo },
+          {
+            distributionLoader: new PluginDistributionLoader(
+              deps.pluginFetcher,
+              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            ),
+            marketplaceRegistry: await makeGithubRegistry(PROJECT_ROOT),
+            ensureBuilt: fakeEnsureBuiltMarketplace(),
+          }
         );
         await useCase.execute({
           tools: catalogOf(),
@@ -354,17 +349,16 @@ describe("AddPlugin", () => {
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
-          deps.fs,
-          deps.manifestRepo,
-          new PluginDistributionLoader(
-            deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-          ),
-          deps.hasher,
-          deps.logger,
-          registry,
-          fakeEnsureBuiltMarketplace(),
-          deps.userManifestRepo
+          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { project: deps.manifestRepo, user: deps.userManifestRepo },
+          {
+            distributionLoader: new PluginDistributionLoader(
+              deps.pluginFetcher,
+              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            ),
+            marketplaceRegistry: registry,
+            ensureBuilt: fakeEnsureBuiltMarketplace(),
+          }
         );
         await useCase.execute({
           tools: catalogOf(),
@@ -395,17 +389,16 @@ describe("AddPlugin", () => {
         // Cursor copies the per-target BUILT tree verbatim; seed it.
         deps.fs.setFile("/built/cursor/plugins/sample-plugin/skills/demo/SKILL.md", "# Demo skill");
         const useCase = new AddPlugin(
-          deps.fs,
-          deps.manifestRepo,
-          new PluginDistributionLoader(
-            deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-          ),
-          deps.hasher,
-          deps.logger,
-          registry,
-          fakeEnsureBuiltMarketplace(),
-          deps.userManifestRepo
+          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { project: deps.manifestRepo, user: deps.userManifestRepo },
+          {
+            distributionLoader: new PluginDistributionLoader(
+              deps.pluginFetcher,
+              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            ),
+            marketplaceRegistry: registry,
+            ensureBuilt: fakeEnsureBuiltMarketplace(),
+          }
         );
         await useCase.execute({
           tools: catalogOf(),
@@ -564,17 +557,16 @@ describe("AddPlugin", () => {
         const projectBRepo = new InMemoryManifestRepository(projectB, "/B");
         const registryB = await makeGithubRegistry("/B");
         await new AddPlugin(
-          deps.fs,
-          projectBRepo,
-          new PluginDistributionLoader(
-            deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-          ),
-          deps.hasher,
-          logger,
-          registryB,
-          fakeEnsureBuiltMarketplace(),
-          deps.userManifestRepo
+          { fs: deps.fs, hasher: deps.hasher, logger: logger },
+          { project: projectBRepo, user: deps.userManifestRepo },
+          {
+            distributionLoader: new PluginDistributionLoader(
+              deps.pluginFetcher,
+              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            ),
+            marketplaceRegistry: registryB,
+            ensureBuilt: fakeEnsureBuiltMarketplace(),
+          }
         ).execute({
           tools: catalogOf(),
           source: GIT_SUBDIR_SOURCE,
@@ -605,17 +597,16 @@ describe("AddPlugin", () => {
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
-          deps.fs,
-          deps.manifestRepo,
-          new PluginDistributionLoader(
-            deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-          ),
-          deps.hasher,
-          deps.logger,
-          registry,
-          fakeEnsureBuiltMarketplace(),
-          deps.userManifestRepo
+          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { project: deps.manifestRepo, user: deps.userManifestRepo },
+          {
+            distributionLoader: new PluginDistributionLoader(
+              deps.pluginFetcher,
+              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            ),
+            marketplaceRegistry: registry,
+            ensureBuilt: fakeEnsureBuiltMarketplace(),
+          }
         );
         await useCase.execute({
           tools: catalogOf(),
@@ -641,17 +632,16 @@ describe("AddPlugin", () => {
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
-          deps.fs,
-          deps.manifestRepo,
-          new PluginDistributionLoader(
-            deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-          ),
-          deps.hasher,
-          deps.logger,
-          registry,
-          fakeEnsureBuiltMarketplace(),
-          deps.userManifestRepo
+          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { project: deps.manifestRepo, user: deps.userManifestRepo },
+          {
+            distributionLoader: new PluginDistributionLoader(
+              deps.pluginFetcher,
+              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            ),
+            marketplaceRegistry: registry,
+            ensureBuilt: fakeEnsureBuiltMarketplace(),
+          }
         );
         await useCase.execute({
           tools: catalogOf(),
@@ -679,17 +669,16 @@ describe("AddPlugin", () => {
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const useCase = new AddPlugin(
-          deps.fs,
-          deps.manifestRepo,
-          new PluginDistributionLoader(
-            deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-          ),
-          deps.hasher,
-          deps.logger,
-          registry,
-          fakeEnsureBuiltMarketplace(),
-          deps.userManifestRepo
+          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { project: deps.manifestRepo, user: deps.userManifestRepo },
+          {
+            distributionLoader: new PluginDistributionLoader(
+              deps.pluginFetcher,
+              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            ),
+            marketplaceRegistry: registry,
+            ensureBuilt: fakeEnsureBuiltMarketplace(),
+          }
         );
         await useCase.execute({
           tools: catalogOf(),
@@ -714,17 +703,16 @@ describe("AddPlugin", () => {
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
-          deps.fs,
-          deps.manifestRepo,
-          new PluginDistributionLoader(
-            deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-          ),
-          deps.hasher,
-          deps.logger,
-          registry,
-          fakeEnsureBuiltMarketplace(),
-          deps.userManifestRepo
+          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { project: deps.manifestRepo, user: deps.userManifestRepo },
+          {
+            distributionLoader: new PluginDistributionLoader(
+              deps.pluginFetcher,
+              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            ),
+            marketplaceRegistry: registry,
+            ensureBuilt: fakeEnsureBuiltMarketplace(),
+          }
         );
         await useCase.execute({
           tools: catalogOf(),
@@ -752,17 +740,16 @@ describe("AddPlugin", () => {
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const useCase = new AddPlugin(
-          deps.fs,
-          deps.manifestRepo,
-          new PluginDistributionLoader(
-            deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-          ),
-          deps.hasher,
-          deps.logger,
-          registry,
-          fakeEnsureBuiltMarketplace(),
-          deps.userManifestRepo
+          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { project: deps.manifestRepo, user: deps.userManifestRepo },
+          {
+            distributionLoader: new PluginDistributionLoader(
+              deps.pluginFetcher,
+              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            ),
+            marketplaceRegistry: registry,
+            ensureBuilt: fakeEnsureBuiltMarketplace(),
+          }
         );
         await useCase.execute({
           tools: catalogOf(),
@@ -807,17 +794,16 @@ describe("AddPlugin", () => {
         );
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
-          deps.fs,
-          deps.manifestRepo,
-          new PluginDistributionLoader(
-            deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-          ),
-          deps.hasher,
-          deps.logger,
-          registry,
-          fakeEnsureBuiltMarketplace(),
-          deps.userManifestRepo
+          { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+          { project: deps.manifestRepo, user: deps.userManifestRepo },
+          {
+            distributionLoader: new PluginDistributionLoader(
+              deps.pluginFetcher,
+              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            ),
+            marketplaceRegistry: registry,
+            ensureBuilt: fakeEnsureBuiltMarketplace(),
+          }
         );
         await useCase.execute({
           tools: catalogOf(),
@@ -863,14 +849,13 @@ describe("AddPlugin", () => {
         })
       );
       const useCase = new AddPlugin(
-        deps.fs,
-        deps.manifestRepo,
-        new PluginDistributionLoader(deps.pluginFetcher, zeroFilesReader),
-        deps.hasher,
-        deps.logger,
-        registry,
-        fakeEnsureBuiltMarketplace(),
-        deps.userManifestRepo
+        { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+        { project: deps.manifestRepo, user: deps.userManifestRepo },
+        {
+          distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, zeroFilesReader),
+          marketplaceRegistry: registry,
+          ensureBuilt: fakeEnsureBuiltMarketplace(),
+        }
       );
       await useCase.execute({
         tools: catalogOf(),

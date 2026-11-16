@@ -45,14 +45,13 @@ async function existingProject(configPath: string) {
     deps.pluginDistributionReader
   );
   const add = new AddPlugin(
-    deps.fs,
-    deps.manifestRepo,
-    distribution,
-    deps.hasher,
-    deps.logger,
-    deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo,
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: distribution,
+      marketplaceRegistry: deps.marketplaceRegistry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    },
     deps.installRuntimeConfigUseCase
   );
   const install = () =>

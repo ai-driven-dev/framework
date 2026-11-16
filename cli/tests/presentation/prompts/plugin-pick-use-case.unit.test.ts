@@ -58,17 +58,16 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const pluginAdd = new AddPlugin(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
-    deps.hasher,
-    deps.logger,
-    registry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      ),
+      marketplaceRegistry: registry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);
   const resolveMarketplace = new ResolveMarketplace(
