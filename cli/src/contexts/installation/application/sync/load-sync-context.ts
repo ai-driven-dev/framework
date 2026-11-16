@@ -1,7 +1,6 @@
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { RegistrationClaims } from "../../../host-registration/contract/native-registration.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -15,6 +14,8 @@ export interface SyncContextRequest {
   projectRoot: string;
   toolIds?: readonly ToolId[];
   recreateFrameworkIfMissing?: boolean;
+  /** The name the framework marketplace is registered under. */
+  frameworkMarketplaceName: string;
   /** `"user"` works on the machine manifest, anything else on the project's. */
   scope: MarketplaceScope;
   marketplaceNames?: readonly string[];
@@ -64,7 +65,11 @@ export class LoadSyncContext {
     ]);
     if (manifest === null) return null;
     const recreatedMarketplaces = request.recreateFrameworkIfMissing
-      ? await this.ensureFrameworkRegistered(projectRoot, initialMarketplaces)
+      ? await this.ensureFrameworkRegistered(
+          projectRoot,
+          initialMarketplaces,
+          request.frameworkMarketplaceName
+        )
       : initialMarketplaces;
     const marketplaces =
       request.marketplaceNames === undefined
@@ -89,9 +94,10 @@ export class LoadSyncContext {
    */
   private async ensureFrameworkRegistered(
     projectRoot: string,
-    marketplaces: readonly DeclaredMarketplace[]
+    marketplaces: readonly DeclaredMarketplace[],
+    frameworkMarketplaceName: string
   ): Promise<readonly DeclaredMarketplace[]> {
-    const framework = marketplaces.find((m) => m.name === FRAMEWORK_MARKETPLACE_NAME);
+    const framework = marketplaces.find((m) => m.name === frameworkMarketplaceName);
     if (marketplaces.length > 0 && framework?.scope !== "project") return marketplaces;
     if (this.marketplaceRegisterFrameworkUseCase === undefined) return marketplaces;
     await this.marketplaceRegisterFrameworkUseCase.execute({

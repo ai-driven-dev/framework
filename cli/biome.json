@@ -2860,12 +2860,13 @@
                   {
                     "group": [
                       "**/auth/**",
+                      "**/distribution/**",
                       "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate and host-registration, never telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -2914,13 +2915,14 @@
                   {
                     "group": [
                       "**/auth/**",
+                      "**/distribution/**",
                       "**/machine-claims/**",
                       "**/presentation/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never telemetry or presentation (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate and host-registration, never telemetry or presentation (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -2965,13 +2967,14 @@
                   {
                     "group": [
                       "**/auth/**",
+                      "**/distribution/**",
                       "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/presentation/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation/infrastructure may import tools, translate, distribution and host-registration, never telemetry or presentation (see context-graph.arch.test.ts)"
+                    "message": "installation/infrastructure may import tools, translate and host-registration, never telemetry or presentation (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -3024,12 +3027,13 @@
                   {
                     "group": [
                       "**/auth/**",
+                      "**/distribution/**",
                       "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate and host-registration, never telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3085,12 +3089,13 @@
                   {
                     "group": [
                       "**/auth/**",
+                      "**/distribution/**",
                       "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate and host-registration, never telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],

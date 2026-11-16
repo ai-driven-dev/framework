@@ -1,7 +1,6 @@
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { HostRegistrationOutcome } from "../../../host-registration/contract/native-registration.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -23,6 +22,8 @@ export interface ActivateNativeToolsRequest {
   context: SyncContext;
   scope: MarketplaceScope;
   enablePlugins: readonly string[];
+  /** The marketplace the requested plugins are enabled from. */
+  frameworkMarketplaceName: string;
 }
 
 export class ActivateNativeTools {
@@ -39,7 +40,7 @@ export class ActivateNativeTools {
   /** Never a tool with no native activation, and never one whose binary is absent: neither wrote
    * anything, so a settings file that differs for it differs because a person changed it. */
   async execute(request: ActivateNativeToolsRequest): Promise<ActivationRun> {
-    const { tools, projectRoot, context, scope, enablePlugins } = request;
+    const { tools, projectRoot, context, scope, enablePlugins, frameworkMarketplaceName } = request;
     const { manifest, marketplaces } = context;
     const outcomes = new Map<ToolId, HostRegistrationOutcome>();
     const binaryMissing: { toolId: ToolId; binary: string }[] = [];
@@ -62,7 +63,8 @@ export class ActivateNativeTools {
               marketplaces,
               hostNameByAlias,
               scope,
-              enablePlugins
+              enablePlugins,
+              frameworkMarketplaceName
             ),
           userCacheRoot: this.userCacheRoot,
           sink: { logger: this.logger, warnings },
@@ -90,9 +92,10 @@ export class ActivateNativeTools {
     marketplaces: readonly DeclaredMarketplace[],
     hostNameByAlias: ReadonlyMap<string, string>,
     scope: MarketplaceScope,
-    enablePlugins: readonly string[]
+    enablePlugins: readonly string[],
+    frameworkMarketplaceName: string
   ): string[] {
-    const frameworkHost = hostNameByAlias.get(FRAMEWORK_MARKETPLACE_NAME);
+    const frameworkHost = hostNameByAlias.get(frameworkMarketplaceName);
     const requested =
       frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
     return [

@@ -125,7 +125,6 @@ export const ALLOWED = new Set([
   "installation->tools",
   "installation->translate",
   // Transitional (M-I1): the exact imports and the way out are in reference-context.md.
-  "installation->distribution",
   "installation->host-registration",
   // Permanent: the target context map gives host-registration the contract of tools
   // (target/04-tools-and-translate.md, "Others reach tools only through its application/ and
@@ -140,12 +139,6 @@ export const ALLOWED = new Set([
  * riding in. The lists only shrink: a pair the code no longer holds fails until removed.
  */
 export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
-  "installation->distribution": [
-    "src/contexts/installation/application/install/install-user-plugins.ts -> src/contexts/distribution/contract/plugin-source-match.ts",
-    "src/contexts/installation/application/purge-user-scope-files.ts -> src/contexts/distribution/contract/marketplace.ts",
-    "src/contexts/installation/application/sync/activate-native-tools.ts -> src/contexts/distribution/contract/marketplace.ts",
-    "src/contexts/installation/application/sync/load-sync-context.ts -> src/contexts/distribution/contract/marketplace.ts",
-  ],
   "installation->host-registration": [
     "src/contexts/installation/application/clean-project.ts -> src/contexts/host-registration/contract/withdrawal.ts",
     "src/contexts/installation/application/plugin/update-user-plugin-files.ts -> src/contexts/host-registration/contract/registration-record.ts",

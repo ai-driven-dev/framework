@@ -81,6 +81,7 @@ export class SyncSettings {
       projectRoot,
       toolIds: options.toolIds,
       recreateFrameworkIfMissing: options.recreateFrameworkIfMissing,
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       scope,
       marketplaceNames: options.marketplaceNames,
     });
@@ -104,6 +105,7 @@ export class SyncSettings {
       context,
       scope,
       enablePlugins: options.enablePlugins ?? [],
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     });
     if (
       scope === "project" &&

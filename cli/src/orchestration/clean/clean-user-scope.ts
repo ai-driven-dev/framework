@@ -80,7 +80,7 @@ export class CleanUserScope {
           this.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label)
       );
     }
-    await this.purgeFiles.purge(options.tools, options.projectRoot);
+    await this.purgeFiles.purge(options.tools, options.projectRoot, FRAMEWORK_MARKETPLACE_NAME);
 
     return { dryRun: false, manifestFound, preview };
   }
