@@ -5,7 +5,6 @@ import { FindMarketplaceToRemove } from "../../contexts/distribution/application
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
 import type { MarketplaceRemover } from "../../contexts/distribution/ports/marketplace-remover.js";
-import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.js";
@@ -29,6 +28,7 @@ import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-
 import { RegisterMarketplace } from "../../orchestration/setup/register-marketplace.js";
 import { SetupMarketplaceRegistration } from "../../orchestration/setup/setup-marketplace-registration.js";
 import { SyncSettings } from "../../orchestration/sync/sync-settings.js";
+import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
 import type { Base } from "./base.js";

@@ -1,4 +1,3 @@
-import { resolveHomeDir } from "../contexts/framework/domain/reading/home-dir.js";
 import type { HostMarketplaceSources } from "../contexts/host-registration/contract/host-marketplace-sources.js";
 import { HostCliAdapter } from "../contexts/host-registration/infrastructure/host-cli-adapter.js";
 import { marketplaceListContract } from "../contexts/host-registration/infrastructure/marketplace-list-parsers.js";
@@ -24,6 +23,7 @@ import type { NativeActivation } from "../contexts/tools/domain/native-registrat
 import { REGISTERED_PROFILES } from "../contexts/tools/domain/profiles/registered-profiles.js";
 import { UnregisteredToolError } from "../shared/domain/errors.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
+import { resolveHomeDir } from "../shared/infrastructure/home-dir.js";
 import { nativeRegistrationsOf } from "./native-registrations.js";
 
 /** One line per layout: a layout declared in a profile with no line here fails to compile. */

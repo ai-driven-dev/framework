@@ -59,7 +59,7 @@ function tokenOf(pattern: string): string {
 
 /**
  * Patterns naming something other than a graph edge, so a deliberate narrower restriction is
- * not read as drift: `distribution` reads a marketplace, never framework's installation
+ * not read as drift: `distribution` reads a marketplace, never the installation
  * record, which is stricter than the edge itself.
  */
 const NON_GRAPH_EXTRA: Readonly<Record<string, readonly string[]>> = {
@@ -220,7 +220,7 @@ describe("cli/biome.json forbids exactly the edges context-graph.arch.test.ts fo
 });
 
 describe("the guard itself", () => {
-  const twoContexts = ["framework", "tools"];
+  const twoContexts = ["installation", "tools"];
 
   it("names a file two overrides both match, and clears one only a single override reaches", () => {
     const files = ["src/contexts/tools/domain/registry.ts", "src/shared/domain/tool.ts"];
@@ -234,12 +234,12 @@ describe("the guard itself", () => {
     const noBaseline = new Map<string, ReadonlySet<string>>();
 
     expect(
-      expectedForbidden("tools", "domain", twoContexts, noBaseline).has("framework"),
-      "tools->framework is no allowed edge"
+      expectedForbidden("tools", "domain", twoContexts, noBaseline).has("installation"),
+      "tools->installation is no allowed edge"
     ).toBe(true);
     expect(
-      expectedForbidden("framework", "domain", twoContexts, noBaseline).has("tools"),
-      "framework->tools is one"
+      expectedForbidden("installation", "domain", twoContexts, noBaseline).has("tools"),
+      "installation->tools is one"
     ).toBe(false);
   });
 
@@ -255,7 +255,7 @@ describe("the guard itself", () => {
 
   it("asks an importer of a held context for the interior groups, and no other context", () => {
     expect(interiorGroupsFor("distribution")).toEqual(interiorGroupsOf("auth"));
-    expect(interiorGroupsFor("framework")).toEqual([
+    expect(interiorGroupsFor("installation")).toEqual([
       ...interiorGroupsOf("auth"),
       ...interiorGroupsOf("host-registration"),
       ...interiorGroupsOf("tools"),
@@ -285,10 +285,10 @@ describe("the guard itself", () => {
   });
 
   it("drops a target the baseline already carries at that layer, and keeps it at another", () => {
-    const debt = new Map([["tools->framework", new Set(["domain"])]]);
+    const debt = new Map([["tools->installation", new Set(["domain"])]]);
 
-    expect(expectedForbidden("tools", "domain", twoContexts, debt).has("framework")).toBe(false);
-    expect(expectedForbidden("tools", "application", twoContexts, debt).has("framework")).toBe(
+    expect(expectedForbidden("tools", "domain", twoContexts, debt).has("installation")).toBe(false);
+    expect(expectedForbidden("tools", "application", twoContexts, debt).has("installation")).toBe(
       true
     );
   });

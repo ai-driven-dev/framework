@@ -2,7 +2,7 @@
 name: framework
 description: >
   Owns the installation record and everything done to a project, under
-  src/contexts/framework/ and src/contexts/installation/ — the manifest aggregate, and the setup/install/restore/uninstall/doctor
+  src/contexts/installation/ and src/orchestration/ — the manifest aggregate, and the setup/install/restore/uninstall/doctor
   orchestration built on top of it. This is the only context allowed to reach `translate` and
   `distribution`. Use when adding a use-case that touches the manifest, a
   setup/doctor/sync/uninstall flow, a new top-level CLI orchestration, or a launcher that runs an
@@ -58,16 +58,14 @@ disk is exactly the job that needs all three.
 
 ## Public surface
 
-Nothing outside `contexts/framework/` may import a module this context has not declared public.
-`framework` is also the context most other contexts should never see: nothing in `tools`,
-`translate`, or `distribution` may import from `framework` at all — the arrow only runs the other
-way. Check `tests/architecture/context-graph.arch.test.ts` before adding an edge; check
-`context-boundary.arch.test.ts`'s `PUBLIC_MODULES` before assuming a module framework itself
-exposes is reachable from `presentation`.
+Nothing outside `contexts/installation/` may import a module this context has not declared public.
+Check `tests/architecture/context-graph.arch.test.ts` before adding an edge; check
+`context-boundary.arch.test.ts`'s `PUBLIC_MODULES` before assuming a module installation
+exposes is reachable from `orchestration` or `presentation`.
 
 ## How it's tested
 
-- `tests/contexts/framework/` and `tests/contexts/installation/` mirror their `src/contexts/` folders — domain models are unit-tier,
+- `tests/contexts/installation/` and `tests/orchestration/` mirror their `src/` folders — domain models are unit-tier,
   use-cases against in-memory ports (`tests/helpers/ports/`) are unit or integration depending on
   whether they touch a real temp filesystem.
 - `tests/e2e/` exercises full CLI invocations through `runCli()`; `tests/golden/` snapshots a

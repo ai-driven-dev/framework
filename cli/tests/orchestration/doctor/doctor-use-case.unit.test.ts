@@ -1,18 +1,18 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import {
   extractAtReferences,
   extractMarkdownLinkTargets,
-} from "../../../../src/contexts/installation/domain/markdown-references.js";
-import type { ToolId } from "../../../../src/shared/domain/tool.js";
+} from "../../../src/contexts/installation/domain/markdown-references.js";
+import type { ToolId } from "../../../src/shared/domain/tool.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import {
   buildDoctorUseCase,
   buildUnitDeps,
   initAndInstall,
   installTool,
-} from "../../../helpers/ports/build-unit-deps.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+} from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 

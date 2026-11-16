@@ -63,7 +63,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/plugin-source/list-framework-plugins.ts",
     "src/contexts/distribution/contract/plugin-source-match.ts",
   ],
-  framework: [],
   installation: [
     // the rule inventory `framework rules` prints, one row per installed rule
     "src/contexts/installation/domain/installed-rule.ts",

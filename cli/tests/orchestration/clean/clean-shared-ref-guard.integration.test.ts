@@ -2,25 +2,25 @@
  * copilot), a ref is left enabled while another project still references its shared source. */
 
 import { describe, expect, it } from "vitest";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/host-registration/contract/registration-record.js";
-import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { UserSourceReferencesAdapter } from "../../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import type { CleanProject } from "../../../../../src/orchestration/clean/clean-project.js";
-import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { projectCleaner } from "../../../../helpers/project-cleaner.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { NativeMarketplaceRegistration } from "../../../src/contexts/host-registration/contract/registration-record.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { projectCleaner } from "../../helpers/project-cleaner.js";
 
 const PROJECT_ROOT = "/test-project";
 const OTHER_PROJECT = "/other-project";

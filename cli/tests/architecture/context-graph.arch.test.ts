@@ -84,8 +84,8 @@ describe("the guard itself", () => {
       "src/contexts/distribution/infrastructure/plugin-fetcher-adapter.ts",
       auth
     );
-    const framework = edgeBetween(
-      "src/contexts/framework/application/doctor/doctor-layout-use-case.ts",
+    const installation = edgeBetween(
+      "src/contexts/installation/application/doctor/check-project-layout.ts",
       auth
     );
     const update = edgeBetween(
@@ -94,10 +94,9 @@ describe("the guard itself", () => {
     );
     const leaving = edgeBetween(auth, "src/contexts/distribution/domain/marketplace.ts");
 
-    expect(forbiddenEdges([planted, distribution, framework, update, leaving], ALLOWED)).toEqual([
-      "tools->auth",
-      "auth->distribution",
-    ]);
+    expect(forbiddenEdges([planted, distribution, installation, update, leaving], ALLOWED)).toEqual(
+      ["tools->auth", "auth->distribution"]
+    );
   });
 
   it("names shared apart from every context, and counts no context among its files", () => {

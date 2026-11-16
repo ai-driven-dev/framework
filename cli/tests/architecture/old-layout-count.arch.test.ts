@@ -1,10 +1,10 @@
 /**
- * The old layout (`contexts/framework/`) is being drained into the target one (`shared/`, a
- * context per concern). A folder that only shrinks needs a number that only shrinks:
- * `framework/` is held by its file count. The folders already gone stay gone: no `src/` area
- * and no `tests/` area may be recreated under their old name.
- * When `framework/` is gone, delete `COMMITTED_COUNTS` and `countVerdict` with their tests, and keep
- * the guards for the areas already gone.
+ * The old layout (`contexts/framework/`) was drained into the target one (`shared/`, a
+ * context per concern). It is held at zero files: gone, and it stays gone. So are the other
+ * folders already gone: no `src/` area and no `tests/` area may be recreated under their old
+ * name.
+ * `COMMITTED_COUNTS` and `countVerdict` go with their tests once nothing else needs a count;
+ * the guards for the areas already gone stay.
  */
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -13,7 +13,7 @@ import { CLI_ROOT, sourceFiles } from "./helpers.js";
 
 /** Source files under each folder that is still counted. Lower a value when files leave. */
 const COMMITTED_COUNTS: Readonly<Record<string, number>> = {
-  "src/contexts/framework/": 1,
+  "src/contexts/framework/": 0,
 };
 
 /** Null when `count` is the committed one, else what to do about the difference. */

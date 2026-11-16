@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
+import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 
 describe("resolveHomeDir", () => {
   // `os.homedir()` reads `USERPROFILE` on Windows, never `HOME`, so a bare `homedir()` drops

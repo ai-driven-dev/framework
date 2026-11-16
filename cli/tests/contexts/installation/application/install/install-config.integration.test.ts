@@ -7,10 +7,10 @@ import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copil
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
+import { linuxPlatform, win32Platform } from "../../../../helpers/install-harness.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
-import { linuxPlatform, win32Platform } from "../../../framework/application/helpers.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";

@@ -22,9 +22,6 @@ src/
 │   │   │   └── catalog-parsers/
 │   │   ├── infrastructure/
 │   │   └── ports/
-│   ├── framework/    # what is left of the old layout: the home directory a use case resolves
-│   │   └── domain/
-│   │       └── reading/    # the home directory a use case resolves when none is given
 │   ├── installation/    # the installation record, and what installs, restores and materializes it into a project
 │   │   ├── application/
 │   │   │   ├── doctor/    # the checks over what the manifest tracks

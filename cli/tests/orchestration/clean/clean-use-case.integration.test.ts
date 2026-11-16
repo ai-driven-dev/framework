@@ -2,15 +2,15 @@ import { mkdir, mkdtemp, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
-import type { CleanProject } from "../../../../src/orchestration/clean/clean-project.js";
-import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { projectCleaner } from "../../../helpers/project-cleaner.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { HasherAdapter } from "../../../src/contexts/installation/infrastructure/hasher-adapter.js";
+import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
+import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { projectCleaner } from "../../helpers/project-cleaner.js";
 
 let projectRoot: string;
 

@@ -159,7 +159,7 @@ describe("biome carries the exit and default-export rules", () => {
 
 /** What distribution's layers must not import, and the layers that try it. */
 const LAYERS = ["contract", "domain", "ports", "application", "infrastructure"] as const;
-const DISTRIBUTION_REACHES = [["framework", LAYERS]] as const;
+const DISTRIBUTION_REACHES = [["installation", LAYERS]] as const;
 const distributionReaches = (): string[] =>
   DISTRIBUTION_REACHES.flatMap(([target, layers]) =>
     layers.map((layer) => `src/contexts/distribution/${layer}/reaches-${target}.ts`)
@@ -176,9 +176,9 @@ describe("the guard itself", () => {
       "src/shared/domain",
       "src/presentation",
       "tests/shared/domain",
-      "src/contexts/framework/domain",
-      "src/contexts/framework/application",
-      "src/contexts/framework/infrastructure",
+      "src/contexts/installation/domain",
+      "src/contexts/installation/application",
+      "src/contexts/installation/infrastructure",
       "src/contexts/tools/infrastructure",
       "src/presentation/display",
       "src/presentation/terminal",
@@ -326,7 +326,7 @@ describe("the guard itself", () => {
         ["src/presentation/display", "../../contexts/"],
         ["src/composition", "../contexts/"],
         ["src/contexts/distribution/infrastructure", "../../"],
-        ["src/contexts/framework/application", "../../"],
+        ["src/contexts/installation/application", "../../"],
       ] as const) {
         writeFileSync(
           join(planted, dir, `reaches-auth-${folder}.ts`),
@@ -370,11 +370,11 @@ describe("the guard itself", () => {
     writeFileSync(join(planted, "src/contexts/recipes/domain/imports-fs.ts"), imports("node:fs"));
     writeFileSync(join(planted, "src/contexts/recipes/ports/imports-fs.ts"), imports("node:fs"));
     writeFileSync(
-      join(planted, "src/contexts/recipes/domain/reaches-framework.ts"),
-      'import type { Registry } from "../../framework/domain/registry.js";\nexport type Reached = Registry;\n'
+      join(planted, "src/contexts/recipes/domain/reaches-installation.ts"),
+      'import type { Registry } from "../../installation/domain/registry.js";\nexport type Reached = Registry;\n'
     );
     writeFileSync(
-      join(planted, "src/contexts/framework/application/reaches-recipes.ts"),
+      join(planted, "src/contexts/installation/application/reaches-recipes.ts"),
       'import type { Run } from "../../recipes/application/validate-recipes.js";\nexport type Reached = Run;\n'
     );
     for (const folder of ["domain", "application"]) {
@@ -384,7 +384,7 @@ describe("the guard itself", () => {
       );
     }
     for (const file of distributionReaches()) {
-      const target = "framework";
+      const target = "installation";
       writeFileSync(
         join(planted, file),
         `import type { X } from "../../../${target}/x.js";\nexport type Z = X;\n`
@@ -426,9 +426,9 @@ describe("the guard itself", () => {
       "export const stop = (): never => process.exit(1);\n"
     );
     for (const file of [
-      "src/contexts/framework/domain/env.ts",
-      "src/contexts/framework/application/env.ts",
-      "src/contexts/framework/infrastructure/env.ts",
+      "src/contexts/installation/domain/env.ts",
+      "src/contexts/installation/application/env.ts",
+      "src/contexts/installation/infrastructure/env.ts",
     ]) {
       writeFileSync(join(planted, file), readsEnvSource);
     }
@@ -453,14 +453,14 @@ describe("the guard itself", () => {
     const findings = biomeFindings(planted);
 
     expect(findings, findings.join(", ")).toContain(
-      "src/contexts/framework/domain/env.ts:lint/style/noRestrictedGlobals"
+      "src/contexts/installation/domain/env.ts:lint/style/noRestrictedGlobals"
     );
     expect(findings, findings.join(", ")).toContain(
-      "src/contexts/framework/application/env.ts:lint/style/noRestrictedGlobals"
+      "src/contexts/installation/application/env.ts:lint/style/noRestrictedGlobals"
     );
-    expect(findings.filter((f) => f.startsWith("src/contexts/framework/infrastructure/"))).toEqual(
-      []
-    );
+    expect(
+      findings.filter((f) => f.startsWith("src/contexts/installation/infrastructure/"))
+    ).toEqual([]);
   });
 
   it("flags shared/ports and shared/infrastructure reaching a context, and shared/domain reaching a context", () => {
@@ -510,7 +510,7 @@ describe("the guard itself", () => {
     const importers = [
       "src/presentation/display",
       "src/contexts/distribution/infrastructure",
-      "src/contexts/framework/application",
+      "src/contexts/installation/application",
     ];
 
     for (const dir of importers) {
@@ -548,13 +548,13 @@ describe("the guard itself", () => {
     expect(findings).not.toContain(`src/contexts/recipes/infrastructure/reads.ts:${rule}`);
   });
 
-  it("flags recipes reaching framework, framework reaching recipes, and presentation reaching recipes beyond its commands", () => {
+  it("flags recipes reaching installation, installation reaching recipes, and presentation reaching recipes beyond its commands", () => {
     const findings = biomeFindings(planted);
     const rule = "lint/style/noRestrictedImports";
 
     for (const file of [
-      "src/contexts/recipes/domain/reaches-framework.ts",
-      "src/contexts/framework/application/reaches-recipes.ts",
+      "src/contexts/recipes/domain/reaches-installation.ts",
+      "src/contexts/installation/application/reaches-recipes.ts",
       "src/presentation/display/reaches-recipes-domain.ts",
     ]) {
       expect(findings, findings.join(", ")).toContain(`${file}:${rule}`);
@@ -564,7 +564,7 @@ describe("the guard itself", () => {
     );
   });
 
-  it("flags every distribution layer reaching framework", () => {
+  it("flags every distribution layer reaching installation", () => {
     const findings = biomeFindings(planted);
     for (const file of distributionReaches()) {
       expect(findings, findings.join(", ")).toContain(`${file}:lint/style/noRestrictedImports`);

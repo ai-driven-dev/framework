@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { ResolvePluginSource } from "../../contexts/distribution/application/plugin-source/resolve-plugin-source.js";
 import { SearchPlugins } from "../../contexts/distribution/application/plugin-source/search-plugins.js";
 import { TrustPluginSource } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.js";
-import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
 import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.js";
@@ -27,6 +26,7 @@ import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-
 import { InstallPlugin } from "../../orchestration/plugin/install-plugin.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.js";
 import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
+import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";

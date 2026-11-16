@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
-import type { AiTool, WithSections } from "../../../../src/contexts/tools/domain/profile.js";
-import { buildClaudeContract } from "../../../../src/contexts/tools/domain/profiles/claude/build.js";
-import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { buildCodexContract } from "../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { buildCopilotMarketplaceContract } from "../../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { buildCursorContract } from "../../../../src/contexts/tools/domain/profiles/cursor/build.js";
-import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
-import { rewritePluginRootToken } from "../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
-import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
-import { TOOL } from "../../tools/testing/catalog-of.js";
-import { hooksAcceptanceOf, nativeOf } from "../../tools/testing/plugin-mode.js";
+import type { AiTool, WithSections } from "../../../../../src/contexts/tools/domain/profile.js";
+import { buildClaudeContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
+import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import { buildCodexContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
+import { codex } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { buildCopilotMarketplaceContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
+import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { buildCursorContract } from "../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
+import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { PluginContentTranslator } from "../../../../../src/contexts/translate/domain/content-translator.js";
+import { rewritePluginRootToken } from "../../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
+import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { TOOL } from "../../testing/catalog-of.js";
+import { hooksAcceptanceOf, nativeOf } from "../../testing/plugin-mode.js";
 
 /**
  * A hook command pointing at nothing installs clean and does nothing, so the command is read

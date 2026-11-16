@@ -1,6 +1,5 @@
 import { homedir } from "node:os";
 import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
-import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { CleanProject as CleanProjectFiles } from "../../contexts/installation/application/clean-project.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/application/removal/remove-project-plugin.js";
@@ -11,6 +10,7 @@ import { ReleaseClaims } from "../../contexts/machine-claims/application/release
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { CleanProject } from "../../orchestration/clean/clean-project.js";
 import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.js";
+import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";

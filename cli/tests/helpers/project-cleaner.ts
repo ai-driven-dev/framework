@@ -1,5 +1,4 @@
 import { ListMarketplaces } from "../../src/contexts/distribution/application/list-marketplaces.js";
-import { resolveHomeDir } from "../../src/contexts/framework/domain/reading/home-dir.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import type { HostPorts } from "../../src/contexts/host-registration/ports/host-ports.js";
 import { CleanProject as CleanProjectFiles } from "../../src/contexts/installation/application/clean-project.js";
@@ -7,6 +6,7 @@ import { assertProjectMcpEntriesRemovable } from "../../src/contexts/installatio
 import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { ReleaseClaims } from "../../src/contexts/machine-claims/application/release-claims.js";
 import { CleanProject } from "../../src/orchestration/clean/clean-project.js";
+import { resolveHomeDir } from "../../src/shared/infrastructure/home-dir.js";
 import { InMemoryMarketplaceRegistry } from "./ports/in-memory-marketplace-registry.js";
 
 type Constructed = ConstructorParameters<typeof CleanProject>;

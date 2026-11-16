@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { resolveHomeDir } from "../../../src/contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
@@ -15,6 +14,7 @@ import { PluginDistributionReaderAdapter } from "../../../src/contexts/installat
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import {
   catalogOf,

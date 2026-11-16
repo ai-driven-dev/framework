@@ -113,20 +113,12 @@ export function contextNames(): string[] {
     .sort();
 }
 
-/** Exactly these edges between contexts, plus every context to shared. `framework → tools`
- * is among them because framework installs for a tool and must name it. */
+/** Exactly these edges between contexts, plus every context to shared. */
 export const ALLOWED = new Set([
-  "framework->translate",
-  "framework->tools",
-  "framework->distribution",
   "translate->tools",
   // The token a fetch carries (`contract/token-provider.ts`), until each of the two splits
   // from the host of the doctor and setup scenarios.
   "distribution->auth",
-  "framework->auth",
-  // The pure rules `contract/` publishes over its own types (reference-context.md, E10),
-  // until doctor and sync registration move into host-registration commands.
-  "framework->host-registration",
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
   // Installation reads the installed tools' profiles. `installation->translate` is M-S1.
@@ -140,12 +132,6 @@ export const ALLOWED = new Set([
   // (target/04-tools-and-translate.md, "Others reach tools only through its application/ and
   // contract/"). Biome keeps tools' domain and application out of reach.
   "host-registration->tools",
-  // Transitional: framework's remaining orchestrators still build on the installation record
-  // and its use cases, until each moves into orchestration.
-  "framework->installation",
-  // Transitional: framework's remaining orchestrators still read the machine claims and the
-  // user source references that moved out of it, until each moves into orchestration.
-  "framework->machine-claims",
   // Transitional (M-C1): the claim files read the installation record and its manifest port, the
   // marketplace name and the tool profile. These rows go once the marketplace name and the tool
   // profile arrive as arguments from orchestration; the exact imports are in reference-context.md.

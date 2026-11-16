@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import type { AiTool, WithSections } from "../../../../src/contexts/tools/domain/profile.js";
-import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
-import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
-import { TOOL } from "../../tools/testing/catalog-of.js";
-import { flatOf, hooksAcceptanceOf, nativeOf } from "../../tools/testing/plugin-mode.js";
+import type { AiTool, WithSections } from "../../../../../src/contexts/tools/domain/profile.js";
+import { claude } from "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import { codex } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
+import { PluginContentTranslator } from "../../../../../src/contexts/translate/domain/content-translator.js";
+import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { TOOL } from "../../testing/catalog-of.js";
+import { flatOf, hooksAcceptanceOf, nativeOf } from "../../testing/plugin-mode.js";
 
 /** A hook that arrives is not a hook that runs: every failure this covers installed cleanly
  * and did nothing. */

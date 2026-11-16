@@ -11,13 +11,13 @@ const MAX_LINES = 800;
 
 // Test files over the cap. The list may only shrink: an entry leaves when its file is split.
 const BASELINE: readonly string[] = [
-  "tests/contexts/framework/application/clean-native-cache.integration.test.ts",
-  "tests/contexts/framework/application/clean-use-case.unit.test.ts",
-  "tests/contexts/framework/application/clean/clean-user-scope.integration.test.ts",
+  "tests/orchestration/clean/clean-native-cache.integration.test.ts",
+  "tests/orchestration/clean/clean-use-case.unit.test.ts",
+  "tests/orchestration/clean/clean-user-scope.integration.test.ts",
   "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts",
   "tests/orchestration/sync/marketplace-sync-settings-migration.integration.test.ts",
   "tests/contexts/installation/application/plugin/add-plugin.unit.test.ts",
-  "tests/contexts/framework/application/plugin/plugin-remove-native-activation.integration.test.ts",
+  "tests/contexts/installation/application/plugin/plugin-remove-native-activation.integration.test.ts",
   "tests/contexts/installation/application/plugin/plugin-update-built-tree.unit.test.ts",
   "tests/contexts/translate/application/strategies/flat-build-strategy.integration.test.ts",
 ];

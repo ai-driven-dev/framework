@@ -1,11 +1,11 @@
 import type { MarketplaceRegistry } from "../../src/contexts/distribution/ports/marketplace-registry.js";
-import { resolveHomeDir } from "../../src/contexts/framework/domain/reading/home-dir.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import { RemovePlugin } from "../../src/contexts/installation/application/removal/remove-plugin.js";
 import type { ManifestRepository } from "../../src/contexts/installation/ports/manifest-repository.js";
 import { pluginRemovalClaims } from "../../src/contexts/machine-claims/application/plugin-removal-claims.js";
 import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import type { UserSourceReferences } from "../../src/contexts/machine-claims/ports/user-source-references.js";
+import { resolveHomeDir } from "../../src/shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../src/shared/ports/file-writer.js";
 import type { Lock } from "../../src/shared/ports/lock.js";
