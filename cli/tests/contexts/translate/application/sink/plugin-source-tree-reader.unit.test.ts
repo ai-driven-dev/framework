@@ -61,8 +61,9 @@ describe("listSkillNames", () => {
       [`${PLUGIN_SRC}/skills/SKILL.md`]: "# Loose",
       [`${PLUGIN_SRC}/skills/notes/readme.md`]: "# Notes",
       [`${PLUGIN_SRC}/skills/other/NOTSKILL.md`]: "# Not an entry",
+      [`${PLUGIN_SRC}/skills/nested/group/SKILL.md`]: "# Nested",
     });
-    expect(await listSkillNames(fs, PLUGIN_SRC)).toEqual(["apply", "commit"]);
+    expect(await listSkillNames(fs, PLUGIN_SRC)).toEqual(["apply", "commit", "nested"]);
   });
 });
 

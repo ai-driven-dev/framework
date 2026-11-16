@@ -3,6 +3,7 @@ import { writeSkillTree } from "../../../../../src/contexts/translate/applicatio
 import { FrameworkPlaceholderInPluginError } from "../../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { WindowsListingFileAdapter } from "../../../../helpers/ports/windows-listing-file-adapter.js";
+import { CLAUDE_ROOT_TOKEN } from "../../testing/plugin-content-translator-kit.js";
 
 const PLUGIN = "aidd-test";
 const PLUGIN_SRC = "/src/plugins/aidd-test";
@@ -53,6 +54,23 @@ describe("writeSkillTree", () => {
       [`${PLUGIN_OUT}/skills/hello/actions/run.md`]: "# Action\n",
       [`${PLUGIN_OUT}/skills/hello/reference.json`]: assetContent,
     });
+  });
+
+  it("carries a file that is not markdown untouched, whatever it names", async () => {
+    const raw = "See @./reference.json and @{{TOOLS}}/x.\n";
+    const fs = fsWith({ [`${PLUGIN_SRC}/skills/hello/notes.txt`]: raw });
+    expect(await writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT)).toBe(1);
+    expect(fs.getFile(`${PLUGIN_OUT}/skills/hello/notes.txt`)).toBe(raw);
+  });
+
+  it("points a plugin-root reference from where the skill file lands", async () => {
+    const fs = fsWith({
+      [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: `See @${CLAUDE_ROOT_TOKEN}/hooks/run.sh\n`,
+    });
+    await writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT);
+    expect(fs.getFile(`${PLUGIN_OUT}/skills/hello/SKILL.md`)).toBe(
+      "See [run.sh](../../hooks/run.sh)\n"
+    );
   });
 
   it("refuses a skill naming the framework's tools placeholder", async () => {
