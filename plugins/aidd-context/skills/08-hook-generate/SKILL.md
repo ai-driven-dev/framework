@@ -22,6 +22,7 @@ flowchart LR
   verify -->|"finding"| plan
   verify -->|"verifier error"| stopped
   verify <-->|"trial to approve"| user
+  verify -->|"trial declined"| unverified((format verified))
   verify --> verified((verified))
 ```
 

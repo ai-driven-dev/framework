@@ -18,6 +18,7 @@ The confirmed frame, or the findings verify sent back.
    - The script in full.
    - Each path with its operation, saying an `update` is written only with `--force`.
    - What the committed config asks of teammates per [hosts.md](../references/hosts.md).
+   - A hook that blocks this session's own tool: say it blocks this session once written, its removal included, and give the remove command.
 5. End the turn and wait for the user's own answer.
    - Revision: read [frame](01-frame.md).
    - Cancel: stop, cancelled.
