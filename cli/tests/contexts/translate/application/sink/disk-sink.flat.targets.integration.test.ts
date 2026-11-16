@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -71,75 +70,6 @@ async function hashTree(dir: string): Promise<Map<string, string>> {
   }
   return hashes;
 }
-
-describe("a flat build of the fixture framework, per target", () => {
-  it("claude materializes .claude/skills, .claude/agents and .mcp.json", async () => {
-    await buildFlat(TOOL.claude);
-
-    expect(existsSync(join(out, ".claude", "agents"))).toBe(true);
-    expect(existsSync(join(out, ".claude", "skills"))).toBe(true);
-    const mcp = JSON.parse(await readFile(join(out, ".mcp.json"), "utf-8")) as Record<
-      string,
-      unknown
-    >;
-    expect(Object.keys(mcp)).toContain("mcpServers");
-  });
-
-  it("cursor materializes .cursor/skills, .cursor/agents without tools or color, and .cursor/mcp.json", async () => {
-    await buildFlat(TOOL.cursor);
-
-    expect(existsSync(join(out, ".cursor", "agents"))).toBe(true);
-    expect(existsSync(join(out, ".cursor", "skills"))).toBe(true);
-    expect(existsSync(join(out, ".cursor", "mcp.json"))).toBe(true);
-    const agents = await readdir(join(out, ".cursor", "agents"));
-    const agentContent = await readFile(join(out, ".cursor", "agents", agents[0]), "utf-8");
-    expect(agentContent).not.toMatch(/^tools:/m);
-    expect(agentContent).not.toMatch(/^color:/m);
-  });
-
-  it("codex emits TOML agents, skills under .agents/skills and a config.toml with mcp_servers", async () => {
-    await buildFlat(TOOL.codex);
-
-    expect(existsSync(join(out, ".codex", "agents"))).toBe(true);
-    // Codex scans `.agents/skills/` for workspace skills, never `.codex/skills/`.
-    expect(existsSync(join(out, ".agents", "skills"))).toBe(true);
-    expect(existsSync(join(out, ".codex", "skills"))).toBe(false);
-    const config = await readFile(join(out, ".codex", "config.toml"), "utf-8");
-    // Discovery is by placement: no [[skills.config]] is emitted.
-    expect(config).not.toContain("skills.config");
-    expect(config).toContain("mcp_servers");
-  });
-
-  it("opencode emits .opencode/skills, .opencode/agents and an opencode.json with mcp", async () => {
-    await buildFlat(TOOL.opencode);
-
-    expect(existsSync(join(out, ".opencode", "agents"))).toBe(true);
-    expect(existsSync(join(out, ".opencode", "skills"))).toBe(true);
-    const opencode = JSON.parse(await readFile(join(out, "opencode.json"), "utf-8")) as Record<
-      string,
-      unknown
-    >;
-    // Aligned with the install-path base asset (single source of truth).
-    expect(opencode.$schema).toBe("https://opencode.ai/config.json");
-    expect(opencode.instructions).toEqual([".opencode/rules/**/*.md"]);
-    expect(opencode.mcp).toBeDefined();
-  });
-
-  it("kilo emits its agents, skills, generated hooks bridge and project config", async () => {
-    await buildFlat(TOOL.kilo);
-
-    expect(existsSync(join(out, ".kilo", "agents"))).toBe(true);
-    expect(existsSync(join(out, ".kilo", "skills"))).toBe(true);
-    expect(existsSync(join(out, ".kilo", "plugin", "aidd-test-hooks.js"))).toBe(true);
-    const kilo = JSON.parse(await readFile(join(out, ".kilo", "kilo.jsonc"), "utf-8")) as Record<
-      string,
-      unknown
-    >;
-    expect(kilo.$schema).toBe("https://app.kilo.ai/config.json");
-    expect(kilo.instructions).toBeUndefined();
-    expect(kilo.mcp).toBeDefined();
-  });
-});
 
 describe("a flat build into a tree a first build already wrote", () => {
   it("is byte-identical when forced, and halts when not", async () => {

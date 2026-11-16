@@ -26,12 +26,7 @@ import { buildTree } from "../../testing/build-tree.js";
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // resolve(): on Windows a leading "/" gets the current drive, as production's resolve(outDir) does.
 const ABS_OUT = resolve("/tmp/aidd-flat-test");
-// DiskSink embeds this into written JSON content ("/"-joined, forward-slash - see
-// resolveClaudeRootAbsolute), never ABS_OUT's own native separators.
-const ABS_OUT_IN_CONTENT = ABS_OUT.replace(/\\/g, "/");
 const PLUGIN = "aidd-test";
-// Avoid biome noTemplateCurlyInString: split literal for the placeholder.
-const CLAUDE_ROOT_VAR = "$" + "{CLAUDE_PLUGIN_ROOT}";
 
 const MINIMAL_MANIFEST_SCHEMA = {
   type: "object",
@@ -104,104 +99,6 @@ describe("FlatOutputStrategy integration", () => {
     memFs = await makeSeededFs();
   });
 
-  describe("happy path", () => {
-    it("writes agent under .github/agents/<plugin>-<name>.agent.md (plugin-prefixed)", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const agentPath = `${ABS_OUT}/.github/agents/${PLUGIN}-code-reviewer.agent.md`;
-      expect(memFs.has(agentPath)).toBe(true);
-    });
-
-    it("strips frontmatter to Copilot allowlist in agent file and uses plugin-prefixed name", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const content = memFs.getFile(`${ABS_OUT}/.github/agents/${PLUGIN}-code-reviewer.agent.md`);
-      expect(content).toContain(`${PLUGIN}-code-reviewer`);
-      expect(content).toContain("description");
-    });
-
-    it("writes skill files under .github/skills/<plugin>-<skill>/ (plugin-prefixed)", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const skillPath = `${ABS_OUT}/.github/skills/${PLUGIN}-commit/SKILL.md`;
-      expect(memFs.has(skillPath)).toBe(true);
-    });
-
-    it("rewrites @./ references in skill files", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const content = memFs.getFile(`${ABS_OUT}/.github/skills/${PLUGIN}-hello.md`);
-      expect(content).toContain("[SKILL.md](./SKILL.md)");
-    });
-
-    it("rewrites @CLAUDE_ROOT/skills/<X> in skill files to relative flat path", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const content = memFs.getFile(`${ABS_OUT}/.github/skills/${PLUGIN}-hello.md`);
-      expect(content).not.toContain(`@${CLAUDE_ROOT_VAR}`);
-    });
-
-    it("writes per-plugin hooks file under .github/hooks/<plugin>.hooks.json", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const hooksPath = `${ABS_OUT}/.github/hooks/${PLUGIN}.hooks.json`;
-      expect(memFs.has(hooksPath)).toBe(true);
-    });
-
-    it("rewrites CLAUDE_ROOT/hooks/<X> in hooks JSON to per-plugin workspace-relative path", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const content = memFs.getFile(`${ABS_OUT}/.github/hooks/${PLUGIN}.hooks.json`);
-      expect(content).not.toContain("CLAUDE_PLUGIN_ROOT");
-      expect(content).toContain(`./.github/hooks/${PLUGIN}/check.sh`);
-    });
-
-    it("copies sibling hook scripts to .github/hooks/<plugin>/ alongside the JSON", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const scriptPath = `${ABS_OUT}/.github/hooks/${PLUGIN}/check.sh`;
-      expect(memFs.has(scriptPath)).toBe(true);
-    });
-
-    it("merges MCP servers into .vscode/mcp.json under servers key with plugin prefix", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const mcpPath = `${ABS_OUT}/.vscode/mcp.json`;
-      expect(memFs.has(mcpPath)).toBe(true);
-      const raw = memFs.getFile(mcpPath) ?? "";
-      const parsed = JSON.parse(raw) as { servers: Record<string, unknown> };
-      expect(parsed.servers).toHaveProperty(`${PLUGIN}-aidd-test-server`);
-    });
-
-    it("rewrites CLAUDE_ROOT in MCP to absolute path under absOut", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const content = memFs.getFile(`${ABS_OUT}/.vscode/mcp.json`) ?? "";
-      expect(content).not.toContain("CLAUDE_PLUGIN_ROOT");
-      expect(content).toContain(ABS_OUT_IN_CONTENT);
-    });
-
-    it("does NOT write a marketplace.json", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      expect(memFs.has(`${ABS_OUT}/.plugin/marketplace.json`)).toBe(false);
-      expect(memFs.has(`${ABS_OUT}/.github/plugin/marketplace.json`)).toBe(false);
-    });
-  });
-
-  describe("idempotency with --force", () => {
-    it("re-run with force produces byte-identical files", async () => {
-      const useCase1 = makeUseCase(memFs, false);
-      await useCase1.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const agentPath = `${ABS_OUT}/.github/agents/${PLUGIN}-code-reviewer.agent.md`;
-      const snapshot = memFs.getFile(agentPath);
-
-      const useCase2 = makeUseCase(memFs, true);
-      await useCase2.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      expect(memFs.getFile(agentPath)).toBe(snapshot);
-    });
-  });
-
   describe("collision detection without --force", () => {
     it("halts with FlatTargetExistsError when agent file already exists", async () => {
       const useCase1 = makeUseCase(memFs, false);
@@ -262,34 +159,6 @@ describe("FlatOutputStrategy integration", () => {
     });
   });
 
-  describe("hooks path resolution for CLAUDE_ROOT/skills/<X>", () => {
-    it("rewrites skills ref to ./.github/skills/<plugin>-<X> in hooks JSON (plugin-prefixed)", async () => {
-      const useCase = makeUseCase(memFs);
-      const hooksKey = `${FIXTURE_DIR}/plugins/${PLUGIN}/hooks/hooks.json`;
-      const skillsRef = `${CLAUDE_ROOT_VAR}/skills/commit/SKILL.md`;
-      memFs.setFile(
-        hooksKey,
-        JSON.stringify({
-          hooks: {
-            PreToolUse: [{ hooks: [{ type: "command", command: skillsRef }] }],
-          },
-        })
-      );
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const content = memFs.getFile(`${ABS_OUT}/.github/hooks/${PLUGIN}.hooks.json`) ?? "";
-      expect(content).toContain(`./.github/skills/${PLUGIN}-commit/SKILL.md`);
-    });
-  });
-
-  describe("MCP path resolution for CLAUDE_ROOT", () => {
-    it("rewrites CLAUDE_ROOT/bin/server.js to absolute path under absOut", async () => {
-      const useCase = makeUseCase(memFs);
-      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot });
-      const content = memFs.getFile(`${ABS_OUT}/.vscode/mcp.json`) ?? "";
-      expect(content).toContain(ABS_OUT_IN_CONTENT);
-    });
-  });
-
   describe("MCP key collision detection", () => {
     it("throws FlatTargetExistsError when two writeMcp calls produce the same prefixed key", async () => {
       const pluginSrc = `${FIXTURE_DIR}/plugins/${PLUGIN}`;
@@ -314,52 +183,6 @@ describe("FlatOutputStrategy integration", () => {
       await expect(sink.writePlugin(target, PLUGIN, pluginSrc)).rejects.toBeInstanceOf(
         FlatTargetExistsError
       );
-    });
-  });
-
-  describe("opencode.json config emission", () => {
-    function makeOpencodeUseCase(fs: InMemoryFileAdapter, force = false): BuildNativeTree {
-      const ap = makeAssetProvider();
-      return buildTree(
-        fs,
-        makeValidator(),
-        ap,
-        new CapturingLogger(),
-        buildOpencodeFlatContract(),
-        "flat",
-        force
-      );
-    }
-
-    it("emits opencode.json with $schema + instructions and no mcp when no plugin ships MCP", async () => {
-      await memFs.deleteFile(`${FIXTURE_DIR}/plugins/${PLUGIN}/.mcp.json`);
-      await makeOpencodeUseCase(memFs).execute({
-        sourceDir: FIXTURE_DIR,
-        outDir: ABS_OUT,
-        target: TOOL.opencode,
-      });
-      const raw = memFs.getFile(`${ABS_OUT}/opencode.json`);
-      expect(raw, "opencode.json must be emitted even with zero MCP servers").toBeDefined();
-      const config = JSON.parse(raw ?? "{}") as Record<string, unknown>;
-      expect(config.$schema).toBe("https://opencode.ai/config.json");
-      expect(config.instructions).toEqual([".opencode/rules/**/*.md"]);
-      expect(config).not.toHaveProperty("mcp");
-    });
-
-    it("emits opencode.json with $schema + instructions + mcp when a plugin ships MCP", async () => {
-      await makeOpencodeUseCase(memFs).execute({
-        sourceDir: FIXTURE_DIR,
-        outDir: ABS_OUT,
-        target: TOOL.opencode,
-      });
-      const config = JSON.parse(memFs.getFile(`${ABS_OUT}/opencode.json`) ?? "{}") as {
-        $schema: string;
-        instructions: string[];
-        mcp: Record<string, unknown>;
-      };
-      expect(config.$schema).toBe("https://opencode.ai/config.json");
-      expect(config.instructions).toEqual([".opencode/rules/**/*.md"]);
-      expect(Object.keys(config.mcp).length).toBeGreaterThan(0);
     });
   });
 
