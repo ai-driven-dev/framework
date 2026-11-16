@@ -16,7 +16,7 @@ import type { AgentModelStore } from "../contexts/installation/ports/agent-model
 import type { PluginTranslation } from "../contexts/installation/ports/plugin/plugin-translation.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { TranslatePluginDistribution } from "../contexts/translate/application/translate-distribution.js";
-import { pluginManifestProbes } from "../contexts/translate/contract/plugin-format.js";
+import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Base } from "./shared.js";

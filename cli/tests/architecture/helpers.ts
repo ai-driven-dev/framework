@@ -154,9 +154,7 @@ export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/registration-record.ts",
     "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/withdrawal.ts",
   ],
-  "installation->translate": [
-    "src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.ts -> src/contexts/translate/contract/plugin-format.ts",
-  ],
+  "installation->translate": [],
 };
 
 /**

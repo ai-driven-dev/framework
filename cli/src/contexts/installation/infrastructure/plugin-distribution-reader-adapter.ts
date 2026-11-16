@@ -11,19 +11,25 @@ import {
   type PluginManifestFields,
 } from "../../../shared/domain/plugin/plugin-distribution.js";
 import { isSemver } from "../../../shared/domain/semver.js";
+import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type { DistributionProbe, PluginFormat } from "../../translate/contract/plugin-format.js";
 import { PLUGIN_NAME_REGEX } from "../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../ports/plugin/plugin-distribution-reader.js";
 
 const README_FILENAME = "README.md";
+
+/** Where a plugin manifest can sit, and the tool whose layout that is. */
+interface ManifestProbe {
+  readonly format: AiToolId;
+  readonly relativePath: string;
+}
 
 export class PluginDistributionReaderAdapter implements PluginDistributionReader {
   /** `manifestProbes` is the ordered list of places a manifest can sit, deepest first, built
    * once by the composition from the registered profiles. */
   constructor(
     private readonly fs: FileReader,
-    private readonly manifestProbes: readonly DistributionProbe[]
+    private readonly manifestProbes: readonly ManifestProbe[]
   ) {}
 
   async read(pluginRoot: string): Promise<PluginDistribution> {
@@ -36,7 +42,7 @@ export class PluginDistributionReaderAdapter implements PluginDistributionReader
 
   private async probeManifest(
     pluginRoot: string
-  ): Promise<{ format: PluginFormat; manifestPath: string; manifestRelativePath: string }> {
+  ): Promise<{ format: AiToolId; manifestPath: string; manifestRelativePath: string }> {
     for (const probe of this.manifestProbes) {
       const fullPath = join(pluginRoot, probe.relativePath);
       if (await this.fs.fileExists(fullPath)) {
