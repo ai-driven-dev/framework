@@ -30,7 +30,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 
 - A plugin never holds its own tests: `hooks/` ships recursively into user projects. Tests for a bundled script go in `scripts/__tests__/`.
 - The scripts suite writes into a git repository. Run it wrapped, never bare: unwrapped it can overwrite this repository's own `.git/hooks`, and `.git` is in no history.
-- A new or rewritten skill runs end to end in OpenCode on `opencode-go/qwen3.8-flash` and a Mistral model before it ships, in a throwaway repository whose sessions are deleted after. It must stop at each wait and write only once approved.
+- A new or rewritten skill runs end to end on at least two small models from different providers before it ships, in a throwaway repository whose sessions are deleted after. It must stop at each wait and write only once approved.
 
 ## Run
 
