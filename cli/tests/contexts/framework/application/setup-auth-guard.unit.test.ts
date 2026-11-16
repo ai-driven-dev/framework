@@ -11,10 +11,10 @@ import type { RepositoryVisibility } from "../../../../src/contexts/distribution
 import type { MarketplaceSyncSettings } from "../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
-import { SetupToolsUseCase } from "../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
+import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
 import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import { CatalogFetchAuthError } from "../../../../src/shared/domain/errors.js";
@@ -93,7 +93,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
     prompter,
     makeReleaseResolver(true)
   );
-  const setupToolsUseCase = new SetupToolsUseCase(
+  const setupToolsUseCase = new InstallTools(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfig

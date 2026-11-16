@@ -107,8 +107,7 @@ export async function createDeps(
     restoreUseCase,
     statusAllUseCase,
     restoreAllUseCase,
-    updateAiToolsUseCase,
-    updateIdeToolsUseCase,
+    updateToolsUseCase,
   } = global;
   const { setupPluginsPromptUseCase, setupToolsPromptUseCase } = setup;
   const { doctorUseCase, doctorRegistrationUseCase, doctorAllUseCase } = doctor;
@@ -160,8 +159,7 @@ export async function createDeps(
     uninstallUseCase,
     statusAllUseCase,
     restoreAllUseCase,
-    updateAiToolsUseCase,
-    updateIdeToolsUseCase,
+    updateToolsUseCase,
     cleanUseCase,
     cleanUserScopeUseCase,
     doctorAllUseCase,

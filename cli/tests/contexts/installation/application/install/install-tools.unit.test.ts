@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { SetupToolsUseCase } from "../../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
+import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.js";
 import type { AiToolId, IdeToolId } from "../../../../../src/shared/domain/tool.js";
 import {
   buildUnitDeps,
@@ -14,7 +14,7 @@ const VERSION = "1.0.0";
 
 async function build() {
   const deps = await buildUnitDeps(PROJECT_ROOT);
-  const useCase = new SetupToolsUseCase(
+  const useCase = new InstallTools(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfig
@@ -33,7 +33,7 @@ function options(aiTools: AiToolId[], ideTools: IdeToolId[]) {
   };
 }
 
-describe("SetupToolsUseCase", () => {
+describe("InstallTools", () => {
   it("installs nothing when no tool was asked for", async () => {
     const { useCase } = await build();
 

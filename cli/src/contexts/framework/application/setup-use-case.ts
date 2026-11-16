@@ -5,7 +5,12 @@ import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { VersionReader } from "../../../shared/ports/version-reader.js";
+import type { DetectProjectContext } from "../../installation/application/detect-project-context.js";
 import { InitProject } from "../../installation/application/init-project.js";
+import type {
+  InstallTools,
+  InstallToolsResult,
+} from "../../installation/application/install/install-tools.js";
 import type { ProjectContext } from "../../installation/contract/project-context.js";
 import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
@@ -14,15 +19,13 @@ import type {
   MarketplaceSyncSettings,
   MarketplaceSyncSettingsResult,
 } from "./flows/marketplace-sync-settings-use-case.js";
-import type { ProjectContextDetectorUseCase } from "./setup/project-context-detector-use-case.js";
 import type { SetupMachineScopeUseCase } from "./setup/setup-machine-scope-use-case.js";
-import type { SetupToolsResult, SetupToolsUseCase } from "./setup/setup-tools-use-case.js";
 import type { SetupMarketplaceRegistrationUseCase } from "./shared/setup-marketplace-registration-use-case.js";
 
 export type SetupResult =
   | {
       kind: "initialized";
-      install: SetupToolsResult;
+      install: InstallToolsResult;
       activation: MarketplaceSyncSettingsResult;
       context?: ProjectContext;
       /** Set by a global run: the plugins it installed for every project. */
@@ -30,7 +33,7 @@ export type SetupResult =
     }
   | {
       kind: "up-to-date";
-      install: SetupToolsResult;
+      install: InstallToolsResult;
       activation: MarketplaceSyncSettingsResult;
       context?: ProjectContext;
       /** Set by a global run: the plugins it installed for every project. */
@@ -46,11 +49,11 @@ export class SetupUseCase {
       "resolveSourceIfNeeded" | "registerIfPresent"
     >,
     private readonly marketplaceSyncSettingsUseCase: MarketplaceSyncSettings,
-    private readonly setupToolsUseCase: Pick<SetupToolsUseCase, "execute">,
+    private readonly setupToolsUseCase: Pick<InstallTools, "execute">,
     private readonly setupPluginsPromptUseCase: Pick<SetupPluginsPromptUseCase, "execute">,
     private readonly currentVersionProvider: VersionReader,
     private readonly setupToolsPromptUseCase?: Pick<SetupToolsPromptUseCase, "execute">,
-    private readonly projectContextDetector?: Pick<ProjectContextDetectorUseCase, "execute">,
+    private readonly projectContextDetector?: Pick<DetectProjectContext, "execute">,
     /** Handles `flow.scope === "user"` entirely. Absent, `execute` refuses a request it has
      * nothing to serve. */
     private readonly setupMachineScopeUseCase?: Pick<SetupMachineScopeUseCase, "execute">
@@ -104,7 +107,7 @@ export class SetupUseCase {
     flow: SetupFlow,
     context: ProjectContext | undefined,
     tools: ToolCatalog
-  ): Promise<SetupToolsResult> {
+  ): Promise<InstallToolsResult> {
     const { aiTools, ideTools } = await this.resolveTools(flow, context, tools);
     const version = this.currentVersionProvider.get();
     return this.setupToolsUseCase.execute({
@@ -147,7 +150,7 @@ export class SetupUseCase {
 
   private buildResult(
     isNew: boolean,
-    install: SetupToolsResult,
+    install: InstallToolsResult,
     activation: MarketplaceSyncSettingsResult,
     context: ProjectContext | undefined
   ): SetupResult {

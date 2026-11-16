@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { SyncConflictResolverUseCase } from "../../../src/presentation/prompts/sync-conflict-resolver-use-case.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { ResolveSyncConflict } from "../../../../src/contexts/installation/application/resolve-sync-conflict.js";
+import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
+import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
 const DISK_PATH = "/project/target.md";
 const CONTENT_A = "content A";
@@ -10,11 +10,11 @@ const CONTENT_B = "content B";
 function buildDeps() {
   const hasher = new DeterministicHasher();
   const fs = new InMemoryFileAdapter({}, hasher);
-  const resolver = new SyncConflictResolverUseCase(fs);
+  const resolver = new ResolveSyncConflict(fs);
   return { hasher, fs, resolver };
 }
 
-describe("SyncConflictResolverUseCase", () => {
+describe("ResolveSyncConflict", () => {
   describe("resolveWriteOutcome", () => {
     it("returns skipped when target content is identical to transformed content", async () => {
       const { fs, resolver } = buildDeps();

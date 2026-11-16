@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
-import { SetupToolsUseCase } from "../../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
+import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit-deps.js";
@@ -25,7 +25,7 @@ async function existingProject(configPath: string) {
   const deps = await buildUnitDeps(ROOT);
   await initProject(deps, ROOT);
   await deps.fs.writeFile(join(ROOT, configPath), USER_CONFIG);
-  const setup = new SetupToolsUseCase(
+  const setup = new InstallTools(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfig

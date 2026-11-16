@@ -24,7 +24,6 @@ src/
 │   │   ├── application/
 │   │   │   ├── clean/
 │   │   │   ├── flows/
-│   │   │   ├── global/
 │   │   │   ├── install/
 │   │   │   ├── ownership/    # machine plugin claims and safe project detach
 │   │   │   ├── plugin/
@@ -42,7 +41,8 @@ src/
 │   │   │   ├── ownership/
 │   │   │   ├── plugin/
 │   │   │   ├── restore/
-│   │   │   └── shared/
+│   │   │   ├── shared/
+│   │   │   └── update/    # one installed tool brought to the current version
 │   │   ├── contract/    # what installation reports about a project: doctor issues and the project context
 │   │   ├── domain/
 │   │   │   ├── manifest/

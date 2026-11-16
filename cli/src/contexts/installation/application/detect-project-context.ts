@@ -1,20 +1,20 @@
 import { join } from "node:path";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import { ProjectContext, type Stack } from "../../../installation/contract/project-context.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import { ProjectContext, type Stack } from "../contract/project-context.js";
 
 const TS_SIGNALS = ["tsconfig.json", "package.json"];
 const PYTHON_SIGNALS = ["pyproject.toml", "setup.py", "requirements.txt"];
 const MONOREPO_SIGNALS = ["pnpm-workspace.yaml", "nx.json", "turbo.json", "lerna.json"];
 const FRAMEWORK_MANIFEST = ".aidd/manifest.json";
 
-export interface ProjectContextDetectorOptions {
+export interface DetectProjectContextCommand {
   projectRoot: string;
 }
 
-export class ProjectContextDetectorUseCase {
+export class DetectProjectContext {
   constructor(private readonly fs: FileReader) {}
 
-  async execute(options: ProjectContextDetectorOptions): Promise<ProjectContext> {
+  async execute(options: DetectProjectContextCommand): Promise<ProjectContext> {
     const { projectRoot } = options;
     const [stack, isMonorepo, hasFramework] = await Promise.all([
       this.detectStack(projectRoot),
