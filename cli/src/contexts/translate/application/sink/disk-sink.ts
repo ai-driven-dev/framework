@@ -35,6 +35,8 @@ import { detectPluginPresenceFlags } from "./plugin-source-tree-reader.js";
 import { writeSkillTree } from "./write-skill-tree.js";
 
 type SupportedArtifact = Extract<ArtifactContract, { supported: true }>;
+/** What a flat MCP merge needs of its artifact: the merge, and where its file lives. */
+type FlatMcpTarget = Required<Pick<SupportedArtifact, "merge" | "mergeDest">>;
 
 /** What a build writes and how: the tool's contract, the layout, and whether it may overwrite. */
 export interface DiskLayout {
@@ -148,7 +150,6 @@ export class DiskSink {
     const artifact = t.contract.artifacts.agents;
     if (!artifact.supported) return 0;
     const agentsSrc = join(pluginSrc, "agents");
-    if (!(await this.fs.fileExists(agentsSrc))) return 0;
     let count = 0;
     for (const absPath of await this.fs.listFilesRecursive(agentsSrc)) {
       if (!absPath.endsWith(PLUGIN_AGENT_INPUT_EXT)) continue;
@@ -186,7 +187,6 @@ export class DiskSink {
       return writeSkillTree(this.fs, pluginName, pluginSrc, pluginOut, artifact.transform);
     }
     const skillsSrc = join(pluginSrc, "skills");
-    if (!(await this.fs.fileExists(skillsSrc))) return 0;
     let count = 0;
     for (const absPath of await this.fs.listFilesRecursive(skillsSrc)) {
       count += await this.writeFlatSkill(t, artifact, pluginName, absPath, skillsSrc);
@@ -243,9 +243,10 @@ export class DiskSink {
     if (!artifact.supported) return 0;
     const mcpSrc = join(pluginSrc, PLUGIN_MCP_RELATIVE);
     if (t.mode === "flat") {
-      if (!artifact.merge || !artifact.mergeDest) return 0;
+      const { merge, mergeDest } = artifact;
+      if (!merge || !mergeDest) return 0;
       if (!(await this.fs.fileExists(mcpSrc))) return 0;
-      return this.writeFlatMcp(t, artifact, pluginName, mcpSrc);
+      return this.writeFlatMcp(t, { merge, mergeDest }, pluginName, mcpSrc);
     }
     if (!(await this.fs.fileExists(mcpSrc))) return 0;
     const content = await this.fs.readFile(mcpSrc);
@@ -495,7 +496,7 @@ export class DiskSink {
 
   private async writeFlatMcp(
     t: DiskTarget,
-    artifact: SupportedArtifact,
+    target: FlatMcpTarget,
     pluginName: string,
     mcpSrc: string
   ): Promise<number> {
@@ -509,12 +510,11 @@ export class DiskSink {
         this.resolveClaudeRootAbsolute(t, suffix, pluginName)
       );
     }
-    if (!artifact.merge || !artifact.mergeDest) return 0;
-    const mcpDest = artifact.mergeDest(t.outDir);
+    const mcpDest = target.mergeDest(t.outDir);
     const existingContent = (await this.fs.fileExists(mcpDest))
       ? await this.fs.readFile(mcpDest)
       : null;
-    const { mergedContent, collisions } = artifact.merge(existingContent, prefixed, t.force);
+    const { mergedContent, collisions } = target.merge(existingContent, prefixed, t.force);
     if (collisions.length > 0) throw new FlatTargetExistsError(mcpDest, pluginName);
     await this.fs.writeFile(mcpDest, mergedContent);
     return 1;
@@ -565,7 +565,7 @@ function resolveSuffixToFlatPath(
 ): string {
   const art = contract.artifacts;
   if (suffix.startsWith("agents/") && art.agents.supported) {
-    return flatAgentPath(art.agents, pluginName, suffix.slice("agents/".length));
+    return flatAgentPath(art.agents, pluginName, suffix);
   }
   if (suffix.startsWith("skills/") && art.skills.supported) {
     return art.skills.path(pluginName, `skills/${suffix.slice("skills/".length)}`);

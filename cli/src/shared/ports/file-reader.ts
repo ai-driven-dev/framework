@@ -10,6 +10,7 @@ export interface FileReader {
   /** Whether `path` exists and is a directory: false for a file and for a missing path. */
   isDirectory(path: string): Promise<boolean>;
   readFileHash(path: string): Promise<FileHash>;
+  /** Every file below `dirPath`; empty for a missing directory. */
   listFilesRecursive(dirPath: string): Promise<string[]>;
 
   /** Whether whoever is running this can execute the file — `access(X_OK)`, never a
