@@ -15,8 +15,8 @@ The engine and the brand kept.
 5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
 6. Reply with:
    - the brand written
-   - the brand's version, to review in the showcase
-   - what the validation still prints
+   - the brand, to review in the showcase
+   - an error left, in plain words, never a warning count
    - that the code is untouched
    - the single next step: set the colours, type and spacing
 

@@ -8,7 +8,8 @@ The pastes.
 
 ## Process
 
-1. Read each paste: its record, its version, and a verdict per state.
+1. Read each paste or chat answer.
+   - Take its record, its version, and a verdict per state.
    - A paste may list several records.
    - Leave entries with `set`.
    - Two pastes for one record: the latest wins.

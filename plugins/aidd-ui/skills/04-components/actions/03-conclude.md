@@ -19,9 +19,9 @@ The output of [write](02-write.md).
    - Hand back only when all are looked at.
 6. Write the showcase per [engine](../references/engine.md), in the project memory's language.
 7. Reply with:
-   - the elements and screens created or raised, with their versions
+   - the elements and screens created or raised, by title
    - the ones the raise left, for a change
-   - what the validation still prints
+   - an error left, in plain words, never a warning count
    - the `code` files listed, still holding old values, for a change
    - that the code is untouched
    - that each element created or raised is `proposed` until its review

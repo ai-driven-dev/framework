@@ -30,7 +30,15 @@ Each box is a file: read it, then do what it says.
 
 - Speak only to ask or to give the final reply.
 - Name a record by its title and a state by its label.
-- Never show a file name, id, heading level or rule code.
+- Say what the person will see, in their words.
+- Never show a path, file name, id, rule code or size.
+- Never give a unit, or a count of warnings.
+- Never use jargon: no wireframe, design system, token or hex code. Say what it is.
+- Name the showcase plainly, « la vitrine » in French.
+- Say once how to open it: double-click `index.html` in `aidd_docs/ui/showcase/`. Give no other path.
+- To show a page, point to it in the showcase.
+- Never hand over a capture or a temp file.
+- End a reply with exactly one next step or one question. Hold the others.
 - After asking, wait for the answer.
 - Otherwise call tools.
 - Run the engine from the project root; never read its source.

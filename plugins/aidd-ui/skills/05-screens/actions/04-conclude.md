@@ -25,11 +25,11 @@ The screens kept.
    - the screens created, each with the wireframe it dresses
    - the screens you picked yourself
    - each screen left without `code`, and why
-   - what the validation still prints
+   - an error left, in plain words, never a warning count
    - that no browser was found, if so
    - that the code is untouched
    - that each screen is `proposed` until its review
-   - the single next step: give a verdict on each screen
+   - the single next step: give a verdict in the showcase
 
 ## Output
 

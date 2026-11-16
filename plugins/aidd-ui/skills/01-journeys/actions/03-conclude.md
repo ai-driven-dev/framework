@@ -24,14 +24,14 @@ The engine and the files written.
    - Leave a journey with no answer as it is.
 8. Validate again per [engine](../references/engine.md), and fix as in steps 2 and 3.
 9. Write the showcase per [engine](../references/engine.md), in the project memory's language.
-10. Reply, in plain words:
+10. Reply, in plain words, per the transversal rules:
    - the journeys and wireframes written or raised
    - the journeys agreed, and those still awaiting their agreement
-   - where to look: the showcase's index page
-   - that the wireframes' review waits for the design system
-   - what comes next: the brand, then the design system
+   - how to open the showcase, once
+   - the single next step: set the brand
    - the components the wireframes expect, for the design system
-   - an error another skill owes, as a next step, not a failure.
+   - leave out the review wait and any warning count
+   - an error another skill owes is not a failure: leave it out
 
 ## Output
 

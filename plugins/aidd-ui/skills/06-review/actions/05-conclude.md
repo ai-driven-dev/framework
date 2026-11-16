@@ -18,10 +18,10 @@ The review written.
    - `warning` lines, which are not errors
 5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
 6. Reply with:
-   - the records published, with their versions
+   - the records published, by title
    - the records sent back for change, with their comments
-   - the captures the user still saves, with their paths
-   - what the validation still prints
+   - the captures the user still saves, by screen and state
+   - an error left, in plain words, never a warning count
    - that the code is untouched
    - the single next step: rework sent-back records, else the next missing part
 

@@ -17,9 +17,9 @@ The output of [write](02-write.md).
    - `warning` lines, which are not errors
 5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
 6. Reply with:
-   - the tokens and the system written, with their versions
+   - the tokens and the system written
    - the elements and screens the raise left, for a change
-   - what the validation still prints
+   - an error left, in plain words, never a warning count
    - the `code` files listed, still holding old values, for a change
    - that the code is untouched
    - that each element created or raised is `proposed` until its review
