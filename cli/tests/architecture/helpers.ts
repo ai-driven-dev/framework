@@ -155,9 +155,6 @@ export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/withdrawal.ts",
   ],
   "installation->translate": [
-    "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts -> src/contexts/translate/contract/translate-distribution.ts",
-    "src/contexts/installation/application/plugin/add-plugin.ts -> src/contexts/translate/contract/translate-distribution.ts",
-    "src/contexts/installation/application/shared/built-materialization-deps.ts -> src/contexts/translate/contract/translate-distribution.ts",
     "src/contexts/installation/application/shared/ensure-built-marketplace.ts -> src/contexts/translate/contract/build-native-tree.ts",
     "src/contexts/installation/application/shared/ensure-built-marketplace.ts -> src/contexts/translate/contract/build-targets.ts",
     "src/contexts/installation/application/shared/hash-output-files.ts -> src/contexts/translate/contract/output-file.ts",

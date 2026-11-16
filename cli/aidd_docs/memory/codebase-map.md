@@ -45,7 +45,7 @@ src/
 │   │   ├── infrastructure/
 │   │   │   └── assets/    # configs inlined at build time, schemas copied beside the binary
 │   │   └── ports/
-│   │       └── plugin/    # reading a plugin's distribution
+│   │       └── plugin/    # reading a plugin's distribution, and the translation of it this context takes
 │   ├── machine-claims/    # which projects claim a machine-wide plugin or source, and what each user scope holds for them
 │   │   ├── application/
 │   │   │   └── shared-source/    # the machine's shared framework source and this project's own copy of it
