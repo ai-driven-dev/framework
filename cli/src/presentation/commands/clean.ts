@@ -7,7 +7,7 @@ import type { CLIOutput } from "../output.js";
 import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 /** What this command reads of the graph. */
-type CleanKeys = "cleanUseCase" | "cleanUserScopeUseCase";
+type CleanKeys = "cleanUseCase" | "cleanUserScopeUseCase" | "setAgentModels";
 
 interface CleanCmdOptions {
   force: boolean;
@@ -49,6 +49,20 @@ async function runUserScopeClean(
   });
 
   printUserScopeCleanOutcome(output, result, interactive);
+
+  // The agents' provider and the main sessions' models are machine-wide choices too, undone
+  // exactly when the clean itself ran: --force, or a confirmed prompt.
+  const models = await deps.setAgentModels.reset({ dryRun: result.dryRun }, catalog);
+  const verb = result.dryRun ? "would be restored" : "restored";
+  for (const { host, path } of models.changed)
+    output.info(`${host} main session: ${verb} in ${path}`);
+  for (const { host, path, reason } of models.skipped) {
+    output.warn(`${host} main session left as it is in ${path}: ${reason}.`);
+  }
+  if (models.providers.length > 0) {
+    const forgotten = result.dryRun ? "would be forgotten" : "forgotten";
+    output.info(`Agents' provider for ${models.providers.join(", ")}: ${forgotten}.`);
+  }
 }
 
 export function registerCleanCommand(

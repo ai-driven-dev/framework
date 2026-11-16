@@ -8,6 +8,7 @@ import { defineAiTool } from "../../profile/define-tool.js";
 import { nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
+import { ModelsSection } from "../../sections/models-section.js";
 import {
   buildCodexContract,
   buildCodexFlatContract,
@@ -141,6 +142,7 @@ export const codex = defineAiTool({
       translationMode: "marketplace",
       pluginRootToken: hooksSupport.rootToken,
     }),
+    models: new ModelsSection({ providers: ["openai"] }),
   }),
 
   rewriteContent(content: string): string {

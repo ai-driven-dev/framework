@@ -227,6 +227,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -399,6 +400,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -741,6 +743,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -1005,6 +1008,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -1198,6 +1202,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -1387,6 +1392,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -1664,6 +1670,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -1850,6 +1857,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -2120,6 +2128,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -2309,6 +2318,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -2630,6 +2640,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -2823,6 +2834,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -3265,6 +3277,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -3685,6 +3698,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -4205,6 +4219,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }
@@ -4645,6 +4660,7 @@
                   "ajv": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "ajv-formats": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "commander": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
+                  "jsonc-parser": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "simple-git": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter",
                   "smol-toml": "a pure folder imports no package and no Node builtin but path and crypto: take a port and let infrastructure supply the adapter"
                 }

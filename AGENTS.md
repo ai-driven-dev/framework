@@ -66,6 +66,14 @@ Project docs, memory, specs, and plans live in `aidd_docs/`.
 - aidd_docs/memory/internal/decisions/a-price-table-is-the-destination-s.md
 - aidd_docs/memory/internal/decisions/measurement-may-reach-a-hosted-destination.md
 
+<!-- folders other plugins own, read on demand -->
+- aidd_docs/brainstorm/
+- aidd_docs/product/
+- aidd_docs/recipes/
+- aidd_docs/release-video/
+- aidd_docs/specs/
+- aidd_docs/tasks/
+
 <!-- aidd_project_memory:end -->
 
 - If the block above is empty, run `ls -1tr aidd_docs/memory/` and read each file.

@@ -12,4 +12,6 @@ export interface FrameworkBuildContext {
   readonly mode: FrameworkBuildMode;
   readonly outDir: string;
   readonly force: boolean;
+  /** The provider whose models the framework's agents run on; absent, each keeps the IDE's. */
+  readonly provider?: string;
 }

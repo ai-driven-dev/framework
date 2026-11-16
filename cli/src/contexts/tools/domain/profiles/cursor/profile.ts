@@ -9,6 +9,7 @@ import { defineAiTool } from "../../profile/define-tool.js";
 import { nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
+import { ModelsSection } from "../../sections/models-section.js";
 import { buildCursorContract, buildCursorFlatContract } from "./build.js";
 import { cursorAgentFrontmatter } from "./cursor-agent.js";
 import { CURSOR_DIRECTORY } from "./cursor-paths.js";
@@ -105,6 +106,7 @@ export const cursor = defineAiTool({
       manifestRelativePath: null,
       pluginRootToken: CURSOR_ROOT_TOKEN,
     }),
+    models: new ModelsSection({ providers: ["anthropic"] }),
   }),
 
   rewriteContent(content: string): string {

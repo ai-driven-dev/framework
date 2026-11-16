@@ -63,8 +63,6 @@ describe("toInstalledRule — one installed file, read as a rule", () => {
     expect(rule.paths).toBeUndefined();
   });
 
-  /** `globs: "a, b"` is what `tool-paths.md` tells a generator to write for Cursor, and a
-   * reader that kept it whole would answer one glob where the rule states two. */
   it("splits a comma-joined scope, which is the form Cursor is generated with", () => {
     const rule = toInstalledRule(
       TOOL.cursor,

@@ -6,6 +6,7 @@ import {
 import type { AiToolId, IdeToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../contract/tool-catalog.js";
 import type { AiToolProfile, IdeToolProfile, ToolProfile } from "../contract/tool-profile.js";
+import { agentProviders } from "../domain/models/agent-models.js";
 import type { BuiltToolConfig } from "../domain/profile/define-tool.js";
 
 /** The catalog of the profiles it is built from, which are held in the order they were given. The
@@ -92,6 +93,15 @@ export class RegisteredToolCatalog implements ToolCatalog {
     return [...this.#byId.values()].sort((a, b) =>
       a.toolId < b.toolId ? -1 : a.toolId > b.toolId ? 1 : 0
     );
+  }
+
+  agentProviders(): readonly string[] {
+    const run = new Set(
+      this.idsInCanonicalOrder("ai").flatMap(
+        (id) => this.aiProfile(id).agentModels()?.providers() ?? []
+      )
+    );
+    return agentProviders().filter((provider) => run.has(provider));
   }
 }
 

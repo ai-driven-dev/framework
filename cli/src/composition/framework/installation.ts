@@ -7,10 +7,12 @@ import { ListPlugins } from "../../contexts/installation/application/plugin/list
 import { DetectPluginDrift } from "../../contexts/installation/application/shared/detect-plugin-drift.js";
 import {
   EnsureBuiltMarketplace,
-  type FrameworkBuildFor,
+  type FrameworkBuilds,
 } from "../../contexts/installation/application/shared/ensure-built-marketplace.js";
 import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.js";
+import { AgentModelStoreAdapter } from "../../contexts/installation/infrastructure/agent-model-store-adapter.js";
 import { BundledAssetProviderAdapter } from "../../contexts/installation/infrastructure/assets/asset-loader.js";
+import type { AgentModelStore } from "../../contexts/installation/ports/agent-model-store.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { TranslatePluginDistribution } from "../../contexts/translate/application/translate-distribution.js";
 import { pluginManifestProbes } from "../../contexts/translate/contract/plugin-format.js";
@@ -21,9 +23,35 @@ import { createFrameworkBuildUseCase, type FrameworkBuildDeps } from "../transla
 import type { Base } from "./base.js";
 
 /** Builds a distribution into the aidd-owned cache, overwriting what a previous build left there. */
-export function cacheBuildFor(tools: ToolCatalog, deps: FrameworkBuildDeps): FrameworkBuildFor {
-  return (target, mode, outDir) =>
-    createFrameworkBuildUseCase(tools, deps, { target, mode, outDir, force: true });
+export function cacheBuildFor(
+  tools: ToolCatalog,
+  deps: FrameworkBuildDeps
+): FrameworkBuilds["buildFor"] {
+  return (target, mode, outDir, provider) =>
+    createFrameworkBuildUseCase(tools, deps, {
+      target,
+      mode,
+      outDir,
+      force: true,
+      ...(provider === undefined ? {} : { provider }),
+    });
+}
+
+/** The cache builds, each tool's tree carrying the provider its agents run on, the variant a
+ * changed provider makes stale. */
+export function frameworkBuildsOf(
+  tools: ToolCatalog,
+  buildFor: FrameworkBuilds["buildFor"],
+  store: AgentModelStore
+): FrameworkBuilds {
+  return {
+    variant: async (target) => {
+      const id = tools.aiToolId(target);
+      if (id === null || tools.aiProfile(id).agentModels() === null) return undefined;
+      return (await store.loadProviders())[id];
+    },
+    buildFor,
+  };
 }
 
 /** A logger whose every level lands at debug, for work that runs behind almost every command. */
@@ -66,10 +94,11 @@ export function wireInstallation(base: Base) {
     assetProvider,
     logger: debugOnly(logger),
   });
+  const agentModelStore = new AgentModelStoreAdapter(fs, userConfigDir);
   const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplace(
     fs,
     resolveMarketplaceUseCase,
-    frameworkBuildFor,
+    frameworkBuildsOf(tools, frameworkBuildFor, agentModelStore),
     currentVersionProvider,
     userConfigDir
   );
@@ -101,6 +130,7 @@ export function wireInstallation(base: Base) {
   );
   return {
     assetProvider,
+    agentModelStore,
     ensureBuiltMarketplaceUseCase,
     updateGitignore,
     runPostInstallPipeline,

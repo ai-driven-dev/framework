@@ -24,6 +24,7 @@ src/
 │   │   └── ports/
 │   ├── installation/    # the installation record, and what installs, restores and materializes it into a project
 │   │   ├── application/
+│   │   │   ├── agents/    # the provider each tool's agents run on, and the main session's model in the tool's user settings
 │   │   │   ├── doctor/    # the checks over what the manifest tracks
 │   │   │   ├── install/
 │   │   │   │   └── content/
@@ -62,6 +63,7 @@ src/
 │   │       ├── bridges/    # the generated event modules of the hosts that read no hooks file
 │   │       ├── formats/
 │   │       ├── hooks/
+│   │       ├── models/    # the model each provider runs a tier on, and the tier of each agent role
 │   │       ├── native-registration/    # the native host's plugin CLI and marketplace declarations, held as data
 │   │       ├── profile.ts    # the sections a profile declares and the shape a defined tool has
 │   │       ├── profile/
@@ -127,6 +129,7 @@ src/
 │       ├── infrastructure/
 │       └── ports/
 ├── orchestration/    # the scenarios that chain contexts: one command class per verb, no business rule
+│   ├── agent-models/    # recording a provider, rebuilding the agents it changes, then setting the main session
 │   ├── clean/    # removing a project's or a machine's installation, then what the hosts and the machine record still hold
 │   ├── doctor/    # running every doctor check over the installation
 │   ├── global/    # machine-wide runs over every installed tool

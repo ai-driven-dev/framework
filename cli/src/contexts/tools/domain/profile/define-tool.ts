@@ -61,6 +61,7 @@ type AiToolFields = Omit<
   | "plugins"
   | "supportsUserScopeActivation"
   | "nativeActivation"
+  | "agentModels"
   | "hostRefInUse"
   | "markdownSection"
   | "skillsSection"
@@ -277,6 +278,7 @@ export function defineAiTool<C extends ProfileSections>(
   refuseDisagreeingPlugin(toolId, capabilities);
   refuseDisagreeingShippedConfig(toolId, spec.configAssets, capabilities);
   const plugins = pluginsOf(capabilities);
+  const models = capabilities.models?.answersFor(toolId) ?? null;
   const profile = {
     ...fields,
     kind: "ai",
@@ -284,7 +286,14 @@ export function defineAiTool<C extends ProfileSections>(
     section: sectionReader(capabilities),
     frameworkBuildMode: (): FrameworkBuildMode =>
       capabilities.layout?.mode === "flat" ? "flat" : "marketplace",
-    buildContract: (mode: FrameworkBuildMode) => contracts[mode]?.() ?? null,
+    buildContract: (mode: FrameworkBuildMode, provider?: string) => {
+      const contract = contracts[mode]?.() ?? null;
+      if (contract === null || provider === undefined) return contract;
+      if (capabilities.models === undefined) {
+        throw new Error(`No agent provider is supported for "${toolId}".`);
+      }
+      return capabilities.models.withAgentModels(contract, toolId, provider);
+    },
     distributionPaths: (kind: "manifest" | "marketplace") =>
       fields.distributionProbes?.[kind] ?? [],
     flatInstallPath: (section: FlatInstallSection, pluginName: string, fileName: string) =>
@@ -297,6 +306,7 @@ export function defineAiTool<C extends ProfileSections>(
     markdownSection: (kind: "commands" | "agents" | "rules") => capabilities[kind] ?? null,
     skillsSection: () => capabilities.skills ?? null,
     nativeActivation: () => nativeActivationOf(capabilities),
+    agentModels: () => models,
     hostRefInUse: (enabled: boolean) =>
       nativeActivationOf(capabilities)?.takesRefForInUse(enabled) ?? true,
     configFiles: () => ({

@@ -14,6 +14,7 @@ import { toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";
+import { ModelsSection } from "../../sections/models-section.js";
 import { buildOpencodeFlatContract } from "./build.js";
 import { OPENCODE_CONFIG_REF } from "./config-refs.js";
 import { OPENCODE_HOOKS } from "./hooks.js";
@@ -99,6 +100,12 @@ export const opencode = defineAiTool({
         dir: (homedir) => join(homedir, ".config", "opencode"),
         map: opencodeGlobalFilePath,
       },
+    }),
+    // OpenCode loads opencode.json, then opencode.jsonc over it: the model goes in the .jsonc.
+    models: new ModelsSection({
+      providers: ["openai", "anthropic", "mistral"],
+      providerPrefix: true,
+      main: { settingsFile: "opencode.jsonc", schema: "https://opencode.ai/config.json" },
     }),
   }),
 

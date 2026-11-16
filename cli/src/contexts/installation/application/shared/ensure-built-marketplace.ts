@@ -13,12 +13,19 @@ import type { FrameworkBuild } from "../../../translate/contract/build-native-tr
 import type { FrameworkBuildTarget } from "../../../translate/contract/build-targets.js";
 import type { DeclaredMarketplace, MarketplaceResolver } from "../../ports/marketplace-sources.js";
 
-/** `undefined` when the target/mode pair has no build. */
-export type FrameworkBuildFor = (
-  target: FrameworkBuildTarget,
-  mode: FrameworkBuildMode,
-  outDir: string
-) => FrameworkBuild | undefined;
+/** The framework builds of every target, and what one target's build differs by. */
+export interface FrameworkBuilds {
+  /** What a target's built tree carries beyond its source, such as the provider its agents run
+   * on, or `undefined` when nothing. A changed variant makes a cached tree stale. */
+  variant(target: FrameworkBuildTarget): Promise<string | undefined>;
+  /** `undefined` when the target/mode pair has no build. */
+  buildFor(
+    target: FrameworkBuildTarget,
+    mode: FrameworkBuildMode,
+    outDir: string,
+    variant?: string
+  ): FrameworkBuild | undefined;
+}
 
 export interface EnsureBuiltMarketplaceCommand {
   readonly projectRoot: string;
@@ -52,7 +59,7 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly resolveMarketplace: MarketplaceResolver,
-    private readonly buildFor: FrameworkBuildFor,
+    private readonly builds: FrameworkBuilds,
     private readonly version: VersionReader,
     /**
      * Where a user-scope marketplace's built tree belongs. Building it under the project that
@@ -81,7 +88,8 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
       projectRoot: options.projectRoot,
       forceRefresh: options.forceRefresh,
     });
-    const sentinel = this.sentinelValue(resolved.catalog?.version);
+    const variant = await this.builds.variant(options.target);
+    const sentinel = this.sentinelValue(resolved.catalog?.version, variant);
     const memoKey = `${options.marketplace.name}:${options.target}:${sentinel}`;
     const memoized = this.memo.get(memoKey);
     if (memoized !== undefined) return memoized;
@@ -90,14 +98,16 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
       builtDir,
       resolve(resolved.localPath),
       sentinel,
-      this.versionIsTrustworthy(options)
+      this.versionIsTrustworthy(options),
+      variant
     );
     this.memo.set(memoKey, result);
     return result;
   }
 
-  private sentinelValue(catalogVersion: string | undefined): string {
-    return `${this.version.get()}:${catalogVersion ?? UNVERSIONED}`;
+  private sentinelValue(catalogVersion: string | undefined, variant: string | undefined): string {
+    const base = `${this.version.get()}:${catalogVersion ?? UNVERSIONED}`;
+    return variant === undefined ? base : `${base}:${variant}`;
   }
 
   /**
@@ -119,19 +129,21 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
     builtDir: string,
     sourceDir: string,
     sentinel: string,
-    versionIsTrustworthy: boolean
+    versionIsTrustworthy: boolean,
+    variant: string | undefined
   ): Promise<EnsureBuiltMarketplaceResult> {
     const version = sentinel.split(":")[1];
     if (versionIsTrustworthy && (await this.isFresh(builtDir, sentinel))) {
       return { builtDir, version, rebuilt: false };
     }
-    await this.build(options.target, options.mode, sourceDir, builtDir);
+    await this.build(options.target, options.mode, sourceDir, builtDir, variant);
     await this.fs.writeFile(join(builtDir, SENTINEL_FILE), sentinel);
     return { builtDir, version, rebuilt: true };
   }
 
   private async isFresh(builtDir: string, sentinel: string): Promise<boolean> {
-    if (sentinel.endsWith(`:${UNVERSIONED}`)) return false;
+    // The catalog version sits second, whatever variant follows it.
+    if (sentinel.split(":")[1] === UNVERSIONED) return false;
     const path = join(builtDir, SENTINEL_FILE);
     if (!(await this.fs.fileExists(path))) return false;
     const current = await this.fs.readFile(path).catch(() => "");
@@ -142,13 +154,14 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
     target: FrameworkBuildTarget,
     mode: FrameworkBuildMode,
     sourceDir: string,
-    builtDir: string
+    builtDir: string,
+    variant: string | undefined
   ): Promise<void> {
     if (this.nested(sourceDir, builtDir)) {
-      await this.buildViaTemp(target, mode, sourceDir, builtDir);
+      await this.buildViaTemp(target, mode, sourceDir, builtDir, variant);
       return;
     }
-    await this.runBuild(target, mode, sourceDir, builtDir);
+    await this.runBuild(target, mode, sourceDir, builtDir, variant);
   }
 
   private nested(sourceDir: string, builtDir: string): boolean {
@@ -159,11 +172,12 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
     target: FrameworkBuildTarget,
     mode: FrameworkBuildMode,
     sourceDir: string,
-    builtDir: string
+    builtDir: string,
+    variant: string | undefined
   ): Promise<void> {
     const temp = join(tmpdir(), `aidd-built-${target}-${mode}`);
     await this.fs.deleteDirectory(temp);
-    await this.runBuild(target, mode, sourceDir, temp);
+    await this.runBuild(target, mode, sourceDir, temp, variant);
     await this.fs.deleteDirectory(builtDir);
     await this.copyDir(temp, builtDir);
     await this.fs.deleteDirectory(temp);
@@ -176,10 +190,11 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
     target: FrameworkBuildTarget,
     mode: FrameworkBuildMode,
     sourceDir: string,
-    outDir: string
+    outDir: string,
+    variant: string | undefined
   ): Promise<void> {
     await this.fs.createDirectory(outDir);
-    const build = this.buildFor(target, mode, outDir);
+    const build = this.builds.buildFor(target, mode, outDir, variant);
     if (build === undefined) {
       throw new Error(`No framework build for target '${target}' mode '${mode}'.`);
     }

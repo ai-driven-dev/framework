@@ -14,7 +14,7 @@ import { wireGlobal } from "./framework/global.js";
 import { wireInstallation } from "./framework/installation.js";
 import { wireMarketplace } from "./framework/marketplace.js";
 import { wirePlugin } from "./framework/plugin.js";
-import { wireSetup } from "./framework/setup.js";
+import { wireAgentModels, wireSetup } from "./framework/setup.js";
 import { wireRecipes } from "./recipes.js";
 import { wireTelemetry } from "./telemetry.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
@@ -54,6 +54,7 @@ export async function createDeps(
   const setup = wireSetup(base, plugin, marketplace, global);
   const doctor = wireDoctor(base, inst);
   const clean = wireClean(base, inst);
+  const setAgentModels = wireAgentModels(base, inst, plugin, marketplace);
   const {
     fs,
     logger,
@@ -145,6 +146,7 @@ export async function createDeps(
     askMarketplaceSource,
     setupPluginsPromptUseCase,
     runSetup,
+    setAgentModels,
     selfUpdate: update.selfUpdate,
     statusUseCase,
     restoreUseCase,

@@ -23,7 +23,7 @@ export function createFrameworkBuildUseCase(
 ): BuildNativeTree | undefined {
   const target = tools.aiToolId(ctx.target);
   if (target === null) return undefined;
-  const contract = tools.aiProfile(target).buildContract(ctx.mode);
+  const contract = tools.aiProfile(target).buildContract(ctx.mode, ctx.provider);
   if (contract === null) return undefined;
   const sink = new DiskSink(
     deps.fs,

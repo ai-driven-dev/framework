@@ -23,9 +23,6 @@ export interface InstalledRule {
  * reader asking one question should not have to know which tool answered. */
 const SCOPE_FIELDS = ["paths", "globs", "applyTo"] as const;
 
-/** A scope stated as one string may hold several globs: `tool-paths.md` tells a generator
- * to comma-join them for Cursor and Copilot. Split, so a rule governing two trees reads as
- * two and not as one glob containing a comma. */
 function globsIn(value: unknown): readonly string[] {
   if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string");
   if (typeof value !== "string") return [];

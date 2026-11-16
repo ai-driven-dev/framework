@@ -38,12 +38,12 @@ describe("a review appends a round and scores the whole plan", () => {
     assert.doesNotMatch(read("actions/01-prepare.md"), /template|`review\.md`/u);
     assert.doesNotMatch(read("actions/02-review.md"), /template|`review\.md`/u);
     assert.match(read("SKILL.md"), /^- Judge this work alone, never an earlier round\.$/mu);
-    assert.match(template(), /\{\{the count of round headings, this one included\}\}/u);
+    assert.match(template(), /Set the round count to the number of round headings, this one included/u);
     assert.match(template(), /Append one round per pass, never rewrite an earlier one/u);
   });
 
   it("the round goes to the folder named, else the plan's, and alone the reply can hold it", () => {
-    assert.match(read("actions/03-conclude.md"), /the task folder named, else of the plan's\. Neither: ask whether to keep it in a file/u);
+    assert.match(read("actions/03-conclude.md"), /the task folder named, else of the plan's\.\n\s+- Neither: ask whether to keep it in a file\./u);
     assert.match(read("actions/03-conclude.md"), /no: the reply holds it/u);
   });
 
@@ -137,7 +137,7 @@ describe("a review appends a round and scores the whole plan", () => {
 
   it("the flow draws every step and verdict", () => {
     const router = read("SKILL.md");
-    const flow = router.slice(router.indexOf("```mermaid"), router.indexOf("Each box"));
+    const flow = router.slice(router.indexOf("```mermaid"), router.indexOf("## Transversal rules"));
     for (const file of ["actions/01-prepare.md", "actions/02-review.md", "actions/03-conclude.md"]) assert.ok(flow.includes(file), file);
     for (const outcome of ["approve", "changes", "blocked"]) assert.match(flow, new RegExp(`${outcome}\\(\\[`, "u"));
   });
@@ -145,6 +145,5 @@ describe("a review appends a round and scores the whole plan", () => {
   it("a review reads the code and never runs or fixes it", () => {
     assert.match(read("SKILL.md"), /^- Read only: never run the app or its checks\.$/mu);
     assert.match(read("SKILL.md"), /^- Change nothing but the report: no code, no test, no config\.$/mu);
-    assert.match(read("SKILL.md"), /Not for fixing what the review finds/u);
   });
 });

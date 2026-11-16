@@ -15,6 +15,7 @@ import { ConfigSection } from "../../sections/config-section.js";
 import { nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
+import { ModelsSection } from "../../sections/models-section.js";
 import { RulesSection } from "../../sections/rules-section.js";
 import { SkillsSection } from "../../sections/skills-section.js";
 import { buildCopilotFlatContract, buildCopilotMarketplaceContract } from "./build.js";
@@ -326,6 +327,14 @@ export const copilot = defineAiTool({
       manifestRelativePath: "plugin.json",
       pluginRootToken: hooksSupport.rootToken,
       translationMode: "marketplace",
+    }),
+    models: new ModelsSection({
+      providers: ["openai", "anthropic"],
+      nativeModels: {
+        "claude-opus-5-5": "claude-opus-5.5",
+        "claude-sonnet-5-5": "claude-sonnet-5.5",
+        "claude-haiku-5-5": "claude-haiku-5.5",
+      },
     }),
   }),
 

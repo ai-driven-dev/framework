@@ -10,6 +10,7 @@ import { toTypedMcpSection } from "../../formats/typed-mcp-merge.js";
 import { defineAiTool } from "../../profile/define-tool.js";
 import { flatGlobalFilePath, flatPlacement } from "../../sections/layout-section.js";
 import { McpConfigPart } from "../../sections/mcp-section.js";
+import { ModelsSection } from "../../sections/models-section.js";
 import { buildKiloFlatContract } from "./build.js";
 import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
@@ -70,6 +71,10 @@ export const kilo = defineAiTool({
         dir: (homedir) => join(homedir, ".config", "kilo"),
         map: flatGlobalFilePath(KILO_DIRECTORY),
       },
+    }),
+    models: new ModelsSection({
+      providers: ["openai", "anthropic", "mistral"],
+      providerPrefix: true,
     }),
   }),
 

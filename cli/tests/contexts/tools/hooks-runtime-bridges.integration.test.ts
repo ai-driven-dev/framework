@@ -65,12 +65,11 @@ const ADAPTERS = { opencode: OPENCODE_HOOKS.runtime.adapter, kilo: KILO_HOOKS.ru
 
 afterEach(async () => {
   vi.unstubAllEnvs();
-  // A hook the bridge started without waiting can still hold its folder: Windows refuses the
-  // removal with EBUSY until it exits.
+  // A SessionStart hook runs detached in `project/`; Windows refuses to remove a live process's cwd (EBUSY).
   await Promise.all(
     created
       .splice(0)
-      .map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }))
+      .map((dir) => rm(dir, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 }))
   );
 });
 

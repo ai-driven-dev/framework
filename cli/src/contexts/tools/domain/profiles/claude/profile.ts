@@ -10,6 +10,7 @@ import { defineAiTool } from "../../profile/define-tool.js";
 import { nativeLayout } from "../../sections/layout-section.js";
 import { manifestSection } from "../../sections/manifest-section.js";
 import { acceptedPluginMcp, McpConfigPart } from "../../sections/mcp-section.js";
+import { ModelsSection } from "../../sections/models-section.js";
 import { buildClaudeContract, buildClaudeFlatContract } from "./build.js";
 import { claudeAgentFrontmatter } from "./claude-agent.js";
 import { CLAUDE_DIRECTORY } from "./claude-build-paths.js";
@@ -123,8 +124,10 @@ export const claude = defineAiTool({
         // marks an orphaned tree `.orphaned_at` but never deletes it itself.
         pluginCacheDir: (h) => join(h, ".claude", "plugins", "cache"),
         // Where a `--scope user` install or marketplace add lands, measured against the real
-        // binary. Never written by aidd; named here for a diagnostic alone.
-        userSettingsPath: (h) => join(h, ".claude", "settings.json"),
+        // binary, under `CLAUDE_CONFIG_DIR` when set. aidd writes the main session's model
+        // there, nothing else.
+        userSettingsPath: (h, env) =>
+          join(env("CLAUDE_CONFIG_DIR") || join(h, ".claude"), "settings.json"),
       },
       marketplaceSettings: {
         settingsPath: ".claude/settings.json",
@@ -141,6 +144,11 @@ export const claude = defineAiTool({
       manifestRelativePath: "plugin.json",
       pluginRootToken: hooksSupport.rootToken,
       translationMode: "marketplace",
+    }),
+    // Its main session reads the model from the user settings file `nativeActivation` names.
+    models: new ModelsSection({
+      providers: ["anthropic"],
+      main: { settingsFile: "settings.json", effortKey: "effortLevel" },
     }),
   }),
 

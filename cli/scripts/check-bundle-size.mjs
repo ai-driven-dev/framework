@@ -61,6 +61,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // among them (+23.6 KB over the 732.4 KB above); 2.1% measured headroom.
 // 773 KB: 772.2 KB, per-call tool profiles threaded through the framework project checks;
 // expected to shrink when the registry free functions are deleted; 0.1% measured headroom.
+// 803 KB: 787.0 KB, next integrated during the split, the provider-models feature among it
+// (+14.2 KB on next alone); expected to shrink in the final size pass; 2.0% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

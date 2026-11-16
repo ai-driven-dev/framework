@@ -3,8 +3,10 @@ import { type Command, Option } from "commander";
 import { MarketplaceSourceMode } from "../../contexts/distribution/domain/marketplace-source-mode.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
+import type { SetAgentModels } from "../../orchestration/agent-models/set-agent-models.js";
 import { SetupFlow } from "../../orchestration/setup/setup-flow.js";
 import { CategoryMismatchError } from "../../shared/domain/errors.js";
+import type { AiToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory } from "../deps.js";
 import { reportSyncActivation } from "../display/framework-display.js";
 import {
@@ -18,7 +20,84 @@ import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
 
 /** What this command reads of the graph. */
-type SetupKeys = "runSetup";
+type SetupKeys = "runSetup" | "setAgentModels";
+
+/** Says, per host, what the main session and each agent now run on, where the main session's
+ * model was written, which plugins were updated, and what other projects still need. */
+function reportAgentModels(
+  output: CLIOutput,
+  catalog: ToolCatalog,
+  provider: string | undefined,
+  hosts: readonly AiToolId[],
+  main: Awaited<ReturnType<SetAgentModels["execute"]>>
+): void {
+  if (provider === undefined) {
+    output.success(`${hosts.join(", ")}: the agents run on the IDE's model again.`);
+    for (const { host, path } of main.changed)
+      output.info(`  ${host} main session: restored in ${path}`);
+  } else {
+    output.success(`Models on ${provider}, for every project on this machine:`);
+    for (const host of hosts) {
+      const models = catalog.aiProfile(host).agentModels();
+      if (models === null) continue;
+      const skipped = main.skipped.some((entry) => entry.host === host);
+      const written = main.changed.findLast((entry) => entry.host === host);
+      const { model, effort } = models.mainModel(provider);
+      const effortShown = effort === undefined ? "" : ` (${effort})`;
+      if (!skipped) {
+        output.info(
+          written === undefined
+            ? `  ${host} main session: not managed by aidd, still the IDE's choice`
+            : `  ${host} main session: ${model}${effortShown}, written in ${written.path}`
+        );
+      }
+      for (const group of models.roleModels(provider)) {
+        output.info(`  ${host} ${group.roles.join(", ")}: ${group.model} (${group.effort})`);
+      }
+    }
+  }
+  for (const { host, path, reason } of main.skipped) {
+    output.warn(`${host} main session left as it is in ${path}: ${reason}.`);
+  }
+  output.info(
+    main.reinstalled.length > 0
+      ? `Agents updated: ${main.reinstalled.join(", ")}.`
+      : "Agents installed later get these models too."
+  );
+  output.info(
+    `Other projects follow at their next install; to update the agents they already have, run \`aidd setup --ide ${hosts.join(",")} --provider ${provider ?? "none"}\` there.`
+  );
+}
+
+/** The tools of this run that run the framework's agents, and the provider asked for, refused
+ * before anything is built or written: one provider per run, so a tool that does not run it is
+ * named. */
+function agentModelsRequest(
+  raw: string | undefined,
+  aiTools: readonly string[],
+  catalog: ToolCatalog
+): { hosts: AiToolId[]; provider: string | undefined } {
+  const runsAgents = (id: AiToolId) => catalog.aiProfile(id).agentModels() !== null;
+  const hosts = aiTools.flatMap((raw) => {
+    const id = catalog.aiToolId(raw);
+    return id !== null && runsAgents(id) ? [id] : [];
+  });
+  const provider = raw === "none" ? undefined : raw;
+  const known = catalog.agentProviders();
+  if (provider !== undefined && !known.includes(provider)) {
+    throw new Error(`Unknown provider "${provider}". Use: ${known.join(", ")}, or none.`);
+  }
+  if (raw !== undefined && hosts.length === 0) {
+    const all = catalog.idsInCanonicalOrder("ai").filter(runsAgents);
+    throw new Error(
+      `--provider needs --ide with a tool that runs the framework's agents: ${all.join(", ")}.`
+    );
+  }
+  if (provider !== undefined) {
+    for (const host of hosts) catalog.aiProfile(host).agentModels()?.supportedProvider(provider);
+  }
+  return { hosts, provider };
+}
 
 interface SetupCmdOptions {
   source?: "remote" | "local";
@@ -31,6 +110,7 @@ interface SetupCmdOptions {
   defaultMarketplace?: boolean;
   scope?: string;
   global?: boolean;
+  provider?: string;
 }
 
 export function parseSourceFlag(
@@ -156,6 +236,10 @@ export function registerSetupCommand(
         "requirements below"
     )
     .addOption(new Option("--scope <scope>", "Former spelling: user means --global").hideHelp())
+    .option(
+      "--provider <provider>",
+      `Run each tool's main session and agents on this provider's model for their role (${catalog.agentProviders().join(", ")}), or none for the IDE's model`
+    )
     .addHelpText("after", () => globalSetupHelp(catalog))
     .action(async (cmdOptions: SetupCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
@@ -173,7 +257,8 @@ export function registerSetupCommand(
         cmdOptions.ide ||
         cmdOptions.plugins ||
         cmdOptions.yes ||
-        cmdOptions.global
+        cmdOptions.global ||
+        cmdOptions.provider
       );
       const interactive = process.stdout.isTTY && !hasScriptingFlags;
 
@@ -201,6 +286,8 @@ export function registerSetupCommand(
           scope,
         });
 
+        const agents = agentModelsRequest(cmdOptions.provider, toolIds.aiTools, catalog);
+
         if (interactive) printWelcomeBanner(output);
 
         const deps = await createDeps(projectRoot, { verbose }, output);
@@ -211,6 +298,15 @@ export function registerSetupCommand(
           printDetectedContext(output, result.context.describe());
         }
         printSetupOutcome(output, result, verbose);
+        // Once the install has succeeded: the provider and the main session's model hold for
+        // every project on the machine, so a failed install leaves both as they were.
+        if (cmdOptions.provider !== undefined) {
+          const models = await deps.setAgentModels.execute(
+            { projectRoot, ...agents, scope: scope ?? "project" },
+            catalog
+          );
+          reportAgentModels(output, catalog, agents.provider, agents.hosts, models);
+        }
         if (interactive) printNextSteps(output, result.install.results.length > 0);
         reportSyncActivation(output, result.activation);
       } catch (error) {

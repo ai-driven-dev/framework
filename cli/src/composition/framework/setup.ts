@@ -1,4 +1,11 @@
+import { homedir } from "node:os";
+import { AgentPluginHosts } from "../../contexts/installation/application/agents/agent-plugin-hosts.js";
+import { AgentProviders } from "../../contexts/installation/application/agents/agent-providers.js";
+import { MainSessionModels } from "../../contexts/installation/application/agents/main-session-models.js";
 import { InitProject } from "../../contexts/installation/application/init-project.js";
+import { jsoncMainSessionSettings } from "../../contexts/installation/infrastructure/jsonc-main-session-settings.js";
+import { RefreshAgentPlugins } from "../../orchestration/agent-models/refresh-agent-plugins.js";
+import { SetAgentModels } from "../../orchestration/agent-models/set-agent-models.js";
 import {
   RunSetup,
   type SetupQuestions,
@@ -8,6 +15,7 @@ import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plug
 import { SetupToolsPromptUseCase } from "../../presentation/prompts/setup-tools-prompt-use-case.js";
 import type { Base } from "./base.js";
 import type { Global } from "./global.js";
+import type { Installation } from "./installation.js";
 import type { Marketplace } from "./marketplace.js";
 import type { Plugin } from "./plugin.js";
 
@@ -38,6 +46,32 @@ export function setupQuestionsOf(
     plugins: (options) => plugins.execute(options),
     tools: (options) => tools.execute(options),
   };
+}
+
+/** The agents' provider and the main session's model, which `setup --provider` sets and
+ * `clean --global` forgets. */
+export function wireAgentModels(
+  base: Base,
+  inst: Pick<Installation, "agentModelStore">,
+  p: Plugin,
+  m: Marketplace
+) {
+  const { fs, manifestRepo, userManifestRepo, environment } = base;
+  const { agentModelStore } = inst;
+  const mainSessions = new MainSessionModels(
+    fs,
+    agentModelStore,
+    jsoncMainSessionSettings,
+    homedir,
+    environment
+  );
+  const refresh = new RefreshAgentPlugins(
+    new AgentPluginHosts(manifestRepo, userManifestRepo),
+    p.pluginUpdateUseCase,
+    p.userPluginUpdateUseCase,
+    m.syncSettingsUseCase
+  );
+  return new SetAgentModels(new AgentProviders(agentModelStore), mainSessions, refresh);
 }
 
 /** `setup`: the questions it asks about plugins and tools, and the scenario that runs them. */

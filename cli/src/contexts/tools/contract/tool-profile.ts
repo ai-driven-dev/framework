@@ -228,6 +228,35 @@ export interface MarketplaceRegistrationAnswers {
   machineLocalFiles(): readonly string[];
 }
 
+/** A model and the effort it runs at, in the tool's own ids. */
+export interface ModelChoice {
+  readonly model: string;
+  readonly effort: string;
+}
+
+/** The agent roles of one tier, and the model they run on. */
+export interface RoleModels extends ModelChoice {
+  readonly roles: readonly string[];
+}
+
+/** Which providers' models a tool's main session and agents run on, asked and never read. */
+export interface AgentModelAnswers {
+  /** The providers it runs, in the framework's order. */
+  providers(): readonly string[];
+  /** The provider, once the tool is known to run it; refused, naming the ones it runs, otherwise. */
+  supportedProvider(provider: string): string;
+  /** The main session's model at the provider; its effort only where its settings take one. */
+  mainModel(provider: string): { readonly model: string; readonly effort?: string };
+  /** The agent roles of each tier and their model at the provider, highest tier first. */
+  roleModels(provider: string): readonly RoleModels[];
+  /** The main session's settings file, read from the machine-wide directory where the tool names
+   * no user settings file of its own, and the schema heading one aidd creates; null when the main
+   * session's model stays the tool's choice. */
+  mainSettings(): { readonly file: string; readonly schema?: string } | null;
+  /** The keys and values the main session's settings take for the provider. */
+  mainSettingsValues(provider: string): Readonly<Record<string, string>>;
+}
+
 /** An AI assistant, as an outside caller asks it. */
 export interface AiToolProfile {
   readonly kind: "ai";
@@ -240,8 +269,9 @@ export interface AiToolProfile {
   distributionPaths(kind: "manifest" | "marketplace"): readonly string[];
   /** Flat when its plugins are injected into the project tree, a marketplace otherwise. */
   frameworkBuildMode(): FrameworkBuildMode;
-  /** The framework-build contract for `mode`, or null when the tool declares none for it. */
-  buildContract(mode: FrameworkBuildMode): ToolBuildContract | null;
+  /** The framework-build contract for `mode`, or null when the tool declares none for it. With a
+   * provider, every agent of a role the framework tiers runs on that tier's model there. */
+  buildContract(mode: FrameworkBuildMode, provider?: string): ToolBuildContract | null;
   /** Where a flat plugin's file of `section` lands, relative to the project root. */
   flatInstallPath(section: FlatInstallSection, pluginName: string, fileName: string): string;
   /** Whether a built, project-relative path is one of `pluginName`'s files in this tool's tree. */
@@ -258,6 +288,8 @@ export interface AiToolProfile {
   skillsSection(): SkillsSectionAnswers | null;
   /** The tool's native plugin CLI declaration, or undefined when it has none. */
   nativeActivation(): NativeActivationAnswers | undefined;
+  /** The providers its main session and agents can run on, or null when it runs none. */
+  agentModels(): AgentModelAnswers | null;
   /** Whether a ref the host's registry lists is a plugin in use: an enabled one always, a disabled
    * one unless the host's uninstall leaves refs disabled. Every ref counts for a tool with no native CLI. */
   hostRefInUse(enabled: boolean): boolean;

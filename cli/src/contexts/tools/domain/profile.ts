@@ -9,6 +9,7 @@ import type { HooksSection } from "./sections/hooks-section.js";
 import type { LayoutSection } from "./sections/layout-section.js";
 import type { ManifestSection } from "./sections/manifest-section.js";
 import type { McpSection } from "./sections/mcp-section.js";
+import type { ModelsSection } from "./sections/models-section.js";
 import type { RulesSection } from "./sections/rules-section.js";
 import type { SkillsSection } from "./sections/skills-section.js";
 
@@ -23,6 +24,7 @@ export interface ProfileSections {
   layout?: LayoutSection;
   manifest?: ManifestSection;
   config?: ConfigSection[];
+  models?: ModelsSection;
 }
 
 export type ProfileSectionKey = keyof ProfileSections;
@@ -40,6 +42,7 @@ export const PROFILE_SECTION_KEYS: readonly ProfileSectionKey[] = [
   "layout",
   "manifest",
   "config",
+  "models",
 ];
 
 export function isProfileSectionKey(name: string): name is ProfileSectionKey {

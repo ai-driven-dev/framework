@@ -109,6 +109,10 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/sync/load-sync-context.ts",
     "src/contexts/installation/application/sync/record-activation.ts",
     "src/contexts/installation/application/sync/sync-tool-settings-files.ts",
+    // what a provider change records and rebuilds, which the agent-models scenario chains
+    "src/contexts/installation/application/agents/agent-plugin-hosts.ts",
+    "src/contexts/installation/application/agents/agent-providers.ts",
+    "src/contexts/installation/application/agents/main-session-models.ts",
   ],
   "machine-claims": [
     // Transitional (reference-context.md, M-C1): framework's orchestrators read the claims and

@@ -8,7 +8,7 @@ import type {
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import {
   EnsureBuiltMarketplace,
-  type FrameworkBuildFor,
+  type FrameworkBuilds,
 } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import type { FrameworkBuild } from "../../../../../src/contexts/translate/contract/build-native-tree.js";
@@ -86,6 +86,13 @@ function fakeResolve(
   } satisfies Pick<ResolveMarketplace, "execute">;
 }
 
+type BuildFor = FrameworkBuilds["buildFor"];
+
+/** Every target's build, with no variant unless one is named. */
+function buildsOf(buildFor: BuildFor, variant?: string): FrameworkBuilds {
+  return { variant: async () => variant, buildFor };
+}
+
 function fakeVersion(value: string): VersionReader {
   return { get: () => value };
 }
@@ -101,7 +108,7 @@ describe("builtMarketplaceDir", () => {
 describe("EnsureBuiltMarketplace", () => {
   let fs: InMemoryFileAdapter;
   let builds: number;
-  let buildFor: FrameworkBuildFor;
+  let buildFor: BuildFor;
 
   beforeEach(() => {
     fs = new InMemoryFileAdapter();
@@ -120,7 +127,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -135,6 +142,71 @@ describe("EnsureBuiltMarketplace", () => {
     expect(fs.getFile(join(r.builtDir, ".build-version"))).toBe("5.0.0:1.0.0");
   });
 
+  it("builds a target's agents with the provider chosen for it, and records it in the sentinel", async () => {
+    const variants: (string | undefined)[] = [];
+    const uc = new EnsureBuiltMarketplace(
+      fs,
+      fakeResolve("/src/framework", "1.0.0"),
+      {
+        variant: async (target) => (target === TOOL.codex ? "openai" : undefined),
+        buildFor: (target, mode, outDir, variant) => {
+          variants.push(variant);
+          return buildFor(target, mode, outDir);
+        },
+      },
+      fakeVersion("5.0.0"),
+      () => "/user-cache"
+    );
+    const r = await uc.execute({
+      projectRoot: PROJECT,
+      marketplace: makeRemoteMarketplace(),
+      target: TOOL.codex,
+      mode: "marketplace",
+    });
+    expect(variants).toStrictEqual(["openai"]);
+    expect(fs.getFile(join(r.builtDir, ".build-version"))).toBe("5.0.0:1.0.0:openai");
+  });
+
+  it("rebuilds a published source once its agents' provider changed", async () => {
+    const builtDir = resolve(builtMarketplaceDir(PROJECT, "aidd-framework", TOOL.codex));
+    fs.setFile(join(builtDir, ".build-version"), "5.0.0:1.0.0");
+    const uc = new EnsureBuiltMarketplace(
+      fs,
+      fakeResolve("/src/framework", "1.0.0"),
+      buildsOf(buildFor, "openai"),
+      fakeVersion("5.0.0"),
+      () => "/user-cache"
+    );
+    const r = await uc.execute({
+      projectRoot: PROJECT,
+      marketplace: makeRemoteMarketplace(),
+      target: TOOL.codex,
+      mode: "marketplace",
+    });
+    expect(r.rebuilt).toBe(true);
+    expect(builds).toBe(1);
+  });
+
+  it("always rebuilds an unversioned published source, even one its agents' provider marks", async () => {
+    const builtDir = resolve(builtMarketplaceDir(PROJECT, "aidd-framework", TOOL.codex));
+    fs.setFile(join(builtDir, ".build-version"), "5.0.0:unversioned:openai");
+    const uc = new EnsureBuiltMarketplace(
+      fs,
+      fakeResolve("/src/framework", undefined),
+      buildsOf(buildFor, "openai"),
+      fakeVersion("5.0.0"),
+      () => "/user-cache"
+    );
+    const r = await uc.execute({
+      projectRoot: PROJECT,
+      marketplace: makeRemoteMarketplace(),
+      target: TOOL.codex,
+      mode: "marketplace",
+    });
+    expect(r.rebuilt).toBe(true);
+    expect(r.version).toBe("unversioned");
+  });
+
   it("does not rebuild a published source when the sentinel matches (cliVer:catalogVer)", async () => {
     // resolve(): a drive-less PROJECT would seed a key the in-memory fs never looks up under,
     // since the code's own builtDir is resolved with a drive letter.
@@ -143,7 +215,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -165,7 +237,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -187,7 +259,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -207,7 +279,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -227,7 +299,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", undefined),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -246,7 +318,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve(PROJECT, "1.0.0"),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -265,7 +337,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -284,7 +356,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -308,7 +380,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -325,7 +397,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", undefined),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -349,7 +421,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       recordingResolve,
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -367,7 +439,7 @@ describe("EnsureBuiltMarketplace", () => {
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", "1.0.0"),
-      () => undefined,
+      buildsOf(() => undefined),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -385,7 +457,7 @@ describe("EnsureBuiltMarketplace", () => {
 describe("EnsureBuiltMarketplace — when a published source's sentinel can be believed", () => {
   let fs: InMemoryFileAdapter;
   let builds: number;
-  let buildFor: FrameworkBuildFor;
+  let buildFor: BuildFor;
   const builtDir = resolve(builtMarketplaceDir(PROJECT, "aidd-framework", "codex"));
 
   beforeEach(() => {
@@ -405,7 +477,7 @@ describe("EnsureBuiltMarketplace — when a published source's sentinel can be b
     const uc = new EnsureBuiltMarketplace(
       fs,
       fakeResolve("/src/framework", catalogVersion),
-      buildFor,
+      buildsOf(buildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -449,7 +521,7 @@ describe("force behavior at the cache-rebuild path", () => {
     const agentPath = `${builtDir}/.github/agents/${PLUGIN}-code-reviewer.agent.md`;
     memFs.setFile(agentPath, "stale cache content from a previous build");
 
-    const realBuildFor: FrameworkBuildFor = (_target, _mode) => {
+    const realBuildFor: BuildFor = (_target, _mode) => {
       const validator = noopValidator();
       const assetProvider = stubAssetProvider();
       return buildTree(
@@ -466,7 +538,7 @@ describe("force behavior at the cache-rebuild path", () => {
     const uc = new EnsureBuiltMarketplace(
       memFs,
       fakeResolve(FIXTURE_DIR, "1.0.0"),
-      realBuildFor,
+      buildsOf(realBuildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -489,7 +561,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
   it("only ever builds into the aidd build cache or the OS temp dir, never a user directory", async () => {
     const memFs = new InMemoryFileAdapter();
     const capturedOutDirs: string[] = [];
-    const capturingBuildFor: FrameworkBuildFor = (_target, _mode, outDir) => {
+    const capturingBuildFor: BuildFor = (_target, _mode, outDir) => {
       capturedOutDirs.push(outDir);
       return {
         execute: async () => {
@@ -503,7 +575,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
     const direct = new EnsureBuiltMarketplace(
       memFs,
       fakeResolve("/src/framework", "1.0.0"),
-      capturingBuildFor,
+      buildsOf(capturingBuildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -519,7 +591,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
     const dogfood = new EnsureBuiltMarketplace(
       memFs,
       fakeResolve(PROJECT, "1.0.0"),
-      capturingBuildFor,
+      buildsOf(capturingBuildFor),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -549,7 +621,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
   it("builds a user-scope marketplace outside the project", async () => {
     const memFs = new InMemoryFileAdapter();
     const built: string[] = [];
-    const capturing: FrameworkBuildFor = (_t, _m, outDir) =>
+    const capturing: BuildFor = (_t, _m, outDir) =>
       ({
         execute: async () => {
           built.push(outDir);
@@ -561,7 +633,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
     const uc = new EnsureBuiltMarketplace(
       memFs,
       fakeResolve("/src/framework", "1.0.0"),
-      capturing,
+      buildsOf(capturing),
       fakeVersion("5.0.0"),
       () => "/user-cache"
     );
@@ -583,7 +655,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
   // user-scope marketplace must land in disjoint trees, so a purge cannot take the other's.
   it("builds two different CLI versions of a user-scope marketplace into disjoint directories", async () => {
     const memFs = new InMemoryFileAdapter();
-    const capturing: FrameworkBuildFor = (_t, _m, outDir) =>
+    const capturing: BuildFor = (_t, _m, outDir) =>
       ({
         execute: async () => {
           await memFs.writeFile(join(outDir, ".claude-plugin/marketplace.json"), "{}");
@@ -595,7 +667,7 @@ describe("outDir invariant for the cache-rebuild build path", () => {
       const uc = new EnsureBuiltMarketplace(
         memFs,
         fakeResolve("/src/framework", "1.0.0"),
-        capturing,
+        buildsOf(capturing),
         fakeVersion(version),
         () => "/user-cache"
       );

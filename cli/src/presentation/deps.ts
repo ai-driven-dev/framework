@@ -37,6 +37,7 @@ import type { FrameworkBuildContext } from "../contexts/translate/contract/build
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
 import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";
+import type { SetAgentModels } from "../orchestration/agent-models/set-agent-models.js";
 import type { CleanProject } from "../orchestration/clean/clean-project.js";
 import type { CleanUserScope } from "../orchestration/clean/clean-user-scope.js";
 import type { CheckRegistration } from "../orchestration/doctor/check-registration.js";
@@ -131,6 +132,8 @@ export interface Deps {
   askMarketplaceSource: Pick<AskMarketplaceSource, "execute">;
   setupPluginsPromptUseCase: Pick<SetupPluginsPromptUseCase, "execute">;
   runSetup: Pick<RunSetup, "execute">;
+  /** The agents' provider and the main session's model: set by `setup`, forgotten by `clean`. */
+  setAgentModels: Pick<SetAgentModels, "execute" | "reset">;
   selfUpdate: Pick<SelfUpdate, "execute">;
   statusUseCase: Pick<ReportStatus, "execute">;
   restoreUseCase: Pick<Restore, "execute">;
