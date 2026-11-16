@@ -43,7 +43,8 @@ src/
 │   │   │   ├── ownership/
 │   │   │   ├── plugin/
 │   │   │   ├── restore/
-│   │   │   └── shared/
+│   │   │   ├── shared/
+│   │   │   └── update/    # one installed tool brought to the current version
 │   │   ├── contract/    # what installation reports about a project: doctor issues and the project context
 │   │   ├── domain/
 │   │   │   ├── manifest/
@@ -130,6 +131,8 @@ src/
 │       ├── domain/
 │       ├── infrastructure/
 │       └── ports/
+├── orchestration/    # the scenarios that chain contexts: one command class per verb, no business rule
+│   └── global/    # machine-wide runs over every installed tool
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
 │   │   ├── materialization/    # where content lands and how its links follow

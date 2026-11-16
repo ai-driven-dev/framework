@@ -7,8 +7,7 @@ const installAiTool = vi.fn();
 const installIdeTool = vi.fn();
 const uninstallAiTools = vi.fn();
 const uninstallIdeTool = vi.fn();
-const updateAiTools = vi.fn();
-const updateIdeTools = vi.fn();
+const updateTools = vi.fn();
 const listInstalledRules = vi.fn();
 const validateRecipes = vi.fn();
 const loadManifest = vi.fn();
@@ -19,8 +18,7 @@ const createDeps = vi.fn(async () => ({
   installIdeToolUseCase: { execute: installIdeTool },
   uninstallUseCase: { execute: uninstallAiTools },
   uninstallIdeUseCase: { execute: uninstallIdeTool },
-  updateAiToolsUseCase: { execute: updateAiTools },
-  updateIdeToolsUseCase: { execute: updateIdeTools },
+  updateToolsUseCase: { execute: updateTools },
   listInstalledRulesUseCase: { execute: listInstalledRules },
   validateRecipes: { execute: validateRecipes },
   manifestRepo: manifestRepositoryLoading(loadManifest),
@@ -68,8 +66,7 @@ beforeEach(() => {
   });
   uninstallAiTools.mockResolvedValue([{ toolId: TOOL.claude, fileCount: 4 }]);
   uninstallIdeTool.mockResolvedValue({ toolId: TOOL.vscode, fileCount: 1 });
-  updateAiTools.mockResolvedValue({ updatedTools: [], errors: [] });
-  updateIdeTools.mockResolvedValue({ updatedTools: [], errors: [] });
+  updateTools.mockResolvedValue({ updatedTools: [], errors: [] });
   listInstalledRules.mockResolvedValue({ rules: [] });
   validateRecipes.mockReturnValue({ findings: [], fileCount: 1 });
   loadManifest.mockResolvedValue(null);
@@ -234,24 +231,17 @@ describe("aidd framework remove", () => {
 });
 
 describe("aidd framework update", () => {
-  it("fans out across both categories when no tool was named", async () => {
-    updateAiTools.mockResolvedValue({
-      updatedTools: [{ toolId: TOOL.claude, fileCount: 5 }],
-      errors: [],
-    });
-    updateIdeTools.mockResolvedValue({
-      updatedTools: [{ toolId: TOOL.vscode, fileCount: 2 }],
+  it("prints what the update moved and warns about what it could not", async () => {
+    updateTools.mockResolvedValue({
+      updatedTools: [
+        { toolId: TOOL.claude, fileCount: 5 },
+        { toolId: TOOL.vscode, fileCount: 2 },
+      ],
       errors: [{ scope: "vscode", message: "one file was kept" }],
     });
 
     expect(await run("update")).toEqual(["Updated claude (5 files)", "Updated vscode (2 files)"]);
-    expect(updateAiTools).toHaveBeenCalledWith({
-      tools: catalogOf(),
-      projectRoot: PROJECT_ROOT,
-      userForce: false,
-      interactive: false,
-    });
-    expect(updateIdeTools).toHaveBeenCalledWith({
+    expect(updateTools).toHaveBeenCalledWith({
       tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       userForce: false,
@@ -260,38 +250,24 @@ describe("aidd framework update", () => {
     expect(errors.join("")).toBe("Warning: [vscode] one file was kept\n");
   });
 
-  it("says nothing is installed when neither category moved and neither failed", async () => {
+  it("says nothing is installed when nothing moved and nothing failed", async () => {
     expect(await run("update")).toEqual(["No tools installed."]);
   });
 
-  it("narrows to the one AI tool named, leaving the IDE sweep unrun", async () => {
+  it("narrows the update to the tool named", async () => {
     await run("update", "--tool", "claude", "--force");
 
-    expect(updateAiTools).toHaveBeenCalledWith({
+    expect(updateTools).toHaveBeenCalledWith({
       tools: catalogOf(),
       toolArg: "claude",
       projectRoot: PROJECT_ROOT,
       userForce: true,
       interactive: false,
     });
-    expect(updateIdeTools).not.toHaveBeenCalled();
-  });
-
-  it("narrows to the one IDE tool named, leaving the AI sweep unrun", async () => {
-    await run("update", "--tool", "vscode");
-
-    expect(updateIdeTools).toHaveBeenCalledWith({
-      tools: catalogOf(),
-      toolArg: "vscode",
-      projectRoot: PROJECT_ROOT,
-      userForce: false,
-      interactive: false,
-    });
-    expect(updateAiTools).not.toHaveBeenCalled();
   });
 
   it("names a failed update on stderr and fails the process", async () => {
-    updateAiTools.mockRejectedValue(new Error("bundled assets are missing"));
+    updateTools.mockRejectedValue(new Error("bundled assets are missing"));
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
     });
@@ -307,7 +283,7 @@ describe("aidd framework update", () => {
 
     await run("update");
 
-    expect(updateAiTools).toHaveBeenCalledWith(expect.objectContaining({ interactive: true }));
+    expect(updateTools).toHaveBeenCalledWith(expect.objectContaining({ interactive: true }));
   });
 
   it("treats a stream that says nothing about being a terminal as none", async () => {
@@ -315,10 +291,10 @@ describe("aidd framework update", () => {
 
     await run("update");
 
-    expect(updateAiTools).toHaveBeenCalledWith(expect.objectContaining({ interactive: false }));
+    expect(updateTools).toHaveBeenCalledWith(expect.objectContaining({ interactive: false }));
   });
 
-  it("refuses a tool it does not know before asking either updater", async () => {
+  it("refuses a tool it does not know before asking the updater", async () => {
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
     });
@@ -328,8 +304,7 @@ describe("aidd framework update", () => {
     expect(errors[0]).toBe(
       "Error: Unknown tool: nope. Valid tools: claude, cursor, copilot, opencode, kilo, codex, antigravity, vscode\n"
     );
-    expect(updateAiTools).not.toHaveBeenCalled();
-    expect(updateIdeTools).not.toHaveBeenCalled();
+    expect(updateTools).not.toHaveBeenCalled();
     expect(exit).toHaveBeenCalledWith(1);
   });
 });

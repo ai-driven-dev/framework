@@ -1,18 +1,18 @@
-import { ResolveUpdateDecisionUseCase } from "../../contexts/framework/application/global/resolve-update-decision-use-case.js";
 import { RestoreAllUseCase } from "../../contexts/framework/application/global/restore-all-use-case.js";
 import { StatusAllUseCase } from "../../contexts/framework/application/global/status-all-use-case.js";
-import { UpdateAiToolsUseCase } from "../../contexts/framework/application/global/update-ai-tools-use-case.js";
-import { UpdateIdeToolsUseCase } from "../../contexts/framework/application/global/update-ide-tools-use-case.js";
-import { UpdateOneToolUseCase } from "../../contexts/framework/application/global/update-one-tool-use-case.js";
 import { InstallAiToolUseCase } from "../../contexts/framework/application/install/install-ai-tool-use-case.js";
 import { InstallGlobalPluginsUseCase } from "../../contexts/framework/application/setup/install-global-plugins-use-case.js";
 import { ProjectContextDetectorUseCase } from "../../contexts/framework/application/setup/project-context-detector-use-case.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { SetupToolsUseCase } from "../../contexts/framework/application/setup/setup-tools-use-case.js";
 import { InstallIdeTool } from "../../contexts/installation/application/install/install-ide-tool.js";
+import { ListInstalledTools } from "../../contexts/installation/application/list-installed-tools.js";
 import { ReportStatus } from "../../contexts/installation/application/report-status.js";
+import { ResolveSyncConflict } from "../../contexts/installation/application/resolve-sync-conflict.js";
 import { Restore } from "../../contexts/installation/application/restore/restore.js";
-import { SyncConflictResolverUseCase } from "../../presentation/prompts/sync-conflict-resolver-use-case.js";
+import { UpdateTool } from "../../contexts/installation/application/update/update-tool.js";
+import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update-decision.js";
+import { UpdateTools } from "../../orchestration/global/update-tools.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";
 import type { Marketplace } from "./marketplace.js";
@@ -59,7 +59,6 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     marketplaceSyncSettingsUseCase,
     logger
   );
-  const syncConflictResolverUseCase = new SyncConflictResolverUseCase(fs);
   const setupToolsUseCase = new SetupToolsUseCase(
     manifestRepo,
     installRuntimeConfigUseCase,
@@ -98,23 +97,17 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     statusUseCase,
     restoreUseCase
   );
-  const resolveUpdateDecisionUseCase = new ResolveUpdateDecisionUseCase(prompter);
-  const updateOneToolUseCase = new UpdateOneToolUseCase(
-    installRuntimeConfigUseCase,
-    installIdeConfig,
-    syncConflictResolverUseCase,
-    resolveUpdateDecisionUseCase,
-    fs
-  );
-  const updateAiToolsUseCase = new UpdateAiToolsUseCase(
-    manifestRepo,
-    currentVersionProvider,
-    updateOneToolUseCase
-  );
-  const updateIdeToolsUseCase = new UpdateIdeToolsUseCase(
-    manifestRepo,
-    currentVersionProvider,
-    updateOneToolUseCase
+  const updateToolsUseCase = new UpdateTools(
+    new ListInstalledTools(manifestRepo),
+    new UpdateTool(
+      installRuntimeConfigUseCase,
+      installIdeConfig,
+      new ResolveSyncConflict(fs),
+      manifestRepo,
+      fs
+    ),
+    new ResolveUpdateDecision(prompter),
+    currentVersionProvider
   );
   return {
     installAiToolUseCase,
@@ -126,7 +119,6 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     restoreUseCase,
     statusAllUseCase,
     restoreAllUseCase,
-    updateAiToolsUseCase,
-    updateIdeToolsUseCase,
+    updateToolsUseCase,
   };
 }

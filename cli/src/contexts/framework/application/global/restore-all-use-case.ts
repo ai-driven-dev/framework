@@ -1,3 +1,4 @@
+import type { GlobalExecutionError } from "../../../../shared/domain/errors.js";
 import { NoManifestError } from "../../../../shared/domain/errors.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
@@ -6,7 +7,6 @@ import type { Restore } from "../../../installation/application/restore/restore.
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
 
 export interface RestoreAllResult {
   totalRestored: number;

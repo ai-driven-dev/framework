@@ -98,6 +98,10 @@
       "mutate": "src/contexts/machine-claims/**/*.ts",
       "break": 92
     },
+    "orchestration": {
+      "mutate": ["src/orchestration/**/*.ts", "!src/orchestration/**/steps/**/*.ts"],
+      "break": 92
+    },
     "presentation": {
       "mutate": [
         "src/presentation/**/*.ts",

@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   BulkConflictState,
-  ResolveUpdateDecisionUseCase,
-} from "../../../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
-import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
-import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
+  ResolveUpdateDecision,
+} from "../../../src/orchestration/global/resolve-update-decision.js";
+import { InputRequiredError } from "../../../src/shared/domain/errors.js";
+import type { Prompter } from "../../../src/shared/ports/prompter.js";
 
 function buildFakePrompter(
   resolveConflictBulkReturn: "keep" | "overwrite" | "overwrite-all" | "skip-all"
@@ -19,11 +19,11 @@ function buildFakePrompter(
   };
 }
 
-describe("ResolveUpdateDecisionUseCase", () => {
+describe("ResolveUpdateDecision", () => {
   describe("non-TTY without force", () => {
     it("throws InputRequiredError for modified file", async () => {
       const prompter = buildFakePrompter("overwrite");
-      const useCase = new ResolveUpdateDecisionUseCase(prompter);
+      const useCase = new ResolveUpdateDecision(prompter);
 
       await expect(
         useCase.execute({
@@ -36,7 +36,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
     });
 
     it("names --force as the way out", async () => {
-      const useCase = new ResolveUpdateDecisionUseCase(buildFakePrompter("overwrite"));
+      const useCase = new ResolveUpdateDecision(buildFakePrompter("overwrite"));
 
       const run = useCase.execute({
         relativePath: "some/file.md",
@@ -52,7 +52,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
 
     it("never calls prompter in non-TTY mode", async () => {
       const prompter = buildFakePrompter("overwrite");
-      const useCase = new ResolveUpdateDecisionUseCase(prompter);
+      const useCase = new ResolveUpdateDecision(prompter);
 
       await expect(
         useCase.execute({
@@ -70,7 +70,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
   describe("force mode", () => {
     it("returns true (overwrite) without prompting when force=true", async () => {
       const prompter = buildFakePrompter("keep");
-      const useCase = new ResolveUpdateDecisionUseCase(prompter);
+      const useCase = new ResolveUpdateDecision(prompter);
 
       const result = await useCase.execute({
         relativePath: "some/file.md",
@@ -85,7 +85,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
 
     it("returns true even when not interactive", async () => {
       const prompter = buildFakePrompter("keep");
-      const useCase = new ResolveUpdateDecisionUseCase(prompter);
+      const useCase = new ResolveUpdateDecision(prompter);
 
       const result = await useCase.execute({
         relativePath: "some/file.md",
@@ -101,7 +101,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
   describe("interactive mode without force", () => {
     it("returns true (overwrite) when prompter returns overwrite", async () => {
       const prompter = buildFakePrompter("overwrite");
-      const useCase = new ResolveUpdateDecisionUseCase(prompter);
+      const useCase = new ResolveUpdateDecision(prompter);
 
       const result = await useCase.execute({
         relativePath: "some/file.md",
@@ -116,7 +116,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
 
     it("returns false (keep) when prompter returns keep", async () => {
       const prompter = buildFakePrompter("keep");
-      const useCase = new ResolveUpdateDecisionUseCase(prompter);
+      const useCase = new ResolveUpdateDecision(prompter);
 
       const result = await useCase.execute({
         relativePath: "some/file.md",
@@ -133,7 +133,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
   describe("bulk state", () => {
     it("short-circuits to overwrite when bulkState is overwrite-all (no prompt)", async () => {
       const prompter = buildFakePrompter("keep");
-      const useCase = new ResolveUpdateDecisionUseCase(prompter);
+      const useCase = new ResolveUpdateDecision(prompter);
       const bulkState = new BulkConflictState();
       bulkState.record("overwrite-all");
 
@@ -150,7 +150,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
 
     it("short-circuits to keep when bulkState is skip-all (no prompt)", async () => {
       const prompter = buildFakePrompter("overwrite");
-      const useCase = new ResolveUpdateDecisionUseCase(prompter);
+      const useCase = new ResolveUpdateDecision(prompter);
       const bulkState = new BulkConflictState();
       bulkState.record("skip-all");
 
@@ -166,7 +166,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
     });
 
     it("records nothing for a single-file answer", async () => {
-      const useCase = new ResolveUpdateDecisionUseCase(buildFakePrompter("overwrite"));
+      const useCase = new ResolveUpdateDecision(buildFakePrompter("overwrite"));
       const bulkState = new BulkConflictState();
 
       await useCase.execute({
@@ -181,7 +181,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
 
     it("records overwrite-all in bulkState when prompted", async () => {
       const prompter = buildFakePrompter("overwrite-all");
-      const useCase = new ResolveUpdateDecisionUseCase(prompter);
+      const useCase = new ResolveUpdateDecision(prompter);
       const bulkState = new BulkConflictState();
 
       const result = await useCase.execute({
@@ -197,7 +197,7 @@ describe("ResolveUpdateDecisionUseCase", () => {
 
     it("records skip-all in bulkState when prompted", async () => {
       const prompter = buildFakePrompter("skip-all");
-      const useCase = new ResolveUpdateDecisionUseCase(prompter);
+      const useCase = new ResolveUpdateDecision(prompter);
       const bulkState = new BulkConflictState();
 
       const result = await useCase.execute({

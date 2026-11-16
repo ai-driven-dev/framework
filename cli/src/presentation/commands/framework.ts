@@ -28,8 +28,7 @@ type FrameworkKeys =
   | "installIdeToolUseCase"
   | "uninstallUseCase"
   | "uninstallIdeUseCase"
-  | "updateAiToolsUseCase"
-  | "updateIdeToolsUseCase"
+  | "updateToolsUseCase"
   | "listInstalledRulesUseCase"
   | "validateRecipes";
 
@@ -146,47 +145,14 @@ async function runFrameworkUpdate(
   const toolId = raw === undefined ? undefined : assertKnownToolId(raw, catalog);
   const interactive = process.stdout.isTTY ?? false;
 
-  if (toolId !== undefined) {
-    if (catalog.isAiTool(toolId)) {
-      const result = await deps.updateAiToolsUseCase.execute({
-        toolArg: toolId,
-        projectRoot,
-        userForce: cmdOptions.force,
-        interactive,
-        tools: catalog,
-      });
-      printUpdateResult(output, result.updatedTools, result.errors);
-    } else {
-      const result = await deps.updateIdeToolsUseCase.execute({
-        toolArg: toolId,
-        projectRoot,
-        userForce: cmdOptions.force,
-        interactive,
-        tools: catalog,
-      });
-      printUpdateResult(output, result.updatedTools, result.errors);
-    }
-    return;
-  }
-
-  // No `--tool`: fan out across both categories — every installed AI and IDE tool.
-  const ai = await deps.updateAiToolsUseCase.execute({
+  const result = await deps.updateToolsUseCase.execute({
+    toolArg: toolId,
     projectRoot,
     userForce: cmdOptions.force,
     interactive,
     tools: catalog,
   });
-  const ide = await deps.updateIdeToolsUseCase.execute({
-    projectRoot,
-    userForce: cmdOptions.force,
-    interactive,
-    tools: catalog,
-  });
-  printUpdateResult(
-    output,
-    [...ai.updatedTools, ...ide.updatedTools],
-    [...ai.errors, ...ide.errors]
-  );
+  printUpdateResult(output, result.updatedTools, result.errors);
 }
 
 export function registerFrameworkCommand(

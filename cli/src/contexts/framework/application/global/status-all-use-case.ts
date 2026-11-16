@@ -1,9 +1,9 @@
+import type { GlobalExecutionError } from "../../../../shared/domain/errors.js";
 import type {
   ReportStatusResult,
   StatusQuery,
 } from "../../../installation/application/report-status.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
 export interface StatusAllResult {
   aiTools: ReportStatusResult;
   ideTools: ReportStatusResult;

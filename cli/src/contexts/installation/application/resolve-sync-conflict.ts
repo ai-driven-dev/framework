@@ -1,7 +1,7 @@
-import type { FileReader } from "../../shared/ports/file-reader.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
 
 /** Decides a conflict, never prompts: recording one is the caller's. */
-export class SyncConflictResolverUseCase {
+export class ResolveSyncConflict {
   constructor(private readonly fs: FileReader) {}
 
   async isConflict(

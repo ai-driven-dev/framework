@@ -8,21 +8,19 @@ import { DoctorReferencesUseCase } from "../../../src/contexts/framework/applica
 import { DoctorRegistrationUseCase } from "../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { DoctorTrackedFilesUseCase } from "../../../src/contexts/framework/application/doctor/doctor-tracked-files-use-case.js";
 import { DoctorUseCase } from "../../../src/contexts/framework/application/doctor/doctor-use-case.js";
-import { ResolveUpdateDecisionUseCase } from "../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
-import { UpdateOneToolUseCase } from "../../../src/contexts/framework/application/global/update-one-tool-use-case.js";
 import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
 import { InstallIdeConfig } from "../../../src/contexts/installation/application/install/install-ide-config.js";
 import { InstallRuntimeConfig } from "../../../src/contexts/installation/application/install/install-runtime-config.js";
 import { RunPostInstallPipeline } from "../../../src/contexts/installation/application/install/run-post-install-pipeline.js";
+import { ResolveSyncConflict } from "../../../src/contexts/installation/application/resolve-sync-conflict.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
+import { UpdateTool } from "../../../src/contexts/installation/application/update/update-tool.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { BundledAssetProviderAdapter } from "../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
-import { SyncConflictResolverUseCase } from "../../../src/presentation/prompts/sync-conflict-resolver-use-case.js";
-import { SilentPrompterAdapter } from "../../../src/presentation/terminal/prompter-adapter.js";
 import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
@@ -74,7 +72,7 @@ export async function buildUnitDeps(_projectRoot: string) {
 
   const currentVersionProvider = new FakeCurrentVersion();
 
-  const syncConflictResolver = new SyncConflictResolverUseCase(fs);
+  const resolveSyncConflict = new ResolveSyncConflict(fs);
   const nativePluginActivators = new Map([[TOOL.codex, new FakeHostActions()]]);
   const marketplaceSyncSettings = marketplaceSync({
     fs,
@@ -105,7 +103,7 @@ export async function buildUnitDeps(_projectRoot: string) {
     updateGitignore,
     runPostInstallPipeline,
     currentVersionProvider,
-    syncConflictResolver,
+    resolveSyncConflict,
   };
 }
 
@@ -153,18 +151,12 @@ export async function initAndInstall(
   return installTool(deps, projectRoot, toolId);
 }
 
-export function buildUpdateOneToolUseCase(
-  deps: Awaited<ReturnType<typeof buildUnitDeps>>,
-  prompter?: ConstructorParameters<typeof ResolveUpdateDecisionUseCase>[0]
-): UpdateOneToolUseCase {
-  const resolveUpdateDecision = new ResolveUpdateDecisionUseCase(
-    prompter ?? new SilentPrompterAdapter()
-  );
-  return new UpdateOneToolUseCase(
+export function buildUpdateTool(deps: Awaited<ReturnType<typeof buildUnitDeps>>): UpdateTool {
+  return new UpdateTool(
     deps.installRuntimeConfigUseCase,
     deps.installIdeConfig,
-    deps.syncConflictResolver,
-    resolveUpdateDecision,
+    deps.resolveSyncConflict,
+    deps.manifestRepo,
     deps.fs
   );
 }

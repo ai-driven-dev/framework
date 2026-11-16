@@ -1,7 +1,7 @@
+import type { GlobalExecutionError } from "../../../../shared/domain/errors.js";
 import type { DoctorReport } from "../../../installation/contract/doctor-issue.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { DoctorUseCase } from "../doctor/doctor-use-case.js";
-import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
 
 export interface DoctorAllResult {
   ai: DoctorReport | null;

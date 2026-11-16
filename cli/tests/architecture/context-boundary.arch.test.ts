@@ -72,6 +72,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // and leave this list as each one moves behind an installation command.
     "src/contexts/installation/application/update-gitignore.ts",
     "src/contexts/installation/application/init-project.ts",
+    "src/contexts/installation/application/list-installed-tools.ts",
+    "src/contexts/installation/application/update/update-tool.ts",
     "src/contexts/installation/application/install/install-ide-config.ts",
     "src/contexts/installation/application/install/install-runtime-config.ts",
     "src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",

@@ -1,0 +1,107 @@
+import { join } from "node:path";
+import { describe, expect, it, vi } from "vitest";
+import type { UpdateToolCommand } from "../../../../../src/contexts/installation/application/update/update-tool.js";
+import { InputRequiredError } from "../../../../../src/shared/domain/errors.js";
+import {
+  buildUnitDeps,
+  buildUpdateTool,
+  initAndInstall,
+} from "../../../../helpers/ports/build-unit-deps.js";
+import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+
+const PROJECT_ROOT = "/test-project";
+
+type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
+
+function commandOf(overwriteModified: UpdateToolCommand["overwriteModified"]): UpdateToolCommand {
+  return {
+    toolId: TOOL.claude,
+    projectRoot: PROJECT_ROOT,
+    version: "test",
+    tools: catalogOf(),
+    overwriteModified,
+  };
+}
+
+async function installWithModifiedFile(): Promise<{ deps: Deps; relativePath: string }> {
+  const deps = await buildUnitDeps(PROJECT_ROOT);
+  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+  const first = (await deps.manifestRepo.load())?.getToolFiles(TOOL.claude)[0];
+  if (!first) throw new Error("the installed tool tracks no file");
+  await deps.fs.writeFile(join(PROJECT_ROOT, first.relativePath), "user-modified content");
+  return { deps, relativePath: first.relativePath };
+}
+
+describe("UpdateTool integration", () => {
+  it("writes an unmodified file without asking", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const ask = vi.fn();
+
+    const result = await buildUpdateTool(deps).execute(commandOf(ask));
+
+    expect(result.kind).toBe("updated");
+    expect(ask).not.toHaveBeenCalled();
+  });
+
+  it("overwrites a modified file the answer says to overwrite", async () => {
+    const { deps, relativePath } = await installWithModifiedFile();
+    const ask = vi.fn().mockResolvedValue(true);
+
+    const result = await buildUpdateTool(deps).execute(commandOf(ask));
+
+    expect(result.kind).toBe("updated");
+    expect(ask).toHaveBeenCalledWith(relativePath);
+    expect(await deps.fs.readFile(join(PROJECT_ROOT, relativePath))).not.toBe(
+      "user-modified content"
+    );
+  });
+
+  it("keeps a modified file the answer says to keep", async () => {
+    const { deps, relativePath } = await installWithModifiedFile();
+
+    await buildUpdateTool(deps).execute(commandOf(vi.fn().mockResolvedValue(false)));
+
+    expect(await deps.fs.readFile(join(PROJECT_ROOT, relativePath))).toBe("user-modified content");
+  });
+
+  it("lets an InputRequiredError from the question stop the run", async () => {
+    const { deps } = await installWithModifiedFile();
+    const ask = vi.fn().mockRejectedValue(new InputRequiredError("use --force"));
+
+    await expect(buildUpdateTool(deps).execute(commandOf(ask))).rejects.toThrow(InputRequiredError);
+  });
+
+  it("answers skipped when the installer skipped the tool", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    vi.spyOn(deps.installRuntimeConfigUseCase, "execute").mockResolvedValue({
+      toolId: TOOL.claude,
+      fileCount: 0,
+      files: [],
+      skipped: true,
+      warnings: [],
+    });
+
+    expect(await buildUpdateTool(deps).execute(commandOf(vi.fn()))).toStrictEqual({
+      kind: "skipped",
+    });
+  });
+
+  it.each([
+    ["an Error", new Error("disk full"), "disk full"],
+    ["a plain string", "plain string", "plain string"],
+  ])(
+    "answers failed with the message of %s the installer rejected with",
+    async (_name, rejection, message) => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+      vi.spyOn(deps.installRuntimeConfigUseCase, "execute").mockRejectedValue(rejection);
+
+      expect(await buildUpdateTool(deps).execute(commandOf(vi.fn()))).toStrictEqual({
+        kind: "failed",
+        message,
+      });
+    }
+  );
+});

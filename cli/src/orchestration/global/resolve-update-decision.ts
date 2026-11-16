@@ -1,5 +1,5 @@
-import { InputRequiredError } from "../../../../shared/domain/errors.js";
-import type { Prompter } from "../../../../shared/ports/prompter.js";
+import { InputRequiredError } from "../../shared/domain/errors.js";
+import type { Prompter } from "../../shared/ports/prompter.js";
 
 type BulkDecision = "overwrite-all" | "skip-all";
 
@@ -31,7 +31,7 @@ export interface ResolveUpdateDecisionOptions {
  * `InputRequiredError` for a non-interactive run without `--force`. Consulted only for a modified
  * file — the caller handles an unmodified one.
  */
-export class ResolveUpdateDecisionUseCase {
+export class ResolveUpdateDecision {
   constructor(private readonly prompter: Prompter) {}
 
   async execute(options: ResolveUpdateDecisionOptions): Promise<boolean> {
