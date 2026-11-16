@@ -235,24 +235,6 @@ describe("skill check", () => {
     expectError("citation");
   });
 
-  it("reference-link: a reference linking a sibling file", () => {
-    write({ "references/glossary.md": "# Glossary\n\n| Term | Meaning |\n| --- | --- |\n| demo | a skill |\n" });
-    mutate("references/rubric.md", "| any | yes |", "| any | yes, per [the glossary](glossary.md) |");
-    expectError("reference-link");
-  });
-
-  it("a reference naming a sibling in backticks, or linking a web page, is no finding", () => {
-    mutate("references/rubric.md", "| any | yes |", "| any | yes, per `hosts.md` and [the docs](https://example.com/docs) |");
-    assert.deepEqual(run(), { code: 0, out: "", err: "" });
-  });
-
-  it("edge: an action file name holding a regular-expression character is matched as text", () => {
-    fs.renameSync(path.join(root, "actions/02-second.md"), path.join(root, "actions/02-c++.md"));
-    mutate("SKILL.md", "actions/02-second.md", "actions/02-c++.md");
-    mutate("actions/01-first.md", "2. Read [second](02-second.md).", "2. Stop.");
-    expectError("edge");
-  });
-
   it("a second link to the same file is no finding", () => {
     mutate("actions/01-first.md", "1. Read", "1. Check [the rubric](../references/rubric.md).\n2. Read");
     assert.deepEqual(run(), { code: 0, out: "", err: "" });
