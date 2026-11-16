@@ -13,12 +13,8 @@ node "$writer" --project "$project_root" --tools "$host_ids" --input "$command_j
 
 | Option | Effect |
 | --- | --- |
-| none | Writes each host's file; a failure midway leaves earlier files written, and a rerun completes them. |
+| none | Writes each host's file. |
 | `--plan` | Writes nothing; lists each file with `create`, `update` or `unchanged`. |
 | `--force` | Overwrites each file the plan lists as `update`; without it, the writer refuses. |
 
 The result is JSON: `files` lists each path and its operation, `dropped` each `{tool, field}` a host does not keep, `error` a `{code, message}`. Exit 0 means done; any other exit comes with `error`.
-
-## Limits
-
-- CRLF line endings are read as LF, and every write uses LF.

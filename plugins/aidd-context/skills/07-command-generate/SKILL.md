@@ -16,7 +16,7 @@ flowchart LR
   plan -->|"cancelled"| cancelled((cancelled))
   plan --> write["actions/03-write.md"]
   write --> done((written))
-  plan -->|"writer refusal"| stopped((stopped))
+  plan -->|"writer error"| stopped((stopped))
   write -->|"writer error"| stopped
 ```
 

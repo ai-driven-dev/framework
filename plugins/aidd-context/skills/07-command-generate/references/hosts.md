@@ -14,12 +14,6 @@ Every host reads `AGENTS.md`, so it signals none. When no signal matches, confir
 
 Codex CLI and Antigravity keep no project command: Codex reads prompts only from `~/.codex/prompts/`, and both deprecate them for skills.
 
-A plugin source is one canonical command, in the Claude Code format, where the target tool's plugin format puts commands, with no per-host copy.
-
-Facts the writer cannot enforce:
-
-- Claude Code merged commands into skills, Cursor calls its commands legacy, and Copilot deprecates its local prompt files.
-- Copilot does not substitute `$ARGUMENTS`, and Cursor documents neither frontmatter nor argument placeholders.
-- Commands are written flat, one file per name, with no subfolder.
+A plugin source holds one canonical command: the Claude Code frontmatter plus the filled template, where the target host's plugin format puts commands, with no per-host copy.
 
 Sources: [Claude](https://code.claude.com/docs/en/slash-commands), [Cursor](https://cursor.com/help/customization/skills), [Copilot](https://code.visualstudio.com/docs/agent-customization/prompt-files), [OpenCode](https://opencode.ai/docs/commands/), [Kilo](https://kilo.ai/docs/customize/workflows), [Codex](https://learn.chatgpt.com/docs/custom-prompts).

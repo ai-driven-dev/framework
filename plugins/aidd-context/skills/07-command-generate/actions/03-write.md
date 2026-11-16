@@ -4,12 +4,12 @@ Write the approved command.
 
 ## Input
 
-The approved command, input file and paths.
+The approved draft, input file and paths.
 
 ## Process
 
 1. Plugin source: write the canonical command at its planned path.
-2. Host tools: run the writer per [writer.md](../references/writer.md) on the same input file.
+2. Hosts: run the writer per [writer.md](../references/writer.md) with the plan's options, without `--plan`.
    - Planned `update`: add `--force`.
    - Non-zero exit: quote the writer's output, then stop.
 3. Report each file written.
