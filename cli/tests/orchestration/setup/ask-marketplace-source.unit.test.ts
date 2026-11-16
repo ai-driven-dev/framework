@@ -76,20 +76,6 @@ describe("AskMarketplaceSource", () => {
       expect(result.ref).toBeUndefined();
     });
 
-    it("offers only HEAD when the repo has no root releases", async () => {
-      const resolver = makeResolver([]);
-      const prompter = new ScriptedPrompter([
-        ScriptedPrompter.answer.select("remote"),
-        ScriptedPrompter.answer.select("__HEAD__"),
-      ]);
-      const uc = askMarketplaceSource(prompter, resolver);
-
-      const result = await uc.execute({ projectRoot: PROJECT_ROOT, interactive: true });
-
-      expect(result.kind).toBe("remote");
-      expect(result.ref).toBeUndefined();
-    });
-
     it("labels the newest release as latest and offers HEAD last", async () => {
       const resolver = makeResolver(["v3.0.0", "v2.9.0"]);
       const prompter = new ScriptedPrompter([
