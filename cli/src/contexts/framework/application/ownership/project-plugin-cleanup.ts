@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
+import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
@@ -9,6 +9,7 @@ import {
   assertProjectHooksRemovable,
   removeProjectHooks,
 } from "../../../installation/application/shared/remove-project-hooks.js";
+import type { RemovedPlugin } from "../../../installation/contract/plugin-claims.js";
 import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import { detachNativePluginRefs } from "../../../machine-claims/application/native-plugin-ownership.js";
@@ -87,7 +88,7 @@ export class ProjectPluginCleanup {
   async detachClaims(
     projectRoot: string,
     nativeRefs: ReadonlyMap<ToolId, readonly string[]>,
-    plugins: readonly { toolId: AiToolId; plugin: InstalledPlugin }[]
+    plugins: readonly RemovedPlugin[]
   ): Promise<void> {
     await detachNativePluginRefs(this.userManifestRepo, this.fs, projectRoot, nativeRefs);
     for (const { toolId, plugin } of plugins) {

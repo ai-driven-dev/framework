@@ -1,22 +1,22 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-remove-use-case.js";
-import { ProjectPluginCleanup } from "../../../../../src/contexts/framework/application/ownership/project-plugin-cleanup.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { ProjectPluginCleanup } from "../../../src/contexts/framework/application/ownership/project-plugin-cleanup.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import {
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,
-} from "../../../../../src/shared/domain/errors.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { KeepPrompter, ScriptedPrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../src/shared/domain/errors.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { KeepPrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
+import { projectMarketplaceRemover } from "../../helpers/project-marketplace-remover.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -81,7 +81,7 @@ function buildUseCase() {
   const fs = new RecordingFileAdapter({}, hasher);
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
-  const useCase = new MarketplaceRemoveUseCase(
+  const useCase = projectMarketplaceRemover(
     new ProjectPluginCleanup(fs),
     manifestRepo,
     registry,
@@ -90,7 +90,7 @@ function buildUseCase() {
   return { useCase, registry, manifestRepo, fs };
 }
 
-describe("MarketplaceRemoveUseCase", () => {
+describe("RemoveProjectMarketplace", () => {
   it("throws MarketplaceNotFoundError when entry does not exist", async () => {
     const { useCase, registry } = buildUseCase();
     await registry.save(
@@ -179,7 +179,7 @@ describe("MarketplaceRemoveUseCase", () => {
 
   it("removes a project marketplace's orphan projection without deleting shared Cursor files", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs),
       manifestRepo,
       registry,
@@ -228,7 +228,7 @@ describe("MarketplaceRemoveUseCase", () => {
 
   it("removes a cursor orphan's file under projectRoot, not ~/.cursor/plugins/local, when the manifest says scope: project", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs),
       manifestRepo,
       registry,
@@ -336,7 +336,11 @@ describe("which marketplace a removal takes out", () => {
       autoConfirm: true,
     });
 
-    expect(result).toStrictEqual({ marketplace: awesome, removedPluginCount: 0, orphanCount: 0 });
+    expect(result).toStrictEqual({
+      marketplace: { name: "awesome", scope: "project" },
+      removedPluginCount: 0,
+      orphanCount: 0,
+    });
     expect((await registry.list(PROJECT_ROOT)).map((m) => m.name)).toStrictEqual(["alpha"]);
   });
 
@@ -352,7 +356,11 @@ describe("which marketplace a removal takes out", () => {
       autoConfirm: true,
     });
 
-    expect(result).toStrictEqual({ marketplace: awesome, removedPluginCount: 0, orphanCount: 0 });
+    expect(result).toStrictEqual({
+      marketplace: { name: "awesome", scope: "project" },
+      removedPluginCount: 0,
+      orphanCount: 0,
+    });
   });
 });
 
@@ -394,7 +402,7 @@ describe("which plugins a removal orphans", () => {
     const machineRepo = new InMemoryManifestRepository(machine);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs, machineRepo),
       projectRepo,
       registry,
@@ -449,7 +457,7 @@ describe("which plugins a removal orphans", () => {
     const manifestRepo = new InMemoryManifestRepository(manifest);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs),
       manifestRepo,
       registry,
@@ -506,7 +514,7 @@ describe("which plugins a removal orphans", () => {
     const manifestRepo = new InMemoryManifestRepository(manifest);
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs),
       manifestRepo,
       registry,
@@ -650,7 +658,11 @@ describe("which plugins a removal orphans", () => {
       autoConfirm: true,
     });
 
-    expect(result).toStrictEqual({ marketplace: awesome, removedPluginCount: 1, orphanCount: 1 });
+    expect(result).toStrictEqual({
+      marketplace: { name: "awesome", scope: "project" },
+      removedPluginCount: 1,
+      orphanCount: 1,
+    });
     expect((await manifestRepo.load())?.getPlugins(TOOL.claude).map((p) => p.name)).toStrictEqual([
       "other",
     ]);
@@ -659,7 +671,7 @@ describe("which plugins a removal orphans", () => {
   it("keeps every orphan when the person declines the cleanup, and still drops the marketplace", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs),
       manifestRepo,
       registry,
@@ -676,7 +688,11 @@ describe("which plugins a removal orphans", () => {
       autoConfirm: false,
     });
 
-    expect(result).toStrictEqual({ marketplace: awesome, removedPluginCount: 0, orphanCount: 1 });
+    expect(result).toStrictEqual({
+      marketplace: { name: "awesome", scope: "project" },
+      removedPluginCount: 0,
+      orphanCount: 1,
+    });
     expect((await manifestRepo.load())?.getPlugins(TOOL.claude).map((p) => p.name)).toStrictEqual([
       "sample",
     ]);
@@ -686,7 +702,7 @@ describe("which plugins a removal orphans", () => {
   it("asks once, naming how many plugins the cleanup would remove", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs),
       manifestRepo,
       registry,
@@ -716,7 +732,7 @@ describe("which plugins a removal orphans", () => {
       manifestWithPlugins(pluginFrom("elsewhere", "other"))
     );
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs),
       manifestRepo,
       registry,
@@ -738,7 +754,7 @@ describe("which plugins a removal orphans", () => {
   it("cleans up without asking when the caller auto-confirms", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs),
       manifestRepo,
       registry,

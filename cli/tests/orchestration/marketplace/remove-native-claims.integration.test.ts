@@ -2,20 +2,18 @@ import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-remove-use-case.js";
-import { ProjectPluginCleanup } from "../../../../../src/contexts/framework/application/ownership/project-plugin-cleanup.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import {
-  errnoError,
-  FaultingFileAdapter,
-} from "../../../../helpers/ports/faulting-file-adapter.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { KeepPrompter, ScriptedPrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { ProjectPluginCleanup } from "../../../src/contexts/framework/application/ownership/project-plugin-cleanup.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { errnoError, FaultingFileAdapter } from "../../helpers/ports/faulting-file-adapter.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { KeepPrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
+import { projectMarketplaceRemover } from "../../helpers/project-marketplace-remover.js";
 
 const { cursor, codex } = TOOL;
 
@@ -25,7 +23,7 @@ const NAME = "project-alias";
 
 /** Removes `NAME` from project `/A`, with only what a case changes. */
 function remove(
-  useCase: MarketplaceRemoveUseCase,
+  useCase: RemoveProjectMarketplace,
   overrides: { autoConfirm?: boolean; scope?: "user" } = {}
 ) {
   return useCase.execute({
@@ -83,7 +81,7 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
     })
   );
   const fs = new InMemoryFileAdapter();
-  const useCase = new MarketplaceRemoveUseCase(
+  const useCase = projectMarketplaceRemover(
     new ProjectPluginCleanup(fs, machineRepo),
     projectRepo,
     registry,
@@ -192,7 +190,7 @@ describe("project marketplace removal against machine native claims", () => {
         addedAt: "2026-09-15T00:00:00Z",
       })
     );
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs, machineRepo),
       projectRepo,
       registry,
@@ -222,7 +220,7 @@ describe("project marketplace removal against machine native claims", () => {
 
   it("removes only the project catalogue when its project manifest is absent", async () => {
     const f = await fixture();
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(f.fs, f.machineRepo),
       new InMemoryManifestRepository(),
       f.registry,
@@ -258,7 +256,7 @@ describe("project marketplace removal against machine native claims", () => {
     const plugin = project?.getPlugins(codex)[0];
     if (project === null || plugin === undefined) throw new Error("fixture missing plugin");
     project.updatePlugin(codex, plugin.withFiles(new Map([[".codex/skills/demo.md", "abc"]])));
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(new RefusingFileAdapter(), f.machineRepo),
       f.projectRepo,
       f.registry,
@@ -274,7 +272,7 @@ describe("project marketplace removal against machine native claims", () => {
   it("leaves a project plugin and B's machine claim when the operator declines orphan cleanup", async () => {
     const f = await fixture();
     const prompter = new ScriptedPrompter([{ type: "confirm", value: false }]);
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(f.fs, f.machineRepo),
       f.projectRepo,
       f.registry,
@@ -368,7 +366,7 @@ describe("project marketplace removal against machine native claims", () => {
     const ownedMcp = join(homedir(), ".cursor/plugins/local/sample-plugin/mcp.json");
     fs.setFile(ownedPath, "B's bytes");
     fs.setFile(ownedMcp, "B's MCP");
-    const useCase = new MarketplaceRemoveUseCase(
+    const useCase = projectMarketplaceRemover(
       new ProjectPluginCleanup(fs, machineRepo),
       projectRepo,
       registry,

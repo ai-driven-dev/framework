@@ -8,7 +8,6 @@ import type { RegisterFrameworkMarketplace } from "../contexts/distribution/appl
 import type { SearchPlugins } from "../contexts/distribution/application/search-plugins.js";
 import type { CleanUserScopeUseCase } from "../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import type { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
-import type { MarketplaceRemoveUseCase } from "../contexts/framework/application/flows/marketplace-remove-use-case.js";
 import type { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { InstallAiToolUseCase } from "../contexts/framework/application/install/install-ai-tool-use-case.js";
 import type { UserMarketplaceRemoveUseCase } from "../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
@@ -57,6 +56,7 @@ import type { ReportAllStatus } from "../orchestration/global/report-all-status.
 import type { RestoreAll } from "../orchestration/global/restore-all.js";
 import type { UpdateTools } from "../orchestration/global/update-tools.js";
 import type { CheckMarketplaceUpstream } from "../orchestration/marketplace/check.js";
+import type { RemoveProjectMarketplace } from "../orchestration/marketplace/remove.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -125,7 +125,7 @@ export interface Deps {
   userPluginUpdateUseCase: Pick<UserPluginUpdateUseCase, "execute">;
   addMarketplace: Pick<AddMarketplace, "execute">;
   listMarketplaces: Pick<ListMarketplaces, "execute">;
-  marketplaceRemoveUseCase: Pick<MarketplaceRemoveUseCase, "execute">;
+  marketplaceRemoveUseCase: Pick<RemoveProjectMarketplace, "execute">;
   userMarketplaceRemoveUseCase: Pick<UserMarketplaceRemoveUseCase, "execute">;
   refreshMarketplace: Pick<RefreshMarketplace, "execute">;
   marketplaceCheckUseCase: Pick<CheckMarketplaceUpstream, "execute">;

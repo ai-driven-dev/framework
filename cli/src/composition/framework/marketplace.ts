@@ -1,6 +1,7 @@
 import { CheckMarketplaces } from "../../contexts/distribution/application/check-marketplaces.js";
+import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.js";
+import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
 import type { MarketplaceRemover } from "../../contexts/distribution/ports/marketplace-remover.js";
-import { MarketplaceRemoveUseCase } from "../../contexts/framework/application/flows/marketplace-remove-use-case.js";
 import {
   ActivateNativeTools,
   BuildMarketplaceForTool,
@@ -17,7 +18,9 @@ import { SetupMarketplaceRegistrationUseCase } from "../../contexts/framework/ap
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
 import { ListPluginSources } from "../../contexts/installation/application/list-plugin-sources.js";
+import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/plugin/remove-plugins-from-marketplace.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check.js";
+import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
 import type { Base } from "./base.js";
@@ -54,10 +57,13 @@ export function wireMarketplace(base: Base, inst: Installation) {
     hostPluginRegistries,
     nativeSources
   );
-  const marketplaceRemoveUseCase = new MarketplaceRemoveUseCase(
-    new ProjectPluginCleanup(fs, userManifestRepo),
-    manifestRepo,
-    marketplaceRegistry,
+  const projectCleanup = new ProjectPluginCleanup(fs, userManifestRepo);
+  const marketplaceRemoveUseCase = new RemoveProjectMarketplace(
+    new FindMarketplaceToRemove(marketplaceRegistry),
+    new RemovePluginsFromMarketplace(manifestRepo, projectCleanup),
+    new RemoveMarketplace(marketplaceRegistry),
+    (projectRoot, { nativeRefs, plugins }) =>
+      projectCleanup.detachClaims(projectRoot, nativeRefs, plugins),
     prompter
   );
   const userMarketplaceRemoveUseCase = new UserMarketplaceRemoveUseCase(

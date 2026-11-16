@@ -35,6 +35,10 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // which marketplaces went stale and what each catalog lists, read for a check
     "src/contexts/distribution/application/check-marketplaces.ts",
     "src/contexts/distribution/contract/marketplace-catalogs.ts",
+    // finding the marketplace a removal targets and forgetting it, the two ends of that removal
+    "src/contexts/distribution/application/remove/find-marketplace-to-remove.ts",
+    "src/contexts/distribution/application/remove/remove-marketplace.ts",
+    "src/contexts/distribution/contract/marketplace-removal.ts",
     // where this run's build of each registered marketplace lives, recomputed for a check
     "src/contexts/distribution/application/resolve-built-marketplaces.ts",
     "src/contexts/distribution/contract/built-marketplaces.ts",
@@ -59,9 +63,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.ts",
     // what a display or a prompt reads to render a decision it does not make
     "src/contexts/framework/domain/setup-flow.ts",
-    // the one operation another context genuinely asks for: `distribution` removes a
-    // marketplace and this context forgets the plugins that came from it
-    "src/contexts/framework/application/flows/marketplace-remove-use-case.ts",
   ],
   installation: [
     // the rule inventory `framework rules` prints, one row per installed rule
@@ -83,6 +84,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/doctor/load-manifest-for-doctor.ts",
     "src/contexts/installation/application/doctor/list-registered-plugins.ts",
     "src/contexts/installation/contract/registered-plugins.ts",
+    // removing the plugins installed from a marketplace, and what they left claimed elsewhere
+    "src/contexts/installation/application/plugin/remove-plugins-from-marketplace.ts",
+    "src/contexts/installation/contract/plugin-claims.ts",
     // the installed plugins that name a marketplace, held against its catalog
     "src/contexts/installation/application/list-plugin-sources.ts",
     "src/contexts/installation/contract/plugin-sources.ts",

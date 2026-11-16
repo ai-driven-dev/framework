@@ -7,17 +7,23 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
+import type { MarketplaceRemovalResult } from "../../../distribution/contract/marketplace-removal.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { NativeHostRegistrationGate } from "../../../host-registration/application/native-host-registration-gate.js";
 import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import { userScopeFilesSafeToDelete } from "../../../machine-claims/application/user-scope-plugin-files.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { resolveHomeDir } from "../../domain/reading/home-dir.js";
-import type {
-  MarketplaceRemoveOptions,
-  MarketplaceRemoveResult,
-} from "../flows/marketplace-remove-use-case.js";
+
+export interface MarketplaceRemoveOptions {
+  name: string;
+  tools: ToolCatalog;
+  projectRoot: string;
+  autoConfirm: boolean;
+  scope?: "project" | "user";
+}
 
 export class UserMarketplaceRemoveUseCase {
   constructor(
@@ -27,7 +33,7 @@ export class UserMarketplaceRemoveUseCase {
     private readonly nativeHost: NativeHostRegistrationGate
   ) {}
 
-  async execute(options: MarketplaceRemoveOptions): Promise<MarketplaceRemoveResult> {
+  async execute(options: MarketplaceRemoveOptions): Promise<MarketplaceRemovalResult> {
     if (options.name === FRAMEWORK_MARKETPLACE_NAME) {
       throw new InvalidMarketplaceNameError(
         `"${FRAMEWORK_MARKETPLACE_NAME}" is shared by every project on this machine and is removed by \`aidd clean --scope user\`, not marketplace remove.`
@@ -49,7 +55,7 @@ export class UserMarketplaceRemoveUseCase {
   private async removeLocked(
     options: MarketplaceRemoveOptions,
     marketplace: Marketplace
-  ): Promise<MarketplaceRemoveResult> {
+  ): Promise<MarketplaceRemovalResult> {
     const current = await this.findOrThrow(options.projectRoot, marketplace.name);
     if (JSON.stringify(current.source) !== JSON.stringify(marketplace.source)) {
       throw new Error(
