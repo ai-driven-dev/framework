@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -28,7 +29,8 @@ function fixture(installedVersion = "0.0.1") {
   const updater = new UserPluginFileUpdater(
     fs,
     new PluginDistributionLoader(new FixturePluginFetcher(), { read: async () => dist }),
-    hasher
+    hasher,
+    isStrictlyWithinUserScope
   );
   const plugin = InstalledPlugin.fromMetadata(
     "sample-plugin",

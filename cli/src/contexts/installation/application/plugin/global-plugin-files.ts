@@ -3,10 +3,15 @@ import { InstallationFile } from "../../../../shared/domain/file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
-import { isStrictlyWithinUserScope } from "../../../machine-claims/domain/user-scope-containment.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
+import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+
+/**
+ * Whether a resolved path sits strictly inside a resolved boundary. Composition supplies the
+ * machine-claims rule, so installation never reaches into that context.
+ */
+export type ContainmentCheck = (resolvedCandidate: string, resolvedBoundary: string) => boolean;
 
 /**
  * A plugin's machine-scope files, read from the tool's built tree and keyed by their path under
@@ -53,7 +58,8 @@ export async function assertGlobalFilesWritable(
   plugin: Pick<InstalledPlugin, "name" | "files"> | undefined,
   pluginName: string,
   files: readonly InstallationFile[],
-  homedir: string
+  homedir: string,
+  isWithinUserScope: ContainmentCheck
 ): Promise<string> {
   const { toolId } = tool;
   const machine = tool.plugins()?.globalFiles() ?? null;
@@ -70,7 +76,7 @@ export async function assertGlobalFilesWritable(
     while (parent !== boundary) {
       const resolved = await tryRealpath(fs, parent);
       if (resolved !== null) {
-        if (!isStrictlyWithinUserScope(resolved, resolvedBoundary)) {
+        if (!isWithinUserScope(resolved, resolvedBoundary)) {
           throw new Error(`${toolId}: '${pluginName}' parent '${parent}' escapes ${boundary}.`);
         }
         break;

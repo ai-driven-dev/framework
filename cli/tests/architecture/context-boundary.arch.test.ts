@@ -74,6 +74,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/init-project.ts",
     "src/contexts/installation/application/install/install-ide-config.ts",
     "src/contexts/installation/application/install/install-runtime-config.ts",
+    "src/contexts/installation/application/plugin/global-plugin-files.ts",
     "src/contexts/installation/application/materialize/built-tree-materialization-translator.ts",
     "src/contexts/installation/application/materialize/plugin-translator.ts",
     "src/contexts/installation/application/materialize/project-hooks-materializer.ts",
@@ -97,6 +98,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // Transitional (reference-context.md, M-C1): framework's orchestrators read the claims and
     // the user source references that moved here, and leave this list as each one moves into
     // orchestration behind a claims port.
+    "src/contexts/machine-claims/contract/user-scope-containment.ts",
     "src/contexts/machine-claims/application/native-plugin-ownership.ts",
     "src/contexts/machine-claims/application/shared-source-reference-support.ts",
     "src/contexts/machine-claims/application/user-plugin-ownership.ts",

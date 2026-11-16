@@ -9,6 +9,7 @@ import { PluginRemoveUseCase } from "../../contexts/framework/application/plugin
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
 import { PluginDistributionLoader } from "../../contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.js";
+import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
 import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Base } from "./base.js";
@@ -85,6 +86,7 @@ export function wirePlugin(base: Base, inst: Installation) {
       join(userConfigDir(), "cache", "plugin-cache")
     ),
     hasher,
+    isStrictlyWithinUserScope,
     builtMaterializationDeps
   );
   const pluginUpdateUseCase = new UpdatePlugin(

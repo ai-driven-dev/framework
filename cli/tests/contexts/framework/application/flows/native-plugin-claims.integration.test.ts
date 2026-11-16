@@ -13,6 +13,7 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
@@ -250,7 +251,8 @@ for (const [toolId, catalogPath] of [
             new FixturePluginFetcher(),
             new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
           ),
-          new DeterministicHasher()
+          new DeterministicHasher(),
+          isStrictlyWithinUserScope
         ),
         new CapturingLogger(),
         new RefreshHostPlugin(
@@ -279,7 +281,8 @@ for (const [toolId, catalogPath] of [
               new FixturePluginFetcher(),
               new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
             ),
-            new DeterministicHasher()
+            new DeterministicHasher(),
+            isStrictlyWithinUserScope
           ),
           new CapturingLogger(),
           new RefreshHostPlugin(

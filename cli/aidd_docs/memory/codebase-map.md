@@ -53,6 +53,7 @@ src/
 │   │   └── ports/
 │   ├── machine-claims/    # which projects claim a machine-wide plugin or source, and what each user scope holds for them
 │   │   ├── application/
+│   │   ├── contract/
 │   │   ├── domain/
 │   │   ├── infrastructure/
 │   │   └── ports/

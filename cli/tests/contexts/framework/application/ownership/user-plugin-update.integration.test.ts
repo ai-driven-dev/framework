@@ -7,6 +7,7 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -73,7 +74,8 @@ function fixture(
           ? { read: async () => distribution }
           : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
       ),
-      new DeterministicHasher()
+      new DeterministicHasher(),
+      isStrictlyWithinUserScope
     ),
     logger,
     new RefreshHostPlugin(new Map([[toolId, activator]]), new Map([[toolId, reader]]))

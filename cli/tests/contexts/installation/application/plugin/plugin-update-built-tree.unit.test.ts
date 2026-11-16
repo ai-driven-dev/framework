@@ -10,6 +10,7 @@ import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/instal
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -65,6 +66,7 @@ function makeUpdateUseCase(
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       deps.hasher,
+      isStrictlyWithinUserScope,
       {
         ensureBuilt,
         marketplaceRegistry: registry,
@@ -693,6 +695,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       deps.hasher,
+      isStrictlyWithinUserScope,
       {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: registry,

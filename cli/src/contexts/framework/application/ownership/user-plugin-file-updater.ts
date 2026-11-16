@@ -11,6 +11,10 @@ import {
   withoutHooksPrefix,
 } from "../../../installation/application/materialize/built-tree-materialization-translator.js";
 import { withoutHooks } from "../../../installation/application/materialize/project-hooks-materializer.js";
+import {
+  assertGlobalFilesWritable,
+  readGlobalPluginFiles,
+} from "../../../installation/application/plugin/global-plugin-files.js";
 import type { PluginDistributionLoader } from "../../../installation/application/plugin/plugin-distribution-loader.js";
 import {
   deleteOldFiles,
@@ -27,10 +31,10 @@ import {
   userScopeFilesSafeToDelete,
   withoutMissingFiles,
 } from "../../../machine-claims/application/user-scope-plugin-files.js";
+import type { IsWithinUserScope } from "../../../machine-claims/contract/user-scope-containment.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
-import { assertGlobalFilesWritable, readGlobalPluginFiles } from "./global-plugin-files.js";
 
 export interface PlannedUserPluginFileUpdate {
   readonly plugin: InstalledPlugin;
@@ -47,6 +51,7 @@ export class UserPluginFileUpdater {
     private readonly fs: FileReader & FileWriter,
     private readonly loader: PluginDistributionLoader,
     private readonly hasher: Hasher,
+    private readonly isWithinUserScope: IsWithinUserScope,
     private readonly builtDeps?: BuiltMaterializationDeps
   ) {}
 
@@ -133,7 +138,15 @@ export class UserPluginFileUpdater {
     home: string
   ): Promise<void> {
     if (tool.plugins()?.globalFiles() != null) {
-      await assertGlobalFilesWritable(this.fs, tool, plugin, plugin.name, files, home);
+      await assertGlobalFilesWritable(
+        this.fs,
+        tool,
+        plugin,
+        plugin.name,
+        files,
+        home,
+        this.isWithinUserScope
+      );
       return;
     }
     const baseDir = resolveBaseDirFromRecord("user", tool, "", () => home);

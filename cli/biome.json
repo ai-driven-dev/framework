@@ -3562,6 +3562,56 @@
       }
     },
     {
+      "includes": ["src/contexts/machine-claims/contract/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "**/domain/**",
+                      "**/application/**",
+                      "**/infrastructure/**",
+                      "**/ports/**",
+                      "**/presentation/**",
+                      "!**/shared/domain/**"
+                    ],
+                    "message": "contract is what other contexts may import: it imports no other folder of its context, nor anything above it"
+                  },
+                  {
+                    "group": [
+                      "**/framework/**",
+                      "**/translate/**",
+                      "**/host-registration/**",
+                      "**/telemetry/**",
+                      "**/update/**",
+                      "**/recipes/**"
+                    ],
+                    "message": "machine-claims may import installation, distribution and tools, never framework or telemetry, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/composition/**"],
+                    "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/auth/**"],
+                    "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
+                  },
+                  {
+                    "group": ["**/tools/domain/**", "**/tools/application/**"],
+                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/contexts/translate/domain/**/*.ts"],
       "linter": {
         "rules": {
