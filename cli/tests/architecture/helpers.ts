@@ -166,6 +166,7 @@ export const HELD_BY_BIOME: readonly string[] = [
   "recipes",
   "telemetry",
   "tools",
+  "translate",
   "update",
 ];
 

@@ -8,17 +8,6 @@ import { expectRatchet, HELD_BY_BIOME, importersByFile, read, sourceFiles } from
 
 /** Each context's declared public surface, one entry per context. */
 const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
-  translate: [
-    // the canonical shapes framework produces and translate consumes
-    "src/contexts/translate/contract/plugin-format.ts",
-    "src/contexts/translate/contract/build-targets.ts",
-    "src/contexts/translate/contract/build-native-tree.ts",
-    // the translation port and the file it answers with
-    "src/contexts/translate/contract/translate-distribution.ts",
-    "src/contexts/translate/contract/output-file.ts",
-    // A per-consumer allowance is not expressible here: the lookup is keyed by the imported
-    // file's own context, so a `tools` file is only ever checked against `tools`.
-  ],
   // Measured with the composition root excluded, and not one entry is an adapter: the
   // adapters are wired from `composition/` alone, so they stay internal.
   distribution: [

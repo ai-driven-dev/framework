@@ -475,6 +475,14 @@
                   },
                   {
                     "group": [
+                      "**/translate/domain/**",
+                      "**/translate/ports/**",
+                      "**/translate/infrastructure/**"
+                    ],
+                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
                       "**/update/domain/**",
                       "**/update/ports/**",
                       "**/update/infrastructure/**"
@@ -2682,7 +2690,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -2858,7 +2866,7 @@
                   },
                   {
                     "group": ["**/telemetry/**", "**/update/**", "**/recipes/**"],
-                    "message": "framework may import translate, tools and distribution, never telemetry — see context-graph.arch.test.ts"
+                    "message": "framework may import translate, tools and distribution, never telemetry \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -2879,6 +2887,14 @@
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/translate/domain/**",
+                      "**/translate/ports/**",
+                      "**/translate/infrastructure/**"
+                    ],
+                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -2898,11 +2914,11 @@
                 "patterns": [
                   {
                     "group": ["**/infrastructure/**"],
-                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
+                    "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
                   },
                   {
                     "group": ["**/telemetry/**", "**/update/**", "**/recipes/**"],
-                    "message": "framework may import translate, tools and distribution, never telemetry — see context-graph.arch.test.ts"
+                    "message": "framework may import translate, tools and distribution, never telemetry \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -2923,6 +2939,14 @@
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/translate/domain/**",
+                      "**/translate/ports/**",
+                      "**/translate/infrastructure/**"
+                    ],
+                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -2947,7 +2971,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "framework/infrastructure may import translate, tools and distribution, never telemetry or presentation — see context-graph.arch.test.ts"
+                    "message": "framework/infrastructure may import translate, tools and distribution, never telemetry or presentation \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -2972,6 +2996,14 @@
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/translate/domain/**",
+                      "**/translate/ports/**",
+                      "**/translate/infrastructure/**"
+                    ],
+                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -3022,6 +3054,14 @@
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/translate/domain/**",
+                      "**/translate/ports/**",
+                      "**/translate/infrastructure/**"
+                    ],
+                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -3073,6 +3113,14 @@
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/translate/domain/**",
+                      "**/translate/ports/**",
+                      "**/translate/infrastructure/**"
+                    ],
+                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -3124,6 +3172,14 @@
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/translate/domain/**",
+                      "**/translate/ports/**",
+                      "**/translate/infrastructure/**"
+                    ],
+                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -3174,6 +3230,14 @@
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/translate/domain/**",
+                      "**/translate/ports/**",
+                      "**/translate/infrastructure/**"
+                    ],
+                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -3231,6 +3295,14 @@
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
                     "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
+                  },
+                  {
+                    "group": [
+                      "**/translate/domain/**",
+                      "**/translate/ports/**",
+                      "**/translate/infrastructure/**"
+                    ],
+                    "message": "translate publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ],
                 "paths": {
@@ -3643,7 +3715,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -3833,7 +3905,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/tools/domain/**", "**/tools/application/**"],
@@ -3875,7 +3947,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3903,7 +3975,7 @@
                 "patterns": [
                   {
                     "group": ["**/infrastructure/**"],
-                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
+                    "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
                   },
                   {
                     "group": [
@@ -3918,7 +3990,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3957,7 +4029,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "translate may import only shared and contexts/tools — see context-graph.arch.test.ts"
+                    "message": "translate may import only shared and contexts/tools \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -4007,7 +4079,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4047,7 +4119,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4071,7 +4143,7 @@
                 "patterns": [
                   {
                     "group": ["**/infrastructure/**"],
-                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
+                    "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
                   },
                   {
                     "group": [
@@ -4087,7 +4159,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4123,7 +4195,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "tools imports no other context — every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
+                    "message": "tools imports no other context \u2014 every context that needs it imports tools, not the reverse (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -4363,7 +4435,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record — it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
+                    "message": "distribution knows no tool, no translation and no installation record \u2014 it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4405,7 +4477,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "distribution knows no tool, no translation and no installation record — it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
+                    "message": "distribution knows no tool, no translation and no installation record \u2014 it says where content comes from, not what is done with it (context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4433,7 +4505,7 @@
                 "patterns": [
                   {
                     "group": ["**/infrastructure/**"],
-                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
+                    "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
                   },
                   {
                     "group": [
@@ -4538,7 +4610,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4577,7 +4649,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4795,7 +4867,7 @@
                 "patterns": [
                   {
                     "group": ["**/infrastructure/**"],
-                    "message": "application must not import infrastructure — take a port and let the composition root supply the adapter"
+                    "message": "application must not import infrastructure \u2014 take a port and let the composition root supply the adapter"
                   },
                   {
                     "group": [
@@ -4811,7 +4883,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -4847,7 +4919,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "telemetry imports only shared — see context-graph.arch.test.ts"
+                    "message": "telemetry imports only shared \u2014 see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
