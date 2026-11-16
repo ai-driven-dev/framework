@@ -1,26 +1,27 @@
 import { dirname, join } from "node:path";
 import {
+  InputRequiredError,
+  NoManifestError,
+  ToolNotInstalledError,
+} from "../../../shared/domain/errors.js";
+import {
   isMergeContentEmpty,
   type MergeFileEntry,
   removeEntriesFromJson,
-} from "../../../../shared/domain/merge.js";
-import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Lock } from "../../../../shared/ports/lock.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
-import { deletePluginFilesForTool } from "../../../installation/application/plugin/plugin-helpers.js";
-import type { Manifest } from "../../../installation/domain/manifest.js";
-import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
-import { detachNativePluginRefs } from "../../../machine-claims/application/native-plugin-ownership.js";
-import { detachUserPlugin } from "../../../machine-claims/application/user-plugin-ownership.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+} from "../../../shared/domain/merge.js";
+import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../shared/ports/file-writer.js";
+import type { Logger } from "../../../shared/ports/logger.js";
+import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import type { Manifest } from "../domain/manifest.js";
+import type { ManifestRepository } from "../ports/manifest-repository.js";
+import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
 
-export interface UninstallToolsOptions {
+export interface UninstallToolsCommand {
   toolIds: ToolId[];
-  tools: ToolCatalog;
-  manifest: Manifest;
   projectRoot: string;
+  tools: ToolCatalog;
 }
 
 export interface UninstallToolsResult {
@@ -29,31 +30,67 @@ export interface UninstallToolsResult {
   deletedFiles: string[];
 }
 
-export class UninstallToolsUseCase {
+/** A user-scope plugin this project stops depending on once its tool is removed. */
+export interface UserPluginRef {
+  toolId: AiToolId;
+  name: string;
+}
+
+/** Releases this project's claim on machine-wide plugins and native registrations, after the project is saved. */
+export type DetachProjectClaims = (
+  projectRoot: string,
+  userPlugins: readonly UserPluginRef[],
+  nativeRefs: ReadonlyMap<ToolId, readonly string[]>
+) => Promise<void>;
+
+/** Removes tools from a project: their files, merged keys and plugins, then their claims. */
+export class UninstallTools {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,
-    private readonly userManifestRepo?: ManifestRepository & Lock
+    private readonly manifestRepo: ManifestRepository,
+    private readonly detachClaims: DetachProjectClaims
   ) {}
 
-  async execute(options: UninstallToolsOptions): Promise<UninstallToolsResult[]> {
-    const { toolIds, manifest, projectRoot, tools } = options;
+  async execute(command: UninstallToolsCommand): Promise<UninstallToolsResult[]> {
+    const { toolIds, projectRoot, tools } = command;
+    if (toolIds.length === 0) {
+      throw new InputRequiredError(
+        `At least one tool ID is required. Valid tools: ${tools.idsInCanonicalOrder().join(", ")}`
+      );
+    }
+    const manifest = await this.loadAndValidate(toolIds);
+    const userPlugins = toolIds.flatMap((toolId) =>
+      tools.isAiTool(toolId)
+        ? manifest
+            .getPlugins(toolId)
+            .filter((plugin) => plugin.scope === "user")
+            .map((plugin) => ({ toolId, name: plugin.name }))
+        : []
+    );
+    const nativeRefs = new Map<ToolId, readonly string[]>();
+    for (const toolId of toolIds) {
+      const refs = manifest.getNativeRegistrations(toolId)?.pluginRefs;
+      if (refs !== undefined && refs.length > 0) nativeRefs.set(toolId, refs);
+    }
+
     const results: UninstallToolsResult[] = [];
     for (const toolId of toolIds) {
       results.push(await this.removeOneTool(toolId, toolIds, tools, manifest, projectRoot));
     }
+
+    await this.manifestRepo.save(manifest);
+    await this.detachClaims(projectRoot, userPlugins, nativeRefs);
     return results;
   }
 
-  async detachClaimsAfterSave(
-    projectRoot: string,
-    userPlugins: readonly { toolId: AiToolId; name: string }[],
-    nativeRefs: ReadonlyMap<ToolId, readonly string[]>
-  ): Promise<void> {
-    await detachNativePluginRefs(this.userManifestRepo, this.fs, projectRoot, nativeRefs);
-    for (const { toolId, name } of userPlugins) {
-      await detachUserPlugin(this.userManifestRepo, this.fs, toolId, name, projectRoot);
+  private async loadAndValidate(toolIds: ToolId[]): Promise<Manifest> {
+    const manifest = await this.manifestRepo.load();
+    if (manifest === null) throw new NoManifestError();
+    for (const toolId of toolIds) {
+      if (!manifest.hasTool(toolId)) throw new ToolNotInstalledError(toolId);
     }
+    return manifest;
   }
 
   private async removeOneTool(

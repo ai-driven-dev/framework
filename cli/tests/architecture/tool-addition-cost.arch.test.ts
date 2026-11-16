@@ -138,7 +138,6 @@ function toolIdentifiersIn(source: string, ids: readonly string[]): string[] {
 const IDENTIFIER_BASELINE: readonly { readonly path: string; readonly named: number }[] = [
   { path: "src/contexts/distribution/application/fetch-marketplace-source.ts", named: 1 },
   { path: "src/contexts/distribution/application/refresh-marketplace.ts", named: 1 },
-  { path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts", named: 1 },
   {
     path: "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts",
     named: 1,

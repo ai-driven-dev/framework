@@ -1,6 +1,6 @@
 import type { CheckMarketplaces } from "../../contexts/distribution/application/check-marketplaces.js";
 import type { StaleMarketplace } from "../../contexts/distribution/contract/marketplace-catalogs.js";
-import type { ListPluginSources } from "../../contexts/installation/application/list-plugin-sources.js";
+import type { ListPluginSources } from "../../contexts/installation/application/plugin/list-plugin-sources.js";
 import type { PluginSource } from "../../contexts/installation/contract/plugin-sources.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 

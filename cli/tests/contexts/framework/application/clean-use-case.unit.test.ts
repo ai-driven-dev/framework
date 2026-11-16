@@ -3,7 +3,6 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { CleanUseCase as ProductionCleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostActions } from "../../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
@@ -13,6 +12,7 @@ import { InstalledPlugin } from "../../../../src/contexts/installation/domain/pl
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { pluginScriptDir } from "../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
 import { CURSOR_HOOKS } from "../../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
+import { CleanProject as ProductionCleanUseCase } from "../../../../src/orchestration/clean/clean-project.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";
@@ -135,27 +135,6 @@ const PLUGIN_KEY = "aidd-context/commands/hello.md";
 
 describe("clean", () => {
   it("with force removes .aidd/cache/ entry from .gitignore", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-
-    const gitignorePath = join(PROJECT_ROOT, ".gitignore");
-    await deps.fs.writeFile(gitignorePath, "node_modules/\n.aidd/cache/\ndist/\n");
-
-    const useCase = new CleanWithKnownHostSource(
-      deps.fs,
-      deps.manifestRepo,
-      deps.logger,
-      deps.updateGitignore
-    );
-    await useCase.execute({ ...AT_PROJECT, force: true });
-
-    const content = deps.fs.getFile(gitignorePath);
-    expect(content).not.toContain(".aidd/cache/");
-    expect(content).toContain("node_modules/");
-    expect(content).toContain("dist/");
-  });
-
-  it("with force removes the .aidd/cache/ entry from .gitignore, same as the pipeline adds", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
@@ -2913,29 +2892,6 @@ describe("clean", () => {
 
       const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
-      expect(result.fileCount).toBe(1);
-    });
-
-    it("deletes a project-scope plugin's files from the project and counts them", async () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "1.0.0", []);
-      manifest.addPlugin(
-        TOOL.claude,
-        InstalledPlugin.fromMetadata(
-          "aidd-context",
-          "1.0.0",
-          { kind: "local", path: "/p" },
-          false,
-          "project"
-        ).withFiles(new Map([["skills/x.md", HASH]]))
-      );
-      const fs = new InMemoryFileAdapter();
-      fs.setFile(join(PROJECT_ROOT, "skills", "x.md"), "x");
-      const useCase = buildCountingUseCase(fs, manifest);
-
-      const result = await useCase.execute({ ...AT_PROJECT, force: true });
-
-      expect(fs.has(join(PROJECT_ROOT, "skills", "x.md"))).toBe(false);
       expect(result.fileCount).toBe(1);
     });
 

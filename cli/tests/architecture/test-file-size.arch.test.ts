@@ -13,7 +13,7 @@ const MAX_LINES = 800;
 const BASELINE: readonly string[] = [
   "tests/contexts/framework/application/clean-native-cache.integration.test.ts",
   "tests/contexts/framework/application/clean-use-case.unit.test.ts",
-  "tests/contexts/framework/application/clean/clean-user-scope-use-case.integration.test.ts",
+  "tests/contexts/framework/application/clean/clean-user-scope.integration.test.ts",
   "tests/contexts/framework/application/flows/marketplace-sync-native-activation.integration.test.ts",
   "tests/contexts/framework/application/flows/marketplace-sync-settings-migration.integration.test.ts",
   "tests/contexts/framework/application/plugin/plugin-add-use-case.unit.test.ts",

@@ -7,13 +7,13 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import type { CleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostMarketplaceRegistryReading } from "../../../../src/contexts/host-registration/domain/marketplace-registry-reading.js";
 import { HostRegistryMarketplaceSourceReaderAdapter } from "../../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
 import type { HostMarketplaceRegistry } from "../../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+import type { CleanProject } from "../../../../src/orchestration/clean/clean-project.js";
 import { AIDD_DIR } from "../../../../src/shared/domain/paths.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
@@ -27,7 +27,7 @@ import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-hos
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
-// Resolve once for this in-memory fixture, then inject it into CleanUseCase: Stryker reuses
+// Resolve once for this in-memory fixture, then inject it into CleanProject: Stryker reuses
 // runners while globalSetup changes HOME, so load-time cache paths and runtime paths must agree.
 const HOME = homedir();
 const CLAUDE_CACHE_ROOT = join(HOME, ".claude", "plugins", "cache");
@@ -202,7 +202,7 @@ function buildUseCase(deps: {
   hostMarketplaceRegistries?: ReadonlyMap<AiToolId, HostMarketplaceRegistry>;
   homeDir?: () => string;
   userManifestRepo?: InMemoryManifestRepository;
-}): CleanUseCase {
+}): CleanProject {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
   const claudeHostRegistry = deps.hostMarketplaceRegistries?.get(TOOL.claude);
   const nativeReader: HostMarketplaceSources | undefined =

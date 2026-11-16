@@ -1,9 +1,16 @@
 import { homedir } from "node:os";
-import { CleanUserScopeUseCase } from "../../contexts/framework/application/clean/clean-user-scope-use-case.js";
-import { CleanUseCase } from "../../contexts/framework/application/clean-use-case.js";
-import { UninstallIdeUseCase } from "../../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
-import { UninstallToolsUseCase } from "../../contexts/framework/application/uninstall/uninstall-tools-use-case.js";
-import { UninstallUseCase } from "../../contexts/framework/application/uninstall/uninstall-use-case.js";
+import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
+import { assertProjectMcpEntriesRemovable } from "../../contexts/framework/application/ownership/project-plugin-cleanup.js";
+import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
+import { CleanProject as CleanProjectFiles } from "../../contexts/installation/application/clean-project.js";
+import { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
+import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.js";
+import { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
+import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
+import { ReleaseClaims } from "../../contexts/machine-claims/application/release-claims.js";
+import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
+import { CleanProject } from "../../orchestration/clean/clean-project.js";
+import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";
@@ -21,33 +28,48 @@ export function wireClean(base: Base, inst: Installation) {
     withdrawFromHost,
   } = base;
   const { updateGitignore } = inst;
-  const uninstallIdeUseCase = new UninstallIdeUseCase(
-    manifestRepo,
-    new UninstallToolsUseCase(fs, logger)
-  );
-  const uninstallUseCase = new UninstallUseCase(fs, manifestRepo, logger, userManifestRepo);
-  const cleanUseCase = new CleanUseCase(
+  const uninstallTools = new UninstallTools(
     fs,
-    manifestRepo,
     logger,
-    updateGitignore,
-    withdrawFromHost,
-    marketplaceRegistry,
-    prompter,
-    undefined,
-    userSourceReferences,
-    userManifestRepo
+    manifestRepo,
+    detachProjectClaims(userManifestRepo, fs)
   );
-  const cleanUserScopeUseCase = new CleanUserScopeUseCase(
+  const purgeCache = new PurgeDeclaredCache(fs, logger);
+  const claims = {
+    release: new ReleaseClaims(fs, logger, userManifestRepo, userSourceReferences),
+    purgeCache,
+  };
+  const purgeUserScopeFiles = new PurgeUserScopeFiles(
     fs,
     userManifestRepo,
     logger,
     marketplaceRegistry,
-    userConfigDir,
+    {
+      userConfigDir,
+      homeDir: homedir,
+      safeFiles: (plugin, tool) => userScopeFilesSafeToDelete(fs, logger, plugin, tool, homedir()),
+      resolveCacheCandidate: (cacheRoot, segments, label) =>
+        purgeCache.resolveCandidate(cacheRoot, segments, label),
+    }
+  );
+  const cleanUserScopeUseCase = new CleanUserScope(
+    purgeUserScopeFiles,
     withdrawFromHost,
-    homedir,
-    userSourceReferences,
+    claims,
+    logger,
     prompter
   );
-  return { uninstallIdeUseCase, uninstallUseCase, cleanUseCase, cleanUserScopeUseCase };
+  const cleanProjectFiles = new CleanProjectFiles(fs, manifestRepo, logger, updateGitignore, {
+    homeDir: resolveHomeDir,
+    assertMcpRemovable: (plugin, tool, projectRoot) =>
+      assertProjectMcpEntriesRemovable(fs, plugin, tool, projectRoot),
+  });
+  const cleanUseCase = new CleanProject(
+    cleanProjectFiles,
+    withdrawFromHost,
+    claims,
+    new ListMarketplaces(marketplaceRegistry),
+    prompter
+  );
+  return { uninstallTools, cleanUseCase, cleanUserScopeUseCase };
 }

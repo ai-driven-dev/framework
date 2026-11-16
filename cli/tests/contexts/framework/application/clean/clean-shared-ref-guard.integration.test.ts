@@ -4,13 +4,13 @@
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { CleanUseCase } from "../../../../../src/contexts/framework/application/clean-use-case.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { NativeMarketplaceRegistration } from "../../../../../src/contexts/host-registration/contract/registration-record.js";
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import type { CleanProject } from "../../../../../src/orchestration/clean/clean-project.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -136,7 +136,7 @@ function buildUseCase(deps: {
   aiddMarketplaceRegistry: InMemoryMarketplaceRegistry;
   userManifestRepo?: InMemoryManifestRepository;
   gitignore?: UpdateGitignore;
-}): CleanUseCase {
+}): CleanProject {
   const manifestRepo = new InMemoryManifestRepository(deps.manifest, PROJECT_ROOT);
   const userSourceReferences = new UserSourceReferencesAdapter(deps.fs, () => USER_CONFIG_DIR);
   return projectCleaner({

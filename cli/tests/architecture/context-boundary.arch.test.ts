@@ -57,6 +57,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/resolve-marketplace.ts",
     "src/contexts/distribution/application/refresh-marketplace.ts",
     "src/contexts/distribution/application/register-framework-marketplace.ts",
+    "src/contexts/distribution/application/list-marketplaces.ts",
   ],
   // The largest context: while it had no entry the mechanism below skipped every framework
   // file, so its interior was reached unchecked. Measured, composition root excluded.
@@ -93,7 +94,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/plugin/purge-marketplace-plugins.ts",
     "src/contexts/installation/contract/plugin-claims.ts",
     // the installed plugins that name a marketplace, held against its catalog
-    "src/contexts/installation/application/list-plugin-sources.ts",
+    "src/contexts/installation/application/plugin/list-plugin-sources.ts",
     "src/contexts/installation/contract/plugin-sources.ts",
     "src/contexts/installation/application/doctor/check-tracked-files.ts",
     "src/contexts/installation/application/update-gitignore.ts",
@@ -119,8 +120,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/shared/detect-plugin-drift.ts",
     "src/contexts/installation/application/shared/ensure-built-marketplace.ts",
     "src/contexts/installation/application/shared/remove-project-hooks.ts",
+    "src/contexts/installation/application/clean-project.ts",
+    "src/contexts/installation/application/purge-user-scope-files.ts",
     "src/contexts/installation/application/report-status.ts",
-    "src/contexts/installation/domain/manifest-gitignore-entries.ts",
     "src/contexts/installation/domain/manifest/native-registrations.ts",
     "src/contexts/installation/domain/plugins/installed-plugin.ts",
   ],
@@ -130,6 +132,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // orchestration behind a claims port.
     "src/contexts/machine-claims/application/native-plugin-ownership.ts",
     "src/contexts/machine-claims/application/record-source-reference.ts",
+    "src/contexts/machine-claims/application/purge-declared-cache.ts",
+    "src/contexts/machine-claims/application/release-claims.ts",
     "src/contexts/machine-claims/application/shared-source-reference-support.ts",
     "src/contexts/machine-claims/application/user-plugin-ownership.ts",
     "src/contexts/machine-claims/application/user-scope-plugin-files.ts",

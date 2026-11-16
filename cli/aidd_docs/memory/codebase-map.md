@@ -23,14 +23,12 @@ src/
 │   │   └── ports/
 │   ├── framework/    # what is left of the old layout: the flows that setup, clean, doctor and plugin commands drive
 │   │   ├── application/
-│   │   │   ├── clean/
 │   │   │   ├── flows/
 │   │   │   ├── install/
 │   │   │   ├── ownership/    # machine plugin claims and safe project detach
 │   │   │   ├── plugin/
 │   │   │   ├── setup/
-│   │   │   ├── shared/
-│   │   │   └── uninstall/
+│   │   │   └── shared/
 │   │   └── domain/
 │   │       └── reading/    # the home directory a use case resolves when none is given
 │   ├── installation/    # the installation record, and what installs, restores and materializes it into a project
@@ -132,6 +130,7 @@ src/
 │       ├── infrastructure/
 │       └── ports/
 ├── orchestration/    # the scenarios that chain contexts: one command class per verb, no business rule
+│   ├── clean/    # removing a project's or a machine's installation, then what the hosts and the machine record still hold
 │   ├── doctor/    # running every doctor check over the installation
 │   ├── global/    # machine-wide runs over every installed tool
 │   ├── marketplace/    # holding what is installed against what its marketplaces list

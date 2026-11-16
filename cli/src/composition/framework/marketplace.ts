@@ -19,7 +19,7 @@ import { SetupMarketplaceRegistrationUseCase } from "../../contexts/framework/ap
 import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
-import { ListPluginSources } from "../../contexts/installation/application/list-plugin-sources.js";
+import { ListPluginSources } from "../../contexts/installation/application/plugin/list-plugin-sources.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/plugin/purge-marketplace-plugins.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/plugin/remove-plugins-from-marketplace.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.js";

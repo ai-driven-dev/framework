@@ -3,7 +3,7 @@ import { join, posix, win32 } from "node:path";
 export const AIDD_DIR = ".aidd";
 export const AIDD_CONFIG_FILENAME = "config.json";
 /** The project-scope marketplace registry, named once: `MarketplaceRegistryAdapter` writes
- * it and `CleanUseCase` removes it, and a second spelling is how one of them forgets. */
+ * it and `CleanProject` removes it, and a second spelling is how one of them forgets. */
 export const AIDD_MARKETPLACES_FILENAME = "marketplaces.json";
 /** The registry of projects referencing the shared machine-scope source, named once for the
  * same reason as `AIDD_MARKETPLACES_FILENAME`: one adapter writes it, a machine-scope

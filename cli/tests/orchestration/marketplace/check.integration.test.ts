@@ -5,7 +5,7 @@ import { FetchMarketplaceSource } from "../../../src/contexts/distribution/appli
 import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { ListPluginSources } from "../../../src/contexts/installation/application/list-plugin-sources.js";
+import { ListPluginSources } from "../../../src/contexts/installation/application/plugin/list-plugin-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CheckMarketplaceUpstream } from "../../../src/orchestration/marketplace/check.js";

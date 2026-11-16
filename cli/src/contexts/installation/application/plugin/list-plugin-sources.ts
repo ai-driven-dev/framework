@@ -1,6 +1,6 @@
-import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { PluginSource } from "../contract/plugin-sources.js";
-import type { ManifestRepository } from "../ports/manifest-repository.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { PluginSource } from "../../contract/plugin-sources.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
 
 export interface ListPluginSourcesCommand {
   tools: ToolCatalog;
