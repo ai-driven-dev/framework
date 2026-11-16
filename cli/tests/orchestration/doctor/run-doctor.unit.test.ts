@@ -32,20 +32,29 @@ async function runDoctor(category?: "ai") {
   vi.spyOn(checks.references, "execute").mockResolvedValue([issue("references")]);
   vi.spyOn(checks.layout, "execute").mockResolvedValue([issue("layout")]);
   const registration = { execute: async () => [issue("registration")] };
+  const authentication = { execute: async () => [issue("authentication")] };
   const report = await new RunDoctor(
     new LoadManifestForDoctor(loadManifest),
     checks,
-    registration
+    registration,
+    authentication
   ).execute({ projectRoot: PROJECT_ROOT, tools: catalogOf(), category });
   return report.issues.map((i) => i.message);
 }
 
 describe("RunDoctor", () => {
-  it("lists issues in the order of the checks: tracked, merge, references, registration, layout", async () => {
-    expect(await runDoctor()).toEqual(["tracked", "merge", "references", "registration", "layout"]);
+  it("lists issues in the order of the checks: tracked, merge, references, registration, layout, authentication", async () => {
+    expect(await runDoctor()).toEqual([
+      "tracked",
+      "merge",
+      "references",
+      "registration",
+      "layout",
+      "authentication",
+    ]);
   });
 
-  it("leaves the project layout out when a category narrows the run", async () => {
+  it("leaves the project layout and the authentication out when a category narrows the run", async () => {
     expect(await runDoctor("ai")).toEqual(["tracked", "merge", "references", "registration"]);
   });
 });

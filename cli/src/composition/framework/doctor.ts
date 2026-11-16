@@ -10,6 +10,7 @@ import { ListRegisteredPlugins } from "../../contexts/installation/application/d
 import { LoadManifest } from "../../contexts/installation/application/doctor/load-manifest.js";
 import { LoadManifestForDoctor } from "../../contexts/installation/application/doctor/load-manifest-for-doctor.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import { CheckAuthentication } from "../../orchestration/doctor/check-authentication.js";
 import { CheckRegistration } from "../../orchestration/doctor/check-registration.js";
 import { RunDoctor } from "../../orchestration/doctor/run-doctor.js";
 import { doctorAll } from "../../orchestration/global/doctor-all.js";
@@ -54,10 +55,11 @@ export function wireDoctor(base: Base, inst: Installation) {
       tracked: new CheckTrackedFiles(loadManifest, fs),
       merge: new CheckMergeFiles(loadManifest, fs, hasher),
       references: new CheckFileReferences(loadManifest, fs),
-      layout: new CheckProjectLayout(loadManifest, fs, tokenProvider),
+      layout: new CheckProjectLayout(loadManifest, fs),
       plugin: new CheckPluginDrift(loadManifest, detectPluginDriftUseCase),
     },
-    registrationOver(loadManifest)
+    registrationOver(loadManifest),
+    new CheckAuthentication(tokenProvider)
   );
   // `doctor --scope user` checks the same registrations against the machine-wide manifest.
   const doctorRegistrationUseCase = registrationOver(new LoadManifest(userManifestRepo));

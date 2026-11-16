@@ -165,7 +165,6 @@ export function buildUpdateTool(deps: Awaited<ReturnType<typeof buildUnitDeps>>)
 
 export function buildDoctorUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
-  authReader?: ConstructorParameters<typeof CheckProjectLayout>[2],
   hostRegistries: ConstructorParameters<typeof InspectHostRegistration>[1] = new Map()
 ): RunDoctor {
   const loadManifest = new LoadManifest(deps.manifestRepo);
@@ -175,7 +174,7 @@ export function buildDoctorUseCase(
       tracked: new CheckTrackedFiles(loadManifest, deps.fs),
       merge: new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
       references: new CheckFileReferences(loadManifest, deps.fs),
-      layout: new CheckProjectLayout(loadManifest, deps.fs, authReader),
+      layout: new CheckProjectLayout(loadManifest, deps.fs),
       plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs)),
     },
     checkRegistrationOver(
@@ -188,7 +187,8 @@ export function buildDoctorUseCase(
       new InspectHostRegistration(deps.fs, hostRegistries, new Map()),
       () => "/user-cache",
       { get: () => "1.0.0" }
-    )
+    ),
+    { execute: async () => [] }
   );
 }
 

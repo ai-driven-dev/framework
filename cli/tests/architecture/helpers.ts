@@ -122,7 +122,6 @@ export const ALLOWED = new Set([
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
   // Installation reads the installed tools' profiles. `installation->translate` is M-S1, narrowed to the translate contract.
-  "installation->auth",
   "installation->tools",
   "installation->translate",
   // Transitional (M-I1): the exact imports and the way out are in reference-context.md.
@@ -141,9 +140,6 @@ export const ALLOWED = new Set([
  * riding in. The lists only shrink: a pair the code no longer holds fails until removed.
  */
 export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
-  "installation->auth": [
-    "src/contexts/installation/application/doctor/check-project-layout.ts -> src/contexts/auth/contract/token-provider.ts",
-  ],
   "installation->distribution": [
     "src/contexts/installation/application/install/install-user-plugins.ts -> src/contexts/distribution/contract/plugin-source-match.ts",
     "src/contexts/installation/application/purge-user-scope-files.ts -> src/contexts/distribution/contract/marketplace.ts",

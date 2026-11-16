@@ -189,15 +189,11 @@ describe("the guard itself", () => {
     expect(forbiddenEdges([permitted], ALLOWED)).toEqual([]);
   });
 
-  it("reports a planted tools to auth crossing and clears the three edges into auth", () => {
+  it("reports a planted tools to auth crossing and clears the two edges into auth", () => {
     const auth = "src/contexts/auth/contract/token-provider.ts";
     const planted = edgeBetween("src/contexts/tools/domain/registry.ts", auth);
     const distribution = edgeBetween(
       "src/contexts/distribution/infrastructure/plugin-fetcher-adapter.ts",
-      auth
-    );
-    const installation = edgeBetween(
-      "src/contexts/installation/application/doctor/check-project-layout.ts",
       auth
     );
     const update = edgeBetween(
@@ -206,9 +202,10 @@ describe("the guard itself", () => {
     );
     const leaving = edgeBetween(auth, "src/contexts/distribution/domain/marketplace.ts");
 
-    expect(forbiddenEdges([planted, distribution, installation, update, leaving], ALLOWED)).toEqual(
-      ["tools->auth", "auth->distribution"]
-    );
+    expect(forbiddenEdges([planted, distribution, update, leaving], ALLOWED)).toEqual([
+      "tools->auth",
+      "auth->distribution",
+    ]);
   });
 
   it("names shared apart from every context, and counts no context among its files", () => {
