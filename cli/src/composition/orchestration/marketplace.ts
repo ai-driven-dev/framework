@@ -39,6 +39,8 @@ import { wireAddMarketplace } from "../distribution.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 
+type HostRegistries = ConstructorParameters<typeof RegisterPluginWithHost>[2];
+
 /** Detaches what a removal's plugins held on the machine, from the removal's own summary. */
 export function detachClaimsOf(cleanup: Pick<RemoveProjectPlugin, "detachClaims">) {
   return (
@@ -74,6 +76,15 @@ export function registerForFlow(
 ): RegisterFrameworkSource {
   return (flow, source) =>
     register.execute({ projectRoot: flow.projectRoot, scope: flow.scope, source });
+}
+
+/** The registries a host's native state is read and written through, by the three maps that hold them. */
+export function hostRegistriesOf(
+  marketplaceRegistries: HostRegistries["marketplaceRegistries"],
+  pluginRegistries: HostRegistries["pluginRegistries"],
+  sources: HostRegistries["sources"]
+): HostRegistries {
+  return { marketplaceRegistries, pluginRegistries, sources };
 }
 
 /** Marketplace removal, check and sync, and the setup steps that register a marketplace. */
@@ -169,11 +180,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
       new RegisterPluginWithHost(
         fs,
         nativePluginActivators,
-        {
-          marketplaceRegistries: hostMarketplaceRegistries,
-          pluginRegistries: hostPluginRegistries,
-          sources: nativeSources,
-        },
+        hostRegistriesOf(hostMarketplaceRegistries, hostPluginRegistries, nativeSources),
         process.platform
       ),
       buildMarketplaceForTool,
