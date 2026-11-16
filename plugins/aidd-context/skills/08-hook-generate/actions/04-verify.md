@@ -1,23 +1,19 @@
 # 04 - Verify
 
-Prove the script answers each host in its own format, then offer a real trial.
+Offer a real trial on each host, then report what each host did.
 
 ## Input
 
-The approved input file and the paths written.
+The paths written, with each host's verifier status.
 
 ## Process
 
-1. Run the verifier per [writer.md](../references/writer.md) on the same input file.
-   - Finding: go to step 6.
-   - Non-zero exit without findings: quote the output, then stop.
-2. Delete the input file with its folder, since a live hook may refuse a later command.
-3. Offer a real trial on each installed host: the scenario, the expected block or message, and the files it touches.
-4. End the turn and wait for the user's own answer.
+1. Offer a real trial on each installed host: the scenario, the expected block or message, and the files it touches.
+2. End the turn and wait for the user's own answer.
    - Approved: run the trial, then report what each host did.
    - Declined: mark the hosts not run as format verified, run not verified.
-5. Report each host's status.
-6. On a finding, quote it, then read [plan](02-plan.md) to fix the script.
+3. Report each host's status, a run verified only when the trial was observed.
+4. On a trial failure, quote what the host did, then read [plan](02-plan.md) to fix the script.
 
 ## Output
 

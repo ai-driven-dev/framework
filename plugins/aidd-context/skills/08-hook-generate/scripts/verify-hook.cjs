@@ -2,17 +2,17 @@
 "use strict";
 // Usage: node verify-hook.cjs --project <abs dir> --input <hook.json>
 // Host ids: claude,codex,cursor,copilot,antigravity,opencode,kilo, named in the input's `hosts`.
-// Runs each host's copy of the script with a sample native payload on stdin and checks its exit code and stdout against that host's rules.
+// Runs the input's script, before it is written, with each host's sample native payload on stdin and checks its exit code and stdout against that host's rules.
 // Exit 0 all verified, 1 a finding or a refusal, 2 usage error, 3 filesystem error. Prints one JSON object on stdout.
 // Limits: one sample payload per host and event, so it proves the answer's format, not the script's logic;
 // a shell script whose child keeps stdout open past the timeout can hold it.
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const EXIT = { OK: 0, REFUSED: 1, USAGE: 2, FILESYSTEM: 3 };
 const VALUES = ["--project", "--input"];
-const SCRIPTS_FOLDER = "hooks";
 const DEFAULT_TIMEOUT_SECONDS = 30;
 const MILLISECONDS = 1000;
 const BLOCKING_EXIT = 2;
@@ -133,17 +133,17 @@ function judgeAntigravity(event, run) {
 // OpenCode and Kilo answer by exit code alone, so stdout is never read.
 const judgeNothing = () => undefined;
 
-// Each host: its folder, the folder its command starts in from the project root, its sample payload,
+// Each host: the folder its command starts in from the project root, its sample payload,
 // the events its exit 2 blocks, whether a block needs a reason on stderr, and its stdout rule.
 const HOSTS = {
-  claude: { folder: ".claude", start: "", payload: claudeShaped, judge: judgeClaude },
-  codex: { folder: ".codex", start: "", payload: codexPayload, judge: judgeCodex },
-  cursor: { folder: ".cursor", start: "", payload: cursorPayload, judge: judgeCursor },
-  copilot: { folder: ".github", start: "", payload: copilotPayload, blocksOn: ["preToolUse", "permissionRequest"], judge: judgeCopilot },
+  claude: { start: "", payload: claudeShaped, judge: judgeClaude },
+  codex: { start: "", payload: codexPayload, judge: judgeCodex },
+  cursor: { start: "", payload: cursorPayload, judge: judgeCursor },
+  copilot: { start: "", payload: copilotPayload, blocksOn: ["preToolUse", "permissionRequest"], judge: judgeCopilot },
   // Antigravity starts a hook from the folder holding its hooks.json.
-  antigravity: { folder: ".agents", start: ".agents", payload: antigravityPayload, judge: judgeAntigravity },
-  opencode: { folder: ".opencode", start: "", payload: gatewayPayload, needsReason: true, judge: judgeNothing },
-  kilo: { folder: ".kilo", start: "", payload: gatewayPayload, needsReason: true, judge: judgeNothing },
+  antigravity: { start: ".agents", payload: antigravityPayload, judge: judgeAntigravity },
+  opencode: { start: "", payload: gatewayPayload, needsReason: true, judge: judgeNothing },
+  kilo: { start: "", payload: gatewayPayload, needsReason: true, judge: judgeNothing },
 };
 const TOOLS = Object.keys(HOSTS);
 
@@ -177,6 +177,7 @@ function readHook(file) {
 function validate(hook) {
   if (!isObject(hook)) refuse("Input must be a JSON object.");
   for (const key of ["name", "runner", "extension"]) if (typeof hook[key] !== "string" || hook[key] === "") refuse(`${key} must be a non-empty string.`);
+  if (typeof hook.script !== "string") refuse("script must be text.");
   const timeout = hook.timeout ?? DEFAULT_TIMEOUT_SECONDS;
   if (!Number.isInteger(timeout) || timeout < 1) refuse("Timeout must be a whole number of seconds, at least 1.");
   if (!isObject(hook.hosts) || !Object.keys(hook.hosts).length) refuse("Hosts must name at least one host.");
@@ -199,16 +200,14 @@ function findingOf(tool, event, run, timeout) {
   return run.status === BLOCKING_EXIT ? undefined : host.judge(event, run);
 }
 
-function verifyHost(project, hook, tool, timeout) {
+// The script runs from the host's start folder once that exists, else from the project root.
+function verifyHost(project, hook, script, tool, timeout) {
   const host = HOSTS[tool];
   const event = hook.hosts[tool].event;
-  const relative = `${host.folder}/${SCRIPTS_FOLDER}/${hook.name}.${hook.extension}`;
-  const copy = path.join(project, relative);
-  if (!fs.existsSync(copy)) return { host: tool, status: "failed", finding: `script not found: ${relative}.` };
   const cwd = path.join(project, host.start);
-  const run = spawnSync(hook.runner, [copy, tool], {
+  const run = spawnSync(hook.runner, [script, tool], {
     input: JSON.stringify(host.payload(event, cwd, project)),
-    cwd,
+    cwd: fs.existsSync(cwd) ? cwd : project,
     encoding: "utf8",
     timeout: timeout * MILLISECONDS,
   });
@@ -221,8 +220,15 @@ function main(argv) {
   const project = realProject(options["--project"]);
   const hook = readHook(options["--input"]);
   const timeout = validate(hook);
-  const results = TOOLS.filter((tool) => tool in hook.hosts).map((tool) => verifyHost(project, hook, tool, timeout));
-  return { results };
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-hook-"));
+  try {
+    const script = path.join(folder, `script.${hook.extension}`);
+    fs.writeFileSync(script, hook.script);
+    const results = TOOLS.filter((tool) => tool in hook.hosts).map((tool) => verifyHost(project, hook, script, tool, timeout));
+    return { results };
+  } finally {
+    fs.rmSync(folder, { recursive: true, force: true });
+  }
 }
 
 function failureOf(error) {

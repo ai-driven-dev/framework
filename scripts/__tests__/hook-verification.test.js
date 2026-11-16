@@ -41,28 +41,23 @@ function fixture(t) {
   assert.ok(fs.existsSync(script), "installed skill must contain its verifier");
   const env = { PATH: process.env.PATH, CAPTURE_DIR: captured };
   const exec = (...args) => spawnSync(process.execPath, [script, ...args], { encoding: "utf8", cwd: dir, env });
-  function copy(host, content, extension = "cjs") {
-    const file = path.join(project, FOLDERS[host], "hooks", `${NAME}.${extension}`);
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, content);
-  }
   function verify(request, hosts = Object.keys(request.hosts)) {
     const input = path.join(dir, "input.json");
-    fs.writeFileSync(input, JSON.stringify({ name: NAME, runner: "node", extension: "cjs", script: "", ...request, hosts: Object.fromEntries(hosts.map((host) => [host, request.hosts[host]])) }));
+    fs.writeFileSync(input, JSON.stringify({ name: NAME, runner: "node", extension: "cjs", ...request, hosts: Object.fromEntries(hosts.map((host) => [host, request.hosts[host]])) }));
     return exec("--project", project, "--input", input);
   }
   const capture = (host) => JSON.parse(JSON.parse(fs.readFileSync(path.join(captured, `${host}.json`), "utf8")).stdin);
   const capturedRun = (host) => JSON.parse(fs.readFileSync(path.join(captured, `${host}.json`), "utf8"));
-  return { project, exec, copy, verify, capture, capturedRun };
+  return { project, exec, verify, capture, capturedRun };
 }
 
 const json = (r) => JSON.parse(r.stdout);
 const byHost = (r) => Object.fromEntries(json(r).results.map((result) => [result.host, result]));
 
 test("a correct script passes on every host and receives that host's native payload", (t) => {
-  const { project, copy, verify, capture, capturedRun } = fixture(t);
-  for (const host of Object.keys(FOLDERS)) copy(host, nodeScript(RECORDER));
-  const r = verify({ hosts: hostsOf(TOOL_EVENTS) });
+  const { project, verify, capture, capturedRun } = fixture(t);
+  fs.mkdirSync(path.join(project, ".agents"));
+  const r = verify({ script: nodeScript(RECORDER), hosts: hostsOf(TOOL_EVENTS) });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(json(r).results, Object.keys(FOLDERS).map((host) => ({ host, status: "verified" })));
 
@@ -86,17 +81,15 @@ test("a correct script passes on every host and receives that host's native payl
 });
 
 test("a shell script is verified like a node one", (t) => {
-  const { copy, verify } = fixture(t);
-  copy("claude", "#!/bin/sh\ncat > /dev/null\nexit 0\n", "sh");
-  const r = verify({ runner: "sh", extension: "sh", hosts: { claude: { event: "PreToolUse" } } });
+  const { verify } = fixture(t);
+  const r = verify({ script: "#!/bin/sh\ncat > /dev/null\nexit 0\n", runner: "sh", extension: "sh", hosts: { claude: { event: "PreToolUse" } } });
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.deepEqual(json(r).results, [{ host: "claude", status: "verified" }]);
 });
 
 test("plain text at Stop fails on codex only, from a shell script", (t) => {
-  const { copy, verify } = fixture(t);
-  for (const host of ["claude", "codex"]) copy(host, "#!/bin/sh\ncat > /dev/null\necho keep going\n", "sh");
-  const r = verify({ runner: "sh", extension: "sh", hosts: { claude: { event: "Stop" }, codex: { event: "Stop" } } });
+  const { verify } = fixture(t);
+  const r = verify({ script: "#!/bin/sh\ncat > /dev/null\necho keep going\n", runner: "sh", extension: "sh", hosts: { claude: { event: "Stop" }, codex: { event: "Stop" } } });
   assert.equal(r.status, 1, r.stdout + r.stderr);
   const results = byHost(r);
   assert.equal(results.claude.status, "verified");
@@ -106,9 +99,8 @@ test("plain text at Stop fails on codex only, from a shell script", (t) => {
 });
 
 test("ask before a tool runs fails on codex, which cannot ask", (t) => {
-  const { copy, verify } = fixture(t);
-  for (const host of ["claude", "codex"]) copy(host, nodeScript(`process.stdout.write(${JSON.stringify(ASK)});`));
-  const r = verify({ hosts: { claude: { event: "PreToolUse" }, codex: { event: "PreToolUse" } } });
+  const { verify } = fixture(t);
+  const r = verify({ script: nodeScript(`process.stdout.write(${JSON.stringify(ASK)});`), hosts: { claude: { event: "PreToolUse" }, codex: { event: "PreToolUse" } } });
   assert.equal(r.status, 1, r.stdout + r.stderr);
   const results = byHost(r);
   assert.equal(results.claude.status, "verified");
@@ -116,22 +108,32 @@ test("ask before a tool runs fails on codex, which cannot ask", (t) => {
   assert.match(results.codex.finding, /ask/);
 });
 
-test("a missing copy fails and names its path", (t) => {
-  const { copy, verify } = fixture(t);
-  copy("claude", nodeScript(""));
-  const r = verify({ hosts: { claude: { event: "PreToolUse" }, codex: { event: "PreToolUse" } } });
+test("verifies the input's script before anything is written to the project", (t) => {
+  const { project, verify } = fixture(t);
+  const r = verify({ script: nodeScript('process.stderr.write("no shell"); process.exit(2);'), hosts: { claude: { event: "PreToolUse" } } });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(json(r).results, [{ host: "claude", status: "verified" }]);
+  assert.deepEqual(fs.readdirSync(project), []);
+});
+
+test("Antigravity is verified before its folder exists", (t) => {
+  const { verify } = fixture(t);
+  const r = verify({ script: nodeScript('process.stdout.write(JSON.stringify({ decision: "allow" }));'), hosts: { antigravity: { event: "PreToolUse" } } });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.deepEqual(json(r).results, [{ host: "antigravity", status: "verified" }]);
+});
+
+test("a script that is not text is refused", (t) => {
+  const { verify } = fixture(t);
+  const r = verify({ script: 1, hosts: { claude: { event: "PreToolUse" } } });
   assert.equal(r.status, 1, r.stdout + r.stderr);
-  const results = byHost(r);
-  assert.equal(results.claude.status, "verified");
-  assert.equal(results.codex.status, "failed");
-  assert.ok(results.codex.finding.includes(".codex/hooks/guard-shell.cjs"), results.codex.finding);
+  assert.equal(json(r).error.code, "REFUSED");
 });
 
 test("a script that never returns fails after the hook's timeout", (t) => {
-  const { copy, verify } = fixture(t);
-  copy("claude", nodeScript("setInterval(() => {}, 1000);"));
+  const { verify } = fixture(t);
   const started = Date.now();
-  const r = verify({ timeout: 1, hosts: { claude: { event: "PreToolUse" } } });
+  const r = verify({ script: nodeScript("setInterval(() => {}, 1000);"), timeout: 1, hosts: { claude: { event: "PreToolUse" } } });
   assert.ok(Date.now() - started < 10000, "the verifier must not wait past the timeout");
   assert.equal(r.status, 1, r.stdout + r.stderr);
   assert.match(byHost(r).claude.finding, /timeout/i);
@@ -149,9 +151,8 @@ const FAILURES = [
 ];
 for (const [title, host, event, body, expected] of FAILURES) {
   test(`${title} fails on ${host}`, (t) => {
-    const { copy, verify } = fixture(t);
-    copy(host, nodeScript(body));
-    const r = verify({ hosts: { [host]: { event } } });
+    const { verify } = fixture(t);
+    const r = verify({ script: nodeScript(body), hosts: { [host]: { event } } });
     assert.equal(r.status, 1, r.stdout + r.stderr);
     assert.equal(byHost(r)[host].status, "failed");
     assert.match(byHost(r)[host].finding, expected);
@@ -167,9 +168,8 @@ const PASSES = [
 ];
 for (const [title, host, event, body] of PASSES) {
   test(title, (t) => {
-    const { copy, verify } = fixture(t);
-    copy(host, nodeScript(body));
-    const r = verify({ hosts: { [host]: { event } } });
+    const { verify } = fixture(t);
+    const r = verify({ script: nodeScript(body), hosts: { [host]: { event } } });
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.deepEqual(json(r).results, [{ host, status: "verified" }]);
   });

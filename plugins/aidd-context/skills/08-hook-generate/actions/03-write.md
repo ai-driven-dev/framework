@@ -8,7 +8,7 @@ The approved input file and paths.
 
 ## Process
 
-1. Run the writer per [writer.md](../references/writer.md) with the plan's options, without `--plan`.
+1. Run the writer per [writer.md](../references/writer.md) with the plan's options, without `--plan`, then delete the input file with its folder in the same command.
    - Approved `update`: add `--force`.
    - Non-zero exit: quote the writer's output, then stop.
 2. Report each path written with its operation.
