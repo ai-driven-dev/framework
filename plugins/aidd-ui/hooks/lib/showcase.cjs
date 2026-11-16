@@ -1304,9 +1304,10 @@ hr { border: 0; border-top: 1px solid #e7e7e2; margin: 12px 0; }
 small { color: #8a8a83; }
 code { font: 12px ui-monospace, Menlo, monospace; background: #f0f0ec; border-radius: 4px; padding: 1px 4px; }`;
 
-/** The document of one state of a render: the tokens inline, every other state hidden. A render without `</head>` keeps every state visible in each frame: a known limit. */
+/** The document of one state of a render: the tokens inline, every other state hidden with the caption standing right before it. A render without `</head>` keeps every state visible in each frame: a known limit. */
 function stateDocument(render, tokens, state, sketch) {
-  const hide = `<style>[data-state]:not([data-state=${JSON.stringify(state)}]) { display: none !important; }${sketch ? GREY_BOX : ""}</style>`;
+  const other = `[data-state]:not([data-state=${JSON.stringify(state)}])`;
+  const hide = `<style>${other} { display: none !important; }:not([data-state]):not(:has([data-state])):has(+ ${other}) { display: none !important; }${sketch ? GREY_BOX : ""}</style>`;
   const doc = inlined(render, tokens);
   return doc.replace(/<\/head>/i, () => `${hide}</head>`);
 }
@@ -1657,4 +1658,4 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets: found = [
   return pages;
 }
 
-module.exports = { showcaseOf, copiedOf, decisionsOf, keptOf, WIDTH, entriesOf, blockedOf, remainingOf, pickedOf, languageOf, LABELS };
+module.exports = { showcaseOf, stateDocument, copiedOf, decisionsOf, keptOf, WIDTH, entriesOf, blockedOf, remainingOf, pickedOf, languageOf, LABELS };
