@@ -2,7 +2,7 @@ import type { FileReader } from "../../../../kernel/ports/file-reader.js";
 import type { AiToolId } from "../../../../kernel/tool.js";
 import type { ManifestRepository } from "../../domain/ports/manifest-repository.js";
 
-/** Release only this project's claim; machine files remain until explicit user cleanup. */
+/** Release only this project's claim; global files remain until explicit user cleanup. */
 export async function detachUserPlugin(
   repo: ManifestRepository | undefined,
   fs: FileReader,

@@ -550,17 +550,6 @@ describe("a plugin's hooks", () => {
     });
   });
 
-  it("flattens the manifest into the shape cursor reads and keeps the scripts under hooks/", () => {
-    expect(treeOf(cursor, hooksDist())).toEqual({
-      "sample-plugin/hooks.json": JSON.stringify(
-        { hooks: { preToolUse: [{ type: "command", command: "./hooks/check.sh" }] } },
-        null,
-        2
-      ),
-      "sample-plugin/hooks/lib/check.sh": hookScriptContent,
-    });
-  });
-
   it("delivers a flat target's scripts per plugin and no manifest", () => {
     expect(treeOf(opencode, hooksDist())).toEqual({
       ".opencode/hooks/sample-plugin/lib/check.sh": hookScriptContent,

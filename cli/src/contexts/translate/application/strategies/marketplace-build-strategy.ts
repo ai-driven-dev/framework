@@ -107,7 +107,8 @@ export class MarketplaceBuildStrategy implements BuildOutputStrategy {
           ? artifact.transform(content, pluginName, basename(absPath))
           : content
       );
-      await this.fs.writeFile(destPath, outContent);
+      const script = artifact.script?.(`hooks/${relPath}`, outContent) ?? outContent;
+      await this.fs.writeFile(destPath, script);
       count++;
     }
     return count;

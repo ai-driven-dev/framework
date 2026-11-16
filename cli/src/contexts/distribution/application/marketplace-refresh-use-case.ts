@@ -1,5 +1,4 @@
 import { join, resolve } from "node:path";
-import { marketplaceCacheDir } from "../../../kernel/paths.js";
 import type { FileReader } from "../../../kernel/ports/file-reader.js";
 import type { Logger } from "../../../kernel/ports/logger.js";
 import {
@@ -61,7 +60,7 @@ export class MarketplaceRefreshUseCase implements MarketplaceRefresh {
   // through the result, never thrown.
   private async refreshOne(projectRoot: string, m: Marketplace): Promise<RefreshEntryResult> {
     try {
-      const cacheDir = marketplaceCacheDir(projectRoot, m.name);
+      const cacheDir = this.resolveMarketplace.cacheDirOf(m, projectRoot);
       await this.warnIfStale(m.name, cacheDir);
       this.logger?.info(`Fetching marketplace '${m.name}'...`);
       const { catalog } = await this.resolveMarketplace.execute({

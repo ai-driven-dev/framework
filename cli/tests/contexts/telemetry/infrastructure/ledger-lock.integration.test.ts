@@ -2,7 +2,13 @@ import { spawn, spawnSync } from "node:child_process";
 import { mkdtemp, readFile, rm, stat, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  return { ...actual, writeFile: vi.fn(actual.writeFile) };
+});
+
 import { LedgerLock } from "../../../../src/contexts/telemetry/infrastructure/ledger-lock.js";
 
 let dir: string;
@@ -111,6 +117,26 @@ describe("the ledger lock", () => {
     const release = await second;
     expect((await holder()).pid).toBe(process.pid);
     await release();
+  });
+
+  it("waits while Windows refuses a lock file another process is still removing", async () => {
+    const pending = Object.assign(new Error("EPERM: operation not permitted"), { code: "EPERM" });
+    vi.mocked(writeFile).mockRejectedValueOnce(pending);
+    const release = await new LedgerLock(path, quick).acquire();
+    expect((await holder()).pid).toBe(process.pid);
+    await release();
+  });
+
+  it("names the refusal once Windows refuses the lock file past the wait", async () => {
+    const pending = Object.assign(new Error("EPERM: operation not permitted"), { code: "EPERM" });
+    vi.mocked(writeFile).mockRejectedValue(pending);
+    try {
+      await expect(new LedgerLock(path, quick).acquire()).rejects.toThrow(/EPERM/);
+    } finally {
+      vi.mocked(writeFile).mockReset();
+      const actual = await vi.importActual<typeof import("node:fs/promises")>("node:fs/promises");
+      vi.mocked(writeFile).mockImplementation(actual.writeFile);
+    }
   });
 
   it("does not take a lock whose content cannot be read while it is recent", async () => {

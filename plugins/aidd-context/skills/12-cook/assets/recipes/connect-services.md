@@ -44,7 +44,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🔀 Version control
 
-> Work with repositories, pull requests and CI runs. Project conventions: [vcs.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/vcs.md).
+> Work with repositories, pull requests and CI runs. Project conventions: [vcs.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/vcs.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
@@ -54,7 +54,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🎫 Ticketing
 
-> Find, create and update tickets. Team workflow: [backlog.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/backlog/backlog.md).
+> Find, create and update tickets. Team workflow: [backlog.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/backlog.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 📚 Documentation and workspace
 
-> Access team documents, files, email and calendars. Connected tools: [ecosystem.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ecosystem/ecosystem.md).
+> Access team documents, files, email and calendars. Connected tools: [ecosystem.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ecosystem.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
@@ -74,7 +74,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🌐 Browser
 
-> Open the application and check its behavior in a browser. Test instructions: [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/core/testing.md).
+> Open the application and check its behavior in a browser. Test instructions: [testing.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/testing.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
@@ -84,7 +84,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🎨 Design
 
-> Read designs and follow the project's design system. UI guidelines: [design.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ui/design.md).
+> Read designs and follow the project's design system. UI guidelines: [ui.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/ui.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
@@ -92,7 +92,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🚨 Monitoring
 
-> Read application errors and investigate failures. Monitoring configuration: [deployment.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/deployment/deployment.md).
+> Read application errors and investigate failures. Monitoring configuration: [deployment.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/deployment.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
@@ -100,7 +100,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🚀 Deployment
 
-> Deploy the application and inspect deployment logs. Deployment instructions: [deployment.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/deployment/deployment.md).
+> Deploy the application and inspect deployment logs. Deployment instructions: [deployment.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/deployment.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |
@@ -108,7 +108,7 @@ Memory links open the AIDD templates for the corresponding files in your project
 
 #### 🗄️ Database
 
-> Explore the database and run migrations. Database conventions: [database.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/database/database.md).
+> Explore the database and run migrations. Database conventions: [database.md](https://github.com/ai-driven-dev/framework/blob/next/plugins/aidd-context/skills/02-project-memory/assets/templates/memory/database.md).
 
 | Service | CLI | MCP or native tool |
 | --- | --- | --- |

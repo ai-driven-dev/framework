@@ -37,6 +37,27 @@ function makeMarketplace(name: string): Marketplace {
 }
 
 describe("ResolveMarketplaceUseCase", () => {
+  it("keeps a user-scope source's clone out of the project, and a project-scope one in it", () => {
+    const useCase = new ResolveMarketplaceUseCase(
+      new FetchMarketplaceSourceUseCase(new FixturePluginFetcher()),
+      new PluginCatalogRepositoryAdapter(new InMemoryFileAdapter({}, new DeterministicHasher())),
+      () => "/config/aidd"
+    );
+    const shared = Marketplace.create({
+      name: "shared",
+      source: { kind: "local", path: MARKETPLACE_DIR },
+      scope: "user",
+      addedAt: "2026-05-01T10:00:00.000Z",
+    });
+
+    expect(useCase.cacheDirOf(shared, PROJECT_ROOT)).toBe(
+      join("/config/aidd", "cache", "marketplaces", "shared")
+    );
+    expect(useCase.cacheDirOf(makeMarketplace("own"), PROJECT_ROOT)).toBe(
+      join(PROJECT_ROOT, ".aidd", "cache", "marketplaces", "own")
+    );
+  });
+
   it("returns the parsed catalog for a local marketplace", async () => {
     const hasher = new DeterministicHasher();
     const fs = new InMemoryFileAdapter({}, hasher);

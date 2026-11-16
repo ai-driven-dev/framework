@@ -5,20 +5,22 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs",
-            "timeout": 30
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/aidd-ui.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD UI: note design system errors"
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit",
+        "matcher": "Write|Edit|Delete|Bash|Shell|bash|PowerShell",
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs",
-            "timeout": 30
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/aidd-ui.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD UI: check design system"
           }
         ]
       }
@@ -28,8 +30,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/ui-hook.cjs",
-            "timeout": 30
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/aidd-ui.cjs hook",
+            "timeout": 5,
+            "statusMessage": "AIDD UI: check design system before finishing"
           }
         ]
       }

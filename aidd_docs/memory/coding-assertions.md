@@ -5,7 +5,7 @@ The checks that must pass for code to count as done. Minimal, run after every ch
 ## Before the code
 
 **Write the test first, and watch it fail for the reason it names.** A test written after the
-code it covers confirms what was built; only one that failed first can tell you it is
+code it covers confirms what was built. Only one that failed first can tell you it is
 checking anything at all.
 
 Three consequences, all learned by paying for them:
@@ -30,22 +30,22 @@ Never state in a commit message or a report anything not just observed in output
 
 | Order | Command | Checks |
 | ----- | ------- | ------ |
-| 1 | `pnpm exec lefthook run pre-commit` | JSON and YAML validity, `scripts/` tests, skill frontmatter and argument hints, cross-plugin orthogonality and router coherence (`scripts/check-architecture-rules.js`), context imports and reference form, markdown links, the paths the prose names, a sentence written in two documents (`scripts/check-doc-duplication.js`) and a path from a contributor's machine (`scripts/check-no-local-paths.js`); `cli` lint, architecture, typecheck and type honesty when `cli/` changed. `cli` knip and the full `cli` suite are pre-push, not pre-commit — see below |
+| 1 | `pnpm exec lefthook run pre-commit --all-files` | JSON and YAML validity, `scripts/` tests, skill frontmatter and argument hints, cross-plugin orthogonality and router coherence (`scripts/check-architecture-rules.js`), context imports and reference form, markdown links, the paths the prose names, a sentence written in two documents (`scripts/check-doc-duplication.js`) and a path from a contributor's machine (`scripts/check-no-local-paths.js`); `cli` lint, architecture, typecheck and type honesty when `cli/` changed. `cli` knip and the full `cli` suite are pre-push, not pre-commit — see below |
 | 2 | `pnpm exec commitlint --edit` | the message against `commitlint.config.cjs` |
 
 Same hook regenerates each plugin's `CATALOG.md`, and the README counts, and stages them.
 
 Every `cli` job is globbed on `cli/**`. A change under `kanban/` alone fires no local job; run `cd kanban && pnpm test` by hand. CI does cover it — `cli-ci.yml`'s `kanban-checks`, see `deployment.md`.
 
-- `context-reference-form` reads only the three files `update_memory.js`'s `TARGET_FILES` names: root `CLAUDE.md`, root `AGENTS.md`, the `copilot-instructions.md` under `.github/` (absent here). It never walks the tree, so `cli/CLAUDE.md`'s memory block is outside it.
+- `context-reference-form` reads only the two files `memory.cjs`'s `TARGET_FILES` names: root `CLAUDE.md` and root `AGENTS.md`. It never walks the tree, so `cli/CLAUDE.md`'s memory block is outside it.
 - `context-imports` walks the whole tree (`scripts/check-context-imports.js`'s `collectContextFiles`).
-- `context-reference-form` also globs `plugins/aidd-context/hooks/update_memory.js`, whose table is its source of truth.
+- `context-reference-form` also globs `plugins/aidd-context/hooks/memory.cjs`, whose table is its source of truth.
 
 ## Before push
 
 | Order | Command | Checks |
 | ----- | ------- | ------ |
-| 1 | `pnpm exec lefthook run pre-push` | `cli knip`, then the full `cli` suite, when `cli/` changed |
+| 1 | `pnpm exec lefthook run pre-push` | `cli knip`, the copies between tool profiles, then the full `cli` suite, when `cli/` changed |
 
 Each runs through `scripts/gate-witness.js`, which skips a gate this exact tree already passed: same index, same unstaged edits, same untracked files. A tree that changed while the gate ran is never stamped.
 
@@ -55,7 +55,7 @@ Each runs through `scripts/gate-witness.js`, which skips a gate this exact tree 
 - Any pull request fires `ci.yml` and `cli-ci.yml`, whatever its base.
 - Only a pull request targeting `main` or `next` replays the pre-commit, and `validate.yml` drops `cli-biome`, `cli-architecture` and `cli-typecheck` from it.
 
-Deleting a remote branch is the one push to send with it. `git push --delete` carries no commit, and the gates still run: measured, lefthook forwards git's pre-push stdin to no command, the hook environment is byte-identical to a normal push, and a `glob` filter matches anyway. Nothing inside the hook can tell the two apart, so the full `cli` suite runs over a push that has nothing to validate.
+Deleting a remote branch is the one push to send with it. `git push --delete` carries no commit, and the gates still run. Measured: lefthook forwards git's pre-push stdin to no command, the hook environment is byte-identical to a normal push, and a `glob` filter matches anyway. Nothing inside the hook can tell the two apart, so the full `cli` suite runs over a push that has nothing to validate.
 
 ## Behavior
 

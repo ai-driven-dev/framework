@@ -38,10 +38,16 @@ aidd_docs/
 | `memory/internal/` | When a task needs it |
 | `memory/external/` | When you ask |
 
-- Every project gets a brief, the architecture, a codebase map, coding assertions, testing and version control.
-- Other files appear when needed: backlog, deployment, API, database.
+- Every project gets a brief, the architecture, a codebase map, coding assertions, testing, version control and its outside services.
+- Other files appear when found in the project: backlog, deployment, api, cli, package, auth, database, data, messaging, realtime, ui, mobile, desktop.
+- A file you already keep in `memory/` is yours: the skill never rewrites or removes it.
+
+### How it stays correct
+
+- At each turn end, a hook checks the memory lines the turn wrote, names a line it lost, and tells the AI what to fix. It checks lines, not sections, and never blocks.
+- A refresh runs the same rules over the whole bank, and a model judges only the content.
 
 ### How it reaches your AI
 
 - A block in `CLAUDE.md` or `AGENTS.md` points to the memory.
-- A hook refreshes that block at the start of each session.
+- A hook refreshes that block at each session start and turn end.

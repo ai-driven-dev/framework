@@ -16,11 +16,13 @@ import {
 import type { ToolBuildContract } from "./build-contract.js";
 import type {
   EnvironmentReader,
+  GlobalFiles,
+  HookScript,
   NativeActivation,
   PluginsCapability,
+  ProjectHooksFormat,
 } from "./capabilities/plugins-capability.js";
 import type { AiTool, IdeToolConfig } from "./contracts.js";
-import type { ProjectHooksFormat } from "./hooks-format.js";
 
 /** Output layout: a marketplace dist versus a flat workspace inject. Declared here, not by
  * translate, because it is read off a tool's own plugins capability — a tool's build mode is
@@ -118,13 +120,38 @@ export function pluginEnablementIsMachineGlobal(toolId: ToolId): boolean {
   return nativeActivationOf(toolId)?.scopeArgs === undefined;
 }
 
-/** Whether `--scope user` has anywhere to point this tool: either it drives its own CLI
- * machine-wide, or it installs a plugin's files into a user-scope directory. `false` for a
- * tool declaring neither — opencode today, with no such directory and no CLI to drive. */
+/** Whether `--scope user` has anywhere to point this tool: it drives its own CLI machine-wide,
+ * installs a plugin's files into a user-scope directory, or copies global files into the
+ * user's configuration directory. `false` for a tool declaring none. */
 export function supportsUserScopeActivation(toolId: ToolId): boolean {
   const capability = resolvePluginsCapability(toolId);
   if (capability === null) return false;
-  return capability.nativeActivation !== null || capability.installScope === "user";
+  return (
+    capability.nativeActivation !== null ||
+    capability.installScope === "user" ||
+    capability.globalFiles !== null
+  );
+}
+
+/** Whether a ref the host's registry lists is a plugin in use: an enabled one always; a disabled
+ * one unless the host's uninstall itself leaves refs disabled, where the two cannot be told
+ * apart and the ref is taken for what an uninstall left behind. */
+export function hostRefInUse(toolId: ToolId, enabled: boolean): boolean {
+  return enabled || nativeActivationOf(toolId)?.uninstallLeavesRefDisabled !== true;
+}
+
+/** Whether `setup --global` writes a plugin's files itself for this tool, into its user plugins
+ * directory or its user configuration directory, instead of only enabling the plugin through
+ * the tool's own CLI. */
+export function copiesPluginFilesGlobally(toolId: ToolId): boolean {
+  const capability = resolvePluginsCapability(toolId);
+  if (capability === null) return false;
+  return capability.installScope === "user" || capability.globalFiles !== null;
+}
+
+/** See {@link GlobalFiles}: `null` for a tool whose machine-scope install copies no file. */
+export function globalFilesOf(toolId: ToolId): GlobalFiles | null {
+  return resolvePluginsCapability(toolId)?.globalFiles ?? null;
 }
 
 /** The tool's declared build contract for one framework-build mode, or undefined when the tool
@@ -139,8 +166,8 @@ export function buildContractFor(
   return config.buildContracts?.[mode];
 }
 
-/** A tool's own user-scope settings file, absolute under `homedir` — never written by aidd,
- * only named by a diagnostic. Empty for a tool whose profile declares no
+/** A tool's own user-scope settings file — aidd writes only the main session's model there.
+ * Empty for a tool whose profile declares no
  * `NativeActivation.userSettingsPath`. */
 export function userMachineLocalFilesOf(
   toolId: ToolId,
@@ -178,9 +205,12 @@ export function projectHooksFileOf(toolId: ToolId): string | undefined {
 }
 
 /** The project hooks file a tool merges plugin hooks into, or `null` when it has none. */
-export function projectHooksDeliveryOf(
-  toolId: ToolId
-): { relativePath: string; format: ProjectHooksFormat; toolName: string } | null {
+export function projectHooksDeliveryOf(toolId: ToolId): {
+  relativePath: string;
+  format: ProjectHooksFormat;
+  toolName: string;
+  hookScript: HookScript;
+} | null {
   const config = getToolConfig(toolId);
   if (!isAiTool(config)) return null;
   const cap = resolvePluginsCapability(toolId);
@@ -190,6 +220,7 @@ export function projectHooksDeliveryOf(
     relativePath: cap.projectHooksRelativePath,
     format: cap.projectHooksFormat,
     toolName: config.displayName,
+    hookScript: cap.hookScript,
   };
 }
 

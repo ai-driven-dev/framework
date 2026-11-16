@@ -4,6 +4,7 @@ import { AbstractNativePluginCliAdapter } from "./abstract-native-plugin-cli-ada
 /** Everything about a tool's plugin CLI that differs between tools, read off its profile. */
 export interface NativePluginCliShape {
   readonly scopeArgs?: Readonly<Record<MarketplaceScope, readonly string[]>>;
+  readonly userRemoveArgs?: readonly string[];
   readonly forceRemoveArgs?: readonly string[];
   readonly sourceCheckVerb?: string;
   readonly upgradeVerb?: string;
@@ -85,5 +86,9 @@ export class NativePluginCliAdapter extends AbstractNativePluginCliAdapter {
 
   protected forceRemoveArgs(): readonly string[] {
     return this.shape.forceRemoveArgs ?? [];
+  }
+
+  protected userRemoveArgs(): readonly string[] | undefined {
+    return this.shape.userRemoveArgs;
   }
 }

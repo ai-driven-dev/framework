@@ -247,4 +247,58 @@ describe("native marketplace source reader", () => {
     expect(reading.unreadable).toContain("marketplace list --json");
     expect(reading.unreadable).toContain("upgrade");
   });
+
+  it("proves Copilot 1.0.98's local sources and leaves any other source unproven", async () => {
+    spawn.mockReturnValue(
+      result(
+        JSON.stringify([
+          { name: "aidd-framework", source: "Local: /home/.aidd/built/copilot", isDefault: false },
+          { name: "awesome-copilot", source: "GitHub: github/awesome-copilot", isDefault: true },
+        ])
+      )
+    );
+
+    const reading = await new NativeMarketplaceSourceReaderAdapter(
+      copilotMarketplaceSourceListContract
+    ).read("/project-a");
+
+    expect(reading.entries?.get("aidd-framework")).toEqual({
+      kind: "effective-list",
+      root: "/home/.aidd/built/copilot",
+      sourceType: "local",
+      source: "/home/.aidd/built/copilot",
+    });
+    expect(reading.entries?.has("awesome-copilot")).toBe(true);
+    expect(reading.entries?.get("awesome-copilot")).toBeNull();
+  });
+
+  it.each([
+    ['{"marketplaces":[]}'],
+    ["[null]"],
+    ['[{"source":"Local: /a"}]'],
+    ['[{"name":"","source":"Local: /a"}]'],
+    ['[{"name":"x"}]'],
+    ['[{"name":"x","source":"Local: /a"},{"name":"x","source":"Local: /b"}]'],
+  ])("refuses the Copilot listing %s rather than guess a source", async (stdout) => {
+    spawn.mockReturnValue(result(stdout));
+
+    const reading = await new NativeMarketplaceSourceReaderAdapter(
+      copilotMarketplaceSourceListContract
+    ).read("/project-a");
+
+    expect(reading.entries).toBeUndefined();
+    expect(reading.unreadable).toMatch(
+      /^copilot marketplace list could not prove a source: .*Copilot/
+    );
+  });
+
+  it("leaves a Copilot source reading just 'Local: ' unproven", async () => {
+    spawn.mockReturnValue(result('[{"name":"x","source":"Local: "}]'));
+
+    const reading = await new NativeMarketplaceSourceReaderAdapter(
+      copilotMarketplaceSourceListContract
+    ).read("/project-a");
+
+    expect(reading.entries?.get("x")).toBeNull();
+  });
 });

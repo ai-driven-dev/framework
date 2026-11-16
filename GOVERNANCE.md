@@ -54,4 +54,3 @@ flowchart LR
 ## Conduct
 
 - [Code of Conduct](CODE_OF_CONDUCT.md)
-- Changes to this document need two Maintainer approvals.

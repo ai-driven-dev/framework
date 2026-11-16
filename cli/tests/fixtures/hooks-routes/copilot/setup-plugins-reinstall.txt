@@ -1,0 +1,14 @@
+setup over installed plugins resolved
+no hook file written without the host binary
+
+no hook file
+
+# recorded
+project copilot aidd-context scope=project: 0 hook files
+  projectHooks null
+  dependents []
+project copilot aidd-telemetry scope=project: 0 hook files
+  projectHooks null
+  dependents []
+project copilot nativeRegistrations pluginRefs null
+machine: no manifest

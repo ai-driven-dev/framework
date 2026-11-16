@@ -1,0 +1,55 @@
+---
+status: done
+---
+
+# Instruction: One host adapter per tool, chosen at build time
+
+## Architecture projection
+
+> Tree of the final files from the project root, each folder ending in `/`. ✅ create · ✏️ modify · ❌ delete
+
+```txt
+.
+├── cli/
+│   ├── assets/hooks-runtime/
+│   │   ├── host-claude.cjs ✅
+│   │   ├── host-codex.cjs ✅
+│   │   ├── host-copilot.cjs ✅
+│   │   ├── host-cursor.cjs ✅
+│   │   └── host-bridge.cjs ✅ (OpenCode and Kilo share it; each descriptor stamps its host)
+│   ├── src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts ✏️
+│   ├── src/contexts/tools/domain/profiles/kilo/kilo-hooks-bridge.ts ✏️
+│   ├── src/contexts/tools/domain/formats/hooks-descriptor.ts ✏️
+│   └── tests/contexts/tools/hooks-runtime.unit.test.ts ✅
+├── plugins/*/hooks/lib/host.cjs ✅
+└── scripts/check-hook-rule-copies.js ✏️
+```
+
+## Test Scope
+
+| Scenario | Action | Observable outcome | Actor |
+| -------- | ------ | ------------------ | ----- |
+| Setup | phase 8's payload fixtures, one per host and event | real host input | system |
+| Happy path | each fixture read by its host's adapter | the same neutral event; `answer` writes the host's own key | system |
+| Edge case | a Codex or Copilot `apply_patch` touching three files | one event listing three files | system |
+| Edge case | garbage, empty stdin, an unknown event | `readEvent` returns nothing, exit 0, nothing printed | system |
+| Edge case | any install | the hook command is unchanged: no wrapper, no extra process | system |
+| Edge case | a Codex payload into aidd-telemetry's hooks | still told as Codex, same records as before | system |
+| Edge case | a host that drops a level 2 answer (Cursor) | its adapter answers at level 1 | system |
+
+## Tasks to do
+
+### `1)` The adapters
+
+> A hook speaks to one neutral interface; each tool's translation is a file the build puts in place.
+
+1. One adapter per host, Node built-ins only, the same exports: `readEvent()` returns `{ host, event, files: [{ path, content?, written?, replaced? }], command?, stopActive, sessionId, cwd, raw }` or nothing on garbage, with one `files` entry per file a patch touches and `stopActive` true when the Stop is already a continuation (Claude's `stop_hook_active`, Cursor's `loop_count` above 0); `answer({ level, text })` writes the host's key, level 2 falling back to level 1 where the host drops it; `continueTurn(text)` for Stop, asking once. A `files` entry carries `written`, the text the write put in that file (a Write's content, an Edit's `new_string`, a patch's added lines), and `replaced`, the text it replaced (an Edit's `old_string`, a patch's removed lines), each absent where the host gives none. A `files` entry may no longer exist (a deletion, a move's source), so hooks tolerate `ENOENT`; a shell `rm` reaches the hook only through `command`. Tests first on every fixture.
+2. `host-claude.cjs` is copied into every plugin's `hooks/lib/host.cjs`, so the plugin tree runs as is on Claude Code; `check-hook-rule-copies.js` holds those copies identical to the asset.
+3. The build replaces `hooks/lib/host.cjs` with the target's adapter on every other route; the descriptor's runtime field arrives here, with this first reader.
+4. OpenCode and Kilo have no stdin hooks: each bridge builds the hook's payload from the plugin's arguments, which is its job, and their one bridge adapter, stamped with its host by each descriptor, reads what the bridge hands it; the bridges' command parsing shares one copy.
+
+## Test acceptance criteria
+
+| Task | Acceptance criteria |
+| ---- | ------------------- |
+| 1 | every fixture reads to the expected event and answers in the host's key; every distribution's `hooks/lib/host.cjs` equals its target's adapter (phase 8 fixtures show it); hook commands and goldens unchanged except the adapter file; the OpenCode and Kilo adapters read what their bridge sends, captured arguments run through the real bridge; `jscpd:profiles` baseline empty; `pnpm smoke` passes; real hosts proven by phase 15's host campaign through the built distributions on all six hosts (record: [`measure.md`](./measure.md#host-campaign)), which replaces `pnpm smoke:real` (it reaches the real host registries, outside the campaign's isolation) |

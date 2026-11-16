@@ -31,6 +31,8 @@ export interface PluginUpdateOptions {
   toolIds: AiToolId[] | "all";
   projectRoot: string;
   scope?: "project" | "user";
+  /** Re-materialize at the same version: the build changed, not the plugin. */
+  rebuild?: boolean;
 }
 
 export class PluginUpdateUseCase {
@@ -57,7 +59,8 @@ export class PluginUpdateUseCase {
         pluginNames,
         projectRoot,
         cacheDir,
-        manifest
+        manifest,
+        options.rebuild === true
       );
       updated.push(...names);
     }
@@ -70,7 +73,8 @@ export class PluginUpdateUseCase {
     pluginNames: string[] | undefined,
     projectRoot: string,
     cacheDir: string,
-    manifest: Manifest
+    manifest: Manifest,
+    rebuild: boolean
   ): Promise<string[]> {
     const plugins = manifest.getPlugins(toolId);
     const targets = pluginNames
@@ -78,7 +82,14 @@ export class PluginUpdateUseCase {
       : plugins.filter((plugin) => plugin.scope !== "user");
     const updated: string[] = [];
     for (const plugin of targets) {
-      const didUpdate = await this.updateOnePlugin(plugin, toolId, projectRoot, cacheDir, manifest);
+      const didUpdate = await this.updateOnePlugin(
+        plugin,
+        toolId,
+        projectRoot,
+        cacheDir,
+        manifest,
+        rebuild
+      );
       if (didUpdate) updated.push(plugin.name);
     }
     return updated;
@@ -89,14 +100,15 @@ export class PluginUpdateUseCase {
     toolId: AiToolId,
     projectRoot: string,
     cacheDir: string,
-    manifest: Manifest
+    manifest: Manifest,
+    rebuild: boolean
   ): Promise<boolean> {
     if (plugin.scope === "user") throw new InvalidPluginScopeError(toolId, "project", "user");
     const dist = await this.distributionLoader.load(plugin.source, cacheDir, {
       forceRefresh: true,
     });
     await this.pluginRuntime?.ensurePluginRuntimeFiles(toolId, projectRoot, manifest);
-    if (compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
+    if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
     await this.replacePluginFiles(plugin, dist, toolId, projectRoot, manifest);
     return true;
   }
