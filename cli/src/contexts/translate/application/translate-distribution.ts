@@ -2,9 +2,9 @@ import type { PluginDistribution } from "../../../shared/domain/plugin/plugin-di
 import type { ReadonlySkipList } from "../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { ReadonlyNoticeList } from "../../tools/contract/plugin-install-notice.js";
 import type { ToolProfile } from "../../tools/contract/tool-profile.js";
-import type { OutputFile } from "../contract/output-file.js";
 import type { DistributionProbe } from "../contract/plugin-format.js";
 import { PluginContentEngine } from "../domain/engine.js";
+import type { OutputFile } from "../domain/output-file.js";
 
 export interface TranslateDistributionCommand {
   readonly distribution: PluginDistribution;

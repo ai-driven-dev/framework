@@ -1,5 +1,5 @@
 import type { FlatHooksBridge } from "../../tools/contract/build-contract.js";
-import type { OutputFile } from "../contract/output-file.js";
+import type { OutputFile } from "./output-file.js";
 
 /**
  * The generated hooks bridge of a flat install, whether it is built to disk or translated for an
