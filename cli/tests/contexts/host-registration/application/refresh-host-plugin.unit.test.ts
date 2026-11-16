@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
-import type { HostActions } from "../../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";

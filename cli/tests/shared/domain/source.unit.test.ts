@@ -466,7 +466,7 @@ describe("a manifest field of the wrong type", () => {
     );
   });
 
-  it.each(["a".repeat(40) + "x", "x" + "a".repeat(40)])(
+  it.each([`${"a".repeat(40)}x`, `x${"a".repeat(40)}`])(
     "refuses a sha with a stray character around the 40 hex ones: %s",
     (sha) => {
       expect(() => parsePluginSource({ kind: "github", repo: "owner/repo", sha })).toThrow(

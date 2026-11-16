@@ -20,10 +20,12 @@
         "noTsIgnore": "error"
       },
       "correctness": {
-        "noUnresolvedImports": "error"
+        "noUnresolvedImports": "error",
+        "noUnusedImports": "error"
       },
       "style": {
-        "noExportedImports": "error"
+        "noExportedImports": "error",
+        "useTemplate": "error"
       }
     }
   },
