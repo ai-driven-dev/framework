@@ -121,9 +121,8 @@ export const ALLOWED = new Set([
   "distribution->auth",
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
-  // Installation reads the installed tools' profiles. `installation->translate` is M-S1, narrowed to the translate contract.
+  // Installation reads the installed tools' profiles.
   "installation->tools",
-  "installation->translate",
   // Transitional (M-I1): the exact imports and the way out are in reference-context.md.
   "installation->host-registration",
   // Permanent: the target context map gives host-registration the contract of tools
@@ -154,7 +153,6 @@ export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/registration-record.ts",
     "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/withdrawal.ts",
   ],
-  "installation->translate": [],
 };
 
 /**

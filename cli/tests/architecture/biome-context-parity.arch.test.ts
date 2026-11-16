@@ -258,7 +258,6 @@ describe("the guard itself", () => {
     expect(interiorGroupsFor("installation")).toEqual([
       ...interiorGroupsOf("host-registration"),
       ...interiorGroupsOf("tools"),
-      ...interiorGroupsOf("translate"),
     ]);
     expect(
       interiorGroupsFor("tools"),

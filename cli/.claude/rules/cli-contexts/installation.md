@@ -21,7 +21,7 @@ paths:
 ## Suppliers
 
 - `tools`: the `ToolCatalog`, each profile's capabilities and the config artifacts it consumes.
-- `translate`: the canonical content and its translators. Transitional, M-S1 in `reference-context.md`.
+- `translate`: none. The translation comes in as a value that satisfies this context's own `ports/plugin/plugin-translation.ts`.
 - `host-registration`: its `contract/`, transitional, M-I1 in `reference-context.md`, with the exact imports.
 - `distribution`: none. The registry, the fetch and the chosen plugins come in as values that satisfy this context's own `ports/`.
 - `shared/`: errors, `Logger`, paths, the source value and the file ports.
