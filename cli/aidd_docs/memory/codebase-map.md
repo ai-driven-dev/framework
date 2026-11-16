@@ -130,7 +130,7 @@ src/
 │       ├── domain/
 │       ├── infrastructure/
 │       └── ports/
-├── orchestration/    # the scenarios a command drives, each reaching a context only through its application and contract
+├── orchestration/    # the scenarios that chain contexts: one command class per verb, no business rule
 │   └── doctor/    # running every doctor check over the installation
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
