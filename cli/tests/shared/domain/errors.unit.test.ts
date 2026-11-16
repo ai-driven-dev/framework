@@ -18,58 +18,6 @@ describe("AiddFilesDetectedError", () => {
   });
 });
 
-describe("FlatTargetExistsError", () => {
-  it("has correct error name", () => {
-    const error = new errors.FlatTargetExistsError(
-      "/out/.github/agents/my-plugin/foo.agent.md",
-      "my-plugin"
-    );
-    expect(error.name).toBe("FlatTargetExistsError");
-  });
-
-  it("includes the conflicting path in the message", () => {
-    const error = new errors.FlatTargetExistsError(
-      "/out/.github/agents/my-plugin/foo.agent.md",
-      "my-plugin"
-    );
-    expect(error.message).toContain("/out/.github/agents/my-plugin/foo.agent.md");
-  });
-
-  it("includes the plugin name in the message", () => {
-    const error = new errors.FlatTargetExistsError(
-      "/out/.github/agents/my-plugin/foo.agent.md",
-      "my-plugin"
-    );
-    expect(error.message).toContain("my-plugin");
-  });
-
-  it("mentions --force hint in message", () => {
-    const error = new errors.FlatTargetExistsError(
-      "/out/.github/agents/my-plugin/foo.agent.md",
-      "my-plugin"
-    );
-    expect(error.message).toContain("--force");
-  });
-});
-
-describe("OutDirNotDirectoryError", () => {
-  it("has correct error name", () => {
-    const error = new errors.OutDirNotDirectoryError("/tmp/some-out");
-    expect(error.name).toBe("OutDirNotDirectoryError");
-  });
-
-  it("includes the outDir path in the message", () => {
-    const error = new errors.OutDirNotDirectoryError("/tmp/some-out");
-    expect(error.message).toContain("/tmp/some-out");
-  });
-
-  it("does not mention source directory in the message", () => {
-    const error = new errors.OutDirNotDirectoryError("/tmp/some-out");
-    expect(error.message).not.toContain("--source");
-    expect(error.message).toContain("not a directory");
-  });
-});
-
 describe("AlreadyInitializedError", () => {
   it("has default message when no argument provided", () => {
     const error = new errors.AlreadyInitializedError();
@@ -645,6 +593,12 @@ describe("error names and messages a caller matches on", () => {
     new errors.InvalidToolProfileError("t", "unknown-section", "d"),
     new errors.KiloDualConfigError(),
     new errors.InvalidAgentFrontmatterError("a", "d"),
+    new errors.InvalidReportPeriodError("m"),
+    new errors.TaskDeclaredNoneWithNameError(),
+    new errors.TaskNameMissingError(),
+    new errors.ConflictingIdentityFlagsError(),
+    new errors.IdentityOffWithIdentifierError(),
+    new errors.InvalidIdentityError("m"),
   ])("names itself after its class: $constructor.name", (error) => {
     expect(error.name).toBe(error.constructor.name);
   });

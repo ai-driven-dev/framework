@@ -119,15 +119,13 @@ export function parseBuiltMarketplaceDirAtAnyRoot(
   const markerStart = segments.length - marker.length - 2;
   if (markerStart < 1) return undefined;
   const candidateMarker = segments.slice(markerStart, markerStart + marker.length);
-  const markerMatches = candidateMarker.every(
-    (segment, index) =>
-      marker[index] !== undefined && samePathSegment(segment, marker[index], platform)
+  const markerMatches = candidateMarker.every((segment, index) =>
+    samePathSegment(segment, marker[index], platform)
   );
   if (!markerMatches) return undefined;
   const projectRoot = segments.slice(0, markerStart).join(platform === "win32" ? "\\" : "/");
   if (projectRoot.length === 0) return undefined;
   const [marketplaceName, target] = segments.slice(markerStart + marker.length);
-  if (marketplaceName === undefined || target === undefined) return undefined;
   return { projectRoot, marketplaceName, target };
 }
 
@@ -142,12 +140,11 @@ function segmentsUnder(base: string, path: string, platform: string): string[] |
   const comparePath = foldCase(normalizedPath, platform);
   if (!comparePath.startsWith(`${compareBase}/`)) return undefined;
   const remainder = normalizedPath.slice(normalizedBase.length + 1);
-  if (remainder.length === 0) return undefined;
   return remainder.split("/");
 }
 
 function stripTrailingSeparator(p: string): string {
-  return p.length > 1 && p.endsWith("/") ? p.slice(0, -1) : p;
+  return p.endsWith("/") ? p.slice(0, -1) : p;
 }
 
 function foldCase(p: string, platform: string): string {
