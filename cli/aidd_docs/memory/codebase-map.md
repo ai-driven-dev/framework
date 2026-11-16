@@ -5,6 +5,7 @@ Where things live. The architecture rules carry no paths on purpose, so this is 
 ```txt
 src/
 ├── composition/    # one wiring module per migrated context, composed by the root until it moves here
+│   └── framework/    # the root's graph, one wire module per area, built on a shared base
 ├── contexts/    # bounded contexts — no barrel, nothing reaches inside another
 │   ├── auth/    # the one GitHub token: where it is read, stored and checked
 │   │   ├── application/
@@ -156,7 +157,7 @@ src/
 ## Entry points
 
 - `src/cli.ts` → `dist/cli.js`, bin `aidd`.
-- `src/composition/framework.ts` — the composition root. Start here when wiring anything.
+- `src/composition/framework.ts` — the composition root. Start here when wiring anything. It caches the graph and calls the per-area wire modules in `src/composition/framework/`.
 
 ## Where to add things
 

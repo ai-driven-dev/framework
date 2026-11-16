@@ -110,6 +110,7 @@
     "runtime": {
       "mutate": [
         "src/composition/framework.ts",
+        "src/composition/framework/*.ts",
         "src/composition/telemetry.ts",
         "src/composition/translate.ts",
         "src/presentation/terminal/prompter-adapter.ts",
