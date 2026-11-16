@@ -20,7 +20,9 @@ A review or validation finding is routed by what it is about. A refusal the user
 
 ## Handoff
 
-- Commit whatever this zone wrote, then open the draft pull request when no actionable finding remains.
+- Commit whatever this zone wrote, then use `/aidd-vcs:02-pull-request` when no actionable finding remains. Apply the repository's creation and review-handling contracts, including its draft/Ready policy.
+- Keep the top-level caller responsible through that skill's follow-up action. If a child creates the request, acknowledge its URL, head, pending checks/reviews and consumed passes, then perform the follow-up in the parent. A child never owns a T3 watch.
+- The URL is a creation result, not completion of delivery. Return only an explicit follow-up state: watching (turn ended, task pending), complete, or blocked with a handback. On a host wake resume follow-up against the current SHA; do not rerun the framing or creation steps.
 
 ```mermaid
 ---
@@ -54,6 +56,7 @@ flowchart TD
     direction TB
     PullRequest["/aidd-vcs:02-pull-request"]
     PullRequestUrl["$pull_request_url"]
+    FollowUp["Caller owns checks and reviews<br/>watching, complete, or blocked"]
   end
 
   Contract --> Validator
@@ -65,12 +68,13 @@ flowchart TD
   Reviewer -- "Return actionable review findings." --> Findings
   Reviewer -- "When the review clears, challenge the outcome." --> Challenge
   Challenge -- "Return actionable challenge findings." --> Findings
-  Challenge -- "When the outcome is trustworthy, open the draft pull request." --> PullRequest
+  Challenge -- "When the outcome is trustworthy, open the pull request." --> PullRequest
   Findings -- "Use product findings as the next Frame source." --> Frame
   Findings -- "Repair independent implementation findings in parallel." --> Batch
   Findings -- "Repair dependent implementation findings together." --> Deliver
   Batch --> Deliver
   PullRequest --> PullRequestUrl
+  PullRequestUrl --> FollowUp
 
   classDef skill fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px
   classDef agent fill:#F3E8FF,stroke:#9333EA,color:#581C87,stroke-width:2px
@@ -79,6 +83,6 @@ flowchart TD
 
   class Challenge,Batch,PullRequest skill
   class Reviewer,Validator agent
-  class Contract,Plan,CommittedCandidate,ValidationReports,Findings,PullRequestUrl artifact
+  class Contract,Plan,CommittedCandidate,ValidationReports,Findings,PullRequestUrl,FollowUp artifact
   class Frame,Deliver zone
 ```

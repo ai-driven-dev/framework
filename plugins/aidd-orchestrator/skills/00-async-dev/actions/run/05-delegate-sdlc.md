@@ -64,7 +64,8 @@ Every field is the result of an observation against git or the VCS host. None is
    esac
    ```
    Set `pr_decoration_applied = true`.
-9. **Forward** the structured output above to `06-write-audit`. Lifecycle artifacts (audit JSON, check run, label transition, completion marker) are produced post-Claude by the workflow job; this action only prepares the data.
+9. **Forward** the structured output above to `06-write-audit`. Lifecycle artifacts (audit JSON, check run, label transition, completion marker) are produced post-Claude by the workflow job; this action only prepares the data. Here `success` describes request creation, not completed checks or reviews.
+10. **Retain follow-up ownership.** The caller, not a delegated child, owns the created request's asynchronous result, including the fallback creation in step 7. On T3 link a request immediately after creating it. Return the URL, head, pending checks/reviews and shared correction count to `06-write-audit`; it prepares the artifact before the parent enters follow-up. A headless workflow with no persistent host must report that follow-up is unavailable; creation success must not imply checks and reviews were handled. This does not add a polling job or authorize external spending.
 
 ## Test
 

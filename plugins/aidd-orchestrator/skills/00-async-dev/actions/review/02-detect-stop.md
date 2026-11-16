@@ -1,41 +1,51 @@
 # 02 -- Detect Stop
 
-Decides whether to keep iterating or hand control to a human.
+Route the reconciled state using the shared follow-up contract.
 
 ## Input
-- `collect_output` (required) -- output of `01-collect-comments`
-- `config` (required) -- parsed `.claude/aidd-orchestrator.json`
-- `issue_labels` (required) -- current labels on the linked issue
+
+`collect_output` from `01-collect-comments`, configuration, current issue labels
+and the user's authorization. No independent iteration counter is accepted.
 
 ## Output
-```json
-{
-  "decision": "stop",
-  "reason": "human_reviewer",
-  "should_finalize": true
-}
-```
 
-`decision` is `"stop"` or `"continue"`. `reason` is one of `max_iterations`, `blocked_label`, `human_reviewer`, or `null`.
-
+- `decision`: `continue`, `wait` or `stop`.
+- `followup_state`: `reconciling`, `watching`, `handed-to-parent`, `complete`
+  or `blocked`.
+- `reason`: `blocked_label`, `max_iterations`, `human_reviewer`, `no_comments`
+  or a specific recovery/authorization/host failure.
+- `should_finalize`: true only for a terminal stop, never for an external wait.
 
 ## Process
 
-1. If `issue_labels` contains `config.labels.blocked` (default `claude/blocked`): decision = `stop`, reason = `blocked_label`. Stop here.
-2. If `collect_output.iteration > config.max_iterations`: decision = `stop`, reason = `max_iterations`. Stop here.
-3. **Iteration-1 special case**: when `collect_output.iteration == 1`, the human comments collected ARE the input the loop was triggered to address. Do NOT trigger `human_reviewer` on the first pass. Skip directly to step 5 and decide `continue` if there is at least one non-bot comment to fix, otherwise `stop` with `reason = "no_comments"` (handled below).
-4. **Iteration N > 1**: if any comment in `collect_output.comments` has `is_bot == false` AND `created_at` strictly newer than the timestamp recorded at the start of the previous fix iteration (read from the audit log): decision = `stop`, reason = `human_reviewer`. New human input mid-loop must always interrupt auto-fix.
-5. If after the above no stop was triggered:
-   - if there is at least one non-bot comment NOT yet addressed (per the audit log): decision = `continue`, reason = `null`.
-   - if no comments are left to address: decision = `stop`, reason = `no_comments`. Treat as a benign closure: the loop exits cleanly, action 04 still posts a summary saying "no fix iterations on this loop".
-6. Set `should_finalize = (decision == "stop")`.
+Apply [stop conditions](../../references/review/stop-conditions.md) in order:
 
-See `references/stop-conditions.md` for rationale.
+1. Honor an explicit stop/blocked label or a human direction needing a decision.
+   New human feedback within the authorized scope is assessed normally; its
+   timestamp or author type alone does not force a manual restart.
+2. Block mutations on incomplete recovery, missing authorization, another owner
+   or incomplete collection. Return the exact reason, not `no_comments`.
+3. Recover an in-flight batch before proposing another. Reconcile already
+   acknowledged effects without repeating them. A reserved batch is not a new
+   iteration on every invocation; completed tests/pushes/replies stay completed.
+4. If actionable feedback remains, continue only with an authorized unfinished
+   batch or capacity for a new one under the shared limit. Otherwise stop with
+   `max_iterations`, preserving every unresolved finding. This applies equally
+   to human and bot feedback and failed checks.
+5. If no corrective work is available but a result of the current SHA is pending,
+   return `wait`. The top-level owner prepares any local continuation artifacts,
+   then uses the shared follow-up action to watch and end the turn on T3. A
+   delegated child returns `handed-to-parent` and never watches. A host without
+   a persistent wake mechanism reports `blocked`; do not poll or falsely finish.
+6. Only when every expected result of the current SHA is terminal and assessed,
+   and no feedback remains, return `stop`, `complete`, `no_comments`. This also
+   applies after the second batch: examine its results before handing back.
 
 ## Test
 
-- `iteration = 1` with one unaddressed human comment, no blocked label: `decision = continue`, reason = `null`. The next pass runs `03-fix-iteration`.
-- `iteration = 1` with no human comments, no blocked label: `decision = stop`, reason = `no_comments`.
-- `iteration = 2` with a human comment whose `created_at` is after the iteration 1 start timestamp: `decision = stop`, reason = `human_reviewer`.
-- `iteration = 4`, `max_iterations = 3`: `decision = stop`, reason = `max_iterations`.
-- `issue_labels` containing `claude/blocked`: `decision = stop`, reason = `blocked_label`, regardless of iteration.
+- Only an unaddressed Codex/Osly comment: `continue` with available budget.
+- Only red CI: assess the failure; never close as `no_comments`.
+- Green CI with a late reviewer pending: `wait`, not terminal success.
+- Two completed batches plus a new finding: `stop / max_iterations`.
+- Duplicate wake after batch 2 while its checks run: `wait`, count unchanged.
+- Unknown count or owner: `blocked`, with no corrective mutation.

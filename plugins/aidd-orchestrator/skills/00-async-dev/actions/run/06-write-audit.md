@@ -36,7 +36,7 @@ A single file at `$RUNNER_TEMP/run-result.json` (workflow-readable):
 1. Merge `run_record` and `delegate_output` into the JSON shape above. Add `started_at` from `03-acquire-lock`, `ended_at = now (UTC)`.
 2. Set `error` to a short string when `outcome = "blocked"`; otherwise `null`.
 3. Write `$RUNNER_TEMP/run-result.json` (or `aidd_docs/async-runs/.pending/<run_id>.json` when running outside a GitHub Actions runner). The file is the sole hand-off contract between the Claude skill and the workflow's post-job.
-4. Return the path to the caller. The agent may exit after this step; lifecycle effects happen post-Claude.
+4. Return the path to the caller. Lifecycle effects happen post-Claude, but creation is not completion of delivery. The top-level caller now applies the repository's review-handling contract and the follow-up action of `/aidd-vcs:02-pull-request`. A child returns URL, head, checks/reviews and consumed passes; it never watches. Prepare all artifacts before the parent's final watch call and end the turn immediately after it. If that capability or a persistent host is absent, report the missing follow-up capability without claiming that the job's completion marker proves monitored reviews. Do not silently install plugins or change workflows.
 
 ## Test
 

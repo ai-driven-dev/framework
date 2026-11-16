@@ -1,43 +1,41 @@
 # Stop conditions
 
-The review loop evaluates four conditions, in order. The first match wins; later conditions are ignored.
+The follow-up action of `/aidd-vcs:02-pull-request` owns the review lifecycle.
+This reference adapts async-dev's legacy audit fields; it grants no second
+budget and never filters feedback solely because its author is a bot.
 
-## 1. Blocked label
+## Shared budget
 
-If the linked issue carries the configured `blocked` label (default `claude/blocked`), the loop stops with `reason = blocked_label`. The Check Run conclusion is `action_required`.
+Use the repository's per-PR batch limit, otherwise two. `config.max_iterations`
+may lower that limit, never raise it. A legacy value of 3 therefore grants at
+most two batches without a different explicit repository contract. New setups
+use 2. Count reserved batches across all entry points, SHAs, jobs and sessions.
+`iteration` is a projection of that shared number, not the next loop turn.
+A missing legacy audit cannot reset the count; incomplete recovery blocks
+mutations. Resume an in-flight batch before opening another and never repeat
+acknowledged writes. Only its original authorized actions belong to that batch.
 
-Use case: a maintainer noticed a deeper issue and wants Claude out of the loop without writing a comment.
+## Decisions
 
-## 2. Max iterations
+| State | Decision |
+| --- | --- |
+| Explicit blocked label or stop | `blocked_label`; preserve the findings |
+| Human decision or scope/authorization change needed | `human_reviewer`; hand back the decision |
+| Unknown history, competing owner, incomplete collection or missing capability | `blocked` with the specific cause; no corrective mutation |
+| Actionable feedback and an authorized in-flight batch or remaining capacity | `continue`; reserve before the first corrective mutation |
+| Actionable new feedback and all batches completed | `max_iterations`; no third correction |
+| No corrective work available, results still pending | `wait` through the parent-owned persistent host; absence of that host is `blocked` |
+| Current SHA's expected checks/reviewers verified, all feedback assessed | `complete`, represented as `no_comments` in the legacy audit |
 
-If the iteration counter has exceeded `config.max_iterations` (default `3`), the loop stops with `reason = max_iterations`. The Check Run conclusion is `neutral`.
+Human and bot comments, edited feedback, old unresolved threads and failed
+checks all enter assessment. A duplicate event spends no batch. New human
+feedback in scope is not automatically a stop; an actual decision is.
+After batch 2, its pending results still require reconciliation. On T3 an
+external wait ends the turn through the follow-up action; it is not an
+immediate collect/fix loop. Finalization records only a terminal outcome.
+The legacy workflow's review-complete marker means the job ended, not that the
+PR's checks/reviews passed. No marker substitutes for current-SHA evidence.
 
-Use case: convergence failure. After N rounds of fixes the reviewer probably wants to look at the PR.
-
-## 3. Human reviewer (iteration > 1 only)
-
-The human-reviewer stop **only fires from iteration 2 onwards**. On iteration 1, the human comments collected ARE the input the loop was triggered to address; treating them as a stop signal would make the loop a no-op.
-
-From iteration 2 onwards, if any new comment authored since the previous iteration started is from a non-bot user, the loop stops with `reason = human_reviewer`. The Check Run conclusion is `success` if the last iteration's tests passed, else `neutral`.
-
-Detection rules for "non-bot":
-- `author.type == "Bot"` from the GitHub API → bot
-- author login ends with `[bot]` → bot
-- author login is in `config.bot_allowlist` (optional) → bot
-- otherwise → human
-
-Use case: a reviewer wrote feedback during the loop. Claude must not loop on top of human input. The next pass requires an explicit re-trigger.
-
-## 4. No comments left to address
-
-If no unaddressed non-bot comments remain in the audit log, the loop stops with `reason = no_comments`. Benign closure: action 04 still posts a summary saying "no fix iterations on this loop". The Check Run conclusion is `success`.
-
-Use case: a `to-review` trigger with nothing concrete to fix (already addressed, or trigger fired by mistake).
-
-## Continue
-
-If none of the above match, the decision is `continue`. `03-fix-iteration` runs and the loop returns to `01-collect-comments`.
-
-## Why this order
-
-Blocked label is the strongest explicit human signal. Max iterations protects against infinite loops even when bots keep commenting. Human reviewer detection is third because a `blocked` label or `max_iterations` could coincide with a human comment, and we want the explicit signals to win. No-comments is the catch-all benign exit.
+These are internal decisions. At finalization, every blocked state projects as
+`stop_reason = "blocked_label"` for the existing workflow consumer, retaining
+the specific decision in `stop_cause`. Labels cannot reset the durable budget.

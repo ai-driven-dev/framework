@@ -59,7 +59,7 @@ Sets up async-dev in a repo. Detects context, asks for runtime parameters, gener
 | 04  | `generate-local-script`           | Emit poll/daemon scripts (local mode only) from `assets/setup/local-*-template.sh`            |
 | 05  | `write-config`                    | Persist `.claude/aidd-orchestrator.json` from `assets/setup/config-template.json`             |
 | 06  | `bootstrap-labels`                | Create `to-implement` / `to-review` / `claude/*` labels via `gh`                              |
-| 07  | `install-user-scope-plugins`      | Install `aidd-orchestrator` + `aidd-dev` at user scope (local mode)                           |
+| 07  | `install-user-scope-plugins`      | Ensure orchestrator, implementation and VCS follow-up providers (local mode)                           |
 | 08  | `configure-remote-secrets`        | Sync `CLAUDE_CODE_OAUTH_TOKEN`, `AIDD_BOT_TOKEN`, etc. (remote mode)                          |
 | 09  | `bootstrap-scheduling`            | Schedule the poll routine (local) or rely on workflow webhook (remote)                        |
 | 10  | `commit-and-push`                 | Stage generated files, conventional-commit, push                                              |
@@ -88,18 +88,21 @@ Default flow: `01 → 02 → 03 → 04 → 05 → 06`. One cycle per ready issue
 
 ### Review (4 actions)
 
-Closes the loop after a PR is opened by the run flow. Detects when to keep auto-fixing and when to hand off to a human. Idempotent on re-runs.
+Resumes the existing PR follow-up owner and budget through the VCS follow-up contract. Assesses human and bot feedback, fixes bounded batches, and distinguishes an external wait from terminal handback.
 
 | #   | Action               | Role                                                                                       |
 | --- | -------------------- | ------------------------------------------------------------------------------------------ |
-| 01  | `collect-comments`   | Read all PR + linked-issue comments newer than the last bot activity                       |
-| 02  | `detect-stop`        | Decide stop vs continue using `references/review/stop-conditions.md`                       |
-| 03  | `fix-iteration`      | Delegate fixes to the SDLC capability; reply to each addressed comment                     |
-| 04  | `finalize`           | Resolve threads, post the structured summary, set `claude/awaiting-review` or `blocked`    |
+| 01  | `collect-comments`   | Recover shared state and reconcile all checks, reviews and conversations                  |
+| 02  | `detect-stop`        | Decide continue, external wait or terminal stop using `references/review/stop-conditions.md` |
+| 03  | `fix-iteration`      | Execute or recover one reserved batch through the responsible capability                   |
+| 04  | `finalize`           | Project a terminal outcome for the existing post-job; no independent counter              |
 
 Files: `actions/review/01-collect-comments.md` ... `actions/review/04-finalize.md`.
 
-Default flow: `01 → 02 → (03 → 01 loop if continue) → 04`. Stop conditions in `references/review/stop-conditions.md`.
+Default flow: `01 → 02`; continue goes to `03 → 01`, terminal stop to `04`.
+An external wait goes to the parent-owned VCS follow-up action and ends the
+turn; a host wake resumes at `01`. No polling loop. Stop conditions in
+`references/review/stop-conditions.md`.
 
 ## Rules
 

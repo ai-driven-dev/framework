@@ -1,6 +1,6 @@
 ---
 name: 01-sdlc
-description: Orchestrates a request from framing to a draft pull request, autonomous or supervised, isolating implementation, independent review, and final outcome challenge. Use when the user wants to deliver a change end to end. Not for one step.
+description: Orchestrates a request from framing through pull request follow-up, autonomous or supervised, isolating implementation, independent review, and final outcome challenge. Use when the user wants to deliver a change end to end. Not for one step.
 argument-hint: request | interactive request
 ---
 
@@ -32,17 +32,19 @@ flowchart TD
     direction TB
     Check["03 Check<br/>interactive: pause on the outcome"]
     PullRequest["$pull_request"]
+    FollowUp["Caller owns asynchronous follow-up"]
   end
 
   Request --> Frame
   Frame --> Deliver
   Deliver --> Check
   Check --> PullRequest
+  PullRequest --> FollowUp
 
   classDef artifact fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px
   classDef zone fill:#F1F5F9,stroke:#64748B,color:#0F172A,stroke-width:2px
 
-  class Request,PullRequest artifact
+  class Request,PullRequest,FollowUp artifact
   class Frame,Deliver,Check zone
 ```
 
