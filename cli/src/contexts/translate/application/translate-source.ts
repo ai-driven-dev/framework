@@ -77,11 +77,7 @@ export class BuildNativeTree implements FrameworkBuild {
       throw new InvalidSourceMarketplaceError("missing 'plugins' array");
     }
     for (const entry of obj.plugins as unknown[]) {
-      if (
-        !entry ||
-        typeof entry !== "object" ||
-        typeof (entry as Record<string, unknown>).name !== "string"
-      ) {
+      if (!entry || typeof (entry as Record<string, unknown>).name !== "string") {
         throw new InvalidSourceMarketplaceError("each plugin entry must have a 'name' string");
       }
     }
