@@ -8,17 +8,21 @@ The request and its source: the confirmed frame, or the existing skill.
 
 ## Process
 
-1. List each file to write, with the breaches of [skill-authoring.md](../references/skill-authoring.md) it fixes and the requested changes it makes.
+1. List each file to write with its changes: the requested ones and the [skill-authoring.md](../references/skill-authoring.md) breaches it fixes.
    - Nothing to change: say so and stop.
-2. List as content to keep each rule, step, branch, wait, loop and stop of the source, with its file.
+2. List as content to keep each rule, step, branch, wait, loop and stop of the existing skill, with its file.
    - Changed by the request: list it as a change instead.
-3. List each fact of the source the rules leave no home, and each addition beyond the source and the request.
-4. Merge two actions that share most logic, so few remain.
-5. Number each action and fill its row: slug, input to output, rules, the cases that enter it, its next actions and outcomes with their condition, check step.
+3. List each fact of the source the rules leave no home.
+4. List each addition beyond the source and the request.
+5. Merge two actions that share most logic.
+6. Fill one row per action in `| # | Slug | Title | Input -> output | Rules | Cases in | Next, on condition | Check step |`.
    - Other file: give its path, kind and change.
-6. For each confirmed target, read its source in [tool-write.md](../references/tool-write.md) and ask the user one question per frontmatter field it lists beyond `name` and `description`.
-7. Confirm the table with the user, then read [write](03-write.md).
+7. Take each target from the confirmed frame.
+   - Existing skill: take each root of [tool-write.md](../references/tool-write.md) that holds it.
+8. For each target, ask the user one question per frontmatter field the plan needs beyond `name` and `description`, read from its official source.
+9. Present the table, then end the turn and wait for the user's own answer.
+10. Read [write](03-write.md).
 
 ## Output
 
-A confirmed table, one row per file, with each target's frontmatter, the content to keep, the changes, and the facts dropped or added.
+A confirmed table with each target and its frontmatter, the content to keep, the changes, and the facts dropped or added.
