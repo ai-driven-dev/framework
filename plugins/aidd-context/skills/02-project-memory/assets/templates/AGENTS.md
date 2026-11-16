@@ -14,7 +14,7 @@
 - **Use as few words as possible** without changing meaning: "Less is more".
 - **Maximize precision per word**: no filler, repetition, or redundant paraphrasing.
 - **Prefer short bullets.** Number ordered steps.
-- **When clarification is needed,** prefer the host's question tool when available; otherwise ask in chat. Offer clear options and put the recommended choice first.
+- **Ask with options, recommended first,** via the host's question tool, else in chat.
 - **Skip redundant preambles, recaps, and closers.**
 - **Quote the shortest decisive error line.**
 - **Report progress at milestones, not per tool call.** Use formatting only when it improves scanability.

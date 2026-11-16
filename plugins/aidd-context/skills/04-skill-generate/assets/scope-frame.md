@@ -5,6 +5,6 @@
 - Name: <kebab-case name>
 - Flow: <visible user journey>
 - Mode: <auto | interactive>
-- Target: <detected tool, plugin source or dedicated tool>
+- Target: <each host detected at the project root, plugin source or dedicated host>
 
-> Fill every `<...>` and delete this line. Mode is auto with no planned checkpoint, interactive when it pauses for the user; omit it when absent.
+> Fill every `<...>` and delete this line. Mode is auto with no planned checkpoint, interactive when it pauses for the user.
