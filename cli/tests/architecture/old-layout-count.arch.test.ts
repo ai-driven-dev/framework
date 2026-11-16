@@ -1,33 +1,14 @@
 /**
- * The old layout (`contexts/framework/`) was drained into the target one (`shared/`, a
- * context per concern). It is held at zero files: gone, and it stays gone. So are the other
- * folders already gone: no `src/` area and no `tests/` area may be recreated under their old
- * name.
- * `COMMITTED_COUNTS` and `countVerdict` go with their tests once nothing else needs a count;
- * the guards for the areas already gone stay.
+ * No `src/` area and no `tests/` area may be recreated under the name of a folder already
+ * gone. A context recreated under `src/contexts/` is caught by the context graph, which
+ * declares every context that may exist.
  */
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLI_ROOT, sourceFiles } from "./helpers.js";
 
-/** Source files under each folder that is still counted. Lower a value when files leave. */
-const COMMITTED_COUNTS: Readonly<Record<string, number>> = {
-  "src/contexts/framework/": 0,
-};
-
-/** Null when `count` is the committed one, else what to do about the difference. */
-function countVerdict(folder: string, count: number, committed: number): string | null {
-  if (count > committed) {
-    return `${folder} went from ${committed} to ${count} files: nothing new enters the old layout`;
-  }
-  if (count < committed) {
-    return `${folder} went from ${committed} to ${count} files: lower the committed value`;
-  }
-  return null;
-}
-
-/** The top-level entries of `src/`. A file moved to any other one escapes the counts above. */
+/** The top-level entries of `src/`. A file moved to any other one escapes every rule written per area. */
 const KNOWN_SOURCE_AREAS: ReadonlySet<string> = new Set([
   "cli.ts",
   "composition",
@@ -69,15 +50,7 @@ function testFiles(): string[] {
     );
 }
 
-describe("the old layout only shrinks", () => {
-  for (const [folder, committed] of Object.entries(COMMITTED_COUNTS)) {
-    it(`${folder} holds its committed file count`, () => {
-      const count = sourceFiles().filter((file) => file.startsWith(folder)).length;
-
-      expect(countVerdict(folder, count, committed) ?? "").toBe("");
-    });
-  }
-
+describe("the old layout stays gone", () => {
   it("src/ holds no top-level area beyond the known ones", () => {
     expect(unknownAreaVerdicts(sourceFiles())).toEqual([]);
   });
@@ -88,12 +61,6 @@ describe("the old layout only shrinks", () => {
 });
 
 describe("the guard itself", () => {
-  it("says what to do about a count one above or one below the committed value", () => {
-    expect(countVerdict("src/contexts/framework/", 40, 39)).toContain("nothing new enters");
-    expect(countVerdict("src/contexts/framework/", 38, 39)).toContain("lower the committed value");
-    expect(countVerdict("src/contexts/framework/", 39, 39)).toBeNull();
-  });
-
   it("reports a file in a top-level src/ area that is not a known one", () => {
     expect(
       unknownAreaVerdicts([
