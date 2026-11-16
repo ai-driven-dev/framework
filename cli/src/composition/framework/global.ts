@@ -1,4 +1,3 @@
-import { RestoreAllUseCase } from "../../contexts/framework/application/global/restore-all-use-case.js";
 import { InstallAiToolUseCase } from "../../contexts/framework/application/install/install-ai-tool-use-case.js";
 import { InstallGlobalPluginsUseCase } from "../../contexts/framework/application/setup/install-global-plugins-use-case.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
@@ -9,9 +8,11 @@ import { ListInstalledTools } from "../../contexts/installation/application/list
 import { ReportStatus } from "../../contexts/installation/application/report-status.js";
 import { ResolveSyncConflict } from "../../contexts/installation/application/resolve-sync-conflict.js";
 import { Restore } from "../../contexts/installation/application/restore/restore.js";
+import { RestoreGlobal } from "../../contexts/installation/application/restore/restore-global.js";
 import { UpdateTool } from "../../contexts/installation/application/update/update-tool.js";
 import { ReportAllStatus } from "../../orchestration/global/report-all-status.js";
 import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update-decision.js";
+import { RestoreAll } from "../../orchestration/global/restore-all.js";
 import { UpdateTools } from "../../orchestration/global/update-tools.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";
@@ -91,11 +92,10 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     builtMaterializationDeps
   );
   const statusAllUseCase = new ReportAllStatus(statusUseCase);
-  const restoreAllUseCase = new RestoreAllUseCase(
-    manifestRepo,
+  const restoreAllUseCase = new RestoreAll(
     prompter,
     statusUseCase,
-    restoreUseCase
+    new RestoreGlobal(manifestRepo, restoreUseCase)
   );
   const updateToolsUseCase = new UpdateTools(
     new ListInstalledTools(manifestRepo),

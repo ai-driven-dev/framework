@@ -1,29 +1,30 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { RestoreAllUseCase } from "../../../../src/contexts/framework/application/global/restore-all-use-case.js";
-import { PluginAddUseCase } from "../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
-import { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.js";
-import { Restore } from "../../../../src/contexts/installation/application/restore/restore.js";
-import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
-import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import { NoManifestError } from "../../../../src/shared/domain/errors.js";
-import type { AiToolId } from "../../../../src/shared/domain/tool.js";
-import type { Prompter } from "../../../../src/shared/ports/prompter.js";
+import { PluginAddUseCase } from "../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { ReportStatus } from "../../../src/contexts/installation/application/report-status.js";
+import { Restore } from "../../../src/contexts/installation/application/restore/restore.js";
+import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/restore-global.js";
+import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { RestoreAll } from "../../../src/orchestration/global/restore-all.js";
+import { NoManifestError } from "../../../src/shared/domain/errors.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import {
   buildUnitDeps,
   initAndInstall,
   initProject,
   installTool,
-} from "../../../helpers/ports/build-unit-deps.js";
-import { CheckboxRecordingPrompter } from "../../../helpers/ports/checkbox-recording-prompter.js";
-import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakePlatform } from "../../../helpers/ports/fake-platform.js";
-import { OverwritePrompter, ScriptedPrompter } from "../../../helpers/ports/scripted-prompter.js";
-import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
+} from "../../helpers/ports/build-unit-deps.js";
+import { CheckboxRecordingPrompter } from "../../helpers/ports/checkbox-recording-prompter.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
+import { FakePlatform } from "../../helpers/ports/fake-platform.js";
+import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
+import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -61,12 +62,12 @@ async function installPlugin(
   });
 }
 
-function makeRestoreAllUseCase(
+function makeRestoreAll(
   deps: Deps,
   pluginReader: PluginDistributionReaderAdapter,
   prompter: OverwritePrompter | ScriptedPrompter = new OverwritePrompter(),
   withBuiltDeps = false
-): RestoreAllUseCase {
+): RestoreAll {
   const statusUseCase = new ReportStatus(
     deps.fs,
     deps.manifestRepo,
@@ -85,7 +86,11 @@ function makeRestoreAllUseCase(
     deps.assetProvider,
     withBuiltDeps ? builtDeps(deps) : undefined
   );
-  return new RestoreAllUseCase(deps.manifestRepo, prompter, statusUseCase, restoreUseCase);
+  return new RestoreAll(
+    prompter,
+    statusUseCase,
+    new RestoreGlobal(deps.manifestRepo, restoreUseCase)
+  );
 }
 
 function countingReader(fs: Deps["fs"]): {
@@ -102,7 +107,7 @@ function countingReader(fs: Deps["fs"]): {
   return { reader, count: () => calls };
 }
 
-describe("RestoreAllUseCase — the --force flag", () => {
+describe("RestoreAll — the --force flag", () => {
   /**
    * `--force` has to reach the use case: folded into `interactive`, a non-TTY run decided
    * with `force: false` and reported "all files are unmodified" over a modified file.
@@ -132,7 +137,7 @@ describe("RestoreAllUseCase — the --force flag", () => {
   it("restores a modified tracked file when force is set", async () => {
     const { deps, reader, trackedPath } = await setupWithModifiedTrackedFile();
 
-    const result = await makeRestoreAllUseCase(deps, reader).execute(
+    const result = await makeRestoreAll(deps, reader).execute(
       PROJECT_ROOT,
       true,
       false,
@@ -147,7 +152,7 @@ describe("RestoreAllUseCase — the --force flag", () => {
   it("keeps a modified tracked file and reports why when force is not set", async () => {
     const { deps, reader, trackedPath } = await setupWithModifiedTrackedFile();
 
-    const result = await makeRestoreAllUseCase(deps, reader).execute(
+    const result = await makeRestoreAll(deps, reader).execute(
       PROJECT_ROOT,
       false,
       false,
@@ -160,7 +165,7 @@ describe("RestoreAllUseCase — the --force flag", () => {
   });
 });
 
-describe("RestoreAllUseCase — an interactive run that ticks nothing", () => {
+describe("RestoreAll — an interactive run that ticks nothing", () => {
   it("restores nothing: an empty selection is a decision, not the absence of one", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -170,7 +175,7 @@ describe("RestoreAllUseCase — an interactive run that ticks nothing", () => {
     await deps.fs.writeFile(trackedPath, "EDITED OUTSIDE THE CLI");
     const prompter = new ScriptedPrompter([ScriptedPrompter.answer.checkbox([])]);
 
-    const result = await makeRestoreAllUseCase(
+    const result = await makeRestoreAll(
       deps,
       new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes()),
       prompter
@@ -188,7 +193,7 @@ describe("RestoreAllUseCase — an interactive run that ticks nothing", () => {
   });
 });
 
-describe("RestoreAllUseCase — plugin materialization", () => {
+describe("RestoreAll — plugin materialization", () => {
   it("restores a corrupted plugin file with exactly one materialization call (translate-mode: claude)", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -204,7 +209,7 @@ describe("RestoreAllUseCase — plugin materialization", () => {
 
     // Counting reader wired only from here — installPlugin's own read() must not count.
     const { reader, count } = countingReader(deps.fs);
-    const useCase = makeRestoreAllUseCase(deps, reader);
+    const useCase = makeRestoreAll(deps, reader);
     await useCase.execute(PROJECT_ROOT, false, false, catalogOf());
 
     expect(deps.fs.getFile(pluginFile)).not.toBe("CORRUPTED CONTENT");
@@ -232,7 +237,7 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     await deps.fs.writeFile(pluginFile, "CORRUPTED CONTENT");
 
     const { reader, count } = countingReader(deps.fs);
-    const useCase = makeRestoreAllUseCase(deps, reader, new OverwritePrompter(), true);
+    const useCase = makeRestoreAll(deps, reader, new OverwritePrompter(), true);
     await useCase.execute(PROJECT_ROOT, false, false, catalogOf());
 
     expect(deps.fs.getFile(pluginFile)).toBe("CORRUPTED CONTENT");
@@ -249,7 +254,7 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     const pluginFile = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
     await deps.fs.writeFile(pluginFile, "CORRUPTED CONTENT");
 
-    const result = await makeRestoreAllUseCase(deps, reader).execute(
+    const result = await makeRestoreAll(deps, reader).execute(
       PROJECT_ROOT,
       false,
       false,
@@ -273,7 +278,7 @@ describe("RestoreAllUseCase — plugin materialization", () => {
       ?.getPlugins(TOOL.claude)
       .find((p) => p.name === "sample-plugin");
 
-    const result = await makeRestoreAllUseCase(deps, reader).execute(
+    const result = await makeRestoreAll(deps, reader).execute(
       PROJECT_ROOT,
       false,
       false,
@@ -311,7 +316,7 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     const prompter = new ScriptedPrompter([
       ScriptedPrompter.answer.checkbox([".vscode/keybindings.json"]),
     ]);
-    const useCase = makeRestoreAllUseCase(deps, reader, prompter);
+    const useCase = makeRestoreAll(deps, reader, prompter);
     await useCase.execute(PROJECT_ROOT, false, true, catalogOf());
 
     expect(deps.fs.getFile(pluginFile)).toBe("CORRUPTED CONTENT");
@@ -346,17 +351,17 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     await deps.fs.writeFile(claudePluginFile, "CORRUPTED CLAUDE");
     await deps.fs.writeFile(codexPluginFile, "CORRUPTED CODEX");
 
-    await makeRestoreAllUseCase(deps, reader).execute(PROJECT_ROOT, false, false, catalogOf());
+    await makeRestoreAll(deps, reader).execute(PROJECT_ROOT, false, false, catalogOf());
 
     expect(deps.fs.getFile(claudePluginFile)).not.toBe("CORRUPTED CLAUDE");
     expect(deps.fs.getFile(codexPluginFile)).not.toBe("CORRUPTED CODEX");
   });
 });
 
-describe("RestoreAllUseCase — consent to overwrite", () => {
+describe("RestoreAll — consent to overwrite", () => {
   type RestoreCommand = Parameters<Restore["execute"]>[0];
 
-  /** Records what RestoreAllUseCase asks the restore to do, without doing it. */
+  /** Records what RestoreAll asks the restore to do, without doing it. */
   function recordAsks(restoreUseCase: Restore): RestoreCommand[] {
     const seen: RestoreCommand[] = [];
     restoreUseCase.execute = async (options: RestoreCommand) => {
@@ -393,12 +398,11 @@ describe("RestoreAllUseCase — consent to overwrite", () => {
       prompter
     );
     const seen = recordAsks(restoreUseCase);
-    await new RestoreAllUseCase(deps.manifestRepo, prompter, statusUseCase, restoreUseCase).execute(
-      PROJECT_ROOT,
-      interactive,
-      force,
-      catalogOf()
-    );
+    await new RestoreAll(
+      prompter,
+      statusUseCase,
+      new RestoreGlobal(deps.manifestRepo, restoreUseCase)
+    ).execute(PROJECT_ROOT, interactive, force, catalogOf());
     const asked = seen[0];
     expect(asked).toBeDefined();
     return asked as RestoreCommand;
@@ -417,7 +421,7 @@ describe("RestoreAllUseCase — consent to overwrite", () => {
   });
 });
 
-describe("RestoreAllUseCase — native-only tools", () => {
+describe("RestoreAll — native-only tools", () => {
   it("forwards the native-only tool ids the restore it delegates to found", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -446,11 +450,10 @@ describe("RestoreAllUseCase — native-only tools", () => {
       nativeOnlyToolIds: [TOOL.claude],
     });
 
-    const result = await new RestoreAllUseCase(
-      deps.manifestRepo,
+    const result = await new RestoreAll(
       prompter,
       statusUseCase,
-      restoreUseCase
+      new RestoreGlobal(deps.manifestRepo, restoreUseCase)
     ).execute(PROJECT_ROOT, true, false, catalogOf());
 
     expect(result.nativeOnlyToolIds).toEqual(["claude"]);
@@ -474,7 +477,7 @@ function restoreAllDelegatingTo(
   deps: Deps,
   prompter: Prompter,
   delegate: (options: RestoreCommand) => Promise<RestoreOutcome>
-): RestoreAllUseCase {
+): RestoreAll {
   const statusUseCase = new ReportStatus(
     deps.fs,
     deps.manifestRepo,
@@ -490,7 +493,11 @@ function restoreAllDelegatingTo(
     prompter
   );
   restoreUseCase.execute = delegate;
-  return new RestoreAllUseCase(deps.manifestRepo, prompter, statusUseCase, restoreUseCase);
+  return new RestoreAll(
+    prompter,
+    statusUseCase,
+    new RestoreGlobal(deps.manifestRepo, restoreUseCase)
+  );
 }
 
 function recordingDelegate(): {
@@ -507,7 +514,7 @@ function recordingDelegate(): {
   };
 }
 
-describe("RestoreAllUseCase — before delegating", () => {
+describe("RestoreAll — before delegating", () => {
   it("refuses a project that has no manifest", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const useCase = restoreAllDelegatingTo(
@@ -571,7 +578,7 @@ describe("RestoreAllUseCase — before delegating", () => {
   });
 });
 
-describe("RestoreAllUseCase — the interactive file picker", () => {
+describe("RestoreAll — the interactive file picker", () => {
   const KEYBINDINGS = ".vscode/keybindings.json";
   const SETTINGS = ".vscode/settings.json";
 
