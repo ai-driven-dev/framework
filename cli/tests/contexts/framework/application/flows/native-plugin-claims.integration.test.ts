@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
@@ -23,6 +22,7 @@ import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-f
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { userMarketplaceRemover } from "../../../../helpers/user-marketplace-remover.js";
 import { userScopeCleaner } from "../../../../helpers/user-scope-cleaner.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import {
@@ -312,7 +312,7 @@ for (const [toolId, catalogPath] of [
         ).rejects.toThrow(/does not support targeted.*update/);
         expect(activator.updatedPlugins).toEqual([]);
       }
-      const removeMarketplace = new UserMarketplaceRemoveUseCase(
+      const removeMarketplace = userMarketplaceRemover(
         new InMemoryFileAdapter(),
         user,
         registry,

@@ -1,5 +1,6 @@
 import { CheckMarketplaces } from "../../contexts/distribution/application/check-marketplaces.js";
 import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.js";
+import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
 import type { MarketplaceRemover } from "../../contexts/distribution/ports/marketplace-remover.js";
 import {
@@ -12,15 +13,18 @@ import {
   SyncToolSettingsFiles,
 } from "../../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { ProjectPluginCleanup } from "../../contexts/framework/application/ownership/project-plugin-cleanup.js";
-import { UserMarketplaceRemoveUseCase } from "../../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
+import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
 import { ListPluginSources } from "../../contexts/installation/application/list-plugin-sources.js";
+import { PurgeMarketplacePlugins } from "../../contexts/installation/application/plugin/purge-marketplace-plugins.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/plugin/remove-plugins-from-marketplace.js";
+import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove.js";
+import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
 import type { Base } from "./base.js";
@@ -66,11 +70,17 @@ export function wireMarketplace(base: Base, inst: Installation) {
       projectCleanup.detachClaims(projectRoot, nativeRefs, plugins),
     prompter
   );
-  const userMarketplaceRemoveUseCase = new UserMarketplaceRemoveUseCase(
-    fs,
-    userManifestRepo,
-    marketplaceRegistry,
-    nativeHostRegistrationGate
+  const userMarketplaceRemoveUseCase = new RemoveUserMarketplace(
+    new FindUserMarketplace(marketplaceRegistry),
+    new PurgeMarketplacePlugins(
+      fs,
+      userManifestRepo,
+      nativeHostRegistrationGate,
+      (plugin, tool, home) =>
+        userScopeFilesSafeToDelete(fs, { debug() {}, info() {}, warn() {} }, plugin, tool, home)
+    ),
+    new RemoveMarketplace(marketplaceRegistry),
+    resolveHomeDir()
   );
   // Removing deletes installed plugin files, which is framework work: framework's two remove
   // commands answer distribution's `MarketplaceRemover`.

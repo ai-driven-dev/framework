@@ -38,6 +38,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // finding the marketplace a removal targets and forgetting it, the two ends of that removal
     "src/contexts/distribution/application/remove/find-marketplace-to-remove.ts",
     "src/contexts/distribution/application/remove/remove-marketplace.ts",
+    "src/contexts/distribution/application/remove/find-user-marketplace.ts",
     "src/contexts/distribution/contract/marketplace-removal.ts",
     // where this run's build of each registered marketplace lives, recomputed for a check
     "src/contexts/distribution/application/resolve-built-marketplaces.ts",
@@ -86,6 +87,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/contract/registered-plugins.ts",
     // removing the plugins installed from a marketplace, and what they left claimed elsewhere
     "src/contexts/installation/application/plugin/remove-plugins-from-marketplace.ts",
+    "src/contexts/installation/application/plugin/purge-marketplace-plugins.ts",
     "src/contexts/installation/contract/plugin-claims.ts",
     // the installed plugins that name a marketplace, held against its catalog
     "src/contexts/installation/application/list-plugin-sources.ts",

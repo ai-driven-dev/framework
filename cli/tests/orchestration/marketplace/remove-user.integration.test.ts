@@ -2,23 +2,27 @@ import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../../../src/contexts/distribution/ports/marketplace-registry.js";
-import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
-import { NativeHostRegistrationGate } from "../../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
+import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import type {
   HostMarketplaceSources,
   NativeMarketplaceSource,
-} from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf, resolveRegisteredToolId, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import {
+  catalogOf,
+  resolveRegisteredToolId,
+  TOOL,
+} from "../../contexts/tools/testing/catalog-of.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { userMarketplaceRemover } from "../../helpers/user-marketplace-remover.js";
 
 const ALIAS = "project-alias";
 const HOST = "real-catalog";
@@ -89,7 +93,7 @@ for (const toolId of [TOOL.codex]) {
       const reader: HostPluginRegistry = {
         read: async () => ({ location: "/host/registry", refs }),
       };
-      const useCase = new UserMarketplaceRemoveUseCase(
+      const useCase = userMarketplaceRemover(
         new InMemoryFileAdapter(),
         repo,
         registry,
@@ -233,7 +237,7 @@ for (const toolId of [TOOL.codex]) {
           return action();
         },
       };
-      const useCase = new UserMarketplaceRemoveUseCase(
+      const useCase = userMarketplaceRemover(
         new InMemoryFileAdapter(),
         lockedRepo,
         f.registry,
@@ -251,7 +255,7 @@ for (const toolId of [TOOL.codex]) {
     it("requires a canonical user manifest before uninstalling any host ref", async () => {
       const f = await fixture(enabled());
       const absent = new InMemoryManifestRepository();
-      const useCase = new UserMarketplaceRemoveUseCase(
+      const useCase = userMarketplaceRemover(
         new InMemoryFileAdapter(),
         absent,
         f.registry,
@@ -289,7 +293,7 @@ for (const toolId of [TOOL.codex]) {
         ]),
         new Map([[toolId, sourceReader()]])
       );
-      const useCase = new UserMarketplaceRemoveUseCase(
+      const useCase = userMarketplaceRemover(
         new InMemoryFileAdapter(),
         f.repo,
         f.registry,
@@ -360,7 +364,7 @@ for (const toolId of [TOOL.codex]) {
         updateVersion: (root, name, scope, version) =>
           f.registry.updateVersion(root, name, scope, version),
       };
-      const useCase = new UserMarketplaceRemoveUseCase(
+      const useCase = userMarketplaceRemover(
         new InMemoryFileAdapter(),
         {
           path: f.repo.path,
@@ -485,7 +489,7 @@ describe("Copilot 1.0.83 targeted user marketplace removal", () => {
         ],
       ])
     );
-    const useCase = new UserMarketplaceRemoveUseCase(fs, repo, registry, gate);
+    const useCase = userMarketplaceRemover(fs, repo, registry, gate);
 
     await expect(useCase.execute(options())).rejects.toThrow(/host source reader unavailable/);
 
@@ -545,7 +549,7 @@ describe("Cursor targeted user marketplace removal", () => {
     const foreign = "/foreign/sample-plugin";
     fs.setFile(join(options.escape ? foreign : pluginDir, "skills/demo/SKILL.md"), "bytes");
     if (options.escape) fs.setSymlink(pluginDir, foreign);
-    const useCase = new UserMarketplaceRemoveUseCase(
+    const useCase = userMarketplaceRemover(
       fs,
       repo,
       registry,

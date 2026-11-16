@@ -11,3 +11,9 @@ export interface MarketplaceRemovalResult {
   removedPluginCount: number;
   orphanCount: number;
 }
+
+/** A user-scope marketplace a removal found, with a fingerprint of the source it was found with. */
+export interface FoundUserMarketplace extends RemovableMarketplace {
+  readonly scope: "user";
+  readonly fingerprint: string;
+}

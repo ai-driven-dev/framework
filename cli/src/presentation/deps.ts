@@ -10,7 +10,6 @@ import type { CleanUserScopeUseCase } from "../contexts/framework/application/cl
 import type { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
 import type { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { InstallAiToolUseCase } from "../contexts/framework/application/install/install-ai-tool-use-case.js";
-import type { UserMarketplaceRemoveUseCase } from "../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import type { UserPluginUpdateUseCase } from "../contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import type { PluginInstallUseCase } from "../contexts/framework/application/plugin/plugin-install-use-case.js";
 import type { PluginRemoveUseCase } from "../contexts/framework/application/plugin/plugin-remove-use-case.js";
@@ -57,6 +56,7 @@ import type { RestoreAll } from "../orchestration/global/restore-all.js";
 import type { UpdateTools } from "../orchestration/global/update-tools.js";
 import type { CheckMarketplaceUpstream } from "../orchestration/marketplace/check.js";
 import type { RemoveProjectMarketplace } from "../orchestration/marketplace/remove.js";
+import type { RemoveUserMarketplace } from "../orchestration/marketplace/remove-user.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -126,7 +126,7 @@ export interface Deps {
   addMarketplace: Pick<AddMarketplace, "execute">;
   listMarketplaces: Pick<ListMarketplaces, "execute">;
   marketplaceRemoveUseCase: Pick<RemoveProjectMarketplace, "execute">;
-  userMarketplaceRemoveUseCase: Pick<UserMarketplaceRemoveUseCase, "execute">;
+  userMarketplaceRemoveUseCase: Pick<RemoveUserMarketplace, "execute">;
   refreshMarketplace: Pick<RefreshMarketplace, "execute">;
   marketplaceCheckUseCase: Pick<CheckMarketplaceUpstream, "execute">;
   userSourceReferences: UserSourceReferences;

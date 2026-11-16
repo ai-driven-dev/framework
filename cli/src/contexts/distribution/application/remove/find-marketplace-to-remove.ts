@@ -27,7 +27,7 @@ export class FindMarketplaceToRemove {
       );
     }
     if (command.scope === "user")
-      throw new Error("User-scope marketplace removal requires UserMarketplaceRemoveUseCase.");
+      throw new Error("User-scope marketplace removal requires RemoveUserMarketplace.");
     const found = (await this.registry.list(command.projectRoot)).find(
       (m) => m.name === command.name && m.scope === "project"
     );
