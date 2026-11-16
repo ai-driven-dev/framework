@@ -11,8 +11,8 @@ const MAX_CONSTRUCTOR_DEPENDENCIES = 5;
 
 /**
  * Orchestrators over the limit today, each with the count its reason was written around.
- * The list normally shrinks. A separately justified host witness may raise an entry, while
- * the exact counts still make any unreviewed growth fail this test.
+ * The list only shrinks, and a count is never raised: the exact counts make any growth of an
+ * admitted orchestrator fail this test.
  */
 const BASELINE: readonly { readonly path: string; readonly dependencies: number }[] = [
   // Five section generators reached inline through a switch on section name, plus the config
@@ -55,22 +55,26 @@ const COMMAND_CLASSES = new Set(
     )
 );
 
-/** One per parameter, or per name a destructured parameter binds, whatever its modifiers or type. */
+/**
+ * One per parameter, or per name a destructured parameter binds, whatever its modifiers or type,
+ * for each constructor of the file: a file holding several classes answers for the widest.
+ */
 function parameterCount(source: string): number {
   const code = codeOnly(source);
-  const open = /\bconstructor\s*\(/.exec(code);
-  if (!open) return 0;
-  const start = open.index + open[0].length - 1;
-  return topLevelPieces(code.slice(start + 1, closingBracket(code, start))).reduce(
-    (count, parameter) => {
-      const bare = parameter.replace(/^(?:(?:public|private|protected|readonly)\s+)+/, "");
-      return (
-        count +
-        (bare.startsWith("{") ? topLevelPieces(bare.slice(1, closingBracket(bare, 0))).length : 1)
-      );
-    },
-    0
-  );
+  const counts = [...code.matchAll(/\bconstructor\s*\(/g)].map((open) => {
+    const start = open.index + open[0].length - 1;
+    return topLevelPieces(code.slice(start + 1, closingBracket(code, start))).reduce(
+      (count, parameter) => {
+        const bare = parameter.replace(/^(?:(?:public|private|protected|readonly)\s+)+/, "");
+        return (
+          count +
+          (bare.startsWith("{") ? topLevelPieces(bare.slice(1, closingBracket(bare, 0))).length : 1)
+        );
+      },
+      0
+    );
+  });
+  return Math.max(0, ...counts);
 }
 
 /**
@@ -196,6 +200,16 @@ describe("the guard itself", () => {
     expect(overLimit(`constructor(${parameters.split(", ").slice(0, 5).join(", ")}) {}`)).toBe(
       false
     );
+  });
+
+  it("holds every class of a file to the limit, not only the first", () => {
+    const parameters = (count: number) =>
+      Array.from({ length: count }, (_, i) => `private readonly a${i}: A`).join(", ");
+    const twoClasses = (first: number, second: number) =>
+      `class One { constructor(${parameters(first)}) {} }\nclass Two { constructor(${parameters(second)}) {} }`;
+
+    expect(overLimit(twoClasses(2, MAX_CONSTRUCTOR_DEPENDENCIES + 1))).toBe(true);
+    expect(overLimit(twoClasses(2, MAX_CONSTRUCTOR_DEPENDENCIES))).toBe(false);
   });
 
   it("does not count the commas of a comment inside the parameters", () => {
