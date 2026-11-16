@@ -9,8 +9,8 @@ import type { IsWithinUserScope } from "../../contexts/machine-claims/contract/u
  */
 export class UpdateUserPlugin {
   constructor(
-    private readonly updateUserPluginFiles: UpdateUserPluginFiles,
-    private readonly refreshHostPlugin: RefreshHostPlugin,
+    private readonly updateUserPluginFiles: Pick<UpdateUserPluginFiles, "execute">,
+    private readonly refreshHostPlugin: Pick<RefreshHostPlugin, "execute">,
     private readonly isWithinUserScope: IsWithinUserScope
   ) {}
 
