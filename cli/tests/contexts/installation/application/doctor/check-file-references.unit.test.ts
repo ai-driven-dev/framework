@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { DoctorReferencesUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-references-use-case.js";
+import { CheckFileReferences } from "../../../../../src/contexts/installation/application/doctor/check-file-references.js";
+import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
@@ -51,17 +54,22 @@ async function issuesFor(
       content,
     ])
   );
-  return new DoctorReferencesUseCase(new InMemoryFileAdapter(files, hasher)).execute({
-    manifest: options.manifest ?? Manifest.create(),
+  const manifest = options.manifest ?? Manifest.create();
+  for (const { relativePath, toolId } of options.trackedFiles ?? []) {
+    manifest.addTool(toolId ?? TOOL.claude, "1.0.0", [
+      new InstallationFile({ relativePath, content: "", hash: hasher.hash("") }),
+    ]);
+  }
+  const load = new LoadManifest(new InMemoryManifestRepository(manifest));
+  return new CheckFileReferences(load, new InMemoryFileAdapter(files, hasher)).execute({
     projectRoot: PROJECT_ROOT,
     allowedIds: options.allowedIds ?? null,
-    trackedFiles: options.trackedFiles ?? [],
   });
 }
 
 const TRACKED_DOC = [{ relativePath: DOC, toolId: TOOL.claude }];
 
-describe("DoctorReferencesUseCase", () => {
+describe("CheckFileReferences", () => {
   describe("references in a tracked markdown file", () => {
     it("reports a warning for an @ reference to a file that is not on disk", async () => {
       const issues = await issuesFor(

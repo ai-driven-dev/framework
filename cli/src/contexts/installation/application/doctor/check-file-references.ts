@@ -1,31 +1,32 @@
 import { dirname, join, normalize } from "node:path";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { DoctorIssue } from "../../../installation/contract/doctor-issue.js";
-import type { Manifest } from "../../../installation/domain/manifest.js";
+import type { DoctorIssue } from "../../contract/doctor-issue.js";
+import type { Manifest } from "../../domain/manifest.js";
 import {
   extractAtReferences,
   extractMarkdownLinkTargets,
   isFileReference,
-} from "../../domain/formats/markdown-references.js";
+} from "../../domain/markdown-references.js";
+import type { CheckInstallationCommand } from "./check-installation-command.js";
+import { collectTrackedFiles } from "./check-tracked-files.js";
+import type { LoadManifest } from "./load-manifest.js";
 
-export interface DoctorReferencesOptions {
-  manifest: Manifest;
-  projectRoot: string;
-  allowedIds: Set<string> | null;
-  trackedFiles: { relativePath: string; toolId: ToolId | null }[];
-}
+export class CheckFileReferences {
+  constructor(
+    private readonly loadManifest: LoadManifest,
+    private readonly fs: FileReader
+  ) {}
 
-export class DoctorReferencesUseCase {
-  constructor(private readonly fs: FileReader) {}
-
-  async execute(options: DoctorReferencesOptions): Promise<DoctorIssue[]> {
-    const { manifest, projectRoot, allowedIds, trackedFiles } = options;
+  async execute(command: CheckInstallationCommand): Promise<DoctorIssue[]> {
+    const { projectRoot, allowedIds } = command;
+    const manifest = await this.loadManifest.execute();
+    const trackedFiles = collectTrackedFiles(manifest, allowedIds);
     const scanFiles = this.gatherAllMarkdownFiles(manifest, trackedFiles, allowedIds);
     return this.checkBrokenReferences(scanFiles, projectRoot);
   }
 
-  gatherAllMarkdownFiles(
+  private gatherAllMarkdownFiles(
     manifest: Manifest,
     trackedFiles: { relativePath: string; toolId: ToolId | null }[],
     allowedIds: Set<string> | null

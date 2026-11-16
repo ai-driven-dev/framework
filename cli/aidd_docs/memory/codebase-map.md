@@ -33,10 +33,10 @@ src/
 │   │   │   ├── shared/
 │   │   │   └── uninstall/
 │   │   └── domain/
-│   │       ├── formats/
 │   │       └── reading/    # the home directory a use case resolves when none is given
 │   ├── installation/    # the installation record, and what installs, restores and materializes it into a project
 │   │   ├── application/
+│   │   │   ├── doctor/    # the checks over what the manifest tracks
 │   │   │   ├── install/
 │   │   │   │   └── content/
 │   │   │   ├── materialize/    # a plugin's files translated for one tool and written

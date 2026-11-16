@@ -1,5 +1,8 @@
 import { ManifestValidationError, NoManifestError } from "../../../../shared/domain/errors.js";
 import type { ToolCategory } from "../../../../shared/domain/tool.js";
+import type { CheckFileReferences } from "../../../installation/application/doctor/check-file-references.js";
+import type { CheckMergeFiles } from "../../../installation/application/doctor/check-merge-files.js";
+import type { CheckTrackedFiles } from "../../../installation/application/doctor/check-tracked-files.js";
 import type {
   DoctorIssue,
   DoctorReport,
@@ -10,11 +13,8 @@ import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { DoctorLayoutUseCase } from "./doctor-layout-use-case.js";
-import type { DoctorMergeFilesUseCase } from "./doctor-merge-files-use-case.js";
 import type { DoctorPluginUseCase } from "./doctor-plugin-use-case.js";
-import type { DoctorReferencesUseCase } from "./doctor-references-use-case.js";
 import type { DoctorRegistrationUseCase } from "./doctor-registration-use-case.js";
-import type { DoctorTrackedFilesUseCase } from "./doctor-tracked-files-use-case.js";
 
 export interface DoctorOptions {
   projectRoot: string;
@@ -26,10 +26,10 @@ export interface DoctorOptions {
 export class DoctorUseCase {
   constructor(
     private readonly manifestRepo: ManifestRepository,
-    private readonly trackedFiles: DoctorTrackedFilesUseCase,
-    private readonly mergeFiles: DoctorMergeFilesUseCase,
+    private readonly trackedFiles: CheckTrackedFiles,
+    private readonly mergeFiles: CheckMergeFiles,
     private readonly plugin: DoctorPluginUseCase,
-    private readonly references: DoctorReferencesUseCase,
+    private readonly references: CheckFileReferences,
     private readonly layout: DoctorLayoutUseCase,
     private readonly registration: DoctorRegistrationUseCase
   ) {}
@@ -81,16 +81,11 @@ export class DoctorUseCase {
     tools: ToolCatalog,
     category?: ToolCategory
   ): Promise<DoctorIssue[]> {
-    const trackedFileList = this.trackedFiles.collectTrackedFiles(manifest, allowedIds);
+    const check = { projectRoot, allowedIds };
     const issues = [
-      ...(await this.trackedFiles.execute({ manifest, projectRoot, allowedIds })),
-      ...(await this.mergeFiles.execute({ manifest, projectRoot, allowedIds })),
-      ...(await this.references.execute({
-        manifest,
-        projectRoot,
-        allowedIds,
-        trackedFiles: trackedFileList,
-      })),
+      ...(await this.trackedFiles.execute(check)),
+      ...(await this.mergeFiles.execute(check)),
+      ...(await this.references.execute(check)),
       ...(await this.registration.execute({ manifest, projectRoot, allowedIds, tools })),
     ];
     if (!category) issues.push(...(await this.layout.execute({ manifest, projectRoot, tools })));

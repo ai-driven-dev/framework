@@ -1,37 +1,37 @@
 import { join } from "node:path";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { DoctorIssue } from "../../../installation/contract/doctor-issue.js";
-import type { Manifest } from "../../../installation/domain/manifest.js";
+import type { DoctorIssue } from "../../contract/doctor-issue.js";
+import type { Manifest } from "../../domain/manifest.js";
+import type { CheckInstallationCommand } from "./check-installation-command.js";
+import type { LoadManifest } from "./load-manifest.js";
 
-export interface DoctorTrackedFilesOptions {
-  manifest: Manifest;
-  projectRoot: string;
-  allowedIds: Set<string> | null;
+export function collectTrackedFiles(
+  manifest: Manifest,
+  allowedIds: Set<string> | null
+): { relativePath: string; toolId: ToolId | null }[] {
+  const result: { relativePath: string; toolId: ToolId | null }[] = [];
+  for (const toolId of manifest.getInstalledToolIds()) {
+    if (allowedIds && !allowedIds.has(toolId)) continue;
+    const files = manifest.getToolFiles(toolId);
+    result.push(...files.map((f) => ({ ...f, toolId })));
+  }
+  return result;
 }
 
-export class DoctorTrackedFilesUseCase {
-  constructor(private readonly fs: FileReader) {}
+export class CheckTrackedFiles {
+  constructor(
+    private readonly loadManifest: LoadManifest,
+    private readonly fs: FileReader
+  ) {}
 
-  async execute(options: DoctorTrackedFilesOptions): Promise<DoctorIssue[]> {
-    const { manifest, projectRoot, allowedIds } = options;
-    const trackedFiles = this.collectTrackedFiles(manifest, allowedIds);
+  async execute(command: CheckInstallationCommand): Promise<DoctorIssue[]> {
+    const { projectRoot, allowedIds } = command;
+    const manifest = await this.loadManifest.execute();
+    const trackedFiles = collectTrackedFiles(manifest, allowedIds);
     const missingIssues = await this.checkMissingFiles(trackedFiles, projectRoot);
     const modifiedIssues = await this.checkModifiedFiles(manifest, projectRoot, allowedIds);
     return [...missingIssues, ...modifiedIssues];
-  }
-
-  collectTrackedFiles(
-    manifest: Manifest,
-    allowedIds: Set<string> | null
-  ): { relativePath: string; toolId: ToolId | null }[] {
-    const result: { relativePath: string; toolId: ToolId | null }[] = [];
-    for (const toolId of manifest.getInstalledToolIds()) {
-      if (allowedIds && !allowedIds.has(toolId)) continue;
-      const files = manifest.getToolFiles(toolId);
-      result.push(...files.map((f) => ({ ...f, toolId })));
-    }
-    return result;
   }
 
   private async checkMissingFiles(

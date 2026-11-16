@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { DoctorTrackedFilesUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-tracked-files-use-case.js";
+import {
+  CheckTrackedFiles,
+  collectTrackedFiles,
+} from "../../../../../src/contexts/installation/application/doctor/check-tracked-files.js";
+import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
@@ -40,14 +45,14 @@ async function issuesFor(
     onDisk === null ? {} : { [`${PROJECT_ROOT}/${FILE}`]: onDisk },
     hasher
   );
-  return new DoctorTrackedFilesUseCase(fs).execute({
-    manifest: manifestTracking(toolId),
+  const load = new LoadManifest(new InMemoryManifestRepository(manifestTracking(toolId)));
+  return new CheckTrackedFiles(load, fs).execute({
     projectRoot: PROJECT_ROOT,
     allowedIds,
   });
 }
 
-describe("DoctorTrackedFilesUseCase", () => {
+describe("CheckTrackedFiles", () => {
   describe("a tracked file", () => {
     it("reports nothing when the disk matches the manifest", async () => {
       expect(await issuesFor(CONTENT)).toStrictEqual([]);
@@ -82,9 +87,7 @@ describe("DoctorTrackedFilesUseCase", () => {
 
   describe("collectTrackedFiles", () => {
     it("pairs every tracked file with the tool that owns it", () => {
-      const collected = new DoctorTrackedFilesUseCase(
-        new InMemoryFileAdapter()
-      ).collectTrackedFiles(manifestTracking(TOOL.claude), null);
+      const collected = collectTrackedFiles(manifestTracking(TOOL.claude), null);
 
       expect(collected.map((f) => [f.relativePath, f.toolId])).toStrictEqual([[FILE, "claude"]]);
     });

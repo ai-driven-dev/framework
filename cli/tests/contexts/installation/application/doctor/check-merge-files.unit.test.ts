@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { DoctorMergeFilesUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-merge-files-use-case.js";
+import { CheckMergeFiles } from "../../../../../src/contexts/installation/application/doctor/check-merge-files.js";
+import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
@@ -47,14 +49,14 @@ async function issuesFor(
     onDisk === null ? {} : { [`${PROJECT_ROOT}/${MERGE_PATH}`]: onDisk },
     hasher
   );
-  return new DoctorMergeFilesUseCase(fs, hasher).execute({
-    manifest: manifestMerging(toolId),
+  const load = new LoadManifest(new InMemoryManifestRepository(manifestMerging(toolId)));
+  return new CheckMergeFiles(load, fs, hasher).execute({
     projectRoot: PROJECT_ROOT,
     allowedIds,
   });
 }
 
-describe("DoctorMergeFilesUseCase", () => {
+describe("CheckMergeFiles", () => {
   describe("a merge file", () => {
     it("reports nothing when every managed key holds its recorded value", async () => {
       expect(await issuesFor(`{ "${KEY}": true }`)).toStrictEqual([]);

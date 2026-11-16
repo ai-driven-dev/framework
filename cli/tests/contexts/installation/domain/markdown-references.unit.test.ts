@@ -3,7 +3,7 @@ import {
   extractAtReferences,
   extractMarkdownLinkTargets,
   isFileReference,
-} from "../../../../../src/contexts/framework/domain/formats/markdown-references.js";
+} from "../../../../src/contexts/installation/domain/markdown-references.js";
 
 describe("isFileReference", () => {
   it("returns true for a path with a file extension", () => {

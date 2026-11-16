@@ -1,10 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import {
   extractAtReferences,
   extractMarkdownLinkTargets,
-} from "../../../../src/contexts/framework/domain/formats/markdown-references.js";
-import type { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
+} from "../../../../src/contexts/installation/domain/markdown-references.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import {
   buildDoctorUseCase,

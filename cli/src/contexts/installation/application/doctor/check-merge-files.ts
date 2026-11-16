@@ -2,23 +2,20 @@ import { join } from "node:path";
 import { extractMergeEntries, type MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { DoctorIssue } from "../../../installation/contract/doctor-issue.js";
-import type { Manifest } from "../../../installation/domain/manifest.js";
+import type { DoctorIssue } from "../../contract/doctor-issue.js";
+import type { CheckInstallationCommand } from "./check-installation-command.js";
+import type { LoadManifest } from "./load-manifest.js";
 
-export interface DoctorMergeFilesOptions {
-  manifest: Manifest;
-  projectRoot: string;
-  allowedIds: Set<string> | null;
-}
-
-export class DoctorMergeFilesUseCase {
+export class CheckMergeFiles {
   constructor(
+    private readonly loadManifest: LoadManifest,
     private readonly fs: FileReader,
     private readonly hasher: Hasher
   ) {}
 
-  async execute(options: DoctorMergeFilesOptions): Promise<DoctorIssue[]> {
-    const { manifest, projectRoot, allowedIds } = options;
+  async execute(command: CheckInstallationCommand): Promise<DoctorIssue[]> {
+    const { projectRoot, allowedIds } = command;
+    const manifest = await this.loadManifest.execute();
     const issues: DoctorIssue[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
       if (allowedIds && !allowedIds.has(toolId)) continue;

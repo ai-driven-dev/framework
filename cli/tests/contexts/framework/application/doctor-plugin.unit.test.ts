@@ -2,13 +2,14 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DoctorLayoutUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-layout-use-case.js";
-import { DoctorMergeFilesUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-merge-files-use-case.js";
 import { DoctorPluginUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-plugin-use-case.js";
-import { DoctorReferencesUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-references-use-case.js";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { DoctorTrackedFilesUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-tracked-files-use-case.js";
 import { DoctorUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-use-case.js";
 import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
+import { CheckFileReferences } from "../../../../src/contexts/installation/application/doctor/check-file-references.js";
+import { CheckMergeFiles } from "../../../../src/contexts/installation/application/doctor/check-merge-files.js";
+import { CheckTrackedFiles } from "../../../../src/contexts/installation/application/doctor/check-tracked-files.js";
+import { LoadManifest } from "../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -66,12 +67,14 @@ const noopHasher: Hasher = {
 };
 
 function makeDoctorUseCase(fs: FileReader, manifest: Manifest): DoctorUseCase {
+  const manifestRepo = makeManifestRepo(manifest);
+  const loadManifest = new LoadManifest(manifestRepo);
   return new DoctorUseCase(
-    makeManifestRepo(manifest),
-    new DoctorTrackedFilesUseCase(fs),
-    new DoctorMergeFilesUseCase(fs, noopHasher),
+    manifestRepo,
+    new CheckTrackedFiles(loadManifest, fs),
+    new CheckMergeFiles(loadManifest, fs, noopHasher),
     new DoctorPluginUseCase(new DetectPluginDrift(fs)),
-    new DoctorReferencesUseCase(fs),
+    new CheckFileReferences(loadManifest, fs),
     new DoctorLayoutUseCase(fs),
     new DoctorRegistrationUseCase(
       fs,

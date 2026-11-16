@@ -70,6 +70,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/domain/install-scope.ts",
     // Transitional (reference-context.md, M-I1): the flows still in framework build on these,
     // and leave this list as each one moves behind an installation command.
+    "src/contexts/installation/application/doctor/check-file-references.ts",
+    "src/contexts/installation/application/doctor/check-merge-files.ts",
+    "src/contexts/installation/application/doctor/check-tracked-files.ts",
     "src/contexts/installation/application/update-gitignore.ts",
     "src/contexts/installation/application/init-project.ts",
     "src/contexts/installation/application/install/install-ide-config.ts",
