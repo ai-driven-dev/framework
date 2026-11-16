@@ -2,18 +2,19 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { UserMarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
-import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
-import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { resolveHomeDir } from "../../../../../src/contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import type { HostMarketplaceSources } from "../../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
+import { UpdateUserPluginFiles } from "../../../../../src/contexts/installation/application/plugin/update-user-plugin-files.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
+import { UpdateUserPlugin } from "../../../../../src/orchestration/plugin/update-user-plugin.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
@@ -25,6 +26,7 @@ import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-ad
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { userScopeCleaner } from "../../../../helpers/user-scope-cleaner.js";
+import { userScopeFileGuard } from "../../../../helpers/user-scope-file-guard.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import {
   catalogOf,
@@ -243,23 +245,26 @@ for (const [toolId, catalogPath] of [
         { ref, dependents: ["/A", "/B"] },
       ]);
       const updateFs = new InMemoryFileAdapter();
-      const update = new UserPluginUpdateUseCase(
-        user,
-        new UserPluginFileUpdater(
-          updateFs,
-          new PluginDistributionLoader(
-            new FixturePluginFetcher(),
-            new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
+      const update = new UpdateUserPlugin(
+        new UpdateUserPluginFiles(
+          user,
+          new PluginMaterializer(
+            updateFs,
+            new PluginDistributionLoader(
+              new FixturePluginFetcher(),
+              new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
+            ),
+            new DeterministicHasher(),
+            userScopeFileGuard
           ),
-          new DeterministicHasher(),
-          isStrictlyWithinUserScope
+          new CapturingLogger()
         ),
-        new CapturingLogger(),
         new RefreshHostPlugin(
           new Map([[toolId, activator]]),
           new Map([[toolId, hostReader]]),
           sources
-        )
+        ),
+        isStrictlyWithinUserScope
       );
       if (toolId === "copilot") {
         expect(
@@ -273,23 +278,26 @@ for (const [toolId, catalogPath] of [
         ).toEqual([ref]);
         expect(activator.updatedPlugins).toEqual([ref]);
         const failed = new FakeHostActions({ available: true, failOnUpdate: [ref] });
-        const failingUpdate = new UserPluginUpdateUseCase(
-          user,
-          new UserPluginFileUpdater(
-            updateFs,
-            new PluginDistributionLoader(
-              new FixturePluginFetcher(),
-              new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
+        const failingUpdate = new UpdateUserPlugin(
+          new UpdateUserPluginFiles(
+            user,
+            new PluginMaterializer(
+              updateFs,
+              new PluginDistributionLoader(
+                new FixturePluginFetcher(),
+                new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
+              ),
+              new DeterministicHasher(),
+              userScopeFileGuard
             ),
-            new DeterministicHasher(),
-            isStrictlyWithinUserScope
+            new CapturingLogger()
           ),
-          new CapturingLogger(),
           new RefreshHostPlugin(
             new Map([[toolId, failed]]),
             new Map([[toolId, hostReader]]),
             sources
-          )
+          ),
+          isStrictlyWithinUserScope
         );
         await expect(
           failingUpdate.execute({

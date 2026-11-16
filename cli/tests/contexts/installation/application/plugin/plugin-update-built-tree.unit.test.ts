@@ -1,20 +1,22 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
-import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
 import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { RefreshHostPlugin } from "../../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
+import { UpdateUserPluginFiles } from "../../../../../src/contexts/installation/application/plugin/update-user-plugin-files.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
+import { UpdateUserPlugin } from "../../../../../src/orchestration/plugin/update-user-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { userScopeFileGuard } from "../../../../helpers/user-scope-file-guard.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
@@ -56,25 +58,28 @@ function makeUpdateUseCase(
   registry: InMemoryMarketplaceRegistry,
   nativeHost: RefreshHostPlugin = new RefreshHostPlugin(new Map(), new Map()),
   ensureBuilt: BuiltMarketplaceEnsurer = fakeEnsureBuiltMarketplace()
-): UserPluginUpdateUseCase {
-  return new UserPluginUpdateUseCase(
-    deps.userManifestRepo,
-    new UserPluginFileUpdater(
-      deps.fs,
-      new PluginDistributionLoader(
-        deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+): UpdateUserPlugin {
+  return new UpdateUserPlugin(
+    new UpdateUserPluginFiles(
+      deps.userManifestRepo,
+      new PluginMaterializer(
+        deps.fs,
+        new PluginDistributionLoader(
+          deps.pluginFetcher,
+          new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+        ),
+        deps.hasher,
+        userScopeFileGuard,
+        {
+          ensureBuilt,
+          marketplaceRegistry: registry,
+          homedir: () => HOME,
+        }
       ),
-      deps.hasher,
-      isStrictlyWithinUserScope,
-      {
-        ensureBuilt,
-        marketplaceRegistry: registry,
-        homedir: () => HOME,
-      }
+      deps.logger
     ),
-    deps.logger,
-    nativeHost
+    nativeHost,
+    isStrictlyWithinUserScope
   );
 }
 
@@ -688,14 +693,14 @@ describe("UpdatePlugin — built-tree materialization", () => {
         new Map([...stale.files, [oldRelativePath, deps.hasher.hash("old owned bytes").value]])
       )
     );
-    const updater = new UserPluginFileUpdater(
+    const updater = new PluginMaterializer(
       deps.fs,
       new PluginDistributionLoader(
         deps.pluginFetcher,
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       deps.hasher,
-      isStrictlyWithinUserScope,
+      userScopeFileGuard,
       {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: registry,
@@ -706,7 +711,9 @@ describe("UpdatePlugin — built-tree materialization", () => {
       machine.getPlugins(cursor)[0],
       registeredAiProfile(cursor),
       PROJECT_ROOT,
-      deps.logger
+      deps.logger,
+      false,
+      isStrictlyWithinUserScope
     );
     if (plan === null) throw new Error("fixture did not plan a newer build");
     const foreign = "/foreign/obsolete";
@@ -714,7 +721,9 @@ describe("UpdatePlugin — built-tree materialization", () => {
     deps.fs.setFile(join(foreign, "SKILL.md"), "outside user bytes");
     const writeSpy = vi.spyOn(deps.fs, "writeFile");
 
-    await expect(updater.applyUpdate(plan, deps.logger)).rejects.toThrow(/unsafe recorded files/);
+    await expect(updater.applyUpdate(plan, deps.logger, isStrictlyWithinUserScope)).rejects.toThrow(
+      /unsafe recorded files/
+    );
 
     expect(writeSpy).not.toHaveBeenCalled();
     expect(deps.fs.getFile(join(foreign, "SKILL.md"))).toBe("outside user bytes");

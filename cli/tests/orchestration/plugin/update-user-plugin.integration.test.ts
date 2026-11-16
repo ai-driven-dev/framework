@@ -1,23 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
-import { UserPluginUpdateUseCase } from "../../../../../src/contexts/framework/application/ownership/user-plugin-update-use-case.js";
-import { RefreshHostPlugin } from "../../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
-import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.js";
+import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { PluginMaterializer } from "../../../src/contexts/installation/application/plugin/plugin-materializer.js";
+import { UpdateUserPluginFiles } from "../../../src/contexts/installation/application/plugin/update-user-plugin-files.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
+import { PluginDistribution } from "../../../src/contexts/translate/domain/plugin-distribution.js";
+import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { userScopeFileGuard } from "../../helpers/user-scope-file-guard.js";
 
 const { copilot, cursor } = TOOL;
 
@@ -64,21 +66,24 @@ function fixture(
   };
   const logger = new CapturingLogger();
   const distribution = options.distribution;
-  const update = new UserPluginUpdateUseCase(
-    repo,
-    new UserPluginFileUpdater(
-      fs,
-      new PluginDistributionLoader(
-        new FixturePluginFetcher(),
-        distribution
-          ? { read: async () => distribution }
-          : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
+  const update = new UpdateUserPlugin(
+    new UpdateUserPluginFiles(
+      repo,
+      new PluginMaterializer(
+        fs,
+        new PluginDistributionLoader(
+          new FixturePluginFetcher(),
+          distribution
+            ? { read: async () => distribution }
+            : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
+        ),
+        new DeterministicHasher(),
+        userScopeFileGuard
       ),
-      new DeterministicHasher(),
-      isStrictlyWithinUserScope
+      logger
     ),
-    logger,
-    new RefreshHostPlugin(new Map([[toolId, activator]]), new Map([[toolId, reader]]))
+    new RefreshHostPlugin(new Map([[toolId, activator]]), new Map([[toolId, reader]])),
+    isStrictlyWithinUserScope
   );
   const execute = (pluginName: string | readonly string[], rebuild?: boolean) =>
     update.execute({
