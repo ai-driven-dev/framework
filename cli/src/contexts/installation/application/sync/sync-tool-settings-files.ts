@@ -4,11 +4,11 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { Marketplace } from "../../../distribution/domain/marketplace.js";
-import type { HostRegistrationOutcome } from "../../../host-registration/application/register-plugin-with-host.js";
+import type { HostRegistrationOutcome } from "../../../host-registration/contract/native-registration.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
 import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.js";
 
 /** The project settings files a tool shares with its host, kept in step with the manifest. */
@@ -25,7 +25,7 @@ export class SyncToolSettingsFiles {
     tools: ToolCatalog,
     projectRoot: string,
     manifest: Manifest,
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly DeclaredMarketplace[],
     toolIds: readonly ToolId[]
   ): Promise<boolean> {
     let anyToolUpdated = false;
@@ -42,7 +42,7 @@ export class SyncToolSettingsFiles {
     tools: ToolCatalog,
     projectRoot: string,
     manifest: Manifest,
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly DeclaredMarketplace[],
     outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>
   ): Promise<boolean> {
     let declarativeChanged = false;
@@ -74,7 +74,7 @@ export class SyncToolSettingsFiles {
     toolId: ToolId,
     projectRoot: string,
     manifest: Manifest,
-    marketplaces: readonly Marketplace[]
+    marketplaces: readonly DeclaredMarketplace[]
   ): Promise<boolean> {
     const marketplaceSettings = tools.aiProfileIfAny(toolId)?.marketplaceRegistration();
     if (marketplaceSettings == null) return false;
@@ -85,7 +85,7 @@ export class SyncToolSettingsFiles {
     toolId: ToolId,
     projectRoot: string,
     manifest: Manifest,
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly DeclaredMarketplace[],
     settings: MarketplaceRegistrationAnswers
   ): Promise<boolean> {
     const marketplaceChanged = await this.syncMarketplacesFile(
@@ -113,7 +113,7 @@ export class SyncToolSettingsFiles {
     projectRoot: string,
     manifest: Manifest,
     settings: MarketplaceRegistrationAnswers,
-    marketplaces: readonly Marketplace[]
+    marketplaces: readonly DeclaredMarketplace[]
   ): Promise<boolean> {
     // Building the tree is this CLI's job whoever registers it: a tool that is not installed
     // today may be tomorrow, and the tree is what any registration points at.
@@ -147,7 +147,7 @@ export class SyncToolSettingsFiles {
     toolId: ToolId,
     projectRoot: string,
     manifest: Manifest,
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly DeclaredMarketplace[],
     settings: MarketplaceRegistrationAnswers,
     provenRefs?: readonly string[]
   ): Promise<boolean> {
@@ -172,7 +172,7 @@ export class SyncToolSettingsFiles {
     settings: MarketplaceRegistrationAnswers,
     toolId: ToolId,
     manifest: Manifest,
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly DeclaredMarketplace[],
     provenRefs?: readonly string[]
   ): readonly string[] {
     if (provenRefs !== undefined) return provenRefs;

@@ -3,7 +3,7 @@ import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
+import type { MachineManifestRepository } from "../ports/machine-manifest.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
 import { detachProjectClaims } from "./detach-project-claims.js";
 import {
@@ -32,7 +32,7 @@ export class ReleaseClaims {
   constructor(
     private readonly fs: FileReader,
     private readonly logger: Logger,
-    private readonly userManifestRepo?: ManifestRepository & Lock,
+    private readonly userManifestRepo?: MachineManifestRepository & Lock,
     private readonly userSourceReferences?: UserSourceReferences
   ) {}
 

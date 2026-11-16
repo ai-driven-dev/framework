@@ -1,9 +1,9 @@
 import { ActiveMachineDependentsError } from "../../../../shared/domain/errors.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import type { NativeHostRegistrationGate } from "../../../host-registration/application/native-host-registration-gate.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { MarketplaceRemovalPlanner } from "../../ports/native-host.js";
 import type { UserPluginFileProof } from "../../ports/user-plugin-file-proof.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 
@@ -24,7 +24,7 @@ export class PurgeMarketplacePlugins {
   constructor(
     private readonly fs: FileWriter,
     private readonly repo: ManifestRepository & Lock,
-    private readonly nativeHost: Pick<NativeHostRegistrationGate, "planMarketplaceRemoval">,
+    private readonly nativeHost: MarketplaceRemovalPlanner,
     private readonly proveFiles: UserPluginFileProof
   ) {}
 

@@ -17,7 +17,6 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
@@ -28,6 +27,7 @@ import {
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { InstallationMarketplaceRegistry } from "../../ports/marketplace-sources.js";
 import type { InstallRuntimeConfig } from "../install/install-runtime-config.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
@@ -76,7 +76,7 @@ export interface AddPluginManifests {
 /** Where a plugin's files come from. */
 export interface AddPluginSources {
   distributionLoader: PluginDistributionLoader;
-  marketplaceRegistry: MarketplaceRegistry;
+  marketplaceRegistry: InstallationMarketplaceRegistry;
   ensureBuilt: BuiltMarketplaceEnsurer;
   translate: TranslateDistribution;
 }
@@ -88,7 +88,7 @@ export class AddPlugin implements PluginAdd {
   private readonly manifestRepo: ManifestRepository;
   private readonly userManifestRepo: ManifestRepository & Lock;
   private readonly distributionLoader: PluginDistributionLoader;
-  private readonly marketplaceRegistry: MarketplaceRegistry;
+  private readonly marketplaceRegistry: InstallationMarketplaceRegistry;
   private readonly ensureBuilt: BuiltMarketplaceEnsurer;
   private readonly translate: TranslateDistribution;
 

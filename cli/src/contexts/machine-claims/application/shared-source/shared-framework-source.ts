@@ -6,7 +6,7 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
-import type { Marketplace } from "../../../distribution/domain/marketplace.js";
+import type { ListedMarketplace } from "../../ports/marketplace-listing.js";
 import type { UserSourceReferences } from "../../ports/user-source-references.js";
 import type { PurgeDeclaredCache } from "../purge-declared-cache.js";
 import {
@@ -46,7 +46,7 @@ export class SharedFrameworkSource {
    */
   async purgeStaleProjectCache(
     projectRoot: string,
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly ListedMarketplace[],
     activation: ActivationEvidence
   ): Promise<void> {
     if (activation.errors.length > 0) return;
@@ -83,7 +83,7 @@ export class SharedFrameworkSource {
    */
   async recordSharedSourceReference(
     projectRoot: string,
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly ListedMarketplace[],
     outcomes: ReadonlyMap<ToolId, RegistrationEvidence>
   ): Promise<void> {
     if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {

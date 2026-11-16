@@ -1,13 +1,13 @@
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
-import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
+import type { MachineManifestRepository } from "../ports/machine-manifest.js";
 import { detachNativePluginRefs } from "./native-plugin-ownership.js";
 import { detachUserPlugin } from "./user-plugin-ownership.js";
 
 /** Releases a project's native-registration refs, then each user plugin, from the machine-level manifest. */
 export function detachProjectClaims(
-  userManifestRepo: (ManifestRepository & Lock) | undefined,
+  userManifestRepo: (MachineManifestRepository & Lock) | undefined,
   fs: FileReader
 ) {
   return async (

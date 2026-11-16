@@ -8,11 +8,10 @@ import {
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
-import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
-import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import type { FrameworkBuild } from "../../../translate/contract/build-native-tree.js";
 import type { FrameworkBuildTarget } from "../../../translate/contract/build-targets.js";
+import type { DeclaredMarketplace, MarketplaceResolver } from "../../ports/marketplace-sources.js";
 
 /** `undefined` when the target/mode pair has no build. */
 export type FrameworkBuildFor = (
@@ -23,7 +22,7 @@ export type FrameworkBuildFor = (
 
 export interface EnsureBuiltMarketplaceCommand {
   readonly projectRoot: string;
-  readonly marketplace: Marketplace;
+  readonly marketplace: DeclaredMarketplace;
   readonly target: FrameworkBuildTarget;
   readonly mode: FrameworkBuildMode;
   readonly forceRefresh?: boolean;
@@ -52,7 +51,7 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
 
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly resolveMarketplace: Pick<ResolveMarketplace, "execute">,
+    private readonly resolveMarketplace: MarketplaceResolver,
     private readonly buildFor: FrameworkBuildFor,
     private readonly version: VersionReader,
     /**

@@ -2,11 +2,8 @@ import { join } from "node:path";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
-import type {
-  PluginFetcher,
-  PluginFetchOptions,
-} from "../../../distribution/ports/plugin-fetcher.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { PluginFetcher, PluginFetchOptions } from "../../ports/marketplace-sources.js";
 import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
 
 export class PluginDistributionLoader {

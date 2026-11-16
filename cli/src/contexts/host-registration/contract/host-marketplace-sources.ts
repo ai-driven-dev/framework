@@ -8,6 +8,20 @@ export type NativeMarketplaceSource =
       readonly source: string;
     };
 
+export function sameNativeMarketplaceSource(
+  recorded: NativeMarketplaceSource,
+  current: NativeMarketplaceSource
+): boolean {
+  if (recorded.kind !== current.kind || recorded.source !== current.source) return false;
+  if (recorded.kind === "registry" && current.kind === "registry") return true;
+  return (
+    recorded.kind === "effective-list" &&
+    current.kind === "effective-list" &&
+    recorded.root === current.root &&
+    recorded.sourceType === current.sourceType
+  );
+}
+
 export interface NativeMarketplaceSourceReading {
   readonly location: string;
   /** A missing name in a readable map proves absence; `null` means named but source unproven. */

@@ -5,17 +5,17 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import type { Marketplace } from "../../../distribution/domain/marketplace.js";
-import { sameNativeMarketplaceSource } from "../../../host-registration/application/native-marketplace-source-proof.js";
+import { sameNativeMarketplaceSource } from "../../../host-registration/contract/host-marketplace-sources.js";
 import type {
   HostRegistrationOutcome,
   RegisteredMarketplace,
-} from "../../../host-registration/application/register-plugin-with-host.js";
+} from "../../../host-registration/contract/native-registration.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
 
 /** What a run observed or caused, written back into the manifests that track it. */
 export class RecordActivation {
@@ -117,7 +117,7 @@ export class RecordActivation {
     tools: ToolCatalog,
     project: Manifest,
     outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>,
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly DeclaredMarketplace[],
     scope: MarketplaceScope,
     projectRoot?: string
   ): Promise<void> {

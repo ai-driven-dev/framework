@@ -2,10 +2,9 @@ import type { ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type { MarketplaceRegistry } from "../../distribution/ports/marketplace-registry.js";
-import type { PluginRemovalClaims } from "../../installation/application/removal/remove-plugin.js";
-import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
+import type { MachineManifestRepository, UserScopePluginFiles } from "../ports/machine-manifest.js";
+import type { MarketplaceListing } from "../ports/marketplace-listing.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
 import { isMachineOwnedNativeRef } from "./native-plugin-ownership.js";
 import { removalClaims } from "./removal-claims.js";
@@ -20,15 +19,19 @@ import {
 import { userScopeFilesSafeToDelete } from "./user-scope-plugin-files.js";
 
 export interface PluginRemovalClaimsDeps {
-  readonly repo: (ManifestRepository & Lock) | undefined;
+  readonly repo: (MachineManifestRepository & Lock) | undefined;
   readonly fs: FileReader;
   readonly logger: Logger;
   readonly home: string;
   /** Absent skips the another-project guard entirely. */
   readonly userSourceReferences?: UserSourceReferences;
   /** Absent treats every marketplace as not shared. */
-  readonly marketplaceRegistry?: MarketplaceRegistry;
-  readonly resolveCacheCandidate: PluginRemovalClaims["resolveCacheCandidate"];
+  readonly marketplaceRegistry?: MarketplaceListing;
+  readonly resolveCacheCandidate: (
+    cacheRoot: string,
+    relativeSegments: string,
+    label: string
+  ) => Promise<string | null>;
 }
 
 /**
@@ -42,7 +45,7 @@ export interface PluginRemovalClaimsDeps {
  * read itself back as "another project". `ref` carries the host's own name for the marketplace,
  * `marketplaceAlias` stays the key this project's registry is read by; both must move together.
  */
-export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps): PluginRemovalClaims {
+export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
   const { repo, fs, logger, userSourceReferences } = deps;
   const guardMessage = async (
     binary: string,
@@ -83,7 +86,7 @@ export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps): PluginRemova
     isMachineOwned: (toolId: ToolId, ref: string) => isMachineOwnedNativeRef(repo, toolId, ref),
     guardMessage,
     resolveCacheCandidate: deps.resolveCacheCandidate,
-    userFilesSafeToDelete: (plugin, tool) =>
+    userFilesSafeToDelete: (plugin: UserScopePluginFiles<unknown>, tool: AiToolProfile) =>
       userScopeFilesSafeToDelete(fs, logger, plugin, tool, deps.home),
     ...removalClaims(repo, fs),
   };

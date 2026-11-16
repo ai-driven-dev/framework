@@ -132,13 +132,63 @@ export const ALLOWED = new Set([
   // (target/04-tools-and-translate.md, "Others reach tools only through its application/ and
   // contract/"). Biome keeps tools' domain and application out of reach.
   "host-registration->tools",
-  // Transitional (M-C1): the claim files read the installation record and its manifest port, the
-  // marketplace name and the tool profile. These rows go once the marketplace name and the tool
-  // profile arrive as arguments from orchestration; the exact imports are in reference-context.md.
-  "machine-claims->installation",
+  // Transitional (M-C1): the claim files read the marketplace name and the tool profile. These rows
+  // go once both arrive as arguments from orchestration; the exact imports are listed in
+  // `TRANSITIONAL_PAIRS` below.
   "machine-claims->distribution",
   "machine-claims->tools",
 ]);
+
+/**
+ * The ALLOWED rows that are debt rather than the target context map, each with the exact
+ * `importer -> target` pairs that justify it. A stable row stays edge-level; a transitional one
+ * admits these imports and no other, so a new import under an existing row fails instead of
+ * riding in. The lists only shrink: a pair the code no longer holds fails until removed.
+ */
+export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
+  "installation->auth": [
+    "src/contexts/installation/application/doctor/check-project-layout.ts -> src/contexts/auth/contract/token-provider.ts",
+  ],
+  "installation->distribution": [
+    "src/contexts/installation/application/install/install-user-plugins.ts -> src/contexts/distribution/contract/plugin-source-match.ts",
+    "src/contexts/installation/application/purge-user-scope-files.ts -> src/contexts/distribution/contract/marketplace.ts",
+    "src/contexts/installation/application/sync/activate-native-tools.ts -> src/contexts/distribution/contract/marketplace.ts",
+    "src/contexts/installation/application/sync/load-sync-context.ts -> src/contexts/distribution/contract/marketplace.ts",
+  ],
+  "installation->host-registration": [
+    "src/contexts/installation/application/clean-project.ts -> src/contexts/host-registration/contract/withdrawal.ts",
+    "src/contexts/installation/application/plugin/update-user-plugin-files.ts -> src/contexts/host-registration/contract/registration-record.ts",
+    "src/contexts/installation/application/purge-user-scope-files.ts -> src/contexts/host-registration/contract/withdrawal.ts",
+    "src/contexts/installation/application/sync/activate-native-tools.ts -> src/contexts/host-registration/contract/native-registration.ts",
+    "src/contexts/installation/application/sync/load-sync-context.ts -> src/contexts/host-registration/contract/native-registration.ts",
+    "src/contexts/installation/application/sync/record-activation.ts -> src/contexts/host-registration/contract/host-marketplace-sources.ts",
+    "src/contexts/installation/application/sync/record-activation.ts -> src/contexts/host-registration/contract/native-registration.ts",
+    "src/contexts/installation/application/sync/sync-tool-settings-files.ts -> src/contexts/host-registration/contract/native-registration.ts",
+    "src/contexts/installation/domain/manifest/native-registrations.ts -> src/contexts/host-registration/contract/host-marketplace-sources.ts",
+    "src/contexts/installation/domain/manifest/native-registrations.ts -> src/contexts/host-registration/contract/registration-record.ts",
+    "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/native-registration.ts",
+    "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/registration-record.ts",
+    "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/withdrawal.ts",
+  ],
+  "installation->translate": [
+    "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts -> src/contexts/translate/contract/translate-distribution.ts",
+    "src/contexts/installation/application/plugin/add-plugin.ts -> src/contexts/translate/contract/translate-distribution.ts",
+    "src/contexts/installation/application/shared/built-materialization-deps.ts -> src/contexts/translate/contract/translate-distribution.ts",
+    "src/contexts/installation/application/shared/ensure-built-marketplace.ts -> src/contexts/translate/contract/build-native-tree.ts",
+    "src/contexts/installation/application/shared/ensure-built-marketplace.ts -> src/contexts/translate/contract/build-targets.ts",
+    "src/contexts/installation/application/shared/hash-output-files.ts -> src/contexts/translate/contract/output-file.ts",
+    "src/contexts/installation/application/sync/build-marketplace-for-tool.ts -> src/contexts/translate/contract/build-targets.ts",
+    "src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.ts -> src/contexts/translate/contract/plugin-format.ts",
+  ],
+  "machine-claims->distribution": [
+    "src/contexts/machine-claims/application/shared-source-reference-support.ts -> src/contexts/distribution/contract/marketplace.ts",
+    "src/contexts/machine-claims/application/shared-source/shared-framework-source.ts -> src/contexts/distribution/contract/marketplace.ts",
+  ],
+  "machine-claims->tools": [
+    "src/contexts/machine-claims/application/plugin-removal-claims.ts -> src/contexts/tools/contract/tool-profile.ts",
+    "src/contexts/machine-claims/application/user-scope-plugin-files.ts -> src/contexts/tools/contract/tool-profile.ts",
+  ],
+};
 
 /**
  * The contexts whose interior is held by Biome's folder groups instead of the public-surface
@@ -203,6 +253,8 @@ export function isContext(name: string): boolean {
 
 interface Crossing {
   readonly file: string;
+  /** The module the import resolves to. */
+  readonly target: string;
   readonly from: string;
   readonly to: string;
   /** `domain`, `application`, `infrastructure`, or a migrated context's `ports` or `contract`
@@ -232,10 +284,23 @@ function crossings(files: readonly string[]): Crossing[] {
       const target = resolveImportTarget(file, match[1] as string);
       const to = contextOf(target);
       if (!isCrossing(from, to)) continue;
-      out.push({ file, from, to, layer: (layerMatch?.[1] as Crossing["layer"]) ?? null });
+      out.push({ file, target, from, to, layer: (layerMatch?.[1] as Crossing["layer"]) ?? null });
     }
   }
   return out;
+}
+
+/**
+ * Every `importer -> target` pair of a crossing from one context into another, in the shape a
+ * rule below compares: a context never imports through shared, presentation or the composition
+ * here, so only the two context-to-context walks are kept.
+ */
+export function contextImportPairs(
+  files: readonly string[]
+): { readonly edge: string; readonly importer: string; readonly target: string }[] {
+  return crossings(files)
+    .filter((crossing) => isContext(crossing.from) && isContext(crossing.to))
+    .map(({ file, target, from, to }) => ({ edge: `${from}->${to}`, importer: file, target }));
 }
 
 export function weighedEdges(

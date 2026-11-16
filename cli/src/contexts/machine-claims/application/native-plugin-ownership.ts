@@ -1,21 +1,20 @@
 import type { ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
-import type { NativePluginClaim } from "../../installation/domain/manifest/native-registrations.js";
-import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
+import type { MachineManifestRepository, MachinePluginClaim } from "../ports/machine-manifest.js";
 
 export async function machineNativePluginClaim(
-  repo: ManifestRepository | undefined,
+  repo: MachineManifestRepository | undefined,
   toolId: ToolId,
   ref: string
-): Promise<NativePluginClaim | undefined> {
+): Promise<MachinePluginClaim | undefined> {
   if (repo === undefined) return undefined;
   const machine = await repo.load();
   return machine?.getNativeRegistrations(toolId)?.pluginClaims?.find((claim) => claim.ref === ref);
 }
 
 export async function isMachineOwnedNativeRef(
-  repo: ManifestRepository | undefined,
+  repo: MachineManifestRepository | undefined,
   toolId: ToolId,
   ref: string
 ): Promise<boolean> {
@@ -23,7 +22,7 @@ export async function isMachineOwnedNativeRef(
 }
 
 export async function detachNativePluginRefs(
-  repo: (ManifestRepository & Lock) | undefined,
+  repo: (MachineManifestRepository & Lock) | undefined,
   fs: FileReader,
   projectRoot: string,
   refsByTool: ReadonlyMap<ToolId, readonly string[]>

@@ -1,9 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  type UserRegistrationWithdrawal,
-  WithdrawFromHost,
-} from "../../../../src/contexts/host-registration/application/withdraw-from-host.js";
+import { WithdrawFromHost } from "../../../../src/contexts/host-registration/application/withdraw-from-host.js";
+import type { UserRegistrationWithdrawal } from "../../../../src/contexts/host-registration/contract/withdrawal.js";
 import type { HostMarketplaceRegistry } from "../../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";

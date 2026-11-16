@@ -3289,13 +3289,14 @@
                   },
                   {
                     "group": [
+                      "**/installation/**",
                       "**/translate/**",
                       "**/host-registration/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "machine-claims may import installation, distribution and tools, never telemetry, see context-graph.arch.test.ts"
+                    "message": "machine-claims may import distribution and tools, never telemetry, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3331,6 +3332,7 @@
                   },
                   {
                     "group": [
+                      "**/installation/**",
                       "**/translate/**",
                       "**/host-registration/**",
                       "**/presentation/**",
@@ -3338,7 +3340,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "machine-claims may import installation, distribution and tools, never telemetry or presentation, see context-graph.arch.test.ts"
+                    "message": "machine-claims may import distribution and tools, never telemetry or presentation, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3370,6 +3372,7 @@
                 "patterns": [
                   {
                     "group": [
+                      "**/installation/**",
                       "**/translate/**",
                       "**/host-registration/**",
                       "**/telemetry/**",
@@ -3377,7 +3380,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "machine-claims/infrastructure may import installation, distribution and tools, never telemetry or presentation, see context-graph.arch.test.ts"
+                    "message": "machine-claims/infrastructure may import distribution and tools, never telemetry or presentation, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -3417,13 +3420,14 @@
                   },
                   {
                     "group": [
+                      "**/installation/**",
                       "**/translate/**",
                       "**/host-registration/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "machine-claims may import installation, distribution and tools, never telemetry, see context-graph.arch.test.ts"
+                    "message": "machine-claims may import distribution and tools, never telemetry, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3466,13 +3470,14 @@
                   },
                   {
                     "group": [
+                      "**/installation/**",
                       "**/translate/**",
                       "**/host-registration/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "machine-claims may import installation, distribution and tools, never telemetry, see context-graph.arch.test.ts"
+                    "message": "machine-claims may import distribution and tools, never telemetry, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],

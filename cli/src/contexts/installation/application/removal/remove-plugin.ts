@@ -8,13 +8,13 @@ import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import type { WithdrawFromHost } from "../../../host-registration/application/withdraw-from-host.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { HostWithdrawal } from "../../ports/native-host.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import { deletePluginFilesForTool, loadPluginManifest } from "../plugin/plugin-helpers.js";
 import {
@@ -67,7 +67,7 @@ export class RemovePlugin {
   constructor(
     private readonly fs: FileWriter & FileReader,
     private readonly manifests: PluginRemovalManifests,
-    private readonly withdrawFromHost: WithdrawFromHost,
+    private readonly withdrawFromHost: HostWithdrawal,
     private readonly claims: PluginRemovalClaims
   ) {}
 

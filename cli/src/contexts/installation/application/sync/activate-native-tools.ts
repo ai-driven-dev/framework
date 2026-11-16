@@ -2,13 +2,11 @@ import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
-import type { Marketplace } from "../../../distribution/domain/marketplace.js";
-import type {
-  HostRegistrationOutcome,
-  RegisterPluginWithHost,
-} from "../../../host-registration/application/register-plugin-with-host.js";
+import type { HostRegistrationOutcome } from "../../../host-registration/contract/native-registration.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
+import type { NativeHostRegistration } from "../../ports/native-host.js";
 import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.js";
 import type { SyncContext } from "./load-sync-context.js";
 
@@ -29,7 +27,7 @@ export interface ActivateNativeToolsRequest {
 
 export class ActivateNativeTools {
   constructor(
-    private readonly registerPluginWithHost: RegisterPluginWithHost,
+    private readonly registerPluginWithHost: NativeHostRegistration,
     private readonly buildMarketplace: BuildMarketplaceForTool,
     private readonly logger: Logger,
     /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
@@ -89,7 +87,7 @@ export class ActivateNativeTools {
   private refsToEnableOn(
     toolId: ToolId,
     manifest: Manifest,
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly DeclaredMarketplace[],
     hostNameByAlias: ReadonlyMap<string, string>,
     scope: MarketplaceScope,
     enablePlugins: readonly string[]
@@ -111,7 +109,7 @@ export class ActivateNativeTools {
   private pluginRefsToEnable(
     toolId: ToolId,
     manifest: Manifest,
-    marketplaces: readonly Marketplace[],
+    marketplaces: readonly DeclaredMarketplace[],
     hostNameByAlias: ReadonlyMap<string, string>,
     scope: MarketplaceScope
   ): string[] {

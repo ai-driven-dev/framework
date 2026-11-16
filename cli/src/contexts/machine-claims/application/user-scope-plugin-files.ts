@@ -2,9 +2,9 @@ import { dirname, join, posix } from "node:path";
 import type { InstallationFile } from "../../../shared/domain/file.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type { InstalledPlugin } from "../../installation/domain/plugins/installed-plugin.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
+import type { UserScopePluginFiles } from "../ports/machine-manifest.js";
 
 /**
  * The files of a user-scope plugin that are actually safe to delete: safe only once the real,
@@ -15,7 +15,7 @@ import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
 export async function userScopeFilesSafeToDelete(
   fs: FileReader,
   logger: Logger,
-  plugin: InstalledPlugin,
+  plugin: UserScopePluginFiles<unknown>,
   tool: AiToolProfile,
   homedir: string
 ): Promise<ReadonlyMap<string, string>> {
@@ -54,12 +54,12 @@ export async function userScopeFilesSafeToDelete(
 
 /** The plugin without the recorded files nothing stands at any more, which an update writes back.
  * A dangling symlink counts as gone: the atomic write replaces the link, and never follows it. */
-export async function withoutMissingFiles(
+export async function withoutMissingFiles<P extends UserScopePluginFiles<P>>(
   fs: FileReader,
-  plugin: InstalledPlugin,
+  plugin: P,
   tool: AiToolProfile,
   homedir: string
-): Promise<InstalledPlugin> {
+): Promise<P> {
   const boundary = tool.plugins()?.userPluginsBaseDir(homedir);
   if (boundary === null || boundary === undefined) return plugin;
   const present = new Map<string, string>();

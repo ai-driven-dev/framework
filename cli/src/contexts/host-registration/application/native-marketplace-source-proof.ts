@@ -1,8 +1,9 @@
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
-import type {
-  HostMarketplaceSources,
-  NativeMarketplaceSource,
-  NativeMarketplaceSourceReading,
+import {
+  type HostMarketplaceSources,
+  type NativeMarketplaceSource,
+  type NativeMarketplaceSourceReading,
+  sameNativeMarketplaceSource,
 } from "../contract/host-marketplace-sources.js";
 import type { NativeMarketplaceRegistration } from "../contract/registration-record.js";
 import type {
@@ -15,20 +16,6 @@ export interface NativeMarketplaceSourceInspection {
   readonly status: "absent" | "owned" | "unproven";
   readonly current?: NativeMarketplaceSource;
   readonly reason?: string;
-}
-
-export function sameNativeMarketplaceSource(
-  recorded: NativeMarketplaceSource,
-  current: NativeMarketplaceSource
-): boolean {
-  if (recorded.kind !== current.kind || recorded.source !== current.source) return false;
-  if (recorded.kind === "registry" && current.kind === "registry") return true;
-  return (
-    recorded.kind === "effective-list" &&
-    current.kind === "effective-list" &&
-    recorded.root === current.root &&
-    recorded.sourceType === current.sourceType
-  );
 }
 
 export async function inspectNativeMarketplaceSource(

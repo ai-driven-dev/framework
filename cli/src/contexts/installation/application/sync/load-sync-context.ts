@@ -1,13 +1,15 @@
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import type { RegisterFrameworkMarketplace } from "../../../distribution/application/register-framework-marketplace.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
-import type { Marketplace } from "../../../distribution/domain/marketplace.js";
-import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
-import type { RegistrationClaims } from "../../../host-registration/application/register-plugin-with-host.js";
+import type { RegistrationClaims } from "../../../host-registration/contract/native-registration.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type {
+  DeclaredMarketplace,
+  FrameworkMarketplaceRegistrar,
+  InstallationMarketplaceRegistry,
+} from "../../ports/marketplace-sources.js";
 
 export interface SyncContextRequest {
   projectRoot: string;
@@ -22,7 +24,7 @@ export interface SyncContextRequest {
  * touches, and the way to persist the manifest to the repository it was read from. */
 export interface SyncContext {
   manifest: Manifest;
-  marketplaces: readonly Marketplace[];
+  marketplaces: readonly DeclaredMarketplace[];
   toolIds: readonly ToolId[];
   save(): Promise<void>;
   /** What a host registration is checked against for one tool: the manifest's own record, the
@@ -33,13 +35,10 @@ export interface SyncContext {
 export class LoadSyncContext {
   constructor(
     private readonly manifestRepo: ManifestRepository,
-    private readonly marketplaceRegistry: MarketplaceRegistry,
+    private readonly marketplaceRegistry: InstallationMarketplaceRegistry,
     /** Re-registers the shared machine-scope source when this run finds no marketplace at all.
      * Absent keeps the silent no-op instead of guessing what to register. */
-    private readonly marketplaceRegisterFrameworkUseCase?: Pick<
-      RegisterFrameworkMarketplace,
-      "execute"
-    >,
+    private readonly marketplaceRegisterFrameworkUseCase?: FrameworkMarketplaceRegistrar,
     private readonly userManifestRepo?: ManifestRepository & Lock
   ) {}
 
@@ -90,8 +89,8 @@ export class LoadSyncContext {
    */
   private async ensureFrameworkRegistered(
     projectRoot: string,
-    marketplaces: readonly Marketplace[]
-  ): Promise<readonly Marketplace[]> {
+    marketplaces: readonly DeclaredMarketplace[]
+  ): Promise<readonly DeclaredMarketplace[]> {
     const framework = marketplaces.find((m) => m.name === FRAMEWORK_MARKETPLACE_NAME);
     if (marketplaces.length > 0 && framework?.scope !== "project") return marketplaces;
     if (this.marketplaceRegisterFrameworkUseCase === undefined) return marketplaces;
