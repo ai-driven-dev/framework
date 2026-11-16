@@ -1,6 +1,6 @@
 ---
 name: 08-hook-generate
-description: Creates, updates or removes a hook that runs a script at a lifecycle event, in each chosen AI tool's native format, not for skills or rules.
+description: Creates, updates or removes a hook that runs a script at a lifecycle event, in each chosen host's native format, not for skills or rules.
 argument-hint: add | update | remove
 ---
 
@@ -19,7 +19,7 @@ flowchart LR
   write -->|"writer error"| stopped((stopped))
   write -->|"remove done"| done((written))
   write --> verify["actions/04-verify.md"]
-  verify -->|"finding"| write
+  verify -->|"finding"| plan
   verify <-->|"trial to approve"| user
   verify --> verified((verified))
 ```
@@ -27,4 +27,4 @@ flowchart LR
 ## Transversal rules
 
 - If a cited reference cannot be read, stop and report the missing file.
-- Write only in the project, never in a user or global scope.
+- Write the hook only in the project, never in a user or global scope.

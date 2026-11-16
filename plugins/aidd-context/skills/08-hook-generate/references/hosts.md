@@ -1,6 +1,6 @@
 # Hosts
 
-The host AI tools that carry a hook: how to detect each, the event for a moment, and what the script reads and answers there.
+The hosts that carry a hook: how to detect each, the event for a moment, and what the script reads and answers there.
 
 Detect by listing the project root with hidden entries, since a file search misses an empty marker.
 

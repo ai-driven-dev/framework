@@ -4,16 +4,15 @@ Write the approved hook to each host.
 
 ## Input
 
-The approved input file and paths, or the findings verify sent back.
+The approved input file and paths.
 
 ## Process
 
-1. Fix the script in the input file for each finding verify sent back.
-2. Run the writer per [writer.md](../references/writer.md) with the options the plan ran.
-   - Approved overwrite: add `--force`.
+1. Run the writer per [writer.md](../references/writer.md) with the plan's options, without `--plan`.
+   - Approved `update`: add `--force`.
    - Non-zero exit: quote the writer's output, then stop.
-3. Report each path written with its operation.
-4. Read [verify](04-verify.md) with the input file still in place, except on remove.
+2. Report each path written with its operation.
+3. Read [verify](04-verify.md), except on remove.
 
 ## Output
 

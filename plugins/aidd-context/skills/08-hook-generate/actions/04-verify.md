@@ -15,8 +15,8 @@ The approved input file and the paths written.
 3. End the turn and wait for the user's own answer.
    - Approved: run the trial, then report what each host did.
    - Declined: mark the hosts not run as format verified, run not verified.
-4. Report each host's status and the teammates' notes from [hosts.md](../references/hosts.md).
-5. On a finding, quote it, then read [write](03-write.md) to fix the script.
+4. Report each host's status.
+5. On a finding, quote it, then read [plan](02-plan.md) to fix the script.
 
 ## Output
 
