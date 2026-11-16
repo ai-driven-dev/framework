@@ -2,6 +2,7 @@ import type { TokenProvider } from "../../src/contexts/auth/contract/token-provi
 import { EnsureFrameworkMarketplace } from "../../src/contexts/distribution/application/ensure-framework-marketplace.js";
 import type { RefreshMarketplace } from "../../src/contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../../src/contexts/distribution/application/register-framework-marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import type { RepositoryVisibility } from "../../src/contexts/distribution/ports/repository-visibility.js";
 import { RecordSourceReference } from "../../src/contexts/machine-claims/application/record-source-reference.js";
 import type { UserSourceReferences } from "../../src/contexts/machine-claims/ports/user-source-references.js";
@@ -28,7 +29,13 @@ export function setupMarketplaceRegistrar(
 ): SetupMarketplaceRegistration {
   const registration = new RegisterMarketplace(
     new EnsureFrameworkMarketplace(register, tokenProvider, releaseResolver),
-    new RecordSourceReference(fs, currentVersionProvider, logger, userSourceReferences),
+    new RecordSourceReference(
+      fs,
+      currentVersionProvider,
+      logger,
+      FRAMEWORK_MARKETPLACE_NAME,
+      userSourceReferences
+    ),
     refresh,
     environment
   );

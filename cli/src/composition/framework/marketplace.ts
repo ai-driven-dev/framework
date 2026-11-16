@@ -4,6 +4,7 @@ import { EnsureFrameworkMarketplace } from "../../contexts/distribution/applicat
 import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.js";
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import type { MarketplaceRemover } from "../../contexts/distribution/ports/marketplace-remover.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
@@ -182,7 +183,13 @@ export function wireMarketplace(base: Base, inst: Installation) {
   );
   const registerMarketplace = new RegisterMarketplace(
     new EnsureFrameworkMarketplace(registerFrameworkMarketplace, tokenProvider, releaseResolver),
-    new RecordSourceReference(fs, currentVersionProvider, logger, userSourceReferences),
+    new RecordSourceReference(
+      fs,
+      currentVersionProvider,
+      logger,
+      FRAMEWORK_MARKETPLACE_NAME,
+      userSourceReferences
+    ),
     refreshMarketplace,
     environment
   );

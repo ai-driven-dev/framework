@@ -23,6 +23,8 @@ export interface PluginRemovalClaimsDeps {
   readonly fs: FileReader;
   readonly logger: Logger;
   readonly home: string;
+  /** The framework marketplace's reserved name, owned by the distribution. */
+  readonly frameworkMarketplaceName: string;
   /** Absent skips the another-project guard entirely. */
   readonly userSourceReferences?: UserSourceReferences;
   /** Absent treats every marketplace as not shared. */
@@ -60,7 +62,7 @@ export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
     const marketplace = marketplaces.find((m) => m.name === marketplaceAlias);
     if (
       marketplace === undefined ||
-      !frameworkSourceIsShared(marketplace.name, marketplace.scope)
+      !frameworkSourceIsShared(marketplace.name, marketplace.scope, deps.frameworkMarketplaceName)
     ) {
       return undefined;
     }

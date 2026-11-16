@@ -132,10 +132,8 @@ export const ALLOWED = new Set([
   // (target/04-tools-and-translate.md, "Others reach tools only through its application/ and
   // contract/"). Biome keeps tools' domain and application out of reach.
   "host-registration->tools",
-  // Transitional (M-C1): the claim files read the marketplace name and the tool profile. These rows
-  // go once both arrive as arguments from orchestration; the exact imports are listed in
-  // `TRANSITIONAL_PAIRS` below.
-  "machine-claims->distribution",
+  // Transitional (M-C1): the claim files read the tool profile. This row goes once it arrives as an
+  // argument from orchestration; the exact imports are listed in `TRANSITIONAL_PAIRS` below.
   "machine-claims->tools",
 ]);
 
@@ -179,10 +177,6 @@ export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/shared/hash-output-files.ts -> src/contexts/translate/contract/output-file.ts",
     "src/contexts/installation/application/sync/build-marketplace-for-tool.ts -> src/contexts/translate/contract/build-targets.ts",
     "src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.ts -> src/contexts/translate/contract/plugin-format.ts",
-  ],
-  "machine-claims->distribution": [
-    "src/contexts/machine-claims/application/shared-source-reference-support.ts -> src/contexts/distribution/contract/marketplace.ts",
-    "src/contexts/machine-claims/application/shared-source/shared-framework-source.ts -> src/contexts/distribution/contract/marketplace.ts",
   ],
   "machine-claims->tools": [
     "src/contexts/machine-claims/application/plugin-removal-claims.ts -> src/contexts/tools/contract/tool-profile.ts",

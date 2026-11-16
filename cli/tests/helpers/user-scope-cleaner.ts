@@ -1,3 +1,4 @@
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import type { HostPorts } from "../../src/contexts/host-registration/ports/host-ports.js";
 import { PurgeUserScopeFiles } from "../../src/contexts/installation/application/purge-user-scope-files.js";
@@ -19,7 +20,7 @@ export interface UserScopeCleanerParts extends Partial<HostPorts> {
   marketplaceRegistry?: Purge[3];
   userConfigDir?: () => string;
   homeDir?: () => string;
-  userSourceReferences?: ConstructorParameters<typeof ReleaseClaims>[3];
+  userSourceReferences?: ConstructorParameters<typeof ReleaseClaims>[4];
   prompter?: ConstructorParameters<typeof CleanUserScope>[4];
 }
 
@@ -49,7 +50,16 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       marketplaceRegistries: parts.marketplaceRegistries ?? new Map(),
       sources: parts.sources ?? new Map(),
     }),
-    { release: new ReleaseClaims(fs, logger, parts.repo, parts.userSourceReferences), purgeCache },
+    {
+      release: new ReleaseClaims(
+        fs,
+        logger,
+        FRAMEWORK_MARKETPLACE_NAME,
+        parts.repo,
+        parts.userSourceReferences
+      ),
+      purgeCache,
+    },
     logger,
     parts.prompter
   );

@@ -5,7 +5,6 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { ListedMarketplace } from "../../ports/marketplace-listing.js";
 import type { UserSourceReferences } from "../../ports/user-source-references.js";
 import type { PurgeDeclaredCache } from "../purge-declared-cache.js";
@@ -42,15 +41,19 @@ export class SharedFrameworkSource {
    * Never run before every tool's own native activation: a host's CLI needs the tree it is
    * unregistering from to still exist, and a binary off `PATH` or a failed build can leave a
    * registration still naming this project's own pre-migration cache. `resolveCacheCandidate`
-   * refuses anything that does not `realpath` strictly inside `projectRoot`.
+   * refuses anything that does not `realpath` strictly inside `projectRoot`. The distribution owns
+   * `frameworkMarketplaceName`; the caller hands it over.
    */
   async purgeStaleProjectCache(
     projectRoot: string,
     marketplaces: readonly ListedMarketplace[],
-    activation: ActivationEvidence
+    activation: ActivationEvidence,
+    frameworkMarketplaceName: string
   ): Promise<void> {
     if (activation.errors.length > 0) return;
-    const framework = marketplaces.find((m) => frameworkSourceIsShared(m.name, m.scope));
+    const framework = marketplaces.find((m) =>
+      frameworkSourceIsShared(m.name, m.scope, frameworkMarketplaceName)
+    );
     if (framework === undefined) return;
     if (activation.binaryMissing.length > 0) {
       this.logger.warn(
@@ -70,7 +73,7 @@ export class SharedFrameworkSource {
     }
     const candidate = await this.purgeCache.resolveCandidate(
       projectRoot,
-      join(BUILT_CACHE_SUBDIR, FRAMEWORK_MARKETPLACE_NAME),
+      join(BUILT_CACHE_SUBDIR, frameworkMarketplaceName),
       "This project's own pre-migration framework cache"
     );
     if (candidate === null) return;
@@ -84,12 +87,15 @@ export class SharedFrameworkSource {
   async recordSharedSourceReference(
     projectRoot: string,
     marketplaces: readonly ListedMarketplace[],
-    outcomes: ReadonlyMap<ToolId, RegistrationEvidence>
+    outcomes: ReadonlyMap<ToolId, RegistrationEvidence>,
+    frameworkMarketplaceName: string
   ): Promise<void> {
     if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {
       return;
     }
-    const framework = marketplaces.find((m) => frameworkSourceIsShared(m.name, m.scope));
+    const framework = marketplaces.find((m) =>
+      frameworkSourceIsShared(m.name, m.scope, frameworkMarketplaceName)
+    );
     if (framework === undefined) return;
     if (
       ![...outcomes.values()].some((outcome) =>

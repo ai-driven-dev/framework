@@ -3,14 +3,18 @@ import { samePathSegment } from "../../../shared/domain/paths.js";
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../distribution/contract/marketplace.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
 
-/** The reserved name at scope `"user"`: the one shared, machine-scope source every project's own
- * `references.json` claim tracks. A single predicate rather than an inline check per caller, so a
- * fourth site cannot drift onto a different spelling and skip the check. */
-export function frameworkSourceIsShared(name: string, scope: MarketplaceScope): boolean {
-  return name === FRAMEWORK_MARKETPLACE_NAME && scope === "user";
+/** The framework marketplace's reserved name at scope `"user"`: the one shared, machine-scope
+ * source every project's own `references.json` claim tracks. A single predicate rather than an
+ * inline check per caller, so a fourth site cannot drift onto a different spelling and skip the
+ * check. The distribution owns the name; the caller hands it over. */
+export function frameworkSourceIsShared(
+  name: string,
+  scope: MarketplaceScope,
+  frameworkMarketplaceName: string
+): boolean {
+  return name === frameworkMarketplaceName && scope === "user";
 }
 
 /**

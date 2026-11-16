@@ -1,5 +1,6 @@
 import { homedir } from "node:os";
 import { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { CleanProject as CleanProjectFiles } from "../../contexts/installation/application/clean-project.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/application/removal/remove-project-plugin.js";
@@ -36,7 +37,13 @@ export function wireClean(base: Base, inst: Installation) {
   );
   const purgeCache = new PurgeDeclaredCache(fs, logger);
   const claims = {
-    release: new ReleaseClaims(fs, logger, userManifestRepo, userSourceReferences),
+    release: new ReleaseClaims(
+      fs,
+      logger,
+      FRAMEWORK_MARKETPLACE_NAME,
+      userManifestRepo,
+      userSourceReferences
+    ),
     purgeCache,
   };
   const purgeUserScopeFiles = new PurgeUserScopeFiles(
