@@ -17,7 +17,7 @@ import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
-import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
+import { fakeBuildSources } from "../../helpers/ports/fake-build-sources.js";
 import type { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter } from "../../helpers/ports/scripted-prompter.js";
@@ -66,7 +66,7 @@ async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       marketplaceRegistry: registry,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     }
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);

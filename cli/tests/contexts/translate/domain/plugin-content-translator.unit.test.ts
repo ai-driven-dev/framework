@@ -262,27 +262,6 @@ describe("PluginContentTranslator.translate()", () => {
   });
 });
 
-describe("PluginContentTranslator.detectFlatCollisions()", () => {
-  it("reports no collision when plugins use different plugin names", () => {
-    const dist1 = makeDist({ manifest: { name: "plugin-a", version: "1.0.0" } });
-    const dist2 = makeDist({ manifest: { name: "plugin-b", version: "1.0.0" } });
-    const collisions = translator.detectFlatCollisions([dist1, dist2], opencode);
-    expect(collisions).toEqual([]);
-  });
-
-  it("reports collisions when same plugin name is used twice", () => {
-    const dist1 = makeDist({ manifest: { name: "same-plugin", version: "1.0.0" } });
-    const dist2 = makeDist({ manifest: { name: "same-plugin", version: "2.0.0" } });
-    const collisions = translator.detectFlatCollisions([dist1, dist2], opencode);
-    expect(collisions.length).toBeGreaterThan(0);
-    expect(collisions[0].plugin).toBe("same-plugin");
-  });
-
-  it("returns empty array for native-mode tools", () => {
-    expect(translator.detectFlatCollisions([makeDist()], claude)).toEqual([]);
-  });
-});
-
 /** The path a plugin's own content takes on its way to disk: the chain `aidd plugin install`
  * follows, and the one the golden suite cannot see, since `aidd translate` never calls
  * `rewriteContent` at all. */

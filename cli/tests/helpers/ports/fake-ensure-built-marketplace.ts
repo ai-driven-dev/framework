@@ -2,7 +2,6 @@ import type {
   BuiltMarketplaceEnsurer,
   EnsureBuiltMarketplaceCommand,
 } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
-
 /** Stand-in for BuiltMarketplaceEnsurer returning a deterministic per-target built dir, so a
  * native or materialize test can consume a built tree without disk I/O. */
 export function fakeEnsureBuiltMarketplace(

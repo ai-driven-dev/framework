@@ -10,7 +10,7 @@ import { AddPlugin } from "../../../../../src/contexts/installation/application/
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
@@ -33,7 +33,7 @@ async function installSamplePlugin() {
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       marketplaceRegistry: registry,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     }
   );
   await useCase.execute({

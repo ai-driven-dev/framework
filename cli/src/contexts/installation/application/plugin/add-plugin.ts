@@ -6,7 +6,7 @@ import {
   ToolNotInManifestError,
   VersionMismatchError,
 } from "../../../../shared/domain/errors.js";
-import type { InstallationFile } from "../../../../shared/domain/file.js";
+import { InstallationFile } from "../../../../shared/domain/file.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
@@ -21,7 +21,8 @@ import type { MarketplaceRegistry } from "../../../distribution/ports/marketplac
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
+import type { OutputFile } from "../../../translate/contract/output-file.js";
+import type { TranslateDistribution } from "../../../translate/contract/translate-distribution.js";
 import { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
@@ -77,6 +78,15 @@ export interface AddPluginSources {
   distributionLoader: PluginDistributionLoader;
   marketplaceRegistry: MarketplaceRegistry;
   ensureBuilt: BuiltMarketplaceEnsurer;
+  translate: TranslateDistribution;
+}
+
+/** Translation yields content; what an install tracks is its hash, taken here. */
+function hashOutputFiles(files: readonly OutputFile[], hasher: Hasher): InstallationFile[] {
+  return files.map(
+    ({ relativePath, content }) =>
+      new InstallationFile({ relativePath, content, hash: hasher.hash(content) })
+  );
 }
 
 export class AddPlugin implements PluginAdd {
@@ -88,6 +98,7 @@ export class AddPlugin implements PluginAdd {
   private readonly distributionLoader: PluginDistributionLoader;
   private readonly marketplaceRegistry: MarketplaceRegistry;
   private readonly ensureBuilt: BuiltMarketplaceEnsurer;
+  private readonly translate: TranslateDistribution;
 
   constructor(
     host: AddPluginHost,
@@ -102,6 +113,7 @@ export class AddPlugin implements PluginAdd {
       distributionLoader: this.distributionLoader,
       marketplaceRegistry: this.marketplaceRegistry,
       ensureBuilt: this.ensureBuilt,
+      translate: this.translate,
     } = sources);
   }
 
@@ -472,10 +484,8 @@ export class AddPlugin implements PluginAdd {
       );
       return { ...result, notices: [] };
     }
-    const translated = new PluginContentTranslator(this.hasher).translateWithComponentPaths(
-      dist,
-      tool
-    );
+    const output = this.translate.execute({ distribution: dist, tool });
+    const translated = { ...output, files: hashOutputFiles(output.files, this.hasher) };
     return this.materializeNativePlugin(
       dist,
       tool,

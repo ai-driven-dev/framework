@@ -13,7 +13,7 @@ import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js"
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -72,7 +72,7 @@ async function installPlugin(
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       marketplaceRegistry: deps.marketplaceRegistry,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     }
   );
   await addUseCase.execute({

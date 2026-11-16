@@ -13,6 +13,7 @@ import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/ins
 import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../../../src/orchestration/plugin/update-user-plugin.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
+import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -101,7 +102,7 @@ async function installStalePlugin(
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       marketplaceRegistry: registry,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     }
   ).execute({
     tools: catalogOf(),

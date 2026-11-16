@@ -9,7 +9,7 @@ import { codex } from "../../../../../src/contexts/tools/domain/profiles/codex/p
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
@@ -33,7 +33,7 @@ async function installWithLogger(toolId: AiToolId) {
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       marketplaceRegistry: new InMemoryMarketplaceRegistry(),
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     }
   );
   await useCase.execute({

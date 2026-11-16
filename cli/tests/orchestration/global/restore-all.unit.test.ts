@@ -21,6 +21,7 @@ import {
   installTool,
 } from "../../helpers/ports/build-unit-deps.js";
 import { CheckboxRecordingPrompter } from "../../helpers/ports/checkbox-recording-prompter.js";
+import { fakeBuildSources } from "../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FakePlatform } from "../../helpers/ports/fake-platform.js";
 import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
@@ -50,7 +51,7 @@ async function installPlugin(
     {
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
       marketplaceRegistry: deps.marketplaceRegistry,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     }
   ).execute({
     tools: catalogOf(),
@@ -334,7 +335,7 @@ describe("RestoreAll — plugin materialization", () => {
       {
         distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
         marketplaceRegistry: deps.marketplaceRegistry,
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        ...fakeBuildSources(),
       }
     ).execute({
       tools: catalogOf(),

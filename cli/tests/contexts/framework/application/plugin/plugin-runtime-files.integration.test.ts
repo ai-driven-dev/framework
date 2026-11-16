@@ -6,7 +6,7 @@ import { UpdatePlugin } from "../../../../../src/contexts/installation/applicati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
@@ -38,7 +38,7 @@ async function legacyProject() {
         deps.pluginDistributionReader
       ),
       marketplaceRegistry: deps.marketplaceRegistry,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     },
     deps.installRuntimeConfigUseCase
   );
