@@ -8,7 +8,6 @@ import type { RegisterFrameworkMarketplace } from "../contexts/distribution/appl
 import type { SearchPlugins } from "../contexts/distribution/application/search-plugins.js";
 import type { CleanUserScopeUseCase } from "../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import type { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
-import type { MarketplaceCheckUseCase } from "../contexts/framework/application/flows/marketplace-check-use-case.js";
 import type { MarketplaceRemoveUseCase } from "../contexts/framework/application/flows/marketplace-remove-use-case.js";
 import type { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { InstallAiToolUseCase } from "../contexts/framework/application/install/install-ai-tool-use-case.js";
@@ -57,6 +56,7 @@ import type { DoctorAll } from "../orchestration/global/doctor-all.js";
 import type { ReportAllStatus } from "../orchestration/global/report-all-status.js";
 import type { RestoreAll } from "../orchestration/global/restore-all.js";
 import type { UpdateTools } from "../orchestration/global/update-tools.js";
+import type { CheckMarketplaceUpstream } from "../orchestration/marketplace/check.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -128,7 +128,7 @@ export interface Deps {
   marketplaceRemoveUseCase: Pick<MarketplaceRemoveUseCase, "execute">;
   userMarketplaceRemoveUseCase: Pick<UserMarketplaceRemoveUseCase, "execute">;
   refreshMarketplace: Pick<RefreshMarketplace, "execute">;
-  marketplaceCheckUseCase: Pick<MarketplaceCheckUseCase, "execute">;
+  marketplaceCheckUseCase: Pick<CheckMarketplaceUpstream, "execute">;
   userSourceReferences: UserSourceReferences;
   installAiToolUseCase: Pick<InstallAiToolUseCase, "execute">;
   installIdeToolUseCase: Pick<InstallIdeTool, "execute">;

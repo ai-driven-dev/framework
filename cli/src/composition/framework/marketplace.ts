@@ -1,5 +1,5 @@
+import { CheckMarketplaces } from "../../contexts/distribution/application/check-marketplaces.js";
 import type { MarketplaceRemover } from "../../contexts/distribution/ports/marketplace-remover.js";
-import { MarketplaceCheckUseCase } from "../../contexts/framework/application/flows/marketplace-check-use-case.js";
 import { MarketplaceRemoveUseCase } from "../../contexts/framework/application/flows/marketplace-remove-use-case.js";
 import {
   ActivateNativeTools,
@@ -16,6 +16,8 @@ import { SetupMarketplaceSourceUseCase } from "../../contexts/framework/applicat
 import { SetupMarketplaceRegistrationUseCase } from "../../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
+import { ListPluginSources } from "../../contexts/installation/application/list-plugin-sources.js";
+import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
 import type { Base } from "./base.js";
@@ -79,10 +81,9 @@ export function wireMarketplace(base: Base, inst: Installation) {
     prompter,
     marketplaceRemover
   );
-  const marketplaceCheckUseCase = new MarketplaceCheckUseCase(
-    manifestRepo,
-    marketplaceRegistry,
-    resolveMarketplaceUseCase
+  const marketplaceCheckUseCase = new CheckMarketplaceUpstream(
+    new CheckMarketplaces(marketplaceRegistry, resolveMarketplaceUseCase),
+    new ListPluginSources(manifestRepo)
   );
   const buildMarketplaceForTool = new BuildMarketplaceForTool(
     ensureBuiltMarketplaceUseCase,
