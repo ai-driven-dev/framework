@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/framework.js";
+import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
 
@@ -37,6 +38,12 @@ describe("createDeps", () => {
 
   it("builds a separate graph when a token is given on the command line", async () => {
     expect(await createDeps(root, { verbose: false, token: "ghp_x" }, undefined, tools)).not.toBe(
+      await createDeps(root, { verbose: false }, undefined, tools)
+    );
+  });
+
+  it("shares one graph between a missing token and an empty one", async () => {
+    expect(await createDeps(root, { verbose: false, token: "" }, undefined, tools)).toBe(
       await createDeps(root, { verbose: false }, undefined, tools)
     );
   });
@@ -127,6 +134,15 @@ describe("createDeps", () => {
     expect(
       await readFile(join(root, ".github", "agents", "aidd-test-code-reviewer.agent.md"), "utf8")
     ).toContain("aidd-test-code-reviewer");
+  });
+
+  it("hands the menu a manifest repository that resolves tool ids through the catalog", async () => {
+    const { manifestRepo } = createMenuDeps(root, catalogOf());
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.claude, "1.0.0", []);
+    await manifestRepo.save(manifest);
+
+    expect((await manifestRepo.load())?.getInstalledToolIds()).toEqual([TOOL.claude]);
   });
 
   it("hands the menu a manifest repository rooted at the project", () => {

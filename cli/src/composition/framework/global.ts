@@ -16,11 +16,20 @@ import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update
 import { RestoreAll } from "../../orchestration/global/restore-all.js";
 import { UpdateTools } from "../../orchestration/global/update-tools.js";
 import { InstallGlobalPlugins } from "../../orchestration/setup/install-global-plugins.js";
-import { SetupMachineScope } from "../../orchestration/setup/setup-machine-scope.js";
+import {
+  SetupMachineScope,
+  type SyncMachineScope,
+} from "../../orchestration/setup/setup-machine-scope.js";
+import type { SyncSettings } from "../../orchestration/sync/sync-settings.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";
 import type { Marketplace } from "./marketplace.js";
 import type { Plugin } from "./plugin.js";
+
+/** Native activation machine-wide: the project sync, bound to the user scope. */
+export function userScopeSyncOf(sync: Pick<SyncSettings, "execute">): SyncMachineScope {
+  return (options) => sync.execute({ ...options, scope: "user" });
+}
 
 /** The machine-wide commands: install and update tools, setup machine scope, status and restore. */
 export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Plugin) {
@@ -76,7 +85,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
   const setupMachineScope = new SetupMachineScope(
     new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
     setupMarketplaceRegistration,
-    (options) => marketplaceSyncSettingsUseCase.execute({ ...options, scope: "user" }),
+    userScopeSyncOf(marketplaceSyncSettingsUseCase),
     installGlobalPlugins
   );
   const statusUseCase = new ReportStatus(fs, manifestRepo, hasher, detectPluginDriftUseCase);

@@ -17,6 +17,14 @@ import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";
 
+/** Whether the host CLI behind a binary is reachable, as the activator that drives it answers;
+ * a binary no activator drives is not. */
+export function hostBinaryAvailableIn(
+  activators: ReadonlyMap<string, { isAvailable(): boolean }>
+): (binary: string) => boolean {
+  return (binary) => activators.get(binary)?.isAvailable() ?? false;
+}
+
 /** The doctor checks and the commands that run them. */
 export function wireDoctor(base: Base, inst: Installation) {
   const {
@@ -37,10 +45,7 @@ export function wireDoctor(base: Base, inst: Installation) {
     new CheckRegistration(
       new ListRegisteredPlugins(manifests),
       new ResolveBuiltMarketplaces(fs, marketplaceRegistry, userConfigDir, currentVersionProvider),
-      new InspectDeclaredMarketplaces(
-        fs,
-        (binary) => nativePluginActivators.get(binary)?.isAvailable() ?? false
-      ),
+      new InspectDeclaredMarketplaces(fs, hostBinaryAvailableIn(nativePluginActivators)),
       new InspectHostRegistration(fs, hostPluginRegistries, hostMarketplaceRegistries)
     );
   const doctorUseCase = new RunDoctor(

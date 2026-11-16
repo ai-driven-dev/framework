@@ -26,13 +26,53 @@ import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove
 import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user.js";
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.js";
 import { RegisterMarketplace } from "../../orchestration/setup/register-marketplace.js";
-import { SetupMarketplaceRegistration } from "../../orchestration/setup/setup-marketplace-registration.js";
+import {
+  type RegisterFrameworkSource,
+  SetupMarketplaceRegistration,
+} from "../../orchestration/setup/setup-marketplace-registration.js";
 import { SyncSettings } from "../../orchestration/sync/sync-settings.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";
+
+/** Detaches what a removal's plugins held on the machine, from the removal's own summary. */
+export function detachClaimsOf(cleanup: Pick<RemoveProjectPlugin, "detachClaims">) {
+  return (
+    projectRoot: string,
+    removed: {
+      readonly nativeRefs: Parameters<RemoveProjectPlugin["detachClaims"]>[1];
+      readonly plugins: Parameters<RemoveProjectPlugin["detachClaims"]>[2];
+    }
+  ) => cleanup.detachClaims(projectRoot, removed.nativeRefs, removed.plugins);
+}
+
+/** The question setup asks about which marketplace to register. */
+export function askedFrom(ask: Pick<AskMarketplaceSource, "execute">) {
+  return (options: Parameters<AskMarketplaceSource["execute"]>[0]) => ask.execute(options);
+}
+
+/** Removing a user-scope plugin's files asks which are safe to delete; nobody reads why one is
+ * left in place, so the reason is not logged. */
+export function quietUserScopeFilesSafeToDelete(
+  fs: Parameters<typeof userScopeFilesSafeToDelete>[0]
+): (
+  plugin: Parameters<typeof userScopeFilesSafeToDelete>[2],
+  tool: Parameters<typeof userScopeFilesSafeToDelete>[3],
+  home: string
+) => ReturnType<typeof userScopeFilesSafeToDelete> {
+  return (plugin, tool, home) =>
+    userScopeFilesSafeToDelete(fs, { debug() {}, info() {}, warn() {} }, plugin, tool, home);
+}
+
+/** A setup flow registers its framework source for the scope the flow runs in. */
+export function registerForFlow(
+  register: Pick<RegisterMarketplace, "execute">
+): RegisterFrameworkSource {
+  return (flow, source) =>
+    register.execute({ projectRoot: flow.projectRoot, scope: flow.scope, source });
+}
 
 /** Marketplace removal, check and sync, and the setup steps that register a marketplace. */
 export function wireMarketplace(base: Base, inst: Installation) {
@@ -70,8 +110,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     new FindMarketplaceToRemove(marketplaceRegistry),
     new RemovePluginsFromMarketplace(manifestRepo, projectCleanup),
     new RemoveMarketplace(marketplaceRegistry),
-    (projectRoot, { nativeRefs, plugins }) =>
-      projectCleanup.detachClaims(projectRoot, nativeRefs, plugins),
+    detachClaimsOf(projectCleanup),
     prompter
   );
   const userMarketplaceRemoveUseCase = new RemoveUserMarketplace(
@@ -80,8 +119,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
       fs,
       userManifestRepo,
       nativeHostRegistrationGate,
-      (plugin, tool, home) =>
-        userScopeFilesSafeToDelete(fs, { debug() {}, info() {}, warn() {} }, plugin, tool, home)
+      quietUserScopeFilesSafeToDelete(fs)
     ),
     new RemoveMarketplace(marketplaceRegistry),
     resolveHomeDir()
@@ -149,9 +187,8 @@ export function wireMarketplace(base: Base, inst: Installation) {
     environment
   );
   const setupMarketplaceRegistration = new SetupMarketplaceRegistration(
-    (options) => askMarketplaceSource.execute(options),
-    (flow, source) =>
-      registerMarketplace.execute({ projectRoot: flow.projectRoot, scope: flow.scope, source })
+    askedFrom(askMarketplaceSource),
+    registerForFlow(registerMarketplace)
   );
   return {
     marketplaceRemoveUseCase,

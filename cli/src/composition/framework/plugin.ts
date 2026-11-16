@@ -31,6 +31,35 @@ import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";
 
+/** Where a fetched plugin distribution is kept between runs. */
+export function pluginCacheDir(): string {
+  return join(userConfigDir(), "cache", "plugin-cache");
+}
+
+/** The materializer with the machine-scope containment rule bound, and no rebuild unless asked. */
+export function withinUserScope(
+  materializer: Pick<PluginMaterializer, "planUpdate" | "applyUpdate">
+): BoundPluginMaterializer {
+  return {
+    planUpdate: (plugin, tool, projectRoot, log, rebuild = false) =>
+      materializer.planUpdate(plugin, tool, projectRoot, log, rebuild, isStrictlyWithinUserScope),
+    applyUpdate: (plan, log) => materializer.applyUpdate(plan, log, isStrictlyWithinUserScope),
+  };
+}
+
+/** Resolves a cache path a removal may delete, through the purge that owns the rule. */
+export function purgeCandidateResolverOf(purge: Pick<PurgeDeclaredCache, "resolveCandidate">) {
+  return (...args: Parameters<PurgeDeclaredCache["resolveCandidate"]>) =>
+    purge.resolveCandidate(...args);
+}
+
+// One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
+export const userScopeFileGuard: UserScopeFileGuard = {
+  safeToDelete: userScopeFilesSafeToDelete,
+  withoutMissing: withoutMissingFiles,
+  assertWriteBoundary: assertUserScopeWriteBoundary,
+};
+
 /** The plugin lifecycle: add, install, update and remove. */
 export function wirePlugin(base: Base, inst: Installation) {
   const {
@@ -64,8 +93,7 @@ export function wirePlugin(base: Base, inst: Installation) {
       home: resolveHomeDir(),
       userSourceReferences,
       marketplaceRegistry,
-      resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
-        new PurgeDeclaredCache(fs, logger).resolveCandidate(cacheRoot, relativeSegments, label),
+      resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),
     })
   );
   const pluginAddUseCase = new AddPlugin(
@@ -98,34 +126,14 @@ export function wirePlugin(base: Base, inst: Installation) {
     pluginInstallFromMarketplaceUseCase,
     new TrustPluginSource(marketplaceTrustStore, prompter)
   );
-  // One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
-  const userScopeFileGuard: UserScopeFileGuard = {
-    safeToDelete: userScopeFilesSafeToDelete,
-    withoutMissing: withoutMissingFiles,
-    assertWriteBoundary: assertUserScopeWriteBoundary,
-  };
   const pluginMaterializer = new PluginMaterializer(
     fs,
-    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader, () =>
-      join(userConfigDir(), "cache", "plugin-cache")
-    ),
+    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader, pluginCacheDir),
     hasher,
     userScopeFileGuard,
     builtMaterializationDeps
   );
-  const userPluginFileUpdater: BoundPluginMaterializer = {
-    planUpdate: (plugin, tool, projectRoot, log, rebuild = false) =>
-      pluginMaterializer.planUpdate(
-        plugin,
-        tool,
-        projectRoot,
-        log,
-        rebuild,
-        isStrictlyWithinUserScope
-      ),
-    applyUpdate: (plan, log) =>
-      pluginMaterializer.applyUpdate(plan, log, isStrictlyWithinUserScope),
-  };
+  const userPluginFileUpdater = withinUserScope(pluginMaterializer);
   const pluginUpdateUseCase = new UpdatePlugin(
     fs,
     manifestRepo,

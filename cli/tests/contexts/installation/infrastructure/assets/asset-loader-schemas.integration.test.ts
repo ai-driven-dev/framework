@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
+import { AssetNotFoundError } from "../../../../../src/shared/domain/errors.js";
+import type { SchemaName } from "../../../../../src/shared/domain/file.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 
 const SCHEMAS = join(REPOSITORY_ROOT, "cli", "assets", "schemas");
@@ -18,5 +20,11 @@ describe("BundledAssetProviderAdapter.loadSchema", () => {
     expect(new BundledAssetProviderAdapter(wireTools()).loadSchema(name)).toStrictEqual(
       JSON.parse(readFileSync(join(SCHEMAS, file), "utf8"))
     );
+  });
+
+  it("names the file it could not find when a schema is not shipped", () => {
+    expect(() =>
+      new BundledAssetProviderAdapter(wireTools()).loadSchema("nope" as SchemaName)
+    ).toThrow(AssetNotFoundError);
   });
 });
