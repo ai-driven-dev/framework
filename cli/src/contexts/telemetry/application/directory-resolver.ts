@@ -1,19 +1,14 @@
 import type { NotStoredReason } from "../contract/repository-resolution.js";
 import { type CloneIdentity, cloneKey, sameClone } from "../domain/consent/clone-identity.js";
 import { repositoryIdOf } from "../domain/repository-identity.js";
-import {
-  cwdKey,
-  ownerAt,
-  type RepositoryResolution,
-  resolutionKey,
-  sameResolution,
-} from "../domain/repository-resolution.js";
+import { cwdKey, ownerAt, type RepositoryResolution } from "../domain/repository-resolution.js";
 import { tokenOfKey } from "../domain/telemetry-consent.js";
 import type { ConsentHistory } from "../ports/consent-history.js";
 import type { ConsentSource } from "../ports/consent-source.js";
 import type { RepositoryLocator } from "../ports/repository-locator.js";
 import type { ResolutionStore } from "../ports/resolution-store.js";
 import { ConsentLog } from "./consent-log.js";
+import { RememberedResolutions } from "./remembered-resolutions.js";
 
 export type DirectoryOutcome =
   | {
@@ -60,8 +55,7 @@ export class DirectoryResolver {
     const run = new ResolutionRun(
       this.locator,
       this.consentSource,
-      this.store,
-      await this.store.load(),
+      await RememberedResolutions.load(this.store),
       await ConsentLog.load(this.history),
       this.environment
     );
@@ -71,7 +65,6 @@ export class DirectoryResolver {
 }
 
 export class ResolutionRun {
-  private changed = false;
   private readonly directories = new Map<string, Directory>();
   /** Clones whose git config could not be read: their intervals are neither kept nor closed. */
   private readonly unreadable = new Set<string>();
@@ -79,8 +72,7 @@ export class ResolutionRun {
   constructor(
     private readonly locator: RepositoryLocator,
     private readonly consentSource: ConsentSource,
-    private readonly store: ResolutionStore,
-    private readonly remembered: Map<string, RepositoryResolution>,
+    private readonly remembered: RememberedResolutions,
     private readonly consents: ConsentLog,
     private readonly environment: ResolutionEnvironment
   ) {}
@@ -102,7 +94,9 @@ export class ResolutionRun {
    * still turn out to be once it can be read. Never true for a directory no read saw readable,
    * nor while the consent log cannot be trusted. */
   mayConsent(cwd: string, at: string): boolean {
-    const owners = this.ownersOf(cwdKey(cwd, this.environment.caseInsensitiveFileSystem));
+    const owners = this.remembered.ownersOf(
+      cwdKey(cwd, this.environment.caseInsensitiveFileSystem)
+    );
     return owners.some((owner) => this.consents.covers(owner.clone, Date.parse(at)));
   }
 
@@ -113,7 +107,7 @@ export class ResolutionRun {
 
   /** Keeps what this run learned. */
   async close(): Promise<void> {
-    if (this.changed) await this.store.save(this.remembered);
+    await this.remembered.save();
   }
 
   /** Closes, at this moment, the earliest anyone knows, every open interval whose clone is
@@ -170,7 +164,7 @@ export class ResolutionRun {
     const dir = cwdKey(cwd, this.environment.caseInsensitiveFileSystem);
     const located = await this.locator.locate(cwd);
     if (located.status === "gone") {
-      const [first, ...others] = this.ownersOf(dir);
+      const [first, ...others] = this.remembered.ownersOf(dir);
       return first === undefined
         ? { skipped: "never-seen-alive" }
         : { owners: [first, ...others], current: null };
@@ -184,34 +178,16 @@ export class ResolutionRun {
     if (id === null) return { skipped: "outside-repo" };
     // A clone the platform cannot identify cannot be told from another: fail closed.
     if (located.clone === null) return { skipped: "unreadable-consent" };
-    const current = this.remember(dir, id, located.root, located.clone);
-    const others = this.ownersOf(dir).filter((owner) => !sameClone(owner.clone, current.clone));
-    return { owners: [current, ...others], current };
-  }
-
-  /** Keeps the first sighting of a directory in a clone, and what it was found to be since. */
-  private remember(
-    dir: string,
-    repositoryId: string,
-    root: string,
-    clone: CloneIdentity
-  ): RepositoryResolution {
-    const key = resolutionKey(dir, clone);
-    const held = this.remembered.get(key);
-    const seen = {
+    const current = this.remembered.remember(
       dir,
-      repository_id: repositoryId,
-      root,
-      clone,
-      seen_at: held?.seen_at ?? this.environment.now().toISOString(),
-    };
-    if (sameResolution(held, seen)) return seen;
-    this.remembered.set(key, seen);
-    this.changed = true;
-    return seen;
-  }
-
-  private ownersOf(dir: string): RepositoryResolution[] {
-    return [...this.remembered.values()].filter((resolution) => resolution.dir === dir);
+      id,
+      located.root,
+      located.clone,
+      this.environment.now
+    );
+    const others = this.remembered
+      .ownersOf(dir)
+      .filter((owner) => !sameClone(owner.clone, current.clone));
+    return { owners: [current, ...others], current };
   }
 }
