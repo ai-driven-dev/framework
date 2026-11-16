@@ -154,13 +154,15 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-capture-command.md](skills/07-command-generate/actions/01-capture-command.md) | - |
-| `actions` | [02-write-command.md](skills/07-command-generate/actions/02-write-command.md) | - |
-| `actions` | [03-validate.md](skills/07-command-generate/actions/03-validate.md) | - |
+| `actions` | [01-frame.md](skills/07-command-generate/actions/01-frame.md) | - |
+| `actions` | [02-plan.md](skills/07-command-generate/actions/02-plan.md) | - |
+| `actions` | [03-write.md](skills/07-command-generate/actions/03-write.md) | - |
 | `assets` | [command-template.md](skills/07-command-generate/assets/command-template.md) | - |
 | `references` | [command-authoring.md](skills/07-command-generate/references/command-authoring.md) | - |
-| `references` | [tool-paths.md](skills/07-command-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/07-command-generate/SKILL.md) | `Generate a flat slash command across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor a one-shot slash command. Not for multi-step skills or other artifacts like rules, agents, hooks.` |
+| `references` | [hosts.md](skills/07-command-generate/references/hosts.md) | - |
+| `references` | [writer.md](skills/07-command-generate/references/writer.md) | - |
+| `scripts` | [write-command.cjs](skills/07-command-generate/scripts/write-command.cjs) | - |
+| `-` | [SKILL.md](skills/07-command-generate/SKILL.md) | `Creates or updates a slash command, a one-shot prompt typed as /name, across the host AI tools, when the user wants a new command or to refactor one.` |
 
 #### `skills/08-hook-generate`
 

@@ -1,45 +1,22 @@
 # Command authoring
 
-The contract every generated command must satisfy. A command is a one-shot slash trigger (frontmatter plus a body) invoked as `/<name>`.
+The constraints every generated command satisfies. A command is a one-shot prompt the user types as `/<name>`.
 
 ## Rules
 
-- **R1.** Single objective. One command does one thing, in fewer than ten steps.
-- **R2.** The description states what it does, explicit triggers, and a `Do NOT use for` clause. Where a tool has no description field (a plain-markdown command), the command is manual-only by `/<name>`.
-- **R3.** No Role section. The role is implicit in the goal. Body in English. `$ARGUMENTS` is the reserved input keyword.
-- **R4.** A flat command is for a one-shot trigger. If it needs supporting files or many steps, use a skill instead.
-- **R5.** One idea per sentence. Split a sentence that runs past one line. Exceptions: table rows.
+| Id | Rule | Why |
+| --- | --- | --- |
+| C1 | One command, one objective, in fewer than ten steps, with no supporting file. | Anything larger belongs in a skill. |
+| C2 | `description` is third person: what the command does, in one line. | The menu shows it next to `/<name>`. |
+| C3 | Read the user's input with `$ARGUMENTS` only when every target substitutes it; otherwise tell the model to read the chat input. | Copilot and Cursor leave `$ARGUMENTS` literal. |
+| C4 | Inline a shell output with `` !`cmd` `` only when every target is Claude Code or OpenCode; otherwise tell the agent to run it. | Other hosts print the syntax literally. |
+| C5 | Set `argument-hint` when the command reads `$ARGUMENTS`. | It tells the user what to type. |
+| C6 | Write in English, short imperative sentences, one idea each. | The prompt is read by a model. |
+| C7 | Set `model`, `agent` or `allowed-tools` only when the user names one. | A default pins every run to one choice. |
 
 ## Naming
 
-The file slug is the command name in kebab-case: lowercase, hyphen-separated, no spaces. `Ship Release` becomes `ship-release`. The command is invoked as `/<slug>`.
-
-## SDLC phase taxonomy
-
-An optional way to order commands. If the user opts in, place the command under `commands/<NN>_<phase>/` by phase digit. Otherwise the user picks any location. Never impose a phase.
-
-| Phase | Name          | Covers                                 |
-| ----- | ------------- | -------------------------------------- |
-| 01    | onboard       | setup, generators, scaffolding         |
-| 02    | context       | discovery, PRD, stories, brainstorming |
-| 03    | plan          | technical planning, component behavior |
-| 04    | code          | implementation, assertions             |
-| 05    | review        | code and functional review             |
-| 06    | tests         | test writing, journeys                 |
-| 07    | documentation | learning, diagrams                     |
-| 08    | deploy        | commits, pull requests, tags           |
-| 09    | refactor      | performance, security                  |
-| 10    | maintenance   | debugging, issues, audits              |
-
-## Arguments
-
-- `$ARGUMENTS`: the full input string as typed. Identical on every tool.
-- `$0`, `$1`, ...: positional arguments, shell-quoted. Indexing differs per tool (0-based on some, 1-based on others), so `$1` reads a different argument across tools.
-
-For a portable command, prefer `$ARGUMENTS` and split it in the body. Reach for positionals only on a single-tool command. On Claude Code, a body that never references `$ARGUMENTS` gets `ARGUMENTS: <value>` appended automatically, so reference `$ARGUMENTS` explicitly whenever you want to control where the input lands.
-
-## CLI injection
-
-Wrap a CLI call as `` !`<command>` ``, a bang followed by the backtick-quoted command. Its output is inlined before the prompt runs. Single pass: the output is not re-scanned.
-
-Injection is confirmed only for Claude Code. For every other tool, do not emit it. Describe the command in the body for the agent to run instead.
+| Constraint | Example |
+| --- | --- |
+| Kebab-case, verb first | `ship-release`, `fix-lint` |
+| Unique among the target's commands and skills | a skill and a command sharing a name collide |
