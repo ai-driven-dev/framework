@@ -25,6 +25,16 @@ const titleOf = (name) => {
   return words.charAt(0).toUpperCase() + words.slice(1);
 };
 
+const HEADING = /^# +(.+?)\s*$/m;
+
+/** What a person is shown for a file of a variant, never its path: the first heading of its record, of the record
+ * beside it for a render, else the name of the file as words. */
+function fileTitleOf(variant, file) {
+  const stem = file.path.replace(/\.[^./]+$/, "");
+  const record = file.path.endsWith(".md") ? file : variant.files.find((each) => each.path === `${stem}.md`);
+  return (record && HEADING.exec(record.text)?.[1]) || titleOf(stem.split("/").pop());
+}
+
 const filled = (label, values) => label.replace(/\{(\w+)\}/g, (_, key) => values[key]);
 
 /** A markdown text cut at its `## ` headings: what comes before the first one has no heading. */
@@ -163,7 +173,7 @@ function framesOf({ variant, file, tokens, labels }) {
   const doc = inlined(file.text, tokens);
   const named = statesOf(file.text);
   const own = named.length ? ` data-states="${escaped(named.join(" "))}"` : "";
-  return `<div class="file rendering" data-path="${escaped(file.path)}"${own}><h3><code>${escaped(file.path)}</code></h3>${frameOf({ variant, path: file.path, doc, size: MOBILE })}<p class="no-state" hidden>${escaped(labels.noState)}</p></div>`;
+  return `<div class="file rendering" data-path="${escaped(file.path)}"${own}><h3>${escaped(fileTitleOf(variant, file))}</h3>${frameOf({ variant, path: file.path, doc, size: MOBILE })}<p class="no-state" hidden>${escaped(labels.noState)}</p></div>`;
 }
 
 const DESKTOP = SIZES.find(([size]) => size === "desktop");
@@ -190,7 +200,7 @@ function columnOf({ variant, at, shared, tokens, labels, wireframes, parent, sib
   const renders = screens ? [] : variant.files.filter((file) => RENDER_FILE.test(file.path)).map((file) => framesOf({ variant, file, tokens, labels }));
   const documents = variant.files.filter((file) => MARKDOWN_FILE.test(file.path)).flatMap((file) => {
     const text = shared.has(file.path) ? shared.get(file.path).texts[at] : file.text;
-    return text ? [`<div class="file" data-path="${escaped(file.path)}"><h3><code>${escaped(file.path)}</code></h3>${documentOf(text)}</div>`] : [];
+    return text ? [`<div class="file" data-path="${escaped(file.path)}"><h3>${escaped(fileTitleOf(variant, file))}</h3>${documentOf(text)}</div>`] : [];
   });
   const full = documents.length ? `<details class="fulltext"><summary>${escaped(labels.full)}</summary>${documents.join("")}</details>` : "";
   const large = screens || renders.length ? `<button type="button" class="large" data-variant="${escaped(variant.name)}">${escaped(labels.large)}</button>` : "";
@@ -219,20 +229,20 @@ const largeOf = (labels) => {
 /** The body of a set's page: its name, then the problems that keep it from being shown, else the paths the
  * variants share and one column per variant. */
 function setBodyOf({ set, tokens, labels, wireframes = [] }) {
-  const head = `<header class="head"><p class="crumb">${labels.choose}</p><h1>${escaped(titleOf(set.id))}</h1></header>`;
+  const head = `<header class="head"><p class="crumb">${labels.choose}</p><h1>${escaped(set.title ?? titleOf(set.id))}</h1></header>`;
   if (set.problems.length) {
     const items = set.problems.map((each) => `<li data-rule="${escaped(each.rule)}"><b>${escaped(each.rule)}</b> ${escaped(each.message)} <span class="fix">${escaped(each.fix)}</span></li>`);
     return `${head}\n<section class="checks"><h2>${labels.checks}</h2><ul>${items.join("")}</ul></section>`;
   }
   const rounds = [...new Set(set.variants.map((variant) => variant.round ?? 1))].sort((a, b) => a - b);
-  const options = wireframes.map((wireframe) => `<option value="${escaped(wireframe.path)}">${escaped(wireframe.title ?? wireframe.path)}</option>`).join("");
+  const options = wireframes.map((wireframe) => `<option value="${escaped(wireframe.path)}">${escaped(wireframe.title ?? titleOf(wireframe.path.replace(/\.[^./]+$/, "")))}</option>`).join("");
   const dressed = wireframes.length && set.variants.some(lookOf);
   const shown = (variant) => !(wireframes.length && lookOf(variant)) && variant.files.some((file) => RENDER_FILE.test(file.path));
   const note = wireframes.length && set.variants.some(lookOf) ? `<div class="preview-bar"><p class="preview-note">${escaped(labels.preview)}</p><label class="screen-pick">${escaped(labels.screen)} <select id="screen-pick">${options}</select></label></div>` : "";
   const roundBody = (round) => {
     const own = set.variants.filter((variant) => (variant.round ?? 1) === round);
     const shared = sharedOf(own);
-    const same = [...shared].filter(([, each]) => each.same.length).map(([path, each]) => `<p class="same" data-path="${escaped(path)}"><code>${escaped(path)}</code> ${escaped(filled(labels.same, { sections: each.same.join(JOINER) }))}</p>`);
+    const same = [...shared].filter(([, each]) => each.same.length).map(([path, each]) => `<p class="same" data-path="${escaped(path)}">${escaped(fileTitleOf(own.find((variant) => variant.files.some((file) => file.path === path)), { path }))} ${escaped(filled(labels.same, { sections: each.same.join(JOINER) }))}</p>`);
     const columns = own.map((variant, at) => columnOf({ variant, at, shared, tokens, labels, wireframes, siblings: own, voting: round === rounds.at(-1), parent: set.variants.find((each) => each.name === variant.parent && (each.round ?? 1) < round) }));
     const body = [same.join("\n"), compareOf({ variants: own.filter(shown), labels }), `<div class="variants" style="--count: ${columns.length}" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}">${columns.join("")}</div>`].filter(Boolean).join("\n");
     return rounds.length > 1 ? `<details class="round" data-round="${round}"${round === rounds.at(-1) ? " open" : ""}><summary>${escaped(filled(labels.round, { round }))}</summary>${body}</details>` : body;
@@ -426,4 +436,4 @@ if (pick) pick.addEventListener("change", () => {
 if (typeof ResizeObserver === "function") new ResizeObserver(fitFrames).observe(document.querySelector("main"));
 `;
 
-module.exports = { stateNameOf, latestOf, setBodyOf, setFileOf, sectionsOf, STYLE, SCRIPT };
+module.exports = { titleOf, stateNameOf, latestOf, setBodyOf, setFileOf, sectionsOf, STYLE, SCRIPT };

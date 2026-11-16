@@ -1064,7 +1064,7 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
   const item = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current || (fm(record).wireframe !== undefined && fm(record).wireframe === current), titleOf(project, record, labels))}</li>`;
   const named = (record, step) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, labels.stepNames[step])}</li>`;
   const ul = (items) => `<ul>${items.join("")}</ul>`;
-  const setsOf = (held) => (held.length ? `<section data-group="choose"><h3>${labels.choose}</h3><ul>${held.map((set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}"${current === `${SET_CURRENT}${set.id}` ? ' aria-current="page"' : ""}>${escaped(set.id)}</a></li>`).join("")}</ul></section>` : "");
+  const setsOf = (held) => (held.length ? `<section data-group="choose"><h3>${labels.choose}</h3><ul>${held.map((set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}"${current === `${SET_CURRENT}${set.id}` ? ' aria-current="page"' : ""}>${escaped(set.title)}</a></li>`).join("")}</ul></section>` : "");
   const bodyOf = ({ step, records: own }) => {
     const sorted = [...own].sort(byRecordId);
     if (step === "identity" || step === "foundations") return ul(sorted.map((record) => named(record, step)));
@@ -1349,7 +1349,7 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
   const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
   const choice = (set) => {
     const row = (variant) => `<li class="pvariant" data-variant="${escaped(variant.name)}"><span class="pick">${escaped(variant.name)}</span><span class="choose">${[["keep", labels.keep], ["revise", labels.revise], ["discard", labels.discard]].map(vote).join("")}</span><textarea class="comment" rows="2" placeholder="${escaped(labels.comment)}" aria-label="${escaped(labels.comment)}" hidden></textarea></li>`;
-    return `<details class="choice" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.id)}</span><span class="picked" data-axes="${set.axes.length}" data-label="${escaped(labels.picks)}" hidden></span><span class="done" data-label="${escaped(labels.decided)}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span></summary><ol>${variants.latestOf(set.variants).map(row).join("")}</ol></details>`;
+    return `<details class="choice" data-set="${escaped(set.id)}" data-fingerprint="${escaped(set.fingerprint)}" open><summary><span>${escaped(set.title)}</span><span class="picked" data-axes="${set.axes.length}" data-label="${escaped(labels.picks)}" hidden></span><span class="done" data-label="${escaped(labels.decided)}">0/${variants.latestOf(set.variants).length} ${escaped(labels.decided)}</span></summary><ol>${variants.latestOf(set.variants).map(row).join("")}</ol></details>`;
   };
   const open = sets.filter((set) => !set.problems.length);
   const choices = open.length ? `<section class="choices" data-group="choose"><h3>${labels.choose}</h3>${open.map(choice).join("")}</section>` : "";
@@ -1479,7 +1479,7 @@ function overviewOf({ project, held, records, rows, labels }) {
     return `<span class="progress" data-record="${escaped(fm(record).id)}" data-base="${settledOf(states)}" data-total="${states.length}">${settledOf(states)}/${states.length}</span>`;
   };
   const entry = (record) => `<li data-id="${escaped(fm(record).id)}"><a href="${escaped(fm(record).id)}.html">${escaped(titleOf(project, record, labels))}</a>${progressOf(record)}</li>`;
-  const setEntry = (set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}">${escaped(set.id)}</a></li>`;
+  const setEntry = (set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}">${escaped(set.title)}</a></li>`;
   const stepBlock = (each) => {
     const body = each.step === "components"
       ? CATEGORIES.flatMap((category) => {
@@ -1538,12 +1538,13 @@ const pageOf = ({ title, lang, navigation, body, drawer, script, wide }) => ["<!
 /** The pages of the showcase by file name: `index.html`, one page per record that is not a review and one per set of variants.
  * `problems` are the engine's, `tokens` the stylesheet text or null, `captures` the png paths beside
  * the records, relative to the design system folder. */
-function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
+function showcaseOf({ project, problems, tokens, captures, lang, sets: found = [] }) {
   const language = languageOf(lang);
   const labels = LABELS[language];
   const records = placed(project).filter((record) => fm(record).kind !== REVIEW_KIND && fm(record).id);
   const recordsById = new Map();
   for (const record of records) if (!recordsById.has(fm(record).id)) recordsById.set(fm(record).id, record);
+  const sets = found.map((set) => ({ ...set, title: recordsById.has(set.id) ? titleOf(project, recordsById.get(set.id), labels) : variants.titleOf(set.id) }));
   const rows = verdictRows(placed(project));
   const journeys = records.filter((record) => fm(record).kind === "journey");
   const system = project.records.find((record) => fm(record).kind === "system");
@@ -1586,7 +1587,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
     return { path: file.slice(WIREFRAMES_DIR.length), title: record ? titleOf(project, record) : undefined, text: text(project, file) ?? "" };
   });
   for (const set of sets) {
-    pages[variants.setFileOf(set.id)] = pageOf({ title: set.id, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets, rows, sectionsById), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null), script: variants.SCRIPT + PANEL, wide: true });
+    pages[variants.setFileOf(set.id)] = pageOf({ title: set.title, lang: language, navigation: navigationOf(project, records, labels, `${SET_CURRENT}${set.id}`, sets, rows, sectionsById), body: variants.setBodyOf({ set, tokens, labels, wireframes }), drawer: drawer(null), script: variants.SCRIPT + PANEL, wide: true });
   }
   return pages;
 }

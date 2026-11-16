@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, LIB, makeTmp, removeTmp, engine, writeProject, put } = require("../fixtures/aidd-ui/project.js");
+const { UI, LIB, makeTmp, removeTmp, engine, writeProject, put, record } = require("../fixtures/aidd-ui/project.js");
 const { load } = require(path.join(LIB, "project.cjs"));
 const { showcaseOf, copiedOf, keptOf, entriesOf, blockedOf, remainingOf, pickedOf, LABELS } = require(path.join(LIB, "showcase.cjs"));
 
@@ -130,6 +130,36 @@ describe("aidd-ui showcase sets", () => {
       new Function("document", "window", SCRIPT)({ querySelectorAll: all, querySelector: () => null, getElementById: () => null }, { addEventListener() {} });
       assert.deepEqual(heads.map((each) => each.style.minHeight), ["120px", "120px"]);
       assert.deepEqual(rows.map((each) => each.map((row) => row.style.minHeight)), [["50px", "60px"], ["50px", "60px"]]);
+    });
+
+    describe("the names it shows", () => {
+      const home = () => put(tmp, `${UI}/screens/home.md`, record(["id: home", "kind: screen", "status: proposed", "version: 1", "wireframe: home", "states: [default]"], "# L\u2019\u00e9cran d\u2019accueil"));
+      const NAME = "L\u2019\u00e9cran d\u2019accueil";
+
+      it("titles a set by the title of the record it is about, on its page, in the navigation, in the panel and on the home page", () => {
+        home();
+        const pages = pagesOf([SET({ id: "home" })]);
+        assert.match(pages["_set-home.html"], new RegExp(`<h1>${NAME}</h1>`));
+        assert.match(pages["_set-home.html"], new RegExp(`<title>${NAME}`));
+        assert.match(groupOf(pages["_set-home.html"], "choose"), new RegExp(`aria-current="page">${NAME}</a>`));
+        assert.match(pages["index.html"], new RegExp(`<summary><span>${NAME}</span><span class="picked"`));
+        assert.match(pages["index.html"], new RegExp(`<a href="_set-home.html">${NAME}</a>`));
+      });
+
+      it("falls back to the id as words for a set about no record", () => {
+        const pages = pagesOf([SET({ id: "new-tool" })]);
+        assert.match(pages["_set-new-tool.html"], /<h1>New tool<\/h1>/);
+        assert.match(groupOf(pages["index.html"], "choose"), />New tool<\/a>/);
+      });
+
+      it("never shows the path of a file: a document by its own heading, a render by the heading of the record beside it", () => {
+        const withRender = (name) => variant(name, name, [file("swatches.md", SECTIONS(name)), file("swatches.html", "<html><head></head><body><p>x</p></body></html>")]);
+        const html = pagesOf([SET({ variants: [withRender("a"), withRender("b")] })])["_set-layout.html"];
+        assert.doesNotMatch(html.replace(/data-[a-z-]+="[^"]*"|srcdoc="[^"]*"|title="[^"]*"/g, ""), /swatches\.(md|html)/);
+        const [a] = columnsOf(html);
+        assert.match(a.html, /<h3>Brand of a<\/h3>/);
+        assert.match(a.html, /<div class="file rendering"[^>]*><h3>Brand of a<\/h3>/);
+      });
     });
 
     it("titles the set page with its name as words", () => {
@@ -285,10 +315,10 @@ describe("aidd-ui showcase sets", () => {
         assert.match(html, /getElementById\("screen-pick"\)/);
       });
 
-      it("names each screen in the select by its record's title, its file when it has none", () => {
+      it("names each screen in the select by its record's title, its file name as words when it has none", () => {
         put(tmp, `${UI}/wireframes/other.html`, OTHER);
         const select = page().match(/<select id="screen-pick"[^>]*>([\s\S]*?)<\/select>/)[1];
-        assert.deepEqual([...select.matchAll(/<option [^>]*>([^<]*)<\/option>/g)].map((match) => match[1]), ["other.html", "Search flow"]);
+        assert.deepEqual([...select.matchAll(/<option [^>]*>([^<]*)<\/option>/g)].map((match) => match[1]), ["Other", "Search flow"]);
       });
 
       it("lets an axis cell grow to its content, over the shell's fixed button height", () => {
