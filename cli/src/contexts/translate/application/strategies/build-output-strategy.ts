@@ -2,7 +2,7 @@ import type {
   SourceMarketplaceRef,
   SourcePluginEntryRef,
 } from "../../../tools/contract/build-contract.js";
-import type { BuildPluginResult } from "../../domain/build-target.js";
+import type { BuildPluginResult } from "../../contract/build-targets.js";
 
 /** Source marketplace catalog entry from the framework's `.claude-plugin/marketplace.json`.
  * The build contract already describes this shape for tool authors, so the orchestrator speaks

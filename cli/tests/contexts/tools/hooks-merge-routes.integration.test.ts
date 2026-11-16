@@ -10,7 +10,7 @@ import { FlatBuildStrategy } from "../../../src/contexts/translate/application/s
 import {
   type PluginComponentFile,
   PluginDistribution,
-} from "../../../src/contexts/translate/domain/plugin-distribution.js";
+} from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { registeredAiProfile, TOOL } from "./testing/catalog-of.js";

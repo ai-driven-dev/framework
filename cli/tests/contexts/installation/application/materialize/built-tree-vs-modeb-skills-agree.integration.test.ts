@@ -4,11 +4,11 @@ import { describe, expect, it } from "vitest";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginContentTranslator } from "../../../../../src/contexts/translate/domain/content-translator.js";
+import { FileHash } from "../../../../../src/shared/domain/file.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
-} from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+} from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
 

@@ -4,8 +4,8 @@ import { RestoreAllPlugins } from "../../../../../src/contexts/installation/appl
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin-distribution-reader.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js";
 import type { Hasher } from "../../../../../src/shared/ports/hasher.js";

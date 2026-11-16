@@ -8,8 +8,8 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
-import { PluginDistribution } from "../../../src/contexts/translate/domain/plugin-distribution.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
+import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";

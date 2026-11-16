@@ -4,7 +4,7 @@ import { buildCopilotMarketplaceContract } from "../../../../src/contexts/tools/
 import type { BuildOutputStrategy } from "../../../../src/contexts/translate/application/strategies/build-output-strategy.js";
 import { MarketplaceBuildStrategy } from "../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
 import { FrameworkBuildUseCase } from "../../../../src/contexts/translate/application/translate-source.js";
-import type { JsonSchemaValidator } from "../../../../src/contexts/translate/domain/ports/schema-validator.js";
+import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FrameworkPlaceholderInPluginError,
   InvalidBuildPathsError,

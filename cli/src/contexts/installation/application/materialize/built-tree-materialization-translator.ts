@@ -1,6 +1,8 @@
 import { join, posix } from "node:path";
 import { InstallationFile } from "../../../../shared/domain/file.js";
 import { posixRelative } from "../../../../shared/domain/paths.js";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -13,8 +15,6 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
  * installs only; a raw local-path install falls back to flat materialization.
  */
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
-import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
-import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,

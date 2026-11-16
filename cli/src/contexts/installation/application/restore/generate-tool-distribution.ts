@@ -3,7 +3,7 @@ import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { ContentSection, FrameworkDescriptor } from "../../../translate/domain/canon.js";
+import type { ContentSection, FrameworkDescriptor } from "../../domain/canon.js";
 import type { Platform } from "../../ports/platform.js";
 import { InstallAgents } from "../install/content/install-agents.js";
 import { InstallCommands } from "../install/content/install-commands.js";

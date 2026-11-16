@@ -1,5 +1,13 @@
 import { InstallationFile } from "../../../shared/domain/file.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../shared/domain/markdown.js";
+import type {
+  PluginComponentFile,
+  PluginDistribution,
+} from "../../../shared/domain/plugin/plugin-distribution.js";
+import type {
+  PluginTranslationSkip,
+  ReadonlySkipList,
+} from "../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { Hasher } from "../../../shared/ports/hasher.js";
 import type { FlatHooksBridge } from "../../tools/contract/build-contract.js";
 import type {
@@ -16,8 +24,6 @@ import type {
   ToolProfile,
 } from "../../tools/contract/tool-profile.js";
 import { rewritePluginRootToken } from "./formats/plugin-root-token-rewrite.js";
-import type { PluginComponentFile, PluginDistribution } from "./plugin-distribution.js";
-import type { PluginTranslationSkip, ReadonlySkipList } from "./plugin-translation-skip.js";
 
 const PLUGIN_MANIFEST_PATHS: readonly string[] = [
   ".claude-plugin/plugin.json",

@@ -1,16 +1,16 @@
 import { dirname, join } from "node:path";
+import {
+  type PluginComponentFile,
+  PluginDistribution,
+} from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type {
+  PluginTranslationSkip,
+  ReadonlySkipList,
+} from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { ProjectHooksLocation } from "../../../tools/contract/tool-vocabulary.js";
-import {
-  type PluginComponentFile,
-  PluginDistribution,
-} from "../../../translate/domain/plugin-distribution.js";
-import type {
-  PluginTranslationSkip,
-  ReadonlySkipList,
-} from "../../../translate/domain/plugin-translation-skip.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/installed-plugin.js";
 import {
   assertProjectHooksUnchanged,

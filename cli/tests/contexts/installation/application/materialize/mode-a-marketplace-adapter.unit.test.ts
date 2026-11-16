@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 function buildDist(name = "test-plugin"): PluginDistribution {

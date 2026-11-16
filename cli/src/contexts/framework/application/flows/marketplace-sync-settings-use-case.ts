@@ -32,7 +32,7 @@ import {
 import type { UserSourceReferences } from "../../../machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
-import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
+import type { FrameworkBuildTarget } from "../../../translate/contract/build-targets.js";
 
 export interface MarketplaceSyncSettingsOptions {
   projectRoot: string;

@@ -9,7 +9,7 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { FrameworkDescriptor } from "../../../translate/domain/canon.js";
+import type { FrameworkDescriptor } from "../../domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { Platform } from "../../ports/platform.js";

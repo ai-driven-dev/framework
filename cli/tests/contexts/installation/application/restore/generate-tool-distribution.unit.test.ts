@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { GenerateToolDistribution } from "../../../../../src/contexts/installation/application/restore/generate-tool-distribution.js";
+import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import type { ToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";
-import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";

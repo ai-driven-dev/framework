@@ -6,12 +6,12 @@ import {
   type McpDigestMap,
   type PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import {
   InvalidPluginNameError,
   InvalidPluginVersionError,
   MalformedPluginScopeError,
 } from "../../../../../src/shared/domain/errors.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 it("round-trips exact Cursor project hook provenance through the plugin manifest", () => {

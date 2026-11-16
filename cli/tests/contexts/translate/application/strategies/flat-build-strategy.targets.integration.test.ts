@@ -8,7 +8,7 @@ import { wireTools } from "../../../../../src/composition/tools.js";
 import { createFrameworkBuildUseCase } from "../../../../../src/composition/translate.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { HasherAdapter } from "../../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
-import type { FrameworkBuildTarget } from "../../../../../src/contexts/translate/domain/build-target.js";
+import type { FrameworkBuildTarget } from "../../../../../src/contexts/translate/contract/build-targets.js";
 import { FlatTargetExistsError } from "../../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
 import { FRAMEWORK_REAL } from "../../../../helpers/fixture-setup.js";

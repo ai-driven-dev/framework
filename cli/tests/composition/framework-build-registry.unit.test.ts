@@ -6,7 +6,7 @@ import type { FrameworkBuildMode } from "../../src/contexts/tools/contract/tool-
 import {
   buildTargetModesOf,
   type FrameworkBuildTarget,
-} from "../../src/contexts/translate/domain/build-target.js";
+} from "../../src/contexts/translate/contract/build-targets.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";

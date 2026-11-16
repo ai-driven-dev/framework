@@ -8,15 +8,17 @@ import type { AssetProvider } from "../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
+import type {
+  BuildPluginResult,
+  FrameworkBuildOptions,
+  FrameworkBuildResult,
+} from "../contract/build-targets.js";
 import {
-  type BuildPluginResult,
-  type FrameworkBuildOptions,
-  type FrameworkBuildResult,
   OUT_OF_SCOPE_PLUGIN_SECTIONS,
   SOURCE_MARKETPLACE_RELATIVE,
   SOURCE_PLUGIN_MANIFEST_RELATIVE,
-} from "../domain/build-target.js";
-import type { JsonSchemaValidator } from "../domain/ports/schema-validator.js";
+} from "../domain/canon-format.js";
+import type { JsonSchemaValidator } from "../ports/json-schema-validator.js";
 import type {
   BuildOutputStrategy,
   SourceMarketplace,

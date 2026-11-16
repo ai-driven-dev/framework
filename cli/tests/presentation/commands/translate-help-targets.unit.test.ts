@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
+import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
 import { registerTranslateCommand } from "../../../src/presentation/commands/translate.js";
 import type { DepsFactory } from "../../../src/presentation/deps.js";
 

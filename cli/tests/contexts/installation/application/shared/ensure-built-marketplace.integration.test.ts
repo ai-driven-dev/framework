@@ -16,7 +16,7 @@ import {
   type FrameworkBuild,
   FrameworkBuildUseCase,
 } from "../../../../../src/contexts/translate/application/translate-source.js";
-import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/domain/ports/schema-validator.js";
+import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import { BUILT_CACHE_SUBDIR, builtMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import type { VersionReader } from "../../../../../src/shared/ports/version-reader.js";

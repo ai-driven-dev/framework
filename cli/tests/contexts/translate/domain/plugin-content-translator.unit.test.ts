@@ -261,3 +261,57 @@ describe("PluginContentTranslator.translate()", () => {
     });
   });
 });
+
+describe("PluginContentTranslator.detectFlatCollisions()", () => {
+  it("reports no collision when plugins use different plugin names", () => {
+    const dist1 = makeDist({ manifest: { name: "plugin-a", version: "1.0.0" } });
+    const dist2 = makeDist({ manifest: { name: "plugin-b", version: "1.0.0" } });
+    const collisions = translator.detectFlatCollisions([dist1, dist2], opencode);
+    expect(collisions).toEqual([]);
+  });
+
+  it("reports collisions when same plugin name is used twice", () => {
+    const dist1 = makeDist({ manifest: { name: "same-plugin", version: "1.0.0" } });
+    const dist2 = makeDist({ manifest: { name: "same-plugin", version: "2.0.0" } });
+    const collisions = translator.detectFlatCollisions([dist1, dist2], opencode);
+    expect(collisions.length).toBeGreaterThan(0);
+    expect(collisions[0].plugin).toBe("same-plugin");
+  });
+
+  it("returns empty array for native-mode tools", () => {
+    expect(translator.detectFlatCollisions([makeDist()], claude)).toEqual([]);
+  });
+});
+
+/** The path a plugin's own content takes on its way to disk: the chain `aidd plugin install`
+ * follows, and the one the golden suite cannot see, since `aidd translate` never calls
+ * `rewriteContent` at all. */
+describe("a plugin whose content references the framework", () => {
+  const withPlaceholder = () => {
+    const skills = [
+      makeFile(
+        "skills/hello/SKILL.md",
+        `---\nname: hello\ndescription: Hello skill\n---\n\nSee \`{{TOOLS}}/plugins/aidd-pm/x.yml\` and @{{DOCS}}/memory/testing.md\n`
+      ),
+    ];
+    // `files` and `components` both, or the override keeps the default skill content and
+    // the assertion passes on a file that never carried a placeholder.
+    return makeDist({
+      files: skills,
+      components: { skills, commands: [], agents: [], rules: [], hooks: [], mcp: [] },
+    });
+  };
+
+  it("resolves the reference for the tool being installed into", () => {
+    const file = translator
+      .translate(withPlaceholder(), copilot)
+      .find((f) => f.relativePath.endsWith("SKILL.md"));
+
+    expect(file?.content).toContain(".github/plugins/aidd-pm/x.yml");
+    expect(file?.content).toContain(
+      "[aidd_docs/memory/testing.md](../../aidd_docs/memory/testing.md)"
+    );
+    expect(file?.content).not.toContain("{{TOOLS}}");
+    expect(file?.content).not.toContain("{{DOCS}}");
+  });
+});
