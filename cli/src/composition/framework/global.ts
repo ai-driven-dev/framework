@@ -1,9 +1,10 @@
+import { ListFrameworkPlugins } from "../../contexts/distribution/application/plugin-source/list-framework-plugins.js";
 import { InstallAiToolUseCase } from "../../contexts/framework/application/install/install-ai-tool-use-case.js";
-import { InstallGlobalPluginsUseCase } from "../../contexts/framework/application/setup/install-global-plugins-use-case.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { DetectProjectContext } from "../../contexts/installation/application/detect-project-context.js";
 import { InstallIdeTool } from "../../contexts/installation/application/install/install-ide-tool.js";
 import { InstallTools } from "../../contexts/installation/application/install/install-tools.js";
+import { InstallUserPlugins } from "../../contexts/installation/application/install/install-user-plugins.js";
 import { ListInstalledTools } from "../../contexts/installation/application/list-installed-tools.js";
 import { ReportStatus } from "../../contexts/installation/application/report-status.js";
 import { ResolveSyncConflict } from "../../contexts/installation/application/resolve-sync-conflict.js";
@@ -14,6 +15,7 @@ import { ReportAllStatus } from "../../orchestration/global/report-all-status.js
 import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update-decision.js";
 import { RestoreAll } from "../../orchestration/global/restore-all.js";
 import { UpdateTools } from "../../orchestration/global/update-tools.js";
+import { InstallGlobalPlugins } from "../../orchestration/setup/install-global-plugins.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";
 import type { Marketplace } from "./marketplace.js";
@@ -66,17 +68,16 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     installIdeConfig
   );
   const projectContextDetector = new DetectProjectContext(fs);
+  const installGlobalPlugins = new InstallGlobalPlugins(
+    new ListFrameworkPlugins(marketplaceRegistry, resolveMarketplaceUseCase),
+    new InstallUserPlugins(userManifestRepo, userPluginFileUpdater, logger)
+  );
   const setupMachineScopeUseCase = new SetupMachineScopeUseCase(
     userManifestRepo,
     setupMarketplaceRegistration,
     marketplaceSyncSettingsUseCase,
     currentVersionProvider,
-    new InstallGlobalPluginsUseCase(
-      marketplaceRegistry,
-      resolveMarketplaceUseCase,
-      userPluginFileUpdater,
-      logger
-    )
+    (options) => installGlobalPlugins.execute(options)
   );
   const statusUseCase = new ReportStatus(fs, manifestRepo, hasher, detectPluginDriftUseCase);
   const restoreUseCase = new Restore(

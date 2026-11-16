@@ -11,7 +11,16 @@ import type {
 } from "../flows/marketplace-sync-settings-use-case.js";
 import type { SetupResult } from "../setup-use-case.js";
 import type { SetupMarketplaceRegistrationUseCase } from "../shared/setup-marketplace-registration-use-case.js";
-import type { InstallGlobalPluginsUseCase } from "./install-global-plugins-use-case.js";
+
+/** Copies the framework plugins a machine-scope setup chose into each tool's user configuration
+ * and names them. The choice and the copy are not framework's: composition hands them in. */
+export type InstallGlobalPlugins = (options: {
+  readonly projectRoot: string;
+  readonly toolIds: SetupFlow["aiTools"];
+  readonly tools: ToolCatalog;
+  readonly mode: SetupFlow["pluginMode"];
+  readonly pluginNames: readonly string[];
+}) => Promise<{ readonly plugins: readonly string[] }>;
 
 /**
  * `--scope user`: registers the shared framework source, installs the requested plugins in each
@@ -30,7 +39,7 @@ export class SetupMachineScopeUseCase {
     private readonly setupMarketplaceRegistration: SetupMarketplaceRegistrationUseCase,
     private readonly marketplaceSyncSettingsUseCase: MarketplaceSyncSettings,
     private readonly currentVersionProvider: VersionReader,
-    private readonly installGlobalPluginsUseCase?: InstallGlobalPluginsUseCase
+    private readonly installPlugins?: InstallGlobalPlugins
   ) {}
 
   async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
@@ -67,20 +76,14 @@ export class SetupMachineScopeUseCase {
     flow: SetupFlow,
     tools: ToolCatalog
   ): Promise<readonly string[]> {
-    if (this.installGlobalPluginsUseCase === undefined) return [];
-    const manifest = await this.userManifestRepo.load();
-    if (manifest === null) return [];
-    const { plugins } = await this.installGlobalPluginsUseCase.execute(
-      manifest,
-      {
-        projectRoot: flow.projectRoot,
-        toolIds: flow.aiTools,
-        mode: flow.pluginMode,
-        pluginNames: flow.pluginNames,
-        tools,
-      },
-      (updated) => this.userManifestRepo.save(updated)
-    );
+    if (this.installPlugins === undefined) return [];
+    const { plugins } = await this.installPlugins({
+      projectRoot: flow.projectRoot,
+      toolIds: flow.aiTools,
+      mode: flow.pluginMode,
+      pluginNames: flow.pluginNames,
+      tools,
+    });
     return plugins;
   }
 
