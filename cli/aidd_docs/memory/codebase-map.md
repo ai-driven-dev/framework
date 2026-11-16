@@ -115,11 +115,12 @@ src/
 │   │           └── ledger/    # the calls, their resolution, the branch snapshots and what an ingest left out
 │   ├── translate/    # canonical source to target-native content
 │   │   ├── application/
-│   │   │   └── strategies/
+│   │   │   └── sink/
+│   │   ├── contract/    # the build targets other contexts name
 │   │   ├── domain/
-│   │   │   ├── formats/
-│   │   │   └── ports/
-│   │   └── infrastructure/
+│   │   │   └── formats/
+│   │   ├── infrastructure/
+│   │   └── ports/    # the schema validator a build is handed
 │   └── update/    # replacing the installed CLI with its latest release, and the notice that one exists
 │       ├── application/
 │       ├── domain/
@@ -136,6 +137,7 @@ src/
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
 │   │   ├── materialization/    # where content lands and how its links follow
+│   │   ├── plugin/    # a plugin distribution and what a translation skips of it
 │   │   └── reading/    # getting at a file's location and its content safely
 │   ├── infrastructure/    # adapters of the shared ports, imported by the composition root only
 │   └── ports/    # a technology port two or more contexts need

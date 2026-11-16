@@ -2,8 +2,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
@@ -42,7 +43,12 @@ function buildAdapter(seed: Record<string, string> = {}): {
 } {
   const fs = new InMemoryFileAdapter(seed);
   const hasher = new DeterministicHasher();
-  const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+  const adapter = new ModeBFlatMaterializationTranslator(
+    fs,
+    hasher,
+    () => STUB_HOME,
+    translateDistribution
+  );
   return { adapter, fs };
 }
 

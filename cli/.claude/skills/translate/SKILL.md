@@ -2,9 +2,9 @@
 name: translate
 description: >
   Builds the canonical-source-to-target-native translation pipeline under src/contexts/translate/
-  — target-aware content transforms, the plugin content translator, and the build strategies
+  — target-aware content transforms, the plugin content translator, and the disk sink
   behind `aidd translate` and `aidd sync`. Use when adding a target-aware transform, changing
-  `PluginContentTranslator`, adding a build strategy, or wiring a new tool into the build
+  `PluginContentTranslator`, changing the disk sink, or wiring a new tool into the build
   registry. Do NOT use for a tool's own profile, capability classes, or build contract — use
   `tools`. Do NOT use for where content is fetched from — use `distribution`. Do NOT use for
   manifest/install orchestration — use `framework`.
@@ -24,12 +24,12 @@ capability and port modules listed as public), never an internal file. The whole
 | Concept | Location |
 |---|---|
 | A transform whose behavior differs by target tool | `domain/formats/` |
-| The plugin-files-to-installed-files translator | `domain/content-translator.ts` (`PluginContentTranslator`) |
+| The plugin-files-to-installed-files translator | `domain/engine.ts` (`PluginContentEngine`) |
 | The canonical framework-doc shape | `domain/canon.ts` |
 | The canonical single-plugin shape | `domain/plugin-distribution.ts` |
 | Build targets and modes | `domain/build-target.ts` |
-| The `aidd translate` use-case | `application/translate-source.ts` (`FrameworkBuildUseCase`) |
-| A build orchestrator (one per mode, never per tool) | `application/strategies/` |
+| The `aidd translate` use-case | `application/translate-source.ts` (`BuildNativeTree`) |
+| The disk sink every build writes through (never per tool) | `application/sink/` |
 | Schema validation for marketplace/plugin manifests | `infrastructure/schema-validator.ts` |
 
 A transform used by exactly one tool profile does not belong here — it lives in that profile's
@@ -44,10 +44,9 @@ transform that is *aware* of which target it is producing for.
   tool's rewrite logic, it invokes what `tools` declared. That function is one-way and has no
   inverse; the `tools` skill's `references/content-rewrite.md` says why, and names the trap an
   identity rewrite sets.
-- `FrameworkBuildUseCase` (`aidd translate`) reads a `ToolBuildContract` per target and mode from
-  `tools`, and dispatches to `MarketplaceBuildStrategy` or `FlatBuildStrategy` — both implement
-  `BuildOutputStrategy` and iterate the six artifact kinds generically, with zero per-tool or
-  per-kind branching. Adding a build target means the target tool declares a contract in `tools`;
+- `BuildNativeTree` (`aidd translate`) reads a `ToolBuildContract` per target and mode from
+  `tools`, and writes through `DiskSink`, which iterates the six artifact kinds generically for both
+  modes, with zero per-tool or per-kind branching. Adding a build target means the target tool declares a contract in `tools`;
   it never means adding a case here. See the `tools` skill's `references/build-contract.md`.
 - `composition/translate.ts` derives the `"<target>:<mode>"` build registry by iterating every
   registered tool and reading its contract — there is no hand-maintained per-tool row.
@@ -64,8 +63,8 @@ by `framework` must be on that list.
 
 ## How it's tested
 
-- `tests/contexts/translate/` mirrors `src/contexts/translate/` — formats, content-translator,
-  canon, and the two build strategies each have unit or integration coverage.
+- `tests/contexts/translate/` mirrors `src/contexts/translate/` — formats, engine,
+  canon, and the disk sink each have unit or integration coverage.
 - `tests/golden/framework-build-golden.golden.test.ts` snapshots a full build across every target —
   see `test` skill's golden/machine-independence rules before touching a snapshot.
 - A new target-aware transform gets a unit test over a representative input carrying the marker it

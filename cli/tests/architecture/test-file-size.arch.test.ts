@@ -19,7 +19,6 @@ const BASELINE: readonly string[] = [
   "tests/contexts/installation/application/plugin/add-plugin.unit.test.ts",
   "tests/contexts/installation/application/plugin/plugin-remove-native-activation.integration.test.ts",
   "tests/contexts/installation/application/plugin/plugin-update-built-tree.unit.test.ts",
-  "tests/contexts/translate/application/strategies/flat-build-strategy.integration.test.ts",
 ];
 
 /** Lines as `wc -l` counts them: one per newline character. */

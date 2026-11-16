@@ -1,0 +1,50 @@
+import { basename, join, relative } from "node:path";
+import { rewriteRelativeLinks } from "../../../../shared/domain/materialization/relative-link-rewrite.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../shared/ports/file-writer.js";
+import { PLUGIN_SKILL_ENTRY_FILE } from "../../domain/canon-format.js";
+import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
+
+type SkillContentTransform = (content: string, plugin: string, basename: string) => string;
+
+export async function writeSkillTree(
+  fs: FileReader & FileWriter,
+  pluginName: string,
+  pluginSrc: string,
+  pluginOut: string,
+  transform?: SkillContentTransform
+): Promise<number> {
+  const skillsSrc = join(pluginSrc, "skills");
+  const files = await fs.listFilesRecursive(skillsSrc);
+  let count = 0;
+  for (const absPath of files) {
+    count += await writeSkillFile(fs, pluginName, absPath, skillsSrc, pluginOut, transform);
+  }
+  return count;
+}
+
+async function writeSkillFile(
+  fs: FileReader & FileWriter,
+  pluginName: string,
+  absPath: string,
+  skillsSrc: string,
+  pluginOut: string,
+  transform?: SkillContentTransform
+): Promise<number> {
+  const relPath = relative(skillsSrc, absPath).replace(/\\/g, "/");
+  const destPath = join(pluginOut, "skills", relPath);
+  const content = await fs.readFile(absPath);
+  if (absPath.endsWith(".md")) {
+    assertNoToolsPlaceholder(content, pluginName, relPath);
+    const currentFilePluginRelative = `skills/${relPath}`;
+    const rewritten = rewriteRelativeLinks(content, { currentFilePluginRelative });
+    const isEntry = transform !== undefined && basename(absPath) === PLUGIN_SKILL_ENTRY_FILE;
+    await fs.writeFile(
+      destPath,
+      isEntry ? transform(rewritten, pluginName, PLUGIN_SKILL_ENTRY_FILE) : rewritten
+    );
+  } else {
+    await fs.writeFile(destPath, content);
+  }
+  return 1;
+}

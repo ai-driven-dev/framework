@@ -7,11 +7,11 @@ import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
-import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
+import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
+import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
 import { catalogOf, registeredAiConfig, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredManifestPaths } from "../../translate/testing/registered-manifest-probes.js";
 
 /**
  * Prose — a skill, an agent, a rule — is translated: frontmatter converted, paths rewritten.
@@ -49,7 +49,7 @@ describe("a plugin's executable files survive being installed", () => {
 describe("installing the plugin carries a skill's own script, on every tool", () => {
   const SCRIPT = "skills/02-project-memory/scripts/example.cjs";
   const SCRIPT_CONTENT = pluginFile("hooks/memory.cjs");
-  const translator = new PluginContentTranslator({ hash: () => new FileHash("a".repeat(32)) });
+  const translator = new PluginContentEngine(registeredManifestPaths());
 
   function distributionOf(): PluginDistribution {
     const skills = [

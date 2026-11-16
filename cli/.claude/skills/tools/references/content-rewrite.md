@@ -9,7 +9,7 @@ rewriteContent(content: string): string;
 One direction, one argument. A tool profile declares it in `contexts/tools/domain/profile.ts`
 and implements it in `contexts/tools/domain/profiles/<tool>/profile.ts`. It is called on the
 install path (`contexts/installation/application/install/content/install-content-section.ts`)
-and on the translate path (`contexts/translate/domain/content-translator.ts`) — every file that reaches a tool's tree
+and on the translate path (`contexts/translate/domain/engine.ts`) — every file that reaches a tool's tree
 passes through it.
 
 There is no reverse. The round-trip API that used to live here was deleted once nothing

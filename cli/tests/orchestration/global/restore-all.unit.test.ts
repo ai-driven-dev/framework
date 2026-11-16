@@ -21,6 +21,7 @@ import {
   installTool,
 } from "../../helpers/ports/build-unit-deps.js";
 import { CheckboxRecordingPrompter } from "../../helpers/ports/checkbox-recording-prompter.js";
+import { fakeBuildSources, translateDistribution } from "../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FakePlatform } from "../../helpers/ports/fake-platform.js";
 import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
@@ -36,6 +37,7 @@ function builtDeps(deps: Deps) {
     ensureBuilt: fakeEnsureBuiltMarketplace(),
     marketplaceRegistry: deps.marketplaceRegistry,
     homedir: () => "/home/test",
+    translate: translateDistribution,
   };
 }
 
@@ -50,7 +52,7 @@ async function installPlugin(
     {
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
       marketplaceRegistry: deps.marketplaceRegistry,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     }
   ).execute({
     tools: catalogOf(),
@@ -64,8 +66,7 @@ async function installPlugin(
 function makeRestoreAll(
   deps: Deps,
   pluginReader: PluginDistributionReaderAdapter,
-  prompter: OverwritePrompter | ScriptedPrompter = new OverwritePrompter(),
-  withBuiltDeps = false
+  prompter: OverwritePrompter | ScriptedPrompter = new OverwritePrompter()
 ): RestoreAll {
   const statusUseCase = new ReportStatus(
     deps.fs,
@@ -83,7 +84,7 @@ function makeRestoreAll(
     deps.pluginFetcher,
     pluginReader,
     deps.assetProvider,
-    withBuiltDeps ? builtDeps(deps) : undefined
+    builtDeps(deps)
   );
   return new RestoreAll(
     prompter,
@@ -236,7 +237,7 @@ describe("RestoreAll — plugin materialization", () => {
     await deps.fs.writeFile(pluginFile, "CORRUPTED CONTENT");
 
     const { reader, count } = countingReader(deps.fs);
-    const useCase = makeRestoreAll(deps, reader, new OverwritePrompter(), true);
+    const useCase = makeRestoreAll(deps, reader);
     await useCase.execute(PROJECT_ROOT, false, false, catalogOf());
 
     expect(deps.fs.getFile(pluginFile)).toBe("CORRUPTED CONTENT");
@@ -334,7 +335,7 @@ describe("RestoreAll — plugin materialization", () => {
       {
         distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
         marketplaceRegistry: deps.marketplaceRegistry,
-        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        ...fakeBuildSources(),
       }
     ).execute({
       tools: catalogOf(),

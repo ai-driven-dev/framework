@@ -7,10 +7,11 @@ import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ProjectHooksProvenance } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CLIOutput } from "../../../../../src/presentation/output.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
@@ -91,7 +92,8 @@ async function installPlugin(
   const adapter = new ModeBFlatMaterializationTranslator(
     fs,
     new DeterministicHasher(),
-    () => STUB_HOME
+    () => STUB_HOME,
+    translateDistribution
   );
   await adapter.addPlugin(
     buildDist(name),
@@ -203,7 +205,8 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     const translator = new ModeBFlatMaterializationTranslator(
       fs,
       new DeterministicHasher(),
-      () => STUB_HOME
+      () => STUB_HOME,
+      translateDistribution
     );
     await translator.addPlugin(
       buildWithoutHooks(PLUGIN_NAME),

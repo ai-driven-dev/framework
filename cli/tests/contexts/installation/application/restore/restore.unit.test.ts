@@ -14,7 +14,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import {
   KeepPrompter,
@@ -40,7 +40,7 @@ async function installPlugin(
     {
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
       marketplaceRegistry: deps.marketplaceRegistry,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     }
   ).execute({
     tools: catalogOf(),
@@ -81,7 +81,9 @@ function makeRestoreUseCase(
     new FakePlatform("linux"),
     prompter,
     deps.pluginFetcher,
-    deps.pluginDistributionReader
+    deps.pluginDistributionReader,
+    undefined,
+    fakeBuiltDeps()
   );
 }
 

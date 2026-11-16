@@ -4,8 +4,8 @@ import {
   RestoreToolFiles,
   type RestoreToolFilesCommand,
 } from "../../../../../src/contexts/installation/application/restore/restore-tool-files.js";
+import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";

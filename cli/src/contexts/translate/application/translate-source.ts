@@ -4,37 +4,31 @@ import {
   InvalidSourceMarketplaceError,
 } from "../../../shared/domain/errors.js";
 import { pathsOverlap } from "../../../shared/domain/paths.js";
-import type { AssetProvider } from "../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
+import type {
+  SourceMarketplaceRef,
+  SourcePluginEntryRef,
+} from "../../tools/contract/build-contract.js";
+import type { FrameworkBuild } from "../contract/build-native-tree.js";
+import type {
+  BuildPluginResult,
+  FrameworkBuildOptions,
+  FrameworkBuildResult,
+} from "../contract/build-targets.js";
 import {
-  type BuildPluginResult,
-  type FrameworkBuildOptions,
-  type FrameworkBuildResult,
   OUT_OF_SCOPE_PLUGIN_SECTIONS,
   SOURCE_MARKETPLACE_RELATIVE,
-  SOURCE_PLUGIN_MANIFEST_RELATIVE,
-} from "../domain/build-target.js";
-import type { JsonSchemaValidator } from "../domain/ports/schema-validator.js";
-import type {
-  BuildOutputStrategy,
-  SourceMarketplace,
-  SourcePluginEntry,
-} from "./strategies/build-output-strategy.js";
+} from "../domain/canon-format.js";
+import type { DiskLayout, DiskSink, DiskTarget } from "./sink/disk-sink.js";
 
-/** Running one framework build, as its callers need it. */
-export interface FrameworkBuild {
-  execute(options: FrameworkBuildOptions): Promise<FrameworkBuildResult>;
-}
-
-export class FrameworkBuildUseCase implements FrameworkBuild {
+export class BuildNativeTree implements FrameworkBuild {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly jsonSchemaValidator: JsonSchemaValidator,
-    private readonly assetProvider: AssetProvider,
     private readonly logger: Logger,
-    private readonly strategy: BuildOutputStrategy
+    private readonly sink: Pick<DiskSink, "prepare" | "writePlugin" | "finish">,
+    private readonly layout: DiskLayout
   ) {}
 
   async execute(options: FrameworkBuildOptions): Promise<FrameworkBuildResult> {
@@ -42,13 +36,13 @@ export class FrameworkBuildUseCase implements FrameworkBuild {
     const outDir = resolve(options.outDir);
     this.guardPaths(sourceDir, outDir);
     const sourceMarketplace = await this.readSourceMarketplace(sourceDir);
-    await this.strategy.preBuild(outDir, sourceDir);
+    const target: DiskTarget = { ...this.layout, sourceDir, outDir };
+    await this.sink.prepare(target);
     const builtPlugins: BuildPluginResult[] = [];
     for (const entry of sourceMarketplace.plugins) {
-      const plugin = await this.buildPlugin(entry, sourceDir, outDir);
-      builtPlugins.push(plugin);
+      builtPlugins.push(await this.buildPlugin(target, entry));
     }
-    const extraFiles = await this.strategy.postBuild(sourceMarketplace, builtPlugins, outDir);
+    const extraFiles = await this.sink.finish(target, sourceMarketplace, builtPlugins);
     const totalFiles = builtPlugins.reduce((sum, p) => sum + p.filesWritten, 0) + extraFiles;
     return { outDir, plugins: builtPlugins, totalFiles };
   }
@@ -57,7 +51,7 @@ export class FrameworkBuildUseCase implements FrameworkBuild {
     if (pathsOverlap(sourceDir, outDir)) throw new InvalidBuildPathsError(sourceDir, outDir);
   }
 
-  private async readSourceMarketplace(sourceDir: string): Promise<SourceMarketplace> {
+  private async readSourceMarketplace(sourceDir: string): Promise<SourceMarketplaceRef> {
     const marketplacePath = join(sourceDir, SOURCE_MARKETPLACE_RELATIVE);
     let raw: string;
     try {
@@ -74,7 +68,7 @@ export class FrameworkBuildUseCase implements FrameworkBuild {
     return this.validateSourceMarketplace(parsed);
   }
 
-  private validateSourceMarketplace(parsed: unknown): SourceMarketplace {
+  private validateSourceMarketplace(parsed: unknown): SourceMarketplaceRef {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       throw new InvalidSourceMarketplaceError("root must be an object");
     }
@@ -83,42 +77,24 @@ export class FrameworkBuildUseCase implements FrameworkBuild {
       throw new InvalidSourceMarketplaceError("missing 'plugins' array");
     }
     for (const entry of obj.plugins as unknown[]) {
-      if (
-        !entry ||
-        typeof entry !== "object" ||
-        typeof (entry as Record<string, unknown>).name !== "string"
-      ) {
+      if (!entry || typeof (entry as Record<string, unknown>).name !== "string") {
         throw new InvalidSourceMarketplaceError("each plugin entry must have a 'name' string");
       }
     }
-    return obj as unknown as SourceMarketplace;
+    return obj as unknown as SourceMarketplaceRef;
   }
 
   private async buildPlugin(
-    entry: SourcePluginEntry,
-    sourceDir: string,
-    outDir: string
+    target: DiskTarget,
+    entry: SourcePluginEntryRef
   ): Promise<BuildPluginResult> {
-    const pluginSrc = join(sourceDir, "plugins", entry.name);
+    const pluginSrc = join(target.sourceDir, "plugins", entry.name);
     if (!(await this.fs.fileExists(pluginSrc))) {
       throw new InvalidSourceMarketplaceError(`plugin '${entry.name}' not found at ${pluginSrc}`);
     }
-    await this.validateManifest(pluginSrc);
-    let filesWritten = 0;
-    filesWritten += await this.strategy.writePluginManifest(entry.name, pluginSrc, outDir);
-    filesWritten += await this.strategy.writeAgents(entry.name, pluginSrc, outDir);
-    filesWritten += await this.strategy.writeSkills(entry.name, pluginSrc, outDir);
-    filesWritten += await this.strategy.writeHooks(entry.name, pluginSrc, outDir);
-    filesWritten += await this.strategy.writeMcp(entry.name, pluginSrc, outDir);
+    const filesWritten = await this.sink.writePlugin(target, entry.name, pluginSrc);
     const skippedSections = await this.warnOutOfScopeSections(entry.name, pluginSrc);
     return { name: entry.name, filesWritten, skippedSections };
-  }
-
-  private async validateManifest(pluginSrc: string): Promise<void> {
-    const manifestPath = join(pluginSrc, SOURCE_PLUGIN_MANIFEST_RELATIVE);
-    const raw = await this.fs.readFile(manifestPath);
-    const data = JSON.parse(raw) as unknown;
-    this.jsonSchemaValidator.validate(this.assetProvider.loadSchema("plugin-manifest"), data);
   }
 
   private async warnOutOfScopeSections(

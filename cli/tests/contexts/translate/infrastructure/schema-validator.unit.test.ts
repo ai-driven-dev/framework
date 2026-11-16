@@ -47,6 +47,13 @@ describe("AjvSchemaValidatorAdapter", () => {
       }
     });
 
+    it("names a failure at the document root as the root", () => {
+      const validator = new AjvSchemaValidatorAdapter();
+      expect(() => validator.validate(STRING_SCHEMA, 42)).toThrow(
+        new JsonSchemaValidationError(["(root) must be string"])
+      );
+    });
+
     it("collects all errors when allErrors is true", () => {
       const schema = {
         type: "object",

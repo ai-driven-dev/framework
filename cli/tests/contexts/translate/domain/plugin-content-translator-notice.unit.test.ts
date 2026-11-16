@@ -2,14 +2,13 @@ import { describe, expect, it } from "vitest";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
-import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
+import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
+import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 import { nativeOf } from "../../tools/testing/plugin-mode.js";
+import { registeredManifestPaths } from "../../translate/testing/registered-manifest-probes.js";
 
-const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
-const translator = new PluginContentTranslator(stubHasher);
+const translator = new PluginContentEngine(registeredManifestPaths());
 
 const HOOKS_CONTENT = JSON.stringify({
   hooks: { SessionStart: [{ hooks: [{ type: "command", command: "node ./hooks/start.js" }] }] },

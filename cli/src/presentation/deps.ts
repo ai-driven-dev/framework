@@ -32,8 +32,8 @@ import type { ResolveReportRequest } from "../contexts/telemetry/application/rep
 import type { DisableTelemetry } from "../contexts/telemetry/application/switch/disable-telemetry.js";
 import type { EnableTelemetry } from "../contexts/telemetry/application/switch/enable-telemetry.js";
 import type { ReadTranscriptRetention } from "../contexts/telemetry/application/switch/read-transcript-retention.js";
-import type { FrameworkBuildMode } from "../contexts/tools/contract/tool-profile.js";
-import type { FrameworkBuildUseCase } from "../contexts/translate/application/translate-source.js";
+import type { BuildNativeTree } from "../contexts/translate/application/translate-source.js";
+import type { FrameworkBuildContext } from "../contexts/translate/contract/build-native-tree.js";
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
 import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";
@@ -88,14 +88,6 @@ export interface TelemetryRequests {
   resolveTaskRequest: Pick<ResolveTaskRequest, "execute">;
   resolveReportRequest: Pick<ResolveReportRequest, "execute">;
   checkIdentity: Pick<CheckIdentity, "execute">;
-}
-
-/** What a build for a target and mode asks of its caller. */
-export interface FrameworkBuildContext {
-  readonly target: string;
-  readonly mode: FrameworkBuildMode;
-  readonly outDir: string;
-  readonly force: boolean;
 }
 
 export interface Deps {
@@ -155,9 +147,7 @@ export interface Deps {
   telemetry: TelemetryDeps;
   /** The use case that builds a marketplace or a flat tree for a target, or undefined when the
    * target declares no build for the mode. */
-  frameworkBuild: (
-    ctx: FrameworkBuildContext
-  ) => Pick<FrameworkBuildUseCase, "execute"> | undefined;
+  frameworkBuild: (ctx: FrameworkBuildContext) => Pick<BuildNativeTree, "execute"> | undefined;
 }
 
 /** What the menu and the interactive prompts of a command group need, before any graph exists. */

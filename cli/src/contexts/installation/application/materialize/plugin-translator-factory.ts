@@ -1,9 +1,8 @@
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { PluginAnswers } from "../../../tools/contract/tool-profile.js";
-import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
+import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { BuiltTreeMaterializationTranslator } from "./built-tree-materialization-translator.js";
 import { ModeAMarketplaceTranslator } from "./mode-a-marketplace-translator.js";
 import type { PluginTranslator } from "./plugin-translator.js";
@@ -11,9 +10,7 @@ import type { PluginTranslator } from "./plugin-translator.js";
 export interface TranslatorDeps {
   fs: FileWriter & FileReader;
   hasher: Hasher;
-  homedir: () => string;
-  ensureBuilt: BuiltMarketplaceEnsurer;
-  marketplaceRegistry: MarketplaceRegistry;
+  built: BuiltMaterializationDeps;
 }
 
 /**
@@ -27,13 +24,7 @@ export function resolveTranslator(
   deps: TranslatorDeps
 ): PluginTranslator | null {
   if (plugins.materializesFromBuiltTree()) {
-    return new BuiltTreeMaterializationTranslator(
-      deps.fs,
-      deps.hasher,
-      deps.homedir,
-      deps.ensureBuilt,
-      deps.marketplaceRegistry
-    );
+    return new BuiltTreeMaterializationTranslator(deps.fs, deps.hasher, deps.built);
   }
   if (plugins.kind === "native" && plugins.translatesAsMarketplace()) {
     return new ModeAMarketplaceTranslator();

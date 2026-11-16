@@ -9,10 +9,10 @@ import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copil
 import { buildCursorContract } from "../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentTranslator } from "../../../../../src/contexts/translate/domain/content-translator.js";
+import { PluginContentEngine } from "../../../../../src/contexts/translate/domain/engine.js";
 import { rewritePluginRootToken } from "../../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { registeredManifestPaths } from "../../../translate/testing/registered-manifest-probes.js";
 import { TOOL } from "../../testing/catalog-of.js";
 import { hooksAcceptanceOf, nativeOf } from "../../testing/plugin-mode.js";
 
@@ -21,8 +21,7 @@ import { hooksAcceptanceOf, nativeOf } from "../../testing/plugin-mode.js";
  * back out of what was installed and the file it names is looked for.
  */
 
-const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
-const translator = new PluginContentTranslator(stubHasher);
+const translator = new PluginContentEngine(registeredManifestPaths());
 
 const PLUGIN = "aidd-telemetry";
 const SOURCE_TOKEN = nativeOf(claude.plugins()).rootToken() ?? "";

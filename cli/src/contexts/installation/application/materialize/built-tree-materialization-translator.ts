@@ -1,20 +1,18 @@
 import { join, posix } from "node:path";
 import { InstallationFile } from "../../../../shared/domain/file.js";
 import { posixRelative } from "../../../../shared/domain/paths.js";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 /**
  * Materializes plugin content by copying the per-target BUILT tree verbatim into the tool's plugin
  * directory, bypassing the per-file transform the build already applied. Marketplace-sourced
  * installs only; a raw local-path install falls back to flat materialization.
  */
-import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
-import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
-import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
@@ -25,7 +23,7 @@ import {
   resolveBaseDirFromRecord,
   resolveScopeForInstall,
 } from "../plugin/plugin-target-resolution.js";
-import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
+import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
 import { ModeBFlatMaterializationTranslator } from "./mode-b-flat-materialization-translator.js";
@@ -38,9 +36,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   constructor(
     private readonly fs: FileWriter & FileReader,
     private readonly hasher: Hasher,
-    private readonly homedir: () => string,
-    private readonly ensureBuilt: BuiltMarketplaceEnsurer,
-    private readonly marketplaceRegistry: MarketplaceRegistry
+    private readonly built: BuiltMaterializationDeps
   ) {
     this.projectHooks = new ProjectHooksMaterializer(fs);
   }
@@ -74,7 +70,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
       );
     }
     const mode = tool.frameworkBuildMode();
-    const { builtDir } = await this.ensureBuilt.execute({
+    const { builtDir } = await this.built.ensureBuilt.execute({
       projectRoot,
       marketplace: resolved,
       target: tool.toolId,
@@ -119,7 +115,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const baseDir =
       mode === "flat"
         ? projectRoot
-        : resolveBaseDirFromRecord(scope, tool, projectRoot, this.homedir);
+        : resolveBaseDirFromRecord(scope, tool, projectRoot, this.built.homedir);
     const owned = userScopeDirTaken ? [] : files;
     const written = await this.writeChangedFiles(owned, baseDir);
     manifest.addPlugin(
@@ -169,7 +165,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const name = dist.manifest.name;
     const hookPaths = deliversHooksToProject
       ? new Set<string>()
-      : new PluginContentTranslator(this.hasher).flatHookPaths(dist, tool);
+      : this.built.translate.execute({ distribution: dist, tool }).flatHookPaths;
     const absPaths = await this.fs.listFilesRecursive(builtDir);
     const files: InstallationFile[] = [];
     for (const abs of absPaths) {
@@ -188,12 +184,17 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
   }
 
   private async findMarketplace(name: string, projectRoot: string) {
-    const all = await this.marketplaceRegistry.list(projectRoot);
+    const all = await this.built.marketplaceRegistry.list(projectRoot);
     return all.find((m) => m.name === name) ?? null;
   }
 
   private fallback(): ModeBFlatMaterializationTranslator {
-    return new ModeBFlatMaterializationTranslator(this.fs, this.hasher, this.homedir);
+    return new ModeBFlatMaterializationTranslator(
+      this.fs,
+      this.hasher,
+      this.built.homedir,
+      this.built.translate
+    );
   }
 }
 

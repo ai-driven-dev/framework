@@ -12,6 +12,9 @@ import {
 import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.js";
 import { BundledAssetProviderAdapter } from "../../contexts/installation/infrastructure/assets/asset-loader.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import { TranslatePluginDistribution } from "../../contexts/translate/application/translate-distribution.js";
+import { pluginManifestProbes } from "../../contexts/translate/contract/plugin-format.js";
+import type { TranslateDistribution } from "../../contexts/translate/contract/translate-distribution.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import { createFrameworkBuildUseCase, type FrameworkBuildDeps } from "../translate.js";
@@ -35,9 +38,10 @@ export function debugOnly(logger: Logger): Logger {
 /** What a restore needs to rebuild through the build pipeline. */
 export function builtMaterializationDepsOf(
   ensureBuilt: EnsureBuiltMarketplace,
-  marketplaceRegistry: Base["marketplaceRegistry"]
+  marketplaceRegistry: Base["marketplaceRegistry"],
+  translate: TranslateDistribution
 ) {
-  return { ensureBuilt, marketplaceRegistry, homedir };
+  return { ensureBuilt, marketplaceRegistry, homedir, translate };
 }
 
 /** The installation context's shared commands and the build cache they read. */
@@ -92,7 +96,8 @@ export function wireInstallation(base: Base) {
   // rewriting raw content instead would itself be drift.
   const builtMaterializationDeps = builtMaterializationDepsOf(
     ensureBuiltMarketplaceUseCase,
-    marketplaceRegistry
+    marketplaceRegistry,
+    new TranslatePluginDistribution(pluginManifestProbes(tools))
   );
   return {
     assetProvider,

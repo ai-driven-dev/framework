@@ -7,6 +7,5 @@ import { SOURCE_PLUGIN_ROOT_TOKEN } from "../../../tools/contract/plugin-root-to
  * the source returns the content unchanged.
  */
 export function rewritePluginRootToken(content: string, targetToken: string): string {
-  if (targetToken === SOURCE_PLUGIN_ROOT_TOKEN) return content;
   return content.replaceAll(SOURCE_PLUGIN_ROOT_TOKEN, targetToken);
 }

@@ -10,13 +10,13 @@ import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { PluginFetcher } from "../../../distribution/ports/plugin-fetcher.js";
 import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import { FrameworkDescriptor } from "../../../translate/domain/canon.js";
+import { FrameworkDescriptor } from "../../domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { Platform } from "../../ports/platform.js";
 import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
-import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files.js";
+import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { RestoreAllPlugins, type RestoreAllPluginsResult } from "./restore-all-plugins.js";
 import { RestoreToolFiles, type RestoreToolFilesResult } from "./restore-tool-files.js";
 
@@ -144,7 +144,11 @@ export class Restore {
   }
 
   private async runPluginRestore(ctx: RestoreCtx): Promise<RestoreAllPluginsResult> {
-    if (this.pluginFetcher === undefined || this.pluginDistributionReader === undefined) {
+    if (
+      this.pluginFetcher === undefined ||
+      this.pluginDistributionReader === undefined ||
+      this.builtDeps === undefined
+    ) {
       return { totalFiles: 0, pluginNames: [], nativeOnlyToolIds: [] };
     }
     return new RestoreAllPlugins(

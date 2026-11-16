@@ -13,6 +13,8 @@ const AGENT_SOURCE = [
   "name: planner",
   "description: Plans the work",
   "model: opus",
+  "tools: [Read]",
+  "color: red",
   "---",
   `Read @${ROOT}/skills/01-plan/SKILL.md`,
   `Ask @${ROOT}/agents/reviewer.md`,
@@ -61,7 +63,7 @@ describe("buildClaudeContract()", () => {
     });
   });
 
-  it("keeps an agent's whole frontmatter and links its plugin-root references from agents/", () => {
+  it("keeps only the frontmatter Claude reads, so an agent gets every tool, and links its plugin-root references from agents/", () => {
     const transform = supported(buildClaudeContract().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(

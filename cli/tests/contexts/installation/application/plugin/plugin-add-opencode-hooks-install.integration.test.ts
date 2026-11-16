@@ -10,7 +10,7 @@ import { AddPlugin } from "../../../../../src/contexts/installation/application/
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
@@ -33,7 +33,7 @@ async function installSamplePlugin() {
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       marketplaceRegistry: registry,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     }
   );
   await useCase.execute({
@@ -74,7 +74,7 @@ describe("AddPlugin OpenCode hooks install (Phase 7)", () => {
 });
 
 // `plugin install` and `setup` reach OpenCode through ContentTranslator, never through
-// FlatBuildStrategy, so without flatHooksBridge there the namespaced script triggers nothing.
+// DiskSink, so without flatHooksBridge there the namespaced script triggers nothing.
 describe("AddPlugin OpenCode event bridge (Lot B)", () => {
   it("generates .opencode/plugin/<plugin>-hooks.js for a plugin's mapped hook", async () => {
     const { deps } = await installSamplePlugin();

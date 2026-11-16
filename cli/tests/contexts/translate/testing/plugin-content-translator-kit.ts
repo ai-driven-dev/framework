@@ -1,15 +1,14 @@
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
-import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
+import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
 import {
   type PluginComponentFile,
   type PluginComponents,
   PluginDistribution,
-} from "../../../../src/contexts/translate/domain/plugin-distribution.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
+} from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredManifestPaths } from "./registered-manifest-probes.js";
 
-export const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
-export const translator = new PluginContentTranslator(stubHasher);
+export const translator = new PluginContentEngine(registeredManifestPaths());
 
 export const greetContent = `---
 name: aidd:04:greet

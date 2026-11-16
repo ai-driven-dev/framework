@@ -27,7 +27,7 @@ function makeDeps(fs: InMemoryFileAdapter): FrameworkBuildDeps {
   };
 }
 
-describe("createFrameworkBuildUseCase threads the caller's --force through to the flat build strategy", () => {
+describe("createFrameworkBuildUseCase threads the caller's --force through to the flat sink", () => {
   let outDir: string;
   let fs: InMemoryFileAdapter;
 
@@ -36,7 +36,7 @@ describe("createFrameworkBuildUseCase threads the caller's --force through to th
     fs = new InMemoryFileAdapter();
     await seedFromDirectory(fs, FIXTURE_DIR, { useAbsolutePaths: true });
     // outDir must exist for both the in-memory fs (fileExists) and the real disk
-    // (FlatBuildStrategy's isDirectory guard is backed by a real fs.stat call).
+    // (the flat sink's directory guard).
     fs.setFile(`${outDir}/.keep`, "");
     fs.setFile(`${outDir}/${COLLIDING_RELATIVE_PATH}`, STALE_CONTENT);
   });

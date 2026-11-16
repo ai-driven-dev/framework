@@ -201,14 +201,16 @@ describe("debugOnly", () => {
 });
 
 describe("builtMaterializationDepsOf", () => {
-  it("hands a restore the build, the registry and the home directory resolver", () => {
+  it("hands a restore the build, the registry, the home directory resolver and the translation", () => {
     const ensureBuilt = {} as Parameters<typeof builtMaterializationDepsOf>[0];
     const marketplaceRegistry = {} as Parameters<typeof builtMaterializationDepsOf>[1];
+    const translate = {} as Parameters<typeof builtMaterializationDepsOf>[2];
 
-    expect(builtMaterializationDepsOf(ensureBuilt, marketplaceRegistry)).toStrictEqual({
+    expect(builtMaterializationDepsOf(ensureBuilt, marketplaceRegistry, translate)).toStrictEqual({
       ensureBuilt,
       marketplaceRegistry,
       homedir,
+      translate,
     });
   });
 });

@@ -20,6 +20,7 @@ function readerOf(files: Readonly<Record<string, string>>): FileReader {
     fileExists: unused("fileExists"),
     readFileHash: unused("readFileHash"),
     isExecutable: unused("isExecutable"),
+    isDirectory: unused("isDirectory"),
     realpath: unused("realpath"),
   };
 }
@@ -51,7 +52,7 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
     ]);
   });
 
-  // `content-translator.ts` installs a plugin's `rules/` into every tool whose capability
+  // `engine.ts` installs a plugin's `rules/` into every tool whose capability
   // accepts them, Codex included, so a Codex project holding rules must never be told none.
   it("answers for Codex, which the script it replaces skipped outright", async () => {
     const useCase = new ListInstalledRules(

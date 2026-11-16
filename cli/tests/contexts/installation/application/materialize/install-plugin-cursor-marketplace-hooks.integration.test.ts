@@ -7,9 +7,10 @@ import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import type { PluginTranslator } from "../../../../../src/contexts/installation/application/materialize/plugin-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -75,13 +76,12 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(
-      fs,
-      new DeterministicHasher(),
-      () => HOME,
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
-    );
+    const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      homedir: () => HOME,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: translateDistribution,
+    });
 
     const { skipped } = await translator.addPlugin(
       dist(),
@@ -105,13 +105,12 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(
-      fs,
-      new DeterministicHasher(),
-      () => HOME,
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
-    );
+    const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      homedir: () => HOME,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: translateDistribution,
+    });
 
     await translator.addPlugin(
       dist(),
@@ -136,7 +135,8 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     const translator: PluginTranslator = new ModeBFlatMaterializationTranslator(
       fs,
       new DeterministicHasher(),
-      () => HOME
+      () => HOME,
+      translateDistribution
     );
     await translator.addPlugin(
       dist(),
@@ -158,9 +158,12 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     const translator: PluginTranslator = new BuiltTreeMaterializationTranslator(
       fs,
       new DeterministicHasher(),
-      () => HOME,
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
+      {
+        homedir: () => HOME,
+        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        marketplaceRegistry: await makeRegistry(),
+        translate: translateDistribution,
+      }
     );
     await translator.addPlugin(
       dist(),

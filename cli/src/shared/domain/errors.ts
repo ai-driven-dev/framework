@@ -478,6 +478,13 @@ export class OutDirNotDirectoryError extends Error {
   }
 }
 
+export class FlatMergeTargetNotJsonError extends Error {
+  constructor(shownPath: string, parseMessage: string) {
+    super(`${shownPath} is not valid JSON (${parseMessage}); left untouched.`);
+    this.name = "FlatMergeTargetNotJsonError";
+  }
+}
+
 export class FlatTargetExistsError extends Error {
   constructor(targetPath: string, pluginName: string) {
     super(

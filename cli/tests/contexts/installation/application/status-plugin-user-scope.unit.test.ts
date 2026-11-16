@@ -37,6 +37,7 @@ function makeFs(fileExists: boolean, diskHash: string): FileReader {
   return {
     fileExists: async () => fileExists,
     isExecutable: async () => false,
+    isDirectory: async () => false,
     realpath: async (path: string) => path,
     readFileHash: async () => new FileHash(diskHash),
     readFile: async () => "",
@@ -69,6 +70,7 @@ describe("ReportStatus — cursor plugin drift (user-scope)", () => {
           return true;
         },
         isExecutable: async () => false,
+        isDirectory: async () => false,
         realpath: async (path: string) => path,
         readFileHash: async () => new FileHash(DRIFTED_HASH),
         readFile: async () => "",

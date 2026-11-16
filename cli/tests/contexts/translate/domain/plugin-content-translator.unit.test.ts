@@ -261,3 +261,36 @@ describe("PluginContentTranslator.translate()", () => {
     });
   });
 });
+
+/** The path a plugin's own content takes on its way to disk: the chain `aidd plugin install`
+ * follows, and the one the golden suite cannot see, since `aidd translate` never calls
+ * `rewriteContent` at all. */
+describe("a plugin whose content references the framework", () => {
+  const withPlaceholder = () => {
+    const skills = [
+      makeFile(
+        "skills/hello/SKILL.md",
+        `---\nname: hello\ndescription: Hello skill\n---\n\nSee \`{{TOOLS}}/plugins/aidd-pm/x.yml\` and @{{DOCS}}/memory/testing.md\n`
+      ),
+    ];
+    // `files` and `components` both, or the override keeps the default skill content and
+    // the assertion passes on a file that never carried a placeholder.
+    return makeDist({
+      files: skills,
+      components: { skills, commands: [], agents: [], rules: [], hooks: [], mcp: [] },
+    });
+  };
+
+  it("resolves the reference for the tool being installed into", () => {
+    const file = translator
+      .translate(withPlaceholder(), copilot)
+      .find((f) => f.relativePath.endsWith("SKILL.md"));
+
+    expect(file?.content).toContain(".github/plugins/aidd-pm/x.yml");
+    expect(file?.content).toContain(
+      "[aidd_docs/memory/testing.md](../../aidd_docs/memory/testing.md)"
+    );
+    expect(file?.content).not.toContain("{{TOOLS}}");
+    expect(file?.content).not.toContain("{{DOCS}}");
+  });
+});

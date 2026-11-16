@@ -1,7 +1,7 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
-import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
+import type { FrameworkBuildTarget } from "../../../translate/contract/build-targets.js";
 import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
 
 export class BuildMarketplaceForTool {

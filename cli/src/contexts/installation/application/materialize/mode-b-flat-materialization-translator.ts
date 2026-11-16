@@ -1,15 +1,15 @@
 import { join } from "node:path";
 import { CursorProjectScopeUnsupportedError } from "../../../../shared/domain/errors.js";
 import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
-import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
-import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
+import type { TranslateDistribution } from "../../../translate/contract/translate-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
 import {
   InstalledPlugin,
@@ -21,6 +21,7 @@ import {
   resolveBaseDirFromRecord,
   resolveScopeForInstall,
 } from "../plugin/plugin-target-resolution.js";
+import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
 import type { PluginTranslator } from "./plugin-translator.js";
@@ -38,7 +39,8 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
   constructor(
     private readonly fs: FileWriter & FileReader,
     private readonly hasher: Hasher,
-    private readonly homedir: () => string
+    private readonly homedir: () => string,
+    private readonly translate: TranslateDistribution
   ) {
     this.projectHooks = new ProjectHooksMaterializer(fs);
   }
@@ -115,9 +117,9 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       throw new CursorProjectScopeUnsupportedError();
     }
     const distForNative = pluginsCap.deliversHooksToProject() ? withoutHooks(dist) : dist;
-    const { files, componentPaths, skipped } = new PluginContentTranslator(
-      this.hasher
-    ).translateWithComponentPaths(distForNative, tool);
+    const translated = this.translate.execute({ distribution: distForNative, tool });
+    const files = hashOutputFiles(translated.files, this.hasher);
+    const { componentPaths, skipped } = translated;
     const scope = resolveScopeForInstall(tool);
     const baseDir = resolveBaseDirFromRecord(scope, tool, projectRoot, this.homedir);
     return { files, componentPaths, skipped, baseDir, scope };

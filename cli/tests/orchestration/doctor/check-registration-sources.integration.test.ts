@@ -48,6 +48,9 @@ class UnresolvableFileReader implements FileReader {
   async listFilesRecursive(): Promise<string[]> {
     return [];
   }
+  async isDirectory(): Promise<boolean> {
+    return false;
+  }
   async isExecutable(): Promise<boolean> {
     return false;
   }

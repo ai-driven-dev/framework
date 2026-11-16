@@ -259,6 +259,7 @@ describe("the guard itself", () => {
       ...interiorGroupsOf("auth"),
       ...interiorGroupsOf("host-registration"),
       ...interiorGroupsOf("tools"),
+      ...interiorGroupsOf("translate"),
     ]);
     expect(
       interiorGroupsFor("tools"),

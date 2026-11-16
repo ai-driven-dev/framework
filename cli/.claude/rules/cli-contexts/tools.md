@@ -31,7 +31,6 @@ paths:
 - E-T4: `domain/formats/toml.ts` is the only domain file that imports a package.
 - E-T7: the native section types stay here as data, in `domain/native-registration/`.
 - E-T8: the generated hooks bridge keeps two property seams no test reads.
-- E-T9: `translate` keeps its own list of the other hosts' manifest paths.
 - E-T10: the profile folders keep their `*-paths.ts`, `*-agent.ts` and `build.ts` files.
 - E-T11: each hooks bridge template keeps its own run, stop and answer functions, which differ in bytes.
 - M-T2 and M-T3: the catalog passed to a use case at call time, and other contexts' tests importing this context's kit (migration state).

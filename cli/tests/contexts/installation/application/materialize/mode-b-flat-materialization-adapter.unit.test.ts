@@ -2,9 +2,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CursorProjectScopeUnsupportedError } from "../../../../../src/shared/domain/errors.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import {
   errnoError,
   FaultingFileAdapter,
@@ -39,7 +40,15 @@ function buildDist(name = "test-plugin"): PluginDistribution {
 function buildAdapter(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter();
   const hasher = new DeterministicHasher();
-  return { adapter: new ModeBFlatMaterializationTranslator(fs, hasher, () => homedir), fs };
+  return {
+    adapter: new ModeBFlatMaterializationTranslator(
+      fs,
+      hasher,
+      () => homedir,
+      translateDistribution
+    ),
+    fs,
+  };
 }
 
 describe("ModeBFlatMaterializationTranslator", () => {
@@ -302,7 +311,8 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const adapter = new ModeBFlatMaterializationTranslator(
         fs,
         new DeterministicHasher(),
-        () => "/stub-home"
+        () => "/stub-home",
+        translateDistribution
       );
       const manifest = Manifest.create();
       manifest.addTool(TOOL.opencode, "test", []);

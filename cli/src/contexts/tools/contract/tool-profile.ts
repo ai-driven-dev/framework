@@ -65,7 +65,7 @@ export type FlatInstallSection = "commands" | "agents" | "rules" | "skills";
  * `"nested"` when the mode has none. */
 export interface FlatLayout {
   skillLayout: FlatSkillLayout;
-  namespacePrefix: string | null;
+  namespacePrefix: string;
   hooksDir: string | null;
   hooksLoaderEntry: FlatHooksLoaderEntry | null;
   hooksBridge: FlatHooksBridge | null;

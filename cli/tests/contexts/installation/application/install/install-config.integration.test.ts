@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { InstallConfig } from "../../../../../src/contexts/installation/application/install/install-config.js";
+import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
-import { FrameworkDescriptor } from "../../../../../src/contexts/translate/domain/canon.js";
 import { linuxPlatform, win32Platform } from "../../../../helpers/install-harness.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";

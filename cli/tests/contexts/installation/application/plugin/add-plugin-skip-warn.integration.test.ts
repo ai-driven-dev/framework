@@ -5,10 +5,10 @@ import { describe, expect, it } from "vitest";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import type { ReadonlySkipList } from "../../../../../src/contexts/translate/domain/plugin-translation-skip.js";
+import type { ReadonlySkipList } from "../../../../../src/shared/domain/plugin/plugin-translation-skip.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
@@ -34,7 +34,7 @@ describe("AddPlugin skip warnings", () => {
             new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           marketplaceRegistry: registry,
-          ensureBuilt: fakeEnsureBuiltMarketplace(),
+          ...fakeBuildSources(),
         }
       );
       await useCase.execute({

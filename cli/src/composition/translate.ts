@@ -1,12 +1,8 @@
-import { stat } from "node:fs/promises";
-import type { ToolBuildContract } from "../contexts/tools/contract/build-contract.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
-import type { FrameworkBuildMode } from "../contexts/tools/contract/tool-profile.js";
-import { FlatBuildStrategy } from "../contexts/translate/application/strategies/flat-build-strategy.js";
-import { MarketplaceBuildStrategy } from "../contexts/translate/application/strategies/marketplace-build-strategy.js";
-import { FrameworkBuildUseCase } from "../contexts/translate/application/translate-source.js";
+import { DiskSink } from "../contexts/translate/application/sink/disk-sink.js";
+import { BuildNativeTree } from "../contexts/translate/application/translate-source.js";
+import type { FrameworkBuildContext } from "../contexts/translate/contract/build-native-tree.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
-import type { FrameworkBuildContext } from "../presentation/deps.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
@@ -18,73 +14,26 @@ export interface FrameworkBuildDeps {
   logger: Logger;
 }
 
-type FrameworkBuildFactory = (
-  deps: FrameworkBuildDeps,
-  ctx: FrameworkBuildContext
-) => FrameworkBuildUseCase;
-
-function buildFrameworkUseCase(
-  deps: FrameworkBuildDeps,
-  makeStrategy: (
-    deps: FrameworkBuildDeps,
-    av: AjvSchemaValidatorAdapter
-  ) => MarketplaceBuildStrategy | FlatBuildStrategy
-): FrameworkBuildUseCase {
-  const av = new AjvSchemaValidatorAdapter();
-  return new FrameworkBuildUseCase(
-    deps.fs,
-    av,
-    deps.assetProvider,
-    deps.logger,
-    makeStrategy(deps, av)
-  );
-}
-
-async function isDirectory(path: string): Promise<boolean> {
-  try {
-    return (await stat(path)).isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-function frameworkBuildFactoryFor(
-  buildContract: ToolBuildContract,
-  mode: FrameworkBuildMode
-): FrameworkBuildFactory {
-  if (mode === "marketplace") {
-    return (deps, ctx) =>
-      buildFrameworkUseCase(
-        deps,
-        (d, av) => new MarketplaceBuildStrategy(d.fs, av, d.assetProvider, buildContract, ctx.force)
-      );
-  }
-  return (deps, ctx) =>
-    buildFrameworkUseCase(
-      deps,
-      (d) =>
-        new FlatBuildStrategy(
-          d.fs,
-          d.assetProvider,
-          buildContract,
-          ctx.force,
-          ctx.outDir,
-          isDirectory,
-          d.logger
-        )
-    );
-}
-
 /** The use case for the target and mode the catalog's profile declares a build contract for, or
  * undefined when it declares none. */
 export function createFrameworkBuildUseCase(
   tools: ToolCatalog,
   deps: FrameworkBuildDeps,
   ctx: FrameworkBuildContext
-): FrameworkBuildUseCase | undefined {
+): BuildNativeTree | undefined {
   const target = tools.aiToolId(ctx.target);
   if (target === null) return undefined;
-  const buildContract = tools.aiProfile(target).buildContract(ctx.mode);
-  if (buildContract === null) return undefined;
-  return frameworkBuildFactoryFor(buildContract, ctx.mode)(deps, ctx);
+  const contract = tools.aiProfile(target).buildContract(ctx.mode);
+  if (contract === null) return undefined;
+  const sink = new DiskSink(
+    deps.fs,
+    new AjvSchemaValidatorAdapter(),
+    deps.assetProvider,
+    deps.logger
+  );
+  return new BuildNativeTree(deps.fs, deps.logger, sink, {
+    contract,
+    mode: ctx.mode,
+    force: ctx.force,
+  });
 }

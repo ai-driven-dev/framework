@@ -5,9 +5,10 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { userScopeFileGuard } from "../../../../helpers/user-scope-file-guard.js";
@@ -31,7 +32,8 @@ function fixture(installedVersion = "0.0.1") {
     fs,
     new PluginDistributionLoader(new FixturePluginFetcher(), { read: async () => dist }),
     hasher,
-    userScopeFileGuard
+    userScopeFileGuard,
+    { ...fakeBuiltDeps(), homedir }
   );
   const plugin = InstalledPlugin.fromMetadata(
     "sample-plugin",

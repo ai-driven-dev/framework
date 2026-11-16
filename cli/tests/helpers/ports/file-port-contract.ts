@@ -36,7 +36,8 @@ export type ContractCaseId =
   | "C19"
   | "C20"
   | "C21"
-  | "C22";
+  | "C22"
+  | "C23";
 
 /**
  * Cases a subject is known to fail, keyed by case, each with the divergence it stands for.
@@ -270,6 +271,14 @@ export function describeFileContract(
         expect(await subject.files.listDirectory(path("d"))).toStrictEqual([]);
       }
     );
+
+    contractCase("C23", "tells a directory from a file and from a missing path", async () => {
+      await subject.files.writeFile(path("d", "f.txt"), "x");
+
+      expect(await subject.files.isDirectory(path("d"))).toBe(true);
+      expect(await subject.files.isDirectory(path("d", "f.txt"))).toBe(false);
+      expect(await subject.files.isDirectory(path("missing"))).toBe(false);
+    });
 
     contractCase("C22", "accepts a directory spelled with a trailing separator", async () => {
       await subject.files.writeFile(path("d", "f.txt"), "x");

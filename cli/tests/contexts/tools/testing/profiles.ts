@@ -126,6 +126,12 @@ export class ProfileBuilder {
     return this;
   }
 
+  /** A tool that builds a marketplace only, with no flat contract to answer for an artifact. */
+  withoutFlatContract(): this {
+    this.contracts = { marketplace: () => anEmptyContract() };
+    return this;
+  }
+
   withMarketplaceProbe(paths: readonly string[]): this {
     this.probes = { ...this.probes, marketplace: paths };
     return this;

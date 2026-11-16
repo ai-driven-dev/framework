@@ -1,14 +1,14 @@
 import { join } from "node:path";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type {
+  PluginTranslationSkip,
+  ReadonlySkipList,
+} from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
-import type {
-  PluginTranslationSkip,
-  ReadonlySkipList,
-} from "../../../translate/domain/plugin-translation-skip.js";
 import type { Manifest } from "../../domain/manifest.js";
 
 export async function refreshTrackedMcpConfigHash(

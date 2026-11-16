@@ -103,6 +103,7 @@ export function wirePlugin(base: Base, inst: Installation) {
       distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
       marketplaceRegistry: marketplaceRegistry,
       ensureBuilt: ensureBuiltMarketplaceUseCase,
+      translate: builtMaterializationDeps.translate,
     },
     installRuntimeConfigUseCase
   );

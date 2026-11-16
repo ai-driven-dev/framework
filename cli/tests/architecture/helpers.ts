@@ -121,7 +121,7 @@ export const ALLOWED = new Set([
   "distribution->auth",
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
-  // Installation reads the installed tools' profiles. `installation->translate` is M-S1.
+  // Installation reads the installed tools' profiles. `installation->translate` is M-S1, narrowed to the translate contract.
   "installation->auth",
   "installation->tools",
   "installation->translate",
@@ -152,6 +152,7 @@ export const HELD_BY_BIOME: readonly string[] = [
   "recipes",
   "telemetry",
   "tools",
+  "translate",
   "update",
 ];
 

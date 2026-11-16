@@ -4,13 +4,13 @@ import {
   MalformedPluginScopeError,
 } from "../../../../shared/domain/errors.js";
 import type { InstallationFile } from "../../../../shared/domain/file.js";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { isSemver } from "../../../../shared/domain/semver.js";
 import {
   type PluginSource,
   parsePluginSource,
   serializePluginSource,
 } from "../../../../shared/domain/source.js";
-import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import { type InstallScope, isInstallScope } from "../install-scope.js";
 
 export const PLUGIN_NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;

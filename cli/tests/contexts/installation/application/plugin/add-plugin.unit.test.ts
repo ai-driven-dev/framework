@@ -8,16 +8,16 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin-distribution-reader.js";
-import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import {
   DuplicatePluginError,
   MissingPluginMetadataError,
 } from "../../../../../src/shared/domain/errors.js";
+import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { Logger } from "../../../../../src/shared/ports/logger.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -61,7 +61,7 @@ function buildAddUseCase(
         new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
       ),
       marketplaceRegistry: registry,
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      ...fakeBuildSources(),
     }
   );
 }
@@ -167,7 +167,7 @@ describe("AddPlugin", () => {
             new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           marketplaceRegistry: registry,
-          ensureBuilt: fakeEnsureBuiltMarketplace(),
+          ...fakeBuildSources(),
         }
       );
       await useCase.execute({
@@ -213,7 +213,7 @@ describe("AddPlugin", () => {
             new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           marketplaceRegistry: registry,
-          ensureBuilt: fakeEnsureBuiltMarketplace(),
+          ...fakeBuildSources(),
         }
       );
       await expect(
@@ -256,7 +256,7 @@ describe("AddPlugin", () => {
             new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
           ),
           marketplaceRegistry: registry,
-          ensureBuilt: fakeEnsureBuiltMarketplace(),
+          ...fakeBuildSources(),
         }
       );
       await useCase.execute({
@@ -316,7 +316,7 @@ describe("AddPlugin", () => {
               new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
             ),
             marketplaceRegistry: await makeGithubRegistry(PROJECT_ROOT),
-            ensureBuilt: fakeEnsureBuiltMarketplace(),
+            ...fakeBuildSources(),
           }
         );
         await useCase.execute({
@@ -357,7 +357,7 @@ describe("AddPlugin", () => {
               new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
             ),
             marketplaceRegistry: registry,
-            ensureBuilt: fakeEnsureBuiltMarketplace(),
+            ...fakeBuildSources(),
           }
         );
         await useCase.execute({
@@ -397,7 +397,7 @@ describe("AddPlugin", () => {
               new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
             ),
             marketplaceRegistry: registry,
-            ensureBuilt: fakeEnsureBuiltMarketplace(),
+            ...fakeBuildSources(),
           }
         );
         await useCase.execute({
@@ -565,7 +565,7 @@ describe("AddPlugin", () => {
               new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
             ),
             marketplaceRegistry: registryB,
-            ensureBuilt: fakeEnsureBuiltMarketplace(),
+            ...fakeBuildSources(),
           }
         ).execute({
           tools: catalogOf(),
@@ -605,7 +605,7 @@ describe("AddPlugin", () => {
               new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
             ),
             marketplaceRegistry: registry,
-            ensureBuilt: fakeEnsureBuiltMarketplace(),
+            ...fakeBuildSources(),
           }
         );
         await useCase.execute({
@@ -640,7 +640,7 @@ describe("AddPlugin", () => {
               new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
             ),
             marketplaceRegistry: registry,
-            ensureBuilt: fakeEnsureBuiltMarketplace(),
+            ...fakeBuildSources(),
           }
         );
         await useCase.execute({
@@ -677,7 +677,7 @@ describe("AddPlugin", () => {
               new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
             ),
             marketplaceRegistry: registry,
-            ensureBuilt: fakeEnsureBuiltMarketplace(),
+            ...fakeBuildSources(),
           }
         );
         await useCase.execute({
@@ -711,7 +711,7 @@ describe("AddPlugin", () => {
               new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
             ),
             marketplaceRegistry: registry,
-            ensureBuilt: fakeEnsureBuiltMarketplace(),
+            ...fakeBuildSources(),
           }
         );
         await useCase.execute({
@@ -748,7 +748,7 @@ describe("AddPlugin", () => {
               new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
             ),
             marketplaceRegistry: registry,
-            ensureBuilt: fakeEnsureBuiltMarketplace(),
+            ...fakeBuildSources(),
           }
         );
         await useCase.execute({
@@ -802,7 +802,7 @@ describe("AddPlugin", () => {
               new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
             ),
             marketplaceRegistry: registry,
-            ensureBuilt: fakeEnsureBuiltMarketplace(),
+            ...fakeBuildSources(),
           }
         );
         await useCase.execute({
@@ -854,7 +854,7 @@ describe("AddPlugin", () => {
         {
           distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, zeroFilesReader),
           marketplaceRegistry: registry,
-          ensureBuilt: fakeEnsureBuiltMarketplace(),
+          ...fakeBuildSources(),
         }
       );
       await useCase.execute({

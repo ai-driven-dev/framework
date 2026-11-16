@@ -11,12 +11,8 @@ import {
   type FrameworkBuildFor,
 } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
-import {
-  type FrameworkBuild,
-  FrameworkBuildUseCase,
-} from "../../../../../src/contexts/translate/application/translate-source.js";
-import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/domain/ports/schema-validator.js";
+import type { FrameworkBuild } from "../../../../../src/contexts/translate/contract/build-native-tree.js";
+import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import { BUILT_CACHE_SUBDIR, builtMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import type { VersionReader } from "../../../../../src/shared/ports/version-reader.js";
@@ -24,6 +20,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { buildTree } from "../../../translate/testing/build-tree.js";
 
 const PROJECT = "/proj";
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
@@ -45,17 +42,6 @@ function stubAssetProvider(): AssetProvider {
       throw new Error("not used");
     },
     loadSchema: (name) => (name === "plugin-manifest" ? MINIMAL_MANIFEST_SCHEMA : {}),
-  };
-}
-
-function makeIsDirectory(memFs: InMemoryFileAdapter): (path: string) => Promise<boolean> {
-  return async (path: string): Promise<boolean> => {
-    // The adapter keys every entry with forward slashes whatever the platform joined
-    // with, so the directory asked about is spelled the same way before the prefix test.
-    const key = path.replace(/\\/g, "/");
-    if (memFs.has(key)) return false;
-    const prefix = key.endsWith("/") ? key : `${key}/`;
-    return memFs.listAll().some((k) => k.startsWith(prefix));
   };
 }
 
@@ -451,7 +437,7 @@ describe("EnsureBuiltMarketplace — when a published source's sentinel can be b
 });
 
 // outDir here is always builtMarketplaceDir(), an aidd-owned disposable cache, so a collision
-// only means a previous build is still there. A real FlatBuildStrategy catches force flipping.
+// only means a previous build is still there. A real flat sink catches force flipping.
 describe("force behavior at the cache-rebuild path", () => {
   it("overwrites a colliding file already present in the build cache instead of throwing FlatTargetExistsError", async () => {
     const memFs = new InMemoryFileAdapter();
@@ -463,24 +449,17 @@ describe("force behavior at the cache-rebuild path", () => {
     const agentPath = `${builtDir}/.github/agents/${PLUGIN}-code-reviewer.agent.md`;
     memFs.setFile(agentPath, "stale cache content from a previous build");
 
-    const realBuildFor: FrameworkBuildFor = (_target, _mode, outDir) => {
+    const realBuildFor: FrameworkBuildFor = (_target, _mode) => {
       const validator = noopValidator();
       const assetProvider = stubAssetProvider();
-      const strategy = new FlatBuildStrategy(
-        memFs,
-        assetProvider,
-        buildCopilotFlatContract(),
-        true, // force:true — mirrors deps.ts wiring for every *:flat target
-        outDir,
-        makeIsDirectory(memFs),
-        new CapturingLogger()
-      );
-      return new FrameworkBuildUseCase(
+      return buildTree(
         memFs,
         validator,
         assetProvider,
         new CapturingLogger(),
-        strategy
+        buildCopilotFlatContract(),
+        "flat",
+        true // force:true, mirrors deps.ts wiring for every *:flat target
       );
     };
 
