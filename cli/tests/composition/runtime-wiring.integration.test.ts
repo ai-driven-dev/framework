@@ -7,13 +7,11 @@ import {
   cacheBuildFor,
   debugOnly,
 } from "../../src/composition/installation.js";
-import { releaseSharedSourceOf } from "../../src/composition/orchestration/clean.js";
 import { hostBinaryAvailableIn } from "../../src/composition/orchestration/doctor.js";
 import { userScopeSyncOf } from "../../src/composition/orchestration/global.js";
 import {
   askedFrom,
   detachClaimsOf,
-  hostRegistriesOf,
   quietUserScopeFilesSafeToDelete,
   registerForFlow,
 } from "../../src/composition/orchestration/marketplace.js";
@@ -25,7 +23,6 @@ import {
 } from "../../src/composition/orchestration/plugin.js";
 import { setupQuestionsOf, setupStepsOf } from "../../src/composition/orchestration/setup.js";
 import { wireTools } from "../../src/composition/tools.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { isStrictlyWithinUserScope } from "../../src/contexts/machine-claims/domain/user-scope-containment.js";
@@ -329,28 +326,5 @@ describe("setupQuestionsOf", () => {
     expect(await questions.tools?.(toolOptions)).toBe("t");
     expect(plugins).toHaveBeenCalledWith(pluginOptions);
     expect(tools).toHaveBeenCalledWith(toolOptions);
-  });
-});
-
-describe("releaseSharedSourceOf", () => {
-  it("hands a release the framework marketplace name and the platform it runs on", () => {
-    expect(releaseSharedSourceOf()).toStrictEqual({
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-      platform: process.platform,
-    });
-  });
-});
-
-describe("hostRegistriesOf", () => {
-  it("names the marketplace registries, the plugin registries and the sources it is handed", () => {
-    const marketplaceRegistries = new Map();
-    const pluginRegistries = new Map();
-    const sources = new Map();
-
-    const hosts = hostRegistriesOf(marketplaceRegistries, pluginRegistries, sources);
-
-    expect(hosts.marketplaceRegistries).toBe(marketplaceRegistries);
-    expect(hosts.pluginRegistries).toBe(pluginRegistries);
-    expect(hosts.sources).toBe(sources);
   });
 });

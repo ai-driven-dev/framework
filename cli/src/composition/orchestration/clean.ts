@@ -16,12 +16,6 @@ import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Installation } from "../installation.js";
 import type { Base } from "../shared.js";
 
-/** What a release shares with the framework: its marketplace name, and the platform that tells
- * how two paths compare. */
-export function releaseSharedSourceOf() {
-  return { frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME, platform: process.platform };
-}
-
 /** Clean and uninstall. */
 export function wireClean(base: Base, inst: Installation) {
   const {
@@ -46,7 +40,7 @@ export function wireClean(base: Base, inst: Installation) {
     release: new ReleaseClaims(
       fs,
       logger,
-      releaseSharedSourceOf(),
+      { frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME, platform: process.platform },
       userManifestRepo,
       userSourceReferences
     ),
