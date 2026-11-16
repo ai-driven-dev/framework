@@ -20,7 +20,7 @@ The request and its source: the confirmed frame, or the existing skill.
 7. Take each target from the confirmed frame.
    - Existing skill: take each root of [tool-write.md](../references/tool-write.md) that holds it.
 8. For each target, ask the user one question per frontmatter field the plan needs beyond `name` and `description`, read from its official source.
-9. Confirm the table with the user.
+9. Present the table, then end the turn and wait for the user's own answer.
 10. Read [write](03-write.md).
 
 ## Output

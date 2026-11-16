@@ -12,7 +12,7 @@ A request for a skill that does not exist yet.
 2. Fill [scope-frame.md](../assets/scope-frame.md).
 3. Check the name per [naming.md](../references/naming.md).
 4. State any overlap with an installed skill, or that none was found.
-5. Confirm the frame with the user.
+5. Present the frame, then end the turn and wait for the user's own answer.
 6. Read [plan](02-plan.md).
 
 ## Output

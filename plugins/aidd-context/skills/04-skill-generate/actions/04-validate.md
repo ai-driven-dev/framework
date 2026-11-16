@@ -15,7 +15,7 @@ The files written.
    - Unconfirmed addition: list it as a breach.
 4. Fix each finding and breach, and repeat from step 1 until every list is empty.
    - Fix declined or impossible: report the blocker and stop.
-5. Propose a trial per [runtime-validation.md](../references/runtime-validation.md), then wait for approval.
+5. Propose a trial per [runtime-validation.md](../references/runtime-validation.md), then end the turn and wait for the user's own answer.
    - Declined, no subagent, or running in a subagent: go to step 7, runtime unverified.
 6. Run the approved trial in a subagent and inspect its evidence.
    - Failure: fix and repeat from step 1.
