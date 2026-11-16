@@ -71,8 +71,10 @@ describe("aidd-ui showcase", () => {
 
     it("lists a wireframe and a screen under the screens step, and a journey under its own", () => {
       const index = pagesOf()["index.html"];
-      assert.ok(stepOf(index, "screens").html.includes('href="search-flow.html"'));
       assert.ok(stepOf(index, "screens").html.includes('href="home.html"'));
+      assert.ok(!stepOf(index, "screens").html.includes('href="search-flow.html"'), "the wireframe the screen dresses is reached from the screen");
+      const bare = pagesOf();
+      assert.ok(bare["search-flow.html"]);
       assert.ok(!stepOf(index, "journeys").html.includes("search-flow"));
       assert.ok(stepOf(index, "journeys").html.includes('href="onboarding.html"'));
     });
@@ -948,9 +950,8 @@ describe("aidd-ui showcase", () => {
 
     it("lists each record in the navigation by its title, the id staying in the address", () => {
       const home = pagesOf()["home.html"];
-      assert.match(itemOf(home, "search-flow"), /<a href="search-flow\.html">Search flow \(wireframe\)<\/a>/);
       assert.match(itemOf(home, "home"), /<a href="home\.html" aria-current="page">Home<\/a>/);
-      assert.doesNotMatch(itemOf(home, "search-flow"), />search-flow</);
+      assert.doesNotMatch(itemOf(home, "home"), />home</);
     });
 
     it("marks only the item whose own link is the page, never the step that holds it", () => {
@@ -1096,7 +1097,7 @@ describe("aidd-ui showcase", () => {
     it("groups the screens under the first journey that names them, the rest out of journey", () => {
       const body = stepOf(pagesOf()["index.html"], "screens").html;
       const groups = [...body.matchAll(/<h3 data-journey="([^"]*)">[^<]*<\/h3><ul>([\s\S]*?)<\/ul>/g)].map((match) => [match[1], [...match[2].matchAll(/data-id="([^"]+)"/g)].map((each) => each[1])]);
-      assert.deepEqual(groups, [["onboarding", ["home", "search-flow"]]]);
+      assert.deepEqual(groups, [["onboarding", ["home"]]]);
       const file = path.join(tmp, UI, "journeys/onboarding.md");
       fs.writeFileSync(file, fs.readFileSync(file, "utf8").replace("| search-flow |", "| ghost |"));
       const after = stepOf(pagesOf()["index.html"], "screens").html;
@@ -1104,17 +1105,38 @@ describe("aidd-ui showcase", () => {
       assert.match(after, /<h3 data-journey="">Out of journey<\/h3><ul><li data-id="search-flow">/);
     });
 
-    it("puts a screen at the journey step of the wireframe it dresses, the wireframe beside it under a name of its own", () => {
+    it("lists one item per journey step: the screen that dresses its wireframe, else the wireframe", () => {
       put(tmp, `${UI}/wireframes/start.md`, record(["id: start", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Start"));
       put(tmp, `${UI}/screens/start-screen.md`, record(["id: start-screen", "kind: screen", "status: proposed", "version: 1", "wireframe: start", "states: [default]"], "# Start"));
       put(tmp, `${UI}/screens/lonely.md`, record(["id: lonely", "kind: screen", "status: proposed", "version: 1", "wireframe: elsewhere", "states: [default]"], "# Lonely"));
+      put(tmp, `${UI}/wireframes/bare.md`, record(["id: bare", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Bare"));
+      edit(tmp, `${UI}/journeys/onboarding.md`, "| search-flow | narrows the results |", "| search-flow | narrows the results |\n| start | begins |\n| bare | sketches |");
+      const body = stepOf(pagesOf()["index.html"], "screens").html;
+      const groups = [...body.matchAll(/<h3 data-journey="([^"]*)">[^<]*<\/h3><ul>([\s\S]*?)<\/ul>/g)].map((match) => [match[1], [...match[2].matchAll(/data-id="([^"]+)"/g)].map((each) => each[1])]);
+      assert.deepEqual(groups, [["onboarding", ["home", "start-screen", "bare"]], ["", ["lonely"]]]);
+      assert.doesNotMatch(body, /\(wireframe\)|\(maquette\)/);
+    });
+
+    it("keeps the screen of a wireframe current in the sidebar while its wireframe page is open", () => {
+      put(tmp, `${UI}/wireframes/start.md`, record(["id: start", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/screens/start-screen.md`, record(["id: start-screen", "kind: screen", "status: proposed", "version: 1", "wireframe: start", "states: [default]"], "# Start"));
       edit(tmp, `${UI}/journeys/onboarding.md`, "| search-flow | narrows the results |", "| search-flow | narrows the results |\n| start | begins |");
-      for (const lang of ["en", "fr"]) {
-        const body = stepOf(pagesOf({ lang })["index.html"], "screens").html;
-        const groups = [...body.matchAll(/<h3 data-journey="([^"]*)">[^<]*<\/h3><ul>([\s\S]*?)<\/ul>/g)].map((match) => [match[1], [...match[2].matchAll(/data-id="([^"]+)"/g)].map((each) => each[1])]);
-        assert.deepEqual(groups, [["onboarding", ["home", "search-flow", "start-screen", "start"]], ["", ["lonely"]]]);
-        const labels = [...body.matchAll(/<li data-id="(start|start-screen)">[\s\S]*?<a [^>]*>([^<]*)<\/a>/g)].map((match) => match[2]);
-        assert.deepEqual(labels, ["Start", lang === "en" ? "Start (wireframe)" : "Start (maquette)"]);
+      const current = (html) => [...navOf(html).matchAll(/<a [^>]*href="([^"]+)\.html"[^>]*aria-current="page"/g)].map((match) => match[1]);
+      assert.deepEqual(current(pagesOf()["start.html"]), ["start-screen"]);
+    });
+
+    it("switches a screen page and its wireframe page to each other, in both languages", () => {
+      put(tmp, `${UI}/wireframes/start.md`, record(["id: start", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/screens/start-screen.md`, record(["id: start-screen", "kind: screen", "status: proposed", "version: 1", "wireframe: start", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/screens/lonely.md`, record(["id: lonely", "kind: screen", "status: proposed", "version: 1", "wireframe: elsewhere", "states: [default]"], "# Lonely"));
+      const twinOf = (html) => html.match(/<nav class="twin"[\s\S]*?<\/nav>/)?.[0];
+      const pairOf = (twin) => [...twin.matchAll(/<a href="([^"]+)\.html"[^>]*>([^<]+)<\/a>|<a [^>]*aria-current="page"[^>]*>([^<]+)<\/a>/g)].map((match) => (match[1] ? [match[1], match[2]] : [null, match[3]]));
+      for (const [lang, words] of [["en", ["Screen", "Wireframe"]], ["fr", ["Écran", "Maquette"]]]) {
+        const pages = pagesOf({ lang });
+        assert.deepEqual(pairOf(twinOf(pages["start-screen.html"])), [[null, words[0]], ["start", words[1]]]);
+        assert.deepEqual(pairOf(twinOf(pages["start.html"])), [["start-screen", words[0]], [null, words[1]]]);
+        assert.equal(twinOf(pages["lonely.html"]), undefined);
+        assert.equal(twinOf(pages["onboarding.html"]), undefined);
       }
     });
 

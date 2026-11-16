@@ -34,7 +34,8 @@ const LABELS = {
     stepNames: { journeys: "Journeys", identity: "Identity", foundations: "Foundations", components: "Elements", screens: "Screens" },
     categories: { input: "Input", action: "Actions", display: "Display", navigation: "Navigation", group: "Groups", asset: "Assets" },
     outOfJourney: "Out of journey",
-    wireframeOf: "{title} (wireframe)",
+    wireframe: "Wireframe",
+    twin: "View",
     toReview: "{count} to review",
     stepDone: "complete",
     stepEmpty: "no content",
@@ -128,7 +129,8 @@ const LABELS = {
     stepNames: { journeys: "Parcours", identity: "Identité", foundations: "Charte", components: "Éléments", screens: "Écrans" },
     categories: { input: "Saisie", action: "Actions", display: "Affichage", navigation: "Navigation", group: "Ensembles", asset: "Ressources" },
     outOfJourney: "Hors parcours",
-    wireframeOf: "{title} (maquette)",
+    wireframe: "Maquette",
+    twin: "Vue",
     toReview: "{count} à relire",
     stepDone: "terminé",
     stepEmpty: "vide",
@@ -334,6 +336,9 @@ nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 .doc table { border-collapse: collapse; width: 100%; font-size: var(--t-md); }
 .doc th { text-align: left; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line-strong); padding: 6px 10px; }
 .doc td { border-bottom: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }
+.twin { display: inline-flex; margin: 0 0 var(--s4); padding: 2px; gap: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r2); font-size: var(--t-md); }
+.twin a { padding: var(--s1) var(--s4); border-radius: var(--r1); color: var(--muted); text-decoration: none; }
+.twin a[aria-current="page"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
 .journey-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s5); padding: var(--s3) var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r2); font-size: var(--t-md); }
 .journey-bar .journey-title { font-weight: 600; }
 .journey-bar .where { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -922,7 +927,7 @@ function stepsOf({ project, records, rows, sets }) {
 
 /** The records of the screens step, grouped under the first journey whose Steps table names them, in step order;
  * the rest under an empty journey id. One group with no journey when none names any. A step that names a wireframe
- * is held by the screens that dress it, the wireframe following as a `sketches` record, so a step reads once. */
+ * is held by the screens that dress it, the wireframe a `sketches` record the navigation leaves out, so a step reads once. */
 function screenGroupsOf(records, journeys) {
   const byId = new Map(records.map((record) => [fm(record).id, record]));
   const placedIds = new Set();
@@ -952,8 +957,7 @@ function screenGroupsOf(records, journeys) {
 /** The navigation, the same on every page: the five steps in order, each folded, the Review button at its foot. */
 function navigationOf(project, records, labels, current, sets = [], rows = [], anchors = new Map()) {
   const journeys = records.filter((record) => fm(record).kind === "journey");
-  const item = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, titleOf(project, record, labels))}</li>`;
-  const sketch = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, filled(labels.wireframeOf, { title: titleOf(project, record, labels) }))}</li>`;
+  const item = (record) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current || (fm(record).wireframe !== undefined && fm(record).wireframe === current), titleOf(project, record, labels))}</li>`;
   const named = (record, step) => `<li data-id="${escaped(fm(record).id)}">${link(fm(record).id, fm(record).id === current, labels.stepNames[step])}</li>`;
   const ul = (items) => `<ul>${items.join("")}</ul>`;
   const setsOf = (held) => (held.length ? `<section data-group="choose"><h3>${labels.choose}</h3><ul>${held.map((set) => `<li data-set="${escaped(set.id)}"><a href="${escaped(variants.setFileOf(set.id))}"${current === `${SET_CURRENT}${set.id}` ? ' aria-current="page"' : ""}>${escaped(set.id)}</a></li>`).join("")}</ul></section>` : "");
@@ -967,7 +971,7 @@ function navigationOf(project, records, labels, current, sets = [], rows = [], a
     if (step === "screens") {
       const groups = screenGroupsOf(own, journeys);
       if (!groups.some((group) => group.journey)) return ul(sorted.map(item));
-      return groups.map((group) => `<h3 data-journey="${group.journey ? escaped(fm(group.journey).id) : ""}">${group.journey ? escaped(titleOf(project, group.journey)) : labels.outOfJourney}</h3>${ul(group.records.map((record) => (group.sketches.has(fm(record).id) ? sketch(record) : item(record))))}`).join("");
+      return groups.map((group) => `<h3 data-journey="${group.journey ? escaped(fm(group.journey).id) : ""}">${group.journey ? escaped(titleOf(project, group.journey)) : labels.outOfJourney}</h3>${ul(group.records.filter((record) => !group.sketches.has(fm(record).id)).map(item))}`).join("");
     }
     return ul(sorted.map(item));
   };
@@ -1074,6 +1078,15 @@ function chipsOf(record) {
   const { route } = fm(record);
   const chips = [...(route === undefined ? [] : [chipOf("route", route)]), ...list(fm(record).code).map((code) => chipOf("code", code))].join("");
   return chips ? `<div class="chips">${chips}</div>` : "";
+}
+
+/** The two-way switch between a screen and the wireframe it dresses, on the page of either; empty for any other record. */
+function twinOf(record, records, labels) {
+  const { id, kind } = fm(record);
+  const pair = kind === "screen" ? [record, records.find((other) => fm(other).kind === "wireframe" && fm(other).id === fm(record).wireframe)] : kind === "wireframe" ? [records.filter((other) => fm(other).kind === "screen" && fm(other).wireframe === id).sort(byRecordId)[0], record] : [];
+  if (!pair[0] || !pair[1]) return "";
+  const side = (each, label) => (fm(each).id === id ? `<a aria-current="page">${escaped(label)}</a>` : `<a href="${escaped(fm(each).id)}.html">${escaped(label)}</a>`);
+  return `<nav class="twin" aria-label="${escaped(labels.twin)}">${side(pair[0], labels.screen)}${side(pair[1], labels.wireframe)}</nav>`;
 }
 
 const linksOf = (kind, label, ids, shown = (id) => id) => (ids.length ? `<section class="links" data-links="${kind}"><h2>${label}</h2><ul>${ids.map((id) => `<li>${link(id, false, shown(id))}</li>`).join("")}</ul></section>` : "");
@@ -1425,6 +1438,7 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets = [] }) {
     const bars = barsOf({ project, record, journeys, recordsById, labels });
     const body = [
       headOf({ record, title, description: descriptionOf(project, record), persona: journey ? personaOf(record, labels) : "", labels }),
+      twinOf(record, records, labels),
       ...bars,
       journey ? "" : linksOf("uses", labels.uses, uses, (each) => titleOf(project, recordsById.get(each), labels)),
       journey ? journeyOf({ project, record, recordsById, tokens, labels }) : "",
