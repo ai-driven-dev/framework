@@ -173,7 +173,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [writer.md](skills/08-hook-generate/references/writer.md) | - |
 | `scripts` | [verify-hook.cjs](skills/08-hook-generate/scripts/verify-hook.cjs) | - |
 | `scripts` | [write-hook.cjs](skills/08-hook-generate/scripts/write-hook.cjs) | - |
-| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Creates, updates or removes a hook that runs a script at a lifecycle event, in each chosen AI tool's native format, not for skills or rules.` |
+| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Creates, updates or removes a hook that runs a script at a lifecycle event, in each chosen host's native format, not for skills or rules.` |
 
 #### `skills/09-mermaid`
 
