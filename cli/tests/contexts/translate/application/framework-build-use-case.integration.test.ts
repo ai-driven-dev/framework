@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { buildCopilotMarketplaceContract } from "../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import type { BuildOutputStrategy } from "../../../../src/contexts/translate/application/strategies/build-output-strategy.js";
 import { MarketplaceBuildStrategy } from "../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
-import { FrameworkBuildUseCase } from "../../../../src/contexts/translate/application/translate-source.js";
+import { BuildNativeTree } from "../../../../src/contexts/translate/application/translate-source.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FrameworkPlaceholderInPluginError,
@@ -74,10 +74,10 @@ function makeUseCase(
   fs: InMemoryFileAdapter,
   validator?: JsonSchemaValidator,
   assetProvider?: AssetProvider
-): FrameworkBuildUseCase {
+): BuildNativeTree {
   const v = validator ?? makeValidator();
   const ap = assetProvider ?? makeAssetProvider();
-  return new FrameworkBuildUseCase(
+  return new BuildNativeTree(
     fs,
     v,
     ap,
@@ -86,7 +86,7 @@ function makeUseCase(
   );
 }
 
-describe("FrameworkBuildUseCase", () => {
+describe("BuildNativeTree", () => {
   let fs: InMemoryFileAdapter;
   let logger: CapturingLogger;
 
@@ -99,7 +99,7 @@ describe("FrameworkBuildUseCase", () => {
     it("throws JsonSchemaValidationError when manifest is invalid", async () => {
       const v = makeValidator(true);
       const ap = makeAssetProvider();
-      const uc = new FrameworkBuildUseCase(
+      const uc = new BuildNativeTree(
         fs,
         v,
         ap,
@@ -291,7 +291,7 @@ describe("FrameworkBuildUseCase", () => {
     it("logs a warning for commands/ and rules/ directories and lists them in skippedSections", async () => {
       const v = makeValidator();
       const ap = makeAssetProvider();
-      const uc = new FrameworkBuildUseCase(
+      const uc = new BuildNativeTree(
         fs,
         v,
         ap,
@@ -523,7 +523,7 @@ describe("FrameworkBuildUseCase", () => {
         },
       };
       const ap = makeAssetProvider();
-      const uc = new FrameworkBuildUseCase(
+      const uc = new BuildNativeTree(
         fs,
         failingMarketplaceValidator,
         ap,
@@ -563,7 +563,7 @@ describe("FrameworkBuildUseCase", () => {
     it("produces byte-identical output when a forced second run writes into the tree the first left", async () => {
       const v = makeValidator();
       const ap = makeAssetProvider();
-      const uc = new FrameworkBuildUseCase(
+      const uc = new BuildNativeTree(
         fs,
         v,
         ap,
@@ -602,7 +602,7 @@ describe("what a build reports having written", () => {
     const fs = await makeSeededFs();
     const v = makeValidator();
     const ap = makeAssetProvider();
-    const uc = new FrameworkBuildUseCase(fs, v, ap, new CapturingLogger(), countingStrategy);
+    const uc = new BuildNativeTree(fs, v, ap, new CapturingLogger(), countingStrategy);
     const result = await uc.execute({
       sourceDir: SOURCE_DIR,
       outDir: OUT_DIR,
@@ -623,7 +623,7 @@ describe("what a build reports having written", () => {
     const logger = new CapturingLogger();
     const v = makeValidator();
     const ap = makeAssetProvider();
-    const uc = new FrameworkBuildUseCase(fs, v, ap, logger, countingStrategy);
+    const uc = new BuildNativeTree(fs, v, ap, logger, countingStrategy);
     const result = await uc.execute({
       sourceDir: SOURCE_DIR,
       outDir: OUT_DIR,

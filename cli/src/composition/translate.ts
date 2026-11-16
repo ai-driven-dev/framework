@@ -4,9 +4,9 @@ import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import type { FrameworkBuildMode } from "../contexts/tools/contract/tool-profile.js";
 import { FlatBuildStrategy } from "../contexts/translate/application/strategies/flat-build-strategy.js";
 import { MarketplaceBuildStrategy } from "../contexts/translate/application/strategies/marketplace-build-strategy.js";
-import { FrameworkBuildUseCase } from "../contexts/translate/application/translate-source.js";
+import { BuildNativeTree } from "../contexts/translate/application/translate-source.js";
+import type { FrameworkBuildContext } from "../contexts/translate/contract/build-native-tree.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
-import type { FrameworkBuildContext } from "../presentation/deps.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
 import type { FileWriter } from "../shared/ports/file-writer.js";
@@ -21,7 +21,7 @@ export interface FrameworkBuildDeps {
 type FrameworkBuildFactory = (
   deps: FrameworkBuildDeps,
   ctx: FrameworkBuildContext
-) => FrameworkBuildUseCase;
+) => BuildNativeTree;
 
 function buildFrameworkUseCase(
   deps: FrameworkBuildDeps,
@@ -29,15 +29,9 @@ function buildFrameworkUseCase(
     deps: FrameworkBuildDeps,
     av: AjvSchemaValidatorAdapter
   ) => MarketplaceBuildStrategy | FlatBuildStrategy
-): FrameworkBuildUseCase {
+): BuildNativeTree {
   const av = new AjvSchemaValidatorAdapter();
-  return new FrameworkBuildUseCase(
-    deps.fs,
-    av,
-    deps.assetProvider,
-    deps.logger,
-    makeStrategy(deps, av)
-  );
+  return new BuildNativeTree(deps.fs, av, deps.assetProvider, deps.logger, makeStrategy(deps, av));
 }
 
 async function isDirectory(path: string): Promise<boolean> {
@@ -81,7 +75,7 @@ export function createFrameworkBuildUseCase(
   tools: ToolCatalog,
   deps: FrameworkBuildDeps,
   ctx: FrameworkBuildContext
-): FrameworkBuildUseCase | undefined {
+): BuildNativeTree | undefined {
   const target = tools.aiToolId(ctx.target);
   if (target === null) return undefined;
   const buildContract = tools.aiProfile(target).buildContract(ctx.mode);

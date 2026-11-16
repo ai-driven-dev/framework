@@ -28,7 +28,7 @@ capability and port modules listed as public), never an internal file. The whole
 | The canonical framework-doc shape | `domain/canon.ts` |
 | The canonical single-plugin shape | `domain/plugin-distribution.ts` |
 | Build targets and modes | `domain/build-target.ts` |
-| The `aidd translate` use-case | `application/translate-source.ts` (`FrameworkBuildUseCase`) |
+| The `aidd translate` use-case | `application/translate-source.ts` (`BuildNativeTree`) |
 | A build orchestrator (one per mode, never per tool) | `application/strategies/` |
 | Schema validation for marketplace/plugin manifests | `infrastructure/schema-validator.ts` |
 
@@ -44,7 +44,7 @@ transform that is *aware* of which target it is producing for.
   tool's rewrite logic, it invokes what `tools` declared. That function is one-way and has no
   inverse; the `tools` skill's `references/content-rewrite.md` says why, and names the trap an
   identity rewrite sets.
-- `FrameworkBuildUseCase` (`aidd translate`) reads a `ToolBuildContract` per target and mode from
+- `BuildNativeTree` (`aidd translate`) reads a `ToolBuildContract` per target and mode from
   `tools`, and dispatches to `MarketplaceBuildStrategy` or `FlatBuildStrategy` — both implement
   `BuildOutputStrategy` and iterate the six artifact kinds generically, with zero per-tool or
   per-kind branching. Adding a build target means the target tool declares a contract in `tools`;

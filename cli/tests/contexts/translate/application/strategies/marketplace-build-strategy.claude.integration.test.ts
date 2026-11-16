@@ -5,7 +5,7 @@ import { wireTools } from "../../../../../src/composition/tools.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { buildClaudeContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
 import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
-import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
+import { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
 import { AjvSchemaValidatorAdapter } from "../../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import {
   FrameworkPlaceholderInPluginError,
@@ -34,11 +34,11 @@ function makeUseCase(
   fs: InMemoryFileAdapter,
   assetProvider?: AssetProvider,
   logger?: CapturingLogger
-): FrameworkBuildUseCase {
+): BuildNativeTree {
   const av = new AjvSchemaValidatorAdapter();
   const ap = assetProvider ?? makeBundledAssetProvider();
   const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildClaudeContract());
-  return new FrameworkBuildUseCase(fs, av, ap, logger ?? new CapturingLogger(), strategy);
+  return new BuildNativeTree(fs, av, ap, logger ?? new CapturingLogger(), strategy);
 }
 
 async function makeSeededFsFromReal(): Promise<InMemoryFileAdapter> {
@@ -292,7 +292,7 @@ Body with [foo.md](./foo.md) ref.`);
       };
       const ap = makeBundledAssetProvider();
       const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildClaudeContract());
-      const uc = new FrameworkBuildUseCase(fs, av, ap, new CapturingLogger(), strategy);
+      const uc = new BuildNativeTree(fs, av, ap, new CapturingLogger(), strategy);
       await expect(
         uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude })
       ).rejects.toThrow(JsonSchemaValidationError);

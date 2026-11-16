@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import type { AiToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import { FlatBuildStrategy } from "../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
 import { MarketplaceBuildStrategy } from "../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
-import { FrameworkBuildUseCase } from "../../../../src/contexts/translate/application/translate-source.js";
+import { BuildNativeTree } from "../../../../src/contexts/translate/application/translate-source.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
@@ -100,7 +100,7 @@ async function writtenByA(tree: InMemoryFileAdapter, tool: AiToolProfile, native
     ? new MarketplaceBuildStrategy(fs, validator, assets, contract)
     : new FlatBuildStrategy(fs, assets, contract, false, OUT, async () => true);
   await fs.createDirectory(OUT);
-  const build = new FrameworkBuildUseCase(fs, validator, assets, new CapturingLogger(), strategy);
+  const build = new BuildNativeTree(fs, validator, assets, new CapturingLogger(), strategy);
   await build.execute({ sourceDir: SOURCE, outDir: OUT, target: tool.toolId, mode });
   return new Map(fs.listUnder(OUT).map((p) => [p.replaceAll("\\", "/"), fs.getFile(p) as string]));
 }

@@ -11,7 +11,7 @@ import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { ResolveMarketplace } from "../../../distribution/application/resolve-marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
-import type { FrameworkBuild } from "../../../translate/application/translate-source.js";
+import type { FrameworkBuild } from "../../../translate/contract/build-native-tree.js";
 import type { FrameworkBuildTarget } from "../../../translate/contract/build-targets.js";
 
 /** `undefined` when the target/mode pair has no build. */

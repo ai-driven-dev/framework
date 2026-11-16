@@ -8,7 +8,7 @@ import type {
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
-import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
+import { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FlatTargetExistsError,
@@ -99,7 +99,7 @@ function makeUseCase(
   memFs: InMemoryFileAdapter,
   force = false,
   validator?: JsonSchemaValidator
-): FrameworkBuildUseCase {
+): BuildNativeTree {
   const v = validator ?? makeValidator();
   const ap = makeAssetProvider();
   const strategy = new FlatBuildStrategy(
@@ -110,7 +110,7 @@ function makeUseCase(
     ABS_OUT,
     makeIsDirectory(memFs)
   );
-  return new FrameworkBuildUseCase(memFs, v, ap, new CapturingLogger(), strategy);
+  return new BuildNativeTree(memFs, v, ap, new CapturingLogger(), strategy);
 }
 
 describe("FlatOutputStrategy integration", () => {
@@ -244,7 +244,7 @@ describe("FlatOutputStrategy integration", () => {
         "/nonexistent",
         makeIsDirectory(emptyFs)
       );
-      const useCase = new FrameworkBuildUseCase(emptyFs, v, ap, new CapturingLogger(), strategy);
+      const useCase = new BuildNativeTree(emptyFs, v, ap, new CapturingLogger(), strategy);
       await expect(
         useCase.execute({ sourceDir: FIXTURE_DIR, outDir: "/nonexistent", target: TOOL.copilot })
       ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
@@ -264,7 +264,7 @@ describe("FlatOutputStrategy integration", () => {
         ABS_OUT,
         makeIsDirectory(fileFs)
       );
-      const useCase = new FrameworkBuildUseCase(fileFs, v2, ap2, new CapturingLogger(), strategy);
+      const useCase = new BuildNativeTree(fileFs, v2, ap2, new CapturingLogger(), strategy);
       await expect(
         useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot })
       ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
@@ -327,7 +327,7 @@ describe("FlatOutputStrategy integration", () => {
   });
 
   describe("opencode.json config emission", () => {
-    function makeOpencodeUseCase(fs: InMemoryFileAdapter, force = false): FrameworkBuildUseCase {
+    function makeOpencodeUseCase(fs: InMemoryFileAdapter, force = false): BuildNativeTree {
       const ap = makeAssetProvider();
       const strategy = new FlatBuildStrategy(
         fs,
@@ -337,7 +337,7 @@ describe("FlatOutputStrategy integration", () => {
         ABS_OUT,
         makeIsDirectory(fs)
       );
-      return new FrameworkBuildUseCase(fs, makeValidator(), ap, new CapturingLogger(), strategy);
+      return new BuildNativeTree(fs, makeValidator(), ap, new CapturingLogger(), strategy);
     }
 
     it("emits opencode.json with $schema + instructions and no mcp when no plugin ships MCP", async () => {

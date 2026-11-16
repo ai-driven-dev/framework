@@ -12,10 +12,8 @@ import {
 } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
-import {
-  type FrameworkBuild,
-  FrameworkBuildUseCase,
-} from "../../../../../src/contexts/translate/application/translate-source.js";
+import { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
+import type { FrameworkBuild } from "../../../../../src/contexts/translate/contract/build-native-tree.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import { BUILT_CACHE_SUBDIR, builtMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
@@ -475,13 +473,7 @@ describe("force behavior at the cache-rebuild path", () => {
         makeIsDirectory(memFs),
         new CapturingLogger()
       );
-      return new FrameworkBuildUseCase(
-        memFs,
-        validator,
-        assetProvider,
-        new CapturingLogger(),
-        strategy
-      );
+      return new BuildNativeTree(memFs, validator, assetProvider, new CapturingLogger(), strategy);
     };
 
     const uc = new EnsureBuiltMarketplace(

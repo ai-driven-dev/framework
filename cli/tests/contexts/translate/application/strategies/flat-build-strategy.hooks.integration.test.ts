@@ -6,7 +6,7 @@ import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/doma
 import { buildCursorFlatContract } from "../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
-import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
+import { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -65,7 +65,7 @@ function makeStrategy(
   memFs: InMemoryFileAdapter,
   contractFn: () => ReturnType<typeof buildClaudeFlatContract>,
   logger = new CapturingLogger()
-): FrameworkBuildUseCase {
+): BuildNativeTree {
   const strategy = new FlatBuildStrategy(
     memFs,
     makeAssetProvider(),
@@ -75,7 +75,7 @@ function makeStrategy(
     makeIsDirectory(memFs),
     logger
   );
-  return new FrameworkBuildUseCase(memFs, makeValidator(), makeAssetProvider(), logger, strategy);
+  return new BuildNativeTree(memFs, makeValidator(), makeAssetProvider(), logger, strategy);
 }
 
 describe("claude flat hooks", () => {
@@ -191,7 +191,7 @@ describe("cursor flat hooks", () => {
       makeIsDirectory(memFs),
       logger
     );
-    const useCase = new FrameworkBuildUseCase(
+    const useCase = new BuildNativeTree(
       memFs,
       makeValidator(),
       makeAssetProvider(),
@@ -320,7 +320,7 @@ describe("opencode flat hooks", () => {
       makeIsDirectory(memFs),
       logger
     );
-    const useCase = new FrameworkBuildUseCase(
+    const useCase = new BuildNativeTree(
       memFs,
       makeValidator(),
       makeOpencodeAssetProvider(),

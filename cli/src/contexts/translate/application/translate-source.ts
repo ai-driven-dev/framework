@@ -8,6 +8,7 @@ import type { AssetProvider } from "../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
+import type { FrameworkBuild } from "../contract/build-native-tree.js";
 import type {
   BuildPluginResult,
   FrameworkBuildOptions,
@@ -25,12 +26,7 @@ import type {
   SourcePluginEntry,
 } from "./strategies/build-output-strategy.js";
 
-/** Running one framework build, as its callers need it. */
-export interface FrameworkBuild {
-  execute(options: FrameworkBuildOptions): Promise<FrameworkBuildResult>;
-}
-
-export class FrameworkBuildUseCase implements FrameworkBuild {
+export class BuildNativeTree implements FrameworkBuild {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly jsonSchemaValidator: JsonSchemaValidator,

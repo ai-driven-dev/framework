@@ -6,7 +6,7 @@ import { BundledAssetProviderAdapter } from "../../../../../src/contexts/install
 import { parseToml } from "../../../../../src/contexts/tools/domain/formats/toml.js";
 import { buildCodexContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
-import { FrameworkBuildUseCase } from "../../../../../src/contexts/translate/application/translate-source.js";
+import { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
 import { AjvSchemaValidatorAdapter } from "../../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import {
   FrameworkPlaceholderInPluginError,
@@ -38,11 +38,11 @@ function makeUseCase(
   fs: InMemoryFileAdapter,
   assetProvider?: AssetProvider,
   logger?: CapturingLogger
-): FrameworkBuildUseCase {
+): BuildNativeTree {
   const av = new AjvSchemaValidatorAdapter();
   const ap = assetProvider ?? makeBundledAssetProvider();
   const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildCodexContract());
-  return new FrameworkBuildUseCase(fs, av, ap, logger ?? new CapturingLogger(), strategy);
+  return new BuildNativeTree(fs, av, ap, logger ?? new CapturingLogger(), strategy);
 }
 
 async function makeSeededFsFromReal(): Promise<InMemoryFileAdapter> {
@@ -406,7 +406,7 @@ describe("CodexOutputStrategy", () => {
       };
       const ap = makeBundledAssetProvider();
       const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildCodexContract());
-      const uc = new FrameworkBuildUseCase(fs, av, ap, new CapturingLogger(), strategy);
+      const uc = new BuildNativeTree(fs, av, ap, new CapturingLogger(), strategy);
       await expect(
         uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex })
       ).rejects.toThrow(JsonSchemaValidationError);

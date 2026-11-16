@@ -12,13 +12,12 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the canonical shapes framework produces and translate consumes
     "src/contexts/translate/domain/plugin-format.ts",
     "src/contexts/translate/contract/build-targets.ts",
+    "src/contexts/translate/contract/build-native-tree.ts",
     // the translation port and the file it answers with
     "src/contexts/translate/contract/translate-distribution.ts",
     "src/contexts/translate/contract/output-file.ts",
     // the translator itself — what this context is for
     "src/contexts/translate/domain/content-translator.ts",
-    // the build use case — `framework build`, one source to N targets
-    "src/contexts/translate/application/translate-source.ts",
     // A per-consumer allowance is not expressible here: the lookup is keyed by the imported
     // file's own context, so a `tools` file is only ever checked against `tools`.
   ],
