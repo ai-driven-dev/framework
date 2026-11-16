@@ -588,3 +588,49 @@ describe("what a flat layout writes once every plugin is built", () => {
     expect(reads.mock.calls.map(([path]) => path)).not.toContain(`${STUB_OUT}/probed.js`);
   });
 });
+
+describe("where a flat layout points a plugin-root reference", () => {
+  const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
+  const mcp = (over: Partial<Extract<ArtifactContract, { supported: true }>> = {}) =>
+    supportedArtifact((plugin, rel) => rel + plugin, {
+      merge: (_existing, prefixed) => ({ mergedContent: JSON.stringify(prefixed), collisions: [] }),
+      mergeDest: (out) => `${out}/.stub/mcp.json`,
+      ...over,
+    });
+  const args = [
+    `${ROOT}/agents/rev.md`,
+    `${ROOT}/skills/hello/x.md`,
+    `${ROOT}/hooks/run.sh`,
+    `${ROOT}/scripts/other.js`,
+  ];
+
+  async function mcpArgs(contract: ToolBuildContract): Promise<string[]> {
+    const memFs = new InMemoryFileAdapter({
+      [`${STUB_PLUGIN_SRC}/.mcp.json`]: JSON.stringify({ mcpServers: { srv: { args } } }),
+    });
+    await stubWrite(memFs, contract);
+    const merged = JSON.parse(memFs.getFile(`${STUB_OUT}/.stub/mcp.json`) ?? "{}") as Record<
+      string,
+      { args: string[] }
+    >;
+    return Object.values(merged)[0]?.args ?? [];
+  }
+
+  it("resolves a reference under each folder the layout hosts to where the layout writes it", async () => {
+    const contract = stubContract({ artifacts: { ...stubContract().artifacts, mcp: mcp() } });
+    expect(await mcpArgs(contract)).toEqual([
+      `${STUB_OUT}/.stub/agents/aidd-test-rev.md`,
+      `${STUB_OUT}/.stub/skills/aidd-test/hello/x.md`,
+      `${STUB_OUT}/.stub/hooks/aidd-test/run.sh`,
+      `${STUB_OUT}/scripts/other.js`,
+    ]);
+  });
+
+  it("leaves a reference under a folder the layout does not host where the plugin had it", async () => {
+    const off = { supported: false } as const;
+    const contract = stubContract({
+      artifacts: { ...stubContract().artifacts, mcp: mcp(), agents: off, skills: off, hooks: off },
+    });
+    expect(await mcpArgs(contract)).toEqual(args.map((a) => a.replace(ROOT, STUB_OUT)));
+  });
+});
