@@ -1,26 +1,26 @@
 import { homedir } from "node:os";
-import { InstallIdeConfig } from "../../contexts/installation/application/install/install-ide-config.js";
-import { InstallRuntimeConfig } from "../../contexts/installation/application/install/install-runtime-config.js";
-import { RunPostInstallPipeline } from "../../contexts/installation/application/install/run-post-install-pipeline.js";
-import { ListInstalledRules } from "../../contexts/installation/application/list-installed-rules.js";
-import { ListPlugins } from "../../contexts/installation/application/plugin/list-plugins.js";
-import { DetectPluginDrift } from "../../contexts/installation/application/shared/detect-plugin-drift.js";
+import { InstallIdeConfig } from "../contexts/installation/application/install/install-ide-config.js";
+import { InstallRuntimeConfig } from "../contexts/installation/application/install/install-runtime-config.js";
+import { RunPostInstallPipeline } from "../contexts/installation/application/install/run-post-install-pipeline.js";
+import { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
+import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
+import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.js";
 import {
   EnsureBuiltMarketplace,
   type FrameworkBuilds,
-} from "../../contexts/installation/application/shared/ensure-built-marketplace.js";
-import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.js";
-import { AgentModelStoreAdapter } from "../../contexts/installation/infrastructure/agent-model-store-adapter.js";
-import { BundledAssetProviderAdapter } from "../../contexts/installation/infrastructure/assets/asset-loader.js";
-import type { AgentModelStore } from "../../contexts/installation/ports/agent-model-store.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { TranslatePluginDistribution } from "../../contexts/translate/application/translate-distribution.js";
-import { pluginManifestProbes } from "../../contexts/translate/contract/plugin-format.js";
-import type { TranslateDistribution } from "../../contexts/translate/contract/translate-distribution.js";
-import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
-import type { Logger } from "../../shared/ports/logger.js";
-import { createFrameworkBuildUseCase, type FrameworkBuildDeps } from "../translate.js";
-import type { Base } from "./base.js";
+} from "../contexts/installation/application/shared/ensure-built-marketplace.js";
+import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.js";
+import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";
+import { BundledAssetProviderAdapter } from "../contexts/installation/infrastructure/assets/asset-loader.js";
+import type { AgentModelStore } from "../contexts/installation/ports/agent-model-store.js";
+import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
+import { TranslatePluginDistribution } from "../contexts/translate/application/translate-distribution.js";
+import { pluginManifestProbes } from "../contexts/translate/contract/plugin-format.js";
+import type { TranslateDistribution } from "../contexts/translate/contract/translate-distribution.js";
+import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
+import type { Logger } from "../shared/ports/logger.js";
+import type { Base } from "./shared.js";
+import { createFrameworkBuildUseCase, type FrameworkBuildDeps } from "./translate.js";
 
 /** Builds a distribution into the aidd-owned cache, overwriting what a previous build left there. */
 export function cacheBuildFor(

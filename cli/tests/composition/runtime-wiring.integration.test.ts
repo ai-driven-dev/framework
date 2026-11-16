@@ -2,26 +2,26 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { hostBinaryAvailableIn } from "../../src/composition/framework/doctor.js";
-import { userScopeSyncOf } from "../../src/composition/framework/global.js";
 import {
   builtMaterializationDepsOf,
   cacheBuildFor,
   debugOnly,
-} from "../../src/composition/framework/installation.js";
+} from "../../src/composition/installation.js";
+import { hostBinaryAvailableIn } from "../../src/composition/orchestration/doctor.js";
+import { userScopeSyncOf } from "../../src/composition/orchestration/global.js";
 import {
   askedFrom,
   detachClaimsOf,
   quietUserScopeFilesSafeToDelete,
   registerForFlow,
-} from "../../src/composition/framework/marketplace.js";
+} from "../../src/composition/orchestration/marketplace.js";
 import {
   pluginCacheDir,
   purgeCandidateResolverOf,
   userScopeFileGuard,
   withinUserScope,
-} from "../../src/composition/framework/plugin.js";
-import { setupQuestionsOf, setupStepsOf } from "../../src/composition/framework/setup.js";
+} from "../../src/composition/orchestration/plugin.js";
+import { setupQuestionsOf, setupStepsOf } from "../../src/composition/orchestration/setup.js";
 import { wireTools } from "../../src/composition/tools.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";

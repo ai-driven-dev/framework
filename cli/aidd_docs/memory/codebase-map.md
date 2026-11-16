@@ -5,7 +5,7 @@ Where things live. The architecture rules carry no paths on purpose, so this is 
 ```txt
 src/
 ├── composition/    # one wiring module per migrated context, composed by the root until it moves here
-│   └── framework/    # the root's graph, one wire module per area, built on a shared base
+│   └── orchestration/    # the root's graph: one wire module per scenario
 ├── contexts/    # bounded contexts — no barrel, nothing reaches inside another
 │   ├── auth/    # the one GitHub token: where it is read, stored and checked
 │   │   ├── application/
@@ -166,7 +166,7 @@ src/
 ## Entry points
 
 - `src/cli.ts` → `dist/cli.js`, bin `aidd`.
-- `src/composition/framework.ts` — the composition root. Start here when wiring anything. It caches the graph and calls the per-area wire modules in `src/composition/framework/`.
+- `src/composition/container.ts` — the composition root. Start here when wiring anything. It caches the graph and calls `src/composition/shared.ts`, `src/composition/installation.ts` and the scenario wire modules in `src/composition/orchestration/`.
 
 ## Where to add things
 
@@ -179,4 +179,4 @@ src/
 | a transform shared by two profiles | `contexts/tools/domain/formats/`; used by one, that profile's own directory |
 | a port used by one context | that context's `domain/ports/` (`ports/` in a migrated context), adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |
-| a context's wiring | `composition/<context>.ts`, called by `composition/framework.ts` |
+| a context's wiring | `composition/<context>.ts`, called by `composition/container.ts` |

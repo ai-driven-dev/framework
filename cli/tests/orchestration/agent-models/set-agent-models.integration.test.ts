@@ -68,7 +68,7 @@ function setup(
     {
       execute: async ({ tools: _tools, ...options }) => {
         activations.push(options);
-        return { activated: [], binaryMissing: [], warnings: [], errors: [] };
+        return { activated: [], binaryMissing: [], warnings: [], errors: [], failed: false };
       },
     }
   );

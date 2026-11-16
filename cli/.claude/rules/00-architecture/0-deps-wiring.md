@@ -17,7 +17,7 @@ paths:
 - Never instantiate an adapter in `cli.ts`.
 - The composition root is `composition/`.
 - A migrated context's adapters are instantiated by the composition root only.
-- A context's wiring module is `composition/<context>.ts`; `composition/framework.ts` composes them all.
+- A context's wiring module is `composition/<context>.ts`; `composition/container.ts` composes them all.
 - Nothing but the composition root imports `composition/` (`context-graph.arch.test.ts`, `biome.json`).
 - `cli.ts` builds the version reader, the `CLIOutput` and the `DepsFactory` and `MenuDepsFactory` it hands every command (`presentation/deps.ts`).
 

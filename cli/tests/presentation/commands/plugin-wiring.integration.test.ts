@@ -20,7 +20,7 @@ const createDeps = vi.fn(async () => ({
   searchPlugins: { execute: pluginSearch },
   pluginUpdateUseCase: { execute: pluginUpdate },
   userPluginUpdateUseCase: { execute: userPluginUpdate },
-  syncSettingsUseCase: { execute: activation },
+  syncNativeActivation: { execute: activation },
 }));
 const createMenuDeps = vi.fn(() => ({ prompter: prompterAnswering({ select: menuSelect }) }));
 
@@ -59,7 +59,7 @@ beforeEach(() => {
   pluginSearch.mockResolvedValue({ hits: [] });
   pluginUpdate.mockResolvedValue(["aidd-dev"]);
   userPluginUpdate.mockResolvedValue(["aidd-vcs@aidd-framework"]);
-  activation.mockResolvedValue({ binaryMissing: [], errors: [] });
+  activation.mockResolvedValue({ binaryMissing: [], errors: [], failed: false });
   menuSelect.mockResolvedValue("list");
   spawn.mockResolvedValue(0);
 });
@@ -150,6 +150,7 @@ describe("aidd plugin remove", () => {
     activation.mockResolvedValue({
       binaryMissing: [],
       errors: [{ scope: "claude", message: "claude CLI refused" }],
+      failed: true,
     });
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");

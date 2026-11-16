@@ -81,7 +81,7 @@ async function runUserScopeSync(
     recreateFrameworkIfMissing: true,
   });
   printActivationOutcome(output, activation);
-  if (activation.errors.length > 0) throw new SyncFailedError(activation.errors);
+  if (activation.failed) throw new SyncFailedError(activation.errors);
   printUserScopeSyncOutcome(output, activation.activated, [...new Set(refreshed)]);
 }
 
@@ -129,7 +129,7 @@ async function runSyncAction(
     // A run that errored synced nothing for that scope, so reporting success would name the
     // unhealthy state healthy. `errorHandler` turns this into the non-zero exit.
     const errors = [...result.errors, ...activation.errors];
-    if (errors.length > 0) throw new SyncFailedError(errors);
+    if (result.failed || activation.failed) throw new SyncFailedError(errors);
   } catch (error) {
     errorHandler.handle(error);
   }
@@ -169,7 +169,7 @@ async function runScopedSync(
     recreateFrameworkIfMissing: true,
   });
   printActivationOutcome(output, activation);
-  if (activation.errors.length > 0) throw new SyncFailedError(activation.errors);
+  if (activation.failed) throw new SyncFailedError(activation.errors);
 }
 
 export function registerSyncCommand(

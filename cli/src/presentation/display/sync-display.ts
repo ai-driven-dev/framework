@@ -1,3 +1,4 @@
+import { SyncFailedError } from "../../shared/domain/errors.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { CLIOutput } from "../output.js";
 import { printNativeActivation, printUnrestorable } from "./restore-display.js";
@@ -78,4 +79,22 @@ export function printUserScopeSyncOutcome(
   } else if (refreshed.length === 0) {
     output.success("Nothing to sync — no tool is registered at user scope yet.");
   }
+}
+
+/** Named structurally: every real caller's result already satisfies this shape. */
+interface SyncActivationOutcome {
+  readonly errors: readonly ScopedError[];
+  readonly failed: boolean;
+}
+
+export function printScopedFailures(output: CLIOutput, failures: readonly ScopedError[]): void {
+  for (const failure of failures) output.warn(`[${failure.scope}] ${failure.message}`);
+}
+
+/** Prints what an activation reported and turns its `failed` verdict into the failing exit.
+ * A result thrown away would turn a refusal into exit 0 with nothing printed and a plugin that
+ * never loads. */
+export function reportNativeActivation(output: CLIOutput, activation: SyncActivationOutcome): void {
+  printScopedFailures(output, activation.errors);
+  if (activation.failed) throw new SyncFailedError(activation.errors);
 }

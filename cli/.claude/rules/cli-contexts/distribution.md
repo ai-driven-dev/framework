@@ -18,7 +18,7 @@ paths:
 
 - `MarketplaceRegistry`, `MarketplaceTrustStore`, `MarketplaceCachePort`: each contract kit in `tests/contexts/distribution/testing/` runs on the in-memory fake and on the real adapter, so a test over the fake can be trusted. The cases of the registry kit are the ones the adapter answers over a directory.
 - `MarketplaceRemover`, `ReleaseLister`, `RepositoryVisibility`, `PluginFetcher`, `PluginCatalogRepository`, `RawCatalogFetcher`: no contract kit yet. The reservations are in `aidd_docs/memory/internal/distribution.md`.
-- `MarketplaceRemover` is held here and implemented by framework's remove commands; `composition/framework.ts` hands it to `wireAddMarketplace`, which builds `AddMarketplace`.
+- `MarketplaceRemover` is held here and implemented by the remove commands of `orchestration/marketplace`; `composition/orchestration/marketplace.ts` hands it to `wireAddMarketplace`, which builds `AddMarketplace`.
 
 ## Suppliers
 

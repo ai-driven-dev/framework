@@ -28,8 +28,8 @@ import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.
 import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
-import type { Base } from "./base.js";
-import type { Installation } from "./installation.js";
+import type { Installation } from "../installation.js";
+import type { Base } from "../shared.js";
 
 /** Where a fetched plugin distribution is kept between runs. */
 export function pluginCacheDir(): string {

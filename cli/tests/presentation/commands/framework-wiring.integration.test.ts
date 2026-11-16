@@ -133,7 +133,10 @@ describe("aidd framework install", () => {
     installAiTool.mockResolvedValue({
       runtimeResult: { skipped: false, fileCount: 5, warnings: [] },
       propagationWarnings: [],
-      activation: { errors: [{ scope: "claude", message: "claude CLI refused" }] },
+      activation: {
+        errors: [{ scope: "claude", message: "claude CLI refused" }],
+        failed: true,
+      },
     });
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");

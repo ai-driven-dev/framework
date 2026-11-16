@@ -31,6 +31,7 @@ const CATALOG = catalogOf();
 
 const NOTHING_RESTORED = {
   errors: [],
+  failed: false,
   totalRestored: 0,
   totalKept: 0,
   pluginNamesRestored: [],
@@ -64,7 +65,7 @@ beforeEach(() => {
     totalKept: 0,
     unrestorable: [],
   });
-  activation.mockResolvedValue({ binaryMissing: [], errors: [], activated: [] });
+  activation.mockResolvedValue({ binaryMissing: [], errors: [], failed: false, activated: [] });
   getToolVersion.mockReturnValue("5.1.0");
   loadManifest.mockResolvedValue({ getToolVersion });
   currentVersion.mockReturnValue("5.2.2");
@@ -131,10 +132,12 @@ describe("aidd sync — the whole project", () => {
     restoreAll.mockResolvedValue({
       ...NOTHING_RESTORED,
       errors: [{ scope: "claude", message: "file is not ours" }],
+      failed: true,
     });
     activation.mockResolvedValue({
       binaryMissing: [],
       errors: [{ scope: "codex", message: "codex CLI refused" }],
+      failed: true,
       activated: [],
     });
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
@@ -151,10 +154,26 @@ describe("aidd sync — the whole project", () => {
     expect(exit).toHaveBeenCalledWith(1);
   });
 
+  it("fails the process on the restoration's refusal alone, the activation being clean", async () => {
+    restoreAll.mockResolvedValue({
+      ...NOTHING_RESTORED,
+      errors: [{ scope: "claude", message: "file is not ours" }],
+      failed: true,
+    });
+    const exit = vi.spyOn(process, "exit").mockImplementation(() => {
+      throw new Error("exited");
+    });
+
+    await expect(run()).rejects.toThrow("exited");
+
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
   it("warns about a binary off PATH without failing the run", async () => {
     activation.mockResolvedValue({
       binaryMissing: [{ toolId: TOOL.claude, binary: "claude" }],
       errors: [],
+      failed: false,
       activated: [],
     });
 
@@ -239,6 +258,7 @@ describe("aidd sync --tool — a refused activation", () => {
     activation.mockResolvedValue({
       binaryMissing: [],
       errors: [{ scope: "claude", message: "claude CLI refused" }],
+      failed: true,
       activated: [],
     });
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
@@ -257,7 +277,12 @@ describe("aidd sync --tool — a refused activation", () => {
 
 describe("aidd sync --scope user", () => {
   it("drives activation off the machine-wide manifest and restores no project file", async () => {
-    activation.mockResolvedValue({ binaryMissing: [], errors: [], activated: ["claude"] });
+    activation.mockResolvedValue({
+      binaryMissing: [],
+      errors: [],
+      failed: false,
+      activated: ["claude"],
+    });
 
     expect(await run("--scope", "user")).toEqual(["Synced native activation for: claude"]);
     expect(activation).toHaveBeenCalledWith({
@@ -351,6 +376,7 @@ describe("aidd sync --scope user", () => {
     activation.mockResolvedValue({
       binaryMissing: [],
       errors: [{ scope: "claude", message: "claude CLI refused" }],
+      failed: true,
       activated: ["claude"],
     });
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {

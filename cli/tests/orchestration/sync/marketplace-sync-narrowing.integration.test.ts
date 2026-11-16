@@ -217,7 +217,13 @@ describe("marketplaceNames narrows a sync run to the marketplaces named", () => 
       marketplaceNames: ["nope"],
     });
 
-    expect(result).toEqual({ activated: [], binaryMissing: [], warnings: [], errors: [] });
+    expect(result).toEqual({
+      activated: [],
+      binaryMissing: [],
+      warnings: [],
+      errors: [],
+      failed: false,
+    });
     expect(activator.addedMarketplaces).toEqual([]);
     expect(activator.enabledPlugins).toEqual([]);
   });

@@ -14,8 +14,8 @@ import { CheckRegistration } from "../../orchestration/doctor/check-registration
 import { RunDoctor } from "../../orchestration/doctor/run-doctor.js";
 import { doctorAll } from "../../orchestration/global/doctor-all.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
-import type { Base } from "./base.js";
-import type { Installation } from "./installation.js";
+import type { Installation } from "../installation.js";
+import type { Base } from "../shared.js";
 
 /** Whether the host CLI behind a binary is reachable, as the activator that drives it answers;
  * a binary no activator drives is not. */

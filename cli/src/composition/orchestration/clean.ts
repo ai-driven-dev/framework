@@ -12,8 +12,8 @@ import { CleanProject } from "../../orchestration/clean/clean-project.js";
 import { CleanUserScope } from "../../orchestration/clean/clean-user-scope.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
-import type { Base } from "./base.js";
-import type { Installation } from "./installation.js";
+import type { Installation } from "../installation.js";
+import type { Base } from "../shared.js";
 
 /** Clean and uninstall. */
 export function wireClean(base: Base, inst: Installation) {

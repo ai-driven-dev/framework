@@ -8,7 +8,7 @@ import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const marketplaceSyncExecute = vi
   .fn()
-  .mockResolvedValue({ activated: [], binaryMissing: [], warnings: [], errors: [] });
+  .mockResolvedValue({ activated: [], binaryMissing: [], warnings: [], errors: [], failed: false });
 const marketplaceAddExecute = vi.fn().mockResolvedValue({ marketplace: { name: "market-b" } });
 
 const createDeps = vi.fn(async () => ({
@@ -18,7 +18,7 @@ const createDeps = vi.fn(async () => ({
   userMarketplaceRemoveUseCase: { execute: vi.fn() },
   refreshMarketplace: { execute: vi.fn() },
   marketplaceCheckUseCase: { execute: vi.fn() },
-  syncSettingsUseCase: { execute: marketplaceSyncExecute },
+  syncNativeActivation: { execute: marketplaceSyncExecute },
   prompter: prompterAnswering({ input: vi.fn() }),
 }));
 const createMenuDeps = vi.fn(() => ({

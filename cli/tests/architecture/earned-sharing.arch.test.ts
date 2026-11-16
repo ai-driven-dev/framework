@@ -176,7 +176,7 @@ describe("the guard itself", () => {
 
   it("flags a shared file one context imports and clears one an earned adapter or two compositions reach", () => {
     const [A, B] = ["src/contexts/framework/domain/x.ts", "src/contexts/tools/domain/x.ts"];
-    const [C1, C2] = ["src/composition/framework.ts", "src/composition/tools.ts"];
+    const [C1, C2] = ["src/composition/container.ts", "src/composition/tools.ts"];
     const port = "src/shared/ports/port.ts";
     const adapter = "src/shared/infrastructure/adapter.ts";
     const helper = "src/shared/infrastructure/helper.ts";

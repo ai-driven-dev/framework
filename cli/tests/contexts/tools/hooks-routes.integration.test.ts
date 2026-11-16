@@ -104,7 +104,7 @@ async function writeSource(source: string): Promise<void> {
 }
 
 async function deps(project: string) {
-  const { createDeps } = await import("../../../src/composition/framework.js");
+  const { createDeps } = await import("../../../src/composition/container.js");
   return createDeps(project, { verbose: false }, new CLIOutput(false), catalogOf());
 }
 

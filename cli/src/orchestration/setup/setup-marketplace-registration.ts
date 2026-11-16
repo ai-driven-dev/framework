@@ -1,7 +1,7 @@
 import type { FrameworkSource } from "../../contexts/distribution/contract/framework-source.js";
 import type { SetupFlow } from "./setup-flow.js";
 
-/** Registers the chosen framework source for a setup. The registration sequence is not framework's:
+/** Registers the chosen framework source for a setup. The registration sequence is not the setup's own:
  * composition hands it in. */
 export type RegisterFrameworkSource = (
   flow: Pick<SetupFlow, "projectRoot" | "scope">,
@@ -9,7 +9,7 @@ export type RegisterFrameworkSource = (
 ) => Promise<void>;
 
 /** Settles which framework source a setup registers, asking when someone can answer. The question
- * is not framework's: composition hands it in. */
+ * is not the setup's own: composition hands it in. */
 export type ResolveFrameworkSource = (options: {
   projectRoot: string;
   sourceFromCli?: FrameworkSource;

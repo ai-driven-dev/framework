@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/framework.js";
+import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/container.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
