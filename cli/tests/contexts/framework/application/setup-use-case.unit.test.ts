@@ -10,7 +10,6 @@ import { MarketplaceSourceMode } from "../../../../src/contexts/distribution/dom
 import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
 import type { MarketplaceSyncSettings } from "../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import type { PluginInstallFromMarketplace } from "../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { ProjectContextDetectorUseCase } from "../../../../src/contexts/framework/application/setup/project-context-detector-use-case.js";
 import { SetupMachineScopeUseCase } from "../../../../src/contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
@@ -23,6 +22,7 @@ import { Manifest } from "../../../../src/contexts/installation/domain/manifest.
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { UserSourceReferences } from "../../../../src/contexts/machine-claims/ports/user-source-references.js";
+import type { PluginInstallFromMarketplace } from "../../../../src/orchestration/plugin/install-from-marketplace.js";
 import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../../../src/presentation/prompts/setup-tools-prompt-use-case.js";

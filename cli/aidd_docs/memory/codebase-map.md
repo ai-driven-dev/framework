@@ -28,7 +28,6 @@ src/
 │   │   │   ├── global/
 │   │   │   ├── install/
 │   │   │   ├── ownership/    # machine plugin claims and safe project detach
-│   │   │   ├── plugin/
 │   │   │   ├── setup/
 │   │   │   ├── shared/
 │   │   │   └── uninstall/
@@ -133,7 +132,8 @@ src/
 │       ├── infrastructure/
 │       └── ports/
 ├── orchestration/    # the scenarios that chain contexts: one command class per verb, no business rule
-│   └── plugin/    # the plugin lifecycle, add to remove
+│   ├── plugin/    # the plugin lifecycle, add to remove
+│   └── setup/    # the questions a plugin install asks
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
 │   │   ├── materialization/    # where content lands and how its links follow

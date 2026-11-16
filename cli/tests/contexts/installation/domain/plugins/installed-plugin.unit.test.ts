@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { parsePluginSpec } from "../../../../../src/contexts/installation/contract/plugin-spec.js";
 import {
   type ComponentPathMap,
   InstalledPlugin,
   type McpDigestMap,
   type PluginEntryData,
-  parsePluginSpec,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import {

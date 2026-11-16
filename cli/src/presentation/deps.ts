@@ -20,7 +20,6 @@ import type { UpdateAiToolsUseCase } from "../contexts/framework/application/glo
 import type { UpdateIdeToolsUseCase } from "../contexts/framework/application/global/update-ide-tools-use-case.js";
 import type { InstallAiToolUseCase } from "../contexts/framework/application/install/install-ai-tool-use-case.js";
 import type { UserMarketplaceRemoveUseCase } from "../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
-import type { PluginInstallUseCase } from "../contexts/framework/application/plugin/plugin-install-use-case.js";
 import type { ProjectContextDetectorUseCase } from "../contexts/framework/application/setup/project-context-detector-use-case.js";
 import type { SetupMachineScopeUseCase } from "../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import type { SetupMarketplaceSourceUseCase } from "../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
@@ -57,6 +56,7 @@ import type { FrameworkBuildUseCase } from "../contexts/translate/application/tr
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
 import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";
+import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
 import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
@@ -137,7 +137,7 @@ export interface Deps {
   assetProvider: AssetProvider;
   searchPlugins: Pick<SearchPlugins, "execute">;
   registerFrameworkMarketplace: Pick<RegisterFrameworkMarketplace, "execute">;
-  pluginInstallUseCase: Pick<PluginInstallUseCase, "execute">;
+  pluginInstallUseCase: Pick<InstallPlugin, "execute">;
   marketplaceSyncSettingsUseCase: Pick<MarketplaceSyncSettingsUseCase, "execute">;
   doctorUseCase: Pick<DoctorUseCase, "execute">;
   /** The registration check alone, reused directly by `doctor --scope user`. */

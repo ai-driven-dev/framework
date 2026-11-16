@@ -54,7 +54,6 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     path: "src/contexts/installation/application/install/install-ide-tool.ts",
     dependencies: 6,
   },
-  { path: "src/contexts/framework/application/plugin/plugin-install-use-case.ts", dependencies: 6 },
   {
     path: "src/contexts/installation/application/plugin/update-plugin.ts",
     dependencies: 6,

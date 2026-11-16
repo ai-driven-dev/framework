@@ -10,7 +10,7 @@ import type {
   PluginInstallFromMarketplace,
   PluginInstallFromMarketplaceOptions,
   PluginInstallFromMarketplaceResult,
-} from "../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
+} from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import type {
   PluginPick,
   PluginPickOptions,
@@ -59,7 +59,7 @@ class RecordingInstaller implements PluginInstallFromMarketplace {
     options: PluginInstallFromMarketplaceOptions
   ): Promise<PluginInstallFromMarketplaceResult> {
     this.calls.push(options);
-    return { marketplace: marketplace("local"), entry: entry(options.pluginName, false) };
+    return { marketplaceName: "local", entry: entry(options.pluginName, false) };
   }
 }
 

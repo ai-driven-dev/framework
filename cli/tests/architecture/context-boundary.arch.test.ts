@@ -43,6 +43,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/resolve-marketplace.ts",
     "src/contexts/distribution/application/refresh-marketplace.ts",
     "src/contexts/distribution/application/register-framework-marketplace.ts",
+    "src/contexts/distribution/application/resolve-plugin-source.ts",
+    "src/contexts/distribution/application/trust-plugin-source.ts",
+    "src/contexts/distribution/contract/plugin-source-match.ts",
   ],
   // The largest context: while it had no entry the mechanism below skipped every framework
   // file, so its interior was reached unchecked. Measured, composition root excluded.
@@ -50,7 +53,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the flows a command drives end to end
     "src/contexts/framework/application/setup-use-case.ts",
     "src/contexts/framework/application/setup/setup-tools-use-case.ts",
-    "src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.ts",
     // what a display or a prompt reads to render a decision it does not make
     "src/contexts/framework/domain/setup-flow.ts",
     // the one operation another context genuinely asks for: `distribution` removes a
@@ -76,6 +78,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/plugin/plugin-distribution-loader.ts",
     "src/contexts/installation/application/plugin/plugin-helpers.ts",
     "src/contexts/installation/application/plugin/add-plugin.ts",
+    "src/contexts/installation/application/plugin/plan-plugin-install.ts",
+    "src/contexts/installation/contract/plugin-spec.ts",
     "src/contexts/installation/application/removal/remove-plugin.ts",
     "src/contexts/installation/application/plugin/plugin-materializer.ts",
     "src/contexts/installation/application/removal/remove-project-plugin.ts",
