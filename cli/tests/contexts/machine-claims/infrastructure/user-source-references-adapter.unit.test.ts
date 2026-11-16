@@ -298,4 +298,44 @@ describe("the shared source's own project references", () => {
       expect(await refs.listAllReferencingProjects()).toEqual([]);
     });
   });
+
+  it("drops a version's key once its last project moves to another version", async () => {
+    const fs = new InMemoryFileAdapter();
+    markExisting(fs, "/project-a");
+    const refs = adapter(fs);
+    await refs.addReference("1.0.0", "/project-a");
+
+    await refs.addReference("2.0.0", "/project-a");
+
+    expect(JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}")).toEqual({ "2.0.0": ["/project-a"] });
+  });
+
+  it("keeps a version's other projects when one project moves away", async () => {
+    const fs = new InMemoryFileAdapter();
+    markExisting(fs, "/project-a");
+    markExisting(fs, "/project-b");
+    const refs = adapter(fs);
+    await refs.addReference("1.0.0", "/project-a");
+    await refs.addReference("1.0.0", "/project-b");
+
+    await refs.addReference("2.0.0", "/project-a");
+
+    expect(JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}")).toEqual({
+      "1.0.0": ["/project-b"],
+      "2.0.0": ["/project-a"],
+    });
+  });
+
+  it("drops a version's key once its last project is removed", async () => {
+    const fs = new InMemoryFileAdapter();
+    markExisting(fs, "/project-a");
+    markExisting(fs, "/project-b");
+    const refs = adapter(fs);
+    await refs.addReference("1.0.0", "/project-a");
+    await refs.addReference("2.0.0", "/project-b");
+
+    await refs.removeReference("/project-a");
+
+    expect(JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}")).toEqual({ "2.0.0": ["/project-b"] });
+  });
 });

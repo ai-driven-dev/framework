@@ -5,6 +5,7 @@ import { InstalledPlugin } from "../../../../src/contexts/installation/domain/pl
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
+  withoutMissingFiles,
 } from "../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
@@ -151,6 +152,54 @@ describe("userScopeFilesSafeToDelete", () => {
         HOME
       )
     ).rejects.toThrow(/EACCES/);
+  });
+});
+
+describe("withoutMissingFiles", () => {
+  it("hands back the same plugin when the tool has no user-scope plugin directory", async () => {
+    const recorded = plugin({ "aidd-test/a.md": HASH });
+
+    const kept = await withoutMissingFiles(
+      new InMemoryFileAdapter(),
+      recorded,
+      registeredAiProfile(TOOL.claude),
+      HOME
+    );
+
+    expect(kept).toBe(recorded);
+  });
+
+  it("drops a recorded file nothing stands at any more and keeps the one that does", async () => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(join(BOUNDARY, "aidd-test", "kept.md"), CONTENT);
+
+    const kept = await withoutMissingFiles(
+      fs,
+      plugin({ "aidd-test/kept.md": HASH, "aidd-test/gone.md": HASH }),
+      registeredAiProfile(TOOL.cursor),
+      HOME
+    );
+
+    expect([...kept.files.keys()]).toStrictEqual(["aidd-test/kept.md"]);
+  });
+});
+
+describe("a recorded install digest", () => {
+  it.each([
+    ["a prefix", `x${HASH}`],
+    ["a suffix", `${HASH}x`],
+  ])("is refused when it carries %s beyond the 32 hex digits", async (_label, digest) => {
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(join(BOUNDARY, "aidd-test", "script.js"), CONTENT);
+    await expect(
+      userScopeFilesSafeToDelete(
+        fs,
+        new CapturingLogger(),
+        plugin({ "aidd-test/script.js": digest }),
+        registeredAiProfile(TOOL.cursor),
+        HOME
+      )
+    ).rejects.toThrow(/unproven/);
   });
 });
 
