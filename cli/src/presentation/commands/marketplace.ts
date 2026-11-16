@@ -4,6 +4,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
 import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
+import { syncNativeActivation } from "../display/framework-display.js";
 import {
   printMarketplaceCheck,
   printMarketplaceRegistered,
@@ -11,7 +12,6 @@ import {
   printRefreshResults,
   printRegisteredMarketplaces,
 } from "../display/marketplace-display.js";
-import { syncNativeActivation } from "../display/sync-native-activation.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";

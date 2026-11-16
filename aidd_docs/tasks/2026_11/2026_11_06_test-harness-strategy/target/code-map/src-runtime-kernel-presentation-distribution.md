@@ -85,7 +85,7 @@ Current paths are relative to `cli/`. `runtime` dissolves into `composition`, `s
 | `src/presentation/commands/plugin.ts` | `src/presentation/commands/plugin.ts` | keep | thin |
 | `src/presentation/commands/setup.ts` | `src/presentation/commands/setup.ts` | keep | no `new`, scenario received |
 | `src/presentation/commands/spawn-cli-command.ts` | `src/orchestration/menu/spawn-cli-command.ts` | move | |
-| `src/presentation/commands/sync-native-activation.ts` | `src/presentation/display/sync-native-activation.ts` | move | it only prints through `CLIOutput` and `printScopedFailures` and throws `SyncFailedError`, so it is display, and orchestration may not import presentation |
+| `src/presentation/commands/sync-native-activation.ts` | `src/presentation/display/framework-display.ts` | move | it reports scoped sync failures beside `printScopedFailures` and throws `SyncFailedError`, so it is display, and orchestration may not import presentation |
 | `src/presentation/commands/sync.ts` | `src/presentation/commands/sync.ts` | keep | thin |
 | `src/presentation/commands/telemetry.ts` | `src/presentation/commands/telemetry.ts; src/contexts/telemetry/application/*` | split | proposal: parse and display stay, validation and identity choice move down |
 | `src/presentation/commands/translate.ts` | `src/presentation/commands/translate.ts` | keep | |

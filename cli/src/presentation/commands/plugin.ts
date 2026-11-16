@@ -4,6 +4,7 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import { UnknownAiToolIdError } from "../../shared/domain/errors.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
+import { syncNativeActivation } from "../display/framework-display.js";
 import {
   printInstalledPlugins,
   printPluginInstallOutcome,
@@ -11,7 +12,6 @@ import {
   printPluginsUpdated,
   printSearchHits,
 } from "../display/plugin-display.js";
-import { syncNativeActivation } from "../display/sync-native-activation.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
