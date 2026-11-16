@@ -5,13 +5,13 @@ import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distrib
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
-import { SetupMarketplaceSourceUseCase } from "../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import { flowTools } from "../../contexts/tools/testing/catalog-of.js";
+import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { FakeCurrentVersion } from "../../helpers/ports/fake-current-version.js";
 import { InMemoryEnvironment } from "../../helpers/ports/in-memory-environment.js";
@@ -56,7 +56,7 @@ function makeUseCase(
   const register = makeRegisterFramework(collaborators.registeredScope ?? "user");
   const useCase = setupMarketplaceRegistrar(
     new InMemoryFileAdapter(),
-    new SetupMarketplaceSourceUseCase(new KeepPrompter(), makeNoOpLatestResolver()),
+    askMarketplaceSource(new KeepPrompter(), makeNoOpLatestResolver()),
     register,
     refresh,
     new FakeCurrentVersion(),

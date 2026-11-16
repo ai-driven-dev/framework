@@ -9,7 +9,6 @@ import type { RegisterFrameworkMarketplace } from "../contexts/distribution/appl
 import type { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import type { InstallAiToolUseCase } from "../contexts/framework/application/install/install-ai-tool-use-case.js";
 import type { SetupMachineScopeUseCase } from "../contexts/framework/application/setup/setup-machine-scope-use-case.js";
-import type { SetupMarketplaceSourceUseCase } from "../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import type { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import type { DetectProjectContext } from "../contexts/installation/application/detect-project-context.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
@@ -56,6 +55,7 @@ import type { RemoveProjectMarketplace } from "../orchestration/marketplace/remo
 import type { RemoveUserMarketplace } from "../orchestration/marketplace/remove-user.js";
 import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
 import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
+import type { AskMarketplaceSource } from "../orchestration/setup/ask-marketplace-source.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -132,7 +132,7 @@ export interface Deps {
   doctorUseCase: Pick<RunDoctor, "execute">;
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: Pick<CheckRegistration, "execute">;
-  setupMarketplaceSourceUseCase: Pick<SetupMarketplaceSourceUseCase, "execute">;
+  askMarketplaceSource: Pick<AskMarketplaceSource, "execute">;
   setupToolsUseCase: Pick<InstallTools, "execute">;
   setupPluginsPromptUseCase: Pick<SetupPluginsPromptUseCase, "execute">;
   setupToolsPromptUseCase: Pick<SetupToolsPromptUseCase, "execute">;

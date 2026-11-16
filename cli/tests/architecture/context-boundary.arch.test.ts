@@ -27,7 +27,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // what a marketplace is, and where it can be read from
     "src/contexts/distribution/domain/marketplace.ts",
     "src/contexts/distribution/domain/marketplace-source-mode.ts",
-    "src/contexts/distribution/domain/plugin-source-resolver.ts",
     "src/contexts/distribution/contract/marketplace.ts",
     "src/contexts/distribution/contract/catalog.ts",
     "src/contexts/distribution/contract/requested-version-policy.ts",
@@ -39,6 +38,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/remove/remove-marketplace.ts",
     "src/contexts/distribution/application/remove/find-user-marketplace.ts",
     // registering the framework marketplace from a chosen source, for setup
+    "src/contexts/distribution/application/choose-marketplace-source.ts",
     "src/contexts/distribution/application/ensure-framework-marketplace.ts",
     "src/contexts/distribution/contract/framework-source.ts",
     "src/contexts/distribution/contract/marketplace-removal.ts",
@@ -59,6 +59,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/list-marketplaces.ts",
     "src/contexts/distribution/application/plugin-source/resolve-plugin-source.ts",
     "src/contexts/distribution/application/plugin-source/trust-plugin-source.ts",
+    "src/contexts/distribution/application/plugin-source/list-framework-plugins.ts",
     "src/contexts/distribution/contract/plugin-source-match.ts",
   ],
   // The largest context: while it had no entry the mechanism below skipped every framework
@@ -102,6 +103,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/list-installed-tools.ts",
     "src/contexts/installation/application/update/update-tool.ts",
     "src/contexts/installation/application/install/install-tools.ts",
+    "src/contexts/installation/application/install/install-user-plugins.ts",
     "src/contexts/installation/application/detect-project-context.ts",
     "src/contexts/installation/application/restore/restore-global.ts",
     "src/contexts/installation/application/install/install-ide-config.ts",
