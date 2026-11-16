@@ -88,6 +88,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/shared/detect-plugin-drift.ts",
     "src/contexts/installation/application/shared/ensure-built-marketplace.ts",
     "src/contexts/installation/application/shared/remove-project-hooks.ts",
+    "src/contexts/installation/application/purge-user-scope-files.ts",
     "src/contexts/installation/application/report-status.ts",
     "src/contexts/installation/domain/manifest-gitignore-entries.ts",
     "src/contexts/installation/domain/manifest/native-registrations.ts",
@@ -99,6 +100,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // orchestration behind a claims port.
     "src/contexts/machine-claims/application/native-plugin-ownership.ts",
     "src/contexts/machine-claims/application/purge-declared-cache.ts",
+    "src/contexts/machine-claims/application/release-claims.ts",
     "src/contexts/machine-claims/application/shared-source-reference-support.ts",
     "src/contexts/machine-claims/application/user-plugin-ownership.ts",
     "src/contexts/machine-claims/application/user-scope-plugin-files.ts",

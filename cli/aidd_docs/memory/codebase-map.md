@@ -22,7 +22,6 @@ src/
 │   │   └── ports/
 │   ├── framework/    # what is left of the old layout: the flows that setup, clean, doctor and plugin commands drive
 │   │   ├── application/
-│   │   │   ├── clean/
 │   │   │   ├── doctor/
 │   │   │   ├── flows/
 │   │   │   ├── global/
@@ -129,6 +128,8 @@ src/
 │       ├── domain/
 │       ├── infrastructure/
 │       └── ports/
+├── orchestration/    # a scenario that drives several contexts' commands in a fixed order
+│   └── clean/    # removing a project's or a machine's installation, then what the hosts and the machine record still hold
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
 │   │   ├── materialization/    # where content lands and how its links follow

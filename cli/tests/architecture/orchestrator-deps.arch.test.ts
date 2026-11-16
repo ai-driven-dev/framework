@@ -30,12 +30,6 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   // Host plugin registries prove ref scope/enablement; the added native source reader independently
   // proves the current catalogue before these flows mutate it. Neither witness replaces the other.
   { path: "src/contexts/framework/application/clean-use-case.ts", dependencies: 10 },
-  // Machine clean also needs both witnesses: source ownership and the full host ref list,
-  // because unregistering an owned catalogue could still disable a foreign installed ref.
-  {
-    path: "src/contexts/framework/application/clean/clean-user-scope-use-case.ts",
-    dependencies: 9,
-  },
   {
     path: "src/contexts/installation/application/restore/restore-tool-files.ts",
     dependencies: 9,
