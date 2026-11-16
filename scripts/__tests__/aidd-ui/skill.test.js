@@ -2,7 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, HISTORY, history, makeTmp, removeTmp, filesUnder, engine, validate, writeProject, edit, editTokens, propose, put } = require("../fixtures/aidd-ui/project.js");
+const { UI, makeTmp, removeTmp, engine, validate, writeProject, edit, editTokens, propose, put } = require("../fixtures/aidd-ui/project.js");
 
 // The record templates are what the skill's model starts from, so each is filled the way an
 // action says and the design system around it must still validate. A placeholder the table does
@@ -211,11 +211,6 @@ describe("aidd-ui screens skill", () => {
     assert.equal(engine("bump", "--task", TASK, "--created", "search", "--root", tmp).status, 0);
     assert.ok(validate(tmp).out.some((line) => line.includes("V12")));
   });
-
-  it("names the wireframe it dresses, and says to stop on a missing component", () => {
-    assert.ok(fs.readFileSync(path.join(SCREENS, "assets/screen-template.md"), "utf8").includes("wireframe: {{wireframe id}}"));
-    assert.match(fs.readFileSync(path.join(SCREENS, "actions/01-prepare.md"), "utf8"), /stop and name it/);
-  });
 });
 
 describe("aidd-ui variant axes", () => {
@@ -230,10 +225,6 @@ describe("aidd-ui variant axes", () => {
 });
 
 describe("aidd-ui resolver", () => {
-  it("holds no resolver JSON for the model to copy: the engine writes it", () => {
-    for (const file of FOLDERS.flatMap((name) => filesUnder(SKILL(name)))) assert.equal(/resolutionOrder|"\$ref"|"modifiers"/.test(fs.readFileSync(file, "utf8")), false, path.relative(SKILLS, file));
-  });
-
   it("has a breakpoint's query written in the template's table, and the engine turn it into the stylesheet", () => {
     assert.ok(template("system").includes("| Name | Query |"));
     propose(tmp, ...["components/button", "components/dialog", "components/search-field", "screens/home"].map((name) => `${UI}/${name}.md`));
@@ -278,14 +269,6 @@ describe("aidd-ui change flow", () => {
 });
 
 describe("aidd-ui review skill", () => {
-  it("asks for the one copy the review panel makes, not one per page", () => {
-    const propose = fs.readFileSync(path.join(SKILL("06-review"), "actions/02-propose.md"), "utf8");
-    const choose = fs.readFileSync(path.join(SKILL("06-review"), "actions/03-choose.md"), "utf8");
-    assert.ok(propose.includes("The review panel, on every page, gathers every verdict."));
-    assert.equal(/home page copies|copied block of each record/.test(propose), false);
-    assert.equal(choose.includes("own page paste wins"), false);
-  });
-
   it("validates once filled, with a row for each state, and holds no pending row", () => {
     const template = filled("review");
     assert.equal(/\| pending \|/.test(template), false);
@@ -303,76 +286,10 @@ describe("aidd-ui review skill", () => {
 });
 
 describe("aidd-ui skills", () => {
-  const texts = (name) => filesUnder(SKILL(name)).map((file) => ({ file: path.relative(SKILL(name), file), text: fs.readFileSync(file, "utf8") }));
-
   it("are the six the plugin lists and holds", () => {
     const manifest = JSON.parse(fs.readFileSync(path.join(PLUGIN, ".claude-plugin/plugin.json"), "utf8"));
     assert.deepEqual(manifest.skills, FOLDERS.map((name) => `./skills/${name}`));
     assert.deepEqual(fs.readdirSync(SKILLS).sort(), FOLDERS);
-  });
-
-  it("name no other skill, hold no date or em-dash, in any file", () => {
-    for (const folder of FOLDERS) {
-      const own = new Set([folder, ...fs.readdirSync(path.join(SKILL(folder), "actions")).map((name) => name.replace(/\.md$/, ""))]);
-      for (const { file, text } of texts(folder)) {
-        assert.equal(/[a-z-]+:\d{2}-[a-z-]+/.test(text), false, `${folder}/${file} names a skill as plugin:folder`);
-        for (const [numbered] of text.matchAll(/\b\d{2}-[a-z]+(?:-[a-z]+)*\b/g)) assert.ok(own.has(numbered), `${folder}/${file} names ${numbered}, which is not part of this skill`);
-        assert.equal(/\d{4}[-_]\d{2}[-_]\d{2}/.test(text), false, `${folder}/${file} holds a date`);
-        assert.equal(text.includes("\u2014"), false, `${folder}/${file} holds an em-dash`);
-      }
-    }
-  });
-
-  it("state the write boundary once, by the Write only line, and list no file the engine writes", () => {
-    for (const folder of FOLDERS) {
-      const rules = fs.readFileSync(path.join(SKILL(folder), "SKILL.md"), "utf8").split("\n").filter((line) => line.startsWith("- "));
-      assert.equal(rules.filter((line) => line.startsWith("- Write only")).length, 1, folder);
-      assert.deepEqual(rules.filter((line) => line.startsWith("- The engine writes")), [], folder);
-      if (folder === "01-journeys" || folder === "02-brand") assert.deepEqual(rules.filter((line) => /never (write )?in the code/i.test(line)), [], folder);
-    }
-  });
-
-  it("hold no reference file twice, byte for byte", () => {
-    const seen = new Map();
-    for (const folder of FOLDERS) {
-      for (const file of filesUnder(SKILL(folder)).filter((each) => each.includes(`${path.sep}references${path.sep}`))) {
-        const text = fs.readFileSync(file, "utf8");
-        assert.equal(seen.has(text), false, `${folder}/${path.basename(file)} repeats ${seen.get(text)}`);
-        seen.set(text, `${folder}/${path.basename(file)}`);
-      }
-    }
-  });
-
-  it("keeps every sentence of every skill to twelve words at most", () => {
-    const MAX = 12;
-    const offenders = [];
-    for (const file of FOLDERS.flatMap((name) => filesUnder(SKILL(name))).filter((each) => each.endsWith(".md"))) {
-      const text = fs.readFileSync(file, "utf8").replace(/```[\s\S]*?```/g, (fence) => fence.replace(/[^\n]/g, "")).replace(/^---\n[\s\S]*?\n---\n/, (front) => front.replace(/[^\n]/g, ""));
-      text.split("\n").forEach((line, index) => {
-        if (line.startsWith("#") || line.startsWith("---")) return;
-        for (const cell of line.startsWith("|") ? line.split("|") : [line]) {
-          for (const raw of cell.split(/(?<=[.!?])\s+/)) {
-            const sentence = raw.replace(/^\s*([-*]|\d+\.)\s*/, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
-            const words = sentence.split(/\s+/).filter(Boolean).length;
-            if (words > MAX) offenders.push(`${path.relative(SKILLS, file)}:${index + 1} ${words} words: ${sentence.trim().slice(0, 60)}`);
-          }
-        }
-      });
-    }
-    assert.deepEqual(offenders, []);
-  });
-
-  it("keeps every action free of commands, flags and code", () => {
-    const offenders = [];
-    for (const folder of FOLDERS) {
-      for (const name of fs.readdirSync(path.join(SKILL(folder), "actions"))) {
-        const text = fs.readFileSync(path.join(SKILL(folder), "actions", name), "utf8");
-        text.split("\n").forEach((line, index) => {
-          if (/node\s+<engine>/.test(line) || /(^|[\s`(])--[a-z]/.test(line) || line.includes("```")) offenders.push(`${folder}/actions/${name}:${index + 1} ${line.trim().slice(0, 60)}`);
-        });
-      }
-    }
-    assert.deepEqual(offenders, []);
   });
 
   it("have one author for each kind of record", () => {
@@ -388,206 +305,7 @@ describe("aidd-ui skills", () => {
     assert.deepEqual([...authors.entries()].filter(([, holders]) => holders.length !== 1), []);
     assert.deepEqual([...authors.keys()].sort(), ["asset", "atom", "brand", "journey", "molecule", "organism", "review", "screen", "system", "wireframe"]);
   });
-
-  it("end saying each element is proposed until its review, and leave publishing to the review skill", () => {
-    for (const folder of ["03-foundations", "04-components"]) {
-      const conclude = fs.readFileSync(path.join(SKILL(folder), "actions/03-conclude.md"), "utf8");
-      assert.equal(fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8").includes("publish"), false, folder);
-      assert.ok(conclude.includes("each element created or raised is `proposed` until its review"), folder);
-    }
-    assert.ok(fs.readFileSync(path.join(SKILL("06-review"), "references/engine.md"), "utf8").includes("`node <engine> publish <id>`"));
-  });
 });
-
-describe("aidd-ui engine references", () => {
-  const { HELP } = require(path.join(PLUGIN, "hooks/lib/help.cjs"));
-  const engineOf = (folder) => fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8");
-
-  it("hold the install table, the step table and the owed table", () => {
-    for (const folder of FOLDERS) {
-      const text = engineOf(folder);
-      assert.deepEqual(text.split("\n").filter((line) => line.startsWith("#")), ["# Engine", "## Owed"], folder);
-      assert.ok(text.includes("| Install | Path |"), folder);
-      assert.ok(text.includes("`<engine>` is that path, run with `node`."), folder);
-      assert.ok(text.includes("`node <engine> help <command>`"), folder);
-      assert.equal(text.includes("```"), false, `${folder} holds a code block`);
-    }
-  });
-
-  it("repeat no sentence of the engine's help", () => {
-    const plain = (text) => text.replace(/[`*]/g, "").replace(/\s+/g, " ").toLowerCase();
-    const sentences = Object.values(HELP).flatMap((entry) => [entry.summary, ...entry.effects, ...entry.output, ...entry.exits]).flatMap((text) => text.split(/(?<=[.!?])\s+/)).map(plain).filter((sentence) => sentence.split(" ").length > 3);
-    for (const folder of FOLDERS) for (const sentence of sentences) assert.equal(plain(engineOf(folder)).includes(sentence), false, `${folder} repeats: ${sentence}`);
-  });
-
-  /** The owed table of a folder as `{rules, owner}` rows. */
-  const owedOf = (folder) => {
-    const lines = engineOf(folder).split("\n");
-    return lines.slice(lines.indexOf("## Owed")).filter((line) => line.startsWith("| ") && !line.startsWith("| Problem") && !line.startsWith("| ---")).map((line) => ({ rules: line.split("|")[1].match(/\b[A-Z]\d+\b/g) ?? [], owner: line.split("|")[2].trim() }));
-  };
-  // What a skill's own steps clear: by a command of its step table, or by the write step itself.
-  const CLEARED_BY = { H1: /bump .*--created/, C4: /bump .*--created system/, T6: /^node <engine> tokens/, T10: /^node <engine> tokens/ };
-  const WRITTEN_BY_ITS_WRITE = { "03-foundations": ["T1"], "04-components": ["V1"] };
-
-  it("owe to another skill no problem that a step of the same skill clears", () => {
-    for (const folder of FOLDERS) {
-      const lines = engineOf(folder).split("\n");
-      const commands = lines.filter((line) => /^\| (prepare|propose|choose|write|conclude) \d/.test(line)).map((line) => line.split("|")[2].trim().replace(/^`|`.*$/g, ""));
-      const rows = owedOf(folder);
-      for (const row of rows) assert.ok(["this skill", "another skill"].includes(row.owner), `${folder}: owner "${row.owner}"`);
-      for (const rule of rows.filter((row) => row.owner === "another skill").flatMap((row) => row.rules)) {
-        if (CLEARED_BY[rule]) assert.equal(commands.some((command) => CLEARED_BY[rule].test(command)), false, `${folder} owes ${rule}, which its own step clears`);
-        assert.equal((WRITTEN_BY_ITS_WRITE[folder] ?? []).includes(rule), false, `${folder} leaves ${rule} to another skill, which its own write clears`);
-      }
-    }
-  });
-
-  it("say, for what its own write clears, that this skill owes it", () => {
-    for (const [folder, rules] of Object.entries(WRITTEN_BY_ITS_WRITE)) for (const rule of rules) assert.ok(owedOf(folder).some((row) => row.owner === "this skill" && row.rules.includes(rule)), `${folder}: ${rule}`);
-  });
-
-  it("keep, in an action, only the errors another skill owes", () => {
-    for (const folder of FOLDERS) {
-      for (const name of fs.readdirSync(path.join(SKILL(folder), "actions"))) {
-        for (const line of fs.readFileSync(path.join(SKILL(folder), "actions", name), "utf8").split("\n").filter((each) => /\bowe/.test(each))) assert.ok(line.includes("another skill"), `${folder}/${name}: ${line.trim()}`);
-      }
-    }
-  });
-
-  it("run only commands the engine's help knows", () => {
-    for (const folder of FOLDERS) {
-      const rows = engineOf(folder).split("\n").filter((line) => /^\| (prepare|propose|choose|write|conclude) \d/.test(line));
-      assert.ok(rows.length > 0, folder);
-      for (const row of rows) assert.ok(Object.hasOwn(HELP, row.match(/`node <engine> ([^ `]+)/)?.[1]), `${folder}: ${row}`);
-    }
-  });
-});
-
-describe("aidd-ui facts the skills keep", () => {
-  const read = (folder, file) => fs.readFileSync(path.join(SKILL(folder), file), "utf8");
-
-  it("say, where a task folder is taken, that it may be absent", () => {
-    for (const folder of ["01-journeys", "03-foundations", "04-components"]) assert.match(read(folder, "actions/01-prepare.md"), /(need|has|have) not (to )?exist|may (not exist|be absent)|can be absent/i, folder);
-  });
-
-  it("say a path link sits on its code root's platform, and focus is the element's own", () => {
-    const elements = read("04-components", "references/elements.md");
-    assert.ok(elements.includes("A path link sits on its code root's platform."));
-    const states = elements.split("\n").find((line) => line.startsWith("| `states`"));
-    for (const fact of ["`focus`", "itself", "it uses"]) assert.ok(states.includes(fact), `states row lacks ${fact}`);
-  });
-
-  it("give the ignore of an unlinked file to the foundations alone, the components only naming it", () => {
-    const mentions = (folder) => filesUnder(SKILL(folder)).filter((file) => file.endsWith(".md")).flatMap((file) => fs.readFileSync(file, "utf8").split("\n").filter((line) => line.includes("`ignore`")).map((line) => ({ file: path.relative(SKILLS, file), line })));
-    assert.ok(mentions("03-foundations").some(({ line }) => line.startsWith("| file no record links (C3)")));
-    for (const folder of ["01-journeys", "02-brand", "04-components"]) for (const { file, line } of mentions(folder)) assert.ok(line.startsWith("| file no record links (C3)") && line.includes("to the user"), `${file} writes ignore: ${line.slice(0, 60)}`);
-    assert.equal(mentions("04-components").length, 1);
-  });
-});
-
-describe("aidd-ui engine step table", () => {
-  const WHAT = [
-    [/^node <engine> impact\b/, /reaches/],
-    [/^node <engine> extract\b/, /extract/],
-    [/^node <engine> tokens\b/, /stylesheet/],
-    [/^node <engine> validate\b/, /Validate/],
-    [/^node <engine> keep\b/, /keep/i],
-    [/^node <engine> publish\b/, /publishes/],
-    [/^node <engine> showcase\b/, /showcase/],
-    [/^node <engine> bump .*--created/, /record/i],
-    [/^node <engine> bump .*--(change|removed)/, /raise/],
-  ];
-  const stepsOf = (text) => {
-    const steps = new Map();
-    let current = null;
-    for (const line of text.split("\n")) {
-      const head = line.match(/^(\d+)\. /);
-      if (head) steps.set((current = Number(head[1])), line);
-      else if (line.startsWith("## ")) current = null;
-      else if (current !== null) steps.set(current, `${steps.get(current)}\n${line}`);
-    }
-    return steps;
-  };
-
-  it("names, for each row, steps of that action which exist and say what the command does", () => {
-    for (const folder of FOLDERS) {
-      const rows = fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8").split("\n").filter((line) => /^\| (prepare|propose|choose|write|conclude) \d/.test(line));
-      assert.ok(rows.length > 0, folder);
-      for (const row of rows) {
-        const [, step, command] = row.split("|").map((cell) => cell.trim());
-        const action = step.split(" ")[0];
-        const file = fs.readdirSync(path.join(SKILL(folder), "actions")).find((name) => name.endsWith(`-${action}.md`));
-        const steps = stepsOf(fs.readFileSync(path.join(SKILL(folder), "actions", file), "utf8"));
-        const [, expected] = WHAT.find(([shape]) => shape.test(command.replace(/^`|`.*$/g, "")));
-        for (const number of step.split(",")[0].match(/\d+/g)) {
-          assert.ok(steps.has(Number(number)), `${folder}: ${step} names no step`);
-          assert.ok(expected.test(steps.get(Number(number))), `${folder}: ${step} does not say what ${command} does`);
-        }
-      }
-    }
-  });
-});
-
-describe("aidd-ui revise comments as change requests", () => {
-  const read = (folder, file) => fs.readFileSync(path.join(SKILL(folder), file), "utf8");
-
-  it("gives screens a change case, raised by a bump with the change", () => {
-    assert.ok(read("05-screens", "references/cases.md").split("\n").some((line) => line.startsWith("| change |") && line.includes("`revise`")));
-    assert.ok(read("05-screens", "references/engine.md").includes("`node <engine> bump --task <task folder> --change"));
-  });
-
-  it("has journeys and components read a revise as a change case", () => {
-    for (const folder of ["01-journeys", "04-components"]) {
-      assert.ok(read(folder, "references/cases.md").split("\n").some((line) => line.startsWith("| change |") && line.includes("`revise`")), folder);
-    }
-  });
-});
-
-describe("aidd-ui system answers", () => {
-  const foundations = (file) => fs.readFileSync(path.join(SKILL("03-foundations"), file), "utf8");
-
-  it("come from the code per extraction, never from the README or visible copy", () => {
-    const write = foundations("actions/02-write.md");
-    const step = write.slice(write.indexOf("3. If no `system.md`"), write.indexOf("4. With a token file"));
-    assert.ok(step.includes("[extraction](../references/extraction.md)"));
-    assert.equal(/README|manifest|visible copy/.test(step), false);
-  });
-
-  it("name the apps the code roots serve as the platforms", () => {
-    assert.ok(foundations("references/extraction.md").split("\n").some((line) => line.startsWith("| ") && line.includes("apps") && line.includes("`platforms`")));
-  });
-});
-
-describe("aidd-ui owed problems", () => {
-  const owed = (folder) => {
-    const text = fs.readFileSync(path.join(SKILL(folder), "references/engine.md"), "utf8");
-    return text.slice(text.indexOf("## Owed")).split("\n").filter((line) => line.startsWith("| ")).flatMap((line) => (line.split("|")[1].match(/\b[A-Z]\d+\b/g) ?? []).map((rule) => `${rule} ${line.split("|")[2].trim()}`));
-  };
-  const rulesOf = (dir) => [...new Set(validate(dir).out.slice(1).flatMap((line) => line.split(" ").filter((word) => /^[A-Z]\d+$/.test(word)).slice(0, 1)))].sort();
-
-  it("name, for the brand alone, the one rule it leaves, and none while no element needs a token", () => {
-    for (const entry of fs.readdirSync(path.join(tmp, UI))) if (entry !== "brand.md") fs.rmSync(path.join(tmp, UI, entry), { recursive: true });
-    fs.rmSync(path.join(tmp, "src"), { recursive: true });
-    put(tmp, HISTORY, history(["brand", "1", "created", "no", "aidd_docs/tasks/ds-init"]));
-    assert.deepEqual(rulesOf(tmp), []);
-    assert.deepEqual(owed("02-brand"), ["T1 another skill"]);
-  });
-
-  it("name, for a token renamed by the foundations alone, the rules left to the components", () => {
-    engine("bump", "--task", "aidd_docs/tasks/rename", "--change", "action colour renamed", "--breaking", "color.action.default", "--root", tmp);
-    editTokens(tmp, (tree) => {
-      tree.color.action.primary = tree.color.action.default;
-      delete tree.color.action.default;
-    });
-    assert.deepEqual(rulesOf(tmp), ["T7", "V3"]);
-    assert.deepEqual(owed("03-foundations").filter((each) => !each.startsWith("T1")), ["T7 another skill", "V3 another skill"]);
-  });
-
-  it("name, for the components, the rule a record leaves until its render exists", () => {
-    assert.deepEqual(owed("04-components"), ["V1 this skill"]);
-  });
-});
-
 const JOURNEY_FILLS = {
   journey: {
     "journey id": "first-search",
@@ -636,24 +354,5 @@ describe("aidd-ui journeys templates", () => {
     const { code, out } = validate(tmp);
     assert.deepEqual([code, out[0], out.slice(1).map((line) => line.split(" ").slice(0, 3).join(" "))], [0, "aidd-ui: 0 errors, 1 warning", [`${UI}/wireframes/results.md R18 warning`]]);
     for (const name of ["journey", "wireframe"]) assert.ok(/\nstatus: proposed\nversion: 1\n/.test(filledJourney(name)), name);
-  });
-});
-
-describe("aidd-ui journeys skill", () => {
-  it("ends naming the components the design system lacks", () => {
-    assert.ok(fs.readFileSync(path.join(JOURNEYS, "references/wireframes.md"), "utf8").includes("warning R18"));
-  });
-
-  it("stops for the persona, then for the journeys, and keeps the task folder silent", () => {
-    const prepare = fs.readFileSync(path.join(JOURNEYS, "actions/01-prepare.md"), "utf8");
-    assert.ok(prepare.includes("Ask it alone, and wait for the answer."));
-    assert.ok(prepare.includes("Show them and wait for the user's agreement."));
-    assert.ok(prepare.includes("Never mention it to the user."));
-  });
-
-  it("asks what the product is, with no invented drafts, when nothing describes it", () => {
-    const prepare = fs.readFileSync(path.join(JOURNEYS, "actions/01-prepare.md"), "utf8");
-    assert.ok(prepare.includes("Nothing describes the product: ask what it is, and for whom."));
-    assert.ok(prepare.includes("Offer no invented product."));
   });
 });

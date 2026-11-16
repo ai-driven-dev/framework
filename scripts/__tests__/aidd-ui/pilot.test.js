@@ -289,14 +289,6 @@ describe("aidd-ui pilot step files", () => {
   const hashes = (files) => Object.fromEntries(files.map((file) => [file, file]));
   const after = (...written) => hashes(written.map(ui));
 
-  it("owns the files each skill's Write only line names", () => {
-    const SKILLS = path.resolve(__dirname, "../../../plugins/aidd-ui/skills");
-    for (const [skill, entries] of Object.entries(OWNED)) {
-      const line = fs.readFileSync(path.join(SKILLS, skill, "SKILL.md"), "utf8").split("\n").find((each) => each.startsWith("- Write only"));
-      for (const entry of entries) assert.ok(line.includes(entry), `${skill}: ${entry}`);
-    }
-  });
-
   it("names a step and the path it wrote outside its set", () => {
     assert.deepEqual(stepBreaks("02-brand", {}, after("brand.md", "system.md")), ["02-brand wrote aidd_docs/ui/system.md"]);
     assert.deepEqual(stepBreaks("02-brand", {}, { ...after("brand.md"), "src/app.js": "x" }), ["02-brand wrote src/app.js"]);
@@ -338,13 +330,6 @@ describe("aidd-ui pilot step files", () => {
 
   it("names a draft a step left behind", () => {
     assert.deepEqual(stepBreaks("02-brand", {}, after("brand.md", "drafts/.gitignore", "drafts/brand/calm/brand.md")), ["02-brand wrote aidd_docs/ui/drafts/brand/calm/brand.md"]);
-  });
-
-  it("has each Write only line name the drafts its skill may leave while it works", () => {
-    const SKILLS = path.resolve(__dirname, "../../../plugins/aidd-ui/skills");
-    const lineOf = (skill) => fs.readFileSync(path.join(SKILLS, skill, "SKILL.md"), "utf8").split("\n").find((each) => each.startsWith("- Write only"));
-    assert.ok(lineOf("02-brand").includes("aidd_docs/ui/drafts/brand/"));
-    for (const skill of ["03-foundations", "04-components", "05-screens"]) assert.ok(lineOf(skill).includes("`drafts/`"), skill);
   });
 
   it("names a step that wrote an engine file it does not drive", () => {

@@ -44,7 +44,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [cases.md](skills/01-journeys/references/cases.md) | - |
 | `references` | [engine.md](skills/01-journeys/references/engine.md) | - |
 | `references` | [wireframes.md](skills/01-journeys/references/wireframes.md) | - |
-| `-` | [SKILL.md](skills/01-journeys/SKILL.md) | `Write a persona's journeys and the wireframe of each screen they cross, from nothing or from an app's real screens. Use when the user wants to map a journey, a user flow, or wireframes. Not for styled screens, components, or reviews.` |
+| `-` | [SKILL.md](skills/01-journeys/SKILL.md) | `Writes a persona's journeys and wireframes when the user wants to map a journey, a user flow or wireframes, not styled screens or reviews.` |
 
 #### `skills/02-brand`
 
@@ -58,7 +58,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [cases.md](skills/02-brand/references/cases.md) | - |
 | `references` | [engine.md](skills/02-brand/references/engine.md) | - |
 | `references` | [variants.md](skills/02-brand/references/variants.md) | - |
-| `-` | [SKILL.md](skills/02-brand/SKILL.md) | `Write a project's brand, from its code or from scratch, or evolve it, by comparing directions. Use when the user wants to set or capture a project's identity, users, tone and references. Not for tokens, components, screens, or journeys.` |
+| `-` | [SKILL.md](skills/02-brand/SKILL.md) | `Writes or evolves a project's brand by comparing directions when the user wants to set its identity, users and tone, not tokens or screens.` |
 
 #### `skills/03-foundations`
 
@@ -74,7 +74,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [tokens.md](skills/03-foundations/references/tokens.md) | - |
 | `references` | [variants.md](skills/03-foundations/references/variants.md) | - |
 | `references` | [versions.md](skills/03-foundations/references/versions.md) | - |
-| `-` | [SKILL.md](skills/03-foundations/SKILL.md) | `Lay a project's design foundations, its system and tokens, from nothing or from its code, or carry a token change to its new versions. Use when the user wants to set up, extract, or change the design system or its tokens. Not for the brand, components, screens, or journeys.` |
+| `-` | [SKILL.md](skills/03-foundations/SKILL.md) | `Lays a project's design system and tokens, or carries a token change, when the user wants to set up, extract or change them, not brand or screens.` |
 
 #### `skills/04-components`
 
@@ -92,7 +92,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [look.md](skills/04-components/references/look.md) | - |
 | `references` | [variants.md](skills/04-components/references/variants.md) | - |
 | `references` | [versions.md](skills/04-components/references/versions.md) | - |
-| `-` | [SKILL.md](skills/04-components/SKILL.md) | `Write a project's components and assets, from nothing or from its code, or carry a component change to its new versions. Use when the user wants to add, extract, or change a component or an asset. Not for the brand, tokens, screens, or journeys.` |
+| `-` | [SKILL.md](skills/04-components/SKILL.md) | `Writes a project's components and assets, or carries a component change, when the user wants to add, extract or change one, not brand or screens.` |
 
 #### `skills/05-screens`
 
@@ -108,7 +108,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [look.md](skills/05-screens/references/look.md) | - |
 | `references` | [screens.md](skills/05-screens/references/screens.md) | - |
 | `references` | [variants.md](skills/05-screens/references/variants.md) | - |
-| `-` | [SKILL.md](skills/05-screens/SKILL.md) | `Write a project's screens, one for each wireframe, by comparing variants of each. Use when the user wants to dress a wireframe as a screen. Not for the brand, tokens, components, or journeys.` |
+| `-` | [SKILL.md](skills/05-screens/SKILL.md) | `Writes a project's screens, one per wireframe, by comparing variants when the user wants to dress a wireframe, not brand, components or journeys.` |
 
 #### `skills/06-review`
 
@@ -124,5 +124,5 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `references` | [engine.md](skills/06-review/references/engine.md) | - |
 | `references` | [look.md](skills/06-review/references/look.md) | - |
 | `references` | [review.md](skills/06-review/references/review.md) | - |
-| `-` | [SKILL.md](skills/06-review/SKILL.md) | `Review a project's wireframes, screens, and components in the showcase, then publish the ones every state of which is OK. Use when the user wants to review, approve, or publish them. Not for writing or changing them.` |
+| `-` | [SKILL.md](skills/06-review/SKILL.md) | `Reviews a project's wireframes, screens and components in the showcase, then publishes the OK ones, when the user wants to review or publish them.` |
 
