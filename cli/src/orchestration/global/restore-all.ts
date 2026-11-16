@@ -10,6 +10,8 @@ export interface RestoreAllResult {
   totalKept: number;
   pluginNamesRestored: string[];
   errors: GlobalExecutionError[];
+  /** The verdict on `errors`: one error fails the run. */
+  failed: boolean;
   unrestorable: string[];
   /** AI tools this run could not restore any plugin file for because their
    * registration is native — the tool's own CLI owns it, not a file tree. */
@@ -39,6 +41,7 @@ export class RestoreAll {
         totalKept: 0,
         pluginNamesRestored: [],
         errors,
+        failed: errors.length > 0,
         unrestorable: [],
         nativeOnlyToolIds: [],
       };
@@ -56,6 +59,7 @@ export class RestoreAll {
         totalKept: result.totalKept,
         pluginNamesRestored: result.restoredPluginNames,
         errors,
+        failed: errors.length > 0,
         unrestorable: result.unrestorable,
         nativeOnlyToolIds: result.nativeOnlyToolIds,
       };
@@ -69,6 +73,7 @@ export class RestoreAll {
         totalKept: 0,
         pluginNamesRestored: [],
         errors,
+        failed: errors.length > 0,
         unrestorable: [],
         nativeOnlyToolIds: [],
       };

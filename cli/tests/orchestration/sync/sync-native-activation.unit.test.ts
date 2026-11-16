@@ -8,6 +8,7 @@ const OUTCOME = {
   binaryMissing: [],
   warnings: [],
   errors: [{ scope: "claude", message: "claude CLI refused" }],
+  failed: true,
 };
 
 describe("SyncNativeActivation", () => {
@@ -24,19 +25,7 @@ describe("SyncNativeActivation", () => {
       tools: CATALOG,
       marketplaceNames: undefined,
     });
-    expect(outcome).toEqual({ ...OUTCOME, failed: true });
-  });
-
-  it("reports the activation as not failed when the sync raised no error", async () => {
-    const clean = { ...OUTCOME, activated: ["claude"], errors: [] };
-    const syncSettings = { execute: vi.fn().mockResolvedValue(clean) };
-
-    const outcome = await new SyncNativeActivation(syncSettings).execute({
-      projectRoot: "/project",
-      tools: CATALOG,
-    });
-
-    expect(outcome.failed).toBe(false);
+    expect(outcome).toBe(OUTCOME);
   });
 
   it("narrows the sync to the marketplaces it is given", async () => {

@@ -16,6 +16,8 @@ export interface NativeActivationReport {
   warnings: readonly string[];
   /** A hard failure returned rather than thrown, so whether the command fails stays the caller's call. */
   errors: readonly { scope: string; message: string }[];
+  /** The verdict on `errors`, decided where they are produced. */
+  failed: boolean;
 }
 
 export interface InstallAiToolOptions {

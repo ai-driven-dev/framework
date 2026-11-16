@@ -251,7 +251,13 @@ describe("the shared source's own reference, recorded by sync", () => {
       projectRoot: PROJECT_ROOT,
     });
 
-    expect(result).toEqual({ activated: [], binaryMissing: [], warnings: [], errors: [] });
+    expect(result).toEqual({
+      activated: [],
+      binaryMissing: [],
+      warnings: [],
+      errors: [],
+      failed: false,
+    });
   });
 
   // Every marketplace and plugin command reaches this same `execute`, where an empty registry is
@@ -302,7 +308,13 @@ describe("the shared source's own reference, recorded by sync", () => {
       recreateFrameworkIfMissing: true,
     });
 
-    expect(result).toStrictEqual({ activated: [], binaryMissing: [], warnings: [], errors: [] });
+    expect(result).toStrictEqual({
+      activated: [],
+      binaryMissing: [],
+      warnings: [],
+      errors: [],
+      failed: false,
+    });
   });
 });
 
@@ -332,7 +344,13 @@ describe("a project with no manifest to sync", () => {
       projectRoot: PROJECT_ROOT,
     });
 
-    expect(result).toStrictEqual({ activated: [], binaryMissing: [], warnings: [], errors: [] });
+    expect(result).toStrictEqual({
+      activated: [],
+      binaryMissing: [],
+      warnings: [],
+      errors: [],
+      failed: false,
+    });
     expect(activator.addedMarketplaces).toStrictEqual([]);
   });
 
@@ -354,6 +372,12 @@ describe("a project with no manifest to sync", () => {
       projectRoot: PROJECT_ROOT,
     });
 
-    expect(result).toStrictEqual({ activated: [], binaryMissing: [], warnings: [], errors: [] });
+    expect(result).toStrictEqual({
+      activated: [],
+      binaryMissing: [],
+      warnings: [],
+      errors: [],
+      failed: false,
+    });
   });
 });

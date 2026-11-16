@@ -14,7 +14,7 @@ import {
   printSetupOutcome,
   printWelcomeBanner,
 } from "../display/setup-display.js";
-import { reportSyncActivation } from "../display/sync-display.js";
+import { reportNativeActivation } from "../display/sync-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
@@ -308,7 +308,7 @@ export function registerSetupCommand(
           reportAgentModels(output, catalog, agents.provider, agents.hosts, models);
         }
         if (interactive) printNextSteps(output, result.install.results.length > 0);
-        reportSyncActivation(output, result.activation);
+        reportNativeActivation(output, result.activation);
       } catch (error) {
         errorHandler.handle(error);
       }

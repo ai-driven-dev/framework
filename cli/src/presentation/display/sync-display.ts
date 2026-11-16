@@ -84,27 +84,17 @@ export function printUserScopeSyncOutcome(
 /** Named structurally: every real caller's result already satisfies this shape. */
 interface SyncActivationOutcome {
   readonly errors: readonly ScopedError[];
+  readonly failed: boolean;
 }
 
 export function printScopedFailures(output: CLIOutput, failures: readonly ScopedError[]): void {
   for (const failure of failures) output.warn(`[${failure.scope}] ${failure.message}`);
 }
 
-/** Prints what `SyncNativeActivation` reported and turns its verdict into the failing exit.
+/** Prints what an activation reported and turns its `failed` verdict into the failing exit.
  * A result thrown away would turn a refusal into exit 0 with nothing printed and a plugin that
  * never loads. */
-export function reportNativeActivation(
-  output: CLIOutput,
-  activation: SyncActivationOutcome & { readonly failed: boolean }
-): void {
+export function reportNativeActivation(output: CLIOutput, activation: SyncActivationOutcome): void {
   printScopedFailures(output, activation.errors);
   if (activation.failed) throw new SyncFailedError(activation.errors);
-}
-
-/** The same print-and-throw for a caller whose own use case already ran the activation inside
- * its `execute`: calling the scenario a second time would run every tool's own CLI twice for
- * one command. Here the refusal rule is the caller's, as in `sync.ts`. */
-export function reportSyncActivation(output: CLIOutput, activation: SyncActivationOutcome): void {
-  printScopedFailures(output, activation.errors);
-  if (activation.errors.length > 0) throw new SyncFailedError(activation.errors);
 }

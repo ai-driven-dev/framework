@@ -72,7 +72,7 @@ beforeEach(() => {
   setAgentModel.mockResolvedValue({ reinstalled: [], changed: [], skipped: [] });
   resolveSourceIfNeeded.mockResolvedValue(undefined);
   registerIfPresent.mockResolvedValue(undefined);
-  activation.mockResolvedValue({ binaryMissing: [], errors: [] });
+  activation.mockResolvedValue({ binaryMissing: [], errors: [], failed: false });
   setupTools.mockResolvedValue({ results: [] });
   setupPluginsPrompt.mockResolvedValue(undefined);
   setupToolsPrompt.mockResolvedValue({ aiTools: ["claude"], ideTools: [] });
@@ -80,7 +80,7 @@ beforeEach(() => {
   setupMachineScope.mockResolvedValue({
     kind: "up-to-date",
     install: { results: [] },
-    activation: { binaryMissing: [], errors: [] },
+    activation: { binaryMissing: [], errors: [], failed: false },
   });
 });
 
@@ -423,6 +423,7 @@ describe("aidd setup — what it refuses and what it reports", () => {
   it("names a refused activation and fails the process", async () => {
     activation.mockResolvedValue({
       binaryMissing: [],
+      failed: true,
       errors: [{ scope: "claude", message: "claude CLI refused" }],
     });
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {

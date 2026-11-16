@@ -350,6 +350,7 @@ describe("what execute reports about activation", () => {
     const { result } = await sync();
 
     expect(result.activated).toEqual(["claude"]);
+    expect(result.failed, "no error was returned, so the run did not fail").toBe(false);
   });
 
   it("names the tool and the binary in `binaryMissing` when the CLI is not on PATH", async () => {
@@ -378,6 +379,7 @@ describe("what execute reports about activation", () => {
       { scope: "claude", message: "activator crashed adding a marketplace" },
     ]);
     expect(result.activated).toEqual([]);
+    expect(result.failed, "one returned error fails the run").toBe(true);
   });
 });
 
@@ -435,6 +437,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     expect(claudeActivator.addedMarketplaces).not.toEqual([]);
     expect(codexActivator.addedMarketplaces).toEqual([]);
     expect(result.activated).toEqual(["claude"]);
+    expect(result.failed, "no error was returned, so the run did not fail").toBe(false);
   });
 
   it("leaves the other tool's CLI alone even when that tool's own tree is ready to register", async () => {
@@ -486,6 +489,7 @@ describe("toolIds narrows which tool's CLI is driven", () => {
       binaryMissing: [],
       warnings: [],
       errors: [],
+      failed: false,
     });
   });
 });
@@ -606,6 +610,7 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
       binaryMissing: [],
       warnings: [],
       errors: [],
+      failed: false,
     });
   });
 });

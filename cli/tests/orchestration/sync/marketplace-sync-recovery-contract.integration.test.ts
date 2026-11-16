@@ -27,6 +27,9 @@ import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
+/** What a sync reports when every tool ran and nothing went wrong, but for the tools named. */
+const CLEAN_RUN = { binaryMissing: [], warnings: [], errors: [], failed: false };
+
 const ROOT = "/project";
 const ALIAS = "team-tools";
 const HOST = "team-catalog";
@@ -227,6 +230,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
         binaryMissing: [],
         warnings: [RECLAIM],
         errors: [],
+        failed: false,
       });
       expect(logger.warnMessages).toEqual([RECLAIM]);
       expect(manifest.getNativeRegistrations(TOOL.claude)).toEqual({
@@ -333,6 +337,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       binaryMissing: [],
       warnings: [RECLAIM],
       errors: [{ scope: "claude", message: "retry crashed" }],
+      failed: true,
     });
     expect(manifest.getNativeRegistrations(TOOL.claude)?.marketplaces[0]?.provenance).toEqual({
       kind: "registry",
@@ -408,7 +413,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     expect(result.errors).toEqual([]);
     const saveCount = repo.saveCount;
     const second = await useCase.execute({ tools: registeredCatalog(), projectRoot: ROOT });
-    expect(second).toEqual({ activated: ["claude"], binaryMissing: [], warnings: [], errors: [] });
+    expect(second).toEqual({ activated: ["claude"], ...CLEAN_RUN });
     expect(repo.saveCount).toBe(saveCount);
     expect(activator.addedMarketplaces).toEqual([BUILT]);
     expect(manifest.getToolFiles(TOOL.claude)[0]?.hash.value).toBe(
@@ -608,7 +613,7 @@ describe("proven native catalogues update declarative settings only when require
     const f = await ownedNativeSettings({ names: ["first", "second"] });
     const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
     const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
-    expect(result).toEqual({ activated: ["copilot"], binaryMissing: [], warnings: [], errors: [] });
+    expect(result).toEqual({ activated: ["copilot"], ...CLEAN_RUN });
     expect(JSON.parse(content)).toEqual({
       permissions: { allow: ["Read"] },
       enabledPlugins: { "review-first@first-catalog": true, "review-second@second-catalog": true },
@@ -646,7 +651,7 @@ describe("proven native catalogues update declarative settings only when require
     const settings = "{ personalSetting: true,";
     const f = await ownedNativeSettings({ withPlugins: false, settings });
     const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
-    expect(result).toEqual({ activated: ["copilot"], binaryMissing: [], warnings: [], errors: [] });
+    expect(result).toEqual({ activated: ["copilot"], ...CLEAN_RUN });
     expect(await f.fs.readFile(resolve(ROOT, f.settingsPath))).toBe(settings);
     expect(f.logger.warnMessages).toEqual([]);
     expect(f.projectRepo.saveCount).toBe(0);
@@ -659,7 +664,7 @@ describe("proven native catalogues update declarative settings only when require
       cachedRoot: "/host/cache/copied-marketplace",
     });
     const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
-    expect(result).toEqual({ activated: ["codex"], binaryMissing: [], warnings: [], errors: [] });
+    expect(result).toEqual({ activated: ["codex"], ...CLEAN_RUN });
     expect(f.activator.addedMarketplaces).toEqual(["/built/codex/first"]);
     expect(f.activator.removedMarketplaces).toEqual([]);
     expect(f.activator.enabledPlugins).toEqual([]);

@@ -9,23 +9,17 @@ export interface SyncNativeActivationRequest {
   readonly marketplaceNames?: readonly string[];
 }
 
-/** What the activation reported, plus the verdict: one refused scope fails the activation. */
-export interface SyncNativeActivationOutcome extends SyncSettingsResult {
-  readonly failed: boolean;
-}
-
 /** Re-drives native activation after a command changed what is registered. The shared
- * marketplace is never recreated here: only `sync` itself repopulates an empty registry. It
- * decides whether the activation failed; the command only prints the outcome and exits on it. */
+ * marketplace is never recreated here: only `sync` itself repopulates an empty registry. The
+ * outcome is handed back whole, `failed` included, so the command only prints it. */
 export class SyncNativeActivation {
   constructor(private readonly syncSettings: Pick<SyncSettings, "execute">) {}
 
-  async execute(request: SyncNativeActivationRequest): Promise<SyncNativeActivationOutcome> {
-    const result = await this.syncSettings.execute({
+  execute(request: SyncNativeActivationRequest): Promise<SyncSettingsResult> {
+    return this.syncSettings.execute({
       projectRoot: request.projectRoot,
       tools: request.tools,
       marketplaceNames: request.marketplaceNames,
     });
-    return { ...result, failed: result.errors.length > 0 };
   }
 }

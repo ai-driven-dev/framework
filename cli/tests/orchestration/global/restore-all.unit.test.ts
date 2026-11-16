@@ -146,6 +146,7 @@ describe("RestoreAll — the --force flag", () => {
 
     expect(deps.fs.getFile(trackedPath)).not.toBe("EDITED OUTSIDE THE CLI");
     expect(result.errors, "force must reach the decision, not raise InputRequired").toEqual([]);
+    expect(result.failed).toBe(false);
     expect(result.totalRestored).toBeGreaterThan(0);
   });
 
@@ -162,6 +163,7 @@ describe("RestoreAll — the --force flag", () => {
     expect(deps.fs.getFile(trackedPath)).toBe("EDITED OUTSIDE THE CLI");
     expect(result.totalRestored).toBe(0);
     expect(result.errors.map((e) => e.message).join(" ")).toContain("--force");
+    expect(result.failed, "a kept file is an error the run fails on").toBe(true);
   });
 });
 
@@ -187,6 +189,7 @@ describe("RestoreAll — an interactive run that ticks nothing", () => {
       totalKept: 0,
       pluginNamesRestored: [],
       errors: [],
+      failed: false,
       unrestorable: [],
       nativeOnlyToolIds: [],
     });
@@ -571,6 +574,7 @@ describe("RestoreAll — before delegating", () => {
       totalKept: 0,
       pluginNamesRestored: [],
       errors: [{ scope: "config-restore", message: "disk on fire" }],
+      failed: true,
       unrestorable: [],
       nativeOnlyToolIds: [],
     });

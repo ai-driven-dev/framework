@@ -48,6 +48,9 @@ export interface SyncSettingsResult {
    * activator, or the source-conflict guard's deliberate refusal. Returned rather than thrown,
    * so whether the whole command fails stays the caller's decision. */
   errors: readonly { scope: string; message: string }[];
+  /** The verdict on `errors`: one returned error fails the run. Decided here, where the errors
+   * are produced, so a command only prints it and exits on it. */
+  failed: boolean;
 }
 
 const EMPTY_RESULT: SyncSettingsResult = {
@@ -55,6 +58,7 @@ const EMPTY_RESULT: SyncSettingsResult = {
   binaryMissing: [],
   warnings: [],
   errors: [],
+  failed: false,
 };
 
 /** Brings a project's (or the machine's) tool settings and native registrations in line with its manifest. */
@@ -153,6 +157,7 @@ export class SyncSettings {
       binaryMissing: activation.binaryMissing,
       warnings: activation.warnings,
       errors: activation.errors,
+      failed: activation.errors.length > 0,
     };
   }
 }
