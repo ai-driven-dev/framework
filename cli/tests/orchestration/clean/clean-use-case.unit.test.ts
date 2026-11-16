@@ -3038,6 +3038,7 @@ class CrashingUninstallActivator implements HostActions {
   }
   upgradeMarketplaces(): void {}
   enablePlugin(): void {}
+  updatePlugin(): void {}
   uninstallPlugin(): void {
     throw new Error("activator crashed uninstalling a plugin");
   }
@@ -3062,6 +3063,7 @@ class OrderRecordingActivator implements HostActions {
   }
   upgradeMarketplaces(): void {}
   enablePlugin(): void {}
+  updatePlugin(): void {}
   uninstallPlugin(pluginRef: string): void {
     this.calls.push(`uninstall:${pluginRef}`);
   }
@@ -3086,5 +3088,6 @@ class AssertingActivator implements HostActions {
   }
   upgradeMarketplaces(): void {}
   enablePlugin(): void {}
+  updatePlugin(): void {}
   uninstallPlugin(): void {}
 }

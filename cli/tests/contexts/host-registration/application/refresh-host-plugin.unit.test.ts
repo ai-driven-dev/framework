@@ -74,24 +74,10 @@ describe("refresh host plugin", () => {
 
   it("requires each independent Copilot update capability and keeps the claim on refusal", async () => {
     const activator = new FakeHostActions({ available: true });
-    const withoutUpdate: HostActions = {
-      isAvailable: () => true,
-      addMarketplace: (source, scope) => activator.addMarketplace(source, scope),
-      enablesPlugins: () => activator.enablesPlugins(),
-      removeMarketplace: (name, scope) => activator.removeMarketplace(name, scope),
-      registrationState: () => activator.registrationState(),
-      upgradeMarketplaces: () => activator.upgradeMarketplaces(),
-      enablePlugin: (ref, scope) => activator.enablePlugin(ref, scope),
-      uninstallPlugin: (ref, scope) => activator.uninstallPlugin(ref, scope),
-    };
     for (const command of [
       new RefreshHostPlugin(new Map(), new Map([[copilot, reader(enabled())]])),
       new RefreshHostPlugin(
         new Map([[copilot, new FakeHostActions({ available: false })]]),
-        new Map([[copilot, reader(enabled())]])
-      ),
-      new RefreshHostPlugin(
-        new Map([[copilot, withoutUpdate]]),
         new Map([[copilot, reader(enabled())]])
       ),
       new RefreshHostPlugin(new Map([[copilot, activator]]), new Map()),

@@ -99,6 +99,7 @@ class RecordingActivator implements HostActions {
   }
   upgradeMarketplaces(): void {}
   enablePlugin(): void {}
+  updatePlugin(): void {}
   uninstallPlugin(pluginRef: string, scope: MarketplaceScope = "project"): void {
     this.order.push(`uninstallPlugin:${pluginRef}`);
     this.uninstalledPlugins.push(pluginRef);

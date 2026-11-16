@@ -37,13 +37,7 @@ export class RefreshHostPlugin {
     }
     const activator = this.activators.get(activation.hostBinary());
     const reader = this.registries.get(toolId);
-    const update = activator?.updatePlugin?.bind(activator);
-    if (
-      activator === undefined ||
-      !activator.isAvailable() ||
-      update === undefined ||
-      reader === undefined
-    ) {
+    if (activator === undefined || !activator.isAvailable() || reader === undefined) {
       throw new Error(
         `${toolId}: cannot update AIDD-owned ref '${ref}' without its CLI and readable host registry; canonical claims retained.`
       );
@@ -67,6 +61,6 @@ export class RefreshHostPlugin {
     );
     if (proof.status !== "owned")
       throw new Error(proof.reason ?? `${toolId}: catalogue source unproven.`);
-    return { apply: () => update(ref) };
+    return { apply: () => activator.updatePlugin(ref) };
   }
 }

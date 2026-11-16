@@ -55,12 +55,10 @@ function declaredMethods(file: string, source: string): string[] {
  * declaration, and both are closed by fixing the code rather than recording it. */
 const BASELINE: readonly string[] = [];
 
-/** Port files that still declare an optional method. `host-actions.ts` keeps `updatePlugin?`:
- * making it required means every `HostActions` test double declares it and the gate's
- * `updatePlugin === undefined` branches go. The list may only shrink. */
-const OPTIONAL_BASELINE: readonly string[] = [
-  "src/contexts/host-registration/ports/host-actions.ts",
-];
+/** Port files that still declare an optional method. Empty, and it stays empty: a method a
+ * caller must test for absence is a capability the port should split or require. The list
+ * may only shrink. */
+const OPTIONAL_BASELINE: readonly string[] = [];
 
 function uncalledMethods(bodies: ReadonlyMap<string, string>, ports: readonly string[]): string[] {
   const uncalled: string[] = [];

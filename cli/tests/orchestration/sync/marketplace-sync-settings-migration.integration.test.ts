@@ -938,6 +938,7 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
       }
       upgradeMarketplaces(): void {}
       enablePlugin(): void {}
+      updatePlugin(): void {}
       uninstallPlugin(): void {}
     }
 
@@ -1346,6 +1347,7 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
     }
     upgradeMarketplaces(): void {}
     enablePlugin(): void {}
+    updatePlugin(): void {}
     uninstallPlugin(): void {}
   }
 
