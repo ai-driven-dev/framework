@@ -5,7 +5,6 @@ import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type { RegistrationRecord } from "../contract/registration-record.js";
 import type {
   CacheCandidateResolver,
@@ -14,9 +13,7 @@ import type {
   ProjectSourceCommand,
   RegisteredTool,
   UserRegistrationWithdrawal,
-  WithdrawalClaims,
   WithdrawFromHostCommand,
-  WithdrawnPlugin,
 } from "../contract/withdrawal.js";
 import {
   judgeConfirmation,

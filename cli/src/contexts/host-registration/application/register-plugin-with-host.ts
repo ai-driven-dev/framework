@@ -9,7 +9,6 @@ import {
   samePath,
   samePathSegment,
 } from "../../../shared/domain/paths.js";
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
@@ -21,14 +20,12 @@ import type {
 } from "../contract/host-marketplace-sources.js";
 import type { MarketplaceSourceDriftFound } from "../contract/marketplace-source-drift.js";
 import type {
-  HostRegistrationOutcome,
   RegisteredMarketplace,
   RegisterPluginWithHostCommand,
   RegisterPluginWithHostResult,
   RegistrationClaims,
   RegistrationSubject,
 } from "../contract/native-registration.js";
-import type { RegistrationRecord } from "../contract/registration-record.js";
 import {
   describePluginDiff,
   type MarketplaceCatalogIdentity,
