@@ -54,22 +54,74 @@ const COMMAND_CLASSES = new Set(
     )
 );
 
+const STRINGS_AND_COMMENTS =
+  /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g;
+
+/** The code with comments dropped and string contents emptied, so neither adds a comma or a bracket. */
+function codeOnly(source: string): string {
+  return source.replace(STRINGS_AND_COMMENTS, (text) => (text.startsWith("/") ? "" : '""'));
+}
+
+/** The index of the bracket closing the one at `open`, counting every kind and skipping `=>`. */
+function closingBracket(text: string, open: number): number {
+  let depth = 0;
+  for (let at = open; at < text.length; at++) {
+    if (text[at] === "=" && text[at + 1] === ">") at++;
+    else if ("([{<".includes(text[at] as string)) depth++;
+    else if (")]}>".includes(text[at] as string) && --depth === 0) return at;
+  }
+  return text.length;
+}
+
+/** The pieces of `text` between the commas that sit outside every bracket. */
+function topLevelPieces(text: string): string[] {
+  const pieces: string[] = [];
+  let depth = 0;
+  let from = 0;
+  for (let at = 0; at < text.length; at++) {
+    if (text[at] === "=" && text[at + 1] === ">") at++;
+    else if ("([{<".includes(text[at] as string)) depth++;
+    else if (")]}>".includes(text[at] as string)) depth--;
+    else if (text[at] === "," && depth === 0) {
+      pieces.push(text.slice(from, at));
+      from = at + 1;
+    }
+  }
+  pieces.push(text.slice(from));
+  return pieces.map((piece) => piece.trim()).filter(Boolean);
+}
+
+/** One per parameter, or per name a destructured parameter binds, whatever its modifiers or type. */
+function parameterCount(source: string): number {
+  const code = codeOnly(source);
+  const open = /\bconstructor\s*\(/.exec(code);
+  if (!open) return 0;
+  const start = open.index + open[0].length - 1;
+  return topLevelPieces(code.slice(start + 1, closingBracket(code, start))).reduce(
+    (count, parameter) => {
+      const bare = parameter.replace(/^(?:(?:public|private|protected|readonly)\s+)+/, "");
+      return (
+        count +
+        (bare.startsWith("{") ? topLevelPieces(bare.slice(1, closingBracket(bare, 0))).length : 1)
+      );
+    },
+    0
+  );
+}
+
 /**
- * Every constructor parameter counts, required or optional and whatever its type is named,
- * plus each `new X(...)` of a command class a method reaches for, deduped by class name within each.
+ * Every constructor parameter counts, required or optional, modified or not and whatever its
+ * type is named, plus each `new X(...)` of a command class a method reaches for, deduped by
+ * class name within each.
  */
 function constructorDependencyCount(
   source: string,
   commands: ReadonlySet<string> = COMMAND_CLASSES
 ): number {
-  const signature = /constructor\((.*?)\)\s*\{/s.exec(source);
-  const paramCount = signature
-    ? [...signature[1].matchAll(/private readonly \w+\??:\s*[\w<>[\]| ]+/g)].length
-    : 0;
   const inlineNames = new Set(
     [...source.matchAll(/new (\w+)\(/g)].map((m) => m[1]).filter((name) => commands.has(name))
   );
-  return paramCount + inlineNames.size;
+  return parameterCount(source) + inlineNames.size;
 }
 
 function overLimit(source: string, commands?: ReadonlySet<string>): boolean {
@@ -153,5 +205,43 @@ describe("the guard itself", () => {
 
     expect(overLimit(atLimit)).toBe(false);
     expect(overLimit(withPlainPortOverLimit)).toBe(true);
+  });
+
+  it.each([
+    [
+      "a readonly parameter property",
+      "readonly a: A, readonly b: B, readonly c: C, readonly d: D, readonly e: E, readonly f: F",
+    ],
+    [
+      "a parameter property with no readonly",
+      "private a: A, private b: B, private c: C, private d: D, private e: E, private f: F",
+    ],
+    ["an untyped parameter", "a, b, c, d, e, f"],
+    ["a destructured parameter, one dependency per name", "{ a, b, c, d, e, f }: Deps"],
+    ["a plain typed parameter", "a: A, b: B, c: C, d: D, e: E, f: F"],
+    [
+      "a generic type holding a comma",
+      "a: Map<string, A>, b: Map<string, B>, c: Map<string, C>, d: Map<string, D>, e: Map<string, E>, f: Map<string, F>",
+    ],
+    [
+      "a function type holding a comma",
+      "a: (x: A, y: B) => void, b: (x: A, y: B) => void, c: (x: A, y: B) => void, d: (x: A, y: B) => void, e: (x: A, y: B) => void, f: (x: A, y: B) => void",
+    ],
+  ])("counts %s", (_form, parameters) => {
+    expect(overLimit(`constructor(${parameters}) {}`)).toBe(true);
+    expect(overLimit(`constructor(${parameters.split(", ").slice(0, 5).join(", ")}) {}`)).toBe(
+      false
+    );
+  });
+
+  it("does not count the commas of a comment inside the parameters", () => {
+    const withComments = `constructor(
+      /** One of a, b, c, d, e, f: why. */
+      private readonly a: A,
+      // (x, y, z)
+      private readonly b: B
+    ) {}`;
+
+    expect(constructorDependencyCount(withComments)).toBe(2);
   });
 });
