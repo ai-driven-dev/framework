@@ -215,6 +215,9 @@ importers:
       '@stryker-mutator/core':
         specifier: ^10.0.0
         version: 10.0.0(@types/node@26.6.5)
+      '@stryker-mutator/instrumenter':
+        specifier: ^10.0.0
+        version: 10.0.0
       '@stryker-mutator/vitest-runner':
         specifier: ^10.0.0
         version: 10.0.0(patch_hash=9e824f46a81c33f801b2120a27ca4232020bd90800df64696bdec8980afc567f)(@stryker-mutator/core@10.0.0(@types/node@26.6.5))(vitest@5.0.5)
