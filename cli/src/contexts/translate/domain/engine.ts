@@ -43,8 +43,8 @@ function parentDirOf(path: string): string {
 
 // A hook script requires its siblings relative to itself, so the tree below hooks/ has to
 // survive translation intact; flattening it breaks every such require.
-function pathBelow(dir: string, path: string): string {
-  return path.startsWith(`${dir}/`) ? path.slice(dir.length + 1) : path;
+function pathBelowHooks(path: string): string {
+  return path.slice(PLUGIN_HOOKS_DIR.length + 1);
 }
 
 export class PluginContentEngine {
@@ -169,7 +169,6 @@ export class PluginContentEngine {
     tool: AiToolProfile,
     cap: NativePluginAnswers
   ): TranslatedFile | null {
-    if (this.manifestPaths.includes(file.relativePath)) return null;
     if (file.relativePath === ".mcp.json") {
       const mcp = cap.mcpFile();
       return mcp.accepts ? { relativePath: mcp.relativePath, content: file.content } : null;
@@ -184,7 +183,7 @@ export class PluginContentEngine {
       // — a script at the root would leave the command naming `hooks/` pointing at nothing.
       const manifestDir = parentDirOf(cap.hooksFilePath()) || PLUGIN_HOOKS_DIR;
       return {
-        relativePath: `${manifestDir}/${pathBelow(PLUGIN_HOOKS_DIR, file.relativePath)}`,
+        relativePath: `${manifestDir}/${pathBelowHooks(file.relativePath)}`,
         content: cap.hookScript(file.relativePath, file.content),
         verbatim: true,
       };
@@ -214,7 +213,6 @@ export class PluginContentEngine {
     plugins: FlatPluginAnswers
   ): { files: OutputFile[]; skipped: ReadonlySkipList } {
     const { namespacePrefix: flatNamespacePrefix } = plugins.flatLayout();
-    if (flatNamespacePrefix === null) return { files: [], skipped: [] };
     const result: OutputFile[] = [];
     for (const file of tool.markdownSection("commands") === null ? [] : dist.components.commands) {
       result.push(this.flatCommandFile(file, dist.manifest.name, tool, flatNamespacePrefix));
