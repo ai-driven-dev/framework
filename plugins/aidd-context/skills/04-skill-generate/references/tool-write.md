@@ -1,10 +1,10 @@
 # Write targets
 
-Where a skill tree is written, per tool.
+Where a skill tree is written, per host.
 
 ## Targets
 
-| Tool | Root | Official source |
+| Host | Root | Official source |
 | --- | --- | --- |
 | Claude Code | `.claude/skills/<name>/` | [Skills](https://code.claude.com/docs/en/skills) |
 | Cursor | `.cursor/skills/<name>/` | [Skills](https://cursor.com/docs/skills) |
@@ -13,8 +13,8 @@ Where a skill tree is written, per tool.
 | Codex | `.agents/skills/<name>/` | [Skills](https://learn.chatgpt.com/docs/build-skills) |
 | Kilo Code | `.kilo/skills/<name>/` | [Skills](https://kilo.ai/docs/customize/skills) |
 | Antigravity | `.agents/skills/<name>/` | [Skills](https://antigravity.google/docs/skills) |
-| Plugin source | where the target tool's plugin format puts skills | the target tool's plugin docs |
+| Plugin source | where the target host's plugin format puts skills | the target host's plugin docs |
 
 ## Frontmatter
 
-Emit `name` and `description`, the two fields of the [Agent Skills](https://agentskills.io/specification) standard every tool reads. For any other field, read the target's source above.
+Emit `name` and `description`, the two fields of the [Agent Skills](https://agentskills.io/specification) standard every host reads.
