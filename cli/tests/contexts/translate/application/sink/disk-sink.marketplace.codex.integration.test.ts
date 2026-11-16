@@ -5,8 +5,7 @@ import { wireTools } from "../../../../../src/composition/tools.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { parseToml } from "../../../../../src/contexts/tools/domain/formats/toml.js";
 import { buildCodexContract } from "../../../../../src/contexts/tools/domain/profiles/codex/build.js";
-import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
-import { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
+import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
 import { AjvSchemaValidatorAdapter } from "../../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import {
   FrameworkPlaceholderInPluginError,
@@ -19,6 +18,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { buildTree } from "../../testing/build-tree.js";
 
 const REAL_FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework-real");
 const CODEX_FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework-codex");
@@ -41,8 +41,14 @@ function makeUseCase(
 ): BuildNativeTree {
   const av = new AjvSchemaValidatorAdapter();
   const ap = assetProvider ?? makeBundledAssetProvider();
-  const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildCodexContract());
-  return new BuildNativeTree(fs, av, ap, logger ?? new CapturingLogger(), strategy);
+  return buildTree(
+    fs,
+    av,
+    ap,
+    logger ?? new CapturingLogger(),
+    buildCodexContract(),
+    "marketplace"
+  );
 }
 
 async function makeSeededFsFromReal(): Promise<InMemoryFileAdapter> {
@@ -405,8 +411,7 @@ describe("CodexOutputStrategy", () => {
         },
       };
       const ap = makeBundledAssetProvider();
-      const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildCodexContract());
-      const uc = new BuildNativeTree(fs, av, ap, new CapturingLogger(), strategy);
+      const uc = buildTree(fs, av, ap, new CapturingLogger(), buildCodexContract(), "marketplace");
       await expect(
         uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.codex })
       ).rejects.toThrow(JsonSchemaValidationError);

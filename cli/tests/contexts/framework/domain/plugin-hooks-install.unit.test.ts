@@ -10,11 +10,12 @@ import { FileHash } from "../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 import { flatOf, hooksAcceptanceOf, nativeOf } from "../../tools/testing/plugin-mode.js";
+import { registeredManifestPaths } from "../../translate/testing/registered-manifest-probes.js";
 
 /** A hook that arrives is not a hook that runs: every failure this covers installed cleanly
  * and did nothing. */
 
-const translator = new PluginContentEngine();
+const translator = new PluginContentEngine(registeredManifestPaths());
 
 const SOURCE_TOKEN = nativeOf(claude.plugins()).rootToken() ?? "";
 const HOOK_COMMAND = `node ${SOURCE_TOKEN}/hooks/journal.cjs session-start`;

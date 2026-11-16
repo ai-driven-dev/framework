@@ -1,9 +1,6 @@
 import { join, resolve } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { AiToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
-import { FlatBuildStrategy } from "../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
-import { MarketplaceBuildStrategy } from "../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
-import { BuildNativeTree } from "../../../../src/contexts/translate/application/translate-source.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
@@ -11,6 +8,7 @@ import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapt
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 import { nativeOf } from "../../tools/testing/plugin-mode.js";
+import { buildTree } from "../testing/build-tree.js";
 import { translator } from "../testing/plugin-content-translator-kit.js";
 
 const SOURCE = resolve(process.cwd(), "tests/fixtures/framework-real");
@@ -96,11 +94,8 @@ async function writtenByA(tree: InMemoryFileAdapter, tool: AiToolProfile, native
   const mode = native ? "marketplace" : "flat";
   const contract = tool.buildContract(mode);
   if (contract === null) throw new Error(`no ${mode} contract for ${tool.toolId}`);
-  const strategy = native
-    ? new MarketplaceBuildStrategy(fs, validator, assets, contract)
-    : new FlatBuildStrategy(fs, assets, contract, false, OUT, async () => true);
   await fs.createDirectory(OUT);
-  const build = new BuildNativeTree(fs, validator, assets, new CapturingLogger(), strategy);
+  const build = buildTree(fs, validator, assets, new CapturingLogger(), contract, mode);
   await build.execute({ sourceDir: SOURCE, outDir: OUT, target: tool.toolId, mode });
   return new Map(fs.listUnder(OUT).map((p) => [p.replaceAll("\\", "/"), fs.getFile(p) as string]));
 }

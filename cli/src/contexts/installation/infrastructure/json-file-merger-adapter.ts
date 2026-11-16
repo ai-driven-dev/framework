@@ -27,6 +27,9 @@ export class JsonFileMergerAdapter implements FileReader, FileWriter, FileMerger
   listFilesRecursive(dirPath: string): Promise<string[]> {
     return this.files.listFilesRecursive(dirPath);
   }
+  isDirectory(path: string): Promise<boolean> {
+    return this.files.isDirectory(path);
+  }
   isExecutable(path: string): Promise<boolean> {
     return this.files.isExecutable(path);
   }

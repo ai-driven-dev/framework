@@ -7,8 +7,9 @@ import {
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredManifestPaths } from "./registered-manifest-probes.js";
 
-export const translator = new PluginContentEngine();
+export const translator = new PluginContentEngine(registeredManifestPaths());
 
 export const greetContent = `---
 name: aidd:04:greet

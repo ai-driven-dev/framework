@@ -12,6 +12,7 @@ function _makeFs(existingPaths: string[]): FileReader {
     fileExists: async (path) =>
       existingPaths.includes(path.replaceAll("\\", "/").replace(/^\/project\//, "")),
     isExecutable: async () => false,
+    isDirectory: async () => false,
     realpath: async (path) => path,
     readFile: async () => "",
     readFileHash: async () => new FileHash("00000000000000000000000000000000"),

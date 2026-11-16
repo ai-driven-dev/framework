@@ -3,7 +3,7 @@ import {
   detectPluginPresenceFlags,
   listAgentFiles,
   listSkillNames,
-} from "../../../../../src/contexts/translate/application/strategies/plugin-source-tree-reader.js";
+} from "../../../../../src/contexts/translate/application/sink/plugin-source-tree-reader.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 
 const PLUGIN_SRC = "/src/plugins/aidd-test";

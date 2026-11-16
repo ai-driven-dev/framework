@@ -1,8 +1,7 @@
 import { join, resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { buildCopilotMarketplaceContract } from "../../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import type { BuildOutputStrategy } from "../../../../src/contexts/translate/application/strategies/build-output-strategy.js";
-import { MarketplaceBuildStrategy } from "../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
+import type { DiskSink } from "../../../../src/contexts/translate/application/sink/disk-sink.js";
 import { BuildNativeTree } from "../../../../src/contexts/translate/application/translate-source.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
@@ -16,6 +15,7 @@ import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
+import { buildTree } from "../testing/build-tree.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 const SOURCE_DIR = FIXTURE_DIR;
@@ -77,12 +77,13 @@ function makeUseCase(
 ): BuildNativeTree {
   const v = validator ?? makeValidator();
   const ap = assetProvider ?? makeAssetProvider();
-  return new BuildNativeTree(
+  return buildTree(
     fs,
     v,
     ap,
     new CapturingLogger(),
-    new MarketplaceBuildStrategy(fs, v, ap, buildCopilotMarketplaceContract())
+    buildCopilotMarketplaceContract(),
+    "marketplace"
   );
 }
 
@@ -99,13 +100,7 @@ describe("BuildNativeTree", () => {
     it("throws JsonSchemaValidationError when manifest is invalid", async () => {
       const v = makeValidator(true);
       const ap = makeAssetProvider();
-      const uc = new BuildNativeTree(
-        fs,
-        v,
-        ap,
-        logger,
-        new MarketplaceBuildStrategy(fs, v, ap, buildCopilotMarketplaceContract())
-      );
+      const uc = buildTree(fs, v, ap, logger, buildCopilotMarketplaceContract(), "marketplace");
       await expect(
         uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })
       ).rejects.toThrow(JsonSchemaValidationError);
@@ -291,13 +286,7 @@ describe("BuildNativeTree", () => {
     it("logs a warning for commands/ and rules/ directories and lists them in skippedSections", async () => {
       const v = makeValidator();
       const ap = makeAssetProvider();
-      const uc = new BuildNativeTree(
-        fs,
-        v,
-        ap,
-        logger,
-        new MarketplaceBuildStrategy(fs, v, ap, buildCopilotMarketplaceContract())
-      );
+      const uc = buildTree(fs, v, ap, logger, buildCopilotMarketplaceContract(), "marketplace");
       const result = await uc.execute({
         sourceDir: SOURCE_DIR,
         outDir: OUT_DIR,
@@ -523,17 +512,13 @@ describe("BuildNativeTree", () => {
         },
       };
       const ap = makeAssetProvider();
-      const uc = new BuildNativeTree(
+      const uc = buildTree(
         fs,
         failingMarketplaceValidator,
         ap,
         logger,
-        new MarketplaceBuildStrategy(
-          fs,
-          failingMarketplaceValidator,
-          ap,
-          buildCopilotMarketplaceContract()
-        )
+        buildCopilotMarketplaceContract(),
+        "marketplace"
       );
       await expect(
         uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })
@@ -563,12 +548,14 @@ describe("BuildNativeTree", () => {
     it("produces byte-identical output when a forced second run writes into the tree the first left", async () => {
       const v = makeValidator();
       const ap = makeAssetProvider();
-      const uc = new BuildNativeTree(
+      const uc = buildTree(
         fs,
         v,
         ap,
         logger,
-        new MarketplaceBuildStrategy(fs, v, ap, buildCopilotMarketplaceContract(), true)
+        buildCopilotMarketplaceContract(),
+        "marketplace",
+        true
       );
       const opts = { sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot };
       await uc.execute(opts);
@@ -587,14 +574,16 @@ describe("BuildNativeTree", () => {
 
 /** Each layout step reports what it wrote, and the use case is the only place those counts are
  * added up; a stub layout states them so the arithmetic is readable. */
-const countingStrategy: BuildOutputStrategy = {
-  preBuild: () => Promise.resolve(),
-  writePluginManifest: () => Promise.resolve(1),
-  writeAgents: () => Promise.resolve(2),
-  writeSkills: () => Promise.resolve(4),
-  writeHooks: () => Promise.resolve(8),
-  writeMcp: () => Promise.resolve(16),
-  postBuild: () => Promise.resolve(32),
+const LAYOUT = {
+  contract: buildCopilotMarketplaceContract(),
+  mode: "marketplace",
+  force: false,
+} as const;
+
+const countingSink: Pick<DiskSink, "prepare" | "writePlugin" | "finish"> = {
+  prepare: () => Promise.resolve(),
+  writePlugin: () => Promise.resolve(31),
+  finish: () => Promise.resolve(32),
 };
 
 describe("what a build reports having written", () => {
@@ -602,7 +591,7 @@ describe("what a build reports having written", () => {
     const fs = await makeSeededFs();
     const v = makeValidator();
     const ap = makeAssetProvider();
-    const uc = new BuildNativeTree(fs, v, ap, new CapturingLogger(), countingStrategy);
+    const uc = new BuildNativeTree(fs, new CapturingLogger(), countingSink, LAYOUT);
     const result = await uc.execute({
       sourceDir: SOURCE_DIR,
       outDir: OUT_DIR,
@@ -623,7 +612,7 @@ describe("what a build reports having written", () => {
     const logger = new CapturingLogger();
     const v = makeValidator();
     const ap = makeAssetProvider();
-    const uc = new BuildNativeTree(fs, v, ap, logger, countingStrategy);
+    const uc = new BuildNativeTree(fs, logger, countingSink, LAYOUT);
     const result = await uc.execute({
       sourceDir: SOURCE_DIR,
       outDir: OUT_DIR,

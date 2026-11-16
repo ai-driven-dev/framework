@@ -6,3 +6,8 @@ import { catalogOf } from "../../tools/testing/catalog-of.js";
 export function registeredManifestProbes() {
   return pluginManifestProbes(catalogOf());
 }
+
+/** The same places as plain paths, as the translation engine takes them. */
+export function registeredManifestPaths(): readonly string[] {
+  return registeredManifestProbes().map((probe) => probe.relativePath);
+}

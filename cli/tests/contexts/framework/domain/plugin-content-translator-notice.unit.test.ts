@@ -7,8 +7,9 @@ import { FileHash } from "../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 import { nativeOf } from "../../tools/testing/plugin-mode.js";
+import { registeredManifestPaths } from "../../translate/testing/registered-manifest-probes.js";
 
-const translator = new PluginContentEngine();
+const translator = new PluginContentEngine(registeredManifestPaths());
 
 const HOOKS_CONTENT = JSON.stringify({
   hooks: { SessionStart: [{ hooks: [{ type: "command", command: "node ./hooks/start.js" }] }] },

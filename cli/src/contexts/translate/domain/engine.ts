@@ -22,14 +22,8 @@ import type {
   ToolProfile,
 } from "../../tools/contract/tool-profile.js";
 import type { OutputFile } from "../contract/output-file.js";
+import { flatHooksBridgeFile } from "./flat-layout.js";
 import { rewritePluginRootToken } from "./formats/plugin-root-token-rewrite.js";
-
-const PLUGIN_MANIFEST_PATHS: readonly string[] = [
-  ".claude-plugin/plugin.json",
-  ".cursor-plugin/plugin.json",
-  ".codex-plugin/plugin.json",
-  "plugin.json",
-];
 
 interface TranslatedFile {
   relativePath: string;
@@ -54,6 +48,10 @@ function pathBelow(dir: string, path: string): string {
 }
 
 export class PluginContentEngine {
+  /** `manifestPaths` is every place a host keeps a plugin manifest, built once by composition from
+   * the registered profiles. */
+  constructor(private readonly manifestPaths: readonly string[]) {}
+
   translate(dist: PluginDistribution, toolConfig: ToolProfile): OutputFile[] {
     return this.translateWithComponentPaths(dist, toolConfig).files;
   }
@@ -142,7 +140,7 @@ export class PluginContentEngine {
   ): void {
     const manifestPath = plugins.manifestPath();
     if (manifestPath === null) return;
-    const sourceManifest = findSourceManifestContent(dist);
+    const sourceManifest = findSourceManifestContent(dist, this.manifestPaths);
     if (sourceManifest === null) return;
     result.push(this.makeFile(`${pluginRoot}${manifestPath}`, sourceManifest));
   }
@@ -171,7 +169,7 @@ export class PluginContentEngine {
     tool: AiToolProfile,
     cap: NativePluginAnswers
   ): TranslatedFile | null {
-    if (PLUGIN_MANIFEST_PATHS.includes(file.relativePath)) return null;
+    if (this.manifestPaths.includes(file.relativePath)) return null;
     if (file.relativePath === ".mcp.json") {
       const mcp = cap.mcpFile();
       return mcp.accepts ? { relativePath: mcp.relativePath, content: file.content } : null;
@@ -249,8 +247,8 @@ export class PluginContentEngine {
     return bridge === null ? scripts : [...scripts, bridge];
   }
 
-  // The install-time counterpart of the flat build strategy's own bridge write: `setup` and
-  // `plugin install` reach OpenCode through this translator, never through the build strategy,
+  // The install-time counterpart of the disk sink's own bridge write: `setup` and
+  // `plugin install` reach OpenCode through this translator, never through the disk sink,
   // so without this a plugin's hooks trigger only on a tree `translate` produced.
   private flatHooksBridgeFile(
     dist: PluginDistribution,
@@ -264,10 +262,13 @@ export class PluginContentEngine {
     const hasOwnBridge = dist.components.hooks.some(
       (f) => basename(f.relativePath) === bridge.skipIfSourceHas
     );
-    if (hasOwnBridge) return null;
-    const generated = bridge.generate(manifestFile.content, dist.manifest.name);
-    if (generated === null) return null;
-    return this.makeFile(bridge.path(dist.manifest.name), generated);
+    const file = flatHooksBridgeFile(
+      bridge,
+      manifestFile.content,
+      dist.manifest.name,
+      hasOwnBridge
+    );
+    return file === null ? null : this.makeFile(file.relativePath, file.content);
   }
 
   private collectHooksSkips(
@@ -362,8 +363,11 @@ function isComponentFile(relativePath: string): boolean {
   return top === "agents" || top === "commands" || top === "rules" || top === "skills";
 }
 
-function findSourceManifestContent(dist: PluginDistribution): string | null {
-  for (const path of PLUGIN_MANIFEST_PATHS) {
+function findSourceManifestContent(
+  dist: PluginDistribution,
+  manifestPaths: readonly string[]
+): string | null {
+  for (const path of manifestPaths) {
     const file = dist.files.find((f) => f.relativePath === path);
     if (file !== undefined) return file.content;
   }

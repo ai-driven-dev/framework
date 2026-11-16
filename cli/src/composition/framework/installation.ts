@@ -12,6 +12,7 @@ import {
 import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.js";
 import { BundledAssetProviderAdapter } from "../../contexts/installation/infrastructure/assets/asset-loader.js";
 import { TranslatePluginDistribution } from "../../contexts/translate/application/translate-distribution.js";
+import { pluginManifestProbes } from "../../contexts/translate/contract/plugin-format.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import { createFrameworkBuildUseCase } from "../translate.js";
@@ -77,7 +78,7 @@ export function wireInstallation(base: Base) {
     ensureBuilt: ensureBuiltMarketplaceUseCase,
     marketplaceRegistry,
     homedir,
-    translate: new TranslatePluginDistribution(),
+    translate: new TranslatePluginDistribution(pluginManifestProbes(tools)),
   };
   return {
     assetProvider,

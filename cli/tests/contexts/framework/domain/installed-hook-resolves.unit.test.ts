@@ -15,13 +15,14 @@ import { FileHash } from "../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 import { hooksAcceptanceOf, nativeOf } from "../../tools/testing/plugin-mode.js";
+import { registeredManifestPaths } from "../../translate/testing/registered-manifest-probes.js";
 
 /**
  * A hook command pointing at nothing installs clean and does nothing, so the command is read
  * back out of what was installed and the file it names is looked for.
  */
 
-const translator = new PluginContentEngine();
+const translator = new PluginContentEngine(registeredManifestPaths());
 
 const PLUGIN = "aidd-telemetry";
 const SOURCE_TOKEN = nativeOf(claude.plugins()).rootToken() ?? "";

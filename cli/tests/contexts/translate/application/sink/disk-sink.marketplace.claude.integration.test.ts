@@ -4,8 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { wireTools } from "../../../../../src/composition/tools.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { buildClaudeContract } from "../../../../../src/contexts/tools/domain/profiles/claude/build.js";
-import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
-import { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
+import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
 import { AjvSchemaValidatorAdapter } from "../../../../../src/contexts/translate/infrastructure/schema-validator.js";
 import {
   FrameworkPlaceholderInPluginError,
@@ -17,6 +16,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { buildTree } from "../../testing/build-tree.js";
 
 const REAL_FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework-real");
 // resolve(), never the bare literal: on Windows path.resolve prepends the current drive to a
@@ -37,8 +37,14 @@ function makeUseCase(
 ): BuildNativeTree {
   const av = new AjvSchemaValidatorAdapter();
   const ap = assetProvider ?? makeBundledAssetProvider();
-  const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildClaudeContract());
-  return new BuildNativeTree(fs, av, ap, logger ?? new CapturingLogger(), strategy);
+  return buildTree(
+    fs,
+    av,
+    ap,
+    logger ?? new CapturingLogger(),
+    buildClaudeContract(),
+    "marketplace"
+  );
 }
 
 async function makeSeededFsFromReal(): Promise<InMemoryFileAdapter> {
@@ -291,8 +297,7 @@ Body with [foo.md](./foo.md) ref.`);
         },
       };
       const ap = makeBundledAssetProvider();
-      const strategy = new MarketplaceBuildStrategy(fs, av, ap, buildClaudeContract());
-      const uc = new BuildNativeTree(fs, av, ap, new CapturingLogger(), strategy);
+      const uc = buildTree(fs, av, ap, new CapturingLogger(), buildClaudeContract(), "marketplace");
       await expect(
         uc.execute({ sourceDir: REAL_FIXTURE_DIR, outDir: OUT_DIR, target: TOOL.claude })
       ).rejects.toThrow(JsonSchemaValidationError);

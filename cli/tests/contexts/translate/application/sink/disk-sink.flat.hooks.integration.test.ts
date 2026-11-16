@@ -5,14 +5,14 @@ import { buildCodexFlatContract } from "../../../../../src/contexts/tools/domain
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildCursorFlatContract } from "../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
-import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
-import { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
+import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { buildTree } from "../../testing/build-tree.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative, so
@@ -45,15 +45,6 @@ function makeOpencodeAssetProvider(): AssetProvider {
   };
 }
 
-function makeIsDirectory(fs: InMemoryFileAdapter): (path: string) => Promise<boolean> {
-  // listUnder() normalizes the path first; a hand-rolled prefix scan would compare a
-  // native-separator outDir against the adapter's "/"-only keys and never match on Windows.
-  return async (path: string): Promise<boolean> => {
-    if (fs.has(path)) return false;
-    return fs.listUnder(path).length > 0;
-  };
-}
-
 async function makeSeededFs(): Promise<InMemoryFileAdapter> {
   const memFs = new InMemoryFileAdapter();
   await seedFromDirectory(memFs, FIXTURE_DIR, { useAbsolutePaths: true });
@@ -66,16 +57,7 @@ function makeStrategy(
   contractFn: () => ReturnType<typeof buildClaudeFlatContract>,
   logger = new CapturingLogger()
 ): BuildNativeTree {
-  const strategy = new FlatBuildStrategy(
-    memFs,
-    makeAssetProvider(),
-    contractFn(),
-    false,
-    ABS_OUT,
-    makeIsDirectory(memFs),
-    logger
-  );
-  return new BuildNativeTree(memFs, makeValidator(), makeAssetProvider(), logger, strategy);
+  return buildTree(memFs, makeValidator(), makeAssetProvider(), logger, contractFn(), "flat");
 }
 
 describe("claude flat hooks", () => {
@@ -182,21 +164,13 @@ describe("cursor flat hooks", () => {
       })
     );
     const logger = new CapturingLogger();
-    const strategy = new FlatBuildStrategy(
-      memFs,
-      makeAssetProvider(),
-      buildCursorFlatContract(),
-      false,
-      ABS_OUT,
-      makeIsDirectory(memFs),
-      logger
-    );
-    const useCase = new BuildNativeTree(
+    const useCase = buildTree(
       memFs,
       makeValidator(),
       makeAssetProvider(),
       logger,
-      strategy
+      buildCursorFlatContract(),
+      "flat"
     );
     await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.cursor });
     expect(logger.warnMessages.some((w) => w.includes("UnknownEvent"))).toBe(true);
@@ -311,21 +285,13 @@ describe("opencode flat hooks", () => {
   });
 
   async function runOpencodeBuild(): Promise<void> {
-    const strategy = new FlatBuildStrategy(
-      memFs,
-      makeOpencodeAssetProvider(),
-      buildOpencodeFlatContract(),
-      false,
-      ABS_OUT,
-      makeIsDirectory(memFs),
-      logger
-    );
-    const useCase = new BuildNativeTree(
+    const useCase = buildTree(
       memFs,
       makeValidator(),
       makeOpencodeAssetProvider(),
       logger,
-      strategy
+      buildOpencodeFlatContract(),
+      "flat"
     );
     await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.opencode });
   }

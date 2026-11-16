@@ -10,6 +10,14 @@ import type { Logger } from "../ports/logger.js";
 import { atomicWriteFile } from "./atomic-write.js";
 
 export class FileAdapter implements FileReader, FileWriter {
+  async isDirectory(path: string): Promise<boolean> {
+    try {
+      return (await stat(path)).isDirectory();
+    } catch {
+      return false;
+    }
+  }
+
   async isExecutable(path: string): Promise<boolean> {
     try {
       await access(path, constants.X_OK);

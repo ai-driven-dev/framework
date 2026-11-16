@@ -1,10 +1,11 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/composition/translate.js";
-import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
+import { DiskSink } from "../../../../../src/contexts/translate/application/sink/disk-sink.js";
 import { McpConfigError } from "../../../../../src/shared/domain/errors.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
+import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import {
   registeredCatalog,
@@ -43,6 +44,7 @@ function mcpTools(): ToolId[] {
 /** A plugin whose MCP server and hook name `paths`, each under the plugin root. */
 function seeded(paths: readonly string[]): InMemoryFileAdapter {
   const fs = new InMemoryFileAdapter({
+    [`${PLUGIN_SRC}/.claude-plugin/plugin.json`]: "{}",
     [`${PLUGIN_SRC}/agents/reviewer.md`]: "---\nname: reviewer\ndescription: Reads\n---\nBody.\n",
     [`${PLUGIN_SRC}/skills/plan/SKILL.md`]: "---\nname: plan\ndescription: Plans\n---\nBody.\n",
     [`${PLUGIN_SRC}/hooks/server.js`]: "console.log('up');\n",
@@ -65,13 +67,11 @@ function seeded(paths: readonly string[]): InMemoryFileAdapter {
 async function build(tool: ToolId, fs: InMemoryFileAdapter): Promise<void> {
   const contract = registeredFlatContract(tool);
   if (contract === null) throw new Error(`${tool} has no flat contract`);
-  const strategy = new FlatBuildStrategy(fs, ASSETS, contract, false, OUT, async () => true);
-  await strategy.preBuild(OUT, SOURCE);
-  await strategy.writeAgents(PLUGIN, PLUGIN_SRC);
-  await strategy.writeSkills(PLUGIN, PLUGIN_SRC);
-  await strategy.writeHooks(PLUGIN, PLUGIN_SRC);
-  await strategy.writeMcp(PLUGIN, PLUGIN_SRC);
-  await strategy.postBuild({ name: "m", plugins: [] }, [{ name: PLUGIN }], OUT);
+  const sink = new DiskSink(fs, { validate() {} }, ASSETS, new CapturingLogger());
+  const target = { contract, mode: "flat", force: false, sourceDir: SOURCE, outDir: OUT } as const;
+  await sink.prepare(target);
+  await sink.writePlugin(target, PLUGIN, PLUGIN_SRC);
+  await sink.finish(target, { name: "m", plugins: [] }, [{ name: PLUGIN }]);
 }
 
 function written(fs: InMemoryFileAdapter): Map<string, string> {

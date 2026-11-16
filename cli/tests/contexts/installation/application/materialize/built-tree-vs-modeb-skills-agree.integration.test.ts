@@ -11,6 +11,7 @@ import {
 } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredManifestPaths } from "../../../translate/testing/registered-manifest-probes.js";
 
 const PLUGINS_DIR = join(REPOSITORY_ROOT, "plugins");
 
@@ -41,7 +42,7 @@ function makeTelemetryLikeDist(): PluginDistribution {
 }
 
 function modeBSkillPaths(dist: PluginDistribution): string[] {
-  return new PluginContentEngine()
+  return new PluginContentEngine(registeredManifestPaths())
     .translate(dist, opencode)
     .map((f) => f.relativePath)
     .filter((p) => p.startsWith(".opencode/skills/"))

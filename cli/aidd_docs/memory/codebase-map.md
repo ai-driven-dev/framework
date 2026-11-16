@@ -121,7 +121,7 @@ src/
 │   │           └── ledger/    # the calls, their resolution, the branch snapshots and what an ingest left out
 │   ├── translate/    # canonical source to target-native content
 │   │   ├── application/
-│   │   │   └── strategies/
+│   │   │   └── sink/
 │   │   ├── contract/    # the build targets other contexts name
 │   │   ├── domain/
 │   │   │   └── formats/

@@ -1,10 +1,11 @@
 import type { BuiltMaterializationDeps } from "../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import { TranslatePluginDistribution } from "../../../src/contexts/translate/application/translate-distribution.js";
+import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { fakeEnsureBuiltMarketplace } from "./fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "./in-memory-marketplace-registry.js";
 
 /** The real translation: pure, so a test needs no fake of it. */
-export const translateDistribution = new TranslatePluginDistribution();
+export const translateDistribution = new TranslatePluginDistribution(registeredManifestProbes());
 
 /** The build and translation sources an AddPlugin reads, both faked or real-and-pure. */
 export function fakeBuildSources() {

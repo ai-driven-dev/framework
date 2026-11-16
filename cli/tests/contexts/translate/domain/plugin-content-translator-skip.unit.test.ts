@@ -5,8 +5,9 @@ import { PluginContentEngine } from "../../../../src/contexts/translate/domain/e
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredManifestPaths } from "../testing/registered-manifest-probes.js";
 
-const translator = new PluginContentEngine();
+const translator = new PluginContentEngine(registeredManifestPaths());
 
 const HOOKS_CONTENT = JSON.stringify({
   hooks: { PreToolUse: [{ hooks: [{ type: "command", command: "node ./hooks/pre.js" }] }] },

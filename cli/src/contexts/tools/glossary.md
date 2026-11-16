@@ -14,7 +14,7 @@ The language of the `tools` context. A name in the code means what this page say
 | Native delivery | The tool installs a plugin through its own plugin CLI | `nativeLayout`, `NativePluginAnswers` |
 | Flat delivery | The tool has the plugin's files injected into the project tree | `flatPlacement`, `FlatPluginAnswers` |
 | Unsupported delivery | The tool takes no plugin | `LayoutSection` (mode unsupported), `UnsupportedPluginAnswers` |
-| Build contract | What `aidd translate` needs of a tool to build its distribution: one artifact-symmetric declaration per build mode, read by translate's two mode-generic strategies | `ToolBuildContract`, `contract/build-contract.ts` |
+| Build contract | What `aidd translate` needs of a tool to build its distribution: one artifact-symmetric declaration per build mode, read by translate's disk sink | `ToolBuildContract`, `contract/build-contract.ts` |
 | Flat layout | Where a flat plugin's files land and how its hooks are loaded | `FlatLayout`, `FlatSkillLayout` |
 | Native activation | What a tool's own plugin CLI declares about itself: its binary, where it keeps its registries and cache, its settings file | `NativeActivation`, `NativeActivationAnswers` |
 | Conformance | The checks every registered profile must pass, run over the registration list, so a new tool is checked without a test of its own | `PROFILE_CHECKS`, `PROFILE_FILE_CHECKS`, `tests/contexts/tools/testing/` |

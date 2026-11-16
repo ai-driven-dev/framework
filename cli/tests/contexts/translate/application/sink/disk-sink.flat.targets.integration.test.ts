@@ -9,7 +9,10 @@ import { createFrameworkBuildUseCase } from "../../../../../src/composition/tran
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { HasherAdapter } from "../../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import type { FrameworkBuildTarget } from "../../../../../src/contexts/translate/contract/build-targets.js";
-import { FlatTargetExistsError } from "../../../../../src/shared/domain/errors.js";
+import {
+  FlatMergeTargetNotJsonError,
+  FlatTargetExistsError,
+} from "../../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
 import { FRAMEWORK_REAL } from "../../../../helpers/fixture-setup.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -187,6 +190,7 @@ describe("a flat build for antigravity into a hooks file that is not JSON", () =
 
     const build = buildFlat(TOOL.antigravity, { source: FRAMEWORK_REAL });
 
+    await expect(build).rejects.toBeInstanceOf(FlatMergeTargetNotJsonError);
     await expect(build).rejects.toThrow(".agents/hooks.json is not valid JSON");
     await expect(build).rejects.toThrow("left untouched");
     expect(await readFile(hooksFile, "utf-8")).toBe("{ not json");

@@ -8,6 +8,10 @@ import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
 import type { Hasher } from "../../../src/shared/ports/hasher.js";
 
 export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
+  async isDirectory(path: string): Promise<boolean> {
+    return !this.files.has(norm(path)) && this.directories.has(dirKey(path));
+  }
+
   /** No file here has a mode: none is ever executable, and no product code asks. */
   async isExecutable(_path: string): Promise<boolean> {
     return false;

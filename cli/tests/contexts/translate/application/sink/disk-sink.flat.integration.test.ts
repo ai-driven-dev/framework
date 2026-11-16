@@ -7,8 +7,8 @@ import type {
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
-import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
-import { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
+import { DiskSink } from "../../../../../src/contexts/translate/application/sink/disk-sink.js";
+import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FlatTargetExistsError,
@@ -21,11 +21,12 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { buildTree } from "../../testing/build-tree.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // resolve(): on Windows a leading "/" gets the current drive, as production's resolve(outDir) does.
 const ABS_OUT = resolve("/tmp/aidd-flat-test");
-// FlatBuildStrategy embeds this into written JSON content ("/"-joined, forward-slash - see
+// DiskSink embeds this into written JSON content ("/"-joined, forward-slash - see
 // resolveClaudeRootAbsolute), never ABS_OUT's own native separators.
 const ABS_OUT_IN_CONTENT = ABS_OUT.replace(/\\/g, "/");
 const PLUGIN = "aidd-test";
@@ -79,15 +80,6 @@ function makeAssetProvider(): AssetProvider {
   };
 }
 
-function makeIsDirectory(fs: InMemoryFileAdapter): (path: string) => Promise<boolean> {
-  // listUnder() normalizes before comparing; a hand-rolled prefix scan would compare a
-  // native-separator outDir against the adapter's "/"-only keys and never match on Windows.
-  return async (path: string): Promise<boolean> => {
-    if (fs.has(path)) return false;
-    return fs.listUnder(path).length > 0;
-  };
-}
-
 async function makeSeededFs(): Promise<InMemoryFileAdapter> {
   const memFs = new InMemoryFileAdapter();
   await seedFromDirectory(memFs, FIXTURE_DIR, { useAbsolutePaths: true });
@@ -102,15 +94,7 @@ function makeUseCase(
 ): BuildNativeTree {
   const v = validator ?? makeValidator();
   const ap = makeAssetProvider();
-  const strategy = new FlatBuildStrategy(
-    memFs,
-    ap,
-    buildCopilotFlatContract(),
-    force,
-    ABS_OUT,
-    makeIsDirectory(memFs)
-  );
-  return new BuildNativeTree(memFs, v, ap, new CapturingLogger(), strategy);
+  return buildTree(memFs, v, ap, new CapturingLogger(), buildCopilotFlatContract(), "flat", force);
 }
 
 describe("FlatOutputStrategy integration", () => {
@@ -236,15 +220,14 @@ describe("FlatOutputStrategy integration", () => {
       await seedFromDirectory(emptyFs, FIXTURE_DIR, { useAbsolutePaths: true });
       const v = makeValidator();
       const ap = makeAssetProvider();
-      const strategy = new FlatBuildStrategy(
+      const useCase = buildTree(
         emptyFs,
+        v,
         ap,
+        new CapturingLogger(),
         buildCopilotFlatContract(),
-        false,
-        "/nonexistent",
-        makeIsDirectory(emptyFs)
+        "flat"
       );
-      const useCase = new BuildNativeTree(emptyFs, v, ap, new CapturingLogger(), strategy);
       await expect(
         useCase.execute({ sourceDir: FIXTURE_DIR, outDir: "/nonexistent", target: TOOL.copilot })
       ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
@@ -256,15 +239,14 @@ describe("FlatOutputStrategy integration", () => {
       fileFs.setFile(ABS_OUT, "I am a file, not a directory");
       const v2 = makeValidator();
       const ap2 = makeAssetProvider();
-      const strategy = new FlatBuildStrategy(
+      const useCase = buildTree(
         fileFs,
+        v2,
         ap2,
+        new CapturingLogger(),
         buildCopilotFlatContract(),
-        false,
-        ABS_OUT,
-        makeIsDirectory(fileFs)
+        "flat"
       );
-      const useCase = new BuildNativeTree(fileFs, v2, ap2, new CapturingLogger(), strategy);
       await expect(
         useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.copilot })
       ).rejects.toBeInstanceOf(OutDirNotDirectoryError);
@@ -311,16 +293,25 @@ describe("FlatOutputStrategy integration", () => {
   describe("MCP key collision detection", () => {
     it("throws FlatTargetExistsError when two writeMcp calls produce the same prefixed key", async () => {
       const pluginSrc = `${FIXTURE_DIR}/plugins/${PLUGIN}`;
-      const strategy = new FlatBuildStrategy(
-        memFs,
+      const mcpOnly = new InMemoryFileAdapter({
+        [`${pluginSrc}/.claude-plugin/plugin.json`]: "{}",
+        [`${pluginSrc}/.mcp.json`]: memFs.getFile(`${pluginSrc}/.mcp.json`) ?? "",
+      });
+      const sink = new DiskSink(
+        mcpOnly,
+        makeValidator(),
         makeAssetProvider(),
-        buildCopilotFlatContract(),
-        false,
-        ABS_OUT,
-        makeIsDirectory(memFs)
+        new CapturingLogger()
       );
-      await strategy.writeMcp(PLUGIN, pluginSrc);
-      await expect(strategy.writeMcp(PLUGIN, pluginSrc)).rejects.toBeInstanceOf(
+      const target = {
+        contract: buildCopilotFlatContract(),
+        mode: "flat",
+        force: false,
+        sourceDir: FIXTURE_DIR,
+        outDir: ABS_OUT,
+      } as const;
+      await sink.writePlugin(target, PLUGIN, pluginSrc);
+      await expect(sink.writePlugin(target, PLUGIN, pluginSrc)).rejects.toBeInstanceOf(
         FlatTargetExistsError
       );
     });
@@ -329,15 +320,15 @@ describe("FlatOutputStrategy integration", () => {
   describe("opencode.json config emission", () => {
     function makeOpencodeUseCase(fs: InMemoryFileAdapter, force = false): BuildNativeTree {
       const ap = makeAssetProvider();
-      const strategy = new FlatBuildStrategy(
+      return buildTree(
         fs,
+        makeValidator(),
         ap,
+        new CapturingLogger(),
         buildOpencodeFlatContract(),
-        force,
-        ABS_OUT,
-        makeIsDirectory(fs)
+        "flat",
+        force
       );
-      return new BuildNativeTree(fs, makeValidator(), ap, new CapturingLogger(), strategy);
     }
 
     it("emits opencode.json with $schema + instructions and no mcp when no plugin ships MCP", async () => {
@@ -378,18 +369,16 @@ describe("FlatOutputStrategy integration", () => {
       // No shipped flat contract declares hooks unsupported any more, so this exercises
       // writeHooks's own unsupported branch on a contract built for that case.
       const base = buildOpencodeFlatContract();
-      const strategy = new FlatBuildStrategy(
+      const useCase = buildTree(
         memFs,
+        makeValidator(),
         makeAssetProvider(),
+        captLogger,
         { ...base, artifacts: { ...base.artifacts, hooks: { supported: false } } },
-        false,
-        ABS_OUT,
-        makeIsDirectory(memFs),
-        captLogger
+        "flat"
       );
-      const pluginSrc = `${FIXTURE_DIR}/plugins/${PLUGIN}`;
       memFs.setFile(`${FIXTURE_DIR}/plugins/${PLUGIN}/hooks/hooks.json`, '{"hooks":{}}');
-      await strategy.writeHooks(PLUGIN, pluginSrc);
+      await useCase.execute({ sourceDir: FIXTURE_DIR, outDir: ABS_OUT, target: TOOL.opencode });
       expect(captLogger.warnMessages.some((m) => m.includes("hooks"))).toBe(true);
       const hooksFiles = memFs
         .listAll()
@@ -436,19 +425,28 @@ function stubContract(over: Partial<ToolBuildContract> = {}): ToolBuildContract 
   };
 }
 
-function stubStrategy(
+function stubSink(memFs: InMemoryFileAdapter, logger?: CapturingLogger) {
+  return new DiskSink(memFs, makeValidator(), makeAssetProvider(), logger ?? new CapturingLogger());
+}
+
+function stubTarget(contract: ToolBuildContract, force = false) {
+  return { contract, mode: "flat", force, sourceDir: "/src", outDir: STUB_OUT } as const;
+}
+
+/** Builds the stub plugin whole: the source holds one artifact kind, so the count is that kind's. */
+async function stubWrite(
   memFs: InMemoryFileAdapter,
   contract: ToolBuildContract,
-  logger?: CapturingLogger
-): FlatBuildStrategy {
-  return new FlatBuildStrategy(
-    memFs,
-    makeAssetProvider(),
-    contract,
-    false,
-    STUB_OUT,
-    makeIsDirectory(memFs),
-    logger
+  logger?: CapturingLogger,
+  force = false
+): Promise<number> {
+  if (!memFs.has(`${STUB_PLUGIN_SRC}/.claude-plugin/plugin.json`)) {
+    memFs.setFile(`${STUB_PLUGIN_SRC}/.claude-plugin/plugin.json`, "{}");
+  }
+  return stubSink(memFs, logger).writePlugin(
+    stubTarget(contract, force),
+    "aidd-test",
+    STUB_PLUGIN_SRC
   );
 }
 
@@ -464,10 +462,7 @@ describe("the agents a flat layout writes", () => {
       [`${STUB_PLUGIN_SRC}/agents/reviewer.md`]: reviewer,
       [`${STUB_PLUGIN_SRC}/agents/notes.txt`]: "not an agent",
     });
-    const written = await stubStrategy(memFs, stubContract()).writeAgents(
-      "aidd-test",
-      STUB_PLUGIN_SRC
-    );
+    const written = await stubWrite(memFs, stubContract());
     expect(written).toBe(1);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({
       [`${STUB_OUT}/.stub/agents/aidd-test-reviewer.md`]:
@@ -485,7 +480,7 @@ describe("the agents a flat layout writes", () => {
         }),
       },
     });
-    await stubStrategy(memFs, contract).writeAgents("aidd-test", STUB_PLUGIN_SRC);
+    await stubWrite(memFs, contract);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({
       [`${STUB_OUT}/.stub/agents/aidd-test-reviewer.md`]: `aidd-test:reviewer.md\n${reviewer}`,
     });
@@ -496,7 +491,7 @@ describe("the agents a flat layout writes", () => {
     const contract = stubContract({
       artifacts: { ...stubContract().artifacts, agents: { supported: false } },
     });
-    expect(await stubStrategy(memFs, contract).writeAgents("aidd-test", STUB_PLUGIN_SRC)).toBe(0);
+    expect(await stubWrite(memFs, contract)).toBe(0);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({});
   });
 
@@ -504,9 +499,7 @@ describe("the agents a flat layout writes", () => {
     const memFs = new InMemoryFileAdapter({
       [`${STUB_PLUGIN_SRC}/agents/nested/reviewer.md`]: "See @{{TOOLS}}/x.md\n",
     });
-    await expect(
-      stubStrategy(memFs, stubContract()).writeAgents("aidd-test", STUB_PLUGIN_SRC)
-    ).rejects.toThrow(
+    await expect(stubWrite(memFs, stubContract())).rejects.toThrow(
       new FrameworkPlaceholderInPluginError("aidd-test", "agents/nested/reviewer.md")
     );
   });
@@ -525,9 +518,7 @@ describe("the skills a flat layout writes", () => {
 
   it("rewrites a skill markdown's own links and carries every other file as it is", async () => {
     const memFs = skillFs();
-    expect(
-      await stubStrategy(memFs, stubContract()).writeSkills("aidd-test", STUB_PLUGIN_SRC)
-    ).toBe(2);
+    expect(await stubWrite(memFs, stubContract())).toBe(2);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({
       [`${STUB_OUT}/.stub/skills/aidd-test/hello/SKILL.md`]:
         "---\nname: hello\n---\n\nHello, see [reference.json](./reference.json)\n",
@@ -545,7 +536,7 @@ describe("the skills a flat layout writes", () => {
         }),
       },
     });
-    await stubStrategy(memFs, contract).writeSkills("aidd-test", STUB_PLUGIN_SRC);
+    await stubWrite(memFs, contract);
     expect(memFs.getFile(`${STUB_OUT}/.stub/skills/aidd-test-hello/SKILL.md`)).toBe(
       "---\nname: 'aidd-test-hello'\n---\n\nHello, see [reference.json](./reference.json)\n"
     );
@@ -559,7 +550,7 @@ describe("the skills a flat layout writes", () => {
         skills: supportedArtifact((_plugin, rel) => basename(rel), { rewriteSkillName: true }),
       },
     });
-    await stubStrategy(memFs, contract).writeSkills("aidd-test", STUB_PLUGIN_SRC);
+    await stubWrite(memFs, contract);
     expect(memFs.getFile(`${STUB_OUT}/SKILL.md`)).toBe(
       "---\nname: hello\n---\n\nHello, see [reference.json](./reference.json)\n"
     );
@@ -570,7 +561,7 @@ describe("the skills a flat layout writes", () => {
     const contract = stubContract({
       artifacts: { ...stubContract().artifacts, skills: { supported: false } },
     });
-    expect(await stubStrategy(memFs, contract).writeSkills("aidd-test", STUB_PLUGIN_SRC)).toBe(0);
+    expect(await stubWrite(memFs, contract)).toBe(0);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({});
   });
 });
@@ -605,15 +596,7 @@ describe("the hooks a flat layout writes", () => {
   it("writes the plugin's own hooks file from nothing, and every script beside it", async () => {
     const memFs = hooksFs();
     memFs.setFile(`${STUB_OUT}/.stub/hooks/aidd-test.hooks.json`, "stale");
-    const strategy = new FlatBuildStrategy(
-      memFs,
-      makeAssetProvider(),
-      withHooks(fileArtifact(false)),
-      true,
-      STUB_OUT,
-      makeIsDirectory(memFs)
-    );
-    expect(await strategy.writeHooks("aidd-test", STUB_PLUGIN_SRC)).toBe(2);
+    expect(await stubWrite(memFs, withHooks(fileArtifact(false)), undefined, true)).toBe(2);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({
       [`${STUB_OUT}/.stub/hooks/aidd-test.hooks.json`]: `none+aidd-test:${hooksJson}`,
       [`${STUB_OUT}/.stub/hooks/aidd-test/lib/check.sh`]: "#!/bin/sh\n",
@@ -623,37 +606,29 @@ describe("the hooks a flat layout writes", () => {
   it("refuses to overwrite the plugin's own hooks file unless forced", async () => {
     const memFs = hooksFs();
     memFs.setFile(`${STUB_OUT}/.stub/hooks/aidd-test.hooks.json`, "stale");
-    await expect(
-      stubStrategy(memFs, withHooks(fileArtifact(false))).writeHooks("aidd-test", STUB_PLUGIN_SRC)
-    ).rejects.toThrow(FlatTargetExistsError);
+    await expect(stubWrite(memFs, withHooks(fileArtifact(false)))).rejects.toThrow(
+      FlatTargetExistsError
+    );
   });
 
   it("merges into the shared file the layout names, reporting what the merge said", async () => {
     const memFs = hooksFs();
     memFs.setFile(`${STUB_OUT}/.stub/settings.json`, "{}");
     const logger = new CapturingLogger();
-    await stubStrategy(memFs, withHooks(fileArtifact(true)), logger).writeHooks(
-      "aidd-test",
-      STUB_PLUGIN_SRC
-    );
+    await stubWrite(memFs, withHooks(fileArtifact(true)), logger);
     expect(memFs.getFile(`${STUB_OUT}/.stub/settings.json`)).toBe(`{}+aidd-test:${hooksJson}`);
     expect(logger.warnMessages).toEqual(["one event has no equivalent"]);
   });
 
   it("merges into a shared file not written yet as into nothing", async () => {
     const memFs = hooksFs();
-    await stubStrategy(memFs, withHooks(fileArtifact(true))).writeHooks(
-      "aidd-test",
-      STUB_PLUGIN_SRC
-    );
+    await stubWrite(memFs, withHooks(fileArtifact(true)));
     expect(memFs.getFile(`${STUB_OUT}/.stub/settings.json`)).toBe(`none+aidd-test:${hooksJson}`);
   });
 
   it("writes only the scripts for a layout whose tool reads no hooks file", async () => {
     const memFs = hooksFs();
-    expect(await stubStrategy(memFs, stubContract()).writeHooks("aidd-test", STUB_PLUGIN_SRC)).toBe(
-      1
-    );
+    expect(await stubWrite(memFs, stubContract())).toBe(1);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({
       [`${STUB_OUT}/.stub/hooks/aidd-test/lib/check.sh`]: "#!/bin/sh\n",
     });
@@ -674,7 +649,7 @@ describe("the hooks a flat layout writes", () => {
         }),
       },
     });
-    expect(await stubStrategy(memFs, contract).writeHooks("aidd-test", STUB_PLUGIN_SRC)).toBe(2);
+    expect(await stubWrite(memFs, contract)).toBe(2);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({
       [`${STUB_OUT}/.stub/plugin/aidd-test.js`]: `bridge(aidd-test):${hooksJson}`,
       [`${STUB_OUT}/.stub/hooks/aidd-test/lib/check.sh`]: "#!/bin/sh\n",
@@ -696,7 +671,7 @@ describe("the hooks a flat layout writes", () => {
         }),
       },
     });
-    expect(await stubStrategy(memFs, contract).writeHooks("aidd-test", STUB_PLUGIN_SRC)).toBe(1);
+    expect(await stubWrite(memFs, contract)).toBe(1);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({
       [`${STUB_OUT}/.stub/hooks/aidd-test/lib/check.sh`]: "#!/bin/sh\n",
     });
@@ -718,15 +693,13 @@ describe("the hooks a flat layout writes", () => {
         }),
       },
     });
-    expect(await stubStrategy(memFs, contract).writeHooks("aidd-test", STUB_PLUGIN_SRC)).toBe(2);
+    expect(await stubWrite(memFs, contract)).toBe(2);
     expect(memFs.has(`${STUB_OUT}/.stub/plugin/aidd-test.js`)).toBe(false);
   });
 
   it("writes nothing for a plugin shipping no hooks manifest", async () => {
-    const memFs = new InMemoryFileAdapter({ [`${STUB_PLUGIN_SRC}/skills/hello/SKILL.md`]: "# H" });
-    expect(await stubStrategy(memFs, stubContract()).writeHooks("aidd-test", STUB_PLUGIN_SRC)).toBe(
-      0
-    );
+    const memFs = new InMemoryFileAdapter({ [`${STUB_PLUGIN_SRC}/README.md`]: "# H" });
+    expect(await stubWrite(memFs, stubContract())).toBe(0);
     expect(writtenUnder(memFs, STUB_OUT)).toEqual({});
   });
 
@@ -736,34 +709,18 @@ describe("the hooks a flat layout writes", () => {
     const contract = stubContract({
       artifacts: { ...stubContract().artifacts, hooks: { supported: false } },
     });
-    expect(
-      await stubStrategy(memFs, contract, logger).writeHooks("aidd-test", STUB_PLUGIN_SRC)
-    ).toBe(0);
+    expect(await stubWrite(memFs, contract, logger)).toBe(0);
     expect(logger.warnMessages).toEqual([
       "Skipping hooks/ in plugin 'aidd-test' (hooks not supported for this target).",
     ]);
   });
-
-  it("skips them silently where the build was given nobody to tell", async () => {
-    const memFs = hooksFs();
-    const contract = stubContract({
-      artifacts: { ...stubContract().artifacts, hooks: { supported: false } },
-    });
-    expect(await stubStrategy(memFs, contract).writeHooks("aidd-test", STUB_PLUGIN_SRC)).toBe(0);
-    expect(writtenUnder(memFs, STUB_OUT)).toEqual({});
-  });
 });
 
 describe("what a flat layout writes once every plugin is built", () => {
-  it("writes no per-plugin manifest", async () => {
-    const memFs = new InMemoryFileAdapter({});
-    expect(await stubStrategy(memFs, stubContract()).writePluginManifest()).toBe(0);
-  });
-
   it("counts nothing where the layout emits no configuration of its own", async () => {
     const memFs = new InMemoryFileAdapter({});
     expect(
-      await stubStrategy(memFs, stubContract()).postBuild({ name: "m", plugins: [] }, [], STUB_OUT)
+      await stubSink(memFs).finish(stubTarget(stubContract()), { name: "m", plugins: [] }, [])
     ).toBe(0);
   });
 
@@ -788,12 +745,12 @@ describe("what a flat layout writes once every plugin is built", () => {
         },
       },
     });
-    const strategy = stubStrategy(memFs, contract);
-    await strategy.preBuild(STUB_OUT, "/src");
+    const sink = stubSink(memFs);
+    await sink.prepare(stubTarget(contract));
     const built = [{ name: "aidd-test" }, { name: "aidd-bare" }];
     const reads = vi.spyOn(memFs, "readFile");
 
-    expect(await strategy.postBuild({ name: "m", plugins: [] }, built, STUB_OUT)).toBe(2);
+    expect(await sink.finish(stubTarget(contract), { name: "m", plugins: [] }, built)).toBe(2);
     expect(seen).toStrictEqual([
       {
         builtPlugins: ["aidd-test", "aidd-bare"],

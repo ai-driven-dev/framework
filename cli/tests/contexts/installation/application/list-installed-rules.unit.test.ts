@@ -20,6 +20,7 @@ function readerOf(files: Readonly<Record<string, string>>): FileReader {
     fileExists: unused("fileExists"),
     readFileHash: unused("readFileHash"),
     isExecutable: unused("isExecutable"),
+    isDirectory: unused("isDirectory"),
     realpath: unused("realpath"),
   };
 }

@@ -6,12 +6,13 @@ import { buildClaudeFlatContract } from "../../../src/contexts/tools/domain/prof
 import { buildCodexFlatContract } from "../../../src/contexts/tools/domain/profiles/codex/build.js";
 import { buildCopilotFlatContract } from "../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildCursorFlatContract } from "../../../src/contexts/tools/domain/profiles/cursor/build.js";
-import { FlatBuildStrategy } from "../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
+import { DiskSink } from "../../../src/contexts/translate/application/sink/disk-sink.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
 } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AssetProvider } from "../../../src/shared/ports/asset-provider.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { registeredAiProfile, TOOL } from "./testing/catalog-of.js";
 
@@ -53,6 +54,7 @@ const unused: AssetProvider = {
 
 function sourceFs(seed: Record<string, string>): InMemoryFileAdapter {
   return new InMemoryFileAdapter({
+    [`${SRC}/.claude-plugin/plugin.json`]: "{}",
     [`${SRC}/hooks/hooks.json`]: PLUGIN_HOOKS,
     ...Object.fromEntries(Object.entries(SCRIPTS).map(([rel, body]) => [`${SRC}/${rel}`, body])),
     ...seed,
@@ -64,8 +66,12 @@ async function flatMerge(
   seed: Record<string, string>
 ): Promise<InMemoryFileAdapter> {
   const fs = sourceFs(seed);
-  const strategy = new FlatBuildStrategy(fs, unused, contract, true, OUT, async () => true);
-  await strategy.writeHooks(PLUGIN, SRC);
+  const sink = new DiskSink(fs, { validate() {} }, unused, new CapturingLogger());
+  await sink.writePlugin(
+    { contract, mode: "flat", force: true, sourceDir: "/source", outDir: OUT },
+    PLUGIN,
+    SRC
+  );
   return fs;
 }
 

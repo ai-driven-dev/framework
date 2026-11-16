@@ -74,7 +74,7 @@ describe("AddPlugin OpenCode hooks install (Phase 7)", () => {
 });
 
 // `plugin install` and `setup` reach OpenCode through ContentTranslator, never through
-// FlatBuildStrategy, so without flatHooksBridge there the namespaced script triggers nothing.
+// DiskSink, so without flatHooksBridge there the namespaced script triggers nothing.
 describe("AddPlugin OpenCode event bridge (Lot B)", () => {
   it("generates .opencode/plugin/<plugin>-hooks.js for a plugin's mapped hook", async () => {
     const { deps } = await installSamplePlugin();

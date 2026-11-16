@@ -3,14 +3,13 @@
 `aidd translate <source> --to <target> --out <dir>` translates the Claude-format framework into
 a tool-native plugin tree (`--as marketplace`, the default) or a project workspace
 (`--as flat`). A tool's build behavior is declared by **one `ToolBuildContract`**, never by
-writing a new strategy class. Two mode-generic orchestrators in `translate` consume it:
+writing a new sink class. One `DiskSink` in `translate` consumes it, for both modes:
 
-- `MarketplaceBuildStrategy(contract)` — emits the tool's marketplace plugin tree + catalog.
-- `FlatBuildStrategy(contract)` — materializes content into a project workspace (per-plugin namespace).
+- marketplace mode emits the tool's plugin tree and catalog.
+- flat mode materializes content into a project workspace (per-plugin namespace).
 
-Both implement the shared `BuildOutputStrategy` interface and iterate artifact kinds
-**generically** — this is the `translate → tools` edge in practice: the orchestrator lives in
-`translate`, reads a contract `tools` declared, and contains zero knowledge of any one tool.
+It iterates artifact kinds **generically** — this is the `translate → tools` edge in practice: the
+sink lives in `translate`, reads a contract `tools` declared, and contains zero knowledge of any one tool.
 
 ## Artifact symmetry (the core rule)
 

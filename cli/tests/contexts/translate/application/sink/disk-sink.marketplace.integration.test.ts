@@ -3,16 +3,18 @@ import { describe, expect, it } from "vitest";
 import type {
   ArtifactContract,
   PluginPresence,
+  SourceMarketplaceRef,
   SourcePluginEntryRef,
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
-import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
+import { DiskSink } from "../../../../../src/contexts/translate/application/sink/disk-sink.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   JsonSchemaValidationError,
   MarketplaceOutDirNotEmptyError,
 } from "../../../../../src/shared/domain/errors.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
+import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 
 const PLUGIN = "aidd-test";
@@ -66,18 +68,35 @@ function stubContract(over: Partial<ToolBuildContract> = {}): ToolBuildContract 
   };
 }
 
-function strategyFor(
+/** One marketplace build of the stub plugin, step by step, over the real sink. */
+function sinkFor(
   fs: InMemoryFileAdapter,
   contract: ToolBuildContract,
   options: { force?: boolean; validator?: JsonSchemaValidator; assetProvider?: AssetProvider } = {}
-): MarketplaceBuildStrategy {
-  return new MarketplaceBuildStrategy(
+) {
+  const sink = new DiskSink(
     fs,
     options.validator ?? passingValidator,
     options.assetProvider ?? assetProviderNaming([]),
-    contract,
-    options.force
+    new CapturingLogger()
   );
+  const target = {
+    contract,
+    mode: "marketplace",
+    force: options.force ?? false,
+    sourceDir: "/src",
+    outDir: OUT_DIR,
+  } as const;
+  return {
+    prepare: () => sink.prepare(target),
+    write: () => {
+      const manifest = `${PLUGIN_SRC}/.claude-plugin/plugin.json`;
+      if (!fs.has(manifest)) fs.setFile(manifest, "{}");
+      return sink.writePlugin(target, PLUGIN, PLUGIN_SRC);
+    },
+    finish: (source: SourceMarketplaceRef, built: { name: string }[]) =>
+      sink.finish(target, source, built),
+  };
 }
 
 function writtenUnder(fs: InMemoryFileAdapter, dir: string): Record<string, string | undefined> {
@@ -88,28 +107,24 @@ describe("preparing a marketplace output directory", () => {
   it("accepts a directory holding no entry yet", async () => {
     const fs = new InMemoryFileAdapter();
     await fs.createDirectory(OUT_DIR);
-    await expect(strategyFor(fs, stubContract()).preBuild(OUT_DIR)).resolves.toBeUndefined();
+    await expect(sinkFor(fs, stubContract()).prepare()).resolves.toBeUndefined();
   });
 
   it("refuses a directory that already holds something, naming it", async () => {
     const fs = new InMemoryFileAdapter({ [`${OUT_DIR}/old.json`]: "{}" });
-    await expect(strategyFor(fs, stubContract()).preBuild(OUT_DIR)).rejects.toThrow(
+    await expect(sinkFor(fs, stubContract()).prepare()).rejects.toThrow(
       new MarketplaceOutDirNotEmptyError(OUT_DIR)
     );
   });
 
   it("writes into a directory that already holds something when forced", async () => {
     const fs = new InMemoryFileAdapter({ [`${OUT_DIR}/old.json`]: "{}" });
-    await expect(
-      strategyFor(fs, stubContract(), { force: true }).preBuild(OUT_DIR)
-    ).resolves.toBeUndefined();
+    await expect(sinkFor(fs, stubContract(), { force: true }).prepare()).resolves.toBeUndefined();
   });
 
   it("accepts a directory that is not there yet when forced", async () => {
     const fs = new InMemoryFileAdapter();
-    await expect(
-      strategyFor(fs, stubContract(), { force: true }).preBuild(OUT_DIR)
-    ).resolves.toBeUndefined();
+    await expect(sinkFor(fs, stubContract(), { force: true }).prepare()).resolves.toBeUndefined();
   });
 
   it("writes its own output and keeps the file it did not write when forced", async () => {
@@ -117,10 +132,10 @@ describe("preparing a marketplace output directory", () => {
       [`${OUT_DIR}/keep.txt`]: "keepme",
       [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "# Hello\n",
     });
-    const strategy = strategyFor(fs, stubContract(), { force: true });
+    const strategy = sinkFor(fs, stubContract(), { force: true });
 
-    await strategy.preBuild(OUT_DIR);
-    await strategy.writeSkills(PLUGIN, PLUGIN_SRC, OUT_DIR);
+    await strategy.prepare();
+    await strategy.write();
 
     expect(fs.getFile(`${OUT_DIR}/keep.txt`)).toBe("keepme");
     expect(fs.getFile(`${PLUGIN_OUT}/skills/hello/SKILL.md`)).toBe("# Hello\n");
@@ -143,22 +158,18 @@ describe("the plugin manifest a marketplace layout synthesizes", () => {
       [`${PLUGIN_SRC}/.claude-plugin/plugin.json`]: sourceManifest,
       [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "# Hello",
     });
-    expect(
-      await strategyFor(fs, manifestContract()).writePluginManifest(PLUGIN, PLUGIN_SRC, OUT_DIR)
-    ).toBe(1);
-    expect(writtenUnder(fs, OUT_DIR)).toEqual({
-      [`${PLUGIN_OUT}/.stub-plugin/plugin.json`]:
-        '{\n  "name": "aidd-test",\n  "version": "1.0.0",\n  "skills": [\n    "hello"\n  ]\n}\n',
-    });
+    // The manifest and the one skill it lists.
+    expect(await sinkFor(fs, manifestContract()).write()).toBe(2);
+    expect(fs.getFile(`${PLUGIN_OUT}/.stub-plugin/plugin.json`)).toBe(
+      '{\n  "name": "aidd-test",\n  "version": "1.0.0",\n  "skills": [\n    "hello"\n  ]\n}\n'
+    );
   });
 
   it("writes none for a layout that synthesizes none", async () => {
     const fs = new InMemoryFileAdapter({
       [`${PLUGIN_SRC}/.claude-plugin/plugin.json`]: sourceManifest,
     });
-    expect(
-      await strategyFor(fs, stubContract()).writePluginManifest(PLUGIN, PLUGIN_SRC, OUT_DIR)
-    ).toBe(0);
+    expect(await sinkFor(fs, stubContract()).write()).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
   });
 
@@ -167,9 +178,7 @@ describe("the plugin manifest a marketplace layout synthesizes", () => {
       [`${PLUGIN_SRC}/.claude-plugin/plugin.json`]: sourceManifest,
     });
     const contract = manifestContract({ manifestFileRelative: null });
-    expect(await strategyFor(fs, contract).writePluginManifest(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(
-      0
-    );
+    expect(await sinkFor(fs, contract).write()).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
   });
 
@@ -178,18 +187,22 @@ describe("the plugin manifest a marketplace layout synthesizes", () => {
       [`${PLUGIN_SRC}/.claude-plugin/plugin.json`]: sourceManifest,
     });
     const loaded: string[] = [];
+    // The source manifest is validated first and must pass: only what the layout synthesized
+    // (it alone carries `skills`) is refused.
     const refusing: JsonSchemaValidator = {
-      validate(_schema: object, _data: unknown): void {
-        throw new JsonSchemaValidationError(["refused"]);
+      validate(_schema: object, data: unknown): void {
+        if (typeof data === "object" && data !== null && "skills" in data) {
+          throw new JsonSchemaValidationError(["refused"]);
+        }
       },
     };
     await expect(
-      strategyFor(fs, manifestContract({ manifestSchemaName: "plugin-manifest" }), {
+      sinkFor(fs, manifestContract({ manifestSchemaName: "plugin-manifest" }), {
         validator: refusing,
         assetProvider: assetProviderNaming(loaded),
-      }).writePluginManifest(PLUGIN, PLUGIN_SRC, OUT_DIR)
+      }).write()
     ).rejects.toThrow(JsonSchemaValidationError);
-    expect(loaded).toEqual(["plugin-manifest"]);
+    expect(loaded).toEqual(["plugin-manifest", "plugin-manifest"]);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
   });
 });
@@ -208,7 +221,7 @@ describe("the agents a marketplace layout writes", () => {
         agents: supportedArtifact((plugin, rel) => `${plugin}/${rel}`),
       },
     });
-    expect(await strategyFor(fs, contract).writeAgents(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(1);
+    expect(await sinkFor(fs, contract).write()).toBe(1);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({
       [`${PLUGIN_OUT}/${PLUGIN}/agents/reviewer.md`]: reviewer,
     });
@@ -224,7 +237,7 @@ describe("the agents a marketplace layout writes", () => {
         }),
       },
     });
-    await strategyFor(fs, contract).writeAgents(PLUGIN, PLUGIN_SRC, OUT_DIR);
+    await sinkFor(fs, contract).write();
     expect(writtenUnder(fs, OUT_DIR)).toEqual({
       [`${PLUGIN_OUT}/agents/reviewer.toml`]: `aidd-test:reviewer.md\n${reviewer}`,
     });
@@ -235,7 +248,7 @@ describe("the agents a marketplace layout writes", () => {
     const contract = stubContract({
       artifacts: { ...stubContract().artifacts, agents: { supported: false } },
     });
-    expect(await strategyFor(fs, contract).writeAgents(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(0);
+    expect(await sinkFor(fs, contract).write()).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
   });
 });
@@ -246,7 +259,7 @@ describe("the skills a marketplace layout writes", () => {
       [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "# Hello\n",
       [`${PLUGIN_SRC}/skills/hello/reference.json`]: "{}\n",
     });
-    expect(await strategyFor(fs, stubContract()).writeSkills(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(2);
+    expect(await sinkFor(fs, stubContract()).write()).toBe(2);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({
       [`${PLUGIN_OUT}/skills/hello/SKILL.md`]: "# Hello\n",
       [`${PLUGIN_OUT}/skills/hello/reference.json`]: "{}\n",
@@ -258,7 +271,7 @@ describe("the skills a marketplace layout writes", () => {
     const contract = stubContract({
       artifacts: { ...stubContract().artifacts, skills: { supported: false } },
     });
-    expect(await strategyFor(fs, contract).writeSkills(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(0);
+    expect(await sinkFor(fs, contract).write()).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
   });
 });
@@ -277,7 +290,7 @@ describe("the hooks a marketplace layout writes", () => {
   it("keeps the whole hooks tree and rewrites the plugin root the layout expands", async () => {
     const fs = hooksFs();
     const contract = stubContract({ pluginRootToken: STUB_ROOT_TOKEN });
-    expect(await strategyFor(fs, contract).writeHooks(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(2);
+    expect(await sinkFor(fs, contract).write()).toBe(2);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({
       [`${PLUGIN_OUT}/hooks/hooks.json`]: `{ "command": "${STUB_ROOT_TOKEN}/hooks/check.sh" }`,
       [`${PLUGIN_OUT}/hooks/lib/check.sh`]: `#!/bin/sh\nexec "${STUB_ROOT_TOKEN}/hooks/lib/run.sh"\n`,
@@ -286,7 +299,7 @@ describe("the hooks a marketplace layout writes", () => {
 
   it("leaves the plugin root alone for a layout that expands none", async () => {
     const fs = hooksFs();
-    expect(await strategyFor(fs, stubContract()).writeHooks(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(2);
+    expect(await sinkFor(fs, stubContract()).write()).toBe(2);
     expect(fs.getFile(`${PLUGIN_OUT}/hooks/hooks.json`)).toBe(hooksJson);
   });
 
@@ -300,7 +313,7 @@ describe("the hooks a marketplace layout writes", () => {
         }),
       },
     });
-    await strategyFor(fs, contract).writeHooks(PLUGIN, PLUGIN_SRC, OUT_DIR);
+    await sinkFor(fs, contract).write();
     expect(writtenUnder(fs, OUT_DIR)).toEqual({
       [`${PLUGIN_OUT}/hooks/hooks.json`]: `aidd-test:hooks.json\n${hooksJson}`,
       [`${PLUGIN_OUT}/hooks/lib/check.sh`]: script,
@@ -308,8 +321,8 @@ describe("the hooks a marketplace layout writes", () => {
   });
 
   it("writes none for a plugin shipping no hooks directory", async () => {
-    const fs = new InMemoryFileAdapter({ [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "# Hello\n" });
-    expect(await strategyFor(fs, stubContract()).writeHooks(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(0);
+    const fs = new InMemoryFileAdapter({ [`${PLUGIN_SRC}/README.md`]: "# Plugin\n" });
+    expect(await sinkFor(fs, stubContract()).write()).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
   });
 });
@@ -320,7 +333,7 @@ describe("the mcp declaration a marketplace layout writes", () => {
   it("writes it at the plugin root with the plugin root the layout expands", async () => {
     const fs = new InMemoryFileAdapter({ [`${PLUGIN_SRC}/.mcp.json`]: mcpJson });
     const contract = stubContract({ pluginRootToken: STUB_ROOT_TOKEN });
-    expect(await strategyFor(fs, contract).writeMcp(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(1);
+    expect(await sinkFor(fs, contract).write()).toBe(1);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({
       [`${PLUGIN_OUT}/.mcp.json`]: `{ "command": "${STUB_ROOT_TOKEN}/bin/server.js" }`,
     });
@@ -336,13 +349,13 @@ describe("the mcp declaration a marketplace layout writes", () => {
         }),
       },
     });
-    await strategyFor(fs, contract).writeMcp(PLUGIN, PLUGIN_SRC, OUT_DIR);
+    await sinkFor(fs, contract).write();
     expect(fs.getFile(`${PLUGIN_OUT}/.mcp.json`)).toBe(`aidd-test:.mcp.json\n${mcpJson}`);
   });
 
   it("writes none for a plugin declaring none", async () => {
-    const fs = new InMemoryFileAdapter({ [`${PLUGIN_SRC}/skills/hello/SKILL.md`]: "# Hello\n" });
-    expect(await strategyFor(fs, stubContract()).writeMcp(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(0);
+    const fs = new InMemoryFileAdapter({ [`${PLUGIN_SRC}/README.md`]: "# Plugin\n" });
+    expect(await sinkFor(fs, stubContract()).write()).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
   });
 
@@ -351,7 +364,7 @@ describe("the mcp declaration a marketplace layout writes", () => {
     const contract = stubContract({
       artifacts: { ...stubContract().artifacts, mcp: { supported: false } },
     });
-    expect(await strategyFor(fs, contract).writeMcp(PLUGIN, PLUGIN_SRC, OUT_DIR)).toBe(0);
+    expect(await sinkFor(fs, contract).write()).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
   });
 });
@@ -388,11 +401,7 @@ describe("the catalog a marketplace layout writes once every plugin is built", (
     const seen: { name: string; pluginSrc: string; srcEntry: SourcePluginEntryRef | undefined }[] =
       [];
     expect(
-      await strategyFor(fs, catalogContract(seen, null)).postBuild(
-        sourceMarketplace,
-        [{ name: PLUGIN }],
-        OUT_DIR
-      )
+      await sinkFor(fs, catalogContract(seen, null)).finish(sourceMarketplace, [{ name: PLUGIN }])
     ).toBe(1);
     expect(seen).toEqual([
       {
@@ -411,11 +420,9 @@ describe("the catalog a marketplace layout writes once every plugin is built", (
     const fs = new InMemoryFileAdapter({});
     const seen: { name: string; pluginSrc: string; srcEntry: SourcePluginEntryRef | undefined }[] =
       [];
-    await strategyFor(fs, catalogContract(seen, null)).postBuild(
-      sourceMarketplace,
-      [{ name: "other-plugin" }],
-      OUT_DIR
-    );
+    await sinkFor(fs, catalogContract(seen, null)).finish(sourceMarketplace, [
+      { name: "other-plugin" },
+    ]);
     expect(seen).toEqual([
       {
         name: "other-plugin",
@@ -434,10 +441,10 @@ describe("the catalog a marketplace layout writes once every plugin is built", (
       },
     };
     await expect(
-      strategyFor(fs, catalogContract([], "marketplace"), {
+      sinkFor(fs, catalogContract([], "marketplace"), {
         validator: refusing,
         assetProvider: assetProviderNaming(loaded),
-      }).postBuild(sourceMarketplace, [{ name: PLUGIN }], OUT_DIR)
+      }).finish(sourceMarketplace, [{ name: PLUGIN }])
     ).rejects.toThrow(JsonSchemaValidationError);
     expect(loaded).toEqual(["marketplace"]);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
@@ -454,21 +461,13 @@ describe("the catalog a marketplace layout writes once every plugin is built", (
           destRelPath: ".stub-plugin/marketplace.json",
         }),
     });
-    expect(
-      await strategyFor(fs, contract).postBuild(sourceMarketplace, [{ name: PLUGIN }], OUT_DIR)
-    ).toBe(0);
+    expect(await sinkFor(fs, contract).finish(sourceMarketplace, [{ name: PLUGIN }])).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
   });
 
   it("writes none for a layout with no catalog of its own", async () => {
     const fs = new InMemoryFileAdapter({});
-    expect(
-      await strategyFor(fs, stubContract()).postBuild(
-        sourceMarketplace,
-        [{ name: PLUGIN }],
-        OUT_DIR
-      )
-    ).toBe(0);
+    expect(await sinkFor(fs, stubContract()).finish(sourceMarketplace, [{ name: PLUGIN }])).toBe(0);
     expect(writtenUnder(fs, OUT_DIR)).toEqual({});
   });
 });
@@ -489,7 +488,7 @@ describe("what a marketplace layout does with a plugin's presence flags", () => 
         return source;
       },
     });
-    await strategyFor(fs, contract).writePluginManifest(PLUGIN, PLUGIN_SRC, OUT_DIR);
+    await sinkFor(fs, contract).write();
     expect(seen).toEqual([
       {
         hasAgents: true,

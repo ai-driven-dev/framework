@@ -1,9 +1,10 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import "../../../../../src/composition/translate.js";
-import { FlatBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/flat-build-strategy.js";
+import { DiskSink } from "../../../../../src/contexts/translate/application/sink/disk-sink.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
+import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredCatalog, registeredFlatContract } from "../../../tools/testing/catalog-of.js";
 
@@ -32,27 +33,43 @@ function flatTools(): ToolId[] {
 /** Where the plugin keeps its agent: at the top of `agents/`, or in a folder under it. */
 const AGENT_FILES = ["reviewer.md", "review/reviewer.md"];
 
-function seeded(agentFile: string): InMemoryFileAdapter {
+function seeded(agentFile: string, withReferences: boolean): InMemoryFileAdapter {
   const reference = `${ROOT}/agents/${agentFile}`;
   const fs = new InMemoryFileAdapter({
+    [`${PLUGIN_SRC}/.claude-plugin/plugin.json`]: "{}",
     [`${PLUGIN_SRC}/agents/${agentFile}`]: "---\nname: reviewer\ndescription: Reads\n---\nBody.\n",
-    [`${PLUGIN_SRC}/hooks/hooks.json`]: JSON.stringify({
-      hooks: {
-        SessionStart: [{ hooks: [{ type: "command", command: `node ${reference}` }] }],
-      },
-    }),
-    [`${PLUGIN_SRC}/.mcp.json`]: JSON.stringify({
-      mcpServers: { review: { command: "node", args: [reference] } },
-    }),
   });
+  if (withReferences) {
+    fs.setFile(
+      `${PLUGIN_SRC}/hooks/hooks.json`,
+      JSON.stringify({
+        hooks: {
+          SessionStart: [{ hooks: [{ type: "command", command: `node ${reference}` }] }],
+        },
+      })
+    );
+    fs.setFile(
+      `${PLUGIN_SRC}/.mcp.json`,
+      JSON.stringify({ mcpServers: { review: { command: "node", args: [reference] } } })
+    );
+  }
   fs.setFile(`${OUT}/.keep`, "");
   return fs;
 }
 
-function strategyFor(tool: ToolId, fs: InMemoryFileAdapter): FlatBuildStrategy {
+async function writePlugin(tool: ToolId, fs: InMemoryFileAdapter): Promise<void> {
   const contract = registeredFlatContract(tool);
   if (contract === null) throw new Error(`${tool} has no flat contract`);
-  return new FlatBuildStrategy(fs, ASSETS, contract, false, OUT, async () => true);
+  const sink = new DiskSink(fs, { validate() {} }, ASSETS, new CapturingLogger());
+  const target = {
+    contract,
+    mode: "flat",
+    force: false,
+    sourceDir: resolve("/src"),
+    outDir: OUT,
+  } as const;
+  await sink.prepare(target);
+  await sink.writePlugin(target, PLUGIN, PLUGIN_SRC);
 }
 
 function outRelative(fs: InMemoryFileAdapter): Set<string> {
@@ -81,15 +98,13 @@ function rewrittenAgentReferences(fs: InMemoryFileAdapter, files: Iterable<strin
 }
 
 async function build(tool: ToolId, agentFile: string) {
-  const fs = seeded(agentFile);
-  const strategy = strategyFor(tool, fs);
-  await strategy.preBuild(OUT, resolve("/src"));
-  const before = outRelative(fs);
-  await strategy.writeAgents(PLUGIN, PLUGIN_SRC);
-  const agents = [...outRelative(fs)].filter((p) => !before.has(p));
-  const afterAgents = outRelative(fs);
-  await strategy.writeHooks(PLUGIN, PLUGIN_SRC);
-  await strategy.writeMcp(PLUGIN, PLUGIN_SRC);
+  const agentsOnly = seeded(agentFile, false);
+  const before = outRelative(agentsOnly);
+  await writePlugin(tool, agentsOnly);
+  const afterAgents = outRelative(agentsOnly);
+  const agents = [...afterAgents].filter((p) => !before.has(p));
+  const fs = seeded(agentFile, true);
+  await writePlugin(tool, fs);
   const later = [...outRelative(fs)].filter((p) => !afterAgents.has(p));
   return { agents, references: rewrittenAgentReferences(fs, later) };
 }
