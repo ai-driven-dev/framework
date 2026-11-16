@@ -124,11 +124,19 @@ describe("createDeps", () => {
   });
 
   describe("the commands it wires", () => {
-    // A machine of its own: no home, no user config and no host binary of the real one.
+    // A machine of its own: no home, no user config, no token and no host binary of the real
+    // one. `HOME` alone only sandboxes POSIX: `os.homedir()` reads `USERPROFILE` on Windows,
+    // and the config-dir rule reads `APPDATA` ahead of it.
     beforeEach(() => {
-      vi.stubEnv("HOME", join(root, "home"));
+      const home = join(root, "home");
+      vi.stubEnv("HOME", home);
+      vi.stubEnv("USERPROFILE", home);
+      vi.stubEnv("APPDATA", join(home, "AppData", "Roaming"));
       vi.stubEnv("AIDD_USER_CONFIG_DIR", join(root, "user-config"));
       vi.stubEnv("PATH", join(root, "no-binaries"));
+      vi.stubEnv("AIDD_TOKEN", undefined);
+      vi.stubEnv("GH_TOKEN", undefined);
+      vi.stubEnv("GITHUB_TOKEN", undefined);
     });
 
     afterEach(() => {
@@ -163,7 +171,9 @@ describe("createDeps", () => {
       const result = await doctorAllUseCase.execute(root, tools);
 
       expect(result.errors).toEqual([]);
-      expect(result.ai?.toolHealth).toEqual(expect.any(Array));
+      expect(result.ai?.toolHealth).toEqual([
+        { toolId: TOOL.claude, fileCount: 0, mergeFileCount: 0 },
+      ]);
     });
 
     it("counts the token given on the command line as authenticated", async () => {
@@ -238,7 +248,7 @@ describe("createDeps", () => {
 
       await expect(
         cleanUseCase.execute({ projectRoot: root, tools, force: true })
-      ).rejects.toThrow();
+      ).rejects.toMatchObject({ code: "EISDIR" });
       expect(existsSync(join(root, ".aidd", "manifest.json"))).toBe(true);
     });
   });
