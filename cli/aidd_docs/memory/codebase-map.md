@@ -130,6 +130,8 @@ src/
 │       ├── domain/
 │       ├── infrastructure/
 │       └── ports/
+├── orchestration/    # the scenarios a command drives, each reaching a context only through its application and contract
+│   └── doctor/    # running every doctor check over the installation
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
 │   │   ├── materialization/    # where content lands and how its links follow

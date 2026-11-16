@@ -1,8 +1,8 @@
 import { resolve } from "node:path";
+import { registrationOver } from "../../../src/composition/framework/doctor.js";
 import { wireTools } from "../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { DoctorRegistrationUseCase } from "../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { DoctorUseCase } from "../../../src/contexts/framework/application/doctor/doctor-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
 import { UpdateOneToolUseCase } from "../../../src/contexts/framework/application/global/update-one-tool-use-case.js";
 import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect-host-registration.js";
@@ -12,6 +12,7 @@ import { CheckPluginDrift } from "../../../src/contexts/installation/application
 import { CheckProjectLayout } from "../../../src/contexts/installation/application/doctor/check-project-layout.js";
 import { CheckTrackedFiles } from "../../../src/contexts/installation/application/doctor/check-tracked-files.js";
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.js";
+import { LoadManifestForDoctor } from "../../../src/contexts/installation/application/doctor/load-manifest-for-doctor.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
 import { InstallIdeConfig } from "../../../src/contexts/installation/application/install/install-ide-config.js";
 import { InstallRuntimeConfig } from "../../../src/contexts/installation/application/install/install-runtime-config.js";
@@ -21,6 +22,7 @@ import { UpdateGitignore } from "../../../src/contexts/installation/application/
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { BundledAssetProviderAdapter } from "../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import { SyncConflictResolverUseCase } from "../../../src/presentation/prompts/sync-conflict-resolver-use-case.js";
 import { SilentPrompterAdapter } from "../../../src/presentation/terminal/prompter-adapter.js";
@@ -174,24 +176,29 @@ export function buildDoctorUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   authReader?: ConstructorParameters<typeof CheckProjectLayout>[2],
   hostRegistries: ConstructorParameters<typeof InspectHostRegistration>[1] = new Map()
-): DoctorUseCase {
+): RunDoctor {
   const loadManifest = new LoadManifest(deps.manifestRepo);
-  return new DoctorUseCase(
-    deps.manifestRepo,
-    new CheckTrackedFiles(loadManifest, deps.fs),
-    new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
-    new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs)),
-    new CheckFileReferences(loadManifest, deps.fs),
-    new CheckProjectLayout(loadManifest, deps.fs, authReader),
-    new DoctorRegistrationUseCase(
-      deps.fs,
-      deps.marketplaceRegistry,
-      (binary) =>
-        binary === TOOL.codex &&
-        deps.nativePluginActivators.get(TOOL.codex)?.isAvailable() === true,
-      new InspectHostRegistration(deps.fs, hostRegistries, new Map()),
-      () => "/user-cache",
-      { get: () => "1.0.0" }
+  return new RunDoctor(
+    new LoadManifestForDoctor(loadManifest),
+    {
+      tracked: new CheckTrackedFiles(loadManifest, deps.fs),
+      merge: new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
+      references: new CheckFileReferences(loadManifest, deps.fs),
+      layout: new CheckProjectLayout(loadManifest, deps.fs, authReader),
+      plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs)),
+    },
+    registrationOver(
+      loadManifest,
+      new DoctorRegistrationUseCase(
+        deps.fs,
+        deps.marketplaceRegistry,
+        (binary) =>
+          binary === TOOL.codex &&
+          deps.nativePluginActivators.get(TOOL.codex)?.isAvailable() === true,
+        new InspectHostRegistration(deps.fs, hostRegistries, new Map()),
+        () => "/user-cache",
+        { get: () => "1.0.0" }
+      )
     )
   );
 }

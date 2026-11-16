@@ -1,0 +1,51 @@
+import { describe, expect, it, vi } from "vitest";
+import { CheckFileReferences } from "../../../src/contexts/installation/application/doctor/check-file-references.js";
+import { CheckMergeFiles } from "../../../src/contexts/installation/application/doctor/check-merge-files.js";
+import { CheckPluginDrift } from "../../../src/contexts/installation/application/doctor/check-plugin-drift.js";
+import { CheckProjectLayout } from "../../../src/contexts/installation/application/doctor/check-project-layout.js";
+import { CheckTrackedFiles } from "../../../src/contexts/installation/application/doctor/check-tracked-files.js";
+import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.js";
+import { LoadManifestForDoctor } from "../../../src/contexts/installation/application/doctor/load-manifest-for-doctor.js";
+import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
+import type { DoctorIssue } from "../../../src/contexts/installation/contract/doctor-issue.js";
+import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
+
+const PROJECT_ROOT = "/test-project";
+
+const issue = (message: string): DoctorIssue => ({ severity: "warning", message, fix: "" });
+
+async function runDoctor(category?: "ai") {
+  const deps = await buildUnitDeps(PROJECT_ROOT);
+  await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+  const loadManifest = new LoadManifest(deps.manifestRepo);
+  const checks = {
+    tracked: new CheckTrackedFiles(loadManifest, deps.fs),
+    merge: new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
+    references: new CheckFileReferences(loadManifest, deps.fs),
+    layout: new CheckProjectLayout(loadManifest, deps.fs),
+    plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs)),
+  };
+  vi.spyOn(checks.tracked, "execute").mockResolvedValue([issue("tracked")]);
+  vi.spyOn(checks.merge, "execute").mockResolvedValue([issue("merge")]);
+  vi.spyOn(checks.references, "execute").mockResolvedValue([issue("references")]);
+  vi.spyOn(checks.layout, "execute").mockResolvedValue([issue("layout")]);
+  const registration = { execute: async () => [issue("registration")] };
+  const report = await new RunDoctor(
+    new LoadManifestForDoctor(loadManifest),
+    checks,
+    registration
+  ).execute({ projectRoot: PROJECT_ROOT, tools: catalogOf(), category });
+  return report.issues.map((i) => i.message);
+}
+
+describe("RunDoctor", () => {
+  it("lists issues in the order of the checks: tracked, merge, references, registration, layout", async () => {
+    expect(await runDoctor()).toEqual(["tracked", "merge", "references", "registration", "layout"]);
+  });
+
+  it("leaves the project layout out when a category narrows the run", async () => {
+    expect(await runDoctor("ai")).toEqual(["tracked", "merge", "references", "registration"]);
+  });
+});

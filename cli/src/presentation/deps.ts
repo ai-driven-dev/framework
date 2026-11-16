@@ -9,7 +9,6 @@ import type { SearchPlugins } from "../contexts/distribution/application/search-
 import type { CleanUserScopeUseCase } from "../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import type { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
 import type { DoctorRegistrationUseCase } from "../contexts/framework/application/doctor/doctor-registration-use-case.js";
-import type { DoctorUseCase } from "../contexts/framework/application/doctor/doctor-use-case.js";
 import type { MarketplaceCheckUseCase } from "../contexts/framework/application/flows/marketplace-check-use-case.js";
 import type { MarketplaceRemoveUseCase } from "../contexts/framework/application/flows/marketplace-remove-use-case.js";
 import type { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
@@ -58,6 +57,7 @@ import type { FrameworkBuildUseCase } from "../contexts/translate/application/tr
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
 import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";
+import type { RunDoctor } from "../orchestration/doctor/run-doctor.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -139,7 +139,7 @@ export interface Deps {
   registerFrameworkMarketplace: Pick<RegisterFrameworkMarketplace, "execute">;
   pluginInstallUseCase: Pick<PluginInstallUseCase, "execute">;
   marketplaceSyncSettingsUseCase: Pick<MarketplaceSyncSettingsUseCase, "execute">;
-  doctorUseCase: Pick<DoctorUseCase, "execute">;
+  doctorUseCase: Pick<RunDoctor, "execute">;
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: Pick<DoctorRegistrationUseCase, "execute">;
   setupMarketplaceSourceUseCase: Pick<SetupMarketplaceSourceUseCase, "execute">;

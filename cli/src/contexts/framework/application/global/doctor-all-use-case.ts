@@ -1,6 +1,6 @@
+import type { ToolCategory } from "../../../../shared/domain/tool.js";
 import type { DoctorReport } from "../../../installation/contract/doctor-issue.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { DoctorUseCase } from "../doctor/doctor-use-case.js";
 import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
 
 export interface DoctorAllResult {
@@ -12,8 +12,18 @@ export interface DoctorAllResult {
   errors: GlobalExecutionError[];
 }
 
+/** What this use case asks of a scoped doctor run. */
+interface ScopedDoctor {
+  execute(options: {
+    projectRoot: string;
+    category?: ToolCategory;
+    pluginName?: string;
+    tools: ToolCatalog;
+  }): Promise<DoctorReport>;
+}
+
 export class DoctorAllUseCase {
-  constructor(private readonly doctorUseCase: DoctorUseCase) {}
+  constructor(private readonly doctorUseCase: ScopedDoctor) {}
 
   async execute(
     projectRoot: string,

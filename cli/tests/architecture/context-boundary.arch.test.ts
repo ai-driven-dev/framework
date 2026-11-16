@@ -63,6 +63,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/domain/installed-rule.ts",
     // what installation reports about a project and what a display reads of it
     "src/contexts/installation/contract/doctor-issue.ts",
+    "src/contexts/installation/contract/installed-tools-view.ts",
     "src/contexts/installation/contract/project-context.ts",
     // the installation record, which is what this context owns
     "src/contexts/installation/domain/manifest.ts",
@@ -74,6 +75,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/doctor/check-merge-files.ts",
     "src/contexts/installation/application/doctor/check-plugin-drift.ts",
     "src/contexts/installation/application/doctor/check-project-layout.ts",
+    "src/contexts/installation/application/doctor/load-manifest-for-doctor.ts",
     "src/contexts/installation/application/doctor/check-tracked-files.ts",
     "src/contexts/installation/application/update-gitignore.ts",
     "src/contexts/installation/application/init-project.ts",

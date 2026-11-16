@@ -1,8 +1,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { registrationOver } from "../../../../src/composition/framework/doctor.js";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { DoctorUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-use-case.js";
 import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import { CheckFileReferences } from "../../../../src/contexts/installation/application/doctor/check-file-references.js";
 import { CheckMergeFiles } from "../../../../src/contexts/installation/application/doctor/check-merge-files.js";
@@ -10,10 +10,12 @@ import { CheckPluginDrift } from "../../../../src/contexts/installation/applicat
 import { CheckProjectLayout } from "../../../../src/contexts/installation/application/doctor/check-project-layout.js";
 import { CheckTrackedFiles } from "../../../../src/contexts/installation/application/doctor/check-tracked-files.js";
 import { LoadManifest } from "../../../../src/contexts/installation/application/doctor/load-manifest.js";
+import { LoadManifestForDoctor } from "../../../../src/contexts/installation/application/doctor/load-manifest-for-doctor.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
+import { RunDoctor } from "../../../../src/orchestration/doctor/run-doctor.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { Hasher } from "../../../../src/shared/ports/hasher.js";
@@ -73,23 +75,27 @@ function pluginCheck(fs: FileReader, manifest: Manifest): CheckPluginDrift {
   );
 }
 
-function makeDoctorUseCase(fs: FileReader, manifest: Manifest): DoctorUseCase {
-  const manifestRepo = makeManifestRepo(manifest);
-  const loadManifest = new LoadManifest(manifestRepo);
-  return new DoctorUseCase(
-    manifestRepo,
-    new CheckTrackedFiles(loadManifest, fs),
-    new CheckMergeFiles(loadManifest, fs, noopHasher),
-    new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs)),
-    new CheckFileReferences(loadManifest, fs),
-    new CheckProjectLayout(loadManifest, fs),
-    new DoctorRegistrationUseCase(
-      fs,
-      new InMemoryMarketplaceRegistry(),
-      () => false,
-      new InspectHostRegistration(fs, new Map(), new Map()),
-      () => "/user-cache",
-      { get: () => "1.0.0" }
+function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
+  const loadManifest = new LoadManifest(makeManifestRepo(manifest));
+  return new RunDoctor(
+    new LoadManifestForDoctor(loadManifest),
+    {
+      tracked: new CheckTrackedFiles(loadManifest, fs),
+      merge: new CheckMergeFiles(loadManifest, fs, noopHasher),
+      references: new CheckFileReferences(loadManifest, fs),
+      layout: new CheckProjectLayout(loadManifest, fs),
+      plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs)),
+    },
+    registrationOver(
+      loadManifest,
+      new DoctorRegistrationUseCase(
+        fs,
+        new InMemoryMarketplaceRegistry(),
+        () => false,
+        new InspectHostRegistration(fs, new Map(), new Map()),
+        () => "/user-cache",
+        { get: () => "1.0.0" }
+      )
     )
   );
 }

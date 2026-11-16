@@ -16,7 +16,6 @@ const MAX_CONSTRUCTOR_DEPENDENCIES = 5;
 const BASELINE: readonly { readonly path: string; readonly dependencies: number }[] = [
   // Six checks, one per thing that can drift, reported at once: the fan-out is the feature.
   // It resolves by giving each check a result type, not by removing a check.
-  { path: "src/contexts/framework/application/doctor/doctor-use-case.ts", dependencies: 7 },
   // `setup` brings a project from nothing to correct, so it names each stage: registration,
   // tool install, plugin prompt, settings sync, version, plus the machine-scope handoff.
   { path: "src/contexts/framework/application/setup-use-case.ts", dependencies: 11 },
