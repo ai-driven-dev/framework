@@ -72,7 +72,7 @@ describe("import rules still bite", () => {
 describe("the guard itself", () => {
   it("checks a real rule and flags a deleted one", () => {
     const paths = [
-      "src/contexts/translate/domain/plugin-format.ts",
+      "src/contexts/translate/contract/plugin-format.ts",
       "src/composition/translate.ts",
     ];
     expect(matchesSomething(literalCore("**/composition/**"), paths)).toBe(true);

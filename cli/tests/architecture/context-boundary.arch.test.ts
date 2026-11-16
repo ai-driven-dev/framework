@@ -10,7 +10,7 @@ import { expectRatchet, HELD_BY_BIOME, importersByFile, read, sourceFiles } from
 const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   translate: [
     // the canonical shapes framework produces and translate consumes
-    "src/contexts/translate/domain/plugin-format.ts",
+    "src/contexts/translate/contract/plugin-format.ts",
     "src/contexts/translate/contract/build-targets.ts",
     "src/contexts/translate/contract/build-native-tree.ts",
     // the translation port and the file it answers with
