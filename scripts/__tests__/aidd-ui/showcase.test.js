@@ -1498,6 +1498,16 @@ describe("aidd-ui showcase", () => {
       assert.match(pagesOf()["brand.html"], /<h2[^>]*>Project<\/h2>/);
     });
 
+    it("names the no-rights state in French and the columns of the glossary table in each language", () => {
+      assert.equal(LABELS.fr.stateNames["no-rights"], "sans droits");
+      const glossary = "## Glossary\n\n| Concept | Word | Forbidden |\n| --- | --- | --- |\n| Patient | patient | client |";
+      put(tmp, `${UI}/brand.md`, read(`${UI}/brand.md`) + "\n\n" + glossary + "\n");
+      const heads = (html) => [...html.matchAll(/<th[^>]*>([^<]*)<\/th>/g)].map((match) => match[1]);
+      assert.deepEqual(heads(pagesOf({ lang: "fr" })["brand.html"]), ["Concept", "Mot", "Interdit"]);
+      assert.deepEqual(heads(pagesOf()["brand.html"]), ["Concept", "Word", "Forbidden"]);
+      assert.match(pagesOf({ lang: "fr" })["brand.html"], /<td>patient<\/td>/);
+    });
+
     it("names the one state of the brand and of the system as the whole, linking the page with no anchor", () => {
       awaitingBrandAndSystem();
       for (const [lang, whole] of [["en", "Whole"], ["fr", "L'ensemble"]]) {

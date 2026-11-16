@@ -11,7 +11,7 @@ const { parseLink } = require("./code.cjs");
 const { text, UI_DIR } = require("./project.cjs");
 const { escaped, documentOf, inlined, STYLESHEET_LINK } = require("./html.cjs");
 const { catalog, citations, resolvedValues } = require("./tokens.cjs");
-const { charteSectionsOf, identitySectionsOf, sectionHtml, subNavigationOf, CHARTE_STYLE } = require("./charte-page.cjs");
+const { charteSectionsOf, identitySectionsOf, columnsNamed, sectionHtml, subNavigationOf, CHARTE_STYLE } = require("./charte-page.cjs");
 const variants = require("./variants.cjs");
 const { STEPS, CATEGORIES, stepOf, categoryOf, setStepOf, awaitingOf } = require("./steps.cjs");
 
@@ -124,6 +124,7 @@ const LABELS = {
     states: "States",
     stateNames: {},
     sections: {},
+    columns: {},
     checksFolded: "For developers ({count})",
     noRender: "No render",
     statuses: { proposed: "proposed", validated: "validated", deprecated: "deprecated" },
@@ -226,7 +227,8 @@ const LABELS = {
     forPersona: "Pour",
     persona: "Pour {name}\u202f: {said}",
     states: "États",
-    stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur", hover: "survol", disabled: "désactivé", pressed: "appuyé", selected: "sélectionné", checked: "coché" },
+    stateNames: { default: "par défaut", empty: "vide", loading: "chargement", error: "erreur", hover: "survol", disabled: "désactivé", pressed: "appuyé", selected: "sélectionné", checked: "coché", "no-rights": "sans droits" },
+    columns: { Word: "Mot", Forbidden: "Interdit" },
     sections: { Usage: "Utilisation", Keyboard: "Clavier", Steps: "Étapes", Persona: "Persona", Users: "Utilisateurs", Domain: "Domaine", "Personality and tone": "Personnalité et ton", "Anti-references": "Anti-références", References: "Références", Breakpoints: "Points de rupture", Project: "Projet", Glossary: "Glossaire" },
     checksFolded: "Pour les développeurs ({count})",
     noRender: "Aucun rendu",
@@ -1481,10 +1483,10 @@ function specLines(project, record) {
   });
 }
 
-/** The record as html under its title: its `specLines`, their headings named in the language. */
+/** The record as html under its title: its `specLines`, their headings and table columns named in the language. */
 function specOf(project, record, labels) {
   const kept = specLines(project, record);
-  const named = kept.map((line) => line.replace(SECTION_LINE, (whole, name) => (Object.hasOwn(labels.sections, name) ? `## ${labels.sections[name]}` : whole)));
+  const named = columnsNamed(kept, labels).map((line) => line.replace(SECTION_LINE, (whole, name) => (Object.hasOwn(labels.sections, name) ? `## ${labels.sections[name]}` : whole)));
   return documentOf(named.join(LINE_BREAK));
 }
 

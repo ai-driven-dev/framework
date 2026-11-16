@@ -168,6 +168,14 @@ function charteSectionsOf({ entries, values, citations, primitives, rows, notes,
 
 const slugOf = (name) => name.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "section";
 
+const TABLE_RULE = /^\|(?:\s*:?-+:?\s*\|)+\s*$/;
+
+/** The lines with the header cells of their tables named in the language of `labels`, a cell it does not know as written. */
+function columnsNamed(lines, labels) {
+  const column = (cell) => { const name = cell.trim(); return Object.hasOwn(labels.columns, name) ? ` ${labels.columns[name]} ` : cell; };
+  return lines.map((line, at) => (line.startsWith("|") && TABLE_RULE.test(lines[at + 1] ?? "") ? line.split("|").map(column).join("|") : line));
+}
+
 /** The sections of the identity page: one per `## ` heading of the lines, named in the language of `labels`. */
 function identitySectionsOf(lines, labels) {
   const found = [];
@@ -181,7 +189,7 @@ function identitySectionsOf(lines, labels) {
     let id = slugOf(name);
     for (let n = 2; used.has(id); n += 1) id = `${slugOf(name)}-${n}`;
     used.add(id);
-    const body = own.some((line) => line.trim()) ? documentOf(own.join(LINE_BREAK)) : "";
+    const body = own.some((line) => line.trim()) ? documentOf(columnsNamed(own, labels).join(LINE_BREAK)) : "";
     return { id, title: Object.hasOwn(labels.sections, name) ? labels.sections[name] : name, body };
   });
 }
@@ -236,4 +244,4 @@ section[id] .render { background: var(--surface); border: 1px solid var(--line);
 section[id] .render iframe { display: block; inline-size: 100%; border: 0; }
 `;
 
-module.exports = { charteSectionsOf, identitySectionsOf, sectionHtml, subNavigationOf, CHARTE_STYLE };
+module.exports = { charteSectionsOf, identitySectionsOf, columnsNamed, sectionHtml, subNavigationOf, CHARTE_STYLE };
