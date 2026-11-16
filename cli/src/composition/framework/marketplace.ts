@@ -148,6 +148,13 @@ export function wireMarketplace(base: Base, inst: Installation) {
     ensureBuiltMarketplaceUseCase,
     logger
   );
+  const recordSourceReference = new RecordSourceReference(
+    fs,
+    currentVersionProvider,
+    logger,
+    FRAMEWORK_MARKETPLACE_NAME,
+    userSourceReferences
+  );
   const syncSettingsUseCase = new SyncSettings(
     new LoadSyncContext(
       manifestRepo,
@@ -174,7 +181,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     new SharedFrameworkSource(
       fs,
       logger,
-      { store: userSourceReferences, version: currentVersionProvider },
+      recordSourceReference,
       new PurgeDeclaredCache(fs, logger),
       FRAMEWORK_MARKETPLACE_NAME
     )
@@ -185,13 +192,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
   );
   const registerMarketplace = new RegisterMarketplace(
     new EnsureFrameworkMarketplace(registerFrameworkMarketplace, tokenProvider, releaseResolver),
-    new RecordSourceReference(
-      fs,
-      currentVersionProvider,
-      logger,
-      FRAMEWORK_MARKETPLACE_NAME,
-      userSourceReferences
-    ),
+    recordSourceReference,
     refreshMarketplace,
     environment
   );

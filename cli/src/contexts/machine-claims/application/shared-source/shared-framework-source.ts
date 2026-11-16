@@ -4,15 +4,10 @@ import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { ListedMarketplace } from "../../ports/marketplace-listing.js";
-import type { UserSourceReferences } from "../../ports/user-source-references.js";
 import type { PurgeDeclaredCache } from "../purge-declared-cache.js";
-import {
-  frameworkSourceIsShared,
-  resolveProjectRootForReferences,
-  toleratingUnreadableSourceReferences,
-} from "../shared-source-reference-support.js";
+import type { RecordSourceReference } from "../record-source-reference.js";
+import { frameworkSourceIsShared } from "../shared-source-reference-support.js";
 
 /** What one tool's host registration observed, as far as the shared source is concerned. */
 interface RegistrationEvidence {
@@ -27,18 +22,14 @@ export interface ActivationEvidence {
   readonly errors: readonly unknown[];
 }
 
-/** Where this machine records which projects use the shared source, and the version it names. */
-export interface SharedSourceReferences {
-  readonly store: UserSourceReferences;
-  readonly version: VersionReader;
-}
-
 /** The machine's shared framework source and this project's own pre-migration copy of it. */
 export class SharedFrameworkSource {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,
-    private readonly references: SharedSourceReferences | undefined,
+    /** Records this project against the running version's shared source, when the machine keeps
+     * that record. */
+    private readonly recordReference: Pick<RecordSourceReference, "execute">,
     private readonly purgeCache: Pick<PurgeDeclaredCache, "resolveCandidate">,
     /** The name the framework marketplace is registered under; the distribution owns it and
      * composition hands it over. */
@@ -95,7 +86,6 @@ export class SharedFrameworkSource {
     marketplaces: readonly ListedMarketplace[],
     outcomes: ReadonlyMap<ToolId, RegistrationEvidence>
   ): Promise<void> {
-    if (this.references === undefined) return;
     const framework = marketplaces.find((m) =>
       frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
     );
@@ -106,15 +96,6 @@ export class SharedFrameworkSource {
       )
     )
       return;
-    await this.recordReferenceForRoot(projectRoot);
-  }
-
-  private async recordReferenceForRoot(root: string): Promise<void> {
-    const references = this.references;
-    if (references === undefined) return;
-    await toleratingUnreadableSourceReferences(this.logger, undefined, async () => {
-      const resolvedRoot = await resolveProjectRootForReferences(this.fs, root);
-      await references.store.addReference(references.version.get(), resolvedRoot);
-    });
+    await this.recordReference.execute({ projectRoot, marketplace: framework });
   }
 }
