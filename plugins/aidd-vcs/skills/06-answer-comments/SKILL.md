@@ -23,5 +23,5 @@ Run the flow above. Read only the next action file.
 
 ## Transversal rules
 
-- Use the VCS tool named in the loaded project context; if absent, consult `aidd_docs/memory/vcs.md`, else infer it from the remote.
+- Reach the pull or merge request through the VCS tool `aidd_docs/memory/vcs.md` names, else the one the remote points to.
 - Read code and history as evidence; never modify source, commit, push, or merge the request.
