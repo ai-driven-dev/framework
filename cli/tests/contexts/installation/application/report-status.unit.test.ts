@@ -69,6 +69,19 @@ describe("ReportStatus", () => {
       expect(failure).toMatchObject({ code: "manifest-missing" });
     });
 
+    it("reports from the manifest it is handed, reading none of its own", async () => {
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "test", []);
+
+      const report = await statusOver({}, null).execute({
+        tools: catalogOf(),
+        projectRoot: PROJECT_ROOT,
+        manifest,
+      });
+
+      expect(report.tools).toStrictEqual([inSyncTool(TOOL.claude)]);
+    });
+
     it("refuses a filter naming a tool that is not installed", async () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "test", []);

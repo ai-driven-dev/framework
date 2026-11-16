@@ -1,5 +1,8 @@
 import type { ReportStatus } from "../../contexts/installation/application/report-status.js";
-import type { RestoreGlobal } from "../../contexts/installation/application/restore/project/restore-global.js";
+import type {
+  OpenRestore,
+  RestoreGlobal,
+} from "../../contexts/installation/application/restore/project/restore-global.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { GlobalExecutionError } from "../../shared/domain/errors.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
@@ -30,9 +33,11 @@ export class RestoreAll {
     tools: ToolCatalog
   ): Promise<RestoreAllResult> {
     const errors: GlobalExecutionError[] = [];
-    await this.restoreGlobal.assertInstalled();
+    const restore = await this.restoreGlobal.open();
 
-    const files = interactive ? await this.promptForFiles(projectRoot, tools) : undefined;
+    const files = interactive
+      ? await this.promptForFiles(projectRoot, tools, restore.manifest)
+      : undefined;
     if (files !== undefined && files.length === 0) {
       return {
         totalRestored: 0,
@@ -44,7 +49,7 @@ export class RestoreAll {
       };
     }
     try {
-      const result = await this.restoreGlobal.execute({
+      const result = await restore.execute({
         projectRoot,
         files,
         force,
@@ -77,9 +82,10 @@ export class RestoreAll {
 
   private async promptForFiles(
     projectRoot: string,
-    tools: ToolCatalog
+    tools: ToolCatalog,
+    manifest: OpenRestore["manifest"]
   ): Promise<string[] | undefined> {
-    const report = await this.reportStatus.execute({ projectRoot, tools });
+    const report = await this.reportStatus.execute({ projectRoot, tools, manifest });
     const driftedFiles = report.tools.flatMap((t) =>
       t.drifted
         .filter((d) => d.status === "modified" || d.status === "deleted")

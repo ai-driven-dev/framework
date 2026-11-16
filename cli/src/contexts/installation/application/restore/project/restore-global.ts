@@ -1,7 +1,8 @@
-import { ManifestUnavailableError } from "../../../../../shared/domain/errors.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
+import type { Manifest } from "../../../domain/manifest.js";
 import type { ManifestRepository } from "../../../ports/manifest-repository.js";
+import { requireManifest } from "../../shared/require-manifest.js";
 import type { Restore } from "../restore.js";
 
 export interface RestoreGlobalCommand {
@@ -23,6 +24,13 @@ export interface RestoreGlobalResult {
   nativeOnlyToolIds: AiToolId[];
 }
 
+/** A restore bound to the record `RestoreGlobal.open` read, so a run reads it once. */
+export interface OpenRestore {
+  /** The record that was read, for a caller that must ask something of it before restoring. */
+  readonly manifest: Manifest;
+  execute(command: RestoreGlobalCommand): Promise<RestoreGlobalResult>;
+}
+
 /** Restores a project from its own record, loaded here so nothing above holds the record. */
 export class RestoreGlobal {
   constructor(
@@ -30,15 +38,16 @@ export class RestoreGlobal {
     private readonly restore: Pick<Restore, "execute">
   ) {}
 
-  /** Throws ManifestUnavailableError when the project has no record. */
-  async assertInstalled(): Promise<void> {
-    if ((await this.manifestRepo.load()) === null)
-      throw new ManifestUnavailableError("manifest-missing");
+  /** Reads the project's record, failing when it has none, and answers the restore it permits. */
+  async open(): Promise<OpenRestore> {
+    const manifest = await requireManifest(this.manifestRepo);
+    return { manifest, execute: (command) => this.restoreFrom(manifest, command) };
   }
 
-  async execute(command: RestoreGlobalCommand): Promise<RestoreGlobalResult> {
-    const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new ManifestUnavailableError("manifest-missing");
+  private async restoreFrom(
+    manifest: Manifest,
+    command: RestoreGlobalCommand
+  ): Promise<RestoreGlobalResult> {
     const version =
       manifest
         .getInstalledToolIds()

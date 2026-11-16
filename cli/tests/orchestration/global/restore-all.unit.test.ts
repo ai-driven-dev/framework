@@ -530,6 +530,28 @@ describe("RestoreAll — before delegating", () => {
     expect(failure).toMatchObject({ code: "manifest-missing" });
   });
 
+  it.each([
+    ["non-interactive", false],
+    ["interactive", true],
+  ])("reads the manifest once for the whole %s run", async (_mode, interactive) => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    let reads = 0;
+    const load = deps.manifestRepo.load.bind(deps.manifestRepo);
+    deps.manifestRepo.load = async () => {
+      reads += 1;
+      return load();
+    };
+
+    await restoreAllDelegatingTo(
+      deps,
+      new CheckboxRecordingPrompter(),
+      recordingDelegate().delegate
+    ).execute(PROJECT_ROOT, false, interactive, catalogOf());
+
+    expect(reads).toBe(1);
+  });
+
   it("hands the restore the version of the first installed tool", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);

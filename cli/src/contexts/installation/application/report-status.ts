@@ -44,6 +44,8 @@ export interface ReportStatusCommand {
   category?: ToolCategory;
   pluginName?: string;
   tools: ToolCatalog;
+  /** The project's manifest, when the caller already read it: the report reads none of its own. */
+  manifest?: Manifest;
 }
 
 /**
@@ -64,7 +66,7 @@ export class ReportStatus implements StatusQuery {
 
   async execute(options: ReportStatusCommand): Promise<ReportStatusResult> {
     const { projectRoot, filterToolId, category, pluginName, tools: profiles } = options;
-    const manifest = await requireManifest(this.manifestRepo);
+    const manifest = options.manifest ?? (await requireManifest(this.manifestRepo));
     if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
 
