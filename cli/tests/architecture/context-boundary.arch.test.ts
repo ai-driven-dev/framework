@@ -40,6 +40,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/remove/remove-marketplace.ts",
     "src/contexts/distribution/application/remove/find-user-marketplace.ts",
     // registering the framework marketplace from a chosen source, for setup
+    "src/contexts/distribution/application/choose-marketplace-source.ts",
     "src/contexts/distribution/application/ensure-framework-marketplace.ts",
     "src/contexts/distribution/contract/framework-source.ts",
     "src/contexts/distribution/contract/marketplace-removal.ts",

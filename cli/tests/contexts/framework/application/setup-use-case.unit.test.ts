@@ -11,7 +11,6 @@ import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/
 import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
 import type { MarketplaceSyncSettings } from "../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { SetupMachineScopeUseCase } from "../../../../src/contexts/framework/application/setup/setup-machine-scope-use-case.js";
-import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
 import { DetectProjectContext } from "../../../../src/contexts/installation/application/detect-project-context.js";
@@ -29,6 +28,7 @@ import { UserScopeUnavailableError } from "../../../../src/shared/domain/errors.
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../../src/shared/ports/lock.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
+import { askMarketplaceSource } from "../../../helpers/ask-marketplace-source.js";
 import {
   buildUnitDeps,
   initAndInstall,
@@ -137,10 +137,7 @@ async function buildUseCase(
 ) {
   const deps = await buildUnitDeps(PROJECT_ROOT);
   const prompter = new OverwritePrompter();
-  const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
-    prompter,
-    makeNoOpLatestResolver()
-  );
+  const askSource = askMarketplaceSource(prompter, makeNoOpLatestResolver());
   const setupToolsUseCase = new InstallTools(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
@@ -159,7 +156,7 @@ async function buildUseCase(
     options?.marketplaceSyncSettingsUseCase ?? makeNoOpMarketplaceSyncSettings();
   const setupMarketplaceRegistration = setupMarketplaceRegistrar(
     deps.fs,
-    setupMarketplaceSourceUseCase,
+    askSource,
     marketplaceRegisterFramework,
     marketplaceRefresh,
     deps.currentVersionProvider,

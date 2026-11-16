@@ -5,13 +5,13 @@ import { Marketplace } from "../../../../src/contexts/distribution/domain/market
 import { MarketplaceSourceMode } from "../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
-import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
 import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
 import type { PluginInstallFromMarketplace } from "../../../../src/orchestration/plugin/install-from-marketplace.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
+import { askMarketplaceSource } from "../../../helpers/ask-marketplace-source.js";
 import { marketplaceSync } from "../../../helpers/marketplace-sync.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -50,10 +50,7 @@ function makeNoOpPluginInstallFromMarketplace(): PluginInstallFromMarketplace {
 async function buildUseCaseWithConflict() {
   const deps = await buildUnitDeps(PROJECT_ROOT);
   const prompter = new OverwritePrompter();
-  const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
-    prompter,
-    makeNoOpLatestResolver()
-  );
+  const askSource = askMarketplaceSource(prompter, makeNoOpLatestResolver());
   const setupToolsUseCase = new InstallTools(
     deps.manifestRepo,
     deps.installRuntimeConfigUseCase,
@@ -103,7 +100,7 @@ async function buildUseCaseWithConflict() {
 
   const setupMarketplaceRegistration = setupMarketplaceRegistrar(
     deps.fs,
-    setupMarketplaceSourceUseCase,
+    askSource,
     makeNoOpMarketplaceRegisterFramework(),
     makeNoOpMarketplaceRefresh(),
     deps.currentVersionProvider,

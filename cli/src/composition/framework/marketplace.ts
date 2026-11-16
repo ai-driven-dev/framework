@@ -1,4 +1,5 @@
 import { CheckMarketplaces } from "../../contexts/distribution/application/check-marketplaces.js";
+import { ChooseMarketplaceSource } from "../../contexts/distribution/application/choose-marketplace-source.js";
 import { EnsureFrameworkMarketplace } from "../../contexts/distribution/application/ensure-framework-marketplace.js";
 import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.js";
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.js";
@@ -13,7 +14,6 @@ import {
   SharedFrameworkSource,
   SyncToolSettingsFiles,
 } from "../../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { SetupMarketplaceSourceUseCase } from "../../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
@@ -28,6 +28,7 @@ import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/applic
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove.js";
 import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user.js";
+import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.js";
 import { RegisterMarketplace } from "../../orchestration/setup/register-marketplace.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
@@ -132,9 +133,9 @@ export function wireMarketplace(base: Base, inst: Installation) {
     new RecordActivation(fs, hasher, userManifestRepo),
     new SharedFrameworkSource(fs, logger, userSourceReferences, currentVersionProvider)
   );
-  const setupMarketplaceSourceUseCase = new SetupMarketplaceSourceUseCase(
+  const askMarketplaceSource = new AskMarketplaceSource(
     prompter,
-    releaseResolver
+    new ChooseMarketplaceSource(releaseResolver)
   );
   const registerMarketplace = new RegisterMarketplace(
     new EnsureFrameworkMarketplace(registerFrameworkMarketplace, tokenProvider, releaseResolver),
@@ -143,7 +144,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     environment
   );
   const setupMarketplaceRegistration = new SetupMarketplaceRegistrationUseCase(
-    setupMarketplaceSourceUseCase,
+    (options) => askMarketplaceSource.execute(options),
     (flow, source) =>
       registerMarketplace.execute({ projectRoot: flow.projectRoot, scope: flow.scope, source })
   );
@@ -153,7 +154,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     addMarketplace,
     marketplaceCheckUseCase,
     marketplaceSyncSettingsUseCase,
-    setupMarketplaceSourceUseCase,
+    askMarketplaceSource,
     setupMarketplaceRegistration,
   };
 }
