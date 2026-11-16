@@ -1,0 +1,62 @@
+import type { DoctorReport } from "../../contexts/installation/contract/doctor-issue.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { GlobalExecutionError } from "../../shared/domain/errors.js";
+import type { RunDoctor } from "../doctor/run-doctor.js";
+
+export interface DoctorAllResult {
+  ai: DoctorReport | null;
+  ide: DoctorReport | null;
+  /** Plugin issues only. Plugins hang off AI tools, so the ai scope already carries them all. */
+  pluginIssues: DoctorReport["pluginIssues"];
+  healthy: boolean;
+  errors: GlobalExecutionError[];
+}
+
+/** The doctor over every category, as a command asks for it. */
+export type DoctorAll = (
+  projectRoot: string,
+  tools: ToolCatalog,
+  pluginName?: string
+) => Promise<DoctorAllResult>;
+
+/** Runs the doctor once per category and reports both, so one category that cannot be checked
+ * never hides the other. */
+export async function doctorAll(
+  doctor: Pick<RunDoctor, "execute">,
+  projectRoot: string,
+  tools: ToolCatalog,
+  pluginName?: string
+): Promise<DoctorAllResult> {
+  const errors: GlobalExecutionError[] = [];
+  const ai = await runScope(
+    () => doctor.execute({ projectRoot, category: "ai", pluginName, tools }),
+    "ai",
+    errors
+  );
+  const ide = await runScope(
+    () => doctor.execute({ projectRoot, category: "ide", pluginName, tools }),
+    "ide",
+    errors
+  );
+  const healthy = errors.length === 0 && computeHealthy(ai, ide);
+  return { ai, ide, pluginIssues: ai?.pluginIssues ?? [], healthy, errors };
+}
+
+async function runScope<T>(
+  fn: () => Promise<T>,
+  scope: string,
+  errors: GlobalExecutionError[]
+): Promise<T | null> {
+  try {
+    return await fn();
+  } catch (err) {
+    errors.push({ scope, message: err instanceof Error ? err.message : String(err) });
+    return null;
+  }
+}
+
+// A scope that errored is reported by `errors`, never here: a null report means "could
+// not be checked", not "checked and fine", so healthy must never read the two the same way.
+function computeHealthy(ai: DoctorReport | null, ide: DoctorReport | null): boolean {
+  return (ai === null || ai.healthy) && (ide === null || ide.healthy);
+}

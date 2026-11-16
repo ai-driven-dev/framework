@@ -1,15 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { DoctorAllUseCase } from "../../../../../src/contexts/framework/application/global/doctor-all-use-case.js";
-import type { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type { ToolId } from "../../../../../src/shared/domain/tool.js";
+import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
+import { doctorAll } from "../../../src/orchestration/global/doctor-all.js";
+import type { ToolId } from "../../../src/shared/domain/tool.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import {
   buildDoctorUseCase,
   buildUnitDeps,
   initAndInstall,
   installTool,
-} from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../helpers/ports/build-unit-deps.js";
 
 const PROJECT_ROOT = "/test-project";
 const NO_MANIFEST = "No AIDD manifest found. Run `aidd setup` to initialize your project.";
@@ -42,14 +43,22 @@ async function deleteOneTrackedFile(
   await deps.fs.deleteFile(`${PROJECT_ROOT}/${first.relativePath}`);
 }
 
-function verdictOf(result: Awaited<ReturnType<DoctorAllUseCase["execute"]>>) {
+function verdictOf(result: Awaited<ReturnType<typeof doctorAll>>) {
   return [result.healthy, result.ai?.healthy, result.ide?.healthy, result.errors];
 }
 
-describe("DoctorAllUseCase", () => {
+function doctorAllOver(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
+  const doctor = buildDoctorUseCase(deps);
+  return {
+    execute: (projectRoot: string, tools: ToolCatalog, pluginName?: string) =>
+      doctorAll(doctor, projectRoot, tools, pluginName),
+  };
+}
+
+describe("doctorAll", () => {
   it("records one error per scope, and no report, when no manifest exists", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
+    const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 
@@ -67,7 +76,7 @@ describe("DoctorAllUseCase", () => {
 
   it("is healthy with one report per category when every tool is in sync", async () => {
     const { deps, manifest } = await depsWithBothCategories();
-    const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
+    const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 
@@ -93,7 +102,7 @@ describe("DoctorAllUseCase", () => {
   it("is not healthy when the ai scope alone found a fault", async () => {
     const { deps, manifest } = await depsWithBothCategories();
     await deleteOneTrackedFile(deps, manifest, TOOL.claude);
-    const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
+    const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 
@@ -103,7 +112,7 @@ describe("DoctorAllUseCase", () => {
   it("is not healthy when the ide scope alone found a fault", async () => {
     const { deps, manifest } = await depsWithBothCategories();
     await deleteOneTrackedFile(deps, manifest, TOOL.vscode);
-    const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
+    const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 
@@ -124,7 +133,7 @@ describe("DoctorAllUseCase", () => {
       })
     );
     await deps.manifestRepo.save(manifest);
-    const useCase = new DoctorAllUseCase(buildDoctorUseCase(deps));
+    const useCase = doctorAllOver(deps);
 
     const result = await useCase.execute(PROJECT_ROOT, catalogOf());
 

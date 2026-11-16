@@ -1,5 +1,4 @@
 import { DoctorRegistrationUseCase } from "../../contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { DoctorAllUseCase } from "../../contexts/framework/application/global/doctor-all-use-case.js";
 import { InspectHostRegistration } from "../../contexts/host-registration/application/inspect-host-registration.js";
 import { CheckFileReferences } from "../../contexts/installation/application/doctor/check-file-references.js";
 import { CheckMergeFiles } from "../../contexts/installation/application/doctor/check-merge-files.js";
@@ -8,7 +7,9 @@ import { CheckProjectLayout } from "../../contexts/installation/application/doct
 import { CheckTrackedFiles } from "../../contexts/installation/application/doctor/check-tracked-files.js";
 import { LoadManifest } from "../../contexts/installation/application/doctor/load-manifest.js";
 import { LoadManifestForDoctor } from "../../contexts/installation/application/doctor/load-manifest-for-doctor.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { type CheckRegistration, RunDoctor } from "../../orchestration/doctor/run-doctor.js";
+import { doctorAll } from "../../orchestration/global/doctor-all.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";
@@ -66,6 +67,9 @@ export function wireDoctor(base: Base, inst: Installation) {
     },
     registrationOver(loadManifest, doctorRegistrationUseCase)
   );
-  const doctorAllUseCase = new DoctorAllUseCase(doctorUseCase);
+  const doctorAllUseCase = {
+    execute: (projectRoot: string, tools: ToolCatalog, pluginName?: string) =>
+      doctorAll(doctorUseCase, projectRoot, tools, pluginName),
+  };
   return { doctorUseCase, doctorRegistrationUseCase, doctorAllUseCase };
 }

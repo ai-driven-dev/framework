@@ -12,7 +12,6 @@ import type { DoctorRegistrationUseCase } from "../contexts/framework/applicatio
 import type { MarketplaceCheckUseCase } from "../contexts/framework/application/flows/marketplace-check-use-case.js";
 import type { MarketplaceRemoveUseCase } from "../contexts/framework/application/flows/marketplace-remove-use-case.js";
 import type { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import type { DoctorAllUseCase } from "../contexts/framework/application/global/doctor-all-use-case.js";
 import type { RestoreAllUseCase } from "../contexts/framework/application/global/restore-all-use-case.js";
 import type { StatusAllUseCase } from "../contexts/framework/application/global/status-all-use-case.js";
 import type { UpdateAiToolsUseCase } from "../contexts/framework/application/global/update-ai-tools-use-case.js";
@@ -58,6 +57,7 @@ import type { PrintUpdateNotice } from "../contexts/update/application/print-upd
 import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";
 import type { RunDoctor } from "../orchestration/doctor/run-doctor.js";
+import type { DoctorAll } from "../orchestration/global/doctor-all.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -162,7 +162,7 @@ export interface Deps {
   updateIdeToolsUseCase: Pick<UpdateIdeToolsUseCase, "execute">;
   cleanUseCase: Pick<CleanUseCase, "execute">;
   cleanUserScopeUseCase: Pick<CleanUserScopeUseCase, "execute">;
-  doctorAllUseCase: Pick<DoctorAllUseCase, "execute">;
+  doctorAllUseCase: { execute: DoctorAll };
   listInstalledRulesUseCase: Pick<ListInstalledRules, "execute">;
   validateRecipes: Pick<ValidateRecipes, "execute">;
   printUpdateNotice: Pick<PrintUpdateNotice, "execute">;
