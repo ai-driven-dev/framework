@@ -12,7 +12,7 @@ Where each host AI tool keeps a project's agents, and how to tell it is installe
 | OpenCode / `opencode` | `.opencode/`, `opencode.json` or `opencode.jsonc` | `.opencode/agents/<name>.md` |
 | Kilo Code / `kilo` | `.kilo/` | `.kilo/agents/<name>.md` |
 
-Every host reads `AGENTS.md`, so it signals none. When no signal matches, confirm the host.
+Every host reads `AGENTS.md`, so it signals none. Test each listed path itself, never its parent: `.agents/skills/` alone signals no host. When no signal matches, confirm the host.
 
 A plugin source is one canonical agent: the draft as one file in the Claude Code format, at `agents/<name>.md` under the plugin root, with no per-host copy.
 
