@@ -9,7 +9,7 @@ import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../src/presentation/terminal/prompter-adapter.js";
-import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/paths.js";
+import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/layout/aidd-layout.js";
 import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
 
 describe("createDeps", () => {

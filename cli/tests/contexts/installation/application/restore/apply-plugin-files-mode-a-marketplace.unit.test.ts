@@ -55,6 +55,7 @@ function makeRestoreUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): 
     {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
+      platform: process.platform,
       homedir: () => HOME,
       translate: translateDistribution,
     }

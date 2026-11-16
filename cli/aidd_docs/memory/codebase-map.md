@@ -140,6 +140,7 @@ src/
 │   └── sync/    # a sync run in order: settings files, native activation, then what the run recorded
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
+│   │   ├── layout/    # where the framework's built marketplaces sit under `.aidd/` and the user config dir
 │   │   ├── materialization/    # where content lands and how its links follow
 │   │   ├── plugin/    # a plugin distribution and what a translation skips of it
 │   │   └── reading/    # getting at a file's location and its content safely

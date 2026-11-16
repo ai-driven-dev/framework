@@ -9,4 +9,6 @@ export interface BuiltMaterializationDeps {
   marketplaceRegistry: InstallationMarketplaceRegistry;
   homedir: () => string;
   translate: TranslateDistribution;
+  /** The platform whose path rules spell a built file's relative path. */
+  platform: string;
 }

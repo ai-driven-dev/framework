@@ -15,7 +15,7 @@ import {
   BUILT_CACHE_SUBDIR,
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
-} from "../../../src/shared/domain/paths.js";
+} from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
@@ -1413,7 +1413,8 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
           }),
         }),
         new Map(),
-        new Map([[TOOL.claude, hostReader]])
+        new Map([[TOOL.claude, hostReader]]),
+        process.platform
       ),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION)

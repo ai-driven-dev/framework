@@ -60,7 +60,9 @@ export class InspectHostRegistration {
     private readonly pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>,
     /** Host marketplace registry readers. Only a tool whose profile declares a marketplace
      * registry is ever looked up here. */
-    private readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>
+    private readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>,
+    /** The platform whose path rules decide what a host's stored source names. */
+    private readonly platform: string
   ) {}
 
   async execute(command: InspectHostRegistrationCommand): Promise<InspectHostRegistrationResult> {
@@ -134,6 +136,7 @@ export class InspectHostRegistration {
           projectRoot: command.projectRoot,
           marketplaceName: marketplace.name,
           target: tool,
+          platform: this.platform,
         }
       );
       if (check === undefined) continue;

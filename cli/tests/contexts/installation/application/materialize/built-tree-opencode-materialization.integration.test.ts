@@ -73,6 +73,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),
@@ -109,6 +110,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),
@@ -143,6 +145,7 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),
@@ -215,6 +218,7 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
       }),
     ]);
     const translator = new BuiltTreeMaterializationTranslator(fs, hasher, {
+      platform: process.platform,
       homedir: () => "/home/u",
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),

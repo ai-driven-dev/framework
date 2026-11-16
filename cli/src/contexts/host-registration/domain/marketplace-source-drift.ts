@@ -2,8 +2,8 @@ import {
   parseBuiltMarketplaceDir,
   parseBuiltMarketplaceDirAtAnyRoot,
   parseUserBuiltMarketplaceDir,
-  samePathSegment,
-} from "../../../shared/domain/paths.js";
+} from "../../../shared/domain/layout/aidd-layout.js";
+import { samePathSegment } from "../../../shared/domain/paths.js";
 import { compareSemver, isSemver } from "../../../shared/domain/semver.js";
 import type { MarketplaceSourceDrift } from "../contract/marketplace-source-drift.js";
 
@@ -15,6 +15,9 @@ export interface MarketplaceSourceDriftContext {
   readonly projectRoot: string;
   readonly marketplaceName: string;
   readonly target: string;
+  /** The platform whose path rules fold case and separators, passed in because a domain reads no
+   * process state. */
+  readonly platform: string;
 }
 
 /**
@@ -32,19 +35,31 @@ export function marketplaceSourceDrift(
   requestedSource: string,
   context: MarketplaceSourceDriftContext
 ): MarketplaceSourceDrift | undefined {
-  const requested = parseUserBuiltMarketplaceDir(context.userCacheRoot, requestedSource);
+  const requested = parseUserBuiltMarketplaceDir(
+    context.userCacheRoot,
+    requestedSource,
+    context.platform
+  );
   if (requested === undefined) return undefined;
   if (
-    !samePathSegment(requested.marketplaceName, context.marketplaceName) ||
-    !samePathSegment(requested.target, context.target)
+    !samePathSegment(requested.marketplaceName, context.marketplaceName, context.platform) ||
+    !samePathSegment(requested.target, context.target, context.platform)
   ) {
     return undefined;
   }
-  const registeredShared = parseUserBuiltMarketplaceDir(context.userCacheRoot, registeredSource);
+  const registeredShared = parseUserBuiltMarketplaceDir(
+    context.userCacheRoot,
+    registeredSource,
+    context.platform
+  );
   if (registeredShared !== undefined) {
     if (
-      !samePathSegment(registeredShared.marketplaceName, context.marketplaceName) ||
-      !samePathSegment(registeredShared.target, context.target)
+      !samePathSegment(
+        registeredShared.marketplaceName,
+        context.marketplaceName,
+        context.platform
+      ) ||
+      !samePathSegment(registeredShared.target, context.target, context.platform)
     ) {
       return undefined;
     }
@@ -56,20 +71,24 @@ export function marketplaceSourceDrift(
       requestedVersion: requested.version,
     };
   }
-  const registeredProject = parseBuiltMarketplaceDir(context.projectRoot, registeredSource);
+  const registeredProject = parseBuiltMarketplaceDir(
+    context.projectRoot,
+    registeredSource,
+    context.platform
+  );
   if (
     registeredProject !== undefined &&
-    samePathSegment(registeredProject.marketplaceName, context.marketplaceName) &&
-    samePathSegment(registeredProject.target, context.target)
+    samePathSegment(registeredProject.marketplaceName, context.marketplaceName, context.platform) &&
+    samePathSegment(registeredProject.target, context.target, context.platform)
   ) {
     return { kind: "unmigrated-project-source" };
   }
-  const registeredForeign = parseBuiltMarketplaceDirAtAnyRoot(registeredSource);
+  const registeredForeign = parseBuiltMarketplaceDirAtAnyRoot(registeredSource, context.platform);
   if (
     registeredForeign !== undefined &&
-    samePathSegment(registeredForeign.marketplaceName, context.marketplaceName) &&
-    samePathSegment(registeredForeign.target, context.target) &&
-    !samePathSegment(registeredForeign.projectRoot, context.projectRoot)
+    samePathSegment(registeredForeign.marketplaceName, context.marketplaceName, context.platform) &&
+    samePathSegment(registeredForeign.target, context.target, context.platform) &&
+    !samePathSegment(registeredForeign.projectRoot, context.projectRoot, context.platform)
   ) {
     return {
       kind: "unmigrated-foreign-project-source",

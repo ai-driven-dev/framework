@@ -284,6 +284,7 @@ describe("UpdatePlugin", () => {
         builtDeps: {
           ensureBuilt: fakeEnsureBuiltMarketplace(),
           marketplaceRegistry: deps.marketplaceRegistry,
+          platform: process.platform,
           homedir: () => "/home/u",
           translate: translateDistribution,
         },

@@ -1,13 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { marketplaceSourceDrift } from "../../../../src/contexts/host-registration/domain/marketplace-source-drift.js";
-import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/paths.js";
+import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/layout/aidd-layout.js";
 
 const DRIFT_CONTEXT = {
   userCacheRoot: "/user-cache",
   projectRoot: "/project",
   marketplaceName: "aidd-framework",
   target: "claude",
+  platform: process.platform,
 };
 
 function sharedPath(version: string): string {

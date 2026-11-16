@@ -77,6 +77,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),
@@ -106,6 +107,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),
@@ -159,6 +161,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
       fs,
       new DeterministicHasher(),
       {
+        platform: process.platform,
         homedir: () => HOME,
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: await makeRegistry(),

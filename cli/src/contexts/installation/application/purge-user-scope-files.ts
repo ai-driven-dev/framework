@@ -2,7 +2,7 @@ import { ActiveMachineDependentsError } from "../../../shared/domain/errors.js";
 import {
   USER_SOURCE_REFERENCES_FILENAME,
   userBuiltCacheRoot,
-} from "../../../shared/domain/paths.js";
+} from "../../../shared/domain/layout/aidd-layout.js";
 import type { ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";

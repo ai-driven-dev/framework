@@ -4,7 +4,7 @@ import {
   AlreadyInitializedError,
   ManifestUnavailableError,
 } from "../../../shared/domain/errors.js";
-import { AIDD_DIR } from "../../../shared/domain/paths.js";
+import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";

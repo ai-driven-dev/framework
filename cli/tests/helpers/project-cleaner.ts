@@ -45,7 +45,7 @@ export function projectCleanerArgs(parts: ProjectCleanerParts): Constructed {
       release: new ReleaseClaims(
         parts.fs,
         parts.logger,
-        FRAMEWORK_MARKETPLACE_NAME,
+        { frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME, platform: process.platform },
         parts.userManifestRepo,
         parts.userSourceReferences
       ),

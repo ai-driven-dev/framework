@@ -169,9 +169,12 @@ export function wireMarketplace(base: Base, inst: Installation) {
       new RegisterPluginWithHost(
         fs,
         nativePluginActivators,
-        hostMarketplaceRegistries,
-        hostPluginRegistries,
-        nativeSources
+        {
+          marketplaceRegistries: hostMarketplaceRegistries,
+          pluginRegistries: hostPluginRegistries,
+          sources: nativeSources,
+        },
+        process.platform
       ),
       buildMarketplaceForTool,
       logger,

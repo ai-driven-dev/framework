@@ -41,31 +41,37 @@ function setup(
   const command = new RegisterPluginWithHost(
     new InMemoryFileAdapter({ [CATALOG]: JSON.stringify({ name: "aidd", plugins: [] }) }),
     new Map([["claude", activator]]),
-    new Map([
-      [
-        TOOL.claude,
-        new FakeHostMarketplaceRegistry(options.registry ?? { location: "r", entries: new Map() }),
-      ],
-    ]),
-    new Map([
-      [
-        TOOL.claude,
-        new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() }),
-      ],
-    ]),
-    options.sources === "absent"
-      ? new Map()
-      : new Map([
-          [
-            TOOL.claude,
-            new FakeHostMarketplaceSources(
-              activator,
-              "registry",
-              () => "aidd",
-              options.sources ?? new Map()
-            ),
-          ],
-        ])
+    {
+      marketplaceRegistries: new Map([
+        [
+          TOOL.claude,
+          new FakeHostMarketplaceRegistry(
+            options.registry ?? { location: "r", entries: new Map() }
+          ),
+        ],
+      ]),
+      pluginRegistries: new Map([
+        [
+          TOOL.claude,
+          new FakeHostPluginRegistry(options.plugins ?? { location: "p", refs: new Map() }),
+        ],
+      ]),
+      sources:
+        options.sources === "absent"
+          ? new Map()
+          : new Map([
+              [
+                TOOL.claude,
+                new FakeHostMarketplaceSources(
+                  activator,
+                  "registry",
+                  () => "aidd",
+                  options.sources ?? new Map()
+                ),
+              ],
+            ]),
+    },
+    process.platform
   );
   const run = (toolId: ToolId = TOOL.claude) =>
     command.execute({
@@ -104,9 +110,8 @@ describe("register plugin with host", () => {
     const command = new RegisterPluginWithHost(
       new InMemoryFileAdapter(),
       new Map(),
-      new Map(),
-      new Map(),
-      new Map()
+      { marketplaceRegistries: new Map(), pluginRegistries: new Map(), sources: new Map() },
+      process.platform
     );
     const result = await command.execute({
       tools: registeredCatalog(),

@@ -8,7 +8,10 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../src/shared/domain/paths.js";
+import {
+  builtMarketplaceDir,
+  userBuiltMarketplaceDir,
+} from "../../../src/shared/domain/layout/aidd-layout.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
@@ -530,7 +533,8 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
       new InspectHostRegistration(
         fs,
         new Map([[claude, new RegistryBoundToActivator(activator)]]),
-        new Map()
+        new Map(),
+        process.platform
       ),
       () => "/user-cache",
       { get: () => "1.0.0" }

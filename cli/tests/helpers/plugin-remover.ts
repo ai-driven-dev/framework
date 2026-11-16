@@ -46,6 +46,7 @@ export function pluginRemover(parts: PluginRemoverParts): RemovePlugin {
       fs,
       logger,
       home: resolveHomeDir(),
+      platform: process.platform,
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       userSourceReferences: parts.userSourceReferences,
       marketplaceRegistry: parts.marketplaceRegistry,

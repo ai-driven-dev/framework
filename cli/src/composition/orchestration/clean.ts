@@ -40,7 +40,7 @@ export function wireClean(base: Base, inst: Installation) {
     release: new ReleaseClaims(
       fs,
       logger,
-      FRAMEWORK_MARKETPLACE_NAME,
+      { frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME, platform: process.platform },
       userManifestRepo,
       userSourceReferences
     ),

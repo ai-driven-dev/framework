@@ -69,7 +69,7 @@ export function builtMaterializationDepsOf(
   marketplaceRegistry: Base["marketplaceRegistry"],
   translate: TranslateDistribution
 ) {
-  return { ensureBuilt, marketplaceRegistry, homedir, translate };
+  return { ensureBuilt, marketplaceRegistry, homedir, translate, platform: process.platform };
 }
 
 /** The installation context's shared commands and the build cache they read. */
@@ -119,7 +119,7 @@ export function wireInstallation(base: Base) {
     assetProvider,
     runPostInstallPipeline
   );
-  const listInstalledRulesUseCase = new ListInstalledRules(fs);
+  const listInstalledRulesUseCase = new ListInstalledRules(fs, process.platform);
   const pluginListUseCase = new ListPlugins(manifestRepo);
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.

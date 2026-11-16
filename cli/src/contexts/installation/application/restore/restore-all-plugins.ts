@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -8,6 +7,7 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { PluginFetcher } from "../../ports/marketplace-sources.js";
 import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";

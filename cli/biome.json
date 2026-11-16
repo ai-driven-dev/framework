@@ -4734,6 +4734,7 @@
         "src/contexts/*/application/**/*.ts",
         "src/contexts/*/ports/**/*.ts",
         "src/contexts/*/contract/**/*.ts",
+        "src/shared/domain/**/*.ts",
         "src/shared/ports/**/*.ts"
       ],
       "linter": {

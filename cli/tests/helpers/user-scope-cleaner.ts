@@ -55,7 +55,7 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       release: new ReleaseClaims(
         fs,
         logger,
-        FRAMEWORK_MARKETPLACE_NAME,
+        { frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME, platform: process.platform },
         parts.repo,
         parts.userSourceReferences
       ),

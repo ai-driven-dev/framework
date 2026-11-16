@@ -87,7 +87,7 @@ export class FileAdapter implements FileReader, FileWriter {
       if (entry.isDirectory()) {
         await this.collectFiles(baseDir, fullPath, results);
       } else {
-        results.push(posixRelative(baseDir, fullPath));
+        results.push(posixRelative(baseDir, fullPath, process.platform));
       }
     }
   }

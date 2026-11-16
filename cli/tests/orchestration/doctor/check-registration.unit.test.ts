@@ -57,7 +57,7 @@ async function issuesFor(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
-    new InspectHostRegistration(fs, new Map(), new Map()),
+    new InspectHostRegistration(fs, new Map(), new Map(), process.platform),
     () => "/user-cache",
     { get: () => "1.0.0" }
   ).execute({
@@ -183,7 +183,7 @@ async function nativeIssuesFor(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
-    new InspectHostRegistration(fs, hostRegistries, new Map()),
+    new InspectHostRegistration(fs, hostRegistries, new Map(), process.platform),
     () => "/user-cache",
     { get: () => "1.0.0" }
   ).execute({

@@ -14,7 +14,7 @@ import type { HostMarketplaceRegistry } from "../../../src/contexts/host-registr
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
-import { AIDD_DIR } from "../../../src/shared/domain/paths.js";
+import { AIDD_DIR } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";

@@ -12,7 +12,10 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { NativePluginCliError } from "../../../src/shared/domain/errors.js";
 import { InstallationFile } from "../../../src/shared/domain/file.js";
-import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../src/shared/domain/paths.js";
+import {
+  builtMarketplaceDir,
+  userBuiltMarketplaceDir,
+} from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";

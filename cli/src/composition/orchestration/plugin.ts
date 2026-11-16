@@ -92,6 +92,7 @@ export function wirePlugin(base: Base, inst: Installation) {
       fs,
       logger,
       home: resolveHomeDir(),
+      platform: process.platform,
       frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       userSourceReferences,
       marketplaceRegistry,

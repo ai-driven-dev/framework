@@ -1,77 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  fetchedMarketplaceDir,
-  marketplaceCacheDir,
-  parseBuiltMarketplaceDir,
-  parseBuiltMarketplaceDirAtAnyRoot,
-  parseUserBuiltMarketplaceDir,
+  dedupePathSegments,
+  pathContainsOrEquals,
+  pathsOverlap,
+  posixRelative,
   samePath,
   samePathSegment,
 } from "../../../src/shared/domain/paths.js";
-
-describe("marketplaceCacheDir()", () => {
-  it("nests the marketplace under the project's cache", () => {
-    expect(marketplaceCacheDir("/p", "mkt").replace(/\\/g, "/")).toBe(
-      "/p/.aidd/cache/marketplaces/mkt"
-    );
-  });
-});
-
-describe("fetchedMarketplaceDir()", () => {
-  it("falls back to the project's cache for a user marketplace when no config directory is known", () => {
-    expect(fetchedMarketplaceDir({ name: "m", scope: "user" }, "/p", undefined)).toBe(
-      marketplaceCacheDir("/p", "m")
-    );
-  });
-});
-
-describe("parseBuiltMarketplaceDir()", () => {
-  it("is undefined for a path carrying one segment too many", () => {
-    expect(parseBuiltMarketplaceDir("/p", "/p/.aidd/cache/built/mkt/claude/extra", "linux")).toBe(
-      undefined
-    );
-  });
-});
-
-describe("parseUserBuiltMarketplaceDir()", () => {
-  it("tolerates a trailing separator on the path", () => {
-    expect(
-      parseUserBuiltMarketplaceDir("/cfg", "/cfg/cache/built/1.0.0/mkt/claude/", "linux")
-    ).toStrictEqual({
-      version: "1.0.0",
-      marketplaceName: "mkt",
-      target: "claude",
-    });
-  });
-});
-
-describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
-  it("reads back a relative project root of a single segment", () => {
-    expect(
-      parseBuiltMarketplaceDirAtAnyRoot("p/.aidd/cache/built/mkt/claude", "linux")
-    ).toStrictEqual({
-      projectRoot: "p",
-      marketplaceName: "mkt",
-      target: "claude",
-    });
-  });
-
-  it("is undefined when only part of the marker matches", () => {
-    expect(parseBuiltMarketplaceDirAtAnyRoot("/p/.aidd/cache/other/mkt/claude", "linux")).toBe(
-      undefined
-    );
-  });
-
-  it("matches the marker segment by segment, never as one string", () => {
-    expect(
-      parseBuiltMarketplaceDirAtAnyRoot("/p/.aidd/cache/built/mkt/claude", "linux")
-    ).toStrictEqual({
-      projectRoot: "/p",
-      marketplaceName: "mkt",
-      target: "claude",
-    });
-  });
-});
 
 describe("samePathSegment()", () => {
   it("tells two different names apart on win32 too", () => {
@@ -95,5 +30,86 @@ describe("samePath()", () => {
 
   it("leaves a posix path that legitimately holds a backslash alone on posix", () => {
     expect(samePath("/odd/a", "/odd\\a", "linux")).toBe(false);
+  });
+});
+
+// Asked with backslash-spelled paths, which is what a Windows run passes and what a
+// hardcoded "/" comparison never recognises.
+describe("pathContainsOrEquals()", () => {
+  it("sees the same directory spelled either way", () => {
+    expect(pathContainsOrEquals("/a/b", "/a/b")).toBe(true);
+    expect(pathContainsOrEquals("C:\\a\\b", "C:\\a\\b")).toBe(true);
+  });
+
+  it("sees a directory inside another, with either separator", () => {
+    expect(pathContainsOrEquals("/a", "/a/b/c")).toBe(true);
+    expect(pathContainsOrEquals("C:\\a", "C:\\a\\b\\c")).toBe(true);
+  });
+
+  it("does not mistake a shared name prefix for containment", () => {
+    expect(pathContainsOrEquals("/a/build", "/a/build-cache")).toBe(false);
+    expect(pathContainsOrEquals("C:\\a\\build", "C:\\a\\build-cache")).toBe(false);
+  });
+
+  it("answers in one direction only", () => {
+    expect(pathContainsOrEquals("/a/b/c", "/a")).toBe(false);
+    expect(pathContainsOrEquals("C:\\a\\b\\c", "C:\\a")).toBe(false);
+  });
+
+  it("separates unrelated directories", () => {
+    expect(pathContainsOrEquals("/a", "/b")).toBe(false);
+    expect(pathContainsOrEquals("C:\\a", "D:\\a")).toBe(false);
+  });
+});
+
+describe("pathsOverlap()", () => {
+  it("answers in both directions, with either separator", () => {
+    expect(pathsOverlap("/a", "/a/b")).toBe(true);
+    expect(pathsOverlap("/a/b", "/a")).toBe(true);
+    expect(pathsOverlap("C:\\a", "C:\\a\\b")).toBe(true);
+    expect(pathsOverlap("C:\\a\\b", "C:\\a")).toBe(true);
+  });
+
+  it("leaves genuinely separate trees alone", () => {
+    expect(pathsOverlap("/a", "/b")).toBe(false);
+    expect(pathsOverlap("C:\\src", "C:\\out")).toBe(false);
+  });
+});
+
+describe("samePathSegment()", () => {
+  it("compares case-sensitively on a case-sensitive platform", () => {
+    expect(samePathSegment("aidd-framework", "AIDD-FRAMEWORK", "linux")).toBe(false);
+  });
+
+  it("compares case-insensitively on win32", () => {
+    expect(samePathSegment("aidd-framework", "AIDD-FRAMEWORK", "win32")).toBe(true);
+  });
+});
+
+describe("dedupePathSegments()", () => {
+  it("collapses a win32 case-only spelling difference, keeping the first spelling", () => {
+    expect(dedupePathSegments(["/A/proj", "/a/proj"], "win32")).toEqual(["/A/proj"]);
+  });
+
+  it("keeps both spellings on a case-sensitive platform", () => {
+    expect(dedupePathSegments(["/A/proj", "/a/proj"], "linux")).toEqual(["/A/proj", "/a/proj"]);
+  });
+});
+
+describe("posixRelative()", () => {
+  it("spells a Windows-joined path with forward slashes, the form a manifest records", () => {
+    expect(posixRelative("C:\\proj\\plugin", "C:\\proj\\plugin\\hooks\\check.sh", "win32")).toBe(
+      "hooks/check.sh"
+    );
+  });
+
+  it("leaves a POSIX path as it is", () => {
+    expect(posixRelative("/proj/plugin", "/proj/plugin/skills/commit/SKILL.md", "linux")).toBe(
+      "skills/commit/SKILL.md"
+    );
+  });
+
+  it("answers an empty string for the base itself", () => {
+    expect(posixRelative("C:\\proj", "C:\\proj", "win32")).toBe("");
   });
 });

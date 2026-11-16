@@ -91,7 +91,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
       fs,
       new InMemoryMarketplaceRegistry(),
       () => false,
-      new InspectHostRegistration(fs, new Map(), new Map()),
+      new InspectHostRegistration(fs, new Map(), new Map(), process.platform),
       () => "/user-cache",
       { get: () => "1.0.0" }
     ),

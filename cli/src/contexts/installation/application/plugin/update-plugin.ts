@@ -1,7 +1,6 @@
 import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
 import { InvalidPluginScopeError } from "../../../../shared/domain/errors.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import { compareSemver } from "../../../../shared/domain/semver.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
@@ -12,6 +11,7 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { InstallRuntimeConfig } from "../install/install-runtime-config.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";

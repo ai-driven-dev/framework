@@ -28,9 +28,9 @@ export interface MarketplaceSyncParts {
   currentVersionProvider?: ConstructorParameters<typeof RecordSourceReference>[1];
   userManifestRepo?: Loader[4];
   activators?: Hosts[1];
-  hostMarketplaceRegistries?: Hosts[2];
-  hostPluginRegistries?: Hosts[3];
-  nativeSources?: Hosts[4];
+  hostMarketplaceRegistries?: Hosts[2]["marketplaceRegistries"];
+  hostPluginRegistries?: Hosts[2]["pluginRegistries"];
+  nativeSources?: Hosts[2]["sources"];
 }
 
 export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
@@ -48,9 +48,12 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       new RegisterPluginWithHost(
         parts.fs,
         parts.activators ?? new Map(),
-        parts.hostMarketplaceRegistries ?? new Map(),
-        parts.hostPluginRegistries ?? new Map(),
-        parts.nativeSources ?? new Map()
+        {
+          marketplaceRegistries: parts.hostMarketplaceRegistries ?? new Map(),
+          pluginRegistries: parts.hostPluginRegistries ?? new Map(),
+          sources: parts.nativeSources ?? new Map(),
+        },
+        process.platform
       ),
       build,
       parts.logger,

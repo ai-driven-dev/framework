@@ -23,6 +23,8 @@ export interface PluginRemovalClaimsDeps {
   readonly fs: FileReader;
   readonly logger: Logger;
   readonly home: string;
+  /** The platform whose path rules decide whether two project roots are the same one. */
+  readonly platform: string;
   /** The framework marketplace's reserved name, owned by the distribution. */
   readonly frameworkMarketplaceName: string;
   /** Absent skips the another-project guard entirely. */
@@ -71,7 +73,7 @@ export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
       [] as readonly string[],
       async () => {
         const ownRoot = await resolveProjectRootForReferences(fs, projectRoot);
-        return otherProjectsReferencing(userSourceReferences, ownRoot);
+        return otherProjectsReferencing(userSourceReferences, ownRoot, deps.platform);
       }
     );
     const guarded = refAnotherProjectStillNeeds({

@@ -1,8 +1,9 @@
 import { readdir, rm, rmdir } from "node:fs/promises";
 import { join } from "node:path";
-import { AIDD_DIR, MANIFEST_FILENAME } from "../../../shared/domain/paths.js";
+import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { Manifest } from "../domain/manifest.js";
+import { MANIFEST_FILENAME } from "../domain/project-layout.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import { readManifestFile, writeManifestFile } from "./manifest-file-io.js";
 

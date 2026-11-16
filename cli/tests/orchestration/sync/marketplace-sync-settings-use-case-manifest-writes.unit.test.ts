@@ -6,7 +6,7 @@ import type { NativeRegistrations } from "../../../src/contexts/installation/dom
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { InstallationFile } from "../../../src/shared/domain/file.js";
-import { builtMarketplaceDir } from "../../../src/shared/domain/paths.js";
+import { builtMarketplaceDir } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
