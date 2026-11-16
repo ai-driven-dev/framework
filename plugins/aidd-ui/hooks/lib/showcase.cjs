@@ -41,6 +41,8 @@ const LABELS = {
     desktop: "Desktop",
     phone: "Phone",
     toReview: "{count} to review",
+    toCopy: "{count} to copy",
+    decisions: "My decisions",
     proposedCount: "{count} awaiting your agreement",
     stepDone: "complete",
     stepEmpty: "no content",
@@ -143,6 +145,8 @@ const LABELS = {
     desktop: "Ordinateur",
     phone: "Téléphone",
     toReview: "{count} à relire",
+    toCopy: "{count} à copier",
+    decisions: "Mes décisions",
     proposedCount: "{count} en attente de votre accord",
     stepDone: "terminé",
     stepEmpty: "vide",
@@ -474,6 +478,11 @@ body[data-drawer="open"] .scrim { display: block; position: fixed; inset: 0; z-i
 .drawer-head .close { margin-left: auto; inline-size: 32px; padding: 0; border-color: transparent; background: transparent; color: var(--muted); font-size: var(--t-lg); }
 .drawer-body { flex: 1; overflow: auto; padding: var(--s2) 0; }
 .drawer-body > p { margin: var(--s4) var(--s5); color: var(--muted); font-size: var(--t-md); }
+.decisions { margin: 0 var(--s4) var(--s3); padding: var(--s3); border: 1px solid var(--line); border-radius: var(--r2); background: var(--sunken); }
+.decisions h3 { margin: 0 0 var(--s2); font-size: var(--t-sm); font-weight: 600; color: var(--muted); }
+.decisions ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--s1); font-size: var(--t-md); }
+.decisions li[data-verdict="ok"] { color: var(--ok); }
+.decisions li[data-verdict="revise"] { color: var(--revise); }
 .step-group > summary { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s5); cursor: pointer; font-size: var(--t-md); font-weight: 600; list-style: none; background: var(--bg); border-bottom: 1px solid var(--line); }
 .step-group > summary::-webkit-details-marker { display: none; }
 .step-group .step-count { color: var(--faint); font-weight: 500; }
@@ -659,6 +668,15 @@ function entriesOf(model, choices) {
   return records.concat(sets);
 }
 
+/** What the copy will hold of the records, one line per decided state, from the page's `model` (each record with its
+ * `title` and its states' `name`) and its `choices`: what the drawer lists so a verdict given is seen before it is copied. */
+function decisionsOf(model, choices) {
+  return model.records.flatMap((each) => each.states.filter((one) => (choices[each.key] || {})[one.state]).map((one) => {
+    const choice = choices[each.key][one.state];
+    return { title: each.title, name: one.name, verdict: choice.verdict, comment: choice.comment || "" };
+  }));
+}
+
 /** The picks of a set after one more pick of `variant` for `axis`: the last pick of an axis stands, and the same
  * pick again takes it back. Picks are by axis name, kept in the set's choices under `@picks`, which no variant is named. */
 function pickedOf(picks, axis, variant) {
@@ -698,6 +716,7 @@ ${keptOf.toString()}
 ${entriesOf.toString()}
 ${blockedOf.toString()}
 ${remainingOf.toString()}
+${decisionsOf.toString()}
 ${pickedOf.toString()}
 const STORE = "aidd-ui-review";
 const drawer = document.getElementById("review");
@@ -755,6 +774,11 @@ function recordsOf() {
     if (!own) { own = { key, step: "", record: each.record, version: String(each.version), states: [] }; records.push(own); }
     for (const one of each.states) if (!own.states.some((other) => other.state === one.state)) own.states.push({ state: one.state, settled: one.settled });
   }
+  for (const own of records) {
+    const named = known.find((each) => knownKeyOf(each) === own.key);
+    own.title = named ? named.title : own.record;
+    for (const one of own.states) one.name = (named && (named.states.find((each) => each.state === one.state) || {}).name) || one.state;
+  }
   return records;
 }
 const model = () => ({
@@ -762,6 +786,21 @@ const model = () => ({
   sets: sets.map((set) => ({ key: setKeyOf(set), set: set.dataset.set, variants: variantsOf(set).map((row) => row.dataset.variant) })),
 });
 const entries = () => entriesOf(model(), choices);
+const decided = document.getElementById("decisions");
+/** The decisions to copy, listed in the drawer with their verdict and comment; the "nothing to review" line gives way to them. */
+function paintDecisions(list) {
+  const nothing = drawer.querySelector(".nothing");
+  if (nothing) nothing.hidden = list.length > 0;
+  if (!decided) return;
+  const words = JSON.parse(decided.dataset.words);
+  decided.querySelector("ul").replaceChildren(...list.map((each) => {
+    const line = document.createElement("li");
+    line.dataset.verdict = each.verdict;
+    line.textContent = each.title + " \u00b7 " + each.name + " \u00b7 " + words[each.verdict] + (each.comment.trim() ? " : " + each.comment.trim() : "");
+    return line;
+  }));
+  decided.hidden = list.length === 0;
+}
 const blocked = () => blockedOf(entries());
 function paint() {
   let left = 0;
@@ -821,7 +860,9 @@ function paint() {
     holder.querySelectorAll(".take").forEach((button) => button.setAttribute("aria-pressed", String(own[button.dataset.axis] === button.dataset.variant)));
   }
   paintBars();
-  document.querySelectorAll(".tally[data-template]").forEach((each) => { each.textContent = each.dataset.template.replace("{count}", String(left)); });
+  const list = decisionsOf(model(), choices);
+  paintDecisions(list);
+  document.querySelectorAll(".tally[data-template]").forEach((each) => { each.textContent = (left || !list.length || !decided ? each.dataset.template : decided.dataset.copy).replace("{count}", String(left || list.length)); });
   const stuck = blocked();
   copy.disabled = stuck || !copiedOf(entries());
   for (const button of stepButtons) button.disabled = remainingOf(model(), choices, button.dataset.step).length === 0;
@@ -1365,7 +1406,8 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
   const known = held.flatMap((each) => each.records).filter((record) => reviewable(project, record)).map((record) => ({
     record: fm(record).id,
     version: String(fm(record).version),
-    states: orderedStates(rows, record).map(({ state, verdict }) => ({ state, settled: !UNRESOLVED.includes(verdict.current) })),
+    title: titleOf(project, record, labels),
+    states: orderedStates(rows, record).map(({ state, verdict }) => ({ state, name: Object.hasOwn(labels.kindNames, fm(record).kind) ? labels.whole : stateNameOf(labels, state), settled: !UNRESOLVED.includes(verdict.current) })),
   }));
   const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.counted.length})</span><button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button></summary>${each.awaiting.map(item).join("\n")}</details>`;
   const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
@@ -1382,7 +1424,7 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
     `<script type="application/json" id="review-records">${JSON.stringify(known).replaceAll("<", "\\u003c")}</script>`,
     `<aside class="drawer" id="review" aria-label="${escaped(labels.myReview)}" hidden>`,
     `<div class="drawer-head"><h2>${labels.myReview}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
-    `<div class="drawer-body">${choices}${groups || (choices ? "" : `<p>${labels.nothing}</p>`)}</div>`,
+    `<div class="drawer-body"><section class="decisions" id="decisions" hidden data-copy="${escaped(labels.toCopy)}" data-words="${escaped(JSON.stringify({ ok: labels.ok, revise: labels.revise }))}"><h3>${labels.decisions}</h3><ul></ul></section>${choices}${groups || (choices ? "" : `<p class="nothing">${labels.nothing}</p>`)}</div>`,
     `<div class="drawer-foot"><p id="note" role="status"></p><button type="button" id="clear" hidden>${labels.clear}</button><button type="button" id="copy" data-copied="${escaped(labels.copied)}" data-blocked="${escaped(labels.blocked)}" data-hint="${escaped(labels.copyHint)}">${labels.copy}</button></div>`,
     "</aside>",
   ].join("\n");
@@ -1615,4 +1657,4 @@ function showcaseOf({ project, problems, tokens, captures, lang, sets: found = [
   return pages;
 }
 
-module.exports = { showcaseOf, copiedOf, keptOf, WIDTH, entriesOf, blockedOf, remainingOf, pickedOf, languageOf, LABELS };
+module.exports = { showcaseOf, copiedOf, decisionsOf, keptOf, WIDTH, entriesOf, blockedOf, remainingOf, pickedOf, languageOf, LABELS };
