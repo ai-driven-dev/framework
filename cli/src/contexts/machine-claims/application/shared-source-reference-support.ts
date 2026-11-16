@@ -76,10 +76,11 @@ export function describeGuardedPluginRefMessage(input: {
  */
 export async function otherProjectsReferencing(
   userSourceReferences: UserSourceReferences,
-  ownRoot: string
+  ownRoot: string,
+  platform: string
 ): Promise<readonly string[]> {
   return (await userSourceReferences.listAllReferencingProjects()).filter(
-    (root) => !samePathSegment(root, ownRoot)
+    (root) => !samePathSegment(root, ownRoot, platform)
   );
 }
 

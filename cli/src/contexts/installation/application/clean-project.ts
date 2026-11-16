@@ -1,15 +1,10 @@
 import { dirname, join } from "node:path";
+import { AIDD_DIR, AIDD_MARKETPLACES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
 import {
   isMergeContentEmpty,
   type MergeFileEntry,
   removeEntriesFromJson,
 } from "../../../shared/domain/merge.js";
-import {
-  AIDD_CONFIG_FILENAME,
-  AIDD_DIR,
-  AIDD_MARKETPLACES_FILENAME,
-  PLUGIN_CACHE_SUBDIR,
-} from "../../../shared/domain/paths.js";
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
@@ -21,6 +16,7 @@ import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type { Manifest } from "../domain/manifest.js";
 import { aiddGitignoreEntries } from "../domain/manifest-gitignore-entries.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
+import { AIDD_CONFIG_FILENAME, PLUGIN_CACHE_SUBDIR } from "../domain/project-layout.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
 import {

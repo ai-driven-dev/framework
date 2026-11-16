@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { BUILT_CACHE_SUBDIR, userBuiltMarketplaceDir } from "../../../src/shared/domain/paths.js";
+import {
+  BUILT_CACHE_SUBDIR,
+  userBuiltMarketplaceDir,
+} from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";

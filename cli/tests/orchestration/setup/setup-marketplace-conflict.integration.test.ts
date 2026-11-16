@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import { remoteFrameworkSource } from "../../../src/contexts/distribution/contract/framework-source.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
@@ -126,7 +126,7 @@ function remoteFlow(aiTools: ToolId[]): SetupFlow {
     ...flowTools(),
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
-    source: MarketplaceSourceMode.remote(),
+    source: remoteFrameworkSource(),
     aiTools,
     ideTools: [],
     pluginMode: "none",

@@ -1,5 +1,4 @@
 import { CatalogFetchAuthError } from "../../../shared/domain/errors.js";
-import type { PluginSource } from "../../../shared/domain/source.js";
 import type { TokenProvider } from "../../auth/contract/token-provider.js";
 import type { EnsuredFrameworkMarketplace, FrameworkSource } from "../contract/framework-source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../contract/marketplace.js";
@@ -24,7 +23,7 @@ export class EnsureFrameworkMarketplace {
     await this.guardRemoteAuth(command.source);
     const result = await this.register.execute({
       projectRoot: command.projectRoot,
-      pluginSource: this.toPluginSource(command.source),
+      pluginSource: command.source,
       force: true,
     });
     return { name: FRAMEWORK_MARKETPLACE_NAME, scope: result.scope };
@@ -33,7 +32,7 @@ export class EnsureFrameworkMarketplace {
   // Auth is only required to fetch a PRIVATE framework. A token can reach either;
   // without one, allow public repos through and gate only private/unreachable ones.
   private async guardRemoteAuth(source: FrameworkSource): Promise<void> {
-    if (source.kind !== "remote") return;
+    if (source.kind !== "github") return;
     if (this.tokenProvider === undefined) return;
     const token = await this.tokenProvider.resolve();
     if (token !== null) return;
@@ -44,10 +43,5 @@ export class EnsureFrameworkMarketplace {
       return;
     }
     throw new CatalogFetchAuthError(`https://github.com/${source.repo}`);
-  }
-
-  private toPluginSource(source: FrameworkSource): PluginSource {
-    if (source.kind === "local") return { kind: "local", path: source.path };
-    return { kind: "github", repo: source.repo, ref: source.ref };
   }
 }

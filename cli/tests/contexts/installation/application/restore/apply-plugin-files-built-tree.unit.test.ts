@@ -56,6 +56,7 @@ function makeRestoreUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): 
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
       homedir,
+      platform: process.platform,
       translate: translateDistribution,
     }
   );

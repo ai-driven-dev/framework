@@ -1,4 +1,4 @@
-import { homedir as nodeHomedir } from "node:os";
+import { homedir as nodeHomedir, platform as nodePlatform } from "node:os";
 import { join } from "node:path";
 import {
   DuplicatePluginError,
@@ -7,7 +7,6 @@ import {
   VersionMismatchError,
 } from "../../../../shared/domain/errors.js";
 import type { InstallationFile } from "../../../../shared/domain/file.js";
-import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
@@ -25,6 +24,7 @@ import {
   InstalledPlugin,
   type ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
+import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../../ports/marketplace-sources.js";
 import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
@@ -560,6 +560,7 @@ export class AddPlugin implements PluginAdd {
         ensureBuilt: this.ensureBuilt,
         marketplaceRegistry: this.marketplaceRegistry,
         translate: this.translate,
+        platform: nodePlatform(),
       },
     });
   }

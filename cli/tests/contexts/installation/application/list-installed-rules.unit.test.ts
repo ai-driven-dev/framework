@@ -37,7 +37,8 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
         [at(".codex/rules/1-naming.md")]: "---\n---\n",
         [at(".kilo/rules/1-naming.md")]: "---\n---\n",
         [at(".opencode/rules/1-naming.md")]: "---\n---\n",
-      })
+      }),
+      process.platform
     );
 
     const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf() });
@@ -56,7 +57,8 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
   // accepts them, Codex included, so a Codex project holding rules must never be told none.
   it("answers for Codex, which the script it replaces skipped outright", async () => {
     const useCase = new ListInstalledRules(
-      readerOf({ [at(".codex/rules/1-naming.md")]: "---\ndescription: Names\n---\n" })
+      readerOf({ [at(".codex/rules/1-naming.md")]: "---\ndescription: Names\n---\n" }),
+      process.platform
     );
 
     const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf() });
@@ -73,7 +75,8 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
 
   it("reports a path relative to the project, never the machine it ran on", async () => {
     const useCase = new ListInstalledRules(
-      readerOf({ [at(".claude/rules/deep/nested/1-naming.md")]: "---\n---\n" })
+      readerOf({ [at(".claude/rules/deep/nested/1-naming.md")]: "---\n---\n" }),
+      process.platform
     );
 
     const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf() });
@@ -88,7 +91,8 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
       readerOf({
         [at(".cursor/rules/1-naming.mdc")]: "---\n---\n",
         [at(".cursor/rules/README.md")]: "---\n---\n",
-      })
+      }),
+      process.platform
     );
 
     const { rules } = await useCase.execute({ projectRoot: ROOT, tools: catalogOf() });
@@ -97,7 +101,7 @@ describe("ListInstalledRules — every tool's installed rules, in one answer", (
   });
 
   it("answers an empty list, never an error, for a project holding no rule at all", async () => {
-    const useCase = new ListInstalledRules(readerOf({}));
+    const useCase = new ListInstalledRules(readerOf({}), process.platform);
 
     await expect(useCase.execute({ projectRoot: ROOT, tools: catalogOf() })).resolves.toEqual({
       rules: [],

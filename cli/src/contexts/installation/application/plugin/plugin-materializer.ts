@@ -227,7 +227,13 @@ export class PluginMaterializer {
         const files = await readGlobalPluginFiles(this.fs, this.hasher, builtDir, tool, dist);
         return { files, componentPaths: new Map() };
       }
-      const built = await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, plugin.name);
+      const built = await readBuiltUserPluginFiles(
+        this.fs,
+        this.hasher,
+        builtDir,
+        plugin.name,
+        this.builtDeps.platform
+      );
       const files =
         tool.plugins()?.deliversHooksToProject() === true
           ? withoutHooksPrefix(built, plugin.name)

@@ -1,10 +1,10 @@
 import { mkdir, rm, rmdir } from "node:fs/promises";
 import { dirname } from "node:path";
 import { setTimeout as pause } from "node:timers/promises";
-import { userManifestPath } from "../../../shared/domain/paths.js";
 import type { ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Manifest } from "../domain/manifest.js";
+import { userManifestPath } from "../domain/project-layout.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import { readManifestFile } from "./manifest-file-io.js";
 

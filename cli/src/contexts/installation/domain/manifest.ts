@@ -1,7 +1,7 @@
 import { InvalidManifestDataError, ToolNotInManifestError } from "../../../shared/domain/errors.js";
 import type { FileHash, InstallationFile } from "../../../shared/domain/file.js";
+import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { MergeFileEntry } from "../../../shared/domain/merge.js";
-import { AIDD_DIR, MANIFEST_FILENAME } from "../../../shared/domain/paths.js";
 import type { ToolId, ToolIdResolver } from "../../../shared/domain/tool.js";
 import type { NativeRegistrations } from "./manifest/native-registrations.js";
 import {
@@ -20,6 +20,7 @@ import {
   serializeManifestTools,
 } from "./manifest-serialization.js";
 import type { InstalledPlugin } from "./plugins/installed-plugin.js";
+import { MANIFEST_FILENAME } from "./project-layout.js";
 
 // The project-scope default, named in the refusal below so a person can act on it without hunting
 // for the path. A caller reading the user-scope manifest passes its own `ManifestFileContext`, so

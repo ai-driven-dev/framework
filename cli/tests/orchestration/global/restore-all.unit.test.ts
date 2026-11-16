@@ -37,6 +37,7 @@ function builtDeps(deps: Deps) {
     ensureBuilt: fakeEnsureBuiltMarketplace(),
     marketplaceRegistry: deps.marketplaceRegistry,
     homedir: () => "/home/test",
+    platform: process.platform,
     translate: translateDistribution,
   };
 }

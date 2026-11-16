@@ -23,7 +23,7 @@ export class AskMarketplaceSource {
   async execute(options: AskMarketplaceSourceOptions): Promise<FrameworkSource> {
     const given = options.sourceFromCli;
     if (given !== undefined) {
-      if (options.interactive && given.kind === "remote" && given.ref === undefined) {
+      if (options.interactive && given.kind === "github" && given.ref === undefined) {
         return this.askVersion(given.repo);
       }
       return this.choose.pinNewest(given);

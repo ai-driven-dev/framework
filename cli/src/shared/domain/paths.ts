@@ -1,139 +1,10 @@
-import { join, posix, win32 } from "node:path";
-
-export const AIDD_DIR = ".aidd";
-export const AIDD_CONFIG_FILENAME = "config.json";
-/** The project-scope marketplace registry, named once: `MarketplaceRegistryAdapter` writes
- * it and `CleanProject` removes it, and a second spelling is how one of them forgets. */
-export const AIDD_MARKETPLACES_FILENAME = "marketplaces.json";
-/** The registry of projects referencing the shared machine-scope source, named once for the
- * same reason as `AIDD_MARKETPLACES_FILENAME`: one adapter writes it, a machine-scope
- * `clean` purges it, and a second spelling is how one of them forgets the other. */
-export const USER_SOURCE_REFERENCES_FILENAME = "references.json";
-export const DOCS_DIR = "aidd_docs" as const;
-export const PLUGIN_CACHE_SUBDIR = join(AIDD_DIR, "plugin-cache");
-export const MARKETPLACE_CACHE_SUBDIR = join(AIDD_DIR, "cache", "marketplaces");
-export const BUILT_CACHE_SUBDIR = join(AIDD_DIR, "cache", "built");
-
-export function marketplaceCacheDir(projectRoot: string, marketplaceName: string): string {
-  return join(projectRoot, MARKETPLACE_CACHE_SUBDIR, marketplaceName);
-}
-
-/** Where a marketplace's fetched source lives: a user-scope one belongs to the whole machine, so a
- * run from any directory writes nothing there. */
-export function fetchedMarketplaceDir(
-  marketplace: { readonly name: string; readonly scope: string },
-  projectRoot: string,
-  userConfigDir: string | undefined
-): string {
-  return marketplace.scope === "user" && userConfigDir !== undefined
-    ? join(userConfigDir, "cache", "marketplaces", marketplace.name)
-    : marketplaceCacheDir(projectRoot, marketplace.name);
-}
-
-export function builtMarketplaceDir(
-  projectRoot: string,
-  marketplaceName: string,
-  target: string
-): string {
-  return join(projectRoot, BUILT_CACHE_SUBDIR, marketplaceName, target);
-}
-
-/** The directory every version's own built tree sits under — `clean --scope user`'s
- * whole-source purge target, three segments above `userBuiltMarketplaceDir`. Named once so
- * the version-scoped path and the root holding every version cannot drift apart. */
-export function userBuiltCacheRoot(userConfigDir: string): string {
-  return join(userConfigDir, "cache", "built");
-}
-
-/** The CLI version sits before the marketplace name, so purging one version is a single
- * `rm -rf` and two projects on two CLI versions never resolve to the same directory — what
- * keeps a second project from silently repointing a host away from the first. */
-export function userBuiltMarketplaceDir(
-  userConfigDir: string,
-  cliVersion: string,
-  marketplaceName: string,
-  target: string
-): string {
-  return join(userBuiltCacheRoot(userConfigDir), cliVersion, marketplaceName, target);
-}
-
-/** What `userBuiltMarketplaceDir` encoded into a path, read back. */
-export interface UserBuiltMarketplaceLocation {
-  readonly version: string;
-  readonly marketplaceName: string;
-  readonly target: string;
-}
-
-/**
- * The inverse of `userBuiltMarketplaceDir`: the version/name/target `path` carries when it
- * has exactly that shape under `userConfigDir`, `undefined` otherwise. Decided from the
- * path's own segments, so a host's registered source is told apart from another version of
- * the shared build without opening any catalog.
- */
-export function parseUserBuiltMarketplaceDir(
-  userConfigDir: string,
-  path: string,
-  platform: string = process.platform
-): UserBuiltMarketplaceLocation | undefined {
-  const segments = segmentsUnder(userBuiltCacheRoot(userConfigDir), path, platform);
-  if (segments === undefined || segments.length !== 3) return undefined;
-  const [version, marketplaceName, target] = segments;
-  return { version, marketplaceName, target };
-}
-
-/** What `builtMarketplaceDir` encoded into a path, read back. */
-export interface BuiltMarketplaceLocation {
-  readonly marketplaceName: string;
-  readonly target: string;
-}
-
-/** The inverse of `builtMarketplaceDir`, decided from the path's own segments the way
- * `parseUserBuiltMarketplaceDir` decides the user-scope shape. */
-export function parseBuiltMarketplaceDir(
-  projectRoot: string,
-  path: string,
-  platform: string = process.platform
-): BuiltMarketplaceLocation | undefined {
-  const segments = segmentsUnder(join(projectRoot, BUILT_CACHE_SUBDIR), path, platform);
-  if (segments === undefined || segments.length !== 2) return undefined;
-  const [marketplaceName, target] = segments;
-  return { marketplaceName, target };
-}
-
-/** `builtMarketplaceDir`'s own shape plus the project root that produced it — the root
- * `parseBuiltMarketplaceDir` has to be handed and this one exists to discover. */
-export interface AnyProjectBuiltMarketplaceLocation extends BuiltMarketplaceLocation {
-  readonly projectRoot: string;
-}
-
-/** Matched segment by segment, never by index arithmetic over a case-folded string: win32
- * folding need not preserve length. `projectRoot` is rejoined with `platform`'s own separator,
- * since every other writer of `references.json` records a backslash `realpath` on win32 and
- * `samePathSegment` compares spelling. */
-export function parseBuiltMarketplaceDirAtAnyRoot(
-  path: string,
-  platform: string = process.platform
-): AnyProjectBuiltMarketplaceLocation | undefined {
-  const segments = stripTrailingSeparator(path.replace(/\\/g, "/")).split("/");
-  const marker = BUILT_CACHE_SUBDIR.replace(/\\/g, "/").split("/");
-  const markerStart = segments.length - marker.length - 2;
-  if (markerStart < 1) return undefined;
-  const candidateMarker = segments.slice(markerStart, markerStart + marker.length);
-  const markerMatches = candidateMarker.every((segment, index) =>
-    samePathSegment(segment, marker[index], platform)
-  );
-  if (!markerMatches) return undefined;
-  const projectRoot = segments.slice(0, markerStart).join(platform === "win32" ? "\\" : "/");
-  if (projectRoot.length === 0) return undefined;
-  const [marketplaceName, target] = segments.slice(markerStart + marker.length);
-  return { projectRoot, marketplaceName, target };
-}
+import { posix, win32 } from "node:path";
 
 /** The path segments of `path` past `base`, `undefined` when `path` does not sit under
- * `base`. Compares spelling — folded by `platform` for the containment test only, so the
- * segments returned keep their original casing — and resolves neither side. A trailing
+ * `base`. Compares spelling, folded by `platform` for the containment test only, so the
+ * segments returned keep their original casing, and resolves neither side. A trailing
  * separator on `base` is tolerated. */
-function segmentsUnder(base: string, path: string, platform: string): string[] | undefined {
+export function segmentsUnder(base: string, path: string, platform: string): string[] | undefined {
   const normalizedBase = stripTrailingSeparator(base.replace(/\\/g, "/"));
   const normalizedPath = stripTrailingSeparator(path.replace(/\\/g, "/"));
   const compareBase = foldCase(normalizedBase, platform);
@@ -143,7 +14,7 @@ function segmentsUnder(base: string, path: string, platform: string): string[] |
   return remainder.split("/");
 }
 
-function stripTrailingSeparator(p: string): string {
+export function stripTrailingSeparator(p: string): string {
   return p.endsWith("/") ? p.slice(0, -1) : p;
 }
 
@@ -153,23 +24,15 @@ function foldCase(p: string, platform: string): string {
 
 /** Whether two path segments name the same thing, folded the way a case-insensitive
  * filesystem would: identical spelling everywhere but win32, where the comparison ignores
- * case. `platform` is a parameter, never `process.platform` read inline, so a test can
- * exercise the win32 branch on any OS. */
-export function samePathSegment(
-  a: string,
-  b: string,
-  platform: string = process.platform
-): boolean {
+ * case. `platform` is always a parameter, so a test can exercise the win32 branch on any OS. */
+export function samePathSegment(a: string, b: string, platform: string): boolean {
   return platform === "win32" ? a.toLowerCase() === b.toLowerCase() : a === b;
 }
 
 /** `roots` with every `samePathSegment` duplicate collapsed away, the first spelling kept.
  * A plain `Set` compares by exact string equality, so on win32 two entries differing only
- * in case — one directory the filesystem never tells apart — would survive as two. */
-export function dedupePathSegments(
-  roots: readonly string[],
-  platform: string = process.platform
-): string[] {
+ * in case, one directory the filesystem never tells apart, would survive as two. */
+export function dedupePathSegments(roots: readonly string[], platform: string): string[] {
   const deduped: string[] = [];
   for (const root of roots) {
     if (!deduped.some((seen) => samePathSegment(seen, root, platform))) deduped.push(root);
@@ -177,7 +40,7 @@ export function dedupePathSegments(
   return deduped;
 }
 
-// One directory is the other, or contains it — separators normalised, so nesting is
+// One directory is the other, or contains it, separators normalised, so nesting is
 // recognised on Windows too. Both sides are expected already resolved: this compares
 // spelling, it does not resolve.
 export function pathContainsOrEquals(outer: string, inner: string): boolean {
@@ -187,12 +50,12 @@ export function pathContainsOrEquals(outer: string, inner: string): boolean {
 }
 
 /** Whether two paths name the same directory: separators normalised, and case folded the way
- * a case-insensitive filesystem would — on win32 only, where a backslash separates and case
+ * a case-insensitive filesystem would, on win32 only, where a backslash separates and case
  * does not count. Elsewhere a backslash is an ordinary character in a name. Both sides are
- * expected already resolved — this
- * compares spelling, it does not resolve. A `realpath` answer and a path a host stored name
- * the same directory in two spellings on Windows, and `===` calls them different. */
-export function samePath(a: string, b: string, platform: string = process.platform): boolean {
+ * expected already resolved: this compares spelling, it does not resolve. A `realpath`
+ * answer and a path a host stored name the same directory in two spellings on Windows, and
+ * `===` calls them different. */
+export function samePath(a: string, b: string, platform: string): boolean {
   if (platform !== "win32") return a === b;
   const folded = (p: string): string => p.replace(/\\/g, "/").toLowerCase();
   return folded(a) === folded(b);
@@ -203,27 +66,13 @@ export function pathsOverlap(a: string, b: string): boolean {
   return pathContainsOrEquals(a, b) || pathContainsOrEquals(b, a);
 }
 
-/** Where the user-scope manifest lives: directly under `userConfigDir()`, never nested in an
- * `.aidd/` segment — there is no project to hold one, and `marketplaces.json` and
- * `references.json` sit at that same root already. */
-export function userManifestPath(userConfigDir: string): string {
-  return join(userConfigDir, MANIFEST_FILENAME);
-}
-
-/** The manifest's filename, named once so every reader and writer of that file spells it the same. */
-export const MANIFEST_FILENAME = "manifest.json";
-
 /**
- * `target` relative to `base`, spelled with forward slashes whatever the platform — the form
+ * `target` relative to `base`, spelled with forward slashes whatever the platform: the form
  * every path this CLI records for another machine to read takes (a manifest's
  * `files[].relativePath`, a snapshot key, a plugin ref), so a tree written on Windows and
  * read on Linux names the same file.
  */
-export function posixRelative(
-  base: string,
-  target: string,
-  platform: NodeJS.Platform = process.platform
-): string {
+export function posixRelative(base: string, target: string, platform: string): string {
   const impl = platform === "win32" ? win32 : posix;
   return impl.relative(base, target).split(impl.sep).join("/");
 }

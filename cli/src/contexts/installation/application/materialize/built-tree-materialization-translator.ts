@@ -83,7 +83,13 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const builtFiles =
       mode === "flat"
         ? await this.readFlatFiles(builtDir, dist, tool, deliversHooksToProject)
-        : await readBuiltUserPluginFiles(this.fs, this.hasher, builtDir, dist.manifest.name);
+        : await readBuiltUserPluginFiles(
+            this.fs,
+            this.hasher,
+            builtDir,
+            dist.manifest.name,
+            this.built.platform
+          );
     const hooks = deliversHooksToProject
       ? await this.projectHooks.materializeWithProvenance(
           dist,
@@ -169,7 +175,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const absPaths = await this.fs.listFilesRecursive(builtDir);
     const files: InstallationFile[] = [];
     for (const abs of absPaths) {
-      const rel = posixRelative(builtDir, abs);
+      const rel = posixRelative(builtDir, abs, this.built.platform);
       if (!this.belongsToPlugin(rel, name, tool) && !hookPaths.has(rel)) continue;
       const content = await this.fs.readFile(abs);
       files.push(
@@ -202,13 +208,14 @@ export async function readBuiltUserPluginFiles(
   fs: FileReader,
   hasher: Hasher,
   builtDir: string,
-  name: string
+  name: string,
+  platform: string
 ): Promise<InstallationFile[]> {
   const pluginSrc = join(builtDir, "plugins", name);
   const absPaths = await fs.listFilesRecursive(pluginSrc);
   return Promise.all(
     absPaths.map(async (abs) => {
-      const rel = posixRelative(pluginSrc, abs);
+      const rel = posixRelative(pluginSrc, abs, platform);
       const content = await fs.readFile(abs);
       return new InstallationFile({
         relativePath: posix.join(name, rel),

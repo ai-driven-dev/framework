@@ -1,5 +1,8 @@
 import { resolve } from "node:path";
-import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../shared/domain/paths.js";
+import {
+  builtMarketplaceDir,
+  userBuiltMarketplaceDir,
+} from "../../../shared/domain/layout/aidd-layout.js";
 import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { VersionReader } from "../../../shared/ports/version-reader.js";

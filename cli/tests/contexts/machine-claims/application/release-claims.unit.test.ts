@@ -8,7 +8,7 @@ function claims(references?: RecordingSourceReferences) {
   return new ReleaseClaims(
     new InMemoryFileAdapter(),
     new CapturingLogger(),
-    "aidd-framework",
+    { frameworkMarketplaceName: "aidd-framework", platform: process.platform },
     undefined,
     references
   );

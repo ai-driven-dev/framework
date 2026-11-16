@@ -4,9 +4,9 @@ import type { RefreshMarketplace } from "../../../src/contexts/distribution/appl
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import type { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../../src/contexts/distribution/contract/catalog.js";
+import { remoteFrameworkSource } from "../../../src/contexts/distribution/contract/framework-source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { DetectProjectContext } from "../../../src/contexts/installation/application/detect-project-context.js";
@@ -207,7 +207,7 @@ function remoteFlow(
     ...flowTools(),
     supportsUserScopeActivation: () => true,
     projectRoot: PROJECT_ROOT,
-    source: MarketplaceSourceMode.remote(),
+    source: remoteFrameworkSource(),
     aiTools: opts.aiTools ?? [],
     ideTools: opts.ideTools ?? [],
     pluginMode: "none",
@@ -339,7 +339,7 @@ describe("setup without TTY", () => {
         ...flowTools(),
         supportsUserScopeActivation: () => true,
         projectRoot: PROJECT_ROOT,
-        source: MarketplaceSourceMode.remote(),
+        source: remoteFrameworkSource(),
         aiTools: [TOOL.claude],
         ideTools: [],
         pluginMode: "named",
@@ -390,7 +390,7 @@ describe("setup without TTY", () => {
           ...flowTools(),
           supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
-          source: MarketplaceSourceMode.remote(),
+          source: remoteFrameworkSource(),
           aiTools: [TOOL.claude],
           ideTools: [],
           pluginMode: "none",
@@ -410,7 +410,7 @@ describe("setup without TTY", () => {
           ...flowTools(),
           supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
-          source: MarketplaceSourceMode.remote(),
+          source: remoteFrameworkSource(),
           aiTools: [TOOL.claude],
           ideTools: [],
           pluginMode: "none",
@@ -448,7 +448,7 @@ describe("setup without TTY", () => {
           ...flowTools(),
           supportsUserScopeActivation: () => true,
           projectRoot: PROJECT_ROOT,
-          source: MarketplaceSourceMode.remote(),
+          source: remoteFrameworkSource(),
           aiTools: [TOOL.claude],
           ideTools: [],
           pluginMode: "none",
@@ -538,7 +538,7 @@ describe("setup interactive tool selection", () => {
       ...flowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
-      source: MarketplaceSourceMode.remote(),
+      source: remoteFrameworkSource(),
       aiTools: opts.aiTools ?? [],
       ideTools: opts.ideTools ?? [],
       pluginMode: "none",

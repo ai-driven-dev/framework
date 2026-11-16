@@ -1,6 +1,10 @@
 import { resolve } from "node:path";
 import { type Command, Option } from "commander";
-import { MarketplaceSourceMode } from "../../contexts/distribution/domain/marketplace-source-mode.js";
+import {
+  type FrameworkSource,
+  localFrameworkSource,
+  remoteFrameworkSource,
+} from "../../contexts/distribution/contract/framework-source.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
 import type { SetAgentModels } from "../../orchestration/agent-models/set-agent-models.js";
@@ -116,16 +120,16 @@ interface SetupCmdOptions {
 export function parseSourceFlag(
   cmdOptions: SetupCmdOptions,
   output: CLIOutput
-): MarketplaceSourceMode | undefined {
+): FrameworkSource | undefined {
   if (!cmdOptions.source) return undefined;
   if (cmdOptions.source === "local") {
     if (!cmdOptions.path) {
       output.error("--source local requires --path <dir>");
       process.exit(1);
     }
-    return MarketplaceSourceMode.local(resolve(cmdOptions.path));
+    return localFrameworkSource(resolve(cmdOptions.path));
   }
-  return MarketplaceSourceMode.remote(undefined, cmdOptions.release);
+  return remoteFrameworkSource(undefined, cmdOptions.release);
 }
 
 export function expandAllKeyword(raw: string | undefined, all: readonly string[]): string[] {

@@ -3,7 +3,6 @@ import copilotVscodeSettings from "../../../../../../assets/configs/copilot/vsco
   type: "json",
 };
 import { GITKEEP_FILE } from "../../../../../shared/domain/file.js";
-import { DOCS_DIR } from "../../../../../shared/domain/paths.js";
 import { MCP_CONFIG_REF } from "../../../contract/config-refs.js";
 import { convertCommandFrontmatter } from "../../formats/command.js";
 import { nativeHooksSupport } from "../../formats/hooks-descriptor.js";
@@ -38,6 +37,7 @@ const DOCS_PLACEHOLDER = "{{DOCS}}/";
 const AT_TOOLS_PLACEHOLDER = "@{{TOOLS}}/";
 const AT_DOCS_PLACEHOLDER = "@{{DOCS}}/";
 
+const DOCS_DIR = "aidd_docs" as const;
 const EXT_AGENT = ".agent.md";
 const EXT_PROMPT = ".prompt.md";
 const EXT_INSTRUCTIONS = ".instructions.md";

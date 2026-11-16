@@ -20,6 +20,7 @@ function guard(options: {
     fs: new InMemoryFileAdapter(),
     logger: new CapturingLogger(),
     home: "/home/u",
+    platform: process.platform,
     userSourceReferences: references,
     marketplaceRegistry: listed === undefined ? undefined : { list: async () => listed },
     resolveCacheCandidate: async () => null,

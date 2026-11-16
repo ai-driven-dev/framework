@@ -130,7 +130,8 @@ async function doctorSays(registry: HostPluginRegistryReading): Promise<string> 
     new InspectHostRegistration(
       new InMemoryFileAdapter(),
       new Map([[copilot, new FakeHostPluginRegistry(registry)]]),
-      new Map()
+      new Map(),
+      process.platform
     ),
     () => "/user-cache",
     { get: () => "1.0.0" }

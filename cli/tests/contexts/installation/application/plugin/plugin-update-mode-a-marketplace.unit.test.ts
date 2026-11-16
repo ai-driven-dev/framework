@@ -61,6 +61,7 @@ function makeUpdateUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): U
     {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
+      platform: process.platform,
       homedir: () => HOME,
       translate: translateDistribution,
     }

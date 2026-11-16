@@ -1,10 +1,7 @@
 import { dirname, join } from "node:path";
 import { UnreadableUserSourceReferencesError } from "../../../shared/domain/errors.js";
-import {
-  dedupePathSegments,
-  samePathSegment,
-  USER_SOURCE_REFERENCES_FILENAME,
-} from "../../../shared/domain/paths.js";
+import { USER_SOURCE_REFERENCES_FILENAME } from "../../../shared/domain/layout/aidd-layout.js";
+import { dedupePathSegments, samePathSegment } from "../../../shared/domain/paths.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
@@ -16,10 +13,11 @@ type ReferencesFile = Record<string, readonly string[]>;
  * case-insensitive platform still matches a root a real `realpath` returns with different casing. */
 function findVersionFor(
   references: ReferencesFile,
-  projectRoot: string
+  projectRoot: string,
+  platform: string
 ): [string, readonly string[]] | undefined {
   for (const [version, roots] of Object.entries(references)) {
-    if (roots.some((root) => samePathSegment(root, projectRoot))) return [version, roots];
+    if (roots.some((root) => samePathSegment(root, projectRoot, platform))) return [version, roots];
   }
   return undefined;
 }
@@ -27,26 +25,30 @@ function findVersionFor(
 export class UserSourceReferencesAdapter implements UserSourceReferences {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly userConfigDir: () => string
+    private readonly userConfigDir: () => string,
+    private readonly platform: string = process.platform
   ) {}
 
   async addReference(version: string, projectRoot: string): Promise<void> {
     const references = await this.readAll();
     const alreadyOnlyHere =
-      (references[version] ?? []).some((root) => samePathSegment(root, projectRoot)) &&
+      (references[version] ?? []).some((root) =>
+        samePathSegment(root, projectRoot, this.platform)
+      ) &&
       Object.entries(references).every(
         ([key, roots]) =>
-          key === version || !roots.some((root) => samePathSegment(root, projectRoot))
+          key === version ||
+          !roots.some((root) => samePathSegment(root, projectRoot, this.platform))
       );
     if (alreadyOnlyHere) return;
     const next: Record<string, string[]> = {};
     for (const [key, roots] of Object.entries(references)) {
       if (key === version) continue;
-      const filtered = roots.filter((root) => !samePathSegment(root, projectRoot));
+      const filtered = roots.filter((root) => !samePathSegment(root, projectRoot, this.platform));
       if (filtered.length > 0) next[key] = filtered;
     }
     const existingAtVersion = (references[version] ?? []).filter(
-      (root) => !samePathSegment(root, projectRoot)
+      (root) => !samePathSegment(root, projectRoot, this.platform)
     );
     next[version] = [...existingAtVersion, projectRoot];
     // `projectRoot` is protected from the prune below: a project vanishing between being recorded
@@ -57,10 +59,10 @@ export class UserSourceReferencesAdapter implements UserSourceReferences {
 
   async removeReference(projectRoot: string): Promise<void> {
     const references = await this.readAll();
-    const found = findVersionFor(references, projectRoot);
+    const found = findVersionFor(references, projectRoot, this.platform);
     if (found === undefined) return;
     const [version, roots] = found;
-    const remaining = roots.filter((root) => !samePathSegment(root, projectRoot));
+    const remaining = roots.filter((root) => !samePathSegment(root, projectRoot, this.platform));
     const next = { ...references };
     if (remaining.length > 0) next[version] = remaining;
     else delete next[version];
@@ -71,7 +73,7 @@ export class UserSourceReferencesAdapter implements UserSourceReferences {
     const references = await this.readAll();
     const allRoots: string[] = [];
     for (const roots of Object.values(references)) allRoots.push(...roots);
-    const deduped = dedupePathSegments(allRoots);
+    const deduped = dedupePathSegments(allRoots, this.platform);
     const existing: string[] = [];
     for (const root of deduped) {
       if (await this.fs.fileExists(root)) existing.push(root);
@@ -109,7 +111,7 @@ export class UserSourceReferencesAdapter implements UserSourceReferences {
       const existing: string[] = [];
       for (const root of roots) {
         const protectedFromPrune =
-          protectedRoot !== undefined && samePathSegment(root, protectedRoot);
+          protectedRoot !== undefined && samePathSegment(root, protectedRoot, this.platform);
         if (protectedFromPrune || (await this.fs.fileExists(root))) existing.push(root);
       }
       if (existing.length > 0) result[version] = existing;

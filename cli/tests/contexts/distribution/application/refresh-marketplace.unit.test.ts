@@ -4,8 +4,8 @@ import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/ap
 import { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
 import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
+import { MARKETPLACE_CACHE_SUBDIR } from "../../../../src/contexts/distribution/domain/marketplace-cache-layout.js";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { MARKETPLACE_CACHE_SUBDIR } from "../../../../src/shared/domain/paths.js";
 import { serializePluginSource } from "../../../../src/shared/domain/source.js";
 import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";

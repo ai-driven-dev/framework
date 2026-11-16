@@ -20,6 +20,7 @@ export function fakeBuiltDeps(): BuiltMaterializationDeps {
   return {
     ...fakeBuildSources(),
     marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+    platform: process.platform,
     homedir: () => "/stub-home",
   };
 }

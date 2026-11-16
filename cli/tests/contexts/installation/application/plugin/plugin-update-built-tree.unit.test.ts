@@ -77,6 +77,7 @@ function makeUpdateUseCase(
         {
           ensureBuilt,
           marketplaceRegistry: registry,
+          platform: process.platform,
           homedir: () => HOME,
           translate: translateDistribution,
         }
@@ -708,6 +709,7 @@ describe("UpdatePlugin — built-tree materialization", () => {
       {
         ensureBuilt: fakeEnsureBuiltMarketplace(),
         marketplaceRegistry: registry,
+        platform: process.platform,
         homedir: () => HOME,
         translate: translateDistribution,
       }

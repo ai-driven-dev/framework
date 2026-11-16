@@ -20,6 +20,13 @@ export interface SharedSourceClaim {
   readonly otherProjects: readonly string[];
 }
 
+/** What names the shared source and decides which project roots are the same one. */
+interface SharedSourceIdentity {
+  readonly frameworkMarketplaceName: string;
+  /** The platform whose path rules compare two project roots. */
+  readonly platform: string;
+}
+
 /** The marketplaces registered for a project, listed only when a claim is actually looked up. */
 type ListMarketplaces = () => Promise<readonly { name: string; scope: MarketplaceScope }[]>;
 
@@ -32,7 +39,7 @@ export class ReleaseClaims {
   constructor(
     private readonly fs: FileReader,
     private readonly logger: Logger,
-    private readonly frameworkMarketplaceName: string,
+    private readonly sharedSource: SharedSourceIdentity,
     private readonly userManifestRepo?: MachineManifestRepository & Lock,
     private readonly userSourceReferences?: UserSourceReferences
   ) {}
@@ -60,7 +67,7 @@ export class ReleaseClaims {
     const references = this.userSourceReferences;
     if (references === undefined) return undefined;
     const shared = (await list()).find((m) =>
-      frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
+      frameworkSourceIsShared(m.name, m.scope, this.sharedSource.frameworkMarketplaceName)
     );
     if (shared === undefined) return undefined;
     return toleratingUnreadableSourceReferences(this.logger, undefined, async () => {
@@ -68,7 +75,11 @@ export class ReleaseClaims {
       return {
         alias: shared.name,
         resolvedRoot,
-        otherProjects: await otherProjectsReferencing(references, resolvedRoot),
+        otherProjects: await otherProjectsReferencing(
+          references,
+          resolvedRoot,
+          this.sharedSource.platform
+        ),
       };
     });
   }

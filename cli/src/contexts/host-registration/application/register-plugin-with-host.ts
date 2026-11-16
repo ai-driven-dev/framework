@@ -6,9 +6,8 @@ import {
 import {
   parseBuiltMarketplaceDir,
   parseUserBuiltMarketplaceDir,
-  samePath,
-  samePathSegment,
-} from "../../../shared/domain/paths.js";
+} from "../../../shared/domain/layout/aidd-layout.js";
+import { samePath, samePathSegment } from "../../../shared/domain/paths.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
@@ -66,8 +65,16 @@ interface Run {
   readonly projectRoot: string;
   readonly claims: RegistrationClaims;
   readonly userCacheRoot: () => string;
+  readonly platform: string;
   readonly logger: Logger;
   readonly warnings: string[];
+}
+
+/** The per-tool registries a host's native state is read and written through. */
+interface HostRegistries {
+  readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>;
+  readonly pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>;
+  readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources>;
 }
 
 export class RegisterPluginWithHost {
@@ -75,11 +82,11 @@ export class RegisterPluginWithHost {
     private readonly fs: FileReader,
     /** Native plugin CLI activators, keyed by the `binary` each profile declares. */
     private readonly activators: ReadonlyMap<string, HostActions>,
-    /** Only a tool whose profile declares a marketplace registry is ever looked up here, so a
-     * tool absent from this map still registers. */
-    private readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>,
-    private readonly pluginRegistries: ReadonlyMap<AiToolId, HostPluginRegistry>,
-    private readonly sources: ReadonlyMap<AiToolId, HostMarketplaceSources>
+    /** Only a tool whose profile declares a registry is ever looked up here, so a tool absent
+     * from a map still registers. */
+    private readonly hosts: HostRegistries,
+    /** The platform whose path rules compare what a host stored with what this run resolved. */
+    private readonly platform: string
   ) {}
 
   /** Registers every marketplace with the tool's own CLI and enables the refs this run asks
@@ -103,6 +110,7 @@ export class RegisterPluginWithHost {
       projectRoot,
       claims,
       userCacheRoot: command.userCacheRoot,
+      platform: this.platform,
       logger: sink.logger,
       warnings: sink.warnings,
     };
@@ -222,7 +230,7 @@ export class RegisterPluginWithHost {
     refs: string[]
   ): Promise<{ refsToEnable: string[]; alreadyOwnedRefs: string[] }> {
     const { profile, claims } = run;
-    const hostRegistry = this.pluginRegistries.get(profile.toolId);
+    const hostRegistry = this.hosts.pluginRegistries.get(profile.toolId);
     if (hostRegistry === undefined) return { refsToEnable: refs, alreadyOwnedRefs: [] };
     const ownRefs = claims.recorded?.pluginRefs;
     const onHost = (await hostRegistry.read(run.projectRoot)).refs;
@@ -272,11 +280,11 @@ export class RegisterPluginWithHost {
         hostName,
       };
     const sourceProof = await inspectNativeMarketplaceSource(
-      this.sources.get(profile.toolId),
+      this.hosts.sources.get(profile.toolId),
       projectRoot,
       registration
     );
-    const reader = this.pluginRegistries.get(profile.toolId);
+    const reader = this.hosts.pluginRegistries.get(profile.toolId);
     const base = {
       canonical,
       sourceStatus: sourceProof.status,
@@ -366,10 +374,10 @@ export class RegisterPluginWithHost {
     if (
       proof.sourceStatus === "owned" &&
       proof.source?.source !== undefined &&
-      samePath(proof.source.source, requestedSource) &&
+      samePath(proof.source.source, requestedSource, this.platform) &&
       (proof.source.kind === "registry" ||
         (proof.source.kind === "effective-list" &&
-          samePath(proof.source.root, requestedSource) &&
+          samePath(proof.source.root, requestedSource, this.platform) &&
           proof.source.sourceType === "local"))
     )
       return { hostName, provenance: proof.source };
@@ -392,7 +400,7 @@ export class RegisterPluginWithHost {
    * caller hands for any other tool is never consulted. */
   private marketplaceRegistryOf(profile: AiToolProfile): HostMarketplaceRegistry | undefined {
     return profile.nativeActivation()?.keepsMarketplaceRegistry() === true
-      ? this.marketplaceRegistries.get(profile.toolId)
+      ? this.hosts.marketplaceRegistries.get(profile.toolId)
       : undefined;
   }
 
@@ -409,7 +417,7 @@ export class RegisterPluginWithHost {
     builtDir: string
   ): Promise<NativeMarketplaceSource | undefined> {
     const { toolId } = run;
-    const reading = await this.sources.get(run.profile.toolId)?.read(run.projectRoot);
+    const reading = await this.hosts.sources.get(run.profile.toolId)?.read(run.projectRoot);
     const current = reading?.entries?.get(hostName);
     const expected = await this.fs.realpath(builtDir).catch(() => builtDir);
     const sourceMatches =
@@ -455,6 +463,7 @@ export class RegisterPluginWithHost {
         projectRoot: run.projectRoot,
         marketplaceName: marketplace.name,
         target: profile.toolId,
+        platform: run.platform,
       }
     );
     if (check === undefined) return undefined;
@@ -513,7 +522,7 @@ export class RegisterPluginWithHost {
       return false;
     }
     const registeredSource = (
-      await this.marketplaceRegistries.get(run.profile.toolId)?.read()
+      await this.hosts.marketplaceRegistries.get(run.profile.toolId)?.read()
     )?.entries?.get(hostName);
     const source =
       registeredSource === undefined
@@ -524,7 +533,8 @@ export class RegisterPluginWithHost {
         ? undefined
         : parseBuiltMarketplaceDir(
             await this.fs.realpath(projectRoot).catch(() => projectRoot),
-            source
+            source,
+            run.platform
           );
     const userRoot = run.userCacheRoot();
     const userSource =
@@ -532,13 +542,14 @@ export class RegisterPluginWithHost {
         ? undefined
         : parseUserBuiltMarketplaceDir(
             await this.fs.realpath(userRoot).catch(() => userRoot),
-            source
+            source,
+            run.platform
           );
     const provenSource = [projectSource, userSource].some(
       (location) =>
         location !== undefined &&
-        samePathSegment(location.marketplaceName, marketplace.name) &&
-        samePathSegment(location.target, toolId)
+        samePathSegment(location.marketplaceName, marketplace.name, run.platform) &&
+        samePathSegment(location.target, toolId, run.platform)
     );
     if (!provenSource) {
       this.warn(

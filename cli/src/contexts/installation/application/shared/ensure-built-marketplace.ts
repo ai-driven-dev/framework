@@ -2,9 +2,9 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
   builtMarketplaceDir,
-  pathsOverlap,
   userBuiltMarketplaceDir,
-} from "../../../../shared/domain/paths.js";
+} from "../../../../shared/domain/layout/aidd-layout.js";
+import { pathsOverlap } from "../../../../shared/domain/paths.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";

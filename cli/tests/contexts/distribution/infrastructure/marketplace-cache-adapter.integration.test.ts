@@ -2,8 +2,8 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { MARKETPLACE_CACHE_SUBDIR } from "../../../../src/contexts/distribution/domain/marketplace-cache-layout.js";
 import { MarketplaceCacheAdapter } from "../../../../src/contexts/distribution/infrastructure/marketplace-cache-adapter.js";
-import { MARKETPLACE_CACHE_SUBDIR } from "../../../../src/shared/domain/paths.js";
 
 // What clearing promises whatever holds the cache is in `ports/marketplace-cache.contract`;
 // what stays here is a cache directory that is not there.

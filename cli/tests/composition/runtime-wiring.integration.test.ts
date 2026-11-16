@@ -201,7 +201,7 @@ describe("debugOnly", () => {
 });
 
 describe("builtMaterializationDepsOf", () => {
-  it("hands a restore the build, the registry, the home directory resolver and the translation", () => {
+  it("hands a restore the build, the registry, the home directory resolver, the translation and the platform", () => {
     const ensureBuilt = {} as Parameters<typeof builtMaterializationDepsOf>[0];
     const marketplaceRegistry = {} as Parameters<typeof builtMaterializationDepsOf>[1];
     const translate = {} as Parameters<typeof builtMaterializationDepsOf>[2];
@@ -211,6 +211,7 @@ describe("builtMaterializationDepsOf", () => {
       marketplaceRegistry,
       homedir,
       translate,
+      platform: process.platform,
     });
   });
 });

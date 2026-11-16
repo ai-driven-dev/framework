@@ -2,7 +2,10 @@ import { resolve } from "node:path";
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
-import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+import {
+  localFrameworkSource,
+  remoteFrameworkSource,
+} from "../../../src/contexts/distribution/contract/framework-source.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
 import { RunSetup } from "../../../src/orchestration/setup/run-setup.js";
 import type { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
@@ -152,13 +155,13 @@ describe("aidd setup — the flow a scripted run builds", () => {
   it("resolves a local source against the working directory", async () => {
     await run("--source", "local", "--path", "vendor/framework", "--ai", "claude");
 
-    expect(builtFlow().source).toEqual(MarketplaceSourceMode.local(resolve("vendor/framework")));
+    expect(builtFlow().source).toEqual(localFrameworkSource(resolve("vendor/framework")));
   });
 
   it("carries the release tag a remote source was pinned to", async () => {
     await run("--source", "remote", "--release", "v1.2.3", "--ai", "claude");
 
-    expect(builtFlow().source).toEqual(MarketplaceSourceMode.remote(undefined, "v1.2.3"));
+    expect(builtFlow().source).toEqual(remoteFrameworkSource(undefined, "v1.2.3"));
   });
 
   it("hands a user scope to the machine-wide setup alone", async () => {

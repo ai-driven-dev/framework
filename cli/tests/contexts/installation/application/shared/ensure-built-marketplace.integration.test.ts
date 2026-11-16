@@ -13,7 +13,10 @@ import {
 } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
-import { BUILT_CACHE_SUBDIR, builtMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
+import {
+  BUILT_CACHE_SUBDIR,
+  builtMarketplaceDir,
+} from "../../../../../src/shared/domain/layout/aidd-layout.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import type { VersionReader } from "../../../../../src/shared/ports/version-reader.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";

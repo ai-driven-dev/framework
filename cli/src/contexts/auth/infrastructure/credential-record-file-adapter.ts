@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { AuthStorageError } from "../../../shared/domain/errors.js";
-import { AIDD_DIR } from "../../../shared/domain/paths.js";
+import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { AuthLevel, Credential } from "../contract/credential.js";
 import {
   type CredentialRecord,

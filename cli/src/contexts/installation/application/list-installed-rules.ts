@@ -18,8 +18,8 @@ export interface ListInstalledRulesResult {
 /** `/`-separated whatever the platform hands back, because the path is data a caller reads
  * and compares, not a path it opens. A Windows checkout answering `.claude\rules\a.md`
  * would make the same project's rules read differently on two machines. */
-function projectRelative(projectRoot: string, absolutePath: string): string {
-  return posixRelative(projectRoot, absolutePath);
+function projectRelative(projectRoot: string, absolutePath: string, platform: string): string {
+  return posixRelative(projectRoot, absolutePath, platform);
 }
 
 /**
@@ -27,7 +27,10 @@ function projectRelative(projectRoot: string, absolutePath: string): string {
  * installs is what makes a fifth tool, or a moved directory, impossible to miss.
  */
 export class ListInstalledRules {
-  constructor(private readonly files: FileReader) {}
+  constructor(
+    private readonly files: FileReader,
+    private readonly platform: string
+  ) {}
 
   async execute(input: ListInstalledRulesCommand): Promise<ListInstalledRulesResult> {
     const rules: InstalledRule[] = [];
@@ -53,7 +56,12 @@ export class ListInstalledRules {
     for (const file of found.filter((path) => path.endsWith(location.extension))) {
       const content = await this.files.readFile(file);
       rules.push(
-        toInstalledRule(toolId, projectRelative(projectRoot, file), location.extension, content)
+        toInstalledRule(
+          toolId,
+          projectRelative(projectRoot, file, this.platform),
+          location.extension,
+          content
+        )
       );
     }
     return rules;

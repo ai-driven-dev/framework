@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { BUILT_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
+import { BUILT_CACHE_SUBDIR } from "../../../../shared/domain/layout/aidd-layout.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";

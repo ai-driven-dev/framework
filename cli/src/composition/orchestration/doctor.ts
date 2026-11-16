@@ -47,7 +47,12 @@ export function wireDoctor(base: Base, inst: Installation) {
       new ListRegisteredPlugins(manifests),
       new ResolveBuiltMarketplaces(fs, marketplaceRegistry, userConfigDir, currentVersionProvider),
       new InspectDeclaredMarketplaces(fs, hostBinaryAvailableIn(nativePluginActivators)),
-      new InspectHostRegistration(fs, hostPluginRegistries, hostMarketplaceRegistries)
+      new InspectHostRegistration(
+        fs,
+        hostPluginRegistries,
+        hostMarketplaceRegistries,
+        process.platform
+      )
     );
   const doctorUseCase = new RunDoctor(
     new LoadManifestForDoctor(loadManifest),

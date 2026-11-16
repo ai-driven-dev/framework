@@ -3,7 +3,7 @@ import {
   hostMarketplaceSourceConflict,
   isDriftFound,
 } from "../../../../src/contexts/host-registration/application/host-marketplace-source-conflict.js";
-import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/paths.js";
+import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/layout/aidd-layout.js";
 import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredProfile, TOOL } from "../../tools/testing/catalog-of.js";
@@ -45,6 +45,7 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
         projectRoot: "/project",
         marketplaceName: NAME,
         target: "claude",
+        platform: process.platform,
       }
     );
 
@@ -73,7 +74,13 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
       reader,
       requestedSource,
       { name: NAME, pluginNames: [] },
-      { userCacheRoot, projectRoot: "/project", marketplaceName: NAME, target: "claude" }
+      {
+        userCacheRoot,
+        projectRoot: "/project",
+        marketplaceName: NAME,
+        target: "claude",
+        platform: process.platform,
+      }
     );
 
     expect(check).toStrictEqual({

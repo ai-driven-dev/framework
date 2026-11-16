@@ -42,6 +42,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(`${BUILT}/plugins/sample-plugin/skills/demo/SKILL.md`, "built skill");
     const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),
@@ -89,6 +90,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),
@@ -122,6 +124,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),
@@ -148,6 +151,7 @@ describe("BuiltTreeMaterializationTranslator — cursor (integration)", () => {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),
@@ -190,6 +194,7 @@ describe("BuiltTreeMaterializationTranslator — when no built tree applies (int
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
     const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: await makeRegistry(),

@@ -95,6 +95,7 @@ describe("biome carries the exit and default-export rules", () => {
       "src/contexts/*/application/**/*.ts",
       "src/contexts/*/ports/**/*.ts",
       "src/contexts/*/contract/**/*.ts",
+      "src/shared/domain/**/*.ts",
       "src/shared/ports/**/*.ts",
     ]);
   });
@@ -421,6 +422,7 @@ describe("the guard itself", () => {
       join(planted, "src/shared/ports/env.ts"),
       "export const home = (): string | undefined => process.env.HOME;\n"
     );
+    writeFileSync(join(planted, "src/shared/domain/env.ts"), readsEnvSource);
     writeFileSync(
       join(planted, "src/shared/infrastructure/exit.ts"),
       "export const stop = (): never => process.exit(1);\n"
@@ -649,11 +651,14 @@ describe("the guard itself", () => {
     }
   });
 
-  it("flags the process global in shared/ports and process.exit in shared/infrastructure", () => {
+  it("flags the process global in shared/ports and shared/domain, and process.exit in shared/infrastructure", () => {
     const findings = biomeFindings(planted);
 
     expect(findings, findings.join(", ")).toContain(
       "src/shared/ports/env.ts:lint/style/noRestrictedGlobals"
+    );
+    expect(findings, findings.join(", ")).toContain(
+      "src/shared/domain/env.ts:lint/style/noRestrictedGlobals"
     );
     expect(findings, findings.join(", ")).toContain("src/shared/infrastructure/exit.ts:plugin");
   });

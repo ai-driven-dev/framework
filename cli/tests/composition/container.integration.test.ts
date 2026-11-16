@@ -1,15 +1,21 @@
-import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { existsSync, realpathSync } from "node:fs";
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/container.js";
+import { wireInstallation } from "../../src/composition/installation.js";
+import { wireMarketplace } from "../../src/composition/orchestration/marketplace.js";
+import { wireBase } from "../../src/composition/shared.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../src/presentation/terminal/prompter-adapter.js";
-import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/paths.js";
+import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/layout/aidd-layout.js";
+import { FakeHostActions } from "../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../contexts/host-registration/testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
 
 describe("createDeps", () => {
@@ -276,6 +282,32 @@ describe("createDeps", () => {
       );
     });
 
+    it("tells a project clean which other projects still reference the framework's shared source, and drops only its own claim", async () => {
+      const { registerFrameworkMarketplace, manifestRepo, userSourceReferences, cleanUseCase } =
+        await createDeps(root, { verbose: false }, undefined, tools);
+      await registerFrameworkMarketplace.execute({
+        projectRoot: root,
+        pluginSource: {
+          kind: "local",
+          path: join(process.cwd(), "tests/fixtures/framework/marketplace-sample"),
+        },
+      });
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "1.0.0", []);
+      await manifestRepo.save(manifest);
+      const other = join(root, "other-project");
+      await mkdir(other, { recursive: true });
+      await userSourceReferences.addReference("1.0.0", await realpath(root));
+      await userSourceReferences.addReference("1.0.0", await realpath(other));
+
+      const result = await cleanUseCase.execute({ projectRoot: root, tools, force: true });
+
+      expect(result.preview.sharedSourceOtherProjects).toEqual([await realpath(other)]);
+      expect(await userSourceReferences.listAllReferencingProjects()).toEqual([
+        await realpath(other),
+      ]);
+    });
+
     it("purges this project's pre-migration copy once sync finds the framework at user scope", async () => {
       const { registerFrameworkMarketplace, manifestRepo, syncSettingsUseCase } = await createDeps(
         root,
@@ -332,6 +364,55 @@ describe("createDeps", () => {
 
       expect(await readFile(projectEntries, "utf8")).not.toContain(FRAMEWORK_MARKETPLACE_NAME);
       expect(await readFile(userEntries, "utf8")).toContain(FRAMEWORK_MARKETPLACE_NAME);
+    });
+
+    it("registers the framework marketplace with the host and enables its plugins through the host's own registries", async () => {
+      // A host records the real location of a source it was given, never a symlinked temp path.
+      class RealpathHostActions extends FakeHostActions {
+        override addMarketplace(source: string, scope?: unknown): void {
+          super.addMarketplace(realpathSync(source), scope);
+        }
+      }
+      const activator = new RealpathHostActions({ available: true });
+      const base = wireBase(root, { verbose: false }, undefined, tools);
+      const withHost = {
+        ...base,
+        nativePluginActivators: new Map([["claude", activator]]),
+        hostPluginRegistries: new Map([
+          [TOOL.claude, new FakeHostPluginRegistry({ location: "fake host", refs: new Map() })],
+        ]),
+        nativeSources: new Map([
+          [
+            TOOL.claude,
+            new FakeHostMarketplaceSources(
+              activator,
+              "registry",
+              () => FRAMEWORK_MARKETPLACE_NAME,
+              new Map()
+            ),
+          ],
+        ]),
+      };
+      const { syncSettingsUseCase } = wireMarketplace(withHost, wireInstallation(withHost));
+      await base.registerFrameworkMarketplace.execute({
+        projectRoot: root,
+        pluginSource: {
+          kind: "local",
+          path: join(process.cwd(), "tests/fixtures/framework"),
+        },
+      });
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "1.0.0", []);
+      await base.manifestRepo.save(manifest);
+
+      await syncSettingsUseCase.execute({
+        projectRoot: root,
+        tools,
+        enablePlugins: ["aidd-test"],
+      });
+
+      expect(activator.addedMarketplaces).toHaveLength(1);
+      expect(activator.enabledPlugins).toEqual([`aidd-test@${FRAMEWORK_MARKETPLACE_NAME}`]);
     });
 
     it("refuses a project clean whose plugin's MCP entries cannot be read back", async () => {
