@@ -3,7 +3,10 @@ import { InitProject } from "../../../../src/contexts/installation/application/i
 import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { NoManifestError, ToolNotInstalledError } from "../../../../src/shared/domain/errors.js";
+import {
+  ManifestUnavailableError,
+  ToolNotInstalledError,
+} from "../../../../src/shared/domain/errors.js";
 import { InstallationFile } from "../../../../src/shared/domain/file.js";
 import { compareSemver } from "../../../../src/shared/domain/semver.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
@@ -58,9 +61,12 @@ function inSyncTool(toolId: ToolId) {
 describe("ReportStatus", () => {
   describe("which tools are reported", () => {
     it("fails when no manifest exists", async () => {
-      await expect(
-        statusOver({}, null).execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT })
-      ).rejects.toThrow(NoManifestError);
+      const failure = await statusOver({}, null)
+        .execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT })
+        .catch((e: unknown) => e);
+
+      expect(failure).toBeInstanceOf(ManifestUnavailableError);
+      expect(failure).toMatchObject({ code: "manifest-missing" });
     });
 
     it("refuses a filter naming a tool that is not installed", async () => {

@@ -1,8 +1,8 @@
-import { NoManifestError } from "../../../../shared/domain/errors.js";
-import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { Restore } from "./restore.js";
+import { ManifestUnavailableError } from "../../../../../shared/domain/errors.js";
+import type { AiToolId } from "../../../../../shared/domain/tool.js";
+import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
+import type { ManifestRepository } from "../../../ports/manifest-repository.js";
+import type { Restore } from "../restore.js";
 
 export interface RestoreGlobalCommand {
   projectRoot: string;
@@ -30,14 +30,15 @@ export class RestoreGlobal {
     private readonly restore: Pick<Restore, "execute">
   ) {}
 
-  /** Throws NoManifestError when the project has no record. */
+  /** Throws ManifestUnavailableError when the project has no record. */
   async assertInstalled(): Promise<void> {
-    if ((await this.manifestRepo.load()) === null) throw new NoManifestError();
+    if ((await this.manifestRepo.load()) === null)
+      throw new ManifestUnavailableError("manifest-missing");
   }
 
   async execute(command: RestoreGlobalCommand): Promise<RestoreGlobalResult> {
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError();
+    if (manifest === null) throw new ManifestUnavailableError("manifest-missing");
     const version =
       manifest
         .getInstalledToolIds()

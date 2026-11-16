@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { NoManifestError } from "../../../../shared/domain/errors.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -17,6 +16,7 @@ import type { PluginFetcher } from "../../ports/marketplace-sources.js";
 import type { Platform } from "../../ports/platform.js";
 import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
+import { requireManifest } from "../shared/require-manifest.js";
 import { RestoreAllPlugins, type RestoreAllPluginsResult } from "./restore-all-plugins.js";
 import { RestoreToolFiles, type RestoreToolFilesResult } from "./restore-tool-files.js";
 
@@ -90,8 +90,7 @@ export class Restore {
   ) {}
 
   async execute(options: RestoreCommand): Promise<RestoreResult> {
-    const manifest = options.manifest ?? (await this.manifestRepo.load());
-    if (manifest === null) throw new NoManifestError();
+    const manifest = options.manifest ?? (await requireManifest(this.manifestRepo));
     const ctx = await this.buildRestoreContext(options, manifest);
     return this.executeRestore(ctx);
   }

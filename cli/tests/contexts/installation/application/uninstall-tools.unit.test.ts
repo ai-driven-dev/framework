@@ -9,7 +9,7 @@ import { InstalledPlugin } from "../../../../src/contexts/installation/domain/pl
 import { detachProjectClaims } from "../../../../src/contexts/machine-claims/application/detach-project-claims.js";
 import {
   InputRequiredError,
-  NoManifestError,
+  ManifestUnavailableError,
   ToolNotInstalledError,
 } from "../../../../src/shared/domain/errors.js";
 import { type FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
@@ -520,13 +520,12 @@ describe("UninstallTools — refusals", () => {
   it("refuses a project that has no manifest", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
 
-    await expect(
-      uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-        tools: catalogOf(),
-        toolIds: [TOOL.claude],
-        projectRoot: PROJECT_ROOT,
-      })
-    ).rejects.toThrow(NoManifestError);
+    const failure = await uninstaller(deps.fs, deps.manifestRepo, deps.logger)
+      .execute({ tools: catalogOf(), toolIds: [TOOL.claude], projectRoot: PROJECT_ROOT })
+      .catch((e: unknown) => e);
+
+    expect(failure).toBeInstanceOf(ManifestUnavailableError);
+    expect(failure).toMatchObject({ code: "manifest-missing" });
   });
 
   it("refuses a tool that is not installed", async () => {

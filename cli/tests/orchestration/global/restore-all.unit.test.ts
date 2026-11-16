@@ -4,12 +4,12 @@ import { describe, expect, it } from "vitest";
 import { AddPlugin } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { ReportStatus } from "../../../src/contexts/installation/application/report-status.js";
+import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/project/restore-global.js";
 import { Restore } from "../../../src/contexts/installation/application/restore/restore.js";
-import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/restore-global.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { RestoreAll } from "../../../src/orchestration/global/restore-all.js";
-import { NoManifestError } from "../../../src/shared/domain/errors.js";
+import { ManifestUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
@@ -522,9 +522,12 @@ describe("RestoreAll — before delegating", () => {
       recordingDelegate().delegate
     );
 
-    await expect(useCase.execute(PROJECT_ROOT, false, false, catalogOf())).rejects.toThrow(
-      NoManifestError
-    );
+    const failure = await useCase
+      .execute(PROJECT_ROOT, false, false, catalogOf())
+      .catch((e: unknown) => e);
+
+    expect(failure).toBeInstanceOf(ManifestUnavailableError);
+    expect(failure).toMatchObject({ code: "manifest-missing" });
   });
 
   it("hands the restore the version of the first installed tool", async () => {

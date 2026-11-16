@@ -1,27 +1,25 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { UnregisteredToolError } from "../../../src/shared/domain/errors.js";
+import {
+  ManifestUnavailableError,
+  UnregisteredToolError,
+} from "../../../src/shared/domain/errors.js";
 import { catalogOf, registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const restoreAll = vi.fn();
 const restoreOne = vi.fn();
 const activation = vi.fn();
-const loadManifest = vi.fn();
-const getToolVersion = vi.fn();
-const currentVersion = vi.fn();
 const loadUserManifest = vi.fn();
 const userManifestRepo = manifestRepositoryLoading(loadUserManifest);
 const userPluginUpdate = vi.fn();
 
 const createDeps = vi.fn(async () => ({
   restoreAllUseCase: { execute: restoreAll },
-  restoreUseCase: { execute: restoreOne },
+  restoreToolUseCase: { execute: restoreOne },
   syncSettingsUseCase: { execute: activation },
-  manifestRepo: manifestRepositoryLoading(loadManifest),
   userManifestRepo,
   userPluginUpdateUseCase: { execute: userPluginUpdate },
-  currentVersionProvider: { get: currentVersion },
 }));
 
 const { registerSyncCommand } = await import("../../../src/presentation/commands/sync.js");
@@ -65,9 +63,6 @@ beforeEach(() => {
     unrestorable: [],
   });
   activation.mockResolvedValue({ binaryMissing: [], errors: [], activated: [] });
-  getToolVersion.mockReturnValue("5.1.0");
-  loadManifest.mockResolvedValue({ getToolVersion });
-  currentVersion.mockReturnValue("5.2.2");
   loadUserManifest.mockResolvedValue({
     getInstalledToolIds: () => ["claude"],
     getPlugins: () => [],
@@ -167,18 +162,16 @@ describe("aidd sync — the whole project", () => {
 });
 
 describe("aidd sync --tool", () => {
-  it("restores that tool at the version the manifest recorded, then activates it alone", async () => {
+  it("restores that tool, then activates it alone", async () => {
     expect(await run("--tool", "claude")).toEqual([
       "Nothing to restore — all files are unmodified.",
     ]);
     expect(restoreOne).toHaveBeenCalledWith({
-      version: "5.1.0",
       projectRoot: PROJECT_ROOT,
-      toolIds: ["claude"],
+      toolId: "claude",
       files: undefined,
       force: false,
       interactive: false,
-      manifest: expect.anything(),
       pluginName: undefined,
       tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
@@ -191,14 +184,6 @@ describe("aidd sync --tool", () => {
     expect(restoreAll).not.toHaveBeenCalled();
   });
 
-  it("falls back to this CLI's own version when the manifest records none for that tool", async () => {
-    getToolVersion.mockReturnValue(undefined);
-
-    await run("--tool", "claude");
-
-    expect(restoreOne).toHaveBeenCalledWith(expect.objectContaining({ version: "5.2.2" }));
-  });
-
   it("hands a tool no profile declares to the restore, which refuses it before any activation", async () => {
     restoreOne.mockRejectedValue(new UnregisteredToolError("nope"));
     vi.spyOn(process, "exit").mockImplementation(() => {
@@ -207,7 +192,7 @@ describe("aidd sync --tool", () => {
 
     await expect(run("--tool", "nope")).rejects.toThrow("exited");
 
-    expect(restoreOne).toHaveBeenCalledWith(expect.objectContaining({ toolIds: ["nope"] }));
+    expect(restoreOne).toHaveBeenCalledWith(expect.objectContaining({ toolId: "nope" }));
     expect(activation).not.toHaveBeenCalled();
   });
 
@@ -219,8 +204,8 @@ describe("aidd sync --tool", () => {
     );
   });
 
-  it("refuses to restore anything when this project has no manifest", async () => {
-    loadManifest.mockResolvedValue(null);
+  it("reports a project with no manifest, and activates nothing", async () => {
+    restoreOne.mockRejectedValue(new ManifestUnavailableError("manifest-missing"));
     vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
     });
@@ -230,7 +215,7 @@ describe("aidd sync --tool", () => {
     expect(errors.join("")).toBe(
       "Error: No AIDD manifest found. Run `aidd setup` to initialize your project.\n"
     );
-    expect(restoreOne).not.toHaveBeenCalled();
+    expect(activation).not.toHaveBeenCalled();
   });
 });
 

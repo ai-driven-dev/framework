@@ -1,5 +1,5 @@
 import type { ReportStatus } from "../../contexts/installation/application/report-status.js";
-import type { RestoreGlobal } from "../../contexts/installation/application/restore/restore-global.js";
+import type { RestoreGlobal } from "../../contexts/installation/application/restore/project/restore-global.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { GlobalExecutionError } from "../../shared/domain/errors.js";
 import type { AiToolId } from "../../shared/domain/tool.js";

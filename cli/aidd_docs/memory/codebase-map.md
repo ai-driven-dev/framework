@@ -34,6 +34,7 @@ src/
 │   │   │   ├── plugin/
 │   │   │   ├── removal/    # a plugin removed from a project, its machine claims released through injected functions
 │   │   │   ├── restore/
+│   │   │   │   └── project/    # a project restored from its own record, whole or one tool
 │   │   │   ├── shared/
 │   │   │   ├── sync/    # a project's or the machine's manifest brought in line with the tools' settings and native registrations
 │   │   │   └── update/    # one installed tool brought to the current version

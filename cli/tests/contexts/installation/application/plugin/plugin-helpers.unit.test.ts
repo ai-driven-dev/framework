@@ -1,23 +1,10 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  deletePluginFilesForTool,
-  loadPluginManifest,
-} from "../../../../../src/contexts/installation/application/plugin/plugin-helpers.js";
-import { NoManifestError } from "../../../../../src/shared/domain/errors.js";
+import { deletePluginFilesForTool } from "../../../../../src/contexts/installation/application/plugin/plugin-helpers.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
-
-describe("loadPluginManifest()", () => {
-  it("refuses a project that was never initialized", async () => {
-    await expect(loadPluginManifest(new InMemoryManifestRepository())).rejects.toThrow(
-      NoManifestError
-    );
-  });
-});
 
 describe("deletePluginFilesForTool()", () => {
   it("returns exactly the tracked paths it deleted, in manifest order", async () => {

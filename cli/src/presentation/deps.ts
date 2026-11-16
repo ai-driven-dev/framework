@@ -13,7 +13,7 @@ import type { ListPlugins } from "../contexts/installation/application/plugin/li
 import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.js";
 import type { RemovePlugin } from "../contexts/installation/application/removal/remove-plugin.js";
 import type { ReportStatus } from "../contexts/installation/application/report-status.js";
-import type { Restore } from "../contexts/installation/application/restore/restore.js";
+import type { RestoreTool } from "../contexts/installation/application/restore/project/restore-tool.js";
 import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.js";
 import type { FileMerger } from "../contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
@@ -136,7 +136,7 @@ export interface Deps {
   setAgentModels: Pick<SetAgentModels, "execute" | "reset">;
   selfUpdate: Pick<SelfUpdate, "execute">;
   statusUseCase: Pick<ReportStatus, "execute">;
-  restoreUseCase: Pick<Restore, "execute">;
+  restoreToolUseCase: Pick<RestoreTool, "execute">;
   statusAllUseCase: Pick<ReportAllStatus, "execute">;
   restoreAllUseCase: Pick<RestoreAll, "execute">;
   updateToolsUseCase: Pick<UpdateTools, "execute">;

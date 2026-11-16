@@ -2,7 +2,7 @@ import { join } from "node:path";
 import {
   AiddFilesDetectedError,
   AlreadyInitializedError,
-  NoManifestError,
+  ManifestUnavailableError,
 } from "../../../shared/domain/errors.js";
 import { AIDD_DIR } from "../../../shared/domain/paths.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
@@ -57,7 +57,7 @@ export class InitProject {
 
     if (force) {
       if (existing === null) {
-        throw new NoManifestError();
+        throw new ManifestUnavailableError("manifest-missing");
       }
       return;
     }

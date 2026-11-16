@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { NoManifestError, ToolNotInstalledError } from "../../../shared/domain/errors.js";
+import { ToolNotInstalledError } from "../../../shared/domain/errors.js";
 import type { FileHash } from "../../../shared/domain/file.js";
 import { extractMergeEntries, type MergeFileEntry } from "../../../shared/domain/merge.js";
 import type { AiToolId, ToolCategory, ToolId } from "../../../shared/domain/tool.js";
@@ -10,6 +10,7 @@ import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { DetectPluginDrift } from "./shared/detect-plugin-drift.js";
+import { requireManifest } from "./shared/require-manifest.js";
 
 type FileStatusKind = "modified" | "deleted" | "added";
 
@@ -63,8 +64,7 @@ export class ReportStatus implements StatusQuery {
 
   async execute(options: ReportStatusCommand): Promise<ReportStatusResult> {
     const { projectRoot, filterToolId, category, pluginName, tools: profiles } = options;
-    const manifest = await this.manifestRepo.load();
-    if (manifest === null) throw new NoManifestError();
+    const manifest = await requireManifest(this.manifestRepo);
     if (filterToolId && !manifest.hasTool(filterToolId))
       throw new ToolNotInstalledError(filterToolId);
 

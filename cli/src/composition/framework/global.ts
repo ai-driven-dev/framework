@@ -8,8 +8,9 @@ import { InstallUserPlugins } from "../../contexts/installation/application/inst
 import { ListInstalledTools } from "../../contexts/installation/application/list-installed-tools.js";
 import { ReportStatus } from "../../contexts/installation/application/report-status.js";
 import { ResolveSyncConflict } from "../../contexts/installation/application/resolve-sync-conflict.js";
+import { RestoreGlobal } from "../../contexts/installation/application/restore/project/restore-global.js";
+import { RestoreTool } from "../../contexts/installation/application/restore/project/restore-tool.js";
 import { Restore } from "../../contexts/installation/application/restore/restore.js";
-import { RestoreGlobal } from "../../contexts/installation/application/restore/restore-global.js";
 import { UpdateTool } from "../../contexts/installation/application/update/update-tool.js";
 import { ReportAllStatus } from "../../orchestration/global/report-all-status.js";
 import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update-decision.js";
@@ -107,6 +108,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     statusUseCase,
     new RestoreGlobal(manifestRepo, restoreUseCase)
   );
+  const restoreToolUseCase = new RestoreTool(manifestRepo, restoreUseCase, currentVersionProvider);
   const updateToolsUseCase = new UpdateTools(
     new ListInstalledTools(manifestRepo),
     new UpdateTool(
@@ -126,7 +128,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     projectContextDetector,
     setupMachineScope,
     statusUseCase,
-    restoreUseCase,
+    restoreToolUseCase,
     statusAllUseCase,
     restoreAllUseCase,
     updateToolsUseCase,
