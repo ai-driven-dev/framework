@@ -59,7 +59,7 @@ recipes           autonomous
 
 ## 5. Import rules (decided, all checkable without a model)
 
-1. A context exposes only two folders to the others: `application/` (its commands) and `contract/` (its published types). No barrel, no re-export (Biome already refuses them). Replaces the `PUBLIC_MODULES` list.
+1. A context exposes one folder to the other contexts: `contract/` (its published types and ports). `application/` is seen only by `presentation` and `orchestration`; `composition` sees everything. A context that needs more than the supplier's `contract/` declares the narrow input it accepts in its own `ports/` or `contract/`, and `composition` or `orchestration` hands in the real object, which satisfies it structurally. No barrel, no re-export (Biome already refuses them). Replaces the `PUBLIC_MODULES` list.
 2. A file in `contract/` must be imported by at least one other context, otherwise it goes back to `domain/` (computed, same principle as earned sharing).
 3. The allowed edges between contexts are written in a table; an edge absent from the table is an error.
 4. No cycle (`noImportCycles`, already an error).
