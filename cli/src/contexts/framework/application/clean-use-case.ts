@@ -25,6 +25,7 @@ import type {
   WithdrawFromHost,
 } from "../../host-registration/application/withdraw-from-host.js";
 import { deletePluginFilesForTool } from "../../installation/application/plugin/plugin-helpers.js";
+import { assertProjectMcpEntriesRemovable } from "../../installation/application/plugin/remove-project-plugin.js";
 import {
   assertProjectHooksRemovable,
   type ProjectHooksGuard,
@@ -48,7 +49,6 @@ import type { UserSourceReferences } from "../../machine-claims/ports/user-sourc
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import { resolveHomeDir } from "../domain/reading/home-dir.js";
-import { assertProjectMcpEntriesRemovable } from "./ownership/project-plugin-cleanup.js";
 import { resolveCacheCandidate } from "./shared/purge-declared-cache.js";
 
 interface CleanOptions {

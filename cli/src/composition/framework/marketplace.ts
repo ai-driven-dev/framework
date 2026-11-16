@@ -10,12 +10,13 @@ import {
   SharedFrameworkSource,
   SyncToolSettingsFiles,
 } from "../../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { ProjectPluginCleanup } from "../../contexts/framework/application/ownership/project-plugin-cleanup.js";
 import { UserMarketplaceRemoveUseCase } from "../../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
+import { RemoveProjectPlugin } from "../../contexts/installation/application/plugin/remove-project-plugin.js";
+import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
 import type { Base } from "./base.js";
@@ -53,7 +54,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     nativeSources
   );
   const marketplaceRemoveUseCase = new MarketplaceRemoveUseCase(
-    new ProjectPluginCleanup(fs, userManifestRepo),
+    new RemoveProjectPlugin(fs, removalClaims(userManifestRepo, fs)),
     manifestRepo,
     marketplaceRegistry,
     prompter

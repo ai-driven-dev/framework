@@ -29,6 +29,7 @@ import {
   resolvePluginToolIds,
   resolveScopeForInstall,
 } from "../../../installation/application/plugin/plugin-target-resolution.js";
+import { assertProjectMcpEntriesRemovable } from "../../../installation/application/plugin/remove-project-plugin.js";
 import type { BuiltMarketplaceEnsurer } from "../../../installation/application/shared/ensure-built-marketplace.js";
 import { assertProjectHooksRemovable } from "../../../installation/application/shared/remove-project-hooks.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
@@ -43,7 +44,6 @@ import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-pr
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
-import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
 
 export interface PluginAddOptions {
   source: PluginSource;

@@ -7,11 +7,11 @@ import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import type { RemoveProjectPlugin } from "../../../installation/application/plugin/remove-project-plugin.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { ProjectPluginCleanup } from "../ownership/project-plugin-cleanup.js";
 
 export interface MarketplaceRemoveOptions {
   name: string;
@@ -34,7 +34,7 @@ interface OrphanRef {
 
 export class MarketplaceRemoveUseCase {
   constructor(
-    private readonly cleanup: ProjectPluginCleanup,
+    private readonly cleanup: RemoveProjectPlugin,
     private readonly manifestRepo: ManifestRepository,
     private readonly registry: MarketplaceRegistry,
     private readonly prompter: Prompter

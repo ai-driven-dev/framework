@@ -4,9 +4,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-remove-use-case.js";
-import { ProjectPluginCleanup } from "../../../../../src/contexts/framework/application/ownership/project-plugin-cleanup.js";
+import { RemoveProjectPlugin } from "../../../../../src/contexts/installation/application/plugin/remove-project-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { removalClaims } from "../../../../../src/contexts/machine-claims/application/removal-claims.js";
 import {
   errnoError,
   FaultingFileAdapter,
@@ -84,7 +85,7 @@ async function fixture(options: { nativeMapping?: "absent" | "unrelated" } = {})
   );
   const fs = new InMemoryFileAdapter();
   const useCase = new MarketplaceRemoveUseCase(
-    new ProjectPluginCleanup(fs, machineRepo),
+    new RemoveProjectPlugin(fs, removalClaims(machineRepo, fs)),
     projectRepo,
     registry,
     new KeepPrompter()
@@ -193,7 +194,7 @@ describe("project marketplace removal against machine native claims", () => {
       })
     );
     const useCase = new MarketplaceRemoveUseCase(
-      new ProjectPluginCleanup(fs, machineRepo),
+      new RemoveProjectPlugin(fs, removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
       new KeepPrompter()
@@ -223,7 +224,7 @@ describe("project marketplace removal against machine native claims", () => {
   it("removes only the project catalogue when its project manifest is absent", async () => {
     const f = await fixture();
     const useCase = new MarketplaceRemoveUseCase(
-      new ProjectPluginCleanup(f.fs, f.machineRepo),
+      new RemoveProjectPlugin(f.fs, removalClaims(f.machineRepo, f.fs)),
       new InMemoryManifestRepository(),
       f.registry,
       new KeepPrompter()
@@ -258,8 +259,9 @@ describe("project marketplace removal against machine native claims", () => {
     const plugin = project?.getPlugins(codex)[0];
     if (project === null || plugin === undefined) throw new Error("fixture missing plugin");
     project.updatePlugin(codex, plugin.withFiles(new Map([[".codex/skills/demo.md", "abc"]])));
+    const refusing = new RefusingFileAdapter();
     const useCase = new MarketplaceRemoveUseCase(
-      new ProjectPluginCleanup(new RefusingFileAdapter(), f.machineRepo),
+      new RemoveProjectPlugin(refusing, removalClaims(f.machineRepo, refusing)),
       f.projectRepo,
       f.registry,
       new KeepPrompter()
@@ -275,7 +277,7 @@ describe("project marketplace removal against machine native claims", () => {
     const f = await fixture();
     const prompter = new ScriptedPrompter([{ type: "confirm", value: false }]);
     const useCase = new MarketplaceRemoveUseCase(
-      new ProjectPluginCleanup(f.fs, f.machineRepo),
+      new RemoveProjectPlugin(f.fs, removalClaims(f.machineRepo, f.fs)),
       f.projectRepo,
       f.registry,
       prompter
@@ -369,7 +371,7 @@ describe("project marketplace removal against machine native claims", () => {
     fs.setFile(ownedPath, "B's bytes");
     fs.setFile(ownedMcp, "B's MCP");
     const useCase = new MarketplaceRemoveUseCase(
-      new ProjectPluginCleanup(fs, machineRepo),
+      new RemoveProjectPlugin(fs, removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
       new KeepPrompter()

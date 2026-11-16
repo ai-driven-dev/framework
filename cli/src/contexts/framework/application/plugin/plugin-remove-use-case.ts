@@ -20,6 +20,7 @@ import {
   resolveBaseDirFromRecord,
   resolvePluginToolIds,
 } from "../../../installation/application/plugin/plugin-target-resolution.js";
+import { assertProjectMcpEntriesRemovable } from "../../../installation/application/plugin/remove-project-plugin.js";
 import {
   assertProjectHooksRemovable,
   removeProjectHooks,
@@ -46,7 +47,6 @@ import type { UserSourceReferences } from "../../../machine-claims/ports/user-so
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { resolveHomeDir } from "../../domain/reading/home-dir.js";
-import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
 
 export interface PluginRemoveOptions {

@@ -81,6 +81,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/plugin/plugin-helpers.ts",
     "src/contexts/installation/application/plugin/plugin-target-resolution.ts",
     "src/contexts/installation/application/plugin/plugin-materializer.ts",
+    "src/contexts/installation/application/plugin/remove-project-plugin.ts",
     "src/contexts/installation/application/plugin/update-plugin.ts",
     "src/contexts/installation/application/plugin/update-user-plugin-files.ts",
     "src/contexts/installation/application/restore/restore.ts",
