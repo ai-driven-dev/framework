@@ -1,7 +1,7 @@
 /**
  * No `src/` area and no `tests/` area may be recreated under the name of a folder already
- * gone. A context recreated under `src/contexts/` is caught by the context graph, which
- * declares every context that may exist.
+ * gone. A context recreated under `src/contexts/` is caught by `biome-context-parity`, which
+ * reads the contexts on disk against the biome overrides.
  */
 import { readdirSync } from "node:fs";
 import { join } from "node:path";

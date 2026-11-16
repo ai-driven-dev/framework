@@ -260,6 +260,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # the architecture suite reads each tolerated list at the merge-base with next
+          fetch-depth: 0
       - name: Install pnpm
         run: corepack enable
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -283,6 +286,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # the architecture suite reads each tolerated list at the merge-base with next
+          fetch-depth: 0
       # The runner image carries Google's chrome apt source, whose mirror serves a stale index a
       # few times a day ("Hash Sum mismatch") and fails the whole update; expect comes from ubuntu.
       - name: Install expect (TTY persona tests)
@@ -522,6 +528,9 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # the architecture suite reads each tolerated list at the merge-base with next
+          fetch-depth: 0
       - name: Install pnpm
         run: corepack enable
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
