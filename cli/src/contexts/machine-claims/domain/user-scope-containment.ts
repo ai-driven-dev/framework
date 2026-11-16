@@ -10,7 +10,6 @@ export function isStrictlyWithinUserScope(
   resolvedCandidate: string,
   resolvedBoundary: string
 ): boolean {
-  if (resolvedCandidate === resolvedBoundary) return false;
   const rel = relative(resolvedBoundary, resolvedCandidate);
   return rel.length > 0 && !rel.startsWith("..") && !isAbsolute(rel);
 }

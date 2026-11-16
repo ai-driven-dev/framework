@@ -86,9 +86,8 @@ export class SharedFrameworkSource {
     marketplaces: readonly ListedMarketplace[],
     outcomes: ReadonlyMap<ToolId, RegistrationEvidence>
   ): Promise<void> {
-    if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {
-      return;
-    }
+    const { userSourceReferences, currentVersionProvider } = this;
+    if (userSourceReferences === undefined || currentVersionProvider === undefined) return;
     const framework = marketplaces.find((m) => frameworkSourceIsShared(m.name, m.scope));
     if (framework === undefined) return;
     if (
@@ -97,17 +96,8 @@ export class SharedFrameworkSource {
       )
     )
       return;
-    await this.recordReferenceForRoot(projectRoot);
-  }
-
-  private async recordReferenceForRoot(root: string): Promise<void> {
-    if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {
-      return;
-    }
-    const userSourceReferences = this.userSourceReferences;
-    const currentVersionProvider = this.currentVersionProvider;
     await toleratingUnreadableSourceReferences(this.logger, undefined, async () => {
-      const resolvedRoot = await resolveProjectRootForReferences(this.fs, root);
+      const resolvedRoot = await resolveProjectRootForReferences(this.fs, projectRoot);
       await userSourceReferences.addReference(currentVersionProvider.get(), resolvedRoot);
     });
   }
