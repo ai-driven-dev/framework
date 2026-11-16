@@ -16,6 +16,7 @@ import {
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { WindowsListingFileAdapter } from "../../../../helpers/ports/windows-listing-file-adapter.js";
 import { registeredFlatContract, TOOL } from "../../../tools/testing/catalog-of.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
@@ -65,12 +66,19 @@ function contractOf(
   };
 }
 
-function seeded(files: Record<string, string> = {}): InMemoryFileAdapter {
-  const fs = new InMemoryFileAdapter({
+function seeded(
+  files: Record<string, string> = {},
+  Adapter: typeof InMemoryFileAdapter = InMemoryFileAdapter
+): InMemoryFileAdapter {
+  const fs = new Adapter({
     [`${PLUGIN_SRC}/.claude-plugin/plugin.json`]: "{}",
     ...files,
   });
   return fs;
+}
+
+function windowsSeeded(files: Record<string, string>): InMemoryFileAdapter {
+  return seeded(files, WindowsListingFileAdapter);
 }
 
 function targetOf(
@@ -236,35 +244,43 @@ describe("the marketplace catalog of a tool that names no schema for it", () => 
 
 describe("a source path a Windows host reports with backslashes", () => {
   it("lands a marketplace hook script under its folder", async () => {
-    const fs = seeded({ [`${PLUGIN_SRC}/hooks/sub\\run.js`]: "run" });
+    const fs = windowsSeeded({ [`${PLUGIN_SRC}/hooks/sub/run.js`]: "run" });
 
-    await write(fs, targetOf(contractOf({ hooks: COPY }), "marketplace"));
+    const script = vi.fn((_pluginPath: string, content: string) => content);
+
+    await write(fs, targetOf(contractOf({ hooks: { ...COPY, script } }), "marketplace"));
 
     expect(writtenPaths(fs)).toEqual([`plugins/${PLUGIN}/hooks/sub/run.js`]);
+    expect(script).toHaveBeenCalledWith("hooks/sub/run.js", "run");
   });
 
   it("lands a flat hook script under its folder", async () => {
-    const fs = seeded({
+    const fs = windowsSeeded({
       [`${PLUGIN_SRC}/hooks/hooks.json`]: "{}",
-      [`${PLUGIN_SRC}/hooks/sub\\run.js`]: "run",
+      [`${PLUGIN_SRC}/hooks/sub/run.js`]: "run",
     });
-    const contract = contractOf({ hooks: { ...COPY, skipHooksJson: true } });
+    const script = vi.fn((_pluginPath: string, content: string) => content);
+    const contract = contractOf({ hooks: { ...COPY, skipHooksJson: true, script } });
 
     await write(fs, targetOf(contract, "flat"));
 
     expect(writtenPaths(fs)).toEqual([`.out/${PLUGIN}/hooks/sub/run.js`]);
+    expect(script).toHaveBeenCalledWith("hooks/sub/run.js", "run");
   });
 
   it("lands a flat skill file under its folder", async () => {
-    const fs = seeded({ [`${PLUGIN_SRC}/skills/plan\\SKILL.md`]: "Plan." });
+    const fs = windowsSeeded({ [`${PLUGIN_SRC}/skills/plan/SKILL.md`]: "Plan." });
 
-    await write(fs, targetOf(contractOf({ skills: COPY }), "flat"));
+    const path = vi.fn(COPY.path);
+
+    await write(fs, targetOf(contractOf({ skills: { ...COPY, path } }), "flat"));
 
     expect(writtenPaths(fs)).toEqual([`.out/${PLUGIN}/skills/plan/SKILL.md`]);
+    expect(path).toHaveBeenCalledWith(PLUGIN, "skills/plan/SKILL.md");
   });
 
   it("names a flat agent with the placeholder by its forward-slash path", async () => {
-    const fs = seeded({ [`${PLUGIN_SRC}/agents/sub\\bad.md`]: FOREIGN_PLACEHOLDER });
+    const fs = windowsSeeded({ [`${PLUGIN_SRC}/agents/sub/bad.md`]: FOREIGN_PLACEHOLDER });
 
     const failure = await write(fs, targetOf(contractOf({ agents: COPY }), "flat")).catch(
       (error: unknown) => error

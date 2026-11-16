@@ -5,6 +5,7 @@ import {
   listSkillNames,
 } from "../../../../../src/contexts/translate/application/sink/plugin-source-tree-reader.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { WindowsListingFileAdapter } from "../../../../helpers/ports/windows-listing-file-adapter.js";
 
 const PLUGIN_SRC = "/src/plugins/aidd-test";
 
@@ -33,6 +34,18 @@ describe("listAgentFiles", () => {
   });
 });
 
+describe("a path a Windows listing separates with backslashes", () => {
+  it("names an agent in a subdirectory with forward slashes", async () => {
+    const fs = new WindowsListingFileAdapter({ [`${PLUGIN_SRC}/agents/sub/deep.md`]: "# Deep" });
+    expect(await listAgentFiles(fs, `${PLUGIN_SRC}/agents`)).toEqual(["sub/deep.md"]);
+  });
+
+  it("finds the skill a backslash-separated entry file belongs to", async () => {
+    const fs = new WindowsListingFileAdapter({ [`${PLUGIN_SRC}/skills/win/SKILL.md`]: "# Win" });
+    expect(await listSkillNames(fs, PLUGIN_SRC)).toEqual(["win"]);
+  });
+});
+
 describe("listSkillNames", () => {
   it("lists nothing when the plugin ships no skills directory", async () => {
     const fs = fsWith({ [`${PLUGIN_SRC}/agents/planner.md`]: "# Planner" });
@@ -47,6 +60,7 @@ describe("listSkillNames", () => {
       [`${PLUGIN_SRC}/skills/apply/reference.json`]: "{}",
       [`${PLUGIN_SRC}/skills/SKILL.md`]: "# Loose",
       [`${PLUGIN_SRC}/skills/notes/readme.md`]: "# Notes",
+      [`${PLUGIN_SRC}/skills/other/NOTSKILL.md`]: "# Not an entry",
     });
     expect(await listSkillNames(fs, PLUGIN_SRC)).toEqual(["apply", "commit"]);
   });

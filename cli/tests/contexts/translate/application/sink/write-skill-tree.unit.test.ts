@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { writeSkillTree } from "../../../../../src/contexts/translate/application/sink/write-skill-tree.js";
 import { FrameworkPlaceholderInPluginError } from "../../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { WindowsListingFileAdapter } from "../../../../helpers/ports/windows-listing-file-adapter.js";
 
 const PLUGIN = "aidd-test";
 const PLUGIN_SRC = "/src/plugins/aidd-test";
@@ -60,6 +61,15 @@ describe("writeSkillTree", () => {
     });
     await expect(writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT)).rejects.toThrow(
       new FrameworkPlaceholderInPluginError(PLUGIN, "hello/SKILL.md")
+    );
+  });
+
+  it("names the file in the refusal with forward slashes", async () => {
+    const fs = new WindowsListingFileAdapter({
+      [`${PLUGIN_SRC}/skills/win/SKILL.md`]: "See @{{TOOLS}}/x.md.\n",
+    });
+    await expect(writeSkillTree(fs, PLUGIN, PLUGIN_SRC, PLUGIN_OUT)).rejects.toThrow(
+      new FrameworkPlaceholderInPluginError(PLUGIN, "win/SKILL.md")
     );
   });
 });
