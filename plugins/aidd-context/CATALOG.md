@@ -168,14 +168,16 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | Group | File | Description |
 |-------|------|---|
-| `actions` | [01-capture-hook.md](skills/08-hook-generate/actions/01-capture-hook.md) | - |
-| `actions` | [02-write-hook.md](skills/08-hook-generate/actions/02-write-hook.md) | - |
-| `actions` | [03-validate.md](skills/08-hook-generate/actions/03-validate.md) | - |
-| `assets` | [hook-script-template.sh](skills/08-hook-generate/assets/hook-script-template.sh) | - |
-| `assets` | [hook-template.json](skills/08-hook-generate/assets/hook-template.json) | - |
+| `actions` | [01-frame.md](skills/08-hook-generate/actions/01-frame.md) | - |
+| `actions` | [02-plan.md](skills/08-hook-generate/actions/02-plan.md) | - |
+| `actions` | [03-write.md](skills/08-hook-generate/actions/03-write.md) | - |
+| `actions` | [04-verify.md](skills/08-hook-generate/actions/04-verify.md) | - |
 | `references` | [hook-authoring.md](skills/08-hook-generate/references/hook-authoring.md) | - |
-| `references` | [tool-paths.md](skills/08-hook-generate/references/tool-paths.md) | - |
-| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Generate a hook, a handler that runs at a lifecycle event, across the host AI tools. Use when the user wants to create, scaffold, or refactor a hook, or automate an action at a lifecycle point. Not for other artifacts like skills or rules.` |
+| `references` | [hosts.md](skills/08-hook-generate/references/hosts.md) | - |
+| `references` | [writer.md](skills/08-hook-generate/references/writer.md) | - |
+| `scripts` | [verify-hook.cjs](skills/08-hook-generate/scripts/verify-hook.cjs) | - |
+| `scripts` | [write-hook.cjs](skills/08-hook-generate/scripts/write-hook.cjs) | - |
+| `-` | [SKILL.md](skills/08-hook-generate/SKILL.md) | `Creates, updates or removes a hook that runs a script at a lifecycle event, in each chosen host's native format, not for skills or rules.` |
 
 #### `skills/09-mermaid`
 
