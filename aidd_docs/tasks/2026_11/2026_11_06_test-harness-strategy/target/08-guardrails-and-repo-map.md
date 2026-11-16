@@ -76,7 +76,7 @@ How it is enforced deterministically, given that `noRestrictedImports` cannot us
 | Dead code | 1 | pre-push + CI | knip | `ports-are-called` for the part knip covers; its "a caller really exists" part stays category 2 | Exists |
 | Duplication | 2 | CI | jscpd, threshold 3.3; extend to `tests/` only if measured useful | nothing | Exists, `src` perimeter |
 | Coverage 92/87/93/92, mutation floor per scope (13), bundle budget 722 KB | 1 | scheduled CI or PR depending on cost | vitest, stryker, bundle measurement | nothing | Exist. Mutation: the per-PR gate stays only on `telemetry` and `shared` (`shared` is today's `kernel` scope), the rest runs in the weekly cron, which is non-blocking. Accepted risk: a regression in another context reaches `next` before the weekly signal. The changed-lines check (`run-mutation.mjs --changed`) stays available locally. Floors are never lowered without a written reason; during the transition a floor may still be raised to the measured score (the existing rule); set at the target for those two scopes only |
-| Ratchet: `BASELINE` entries only shrink; a counter of files still in the old layout (`runtime/`, `kernel/`, `framework/`) only goes down | 1 | pre-commit | architecture test comparing each `BASELINE` and the counter with their committed value; the counter test is deleted at the end of the migration | nothing | Decided; to write (section 2.3) |
+| Ratchet: every tolerated list (`BASELINE` and the other shrink-only lists) only shrinks | 1 | pre-commit | architecture test comparing the size of each list with its size at the merge-base with `next` | nothing | Decided; to write (section 2.3) |
 | Folder size (at most 10 files) | 3 or 1 | review, or pre-commit if kept | the harness map deletes the test and its list and keeps the threshold in the grid; the overview instead asks to group commands in subfolders or revise the rule | `folder-size` and its list | Open: decision for the guideline PR (section 9) |
 | Comment volume; no id/date in a comment | 2 / 3 | review | the cap (raised twice) is deleted; the rule "no date/ticket" stays in `.claude/rules` and in the grid | `comments` | Decided: the cap has no proven effect |
 | An empty catch swallows nothing | 1 | pre-commit | Biome `noEmptyBlockStatements` or equivalent to verify | `catches-that-swallow` and its list that only shrinks | UNVERIFIED: exact equivalence not tested |
@@ -91,7 +91,7 @@ How it is enforced deterministically, given that `noRestrictedImports` cannot us
 ### 2.3 Ratchet
 
 - `BASELINE` (in `tests/architecture/helpers.ts`) holds the deviations from the target that are tolerated today. A PR may remove entries, never add one.
-- A counter of files still in the old layout (`runtime/`, `kernel/`, `framework/`) is committed; the test fails when the real count differs from the committed one in the wrong direction (up) and requires the committed value to be lowered when files move. The counter only goes down, and the test is deleted at the end of the migration, when the three folders are gone.
+- The size of each tolerated list is read at the merge-base with `next` and at the head; the test fails when a list grew, and a shrink needs no second edit. No `src/` or `tests/` area may be recreated under the name of a folder already gone.
 - Volume caps that do not guard drift are dropped (comments, orchestrator collaborator cap): a cap that was only ever raised measures nothing. Folder size is open, for the guideline PR (section 9).
 - A new rule enters with the PR that makes it true, together with a planted tree (a minimal tree that violates it) proving that the rule bites. A rule whose planted tree stays green is not a guard. No rule ships with exceptions: either the violation count is zero and the rule is `error`, or the rule enters with the move that makes it true.
 
@@ -245,7 +245,7 @@ The repository-level plan follows section 12 of `00-overview.md`; guard work is 
 ### PR exit criteria (every PR)
 
 - Green, with no behaviour change.
-- Removes `BASELINE` entries (never adds one); the old-layout counter goes down.
+- Removes `BASELINE` entries (never adds one).
 - Moves before renaming, renames before changing logic.
 - Every rule it introduces ships with a planted tree proving it bites.
 - Memory and rules describing the moved code change in the same PR.
@@ -257,7 +257,7 @@ The repository-level plan follows section 12 of `00-overview.md`; guard work is 
 
 | Overview step | Guard work in this step | Why then |
 | --- | --- | --- |
-| 1. Guideline and rules, no code moved | Write the path-based rules and grids (sections 4 and 5); enable `useImportType` and `useFilenamingConvention` (kebab), 0 violations; generate the `noRestrictedImports` config from `ALLOWED` (one generation script plus the "derivation is current" test); write the ratchet (`BASELINE` and the old-layout counter) | no cost, and it prevents drift while 6 contexts are created |
+| 1. Guideline and rules, no code moved | Write the path-based rules and grids (sections 4 and 5); enable `useImportType` and `useFilenamingConvention` (kebab), 0 violations; generate the `noRestrictedImports` config from `ALLOWED` (one generation script plus the "derivation is current" test); write the ratchet (every tolerated list) | no cost, and it prevents drift while 6 contexts are created |
 | 2. Test levers independent of the architecture (in parallel) | Fix the ~28 sites then enable `noFloatingPromises`; the mutation trigger and its scopes (per-PR gate on `telemetry` and `shared` only); remove duplicates (section 6) and reduce `scripts/__tests__` | detects reordering errors during the moves; cost gain with no architecture risk |
 | 3. Safe cuts: `auth`, `update`, `recipes`, the release resolver moved to `distribution` | Add the context's line to `ALLOWED`, move, delete the old `BASELINE` line; public-surface rule and the `contract/` importer test on these first contexts | the guards follow each move |
 | 4. `runtime` and `kernel` into `shared` and `composition` | Computed `earned-sharing` without a list; rule `shared/infrastructure` imported only by `composition`; single-owner rule for `child_process`, per context as the moves land (the 12 current files say where the violations are); purity rule (Node builtins + third parties) on `domain`, `ports`, `shared/domain` | decides which modules go to `shared`; closes the blind spot before the "no I/O" wording is rewritten |
@@ -266,7 +266,7 @@ The repository-level plan follows section 12 of `00-overview.md`; guard work is 
 | 7. Manifest format v9, one v8 to v9 reader | Characterization test for `addTool` before the step; no new architecture guard | the format change touches the native registrations |
 | 8. Tests follow each context, the same day | Test kit per context, contract suites per port, mutation scope per context; at the target, floors are set only for `telemetry` and `shared`; until then a floor is never lowered without a written reason and may be raised to the measured score | tests follow the architecture |
 
-At the end of step 5, the old-layout counter reaches zero and its test is deleted; `BASELINE` is empty or holds only reasoned entries.
+At the end of step 5, `BASELINE` is empty or holds only reasoned entries.
 
 ## 8. Cost of local gates
 
@@ -290,7 +290,7 @@ Decided (from the overview):
 1. Public surface of a context: `application/` and `contract/` only, path based, computed; replaces `PUBLIC_MODULES` (82). A `contract/` file needs an importer from another context.
 2. Allowed edges are a table (`ALLOWED`); an absent edge is an error; no cycle; `shared/infrastructure` imported only by `composition`; a module enters `shared` only with at least 2 importing contexts.
 3. Volume caps that only go up are dropped and replaced by a grid (`comments`); `orchestrator-deps` is replaced by the constructor-over-5-dependencies test.
-4. Ratchet: `BASELINE` only shrinks, the old-layout counter only goes down.
+4. Ratchet: every tolerated list only shrinks.
 5. No guard calls a model; category-3 rules are applied by the agent while working and in audits, never as gates.
 
 Open:

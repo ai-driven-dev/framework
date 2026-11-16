@@ -144,8 +144,8 @@
 | `tests/architecture/*` | `tests/architecture/*` | keep | deterministic rules with a written rule (catches, errors, no-re-export, ports-are-called, codebase-map, one repository helper, throwaway profile wiring, no-shared-binary, automation-calls-real-scripts); several read application/ instead of the use-case suffix in the renaming PR |
 | - | `tests/architecture/contract-has-importer.arch.test.ts` | add | a contract file needs an importer from another context, else it returns to domain (00 section 5, 08) |
 | - | `tests/architecture/command-shape.arch.test.ts` | add | one file, one class of the same name, public execute, no UseCase suffix (08) |
-| - | `tests/architecture/old-layout-counter.arch.test.ts` | add | files left in runtime, kernel, framework only go down; deleted at the end of the migration (08 section 2.3) |
-| - | `tests/architecture/baseline-only-shrinks.arch.test.ts` | add | proposal: BASELINE entries compared with the committed value, never added (00 section 11) |
+| - | `tests/architecture/old-layout-count.arch.test.ts` | add | no `src/` or `tests/` area recreated under the name of a folder already gone (08 section 2.3) |
+| - | `tests/architecture/baseline-only-shrinks.arch.test.ts` | add | every tolerated list compared with its size at the merge-base with `next`, never longer (00 section 11) |
 | - | `tests/architecture/test-file-size.arch.test.ts` | add | 800 lines failure; 400 lines is a review grid point, deliberately unchecked (07 section 1) |
 | - | `tests/architecture/kit-isolation.arch.test.ts` | add | a test never imports another context's kit (07 section 2.1) |
 | - | `tests/architecture/test-mirror-path.arch.test.ts` | add | every domain or application module has its mirror test or a written exception (07 section 7) |

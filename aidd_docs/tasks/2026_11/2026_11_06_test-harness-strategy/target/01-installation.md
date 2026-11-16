@@ -154,7 +154,7 @@ No other context imports `contexts/framework` today: only `presentation/` (11 fi
 
 Existing: `tests/contexts/framework/` has 172 files; `application/plugin` 20, `application/framework` 20, `application/flows` 17, `application/shared` 16. The tests of wide constructors pass 7 to 16 positional arguments.
 
-Titles in English, one test file per command, named with its level suffix (`remove-plugin.unit.test.ts`) (`describe` names a situation, `it` an observable result; 400-line warning, 800-line failure). A test is written before the code and must fail for the reason it names; a test that passes at once is not kept.
+Titles in English, one test file per command, named with its level suffix (`remove-plugin.unit.test.ts`) (`describe` names a situation, `it` an observable result; 800-line failure, 400 lines a review grid point). A test is written before the code and must fail for the reason it names; a test that passes at once is not kept.
 
 | Level | For what |
 | --- | --- |

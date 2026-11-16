@@ -155,7 +155,7 @@ A test is justified by a failure.
 ## 11. Guardrails against drift (decided)
 
 1. The target is written as data in `tests/architecture/helpers.ts` (`ALLOWED`, `BASELINE`), held by the architecture tests and by parity with Biome; the repository map is held in both directions by `codebase-map.arch.test.ts`.
-2. Ratchet: a deviation from the target is a `BASELINE` entry; a PR may remove entries, never add them. A counter of files still in the old layout only goes down.
+2. Ratchet: a deviation from the target is a `BASELINE` entry; a PR may remove entries, never add them.
 3. Behaviour frozen before any move: golden, smoke, e2e, plus a characterization test for each uncovered area (two candidates: `addTool` which seems to erase the native registration, and the order of `marketplace-add`, which removes before fetching).
 4. A rule enters with the PR that makes it true and proves it bites (a planted tree that violates it). Memory and rules change in the same PR as the code they describe.
 5. What a tool cannot see (quality of a name, cohesion of an aggregate, legitimacy of a shared module, relevance of a test): a written grid applied by the agent while working, at the review of each PR and in an end-of-phase audit. Never an automatic gate. Contested cases stay with the human.
