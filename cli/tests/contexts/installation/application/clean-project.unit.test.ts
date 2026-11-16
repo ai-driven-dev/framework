@@ -53,3 +53,37 @@ describe("CleanProject.assertRemovable", () => {
     await expect(clean.assertRemovable(catalogOf(), ROOT, true)).resolves.toBeUndefined();
   });
 });
+
+describe("CleanProject.remove", () => {
+  it("deletes a project-scope plugin's files from the project and counts them", async () => {
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.claude, "1.0.0", []);
+    manifest.addPlugin(
+      TOOL.claude,
+      InstalledPlugin.fromMetadata(
+        "aidd-context",
+        "1.0.0",
+        { kind: "local", path: "/p" },
+        false,
+        "project"
+      ).withFiles(new Map([["skills/x.md", createHash("md5").update("x").digest("hex")]]))
+    );
+    const fs = new InMemoryFileAdapter();
+    fs.setFile(join(ROOT, "skills", "x.md"), "x");
+    const clean = new CleanProject(
+      fs,
+      new InMemoryManifestRepository(manifest, ROOT),
+      new CapturingLogger(),
+      new UpdateGitignore(fs),
+      {
+        homeDir: () => "/home",
+        assertMcpRemovable: async () => undefined,
+      }
+    );
+
+    const count = await clean.remove(catalogOf(), ROOT, true);
+
+    expect(fs.has(join(ROOT, "skills", "x.md"))).toBe(false);
+    expect(count).toBe(1);
+  });
+});
