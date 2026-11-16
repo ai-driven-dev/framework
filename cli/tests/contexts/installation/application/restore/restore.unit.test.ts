@@ -14,7 +14,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import {
   KeepPrompter,
@@ -81,7 +81,9 @@ function makeRestoreUseCase(
     new FakePlatform("linux"),
     prompter,
     deps.pluginFetcher,
-    deps.pluginDistributionReader
+    deps.pluginDistributionReader,
+    undefined,
+    fakeBuiltDeps()
   );
 }
 

@@ -24,7 +24,7 @@ capability and port modules listed as public), never an internal file. The whole
 | Concept | Location |
 |---|---|
 | A transform whose behavior differs by target tool | `domain/formats/` |
-| The plugin-files-to-installed-files translator | `domain/content-translator.ts` (`PluginContentTranslator`) |
+| The plugin-files-to-installed-files translator | `domain/engine.ts` (`PluginContentEngine`) |
 | The canonical framework-doc shape | `domain/canon.ts` |
 | The canonical single-plugin shape | `domain/plugin-distribution.ts` |
 | Build targets and modes | `domain/build-target.ts` |
@@ -64,7 +64,7 @@ by `framework` must be on that list.
 
 ## How it's tested
 
-- `tests/contexts/translate/` mirrors `src/contexts/translate/` — formats, content-translator,
+- `tests/contexts/translate/` mirrors `src/contexts/translate/` — formats, engine,
   canon, and the two build strategies each have unit or integration coverage.
 - `tests/golden/framework-build-golden.golden.test.ts` snapshots a full build across every target —
   see `test` skill's golden/machine-independence rules before touching a snapshot.

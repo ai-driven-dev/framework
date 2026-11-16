@@ -1,10 +1,24 @@
+import type { BuiltMaterializationDeps } from "../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import { TranslatePluginDistribution } from "../../../src/contexts/translate/application/translate-distribution.js";
 import { fakeEnsureBuiltMarketplace } from "./fake-ensure-built-marketplace.js";
+import { InMemoryMarketplaceRegistry } from "./in-memory-marketplace-registry.js";
+
+/** The real translation: pure, so a test needs no fake of it. */
+export const translateDistribution = new TranslatePluginDistribution();
 
 /** The build and translation sources an AddPlugin reads, both faked or real-and-pure. */
 export function fakeBuildSources() {
   return {
     ensureBuilt: fakeEnsureBuiltMarketplace(),
-    translate: new TranslatePluginDistribution(),
+    translate: translateDistribution,
+  };
+}
+
+/** What re-materializing a plugin reaches for, faked where it touches a host. */
+export function fakeBuiltDeps(): BuiltMaterializationDeps {
+  return {
+    ...fakeBuildSources(),
+    marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+    homedir: () => "/stub-home",
   };
 }

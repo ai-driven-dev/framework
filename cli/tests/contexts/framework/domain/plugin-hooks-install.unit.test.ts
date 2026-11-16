@@ -5,7 +5,7 @@ import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/prof
 import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
+import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
@@ -14,8 +14,7 @@ import { flatOf, hooksAcceptanceOf, nativeOf } from "../../tools/testing/plugin-
 /** A hook that arrives is not a hook that runs: every failure this covers installed cleanly
  * and did nothing. */
 
-const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
-const translator = new PluginContentTranslator(stubHasher);
+const translator = new PluginContentEngine();
 
 const SOURCE_TOKEN = nativeOf(claude.plugins()).rootToken() ?? "";
 const HOOK_COMMAND = `node ${SOURCE_TOKEN}/hooks/journal.cjs session-start`;

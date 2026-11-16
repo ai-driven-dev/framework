@@ -19,6 +19,7 @@ import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -255,7 +256,8 @@ for (const [toolId, catalogPath] of [
               new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
             ),
             new DeterministicHasher(),
-            userScopeFileGuard
+            userScopeFileGuard,
+            fakeBuiltDeps()
           ),
           new CapturingLogger()
         ),
@@ -288,7 +290,8 @@ for (const [toolId, catalogPath] of [
                 new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
               ),
               new DeterministicHasher(),
-              userScopeFileGuard
+              userScopeFileGuard,
+              fakeBuiltDeps()
             ),
             new CapturingLogger()
           ),

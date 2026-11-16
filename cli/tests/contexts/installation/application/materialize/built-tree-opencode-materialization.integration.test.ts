@@ -5,6 +5,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -71,13 +72,12 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(
-      fs,
-      new DeterministicHasher(),
-      () => "/home/u",
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
-    );
+    const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      homedir: () => "/home/u",
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: translateDistribution,
+    });
 
     await translator.addPlugin(
       dist(),
@@ -108,13 +108,12 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(
-      fs,
-      new DeterministicHasher(),
-      () => "/home/u",
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
-    );
+    const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      homedir: () => "/home/u",
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: translateDistribution,
+    });
 
     await translator.addPlugin(
       distWithHooks(),
@@ -143,13 +142,12 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
   ): Promise<{ skipped: readonly unknown[] }> {
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(
-      fs,
-      new DeterministicHasher(),
-      () => "/home/u",
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
-    );
+    const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+      homedir: () => "/home/u",
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: translateDistribution,
+    });
     return translator.addPlugin(
       distribution,
       registeredAiProfile(TOOL.opencode),
@@ -216,13 +214,12 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
         hash: hasher.hash(baseConfig),
       }),
     ]);
-    const translator = new BuiltTreeMaterializationTranslator(
-      fs,
-      hasher,
-      () => "/home/u",
-      fakeEnsureBuiltMarketplace(),
-      await makeRegistry()
-    );
+    const translator = new BuiltTreeMaterializationTranslator(fs, hasher, {
+      homedir: () => "/home/u",
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      marketplaceRegistry: await makeRegistry(),
+      translate: translateDistribution,
+    });
     const distribution = new PluginDistribution({
       manifest: { name: "aidd-vcs", version: "1.0.0" },
       format: TOOL.claude,

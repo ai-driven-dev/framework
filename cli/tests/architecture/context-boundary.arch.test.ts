@@ -16,8 +16,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the translation port and the file it answers with
     "src/contexts/translate/contract/translate-distribution.ts",
     "src/contexts/translate/contract/output-file.ts",
-    // the translator itself — what this context is for
-    "src/contexts/translate/domain/content-translator.ts",
     // A per-consumer allowance is not expressible here: the lookup is keyed by the imported
     // file's own context, so a `tools` file is only ever checked against `tools`.
   ],

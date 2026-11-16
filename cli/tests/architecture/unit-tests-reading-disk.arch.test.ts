@@ -22,9 +22,8 @@ const BASELINE: readonly string[] = [
   "tests/contexts/installation/application/plugin/update-plugin.unit.test.ts",
   "tests/orchestration/global/restore-all.unit.test.ts",
   "tests/contexts/installation/application/restore/restore.unit.test.ts",
-  "tests/contexts/installation/application/shared/apply-plugin-files-built-tree.unit.test.ts",
-  "tests/contexts/installation/application/shared/apply-plugin-files-mode-a-marketplace.unit.test.ts",
-  "tests/contexts/installation/application/shared/apply-plugin-files.unit.test.ts",
+  "tests/contexts/installation/application/restore/apply-plugin-files-built-tree.unit.test.ts",
+  "tests/contexts/installation/application/restore/apply-plugin-files-mode-a-marketplace.unit.test.ts",
   "tests/presentation/prompts/plugin-pick-use-case.unit.test.ts",
 ];
 

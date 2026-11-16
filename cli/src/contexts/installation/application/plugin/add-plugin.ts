@@ -6,7 +6,7 @@ import {
   ToolNotInManifestError,
   VersionMismatchError,
 } from "../../../../shared/domain/errors.js";
-import { InstallationFile } from "../../../../shared/domain/file.js";
+import type { InstallationFile } from "../../../../shared/domain/file.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
@@ -21,7 +21,6 @@ import type { MarketplaceRegistry } from "../../../distribution/ports/marketplac
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
-import type { OutputFile } from "../../../translate/contract/output-file.js";
 import type { TranslateDistribution } from "../../../translate/contract/translate-distribution.js";
 import { Manifest } from "../../domain/manifest.js";
 import {
@@ -34,6 +33,7 @@ import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
 import { assertProjectMcpEntriesRemovable } from "../removal/remove-project-plugin.js";
 import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
+import { hashOutputFiles } from "../shared/hash-output-files.js";
 import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import { loadPluginManifest, writePluginFiles } from "./plugin-helpers.js";
@@ -79,14 +79,6 @@ export interface AddPluginSources {
   marketplaceRegistry: MarketplaceRegistry;
   ensureBuilt: BuiltMarketplaceEnsurer;
   translate: TranslateDistribution;
-}
-
-/** Translation yields content; what an install tracks is its hash, taken here. */
-function hashOutputFiles(files: readonly OutputFile[], hasher: Hasher): InstallationFile[] {
-  return files.map(
-    ({ relativePath, content }) =>
-      new InstallationFile({ relativePath, content, hash: hasher.hash(content) })
-  );
 }
 
 export class AddPlugin implements PluginAdd {
@@ -562,9 +554,12 @@ export class AddPlugin implements PluginAdd {
     return resolvePluginTranslator(tool, {
       fs: this.fs,
       hasher: this.hasher,
-      homedir: nodeHomedir,
-      ensureBuilt: this.ensureBuilt,
-      marketplaceRegistry: this.marketplaceRegistry,
+      built: {
+        homedir: nodeHomedir,
+        ensureBuilt: this.ensureBuilt,
+        marketplaceRegistry: this.marketplaceRegistry,
+        translate: this.translate,
+      },
     });
   }
 }

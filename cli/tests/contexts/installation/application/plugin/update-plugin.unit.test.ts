@@ -4,11 +4,15 @@ import type { PluginFetchOptions } from "../../../../../src/contexts/distributio
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
-import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/apply-plugin-files.js";
+import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
-import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
+import {
+  fakeBuildSources,
+  fakeBuiltDeps,
+  translateDistribution,
+} from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -58,7 +62,7 @@ async function setup(
     deps.manifestRepo,
     new PluginDistributionLoader(options.fetcher ?? deps.pluginFetcher, reader),
     deps.hasher,
-    options.builtDeps
+    options.builtDeps ?? fakeBuiltDeps()
   );
   return { addUseCase, updateUseCase };
 }
@@ -281,6 +285,7 @@ describe("UpdatePlugin", () => {
           ensureBuilt: fakeEnsureBuiltMarketplace(),
           marketplaceRegistry: deps.marketplaceRegistry,
           homedir: () => "/home/u",
+          translate: translateDistribution,
         },
       });
       await addLocal(addUseCase);

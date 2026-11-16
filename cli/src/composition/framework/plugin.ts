@@ -23,7 +23,6 @@ import {
   withoutMissingFiles,
 } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
-import { TranslatePluginDistribution } from "../../contexts/translate/application/translate-distribution.js";
 import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.js";
 import { InstallPlugin } from "../../orchestration/plugin/install-plugin.js";
 import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.js";
@@ -76,7 +75,7 @@ export function wirePlugin(base: Base, inst: Installation) {
       distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
       marketplaceRegistry: marketplaceRegistry,
       ensureBuilt: ensureBuiltMarketplaceUseCase,
-      translate: new TranslatePluginDistribution(),
+      translate: builtMaterializationDeps.translate,
     },
     installRuntimeConfigUseCase
   );

@@ -7,7 +7,10 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
-import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
+import {
+  fakeBuildSources,
+  translateDistribution,
+} from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -53,6 +56,7 @@ function makeRestoreUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): 
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
       homedir,
+      translate: translateDistribution,
     }
   );
 }

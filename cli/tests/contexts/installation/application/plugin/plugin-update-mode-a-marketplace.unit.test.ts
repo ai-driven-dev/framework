@@ -7,7 +7,10 @@ import { UpdatePlugin } from "../../../../../src/contexts/installation/applicati
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
-import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
+import {
+  fakeBuildSources,
+  translateDistribution,
+} from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
@@ -59,6 +62,7 @@ function makeUpdateUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): U
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
       homedir: () => HOME,
+      translate: translateDistribution,
     }
   );
 }

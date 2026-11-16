@@ -5,7 +5,7 @@ import { AddPlugin } from "../../../../../src/contexts/installation/application/
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit-deps.js";
-import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
@@ -67,7 +67,7 @@ async function existingProject(configPath: string) {
     deps.manifestRepo,
     distribution,
     deps.hasher,
-    undefined,
+    fakeBuiltDeps(),
     deps.installRuntimeConfigUseCase
   );
   return { deps, setup, setupOptions, install, update };

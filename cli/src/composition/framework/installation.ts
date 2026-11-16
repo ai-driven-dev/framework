@@ -11,6 +11,7 @@ import {
 } from "../../contexts/installation/application/shared/ensure-built-marketplace.js";
 import { UpdateGitignore } from "../../contexts/installation/application/update-gitignore.js";
 import { BundledAssetProviderAdapter } from "../../contexts/installation/infrastructure/assets/asset-loader.js";
+import { TranslatePluginDistribution } from "../../contexts/translate/application/translate-distribution.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import { createFrameworkBuildUseCase } from "../translate.js";
@@ -76,6 +77,7 @@ export function wireInstallation(base: Base) {
     ensureBuilt: ensureBuiltMarketplaceUseCase,
     marketplaceRegistry,
     homedir,
+    translate: new TranslatePluginDistribution(),
   };
   return {
     assetProvider,

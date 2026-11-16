@@ -16,6 +16,7 @@ import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { fakeBuiltDeps } from "../../helpers/ports/fake-build-sources.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -78,7 +79,8 @@ function fixture(
             : new PluginDistributionReaderAdapter(fs, registeredManifestProbes())
         ),
         new DeterministicHasher(),
-        userScopeFileGuard
+        userScopeFileGuard,
+        fakeBuiltDeps()
       ),
       logger
     ),

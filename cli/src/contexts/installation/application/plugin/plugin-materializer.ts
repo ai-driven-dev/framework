@@ -1,4 +1,3 @@
-import { homedir as nodeHomedir } from "node:os";
 import { join } from "node:path";
 import type { InstallationFile } from "../../../../shared/domain/file.js";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
@@ -8,14 +7,14 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import { InstalledPlugin, PLUGIN_NAME_REGEX } from "../../domain/plugins/installed-plugin.js";
 import {
   readBuiltUserPluginFiles,
   withoutHooksPrefix,
 } from "../materialize/built-tree-materialization-translator.js";
 import { withoutHooks } from "../materialize/project-hooks-materializer.js";
-import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files.js";
+import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
+import { hashOutputFiles } from "../shared/hash-output-files.js";
 import {
   assertGlobalFilesWritable,
   type ContainmentCheck,
@@ -81,7 +80,7 @@ export class PluginMaterializer {
     private readonly loader: PluginDistributionLoader,
     private readonly hasher: Hasher,
     private readonly guard: UserScopeFileGuard,
-    private readonly builtDeps?: BuiltMaterializationDeps
+    private readonly builtDeps: BuiltMaterializationDeps
   ) {}
 
   async update(
@@ -107,7 +106,7 @@ export class PluginMaterializer {
     const dist = await this.loader.loadLatest(plugin, projectRoot);
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return null;
     const { files, componentPaths } = await this.materializeFiles(dist, tool, plugin, projectRoot);
-    const home = (this.builtDeps?.homedir ?? nodeHomedir)();
+    const home = this.builtDeps.homedir();
     const present = await this.guard.withoutMissing(this.fs, plugin, tool, home);
     const oldSafe = await this.guard.safeToDelete(this.fs, logger, present, tool, home);
     if (oldSafe.size !== present.files.size) {
@@ -214,10 +213,10 @@ export class PluginMaterializer {
     const marketplace =
       plugin.marketplace === undefined
         ? undefined
-        : (await this.builtDeps?.marketplaceRegistry.list(projectRoot))?.find(
+        : (await this.builtDeps.marketplaceRegistry.list(projectRoot))?.find(
             (entry) => entry.name === plugin.marketplace
           );
-    if (marketplace !== undefined && this.builtDeps !== undefined) {
+    if (marketplace !== undefined) {
       const { builtDir } = await this.builtDeps.ensureBuilt.execute({
         projectRoot,
         marketplace,
@@ -243,10 +242,10 @@ export class PluginMaterializer {
     }
     const forGlobalFiles =
       tool.plugins()?.deliversHooksToProject() === true ? withoutHooks(dist) : dist;
-    const translated = new PluginContentTranslator(this.hasher).translateWithComponentPaths(
-      forGlobalFiles,
-      tool
-    );
-    return { files: translated.files, componentPaths: translated.componentPaths };
+    const translated = this.builtDeps.translate.execute({ distribution: forGlobalFiles, tool });
+    return {
+      files: hashOutputFiles(translated.files, this.hasher),
+      componentPaths: translated.componentPaths,
+    };
   }
 }

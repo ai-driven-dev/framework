@@ -1,5 +1,5 @@
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
-import { PluginContentTranslator } from "../../../../src/contexts/translate/domain/content-translator.js";
+import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import {
   type PluginComponentFile,
@@ -8,8 +8,7 @@ import {
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 
-export const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
-export const translator = new PluginContentTranslator(stubHasher);
+export const translator = new PluginContentEngine();
 
 export const greetContent = `---
 name: aidd:04:greet

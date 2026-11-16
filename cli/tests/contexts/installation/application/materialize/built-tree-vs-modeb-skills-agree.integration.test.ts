@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentTranslator } from "../../../../../src/contexts/translate/domain/content-translator.js";
+import { PluginContentEngine } from "../../../../../src/contexts/translate/domain/engine.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import {
   type PluginComponentFile,
@@ -20,7 +20,6 @@ const PLUGINS_DIR = join(REPOSITORY_ROOT, "plugins");
  */
 
 const PLUGIN_NAME = "aidd-telemetry";
-const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 
 function skillFile(relativePath: string, content = "// stub"): PluginComponentFile {
   return { relativePath: `skills/${relativePath}`, content };
@@ -42,7 +41,7 @@ function makeTelemetryLikeDist(): PluginDistribution {
 }
 
 function modeBSkillPaths(dist: PluginDistribution): string[] {
-  return new PluginContentTranslator(stubHasher)
+  return new PluginContentEngine()
     .translate(dist, opencode)
     .map((f) => f.relativePath)
     .filter((p) => p.startsWith(".opencode/skills/"))

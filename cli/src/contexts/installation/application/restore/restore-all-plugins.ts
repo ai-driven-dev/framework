@@ -10,7 +10,8 @@ import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
-import { ApplyPluginFiles, type BuiltMaterializationDeps } from "../shared/apply-plugin-files.js";
+import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
+import { ApplyPluginFiles } from "./apply-plugin-files.js";
 
 interface RestoreAllPluginsCommand {
   projectRoot: string;
@@ -40,7 +41,7 @@ export class RestoreAllPlugins {
     private readonly hasher: Hasher,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,
-    private readonly builtDeps?: BuiltMaterializationDeps
+    private readonly builtDeps: BuiltMaterializationDeps
   ) {}
 
   async execute(options: RestoreAllPluginsCommand): Promise<RestoreAllPluginsResult> {

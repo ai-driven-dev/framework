@@ -3,9 +3,8 @@ import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { resolveTranslator } from "../../../../../src/contexts/installation/application/materialize/plugin-translator-factory.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
+import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import {
   answersOf,
   nativePlugins,
@@ -18,9 +17,7 @@ function buildDeps(homedir = "/stub-home") {
   return {
     fs,
     hasher,
-    homedir: () => homedir,
-    ensureBuilt: fakeEnsureBuiltMarketplace(),
-    marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+    built: { ...fakeBuiltDeps(), homedir: () => homedir },
   };
 }
 

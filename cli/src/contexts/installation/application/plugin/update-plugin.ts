@@ -10,14 +10,14 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { InstallRuntimeConfig } from "../install/install-runtime-config.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
-import type { BuiltMaterializationDeps } from "../shared/apply-plugin-files.js";
+import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
+import { hashOutputFiles } from "../shared/hash-output-files.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import {
   deleteOldFiles,
@@ -44,7 +44,7 @@ export class UpdatePlugin {
     private readonly manifestRepo: ManifestRepository,
     private readonly distributionLoader: PluginDistributionLoader,
     private readonly hasher: Hasher,
-    private readonly builtDeps?: BuiltMaterializationDeps,
+    private readonly builtDeps: BuiltMaterializationDeps,
     private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
   ) {}
 
@@ -122,9 +122,9 @@ export class UpdatePlugin {
       await materializeViaTranslator(translator, dist, tool, plugin, projectRoot, manifest);
       return;
     }
-    const { files: newFiles, componentPaths } = new PluginContentTranslator(
-      this.hasher
-    ).translateWithComponentPaths(dist, tool);
+    const translated = this.builtDeps.translate.execute({ distribution: dist, tool });
+    const newFiles = hashOutputFiles(translated.files, this.hasher);
+    const componentPaths = translated.componentPaths;
     await writePluginFiles(newFiles, baseDir, this.fs);
     manifest.updatePlugin(
       toolId,
@@ -136,13 +136,10 @@ export class UpdatePlugin {
   // marketplace tools (claude/codex/copilot) re-register without writing files, so an
   // update matches whatever install would have done for that tool.
   private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
-    if (this.builtDeps === undefined) return null;
     return resolvePluginTranslator(tool, {
       fs: this.fs,
       hasher: this.hasher,
-      homedir: this.builtDeps.homedir,
-      ensureBuilt: this.builtDeps.ensureBuilt,
-      marketplaceRegistry: this.builtDeps.marketplaceRegistry,
+      built: this.builtDeps,
     });
   }
 }

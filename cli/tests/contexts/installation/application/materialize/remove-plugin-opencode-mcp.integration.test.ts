@@ -6,6 +6,7 @@ import { CLIOutput } from "../../../../../src/presentation/output.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
@@ -45,7 +46,12 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     const existingJson = JSON.stringify({ mcp: { "user-server": USER_SERVER } }, null, 2);
     const fs = new InMemoryFileAdapter({ [OPENCODE_JSON]: existingJson });
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      hasher,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
@@ -79,7 +85,12 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
   it("removes the plugin from the manifest after unmerge", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      hasher,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
@@ -110,7 +121,12 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
   it("is safe to call when opencode.json does not exist (first install never completed)", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
-    const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
+    const adapter = new ModeBFlatMaterializationTranslator(
+      fs,
+      hasher,
+      () => STUB_HOME,
+      translateDistribution
+    );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
@@ -142,7 +158,8 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     const translator = new ModeBFlatMaterializationTranslator(
       fs,
       new DeterministicHasher(),
-      () => STUB_HOME
+      () => STUB_HOME,
+      translateDistribution
     );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.opencode, "test", []);

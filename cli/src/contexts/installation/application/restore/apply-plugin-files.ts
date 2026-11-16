@@ -4,10 +4,8 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { PluginFetcher } from "../../../distribution/ports/plugin-fetcher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";
@@ -19,7 +17,8 @@ import {
   materializeViaTranslator,
 } from "../plugin/plugin-helpers.js";
 import { resolveBaseDirFromRecord } from "../plugin/plugin-target-resolution.js";
-import type { BuiltMarketplaceEnsurer } from "./ensure-built-marketplace.js";
+import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
+import { hashOutputFiles } from "../shared/hash-output-files.js";
 
 interface ApplyPluginFilesCommand {
   toolId: AiToolId;
@@ -33,13 +32,6 @@ interface ApplyPluginFilesCommand {
   force?: boolean;
 }
 
-/** Optional deps that let restore re-materialize through the build pipeline, as install does. */
-export interface BuiltMaterializationDeps {
-  ensureBuilt: BuiltMarketplaceEnsurer;
-  marketplaceRegistry: MarketplaceRegistry;
-  homedir: () => string;
-}
-
 function deliversHooksToProject(tool: AiToolProfile): boolean {
   return tool.plugins()?.deliversHooksToProject() ?? false;
 }
@@ -50,7 +42,7 @@ export class ApplyPluginFiles {
     private readonly hasher: Hasher,
     private readonly pluginFetcher: PluginFetcher,
     private readonly pluginDistributionReader: PluginDistributionReader,
-    private readonly builtDeps?: BuiltMaterializationDeps
+    private readonly builtDeps: BuiltMaterializationDeps
   ) {}
 
   async execute(options: ApplyPluginFilesCommand): Promise<number> {
@@ -73,13 +65,10 @@ export class ApplyPluginFiles {
   // (claude/codex/copilot) must re-register without writing files — not the raw source
   // transform in either case.
   private resolveTranslator(tool: AiToolProfile): PluginTranslator | null {
-    if (this.builtDeps === undefined) return null;
     return resolvePluginTranslator(tool, {
       fs: this.fs,
       hasher: this.hasher,
-      homedir: this.builtDeps.homedir,
-      ensureBuilt: this.builtDeps.ensureBuilt,
-      marketplaceRegistry: this.builtDeps.marketplaceRegistry,
+      built: this.builtDeps,
     });
   }
 
@@ -92,7 +81,7 @@ export class ApplyPluginFiles {
     // Mode A never materializes files, so any manifest-tracked path here is a leftover from a run
     // before that was true. Scoped to the manifest's own keys under the plugin's base dir — never a
     // directory scan — so it cannot touch files the plugin never wrote.
-    if (translator.mode === "marketplace" && this.builtDeps !== undefined) {
+    if (translator.mode === "marketplace") {
       const baseDir = resolveBaseDirFromRecord(
         plugin.scope,
         tool,
@@ -111,7 +100,10 @@ export class ApplyPluginFiles {
     options: ApplyPluginFilesCommand
   ): Promise<number> {
     const { toolId, plugin, tool, projectRoot, manifest, fileFilter } = options;
-    const files = new PluginContentTranslator(this.hasher).translate(dist, tool);
+    const files = hashOutputFiles(
+      this.builtDeps.translate.execute({ distribution: dist, tool }).files,
+      this.hasher
+    );
     let restored = 0;
     for (const f of files) {
       if (fileFilter !== null && fileFilter !== undefined && !fileFilter(f.relativePath)) continue;

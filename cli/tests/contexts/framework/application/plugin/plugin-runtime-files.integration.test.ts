@@ -6,7 +6,7 @@ import { UpdatePlugin } from "../../../../../src/contexts/installation/applicati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
-import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
+import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
@@ -47,7 +47,7 @@ async function legacyProject() {
     deps.manifestRepo,
     new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
     deps.hasher,
-    undefined,
+    fakeBuiltDeps(),
     deps.installRuntimeConfigUseCase
   );
   const addPlugin = () =>
