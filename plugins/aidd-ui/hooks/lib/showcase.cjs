@@ -725,8 +725,10 @@ function keep(name, value) {
     else window.localStorage.setItem(name, value);
   } catch (error) { /* no shared storage: the review holds for this page alone */ }
 }
+const known = (() => { try { return JSON.parse(document.getElementById("review-records").textContent); } catch (error) { return []; } })();
+const knownKeyOf = (each) => each.record + "@" + each.version;
 let choices = {};
-try { choices = keptOf(JSON.parse(stored(STORE) || "{}"), items.map(keyOf).concat(reviews.map(reviewKeyOf), sets.map(setKeyOf))); } catch (error) { choices = {}; }
+try { choices = keptOf(JSON.parse(stored(STORE) || "{}"), items.map(keyOf).concat(reviews.map(reviewKeyOf), sets.map(setKeyOf), known.map(knownKeyOf))); } catch (error) { choices = {}; }
 const choiceOf = (key, name) => (choices[key] || {})[name];
 function choose(key, name, choice) {
   const own = Object.assign({}, choices[key]);
@@ -737,7 +739,8 @@ function choose(key, name, choice) {
   keep(STORE, Object.keys(choices).length ? JSON.stringify(choices) : null);
 }
 const settled = (row) => row.dataset.current === "ok" || row.dataset.current === "revise";
-/** The records the page holds a verdict for: the drawer's, each with the states of its tabs the drawer holds no row for added. */
+/** The records the page holds a verdict for: the drawer's, then every record of the project (the drawer's data), each
+ * with the states of its tabs the drawer holds no row for added: a verdict given on another page still belongs to the copy. */
 function recordsOf() {
   const records = items.map((item) => ({ key: keyOf(item), step: item.closest("details.step-group").dataset.step, record: item.dataset.record, version: item.dataset.version, states: rowsOf(item).map((row) => ({ state: row.dataset.state, settled: settled(row) })) }));
   for (const review of reviews) {
@@ -745,6 +748,12 @@ function recordsOf() {
     let own = records.find((each) => each.key === key);
     if (!own) { own = { key, step: "", record: review.dataset.record, version: review.dataset.version, states: [] }; records.push(own); }
     for (const tab of review.querySelectorAll('[role="tab"]')) if (!own.states.some((one) => one.state === tab.dataset.tab)) own.states.push({ state: tab.dataset.tab, settled: tab.dataset.current === "ok" || tab.dataset.current === "revise" });
+  }
+  for (const each of known) {
+    const key = knownKeyOf(each);
+    let own = records.find((one) => one.key === key);
+    if (!own) { own = { key, step: "", record: each.record, version: String(each.version), states: [] }; records.push(own); }
+    for (const one of each.states) if (!own.states.some((other) => other.state === one.state)) own.states.push({ state: one.state, settled: one.settled });
   }
   return records;
 }
@@ -1353,6 +1362,11 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
     return `<details class="item" data-record="${escaped(id)}" data-version="${escaped(String(version))}"${screen ? ` data-dressed-by="${escaped(screen)}"` : ""}${id === current ? " open data-here" : ""}><summary><span>${escaped(titleOf(project, record, labels))}${screen ? ` \u00b7 ${escaped(labels.wireframe)}` : ""}</span><span class="done">${settledOf(states)}/${states.length}</span></summary><ol>${states.map(row).join("")}</ol></details>`;
   };
   const shown = held.reduce((sum, each) => sum + each.awaiting.length, 0);
+  const known = held.flatMap((each) => each.records).filter((record) => reviewable(project, record)).map((record) => ({
+    record: fm(record).id,
+    version: String(fm(record).version),
+    states: orderedStates(rows, record).map(({ state, verdict }) => ({ state, settled: !UNRESOLVED.includes(verdict.current) })),
+  }));
   const group = (each) => `<details class="step-group" data-step="${each.step}"${each.step === here || shown <= FEW_ITEMS ? " open" : ""}><summary><span class="step-name">${labels.stepNames[each.step]}</span><span class="step-count">(${each.counted.length})</span><button type="button" class="step-ok" data-step="${each.step}">${labels.allOk}</button></summary>${each.awaiting.map(item).join("\n")}</details>`;
   const vote = ([verdict, label]) => `<button type="button" class="vote" data-verdict="${verdict}" aria-pressed="false">${label}</button>`;
   const choice = (set) => {
@@ -1365,6 +1379,7 @@ function drawerOf({ project, held, here, rows, labels, current, sets = [] }) {
   const tally = pendingOf(labels, held.reduce((sum, each) => sum + each.todo, 0));
   return [
     '<div class="scrim" id="scrim"></div>',
+    `<script type="application/json" id="review-records">${JSON.stringify(known).replaceAll("<", "\\u003c")}</script>`,
     `<aside class="drawer" id="review" aria-label="${escaped(labels.myReview)}" hidden>`,
     `<div class="drawer-head"><h2>${labels.myReview}</h2>${tally}<button type="button" class="close" id="close-review" aria-label="${escaped(labels.close)}">&times;</button></div>`,
     `<div class="drawer-body">${choices}${groups || (choices ? "" : `<p>${labels.nothing}</p>`)}</div>`,

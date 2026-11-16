@@ -30,6 +30,15 @@ describe("the verdicts beside the state tabs", () => {
     }
   });
 
+  it("hands every page the reviewable records and their states, settled or not, for the copy to cover", () => {
+    const html = pagesOf()["onboarding.html"];
+    const records = JSON.parse(html.match(/<script type="application\/json" id="review-records">([^<]*)<\/script>/)[1]);
+    const home = records.find((each) => each.record === "home");
+    assert.ok(home, "a record the page does not show");
+    assert.deepEqual(home.states.map((each) => each.state).sort(), ["default", "empty", "error", "loading"]);
+    assert.equal(typeof home.version, "string");
+  });
+
   it("puts none on a page with no state tabs", () => {
     const pages = pagesOf();
     for (const name of ["index.html", "onboarding.html", "brand.html", "system.html"]) assert.doesNotMatch(pages[name], /class="verdict-bar"/, name);
@@ -56,7 +65,7 @@ describe("the verdicts beside the state tabs", () => {
       own.closest = () => ({ dataset: { step: "screens" } });
       return own;
     };
-    const open = (memory = {}, { drawerHoldsIt = true, beside = [] } = {}) => {
+    const open = (memory = {}, { drawerHoldsIt = true, beside = [], known } = {}) => {
       const script = pagesOf()["index.html"].match(/<script>([\s\S]*)<\/script>/)[1];
       const tabs = [["default", "pending"], ["empty", "pending"]].map(([state, current]) => element({ tab: state, current }));
       const field = element();
@@ -70,7 +79,7 @@ describe("the verdicts beside the state tabs", () => {
       item.hasAttribute = () => false;
       item.closest = () => ({ dataset: { step: "screens" } });
       const tally = element({ template: "{count} to review" });
-      const by = { scrim: element(), review: element({}, { hidden: true, below: { "details.item": drawerHoldsIt ? [item, ...beside.map(([record, dressedBy]) => pending(record, dressedBy))] : [], "details.choice": [], ".step-ok": [] } }), "open-review": element(), copy: element({ blocked: "blocked", hint: "hint" }), clear: element(), note: element(), "close-review": element() };
+      const by = { scrim: element(), review: element({}, { hidden: true, below: { "details.item": drawerHoldsIt ? [item, ...beside.map(([record, dressedBy]) => pending(record, dressedBy))] : [], "details.choice": [], ".step-ok": [] } }), "open-review": element(), copy: element({ blocked: "blocked", hint: "hint" }), clear: element(), note: element(), "close-review": element(), ...(known ? { "review-records": element({}, { textContent: JSON.stringify(known) }) } : {}) };
       const document = { body: { dataset: {} }, addEventListener() {}, getElementById: (id) => by[id] ?? null, querySelectorAll: (selector) => (selector === "section.review[data-record]" ? [review] : selector === ".tally[data-template]" ? [tally] : []), querySelector: () => null };
       const written = [];
       const window = { addEventListener() {}, localStorage: { getItem: (key) => memory[key] ?? null, setItem: (key, value) => { memory[key] = value; }, removeItem: (key) => { delete memory[key]; } } };
@@ -141,6 +150,18 @@ describe("the verdicts beside the state tabs", () => {
       const again = open(page.memory, { drawerHoldsIt: false });
       assert.equal(again.votes[1].attrs["aria-pressed"], "true");
       assert.equal(again.field.value, "wider");
+    });
+
+    it("copies and keeps a verdict given on another page for a record this page neither shows nor lists", async () => {
+      const known = [{ record: "button", version: "1", step: "components", title: "Button", states: [{ state: "default", name: "default", settled: true }] }];
+      const page = open({ "aidd-ui-review": JSON.stringify({ "button@1": { default: { verdict: "ok", comment: "" } } }) }, { known });
+      page.votes[1].listeners.click();
+      page.field.value = "wider";
+      page.field.listeners.input();
+      page.by.copy.listeners.click();
+      await new Promise((resolve) => setImmediate(resolve));
+      assert.deepEqual(JSON.parse(page.written[0].replace(/^```json\n|\n```\n$/g, "")).map((each) => [each.record, each.verdicts.map((one) => [one.state, one.verdict])]), [["home", [["default", "revise"]]], ["button", [["default", "ok"]]]]);
+      assert.deepEqual(Object.keys(JSON.parse(page.memory["aidd-ui-review"])).sort(), ["button@1", "home@1"]);
     });
 
     it("copies a verdict given on a state the drawer holds no row for, and keeps it across a reload", async () => {
