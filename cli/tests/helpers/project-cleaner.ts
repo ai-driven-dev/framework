@@ -50,6 +50,7 @@ export function projectCleanerArgs(parts: ProjectCleanerParts): Constructed {
         parts.userSourceReferences
       ),
       purgeCache,
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     },
     new ListMarketplaces(parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()),
     parts.prompter,

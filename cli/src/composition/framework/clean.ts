@@ -45,6 +45,7 @@ export function wireClean(base: Base, inst: Installation) {
       userSourceReferences
     ),
     purgeCache,
+    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
   const purgeUserScopeFiles = new PurgeUserScopeFiles(
     fs,
@@ -57,6 +58,7 @@ export function wireClean(base: Base, inst: Installation) {
       safeFiles: (plugin, tool) => userScopeFilesSafeToDelete(fs, logger, plugin, tool, homedir()),
       resolveCacheCandidate: (cacheRoot, segments, label) =>
         purgeCache.resolveCandidate(cacheRoot, segments, label),
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     }
   );
   const cleanUserScopeUseCase = new CleanUserScope(

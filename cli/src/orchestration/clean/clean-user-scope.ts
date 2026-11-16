@@ -1,4 +1,3 @@
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw-from-host.js";
 import type { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
 import { describeFullRemovalInstruction } from "../../contexts/machine-claims/application/shared-source-reference-support.js";
@@ -80,7 +79,7 @@ export class CleanUserScope {
           this.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label)
       );
     }
-    await this.purgeFiles.purge(options.tools, options.projectRoot, FRAMEWORK_MARKETPLACE_NAME);
+    await this.purgeFiles.purge(options.tools, options.projectRoot);
 
     return { dryRun: false, manifestFound, preview };
   }
@@ -118,7 +117,7 @@ export class CleanUserScope {
         ? preview.referencingProjects.join(", ")
         : "no other project";
     return (
-      `Remove the shared '${FRAMEWORK_MARKETPLACE_NAME}' source for this machine ` +
+      `Remove the shared '${this.claims.frameworkMarketplaceName}' source for this machine ` +
       `(versions: ${versions})? Still referenced by: ${projects}.`
     );
   }

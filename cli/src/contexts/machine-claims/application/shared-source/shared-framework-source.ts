@@ -27,32 +27,38 @@ export interface ActivationEvidence {
   readonly errors: readonly unknown[];
 }
 
+/** Where this machine records which projects use the shared source, and the version it names. */
+export interface SharedSourceReferences {
+  readonly store: UserSourceReferences;
+  readonly version: VersionReader;
+}
+
 /** The machine's shared framework source and this project's own pre-migration copy of it. */
 export class SharedFrameworkSource {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,
-    private readonly userSourceReferences: UserSourceReferences | undefined,
-    private readonly currentVersionProvider: VersionReader | undefined,
-    private readonly purgeCache: Pick<PurgeDeclaredCache, "resolveCandidate">
+    private readonly references: SharedSourceReferences | undefined,
+    private readonly purgeCache: Pick<PurgeDeclaredCache, "resolveCandidate">,
+    /** The name the framework marketplace is registered under; the distribution owns it and
+     * composition hands it over. */
+    private readonly frameworkMarketplaceName: string
   ) {}
 
   /**
    * Never run before every tool's own native activation: a host's CLI needs the tree it is
    * unregistering from to still exist, and a binary off `PATH` or a failed build can leave a
    * registration still naming this project's own pre-migration cache. `resolveCacheCandidate`
-   * refuses anything that does not `realpath` strictly inside `projectRoot`. The distribution owns
-   * `frameworkMarketplaceName`; the caller hands it over.
+   * refuses anything that does not `realpath` strictly inside `projectRoot`.
    */
   async purgeStaleProjectCache(
     projectRoot: string,
     marketplaces: readonly ListedMarketplace[],
-    activation: ActivationEvidence,
-    frameworkMarketplaceName: string
+    activation: ActivationEvidence
   ): Promise<void> {
     if (activation.errors.length > 0) return;
     const framework = marketplaces.find((m) =>
-      frameworkSourceIsShared(m.name, m.scope, frameworkMarketplaceName)
+      frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
     );
     if (framework === undefined) return;
     if (activation.binaryMissing.length > 0) {
@@ -73,7 +79,7 @@ export class SharedFrameworkSource {
     }
     const candidate = await this.purgeCache.resolveCandidate(
       projectRoot,
-      join(BUILT_CACHE_SUBDIR, frameworkMarketplaceName),
+      join(BUILT_CACHE_SUBDIR, this.frameworkMarketplaceName),
       "This project's own pre-migration framework cache"
     );
     if (candidate === null) return;
@@ -87,14 +93,11 @@ export class SharedFrameworkSource {
   async recordSharedSourceReference(
     projectRoot: string,
     marketplaces: readonly ListedMarketplace[],
-    outcomes: ReadonlyMap<ToolId, RegistrationEvidence>,
-    frameworkMarketplaceName: string
+    outcomes: ReadonlyMap<ToolId, RegistrationEvidence>
   ): Promise<void> {
-    if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {
-      return;
-    }
+    if (this.references === undefined) return;
     const framework = marketplaces.find((m) =>
-      frameworkSourceIsShared(m.name, m.scope, frameworkMarketplaceName)
+      frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
     );
     if (framework === undefined) return;
     if (
@@ -107,14 +110,11 @@ export class SharedFrameworkSource {
   }
 
   private async recordReferenceForRoot(root: string): Promise<void> {
-    if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {
-      return;
-    }
-    const userSourceReferences = this.userSourceReferences;
-    const currentVersionProvider = this.currentVersionProvider;
+    const references = this.references;
+    if (references === undefined) return;
     await toleratingUnreadableSourceReferences(this.logger, undefined, async () => {
       const resolvedRoot = await resolveProjectRootForReferences(this.fs, root);
-      await userSourceReferences.addReference(currentVersionProvider.get(), resolvedRoot);
+      await references.store.addReference(references.version.get(), resolvedRoot);
     });
   }
 }

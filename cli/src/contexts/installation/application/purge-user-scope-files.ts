@@ -31,6 +31,8 @@ export interface UserScopeGuards {
     tool: AiToolProfile
   ) => Promise<ReadonlyMap<string, string>>;
   readonly resolveCacheCandidate: CacheCandidateResolver;
+  /** The name the framework marketplace is registered under. */
+  readonly frameworkMarketplaceName: string;
 }
 
 /** What the user manifest and the cache say before anything is removed. */
@@ -86,14 +88,10 @@ export class PurgeUserScopeFiles {
     return this.withdrawalsOf(manifest, tools);
   }
 
-  async purge(
-    tools: ToolCatalog,
-    projectRoot: string,
-    frameworkMarketplaceName: string
-  ): Promise<void> {
+  async purge(tools: ToolCatalog, projectRoot: string): Promise<void> {
     const manifest = await this.userManifestRepo.load();
     if (manifest !== null) await this.purgeUserPluginFiles(manifest, tools, projectRoot);
-    await this.purgeWhitelistedMachineState(projectRoot, frameworkMarketplaceName);
+    await this.purgeWhitelistedMachineState(projectRoot);
   }
 
   /** Refuses when anything still depends on what a purge would remove. */
@@ -217,16 +215,13 @@ export class PurgeUserScopeFiles {
     }
   }
 
-  private async purgeWhitelistedMachineState(
-    projectRoot: string,
-    frameworkMarketplaceName: string
-  ): Promise<void> {
+  private async purgeWhitelistedMachineState(projectRoot: string): Promise<void> {
     await this.purgeWhitelistedPath("cache/built", (candidate) =>
       this.fs.deleteDirectory(candidate)
     );
     // Other user marketplaces keep their registered sources. Plugin fetches belong to the
     // machine manifest being removed, whose active dependents were checked before any purge.
-    const frameworkSource = `cache/marketplaces/${frameworkMarketplaceName}`;
+    const frameworkSource = `cache/marketplaces/${this.guards.frameworkMarketplaceName}`;
     for (const path of [frameworkSource, "cache/plugin-cache"]) {
       await this.purgeWhitelistedPath(path, (candidate) => this.fs.deleteDirectory(candidate));
     }
@@ -248,7 +243,11 @@ export class PurgeUserScopeFiles {
     );
     // The manifest's own repository is the single writer of `manifest.json` — deleting through
     // it, never a second path to the same file, is what keeps that true.
-    await this.marketplaceRegistry.delete(projectRoot, frameworkMarketplaceName, "user");
+    await this.marketplaceRegistry.delete(
+      projectRoot,
+      this.guards.frameworkMarketplaceName,
+      "user"
+    );
     await this.userManifestRepo.delete();
   }
 

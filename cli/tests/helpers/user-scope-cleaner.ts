@@ -42,6 +42,7 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
           userScopeFilesSafeToDelete(fs, logger, plugin, tool, homeDir()),
         resolveCacheCandidate: (cacheRoot, segments, label) =>
           purgeCache.resolveCandidate(cacheRoot, segments, label),
+        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       }
     ),
     new WithdrawFromHost(fs, logger, {
@@ -59,6 +60,7 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
         parts.userSourceReferences
       ),
       purgeCache,
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     },
     logger,
     parts.prompter

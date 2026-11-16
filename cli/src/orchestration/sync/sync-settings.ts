@@ -1,4 +1,3 @@
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import type { ActivateNativeTools } from "../../contexts/installation/application/sync/activate-native-tools.js";
 import type { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.js";
 import type { RecordActivation } from "../../contexts/installation/application/sync/record-activation.js";
@@ -81,7 +80,6 @@ export class SyncSettings {
       projectRoot,
       toolIds: options.toolIds,
       recreateFrameworkIfMissing: options.recreateFrameworkIfMissing,
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       scope,
       marketplaceNames: options.marketplaceNames,
     });
@@ -105,7 +103,6 @@ export class SyncSettings {
       context,
       scope,
       enablePlugins: options.enablePlugins ?? [],
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     });
     if (
       scope === "project" &&
@@ -124,8 +121,7 @@ export class SyncSettings {
       await this.sharedSource.recordSharedSourceReference(
         projectRoot,
         marketplaces,
-        activation.outcomes,
-        FRAMEWORK_MARKETPLACE_NAME
+        activation.outcomes
       );
     }
     const wroteHashes = await this.recordActivation.recordWhatActivationWrote(
@@ -150,12 +146,7 @@ export class SyncSettings {
       scope === "project" ? projectRoot : undefined
     );
     if (options.recreateFrameworkIfMissing === true && scope === "project") {
-      await this.sharedSource.purgeStaleProjectCache(
-        projectRoot,
-        marketplaces,
-        activation,
-        FRAMEWORK_MARKETPLACE_NAME
-      );
+      await this.sharedSource.purgeStaleProjectCache(projectRoot, marketplaces, activation);
     }
     return {
       activated: [...activation.outcomes.keys()],

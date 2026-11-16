@@ -22,8 +22,6 @@ export interface ActivateNativeToolsRequest {
   context: SyncContext;
   scope: MarketplaceScope;
   enablePlugins: readonly string[];
-  /** The marketplace the requested plugins are enabled from. */
-  frameworkMarketplaceName: string;
 }
 
 export class ActivateNativeTools {
@@ -31,6 +29,8 @@ export class ActivateNativeTools {
     private readonly registerPluginWithHost: NativeHostRegistration,
     private readonly buildMarketplace: BuildMarketplaceForTool,
     private readonly logger: Logger,
+    /** The marketplace the requested plugins are enabled from. */
+    private readonly frameworkMarketplaceName: string,
     /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
      * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
      * already built before this runs, never from a path recomputed without one. */
@@ -40,7 +40,7 @@ export class ActivateNativeTools {
   /** Never a tool with no native activation, and never one whose binary is absent: neither wrote
    * anything, so a settings file that differs for it differs because a person changed it. */
   async execute(request: ActivateNativeToolsRequest): Promise<ActivationRun> {
-    const { tools, projectRoot, context, scope, enablePlugins, frameworkMarketplaceName } = request;
+    const { tools, projectRoot, context, scope, enablePlugins } = request;
     const { manifest, marketplaces } = context;
     const outcomes = new Map<ToolId, HostRegistrationOutcome>();
     const binaryMissing: { toolId: ToolId; binary: string }[] = [];
@@ -63,8 +63,7 @@ export class ActivateNativeTools {
               marketplaces,
               hostNameByAlias,
               scope,
-              enablePlugins,
-              frameworkMarketplaceName
+              enablePlugins
             ),
           userCacheRoot: this.userCacheRoot,
           sink: { logger: this.logger, warnings },
@@ -92,10 +91,9 @@ export class ActivateNativeTools {
     marketplaces: readonly DeclaredMarketplace[],
     hostNameByAlias: ReadonlyMap<string, string>,
     scope: MarketplaceScope,
-    enablePlugins: readonly string[],
-    frameworkMarketplaceName: string
+    enablePlugins: readonly string[]
   ): string[] {
-    const frameworkHost = hostNameByAlias.get(frameworkMarketplaceName);
+    const frameworkHost = hostNameByAlias.get(this.frameworkMarketplaceName);
     const requested =
       frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
     return [

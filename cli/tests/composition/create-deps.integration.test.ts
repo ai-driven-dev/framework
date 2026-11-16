@@ -4,9 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/framework.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CLIOutput } from "../../src/presentation/output.js";
+import { SilentPrompterAdapter } from "../../src/presentation/terminal/prompter-adapter.js";
+import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/paths.js";
 import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
 
 describe("createDeps", () => {
@@ -141,6 +144,7 @@ describe("createDeps", () => {
 
     afterEach(() => {
       vi.unstubAllEnvs();
+      vi.restoreAllMocks();
     });
 
     const aPlugin = (
@@ -231,6 +235,103 @@ describe("createDeps", () => {
       await expect(
         cleanUserScopeUseCase.execute({ projectRoot: root, tools, force: true })
       ).rejects.toThrow("User clean refused; canonical claims retained.");
+    });
+
+    it("purges the framework's own registered source on a user clean and keeps another marketplace's", async () => {
+      const sources = join(root, "user-config", "cache", "marketplaces");
+      await mkdir(join(sources, FRAMEWORK_MARKETPLACE_NAME), { recursive: true });
+      await mkdir(join(sources, "awesome"), { recursive: true });
+      await writeFile(join(sources, "awesome", "source"), "another marketplace's clone");
+      const { cleanUserScopeUseCase } = await createDeps(
+        root,
+        { verbose: false },
+        undefined,
+        tools
+      );
+
+      await cleanUserScopeUseCase.execute({ projectRoot: root, tools, force: true });
+
+      expect(existsSync(join(sources, FRAMEWORK_MARKETPLACE_NAME))).toBe(false);
+      expect(existsSync(join(sources, "awesome"))).toBe(true);
+    });
+
+    it("names the framework's shared source when a user clean asks before removing it", async () => {
+      const asked = vi.spyOn(SilentPrompterAdapter.prototype, "confirm").mockResolvedValue(false);
+      const { cleanUserScopeUseCase } = await createDeps(
+        root,
+        { verbose: false },
+        undefined,
+        tools
+      );
+
+      await cleanUserScopeUseCase.execute({
+        projectRoot: root,
+        tools,
+        force: false,
+        interactive: true,
+      });
+
+      expect(asked).toHaveBeenCalledWith(
+        expect.stringContaining(`Remove the shared '${FRAMEWORK_MARKETPLACE_NAME}' source`)
+      );
+    });
+
+    it("purges this project's pre-migration copy once sync finds the framework at user scope", async () => {
+      const { registerFrameworkMarketplace, manifestRepo, syncSettingsUseCase } = await createDeps(
+        root,
+        { verbose: false },
+        undefined,
+        tools
+      );
+      await registerFrameworkMarketplace.execute({
+        projectRoot: root,
+        pluginSource: {
+          kind: "local",
+          path: join(process.cwd(), "tests/fixtures/framework/marketplace-sample"),
+        },
+      });
+      await manifestRepo.save(Manifest.create());
+      const preMigration = join(root, BUILT_CACHE_SUBDIR, FRAMEWORK_MARKETPLACE_NAME);
+      await mkdir(preMigration, { recursive: true });
+
+      await syncSettingsUseCase.execute({
+        projectRoot: root,
+        tools,
+        recreateFrameworkIfMissing: true,
+      });
+
+      expect(existsSync(preMigration)).toBe(false);
+    });
+
+    it("moves a project-scope framework entry to the machine when sync recreates the framework", async () => {
+      const { registerFrameworkMarketplace, manifestRepo, syncSettingsUseCase } = await createDeps(
+        root,
+        { verbose: false },
+        undefined,
+        tools
+      );
+      await registerFrameworkMarketplace.execute({
+        projectRoot: root,
+        pluginSource: {
+          kind: "local",
+          path: join(process.cwd(), "tests/fixtures/framework/marketplace-sample"),
+        },
+      });
+      const userEntries = join(root, "user-config", "marketplaces.json");
+      const projectEntries = join(root, ".aidd", "marketplaces.json");
+      await mkdir(join(root, ".aidd"), { recursive: true });
+      await writeFile(projectEntries, await readFile(userEntries, "utf8"));
+      await rm(userEntries);
+      await manifestRepo.save(Manifest.create());
+
+      await syncSettingsUseCase.execute({
+        projectRoot: root,
+        tools,
+        recreateFrameworkIfMissing: true,
+      });
+
+      expect(await readFile(projectEntries, "utf8")).not.toContain(FRAMEWORK_MARKETPLACE_NAME);
+      expect(await readFile(userEntries, "utf8")).toContain(FRAMEWORK_MARKETPLACE_NAME);
     });
 
     it("refuses a project clean whose plugin's MCP entries cannot be read back", async () => {

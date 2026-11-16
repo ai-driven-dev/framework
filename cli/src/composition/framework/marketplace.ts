@@ -152,6 +152,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     new LoadSyncContext(
       manifestRepo,
       marketplaceRegistry,
+      FRAMEWORK_MARKETPLACE_NAME,
       registerFrameworkMarketplace,
       userManifestRepo
     ),
@@ -166,15 +167,16 @@ export function wireMarketplace(base: Base, inst: Installation) {
       ),
       buildMarketplaceForTool,
       logger,
+      FRAMEWORK_MARKETPLACE_NAME,
       userConfigDir
     ),
     new RecordActivation(fs, hasher, userManifestRepo),
     new SharedFrameworkSource(
       fs,
       logger,
-      userSourceReferences,
-      currentVersionProvider,
-      new PurgeDeclaredCache(fs, logger)
+      { store: userSourceReferences, version: currentVersionProvider },
+      new PurgeDeclaredCache(fs, logger),
+      FRAMEWORK_MARKETPLACE_NAME
     )
   );
   const askMarketplaceSource = new AskMarketplaceSource(
