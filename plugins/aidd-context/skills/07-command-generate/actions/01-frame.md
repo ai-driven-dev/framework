@@ -16,6 +16,7 @@ A request for a new command, or an existing command file to refactor.
    - Breaches C1: recommend a skill instead, then stop.
 3. Propose one name per [command-authoring.md](../references/command-authoring.md).
    - Existing command: keep its name unless the request renames it.
+   - Rename: name the old file for the user to delete, since the writer removes nothing.
 4. Ask where the command goes, the detected hosts or a plugin source.
 5. Read [plan](02-plan.md).
 
