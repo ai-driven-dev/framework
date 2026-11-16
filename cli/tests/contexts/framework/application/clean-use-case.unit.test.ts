@@ -3,7 +3,6 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { CleanUseCase as ProductionCleanUseCase } from "../../../../src/contexts/framework/application/clean-use-case.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
 import type { HostActions } from "../../../../src/contexts/host-registration/ports/host-actions.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
@@ -13,6 +12,7 @@ import { InstalledPlugin } from "../../../../src/contexts/installation/domain/pl
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { pluginScriptDir } from "../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
 import { CURSOR_HOOKS } from "../../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
+import { CleanProject as ProductionCleanUseCase } from "../../../../src/orchestration/clean/clean-project.js";
 import { FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../helpers/ports/build-unit-deps.js";

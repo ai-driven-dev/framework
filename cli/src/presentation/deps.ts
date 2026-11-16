@@ -6,7 +6,6 @@ import type { ListMarketplaces } from "../contexts/distribution/application/list
 import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.js";
 import type { SearchPlugins } from "../contexts/distribution/application/search-plugins.js";
-import type { CleanUseCase } from "../contexts/framework/application/clean-use-case.js";
 import type { DoctorRegistrationUseCase } from "../contexts/framework/application/doctor/doctor-registration-use-case.js";
 import type { DoctorUseCase } from "../contexts/framework/application/doctor/doctor-use-case.js";
 import type { MarketplaceCheckUseCase } from "../contexts/framework/application/flows/marketplace-check-use-case.js";
@@ -56,6 +55,7 @@ import type { FrameworkBuildUseCase } from "../contexts/translate/application/tr
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
 import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";
+import type { CleanProject } from "../orchestration/clean/clean-project.js";
 import type { CleanUserScope } from "../orchestration/clean/clean-user-scope.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
@@ -158,7 +158,7 @@ export interface Deps {
   restoreAllUseCase: Pick<RestoreAllUseCase, "execute">;
   updateAiToolsUseCase: Pick<UpdateAiToolsUseCase, "execute">;
   updateIdeToolsUseCase: Pick<UpdateIdeToolsUseCase, "execute">;
-  cleanUseCase: Pick<CleanUseCase, "execute">;
+  cleanUseCase: Pick<CleanProject, "execute">;
   cleanUserScopeUseCase: Pick<CleanUserScope, "execute">;
   doctorAllUseCase: Pick<DoctorAllUseCase, "execute">;
   listInstalledRulesUseCase: Pick<ListInstalledRules, "execute">;

@@ -43,6 +43,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/resolve-marketplace.ts",
     "src/contexts/distribution/application/refresh-marketplace.ts",
     "src/contexts/distribution/application/register-framework-marketplace.ts",
+    "src/contexts/distribution/application/list-marketplaces.ts",
   ],
   // The largest context: while it had no entry the mechanism below skipped every framework
   // file, so its interior was reached unchecked. Measured, composition root excluded.
@@ -88,9 +89,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/shared/detect-plugin-drift.ts",
     "src/contexts/installation/application/shared/ensure-built-marketplace.ts",
     "src/contexts/installation/application/shared/remove-project-hooks.ts",
+    "src/contexts/installation/application/clean-project.ts",
     "src/contexts/installation/application/purge-user-scope-files.ts",
     "src/contexts/installation/application/report-status.ts",
-    "src/contexts/installation/domain/manifest-gitignore-entries.ts",
     "src/contexts/installation/domain/manifest/native-registrations.ts",
     "src/contexts/installation/domain/plugins/installed-plugin.ts",
   ],
