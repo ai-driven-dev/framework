@@ -12,4 +12,4 @@ Which hosts a project has installed.
 | Kilo Code      | `.kilo/`                          |
 | Antigravity    | `.agents/agents/`, `.agents/rules/` or `.agents/hooks.json` |
 
-Every host reads `AGENTS.md`, so it signals none. When no signal matches, confirm the host.
+Every host reads `AGENTS.md`, so it signals none. Test each listed path itself, never its parent: `.agents/skills/` alone signals no host. When no signal matches, confirm the host.
