@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import type { MarketplaceSyncSettings } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { InstallAiToolUseCase } from "../../../../../src/contexts/framework/application/install/install-ai-tool-use-case.js";
+import {
+  type ActivatePropagatedPlugins,
+  InstallAiTool,
+} from "../../../../../src/contexts/installation/application/install/install-ai-tool.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { PluginInstallFromMarketplace } from "../../../../../src/orchestration/plugin/install-from-marketplace.js";
@@ -40,18 +42,18 @@ function makeMockOrphanPlugin(name: string): InstalledPlugin {
 function buildUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   pluginInstall: Partial<PluginInstallFromMarketplace> = {},
-  syncSettings: Partial<MarketplaceSyncSettings> = {}
+  syncSettings: Partial<ActivatePropagatedPlugins> = {}
 ) {
   const pluginInstallMock: PluginInstallFromMarketplace = {
     execute: vi.fn().mockResolvedValue({ marketplace: {}, entry: {} }),
     ...pluginInstall,
   };
-  const syncSettingsMock: MarketplaceSyncSettings = {
+  const syncSettingsMock: ActivatePropagatedPlugins = {
     execute: vi.fn().mockResolvedValue({ updatedTools: [] }),
     ...syncSettings,
   };
   return {
-    useCase: new InstallAiToolUseCase(
+    useCase: new InstallAiTool(
       deps.installRuntimeConfigUseCase,
       deps.manifestRepo,
       pluginInstallMock,
@@ -73,7 +75,7 @@ async function addPlugin(
   await deps.manifestRepo.save(manifest);
 }
 
-describe("InstallAiToolUseCase", () => {
+describe("InstallAiTool", () => {
   describe("empty manifest — no prior tools", () => {
     it("installs the tool and returns no propagation when no plugins exist on other tools", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);

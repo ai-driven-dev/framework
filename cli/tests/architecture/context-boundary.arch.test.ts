@@ -104,6 +104,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/list-installed-tools.ts",
     "src/contexts/installation/application/update/update-tool.ts",
     "src/contexts/installation/application/install/install-tools.ts",
+    "src/contexts/installation/application/install/install-ai-tool.ts",
     "src/contexts/installation/application/install/install-user-plugins.ts",
     "src/contexts/installation/application/detect-project-context.ts",
     "src/contexts/installation/application/restore/restore-global.ts",

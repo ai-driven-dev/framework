@@ -1,7 +1,7 @@
 import { ListFrameworkPlugins } from "../../contexts/distribution/application/plugin-source/list-framework-plugins.js";
-import { InstallAiToolUseCase } from "../../contexts/framework/application/install/install-ai-tool-use-case.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { DetectProjectContext } from "../../contexts/installation/application/detect-project-context.js";
+import { InstallAiTool } from "../../contexts/installation/application/install/install-ai-tool.js";
 import { InstallIdeTool } from "../../contexts/installation/application/install/install-ide-tool.js";
 import { InstallTools } from "../../contexts/installation/application/install/install-tools.js";
 import { InstallUserPlugins } from "../../contexts/installation/application/install/install-user-plugins.js";
@@ -55,7 +55,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     runPostInstallPipeline,
     assetProvider
   );
-  const installAiToolUseCase = new InstallAiToolUseCase(
+  const installAiToolUseCase = new InstallAiTool(
     installRuntimeConfigUseCase,
     manifestRepo,
     pluginInstallFromMarketplaceUseCase,

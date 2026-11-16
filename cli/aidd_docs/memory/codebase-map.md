@@ -25,7 +25,6 @@ src/
 │   ├── framework/    # what is left of the old layout: the flows that setup, clean, doctor and plugin commands drive
 │   │   ├── application/
 │   │   │   ├── flows/
-│   │   │   ├── install/
 │   │   │   ├── setup/
 │   │   │   └── shared/
 │   │   └── domain/

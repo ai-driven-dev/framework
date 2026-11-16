@@ -7,10 +7,10 @@ import type { SearchPlugins } from "../contexts/distribution/application/plugin-
 import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.js";
 import type { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import type { InstallAiToolUseCase } from "../contexts/framework/application/install/install-ai-tool-use-case.js";
 import type { SetupMachineScopeUseCase } from "../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import type { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import type { DetectProjectContext } from "../contexts/installation/application/detect-project-context.js";
+import type { InstallAiTool } from "../contexts/installation/application/install/install-ai-tool.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import type { InstallTools } from "../contexts/installation/application/install/install-tools.js";
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
@@ -129,7 +129,7 @@ export interface Deps {
   refreshMarketplace: Pick<RefreshMarketplace, "execute">;
   marketplaceCheckUseCase: Pick<CheckMarketplaceUpstream, "execute">;
   userSourceReferences: UserSourceReferences;
-  installAiToolUseCase: Pick<InstallAiToolUseCase, "execute">;
+  installAiToolUseCase: Pick<InstallAiTool, "execute">;
   installIdeToolUseCase: Pick<InstallIdeTool, "execute">;
   uninstallTools: Pick<UninstallTools, "execute">;
   assetProvider: AssetProvider;

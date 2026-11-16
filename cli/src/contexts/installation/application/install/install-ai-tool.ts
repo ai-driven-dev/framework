@@ -1,17 +1,22 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type {
-  InstallRuntimeConfig,
-  InstallRuntimeConfigResult,
-} from "../../../installation/application/install/install-runtime-config.js";
-import { Manifest } from "../../../installation/domain/manifest.js";
-import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type {
-  MarketplaceSyncSettings,
-  MarketplaceSyncSettingsResult,
-} from "../flows/marketplace-sync-settings-use-case.js";
+import { Manifest } from "../../domain/manifest.js";
+import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { InstallRuntimeConfig, InstallRuntimeConfigResult } from "./install-runtime-config.js";
+
+/** What native activation did for a run, as the command that asked for it reports it. */
+export interface NativeActivationReport {
+  /** Tools whose own CLI actually ran, whether or not every step inside it succeeded. */
+  activated: readonly ToolId[];
+  /** Tools with a native activation whose binary was not on PATH: nothing of theirs ran. */
+  binaryMissing: readonly { toolId: ToolId; binary: string }[];
+  /** What a recoverable, best-effort step logged. */
+  warnings: readonly string[];
+  /** A hard failure returned rather than thrown, so whether the command fails stays the caller's call. */
+  errors: readonly { scope: string; message: string }[];
+}
 
 export interface InstallAiToolOptions {
   toolId: AiToolId;
@@ -28,7 +33,12 @@ export interface InstallAiToolResult {
   propagationWarnings: string[];
   /** What native activation did while re-registering the plugins this run propagated —
    * `undefined` when nothing was propagated, so activation never ran. */
-  activation?: MarketplaceSyncSettingsResult;
+  activation?: NativeActivationReport;
+}
+
+/** Re-registers the native settings of what a run propagated. Supplied by the composition root. */
+export interface ActivatePropagatedPlugins {
+  execute(options: { projectRoot: string; tools: ToolCatalog }): Promise<NativeActivationReport>;
 }
 
 /** The one thing propagation asks of the plugin installer: put a named marketplace plugin on a
@@ -48,12 +58,12 @@ export interface MarketplacePluginInstaller {
   }): Promise<unknown>;
 }
 
-export class InstallAiToolUseCase {
+export class InstallAiTool {
   constructor(
     private readonly installRuntimeConfig: InstallRuntimeConfig,
     private readonly manifestRepo: ManifestRepository,
     private readonly pluginInstallFromMarketplace: MarketplacePluginInstaller,
-    private readonly marketplaceSyncSettings: MarketplaceSyncSettings,
+    private readonly activatePropagated: ActivatePropagatedPlugins,
     private readonly logger: Logger
   ) {}
 
@@ -94,7 +104,7 @@ export class InstallAiToolUseCase {
     }
     const activation =
       propagated.length > 0
-        ? await this.marketplaceSyncSettings.execute({ projectRoot, tools })
+        ? await this.activatePropagated.execute({ projectRoot, tools })
         : undefined;
     return {
       runtimeResult,
