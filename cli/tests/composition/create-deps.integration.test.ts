@@ -1,9 +1,11 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bindCatalog, createDeps, createMenuDeps } from "../../src/composition/framework.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
 
@@ -118,6 +120,126 @@ describe("createDeps", () => {
       await expect(registerThenOverwrite("user")).rejects.toThrow(
         "Cannot prove AIDD ownership of user-scope marketplace 'awesome'"
       );
+    });
+  });
+
+  describe("the commands it wires", () => {
+    // A machine of its own: no home, no user config and no host binary of the real one.
+    beforeEach(() => {
+      vi.stubEnv("HOME", join(root, "home"));
+      vi.stubEnv("AIDD_USER_CONFIG_DIR", join(root, "user-config"));
+      vi.stubEnv("PATH", join(root, "no-binaries"));
+    });
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    const aPlugin = (
+      scope: "project" | "user",
+      extra: { mcpEntries?: Record<string, string> } = {}
+    ) =>
+      InstalledPlugin.fromJSON({
+        name: "aidd-dev",
+        source: { kind: "github", repo: "ai-driven-dev/framework" },
+        version: "1.0.0",
+        strict: true,
+        files: {},
+        scope,
+        ...extra,
+      });
+
+    it("checks every category of an installed project and reports no category it could not check", async () => {
+      const { manifestRepo, doctorAllUseCase } = await createDeps(
+        root,
+        { verbose: false },
+        undefined,
+        tools
+      );
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "1.0.0", []);
+      await manifestRepo.save(manifest);
+
+      const result = await doctorAllUseCase.execute(root, tools);
+
+      expect(result.errors).toEqual([]);
+      expect(result.ai?.toolHealth).toEqual(expect.any(Array));
+    });
+
+    it("counts the token given on the command line as authenticated", async () => {
+      const { manifestRepo, doctorUseCase } = await createDeps(
+        root,
+        { verbose: false, token: "ghp_given" },
+        undefined,
+        tools
+      );
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "1.0.0", []);
+      await manifestRepo.save(manifest);
+
+      const report = await doctorUseCase.execute({ projectRoot: root, tools });
+
+      expect(report.issues.map((issue) => issue.message)).not.toContain("Not authenticated");
+    });
+
+    it("purges the machine's built cache and checks each user plugin's files before deleting them", async () => {
+      const builtCache = join(root, "user-config", "cache", "built");
+      await mkdir(join(builtCache, "1.0.0"), { recursive: true });
+      await writeFile(join(builtCache, "1.0.0", "marker"), "");
+      const { userManifestRepo, cleanUserScopeUseCase } = await createDeps(
+        root,
+        { verbose: false },
+        undefined,
+        tools
+      );
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.cursor, "1.0.0", []);
+      manifest.addPlugin(TOOL.cursor, aPlugin("user"));
+      await userManifestRepo.save(manifest);
+
+      await cleanUserScopeUseCase.execute({ projectRoot: root, tools, force: true });
+
+      expect(existsSync(builtCache)).toBe(false);
+    });
+
+    it("refuses a user clean whose host binary cannot be found, naming why", async () => {
+      const { userManifestRepo, cleanUserScopeUseCase } = await createDeps(
+        root,
+        { verbose: false },
+        undefined,
+        tools
+      );
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "1.0.0", []);
+      manifest.setNativeRegistrations(TOOL.claude, {
+        binary: "claude",
+        marketplaces: [],
+        pluginRefs: [],
+      });
+      await userManifestRepo.save(manifest);
+
+      await expect(
+        cleanUserScopeUseCase.execute({ projectRoot: root, tools, force: true })
+      ).rejects.toThrow("User clean refused; canonical claims retained.");
+    });
+
+    it("refuses a project clean whose plugin's MCP entries cannot be read back", async () => {
+      const { manifestRepo, cleanUseCase } = await createDeps(
+        root,
+        { verbose: false },
+        undefined,
+        tools
+      );
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.opencode, "1.0.0", []);
+      manifest.addPlugin(TOOL.opencode, aPlugin("project", { mcpEntries: { server: "digest" } }));
+      await manifestRepo.save(manifest);
+      await mkdir(join(root, "opencode.json"));
+
+      await expect(
+        cleanUseCase.execute({ projectRoot: root, tools, force: true })
+      ).rejects.toThrow();
+      expect(existsSync(join(root, ".aidd", "manifest.json"))).toBe(true);
     });
   });
 
