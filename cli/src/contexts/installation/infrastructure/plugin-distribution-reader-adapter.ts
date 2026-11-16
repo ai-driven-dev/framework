@@ -14,7 +14,7 @@ import { isSemver } from "../../../shared/domain/semver.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { DistributionProbe, PluginFormat } from "../../translate/contract/plugin-format.js";
 import { PLUGIN_NAME_REGEX } from "../domain/plugins/installed-plugin.js";
-import type { PluginDistributionReader } from "../ports/plugin-distribution-reader.js";
+import type { PluginDistributionReader } from "../ports/plugin/plugin-distribution-reader.js";
 
 const README_FILENAME = "README.md";
 

@@ -3,7 +3,7 @@ import type { PluginFetcher } from "../../../../../src/contexts/distribution/por
 import { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin-distribution-reader.js";
+import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
