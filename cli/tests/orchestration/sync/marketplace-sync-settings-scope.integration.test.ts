@@ -299,6 +299,57 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
     expect(fs.listUnder(resolve(PROJECT_ROOT))).toEqual([]);
   });
 
+  it("writes no project file for a plugin the host proved at user scope", async () => {
+    const activator = new FakeHostActions({ available: true });
+    const registry = new InMemoryMarketplaceRegistry();
+    await registry.save(PROJECT_ROOT, marketplace());
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.copilot, "test", []);
+    const fs = new InMemoryFileAdapter({
+      "/built/copilot/.plugin/marketplace.json": JSON.stringify({
+        name: MARKETPLACE,
+        version: "1.0.0",
+        plugins: [{ name: "aidd-telemetry" }],
+      }),
+    });
+    const useCase = marketplaceSync({
+      fs,
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      marketplaceRegistry: registry,
+      hasher: new DeterministicHasher(),
+      logger: new CapturingLogger(),
+      activators: new Map([[TOOL.copilot, activator]]),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+      hostPluginRegistries: new Map([
+        [
+          TOOL.copilot,
+          new FakeHostPluginRegistry({ location: "/host/settings.json", refs: new Map() }),
+        ],
+      ]),
+      nativeSources: new Map([
+        [
+          TOOL.copilot,
+          new FakeHostMarketplaceSources(
+            activator,
+            "effective-list",
+            (path) => (path === "/built/copilot" ? MARKETPLACE : undefined),
+            new Map()
+          ),
+        ],
+      ]),
+    });
+
+    await useCase.execute({
+      tools: registeredCatalog(),
+      projectRoot: PROJECT_ROOT,
+      scope: "user",
+      enablePlugins: ["aidd-telemetry"],
+    });
+
+    expect(activator.enabledPluginScopes).toEqual(["user"]);
+    expect(fs.listUnder(resolve(PROJECT_ROOT))).toEqual([]);
+  });
+
   it("writes .claude/settings.json for that same fixture at project scope — proof the fixture is not inert", async () => {
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const registry = new InMemoryMarketplaceRegistry();
