@@ -98,6 +98,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the user source references that moved here, and leave this list as each one moves into
     // orchestration behind a claims port.
     "src/contexts/machine-claims/application/native-plugin-ownership.ts",
+    "src/contexts/machine-claims/application/purge-declared-cache.ts",
     "src/contexts/machine-claims/application/shared-source-reference-support.ts",
     "src/contexts/machine-claims/application/user-plugin-ownership.ts",
     "src/contexts/machine-claims/application/user-scope-plugin-files.ts",
