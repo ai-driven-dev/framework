@@ -15,16 +15,17 @@ The set, in the showcase.
 2. Give the user the set's page.
    - Ask them to choose, then paste the copied feedback here.
 3. Wait for the feedback.
-   - Read the entry with `set`. Leave record entries.
+   - Read the entry with `set`.
+   - Leave record entries.
 4. Weigh the feedback.
    - Keep: a candidate as it is.
-   - Revise: a lead. Its comment says what to change.
+   - Revise: a lead, its comment says what to change.
    - Discard: out.
-   - No verdict: not looked at. Ask before deciding.
-   - Several kept: ask which one. The user makes the choice.
+   - No verdict: not looked at, so ask before deciding.
+   - Several kept: ask the user which one.
    - If nothing is kept, read [propose](02-propose.md) with the comments.
 5. Keep the chosen variant per [engine](../references/engine.md).
-6. If a wireframe is left, read [propose](02-propose.md). Else read [conclude](04-conclude.md).
+6. If a wireframe is left, read [propose](02-propose.md), else read [conclude](04-conclude.md).
 
 ## Output
 

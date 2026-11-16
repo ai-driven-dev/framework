@@ -8,8 +8,9 @@ The request.
 
 ## Process
 
-1. Find the engine per [engine](../references/engine.md). If missing, stop and say so.
-2. Read `aidd_docs/ui/`. Name the [case](../references/cases.md).
+1. Find the engine per [engine](../references/engine.md).
+   - If it is missing, stop and say so.
+2. Read `aidd_docs/ui/`, then name the [case](../references/cases.md).
 3. If `aidd_docs/ui/system.md` is missing, stop and say so.
 4. Take the wireframes the request names, else each one no screen dresses.
    - Add each screen a review marks `revise`: its comment is the request.
@@ -20,7 +21,7 @@ The request.
 6. Take the task folder the user named.
    - Else the one `history.md` names for this work, any step.
    - Else, for new work the person names, one under `aidd_docs/tasks/`.
-   - Never ask for it. Never mention it to the user.
+   - Never ask for it, and never mention it to the user.
    - It need not exist: only `history.md` rows cite it.
 7. Ask once: should you pick the simple screens yourself?
    - Say you would follow their earlier picks.

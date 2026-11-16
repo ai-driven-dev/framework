@@ -3,11 +3,22 @@
 | Install | Path |
 | --- | --- |
 | plugin | `../../hooks/aidd-ui.cjs` from this skill's folder |
-| flat | `hooks/aidd-ui/aidd-ui.cjs` under the tool's folder: `.claude`, `.github`, `.kilo`, `.codex`, `.cursor`, `.opencode` |
+| flat | `hooks/aidd-ui/aidd-ui.cjs` under the tool's folder at the project root: `.claude`, `.github`, `.kilo`, `.codex`, `.cursor`, `.opencode` |
 
-`<engine>` is that path, run with `node`.
+Try the plugin row first, then the flat row.
+
+`<engine>` is the first path that exists, run with `node`.
 
 `node <engine> help <command>` says what each does.
+
+## Run
+
+- Run the engine from the project root, and never read its source.
+- After each write, fix what the hook or the validation reports.
+- Never bypass a hook.
+- Record the history without asking, and change only what was named.
+
+## Steps
 
 | Step | Command |
 | --- | --- |

@@ -8,20 +8,22 @@ The request.
 
 ## Process
 
-1. Find the engine per [engine](../references/engine.md). If missing, stop and say so.
-2. Read `aidd_docs/ui/` and the UI code, whatever its platforms. Name the [case](../references/cases.md).
+1. Find the engine per [engine](../references/engine.md).
+   - If it is missing, stop and say so.
+2. Read `aidd_docs/ui/` and the UI code, whatever its platforms, then name the [case](../references/cases.md).
 3. If `aidd_docs/ui/brand.md` is missing, stop and say so.
 4. Read its personality, references and anti-references: the tokens' direction.
 5. Take the task folder the user named.
    - Else the one `history.md` names for this work, any step.
    - Else, for new work the person names, one under `aidd_docs/tasks/`.
-   - Never ask for it. Never mention it to the user.
+   - Never ask for it, and never mention it to the user.
    - It need not exist: only `history.md` rows cite it.
 6. For a change only:
    - If vague, ask which token changes, and to which value.
    - Measure what it reaches per [engine](../references/engine.md), and show it.
    - Let the user include or leave its `same-value` tokens.
-   - Wait for the user's agreement. If refused, stop.
+   - Wait for the user's agreement.
+   - If it is refused, stop.
 7. Read [write](02-write.md).
 
 ## Output

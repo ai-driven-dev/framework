@@ -10,13 +10,16 @@ The output of [prepare](01-prepare.md).
 
 1. From the code, [read it](../references/extraction.md).
 2. If the user asks for variants, propose and choose per [variants](../references/variants.md).
-   - Write the showcase per [engine](../references/engine.md), in the project memory's language. Fix what it reports.
-   - Give the user the set's page. Ask them to choose, then paste the copied feedback here.
+   - Write the showcase per [engine](../references/engine.md), in the project memory's language.
+   - Fix what it reports.
+   - Give the user the set's page, and ask them to choose, then paste the copied feedback here.
    - Wait for the feedback.
-     - Read the entry with `set`. Leave record entries.
+     - Read the entry with `set`.
+     - Leave record entries.
      - Read a comment against the tokens it names.
-     - Keep: a candidate as it is. Discard: out.
-     - Revise: a lead. Its comment says what to change.
+     - Keep: a candidate as it is.
+     - Discard: out.
+     - Revise: a lead, its comment says what to change.
      - Several kept: keep the one nearer the brand.
      - Only revise: revise per the comments, then write the showcase again.
    - Keep the chosen variant per [engine](../references/engine.md).
@@ -25,7 +28,7 @@ The output of [prepare](01-prepare.md).
    - Ask what [extraction](../references/extraction.md) names no source for.
    - Scratch: ask the user for each answer, but never about sizes.
    - Pick sizes from the platforms: phone and desktop for the web.
-   - Ask only if the product needs a third size. Name it by device, such as tablet at a desk.
+   - Ask only if the product needs a third size, and name it by device, such as tablet at a desk.
 4. With a token file in the code, extract its tokens per [engine](../references/engine.md).
    - Settle what is left per [extraction](../references/extraction.md).
 5. For a change, raise the versions per [versions](../references/versions.md).

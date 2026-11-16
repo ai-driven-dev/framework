@@ -8,12 +8,13 @@ The request.
 
 ## Process
 
-1. Find the engine per [engine](../references/engine.md). If missing, stop and say so.
-2. Read `aidd_docs/ui/` and the UI code. Name the [case](../references/cases.md).
+1. Find the engine per [engine](../references/engine.md).
+   - If it is missing, stop and say so.
+2. Read `aidd_docs/ui/` and the UI code, then name the [case](../references/cases.md).
 3. Take the task folder the user named.
    - Else the one `history.md` names for this work, any step.
    - Else, for new work the person names, one under `aidd_docs/tasks/`.
-   - Never ask for it. Never mention it to the user.
+   - Never ask for it, and never mention it to the user.
    - It need not exist: only `history.md` rows cite it.
 4. Settle the persona:
    - A brief under `aidd_docs/` describing one: propose it as written.
@@ -26,7 +27,8 @@ The request.
    - Scratch: draft them from the persona, each with its steps.
    - Change: name what is added or changed, and how.
    - A `revise` comment in a review is the request.
-   - Show them and wait for the user's agreement. If refused, stop.
+   - Show them, and wait for the user's agreement.
+   - If it is refused, stop.
 6. Read [write](02-write.md).
 
 ## Output

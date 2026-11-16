@@ -21,7 +21,7 @@ The records to review, and the captures to save.
    - If a page fails, say it is a defect.
    - Never say the person cannot vote.
    - Then collect the verdicts in the chat instead.
-   - Ask one record at a time: ok, or what to change. Keep it short.
+   - Ask one record at a time, ok or what to change, and keep it short.
 5. Wait for the paste, or the chat verdicts.
 6. Read [choose](03-choose.md).
 

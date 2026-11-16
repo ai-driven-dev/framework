@@ -8,14 +8,15 @@ The case and the engine. In a later round, the mix and comments.
 
 ## Process
 
-1. In the first round, ask what the user starts from. Several answers combine.
+1. In the first round, ask what the user starts from, and let several answers combine.
    - Existing: the code, a site address, or screenshots.
    - References: products liked and disliked.
      - For each, what to take or avoid.
    - Nothing: ask for each section of the [brand](../assets/brand-template.md) template.
 2. Read what they give.
    - Code: its README, package manifest and visible copy.
-   - Site: only the address they give, with the host's fetch tool. A page that reads empty: ask for screenshots.
+   - Site: fetch only the address they give, with the host's fetch tool.
+     - A page that reads empty: ask for screenshots.
    - Screenshots: read them.
    - Evolution: read `aidd_docs/ui/brand.md`, and ask what changes.
 3. Draw the directions per [variants](../references/variants.md).

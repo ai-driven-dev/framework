@@ -13,14 +13,15 @@ The set, in the showcase.
    - Or to take one cell per axis.
    - Then to paste the copied feedback here.
 2. Wait for the feedback.
-   - Read the entry with `set`. Leave record entries.
+   - Read the entry with `set`.
+   - Leave record entries.
 3. Weigh the feedback.
    - Keep: a candidate as it is.
-   - Revise: a lead. Its comment says what to change.
+   - Revise: a lead, its comment says what to change.
    - Discard: out.
-   - No verdict and no pick: not looked at. Ask before deciding.
-   - Picks: each picked axis comes from its variant. Together they make the mix.
-   - Several kept: ask which one. The user makes the choice.
+   - No verdict and no pick: not looked at, so ask before deciding.
+   - Picks: each picked axis comes from its variant, and together they make the mix.
+   - Several kept: ask the user which one.
 4. One kept, no revise, no picks: keep it per [engine](../references/engine.md).
    - Then raise the brand's version per [engine](../references/engine.md).
    - A new brand is recorded the same way.

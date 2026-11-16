@@ -12,13 +12,16 @@ The output of [prepare](01-prepare.md).
 2. For a change, raise the versions per [versions](../references/versions.md), removals included.
 3. If the user asks for variants of an element, propose and choose.
    - Follow [variants](../references/variants.md).
-   - Write the showcase per [engine](../references/engine.md), in the project memory's language. Fix what it reports.
-   - Give the user the set's page. Ask them to choose, then paste the copied feedback here.
+   - Write the showcase per [engine](../references/engine.md), in the project memory's language.
+   - Fix what it reports.
+   - Give the user the set's page, and ask them to choose, then paste the copied feedback here.
    - Wait for the feedback.
-     - Read the entry with `set`. Leave record entries.
+     - Read the entry with `set`.
+     - Leave record entries.
      - Read a comment against the state it names.
-     - Keep: a candidate as it is. Discard: out.
-     - Revise: a lead. Its comment says what to change.
+     - Keep: a candidate as it is.
+     - Discard: out.
+     - Revise: a lead, its comment says what to change.
      - Several kept: keep the one with fewer states.
      - Only revise: revise per the comments, then write the showcase again.
    - Keep the chosen variant per [engine](../references/engine.md).
