@@ -6,12 +6,12 @@ import type {
   ResolveMarketplaceCommand,
 } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import type { FrameworkBuild } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import {
   EnsureBuiltMarketplace,
   type FrameworkBuilds,
 } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import type { FrameworkBuild } from "../../../../../src/contexts/translate/contract/build-native-tree.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import { BUILT_CACHE_SUBDIR, builtMarketplaceDir } from "../../../../../src/shared/domain/paths.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
