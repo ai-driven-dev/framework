@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import { UnreadableUserSourceReferencesError } from "../../../../src/shared/domain/errors.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
@@ -313,5 +313,27 @@ describe("the shared source's own project references", () => {
 
       expect(await refs.listAllReferencingProjects()).toEqual([]);
     });
+  });
+});
+
+describe("removing a reference where paths compare case-insensitively", () => {
+  const platform = Object.getOwnPropertyDescriptor(process, "platform");
+  afterEach(() => {
+    if (platform !== undefined) Object.defineProperty(process, "platform", platform);
+  });
+
+  it("prunes without a protected root to compare against", async () => {
+    const fs = new InMemoryFileAdapter();
+    markExisting(fs, "/project-a");
+    markExisting(fs, "/project-b");
+    const refs = adapter(fs);
+    await refs.addReference("1.0.0", "/project-a");
+    await refs.addReference("1.0.0", "/project-b");
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+
+    await refs.removeReference("/project-a");
+
+    const written = JSON.parse(fs.getFile(REFERENCES_PATH) ?? "{}") as Record<string, string[]>;
+    expect(written).toEqual({ "1.0.0": ["/project-b"] });
   });
 });

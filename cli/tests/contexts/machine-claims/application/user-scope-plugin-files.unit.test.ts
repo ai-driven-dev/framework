@@ -410,3 +410,61 @@ describe("user-scope boundaries on a filesystem that rejects a missing path", ()
     ).resolves.toBeUndefined();
   });
 });
+
+describe("a profile that declares no plugins at all", () => {
+  const noPlugins = { ...registeredAiProfile(TOOL.cursor), plugins: () => null };
+  const file = new InstallationFile({
+    relativePath: "aidd-test/a.md",
+    content: "new bytes",
+    hash: new FileHash("a".repeat(32)),
+  });
+
+  it("answers nothing safe to delete", async () => {
+    const safe = await userScopeFilesSafeToDelete(
+      new InMemoryFileAdapter({ [join(BOUNDARY, "aidd-test/a.md")]: CONTENT }),
+      new CapturingLogger(),
+      plugin({ "aidd-test/a.md": HASH }),
+      noPlugins,
+      HOME
+    );
+
+    expect([...safe]).toStrictEqual([]);
+  });
+
+  it("hands back the same plugin", async () => {
+    const recorded = plugin({ "aidd-test/a.md": HASH });
+
+    expect(await withoutMissingFiles(new InMemoryFileAdapter(), recorded, noPlugins, HOME)).toBe(
+      recorded
+    );
+  });
+
+  it("refuses to write", async () => {
+    await expect(
+      assertUserScopeWriteBoundary(new InMemoryFileAdapter(), noPlugins, "aidd-test", [file], HOME)
+    ).rejects.toThrow(/no user plugins directory/);
+  });
+});
+
+describe("a write boundary that vanished while its plugin directory resolves", () => {
+  it("is refused as unsafe, not dereferenced", async () => {
+    const fs = new FaultingFileAdapter();
+    fs.failOn("realpath", BOUNDARY, errnoError("ENOENT"));
+
+    await expect(
+      assertUserScopeWriteBoundary(
+        fs,
+        registeredAiProfile(TOOL.cursor),
+        "aidd-test",
+        [
+          new InstallationFile({
+            relativePath: "aidd-test/a.md",
+            content: "new bytes",
+            hash: new FileHash("a".repeat(32)),
+          }),
+        ],
+        HOME
+      )
+    ).rejects.toThrow(/directory is not safely inside/);
+  });
+});

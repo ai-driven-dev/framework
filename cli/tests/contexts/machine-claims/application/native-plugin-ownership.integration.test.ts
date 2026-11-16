@@ -46,6 +46,20 @@ describe("one project's exact native host ref claim", () => {
     expect(await isMachineOwnedNativeRef(undefined, codex, TARGET)).toBe(false);
   });
 
+  it("recognizes no claim on a registration that records none", async () => {
+    const machine = Manifest.create();
+    machine.addTool(codex, "1.0.0", []);
+    machine.setNativeRegistrations(codex, {
+      binary: "codex",
+      marketplaces: [],
+      pluginRefs: [TARGET],
+    });
+
+    expect(
+      await isMachineOwnedNativeRef(new InMemoryManifestRepository(machine), codex, TARGET)
+    ).toBe(false);
+  });
+
   it("detaches A's realpath only from the exact ref, preserving B and other catalogue claims", async () => {
     const f = fixture();
     f.fs.setSymlink("/link-to-A", "/A");
