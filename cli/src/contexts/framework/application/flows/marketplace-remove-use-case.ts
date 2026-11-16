@@ -7,7 +7,7 @@ import type { Prompter } from "../../../../shared/ports/prompter.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
-import type { RemoveProjectPlugin } from "../../../installation/application/plugin/remove-project-plugin.js";
+import type { RemoveProjectPlugin } from "../../../installation/application/removal/remove-project-plugin.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";

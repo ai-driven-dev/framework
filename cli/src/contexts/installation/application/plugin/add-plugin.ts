@@ -31,6 +31,7 @@ import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { InstallRuntimeConfig } from "../install/install-runtime-config.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
+import { assertProjectMcpEntriesRemovable } from "../removal/remove-project-plugin.js";
 import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
 import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
@@ -40,7 +41,6 @@ import {
   resolvePluginToolIds,
   resolveScopeForInstall,
 } from "./plugin-target-resolution.js";
-import { assertProjectMcpEntriesRemovable } from "./remove-project-plugin.js";
 
 export interface PluginAddOptions {
   source: PluginSource;

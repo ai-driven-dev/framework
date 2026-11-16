@@ -1,0 +1,90 @@
+import type { ToolId } from "../../../shared/domain/tool.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
+import type { Lock } from "../../../shared/ports/lock.js";
+import type { Logger } from "../../../shared/ports/logger.js";
+import type { MarketplaceRegistry } from "../../distribution/ports/marketplace-registry.js";
+import type { PluginRemovalClaims } from "../../installation/application/removal/remove-plugin.js";
+import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
+import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
+import type { UserSourceReferences } from "../ports/user-source-references.js";
+import { isMachineOwnedNativeRef } from "./native-plugin-ownership.js";
+import { removalClaims } from "./removal-claims.js";
+import {
+  describeGuardedPluginRefMessage,
+  frameworkSourceIsShared,
+  otherProjectsReferencing,
+  refAnotherProjectStillNeeds,
+  resolveProjectRootForReferences,
+  toleratingUnreadableSourceReferences,
+} from "./shared-source-reference-support.js";
+import { userScopeFilesSafeToDelete } from "./user-scope-plugin-files.js";
+
+export interface PluginRemovalClaimsDeps {
+  readonly repo: (ManifestRepository & Lock) | undefined;
+  readonly fs: FileReader;
+  readonly logger: Logger;
+  readonly home: string;
+  /** Absent skips the another-project guard entirely. */
+  readonly userSourceReferences?: UserSourceReferences;
+  /** Absent treats every marketplace as not shared. */
+  readonly marketplaceRegistry?: MarketplaceRegistry;
+  readonly resolveCacheCandidate: PluginRemovalClaims["resolveCacheCandidate"];
+}
+
+/**
+ * Everything a plugin removal asks the machine scope, bound to the machine manifest and registry.
+ *
+ * A ref enabled through the shared, machine-scope source at a host that enables a plugin
+ * machine-wide (no `scopeArgs`: codex, copilot) must survive a `plugin remove` in one project while
+ * another project on this machine still references that source: uninstalling it here would disable
+ * it there too. `plugin remove` never decrements `references.json` the way `clean` does, so this
+ * project's own root is subtracted by hand, otherwise a project holding the only reference would
+ * read itself back as "another project". `ref` carries the host's own name for the marketplace,
+ * `marketplaceAlias` stays the key this project's registry is read by; both must move together.
+ */
+export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps): PluginRemovalClaims {
+  const { repo, fs, logger, userSourceReferences } = deps;
+  const guardMessage = async (
+    binary: string,
+    tool: AiToolProfile,
+    ref: string,
+    marketplaceAlias: string,
+    hostName: string,
+    projectRoot: string
+  ): Promise<string | undefined> => {
+    if (userSourceReferences === undefined) return undefined;
+    const marketplaces = (await deps.marketplaceRegistry?.list(projectRoot)) ?? [];
+    const marketplace = marketplaces.find((m) => m.name === marketplaceAlias);
+    if (
+      marketplace === undefined ||
+      !frameworkSourceIsShared(marketplace.name, marketplace.scope)
+    ) {
+      return undefined;
+    }
+    const otherProjects = await toleratingUnreadableSourceReferences(
+      logger,
+      [] as readonly string[],
+      async () => {
+        const ownRoot = await resolveProjectRootForReferences(fs, projectRoot);
+        return otherProjectsReferencing(userSourceReferences, ownRoot);
+      }
+    );
+    const guarded = refAnotherProjectStillNeeds({
+      ref,
+      sharedSourceHostName: hostName,
+      enablementIsMachineGlobal: tool.pluginEnablementIsMachineGlobal(),
+      otherProjects,
+    });
+    if (!guarded) return undefined;
+    return describeGuardedPluginRefMessage({ binary, ref, otherProjects });
+  };
+  return {
+    home: deps.home,
+    isMachineOwned: (toolId: ToolId, ref: string) => isMachineOwnedNativeRef(repo, toolId, ref),
+    guardMessage,
+    resolveCacheCandidate: deps.resolveCacheCandidate,
+    userFilesSafeToDelete: (plugin, tool) =>
+      userScopeFilesSafeToDelete(fs, logger, plugin, tool, deps.home),
+    ...removalClaims(repo, fs),
+  };
+}

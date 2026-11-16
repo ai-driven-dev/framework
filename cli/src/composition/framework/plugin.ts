@@ -2,7 +2,8 @@ import { join } from "node:path";
 import { SearchPlugins } from "../../contexts/distribution/application/search-plugins.js";
 import { PluginInstallFromMarketplaceUseCase } from "../../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../../contexts/framework/application/plugin/plugin-install-use-case.js";
-import { PluginRemoveUseCase } from "../../contexts/framework/application/plugin/plugin-remove-use-case.js";
+import { resolveCacheCandidate } from "../../contexts/framework/application/shared/purge-declared-cache.js";
+import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
 import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../contexts/installation/application/plugin/plugin-distribution-loader.js";
@@ -13,6 +14,8 @@ import {
 } from "../../contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.js";
 import { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.js";
+import { RemovePlugin } from "../../contexts/installation/application/removal/remove-plugin.js";
+import { pluginRemovalClaims } from "../../contexts/machine-claims/application/plugin-removal-claims.js";
 import {
   assertUserScopeWriteBoundary,
   userScopeFilesSafeToDelete,
@@ -47,14 +50,20 @@ export function wirePlugin(base: Base, inst: Installation) {
   } = base;
   const { ensureBuiltMarketplaceUseCase, installRuntimeConfigUseCase, builtMaterializationDeps } =
     inst;
-  const pluginRemoveUseCase = new PluginRemoveUseCase(
+  const pluginRemoveUseCase = new RemovePlugin(
     fs,
-    manifestRepo,
-    logger,
+    { project: manifestRepo, user: userManifestRepo },
     withdrawFromHost,
-    userSourceReferences,
-    marketplaceRegistry,
-    userManifestRepo
+    pluginRemovalClaims({
+      repo: userManifestRepo,
+      fs,
+      logger,
+      home: resolveHomeDir(),
+      userSourceReferences,
+      marketplaceRegistry,
+      resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
+        resolveCacheCandidate(fs, logger, cacheRoot, relativeSegments, label),
+    })
   );
   const pluginAddUseCase = new AddPlugin(
     fs,

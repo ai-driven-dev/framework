@@ -21,7 +21,6 @@ import type { UpdateIdeToolsUseCase } from "../contexts/framework/application/gl
 import type { InstallAiToolUseCase } from "../contexts/framework/application/install/install-ai-tool-use-case.js";
 import type { UserMarketplaceRemoveUseCase } from "../contexts/framework/application/ownership/user-marketplace-remove-use-case.js";
 import type { PluginInstallUseCase } from "../contexts/framework/application/plugin/plugin-install-use-case.js";
-import type { PluginRemoveUseCase } from "../contexts/framework/application/plugin/plugin-remove-use-case.js";
 import type { ProjectContextDetectorUseCase } from "../contexts/framework/application/setup/project-context-detector-use-case.js";
 import type { SetupMachineScopeUseCase } from "../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import type { SetupMarketplaceSourceUseCase } from "../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
@@ -33,6 +32,7 @@ import type { InstallIdeTool } from "../contexts/installation/application/instal
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
 import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
 import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.js";
+import type { RemovePlugin } from "../contexts/installation/application/removal/remove-plugin.js";
 import type { ReportStatus } from "../contexts/installation/application/report-status.js";
 import type { Restore } from "../contexts/installation/application/restore/restore.js";
 import type { FileMerger } from "../contexts/installation/ports/file-merger.js";
@@ -120,7 +120,7 @@ export interface Deps {
   logIn: Pick<LogIn, "execute">;
   logOut: Pick<LogOut, "execute">;
   checkStatus: Pick<CheckStatus, "execute">;
-  pluginRemoveUseCase: Pick<PluginRemoveUseCase, "execute">;
+  pluginRemoveUseCase: Pick<RemovePlugin, "execute">;
   pluginListUseCase: Pick<ListPlugins, "execute">;
   pluginUpdateUseCase: Pick<UpdatePlugin, "execute">;
   userPluginUpdateUseCase: Pick<UpdateUserPlugin, "execute">;

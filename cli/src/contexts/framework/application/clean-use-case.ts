@@ -25,7 +25,7 @@ import type {
   WithdrawFromHost,
 } from "../../host-registration/application/withdraw-from-host.js";
 import { deletePluginFilesForTool } from "../../installation/application/plugin/plugin-helpers.js";
-import { assertProjectMcpEntriesRemovable } from "../../installation/application/plugin/remove-project-plugin.js";
+import { assertProjectMcpEntriesRemovable } from "../../installation/application/removal/remove-project-plugin.js";
 import {
   assertProjectHooksRemovable,
   type ProjectHooksGuard,

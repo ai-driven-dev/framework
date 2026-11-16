@@ -15,7 +15,7 @@ import { SetupMarketplaceSourceUseCase } from "../../contexts/framework/applicat
 import { SetupMarketplaceRegistrationUseCase } from "../../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
-import { RemoveProjectPlugin } from "../../contexts/installation/application/plugin/remove-project-plugin.js";
+import { RemoveProjectPlugin } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";

@@ -42,6 +42,7 @@ src/
 │   │   │   ├── materialize/    # a plugin's files translated for one tool and written
 │   │   │   ├── ownership/
 │   │   │   ├── plugin/
+│   │   │   ├── removal/    # a plugin removed from a project, its machine claims released through injected functions
 │   │   │   ├── restore/
 │   │   │   └── shared/
 │   │   ├── contract/    # what installation reports about a project: doctor issues and the project context

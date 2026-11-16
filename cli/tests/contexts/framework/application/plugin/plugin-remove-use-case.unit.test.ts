@@ -1,8 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import type { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
   InstalledPlugin,
@@ -108,11 +108,11 @@ function manifestHolding(
 function removeUseCaseOver(
   fs: InMemoryFileAdapter,
   manifestRepo: InMemoryManifestRepository
-): PluginRemoveUseCase {
+): RemovePlugin {
   return pluginRemover({ fs, manifestRepo });
 }
 
-describe("PluginRemoveUseCase", () => {
+describe("RemovePlugin", () => {
   describe("remove installed plugin", () => {
     it("deletes plugin files and updates manifest", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);

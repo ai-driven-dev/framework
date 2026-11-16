@@ -4,10 +4,10 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { PluginRemoveUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
+import type { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/errors.js";
@@ -81,7 +81,7 @@ function buildRemoveUseCase(
   activator: FakeHostActions,
   logger: CapturingLogger,
   hostScope: "project" | "user" = "project"
-): { removeUseCase: PluginRemoveUseCase; manifestRepo: InMemoryManifestRepository } {
+): { removeUseCase: RemovePlugin; manifestRepo: InMemoryManifestRepository } {
   const fs = new InMemoryFileAdapter();
   const manifestRepo = new InMemoryManifestRepository();
   const removeUseCase = pluginRemover({
@@ -106,7 +106,7 @@ function buildRemoveUseCase(
   return { removeUseCase, manifestRepo };
 }
 
-describe("PluginRemoveUseCase undoes native activation", () => {
+describe("RemovePlugin undoes native activation", () => {
   it.each(["unrecorded activation", "absent catalogue"])(
     "refuses %s without changing project state",
     async (missing) => {
@@ -934,7 +934,7 @@ describe("PluginRemoveUseCase undoes native activation", () => {
   });
 });
 
-describe("PluginRemoveUseCase undoes only the activation this project made", () => {
+describe("RemovePlugin undoes only the activation this project made", () => {
   async function removeWithRecordedRefs(pluginRefs: readonly string[]) {
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();

@@ -5,8 +5,8 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
+import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
-import { deletePluginFilesForTool } from "./plugin-helpers.js";
 
 /** Read-only OpenCode MCP proof, shared by Clean and local plugin removals before any detach. */
 export async function assertProjectMcpEntriesRemovable(

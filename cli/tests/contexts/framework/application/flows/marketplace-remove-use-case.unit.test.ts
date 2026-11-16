@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { MarketplaceRemoveUseCase } from "../../../../../src/contexts/framework/application/flows/marketplace-remove-use-case.js";
-import { RemoveProjectPlugin } from "../../../../../src/contexts/installation/application/plugin/remove-project-plugin.js";
+import { RemoveProjectPlugin } from "../../../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { removalClaims } from "../../../../../src/contexts/machine-claims/application/removal-claims.js";

@@ -8,46 +8,52 @@ import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
-import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
 import type { WithdrawFromHost } from "../../../host-registration/application/withdraw-from-host.js";
-import { assertProjectPathWithinRoot } from "../../../installation/application/ownership/project-path-boundary.js";
-import {
-  deletePluginFilesForTool,
-  loadPluginManifest,
-} from "../../../installation/application/plugin/plugin-helpers.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
+import type { Manifest } from "../../domain/manifest.js";
+import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
+import { deletePluginFilesForTool, loadPluginManifest } from "../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
   resolvePluginToolIds,
-} from "../../../installation/application/plugin/plugin-target-resolution.js";
-import { assertProjectMcpEntriesRemovable } from "../../../installation/application/plugin/remove-project-plugin.js";
-import {
-  assertProjectHooksRemovable,
-  removeProjectHooks,
-} from "../../../installation/application/shared/remove-project-hooks.js";
-import type { NativeRegistrations } from "../../../installation/domain/manifest/native-registrations.js";
-import type { Manifest } from "../../../installation/domain/manifest.js";
-import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
-import {
-  detachNativePluginRefs,
-  isMachineOwnedNativeRef,
-} from "../../../machine-claims/application/native-plugin-ownership.js";
-import {
-  describeGuardedPluginRefMessage,
-  frameworkSourceIsShared,
-  otherProjectsReferencing,
-  refAnotherProjectStillNeeds,
-  resolveProjectRootForReferences,
-  toleratingUnreadableSourceReferences,
-} from "../../../machine-claims/application/shared-source-reference-support.js";
-import { detachUserPlugin } from "../../../machine-claims/application/user-plugin-ownership.js";
-import { userScopeFilesSafeToDelete } from "../../../machine-claims/application/user-scope-plugin-files.js";
-import type { UserSourceReferences } from "../../../machine-claims/ports/user-source-references.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
-import { resolveHomeDir } from "../../domain/reading/home-dir.js";
-import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
+} from "../plugin/plugin-target-resolution.js";
+import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
+import { assertProjectMcpEntriesRemovable, type RemovalClaims } from "./remove-project-plugin.js";
+
+/** What a removal asks the machine scope, supplied by the composition root: who else owns a ref,
+ * whether another project still needs it, which cache path is provably inside its root, which of a
+ * plugin's files are provably inside the user scope, and the home directory they are read under. */
+export interface PluginRemovalClaims extends RemovalClaims {
+  readonly home: string;
+  isMachineOwned(toolId: ToolId, ref: string): Promise<boolean>;
+  guardMessage(
+    binary: string,
+    tool: AiToolProfile,
+    ref: string,
+    marketplaceAlias: string,
+    hostName: string,
+    projectRoot: string
+  ): Promise<string | undefined>;
+  resolveCacheCandidate(
+    cacheRoot: string,
+    relativeSegments: string,
+    label: string
+  ): Promise<string | null>;
+  userFilesSafeToDelete(
+    plugin: InstalledPlugin,
+    tool: AiToolProfile
+  ): Promise<ReadonlyMap<string, string>>;
+}
+
+/** The project manifest, and the machine one a user-scope removal is serialised through. */
+export interface PluginRemovalManifests {
+  readonly project: ManifestRepository;
+  readonly user?: ManifestRepository & Lock;
+}
 
 export interface PluginRemoveOptions {
   pluginName: string;
@@ -57,31 +63,22 @@ export interface PluginRemoveOptions {
   scope?: "project" | "user";
 }
 
-export class PluginRemoveUseCase {
+export class RemovePlugin {
   constructor(
     private readonly fs: FileWriter & FileReader,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly logger: Logger,
+    private readonly manifests: PluginRemovalManifests,
     private readonly withdrawFromHost: WithdrawFromHost,
-    /** The registry of projects referencing the shared machine-scope source, needed for the
-     * guard: uninstalling a ref a host enables machine-wide (codex, copilot) would disable it for
-     * another project on this machine too. Absent skips the guard entirely. */
-    private readonly userSourceReferences?: UserSourceReferences,
-    /** Resolves the scope this project's own registry recorded for `plugin.marketplace` — the one
-     * fact `frameworkSourceIsShared` needs and a plugin record does not carry. Absent treats every
-     * marketplace as not shared. */
-    private readonly marketplaceRegistry?: MarketplaceRegistry,
-    private readonly userManifestRepo?: ManifestRepository & Lock
+    private readonly claims: PluginRemovalClaims
   ) {}
 
   async execute(options: PluginRemoveOptions): Promise<void> {
     if (options.scope === "user") {
-      if (this.userManifestRepo === undefined)
+      if (this.manifests.user === undefined)
         throw new Error("User manifest repository is required for user-scope plugin removal.");
-      return this.userManifestRepo.withExclusiveAccess(() => this.removeUserPlugin(options));
+      return this.manifests.user.withExclusiveAccess(() => this.removeUserPlugin(options));
     }
     const { pluginName, toolIds, projectRoot, tools } = options;
-    const manifest = await loadPluginManifest(this.manifestRepo);
+    const manifest = await loadPluginManifest(this.manifests.project);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, tools);
     for (const toolId of resolvedToolIds) {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
@@ -94,7 +91,7 @@ export class PluginRemoveUseCase {
           plugin: { name: plugin.name, marketplace: plugin.marketplace, scope: plugin.scope },
           projectRoot,
           registrations: manifest.getNativeRegistrations(toolId),
-          isMachineOwned: (ref) => isMachineOwnedNativeRef(this.userManifestRepo, toolId, ref),
+          isMachineOwned: (ref) => this.claims.isMachineOwned(toolId, ref),
         });
     }
     const userTools = resolvedToolIds.filter((toolId) =>
@@ -118,15 +115,15 @@ export class PluginRemoveUseCase {
       manifest
     );
     if (!removed) throw new PluginNotFoundError(pluginName);
-    await this.manifestRepo.save(manifest);
-    await detachNativePluginRefs(this.userManifestRepo, this.fs, projectRoot, nativeRefs);
+    await this.manifests.project.save(manifest);
+    await this.claims.detachNativeRefs(projectRoot, nativeRefs);
     for (const toolId of userTools) {
-      await detachUserPlugin(this.userManifestRepo, this.fs, toolId, pluginName, projectRoot);
+      await this.claims.detachUserPlugin(toolId, pluginName, projectRoot);
     }
   }
 
   private async removeUserPlugin(options: PluginRemoveOptions): Promise<void> {
-    const repo = this.userManifestRepo;
+    const repo = this.manifests.user;
     if (repo === undefined)
       throw new Error("User manifest repository is required for user-scope plugin removal.");
     const manifest = await loadPluginManifest(repo);
@@ -168,12 +165,9 @@ export class PluginRemoveUseCase {
     }
     const safeFiles = await Promise.all(
       targets.map(async ({ toolId, plugin }) => {
-        const files = await userScopeFilesSafeToDelete(
-          this.fs,
-          this.logger,
+        const files = await this.claims.userFilesSafeToDelete(
           plugin,
-          options.tools.aiProfile(toolId),
-          resolveHomeDir()
+          options.tools.aiProfile(toolId)
         );
         if (files.size !== plugin.files.size)
           throw new Error(
@@ -242,14 +236,13 @@ export class PluginRemoveUseCase {
               projectRoot,
               registrations,
               claims: {
-                isMachineOwned: (ref) =>
-                  isMachineOwnedNativeRef(this.userManifestRepo, toolId, ref),
+                isMachineOwned: (ref) => this.claims.isMachineOwned(toolId, ref),
                 guardMessage: (binary, ref, alias, hostName) =>
-                  this.describeGuardedPluginRef(binary, tool, ref, alias, hostName, projectRoot),
+                  this.claims.guardMessage(binary, tool, ref, alias, hostName, projectRoot),
                 resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
-                  resolveCacheCandidate(this.fs, this.logger, cacheRoot, relativeSegments, label),
+                  this.claims.resolveCacheCandidate(cacheRoot, relativeSegments, label),
               },
-              pluginCacheRoot: tool.nativeActivation()?.pluginCacheRoot(resolveHomeDir()),
+              pluginCacheRoot: tool.nativeActivation()?.pluginCacheRoot(this.claims.home),
             });
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, tool, projectRoot);
@@ -262,7 +255,7 @@ export class PluginRemoveUseCase {
         confirmed === true ||
         (ref !== undefined &&
           tool.pluginEnablementIsMachineGlobal() &&
-          (await isMachineOwnedNativeRef(this.userManifestRepo, toolId, ref)));
+          (await this.claims.isMachineOwned(toolId, ref)));
       if (hostName !== undefined && registrations !== undefined && canDetachRef) {
         manifest.setNativeRegistrations(toolId, {
           ...registrations,
@@ -275,57 +268,6 @@ export class PluginRemoveUseCase {
       removed = true;
     }
     return removed;
-  }
-
-  /**
-   * A ref enabled through the shared, machine-scope source at a host that enables a plugin
-   * machine-wide (no `scopeArgs` — codex, copilot) must survive a `plugin remove` in one project
-   * while another project on this machine still references that source: uninstalling it here would
-   * disable it there too.
-   *
-   * `plugin remove` never decrements `references.json` the way `clean` does, so this project's own
-   * root is still in what `listAllReferencingProjects` returns and is subtracted by hand —
-   * otherwise a project holding the *only* reference would read itself back as "another project".
-   *
-   * `ref` carries the host's own name for the marketplace, never `plugin.marketplace` alone, which
-   * a host never learns; `marketplaceAlias` stays the key this project's own registry is read by.
-   * Both sides must move together, or a ref moved to `hostName` while this parameter kept the
-   * alias would silently stop guarding anything.
-   */
-  private async describeGuardedPluginRef(
-    binary: string,
-    tool: AiToolProfile,
-    ref: string,
-    marketplaceAlias: string,
-    hostName: string,
-    projectRoot: string
-  ): Promise<string | undefined> {
-    if (this.userSourceReferences === undefined) return undefined;
-    const marketplaces = (await this.marketplaceRegistry?.list(projectRoot)) ?? [];
-    const marketplace = marketplaces.find((m) => m.name === marketplaceAlias);
-    if (
-      marketplace === undefined ||
-      !frameworkSourceIsShared(marketplace.name, marketplace.scope)
-    ) {
-      return undefined;
-    }
-    const userSourceReferences = this.userSourceReferences;
-    const otherProjects = await toleratingUnreadableSourceReferences(
-      this.logger,
-      [] as readonly string[],
-      async () => {
-        const ownRoot = await resolveProjectRootForReferences(this.fs, projectRoot);
-        return otherProjectsReferencing(userSourceReferences, ownRoot);
-      }
-    );
-    const guarded = refAnotherProjectStillNeeds({
-      ref,
-      sharedSourceHostName: hostName,
-      enablementIsMachineGlobal: tool.pluginEnablementIsMachineGlobal(),
-      otherProjects,
-    });
-    if (!guarded) return undefined;
-    return describeGuardedPluginRefMessage({ binary, ref, otherProjects });
   }
 
   private async removeMcpEntries(
