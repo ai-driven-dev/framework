@@ -2,6 +2,8 @@ import { ManifestValidationError, NoManifestError } from "../../../../shared/dom
 import type { ToolCategory } from "../../../../shared/domain/tool.js";
 import type { CheckFileReferences } from "../../../installation/application/doctor/check-file-references.js";
 import type { CheckMergeFiles } from "../../../installation/application/doctor/check-merge-files.js";
+import type { CheckPluginDrift } from "../../../installation/application/doctor/check-plugin-drift.js";
+import type { CheckProjectLayout } from "../../../installation/application/doctor/check-project-layout.js";
 import type { CheckTrackedFiles } from "../../../installation/application/doctor/check-tracked-files.js";
 import type {
   DoctorIssue,
@@ -12,8 +14,6 @@ import type {
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { DoctorLayoutUseCase } from "./doctor-layout-use-case.js";
-import type { DoctorPluginUseCase } from "./doctor-plugin-use-case.js";
 import type { DoctorRegistrationUseCase } from "./doctor-registration-use-case.js";
 
 export interface DoctorOptions {
@@ -28,9 +28,9 @@ export class DoctorUseCase {
     private readonly manifestRepo: ManifestRepository,
     private readonly trackedFiles: CheckTrackedFiles,
     private readonly mergeFiles: CheckMergeFiles,
-    private readonly plugin: DoctorPluginUseCase,
+    private readonly plugin: CheckPluginDrift,
     private readonly references: CheckFileReferences,
-    private readonly layout: DoctorLayoutUseCase,
+    private readonly layout: CheckProjectLayout,
     private readonly registration: DoctorRegistrationUseCase
   ) {}
 
@@ -41,7 +41,6 @@ export class DoctorUseCase {
     const toolHealth = this.buildToolHealth(manifest, allowedIds);
     const issues = await this.collectIssues(manifest, projectRoot, allowedIds, tools, category);
     const pluginIssues = await this.plugin.execute({
-      manifest,
       projectRoot,
       allowedIds,
       tools,
@@ -88,7 +87,7 @@ export class DoctorUseCase {
       ...(await this.references.execute(check)),
       ...(await this.registration.execute({ manifest, projectRoot, allowedIds, tools })),
     ];
-    if (!category) issues.push(...(await this.layout.execute({ manifest, projectRoot, tools })));
+    if (!category) issues.push(...(await this.layout.execute({ projectRoot, tools })));
     return issues;
   }
 

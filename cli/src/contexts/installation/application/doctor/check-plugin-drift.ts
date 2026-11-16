@@ -1,21 +1,23 @@
-import type { DetectPluginDrift } from "../../../installation/application/shared/detect-plugin-drift.js";
-import type { PluginIssueEntry } from "../../../installation/contract/doctor-issue.js";
-import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { PluginIssueEntry } from "../../contract/doctor-issue.js";
+import type { DetectPluginDrift } from "../shared/detect-plugin-drift.js";
+import type { CheckInstallationCommand } from "./check-installation-command.js";
+import type { LoadManifest } from "./load-manifest.js";
 
-export interface DoctorPluginOptions {
-  manifest: Manifest;
-  projectRoot: string;
-  allowedIds: Set<string> | null;
+export interface CheckPluginDriftCommand extends CheckInstallationCommand {
   tools: ToolCatalog;
   pluginName?: string;
 }
 
-export class DoctorPluginUseCase {
-  constructor(private readonly detectPluginDrift: DetectPluginDrift) {}
+export class CheckPluginDrift {
+  constructor(
+    private readonly loadManifest: LoadManifest,
+    private readonly detectPluginDrift: DetectPluginDrift
+  ) {}
 
-  async execute(options: DoctorPluginOptions): Promise<PluginIssueEntry[]> {
-    const { manifest, projectRoot, allowedIds, pluginName, tools } = options;
+  async execute(command: CheckPluginDriftCommand): Promise<PluginIssueEntry[]> {
+    const { projectRoot, allowedIds, pluginName, tools } = command;
+    const manifest = await this.loadManifest.execute();
     const toolIds = manifest
       .getInstalledToolIds()
       .filter((toolId) => allowedIds === null || allowedIds.has(toolId));

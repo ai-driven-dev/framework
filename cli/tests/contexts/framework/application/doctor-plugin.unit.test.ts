@@ -1,13 +1,13 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DoctorLayoutUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-layout-use-case.js";
-import { DoctorPluginUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-plugin-use-case.js";
 import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { DoctorUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-use-case.js";
 import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import { CheckFileReferences } from "../../../../src/contexts/installation/application/doctor/check-file-references.js";
 import { CheckMergeFiles } from "../../../../src/contexts/installation/application/doctor/check-merge-files.js";
+import { CheckPluginDrift } from "../../../../src/contexts/installation/application/doctor/check-plugin-drift.js";
+import { CheckProjectLayout } from "../../../../src/contexts/installation/application/doctor/check-project-layout.js";
 import { CheckTrackedFiles } from "../../../../src/contexts/installation/application/doctor/check-tracked-files.js";
 import { LoadManifest } from "../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { DetectPluginDrift } from "../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
@@ -66,6 +66,13 @@ const noopHasher: Hasher = {
   hash: () => new FileHash("00000000000000000000000000000000"),
 };
 
+function pluginCheck(fs: FileReader, manifest: Manifest): CheckPluginDrift {
+  return new CheckPluginDrift(
+    new LoadManifest(makeManifestRepo(manifest)),
+    new DetectPluginDrift(fs)
+  );
+}
+
 function makeDoctorUseCase(fs: FileReader, manifest: Manifest): DoctorUseCase {
   const manifestRepo = makeManifestRepo(manifest);
   const loadManifest = new LoadManifest(manifestRepo);
@@ -73,9 +80,9 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): DoctorUseCase {
     manifestRepo,
     new CheckTrackedFiles(loadManifest, fs),
     new CheckMergeFiles(loadManifest, fs, noopHasher),
-    new DoctorPluginUseCase(new DetectPluginDrift(fs)),
+    new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs)),
     new CheckFileReferences(loadManifest, fs),
-    new DoctorLayoutUseCase(fs),
+    new CheckProjectLayout(loadManifest, fs),
     new DoctorRegistrationUseCase(
       fs,
       new InMemoryMarketplaceRegistry(),
@@ -158,11 +165,10 @@ describe("DoctorUseCase — plugin integrity", () => {
   describe("when narrowed to a set of tools", () => {
     it("ignores the plugins of a tool outside the set", async () => {
       const fs = makeFs(false, EXPECTED_HASH);
-      const useCase = new DoctorPluginUseCase(new DetectPluginDrift(fs));
+      const useCase = pluginCheck(fs, makeManifest(EXPECTED_HASH));
 
       const issues = await useCase.execute({
         tools: catalogOf(),
-        manifest: makeManifest(EXPECTED_HASH),
         projectRoot: "/proj",
         allowedIds: new Set(["cursor"]),
       });
@@ -172,11 +178,10 @@ describe("DoctorUseCase — plugin integrity", () => {
 
     it("still checks the plugins of a tool inside the set", async () => {
       const fs = makeFs(false, EXPECTED_HASH);
-      const useCase = new DoctorPluginUseCase(new DetectPluginDrift(fs));
+      const useCase = pluginCheck(fs, makeManifest(EXPECTED_HASH));
 
       const issues = await useCase.execute({
         tools: catalogOf(),
-        manifest: makeManifest(EXPECTED_HASH),
         projectRoot: "/proj",
         allowedIds: new Set(["claude"]),
       });
@@ -203,11 +208,10 @@ describe("DoctorUseCase — plugin integrity", () => {
         })
       );
       const fs = makeFs(false, EXPECTED_HASH);
-      const useCase = new DoctorPluginUseCase(new DetectPluginDrift(fs));
+      const useCase = pluginCheck(fs, manifest);
 
       const issues = await useCase.execute({
         tools: catalogOf(),
-        manifest,
         projectRoot: "/proj",
         allowedIds: null,
       });
@@ -249,11 +253,10 @@ describe("DoctorUseCase — plugin integrity", () => {
         listDirectory: async () => [],
         listFilesRecursive: async () => [],
       };
-      const pluginUseCase = new DoctorPluginUseCase(new DetectPluginDrift(fs));
+      const pluginUseCase = pluginCheck(fs, manifest);
 
       await pluginUseCase.execute({
         tools: catalogOf(),
-        manifest,
         projectRoot: "/proj",
         allowedIds: null,
       });

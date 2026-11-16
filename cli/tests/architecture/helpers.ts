@@ -130,6 +130,7 @@ export const ALLOWED = new Set([
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
   // Installation reads the installed tools' profiles. `installation->translate` is M-S1.
+  "installation->auth",
   "installation->tools",
   "installation->translate",
   // Transitional (M-I1): the exact imports and the way out are in reference-context.md.

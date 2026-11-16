@@ -1,8 +1,6 @@
 import { resolve } from "node:path";
 import { wireTools } from "../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { DoctorLayoutUseCase } from "../../../src/contexts/framework/application/doctor/doctor-layout-use-case.js";
-import { DoctorPluginUseCase } from "../../../src/contexts/framework/application/doctor/doctor-plugin-use-case.js";
 import { DoctorRegistrationUseCase } from "../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { DoctorUseCase } from "../../../src/contexts/framework/application/doctor/doctor-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
@@ -10,6 +8,8 @@ import { UpdateOneToolUseCase } from "../../../src/contexts/framework/applicatio
 import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect-host-registration.js";
 import { CheckFileReferences } from "../../../src/contexts/installation/application/doctor/check-file-references.js";
 import { CheckMergeFiles } from "../../../src/contexts/installation/application/doctor/check-merge-files.js";
+import { CheckPluginDrift } from "../../../src/contexts/installation/application/doctor/check-plugin-drift.js";
+import { CheckProjectLayout } from "../../../src/contexts/installation/application/doctor/check-project-layout.js";
 import { CheckTrackedFiles } from "../../../src/contexts/installation/application/doctor/check-tracked-files.js";
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
@@ -172,7 +172,7 @@ export function buildUpdateOneToolUseCase(
 
 export function buildDoctorUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
-  authReader?: ConstructorParameters<typeof DoctorLayoutUseCase>[1],
+  authReader?: ConstructorParameters<typeof CheckProjectLayout>[2],
   hostRegistries: ConstructorParameters<typeof InspectHostRegistration>[1] = new Map()
 ): DoctorUseCase {
   const loadManifest = new LoadManifest(deps.manifestRepo);
@@ -180,9 +180,9 @@ export function buildDoctorUseCase(
     deps.manifestRepo,
     new CheckTrackedFiles(loadManifest, deps.fs),
     new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
-    new DoctorPluginUseCase(new DetectPluginDrift(deps.fs)),
+    new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs)),
     new CheckFileReferences(loadManifest, deps.fs),
-    new DoctorLayoutUseCase(deps.fs, authReader),
+    new CheckProjectLayout(loadManifest, deps.fs, authReader),
     new DoctorRegistrationUseCase(
       deps.fs,
       deps.marketplaceRegistry,

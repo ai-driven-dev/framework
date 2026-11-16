@@ -3001,15 +3001,15 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never framework or telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate, distribution, host-registration and auth, never framework or telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   },
                   {
-                    "group": ["**/auth/**"],
-                    "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
+                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -3052,15 +3052,15 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never framework, telemetry or presentation (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate, distribution, host-registration and auth, never framework, telemetry or presentation (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   },
                   {
-                    "group": ["**/auth/**"],
-                    "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
+                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -3110,8 +3110,8 @@
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   },
                   {
-                    "group": ["**/auth/**"],
-                    "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
+                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -3153,15 +3153,15 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never framework or telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate, distribution, host-registration and auth, never framework or telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   },
                   {
-                    "group": ["**/auth/**"],
-                    "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
+                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -3210,15 +3210,15 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution and host-registration, never framework or telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate, distribution, host-registration and auth, never framework or telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   },
                   {
-                    "group": ["**/auth/**"],
-                    "message": "installation knows no auth: a fetch token reaches it through distribution, see context-graph.arch.test.ts"
+                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
+                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [

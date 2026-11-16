@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { TokenProvider } from "../../../../../src/contexts/auth/contract/token-provider.js";
-import { DoctorLayoutUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-layout-use-case.js";
+import { CheckProjectLayout } from "../../../../../src/contexts/installation/application/doctor/check-project-layout.js";
+import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/project";
@@ -31,14 +33,14 @@ async function issuesFor(onDisk: Record<string, string>, authReader?: TokenProvi
       content,
     ])
   );
-  return new DoctorLayoutUseCase(new InMemoryFileAdapter(files, hasher), authReader).execute({
-    manifest: manifestTrackingClaude(),
+  const load = new LoadManifest(new InMemoryManifestRepository(manifestTrackingClaude()));
+  return new CheckProjectLayout(load, new InMemoryFileAdapter(files, hasher), authReader).execute({
     projectRoot: PROJECT_ROOT,
     tools: catalogOf(),
   });
 }
 
-describe("DoctorLayoutUseCase", () => {
+describe("CheckProjectLayout", () => {
   describe("orphaned tool directories", () => {
     it("warns about a tool directory holding aidd files the manifest does not track", async () => {
       const issues = await issuesFor({

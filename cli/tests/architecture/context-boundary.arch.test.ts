@@ -72,6 +72,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // and leave this list as each one moves behind an installation command.
     "src/contexts/installation/application/doctor/check-file-references.ts",
     "src/contexts/installation/application/doctor/check-merge-files.ts",
+    "src/contexts/installation/application/doctor/check-plugin-drift.ts",
+    "src/contexts/installation/application/doctor/check-project-layout.ts",
     "src/contexts/installation/application/doctor/check-tracked-files.ts",
     "src/contexts/installation/application/update-gitignore.ts",
     "src/contexts/installation/application/init-project.ts",

@@ -1,24 +1,26 @@
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { TokenProvider } from "../../../auth/contract/token-provider.js";
-import { detectToolSignals } from "../../../installation/application/init-project.js";
-import type { DoctorIssue } from "../../../installation/contract/doctor-issue.js";
-import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
+import type { DoctorIssue } from "../../contract/doctor-issue.js";
+import type { Manifest } from "../../domain/manifest.js";
+import { detectToolSignals } from "../init-project.js";
+import type { LoadManifest } from "./load-manifest.js";
 
-export interface DoctorLayoutOptions {
-  manifest: Manifest;
+export interface CheckProjectLayoutCommand {
   projectRoot: string;
   tools: ToolCatalog;
 }
 
-export class DoctorLayoutUseCase {
+export class CheckProjectLayout {
   constructor(
+    private readonly loadManifest: LoadManifest,
     private readonly fs: FileReader,
     private readonly authReader?: TokenProvider
   ) {}
 
-  async execute(options: DoctorLayoutOptions): Promise<DoctorIssue[]> {
-    const { manifest, projectRoot, tools } = options;
+  async execute(command: CheckProjectLayoutCommand): Promise<DoctorIssue[]> {
+    const { projectRoot, tools } = command;
+    const manifest = await this.loadManifest.execute();
     const orphanIssues = await this.checkOrphanedDirectories(manifest, projectRoot, tools);
     const authIssues = await this.checkAuth();
     return [...orphanIssues, ...authIssues];
