@@ -345,6 +345,17 @@ describe("BuildNativeTree", () => {
       ).rejects.toThrow("Invalid source marketplace: missing 'plugins' array.");
     });
 
+    it("throws InvalidSourceMarketplaceError when a plugin entry is null", async () => {
+      fs.setFile(
+        `${SOURCE_DIR}/.claude-plugin/marketplace.json`,
+        JSON.stringify({ name: "test", owner: { name: "X" }, plugins: [null] })
+      );
+      const uc = makeUseCase(fs);
+      await expect(
+        uc.execute({ sourceDir: SOURCE_DIR, outDir: OUT_DIR, target: TOOL.copilot })
+      ).rejects.toThrow("Invalid source marketplace: each plugin entry must have a 'name' string.");
+    });
+
     it("throws InvalidSourceMarketplaceError when a plugin name does not match a directory", async () => {
       fs.setFile(
         `${SOURCE_DIR}/.claude-plugin/marketplace.json`,
