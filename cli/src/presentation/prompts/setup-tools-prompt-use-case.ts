@@ -1,9 +1,9 @@
-import type { ProjectContext } from "../../contexts/framework/domain/project-context.js";
+import type { ProjectContext } from "../../contexts/installation/contract/project-context.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import {
   recommendAiTools,
   recommendIdeTools,
-} from "../../contexts/framework/domain/tool-recommendations.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+} from "../../contexts/tools/contract/tool-recommendations.js";
 import type { AiToolId, IdeToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 

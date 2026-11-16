@@ -14,13 +14,13 @@ import type {
 } from "../../../host-registration/application/inspect-host-registration.js";
 import type { HostRegistrationFinding } from "../../../host-registration/contract/inspect-host-registration-result.js";
 import type { MarketplaceSourceDriftFound } from "../../../host-registration/contract/marketplace-source-drift.js";
+import type { DoctorIssue } from "../../../installation/contract/doctor-issue.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   MarketplaceRegistrationAnswers,
   ToolProfile,
 } from "../../../tools/contract/tool-profile.js";
-import type { DoctorIssue } from "../../domain/doctor.js";
 
 export interface DoctorRegistrationOptions {
   manifest: Manifest;

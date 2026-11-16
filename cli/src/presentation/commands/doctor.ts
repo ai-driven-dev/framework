@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import type { DoctorReport } from "../../contexts/framework/domain/doctor.js";
+import type { DoctorReport } from "../../contexts/installation/contract/doctor-issue.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { UserScopeFilterUnsupportedError } from "../../shared/domain/errors.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";

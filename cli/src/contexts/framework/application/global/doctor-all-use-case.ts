@@ -1,5 +1,5 @@
+import type { DoctorReport } from "../../../installation/contract/doctor-issue.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { DoctorReport } from "../../domain/doctor.js";
 import type { DoctorUseCase } from "../doctor/doctor-use-case.js";
 import type { GlobalExecutionError } from "./update-one-tool-use-case.js";
 

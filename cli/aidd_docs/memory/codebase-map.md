@@ -44,6 +44,7 @@ src/
 │   │   │   ├── plugin/
 │   │   │   ├── restore/
 │   │   │   └── shared/
+│   │   ├── contract/    # what installation reports about a project: doctor issues and the project context
 │   │   ├── domain/
 │   │   │   ├── manifest/
 │   │   │   └── plugins/

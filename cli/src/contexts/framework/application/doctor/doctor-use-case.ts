@@ -1,14 +1,14 @@
 import { ManifestValidationError, NoManifestError } from "../../../../shared/domain/errors.js";
 import type { ToolCategory } from "../../../../shared/domain/tool.js";
-import type { Manifest } from "../../../installation/domain/manifest.js";
-import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   DoctorIssue,
   DoctorReport,
   PluginIssueEntry,
   ToolHealth,
-} from "../../domain/doctor.js";
+} from "../../../installation/contract/doctor-issue.js";
+import type { Manifest } from "../../../installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { DoctorLayoutUseCase } from "./doctor-layout-use-case.js";
 import type { DoctorMergeFilesUseCase } from "./doctor-merge-files-use-case.js";
 import type { DoctorPluginUseCase } from "./doctor-plugin-use-case.js";

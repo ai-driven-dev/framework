@@ -1,9 +1,9 @@
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { TokenProvider } from "../../../auth/contract/token-provider.js";
 import { detectToolSignals } from "../../../installation/application/init-project.js";
+import type { DoctorIssue } from "../../../installation/contract/doctor-issue.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { DoctorIssue } from "../../domain/doctor.js";
 
 export interface DoctorLayoutOptions {
   manifest: Manifest;

@@ -6,9 +6,9 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { VersionReader } from "../../../shared/ports/version-reader.js";
 import { InitProject } from "../../installation/application/init-project.js";
+import type { ProjectContext } from "../../installation/contract/project-context.js";
 import type { ManifestRepository } from "../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { ProjectContext } from "../domain/project-context.js";
 import type { SetupFlow } from "../domain/setup-flow.js";
 import type {
   MarketplaceSyncSettings,

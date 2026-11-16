@@ -47,16 +47,13 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   // The largest context: while it had no entry the mechanism below skipped every framework
   // file, so its interior was reached unchecked. Measured, composition root excluded.
   framework: [
-    "src/contexts/framework/domain/project-context.ts",
     // the flows a command drives end to end
     "src/contexts/framework/application/setup-use-case.ts",
     "src/contexts/framework/application/setup/setup-tools-use-case.ts",
     "src/contexts/framework/application/plugin/plugin-add-use-case.ts",
     "src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.ts",
     // what a display or a prompt reads to render a decision it does not make
-    "src/contexts/framework/domain/doctor.ts",
     "src/contexts/framework/domain/setup-flow.ts",
-    "src/contexts/framework/domain/tool-recommendations.ts",
     // the one operation another context genuinely asks for: `distribution` removes a
     // marketplace and this context forgets the plugins that came from it
     "src/contexts/framework/application/flows/marketplace-remove-use-case.ts",
@@ -64,6 +61,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   installation: [
     // the rule inventory `framework rules` prints, one row per installed rule
     "src/contexts/installation/domain/installed-rule.ts",
+    // what installation reports about a project and what a display reads of it
+    "src/contexts/installation/contract/doctor-issue.ts",
+    "src/contexts/installation/contract/project-context.ts",
     // the installation record, which is what this context owns
     "src/contexts/installation/domain/manifest.ts",
     "src/contexts/installation/ports/manifest-repository.ts",

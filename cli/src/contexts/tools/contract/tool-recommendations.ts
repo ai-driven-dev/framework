@@ -1,6 +1,11 @@
-import type { ProjectContext } from "./project-context.js";
+/** What the recommendation reads of a project: the stack and whether the framework is already there. */
+export interface RecommendationContext {
+  readonly stack: "typescript" | "python" | "unknown";
+  readonly isMonorepo: boolean;
+  readonly hasFramework: boolean;
+}
 
-export function recommendAiTools(context?: ProjectContext): readonly string[] {
+export function recommendAiTools(context?: RecommendationContext): readonly string[] {
   if (context === undefined) return ["claude"];
   if (context.hasFramework) return [];
   if (context.isMonorepo) return ["claude", "copilot"];
@@ -9,7 +14,7 @@ export function recommendAiTools(context?: ProjectContext): readonly string[] {
   return ["claude"];
 }
 
-export function recommendIdeTools(context?: ProjectContext): readonly string[] {
+export function recommendIdeTools(context?: RecommendationContext): readonly string[] {
   if (context === undefined) return [];
   if (context.hasFramework) return [];
   if (context.stack === "typescript" || context.isMonorepo) return ["vscode"];

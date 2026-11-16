@@ -17,8 +17,8 @@ import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framewor
 import { SetupToolsUseCase } from "../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
-import { ProjectContext } from "../../../../src/contexts/framework/domain/project-context.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
+import { ProjectContext } from "../../../../src/contexts/installation/contract/project-context.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
 import { UserSourceReferencesAdapter } from "../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";

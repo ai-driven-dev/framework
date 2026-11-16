@@ -1,7 +1,7 @@
 import type { DetectPluginDrift } from "../../../installation/application/shared/detect-plugin-drift.js";
+import type { PluginIssueEntry } from "../../../installation/contract/doctor-issue.js";
 import type { Manifest } from "../../../installation/domain/manifest.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { PluginIssueEntry } from "../../domain/doctor.js";
 
 export interface DoctorPluginOptions {
   manifest: Manifest;
