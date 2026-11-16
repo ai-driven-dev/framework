@@ -9,7 +9,7 @@ node "$writer" --project "$project_root" --tools "$host_ids" --input "$request_j
 - `$writer`: the absolute path of `scripts/write-rule.cjs`, next to the loaded `SKILL.md`.
 - `$project_root`: the absolute path of the working directory, copied as the session reports it.
 - `$host_ids`: the confirmed IDs from `hosts.md`, comma-separated.
-- `$request_json`: a temporary file outside the project holding `category`, `slug`, a one-line `description`, a `body` starting with `# <title>`, and optional `paths`, an array of globs without commas, so `*.{ts,tsx}` is split.
+- `$request_json`: a temporary file outside the project holding `category`, `slug`, a one-line `description`, a `body` starting with `# <title>`, and optional `paths`, an array of globs without commas, so write `*.{ts,tsx}` as `*.ts` and `*.tsx`.
 
 | Option | Effect |
 | --- | --- |
@@ -20,11 +20,4 @@ node "$writer" --project "$project_root" --tools "$host_ids" --input "$request_j
 | `--plan` | Writes nothing; lists each file with `create`, `update` or `delete`. |
 | `--force` | Overwrites each copy the plan lists in `conflicts`; without it, the writer refuses. |
 
-The result is JSON: `files` lists each path and its operation, `conflicts` each copy the writer did not produce, `error` a `{code, message}`. Exit 0 means done; any other exit comes with `error`, and nothing is written when a path is unwritable.
-
-## Limits
-
-- A config whose text holds the quoted glob counts as listing it, even inside a comment.
-- Text is read and written as UTF-8 without validation; CRLF line endings are read as LF, and every write uses LF.
-- A failure midway leaves earlier files written, and a rerun completes them.
-- OpenCode configs are read only at the project root, never under `.opencode/`.
+The result is JSON: `files` lists each path and its operation, `conflicts` each copy the writer did not produce, `error` a `{code, message}`. Exit 0 means done; any other exit comes with `error`.

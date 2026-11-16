@@ -1,6 +1,6 @@
 ---
 name: 05-rule-generate
-description: Creates, updates, publishes or removes a coding rule across AI tools when a convention is set, changed or dropped, not for skills, agents or hooks.
+description: Creates, updates, publishes or removes a coding rule across hosts when a convention is set, changed or dropped, not for skills, agents or hooks.
 argument-hint: add | update | remove | publish
 ---
 
@@ -20,10 +20,10 @@ flowchart LR
   plan -->|"writer refusal on remove or publish"| stopped((stopped))
   plan --> write["actions/04-write.md"]
   write --> done((written))
+  write -->|"rename or host drop: add"| draft
   write -->|"writer error"| stopped
 ```
 
 ## Transversal rules
 
 - If a cited reference cannot be read, stop and report the missing file.
-- Keep the meaning of each line of an existing rule, unless the request changes it.
