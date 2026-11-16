@@ -5,8 +5,7 @@ import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const installAiTool = vi.fn();
 const installIdeTool = vi.fn();
-const uninstallAiTools = vi.fn();
-const uninstallIdeTool = vi.fn();
+const uninstallTools = vi.fn();
 const updateAiTools = vi.fn();
 const updateIdeTools = vi.fn();
 const listInstalledRules = vi.fn();
@@ -17,8 +16,7 @@ const currentVersion = vi.fn(() => "5.2.2");
 const createDeps = vi.fn(async () => ({
   installAiToolUseCase: { execute: installAiTool },
   installIdeToolUseCase: { execute: installIdeTool },
-  uninstallUseCase: { execute: uninstallAiTools },
-  uninstallIdeUseCase: { execute: uninstallIdeTool },
+  uninstallTools: { execute: uninstallTools },
   updateAiToolsUseCase: { execute: updateAiTools },
   updateIdeToolsUseCase: { execute: updateIdeTools },
   listInstalledRulesUseCase: { execute: listInstalledRules },
@@ -66,8 +64,7 @@ beforeEach(() => {
     fileCount: 2,
     warnings: [],
   });
-  uninstallAiTools.mockResolvedValue([{ toolId: TOOL.claude, fileCount: 4 }]);
-  uninstallIdeTool.mockResolvedValue({ toolId: TOOL.vscode, fileCount: 1 });
+  uninstallTools.mockResolvedValue([{ toolId: TOOL.claude, fileCount: 4 }]);
   updateAiTools.mockResolvedValue({ updatedTools: [], errors: [] });
   updateIdeTools.mockResolvedValue({ updatedTools: [], errors: [] });
   listInstalledRules.mockResolvedValue({ rules: [] });
@@ -196,22 +193,21 @@ describe("aidd framework install", () => {
 
 describe("aidd framework remove", () => {
   it("removes one AI tool, and counts every file that went", async () => {
-    uninstallAiTools.mockResolvedValue([
+    uninstallTools.mockResolvedValue([
       { toolId: TOOL.claude, fileCount: 4 },
       { toolId: TOOL.claude, fileCount: 3 },
     ]);
 
     expect(await run("remove", "--tool", "claude")).toEqual(["Removed claude (7 files removed)"]);
-    expect(uninstallAiTools).toHaveBeenCalledWith({
+    expect(uninstallTools).toHaveBeenCalledWith({
       toolIds: ["claude"],
       projectRoot: PROJECT_ROOT,
       tools: catalogOf(),
     });
-    expect(uninstallIdeTool).not.toHaveBeenCalled();
   });
 
   it("names a failed removal on stderr and fails the process", async () => {
-    uninstallAiTools.mockRejectedValue(new Error("manifest is locked"));
+    uninstallTools.mockRejectedValue(new Error("manifest is locked"));
     const exit = vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("exited");
     });
@@ -222,14 +218,15 @@ describe("aidd framework remove", () => {
     expect(exit).toHaveBeenCalledWith(1);
   });
 
-  it("sends an IDE tool down its own removal", async () => {
+  it("removes an IDE tool through the same command", async () => {
+    uninstallTools.mockResolvedValue([{ toolId: TOOL.vscode, fileCount: 1 }]);
+
     expect(await run("remove", "--tool", "vscode")).toEqual(["Removed vscode (1 files removed)"]);
-    expect(uninstallIdeTool).toHaveBeenCalledWith({
-      toolId: TOOL.vscode,
+    expect(uninstallTools).toHaveBeenCalledWith({
+      toolIds: ["vscode"],
       projectRoot: PROJECT_ROOT,
       tools: catalogOf(),
     });
-    expect(uninstallAiTools).not.toHaveBeenCalled();
   });
 });
 

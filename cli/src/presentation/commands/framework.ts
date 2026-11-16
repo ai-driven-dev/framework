@@ -26,8 +26,7 @@ type FrameworkKeys =
   | "installAiToolUseCase"
   | "manifestRepo"
   | "installIdeToolUseCase"
-  | "uninstallUseCase"
-  | "uninstallIdeUseCase"
+  | "uninstallTools"
   | "updateAiToolsUseCase"
   | "updateIdeToolsUseCase"
   | "listInstalledRulesUseCase"
@@ -121,18 +120,13 @@ async function runFrameworkRemove(
 ): Promise<void> {
   const toolId = assertKnownToolId(raw, catalog);
 
-  if (catalog.isAiTool(toolId)) {
-    const results = await deps.uninstallUseCase.execute({
-      toolIds: [toolId],
-      projectRoot,
-      tools: catalog,
-    });
-    const totalFileCount = results.reduce((sum, r) => sum + r.fileCount, 0);
-    printToolRemoved(output, results[0].toolId, totalFileCount);
-    return;
-  }
-  const result = await deps.uninstallIdeUseCase.execute({ toolId, projectRoot, tools: catalog });
-  printToolRemoved(output, result.toolId, result.fileCount);
+  const results = await deps.uninstallTools.execute({
+    toolIds: [toolId],
+    projectRoot,
+    tools: catalog,
+  });
+  const totalFileCount = results.reduce((sum, r) => sum + r.fileCount, 0);
+  printToolRemoved(output, results[0].toolId, totalFileCount);
 }
 
 async function runFrameworkUpdate(

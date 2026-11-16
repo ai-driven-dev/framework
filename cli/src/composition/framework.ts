@@ -112,7 +112,7 @@ export async function createDeps(
   } = global;
   const { setupPluginsPromptUseCase, setupToolsPromptUseCase } = setup;
   const { doctorUseCase, doctorRegistrationUseCase, doctorAllUseCase } = doctor;
-  const { uninstallIdeUseCase, uninstallUseCase, cleanUseCase, cleanUserScopeUseCase } = clean;
+  const { uninstallTools, cleanUseCase, cleanUserScopeUseCase } = clean;
   const deps: Deps = {
     validateRecipes: wireRecipes().validateRecipes,
     fs,
@@ -139,7 +139,7 @@ export async function createDeps(
     userSourceReferences,
     installAiToolUseCase,
     installIdeToolUseCase,
-    uninstallIdeUseCase,
+    uninstallTools,
     assetProvider,
     searchPlugins,
     registerFrameworkMarketplace,
@@ -157,7 +157,6 @@ export async function createDeps(
     selfUpdate: update.selfUpdate,
     statusUseCase,
     restoreUseCase,
-    uninstallUseCase,
     statusAllUseCase,
     restoreAllUseCase,
     updateAiToolsUseCase,

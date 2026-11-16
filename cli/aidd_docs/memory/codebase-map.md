@@ -30,8 +30,7 @@ src/
 │   │   │   ├── ownership/    # machine plugin claims and safe project detach
 │   │   │   ├── plugin/
 │   │   │   ├── setup/
-│   │   │   ├── shared/
-│   │   │   └── uninstall/
+│   │   │   └── shared/
 │   │   └── domain/
 │   │       ├── formats/
 │   │       └── reading/    # the home directory a use case resolves when none is given

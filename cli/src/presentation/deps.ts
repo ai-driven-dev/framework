@@ -28,14 +28,13 @@ import type { SetupMachineScopeUseCase } from "../contexts/framework/application
 import type { SetupMarketplaceSourceUseCase } from "../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import type { SetupToolsUseCase } from "../contexts/framework/application/setup/setup-tools-use-case.js";
 import type { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
-import type { UninstallIdeUseCase } from "../contexts/framework/application/uninstall/uninstall-ide-use-case.js";
-import type { UninstallUseCase } from "../contexts/framework/application/uninstall/uninstall-use-case.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
 import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
 import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.js";
 import type { ReportStatus } from "../contexts/installation/application/report-status.js";
 import type { Restore } from "../contexts/installation/application/restore/restore.js";
+import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.js";
 import type { FileMerger } from "../contexts/installation/ports/file-merger.js";
 import type { ManifestRepository } from "../contexts/installation/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../contexts/machine-claims/ports/user-source-references.js";
@@ -133,7 +132,7 @@ export interface Deps {
   userSourceReferences: UserSourceReferences;
   installAiToolUseCase: Pick<InstallAiToolUseCase, "execute">;
   installIdeToolUseCase: Pick<InstallIdeTool, "execute">;
-  uninstallIdeUseCase: Pick<UninstallIdeUseCase, "execute">;
+  uninstallTools: Pick<UninstallTools, "execute">;
   assetProvider: AssetProvider;
   searchPlugins: Pick<SearchPlugins, "execute">;
   registerFrameworkMarketplace: Pick<RegisterFrameworkMarketplace, "execute">;
@@ -155,7 +154,6 @@ export interface Deps {
   selfUpdate: Pick<SelfUpdate, "execute">;
   statusUseCase: Pick<ReportStatus, "execute">;
   restoreUseCase: Pick<Restore, "execute">;
-  uninstallUseCase: Pick<UninstallUseCase, "execute">;
   statusAllUseCase: Pick<StatusAllUseCase, "execute">;
   restoreAllUseCase: Pick<RestoreAllUseCase, "execute">;
   updateAiToolsUseCase: Pick<UpdateAiToolsUseCase, "execute">;
