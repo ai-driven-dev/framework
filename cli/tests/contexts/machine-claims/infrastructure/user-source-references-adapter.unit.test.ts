@@ -282,6 +282,22 @@ describe("the shared source's own project references", () => {
       ]);
     });
 
+    it("lists a version's projects after the other versions' once a project joins it", async () => {
+      const fs = new InMemoryFileAdapter();
+      for (const root of ["/project-a", "/project-b", "/project-c"]) markExisting(fs, root);
+      const refs = adapter(fs);
+      await refs.addReference("1.0.0", "/project-a");
+      await refs.addReference("2.0.0", "/project-b");
+
+      await refs.addReference("1.0.0", "/project-c");
+
+      expect(await refs.listAllReferencingProjects()).toEqual([
+        "/project-b",
+        "/project-a",
+        "/project-c",
+      ]);
+    });
+
     it("leaves out a project whose own root no longer exists", async () => {
       const fs = new InMemoryFileAdapter();
       markExisting(fs, "/project-a");
