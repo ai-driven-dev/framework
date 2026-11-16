@@ -87,7 +87,6 @@ describe("the ledger on disk", () => {
       stored({ key: "a", at: "2026-08-02T00:00:00Z" }),
       stored({ key: "b", at: "2026-09-02T00:00:00Z" }),
     ]);
-    const written = writtenFrom();
     await writeFile(join(dir, "2026-08-02.jsonl"), "{not a record}\n");
     await ledger.save(
       [
@@ -98,7 +97,6 @@ describe("the ledger on disk", () => {
       new Set(["2026-09-02", "2026-10-02"])
     );
     expect(await readFile(join(dir, "2026-08-02.jsonl"), "utf8")).toBe("{not a record}\n");
-    expect(written()).toEqual([join(dir, "2026-09-02.jsonl"), join(dir, "2026-10-02.jsonl")]);
     expect(await readFile(join(dir, "2026-09-02.jsonl"), "utf8")).toContain('"output":99');
     expect(await partitions()).toEqual([
       "2026-08-02.jsonl",

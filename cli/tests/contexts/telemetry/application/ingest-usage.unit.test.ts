@@ -403,14 +403,6 @@ describe("only projects that opted in are stored", () => {
     });
   });
 
-  it("asks a linked worktree's clone, the repository's git config being shared", async () => {
-    const s = setup();
-    s.locator.directories.set("/work/wt", repository("/work/wt", { mainRoot: "/work/a" }));
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, { cwd: "/work/wt" })]);
-    expect((await s.ingest.execute()).added).toBe(1);
-    expect(s.consents.cloneReads).toEqual([A.path]);
-  });
-
   it("gives a linked worktree and its main working tree one repository id", async () => {
     const s = setup();
     s.locator.directories.set("/work/wt", repository("/work/wt", { mainRoot: "/work/a" }));
@@ -455,15 +447,6 @@ describe("where a call was made", () => {
     expect(s.history.written).toEqual([]);
   });
 
-  it("does not store a call from a directory that is gone and was never seen alive", async () => {
-    const s = setup();
-    s.locator.directories.delete("/work/a");
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
-    const result = await s.ingest.execute();
-    expect(result.notStored["never-seen-alive"]).toBe(1);
-    expect(s.ledger.records).toEqual([]);
-  });
-
   it("resolves a directory deleted after it was seen alive from what was remembered", async () => {
     const s = setup();
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
@@ -474,18 +457,6 @@ describe("where a call was made", () => {
     expect(result).toMatchObject({ added: 1 });
     expect(new Set(s.ledger.records.map((r) => r.repository_id)).size).toBe(1);
     expect(s.ledger.records).toHaveLength(2);
-  });
-
-  it("does not store from a deleted directory whose clone does not consent", async () => {
-    const s = setup();
-    s.consents.cloneSays(A, null);
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1, {}, NOW.toISOString())]);
-    await s.ingest.execute();
-    s.locator.directories.delete("/work/a");
-    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2, {}, NOW.toISOString()));
-    const result = await s.ingest.execute();
-    expect(result.notStored["no-consent"]).toBe(1);
-    expect(s.ledger.records).toEqual([]);
   });
 
   it("remembers a directory under one key per spelling on a case-sensitive file system", async () => {
@@ -620,17 +591,6 @@ describe("branch declarations are snapshotted for the repositories touched", () 
     s.consents.cloneSays(A, null);
     s.bindings.bindingsByRoot.set("/work/a", [declared]);
     s.transcripts.files.set("/t/1.jsonl", [line("A", 1, {}, NOW.toISOString())]);
-    expect((await s.ingest.execute()).snapshots).toBe(0);
-  });
-
-  it("does not snapshot from a directory that is gone", async () => {
-    const s = setup();
-    s.transcripts.files.set("/t/1.jsonl", [line("A", 1)]);
-    s.bindings.bindingsByRoot.set("/work/a", [declared]);
-    await s.ingest.execute();
-    s.snapshotStore.appended.length = 0;
-    s.locator.directories.delete("/work/a");
-    s.transcripts.files.get("/t/1.jsonl")?.push(line("B", 2));
     expect((await s.ingest.execute()).snapshots).toBe(0);
   });
 

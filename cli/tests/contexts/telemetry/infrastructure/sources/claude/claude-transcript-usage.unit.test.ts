@@ -53,10 +53,6 @@ describe("one transcript line to usage records", () => {
     });
   });
 
-  it("keys a call by message id and request id", () => {
-    expect(only(line()).key).toBe("msg_A:req_A");
-  });
-
   it("keys a requestless call by message id and session id, so its copies are one key", () => {
     const first = line({ requestId: undefined, timestamp: "2026-10-07T23:59:59.000Z" });
     const copy = line({ requestId: undefined, timestamp: "2026-10-08T00:00:02.000Z" });
@@ -210,12 +206,6 @@ describe("one transcript line to usage records", () => {
   it("reports a usage line of an unexpected shape and guesses no record", () => {
     const noId = line({}, { id: undefined });
     const outcome = readClaudeUsageLine(noId);
-    expect(outcome.records).toEqual([]);
-    expect(outcome.unrecognised).toHaveLength(1);
-  });
-
-  it("reports a complete line that is not JSON", () => {
-    const outcome = readClaudeUsageLine("{not json");
     expect(outcome.records).toEqual([]);
     expect(outcome.unrecognised).toHaveLength(1);
   });

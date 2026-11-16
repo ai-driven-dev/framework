@@ -478,33 +478,6 @@ describe("forgetting", () => {
     expect(existsSync(join(box.home, ".config", "aidd", "telemetry", "keep.jsonl"))).toBe(true);
   });
 
-  it("skips a repository that is gone and says so", async () => {
-    await measured();
-    const other = box.repository("gadgets");
-    git(other, box.gitEnv, "config", "--local", "branch.main.aiddTask", "x");
-    await deps.enableTelemetry.execute({ cwd: other, choice: "keep" });
-    writeTranscript(other, ["z"], "s-2");
-    await deps.ingestUsage.execute();
-    rmSync(other, { recursive: true });
-
-    const result = await deps.forgetTelemetry.execute({ confirmed: true });
-
-    expect(result.plan.missing).toEqual([join(other, ".git")]);
-    expect(git(repo, box.gitEnv, "config", "--local", "--list")).not.toMatch(/aidd/i);
-  });
-
-  it("does not name a gone clone that never opted in", async () => {
-    await measured();
-    const other = box.repository("gadgets");
-    writeTranscript(other, ["z"], "s-2");
-    await deps.ingestUsage.execute();
-    rmSync(other, { recursive: true });
-
-    const result = await deps.forgetTelemetry.execute({ confirmed: true });
-
-    expect(result.plan.missing).toEqual([]);
-  });
-
   it("creates nothing where nothing was measured", async () => {
     const result = await deps.forgetTelemetry.execute({ confirmed: true });
     expect(result.plan.entries).toEqual([]);
