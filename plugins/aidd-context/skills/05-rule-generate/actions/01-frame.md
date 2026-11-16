@@ -10,7 +10,8 @@ The request.
 
 1. Confirm the operation: add, update, remove or publish.
    - Rename or drop a host: read the source in full.
-   - Rename or drop a host: confirm a remove, then an add from that source.
+   - Rename: confirm an add under the new name, then a remove of the old one.
+   - Drop a host: confirm a remove, then an add from that source.
 2. Confirm the hosts per [hosts.md](../references/hosts.md).
    - Existing rule: reuse its `targets`.
    - Otherwise: detect the installed hosts, then ask, naming what each receives.

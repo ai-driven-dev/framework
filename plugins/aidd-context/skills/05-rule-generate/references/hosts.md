@@ -2,7 +2,7 @@
 
 Which host AI tools receive rules, how to detect them, and what each receives.
 
-Detect by listing the project root with hidden entries, since a file search misses an empty or folder-only marker.
+Detect by listing the project root with hidden entries, since a file search misses an empty or folder-only marker. Test each listed path itself, never its parent: `.agents/skills/` alone signals no host.
 
 | Host / ID | Detected when | Receives |
 | --- | --- | --- |
