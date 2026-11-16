@@ -46,10 +46,6 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   { path: "src/contexts/framework/application/plugin/plugin-add-use-case.ts", dependencies: 9 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", dependencies: 7 },
   {
-    path: "src/contexts/framework/application/doctor/doctor-registration-use-case.ts",
-    dependencies: 6,
-  },
-  {
     path: "src/contexts/installation/application/install/install-ide-tool.ts",
     dependencies: 6,
   },

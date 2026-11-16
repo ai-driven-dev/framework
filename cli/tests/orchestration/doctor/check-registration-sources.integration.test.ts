@@ -1,19 +1,16 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import {
-  builtMarketplaceDir,
-  userBuiltMarketplaceDir,
-} from "../../../../src/shared/domain/paths.js";
-import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
-import type { VersionReader } from "../../../../src/shared/ports/version-reader.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { builtMarketplaceDir, userBuiltMarketplaceDir } from "../../../src/shared/domain/paths.js";
+import type { FileReader } from "../../../src/shared/ports/file-reader.js";
+import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
+import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 function fakeVersion(value: string): VersionReader {
   return { get: () => value };
@@ -107,7 +104,7 @@ async function issuesFor(
   );
   const manifest = Manifest.create();
   manifest.addTool(TOOL.claude, "test", []);
-  const useCase = new DoctorRegistrationUseCase(
+  const useCase = buildCheckRegistration(
     fs,
     registry,
     () => false,
@@ -126,7 +123,7 @@ async function issuesFor(
   return issues.filter((issue) => issue.message.includes("catalog"));
 }
 
-describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
+describe("CheckRegistration — marketplace source conflicts", () => {
   it("reports a conflict when a different catalog is registered under the same name", async () => {
     const hostReader = new FakeHostMarketplaceRegistry({
       location: REGISTRY_LOCATION,
@@ -279,7 +276,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
     );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    const useCase = new DoctorRegistrationUseCase(
+    const useCase = buildCheckRegistration(
       fs,
       registry,
       () => false,
@@ -324,7 +321,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
       location: REGISTRY_LOCATION,
       entries: new Map([[NAME, "/other/src"]]),
     });
-    const useCase = new DoctorRegistrationUseCase(
+    const useCase = buildCheckRegistration(
       fs,
       registry,
       () => false,
@@ -378,7 +375,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
     );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    const useCase = new DoctorRegistrationUseCase(
+    const useCase = buildCheckRegistration(
       fs,
       registry,
       () => false,
@@ -398,7 +395,7 @@ describe("DoctorRegistrationUseCase — marketplace source conflicts", () => {
   });
 });
 
-describe("DoctorRegistrationUseCase — user-scope marketplace source drift", () => {
+describe("CheckRegistration — user-scope marketplace source drift", () => {
   // resolve(): compared against an already-resolved requested/registered source, so a
   // drive-less literal misses the base compare and every drift below returns undefined.
   const USER_CACHE_ROOT = resolve("/user-cache");
@@ -427,7 +424,7 @@ describe("DoctorRegistrationUseCase — user-scope marketplace source drift", ()
     );
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
-    const useCase = new DoctorRegistrationUseCase(
+    const useCase = buildCheckRegistration(
       fs,
       registry,
       () => false,

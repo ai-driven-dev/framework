@@ -153,7 +153,6 @@ async function runUserScopeDoctor(
   );
   const allowedIds = tool === undefined ? null : new Set([tool]);
   const issues = await deps.doctorRegistrationUseCase.execute({
-    manifest,
     projectRoot,
     allowedIds,
     tools,

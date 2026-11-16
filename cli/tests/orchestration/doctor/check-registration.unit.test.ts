@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
-import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
-import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
-import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
+import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
+import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/project";
 const LOCAL_SETTINGS = `${PROJECT_ROOT}/.claude/settings.local.json`;
@@ -53,7 +53,7 @@ async function issuesFor(
   const activators = new Map<string, FakeHostActions>([
     [TOOL.claude, new FakeHostActions({ available: toolInstalled, enablesPlugins: false })],
   ]);
-  return new DoctorRegistrationUseCase(
+  return buildCheckRegistration(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
@@ -69,7 +69,7 @@ async function issuesFor(
   });
 }
 
-describe("DoctorRegistrationUseCase", () => {
+describe("CheckRegistration", () => {
   it("says nothing when the tool still declares the marketplace", async () => {
     expect(await issuesFor(settingsDeclaring(["aidd-framework"]))).toStrictEqual([]);
   });
@@ -166,10 +166,12 @@ function manifestWithPlugin(marketplace?: string, toolId: AiToolId = TOOL.claude
 
 async function nativeIssuesFor(
   manifest: Manifest,
-  reading: HostPluginRegistryReading | "unreachable"
+  reading: HostPluginRegistryReading | "unreachable",
+  registered?: Marketplace
 ) {
   const fs = new InMemoryFileAdapter();
   const registry = new InMemoryMarketplaceRegistry();
+  if (registered) await registry.save(PROJECT_ROOT, registered);
   const activators = new Map<string, FakeHostActions>([
     [TOOL.claude, new FakeHostActions({ available: true, enablesPlugins: true })],
   ]);
@@ -177,7 +179,7 @@ async function nativeIssuesFor(
   if (reading !== "unreachable") {
     hostRegistries.set(TOOL.claude, new FakeHostPluginRegistry(reading));
   }
-  return new DoctorRegistrationUseCase(
+  return buildCheckRegistration(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
@@ -192,7 +194,7 @@ async function nativeIssuesFor(
   });
 }
 
-describe("DoctorRegistrationUseCase — native registrations against the host's own registry", () => {
+describe("CheckRegistration — native registrations against the host's own registry", () => {
   it("says nothing when the registry carries the expected ref, enabled", async () => {
     const issues = await nativeIssuesFor(manifestWithNativeRegistrations([REF]), {
       location: REGISTRY_LOCATION,
@@ -301,5 +303,23 @@ describe("DoctorRegistrationUseCase — native registrations against the host's 
     });
 
     expect(issues).toStrictEqual([]);
+  });
+});
+
+describe("CheckRegistration — order", () => {
+  it("lists the undeclared marketplace before what the host's registry lacks", async () => {
+    const marketplace = Marketplace.create({
+      name: "aidd-framework",
+      source: { kind: "local", path: "/src" },
+      scope: "project",
+      addedAt: "2026-01-01T00:00:00Z",
+    });
+    const issues = await nativeIssuesFor(
+      manifestWithNativeRegistrations([REF]),
+      { location: REGISTRY_LOCATION, refs: new Map() },
+      marketplace
+    );
+
+    expect(issues.map((issue) => issue.severity)).toStrictEqual(["warning", "error"]);
   });
 });

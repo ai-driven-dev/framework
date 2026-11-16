@@ -1,11 +1,9 @@
 import { resolve } from "node:path";
-import { registrationOver } from "../../../src/composition/framework/doctor.js";
 import { wireTools } from "../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { DoctorRegistrationUseCase } from "../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../../../src/contexts/framework/application/global/resolve-update-decision-use-case.js";
 import { UpdateOneToolUseCase } from "../../../src/contexts/framework/application/global/update-one-tool-use-case.js";
-import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect-host-registration.js";
+import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import { CheckFileReferences } from "../../../src/contexts/installation/application/doctor/check-file-references.js";
 import { CheckMergeFiles } from "../../../src/contexts/installation/application/doctor/check-merge-files.js";
 import { CheckPluginDrift } from "../../../src/contexts/installation/application/doctor/check-plugin-drift.js";
@@ -31,6 +29,7 @@ import { FakeHostActions } from "../../contexts/host-registration/testing/fake-h
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { marketplaceSync } from "../marketplace-sync.js";
+import { checkRegistrationOver } from "./build-check-registration.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "./fake-ensure-built-marketplace.js";
@@ -187,18 +186,16 @@ export function buildDoctorUseCase(
       layout: new CheckProjectLayout(loadManifest, deps.fs, authReader),
       plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs)),
     },
-    registrationOver(
+    checkRegistrationOver(
       loadManifest,
-      new DoctorRegistrationUseCase(
-        deps.fs,
-        deps.marketplaceRegistry,
-        (binary) =>
-          binary === TOOL.codex &&
-          deps.nativePluginActivators.get(TOOL.codex)?.isAvailable() === true,
-        new InspectHostRegistration(deps.fs, hostRegistries, new Map()),
-        () => "/user-cache",
-        { get: () => "1.0.0" }
-      )
+      deps.fs,
+      deps.marketplaceRegistry,
+      (binary) =>
+        binary === TOOL.codex &&
+        deps.nativePluginActivators.get(TOOL.codex)?.isAvailable() === true,
+      new InspectHostRegistration(deps.fs, hostRegistries, new Map()),
+      () => "/user-cache",
+      { get: () => "1.0.0" }
     )
   );
 }

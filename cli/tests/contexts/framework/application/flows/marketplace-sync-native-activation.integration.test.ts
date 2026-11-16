@@ -1,8 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { DoctorRegistrationUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect-host-registration.js";
+import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import { answeredRegistry } from "../../../../../src/contexts/host-registration/domain/host-registration-answers.js";
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
@@ -14,6 +13,7 @@ import {
   userBuiltMarketplaceDir,
 } from "../../../../../src/shared/domain/paths.js";
 import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
+import { buildCheckRegistration } from "../../../../helpers/ports/build-check-registration.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -526,7 +526,7 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
     const activator = new FakeHostActions({ available: true });
     const { useCase, registry, manifestRepo, fs } = buildSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
-    const doctorRegistration = new DoctorRegistrationUseCase(
+    const doctorRegistration = buildCheckRegistration(
       fs,
       registry,
       (binary) => binary === claude && activator.isAvailable(),

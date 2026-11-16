@@ -6,8 +6,7 @@ import {
 } from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { DoctorRegistrationUseCase } from "../../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect-host-registration.js";
+import { InspectHostRegistration } from "../../../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import type { HostActions } from "../../../../../src/contexts/host-registration/ports/host-actions.js";
 import type { BuiltMarketplaceEnsurer } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -20,6 +19,7 @@ import {
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { VersionReader } from "../../../../../src/shared/ports/version-reader.js";
 import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
+import { buildCheckRegistration } from "../../../../helpers/ports/build-check-registration.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -1316,7 +1316,7 @@ describe("MarketplaceSyncSettingsUseCase — purging this project's own pre-migr
   });
 });
 
-describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the full migration cycle", () => {
+describe("MarketplaceSyncSettingsUseCase + CheckRegistration — the full migration cycle", () => {
   /** Reads live from a `Map` the test's own activator double mutates on `addMarketplace`, the
    * one double that lets a `doctor` call made after a `sync` see what that `sync` actually did. */
   class LiveHostMarketplaceRegistryReader {
@@ -1394,7 +1394,7 @@ describe("MarketplaceSyncSettingsUseCase + DoctorRegistrationUseCase — the ful
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "test", []);
 
-    const doctor = new DoctorRegistrationUseCase(
+    const doctor = buildCheckRegistration(
       new InMemoryFileAdapter({
         [`${sharedBuiltDir}/${CATALOG_RELATIVE}`]: JSON.stringify({
           name: FRAMEWORK_MARKETPLACE_NAME,

@@ -417,7 +417,6 @@ describe("aidd doctor --scope user", () => {
       "User-scope installation is healthy",
     ]);
     expect(doctorRegistration).toHaveBeenCalledWith({
-      manifest: expect.anything(),
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
       tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),

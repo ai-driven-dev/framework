@@ -1,9 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { registrationOver } from "../../../../src/composition/framework/doctor.js";
-import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
+import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import { CheckFileReferences } from "../../../../src/contexts/installation/application/doctor/check-file-references.js";
 import { CheckMergeFiles } from "../../../../src/contexts/installation/application/doctor/check-merge-files.js";
 import { CheckPluginDrift } from "../../../../src/contexts/installation/application/doctor/check-plugin-drift.js";
@@ -19,6 +17,7 @@ import { RunDoctor } from "../../../../src/orchestration/doctor/run-doctor.js";
 import { FileHash } from "../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { Hasher } from "../../../../src/shared/ports/hasher.js";
+import { checkRegistrationOver } from "../../../helpers/ports/build-check-registration.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
 
@@ -86,16 +85,14 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
       layout: new CheckProjectLayout(loadManifest, fs),
       plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs)),
     },
-    registrationOver(
+    checkRegistrationOver(
       loadManifest,
-      new DoctorRegistrationUseCase(
-        fs,
-        new InMemoryMarketplaceRegistry(),
-        () => false,
-        new InspectHostRegistration(fs, new Map(), new Map()),
-        () => "/user-cache",
-        { get: () => "1.0.0" }
-      )
+      fs,
+      new InMemoryMarketplaceRegistry(),
+      () => false,
+      new InspectHostRegistration(fs, new Map(), new Map()),
+      () => "/user-cache",
+      { get: () => "1.0.0" }
     )
   );
 }

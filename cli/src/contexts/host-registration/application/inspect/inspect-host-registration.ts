@@ -1,16 +1,22 @@
-import type { AiToolId } from "../../../shared/domain/tool.js";
-import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
+import type { FileReader } from "../../../../shared/ports/file-reader.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type {
   HostRegistrationFinding,
   InspectHostRegistrationResult,
-} from "../contract/inspect-host-registration-result.js";
-import { answeredRegistry } from "../domain/host-registration-answers.js";
-import { describePluginDiff, pluginSetDifference } from "../domain/marketplace-source-conflict.js";
-import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
-import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
-import { hostMarketplaceSourceConflict, isDriftFound } from "./host-marketplace-source-conflict.js";
-import { readMarketplaceCatalogIdentity } from "./read-marketplace-catalog-identity.js";
+} from "../../contract/inspect-host-registration-result.js";
+import { answeredRegistry } from "../../domain/host-registration-answers.js";
+import {
+  describePluginDiff,
+  pluginSetDifference,
+} from "../../domain/marketplace-source-conflict.js";
+import type { HostMarketplaceRegistry } from "../../ports/host-marketplace-registry.js";
+import type { HostPluginRegistry } from "../../ports/host-plugin-registry.js";
+import {
+  hostMarketplaceSourceConflict,
+  isDriftFound,
+} from "../host-marketplace-source-conflict.js";
+import { readMarketplaceCatalogIdentity } from "../read-marketplace-catalog-identity.js";
 
 /** A plugin the host is expected to carry, and the ref to look it up by: `ref` is absent exactly
  * when nothing can build one. */

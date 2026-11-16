@@ -23,7 +23,6 @@ src/
 │   ├── framework/    # what is left of the old layout: the flows that setup, clean, doctor and plugin commands drive
 │   │   ├── application/
 │   │   │   ├── clean/
-│   │   │   ├── doctor/
 │   │   │   ├── flows/
 │   │   │   ├── global/
 │   │   │   ├── install/
@@ -83,6 +82,7 @@ src/
 │   │       └── sections/    # the parts a profile is made of: one class per section it declares
 │   ├── host-registration/    # what a host's own registry says about plugins and marketplaces, and the driving of its CLI
 │   │   ├── application/    # the host-side rules a command asks: catalogue identity and source conflict, uninstall scope, best-effort calls
+│   │   │   └── inspect/    # what a host's registry and a tool's settings say, asked by a check
 │   │   ├── contract/
 │   │   ├── domain/    # when a catalogue source has drifted from the one recorded
 │   │   ├── infrastructure/

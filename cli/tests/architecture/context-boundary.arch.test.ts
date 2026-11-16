@@ -32,6 +32,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/contract/marketplace.ts",
     "src/contexts/distribution/contract/catalog.ts",
     "src/contexts/distribution/contract/requested-version-policy.ts",
+    // where this run's build of each registered marketplace lives, recomputed for a check
+    "src/contexts/distribution/application/resolve-built-marketplaces.ts",
+    "src/contexts/distribution/contract/built-marketplaces.ts",
     // the ports its callers hold, so they can be given an implementation
     "src/contexts/distribution/ports/marketplace-registry.ts",
     "src/contexts/distribution/ports/marketplace-trust-store.ts",
@@ -76,6 +79,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/doctor/check-plugin-drift.ts",
     "src/contexts/installation/application/doctor/check-project-layout.ts",
     "src/contexts/installation/application/doctor/load-manifest-for-doctor.ts",
+    "src/contexts/installation/application/doctor/list-registered-plugins.ts",
+    "src/contexts/installation/contract/registered-plugins.ts",
     "src/contexts/installation/application/doctor/check-tracked-files.ts",
     "src/contexts/installation/application/update-gitignore.ts",
     "src/contexts/installation/application/init-project.ts",

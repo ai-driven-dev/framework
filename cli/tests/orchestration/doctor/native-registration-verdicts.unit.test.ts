@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { DoctorRegistrationUseCase } from "../../../../src/contexts/framework/application/doctor/doctor-registration-use-case.js";
-import { InspectHostRegistration } from "../../../../src/contexts/host-registration/application/inspect-host-registration.js";
-import { NativeHostRegistrationGate } from "../../../../src/contexts/host-registration/application/native-host-registration-gate.js";
-import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
-import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { HostPluginRegistryReading } from "../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
-import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
-import { FakeHostPluginRegistry } from "../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
+import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
+import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
+import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.js";
+import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
+import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
+import { catalogOf, registeredAiProfile, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 const { copilot } = TOOL;
 const HOST = "real-catalog";
@@ -123,7 +123,7 @@ async function doctorSays(registry: HostPluginRegistryReading): Promise<string> 
   const manifest = Manifest.create();
   manifest.addTool(copilot, "test", []);
   manifest.setNativeRegistrations(copilot, registrations);
-  const issues = await new DoctorRegistrationUseCase(
+  const issues = await buildCheckRegistration(
     new InMemoryFileAdapter(),
     new InMemoryMarketplaceRegistry(),
     () => false,
