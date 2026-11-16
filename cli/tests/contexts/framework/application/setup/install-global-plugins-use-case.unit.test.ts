@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PluginCatalogEntry } from "../../../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { InstallGlobalPluginsUseCase } from "../../../../../src/contexts/framework/application/setup/install-global-plugins-use-case.js";
 import type { PluginInstallMode } from "../../../../../src/contexts/framework/domain/setup-flow.js";
+import type { PlannedUserPluginFileUpdate } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolProfile } from "../../../../../src/contexts/tools/contract/tool-profile.js";

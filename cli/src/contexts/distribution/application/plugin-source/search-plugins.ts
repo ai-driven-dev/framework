@@ -1,7 +1,7 @@
-import type { PluginCatalogEntry } from "../contract/catalog.js";
-import type { Marketplace } from "../domain/marketplace.js";
-import type { MarketplaceRegistry } from "../ports/marketplace-registry.js";
-import type { ResolveMarketplace } from "./resolve-marketplace.js";
+import type { PluginCatalogEntry } from "../../contract/catalog.js";
+import type { Marketplace } from "../../domain/marketplace.js";
+import type { MarketplaceRegistry } from "../../ports/marketplace-registry.js";
+import type { ResolveMarketplace } from "../resolve-marketplace.js";
 
 export interface SearchPluginsCommand {
   query: string;

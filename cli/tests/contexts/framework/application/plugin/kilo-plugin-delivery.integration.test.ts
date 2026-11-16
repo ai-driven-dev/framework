@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.js";
+import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit-deps.js";
@@ -44,15 +44,14 @@ async function existingProject(configPath: string) {
     deps.pluginFetcher,
     deps.pluginDistributionReader
   );
-  const add = new PluginAddUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    distribution,
-    deps.hasher,
-    deps.logger,
-    deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo,
+  const add = new AddPlugin(
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: distribution,
+      marketplaceRegistry: deps.marketplaceRegistry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    },
     deps.installRuntimeConfigUseCase
   );
   const install = () =>

@@ -23,6 +23,7 @@ import type { BuiltMarketplaceEnsurer } from "../../../installation/application/
 import type { NativeRegistrations } from "../../../installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
+import { PurgeDeclaredCache } from "../../../machine-claims/application/purge-declared-cache.js";
 import {
   frameworkSourceIsShared,
   resolveProjectRootForReferences,
@@ -32,7 +33,6 @@ import type { UserSourceReferences } from "../../../machine-claims/ports/user-so
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
-import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
 
 export interface MarketplaceSyncSettingsOptions {
   projectRoot: string;
@@ -909,9 +909,7 @@ export class SharedFrameworkSource {
       );
       return;
     }
-    const candidate = await resolveCacheCandidate(
-      this.fs,
-      this.logger,
+    const candidate = await new PurgeDeclaredCache(this.fs, this.logger).resolveCandidate(
       projectRoot,
       join(BUILT_CACHE_SUBDIR, FRAMEWORK_MARKETPLACE_NAME),
       "This project's own pre-migration framework cache"

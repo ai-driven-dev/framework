@@ -1,20 +1,22 @@
 import { join } from "node:path";
 import { describe, expect, it, type Mock, vi } from "vitest";
-import type { MarketplaceTrustStore } from "../../../../../src/contexts/distribution/ports/marketplace-trust-store.js";
-import type { PluginAdd } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
-import type { PluginInstallFromMarketplace } from "../../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
-import { PluginInstallUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-install-use-case.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { PluginPick } from "../../../../../src/presentation/prompts/plugin-pick-use-case.js";
+import { TrustPluginSource } from "../../../src/contexts/distribution/application/plugin-source/trust-plugin-source.js";
+import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
+import type { PluginAdd } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
+import { PlanPluginInstall } from "../../../src/contexts/installation/application/plugin/plan-plugin-install.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
+import { InstallPlugin } from "../../../src/orchestration/plugin/install-plugin.js";
+import type { PluginPick } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
 import {
   InteractiveOnlyError,
   InvalidPluginScopeError,
   TrustDeniedError,
-} from "../../../../../src/shared/domain/errors.js";
-import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
-import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+} from "../../../src/shared/domain/errors.js";
+import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -75,7 +77,7 @@ function makeUseCases(overrides?: {
   };
 }
 
-function makeUseCase(overrides?: Parameters<typeof makeUseCases>[0]): PluginInstallUseCase {
+function makeUseCase(overrides?: Parameters<typeof makeUseCases>[0]): InstallPlugin {
   const {
     pluginPickUseCase,
     pluginAddUseCase,
@@ -84,17 +86,16 @@ function makeUseCase(overrides?: Parameters<typeof makeUseCases>[0]): PluginInst
     trustStore,
     prompter,
   } = makeUseCases(overrides);
-  return new PluginInstallUseCase(
+  return new InstallPlugin(
+    new PlanPluginInstall(manifestRepo),
     pluginPickUseCase,
     pluginAddUseCase,
     pluginInstallFromMarketplaceUseCase,
-    manifestRepo,
-    trustStore,
-    prompter
+    new TrustPluginSource(trustStore, prompter)
   );
 }
 
-describe("PluginInstallUseCase", () => {
+describe("InstallPlugin", () => {
   describe("no-arg routing", () => {
     it("delegates to PluginPickUseCase when no arg and interactive", async () => {
       const pickExecute = vi
@@ -182,7 +183,7 @@ describe("PluginInstallUseCase", () => {
   });
 
   describe("source arg routing", () => {
-    it("delegates to PluginAddUseCase when arg is an absolute local path", async () => {
+    it("delegates to AddPlugin when arg is an absolute local path", async () => {
       const addExecute = vi.fn().mockResolvedValue(undefined);
 
       const result = await makeUseCase({ addExecute }).execute({

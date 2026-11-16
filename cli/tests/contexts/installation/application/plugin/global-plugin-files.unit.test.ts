@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   assertGlobalFilesWritable,
   readGlobalPluginFiles,
-} from "../../../../../src/contexts/framework/application/ownership/global-plugin-files.js";
+} from "../../../../../src/contexts/installation/application/plugin/global-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -67,7 +68,8 @@ describe("readGlobalPluginFiles", () => {
         undefined,
         "aidd-dev",
         [],
-        "/h"
+        "/h",
+        isStrictlyWithinUserScope
       )
     ).rejects.toThrow("claude: no machine-scope directory is declared.");
   });
@@ -103,7 +105,8 @@ describe("assertGlobalFilesWritable", () => {
         undefined,
         "aidd-dev",
         [file("agents/a.md")],
-        HOME
+        HOME,
+        isStrictlyWithinUserScope
       )
     ).resolves.toBe(DIR);
   });
@@ -120,7 +123,8 @@ describe("assertGlobalFilesWritable", () => {
           undefined,
           "aidd-dev",
           [file(path)],
-          HOME
+          HOME,
+          isStrictlyWithinUserScope
         )
       ).rejects.toThrow(`opencode: 'aidd-dev' path '${path}' escapes ${DIR}.`);
     }
@@ -137,7 +141,8 @@ describe("assertGlobalFilesWritable", () => {
         undefined,
         "aidd-dev",
         [file("agents/a.md")],
-        HOME
+        HOME,
+        isStrictlyWithinUserScope
       )
     ).rejects.toThrow(`opencode: 'aidd-dev' parent '${under("agents")}' escapes ${DIR}.`);
   });
@@ -152,7 +157,8 @@ describe("assertGlobalFilesWritable", () => {
         undefined,
         "aidd-dev",
         [file("agents/a.md")],
-        HOME
+        HOME,
+        isStrictlyWithinUserScope
       )
     ).rejects.toThrow(
       `opencode: '${under("agents", "a.md")}' already exists and was not installed by aidd`
@@ -176,7 +182,8 @@ describe("assertGlobalFilesWritable", () => {
         owned,
         "aidd-dev",
         [file("agents/owned.md")],
-        HOME
+        HOME,
+        isStrictlyWithinUserScope
       )
     ).resolves.toBe(DIR);
   });
@@ -198,7 +205,8 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
         undefined,
         "aidd-dev",
         [file("agents/deep/a.md")],
-        "/home/me"
+        "/home/me",
+        isStrictlyWithinUserScope
       )
     ).resolves.toBe(DIR);
   });
@@ -214,7 +222,8 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
         undefined,
         "aidd-dev",
         [file("agents/deep/a.md")],
-        "/home/me"
+        "/home/me",
+        isStrictlyWithinUserScope
       )
     ).rejects.toThrow(`opencode: 'aidd-dev' parent '${join(DIR, "agents")}' escapes ${DIR}.`);
   });

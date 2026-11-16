@@ -3,9 +3,10 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { ProjectPluginCleanup } from "../../../src/contexts/framework/application/ownership/project-plugin-cleanup.js";
+import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import {
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,
@@ -82,7 +83,7 @@ function buildUseCase() {
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
   const useCase = projectMarketplaceRemover(
-    new ProjectPluginCleanup(fs),
+    new RemoveProjectPlugin(fs),
     manifestRepo,
     registry,
     new KeepPrompter()
@@ -180,7 +181,7 @@ describe("RemoveProjectMarketplace", () => {
   it("removes a project marketplace's orphan projection without deleting shared Cursor files", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const useCase = projectMarketplaceRemover(
-      new ProjectPluginCleanup(fs),
+      new RemoveProjectPlugin(fs),
       manifestRepo,
       registry,
       new KeepPrompter()
@@ -229,7 +230,7 @@ describe("RemoveProjectMarketplace", () => {
   it("removes a cursor orphan's file under projectRoot, not ~/.cursor/plugins/local, when the manifest says scope: project", async () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const useCase = projectMarketplaceRemover(
-      new ProjectPluginCleanup(fs),
+      new RemoveProjectPlugin(fs),
       manifestRepo,
       registry,
       new KeepPrompter()
@@ -403,7 +404,7 @@ describe("which plugins a removal orphans", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      new ProjectPluginCleanup(fs, machineRepo),
+      new RemoveProjectPlugin(fs, removalClaims(machineRepo, fs)),
       projectRepo,
       registry,
       new KeepPrompter()
@@ -458,7 +459,7 @@ describe("which plugins a removal orphans", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      new ProjectPluginCleanup(fs),
+      new RemoveProjectPlugin(fs),
       manifestRepo,
       registry,
       new KeepPrompter()
@@ -515,7 +516,7 @@ describe("which plugins a removal orphans", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, marketplaceNamed("awesome"));
     const useCase = projectMarketplaceRemover(
-      new ProjectPluginCleanup(fs),
+      new RemoveProjectPlugin(fs),
       manifestRepo,
       registry,
       new KeepPrompter()
@@ -672,7 +673,7 @@ describe("which plugins a removal orphans", () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
     const useCase = projectMarketplaceRemover(
-      new ProjectPluginCleanup(fs),
+      new RemoveProjectPlugin(fs),
       manifestRepo,
       registry,
       prompter
@@ -703,7 +704,7 @@ describe("which plugins a removal orphans", () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
     const useCase = projectMarketplaceRemover(
-      new ProjectPluginCleanup(fs),
+      new RemoveProjectPlugin(fs),
       manifestRepo,
       registry,
       prompter
@@ -733,7 +734,7 @@ describe("which plugins a removal orphans", () => {
     );
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(true)]);
     const useCase = projectMarketplaceRemover(
-      new ProjectPluginCleanup(fs),
+      new RemoveProjectPlugin(fs),
       manifestRepo,
       registry,
       prompter
@@ -755,7 +756,7 @@ describe("which plugins a removal orphans", () => {
     const { registry, manifestRepo, fs } = buildUseCase();
     const prompter = new ConfirmRecordingPrompter([ScriptedPrompter.answer.confirm(false)]);
     const useCase = projectMarketplaceRemover(
-      new ProjectPluginCleanup(fs),
+      new RemoveProjectPlugin(fs),
       manifestRepo,
       registry,
       prompter

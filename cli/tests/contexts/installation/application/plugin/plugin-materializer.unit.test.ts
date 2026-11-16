@@ -1,14 +1,16 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { UserPluginFileUpdater } from "../../../../../src/contexts/framework/application/ownership/user-plugin-file-updater.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { PluginDistribution } from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { userScopeFileGuard } from "../../../../helpers/user-scope-file-guard.js";
 import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const { cursor } = TOOL;
@@ -25,10 +27,11 @@ function fixture(installedVersion = "0.0.1") {
     files: [skill],
     components: { commands: [], agents: [], rules: [], skills: [skill], hooks: [], mcp: [] },
   });
-  const updater = new UserPluginFileUpdater(
+  const updater = new PluginMaterializer(
     fs,
     new PluginDistributionLoader(new FixturePluginFetcher(), { read: async () => dist }),
-    hasher
+    hasher,
+    userScopeFileGuard
   );
   const plugin = InstalledPlugin.fromMetadata(
     "sample-plugin",
@@ -41,13 +44,19 @@ function fixture(installedVersion = "0.0.1") {
   return { fs, hasher, logger, updater, plugin, base, content };
 }
 
-describe("UserPluginFileUpdater public update contract", () => {
+describe("PluginMaterializer public update contract", () => {
   it.each(["1.0.0", "2.0.0"])(
     "leaves version %s unchanged when no upgrade exists",
     async (version) => {
       const f = fixture(version);
       expect(
-        await f.updater.update(f.plugin, registeredAiProfile(cursor), "/A", f.logger)
+        await f.updater.update(
+          f.plugin,
+          registeredAiProfile(cursor),
+          "/A",
+          f.logger,
+          isStrictlyWithinUserScope
+        )
       ).toBeNull();
       expect(await f.fs.fileExists(join(f.base, "sample-plugin/skills/demo/SKILL.md"))).toBe(false);
       expect(f.plugin.version).toBe(version);
@@ -57,7 +66,13 @@ describe("UserPluginFileUpdater public update contract", () => {
 
   it("applies a planned upgrade through the public convenience method and preserves dependents", async () => {
     const f = fixture();
-    const result = await f.updater.update(f.plugin, registeredAiProfile(cursor), "/A", f.logger);
+    const result = await f.updater.update(
+      f.plugin,
+      registeredAiProfile(cursor),
+      "/A",
+      f.logger,
+      isStrictlyWithinUserScope
+    );
     expect(result?.version).toBe("1.0.0");
     expect(result?.scope).toBe("user");
     expect(result?.dependents).toEqual(["/A", "/B"]);
@@ -74,7 +89,13 @@ describe("UserPluginFileUpdater public update contract", () => {
     );
     await f.fs.writeFile(join(f.base, "../foreign.txt"), "foreign");
     await expect(
-      f.updater.update(unsafe, registeredAiProfile(cursor), "/A", f.logger)
+      f.updater.update(
+        unsafe,
+        registeredAiProfile(cursor),
+        "/A",
+        f.logger,
+        isStrictlyWithinUserScope
+      )
     ).rejects.toThrow(
       "cursor: 'sample-plugin' has unsafe recorded files; update refused without dropping its machine claim."
     );
@@ -87,7 +108,13 @@ describe("UserPluginFileUpdater public update contract", () => {
     const path = "sample-plugin/skills/demo/SKILL.md";
     const owned = f.plugin.withFiles(new Map([[path, f.hasher.hash(f.content).value]]));
 
-    const result = await f.updater.update(owned, registeredAiProfile(cursor), "/A", f.logger);
+    const result = await f.updater.update(
+      owned,
+      registeredAiProfile(cursor),
+      "/A",
+      f.logger,
+      isStrictlyWithinUserScope
+    );
 
     expect(await f.fs.readFile(join(f.base, path))).toBe(f.content);
     expect(result?.files.has(path)).toBe(true);
@@ -97,17 +124,30 @@ describe("UserPluginFileUpdater public update contract", () => {
   it("refuses to rebuild global files without the shared source, rather than write a project's layout", async () => {
     const f = fixture();
     await expect(
-      f.updater.update(f.plugin, registeredAiProfile(TOOL.opencode), "/A", f.logger)
+      f.updater.update(
+        f.plugin,
+        registeredAiProfile(TOOL.opencode),
+        "/A",
+        f.logger,
+        isStrictlyWithinUserScope
+      )
     ).rejects.toThrow("run `aidd setup --global`");
   });
 
   it("rechecks planned new-file containment when a parent becomes a symlink", async () => {
     const f = fixture();
-    const plan = await f.updater.planUpdate(f.plugin, registeredAiProfile(cursor), "/A", f.logger);
+    const plan = await f.updater.planUpdate(
+      f.plugin,
+      registeredAiProfile(cursor),
+      "/A",
+      f.logger,
+      false,
+      isStrictlyWithinUserScope
+    );
     if (plan === null) throw new Error("Expected upgrade plan");
     await f.fs.writeFile("/foreign/skills/demo/SKILL.md", "foreign");
     f.fs.setSymlink(join(f.base, "sample-plugin"), "/foreign");
-    await expect(f.updater.applyUpdate(plan, f.logger)).rejects.toThrow(
+    await expect(f.updater.applyUpdate(plan, f.logger, isStrictlyWithinUserScope)).rejects.toThrow(
       `cursor: 'sample-plugin' directory is not safely inside ${f.base}; update refused.`
     );
     expect(await f.fs.readFile("/foreign/skills/demo/SKILL.md")).toBe("foreign");

@@ -2,7 +2,7 @@
  * gates every hook behind a per-hook trust grant it can decline in silence. */
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { codex } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
@@ -24,18 +24,17 @@ async function installWithLogger(toolId: AiToolId) {
   await initAndInstall(deps, PROJECT_ROOT, toolId);
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const logger = new CapturingLogger();
-  const useCase = new PluginAddUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
-    deps.hasher,
-    logger,
-    new InMemoryMarketplaceRegistry(),
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+  const useCase = new AddPlugin(
+    { fs: deps.fs, hasher: deps.hasher, logger: logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      ),
+      marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   );
   await useCase.execute({
     tools: catalogOf(),
@@ -47,7 +46,7 @@ async function installWithLogger(toolId: AiToolId) {
   return logger;
 }
 
-describe("PluginAddUseCase hook trust notice", () => {
+describe("AddPlugin hook trust notice", () => {
   it("names what Codex still requires, on the info channel, when the plugin delivers hooks", async () => {
     const logger = await installWithLogger(TOOL.codex);
 

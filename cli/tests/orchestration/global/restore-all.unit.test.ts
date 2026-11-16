@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginAddUseCase } from "../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { AddPlugin } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { ReportStatus } from "../../../src/contexts/installation/application/report-status.js";
 import { Restore } from "../../../src/contexts/installation/application/restore/restore.js";
@@ -44,15 +44,14 @@ async function installPlugin(
   toolId: AiToolId,
   pluginReader: PluginDistributionReaderAdapter
 ): Promise<void> {
-  await new PluginAddUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
-    deps.hasher,
-    deps.logger,
-    deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+  await new AddPlugin(
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
+      marketplaceRegistry: deps.marketplaceRegistry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   ).execute({
     tools: catalogOf(),
     source: { kind: "local", path: PLUGIN_FIXTURE },
@@ -329,15 +328,14 @@ describe("RestoreAll — plugin materialization", () => {
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
     await installPlugin(deps, TOOL.claude, reader);
-    await new PluginAddUseCase(
-      deps.fs,
-      deps.manifestRepo,
-      new PluginDistributionLoader(deps.pluginFetcher, reader),
-      deps.hasher,
-      deps.logger,
-      deps.marketplaceRegistry,
-      fakeEnsureBuiltMarketplace(),
-      deps.userManifestRepo
+    await new AddPlugin(
+      { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+      { project: deps.manifestRepo, user: deps.userManifestRepo },
+      {
+        distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
+        marketplaceRegistry: deps.marketplaceRegistry,
+        ensureBuilt: fakeEnsureBuiltMarketplace(),
+      }
     ).execute({
       tools: catalogOf(),
       source: { kind: "local", path: PLUGIN_FIXTURE },

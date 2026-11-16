@@ -1,39 +1,54 @@
-import { PluginRemoveUseCase } from "../../src/contexts/framework/application/plugin/plugin-remove-use-case.js";
+import type { MarketplaceRegistry } from "../../src/contexts/distribution/ports/marketplace-registry.js";
+import { resolveHomeDir } from "../../src/contexts/framework/domain/reading/home-dir.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
+import { RemovePlugin } from "../../src/contexts/installation/application/removal/remove-plugin.js";
+import type { ManifestRepository } from "../../src/contexts/installation/ports/manifest-repository.js";
+import { pluginRemovalClaims } from "../../src/contexts/machine-claims/application/plugin-removal-claims.js";
+import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";
+import type { UserSourceReferences } from "../../src/contexts/machine-claims/ports/user-source-references.js";
+import type { FileReader } from "../../src/shared/ports/file-reader.js";
+import type { FileWriter } from "../../src/shared/ports/file-writer.js";
+import type { Lock } from "../../src/shared/ports/lock.js";
+import type { Logger } from "../../src/shared/ports/logger.js";
 import { CapturingLogger } from "./ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "./ports/in-memory-file-adapter.js";
 
-type Constructed = ConstructorParameters<typeof PluginRemoveUseCase>;
 type Withdrawing = ConstructorParameters<typeof WithdrawFromHost>;
 
 /** What a test names; everything else is the empty or in-memory default. */
 export interface PluginRemoverParts {
-  manifestRepo: Constructed[1];
-  fs?: Constructed[0];
-  logger?: Constructed[2];
+  manifestRepo: ManifestRepository;
+  fs?: FileReader & FileWriter;
+  logger?: Logger;
   activators?: Withdrawing[2]["activators"];
   hostPluginRegistries?: Withdrawing[2]["pluginRegistries"];
-  userSourceReferences?: Constructed[4];
-  marketplaceRegistry?: Constructed[5];
-  userManifestRepo?: Constructed[6];
+  userSourceReferences?: UserSourceReferences;
+  marketplaceRegistry?: MarketplaceRegistry;
+  userManifestRepo?: ManifestRepository & Lock;
   nativeMarketplaceSources?: Withdrawing[2]["sources"];
 }
 
-export function pluginRemover(parts: PluginRemoverParts): PluginRemoveUseCase {
+export function pluginRemover(parts: PluginRemoverParts): RemovePlugin {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();
-  return new PluginRemoveUseCase(
+  return new RemovePlugin(
     fs,
-    parts.manifestRepo,
-    logger,
+    { project: parts.manifestRepo, user: parts.userManifestRepo },
     new WithdrawFromHost(fs, logger, {
       activators: parts.activators ?? new Map(),
       pluginRegistries: parts.hostPluginRegistries ?? new Map(),
       marketplaceRegistries: new Map(),
       sources: parts.nativeMarketplaceSources ?? new Map(),
     }),
-    parts.userSourceReferences,
-    parts.marketplaceRegistry,
-    parts.userManifestRepo
+    pluginRemovalClaims({
+      repo: parts.userManifestRepo,
+      fs,
+      logger,
+      home: resolveHomeDir(),
+      userSourceReferences: parts.userSourceReferences,
+      marketplaceRegistry: parts.marketplaceRegistry,
+      resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
+        new PurgeDeclaredCache(fs, logger).resolveCandidate(cacheRoot, relativeSegments, label),
+    })
   );
 }

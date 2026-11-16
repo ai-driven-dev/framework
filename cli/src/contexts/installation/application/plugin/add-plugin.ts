@@ -16,34 +16,31 @@ import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
-import type { InstallRuntimeConfig } from "../../../installation/application/install/install-runtime-config.js";
-import type { PluginTranslator } from "../../../installation/application/materialize/plugin-translator.js";
-import { resolvePluginTranslator } from "../../../installation/application/materialize/resolve-plugin-translator.js";
-import type { PluginDistributionLoader } from "../../../installation/application/plugin/plugin-distribution-loader.js";
-import {
-  loadPluginManifest,
-  writePluginFiles,
-} from "../../../installation/application/plugin/plugin-helpers.js";
-import {
-  resolveBaseDirFromRecord,
-  resolvePluginToolIds,
-  resolveScopeForInstall,
-} from "../../../installation/application/plugin/plugin-target-resolution.js";
-import type { BuiltMarketplaceEnsurer } from "../../../installation/application/shared/ensure-built-marketplace.js";
-import { assertProjectHooksRemovable } from "../../../installation/application/shared/remove-project-hooks.js";
-import { Manifest } from "../../../installation/domain/manifest.js";
-import {
-  InstalledPlugin,
-  type ProjectHooksProvenance,
-} from "../../../installation/domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-notice.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
 import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
-import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
+import { Manifest } from "../../domain/manifest.js";
+import {
+  InstalledPlugin,
+  type ProjectHooksProvenance,
+} from "../../domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { InstallRuntimeConfig } from "../install/install-runtime-config.js";
+import type { PluginTranslator } from "../materialize/plugin-translator.js";
+import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
+import { assertProjectMcpEntriesRemovable } from "../removal/remove-project-plugin.js";
+import type { BuiltMarketplaceEnsurer } from "../shared/ensure-built-marketplace.js";
+import { assertProjectHooksRemovable } from "../shared/remove-project-hooks.js";
+import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
+import { loadPluginManifest, writePluginFiles } from "./plugin-helpers.js";
+import {
+  resolveBaseDirFromRecord,
+  resolvePluginToolIds,
+  resolveScopeForInstall,
+} from "./plugin-target-resolution.js";
 
 export interface PluginAddOptions {
   source: PluginSource;
@@ -62,18 +59,51 @@ export interface PluginAdd {
   execute(options: PluginAddOptions): Promise<void>;
 }
 
-export class PluginAddUseCase implements PluginAdd {
+/** What the plugin writes through and reports with. */
+export interface AddPluginHost {
+  fs: FileWriter & FileReader;
+  hasher: Hasher;
+  logger: Logger;
+}
+
+/** The two manifests an add touches: the project's, and the machine's, which guards the lock. */
+export interface AddPluginManifests {
+  project: ManifestRepository;
+  user: ManifestRepository & Lock;
+}
+
+/** Where a plugin's files come from. */
+export interface AddPluginSources {
+  distributionLoader: PluginDistributionLoader;
+  marketplaceRegistry: MarketplaceRegistry;
+  ensureBuilt: BuiltMarketplaceEnsurer;
+}
+
+export class AddPlugin implements PluginAdd {
+  private readonly fs: FileWriter & FileReader;
+  private readonly hasher: Hasher;
+  private readonly logger: Logger;
+  private readonly manifestRepo: ManifestRepository;
+  private readonly userManifestRepo: ManifestRepository & Lock;
+  private readonly distributionLoader: PluginDistributionLoader;
+  private readonly marketplaceRegistry: MarketplaceRegistry;
+  private readonly ensureBuilt: BuiltMarketplaceEnsurer;
+
   constructor(
-    private readonly fs: FileWriter & FileReader,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly distributionLoader: PluginDistributionLoader,
-    private readonly hasher: Hasher,
-    private readonly logger: Logger,
-    private readonly marketplaceRegistry: MarketplaceRegistry,
-    private readonly ensureBuilt: BuiltMarketplaceEnsurer,
-    private readonly userManifestRepo: ManifestRepository & Lock,
+    host: AddPluginHost,
+    manifests: AddPluginManifests,
+    sources: AddPluginSources,
     private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
-  ) {}
+  ) {
+    ({ fs: this.fs, hasher: this.hasher, logger: this.logger } = host);
+    this.manifestRepo = manifests.project;
+    this.userManifestRepo = manifests.user;
+    ({
+      distributionLoader: this.distributionLoader,
+      marketplaceRegistry: this.marketplaceRegistry,
+      ensureBuilt: this.ensureBuilt,
+    } = sources);
+  }
 
   async execute(options: PluginAddOptions): Promise<void> {
     return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));

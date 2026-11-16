@@ -1,28 +1,49 @@
 import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { RefreshHostPlugin } from "../../../host-registration/application/refresh-host-plugin.js";
-import { resolvePluginToolIds } from "../../../installation/application/plugin/plugin-target-resolution.js";
-import type { UpdatePluginCommand } from "../../../installation/application/plugin/update-plugin.js";
-import { Manifest } from "../../../installation/domain/manifest.js";
-import type { InstalledPlugin } from "../../../installation/domain/plugins/installed-plugin.js";
-import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
-import type { UserPluginFileUpdater } from "./user-plugin-file-updater.js";
+import type { RegistrationRecord } from "../../../host-registration/contract/registration-record.js";
+import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import { Manifest } from "../../domain/manifest.js";
+import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { ContainmentCheck } from "./global-plugin-files.js";
+import type { PluginMaterializer } from "./plugin-materializer.js";
+import { resolvePluginToolIds } from "./plugin-target-resolution.js";
+import type { UpdatePluginCommand } from "./update-plugin.js";
 
-export class UserPluginUpdateUseCase {
+/** A host refresh whose proofs all held: applying it is the only step left. */
+export interface ProvenNativeRefresh {
+  apply(): void;
+}
+
+/** Proves, then refreshes, one AIDD-owned native ref on its host. The scenario supplies it. */
+export type RefreshNativeRef = (request: {
+  readonly tool: AiToolProfile;
+  readonly ref: string;
+  readonly projectRoot: string;
+  readonly registrations: RegistrationRecord | undefined;
+}) => Promise<ProvenNativeRefresh>;
+
+/** What a machine-scope update needs beyond the plugins it names. */
+export interface UpdateUserPluginFilesCommand extends UpdatePluginCommand {
+  readonly isWithinUserScope: ContainmentCheck;
+  readonly refreshNative: RefreshNativeRef;
+}
+
+/** Brings the machine-scope plugins, and the native refs aidd owns, to their latest version. */
+export class UpdateUserPluginFiles {
   constructor(
     private readonly repo: ManifestRepository & Lock,
-    private readonly fileUpdater: UserPluginFileUpdater,
-    private readonly logger: Logger,
-    private readonly refreshHostPlugin: RefreshHostPlugin
+    private readonly materializer: PluginMaterializer,
+    private readonly logger: Logger
   ) {}
 
-  async execute(options: UpdatePluginCommand): Promise<string[]> {
+  async execute(options: UpdateUserPluginFilesCommand): Promise<string[]> {
     const run = () => this.updateLocked(options);
     return this.repo.withExclusiveAccess(run);
   }
 
-  private async updateLocked(options: UpdatePluginCommand): Promise<string[]> {
+  private async updateLocked(options: UpdateUserPluginFilesCommand): Promise<string[]> {
     const loaded = await this.repo.load();
     if (loaded === null)
       throw new Error(
@@ -70,12 +91,13 @@ export class UserPluginUpdateUseCase {
     // One plan at a time: plans for one tool share its built tree, which the first one builds.
     const filePlans = [];
     for (const { toolId, plugin } of targets) {
-      const plan = await this.fileUpdater.planUpdate(
+      const plan = await this.materializer.planUpdate(
         plugin,
         options.tools.aiProfile(toolId),
         options.projectRoot,
         this.logger,
-        options.rebuild === true
+        options.rebuild === true,
+        options.isWithinUserScope
       );
       filePlans.push({ toolId, plugin, plan });
     }
@@ -83,7 +105,7 @@ export class UserPluginUpdateUseCase {
       nativeTargets.map(async ({ toolId, claim, registrations }) => ({
         toolId,
         claim,
-        refresh: await this.refreshHostPlugin.execute({
+        refresh: await options.refreshNative({
           tool: options.tools.aiProfile(toolId),
           ref: claim.ref,
           projectRoot: options.projectRoot,
@@ -108,7 +130,7 @@ export class UserPluginUpdateUseCase {
         );
       let next: InstalledPlugin;
       try {
-        next = await this.fileUpdater.applyUpdate(plan, this.logger);
+        next = await this.materializer.applyUpdate(plan, this.logger, options.isWithinUserScope);
       } catch (error) {
         throw new Error(
           `${toolId}: user plugin file update failed after preflight; a native ref may already have been updated and file bytes may be partial. Canonical claim not saved; reconcile manually before retrying.`,

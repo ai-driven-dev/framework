@@ -30,13 +30,11 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     path: "src/contexts/installation/application/restore/restore-tool-files.ts",
     dependencies: 9,
   },
-  { path: "src/contexts/framework/application/plugin/plugin-add-use-case.ts", dependencies: 9 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", dependencies: 7 },
   {
     path: "src/contexts/installation/application/install/install-ide-tool.ts",
     dependencies: 6,
   },
-  { path: "src/contexts/framework/application/plugin/plugin-install-use-case.ts", dependencies: 6 },
   {
     path: "src/contexts/installation/application/plugin/update-plugin.ts",
     dependencies: 6,
@@ -47,7 +45,6 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   },
   // Carries `clean`'s shared-source guard and the separate current-source witness so a
   // targeted remove cannot disable another project's plugin or a repointed catalogue.
-  { path: "src/contexts/framework/application/plugin/plugin-remove-use-case.ts", dependencies: 7 },
 ];
 
 function isUseCase(file: string): boolean {

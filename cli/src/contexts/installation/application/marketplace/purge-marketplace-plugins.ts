@@ -5,7 +5,7 @@ import type { NativeHostRegistrationGate } from "../../../host-registration/appl
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { UserPluginFileProof } from "../../ports/user-plugin-file-proof.js";
-import { deletePluginFilesForTool } from "./plugin-helpers.js";
+import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 
 export interface PurgeMarketplacePluginsCommand {
   marketplace: string;

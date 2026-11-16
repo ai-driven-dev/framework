@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { MarketplaceSyncSettings } from "../../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { InstallAiToolUseCase } from "../../../../../src/contexts/framework/application/install/install-ai-tool-use-case.js";
-import type { PluginInstallFromMarketplace } from "../../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { PluginInstallFromMarketplace } from "../../../../../src/orchestration/plugin/install-from-marketplace.js";
 import {
   buildUnitDeps,
   initAndInstall,

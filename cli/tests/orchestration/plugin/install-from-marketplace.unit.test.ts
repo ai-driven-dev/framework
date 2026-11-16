@@ -1,30 +1,31 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { FetchMarketplaceSource } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
-import { ResolveMarketplace } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginCatalogRepositoryAdapter } from "../../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
-import { PluginInstallFromMarketplaceUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
-import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { FetchMarketplaceSource } from "../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { ResolvePluginSource } from "../../../src/contexts/distribution/application/plugin-source/resolve-plugin-source.js";
+import { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
+import { AddPlugin } from "../../../src/contexts/installation/application/plugin/add-plugin.js";
+import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
+import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { InstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
 import {
   AmbiguousPluginMatchError,
   PluginNotInMarketplaceError,
   VersionMismatchError,
-} from "../../../../../src/shared/domain/errors.js";
-import type { Logger } from "../../../../../src/shared/ports/logger.js";
-import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
-import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { ChoosingPrompter } from "../../../../helpers/ports/choosing-prompter.js";
-import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import type { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { KeepPrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+} from "../../../src/shared/domain/errors.js";
+import type { Logger } from "../../../src/shared/ports/logger.js";
+import type { Prompter } from "../../../src/shared/ports/prompter.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
+import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { ChoosingPrompter } from "../../helpers/ports/choosing-prompter.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
+import type { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { KeepPrompter } from "../../helpers/ports/scripted-prompter.js";
+import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -49,24 +50,22 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();
   const catalogRepo = new PluginCatalogRepositoryAdapter(deps.fs);
-  const pluginAdd = new PluginAddUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
-    deps.hasher,
-    deps.logger,
-    registry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+  const pluginAdd = new AddPlugin(
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      ),
+      marketplaceRegistry: registry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);
   const logger = options.logger === null ? undefined : (options.logger ?? deps.logger);
-  const useCase = new PluginInstallFromMarketplaceUseCase(
-    new ResolveMarketplace(fetchMarketplaceSource, catalogRepo),
-    registry,
+  const useCase = new InstallFromMarketplace(
+    new ResolvePluginSource(registry, new ResolveMarketplace(fetchMarketplaceSource, catalogRepo)),
     pluginAdd,
     options.prompter ?? new KeepPrompter(),
     logger
@@ -97,7 +96,7 @@ function installedSamplePlugin(deps: Awaited<ReturnType<typeof buildUnitDeps>>) 
     .find((p) => p.name === "sample-plugin");
 }
 
-describe("PluginInstallFromMarketplaceUseCase", () => {
+describe("InstallFromMarketplace", () => {
   it("installs a plugin found in a single marketplace and tags it", async () => {
     const { useCase, deps, registry } = await buildUseCase();
     seedMarketplaceFile(deps.fs, MKT1_DIR, [
@@ -121,7 +120,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
       interactive: false,
     });
 
-    expect(result.marketplace.name).toBe("mkt1");
+    expect(result.marketplaceName).toBe("mkt1");
     const manifest = await deps.manifestRepo.load();
     const plugins = manifest?.getPlugins(TOOL.claude) ?? [];
     const installed = plugins.find((p) => p.name === "sample-plugin");
@@ -228,7 +227,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
       interactive: false,
     });
 
-    expect(result.marketplace.name).toBe("mkt2");
+    expect(result.marketplaceName).toBe("mkt2");
   });
 
   it("throws VersionMismatchError when pinned version disagrees with catalog", async () => {
@@ -474,7 +473,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
       autoSelect: true,
     });
 
-    expect(result.marketplace.name).toBe("mkt1");
+    expect(result.marketplaceName).toBe("mkt1");
   });
 
   describe("choosing among several matches", () => {
@@ -500,7 +499,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
         interactive: true,
       });
 
-      expect(result.marketplace.name).toBe("mkt2");
+      expect(result.marketplaceName).toBe("mkt2");
       expect(prompter.selectCalls).toStrictEqual([
         {
           message: "Multiple matches for 'sample-plugin'. Select one:",
@@ -562,7 +561,7 @@ describe("PluginInstallFromMarketplaceUseCase", () => {
         interactive: false,
       });
 
-      expect(result.marketplace.name).toBe("mkt1");
+      expect(result.marketplaceName).toBe("mkt1");
     });
   });
 

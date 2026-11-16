@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { PluginFetchOptions } from "../../../../../src/contexts/distribution/ports/plugin-fetcher.js";
-import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import type { BuiltMaterializationDeps } from "../../../../../src/contexts/installation/application/shared/apply-plugin-files.js";
@@ -43,15 +43,14 @@ async function setup(
 ) {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const reader = new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes());
-  const addUseCase = new PluginAddUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(deps.pluginFetcher, reader),
-    deps.hasher,
-    deps.logger,
-    deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+  const addUseCase = new AddPlugin(
+    { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
+      marketplaceRegistry: deps.marketplaceRegistry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   );
   const updateUseCase = new UpdatePlugin(
     deps.fs,
@@ -63,7 +62,7 @@ async function setup(
   return { addUseCase, updateUseCase };
 }
 
-async function addLocal(addUseCase: PluginAddUseCase, path = PLUGIN_FIXTURE): Promise<void> {
+async function addLocal(addUseCase: AddPlugin, path = PLUGIN_FIXTURE): Promise<void> {
   await addUseCase.execute({
     tools: catalogOf(),
     source: { kind: "local", path },

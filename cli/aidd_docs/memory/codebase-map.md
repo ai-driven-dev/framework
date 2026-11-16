@@ -15,6 +15,7 @@ src/
 │   │   └── ports/
 │   ├── distribution/    # where content comes from and how it is fetched
 │   │   ├── application/
+│   │   │   ├── plugin-source/    # which source a plugin comes from, whether it is trusted, and a search over them
 │   │   │   └── remove/
 │   │   ├── contract/
 │   │   ├── domain/
@@ -25,8 +26,6 @@ src/
 │   │   ├── application/
 │   │   │   ├── flows/
 │   │   │   ├── install/
-│   │   │   ├── ownership/    # machine plugin claims and safe project detach
-│   │   │   ├── plugin/
 │   │   │   ├── setup/
 │   │   │   └── shared/
 │   │   └── domain/
@@ -36,9 +35,11 @@ src/
 │   │   │   ├── doctor/    # the checks over what the manifest tracks
 │   │   │   ├── install/
 │   │   │   │   └── content/
+│   │   │   ├── marketplace/    # what a marketplace holds in a project: its plugin sources, and the plugins removed with it
 │   │   │   ├── materialize/    # a plugin's files translated for one tool and written
 │   │   │   ├── ownership/
 │   │   │   ├── plugin/
+│   │   │   ├── removal/    # a plugin removed from a project, its machine claims released through injected functions
 │   │   │   ├── restore/
 │   │   │   ├── shared/
 │   │   │   └── update/    # one installed tool brought to the current version
@@ -51,6 +52,7 @@ src/
 │   │   └── ports/
 │   ├── machine-claims/    # which projects claim a machine-wide plugin or source, and what each user scope holds for them
 │   │   ├── application/
+│   │   ├── contract/
 │   │   ├── domain/
 │   │   ├── infrastructure/
 │   │   └── ports/
@@ -134,7 +136,8 @@ src/
 │   ├── doctor/    # running every doctor check over the installation
 │   ├── global/    # machine-wide runs over every installed tool
 │   ├── marketplace/    # holding what is installed against what its marketplaces list
-│   └── setup/    # registering the framework marketplace a setup chose
+│   ├── plugin/    # the plugin lifecycle, add to remove
+│   └── setup/    # registering the framework marketplace a setup chose, and the questions a plugin install asks
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
 │   │   ├── materialization/    # where content lands and how its links follow

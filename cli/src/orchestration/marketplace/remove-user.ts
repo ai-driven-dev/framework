@@ -1,7 +1,7 @@
 import type { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.js";
 import type { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
 import type { MarketplaceRemovalResult } from "../../contexts/distribution/contract/marketplace-removal.js";
-import type { PurgeMarketplacePlugins } from "../../contexts/installation/application/plugin/purge-marketplace-plugins.js";
+import type { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 

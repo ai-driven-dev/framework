@@ -1,14 +1,31 @@
 import { join } from "node:path";
-import { SearchPlugins } from "../../contexts/distribution/application/search-plugins.js";
-import { UserPluginFileUpdater } from "../../contexts/framework/application/ownership/user-plugin-file-updater.js";
-import { UserPluginUpdateUseCase } from "../../contexts/framework/application/ownership/user-plugin-update-use-case.js";
-import { PluginAddUseCase } from "../../contexts/framework/application/plugin/plugin-add-use-case.js";
-import { PluginInstallFromMarketplaceUseCase } from "../../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
-import { PluginInstallUseCase } from "../../contexts/framework/application/plugin/plugin-install-use-case.js";
-import { PluginRemoveUseCase } from "../../contexts/framework/application/plugin/plugin-remove-use-case.js";
+import { ResolvePluginSource } from "../../contexts/distribution/application/plugin-source/resolve-plugin-source.js";
+import { SearchPlugins } from "../../contexts/distribution/application/plugin-source/search-plugins.js";
+import { TrustPluginSource } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.js";
+import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
+import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.js";
+import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.js";
 import { PluginDistributionLoader } from "../../contexts/installation/application/plugin/plugin-distribution-loader.js";
+import {
+  type BoundPluginMaterializer,
+  PluginMaterializer,
+  type UserScopeFileGuard,
+} from "../../contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.js";
+import { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.js";
+import { RemovePlugin } from "../../contexts/installation/application/removal/remove-plugin.js";
+import { pluginRemovalClaims } from "../../contexts/machine-claims/application/plugin-removal-claims.js";
+import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
+import {
+  assertUserScopeWriteBoundary,
+  userScopeFilesSafeToDelete,
+  withoutMissingFiles,
+} from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
+import { isStrictlyWithinUserScope } from "../../contexts/machine-claims/domain/user-scope-containment.js";
+import { InstallFromMarketplace } from "../../orchestration/plugin/install-from-marketplace.js";
+import { InstallPlugin } from "../../orchestration/plugin/install-plugin.js";
+import { UpdateUserPlugin } from "../../orchestration/plugin/update-user-plugin.js";
 import { PluginPickUseCase } from "../../presentation/prompts/plugin-pick-use-case.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import type { Base } from "./base.js";
@@ -36,29 +53,33 @@ export function wirePlugin(base: Base, inst: Installation) {
   } = base;
   const { ensureBuiltMarketplaceUseCase, installRuntimeConfigUseCase, builtMaterializationDeps } =
     inst;
-  const pluginRemoveUseCase = new PluginRemoveUseCase(
+  const pluginRemoveUseCase = new RemovePlugin(
     fs,
-    manifestRepo,
-    logger,
+    { project: manifestRepo, user: userManifestRepo },
     withdrawFromHost,
-    userSourceReferences,
-    marketplaceRegistry,
-    userManifestRepo
+    pluginRemovalClaims({
+      repo: userManifestRepo,
+      fs,
+      logger,
+      home: resolveHomeDir(),
+      userSourceReferences,
+      marketplaceRegistry,
+      resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
+        new PurgeDeclaredCache(fs, logger).resolveCandidate(cacheRoot, relativeSegments, label),
+    })
   );
-  const pluginAddUseCase = new PluginAddUseCase(
-    fs,
-    manifestRepo,
-    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-    hasher,
-    logger,
-    marketplaceRegistry,
-    ensureBuiltMarketplaceUseCase,
-    userManifestRepo,
+  const pluginAddUseCase = new AddPlugin(
+    { fs: fs, hasher: hasher, logger: logger },
+    { project: manifestRepo, user: userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
+      marketplaceRegistry: marketplaceRegistry,
+      ensureBuilt: ensureBuiltMarketplaceUseCase,
+    },
     installRuntimeConfigUseCase
   );
-  const pluginInstallFromMarketplaceUseCase = new PluginInstallFromMarketplaceUseCase(
-    resolveMarketplaceUseCase,
-    marketplaceRegistry,
+  const pluginInstallFromMarketplaceUseCase = new InstallFromMarketplace(
+    new ResolvePluginSource(marketplaceRegistry, resolveMarketplaceUseCase),
     pluginAddUseCase,
     prompter,
     logger
@@ -70,23 +91,41 @@ export function wirePlugin(base: Base, inst: Installation) {
     pluginAddUseCase,
     prompter
   );
-  const pluginInstallUseCase = new PluginInstallUseCase(
+  const pluginInstallUseCase = new InstallPlugin(
+    new PlanPluginInstall(manifestRepo),
     pluginPickUseCase,
     pluginAddUseCase,
     pluginInstallFromMarketplaceUseCase,
-    manifestRepo,
-    marketplaceTrustStore,
-    prompter
+    new TrustPluginSource(marketplaceTrustStore, prompter)
   );
   // One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
-  const userPluginFileUpdater = new UserPluginFileUpdater(
+  const userScopeFileGuard: UserScopeFileGuard = {
+    safeToDelete: userScopeFilesSafeToDelete,
+    withoutMissing: withoutMissingFiles,
+    assertWriteBoundary: assertUserScopeWriteBoundary,
+  };
+  const pluginMaterializer = new PluginMaterializer(
     fs,
     new PluginDistributionLoader(pluginFetcher, pluginDistributionReader, () =>
       join(userConfigDir(), "cache", "plugin-cache")
     ),
     hasher,
+    userScopeFileGuard,
     builtMaterializationDeps
   );
+  const userPluginFileUpdater: BoundPluginMaterializer = {
+    planUpdate: (plugin, tool, projectRoot, log, rebuild = false) =>
+      pluginMaterializer.planUpdate(
+        plugin,
+        tool,
+        projectRoot,
+        log,
+        rebuild,
+        isStrictlyWithinUserScope
+      ),
+    applyUpdate: (plan, log) =>
+      pluginMaterializer.applyUpdate(plan, log, isStrictlyWithinUserScope),
+  };
   const pluginUpdateUseCase = new UpdatePlugin(
     fs,
     manifestRepo,
@@ -95,11 +134,10 @@ export function wirePlugin(base: Base, inst: Installation) {
     builtMaterializationDeps,
     installRuntimeConfigUseCase
   );
-  const userPluginUpdateUseCase = new UserPluginUpdateUseCase(
-    userManifestRepo,
-    userPluginFileUpdater,
-    logger,
-    new RefreshHostPlugin(nativePluginActivators, hostPluginRegistries, nativeSources)
+  const userPluginUpdateUseCase = new UpdateUserPlugin(
+    new UpdateUserPluginFiles(userManifestRepo, pluginMaterializer, logger),
+    new RefreshHostPlugin(nativePluginActivators, hostPluginRegistries, nativeSources),
+    isStrictlyWithinUserScope
   );
   return {
     pluginRemoveUseCase,

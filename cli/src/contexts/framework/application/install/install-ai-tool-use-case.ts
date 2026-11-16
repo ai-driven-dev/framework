@@ -12,7 +12,6 @@ import type {
   MarketplaceSyncSettings,
   MarketplaceSyncSettingsResult,
 } from "../flows/marketplace-sync-settings-use-case.js";
-import type { PluginInstallFromMarketplace } from "../plugin/plugin-install-from-marketplace-use-case.js";
 
 export interface InstallAiToolOptions {
   toolId: AiToolId;
@@ -32,11 +31,28 @@ export interface InstallAiToolResult {
   activation?: MarketplaceSyncSettingsResult;
 }
 
+/** The one thing propagation asks of the plugin installer: put a named marketplace plugin on a
+ * tool, quietly. Supplied by the composition root. */
+export interface MarketplacePluginInstaller {
+  execute(options: {
+    pluginName: string;
+    version: string | undefined;
+    fromMarketplace: string | undefined;
+    toolIds: AiToolId[];
+    projectRoot: string;
+    interactive: boolean;
+    autoSelect: boolean;
+    replace: boolean;
+    requestedVersionPolicy: "prefer-catalog";
+    tools: ToolCatalog;
+  }): Promise<unknown>;
+}
+
 export class InstallAiToolUseCase {
   constructor(
     private readonly installRuntimeConfig: InstallRuntimeConfig,
     private readonly manifestRepo: ManifestRepository,
-    private readonly pluginInstallFromMarketplace: PluginInstallFromMarketplace,
+    private readonly pluginInstallFromMarketplace: MarketplacePluginInstaller,
     private readonly marketplaceSyncSettings: MarketplaceSyncSettings,
     private readonly logger: Logger
   ) {}

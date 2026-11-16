@@ -13,16 +13,17 @@ import {
   SharedFrameworkSource,
   SyncToolSettingsFiles,
 } from "../../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { ProjectPluginCleanup } from "../../contexts/framework/application/ownership/project-plugin-cleanup.js";
 import { SetupMarketplaceSourceUseCase } from "../../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupMarketplaceRegistrationUseCase } from "../../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
-import { ListPluginSources } from "../../contexts/installation/application/plugin/list-plugin-sources.js";
-import { PurgeMarketplacePlugins } from "../../contexts/installation/application/plugin/purge-marketplace-plugins.js";
-import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/plugin/remove-plugins-from-marketplace.js";
+import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.js";
+import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.js";
+import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.js";
+import { RemoveProjectPlugin } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.js";
+import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove.js";
@@ -64,7 +65,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     hostPluginRegistries,
     nativeSources
   );
-  const projectCleanup = new ProjectPluginCleanup(fs, userManifestRepo);
+  const projectCleanup = new RemoveProjectPlugin(fs, removalClaims(userManifestRepo, fs));
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace(
     new FindMarketplaceToRemove(marketplaceRegistry),
     new RemovePluginsFromMarketplace(manifestRepo, projectCleanup),

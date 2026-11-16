@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
@@ -29,7 +29,7 @@ type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
 async function buildOpencodeProject(): Promise<{
   deps: Deps;
   logger: CapturingLogger;
-  useCase: PluginAddUseCase;
+  useCase: AddPlugin;
 }> {
   const deps = await buildUnitDeps(PROJECT_ROOT);
   await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
@@ -43,23 +43,22 @@ async function buildOpencodeProject(): Promise<{
     JSON.stringify({ mcpServers: { "local-tool": { command: "node", args: ["./server.js"] } } })
   );
   const logger = new CapturingLogger();
-  const useCase = new PluginAddUseCase(
-    deps.fs,
-    deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
-    deps.hasher,
-    logger,
-    deps.marketplaceRegistry,
-    fakeEnsureBuiltMarketplace(),
-    deps.userManifestRepo
+  const useCase = new AddPlugin(
+    { fs: deps.fs, hasher: deps.hasher, logger: logger },
+    { project: deps.manifestRepo, user: deps.userManifestRepo },
+    {
+      distributionLoader: new PluginDistributionLoader(
+        deps.pluginFetcher,
+        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+      ),
+      marketplaceRegistry: deps.marketplaceRegistry,
+      ensureBuilt: fakeEnsureBuiltMarketplace(),
+    }
   );
   return { deps, logger, useCase };
 }
 
-function addLocal(useCase: PluginAddUseCase, path: string, replace?: boolean): Promise<void> {
+function addLocal(useCase: AddPlugin, path: string, replace?: boolean): Promise<void> {
   return useCase.execute({
     tools: catalogOf(),
     source: { kind: "local", path },
@@ -77,7 +76,7 @@ function installedMcpPlugin(deps: Deps): InstalledPlugin | undefined {
     .find((p) => p.name === "mcp-plugin");
 }
 
-describe("PluginAddUseCase and opencode MCP servers", () => {
+describe("AddPlugin and opencode MCP servers", () => {
   it("keeps user servers and other config while recording only successfully installed MCP servers", async () => {
     const { deps, logger, useCase } = await buildOpencodeProject();
     const owned = { type: "local", command: ["user-server"], enabled: false };
