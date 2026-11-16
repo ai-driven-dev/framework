@@ -8,19 +8,23 @@ The set, in the showcase.
 
 ## Process
 
-1. Give the user the set's page.
+1. If the user left simple screens to you, and variants differ little:
+   - Keep the variant closest to their earlier picks.
+   - Note it for the final reply.
+   - Skip to step 5.
+2. Give the user the set's page.
    - Ask them to choose, then paste the copied feedback here.
-2. Wait for the feedback.
+3. Wait for the feedback.
    - Read the entry with `set`. Leave record entries.
-3. Weigh the feedback.
+4. Weigh the feedback.
    - Keep: a candidate as it is.
    - Revise: a lead. Its comment says what to change.
    - Discard: out.
    - No verdict: not looked at. Ask before deciding.
    - Several kept: ask which one. The user makes the choice.
    - If nothing is kept, read [propose](02-propose.md) with the comments.
-4. Keep the chosen variant per [engine](../references/engine.md).
-5. If a wireframe is left, read [propose](02-propose.md). Else read [conclude](04-conclude.md).
+5. Keep the chosen variant per [engine](../references/engine.md).
+6. If a wireframe is left, read [propose](02-propose.md). Else read [conclude](04-conclude.md).
 
 ## Output
 

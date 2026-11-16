@@ -104,6 +104,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [screen-template.md](skills/05-screens/assets/screen-template.md) | - |
 | `references` | [cases.md](skills/05-screens/references/cases.md) | - |
 | `references` | [engine.md](skills/05-screens/references/engine.md) | - |
+| `references` | [look.md](skills/05-screens/references/look.md) | - |
 | `references` | [screens.md](skills/05-screens/references/screens.md) | - |
 | `references` | [variants.md](skills/05-screens/references/variants.md) | - |
 | `-` | [SKILL.md](skills/05-screens/SKILL.md) | `Write a project's screens, one for each wireframe, by comparing variants of each. Use when the user wants to dress a wireframe as a screen. Not for the brand, tokens, components, or journeys.` |

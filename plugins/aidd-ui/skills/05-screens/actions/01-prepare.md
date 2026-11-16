@@ -19,12 +19,17 @@ The request.
    - Never create it: the components are written elsewhere.
 6. Take the task folder the user named, else ask.
    - It need not exist: only `history.md` rows cite it.
-7. For a change, edit each such screen as its comment says.
+7. Ask once: should you pick the simple screens yourself?
+   - Say you would follow their earlier picks.
+   - Say they would see only the screens with a real choice.
+   - Keep the answer.
+8. For a change, edit each such screen as its comment says.
    - Read [conclude](04-conclude.md).
-8. Otherwise read [propose](02-propose.md).
+9. Otherwise read [propose](02-propose.md).
 
 ## Output
 
 - The case and the engine.
 - The wireframes to dress.
 - The task folder.
+- Whether the user leaves simple screens to you.

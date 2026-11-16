@@ -15,11 +15,15 @@ The screens kept.
 4. Validate again per [engine](../references/engine.md), and repeat until only these remain:
    - errors the [engine](../references/engine.md) says are about the code
    - `warning` lines, which are not errors
-5. Write the showcase per [engine](../references/engine.md), in the project memory's language.
-6. Reply with:
+5. Look at each screen created or changed per [look](../references/look.md), and fix it.
+   - Skip those already looked at and unchanged since.
+6. Write the showcase per [engine](../references/engine.md), in the project memory's language.
+7. Reply with:
    - the screens created, each with the wireframe it dresses
+   - the screens you picked yourself
    - each screen left without `code`, and why
    - what the validation still prints
+   - that no browser was found, if so
    - that the code is untouched
    - that each screen is `proposed` until its review
 
