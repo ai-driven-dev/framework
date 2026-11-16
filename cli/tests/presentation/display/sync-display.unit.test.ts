@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   printActivationOutcome,
   printRestoreOutcome,
+  printScopedFailures,
   printToolRestoreOutcome,
   printUserScopeSyncOutcome,
 } from "../../../src/presentation/display/sync-display.js";
@@ -200,5 +201,26 @@ describe("printUserScopeSyncOutcome", () => {
     printUserScopeSyncOutcome(output, ["claude", "codex"]);
 
     expect(output.at("success")).toEqual(["Synced native activation for: claude, codex"]);
+  });
+});
+
+describe("printScopedFailures", () => {
+  it("prints nothing when nothing failed", () => {
+    const output = new CapturingOutput(false);
+
+    printScopedFailures(output, []);
+
+    expect(output.lines).toEqual([]);
+  });
+
+  it("warns one bracketed scope per failure, in the order given", () => {
+    const output = new CapturingOutput(false);
+
+    printScopedFailures(output, [
+      { scope: "claude", message: "add refused" },
+      { scope: "codex", message: "not on PATH" },
+    ]);
+
+    expect(output.at("warn")).toEqual(["[claude] add refused", "[codex] not on PATH"]);
   });
 });

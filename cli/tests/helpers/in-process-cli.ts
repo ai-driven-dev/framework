@@ -178,7 +178,7 @@ export async function runInProcess(
     const tools = wireTools();
     const program = new Command();
     program.name("aidd").option("--verbose", "Show detailed diagnostic output", false);
-    const { bindCatalog, createMenuDeps } = await import("../../src/composition/framework.js");
+    const { bindCatalog, createMenuDeps } = await import("../../src/composition/container.js");
     const depsFactory: DepsFactory = bindCatalog(tools);
     for (const load of REGISTRATIONS)
       (await load())(program, tools, depsFactory, (projectRoot) =>

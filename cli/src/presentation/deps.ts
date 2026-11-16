@@ -53,6 +53,7 @@ import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
 import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
 import type { AskMarketplaceSource } from "../orchestration/setup/ask-marketplace-source.js";
 import type { RunSetup } from "../orchestration/setup/run-setup.js";
+import type { SyncNativeActivation } from "../orchestration/sync/sync-native-activation.js";
 import type { SyncSettings } from "../orchestration/sync/sync-settings.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
@@ -126,6 +127,7 @@ export interface Deps {
   registerFrameworkMarketplace: Pick<RegisterFrameworkMarketplace, "execute">;
   pluginInstallUseCase: Pick<InstallPlugin, "execute">;
   syncSettingsUseCase: Pick<SyncSettings, "execute">;
+  syncNativeActivation: Pick<SyncNativeActivation, "execute">;
   doctorUseCase: Pick<RunDoctor, "execute">;
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: Pick<CheckRegistration, "execute">;

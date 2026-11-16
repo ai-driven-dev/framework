@@ -4,7 +4,6 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import { UnknownAiToolIdError } from "../../shared/domain/errors.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
-import { syncNativeActivation } from "../display/framework-display.js";
 import {
   printInstalledPlugins,
   printPluginInstallOutcome,
@@ -12,6 +11,7 @@ import {
   printPluginsUpdated,
   printSearchHits,
 } from "../display/plugin-display.js";
+import { reportNativeActivation } from "../display/sync-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
@@ -24,7 +24,7 @@ type PluginKeys =
   | "searchPlugins"
   | "userPluginUpdateUseCase"
   | "pluginUpdateUseCase"
-  | "syncSettingsUseCase";
+  | "syncNativeActivation";
 
 /** `--tool` names one AI tool or, left out or set to `all`, every one. */
 export function parseToolOption(
@@ -80,7 +80,12 @@ export function registerPluginCommand(
           scope,
           tools: catalog,
         });
-        if (scope === "project") await syncNativeActivation(deps, output, catalog, projectRoot);
+        if (scope === "project") {
+          reportNativeActivation(
+            output,
+            await deps.syncNativeActivation.execute({ projectRoot, tools: catalog })
+          );
+        }
         printPluginRemoved(output, name);
       } catch (error) {
         errorHandler.handle(error);
@@ -142,12 +147,13 @@ export function registerPluginCommand(
             yes: cmdOptions.yes,
             scope,
           });
-          await syncNativeActivation(
-            deps,
+          reportNativeActivation(
             output,
-            catalog,
-            projectRoot,
-            cmdOptions.from !== undefined ? [cmdOptions.from] : undefined
+            await deps.syncNativeActivation.execute({
+              projectRoot,
+              tools: catalog,
+              marketplaceNames: cmdOptions.from !== undefined ? [cmdOptions.from] : undefined,
+            })
           );
           printPluginInstallOutcome(output, result);
         } catch (error) {
@@ -200,7 +206,12 @@ export function registerPluginCommand(
           scope,
           tools: catalog,
         });
-        if (scope === "project") await syncNativeActivation(deps, output, catalog, projectRoot);
+        if (scope === "project") {
+          reportNativeActivation(
+            output,
+            await deps.syncNativeActivation.execute({ projectRoot, tools: catalog })
+          );
+        }
         printPluginsUpdated(output, updated);
       } catch (error) {
         errorHandler.handle(error);

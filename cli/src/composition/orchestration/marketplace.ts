@@ -30,12 +30,13 @@ import {
   type RegisterFrameworkSource,
   SetupMarketplaceRegistration,
 } from "../../orchestration/setup/setup-marketplace-registration.js";
+import { SyncNativeActivation } from "../../orchestration/sync/sync-native-activation.js";
 import { SyncSettings } from "../../orchestration/sync/sync-settings.js";
 import { resolveHomeDir } from "../../shared/infrastructure/home-dir.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
-import type { Base } from "./base.js";
-import type { Installation } from "./installation.js";
+import type { Installation } from "../installation.js";
+import type { Base } from "../shared.js";
 
 /** Detaches what a removal's plugins held on the machine, from the removal's own summary. */
 export function detachClaimsOf(cleanup: Pick<RemoveProjectPlugin, "detachClaims">) {
@@ -124,8 +125,8 @@ export function wireMarketplace(base: Base, inst: Installation) {
     new RemoveMarketplace(marketplaceRegistry),
     resolveHomeDir()
   );
-  // Removing deletes installed plugin files, which is framework work: framework's two remove
-  // commands answer distribution's `MarketplaceRemover`.
+  // Removing deletes installed plugin files, which is orchestration work: its two remove
+  // scenarios answer distribution's `MarketplaceRemover`.
   const marketplaceRemover: MarketplaceRemover = {
     remove: async (request) => {
       const removal = { ...request, tools };
@@ -176,6 +177,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
       new PurgeDeclaredCache(fs, logger)
     )
   );
+  const syncNativeActivation = new SyncNativeActivation(syncSettingsUseCase);
   const askMarketplaceSource = new AskMarketplaceSource(
     prompter,
     new ChooseMarketplaceSource(releaseResolver)
@@ -196,6 +198,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     addMarketplace,
     marketplaceCheckUseCase,
     syncSettingsUseCase,
+    syncNativeActivation,
     askMarketplaceSource,
     setupMarketplaceRegistration,
   };

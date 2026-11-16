@@ -1,28 +1,28 @@
-import { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw-from-host.js";
-import { HasherAdapter } from "../../contexts/installation/infrastructure/hasher-adapter.js";
-import { JsonFileMergerAdapter } from "../../contexts/installation/infrastructure/json-file-merger-adapter.js";
-import { ManifestRepositoryAdapter } from "../../contexts/installation/infrastructure/manifest-repository-adapter.js";
-import { PlatformAdapter } from "../../contexts/installation/infrastructure/platform-adapter.js";
-import { PluginDistributionReaderAdapter } from "../../contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import { UserManifestRepositoryAdapter } from "../../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
-import { UserSourceReferencesAdapter } from "../../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
-import { pluginManifestProbes } from "../../contexts/translate/contract/plugin-format.js";
-import type { FactoryOptions } from "../../presentation/deps.js";
-import { CLIOutput } from "../../presentation/output.js";
+import { WithdrawFromHost } from "../contexts/host-registration/application/withdraw-from-host.js";
+import { HasherAdapter } from "../contexts/installation/infrastructure/hasher-adapter.js";
+import { JsonFileMergerAdapter } from "../contexts/installation/infrastructure/json-file-merger-adapter.js";
+import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructure/manifest-repository-adapter.js";
+import { PlatformAdapter } from "../contexts/installation/infrastructure/platform-adapter.js";
+import { PluginDistributionReaderAdapter } from "../contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
+import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
+import { pluginManifestProbes } from "../contexts/translate/contract/plugin-format.js";
+import type { FactoryOptions } from "../presentation/deps.js";
+import { CLIOutput } from "../presentation/output.js";
 import {
   InquirerPrompterAdapter,
   SilentPrompterAdapter,
-} from "../../presentation/terminal/prompter-adapter.js";
-import { atomicWriteFile } from "../../shared/infrastructure/atomic-write.js";
-import { CurrentVersionAdapter } from "../../shared/infrastructure/current-version-adapter.js";
-import { EnvironmentAdapter } from "../../shared/infrastructure/environment-adapter.js";
-import { FileAdapter } from "../../shared/infrastructure/file-adapter.js";
-import { HttpClient } from "../../shared/infrastructure/http-client.js";
-import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
-import { wireAuth } from "../auth.js";
-import { wireDistribution } from "../distribution.js";
-import { wireHostRegistration } from "../host-registration.js";
+} from "../presentation/terminal/prompter-adapter.js";
+import { atomicWriteFile } from "../shared/infrastructure/atomic-write.js";
+import { CurrentVersionAdapter } from "../shared/infrastructure/current-version-adapter.js";
+import { EnvironmentAdapter } from "../shared/infrastructure/environment-adapter.js";
+import { FileAdapter } from "../shared/infrastructure/file-adapter.js";
+import { HttpClient } from "../shared/infrastructure/http-client.js";
+import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
+import { wireAuth } from "./auth.js";
+import { wireDistribution } from "./distribution.js";
+import { wireHostRegistration } from "./host-registration.js";
 
 /** The adapters and context wirings every area reads: the file system, the manifests, auth, host
  * registration and distribution. Built once per graph. */

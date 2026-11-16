@@ -10,12 +10,12 @@ import {
   printToolRemoved,
   printUpdateResult,
   renderRecipeValidation,
-  reportSyncActivation,
 } from "../display/framework-display.js";
 import {
   printInstalledRules,
   printInstalledRulesJson,
 } from "../display/installed-rules-display.js";
+import { reportSyncActivation } from "../display/sync-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";

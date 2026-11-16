@@ -13,6 +13,10 @@ const MAX_FILES_PER_FOLDER = 10;
  * files are shuffled. The test asserts the count, so a reason nobody measured fails here.
  */
 const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
+  // The target layout (composition, section 8.1) prescribes one module per context beside the
+  // root, the shared module and the scenario assembly: twelve files. The cap follows the target,
+  // not the generic limit.
+  { path: "src/composition", count: 12 },
   // Twelve files carry the command surface, plus two helpers no other folder imports. That
   // is the flattest mapping from the CLI's surface to its source; moving the helpers out
   // would leave twelve, still over the limit and clearer about nothing.

@@ -22,7 +22,7 @@ const createDeps = vi.fn(async () => ({
   userMarketplaceRemoveUseCase: { execute: userMarketplaceRemove },
   refreshMarketplace: { execute: marketplaceRefresh },
   marketplaceCheckUseCase: { execute: marketplaceCheck },
-  syncSettingsUseCase: { execute: activation },
+  syncNativeActivation: { execute: activation },
   prompter: prompterAnswering({ input: promptInput }),
 }));
 const createMenuDeps = vi.fn(() => ({ prompter: prompterAnswering({ select: menuSelect }) }));
@@ -73,7 +73,7 @@ beforeEach(() => {
     failedCount: 0,
   });
   marketplaceCheck.mockResolvedValue({ stale: [], upstreamRemoved: [], skipped: [] });
-  activation.mockResolvedValue({ binaryMissing: [], errors: [] });
+  activation.mockResolvedValue({ binaryMissing: [], errors: [], failed: false });
   promptInput.mockResolvedValueOnce("asked-name").mockResolvedValueOnce("asked/source");
   menuSelect.mockResolvedValue("list");
   spawn.mockResolvedValue(0);

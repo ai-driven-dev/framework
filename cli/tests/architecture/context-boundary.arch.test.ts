@@ -305,7 +305,7 @@ describe("the guard itself", () => {
     ];
     const importers = new Map([
       ["src/contexts/acme/contract/orphan.ts", new Set(["src/contexts/acme/application/use.ts"])],
-      ["src/contexts/acme/contract/wired.ts", new Set(["src/composition/framework.ts"])],
+      ["src/contexts/acme/contract/wired.ts", new Set(["src/composition/container.ts"])],
       ["src/contexts/acme/contract/shown.ts", new Set(["src/presentation/display/x.ts"])],
       ["src/contexts/acme/contract/shared.ts", new Set(["src/contexts/other/domain/y.ts"])],
     ]);
@@ -319,7 +319,7 @@ describe("the guard itself", () => {
   it("names a public module only its own context imports, and clears one read from outside", () => {
     const importers = new Map([
       ["src/contexts/acme/domain/stale.ts", new Set(["src/contexts/acme/application/use.ts"])],
-      ["src/contexts/acme/domain/wired.ts", new Set(["src/composition/framework.ts"])],
+      ["src/contexts/acme/domain/wired.ts", new Set(["src/composition/container.ts"])],
       ["src/contexts/acme/domain/shown.ts", new Set(["src/presentation/commands/x.ts"])],
     ]);
     const publicModules = {
@@ -385,7 +385,7 @@ describe("the guard itself", () => {
     const importers = new Map([
       [
         "src/contexts/acme/domain/internal.ts",
-        new Set(["src/contexts/acme/application/sibling.ts", "src/composition/framework.ts"]),
+        new Set(["src/contexts/acme/application/sibling.ts", "src/composition/container.ts"]),
       ],
     ]);
     const publicModules = { acme: [] };

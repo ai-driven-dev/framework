@@ -7,15 +7,15 @@ import {
   InquirerPrompterAdapter,
   SilentPrompterAdapter,
 } from "../presentation/terminal/prompter-adapter.js";
-import { wireBase } from "./framework/base.js";
-import { wireClean } from "./framework/clean.js";
-import { wireDoctor } from "./framework/doctor.js";
-import { wireGlobal } from "./framework/global.js";
-import { wireInstallation } from "./framework/installation.js";
-import { wireMarketplace } from "./framework/marketplace.js";
-import { wirePlugin } from "./framework/plugin.js";
-import { wireAgentModels, wireSetup } from "./framework/setup.js";
+import { wireInstallation } from "./installation.js";
+import { wireClean } from "./orchestration/clean.js";
+import { wireDoctor } from "./orchestration/doctor.js";
+import { wireGlobal } from "./orchestration/global.js";
+import { wireMarketplace } from "./orchestration/marketplace.js";
+import { wirePlugin } from "./orchestration/plugin.js";
+import { wireAgentModels, wireSetup } from "./orchestration/setup.js";
 import { wireRecipes } from "./recipes.js";
+import { wireBase } from "./shared.js";
 import { wireTelemetry } from "./telemetry.js";
 import { createFrameworkBuildUseCase } from "./translate.js";
 import { wireUpdate } from "./update.js";
@@ -88,6 +88,7 @@ export async function createDeps(
     userMarketplaceRemoveUseCase,
     marketplaceCheckUseCase,
     syncSettingsUseCase,
+    syncNativeActivation,
     askMarketplaceSource,
   } = marketplace;
   const {
@@ -141,6 +142,7 @@ export async function createDeps(
     registerFrameworkMarketplace,
     pluginInstallUseCase,
     syncSettingsUseCase,
+    syncNativeActivation,
     doctorUseCase,
     doctorRegistrationUseCase,
     askMarketplaceSource,

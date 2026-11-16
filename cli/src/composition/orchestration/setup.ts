@@ -13,9 +13,9 @@ import {
 } from "../../orchestration/setup/run-setup.js";
 import { SetupPluginsPromptUseCase } from "../../presentation/prompts/setup-plugins-prompt-use-case.js";
 import { SetupToolsPromptUseCase } from "../../presentation/prompts/setup-tools-prompt-use-case.js";
-import type { Base } from "./base.js";
+import type { Installation } from "../installation.js";
+import type { Base } from "../shared.js";
 import type { Global } from "./global.js";
-import type { Installation } from "./installation.js";
 import type { Marketplace } from "./marketplace.js";
 import type { Plugin } from "./plugin.js";
 

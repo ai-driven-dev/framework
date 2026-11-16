@@ -4,7 +4,6 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
 import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
-import { syncNativeActivation } from "../display/framework-display.js";
 import {
   printMarketplaceCheck,
   printMarketplaceRegistered,
@@ -12,6 +11,7 @@ import {
   printRefreshResults,
   printRegisteredMarketplaces,
 } from "../display/marketplace-display.js";
+import { reportNativeActivation } from "../display/sync-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
@@ -25,7 +25,7 @@ type MarketplaceKeys =
   | "marketplaceRemoveUseCase"
   | "refreshMarketplace"
   | "marketplaceCheckUseCase"
-  | "syncSettingsUseCase";
+  | "syncNativeActivation";
 
 export function registerMarketplaceCommand(
   program: Command,
@@ -98,7 +98,14 @@ export function registerMarketplaceCommand(
             autoTrust: cmdOptions.yes ?? false,
             overwrite: cmdOptions.overwrite ?? false,
           });
-          await syncNativeActivation(deps, output, tools, projectRoot, [result.marketplace.name]);
+          reportNativeActivation(
+            output,
+            await deps.syncNativeActivation.execute({
+              projectRoot,
+              tools,
+              marketplaceNames: [result.marketplace.name],
+            })
+          );
           printMarketplaceRegistered(output, result.marketplace.name);
         } catch (error) {
           errorHandler.handle(error);
@@ -146,7 +153,12 @@ export function registerMarketplaceCommand(
           autoConfirm: cmdOptions.yes ?? false,
           scope,
         });
-        if (scope !== "user") await syncNativeActivation(deps, output, tools, projectRoot);
+        if (scope !== "user") {
+          reportNativeActivation(
+            output,
+            await deps.syncNativeActivation.execute({ projectRoot, tools })
+          );
+        }
         printMarketplaceRemoved(output, result.marketplace.name, result.removedPluginCount);
       } catch (error) {
         errorHandler.handle(error);
@@ -169,7 +181,10 @@ export function registerMarketplaceCommand(
           name,
           force: cmdOptions.force,
         });
-        await syncNativeActivation(deps, output, tools, projectRoot);
+        reportNativeActivation(
+          output,
+          await deps.syncNativeActivation.execute({ projectRoot, tools })
+        );
         printRefreshResults(output, results);
         if (failedCount > 0) process.exit(1);
       } catch (error) {

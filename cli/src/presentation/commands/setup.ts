@@ -8,13 +8,13 @@ import { SetupFlow } from "../../orchestration/setup/setup-flow.js";
 import { CategoryMismatchError } from "../../shared/domain/errors.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { DepsSliceFactory } from "../deps.js";
-import { reportSyncActivation } from "../display/framework-display.js";
 import {
   printDetectedContext,
   printNextSteps,
   printSetupOutcome,
   printWelcomeBanner,
 } from "../display/setup-display.js";
+import { reportSyncActivation } from "../display/sync-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";

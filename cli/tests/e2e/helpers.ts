@@ -13,7 +13,7 @@ import { homedir, tmpdir } from "node:os";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { afterAll, inject } from "vitest";
-import { createDeps } from "../../src/composition/framework.js";
+import { createDeps } from "../../src/composition/container.js";
 import { InitProject } from "../../src/contexts/installation/application/init-project.js";
 import { environmentWithoutGitVariables as withoutGitEnv } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
 import { CLIOutput } from "../../src/presentation/output.js";

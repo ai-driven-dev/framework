@@ -21,8 +21,8 @@ import {
   type SyncMachineScope,
 } from "../../orchestration/setup/setup-machine-scope.js";
 import type { SyncSettings } from "../../orchestration/sync/sync-settings.js";
-import type { Base } from "./base.js";
-import type { Installation } from "./installation.js";
+import type { Installation } from "../installation.js";
+import type { Base } from "../shared.js";
 import type { Marketplace } from "./marketplace.js";
 import type { Plugin } from "./plugin.js";
 

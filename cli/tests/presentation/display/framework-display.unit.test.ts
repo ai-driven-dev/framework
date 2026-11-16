@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  printScopedFailures,
   printToolAlreadyInstalled,
   printToolInstalled,
   printToolRemoved,
@@ -93,26 +92,5 @@ describe("printUpdateResult", () => {
     printUpdateResult(output, [], [{ scope: "claude", message: "refused" }]);
 
     expect(output.captured).toEqual([{ level: "warn", message: "[claude] refused" }]);
-  });
-});
-
-describe("printScopedFailures", () => {
-  it("prints nothing when nothing failed", () => {
-    const output = new CapturingOutput(false);
-
-    printScopedFailures(output, []);
-
-    expect(output.lines).toEqual([]);
-  });
-
-  it("warns one bracketed scope per failure, in the order given", () => {
-    const output = new CapturingOutput(false);
-
-    printScopedFailures(output, [
-      { scope: "claude", message: "add refused" },
-      { scope: "codex", message: "not on PATH" },
-    ]);
-
-    expect(output.at("warn")).toEqual(["[claude] add refused", "[codex] not on PATH"]);
   });
 });
