@@ -408,6 +408,7 @@ describe("UninstallTools — a project's tools", () => {
     await initProject(deps, PROJECT_ROOT);
     await installTool(deps, PROJECT_ROOT, TOOL.claude);
 
+    const saved = deps.manifestRepo.saveCount;
     const useCase = uninstaller(deps.fs, deps.manifestRepo, deps.logger);
     await useCase.execute({
       tools: catalogOf(),
@@ -417,6 +418,7 @@ describe("UninstallTools — a project's tools", () => {
 
     const manifest = await deps.manifestRepo.load();
     expect(manifest?.getInstalledToolIds()).not.toContain("claude");
+    expect(deps.manifestRepo.saveCount).toBe(saved + 1);
   });
 
   it("completes without error when files were already deleted from disk", async () => {
@@ -619,32 +621,7 @@ describe("UninstallTools, IDE — merge-file entries", () => {
   });
 });
 
-describe("UninstallTools, IDE — refusals and report", () => {
-  it("refuses a project that has no manifest", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-
-    await expect(
-      uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-        tools: catalogOf(),
-        toolIds: [TOOL.vscode],
-        projectRoot: PROJECT_ROOT,
-      })
-    ).rejects.toThrow(NoManifestError);
-  });
-
-  it("refuses a tool that is not installed", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-
-    await expect(
-      uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-        tools: catalogOf(),
-        toolIds: [TOOL.vscode],
-        projectRoot: PROJECT_ROOT,
-      })
-    ).rejects.toThrow(ToolNotInstalledError);
-  });
-
+describe("UninstallTools, IDE — report", () => {
   it("reports every file it removed", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);

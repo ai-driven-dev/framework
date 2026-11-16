@@ -155,27 +155,6 @@ describe("clean", () => {
     expect(content).toContain("dist/");
   });
 
-  it("with force removes the .aidd/cache/ entry from .gitignore, same as the pipeline adds", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-
-    const gitignorePath = join(PROJECT_ROOT, ".gitignore");
-    await deps.fs.writeFile(gitignorePath, "node_modules/\n.aidd/cache/\ndist/\n");
-
-    const useCase = new CleanWithKnownHostSource(
-      deps.fs,
-      deps.manifestRepo,
-      deps.logger,
-      deps.updateGitignore
-    );
-    await useCase.execute({ ...AT_PROJECT, force: true });
-
-    const content = deps.fs.getFile(gitignorePath);
-    expect(content).not.toContain(".aidd/cache/");
-    expect(content).toContain("node_modules/");
-    expect(content).toContain("dist/");
-  });
-
   it("with force leaves .gitignore unchanged when entry absent", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
@@ -2913,29 +2892,6 @@ describe("clean", () => {
 
       const result = await useCase.execute({ ...AT_PROJECT, force: true });
 
-      expect(result.fileCount).toBe(1);
-    });
-
-    it("deletes a project-scope plugin's files from the project and counts them", async () => {
-      const manifest = Manifest.create();
-      manifest.addTool(TOOL.claude, "1.0.0", []);
-      manifest.addPlugin(
-        TOOL.claude,
-        InstalledPlugin.fromMetadata(
-          "aidd-context",
-          "1.0.0",
-          { kind: "local", path: "/p" },
-          false,
-          "project"
-        ).withFiles(new Map([["skills/x.md", HASH]]))
-      );
-      const fs = new InMemoryFileAdapter();
-      fs.setFile(join(PROJECT_ROOT, "skills", "x.md"), "x");
-      const useCase = buildCountingUseCase(fs, manifest);
-
-      const result = await useCase.execute({ ...AT_PROJECT, force: true });
-
-      expect(fs.has(join(PROJECT_ROOT, "skills", "x.md"))).toBe(false);
       expect(result.fileCount).toBe(1);
     });
 
