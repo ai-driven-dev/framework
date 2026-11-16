@@ -892,6 +892,29 @@ describe("aidd-ui showcase", () => {
       assert.doesNotMatch(drawer, /data-record="(start-screen|bare)"[^>]*data-dressed-by/);
     });
 
+    it("takes a wireframe out of the review once a screen that dresses it is settled, and keeps its own page", () => {
+      const render = "<html><head></head><body><main data-state=\"default\">x</main></body></html>";
+      put(tmp, `${UI}/wireframes/start.md`, record(["id: start", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/wireframes/start.html`, render);
+      put(tmp, `${UI}/screens/start-screen.md`, record(["id: start-screen", "kind: screen", "status: proposed", "version: 1", "wireframe: start", "states: [default]"], "# Start"));
+      put(tmp, `${UI}/screens/start-screen.html`, render);
+      put(tmp, `${UI}/screens/other-screen.md`, record(["id: other-screen", "kind: screen", "status: proposed", "version: 1", "wireframe: start", "states: [default]"], "# Other"));
+      put(tmp, `${UI}/screens/other-screen.html`, render);
+      put(tmp, `${UI}/wireframes/bare.md`, record(["id: bare", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Bare"));
+      put(tmp, `${UI}/wireframes/bare.html`, render);
+      const first = pagesOf();
+      assert.match(first["index.html"].match(/<aside class="drawer"[\s\S]*?<\/aside>/)[0], /data-record="start"/, "listed while no dressing screen is settled");
+      verdicts(["start-screen", "default", "1", "ok", ""]);
+      const pages = pagesOf();
+      const index = pages["index.html"];
+      const drawer = index.match(/<aside class="drawer"[\s\S]*?<\/aside>/)[0];
+      assert.doesNotMatch(drawer, /data-record="start"/);
+      assert.match(drawer, /data-record="bare"/);
+      assert.match(drawer, /data-step="screens"[^>]*>(?:(?!<\/summary>)[\s\S])*<span class="step-count">\(3\)<\/span>/);
+      assert.match(index, /<h2>To review \(7\)<\/h2>/);
+      assert.match(pages["start.html"], /class="verdict"/, "its own page keeps the verdict buttons");
+    });
+
     it("tells the dressed wireframe from its screen by the kind in its drawer title", () => {
       const render = "<html><head></head><body><main data-state=\"default\">x</main></body></html>";
       put(tmp, `${UI}/wireframes/start.md`, record(["id: start", "kind: wireframe", "status: proposed", "version: 1", "states: [default]"], "# Start"));
@@ -964,11 +987,11 @@ describe("aidd-ui showcase", () => {
     });
 
     it("leaves a settled record out of the drawer, ok or revise alike, and its settled states out of a record kept", () => {
-      verdicts(...HOME_STATES.map((state) => ["home", state, "1", "ok", ""]), ["search-flow", "default", "1", "revise", "too pale"]);
+      verdicts(...HOME_STATES.map((state) => ["home", state, "1", "ok", ""]), ["button", "default", "1", "revise", "too pale"]);
       const index = pagesOf()["index.html"];
-      assert.ok(!itemsOf(index).some((item) => ["home"].includes(item.record)));
-      assert.equal(itemsOf(index).find((item) => item.record === "search-flow")?.html.match(/class="pstate"/g).length, 1);
-      assert.match(drawerOf(index), /data-step="screens"><summary><span class="step-name">Screens<\/span><span class="step-count">\(1\)<\/span>/);
+      assert.ok(!itemsOf(index).some((item) => ["home", "search-flow"].includes(item.record)));
+      assert.equal(itemsOf(index).find((item) => item.record === "button")?.html.match(/class="pstate"/g).length, 3);
+      assert.doesNotMatch(drawerOf(index), /data-step="screens"/);
     });
 
     it("counts the records and open sets awaiting review, not the states, in the button and in the drawer, in the language", () => {
@@ -1491,9 +1514,9 @@ describe("aidd-ui showcase", () => {
     });
 
     it("opens every group of the drawer when it holds three records or fewer", () => {
-      awaitingBrandAndSystem("search-flow");
+      awaitingBrandAndSystem("button");
       assert.equal(itemsOf(pagesOf()["index.html"]).length, 3);
-      assert.deepEqual(groupsOf(pagesOf()["index.html"]), [["identity", true], ["foundations", true], ["screens", true]]);
+      assert.deepEqual(groupsOf(pagesOf()["index.html"]), [["identity", true], ["foundations", true], ["components", true]]);
     });
 
     it("opens only the group of the page when the drawer holds four records", () => {

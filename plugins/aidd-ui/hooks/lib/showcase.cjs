@@ -779,7 +779,7 @@ function paint() {
     });
     if (own < rows.length) unsettled.push(item);
   }
-  left += unsettled.filter((item) => !(item.dataset.dressedBy && unsettled.some((other) => other.dataset.record === item.dataset.dressedBy))).length;
+  left += unsettled.filter((item) => !item.dataset.dressedBy).length;
   for (const set of sets) {
     let decided = 0;
     for (const row of variantsOf(set)) {
@@ -1020,12 +1020,14 @@ const leftWordOf = (labels, each) => (each.todo ? filled(labels.toReview, { coun
 /** What each step holds and what in it awaits review: its records, its sets, the records with a render and a state
  * not settled, the open sets, and the records the drawer cannot review that are still proposed. `todo` counts records
  * and open sets, never states, a wireframe awaiting beside the awaiting screen that dresses it once (`dressedBy` names
- * that screen, `counted` is what is left), and leaves the proposed ones out: the drawer cannot clear them. */
+ * that screen, `counted` is what is left), and leaves the proposed ones out: the drawer cannot clear them. A wireframe
+ * leaves the review once one screen that dresses it has nothing left awaiting. */
 function stepsOf({ project, records, rows, sets }) {
+  const settledWireframes = new Set(records.filter((record) => fm(record).kind === "screen" && fm(record).wireframe && reviewable(project, record) && !awaitingOf(rows, record).length).map((record) => fm(record).wireframe));
   return STEPS.map((step) => {
     const own = records.filter((record) => stepOf(record) === step);
     const ownSets = sets.filter((set) => setStepOf(set) === step);
-    const awaiting = own.filter((record) => reviewable(project, record) && awaitingOf(rows, record).length).sort(byCategory);
+    const awaiting = own.filter((record) => reviewable(project, record) && awaitingOf(rows, record).length && !settledWireframes.has(fm(record).id)).sort(byCategory);
     const open = ownSets.filter((set) => !set.problems.length);
     const dressedBy = new Map(awaiting.filter((record) => fm(record).kind === "screen" && fm(record).wireframe).map((record) => [fm(record).wireframe, fm(record).id]));
     const counted = awaiting.filter((record) => !(fm(record).kind === "wireframe" && dressedBy.has(fm(record).id)));

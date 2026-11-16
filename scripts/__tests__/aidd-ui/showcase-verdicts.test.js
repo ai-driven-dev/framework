@@ -84,11 +84,11 @@ describe("the verdicts beside the state tabs", () => {
       return JSON.parse(page.written[0].replace(/^```json\n|\n```\n$/g, ""))[0].verdicts.map((each) => [each.state, each.verdict, each.comment]);
     };
 
-    it("counts a wireframe awaiting beside the screen that dresses it once, and alone once that screen is settled", () => {
+    it("counts a wireframe awaiting beside the screen that dresses it once, and never alone once that screen is settled", () => {
       const page = open({}, { beside: [["wire", "screen"], ["screen"], ["bare"]] });
       assert.equal(page.tally.textContent, "3 to review", "home, screen and bare count, the wireframe the screen dresses does not");
       const settledScreen = open({}, { beside: [["wire", "screen"], ["bare"]] });
-      assert.equal(settledScreen.tally.textContent, "3 to review", "with no awaiting screen beside it the wireframe counts for itself");
+      assert.equal(settledScreen.tally.textContent, "2 to review", "with no awaiting screen beside it the wireframe has left the review");
     });
 
     it("gives the verdict of the shown state under the key and the values the drawer keeps", () => {
