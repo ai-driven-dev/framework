@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { legsOf } from "../../scripts/mutation-scopes-to-run.mjs";
 import {
   aggregateVerdict,
+  cutScope,
   inScope,
   mergeReports,
+  mutantCountOf,
   partition,
   scopeFiles,
   shardFiles,
@@ -35,12 +37,10 @@ describe("splitting a scope into shards", () => {
     expect(scopes.canary?.shards).toBeUndefined();
   });
 
-  it.each(sharded)("partitions %s: every file once, in exactly one shard", (_name, scope) => {
+  it.each(sharded)("partitions %s: every file once, in exactly one shard", async (_name, scope) => {
     const all = scopeFiles(scope.mutate, sourceFiles());
     const of = scope.shards ?? 1;
-    const parts = Array.from({ length: of }, (_, i) =>
-      shardFiles(scope.mutate, sourceFiles(), i + 1, of)
-    );
+    const parts = await cutScope(scope.mutate, sourceFiles(), of);
     expect(parts.flat().sort()).toEqual(all);
     expect(new Set(parts.flat()).size).toBe(all.length);
     for (const part of parts) expect(part.length).toBeGreaterThan(0);
@@ -62,13 +62,21 @@ describe("splitting a scope into shards", () => {
     expect(cut()).toEqual(cut());
   });
 
+  it("weighs a file by the mutants Stryker generates in it, not by its lines", async () => {
+    const comments = `${"// a long comment, no mutant\n".repeat(50)}`;
+    expect(await mutantCountOf(comments)).toBe(0);
+    expect(await mutantCountOf("export const sum = 1 + 2;\n")).toBe(1);
+  });
+
   it.each(sharded)(
-    "keeps the heaviest shard of %s within a quarter of its fair share, or its heaviest file",
-    (name, scope) => {
+    "keeps the heaviest shard of %s within a quarter of its fair share, or its heaviest file, in mutants",
+    async (name, scope) => {
       const of = scope.shards ?? 1;
-      const parts = partition(scope.mutate, sourceFiles(), of);
+      const parts = await cutScope(scope.mutate, sourceFiles(), of);
+      const mutants = new Map<string, number>();
+      for (const file of parts.flat()) mutants.set(file, await mutantCountOf(read(file), file));
       const weight = (files: string[]) =>
-        files.reduce((sum, file) => sum + read(file).split("\n").length, 0);
+        files.reduce((sum, file) => sum + (mutants.get(file) ?? 0), 0);
       const fair = weight(parts.flat()) / of;
       const heaviestFile = Math.max(...parts.flat().map((file) => weight([file])));
       expect(Math.max(...parts.map(weight)), name).toBeLessThanOrEqual(

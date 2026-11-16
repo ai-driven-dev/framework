@@ -11,7 +11,13 @@ import {
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { aggregateVerdict, mergeReports, shardFiles, sourceFiles } from "./mutation-shards.mjs";
+import {
+  aggregateVerdict,
+  cutScope,
+  mergeReports,
+  scopeWeights,
+  sourceFiles,
+} from "./mutation-shards.mjs";
 
 const CLI_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const REPORT_ROOT = join(CLI_ROOT, "reports", "mutation");
@@ -227,12 +233,12 @@ function mainChanged(base = "origin/next") {
 }
 
 /** One shard of a scope: its files only, no floor. The aggregate scores the scope. */
-function mainShard(scope, scopes, text, force) {
+async function mainShard(scope, scopes, text, force) {
   const { shard, of } = parseShard(text, scopes[scope]);
   const dir = `reports/mutation/${scope}/shard-${shard}-of-${of}`;
   mkdirSync(join(CLI_ROOT, dir), { recursive: true });
   pruneIncrementalFile(join(CLI_ROOT, dir, "incremental.json"));
-  const files = shardFiles(scopes[scope].mutate, sourceFiles(), shard, of);
+  const files = (await cutScope(scopes[scope].mutate, sourceFiles(), of))[shard - 1];
   writeFileSync(join(CLI_ROOT, dir, "manifest.json"), JSON.stringify({ scope, shard, of, files }));
   const tempDirName = `.stryker-tmp-${scope}-${shard}`;
   const base = JSON.parse(readFileSync(join(CLI_ROOT, "stryker.conf.json"), "utf8"));
@@ -252,7 +258,7 @@ function mainShard(scope, scopes, text, force) {
 }
 
 /** Scores a sharded scope once, over every shard's report in `from`, against its floor. */
-function mainAggregate(scope, scopes, from) {
+async function mainAggregate(scope, scopes, from) {
   const declared = scopes[scope];
   if (from === undefined || !existsSync(from)) {
     console.error(`${scope}: no shard report was found${from === undefined ? "" : ` in ${from}`}`);
@@ -266,11 +272,13 @@ function mainAggregate(scope, scopes, from) {
       report: JSON.parse(readFileSync(join(dir, "mutation.json"), "utf8")),
     }))
     .filter((shard) => shard.manifest.scope === scope);
+  const files = sourceFiles();
   const problem = aggregateVerdict({
     mutate: declared.mutate,
-    files: sourceFiles(),
+    files,
     of: declared.shards ?? 1,
     shards,
+    weightOf: await scopeWeights(declared.mutate, files),
   });
   if (problem !== null) {
     console.error(`${scope}: ${problem}`);
@@ -289,7 +297,7 @@ function mainAggregate(scope, scopes, from) {
   }
 }
 
-function main() {
+async function main() {
   const scopes = loadScopes();
   const [scope, ...flags] = process.argv.slice(2);
   if (scope === "--changed") return mainChanged(flags[0]);
@@ -333,5 +341,5 @@ function main() {
 }
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main();
+  await main();
 }
