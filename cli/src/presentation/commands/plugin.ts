@@ -11,10 +11,10 @@ import {
   printPluginsUpdated,
   printSearchHits,
 } from "../display/plugin-display.js";
+import { syncNativeActivation } from "../display/sync-native-activation.js";
 import { ErrorHandler } from "../error-handler.js";
 import { parseGlobalOptions } from "./global-options.js";
 import { spawnCliCommand } from "./spawn-cli-command.js";
-import { syncNativeActivation } from "./sync-native-activation.js";
 
 /** What this command reads of the graph. */
 type PluginKeys =

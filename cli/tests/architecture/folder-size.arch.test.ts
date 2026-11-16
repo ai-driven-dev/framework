@@ -16,11 +16,11 @@ const BASELINE: readonly { readonly path: string; readonly count: number }[] = [
   // Eleven files carry the command surface, plus three helpers no other folder imports. That
   // is the flattest mapping from the CLI's surface to its source; moving the helpers out
   // would leave eleven, still over the limit and clearer about nothing.
-  { path: "src/presentation/commands", count: 15 },
+  { path: "src/presentation/commands", count: 14 },
   // One display module per command, mirroring `presentation/commands/`: that mirror is what
   // lets a command's rendering be asserted without running the binary. Fewer files would mean
   // one module rendering several commands, which is what put the printing in the actions.
-  { path: "src/presentation/display", count: 15 },
+  { path: "src/presentation/display", count: 16 },
 ];
 
 /** A subfolder counts toward itself, not toward its parent. */

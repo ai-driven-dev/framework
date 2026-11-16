@@ -15,10 +15,10 @@ import {
   printInstalledRules,
   printInstalledRulesJson,
 } from "../display/installed-rules-display.js";
+import { reportSyncActivation } from "../display/sync-native-activation.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
-import { reportSyncActivation } from "./sync-native-activation.js";
 
 /** What this command reads of the graph. */
 type FrameworkKeys =
