@@ -48,12 +48,14 @@ function gitDirectory() {
 }
 const GIT_DIR_ON_PATH = gitDirectory();
 
-/** git as a test sets a repository up: never through a variable a commit hook exported. */
+/** git as a test sets a repository up: never through a variable a commit hook exported.
+ * No auto maintenance: a commit detaches it, and its lock in `.git/objects` can vanish under a copy. */
 function git(cwd, ...args) {
   const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith("GIT_")));
+  const config = ["user.name=t", "user.email=t@t", "commit.gpgsign=false", "maintenance.auto=false"];
   const run = spawnSync(
     "git",
-    ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", ...args],
+    [...config.flatMap((c) => ["-c", c]), ...args],
     { cwd, env, encoding: "utf8" }
   );
   assert.equal(run.status, 0, `git ${args.join(" ")}: ${run.stderr}`);

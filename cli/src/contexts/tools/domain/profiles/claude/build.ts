@@ -7,39 +7,34 @@
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
   genericFlatAgentPath,
-  genericFlatHooksFile,
-  genericFlatHooksScriptPath,
   genericFlatSkillPath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
 import type { ToolBuildContract } from "../../build-contract.js";
-import { mergeClaudeSettingsHooks } from "../../formats/flat-hooks-merge.js";
-import { CLAUDE_PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { flatHooksArtifact, pluginTreeHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { mergeVscodeMcp } from "../../formats/vscode-mcp-merge.js";
 import {
   buildClaudeStyleEntry,
   buildClaudeStyleMarketplace,
   synthesizeClaudeStyleManifest,
-  transformClaudeAgent,
 } from "../../marketplace-catalog.js";
+import { claudeAgentFrontmatter } from "./claude-agent.js";
 import {
   OUTPUT_CLAUDE_MANIFEST_RELATIVE,
   OUTPUT_CLAUDE_MARKETPLACE_RELATIVE,
 } from "./claude-build-paths.js";
+import { CLAUDE_HOOKS } from "./hooks.js";
 
 export function buildClaudeContract(): ToolBuildContract {
   const manifestRelative = OUTPUT_CLAUDE_MANIFEST_RELATIVE;
   const marketplaceRelative = OUTPUT_CLAUDE_MARKETPLACE_RELATIVE;
   return {
-    pluginRootToken: CLAUDE_PLUGIN_ROOT_TOKEN,
+    pluginRootToken: CLAUDE_HOOKS.rootToken,
     manifestFileRelative: manifestRelative,
     synthesizeManifest: (source, presence) =>
       synthesizeClaudeStyleManifest(source, presence, {
         agentsField: true,
-        // Claude Code loads ./hooks/hooks.json by its own convention and rejects the plugin
-        // outright when a manifest names it too — "Duplicate hooks file detected". The hooks
-        // fired anyway, so the plugin read as failed while working.
-        hooksField: false,
+        hooksField: CLAUDE_HOOKS.manifestNamesHooks,
       }),
     manifestSchemaName: "plugin-manifest",
     artifacts: {
@@ -59,11 +54,7 @@ export function buildClaudeContract(): ToolBuildContract {
         source: { kind: "configFile", srcPath: ".mcp.json" },
         path: () => ".mcp.json",
       },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: (_p, rel) => rel,
-      },
+      hooks: pluginTreeHooksArtifact(CLAUDE_HOOKS),
       rules: { supported: false },
       commands: { supported: false },
     },
@@ -88,10 +79,12 @@ function claudeFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillPath(".claude/skills/", plugin, rel.replace(/^skills\//, ""));
 }
 
-function claudeFlatHooksPath(plugin: string, rel: string): string {
-  const rest = rel.replace(/^hooks\//, "");
-  if (rest === `${plugin}.hooks.json`) return genericFlatHooksFile(".claude/hooks/", plugin);
-  return genericFlatHooksScriptPath(".claude/hooks/", plugin, rest);
+function transformClaudeAgent(content: string, _plugin: string, outName: string): string {
+  const { frontmatter, body } = parseFrontmatter(content);
+  const rewrittenBody = rewriteRelativeLinks(body, {
+    currentFilePluginRelative: `agents/${outName}`,
+  });
+  return serializeFrontmatter(claudeAgentFrontmatter(frontmatter), rewrittenBody);
 }
 
 function claudeFlatResolveTarget(plugin: string, rel: string): string {
@@ -107,8 +100,8 @@ function transformClaudeFlatAgent(content: string, plugin: string, outName: stri
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => claudeFlatResolveTarget(plugin, rel),
   });
-  const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  return serializeFrontmatter({ ...frontmatter, name: prefixedName }, rewrittenBody);
+  const name = `${plugin}-${outName.replace(/\.md$/, "")}`;
+  return serializeFrontmatter(claudeAgentFrontmatter({ ...frontmatter, name }), rewrittenBody);
 }
 
 export function buildClaudeFlatContract(): ToolBuildContract {
@@ -138,13 +131,7 @@ export function buildClaudeFlatContract(): ToolBuildContract {
         mcpServersKey: "mcpServers",
         mergeDest: (outDir) => `${outDir}/.mcp.json`,
       },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: claudeFlatHooksPath,
-        hooksMerge: (existing, incoming) => mergeClaudeSettingsHooks(existing, incoming),
-        hooksMergeDest: (outDir) => `${outDir}/.claude/settings.json`,
-      },
+      hooks: flatHooksArtifact(CLAUDE_HOOKS, { tool: "claude" }),
       rules: { supported: false },
       commands: { supported: false },
     },

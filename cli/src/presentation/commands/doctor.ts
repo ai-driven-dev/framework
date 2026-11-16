@@ -16,7 +16,7 @@ import {
 } from "../display/doctor-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
-import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
+import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./global-options.js";
 
 type Deps = Awaited<ReturnType<typeof createDeps>>;
 
@@ -109,14 +109,14 @@ async function runUserScopeDoctor(
   projectRoot: string,
   cmdOptions: DoctorCmdOptions
 ): Promise<void> {
-  // No plugin is tracked at user scope yet — there is nothing `--plugin` could narrow —
-  // so it is refused rather than silently read and discarded.
+  // At user scope doctor checks registrations, not plugin files — there is nothing `--plugin`
+  // could narrow — so it is refused rather than silently read and discarded.
   if (cmdOptions.plugin !== undefined) {
     throw new UserScopeFilterUnsupportedError("--plugin", "doctor --plugin <name>");
   }
   const manifest = await deps.userManifestRepo.load();
   if (manifest === null) {
-    output.success("Nothing registered at user scope yet — run `aidd setup --scope user` first.");
+    output.success("Nothing registered at user scope yet — run `aidd setup --global` first.");
     return;
   }
   const toolId = cmdOptions.tool as ToolId | undefined;
@@ -139,6 +139,7 @@ async function runUserScopeDoctor(
     manifest,
     projectRoot,
     allowedIds,
+    globalInstall: true,
   });
   printScopeIssues(output, "User scope", { issues });
   const healthy = issues.every((i) => i.severity !== "error");
@@ -153,6 +154,7 @@ interface DoctorCmdOptions {
   tool?: string;
   plugin?: string;
   scope?: string;
+  global?: boolean;
 }
 
 export function registerDoctorCommand(program: Command): void {
@@ -168,12 +170,13 @@ export function registerDoctorCommand(program: Command): void {
       "project (default) checks this project's own manifest; user checks the " +
         "machine-wide manifest --scope user setup wrote"
     )
+    .option("--global", GLOBAL_FLAG_HELP)
     .action(async (cmdOptions: DoctorCmdOptions) => {
       const { verbose, output, projectRoot } = parseGlobalOptions(program);
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const scope = parseScopeFlag(cmdOptions.scope, output) ?? "project";
+        const scope = resolveScopeFlags(cmdOptions, output) ?? "project";
         if (scope === "user") {
           await runUserScopeDoctor(deps, output, projectRoot, cmdOptions);
         } else if (cmdOptions.tool !== undefined) {

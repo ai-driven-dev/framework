@@ -56,7 +56,7 @@ jobs:
       # HEAD, not the index: the generators already staged, so a plain `git diff` is empty.
       - name: Fail if a generated file drifted from what pre-commit regenerated
         run: |
-          if ! git diff --exit-code HEAD -- 'plugins/*/CATALOG.md' README.md; then
+          if ! git diff --exit-code HEAD -- 'plugins/*/CATALOG.md' README.md docs/ARCHITECTURE.md docs/COMPATIBILITY.md 'docs/assets/plugins/*.svg'; then
             echo "::error::A generated file is stale. Run 'pnpm exec lefthook run pre-commit --all-files --force' locally and commit the result."
             exit 1
           fi

@@ -185,7 +185,7 @@ describe("FrameworkBuildUseCase", () => {
       expect(fs.has(`${OUT_DIR}/plugins/aidd-test/agents/code-reviewer.agent.md`)).toBe(false);
     });
 
-    it("preserves all frontmatter fields from agents (OpenPlugin does not strip)", async () => {
+    it("keeps only the agent fields Copilot reads", async () => {
       const agentPath = `${SOURCE_DIR}/plugins/aidd-test/agents/extra.md`;
       fs.setFile(
         agentPath,
@@ -196,8 +196,8 @@ describe("FrameworkBuildUseCase", () => {
       const out = fs.getFile(`${OUT_DIR}/plugins/aidd-test/agents/extra.md`) ?? "";
       expect(out).toContain("name: 'extra'");
       expect(out).toContain("description: 'desc'");
-      expect(out).toContain("version");
-      expect(out).toContain("tags");
+      expect(out).not.toContain("version");
+      expect(out).not.toContain("tags");
     });
   });
 

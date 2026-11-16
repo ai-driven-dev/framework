@@ -104,7 +104,7 @@ test("categories require level-four steps and cannot parent earlier steps", () =
     recipe(command, "### Beginner\n\n#### Unnumbered step"),
     "category-depth",
     9,
-    "Use level 3 for a category and level 4 only for its numbered steps."
+    "Use level 4 for numbered category steps or subsections of a direct numbered step."
   );
 });
 
@@ -116,6 +116,41 @@ test("direct steps stay at level three", () => {
     "Use level 3 for direct numbered steps."
   );
 });
+
+test("direct numbered steps allow unnumbered level-four subsections", () => {
+  const content = recipe(
+    `#### Version control\n\n${command}\n\n#### Database\n\n${command}\n\n### 2) 🔌 Connect\n\n#### Authentication\n\n${command}`
+  );
+  assert.deepEqual(inspectRecipe(file, content).findings, []);
+});
+
+test("unnumbered level-four subsections require a direct numbered parent", () => {
+  for (const heading of [
+    "#### Orphan subsection",
+    "### 1. ✅ Check readiness\n\n#### Subsection",
+    "### 1) ✅ Check readiness\n\n### Beginner\n\n#### Subsection",
+    "### Beginner\n\n#### 1) ✅ Check readiness\n\n#### Subsection",
+  ]) {
+    assert.equal(
+      inspectRecipe(file, recipe(command, heading)).findings.some(
+        (item) => item.rule === "category-depth"
+      ),
+      true
+    );
+  }
+});
+
+test.each(["#### 2. 🔌 Connect", "#### 2 🔌 Connect"])(
+  "subsections do not hide malformed numbered step heading %s",
+  (heading) => {
+    finding(
+      recipe(`${heading}\n\n${command}`),
+      "step-heading",
+      9,
+      "Use `### N) <emoji> Title`, or `#### N) <emoji> Title` below a category."
+    );
+  }
+);
 
 test("step numbering continues across categories instead of restarting", () => {
   const content = recipe(

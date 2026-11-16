@@ -109,6 +109,12 @@ describe("parseFrontmatter, line by line", () => {
 });
 
 describe("serializeFrontmatter, line by line", () => {
+  it("writes double-quoted strings on request, escaping what YAML needs", () => {
+    expect(serializeFrontmatter({ a: `it's "x"\\` }, "body", "double")).toBe(
+      '---\na: "it\'s \\"x\\"\\\\"\n---\nbody'
+    );
+  });
+
   it("quotes a value that only starts with a bracket", () => {
     expect(serializeFrontmatter({ a: "[open" }, "body")).toBe("---\na: '[open'\n---\nbody");
   });

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { PluginsCapability } from "../../../../src/contexts/tools/domain/capabilities/plugins-capability.js";
+import { antigravity } from "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
 import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import { parseToml } from "../../../../src/contexts/tools/domain/profiles/codex/toml.js";
 import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
@@ -14,7 +16,7 @@ import {
   PluginDistribution,
 } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import { FileHash } from "../../../../src/kernel/file.js";
-import { parseFrontmatter } from "../../../../src/kernel/markdown.js";
+import { parseFrontmatter, serializeFrontmatter } from "../../../../src/kernel/markdown.js";
 
 const stubHasher = { hash: (_content: string) => new FileHash("a".repeat(32)) };
 const translator = new PluginContentTranslator(stubHasher);
@@ -84,6 +86,62 @@ function pathsFor(tool: ToolConfig, dist = makeDist()): string[] {
 }
 
 describe("PluginContentTranslator.translate()", () => {
+  it.each([
+    [
+      "claude",
+      claude,
+      ".claude/plugins/aidd-dev/agents/reviewer.md",
+      { model: "claude-haiku-5-5", effort: "medium" },
+    ],
+    [
+      "codex",
+      codex,
+      ".codex/plugins/aidd-dev/agents/reviewer.toml",
+      { model: "gpt-6-luna", model_reasoning_effort: "medium" },
+    ],
+    [
+      "copilot",
+      copilot,
+      ".github/plugins/aidd-dev/agents/reviewer.agent.md",
+      { model: "gpt-6-luna", reasoningEffort: "medium" },
+    ],
+    [
+      "opencode",
+      opencode,
+      ".opencode/agents/aidd-dev-reviewer.md",
+      { model: "openai/gpt-6-luna#medium" },
+    ],
+  ] as const)(
+    "carries %s's model and Claude's effort, under the host's own key, through ordinary installation",
+    (label, host, path, expected) => {
+      const base = makeDist({ manifest: { name: "aidd-dev", version: "1.0.0" } });
+      const agent = makeFile(
+        "agents/reviewer.md",
+        serializeFrontmatter(
+          {
+            name: "reviewer",
+            description: "Role",
+            model: expected.model.replace(/#.*$/, ""),
+            effort: "medium",
+          },
+          "Reviewer agent from sample-plugin."
+        )
+      );
+      const dist = makeDist({
+        manifest: base.manifest,
+        files: base.files.map((file) => (file.relativePath === agent.relativePath ? agent : file)),
+        components: { ...base.components, agents: [agent] },
+      });
+      const installed = translator.translate(dist, host).find((file) => file.relativePath === path);
+      expect(installed).toBeDefined();
+      const content = installed?.content ?? "";
+      expect(
+        label === "codex" ? parseToml(content) : parseFrontmatter(content).frontmatter
+      ).toMatchObject(expected);
+      expect(content).toContain("Reviewer agent from sample-plugin.");
+    }
+  );
+
   describe("claude target", () => {
     it("emits all components claude supports under .claude/plugins/sample-plugin/", () => {
       const paths = pathsFor(claude);
@@ -238,8 +296,8 @@ describe("PluginContentTranslator.translate()", () => {
       expect(greet?.content).toContain("name: 'aidd-sample-plugin:greet'");
     });
 
-    it("emits agents under .opencode/agents/sample-plugin/", () => {
-      expect(pathsFor(opencode)).toContain(".opencode/agents/sample-plugin/reviewer.md");
+    it("emits agents at their native flat path", () => {
+      expect(pathsFor(opencode)).toContain(".opencode/agents/sample-plugin-reviewer.md");
     });
 
     it("emits skills under .opencode/skills/sample-plugin/", () => {
@@ -248,6 +306,15 @@ describe("PluginContentTranslator.translate()", () => {
 
     it("emits rules under .opencode/rules/sample-plugin/", () => {
       expect(pathsFor(opencode)).toContain(".opencode/rules/sample-plugin/standards.md");
+    });
+  });
+
+  describe("antigravity target (flat mode, one-level skills)", () => {
+    it("emits a skill as .agents/skills/<plugin>-<skill>/, never nested under the plugin", () => {
+      expect(pathsFor(antigravity)).toEqual([
+        ".agents/agents/sample-plugin-reviewer/agent.md",
+        ".agents/skills/sample-plugin-hello/SKILL.md",
+      ]);
     });
   });
 
@@ -480,17 +547,6 @@ describe("a plugin's hooks", () => {
       ".codex/plugins/sample-plugin/hooks/hooks.json": hooksManifestFor(CODEX_ROOT_TOKEN),
       ".codex/plugins/sample-plugin/hooks/lib/check.sh": hookScriptContent,
       ".codex/plugins/sample-plugin/plugin.json": claudeManifestContent,
-    });
-  });
-
-  it("flattens the manifest into the shape cursor reads and keeps the scripts under hooks/", () => {
-    expect(treeOf(cursor, hooksDist())).toEqual({
-      "sample-plugin/hooks.json": JSON.stringify(
-        { hooks: { preToolUse: [{ type: "command", command: "./hooks/check.sh" }] } },
-        null,
-        2
-      ),
-      "sample-plugin/hooks/lib/check.sh": hookScriptContent,
     });
   });
 

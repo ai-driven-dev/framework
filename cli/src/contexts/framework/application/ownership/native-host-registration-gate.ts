@@ -95,7 +95,8 @@ export class NativeHostRegistrationGate {
       reader,
       registration.hostName,
       owned,
-      projectRoot
+      projectRoot,
+      toolId
     );
     const refs = (registrations.pluginClaims ?? []).filter((claim) =>
       claim.ref.endsWith(`@${registration.hostName}`)

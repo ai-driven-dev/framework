@@ -16,7 +16,7 @@ test("a release renders its video once the release exists", () => {
 test("the video is rendered for the release's major.minor and attached to its tag", () => {
   assert.match(script, /render-release-video\.cjs --version "\$\{MINOR\}"/);
   assert.match(script, /MINOR="\$\{VERSION%\.\*\}"/);
-  assert.match(script, /gh release upload "\$\{TAG\}" release-video\.mp4 release-video\.json --clobber/);
+  assert.match(script, /gh release upload "\$\{TAG\}" release-video\.mp4 release-video\.json release-video\.png --clobber/);
 });
 
 test("the YouTube title and description are written for the tag and attached with the video", () => {
@@ -46,7 +46,7 @@ test("a draft cannot be the latest release, so latest is set when it is publishe
   assert.match(publishScript, /gh release edit "\$\{TAG\}" --draft=false --latest/);
 });
 
-test("the release is published once its bundle and distributions are attached, video or not", () => {
+test("the release is published once its bundle, distributions and video are attached", () => {
   assert.deepEqual(publish.needs.sort(), [
     "build-and-attach",
     "build-per-tool",
@@ -57,7 +57,7 @@ test("the release is published once its bundle and distributions are attached, v
   assert.match(publish.if, /always\(\)/);
   assert.match(publish.if, /needs\.build-and-attach\.result == 'success'/);
   assert.match(publish.if, /needs\.build-per-tool\.result == 'success'/);
-  assert.doesNotMatch(publish.if, /build-release-video/);
+  assert.match(publish.if, /needs\.build-release-video\.result == 'success'/);
 });
 
 test("publishing uses the App token so the release event reaches the other workflows", () => {

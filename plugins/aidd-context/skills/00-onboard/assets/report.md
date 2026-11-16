@@ -12,6 +12,7 @@ Your AIDD setup:
   Plugins     <installed>   ✅
   Tech stack  <✅ established | ❌ not chosen yet>
   Memory      <aidd_docs · N synced ✅ | ❌ not set up yet>
+  Access      <✅ checked | ❌ not checked yet; line dropped when memory was wired before this session>
 
 <state sentence>
 

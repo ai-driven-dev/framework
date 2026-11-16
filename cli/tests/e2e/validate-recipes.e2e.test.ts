@@ -1,7 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
 import { createTestEnv, runCli } from "./helpers.js";
 
 const RECIPE = [
@@ -45,14 +44,16 @@ describe("recipe validation through the built CLI", () => {
       const directory = join(env.projectDir, "aidd_docs", "recipes");
       await mkdir(directory, { recursive: true });
       await writeFile(join(directory, "project.md"), RECIPE);
-      const bundled = join(REPOSITORY_ROOT, "plugins/aidd-context/skills/12-cook/assets/recipes");
+      const bundled = join(env.projectDir, "bundled");
+      await mkdir(bundled);
+      await writeFile(join(bundled, "bundled.md"), RECIPE);
       const result = await runCli(
         ["framework", "validate-recipes", "--all", "--bundled", bundled],
         env.projectDir,
         env.fakeHome
       );
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toBe("PASS: 4 recipe(s) validated.\n");
+      expect(result.stdout).toBe("PASS: 2 recipe(s) validated.\n");
       expect(result.stderr).toBe("");
     } finally {
       await env.cleanup();

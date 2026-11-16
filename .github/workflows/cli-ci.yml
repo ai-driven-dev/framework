@@ -70,8 +70,13 @@ jobs:
               cli/*|kanban/*|scripts/__tests__/*|README.md)
                 relevant=true
                 ;;
-              # The identifier-join probe, and the hook predicates it judges the real tool by.
-              scripts/probe-identifier-join.cjs|scripts/check-claude-tokens-end-to-end.cjs|plugins/aidd-telemetry/hooks/*)
+              # The identifier-join probe and the token check, which judge the real tool by the hooks.
+              scripts/probe-identifier-join.cjs|scripts/check-claude-tokens-end-to-end.cjs)
+                relevant=true
+                ;;
+              # A plugin's bundled scripts and hooks: only the Windows and macOS jobs run them
+              # off Linux, where paths and line endings differ.
+              plugins/*/skills/*/scripts/*|plugins/*/hooks/*)
                 relevant=true
                 ;;
               # This file: a change to how the suite runs matches nothing else here, so the
@@ -578,6 +583,25 @@ jobs:
             --exclude "tests/e2e/persona.e2e.test.ts"
         # persona.e2e.test.ts needs /usr/bin/expect, which windows-latest does not carry.
 
+  macos:
+    # The plugin suite on macOS: scripts and bundled hooks touch paths, line endings and shells,
+    # and only Linux and Windows ran it. The Windows job covers the rest of that platform.
+    name: cli / macOS
+    needs: [changes]
+    if: needs.changes.outputs.relevant == 'true'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pnpm
+        run: corepack enable
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - run: pnpm install --frozen-lockfile
+      - run: cd cli && pnpm install --frozen-lockfile
+      - name: Plugin suite
+        run: node scripts/check-tests-leave-git-alone.js -- node --test 'scripts/__tests__/**/*.test.js'
+
   # Fan-in: every job above either ran and passed, or was skipped because `changes` found
   # nothing relevant. The one check the branch rulesets require — without it a pull request
   # merges with the real jobs red, because nothing names them.
@@ -680,6 +704,7 @@ jobs:
       - cli-mutation-score
       - kanban-checks
       - windows
+      - macos
     steps:
       - name: Fail unless changes decided cleanly and every gated job passed or was skipped
         run: |
@@ -702,7 +727,8 @@ jobs:
             "${{ needs.cli-mutation.result }}" \
             "${{ needs.cli-mutation-score.result }}" \
             "${{ needs.kanban-checks.result }}" \
-            "${{ needs.windows.result }}"; do
+            "${{ needs.windows.result }}" \
+            "${{ needs.macos.result }}"; do
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               echo "::error::a required job did not pass (result: $result)"
               exit 1

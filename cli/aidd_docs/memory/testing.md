@@ -18,6 +18,7 @@ How this package is tested: the layers, the tools, the conventions.
 ## Conventions
 
 - `tests/` mirrors `src/`; where it does not, the mirror is wrong.
+- A tool profile's tests split by feature: `tests/contexts/tools/domain/profiles/<tool>/<feature>.unit.test.ts` (`agents`, `skills`, `rules`, `commands`, `mcp`, `hooks`, `plugins`, `settings`, `content`), with the profile's own declarations in `profile.unit.test.ts`.
 - Doubles from `tests/helpers/ports/`. Substitute at the seam; never mock functional behaviour.
 - Fixtures in `tests/fixtures/`, read-only, excluded from JSON and link checks. Mutate a copy in a temp directory.
 - `.gitattributes`'s `tests/fixtures/** text eol=lf` keeps byte-for-byte comparisons (`manifest-round-trip.unit.test.ts`) passing on Windows.

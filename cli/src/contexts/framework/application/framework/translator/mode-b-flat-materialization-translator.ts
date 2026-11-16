@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { CursorProjectScopeUnsupportedError } from "../../../../../kernel/errors.js";
 import type { InstallationFile } from "../../../../../kernel/file.js";
 import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
@@ -16,11 +17,12 @@ import {
   type PluginScope,
   type ProjectHooksProvenance,
 } from "../../../domain/plugins/installed-plugin.js";
-import { writePluginFiles } from "../../plugin/plugin-helpers.js";
+import { isPluginFileAtDesiredState } from "../../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
   resolveScopeForInstall,
 } from "../../plugin/plugin-target-resolution.js";
+import type { ProjectHooksGuard } from "../../shared/remove-project-hooks.js";
 import { materializeFlatMcp, refreshTrackedMcpConfigHash } from "./flat-mcp-materializer.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 import { ProjectHooksMaterializer, withoutHooks } from "./project-hooks-materializer.js";
@@ -51,8 +53,9 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     marketplace: string | undefined,
     previousMcpEntries: ReadonlyMap<string, string> = new Map(),
     userScopeDirTaken = false,
-    previousProjectHooks?: ProjectHooksProvenance
-  ): Promise<{ skipped: ReadonlySkipList }> {
+    previousProjectHooks?: ProjectHooksProvenance,
+    hooksGuard: ProjectHooksGuard = {}
+  ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
     const ctx = this.resolveFlatToolContext(toolId, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
     const mcp = await materializeFlatMcp(
@@ -68,12 +71,13 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       dist,
       toolId,
       projectRoot,
-      previousProjectHooks
+      previousProjectHooks,
+      hooksGuard
     );
     const allSkipped: ReadonlySkipList = [...ctx.skipped, ...mcp.mcpSkips, ...hooks.skipped];
     if (ctx.files.length === 0 && mcp.mcpEntries.size === 0 && hooks.projectHooks === undefined)
       return { skipped: allSkipped };
-    await this.writeAndRegisterPlugin(
+    const written = await this.writeAndRegisterPlugin(
       dist,
       toolId,
       source,
@@ -86,7 +90,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       ctx.scope,
       manifest
     );
-    return { skipped: allSkipped };
+    return { skipped: allSkipped, written };
   }
 
   private resolveFlatToolContext(
@@ -129,8 +133,15 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
     baseDir: string,
     scope: PluginScope,
     manifest: Manifest
-  ): Promise<void> {
-    if (files.length > 0) await writePluginFiles(files, baseDir, this.fs);
+  ): Promise<number> {
+    let written = 0;
+    for (const file of files) {
+      const outputPath = join(baseDir, file.relativePath);
+      if (await isPluginFileAtDesiredState(this.fs, this.hasher, outputPath, file.hash.value))
+        continue;
+      await this.fs.writeFile(outputPath, file.content);
+      written++;
+    }
     const plugin = InstalledPlugin.fromDistributionWithMcp(
       dist,
       source,
@@ -141,5 +152,6 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
       marketplace
     );
     manifest.addPlugin(toolId, InstalledPlugin.withProjectHooks(plugin, projectHooks));
+    return written;
   }
 }

@@ -17,7 +17,6 @@ import type {
 } from "../../tools/domain/models/plugin-install-notice.js";
 import type { ToolConfig } from "../../tools/domain/registry.js";
 import { isAiTool } from "../../tools/domain/registry.js";
-import { convertHooksFormat } from "./formats/cursor-hooks.js";
 import { rewritePluginRootToken } from "./formats/plugin-root-token-rewrite.js";
 import type { PluginComponentFile, PluginDistribution } from "./plugin-distribution.js";
 import type { PluginTranslationSkip, ReadonlySkipList } from "./plugin-translation-skip.js";
@@ -139,10 +138,11 @@ export class PluginContentTranslator {
     for (const file of dist.files) {
       const translated = this.translateFile(file, tool);
       if (translated === null) continue;
-      const hooked = this.maybeConvertHooks(file.relativePath, translated.content, tool);
       // Prose is rewritten, an artefact is carried byte for byte: a tool's own rewrite leaving
       // a script intact is luck rather than a guarantee.
-      const rewritten = isProse(file.relativePath) ? tool.rewriteContent(hooked) : hooked;
+      const rewritten = isProse(file.relativePath)
+        ? tool.rewriteContent(translated.content)
+        : translated.content;
       // The plugin-root variable is a path, not prose: a hook manifest and an mcp manifest both
       // name one, in JSON. Gating it on prose left every tool but Claude installing a hook that
       // points at a variable its own runtime never expands.
@@ -195,11 +195,6 @@ export class PluginContentTranslator {
     return rewritePluginRootToken(content, pluginRootToken);
   }
 
-  private maybeConvertHooks(sourcePath: string, content: string, tool: AiTool<HasPlugins>): string {
-    if (sourcePath !== "hooks/hooks.json") return content;
-    return convertHooksFormat(content, tool.capabilities.plugins.hooksContentFormat);
-  }
-
   private translateFile(
     file: PluginComponentFile,
     tool: AiTool<HasPlugins>
@@ -220,7 +215,7 @@ export class PluginContentTranslator {
       const manifestDir = parentDirOf(cap.hooksRelativePath) || PLUGIN_HOOKS_DIR;
       return {
         relativePath: `${manifestDir}/${pathBelow(PLUGIN_HOOKS_DIR, file.relativePath)}`,
-        content: file.content,
+        content: cap.hookScript(file.relativePath, file.content),
         verbatim: true,
       };
     }
@@ -254,7 +249,7 @@ export class PluginContentTranslator {
     const { flatNamespacePrefix } = tool.capabilities.plugins;
     if (flatNamespacePrefix === null) return { files: [], skipped: [] };
     const result: InstallationFile[] = [];
-    for (const file of dist.components.commands) {
+    for (const file of hasCommands(tool) ? dist.components.commands : []) {
       result.push(this.flatCommandFile(file, dist.manifest.name, tool, flatNamespacePrefix));
     }
     for (const section of ["agents", "rules", "skills"] as const) {
@@ -272,7 +267,8 @@ export class PluginContentTranslator {
   // it is never delivered here. Everything else under hooks/ is carried verbatim, namespaced per
   // plugin — unless it is that loader's own plugin module, delivered flat and renamed instead.
   private flatHooksFiles(dist: PluginDistribution, tool: AiTool<HasPlugins>): InstallationFile[] {
-    const { flatHooksDir, flatHooksLoaderEntry, flatHooksBridge } = tool.capabilities.plugins;
+    const { flatHooksDir, flatHooksLoaderEntry, flatHooksBridge, hookScript } =
+      tool.capabilities.plugins;
     if (flatHooksDir === null) return [];
     const scripts = dist.components.hooks
       .filter((file) => file.relativePath !== `${PLUGIN_HOOKS_DIR}/hooks.json`)
@@ -284,7 +280,7 @@ export class PluginContentTranslator {
             dist.manifest.name,
             file.relativePath
           ),
-          file.content
+          hookScript(file.relativePath, file.content)
         )
       );
     const bridge = this.flatHooksBridgeFile(dist, flatHooksBridge);
@@ -343,13 +339,36 @@ export class PluginContentTranslator {
     pluginName: string,
     tool: AiTool<HasPlugins>
   ): InstallationFile | null {
-    if (!sectionPresent(tool, section)) return null;
     const sectionDir = `${section}/`;
     const fileName = file.relativePath.slice(sectionDir.length);
+    if (!sectionPresent(tool, section)) {
+      const artifact =
+        section === "agents" ? tool.buildContracts?.flat?.().artifacts.agents : undefined;
+      if (!artifact?.supported || !isProse(file.relativePath)) return null;
+      const content = tool.rewriteContent(file.content);
+      return this.makeFile(
+        artifact.path(pluginName, file.relativePath),
+        artifact.transform?.(content, pluginName, fileName) ?? content
+      );
+    }
     // Same rule as the native path: prose is rewritten, an artefact is carried. Rewriting every
     // flat file left a script intact only where a tool's own rewrite happened to spare it.
     const content = isProse(file.relativePath) ? tool.rewriteContent(file.content) : file.content;
-    return this.makeFile(`${tool.directory}${section}/${pluginName}/${fileName}`, content);
+    if (section === "agents" && hasAgents(tool)) {
+      const artifact = tool.buildContracts?.flat?.().artifacts.agents;
+      if (artifact?.supported) {
+        return this.makeFile(
+          artifact.path(pluginName, file.relativePath),
+          artifact.transform?.(content, pluginName, fileName) ?? content
+        );
+      }
+    }
+    const singleLevel =
+      section === "skills" && tool.capabilities.plugins.flatSkillLayout === "single-level";
+    const path = singleLevel
+      ? `${tool.directory}skills/${pluginName}-${fileName}`
+      : `${tool.directory}${section}/${pluginName}/${fileName}`;
+    return this.makeFile(path, content);
   }
 
   private makeFile(relativePath: string, content: string): InstallationFile {

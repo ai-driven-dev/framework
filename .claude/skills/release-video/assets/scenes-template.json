@@ -1,11 +1,5 @@
 {
-  "intro": {
-    "highlights": [
-      "Feature in a few words",
-      "Feature in a few words",
-      "Feature in a few words"
-    ]
-  },
+  "intro": {},
   "scenes": [
     {
       "template": "terminal-demo",
@@ -28,7 +22,7 @@
         ]
       },
       "note": "Example run.",
-      "lead": "One plain sentence: what it does for the user, and why it matters."
+      "lead": "Optional, left out by default: only when the picture alone cannot say it."
     }
   ],
   "skipped": [
@@ -45,6 +39,7 @@
     "programme": [
       {
         "surface": "aidd command",
+        "theme": "Theme one",
         "text": "what it does for the user, in French."
       }
     ]

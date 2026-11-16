@@ -1,0 +1,66 @@
+{
+  "host": "claude",
+  "event": "Stop",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "a28b8f6d-931b-4057-970d-fc6801beb719",
+        "permission_mode": "bypassPermissions",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "Stop",
+        "stop_hook_active": false,
+        "last_assistant_message": "done",
+        "background_tasks": [],
+        "session_crons": []
+      },
+      "hookAnswer": null
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "7f5226de-6234-4391-adb1-8d914add9f31",
+        "permission_mode": "bypassPermissions",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "Stop",
+        "stop_hook_active": false,
+        "last_assistant_message": "I created `notes.md` containing `hello`. The PostToolUse hook returned this feedback after the write:\n\nPostToolUse:Write hook blocking error from command: \"node /Users/user/log.js claude B PostToolUse ptu-block\": Hook feedback: PTUTOKEN-7Q2X",
+        "background_tasks": [],
+        "session_crons": []
+      },
+      "hookAnswer": {
+        "decision": "block",
+        "reason": "Reply with only this exact token: STOPTOKEN-4K9M"
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "session_id": "00000000-0000-4000-8000-000000000000",
+        "transcript_path": "/Users/user/.claude/projects/-Users-user-project/00000000-0000-4000-8000-000000000000.jsonl",
+        "cwd": "/Users/user/project",
+        "prompt_id": "7f5226de-6234-4391-adb1-8d914add9f31",
+        "permission_mode": "bypassPermissions",
+        "effort": {
+          "level": "medium"
+        },
+        "hook_event_name": "Stop",
+        "stop_hook_active": true,
+        "last_assistant_message": "STOPTOKEN-4K9M",
+        "background_tasks": [],
+        "session_crons": []
+      },
+      "hookAnswer": null
+    }
+  ]
+}

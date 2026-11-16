@@ -7,27 +7,21 @@
 import { InvalidMcpServerConfigError, McpConfigError } from "../../../../../kernel/errors.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
-  flatHooksPathWithLoaderEntry,
   flatMcpKeyPrefix,
   genericFlatAgentPath,
   genericFlatSkillTreePath,
 } from "../../../../../kernel/materialization/flat-paths.js";
 import { rewriteRelativeLinks } from "../../../../../kernel/materialization/relative-link-rewrite.js";
-import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
-import type { ArtifactContract, ToolBuildContract } from "../../build-contract.js";
+import type {
+  ConfigArtifactFile,
+  ConfigArtifactInput,
+  ToolBuildContract,
+} from "../../build-contract.js";
+import { flatHooksArtifact, hooksBridgePath } from "../../formats/hooks-descriptor.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
+import { OPENCODE_HOOKS } from "./hooks.js";
+import { opencodeAgentFrontmatter } from "./opencode-agent.js";
 import { generateOpencodeHooksBridge } from "./opencode-hooks-bridge.js";
-import {
-  makeOpencodeHooksBridgePath,
-  OPENCODE_EVENTS_ASSET,
-  OPENCODE_EVENTS_PATH,
-  OPENCODE_FLAT_HOOKS_DIR,
-  OPENCODE_HOOKS_DIR,
-  OPENCODE_PLUGIN_ENTRY_BASENAME,
-} from "./opencode-paths.js";
-
-type FsType = FileReader & FileWriter;
 
 type RawServer =
   | { command: string; args?: string[]; env?: Record<string, string>; disabled?: boolean }
@@ -89,36 +83,6 @@ function opencodeFlatSkillPath(plugin: string, rel: string): string {
   return genericFlatSkillTreePath(".opencode/skills/", plugin, rel.replace(/^skills\//, ""));
 }
 
-/** OpenCode's loader scans one flat directory for its own plugin modules, never a "hooks"
- * family, so a plugin's hook scripts are namespaced under `OPENCODE_HOOKS_DIR` instead. The one
- * exception is a script named `OPENCODE_PLUGIN_ENTRY_BASENAME`: that loader's own module,
- * delivered flat and renamed to the plugin's own name. */
-function makeOpencodeFlatHooksPath(): (plugin: string, rel: string) => string {
-  return (plugin, rel) =>
-    flatHooksPathWithLoaderEntry(
-      OPENCODE_HOOKS_DIR,
-      { dir: OPENCODE_FLAT_HOOKS_DIR, baseName: OPENCODE_PLUGIN_ENTRY_BASENAME },
-      plugin,
-      rel
-    );
-}
-
-/** Supported exactly when the profile names a directory to deliver into — the same
- * declaration `acceptsHooks` is paired with, read once rather than restated here. */
-function buildOpencodeFlatHooksArtifact(): ArtifactContract {
-  return {
-    supported: true,
-    source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-    path: makeOpencodeFlatHooksPath(),
-    skipHooksJson: true,
-    hooksBridge: {
-      generate: generateOpencodeHooksBridge,
-      path: makeOpencodeHooksBridgePath,
-      skipIfSourceHas: OPENCODE_PLUGIN_ENTRY_BASENAME,
-    },
-  };
-}
-
 function opencodeFlatResolveTarget(plugin: string, rel: string): string {
   if (rel.startsWith("agents/")) return opencodeFlatAgentPath(plugin, rel);
   if (rel.startsWith("skills/")) return opencodeFlatSkillPath(plugin, rel);
@@ -132,30 +96,20 @@ function transformOpencodeFlatAgent(content: string, plugin: string, outName: st
     currentFilePluginRelative: flatRelPath,
     resolveTargetPath: (rel) => opencodeFlatResolveTarget(plugin, rel),
   });
-  const prefixedName = `${plugin}-${outName.replace(/\.md$/, "")}`;
-  // mode: subagent ensures opencode treats copied agents as subagents, not primary agents.
-  return serializeFrontmatter(
-    { ...frontmatter, name: prefixedName, mode: "subagent" },
-    rewrittenBody
-  );
+  return serializeFrontmatter(opencodeAgentFrontmatter(frontmatter), rewrittenBody);
 }
 
-async function resolveOpencodeJsonPath(outDir: string, fs: FsType): Promise<string> {
-  const jsoncExists = await fs.fileExists(`${outDir}/opencode.jsonc`);
-  if (jsoncExists) return `${outDir}/opencode.jsonc`;
-  return `${outDir}/opencode.json`;
-}
+const OPENCODE_JSONC = "opencode.jsonc";
+const OPENCODE_JSON = "opencode.json";
 
-async function collectOpencodeMcp(
+function collectOpencodeMcp(
   builtPlugins: readonly string[],
-  sourceDir: string,
-  fs: FsType
-): Promise<Record<string, unknown>> {
+  pluginMcp: ReadonlyMap<string, string>
+): Record<string, unknown> {
   const incoming: Record<string, unknown> = {};
   for (const plugin of builtPlugins) {
-    const mcpSrc = `${sourceDir}/plugins/${plugin}/.mcp.json`;
-    if (!(await fs.fileExists(mcpSrc))) continue;
-    const raw = await fs.readFile(mcpSrc);
+    const raw = pluginMcp.get(plugin);
+    if (raw === undefined) continue;
     const transformed = JSON.parse(transformMcpToOpencode(raw)) as {
       mcp?: Record<string, unknown>;
     };
@@ -165,6 +119,37 @@ async function collectOpencodeMcp(
     }
   }
   return incoming;
+}
+
+/** A built plugin's own loader or its generated bridge: either means OpenCode will run hooks. */
+function pluginLoaders(plugin: string): readonly string[] {
+  const { loaderEntry } = OPENCODE_HOOKS.flat;
+  return [`${loaderEntry.dir}${plugin}.js`, hooksBridgePath(loaderEntry, plugin)];
+}
+
+function emitOpencodeConfig({
+  builtPlugins,
+  pluginMcp,
+  existing,
+  present,
+  assets,
+}: ConfigArtifactInput): readonly ConfigArtifactFile[] {
+  const configPath = existing.has(OPENCODE_JSONC) ? OPENCODE_JSONC : OPENCODE_JSON;
+  const incoming = collectOpencodeMcp(builtPlugins, pluginMcp);
+  const baseAsset = assets.get(OPENCODE_JSON);
+  const base = typeof baseAsset === "string" ? baseAsset : JSON.stringify(baseAsset);
+  const config = {
+    path: configPath,
+    content: buildOpencodeFlatConfig(base, existing.get(configPath) ?? null, incoming),
+  };
+  const runsHooks = builtPlugins.some((plugin) =>
+    pluginLoaders(plugin).some((loader) => present.has(loader))
+  );
+  if (!runsHooks) return [config];
+  const runtime = OPENCODE_HOOKS.bridgeRuntime;
+  const events = assets.get(runtime.asset);
+  if (typeof events !== "string") throw new TypeError("OpenCode event adapter must be source text");
+  return [config, { path: runtime.path, content: events }];
 }
 
 export function buildOpencodeFlatContract(): ToolBuildContract {
@@ -185,31 +170,18 @@ export function buildOpencodeFlatContract(): ToolBuildContract {
         path: opencodeFlatAgentPath,
         transform: transformOpencodeFlatAgent,
       },
-      mcp: { supported: false }, // handled by emitConfigArtifact (opencode.json mcp)
-      hooks: buildOpencodeFlatHooksArtifact(),
+      mcp: { supported: false }, // handled by configArtifact (opencode.json mcp)
+      hooks: flatHooksArtifact(OPENCODE_HOOKS, { bridge: generateOpencodeHooksBridge }),
       rules: { supported: false },
       commands: { supported: false },
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
-    emitConfigArtifact: async (builtPlugins, outDir, sourceDir, fs, _validator, assetProvider) => {
-      const configPath = await resolveOpencodeJsonPath(outDir, fs);
-      const existing = (await fs.fileExists(configPath)) ? await fs.readFile(configPath) : null;
-      const incoming = await collectOpencodeMcp(builtPlugins, sourceDir, fs);
-      const baseAsset = assetProvider.loadConfigAsset("opencode", "opencode.json");
-      const base = typeof baseAsset === "string" ? baseAsset : JSON.stringify(baseAsset);
-      await fs.writeFile(configPath, buildOpencodeFlatConfig(base, existing, incoming));
-      for (const plugin of builtPlugins) {
-        const native = `${outDir}/${OPENCODE_FLAT_HOOKS_DIR}${plugin}.js`;
-        const generated = `${outDir}/${makeOpencodeHooksBridgePath(plugin)}`;
-        if (!(await fs.fileExists(native)) && !(await fs.fileExists(generated))) continue;
-        const events = assetProvider.loadConfigAsset("opencode", OPENCODE_EVENTS_ASSET);
-        if (typeof events !== "string")
-          throw new TypeError("OpenCode event adapter must be source text");
-        await fs.writeFile(`${outDir}/${OPENCODE_EVENTS_PATH}`, events);
-        return 2;
-      }
-      return 1;
+    configArtifact: {
+      reads: () => [OPENCODE_JSONC, OPENCODE_JSON],
+      probes: (builtPlugins) => builtPlugins.flatMap(pluginLoaders),
+      assets: { tool: "opencode", names: [OPENCODE_JSON, OPENCODE_HOOKS.bridgeRuntime.asset] },
+      emit: emitOpencodeConfig,
     },
   };
 }

@@ -20,6 +20,16 @@ export function parseGlobalOptions(program: Command): GlobalOptions {
 
 /** Returns the flag as given, `undefined` included: each caller applies its own default
  * rather than this validation guessing one for all of them. */
+/** `--global` is the spelling a person types; `--scope user` stays for scripts. */
+export const GLOBAL_FLAG_HELP = "act on the machine-wide install `setup --global` wrote";
+
+export function resolveScopeFlags(
+  options: { scope?: string; global?: boolean },
+  output: CLIOutput
+): MarketplaceScope | undefined {
+  return options.global === true ? "user" : parseScopeFlag(options.scope, output);
+}
+
 export function parseScopeFlag(
   raw: string | undefined,
   output: CLIOutput

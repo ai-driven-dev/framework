@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import "../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
+import "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,
@@ -29,6 +32,22 @@ function reader(
 }
 
 describe("current native marketplace source proof", () => {
+  it.each(["claude", "codex", "copilot"] as const)(
+    "%s protects a foreign disabled ref unless uninstall leaves that tombstone",
+    async (toolId) => {
+      const refs = new Map([["foreign@real-catalog", { enabled: false }]]);
+      const result = assertNoForeignNativeRefs(
+        { read: async () => ({ location: "host plugins", refs }) },
+        "real-catalog",
+        new Set(),
+        "/project-b",
+        toolId
+      );
+      if (toolId === "copilot") await expect(result).resolves.toEqual(refs);
+      else await expect(result).rejects.toThrow(/foreign host ref/);
+    }
+  );
+
   it.each([new Error("source permission denied"), "source permission denied"])(
     "reports host source read failures as unproven without throwing",
     async (error) => {
@@ -80,21 +99,28 @@ describe("current native marketplace source proof", () => {
       },
     };
     await expect(
-      assertNoForeignNativeRefs(host, "real-catalog", new Set(["mine@real-catalog"]), "/project-b")
+      assertNoForeignNativeRefs(
+        host,
+        "real-catalog",
+        new Set(["mine@real-catalog"]),
+        "/project-b",
+        "claude"
+      )
     ).rejects.toThrow(/foreign host ref 'foreign@real-catalog'/);
     expect(requestedRoot).toBe("/project-b");
   });
 
   it("fails closed on unreadable or missing host plugin readers, but accepts explicit absence", async () => {
     await expect(
-      assertNoForeignNativeRefs(undefined, "real-catalog", new Set(), "/project-b")
+      assertNoForeignNativeRefs(undefined, "real-catalog", new Set(), "/project-b", "claude")
     ).rejects.toThrow(/reader unavailable/);
     await expect(
       assertNoForeignNativeRefs(
         { read: async () => ({ location: "host plugins", unreadable: "EACCES" }) },
         "real-catalog",
         new Set(),
-        "/project-b"
+        "/project-b",
+        "claude"
       )
     ).rejects.toThrow(/EACCES/);
     await expect(
@@ -106,7 +132,8 @@ describe("current native marketplace source proof", () => {
         },
         "real-catalog",
         new Set(),
-        "/project-b"
+        "/project-b",
+        "claude"
       )
     ).rejects.toThrow(/real-catalog.*host plugin registry read failed.*EACCES/);
     expect(
@@ -114,7 +141,8 @@ describe("current native marketplace source proof", () => {
         { read: async () => ({ location: "host plugins", absent: true }) },
         "real-catalog",
         new Set(),
-        "/project-b"
+        "/project-b",
+        "claude"
       )
     ).toEqual(new Map());
   });
@@ -129,7 +157,8 @@ describe("current native marketplace source proof", () => {
         { read: async () => ({ location: "host plugins", refs }) },
         "real-catalog",
         new Set(["mine@real-catalog"]),
-        "/project-b"
+        "/project-b",
+        "claude"
       )
     ).toEqual(refs);
   });

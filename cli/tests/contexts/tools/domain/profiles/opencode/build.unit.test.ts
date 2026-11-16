@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import type {
   ArtifactContract,
   ArtifactSource,
+  ConfigArtifact,
+  ConfigArtifactFile,
 } from "../../../../../../src/contexts/tools/domain/build-contract.js";
 import {
   buildOpencodeFlatContract,
   transformMcpToOpencode,
 } from "../../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
-import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
-import { StubAssetProvider } from "../../../../../helpers/ports/stub-asset-provider.js";
 
 // Built, not written literally: biome reads a string holding "${...}" as a lost template.
 const ROOT = "$" + "{CLAUDE_PLUGIN_ROOT}";
@@ -31,6 +31,32 @@ function supported(artifact: ArtifactContract): Extract<ArtifactContract, { supp
 
 function sourceOf(artifact: ArtifactContract): ArtifactSource | null {
   return artifact.supported ? artifact.source : null;
+}
+
+function configArtifactOf(): ConfigArtifact {
+  const step = buildOpencodeFlatContract().configArtifact;
+  if (step === undefined) throw new Error("opencode flat declares no config artifact");
+  return step;
+}
+
+function emit(input: {
+  builtPlugins?: readonly string[];
+  pluginMcp?: ReadonlyMap<string, string>;
+  existing?: Readonly<Record<string, string>>;
+  present?: readonly string[];
+  base?: string;
+  events?: string | Record<string, unknown>;
+}): readonly ConfigArtifactFile[] {
+  return configArtifactOf().emit({
+    builtPlugins: input.builtPlugins ?? [],
+    pluginMcp: input.pluginMcp ?? new Map(),
+    existing: new Map(Object.entries(input.existing ?? {})),
+    present: new Set(input.present ?? []),
+    assets: new Map([
+      ["opencode.json", input.base ?? { $schema: "https://opencode.ai/config.json" }],
+      ["opencode-events.js", input.events ?? "export async function setupOpencodeEvents() {}"],
+    ]),
+  });
 }
 
 describe("transformMcpToOpencode()", () => {
@@ -81,30 +107,53 @@ describe("transformMcpToOpencode()", () => {
 });
 
 describe("buildOpencodeFlatContract()", () => {
+  it("reads both config spellings, and only checks each plugin's native and generated loader exists", () => {
+    expect(configArtifactOf().reads(["aidd-dev"])).toStrictEqual([
+      "opencode.jsonc",
+      "opencode.json",
+    ]);
+    expect(configArtifactOf().probes(["aidd-dev"])).toStrictEqual([
+      ".opencode/plugin/aidd-dev.js",
+      ".opencode/plugin/aidd-dev-hooks.js",
+    ]);
+    expect(configArtifactOf().assets).toStrictEqual({
+      tool: "opencode",
+      names: ["opencode.json", "opencode-events.js"],
+    });
+  });
+
   it.each(["aidd-dev.js", "aidd-dev-hooks.js"])(
     "delivers one shared adapter outside plugin discovery when %s was built",
-    async (entry) => {
+    (entry) => {
       const adapter = "export async function setupOpencodeEvents() {}";
-      const fs = new InMemoryFileAdapter({ [`/out/.opencode/plugin/${entry}`]: "plugin" });
-      const assets = new StubAssetProvider({
-        "opencode/opencode.json": {},
-        "opencode/opencode-events.js": adapter,
+      const files = emit({
+        builtPlugins: ["aidd-dev", "aidd-pm"],
+        present: [`.opencode/plugin/${entry}`],
+        events: adapter,
       });
 
-      const written = await buildOpencodeFlatContract().emitConfigArtifact?.(
-        ["aidd-dev"],
-        "/out",
-        "/src",
-        fs,
-        { validate: () => undefined },
-        assets
-      );
-
-      expect(written).toBe(2);
-      expect(fs.getFile("/out/.opencode/hooks/opencode-events.js")).toBe(adapter);
-      expect(fs.has("/out/.opencode/plugin/opencode-events.js")).toBe(false);
+      expect(files).toStrictEqual([
+        { path: "opencode.json", content: expect.any(String) },
+        { path: ".opencode/hooks/opencode-events.js", content: adapter },
+      ]);
     }
   );
+
+  it("delivers no adapter when no plugin built a loader", () => {
+    const files = emit({ builtPlugins: ["aidd-dev"] });
+
+    expect(files.map((f) => f.path)).toStrictEqual(["opencode.json"]);
+  });
+
+  it("refuses an event adapter that is not source text", () => {
+    expect(() =>
+      emit({
+        builtPlugins: ["aidd-dev"],
+        present: [".opencode/plugin/aidd-dev.js"],
+        events: {},
+      })
+    ).toThrow(new TypeError("OpenCode event adapter must be source text"));
+  });
 
   it("writes no manifest and no marketplace of its own", () => {
     const contract = buildOpencodeFlatContract();
@@ -164,13 +213,12 @@ describe("buildOpencodeFlatContract()", () => {
     );
   });
 
-  it("declares an agent a subagent, renames it after its plugin, and points its references at their flat destinations", () => {
+  it("declares an agent a subagent, leaves its ID to the file name, and points its references at their flat destinations", () => {
     const transform = supported(buildOpencodeFlatContract().artifacts.agents).transform;
 
     expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).toBe(
       [
         "---",
-        "name: 'aidd-dev-planner'",
         "description: 'Plans the work'",
         "mode: 'subagent'",
         "---",
@@ -179,16 +227,6 @@ describe("buildOpencodeFlatContract()", () => {
         "Run [journal.cjs](../../hooks/journal.cjs)",
         "",
       ].join("\n")
-    );
-  });
-
-  it("drops only the trailing .md from the name it gives a flat agent", () => {
-    const transform = supported(buildOpencodeFlatContract().artifacts.agents).transform;
-
-    expect(
-      transform?.("---\ndescription: Helps\n---\nBody.\n", "aidd-dev", "notes.md-helper.md")
-    ).toBe(
-      "---\ndescription: 'Helps'\nname: 'aidd-dev-notes.md-helper'\nmode: 'subagent'\n---\nBody.\n"
     );
   });
 
@@ -221,102 +259,38 @@ describe("buildOpencodeFlatContract()", () => {
     ).toBeNull();
   });
 
-  it("writes one opencode.json holding the bundled base, the user's own keys and every plugin's mcp servers", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/src/plugins/aidd-dev/.mcp.json": JSON.stringify({
-        mcpServers: { context: { command: "node" } },
-      }),
-      "/out/opencode.json": JSON.stringify({ theme: "dark" }),
+  it("writes one opencode.json holding the bundled base, the user's own keys and every plugin's mcp servers", () => {
+    const files = emit({
+      builtPlugins: ["aidd-dev"],
+      pluginMcp: new Map([
+        ["aidd-dev", JSON.stringify({ mcpServers: { context: { command: "node" } } })],
+      ]),
+      existing: { "opencode.json": JSON.stringify({ theme: "dark" }) },
     });
 
-    const written = await buildOpencodeFlatContract().emitConfigArtifact?.(
-      ["aidd-dev"],
-      "/out",
-      "/src",
-      fs,
-      { validate: () => undefined },
-      {
-        loadConfigAsset: () => ({ $schema: "https://opencode.ai/config.json" }),
-        loadSchema: () => ({}),
-      }
-    );
-
-    expect({
-      written,
-      config: JSON.parse(fs.getFile("/out/opencode.json") ?? "null"),
-    }).toStrictEqual({
-      written: 1,
-      config: {
-        $schema: "https://opencode.ai/config.json",
-        theme: "dark",
-        mcp: {
-          "aidd-dev-context": { type: "local", command: ["node"], enabled: true },
-        },
+    expect(files.map((f) => f.path)).toStrictEqual(["opencode.json"]);
+    expect(JSON.parse(files[0]?.content ?? "null")).toStrictEqual({
+      $schema: "https://opencode.ai/config.json",
+      theme: "dark",
+      mcp: {
+        "aidd-dev-context": { type: "local", command: ["node"], enabled: true },
       },
     });
   });
 
-  it("writes into the jsonc config when the project already keeps one", async () => {
-    const fs = new InMemoryFileAdapter({
-      "/out/opencode.jsonc": JSON.stringify({ theme: "dark" }),
+  it("writes into the jsonc config when the project already keeps one", () => {
+    const files = emit({
+      existing: { "opencode.jsonc": JSON.stringify({ theme: "dark" }), "opencode.json": "{}" },
     });
 
-    await buildOpencodeFlatContract().emitConfigArtifact?.(
-      [],
-      "/out",
-      "/src",
-      fs,
-      { validate: () => undefined },
-      { loadConfigAsset: () => ({}), loadSchema: () => ({}) }
-    );
-
-    expect({
-      jsonc: fs.has("/out/opencode.jsonc"),
-      json: fs.has("/out/opencode.json"),
-    }).toStrictEqual({ jsonc: true, json: false });
+    expect(files.map((f) => f.path)).toStrictEqual(["opencode.jsonc"]);
+    expect(JSON.parse(files[0]?.content ?? "null")).toMatchObject({ theme: "dark" });
   });
 
-  it("builds opencode.json on opencode's own bundled base config", async () => {
-    const fs = new InMemoryFileAdapter();
+  it("takes a bundled base config that comes as text as written", () => {
+    const files = emit({ base: '{"$schema":"https://opencode.ai/config.json"}' });
 
-    await buildOpencodeFlatContract().emitConfigArtifact?.(
-      [],
-      "/out",
-      "/src",
-      fs,
-      { validate: () => undefined },
-      {
-        loadConfigAsset: (tool, name) => {
-          if (tool !== "opencode" || name !== "opencode.json") {
-            throw new Error(`no bundled asset ${tool}/${name}`);
-          }
-          return { $schema: "https://opencode.ai/config.json" };
-        },
-        loadSchema: () => ({}),
-      }
-    );
-
-    expect(JSON.parse(fs.getFile("/out/opencode.json") ?? "null")).toStrictEqual({
-      $schema: "https://opencode.ai/config.json",
-    });
-  });
-
-  it("takes a bundled base config that comes as text as written", async () => {
-    const fs = new InMemoryFileAdapter();
-
-    await buildOpencodeFlatContract().emitConfigArtifact?.(
-      [],
-      "/out",
-      "/src",
-      fs,
-      { validate: () => undefined },
-      {
-        loadConfigAsset: () => '{"$schema":"https://opencode.ai/config.json"}',
-        loadSchema: () => ({}),
-      }
-    );
-
-    expect(JSON.parse(fs.getFile("/out/opencode.json") ?? "null")).toStrictEqual({
+    expect(JSON.parse(files[0]?.content ?? "null")).toStrictEqual({
       $schema: "https://opencode.ai/config.json",
     });
   });

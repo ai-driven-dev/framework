@@ -1,5 +1,5 @@
 ---
-name: resolve-conflict
+name: 05-resolve-conflict
 description: Resolves deterministic Git conflicts or approved choices. Use when the user wants to resolve a merge, rebase, or cherry-pick conflict. Not for deciding between competing implementations or committing changes.
 argument-hint: conflict | decision
 ---

@@ -4,6 +4,8 @@ import "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import { registerTool } from "../../../../src/contexts/tools/domain/registry.js";
 import "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import {
@@ -120,10 +122,24 @@ describe("SetupFlow", () => {
       expect(() => makeFlow({ scope: "user" })).toThrow(UserScopeNoToolsError);
     });
 
-    it("refuses an AI tool with no user-scope activation at --scope user (opencode)", () => {
-      expect(() => makeFlow({ scope: "user", aiTools: ["opencode"] })).toThrow(
-        UserScopeUnsupportedAiToolsError
-      );
+    it("refuses an AI tool with no user-scope activation at --scope user", () => {
+      const { plugins: _plugins, ...withoutPlugins } = kilo.capabilities;
+      registerTool({ ...kilo, capabilities: withoutPlugins });
+      try {
+        expect(() => makeFlow({ scope: "user", aiTools: ["kilo"] })).toThrow(
+          UserScopeUnsupportedAiToolsError
+        );
+      } finally {
+        registerTool(kilo);
+      }
+    });
+
+    it("accepts an AI tool that copies global files at --scope user (kilo)", () => {
+      expect(() => makeFlow({ scope: "user", aiTools: ["kilo"] })).not.toThrow();
+    });
+
+    it("accepts an AI tool that copies global files at --scope user (opencode)", () => {
+      expect(() => makeFlow({ scope: "user", aiTools: ["opencode"] })).not.toThrow();
     });
 
     it("accepts an AI tool that installs to a user-scope directory at --scope user (cursor)", () => {
@@ -134,10 +150,17 @@ describe("SetupFlow", () => {
       expect(() => makeFlow({ scope: "user", aiTools: ["claude"] })).not.toThrow();
     });
 
-    it("refuses --plugins at --scope user — no manifest entry exists yet to enable one against", () => {
-      expect(() => makeFlow({ scope: "user", aiTools: ["claude"], pluginMode: "all" })).toThrow(
-        UserScopePluginModeError
-      );
+    it("refuses an interactive plugin pick at --scope user — there is no project to ask in", () => {
+      expect(() =>
+        makeFlow({ scope: "user", aiTools: ["claude"], pluginMode: "interactive" })
+      ).toThrow(UserScopePluginModeError);
     });
+
+    it.each(["all", "recommended", "none"] as const)(
+      "accepts --plugins %s at --scope user",
+      (pluginMode) => {
+        expect(() => makeFlow({ scope: "user", aiTools: ["opencode"], pluginMode })).not.toThrow();
+      }
+    );
   });
 });

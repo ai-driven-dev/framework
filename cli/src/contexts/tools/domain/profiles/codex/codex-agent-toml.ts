@@ -1,50 +1,30 @@
 import { parseFrontmatter } from "../../../../../kernel/markdown.js";
+import { type AgentFrontmatter, pickFrontmatterKeys } from "../../formats/agent-format.js";
 import { stringifyToml } from "./toml.js";
 
-/**
- * Converts a Claude-format agent markdown file (frontmatter + body) into a Codex subagent TOML
- * string. Key insertion order is fixed for deterministic output, and the conversion is lossy —
- * no model field is emitted and the TOML schema diverges from the frontmatter, so there is no
- * inverse.
- *
- * `prefixName` is for flat mode, where every plugin shares one `.codex/agents/` directory and
- * the plugin prefix is what keeps two plugins' agents from colliding.
- */
+/** Codex requires `name` and `description`, and reads the effort as `model_reasoning_effort`. */
+export const codexAgentFrontmatter: AgentFrontmatter = (fm) => ({
+  name: typeof fm.name === "string" ? fm.name : "",
+  description: typeof fm.description === "string" ? fm.description : "",
+  ...pickFrontmatterKeys({ ...fm, model_reasoning_effort: fm.effort }, [
+    "model",
+    "model_reasoning_effort",
+  ]),
+});
+
+/** Writes a Codex subagent from its native frontmatter; the body is its instructions. */
+export function codexAgentToml(frontmatter: Record<string, unknown>, body: string): string {
+  return stringifyToml({ ...frontmatter, developer_instructions: body });
+}
+
+/** Built distributions prefix the name with the plugin: Codex loads agents only from one
+ * shared `agents/` directory, never from a plugin, so the prefix keeps two plugins apart. */
 export function codexAgentMarkdownToToml(
   content: string,
   pluginName: string,
-  fileBaseName: string,
-  prefixName = false
+  fileBaseName: string
 ): string {
   const { frontmatter, body } = parseFrontmatter(content);
-  const name = resolveName(frontmatter, pluginName, fileBaseName, prefixName);
-  const obj = buildTomlObject(name, frontmatter, body);
-  return stringifyToml(obj);
-}
-
-function resolveName(
-  frontmatter: Record<string, unknown>,
-  pluginName: string,
-  fileBaseName: string,
-  prefixName: boolean
-): string {
-  const basename = fileBaseName.replace(/\.md$/, "");
-  if (!prefixName && typeof frontmatter.name === "string" && frontmatter.name.length > 0) {
-    return frontmatter.name;
-  }
-  return `${pluginName}-${basename}`;
-}
-
-function buildTomlObject(
-  name: string,
-  frontmatter: Record<string, unknown>,
-  body: string
-): Record<string, unknown> {
-  const obj: Record<string, unknown> = {};
-  obj.name = name;
-  // description is a required subagent key; default to "" when absent.
-  obj.description = typeof frontmatter.description === "string" ? frontmatter.description : "";
-  // model is intentionally omitted: no known Codex model id set.
-  obj.developer_instructions = body;
-  return obj;
+  const name = `${pluginName}-${fileBaseName.replace(/\.md$/, "")}`;
+  return codexAgentToml(codexAgentFrontmatter({ ...frontmatter, name }), body);
 }

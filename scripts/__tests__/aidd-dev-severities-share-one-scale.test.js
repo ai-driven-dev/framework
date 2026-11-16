@@ -6,7 +6,7 @@ const { describe, it } = require("node:test");
 const SKILLS = path.resolve(__dirname, "../../plugins/aidd-dev/skills");
 
 /**
- * An audit feeds refactor, and assert and review grade the same code: a finding keeps its severity
+ * An audit feeds refactor, and review grades the same code: a finding keeps its severity
  * from one skill to the next only when every skill names the same three levels.
  */
 
@@ -39,9 +39,5 @@ describe("aidd-dev severities share one scale", () => {
 
   it("refactor reads an audit's findings on the same scale", () => {
     assert.match(read("07-refactor/SKILL.md"), /🔴 critical, 🟡 major, 🟢 minor/u);
-  });
-
-  it("an architecture violation is critical or major", () => {
-    assert.match(read("03-assert/actions/02-assert-architecture.md"), /severity \(`critical` or `major`\)/u);
   });
 });

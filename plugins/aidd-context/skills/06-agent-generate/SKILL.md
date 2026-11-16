@@ -1,29 +1,25 @@
 ---
 name: 06-agent-generate
-description: Generate an agent across the host AI tools a project uses. Use when the user wants to create, scaffold, or refactor an agent, subagent or specialized role. Not for other artifacts like skills, rules, commands, hooks.
+description: Creates or updates an agent, a focused role, across the host AI tools, when the user wants a new agent or to refactor one.
 argument-hint: role
 ---
 
 # Agent Generate
 
-Write one canonical agent from intent and render it per confirmed host tool, or once as a plugin source.
+```mermaid
+flowchart LR
+  entry([request]) --> frame["actions/01-frame.md"]
+  frame <-->|"part to ask"| user((user answers))
+  frame --> plan["actions/02-plan.md"]
+  plan <-->|"plan to approve"| user
+  plan -->|"cancelled"| cancelled((cancelled))
+  plan --> write["actions/03-write.md"]
+  write --> done((written))
+  plan -->|"writer refusal"| stopped((stopped))
+  write -->|"writer error"| stopped
+```
 
-## Actions
+## Transversal rules
 
-| #   | Action          | Role                                           | Input        |
-| --- | --------------- | ---------------------------------------------- | ------------ |
-| 01  | `capture-agent` | Gather the role and propose names              | user request |
-| 02  | `write-agent`   | Render the agent per tool and write            | the role     |
-| 03  | `validate`      | Check each agent file                          | the files    |
-
-Run the actions in order, `01 → 03`, and run each action's `## Test` before the next.
-Before running an action, read its file in `actions/`, not only the table or assets.
-
-## References
-
-- `references/agent-authoring.md`: the contract (frontmatter, body shape, naming, quality).
-- `references/tool-paths.md`: per-tool agent path, frontmatter, format conversions, the gate.
-
-## Assets
-
-- `assets/agent-template.md`: agent file scaffold.
+- If a cited reference cannot be read, stop and report the missing file.
+- Keep the meaning of each line of an existing agent, unless the request changes it.

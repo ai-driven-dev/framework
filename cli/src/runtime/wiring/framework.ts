@@ -1,4 +1,6 @@
 import { homedir } from "node:os";
+import "../../contexts/tools/domain/profiles/antigravity/profile.js";
+import { join } from "node:path";
 import "../../contexts/tools/domain/profiles/claude/profile.js";
 import "../../contexts/tools/domain/profiles/codex/profile.js";
 import "../../contexts/tools/domain/profiles/copilot/profile.js";
@@ -10,6 +12,7 @@ import { MarketplaceAddUseCase } from "../../contexts/distribution/application/m
 import type { MarketplaceListUseCase } from "../../contexts/distribution/application/marketplace-list-use-case.js";
 import type { MarketplaceRefreshUseCase } from "../../contexts/distribution/application/marketplace-refresh-use-case.js";
 import type { MarketplaceRegisterFrameworkUseCase } from "../../contexts/distribution/application/marketplace-register-framework-use-case.js";
+import { SetAgentModelUseCase } from "../../contexts/framework/application/agents/set-agent-model-use-case.js";
 import { CleanUserScopeUseCase } from "../../contexts/framework/application/clean/clean-user-scope-use-case.js";
 import { CleanUseCase } from "../../contexts/framework/application/clean-use-case.js";
 import { DoctorLayoutUseCase } from "../../contexts/framework/application/doctor/doctor-layout-use-case.js";
@@ -51,12 +54,14 @@ import { PluginSearchUseCase } from "../../contexts/framework/application/plugin
 import { PluginUpdateUseCase } from "../../contexts/framework/application/plugin/plugin-update-use-case.js";
 import { ValidateRecipesUseCase } from "../../contexts/framework/application/recipes/validate-recipes-use-case.js";
 import { RestoreUseCase } from "../../contexts/framework/application/restore/restore-use-case.js";
+import { InstallGlobalPluginsUseCase } from "../../contexts/framework/application/setup/install-global-plugins-use-case.js";
 import { ProjectContextDetectorUseCase } from "../../contexts/framework/application/setup/project-context-detector-use-case.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupToolsUseCase } from "../../contexts/framework/application/setup/setup-tools-use-case.js";
 import { DetectPluginDriftUseCase } from "../../contexts/framework/application/shared/detect-plugin-drift-use-case.js";
 import {
+  type AgentProviderFor,
   EnsureBuiltMarketplaceUseCase,
   type FrameworkBuildFor,
 } from "../../contexts/framework/application/shared/ensure-built-marketplace-use-case.js";
@@ -68,12 +73,14 @@ import { UninstallUseCase } from "../../contexts/framework/application/uninstall
 import type { Environment } from "../../contexts/framework/domain/ports/environment.js";
 import type { ManifestRepository } from "../../contexts/framework/domain/ports/manifest-repository.js";
 import type { UserSourceReferences } from "../../contexts/framework/domain/ports/user-source-references.js";
+import { AgentModelStoreAdapter } from "../../contexts/framework/infrastructure/agent-model-store-adapter.js";
 import { EnvironmentAdapter } from "../../contexts/framework/infrastructure/environment-adapter.js";
 import { ManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../contexts/framework/infrastructure/plugin-distribution-reader-adapter.js";
 import { RecipeFilesAdapter } from "../../contexts/framework/infrastructure/recipe-files-adapter.js";
 import { UserManifestRepositoryAdapter } from "../../contexts/framework/infrastructure/user-manifest-repository-adapter.js";
 import { UserSourceReferencesAdapter } from "../../contexts/framework/infrastructure/user-source-references-adapter.js";
+import { isAgentHost } from "../../contexts/tools/domain/formats/models/agent-models.js";
 import type { FileMerger } from "../../contexts/tools/domain/ports/file-merger.js";
 import type { NativeMarketplaceSourceReader } from "../../contexts/tools/domain/ports/native-marketplace-source-reader.js";
 import { codexMarketplaceSourceListContract } from "../../contexts/tools/domain/profiles/codex/native-marketplace-source.js";
@@ -143,6 +150,7 @@ interface Deps {
   pluginRemoveUseCase: PluginRemoveUseCase;
   pluginListUseCase: PluginListUseCase;
   pluginUpdateUseCase: PluginUpdateUseCase;
+  setAgentModelUseCase: SetAgentModelUseCase;
   userPluginUpdateUseCase: UserPluginUpdateUseCase;
   marketplaceAddUseCase: MarketplaceAddUseCase;
   marketplaceListUseCase: MarketplaceListUseCase;
@@ -328,17 +336,21 @@ export async function createDeps(
     info: (message) => logger.debug(message),
     warn: (message) => logger.debug(message),
   };
-  const frameworkBuildFor: FrameworkBuildFor = (target, mode, outDir) =>
+  const frameworkBuildFor: FrameworkBuildFor = (target, mode, outDir, provider) =>
     createFrameworkBuildUseCase(
       { fs, assetProvider, logger: cacheBuildLogger },
-      { target, mode, outDir, force: true }
+      { target, mode, outDir, force: true, ...(provider === undefined ? {} : { provider }) }
     );
+  const agentModelStore = new AgentModelStoreAdapter(fs, userConfigDir);
+  const agentProviderFor: AgentProviderFor = async (target) =>
+    isAgentHost(target) ? (await agentModelStore.loadProviders())[target] : undefined;
   const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplaceUseCase(
     fs,
     resolveMarketplaceUseCase,
     frameworkBuildFor,
     currentVersionProvider,
-    userConfigDir
+    userConfigDir,
+    agentProviderFor
   );
   const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
     fs,
@@ -485,13 +497,6 @@ export async function createDeps(
     releaseResolver,
     userSourceReferences
   );
-  const setupMachineScopeUseCase = new SetupMachineScopeUseCase(
-    userManifestRepo,
-    setupMarketplaceRegistration,
-    marketplaceSyncSettingsUseCase,
-    currentVersionProvider
-  );
-  const statusUseCase = new StatusUseCase(fs, manifestRepo, hasher, detectPluginDriftUseCase);
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
   const builtMaterializationDeps = {
@@ -499,6 +504,28 @@ export async function createDeps(
     marketplaceRegistry,
     homedir,
   };
+  // One writer for a machine-scope plugin's files, whether setup installs it or update rebuilds it.
+  const userPluginFileUpdater = new UserPluginFileUpdater(
+    fs,
+    new PluginDistributionLoader(pluginFetcher, pluginDistributionReader, () =>
+      join(userConfigDir(), "cache", "plugin-cache")
+    ),
+    hasher,
+    builtMaterializationDeps
+  );
+  const setupMachineScopeUseCase = new SetupMachineScopeUseCase(
+    userManifestRepo,
+    setupMarketplaceRegistration,
+    marketplaceSyncSettingsUseCase,
+    currentVersionProvider,
+    new InstallGlobalPluginsUseCase(
+      marketplaceRegistry,
+      resolveMarketplaceUseCase,
+      userPluginFileUpdater,
+      logger
+    )
+  );
+  const statusUseCase = new StatusUseCase(fs, manifestRepo, hasher, detectPluginDriftUseCase);
   const pluginUpdateUseCase = new PluginUpdateUseCase(
     fs,
     manifestRepo,
@@ -509,14 +536,20 @@ export async function createDeps(
   );
   const userPluginUpdateUseCase = new UserPluginUpdateUseCase(
     userManifestRepo,
-    new UserPluginFileUpdater(
-      fs,
-      new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-      hasher,
-      builtMaterializationDeps
-    ),
+    userPluginFileUpdater,
     logger,
     nativeHostRegistrationGate
+  );
+  const setAgentModelUseCase = new SetAgentModelUseCase(
+    fs,
+    agentModelStore,
+    manifestRepo,
+    userManifestRepo,
+    pluginUpdateUseCase,
+    userPluginUpdateUseCase,
+    marketplaceSyncSettingsUseCase,
+    homedir,
+    (name) => environment.get(name)
   );
   const restoreUseCase = new RestoreUseCase(
     fs,
@@ -603,6 +636,7 @@ export async function createDeps(
     pluginRemoveUseCase,
     pluginListUseCase,
     pluginUpdateUseCase,
+    setAgentModelUseCase,
     userPluginUpdateUseCase,
     marketplaceAddUseCase,
     marketplaceListUseCase,

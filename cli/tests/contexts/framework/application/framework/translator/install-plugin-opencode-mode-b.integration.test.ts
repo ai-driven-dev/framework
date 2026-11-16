@@ -1,5 +1,5 @@
 // OpenCode uses Mode B with `mode: "flat"` and project scope, so `translateFlat` writes at
-// `.opencode/<section>/<plugin>/<file>`, never under one `.opencode/plugins/<name>/` root.
+// section-specific native paths, never under one `.opencode/plugins/<name>/` root.
 import "../../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../../src/contexts/framework/application/framework/translator/mode-b-flat-materialization-translator.js";
@@ -39,7 +39,7 @@ function buildDist(name = "aidd-context"): PluginDistribution {
 }
 
 describe("install opencode plugin via Mode B (integration)", () => {
-  it("materializes flat plugin files under .opencode/<section>/<plugin>/ at projectRoot", async () => {
+  it("materializes project commands and namespaced native agents", async () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
     const adapter = new ModeBFlatMaterializationTranslator(fs, hasher, () => STUB_HOME);
@@ -59,9 +59,7 @@ describe("install opencode plugin via Mode B (integration)", () => {
     expect(
       written.some((p) => p.startsWith(`${PROJECT_ROOT}/.opencode/commands/aidd-context/`))
     ).toBe(true);
-    expect(
-      written.some((p) => p.startsWith(`${PROJECT_ROOT}/.opencode/agents/aidd-context/`))
-    ).toBe(true);
+    expect(written).toContain(`${PROJECT_ROOT}/.opencode/agents/aidd-context-coach.md`);
   });
 
   it("does not write any file under user home for project-scope flat tools", async () => {

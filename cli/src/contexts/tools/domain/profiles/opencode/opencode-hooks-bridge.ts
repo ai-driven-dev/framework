@@ -11,66 +11,24 @@
  *   idempotent commands. V1 did not deliver `session.created` to this event hook;
  *   the V2 adapter delivers it.
  * - `Stop` maps to V1's `session.idle` or V2's execution terminal, once per turn.
- * - `PostToolUse` maps to `message.part.updated` whose `part.state.status === "completed"`, the
- *   shape measured live: `part.tool` names the tool, `part.state.input` its arguments.
+ * - `PostToolUse` maps to V1's `tool.execute.after`, the one hook that waits for the script and
+ *   can append its exit-2 stderr to the tool's output, which is how a problem reaches the model.
+ *   V2's adapter calls the same hook from a successful tool call, without that answer.
  *
  * A `matcher` on a `PostToolUse` group filters by tool name, exact or pipe-separated
- * alternation; absent, every tool matches.
+ * alternation, ignoring case: OpenCode names its tools in lowercase. Absent, every tool matches.
  */
 
-interface ParsedHookCall {
-  readonly script: string;
-  readonly args: readonly string[];
-}
-
-interface ParsedPostToolUseCall extends ParsedHookCall {
-  readonly matcher?: string;
-}
+import {
+  type BridgeHookCall,
+  bridgeHookCalls,
+  type PluginHooksShape,
+} from "../../formats/plugin-hooks-shape.js";
 
 interface OpencodeHookTable {
-  readonly sessionStart: readonly ParsedHookCall[];
-  readonly stop: readonly ParsedHookCall[];
-  readonly postToolUse: readonly ParsedPostToolUseCall[];
-}
-
-interface ClaudeHookItem {
-  readonly type?: string;
-  readonly command?: string;
-}
-
-interface ClaudeMatcherGroup {
-  readonly matcher?: string;
-  readonly hooks?: readonly ClaudeHookItem[];
-}
-
-interface ClaudeHooksShape {
-  readonly hooks?: Record<string, readonly ClaudeMatcherGroup[]>;
-}
-
-// Only a command this generator can actually replay: `node ${CLAUDE_PLUGIN_ROOT}/hooks/<rel>
-// [args...]`. Anything else is a shape only Claude's own settings.json target ever runs, and is
-// dropped here rather than guessed at.
-const COMMAND_PATTERN = /^node\s+\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/(\S+)(.*)$/;
-
-function parseCommand(command: string | undefined): ParsedHookCall | null {
-  if (typeof command !== "string") return null;
-  const match = COMMAND_PATTERN.exec(command.trim());
-  if (!match) return null;
-  const [, script, rest] = match;
-  const args = rest.trim().length > 0 ? rest.trim().split(/\s+/) : [];
-  return { script, args };
-}
-
-function parseGroups(groups: readonly ClaudeMatcherGroup[] | undefined): ParsedPostToolUseCall[] {
-  const calls: ParsedPostToolUseCall[] = [];
-  for (const group of groups ?? []) {
-    for (const item of group.hooks ?? []) {
-      const parsed = parseCommand(item.command);
-      if (parsed === null) continue;
-      calls.push(group.matcher ? { ...parsed, matcher: group.matcher } : parsed);
-    }
-  }
-  return calls;
+  readonly sessionStart: readonly BridgeHookCall[];
+  readonly stop: readonly BridgeHookCall[];
+  readonly postToolUse: readonly BridgeHookCall[];
 }
 
 /** A plugin's raw hooks.json — still carrying `${CLAUDE_PLUGIN_ROOT}`, since the generated
@@ -78,12 +36,12 @@ function parseGroups(groups: readonly ClaudeMatcherGroup[] | undefined): ParsedP
  * every other flat target needs buys this one nothing — reduced to the three mapped events.
  * Exported for the generator's own unit test. */
 export function parseHooksJsonForBridge(rawHooksJson: string): OpencodeHookTable {
-  const parsed = JSON.parse(rawHooksJson) as ClaudeHooksShape;
+  const parsed = JSON.parse(rawHooksJson) as PluginHooksShape;
   const hooks = parsed.hooks ?? {};
   return {
-    sessionStart: parseGroups(hooks.SessionStart),
-    stop: parseGroups(hooks.Stop),
-    postToolUse: parseGroups(hooks.PostToolUse),
+    sessionStart: bridgeHookCalls(hooks.SessionStart),
+    stop: bridgeHookCalls(hooks.Stop),
+    postToolUse: bridgeHookCalls(hooks.PostToolUse),
   };
 }
 
@@ -98,7 +56,7 @@ function toIdentifier(plugin: string): string {
   return `${pascal}Hooks`;
 }
 
-function callTableLiteral(calls: readonly ParsedHookCall[]): string {
+function callTableLiteral(calls: readonly BridgeHookCall[]): string {
   return JSON.stringify(calls);
 }
 
@@ -160,30 +118,85 @@ function stopCallsFor(event, directory) {
   }));
 }
 
-/** Pure: \`message.part.updated\` for a completed tool part -> every PostToolUse hook whose
- * matcher (absent, or an exact / pipe-separated tool name) allows this tool - or \`[]\` for
- * any other event, an incomplete part, or one naming no tool. */
-function postToolUseCallsFor(event, directory) {
-  if (event?.type !== "message.part.updated") return [];
-  const part = event.properties?.part;
-  if (part?.type !== "tool" || part.state?.status !== "completed") return [];
-  const toolName = part.tool;
-  const sessionId = event.properties?.sessionID;
-  const matches = (matcher) => !matcher || matcher.split("|").includes(toolName);
+// Awaited, unlike runHook: the script has something the model must read.
+// Exit 2 puts it on stderr; exit 0 puts it in additionalContext on stdout.
+function answerFrom(code, stdout, stderr) {
+  if (code === 2) return stderr.trim();
+  if (code !== 0) return "";
+  try {
+    const output = JSON.parse(stdout);
+    return String(output?.hookSpecificOutput?.additionalContext ?? output?.additionalContext ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/** Runs one hook script with its payload on stdin and collects what it wrote. */
+function runCapture(script, args, payload, directory) {
+  return new Promise((resolve) => {
+    let stdout = "";
+    let stderr = "";
+    const child = spawn("node", [HOOKS_DIR + script, ...args], {
+      cwd: directory,
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 5000,
+    });
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", () => resolve({ code: null, stdout: "", stderr: "" }));
+    child.on("close", (code) => resolve({ code, stdout, stderr }));
+    child.stdin.on("error", () => {});
+    child.stdin.end(JSON.stringify(payload));
+  });
+}
+
+function answerOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ code, stdout, stderr }) =>
+    answerFrom(code, stdout, stderr)
+  );
+}
+
+/** A Stop script's {"decision":"block","reason"} on stdout: the reason to keep working on. */
+function stopReasonOf(script, args, payload, directory) {
+  return runCapture(script, args, payload, directory).then(({ code, stdout }) => {
+    if (code !== 0) return "";
+    try {
+      const output = JSON.parse(stdout);
+      return output?.decision === "block" ? String(output.reason ?? "").trim() : "";
+    } catch {
+      return "";
+    }
+  });
+}
+
+/** Pure: a finished tool call -> every PostToolUse hook whose matcher allows its tool. OpenCode
+ * names the written file \`filePath\`; the scripts read Claude Code's \`file_path\`. */
+function postToolUseCallsFor(call, directory) {
+  const tool = String(call?.tool ?? "");
+  const args = call?.args;
+  const matches = (matcher) =>
+    !matcher || matcher.split("|").some((name) => name.toLowerCase() === tool.toLowerCase());
+  const toolInput = typeof args?.filePath === "string" ? { ...args, file_path: args.filePath } : args;
   return POST_TOOL_USE.filter((hook) => matches(hook.matcher)).map((hook) => ({
     script: hook.script,
     args: hook.args,
     payload: {
       hook_event_name: "PostToolUse",
-      session_id: sessionId ?? null,
+      session_id: call?.sessionID ?? null,
       cwd: directory,
-      tool_name: toolName,
-      tool_input: part.state.input,
+      tool_name: tool,
+      tool_input: toolInput,
     },
   }));
 }
 
 export const ${ident} = async (input) => {
+  // Sessions whose last Stop asked the model to continue: their next Stop carries stop_hook_active.
+  const continued = new Set();
   // SessionStart's own approximation (module doc comment above): fired once here, never
   // per session. Silent on purpose: a memory refresh
   // that breaks OpenCode's own startup is worse than one that never ran.
@@ -203,12 +216,29 @@ export const ${ident} = async (input) => {
     event: async ({ event }) => {
       try {
         const directory = event?.properties?.directory ?? input.directory;
-        const calls = [
-          ...stopCallsFor(event, directory),
-          ...postToolUseCallsFor(event, directory),
-        ];
-        for (const call of calls) {
-          runHook(call.script, call.args, call.payload, directory);
+        for (const call of stopCallsFor(event, directory)) {
+          const sessionId = call.payload.session_id;
+          const payload = { ...call.payload, stop_hook_active: continued.has(sessionId) };
+          const reason = await stopReasonOf(call.script, call.args, payload, directory);
+          if (!reason) {
+            continued.delete(sessionId);
+            continue;
+          }
+          continued.add(sessionId);
+          // Not awaited: the prompt is the session's next turn, and this handler must not hold it.
+          input.client.session
+            .promptAsync({ path: { id: sessionId }, body: { parts: [{ type: "text", text: reason }] } })
+            .catch(() => {});
+        }
+      } catch {
+        // Silent on purpose - see above.
+      }
+    },
+    "tool.execute.after": async (call, output) => {
+      try {
+        for (const hook of postToolUseCallsFor(call, input.directory)) {
+          const answer = await answerOf(hook.script, hook.args, hook.payload, input.directory);
+          if (answer) output.output = \`\${output.output ?? ""}\\n\\n\${answer}\`;
         }
       } catch {
         // Silent on purpose - see above.

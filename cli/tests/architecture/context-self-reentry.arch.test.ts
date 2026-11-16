@@ -79,7 +79,7 @@ describe("the guard itself", () => {
   it("does not flag a real cross-context edge, which climbs out and never comes back", () => {
     expect(
       climbsOutAndReenters(
-        "../../../contexts/tools/domain/formats/cursor-hooks-project-merge.js",
+        "../../../contexts/tools/domain/profiles/cursor/hooks-format.js",
         "acme",
         4
       )

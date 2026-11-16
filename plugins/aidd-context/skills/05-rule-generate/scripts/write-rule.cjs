@@ -1,285 +1,501 @@
 #!/usr/bin/env node
 "use strict";
-
-// Installed-skill entrypoint: deliberately independent of the framework and host packages.
+// Usage: node write-rule.cjs --project <abs dir> (--input <request.json> --tools <ids> | --remove <category>/<slug> | --publish [--tools <ids>]) [--plan] [--force]
+// Tool ids: claude,cursor,copilot,antigravity,codex,opencode,kilo.
+// Writes a rule source under aidd_docs/rules and publishes it to each host it targets.
+// Exit 0 ok, 1 refusal, 2 usage error, 3 filesystem error. Prints one JSON object on stdout.
 const fs = require("node:fs");
 const path = require("node:path");
-const { createHash, randomUUID } = require("node:crypto");
+const { createHash } = require("node:crypto");
 
-const TOOLS = ["claude", "cursor", "copilot", "codex", "opencode"];
-const CATEGORIES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"];
-const SHARED = ["codex", "opencode"];
-const SOURCE = "aidd_docs/rules";
-const fail = (message) => { throw new Error(message); };
-const hash = (text) => createHash("sha256").update(text).digest("hex");
-const contributionHash = (payload, separator) => hash(`separator=${separator}\n${payload}`);
+const EXIT = { OK: 0, REFUSED: 1, USAGE: 2, FILESYSTEM: 3 };
+const FLAGS = ["--publish", "--plan", "--force"];
+const VALUES = ["--project", "--tools", "--input", "--remove"];
+const ACTIONS = ["--input", "--remove", "--publish"];
+const REQUEST_KEYS = ["category", "slug", "description", "body", "paths"];
+const CATEGORY_NAMES = ["architecture", "standards", "programming-languages", "frameworks-and-libraries", "tooling", "testing", "design-patterns", "quality", "domain", "other"];
+const CATEGORIES = CATEGORY_NAMES.map((name, index) => `0${index}-${name}`);
+const SLUG = /^\d-[a-z0-9]+(?:[-.@][a-z0-9]+)*$/;
+const SLUG_PREFIX = /^\d-/;
+const LINE_BREAK = /[\r\n]/;
+const CRLF = /\r\n/g;
+const GLOB_FORBIDDEN = /[,\r\n]/;
+const TITLE_PREFIX = "# ";
+const MISSING = ["ENOENT", "ENOTDIR"];
 
-function readUtf8(file) {
-  const bytes = fs.readFileSync(file);
-  const text = bytes.toString("utf8");
-  if (!Buffer.from(text).equals(bytes)) fail(`Invalid UTF-8 in ${file}; refusing byte loss.`);
-  return text;
-}
+const SOURCE_DIR = "aidd_docs/rules";
+const SOURCE_EXTENSION = ".md";
+const FRONTMATTER_SOURCE = /^---\n([\s\S]*?)\n---\n\n([\s\S]*)$/;
+const SOURCE_LINE = { description: /^description: (.*)$/, glob: /^ {2}- (.*)$/, targets: /^targets: \[(.*)\]$/, paths: /^paths:$/ };
 
-function options(args) {
-  const result = {};
-  for (let i = 0; i < args.length; i++) {
-    const key = args[i];
-    if (!["--project", "--tools", "--input", "--delete", "--publish", "--plan", "--check"].includes(key) || key in result) fail(`Unknown or repeated option: ${key}`);
-    result[key] = ["--publish", "--plan", "--check"].includes(key) ? true : args[++i];
-    if (!result[key] || (typeof result[key] === "string" && result[key].startsWith("--"))) fail(`Missing value: ${key}`);
+const AGENTS = "AGENTS.md";
+const INDEX_START = "<!-- aidd_rules:start -->";
+const INDEX_END = "<!-- aidd_rules:end -->";
+const INDEX_INTRO = "Before editing a file, read each rule whose scope matches it.";
+const INDEX_MARK = /^<!-- aidd_rules:(start|end)(.*?)-->$/gm;
+const INDEX_PRESENT = /^<!-- aidd_rules:start/m;
+const FENCED_CODE = /^```[\s\S]*?^```/gm;
+const TITLE_LINE = /^# (.+)$/m;
+
+// Formats of earlier releases, converted on their next write.
+const LEGACY_SOURCE = /^<!-- aidd_rule:([^\r\n]+) -->\n/;
+const LEGACY_COPY_TRAILER = /\n<!-- aidd_rule_output:path=(\S+) sha256=([a-f0-9]{64}) -->\n$/;
+const LEGACY_INDEX_SIGNATURE = /^ sha256=([a-f0-9]{64}) separator=([01]) $/;
+const CURRENT_INDEX_SUFFIX = " ";
+
+const quote = (value) => JSON.stringify(value);
+const isScoped = (rule) => rule.paths.length > 0;
+const yamlList = (globs) => globs.map((glob) => `  - ${quote(glob)}\n`).join("");
+const joinedGlobs = (rule) => quote(rule.paths.join(","));
+const codeList = (globs) => globs.map((glob) => `\`${glob}\``).join(", ");
+
+// Each host's copy path and frontmatter, in `targets` order. Codex has no rule files: it reads a line of the root AGENTS.md index.
+// Kilo and OpenCode ignore copy frontmatter and load copies only through a glob in a config's `instructions`; the first config is created when none exists.
+const HOSTS = {
+  claude: {
+    path: (rule) => `.claude/rules/${rule.category}/${rule.slug}.md`,
+    frontmatter: (rule) => (isScoped(rule) ? `paths:\n${yamlList(rule.paths)}` : ""),
+  },
+  cursor: {
+    path: (rule) => `.cursor/rules/${rule.category}/${rule.slug}.mdc`,
+    frontmatter: (rule) => `description: ${quote(rule.description)}\n${isScoped(rule) ? `globs: ${rule.paths.join(", ")}\n` : ""}alwaysApply: ${!isScoped(rule)}\n`,
+  },
+  copilot: {
+    path: (rule) => `.github/instructions/${rule.category.split("-")[0]}-${rule.slug.replace(SLUG_PREFIX, "")}.instructions.md`,
+    frontmatter: (rule) => `applyTo: ${isScoped(rule) ? joinedGlobs(rule) : '"**"'}\n`,
+  },
+  antigravity: {
+    path: (rule) => `.agents/rules/${rule.slug}.md`,
+    frontmatter: (rule) => `description: ${quote(rule.description)}\n${isScoped(rule) ? `trigger: glob\nglobs: ${joinedGlobs(rule)}\n` : "trigger: always_on\n"}`,
+    maxBytes: 24000,
+  },
+  codex: { indexed: true },
+  opencode: {
+    path: (rule) => `.opencode/rules/${rule.category}-${rule.slug}.md`,
+    config: { glob: ".opencode/rules/*.md", files: ["opencode.json", "opencode.jsonc"] },
+  },
+  kilo: {
+    path: (rule) => `.kilo/rules/${rule.category}-${rule.slug}.md`,
+    config: { glob: ".kilo/rules/*.md", files: ["kilo.jsonc", "kilo.json", ".kilo/kilo.jsonc", ".kilo/kilo.json"] },
+  },
+};
+const TOOLS = Object.keys(HOSTS);
+
+class Refusal extends Error {}
+class UsageError extends Error {}
+const refuse = (message) => { throw new Refusal(message); };
+
+// ---------- arguments ----------
+
+function parseArgs(argv) {
+  const options = {};
+  for (let i = 0; i < argv.length; i++) {
+    const name = argv[i];
+    const known = FLAGS.includes(name) || VALUES.includes(name);
+    if (!known || name in options) throw new UsageError(`Bad option: ${name}`);
+    if (FLAGS.includes(name)) {
+      options[name] = true;
+      continue;
+    }
+    const value = argv[++i];
+    if (!value || value.startsWith("--")) throw new UsageError(`Missing value: ${name}`);
+    options[name] = value;
   }
-  if (!result["--project"] || !result["--tools"]) fail("Explicit --project and --tools are required.");
-  if (["--input", "--delete", "--publish"].filter((key) => key in result).length !== 1) fail("Choose exactly one of --input, --delete or --publish.");
-  if (result["--check"] && (!result["--publish"] || result["--plan"])) fail("--check verifies --publish alone and excludes --plan.");
-  return result;
+  assertOptionsConsistent(options);
+  return options;
 }
 
-function tools(value) {
-  const selected = typeof value === "string" ? value.split(",") : value;
-  if (!Array.isArray(selected) || !selected.length || new Set(selected).size !== selected.length || selected.some((tool) => !TOOLS.includes(tool))) fail("Targets must be distinct confirmed tools: claude,cursor,copilot,codex,opencode.");
-  return [...selected].sort();
+function assertOptionsConsistent(options) {
+  if (!options["--project"]) throw new UsageError("--project is required.");
+  if (ACTIONS.filter((name) => name in options).length !== 1) throw new UsageError(`Choose exactly one of ${ACTIONS.join(", ")}.`);
+  if (options["--input"] && !options["--tools"]) throw new UsageError("--input requires --tools.");
 }
 
-function identity(category, slug) {
-  const index = CATEGORIES.findIndex((name, i) => category === `${String(i).padStart(2, "0")}-${name}`);
-  if (index < 0 || typeof slug !== "string" || !new RegExp(`^${index}-[a-z0-9]+(?:[-@.][a-z0-9]+)*$`).test(slug)) fail("Invalid taxonomy category or matching #-slug.");
-  return `${category}/${slug}`;
+function parseTools(list) {
+  if (!Array.isArray(list) || list.some((tool) => !TOOLS.includes(tool))) refuse(`Unknown tool; expected ${TOOLS.join(",")}.`);
+  return TOOLS.filter((tool) => list.includes(tool));
 }
 
-// Scan actual rendered text, never YAML-stripped approximations. Fenced examples remain text.
-function scan(text) {
-  if (text.includes("\0")) fail("NUL is not supported in rule text.");
-  const active = [];
-  let fence = null;
-  let offset = 0;
-  for (const line of text.match(/[^\n]*\n|[^\n]+$/g) || []) {
-    const value = line.replace(/\r?\n$/, "");
-    const match = /^(?: {0,3})(`{3,}|~{3,})(.*)$/.exec(value);
-    if (fence) {
-      if (match && match[1][0] === fence.char && match[1].length >= fence.length && !match[2].trim()) fence = null;
-    } else if (match) {
-      if (match[1][0] === "`" && match[2].includes("`")) fail("Invalid Markdown fence.");
-      fence = { char: match[1][0], length: match[1].length };
-    } else active.push({ value, offset, end: offset + line.length });
-    offset += line.length;
+// ---------- rules ----------
+
+const isSingleLine = (value) => typeof value === "string" && value.trim() !== "" && !LINE_BREAK.test(value);
+const isGlob = (value) => typeof value === "string" && value !== "" && !GLOB_FORBIDDEN.test(value);
+
+function validateRule(rule) {
+  const categoryIndex = CATEGORIES.indexOf(rule.category);
+  const slugMatches = typeof rule.slug === "string" && SLUG.test(rule.slug) && rule.slug[0] === String(categoryIndex);
+  if (categoryIndex < 0 || !slugMatches) refuse("Invalid category or slug.");
+  if (!isSingleLine(rule.description)) refuse("Description must be a non-empty single line.");
+  if (typeof rule.body !== "string" || !rule.body.trim()) refuse("Body must be non-empty.");
+  if (!Array.isArray(rule.paths) || !rule.paths.every(isGlob)) refuse("Paths must be non-empty strings without commas or newlines.");
+  return { ...rule, targets: parseTools(rule.targets) };
+}
+
+function parseJson(text, message) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return refuse(message);
   }
-  if (fence) fail("Unclosed Markdown fence; close it before publishing rules.");
-  return active;
 }
 
-function safeText(text) {
-  if (Buffer.from(text).toString("utf8") !== text) fail("Unpaired Unicode surrogate; UTF-8 text must roundtrip.");
-  if (scan(text).some(({ value }) => /<!--\s*aidd_(?:rules|rule:|rule_output|opencode_rules)/.test(value))) fail("Reserved AIDD rule marker outside a fenced example.");
+function readRequest(file) {
+  let text;
+  try {
+    text = fs.readFileSync(path.resolve(file), "utf8");
+  } catch {
+    refuse("Input must be a readable JSON file.");
+  }
+  const request = parseJson(text, "Input must be a readable JSON file.");
+  const isObject = request && typeof request === "object" && !Array.isArray(request);
+  if (!isObject || Object.keys(request).some((key) => !REQUEST_KEYS.includes(key))) refuse(`Request must be an object with ${REQUEST_KEYS.join(", ")}.`);
+  return request;
 }
 
-function metadata(value, body, targets, fromSource = false) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) fail("Rule input must be a JSON object.");
-  const keys = fromSource ? ["version", "category", "slug", "description", "paths", "targets"] : ["category", "slug", "description", "paths", "body"];
-  if (Object.keys(value).some((key) => !keys.includes(key))) fail("Unknown rule metadata field.");
-  identity(value.category, value.slug);
-  if (fromSource && value.version !== 1) fail("Unsupported canonical metadata version.");
-  if (typeof value.description !== "string" || !value.description.trim() || /[\r\n\0]/.test(value.description)) fail("Description must be a nonempty single line.");
-  const paths = value.paths === undefined ? [] : value.paths;
-  if (!Array.isArray(paths) || paths.some((glob) => typeof glob !== "string" || !glob.trim() || glob !== glob.trim() || /[,\r\n\0]/.test(glob)) || new Set(paths).size !== paths.length) fail("Paths must be distinct nonempty globs without commas or line breaks.");
-  if (typeof body !== "string" || !body.trim()) fail("Body must be complete nonempty Markdown.");
-  if (/^---\r?\n/.test(body)) fail("Body must not start with YAML frontmatter; supply scope in JSON metadata.");
-  safeText(body);
-  safeText(value.description + "\n" + paths.join("\n"));
-  return { version: 1, category: value.category, slug: value.slug, description: value.description, paths, targets: tools(targets), body };
+const sourcePath = (rule) => `${SOURCE_DIR}/${rule.category}/${rule.slug}${SOURCE_EXTENSION}`;
+
+function renderSource(rule) {
+  const paths = isScoped(rule) ? `paths:\n${yamlList(rule.paths)}` : "";
+  return `---\ndescription: ${quote(rule.description)}\n${paths}targets: [${rule.targets.join(", ")}]\n---\n\n${rule.body}`;
 }
 
-function canonical(rule) {
-  const { body, ...meta } = rule;
-  return `<!-- aidd_rule:${JSON.stringify(meta)} -->\n${body}`;
+function parseLegacySource(match, text, relativePath) {
+  return { ...parseJson(match[1], `Unparseable source: ${relativePath}`), body: text.slice(match[0].length) };
 }
 
-function parseCanonical(text, relative) {
-  const match = /^<!-- aidd_rule:([^\r\n]+) -->\n/.exec(text);
-  if (!match) fail(`Missing strict canonical metadata: ${relative}. Legacy sources are not migrated.`);
-  let meta;
-  try { meta = JSON.parse(match[1]); } catch { fail(`Invalid canonical JSON metadata: ${relative}`); }
-  const rule = metadata(meta, text.slice(match[0].length), meta.targets, true);
-  if (`${SOURCE}/${identity(rule.category, rule.slug)}.md` !== relative || canonical(rule) !== text) fail(`Noncanonical metadata or path: ${relative}`);
+function parseFrontmatterSource(match, relativePath) {
+  const rule = { body: match[2], paths: [], targets: [] };
+  const unparseable = `Unparseable source line in ${relativePath}.`;
+  for (const line of match[1].split("\n")) {
+    const description = SOURCE_LINE.description.exec(line);
+    const glob = SOURCE_LINE.glob.exec(line);
+    const targets = SOURCE_LINE.targets.exec(line);
+    if (description) rule.description = parseJson(description[1], unparseable);
+    else if (glob) rule.paths.push(parseJson(glob[1], unparseable));
+    else if (targets) rule.targets = targets[1] ? targets[1].split(", ") : [];
+    else if (!SOURCE_LINE.paths.test(line)) refuse(unparseable);
+  }
+  [rule.category, rule.slug] = relativePath.slice(SOURCE_DIR.length + 1, -SOURCE_EXTENSION.length).split("/");
   return rule;
 }
 
-function nativePath(rule, tool) {
-  const id = identity(rule.category, rule.slug);
-  if (tool === "claude") return `.claude/rules/${id}.md`;
-  if (tool === "cursor") return `.cursor/rules/${id}.mdc`;
-  return `.github/instructions/${rule.category.slice(0, 2)}-${rule.slug.slice(2)}.instructions.md`;
+function parseSource(text, relativePath) {
+  const legacy = LEGACY_SOURCE.exec(text);
+  const current = FRONTMATTER_SOURCE.exec(text);
+  let rule;
+  if (legacy) rule = parseLegacySource(legacy, text, relativePath);
+  else if (current) rule = parseFrontmatterSource(current, relativePath);
+  else refuse(`Unrecognized source: ${relativePath}`);
+  const valid = validateRule({ ...rule, paths: rule.paths ?? [], targets: rule.targets ?? [] });
+  if (sourcePath(valid) !== relativePath) refuse(`Source path does not match its identity: ${relativePath}`);
+  return valid;
 }
 
-function renderNative(rule, tool, signed = true) {
-  const quote = JSON.stringify;
-  let fields;
-  if (tool === "claude") fields = rule.paths.length ? `paths:\n${rule.paths.map((glob) => `  - ${quote(glob)}\n`).join("")}` : "";
-  if (tool === "cursor") fields = `description: ${quote(rule.description)}\n${rule.paths.length ? `globs: ${quote(rule.paths.join(","))}\n` : ""}alwaysApply: ${!rule.paths.length}\n`;
-  if (tool === "copilot") fields = `applyTo: ${quote(rule.paths.length ? rule.paths.join(",") : "**")}\n`;
-  const text = (fields ? `---\n${fields}---\n` : "") + rule.body;
-  safeText(text);
-  return signed ? `${text}\n<!-- aidd_rule_output:path=${nativePath(rule, tool)} sha256=${hash(text)} -->\n` : text;
+function renderCopy(rule, tool) {
+  const host = HOSTS[tool];
+  const frontmatter = host.frontmatter ? host.frontmatter(rule) : "";
+  const scopeLine = host.config && isScoped(rule) ? `Applies to files matching ${codeList(rule.paths)}.\n\n` : "";
+  const text = (frontmatter ? `---\n${frontmatter}---\n` : "") + scopeLine + rule.body;
+  if (host.maxBytes && Buffer.byteLength(text) > host.maxBytes) refuse(`The ${tool} rule exceeds ${host.maxBytes} bytes.`);
+  return text;
 }
 
-function ownedNative(existing, prior, tool, relative) {
-  const match = /\n<!-- aidd_rule_output:path=([^\s]+) sha256=([a-f0-9]{64}) -->\n$/.exec(existing);
-  if (match && match[1] === relative && hash(existing.slice(0, match.index)) === match[2]) return;
-  if (prior && existing === renderNative(prior, tool, false)) return;
-  fail(`Edited or unowned native output: ${relative}. Restore the generated file; edit the canonical source instead.`);
+const copyTools = (rule) => rule.targets.filter((tool) => HOSTS[tool].path);
+const isIndexed = (rule) => rule.targets.some((tool) => HOSTS[tool].indexed);
+const sha256 = (text) => createHash("sha256").update(text).digest("hex");
+
+// A legacy copy ended with a sha256 trailer; only a valid one proves the writer produced it.
+function isLegacySigned(text, relativePath) {
+  const trailer = LEGACY_COPY_TRAILER.exec(text);
+  return Boolean(trailer) && trailer[1] === relativePath && sha256(text.slice(0, trailer.index)) === trailer[2];
 }
 
-function contribution(text) {
-  const markers = scan(text).filter(({ value }) => /<!--\s*aidd_(?:rules|opencode_rules)/.test(value));
-  if (!markers.length) return null;
-  if (markers.length !== 2) fail("Duplicate, incomplete or legacy AIDD rule contribution; restore it explicitly. No automatic migration.");
-  const start = /^<!-- aidd_rules:start sha256=([a-f0-9]{64}) separator=([01]) -->$/.exec(markers[0].value);
-  if (!start || markers[1].value !== "<!-- aidd_rules:end -->") fail("Ambiguous or legacy AIDD rule contribution; no automatic migration.");
-  const payload = text.slice(markers[0].end, markers[1].offset);
-  if (contributionHash(payload, start[2]) !== start[1]) fail("Edited AIDD rule contribution; restore it and edit canonical sources instead.");
-  const begin = markers[0].offset - Number(start[2]);
-  if (begin < 0 || (start[2] === "1" && text[begin] !== "\n")) fail("Invalid contribution separator.");
-  return { begin, end: markers[1].end };
+// ---------- AGENTS.md index ----------
+
+function indexLines(sources) {
+  return [...sources]
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .filter(([, rule]) => isIndexed(rule))
+    .map(([relativePath, rule]) => {
+      const scope = isScoped(rule) ? codeList(rule.paths) : "all files";
+      const title = TITLE_LINE.exec(rule.body.replace(FENCED_CODE, ""))?.[1].trim() || rule.slug;
+      return `- ${scope}: [${title}](${relativePath})`;
+    });
 }
 
-function startsHtmlBlock(line) {
-  // CommonMark HTML block starts; inline tags and autolinks remain paragraph text.
-  return /^ {0,3}<(?:!--|\?|![A-Za-z]|!\[CDATA\[)/.test(line)
-    || /^ {0,3}<(?:pre|script|style|textarea)(?=[ \t>]|$)/i.test(line)
-    || /^ {0,3}<\/?(?:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?=[ \t>]|\/>|$)/i.test(line)
-    || /^ {0,3}(?:<[A-Za-z][A-Za-z0-9-]*(?:[ \t]+[A-Za-z_:][A-Za-z0-9_.:-]*(?:[ \t]*=[ \t]*(?:[^ \t"'=<>`]+|'[^']*'|"[^"]*"))?)*[ \t]*\/?>|<\/[A-Za-z][A-Za-z0-9-]*[ \t]*>)[ \t]*$/.test(line);
+const indexBlock = (lines) => (lines.length ? `${INDEX_START}\n${INDEX_INTRO}\n\n${lines.join("\n")}\n${INDEX_END}\n` : "");
+
+function separatorBefore(text) {
+  if (!text || text.endsWith("\n\n")) return "";
+  return text.endsWith("\n") ? "\n" : "\n\n";
 }
 
-function leadingTitle(body) {
-  const [first, second = ""] = body.replace(/^(?:[ \t]*\r?\n)+/, "").split(/\r?\n/, 2);
-  if (/^ {0,3}#{1,6}(?:[ \t]|$)/.test(first)) return true;
-  // Recognize a single-line Setext title, excluding leading Markdown blocks.
-  return /^ {0,3}\S/.test(first)
-    && !/^ {0,3}(?:>|`{3,}|~{3,}|[-+*](?:[ \t]|$)|\d{1,9}[.)](?:[ \t]|$)|(?:[-*_][ \t]*){3,}$)/.test(first)
-    && !startsHtmlBlock(first)
-    && /^ {0,3}(?:=+|-+)[ \t]*$/.test(second);
+// Where a signed legacy block begins, or null when its signature does not hold.
+function legacyBlockStart(text, start, end) {
+  const signature = LEGACY_INDEX_SIGNATURE.exec(start[2]);
+  if (!signature) return null;
+  const [, expectedHash, separator] = signature;
+  const payload = text.slice(start.index + start[0].length + 1, end.index);
+  if (sha256(`separator=${separator}\n${payload}`) !== expectedHash) return null;
+  if (separator === "1" && text[start.index - 1] !== "\n") return null;
+  return start.index - Number(separator);
 }
 
-function codeSpan(text) {
-  const length = (text.match(/`+/g) || []).reduce((max, run) => Math.max(max, run.length), 0) + 1;
-  const delimiter = "`".repeat(length);
-  const padding = text.startsWith("`") || text.endsWith("`") ? " " : "";
-  return `${delimiter}${padding}${text}${padding}${delimiter}`;
+// The AGENTS.md text holding these lines, or null when its existing block cannot be trusted.
+function reindexAgents(text, lines) {
+  const block = indexBlock(lines);
+  const marks = [...text.matchAll(INDEX_MARK)];
+  if (!marks.length) return block ? text + separatorBefore(text) + block : text;
+  const [start, end] = marks;
+  if (marks.length !== 2 || start[1] !== "start" || end[1] !== "end") return null;
+  const markEnd = end.index + end[0].length;
+  const blockEnd = markEnd + (text[markEnd] === "\n" ? 1 : 0);
+  const isLegacy = start[2] !== CURRENT_INDEX_SUFFIX;
+  const blockStart = isLegacy ? legacyBlockStart(text, start, end) : start.index;
+  if (blockStart === null) return null;
+  if (block) return text.slice(0, start.index) + block + text.slice(blockEnd);
+  const prefix = text.slice(0, blockStart);
+  const trimmed = !isLegacy && prefix.endsWith("\n\n") ? prefix.slice(0, -1) : prefix;
+  return trimmed + text.slice(blockEnd);
 }
 
-function renderShared(existing, rules) {
-  const old = contribution(existing);
-  const selected = rules.filter((rule) => rule.targets.some((tool) => SHARED.includes(tool)));
-  const payload = selected.map((rule) => {
-    const scope = rule.paths.length ? `Applies to: ${rule.paths.map(codeSpan).join(", ")}.\n` : "Applies to: all files.\n";
-    const title = leadingTitle(rule.body) ? "" : `## ${rule.description}\n\n`;
-    const text = `${title}${scope}\n${rule.body}`;
-    safeText(text);
-    return text.endsWith("\n") ? text : text + "\n";
-  }).join("\n");
-  let result;
-  if (!payload) result = old ? existing.slice(0, old.begin) + existing.slice(old.end) : existing;
-  else {
-    const prefix = old ? existing.slice(0, old.begin) : existing;
-    const separator = prefix && !prefix.endsWith("\n") ? "\n" : "";
-    const block = `${separator}<!-- aidd_rules:start sha256=${contributionHash(payload, separator.length)} separator=${separator.length} -->\n${payload}<!-- aidd_rules:end -->\n`;
-    result = prefix + block + (old ? existing.slice(old.end) : "");
-  }
-  contribution(result);
-  return result;
-}
+// ---------- project reads ----------
 
-function main() {
-  const opts = options(process.argv.slice(2));
-  const selected = tools(opts["--tools"]);
-  const root = path.resolve(opts["--project"]);
-  if (!fs.statSync(root).isDirectory() || fs.realpathSync(root) !== root) fail("Project must be a real directory without symlink ancestors.");
-  function target(relative) {
-    if (path.isAbsolute(relative) || relative.split("/").some((part) => !part || part === "." || part === "..") || relative.includes("\\")) fail(`Unsafe project path: ${relative}`);
+function openProject(value) {
+  const root = path.resolve(value);
+  const isReal = path.isAbsolute(value) && fs.existsSync(root) && fs.statSync(root).isDirectory() && fs.realpathSync(root) === root;
+  if (!isReal) refuse("--project must be an absolute real directory.");
+
+  function resolve(relativePath) {
+    const parts = relativePath.split("/");
+    if (parts.some((part) => !part || part === "." || part === "..") || relativePath.includes("\\")) refuse(`Unsafe path: ${relativePath}`);
     let current = root;
-    for (const part of relative.split("/")) {
+    for (const part of parts) {
       current = path.join(current, part);
-      try { if (fs.lstatSync(current).isSymbolicLink()) fail(`Symlink target or ancestor: ${relative}`); }
-      catch (error) { if (error.code !== "ENOENT") throw error; }
+      if (isSymlink(current)) refuse(`Symlink in path: ${relativePath}`);
     }
     return current;
   }
-  function read(relative) {
-    const file = target(relative);
-    try { return readUtf8(file); } catch (error) { if (error.code === "ENOENT") return null; throw error; }
-  }
-  const previous = new Map();
-  function walk(relative) {
-    const dir = target(relative);
-    let entries;
-    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch (error) { if (error.code === "ENOENT") return; throw error; }
-    for (const entry of entries) {
-      const name = `${relative}/${entry.name}`;
-      target(name);
-      if (entry.isDirectory()) walk(name);
-      else if (entry.isFile() && entry.name.endsWith(".md")) previous.set(name, parseCanonical(read(name), name));
-      else fail(`Unexpected canonical source: ${name}`);
-    }
-  }
-  walk(SOURCE);
-  const prospective = new Map(previous);
-  let changed;
-  if (opts["--input"]) {
-    const input = JSON.parse(readUtf8(path.resolve(opts["--input"])));
-    const rule = metadata(input, input.body, selected);
-    changed = `${SOURCE}/${identity(rule.category, rule.slug)}.md`;
-    prospective.set(changed, rule);
-  } else if (opts["--delete"]) {
-    const parts = opts["--delete"].split("/");
-    if (parts.length !== 2) fail("Delete requires <category>/<slug>.");
-    changed = `${SOURCE}/${identity(...parts)}.md`;
-    if (!previous.has(changed)) fail("Cannot delete an absent canonical rule.");
-    prospective.delete(changed);
-  }
-  const nextRules = [...prospective.entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([, rule]) => rule);
-  const affected = new Set(selected);
-  if (changed && previous.has(changed)) for (const tool of previous.get(changed).targets) affected.add(tool);
-  const writes = new Map();
-  if (changed) writes.set(changed, prospective.has(changed) ? canonical(prospective.get(changed)) : null);
-  for (const tool of affected) {
-    if (SHARED.includes(tool)) continue;
-    for (const name of new Set([...previous.keys(), ...prospective.keys()])) {
-      const old = previous.get(name);
-      const next = prospective.get(name);
-      if (!old?.targets.includes(tool) && !next?.targets.includes(tool)) continue;
-      const relative = nativePath(next || old, tool);
-      const existing = read(relative);
-      if (existing !== null) ownedNative(existing, old, tool, relative);
-      writes.set(relative, next?.targets.includes(tool) ? renderNative(next, tool) : null);
-    }
-  }
-  if ([...affected].some((tool) => SHARED.includes(tool))) {
-    const existing = read("AGENTS.md");
-    const updated = renderShared(existing || "", nextRules);
-    if (selected.includes("codex") || nextRules.some((rule) => rule.targets.includes("codex"))) {
-      if (read("AGENTS.override.md") !== null) fail("Root AGENTS.override.md masks Codex AGENTS.md; resolve the override explicitly.");
-      if (Buffer.byteLength(updated) > 32768) fail("Local AGENTS.md exceeds Codex's default 32 KiB combined instruction limit.");
-    }
-    if (existing !== null || updated) writes.set("AGENTS.md", updated);
-  }
-  // Preflight every destination and ownership above; no validation can first happen after mutation.
-  for (const relative of writes.keys()) target(relative);
-  if (opts["--plan"]) return void process.stdout.write(JSON.stringify({ dryRun: true, files: [...writes.keys()] }) + "\n");
-  if (opts["--check"]) {
-    const drift = [...writes].filter(([relative, text]) => text !== read(relative)).map(([relative]) => relative);
-    process.exitCode = drift.length ? 1 : 0;
-    return void process.stdout.write(JSON.stringify({ drift }) + "\n");
-  }
-  for (const [relative, text] of writes) {
-    const file = target(relative);
-    if (text === read(relative)) continue;
-    if (text === null) { fs.rmSync(file, { force: true }); continue; }
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    const temporary = `${file}.${randomUUID()}.tmp`;
-    try { fs.writeFileSync(temporary, text, { flag: "wx" }); fs.renameSync(temporary, file); }
-    finally { fs.rmSync(temporary, { force: true }); }
-  }
-  process.stdout.write(JSON.stringify({ files: [...writes.keys()] }) + "\n");
+
+  // A Windows checkout may turn every line ending into CRLF; the writer reads and writes LF.
+  const read = (relativePath) => orWhenMissing(() => fs.readFileSync(resolve(relativePath), "utf8").replace(CRLF, "\n"), null);
+  const list = (relativePath) => orWhenMissing(() => fs.readdirSync(resolve(relativePath)).sort(), []);
+  return { resolve, read, list };
 }
 
-try { main(); } catch (error) { process.stderr.write(`${error.message}\n`); process.exitCode = 1; }
+function orWhenMissing(action, fallback) {
+  try {
+    return action();
+  } catch (error) {
+    if (MISSING.includes(error.code)) return fallback;
+    throw error;
+  }
+}
+
+const isSymlink = (file) => orWhenMissing(() => fs.lstatSync(file).isSymbolicLink(), false);
+
+function loadSources(project) {
+  const sources = new Map();
+  for (const category of project.list(SOURCE_DIR)) {
+    for (const name of project.list(`${SOURCE_DIR}/${category}`)) {
+      if (!name.endsWith(SOURCE_EXTENSION)) continue;
+      const relativePath = `${SOURCE_DIR}/${category}/${name}`;
+      sources.set(relativePath, parseSource(project.read(relativePath), relativePath));
+    }
+  }
+  return sources;
+}
+
+// ---------- planning: decides every write, delete and conflict, touches nothing ----------
+
+// Targets only grow: --tools adds hosts to a rule, never drops one.
+function collectItems(options, sources) {
+  const tools = options["--tools"] ? parseTools(options["--tools"].split(",")) : [];
+  if (options["--input"]) return [itemFromRequest(options["--input"], tools, sources)];
+  if (options["--remove"]) return [itemFromRemoval(options["--remove"], sources)];
+  return [...sources.values()].map((prior) => ({ rule: { ...prior, targets: parseTools([...prior.targets, ...tools]) }, prior }));
+}
+
+const withFinalNewline = (text) => (text.endsWith("\n") ? text : `${text}\n`);
+
+function itemFromRequest(file, tools, sources) {
+  const rule = validateRule({ paths: [], ...readRequest(file), targets: tools });
+  if (!rule.body.startsWith(TITLE_PREFIX)) refuse("Body must start with a `# <title>` line.");
+  const prior = sources.get(sourcePath(rule));
+  const targets = parseTools([...(prior ? prior.targets : []), ...tools]);
+  return { rule: { ...rule, body: withFinalNewline(rule.body), targets }, prior };
+}
+
+function itemFromRemoval(identity, sources) {
+  const prior = sources.get(`${SOURCE_DIR}/${identity}${SOURCE_EXTENSION}`);
+  if (!prior) refuse("Cannot remove an absent rule.");
+  return { rule: prior, prior, deleting: true };
+}
+
+function planChanges(project, options) {
+  const sources = loadSources(project);
+  const items = collectItems(options, sources);
+  const plan = { writes: new Map(), conflicts: [] };
+  const finalSources = planRuleFiles(plan, project, items, sources);
+  for (const host of Object.values(HOSTS).filter((candidate) => candidate.config)) {
+    const targeted = items.some((item) => !item.deleting && item.rule.targets.some((tool) => HOSTS[tool] === host));
+    if (targeted) planConfig(plan, project, host.config);
+  }
+  // An existing block is rebuilt too, so lines for hosts that now take copies disappear.
+  const indexed = items.some((item) => isIndexed(item.rule));
+  if (indexed || INDEX_PRESENT.test(project.read(AGENTS) ?? "")) planIndex(plan, project, finalSources, indexed);
+  return plan;
+}
+
+function planChange(plan, relativePath, current, wanted) {
+  if (current !== wanted) plan.writes.set(relativePath, { current, wanted });
+}
+
+function planRuleFiles(plan, project, items, sources) {
+  const finalSources = new Map(sources);
+  for (const { rule, prior, deleting } of items) {
+    const relativePath = sourcePath(rule);
+    if (deleting) finalSources.delete(relativePath);
+    else finalSources.set(relativePath, rule);
+    planChange(plan, relativePath, project.read(relativePath), deleting ? null : renderSource(rule));
+    for (const tool of copyTools(rule)) {
+      const wanted = deleting ? null : renderCopy(rule, tool);
+      const previous = prior && renderCopy(prior, tool);
+      planCopy(plan, project, HOSTS[tool].path(rule), wanted, previous);
+    }
+  }
+  return finalSources;
+}
+
+// A copy is the writer's when absent, legacy-signed or what the prior source rendered; any other differing copy conflicts.
+function planCopy(plan, project, relativePath, wanted, previous) {
+  const current = project.read(relativePath);
+  if (current === wanted) return;
+  const produced = current === null || current === previous || isLegacySigned(current, relativePath);
+  if (!produced) plan.conflicts.push(relativePath);
+  planChange(plan, relativePath, current, wanted);
+}
+
+// An untrusted block refuses only an operation that must index; any other leaves it alone.
+function planIndex(plan, project, finalSources, required) {
+  const current = project.read(AGENTS);
+  const next = reindexAgents(current ?? "", indexLines(finalSources));
+  if (next === null && required) refuse(`${AGENTS} has an aidd_rules block the writer cannot trust; repair or remove it by hand.`);
+  if (next !== null) planChange(plan, AGENTS, current, next || null);
+}
+
+function parseJsonObject(text) {
+  try {
+    const value = JSON.parse(text);
+    return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+const acceptsInstructions = (config) => Boolean(config) && (config.instructions === undefined || Array.isArray(config.instructions));
+
+// The config is never a conflict and never cleaned up: a glob matching no rule is harmless.
+function planConfig(plan, project, config) {
+  const entry = quote(config.glob);
+  const found = config.files.map((file) => [file, project.read(file)]).filter(([, text]) => text !== null);
+  if (found.some(([, text]) => text.includes(entry))) return;
+  if (!found.length) {
+    planChange(plan, config.files[0], null, `{\n  "instructions": [${entry}]\n}\n`);
+    return;
+  }
+  const parsed = found.length === 1 ? parseJsonObject(found[0][1]) : null;
+  if (!acceptsInstructions(parsed)) refuse(`Add ${entry} to "instructions" in ${found.map(([file]) => file).join(" and ")} by hand, then rerun.`);
+  parsed.instructions = [...(parsed.instructions ?? []), config.glob];
+  planChange(plan, found[0][0], found[0][1], `${JSON.stringify(parsed, null, 2)}\n`);
+}
+
+// ---------- effects ----------
+
+function operationOf({ current, wanted }) {
+  if (wanted === null) return "delete";
+  return current === null ? "create" : "update";
+}
+
+function toOperations(project, writes) {
+  return [...writes].map(([relativePath, change]) => ({ path: relativePath, file: project.resolve(relativePath), operation: operationOf(change), text: change.wanted }));
+}
+
+function nearestExisting(file) {
+  let candidate = file;
+  while (!fs.existsSync(candidate)) candidate = path.dirname(candidate);
+  return candidate;
+}
+
+// Only the parent directory must be writable; a delete needs its own parent, a write the nearest one that exists.
+function assertParentWritable(operation) {
+  const parent = path.dirname(operation.file);
+  const directory = operation.operation === "delete" ? parent : nearestExisting(parent);
+  if (!fs.statSync(directory).isDirectory()) throw Object.assign(new Error(`${directory} is not a directory`), { code: "ENOTDIR" });
+  fs.accessSync(directory, fs.constants.W_OK);
+}
+
+// Every path is checked before the first write, so a blocked one fails with nothing written.
+function assertWritable(operations) {
+  const blocked = [];
+  for (const operation of operations) {
+    try {
+      assertParentWritable(operation);
+    } catch (error) {
+      blocked.push({ path: operation.path, code: error.code });
+    }
+  }
+  if (!blocked.length) return;
+  const list = blocked.map((entry) => `${entry.path} (${entry.code})`).join(", ");
+  throw Object.assign(new Error(`Not writable, nothing written: ${list}.`), { code: blocked[0].code });
+}
+
+function perform(operation) {
+  try {
+    if (operation.operation === "delete") {
+      fs.rmSync(operation.file, { force: true });
+      return;
+    }
+    fs.mkdirSync(path.dirname(operation.file), { recursive: true });
+    fs.writeFileSync(operation.file, operation.text);
+  } catch (error) {
+    throw Object.assign(new Error(`${operation.operation} failed on ${operation.path}: ${error.message}`), { code: error.code });
+  }
+}
+
+function applyPlan(operations, conflicts, force) {
+  if (conflicts.length && !force) refuse(`Would overwrite ${conflicts.join(", ")}, which the writer did not produce; rerun with --force once approved.`);
+  assertWritable(operations);
+  for (const operation of operations) perform(operation);
+}
+
+// ---------- output ----------
+
+function main(argv) {
+  const options = parseArgs(argv);
+  const project = openProject(options["--project"]);
+  const plan = planChanges(project, options);
+  const operations = toOperations(project, plan.writes);
+  if (!options["--plan"]) applyPlan(operations, plan.conflicts, options["--force"]);
+  return { files: operations.map((operation) => ({ path: operation.path, operation: operation.operation })), conflicts: plan.conflicts };
+}
+
+function failureOf(error) {
+  if (error instanceof UsageError) return { code: EXIT.USAGE, error: { code: "USAGE", message: error.message } };
+  if (error instanceof Refusal) return { code: EXIT.REFUSED, error: { code: "REFUSED", message: error.message } };
+  if (error.code) return { code: EXIT.FILESYSTEM, error: { code: error.code, message: error.message } };
+  throw error;
+}
+
+function run() {
+  try {
+    process.stdout.write(`${JSON.stringify(main(process.argv.slice(2)), null, 2)}\n`);
+    process.exitCode = EXIT.OK;
+  } catch (thrown) {
+    const failure = failureOf(thrown);
+    process.stdout.write(`${JSON.stringify({ error: failure.error }, null, 2)}\n`);
+    process.exitCode = failure.code;
+  }
+}
+
+run();
