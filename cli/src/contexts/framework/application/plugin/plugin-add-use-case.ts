@@ -8,6 +8,8 @@ import {
 } from "../../../../shared/domain/errors.js";
 import type { InstallationFile } from "../../../../shared/domain/file.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../shared/domain/paths.js";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
 import type { AiToolId, ToolIdResolver } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
@@ -41,8 +43,6 @@ import type { ReadonlyNoticeList } from "../../../tools/contract/plugin-install-
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
-import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
-import type { ReadonlySkipList } from "../../../translate/domain/plugin-translation-skip.js";
 import { assertProjectMcpEntriesRemovable } from "../ownership/project-plugin-cleanup.js";
 
 export interface PluginAddOptions {

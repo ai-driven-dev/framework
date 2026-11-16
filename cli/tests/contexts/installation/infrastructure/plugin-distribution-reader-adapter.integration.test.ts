@@ -4,14 +4,14 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import type {
-  PluginComponentFile,
-  PluginDistribution,
-} from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import {
   InvalidPluginManifestError,
   InvalidPluginNameError,
 } from "../../../../src/shared/domain/errors.js";
+import type {
+  PluginComponentFile,
+  PluginDistribution,
+} from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";

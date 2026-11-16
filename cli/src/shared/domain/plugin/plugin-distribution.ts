@@ -1,4 +1,4 @@
-import type { PluginFormat } from "./plugin-format.js";
+import type { AiToolId } from "../tool.js";
 
 export interface PluginManifestFields {
   name: string;
@@ -24,13 +24,13 @@ export interface PluginComponents {
 
 export class PluginDistribution {
   readonly manifest: PluginManifestFields;
-  readonly format: PluginFormat;
+  readonly format: AiToolId;
   readonly files: readonly PluginComponentFile[];
   readonly components: PluginComponents;
 
   constructor(params: {
     manifest: PluginManifestFields;
-    format: PluginFormat;
+    format: AiToolId;
     files: readonly PluginComponentFile[];
     components: PluginComponents;
   }) {

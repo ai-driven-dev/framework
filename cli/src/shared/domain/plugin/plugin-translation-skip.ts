@@ -1,4 +1,4 @@
-import type { AiToolId } from "../../../shared/domain/tool.js";
+import type { AiToolId } from "../tool.js";
 
 export interface PluginTranslationSkip {
   readonly pluginName: string;

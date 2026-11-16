@@ -31,7 +31,7 @@ import {
 import type { UserSourceReferences } from "../../../machine-claims/ports/user-source-references.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
-import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
+import type { FrameworkBuildTarget } from "../../../translate/contract/build-targets.js";
 import { resolveCacheCandidate } from "../shared/purge-declared-cache.js";
 
 export interface MarketplaceSyncSettingsOptions {

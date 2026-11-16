@@ -4,7 +4,7 @@ import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/prof
 import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
+import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 import { nativeOf } from "../../tools/testing/plugin-mode.js";
 import {

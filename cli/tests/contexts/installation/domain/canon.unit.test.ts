@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FrameworkDescriptor } from "../../../../src/contexts/translate/domain/canon.js";
+import { FrameworkDescriptor } from "../../../../src/contexts/installation/domain/canon.js";
 
 function makeDescriptor() {
   return new FrameworkDescriptor({

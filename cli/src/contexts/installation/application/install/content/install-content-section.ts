@@ -2,7 +2,7 @@ import { GITKEEP_FILE, InstallationFile } from "../../../../../shared/domain/fil
 import { parseFrontmatter } from "../../../../../shared/domain/markdown.js";
 import type { Hasher } from "../../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
-import type { ContentSection } from "../../../../translate/domain/canon.js";
+import type { ContentSection } from "../../../domain/canon.js";
 
 /**
  * The shape every content-section answer exposes with identical arity, so this engine calls

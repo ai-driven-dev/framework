@@ -5,7 +5,7 @@ import type { FrameworkBuildMode } from "../../contexts/tools/contract/tool-prof
 import {
   type FrameworkBuildTarget,
   supportedBuildTargets,
-} from "../../contexts/translate/domain/build-target.js";
+} from "../../contexts/translate/contract/build-targets.js";
 import type { DepsSliceFactory } from "../deps.js";
 import { printTranslateResult } from "../display/translate-display.js";
 import { ErrorHandler } from "../error-handler.js";

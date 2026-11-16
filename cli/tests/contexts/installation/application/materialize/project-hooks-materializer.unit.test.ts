@@ -8,7 +8,7 @@ import { removeRecordedProjectHooks } from "../../../../../src/contexts/installa
 import {
   type PluginComponentFile,
   PluginDistribution,
-} from "../../../../../src/contexts/translate/domain/plugin-distribution.js";
+} from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import {
   errnoError,
   FaultingFileAdapter,

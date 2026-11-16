@@ -66,7 +66,7 @@ describe("the guard itself", () => {
   it("reports a planted crossing the chain forbids and clears one it permits", () => {
     const forbidden = edgeBetween(
       "src/contexts/tools/domain/registry.ts",
-      "src/contexts/translate/domain/canon.ts"
+      "src/contexts/translate/domain/plugin-format.ts"
     );
     const permitted = edgeBetween(
       "src/contexts/translate/application/translate-source.ts",

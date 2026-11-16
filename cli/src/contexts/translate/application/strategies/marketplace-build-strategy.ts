@@ -7,9 +7,9 @@ import type { PluginPresence, ToolBuildContract } from "../../../tools/contract/
 import {
   PLUGIN_AGENT_INPUT_EXT,
   SOURCE_PLUGIN_MANIFEST_RELATIVE,
-} from "../../domain/build-target.js";
+} from "../../domain/canon-format.js";
 import { rewritePluginRootToken } from "../../domain/formats/plugin-root-token-rewrite.js";
-import type { JsonSchemaValidator } from "../../domain/ports/schema-validator.js";
+import type { JsonSchemaValidator } from "../../ports/json-schema-validator.js";
 import { assertNoToolsPlaceholder } from "../shared-plugin-helpers.js";
 import type { BuildOutputStrategy, SourceMarketplace } from "./build-output-strategy.js";
 import { detectPluginPresenceFlags } from "./plugin-source-tree-reader.js";

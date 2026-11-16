@@ -12,7 +12,7 @@ import type { ResolveMarketplace } from "../../../distribution/application/resol
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
 import type { FrameworkBuild } from "../../../translate/application/translate-source.js";
-import type { FrameworkBuildTarget } from "../../../translate/domain/build-target.js";
+import type { FrameworkBuildTarget } from "../../../translate/contract/build-targets.js";
 
 /** `undefined` when the target/mode pair has no build. */
 export type FrameworkBuildFor = (

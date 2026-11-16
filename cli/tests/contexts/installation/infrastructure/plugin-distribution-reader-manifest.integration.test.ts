@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import type { PluginDistribution } from "../../../../src/contexts/translate/domain/plugin-distribution.js";
 import {
   InvalidPluginManifestError,
   InvalidPluginNameError,
   InvalidPluginVersionError,
 } from "../../../../src/shared/domain/errors.js";
+import type { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredManifestProbes } from "../../translate/testing/registered-manifest-probes.js";
 

@@ -4,14 +4,14 @@ import {
   InvalidPluginNameError,
   InvalidPluginVersionError,
 } from "../../../shared/domain/errors.js";
-import { isSemver } from "../../../shared/domain/semver.js";
-import type { FileReader } from "../../../shared/ports/file-reader.js";
 import {
   type PluginComponentFile,
   type PluginComponents,
   PluginDistribution,
   type PluginManifestFields,
-} from "../../translate/domain/plugin-distribution.js";
+} from "../../../shared/domain/plugin/plugin-distribution.js";
+import { isSemver } from "../../../shared/domain/semver.js";
+import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { DistributionProbe, PluginFormat } from "../../translate/domain/plugin-format.js";
 import { PLUGIN_NAME_REGEX } from "../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../ports/plugin-distribution-reader.js";

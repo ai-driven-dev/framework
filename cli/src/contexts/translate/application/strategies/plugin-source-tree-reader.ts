@@ -4,7 +4,7 @@ import {
   PLUGIN_AGENT_INPUT_EXT,
   PLUGIN_HOOKS_RELATIVE,
   PLUGIN_MCP_RELATIVE,
-} from "../../domain/build-target.js";
+} from "../../domain/canon-format.js";
 
 export interface PluginPresenceFlags {
   readonly hasAgents: boolean;

@@ -3,7 +3,7 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { REGISTERED_PROFILES } from "../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { supportedBuildTargets } from "../../../src/contexts/translate/domain/build-target.js";
+import { supportedBuildTargets } from "../../../src/contexts/translate/contract/build-targets.js";
 
 const build = vi.fn();
 let buildUseCase: { execute: typeof build } | undefined;

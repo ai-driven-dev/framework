@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
@@ -7,7 +8,6 @@ import type { MarketplaceRegistry } from "../../../distribution/ports/marketplac
 import type { PluginFetcher } from "../../../distribution/ports/plugin-fetcher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import { PluginContentTranslator } from "../../../translate/domain/content-translator.js";
-import type { PluginDistribution } from "../../../translate/domain/plugin-distribution.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { PluginDistributionReader } from "../../ports/plugin-distribution-reader.js";

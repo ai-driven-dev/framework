@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { InstallSkills } from "../../../../../../src/contexts/installation/application/install/content/install-skills.js";
+import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
 import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import type { ContentSection } from "../../../../../../src/contexts/translate/domain/canon.js";
 import { GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 

@@ -7,7 +7,7 @@ import type {
   ToolBuildContract,
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { MarketplaceBuildStrategy } from "../../../../../src/contexts/translate/application/strategies/marketplace-build-strategy.js";
-import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/domain/ports/schema-validator.js";
+import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   JsonSchemaValidationError,
   MarketplaceOutDirNotEmptyError,
