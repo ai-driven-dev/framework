@@ -1,3 +1,4 @@
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import type { MarketplaceRegistry } from "../../src/contexts/distribution/ports/marketplace-registry.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import { RemovePlugin } from "../../src/contexts/installation/application/removal/remove-plugin.js";
@@ -45,6 +46,7 @@ export function pluginRemover(parts: PluginRemoverParts): RemovePlugin {
       fs,
       logger,
       home: resolveHomeDir(),
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       userSourceReferences: parts.userSourceReferences,
       marketplaceRegistry: parts.marketplaceRegistry,
       resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>

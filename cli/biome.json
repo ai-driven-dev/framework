@@ -2859,20 +2859,18 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
                       "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution, host-registration and auth, never telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate and host-registration, never telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -2916,21 +2914,19 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
                       "**/machine-claims/**",
                       "**/presentation/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution, host-registration and auth, never telemetry or presentation (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate and host-registration, never telemetry or presentation (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -2970,13 +2966,15 @@
                 "patterns": [
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
                       "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/presentation/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation/infrastructure may import tools, translate, distribution and host-registration, never telemetry or presentation (see context-graph.arch.test.ts)"
+                    "message": "installation/infrastructure may import tools, translate and host-registration, never telemetry or presentation (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -2985,10 +2983,6 @@
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -3032,20 +3026,18 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
                       "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution, host-registration and auth, never telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate and host-registration, never telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -3096,20 +3088,18 @@
                   },
                   {
                     "group": [
+                      "**/auth/**",
+                      "**/distribution/**",
                       "**/machine-claims/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "installation may import tools, translate, distribution, host-registration and auth, never telemetry (see context-graph.arch.test.ts)"
+                    "message": "installation may import tools, translate and host-registration, never telemetry (see context-graph.arch.test.ts)"
                   },
                   {
                     "group": ["**/composition/**"],
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
-                    "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },
                   {
                     "group": [
@@ -3303,13 +3293,15 @@
                   {
                     "group": [
                       "**/installation/**",
+                      "**/distribution/**",
+                      "**/tools/**",
                       "**/translate/**",
                       "**/host-registration/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "machine-claims may import distribution and tools, never telemetry, see context-graph.arch.test.ts"
+                    "message": "machine-claims imports no other context, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3318,10 +3310,6 @@
                   {
                     "group": ["**/auth/**"],
                     "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -3346,6 +3334,8 @@
                   {
                     "group": [
                       "**/installation/**",
+                      "**/distribution/**",
+                      "**/tools/**",
                       "**/translate/**",
                       "**/host-registration/**",
                       "**/presentation/**",
@@ -3353,7 +3343,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "machine-claims may import distribution and tools, never telemetry or presentation, see context-graph.arch.test.ts"
+                    "message": "machine-claims imports no other context, nor presentation, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3362,10 +3352,6 @@
                   {
                     "group": ["**/auth/**"],
                     "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -3386,6 +3372,8 @@
                   {
                     "group": [
                       "**/installation/**",
+                      "**/distribution/**",
+                      "**/tools/**",
                       "**/translate/**",
                       "**/host-registration/**",
                       "**/telemetry/**",
@@ -3393,7 +3381,7 @@
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "machine-claims/infrastructure may import distribution and tools, never telemetry or presentation, see context-graph.arch.test.ts"
+                    "message": "machine-claims/infrastructure imports no other context, nor presentation, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/shared/infrastructure/**"],
@@ -3406,10 +3394,6 @@
                   {
                     "group": ["**/auth/**"],
                     "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -3434,13 +3418,15 @@
                   {
                     "group": [
                       "**/installation/**",
+                      "**/distribution/**",
+                      "**/tools/**",
                       "**/translate/**",
                       "**/host-registration/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "machine-claims may import distribution and tools, never telemetry, see context-graph.arch.test.ts"
+                    "message": "machine-claims imports no other context, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3449,10 +3435,6 @@
                   {
                     "group": ["**/auth/**"],
                     "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }
@@ -3484,13 +3466,15 @@
                   {
                     "group": [
                       "**/installation/**",
+                      "**/distribution/**",
+                      "**/tools/**",
                       "**/translate/**",
                       "**/host-registration/**",
                       "**/telemetry/**",
                       "**/update/**",
                       "**/recipes/**"
                     ],
-                    "message": "machine-claims may import distribution and tools, never telemetry, see context-graph.arch.test.ts"
+                    "message": "machine-claims imports no other context, see context-graph.arch.test.ts"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -3499,10 +3483,6 @@
                   {
                     "group": ["**/auth/**"],
                     "message": "machine-claims may not import auth, see context-graph.arch.test.ts"
-                  },
-                  {
-                    "group": ["**/tools/domain/**", "**/tools/application/**"],
-                    "message": "tools publishes its contract only: its domain and application belong to the composition root, see context-boundary.arch.test.ts"
                   }
                 ]
               }

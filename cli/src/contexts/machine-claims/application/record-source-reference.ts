@@ -21,6 +21,7 @@ export class RecordSourceReference {
     private readonly fs: FileReader,
     private readonly currentVersionProvider: VersionReader,
     private readonly logger: Logger,
+    private readonly frameworkMarketplaceName: string,
     private readonly userSourceReferences?: UserSourceReferences
   ) {}
 
@@ -31,7 +32,7 @@ export class RecordSourceReference {
     // `references.json`: always true today, but a future change must not silently start writing a
     // reference for a registration that is no longer the shared one.
     const { name, scope } = command.marketplace;
-    if (!frameworkSourceIsShared(name, scope)) return;
+    if (!frameworkSourceIsShared(name, scope, this.frameworkMarketplaceName)) return;
     if (this.userSourceReferences === undefined) return;
     const userSourceReferences = this.userSourceReferences;
     await toleratingUnreadableSourceReferences(this.logger, undefined, async () => {

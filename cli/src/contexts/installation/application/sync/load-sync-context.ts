@@ -1,7 +1,6 @@
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { RegistrationClaims } from "../../../host-registration/contract/native-registration.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -36,6 +35,8 @@ export class LoadSyncContext {
   constructor(
     private readonly manifestRepo: ManifestRepository,
     private readonly marketplaceRegistry: InstallationMarketplaceRegistry,
+    /** The name the framework marketplace is registered under. */
+    private readonly frameworkMarketplaceName: string,
     /** Re-registers the shared machine-scope source when this run finds no marketplace at all.
      * Absent keeps the silent no-op instead of guessing what to register. */
     private readonly marketplaceRegisterFrameworkUseCase?: FrameworkMarketplaceRegistrar,
@@ -91,7 +92,7 @@ export class LoadSyncContext {
     projectRoot: string,
     marketplaces: readonly DeclaredMarketplace[]
   ): Promise<readonly DeclaredMarketplace[]> {
-    const framework = marketplaces.find((m) => m.name === FRAMEWORK_MARKETPLACE_NAME);
+    const framework = marketplaces.find((m) => m.name === this.frameworkMarketplaceName);
     if (marketplaces.length > 0 && framework?.scope !== "project") return marketplaces;
     if (this.marketplaceRegisterFrameworkUseCase === undefined) return marketplaces;
     await this.marketplaceRegisterFrameworkUseCase.execute({

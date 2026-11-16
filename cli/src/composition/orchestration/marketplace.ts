@@ -4,6 +4,7 @@ import { EnsureFrameworkMarketplace } from "../../contexts/distribution/applicat
 import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.js";
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import type { MarketplaceRemover } from "../../contexts/distribution/ports/marketplace-remover.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
@@ -148,10 +149,18 @@ export function wireMarketplace(base: Base, inst: Installation) {
     ensureBuiltMarketplaceUseCase,
     logger
   );
+  const recordSourceReference = new RecordSourceReference(
+    fs,
+    currentVersionProvider,
+    logger,
+    FRAMEWORK_MARKETPLACE_NAME,
+    userSourceReferences
+  );
   const syncSettingsUseCase = new SyncSettings(
     new LoadSyncContext(
       manifestRepo,
       marketplaceRegistry,
+      FRAMEWORK_MARKETPLACE_NAME,
       registerFrameworkMarketplace,
       userManifestRepo
     ),
@@ -166,15 +175,16 @@ export function wireMarketplace(base: Base, inst: Installation) {
       ),
       buildMarketplaceForTool,
       logger,
+      FRAMEWORK_MARKETPLACE_NAME,
       userConfigDir
     ),
     new RecordActivation(fs, hasher, userManifestRepo),
     new SharedFrameworkSource(
       fs,
       logger,
-      userSourceReferences,
-      currentVersionProvider,
-      new PurgeDeclaredCache(fs, logger)
+      recordSourceReference,
+      new PurgeDeclaredCache(fs, logger),
+      FRAMEWORK_MARKETPLACE_NAME
     )
   );
   const syncNativeActivation = new SyncNativeActivation(syncSettingsUseCase);
@@ -184,7 +194,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
   );
   const registerMarketplace = new RegisterMarketplace(
     new EnsureFrameworkMarketplace(registerFrameworkMarketplace, tokenProvider, releaseResolver),
-    new RecordSourceReference(fs, currentVersionProvider, logger, userSourceReferences),
+    recordSourceReference,
     refreshMarketplace,
     environment
   );

@@ -53,11 +53,11 @@ describe("refAnotherProjectStillNeeds", () => {
 
 describe("frameworkSourceIsShared", () => {
   it("is false for the framework marketplace at project scope", () => {
-    expect(frameworkSourceIsShared("aidd-framework", "project")).toBe(false);
+    expect(frameworkSourceIsShared("aidd-framework", "project", "aidd-framework")).toBe(false);
   });
 
   it("is false for another marketplace at user scope", () => {
-    expect(frameworkSourceIsShared("other-marketplace", "user")).toBe(false);
+    expect(frameworkSourceIsShared("other-marketplace", "user", "aidd-framework")).toBe(false);
   });
 });
 

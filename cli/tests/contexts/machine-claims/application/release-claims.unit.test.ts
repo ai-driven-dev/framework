@@ -5,7 +5,13 @@ import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapt
 import { RecordingSourceReferences } from "./recording-source-references.js";
 
 function claims(references?: RecordingSourceReferences) {
-  return new ReleaseClaims(new InMemoryFileAdapter(), new CapturingLogger(), undefined, references);
+  return new ReleaseClaims(
+    new InMemoryFileAdapter(),
+    new CapturingLogger(),
+    "aidd-framework",
+    undefined,
+    references
+  );
 }
 
 describe("dropping this project's claim on the shared source", () => {

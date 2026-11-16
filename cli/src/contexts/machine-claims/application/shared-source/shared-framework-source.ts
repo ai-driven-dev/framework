@@ -4,16 +4,10 @@ import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { VersionReader } from "../../../../shared/ports/version-reader.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { ListedMarketplace } from "../../ports/marketplace-listing.js";
-import type { UserSourceReferences } from "../../ports/user-source-references.js";
 import type { PurgeDeclaredCache } from "../purge-declared-cache.js";
-import {
-  frameworkSourceIsShared,
-  resolveProjectRootForReferences,
-  toleratingUnreadableSourceReferences,
-} from "../shared-source-reference-support.js";
+import type { RecordSourceReference } from "../record-source-reference.js";
+import { frameworkSourceIsShared } from "../shared-source-reference-support.js";
 
 /** What one tool's host registration observed, as far as the shared source is concerned. */
 interface RegistrationEvidence {
@@ -33,9 +27,13 @@ export class SharedFrameworkSource {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,
-    private readonly userSourceReferences: UserSourceReferences | undefined,
-    private readonly currentVersionProvider: VersionReader | undefined,
-    private readonly purgeCache: Pick<PurgeDeclaredCache, "resolveCandidate">
+    /** Records this project against the running version's shared source, when the machine keeps
+     * that record. */
+    private readonly recordReference: Pick<RecordSourceReference, "execute">,
+    private readonly purgeCache: Pick<PurgeDeclaredCache, "resolveCandidate">,
+    /** The name the framework marketplace is registered under; the distribution owns it and
+     * composition hands it over. */
+    private readonly frameworkMarketplaceName: string
   ) {}
 
   /**
@@ -50,7 +48,9 @@ export class SharedFrameworkSource {
     activation: ActivationEvidence
   ): Promise<void> {
     if (activation.errors.length > 0) return;
-    const framework = marketplaces.find((m) => frameworkSourceIsShared(m.name, m.scope));
+    const framework = marketplaces.find((m) =>
+      frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
+    );
     if (framework === undefined) return;
     if (activation.binaryMissing.length > 0) {
       this.logger.warn(
@@ -70,7 +70,7 @@ export class SharedFrameworkSource {
     }
     const candidate = await this.purgeCache.resolveCandidate(
       projectRoot,
-      join(BUILT_CACHE_SUBDIR, FRAMEWORK_MARKETPLACE_NAME),
+      join(BUILT_CACHE_SUBDIR, this.frameworkMarketplaceName),
       "This project's own pre-migration framework cache"
     );
     if (candidate === null) return;
@@ -86,9 +86,9 @@ export class SharedFrameworkSource {
     marketplaces: readonly ListedMarketplace[],
     outcomes: ReadonlyMap<ToolId, RegistrationEvidence>
   ): Promise<void> {
-    const { userSourceReferences, currentVersionProvider } = this;
-    if (userSourceReferences === undefined || currentVersionProvider === undefined) return;
-    const framework = marketplaces.find((m) => frameworkSourceIsShared(m.name, m.scope));
+    const framework = marketplaces.find((m) =>
+      frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
+    );
     if (framework === undefined) return;
     if (
       ![...outcomes.values()].some((outcome) =>
@@ -96,9 +96,6 @@ export class SharedFrameworkSource {
       )
     )
       return;
-    await toleratingUnreadableSourceReferences(this.logger, undefined, async () => {
-      const resolvedRoot = await resolveProjectRootForReferences(this.fs, projectRoot);
-      await userSourceReferences.addReference(currentVersionProvider.get(), resolvedRoot);
-    });
+    await this.recordReference.execute({ projectRoot, marketplace: framework });
   }
 }

@@ -8,6 +8,7 @@ import type { DoctorReport } from "../../contexts/installation/contract/doctor-i
 import type { InstalledToolsView } from "../../contexts/installation/contract/installed-tools-view.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { ToolCategory } from "../../shared/domain/tool.js";
+import type { CheckAuthentication } from "./check-authentication.js";
 import type { CheckRegistration } from "./check-registration.js";
 
 export interface DoctorOptions {
@@ -29,13 +30,15 @@ export interface DoctorChecks {
 /**
  * Runs every doctor check over the installation and gathers one report. The order of the
  * issues is the order of the checks: tracked files, merge files, references, registration, then
- * the project layout, which a category-scoped run leaves out. Plugin drift is reported apart.
+ * the project layout and the authentication, which a category-scoped run leaves out. Plugin drift
+ * is reported apart.
  */
 export class RunDoctor {
   constructor(
     private readonly load: LoadManifestForDoctor,
     private readonly checks: DoctorChecks,
-    private readonly registration: Pick<CheckRegistration, "execute">
+    private readonly registration: Pick<CheckRegistration, "execute">,
+    private readonly authentication: Pick<CheckAuthentication, "execute">
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
@@ -49,7 +52,10 @@ export class RunDoctor {
       ...(await this.checks.references.execute(check)),
       ...(await this.registration.execute({ projectRoot, allowedIds, tools })),
     ];
-    if (!category) issues.push(...(await this.checks.layout.execute({ projectRoot, tools })));
+    if (!category) {
+      issues.push(...(await this.checks.layout.execute({ projectRoot, tools })));
+      issues.push(...(await this.authentication.execute()));
+    }
     const pluginIssues = await this.checks.plugin.execute({
       projectRoot,
       allowedIds,

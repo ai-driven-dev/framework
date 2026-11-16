@@ -256,7 +256,6 @@ describe("the guard itself", () => {
   it("asks an importer of a held context for the interior groups, and no other context", () => {
     expect(interiorGroupsFor("distribution")).toEqual(interiorGroupsOf("auth"));
     expect(interiorGroupsFor("installation")).toEqual([
-      ...interiorGroupsOf("auth"),
       ...interiorGroupsOf("host-registration"),
       ...interiorGroupsOf("tools"),
       ...interiorGroupsOf("translate"),

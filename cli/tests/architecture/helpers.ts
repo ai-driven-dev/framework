@@ -122,21 +122,14 @@ export const ALLOWED = new Set([
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
   // Installation reads the installed tools' profiles. `installation->translate` is M-S1, narrowed to the translate contract.
-  "installation->auth",
   "installation->tools",
   "installation->translate",
   // Transitional (M-I1): the exact imports and the way out are in reference-context.md.
-  "installation->distribution",
   "installation->host-registration",
   // Permanent: the target context map gives host-registration the contract of tools
   // (target/04-tools-and-translate.md, "Others reach tools only through its application/ and
   // contract/"). Biome keeps tools' domain and application out of reach.
   "host-registration->tools",
-  // Transitional (M-C1): the claim files read the marketplace name and the tool profile. These rows
-  // go once both arrive as arguments from orchestration; the exact imports are listed in
-  // `TRANSITIONAL_PAIRS` below.
-  "machine-claims->distribution",
-  "machine-claims->tools",
 ]);
 
 /**
@@ -146,15 +139,6 @@ export const ALLOWED = new Set([
  * riding in. The lists only shrink: a pair the code no longer holds fails until removed.
  */
 export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
-  "installation->auth": [
-    "src/contexts/installation/application/doctor/check-project-layout.ts -> src/contexts/auth/contract/token-provider.ts",
-  ],
-  "installation->distribution": [
-    "src/contexts/installation/application/install/install-user-plugins.ts -> src/contexts/distribution/contract/plugin-source-match.ts",
-    "src/contexts/installation/application/purge-user-scope-files.ts -> src/contexts/distribution/contract/marketplace.ts",
-    "src/contexts/installation/application/sync/activate-native-tools.ts -> src/contexts/distribution/contract/marketplace.ts",
-    "src/contexts/installation/application/sync/load-sync-context.ts -> src/contexts/distribution/contract/marketplace.ts",
-  ],
   "installation->host-registration": [
     "src/contexts/installation/application/clean-project.ts -> src/contexts/host-registration/contract/withdrawal.ts",
     "src/contexts/installation/application/plugin/update-user-plugin-files.ts -> src/contexts/host-registration/contract/registration-record.ts",
@@ -179,14 +163,6 @@ export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/shared/hash-output-files.ts -> src/contexts/translate/contract/output-file.ts",
     "src/contexts/installation/application/sync/build-marketplace-for-tool.ts -> src/contexts/translate/contract/build-targets.ts",
     "src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.ts -> src/contexts/translate/contract/plugin-format.ts",
-  ],
-  "machine-claims->distribution": [
-    "src/contexts/machine-claims/application/shared-source-reference-support.ts -> src/contexts/distribution/contract/marketplace.ts",
-    "src/contexts/machine-claims/application/shared-source/shared-framework-source.ts -> src/contexts/distribution/contract/marketplace.ts",
-  ],
-  "machine-claims->tools": [
-    "src/contexts/machine-claims/application/plugin-removal-claims.ts -> src/contexts/tools/contract/tool-profile.ts",
-    "src/contexts/machine-claims/application/user-scope-plugin-files.ts -> src/contexts/tools/contract/tool-profile.ts",
   ],
 };
 

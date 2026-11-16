@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import type { TokenProvider } from "../../../../../src/contexts/auth/contract/token-provider.js";
 import { CheckProjectLayout } from "../../../../../src/contexts/installation/application/doctor/check-project-layout.js";
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -26,7 +25,7 @@ function manifestTrackingClaude(): Manifest {
   return manifest;
 }
 
-async function issuesFor(onDisk: Record<string, string>, authReader?: TokenProvider) {
+async function issuesFor(onDisk: Record<string, string>) {
   const files = Object.fromEntries(
     Object.entries(onDisk).map(([relativePath, content]) => [
       `${PROJECT_ROOT}/${relativePath}`,
@@ -34,7 +33,7 @@ async function issuesFor(onDisk: Record<string, string>, authReader?: TokenProvi
     ])
   );
   const load = new LoadManifest(new InMemoryManifestRepository(manifestTrackingClaude()));
-  return new CheckProjectLayout(load, new InMemoryFileAdapter(files, hasher), authReader).execute({
+  return new CheckProjectLayout(load, new InMemoryFileAdapter(files, hasher)).execute({
     projectRoot: PROJECT_ROOT,
     tools: catalogOf(),
   });
@@ -59,24 +58,6 @@ describe("CheckProjectLayout", () => {
 
     it("says nothing about a tracked tool directory holding aidd files", async () => {
       expect(await issuesFor({ [CLAUDE_COMMAND]: SIGNAL })).toStrictEqual([]);
-    });
-  });
-
-  describe("authentication", () => {
-    it("reports an info line when no token resolves", async () => {
-      const issues = await issuesFor({}, { resolve: async () => null });
-
-      expect(issues).toStrictEqual([
-        { severity: "info", message: "Not authenticated", fix: "Run aidd auth login" },
-      ]);
-    });
-
-    it("says nothing when a token resolves", async () => {
-      expect(await issuesFor({}, { resolve: async () => "token" })).toStrictEqual([]);
-    });
-
-    it("says nothing when nothing here can read a token", async () => {
-      expect(await issuesFor({})).toStrictEqual([]);
     });
   });
 });

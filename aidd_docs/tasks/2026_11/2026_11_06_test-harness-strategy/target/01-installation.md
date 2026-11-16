@@ -142,7 +142,7 @@ Context map (overview, section 4): `installation -> tools`, `machine-claims -> i
 | --- | --- | --- |
 | Upstream (reads) | `tools` | `ToolId`, `AiToolId`, tool profile, content and merge capabilities, the `FileMerger` port; `getToolSupportedScope` reads the tool registry (`install-scope.ts:19`), so the domain imports another context |
 | Upstream | `translate` | `PluginDistribution`, `ContentSection`, canonical descriptor; the plugin translators (`application/framework/translator/`, 8 files, 835 lines) write into `Manifest` |
-| Upstream | `distribution` | `PluginFetcher`, `FRAMEWORK_MARKETPLACE_NAME` |
+| Upstream | `distribution` | nothing imported: distribution's `PluginFetcher` reaches installation through the shape installation declares in `ports/marketplace-sources`, and the framework marketplace name arrives as a value from `orchestration` |
 | Downstream | `machine-claims` | `ownerOf` |
 | Downstream | `orchestration/` | the commands (`application/`) and published types (`contract/`) |
 

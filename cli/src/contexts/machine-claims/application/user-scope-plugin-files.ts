@@ -2,9 +2,9 @@ import { dirname, join, posix } from "node:path";
 import type { InstallationFile } from "../../../shared/domain/file.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
 import type { UserScopePluginFiles } from "../ports/machine-manifest.js";
+import type { UserScopeTool } from "../ports/user-scope-tool.js";
 
 /**
  * The files of a user-scope plugin that are actually safe to delete: safe only once the real,
@@ -16,7 +16,7 @@ export async function userScopeFilesSafeToDelete(
   fs: FileReader,
   logger: Logger,
   plugin: UserScopePluginFiles<unknown>,
-  tool: AiToolProfile,
+  tool: UserScopeTool,
   homedir: string
 ): Promise<ReadonlyMap<string, string>> {
   const { toolId } = tool;
@@ -57,7 +57,7 @@ export async function userScopeFilesSafeToDelete(
 export async function withoutMissingFiles<P extends UserScopePluginFiles<P>>(
   fs: FileReader,
   plugin: P,
-  tool: AiToolProfile,
+  tool: UserScopeTool,
   homedir: string
 ): Promise<P> {
   const boundary = tool.plugins()?.userPluginsBaseDir(homedir);
@@ -72,7 +72,7 @@ export async function withoutMissingFiles<P extends UserScopePluginFiles<P>>(
 /** Refuse a machine update if a new path, existing parent, or plugin directory escapes its declared base. */
 export async function assertUserScopeWriteBoundary(
   fs: FileReader,
-  tool: AiToolProfile,
+  tool: UserScopeTool,
   pluginName: string,
   files: readonly InstallationFile[],
   homedir: string

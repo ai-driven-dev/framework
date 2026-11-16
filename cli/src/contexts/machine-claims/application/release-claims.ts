@@ -32,6 +32,7 @@ export class ReleaseClaims {
   constructor(
     private readonly fs: FileReader,
     private readonly logger: Logger,
+    private readonly frameworkMarketplaceName: string,
     private readonly userManifestRepo?: MachineManifestRepository & Lock,
     private readonly userSourceReferences?: UserSourceReferences
   ) {}
@@ -58,7 +59,9 @@ export class ReleaseClaims {
   async claim(projectRoot: string, list: ListMarketplaces): Promise<SharedSourceClaim | undefined> {
     const references = this.userSourceReferences;
     if (references === undefined) return undefined;
-    const shared = (await list()).find((m) => frameworkSourceIsShared(m.name, m.scope));
+    const shared = (await list()).find((m) =>
+      frameworkSourceIsShared(m.name, m.scope, this.frameworkMarketplaceName)
+    );
     if (shared === undefined) return undefined;
     return toleratingUnreadableSourceReferences(this.logger, undefined, async () => {
       const resolvedRoot = await resolveProjectRootForReferences(this.fs, projectRoot);

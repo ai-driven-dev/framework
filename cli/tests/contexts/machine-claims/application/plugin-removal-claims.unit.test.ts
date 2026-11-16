@@ -23,6 +23,7 @@ function guard(options: {
     userSourceReferences: references,
     marketplaceRegistry: listed === undefined ? undefined : { list: async () => listed },
     resolveCacheCandidate: async () => null,
+    frameworkMarketplaceName: "aidd-framework",
   });
   return claims.guardMessage(
     "codex",

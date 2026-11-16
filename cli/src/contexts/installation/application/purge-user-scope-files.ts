@@ -8,7 +8,6 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../distribution/contract/marketplace.js";
 import type {
   CacheCandidateResolver,
   UserRegistrationWithdrawal,
@@ -32,6 +31,8 @@ export interface UserScopeGuards {
     tool: AiToolProfile
   ) => Promise<ReadonlyMap<string, string>>;
   readonly resolveCacheCandidate: CacheCandidateResolver;
+  /** The name the framework marketplace is registered under. */
+  readonly frameworkMarketplaceName: string;
 }
 
 /** What the user manifest and the cache say before anything is removed. */
@@ -220,7 +221,7 @@ export class PurgeUserScopeFiles {
     );
     // Other user marketplaces keep their registered sources. Plugin fetches belong to the
     // machine manifest being removed, whose active dependents were checked before any purge.
-    const frameworkSource = `cache/marketplaces/${FRAMEWORK_MARKETPLACE_NAME}`;
+    const frameworkSource = `cache/marketplaces/${this.guards.frameworkMarketplaceName}`;
     for (const path of [frameworkSource, "cache/plugin-cache"]) {
       await this.purgeWhitelistedPath(path, (candidate) => this.fs.deleteDirectory(candidate));
     }
@@ -242,7 +243,11 @@ export class PurgeUserScopeFiles {
     );
     // The manifest's own repository is the single writer of `manifest.json` — deleting through
     // it, never a second path to the same file, is what keeps that true.
-    await this.marketplaceRegistry.delete(projectRoot, FRAMEWORK_MARKETPLACE_NAME, "user");
+    await this.marketplaceRegistry.delete(
+      projectRoot,
+      this.guards.frameworkMarketplaceName,
+      "user"
+    );
     await this.userManifestRepo.delete();
   }
 

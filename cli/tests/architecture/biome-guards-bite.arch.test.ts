@@ -326,7 +326,7 @@ describe("the guard itself", () => {
         ["src/presentation/display", "../../contexts/"],
         ["src/composition", "../contexts/"],
         ["src/contexts/distribution/infrastructure", "../../"],
-        ["src/contexts/installation/application", "../../"],
+        ["src/contexts/update/application", "../../"],
       ] as const) {
         writeFileSync(
           join(planted, dir, `reaches-auth-${folder}.ts`),
@@ -510,7 +510,7 @@ describe("the guard itself", () => {
     const importers = [
       "src/presentation/display",
       "src/contexts/distribution/infrastructure",
-      "src/contexts/installation/application",
+      "src/contexts/update/application",
     ];
 
     for (const dir of importers) {

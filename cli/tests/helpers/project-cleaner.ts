@@ -1,4 +1,5 @@
 import { ListMarketplaces } from "../../src/contexts/distribution/application/list-marketplaces.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import type { HostPorts } from "../../src/contexts/host-registration/ports/host-ports.js";
 import { CleanProject as CleanProjectFiles } from "../../src/contexts/installation/application/clean-project.js";
@@ -22,8 +23,8 @@ export interface ProjectCleanerParts extends Partial<HostPorts> {
   marketplaceRegistry?: ConstructorParameters<typeof ListMarketplaces>[0];
   prompter?: Constructed[4];
   homeDir?: () => string;
-  userSourceReferences?: Release[3];
-  userManifestRepo?: Release[2];
+  userSourceReferences?: Release[4];
+  userManifestRepo?: Release[3];
 }
 
 export function projectCleanerArgs(parts: ProjectCleanerParts): Constructed {
@@ -44,10 +45,12 @@ export function projectCleanerArgs(parts: ProjectCleanerParts): Constructed {
       release: new ReleaseClaims(
         parts.fs,
         parts.logger,
+        FRAMEWORK_MARKETPLACE_NAME,
         parts.userManifestRepo,
         parts.userSourceReferences
       ),
       purgeCache,
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
     },
     new ListMarketplaces(parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry()),
     parts.prompter,

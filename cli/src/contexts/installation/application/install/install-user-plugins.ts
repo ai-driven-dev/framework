@@ -1,9 +1,9 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { PluginSourceMatch } from "../../../distribution/contract/plugin-source-match.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { UserPluginChoice } from "../../ports/marketplace-sources.js";
 import type {
   BoundPluginMaterializer,
   PlannedUserPluginFileUpdate,
@@ -14,7 +14,7 @@ export interface InstallUserPluginsCommand {
   readonly toolIds: readonly ToolId[];
   readonly tools: ToolCatalog;
   /** The plugins to copy, each with the source it resolved to. */
-  readonly plugins: readonly PluginSourceMatch[];
+  readonly plugins: readonly UserPluginChoice[];
 }
 
 /**

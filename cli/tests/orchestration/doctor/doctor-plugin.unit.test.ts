@@ -94,7 +94,8 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
       new InspectHostRegistration(fs, new Map(), new Map()),
       () => "/user-cache",
       { get: () => "1.0.0" }
-    )
+    ),
+    { execute: async () => [] }
   );
 }
 

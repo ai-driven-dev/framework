@@ -1,7 +1,6 @@
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
 import type { HostRegistrationOutcome } from "../../../host-registration/contract/native-registration.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
@@ -30,6 +29,8 @@ export class ActivateNativeTools {
     private readonly registerPluginWithHost: NativeHostRegistration,
     private readonly buildMarketplace: BuildMarketplaceForTool,
     private readonly logger: Logger,
+    /** The marketplace the requested plugins are enabled from. */
+    private readonly frameworkMarketplaceName: string,
     /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
      * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
      * already built before this runs, never from a path recomputed without one. */
@@ -92,7 +93,7 @@ export class ActivateNativeTools {
     scope: MarketplaceScope,
     enablePlugins: readonly string[]
   ): string[] {
-    const frameworkHost = hostNameByAlias.get(FRAMEWORK_MARKETPLACE_NAME);
+    const frameworkHost = hostNameByAlias.get(this.frameworkMarketplaceName);
     const requested =
       frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
     return [

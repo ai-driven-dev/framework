@@ -1,5 +1,4 @@
 import type { ListMarketplaces } from "../../contexts/distribution/application/list-marketplaces.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import type {
   ProjectCleanFacts,
   WithdrawFromHost,
@@ -109,7 +108,7 @@ export class CleanProject {
       projectRoot,
       marketplaceScopes,
       sharedSource: undefined,
-      frameworkAlias: FRAMEWORK_MARKETPLACE_NAME,
+      frameworkAlias: this.claims.frameworkMarketplaceName,
       machineClaims: (toolId) => this.claims.release.machineClaims(toolId),
       exclusive: (action) => this.claims.release.exclusive(action),
       resolveCacheCandidate: (cacheRoot, segments, label) =>

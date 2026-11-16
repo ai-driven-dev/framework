@@ -2,9 +2,9 @@ import type { ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type { MachineManifestRepository, UserScopePluginFiles } from "../ports/machine-manifest.js";
 import type { MarketplaceListing } from "../ports/marketplace-listing.js";
+import type { PluginEnablementReach, UserScopeTool } from "../ports/user-scope-tool.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
 import { isMachineOwnedNativeRef } from "./native-plugin-ownership.js";
 import { removalClaims } from "./removal-claims.js";
@@ -23,6 +23,8 @@ export interface PluginRemovalClaimsDeps {
   readonly fs: FileReader;
   readonly logger: Logger;
   readonly home: string;
+  /** The framework marketplace's reserved name, owned by the distribution. */
+  readonly frameworkMarketplaceName: string;
   /** Absent skips the another-project guard entirely. */
   readonly userSourceReferences?: UserSourceReferences;
   /** Absent treats every marketplace as not shared. */
@@ -49,7 +51,7 @@ export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
   const { repo, fs, logger, userSourceReferences } = deps;
   const guardMessage = async (
     binary: string,
-    tool: AiToolProfile,
+    tool: PluginEnablementReach,
     ref: string,
     marketplaceAlias: string,
     hostName: string,
@@ -60,7 +62,7 @@ export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
     const marketplace = marketplaces.find((m) => m.name === marketplaceAlias);
     if (
       marketplace === undefined ||
-      !frameworkSourceIsShared(marketplace.name, marketplace.scope)
+      !frameworkSourceIsShared(marketplace.name, marketplace.scope, deps.frameworkMarketplaceName)
     ) {
       return undefined;
     }
@@ -86,7 +88,7 @@ export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
     isMachineOwned: (toolId: ToolId, ref: string) => isMachineOwnedNativeRef(repo, toolId, ref),
     guardMessage,
     resolveCacheCandidate: deps.resolveCacheCandidate,
-    userFilesSafeToDelete: (plugin: UserScopePluginFiles<unknown>, tool: AiToolProfile) =>
+    userFilesSafeToDelete: (plugin: UserScopePluginFiles<unknown>, tool: UserScopeTool) =>
       userScopeFilesSafeToDelete(fs, logger, plugin, tool, deps.home),
     ...removalClaims(repo, fs),
   };

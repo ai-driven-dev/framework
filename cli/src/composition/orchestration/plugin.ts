@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { ResolvePluginSource } from "../../contexts/distribution/application/plugin-source/resolve-plugin-source.js";
 import { SearchPlugins } from "../../contexts/distribution/application/plugin-source/search-plugins.js";
 import { TrustPluginSource } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
 import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.js";
@@ -91,6 +92,7 @@ export function wirePlugin(base: Base, inst: Installation) {
       fs,
       logger,
       home: resolveHomeDir(),
+      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
       userSourceReferences,
       marketplaceRegistry,
       resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),

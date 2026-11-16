@@ -4,7 +4,7 @@ The installation record of a project and the flows that write it: init, install,
 
 ## Reserved
 
-- I1: the `distribution` and `host-registration` imports cut by taking the fetch, the registry and the native registration as values composition hands in. Vanishes with the orchestration split (M-I1).
+- I1: the `host-registration` imports, read through its `contract/`. The `distribution` imports are gone: the fetch, the registry and the chosen plugins come in as values. Vanishes when the manifest record moves to its own file (M-I1).
 - I2: the `translate/domain` imports cut by the translator split. Vanishes with that split (M-S1).
 - I3: installation is not in `HELD_BY_BIOME`. It is held by `PUBLIC_MODULES` in `tests/architecture/context-boundary.arch.test.ts`, whose installation list names 26 interior files that `framework` imports, and the context has no `contract/` folder. Moving it to `HELD_BY_BIOME` needs those files behind installation commands or a `contract/` folder first, so the Biome rule has one public path to allow. Vanishes with the orchestration split, when each framework orchestrator moves out and the list empties.
 - I4: contract kits for `ManifestRepository`, `FileMerger`, `Platform` and `PluginDistributionReader`, run on the fake and on the adapter. Vanishes with the next installation PR.
