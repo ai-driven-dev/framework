@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import type { ToolId } from "../../../../shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
@@ -76,13 +76,20 @@ export class SyncToolSettingsFiles {
     manifest: Manifest,
     marketplaces: readonly DeclaredMarketplace[]
   ): Promise<boolean> {
-    const marketplaceSettings = tools.aiProfileIfAny(toolId)?.marketplaceRegistration();
-    if (marketplaceSettings == null) return false;
-    return this.syncToolSettings(toolId, projectRoot, manifest, marketplaces, marketplaceSettings);
+    const profile = tools.aiProfileIfAny(toolId);
+    const marketplaceSettings = profile?.marketplaceRegistration();
+    if (profile == null || marketplaceSettings == null) return false;
+    return this.syncToolSettings(
+      profile.toolId,
+      projectRoot,
+      manifest,
+      marketplaces,
+      marketplaceSettings
+    );
   }
 
   private async syncToolSettings(
-    toolId: ToolId,
+    toolId: AiToolId,
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly DeclaredMarketplace[],
@@ -109,7 +116,7 @@ export class SyncToolSettingsFiles {
   // of its own. That file is written but never hashed: an absolute path recorded in the manifest
   // would read as drift on every other machine.
   private async syncMarketplacesFile(
-    toolId: ToolId,
+    toolId: AiToolId,
     projectRoot: string,
     manifest: Manifest,
     settings: MarketplaceRegistrationAnswers,

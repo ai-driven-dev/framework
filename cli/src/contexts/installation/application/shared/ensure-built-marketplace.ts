@@ -5,7 +5,7 @@ import {
   pathsOverlap,
   userBuiltMarketplaceDir,
 } from "../../../../shared/domain/paths.js";
-import type { ToolId } from "../../../../shared/domain/tool.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
@@ -17,7 +17,7 @@ export interface FrameworkBuild {
   execute(options: {
     readonly sourceDir: string;
     readonly outDir: string;
-    readonly target: ToolId;
+    readonly target: AiToolId;
     readonly mode?: FrameworkBuildMode;
   }): Promise<unknown>;
 }
@@ -26,10 +26,10 @@ export interface FrameworkBuild {
 export interface FrameworkBuilds {
   /** What a target's built tree carries beyond its source, such as the provider its agents run
    * on, or `undefined` when nothing. A changed variant makes a cached tree stale. */
-  variant(target: ToolId): Promise<string | undefined>;
+  variant(target: AiToolId): Promise<string | undefined>;
   /** `undefined` when the target/mode pair has no build. */
   buildFor(
-    target: ToolId,
+    target: AiToolId,
     mode: FrameworkBuildMode,
     outDir: string,
     variant?: string
@@ -39,7 +39,7 @@ export interface FrameworkBuilds {
 export interface EnsureBuiltMarketplaceCommand {
   readonly projectRoot: string;
   readonly marketplace: DeclaredMarketplace;
-  readonly target: ToolId;
+  readonly target: AiToolId;
   readonly mode: FrameworkBuildMode;
   readonly forceRefresh?: boolean;
 }
@@ -160,7 +160,7 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
   }
 
   private async build(
-    target: ToolId,
+    target: AiToolId,
     mode: FrameworkBuildMode,
     sourceDir: string,
     builtDir: string,
@@ -178,7 +178,7 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
   }
 
   private async buildViaTemp(
-    target: ToolId,
+    target: AiToolId,
     mode: FrameworkBuildMode,
     sourceDir: string,
     builtDir: string,
@@ -196,7 +196,7 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
   // just deleted — an aidd-owned cache, never a user directory — so a collision here is stale-cache
   // reuse, not data loss.
   private async runBuild(
-    target: ToolId,
+    target: AiToolId,
     mode: FrameworkBuildMode,
     sourceDir: string,
     outDir: string,
