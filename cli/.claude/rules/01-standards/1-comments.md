@@ -14,4 +14,4 @@ paths:
 - Name no ticket, PR, commit, date, review or URL.
 - Keep the fact and its consequence.
 - One or two lines; a paragraph belongs in `aidd_docs/memory/`.
-- `tests/architecture/comments.arch.test.ts` refuses external references and ratchets volume down.
+- No test holds this: review reads it against the grid.
