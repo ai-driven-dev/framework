@@ -132,7 +132,7 @@ export interface Deps {
   searchPlugins: Pick<SearchPlugins, "execute">;
   registerFrameworkMarketplace: Pick<RegisterFrameworkMarketplace, "execute">;
   pluginInstallUseCase: Pick<InstallPlugin, "execute">;
-  marketplaceSyncSettingsUseCase: Pick<SyncSettings, "execute">;
+  syncSettingsUseCase: Pick<SyncSettings, "execute">;
   doctorUseCase: Pick<RunDoctor, "execute">;
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: Pick<CheckRegistration, "execute">;

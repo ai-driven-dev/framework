@@ -18,7 +18,7 @@ const createDeps = vi.fn(async () => ({
   userMarketplaceRemoveUseCase: { execute: vi.fn() },
   refreshMarketplace: { execute: vi.fn() },
   marketplaceCheckUseCase: { execute: vi.fn() },
-  marketplaceSyncSettingsUseCase: { execute: marketplaceSyncExecute },
+  syncSettingsUseCase: { execute: marketplaceSyncExecute },
   prompter: prompterAnswering({ input: vi.fn() }),
 }));
 const createMenuDeps = vi.fn(() => ({

@@ -55,7 +55,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     builtMaterializationDeps,
     detectPluginDriftUseCase,
   } = inst;
-  const { marketplaceSyncSettingsUseCase, setupMarketplaceRegistration } = m;
+  const { syncSettingsUseCase, setupMarketplaceRegistration } = m;
   const { pluginInstallFromMarketplaceUseCase, userPluginFileUpdater } = p;
   const installIdeToolUseCase = new InstallIdeTool(
     installIdeConfig,
@@ -69,7 +69,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     installRuntimeConfigUseCase,
     manifestRepo,
     pluginInstallFromMarketplaceUseCase,
-    marketplaceSyncSettingsUseCase,
+    syncSettingsUseCase,
     logger
   );
   const setupToolsUseCase = new InstallTools(
@@ -85,7 +85,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
   const setupMachineScope = new SetupMachineScope(
     new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
     setupMarketplaceRegistration,
-    userScopeSyncOf(marketplaceSyncSettingsUseCase),
+    userScopeSyncOf(syncSettingsUseCase),
     installGlobalPlugins
   );
   const statusUseCase = new ReportStatus(fs, manifestRepo, hasher, detectPluginDriftUseCase);

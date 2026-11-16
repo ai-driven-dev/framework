@@ -269,7 +269,7 @@ describe("setupStepsOf", () => {
       { currentVersionProvider: version },
       {
         setupMarketplaceRegistration: registration,
-        marketplaceSyncSettingsUseCase: { execute: vi.fn() },
+        syncSettingsUseCase: { execute: vi.fn() },
       },
       {
         setupToolsUseCase: installTools,
@@ -293,7 +293,7 @@ describe("setupStepsOf", () => {
       { currentVersionProvider: version },
       {
         setupMarketplaceRegistration: registration,
-        marketplaceSyncSettingsUseCase: { execute },
+        syncSettingsUseCase: { execute },
       },
       {
         setupToolsUseCase: installTools,

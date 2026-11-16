@@ -86,7 +86,7 @@ export async function createDeps(
     marketplaceRemoveUseCase,
     userMarketplaceRemoveUseCase,
     marketplaceCheckUseCase,
-    marketplaceSyncSettingsUseCase,
+    syncSettingsUseCase,
     askMarketplaceSource,
   } = marketplace;
   const {
@@ -139,7 +139,7 @@ export async function createDeps(
     searchPlugins,
     registerFrameworkMarketplace,
     pluginInstallUseCase,
-    marketplaceSyncSettingsUseCase,
+    syncSettingsUseCase,
     doctorUseCase,
     doctorRegistrationUseCase,
     askMarketplaceSource,

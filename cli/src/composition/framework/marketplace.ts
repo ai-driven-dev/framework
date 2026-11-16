@@ -147,7 +147,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     ensureBuiltMarketplaceUseCase,
     logger
   );
-  const marketplaceSyncSettingsUseCase = new SyncSettings(
+  const syncSettingsUseCase = new SyncSettings(
     new LoadSyncContext(
       manifestRepo,
       marketplaceRegistry,
@@ -195,7 +195,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     userMarketplaceRemoveUseCase,
     addMarketplace,
     marketplaceCheckUseCase,
-    marketplaceSyncSettingsUseCase,
+    syncSettingsUseCase,
     askMarketplaceSource,
     setupMarketplaceRegistration,
   };

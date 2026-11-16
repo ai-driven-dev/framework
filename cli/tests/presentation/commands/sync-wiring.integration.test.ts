@@ -17,7 +17,7 @@ const userPluginUpdate = vi.fn();
 const createDeps = vi.fn(async () => ({
   restoreAllUseCase: { execute: restoreAll },
   restoreUseCase: { execute: restoreOne },
-  marketplaceSyncSettingsUseCase: { execute: activation },
+  syncSettingsUseCase: { execute: activation },
   manifestRepo: manifestRepositoryLoading(loadManifest),
   userManifestRepo,
   userPluginUpdateUseCase: { execute: userPluginUpdate },

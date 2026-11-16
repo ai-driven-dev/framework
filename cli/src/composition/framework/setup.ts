@@ -15,17 +15,14 @@ import type { Plugin } from "./plugin.js";
 export function setupStepsOf(
   base: Pick<Base, "currentVersionProvider">,
   m: Pick<Marketplace, "setupMarketplaceRegistration"> & {
-    readonly marketplaceSyncSettingsUseCase: Pick<
-      Marketplace["marketplaceSyncSettingsUseCase"],
-      "execute"
-    >;
+    readonly syncSettingsUseCase: Pick<Marketplace["syncSettingsUseCase"], "execute">;
   },
   g: Pick<Global, "setupToolsUseCase" | "projectContextDetector" | "setupMachineScope">
 ): SetupSteps {
   return {
     registration: m.setupMarketplaceRegistration,
     installTools: g.setupToolsUseCase,
-    syncSettings: (options) => m.marketplaceSyncSettingsUseCase.execute(options),
+    syncSettings: (options) => m.syncSettingsUseCase.execute(options),
     version: base.currentVersionProvider,
     detectContext: g.projectContextDetector,
     machineScope: g.setupMachineScope,

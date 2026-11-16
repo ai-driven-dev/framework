@@ -20,7 +20,7 @@ const createDeps = vi.fn(async () => ({
   searchPlugins: { execute: pluginSearch },
   pluginUpdateUseCase: { execute: pluginUpdate },
   userPluginUpdateUseCase: { execute: userPluginUpdate },
-  marketplaceSyncSettingsUseCase: { execute: activation },
+  syncSettingsUseCase: { execute: activation },
 }));
 const createMenuDeps = vi.fn(() => ({ prompter: prompterAnswering({ select: menuSelect }) }));
 

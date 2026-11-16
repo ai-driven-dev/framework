@@ -5,7 +5,7 @@ import { printScopedFailures } from "../display/framework-display.js";
 import type { CLIOutput } from "../output.js";
 
 /** What this command reads of the graph. */
-type SyncActivationKeys = "marketplaceSyncSettingsUseCase";
+type SyncActivationKeys = "syncSettingsUseCase";
 
 /** Named structurally: every real caller's result already satisfies this shape. */
 interface SyncActivationOutcome {
@@ -24,7 +24,7 @@ export async function syncNativeActivation(
    * re-driven. */
   marketplaceNames?: readonly string[]
 ): Promise<void> {
-  const activation = await deps.marketplaceSyncSettingsUseCase.execute({
+  const activation = await deps.syncSettingsUseCase.execute({
     projectRoot,
     tools: catalog,
     marketplaceNames,

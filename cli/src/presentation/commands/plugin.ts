@@ -24,7 +24,7 @@ type PluginKeys =
   | "searchPlugins"
   | "userPluginUpdateUseCase"
   | "pluginUpdateUseCase"
-  | "marketplaceSyncSettingsUseCase";
+  | "syncSettingsUseCase";
 
 /** `--tool` names one AI tool or, left out or set to `all`, every one. */
 export function parseToolOption(

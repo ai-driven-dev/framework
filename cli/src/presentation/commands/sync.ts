@@ -20,7 +20,7 @@ import { GLOBAL_FLAG_HELP, parseGlobalOptions, resolveScopeFlags } from "./globa
 type SyncKeys =
   | "userManifestRepo"
   | "userPluginUpdateUseCase"
-  | "marketplaceSyncSettingsUseCase"
+  | "syncSettingsUseCase"
   | "restoreAllUseCase"
   | "manifestRepo"
   | "currentVersionProvider"
@@ -73,7 +73,7 @@ async function runUserScopeSync(
           rebuild: true,
           tools: catalog,
         });
-  const activation = await deps.marketplaceSyncSettingsUseCase.execute({
+  const activation = await deps.syncSettingsUseCase.execute({
     projectRoot,
     tools: catalog,
     scope: "user",
@@ -119,7 +119,7 @@ async function runSyncAction(
 
     // After restoration, never before: activation drives the host CLI that writes into the
     // settings file restoration regenerates, which must be on disk before that CLI runs.
-    const activation = await deps.marketplaceSyncSettingsUseCase.execute({
+    const activation = await deps.syncSettingsUseCase.execute({
       projectRoot,
       tools,
       recreateFrameworkIfMissing: true,
@@ -162,7 +162,7 @@ async function runScopedSync(
 
   // Same order as the full sync, narrowed to this one tool so fixing it re-drives no other
   // installed tool's activation.
-  const activation = await deps.marketplaceSyncSettingsUseCase.execute({
+  const activation = await deps.syncSettingsUseCase.execute({
     projectRoot,
     tools: catalog,
     toolIds: result.tools.map((tool) => tool.toolId),

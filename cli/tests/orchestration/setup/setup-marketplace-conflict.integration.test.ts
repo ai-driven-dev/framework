@@ -87,7 +87,7 @@ async function buildUseCaseWithConflict() {
     entries: new Map([["probe-mkt", "/other/src"]]),
   });
   const activator = new FakeHostActions({ available: true, enablesPlugins: false });
-  const marketplaceSyncSettingsUseCase = marketplaceSync({
+  const syncSettingsUseCase = marketplaceSync({
     fs: deps.fs,
     manifestRepo: deps.manifestRepo,
     marketplaceRegistry: deps.marketplaceRegistry,
@@ -113,7 +113,7 @@ async function buildUseCaseWithConflict() {
     {
       registration: setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
-      syncSettings: (options) => marketplaceSyncSettingsUseCase.execute(options),
+      syncSettings: (options) => syncSettingsUseCase.execute(options),
       version: deps.currentVersionProvider,
     },
     { plugins: (options) => setupPluginsPromptUseCase.execute(options) }

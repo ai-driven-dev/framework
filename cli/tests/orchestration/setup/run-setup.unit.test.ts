@@ -126,7 +126,7 @@ async function buildUseCase(
   logger?: Logger,
   options?: {
     userManifestRepo?: ManifestRepository & Lock;
-    marketplaceSyncSettingsUseCase?: Pick<SyncSettings, "execute"> & {
+    syncSettingsUseCase?: Pick<SyncSettings, "execute"> & {
       execute: ReturnType<typeof vi.fn>;
     };
     detectContext?: boolean;
@@ -149,8 +149,7 @@ async function buildUseCase(
   );
   const marketplaceRegisterFramework = makeNoOpMarketplaceRegisterFramework();
   const marketplaceRefresh = makeNoOpMarketplaceRefresh();
-  const marketplaceSyncSettingsUseCase =
-    options?.marketplaceSyncSettingsUseCase ?? makeNoOpMarketplaceSyncSettings();
+  const syncSettingsUseCase = options?.syncSettingsUseCase ?? makeNoOpMarketplaceSyncSettings();
   const setupMarketplaceRegistration = setupMarketplaceRegistrar(
     deps.fs,
     askSource,
@@ -169,7 +168,7 @@ async function buildUseCase(
       : new SetupMachineScope(
           new ConfigureMachineScope(options.userManifestRepo, deps.currentVersionProvider),
           setupMarketplaceRegistration,
-          (syncOptions) => marketplaceSyncSettingsUseCase.execute(syncOptions)
+          (syncOptions) => syncSettingsUseCase.execute(syncOptions)
         );
   const useCase = runSetupOf(
     deps.fs,
@@ -177,7 +176,7 @@ async function buildUseCase(
     {
       registration: setupMarketplaceRegistration,
       installTools: setupToolsUseCase,
-      syncSettings: (syncOptions) => marketplaceSyncSettingsUseCase.execute(syncOptions),
+      syncSettings: (syncOptions) => syncSettingsUseCase.execute(syncOptions),
       version: deps.currentVersionProvider,
       detectContext:
         options?.detectContext === true ? new DetectProjectContext(deps.fs) : undefined,
@@ -196,7 +195,7 @@ async function buildUseCase(
     deps,
     marketplaceRegisterFramework,
     marketplaceRefresh,
-    marketplaceSyncSettingsUseCase,
+    syncSettingsUseCase,
     pluginInstallFromMarketplace,
   };
 }
@@ -695,7 +694,7 @@ describe("setup --scope user", () => {
 
   it("hands the machine-wide sync the tools it registered and the plugins it enabled", async () => {
     const userManifestRepo = new InMemoryManifestRepository();
-    const marketplaceSyncSettingsUseCase = makeNoOpMarketplaceSyncSettings() as Pick<
+    const syncSettingsUseCase = makeNoOpMarketplaceSyncSettings() as Pick<
       SyncSettings,
       "execute"
     > & {
@@ -703,12 +702,12 @@ describe("setup --scope user", () => {
     };
     const { useCase } = await buildUseCase(undefined, undefined, undefined, {
       userManifestRepo,
-      marketplaceSyncSettingsUseCase,
+      syncSettingsUseCase,
     });
 
     await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }), catalogOf());
 
-    expect(marketplaceSyncSettingsUseCase.execute).toHaveBeenCalledWith(
+    expect(syncSettingsUseCase.execute).toHaveBeenCalledWith(
       expect.objectContaining({ toolIds: [TOOL.claude], enablePlugins: [] })
     );
   });

@@ -25,7 +25,7 @@ type MarketplaceKeys =
   | "marketplaceRemoveUseCase"
   | "refreshMarketplace"
   | "marketplaceCheckUseCase"
-  | "marketplaceSyncSettingsUseCase";
+  | "syncSettingsUseCase";
 
 export function registerMarketplaceCommand(
   program: Command,
