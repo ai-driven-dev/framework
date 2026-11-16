@@ -3,8 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { ChooseMarketplaceSource } from "../../../../src/contexts/distribution/application/choose-marketplace-source.js";
 import {
   DEFAULT_FRAMEWORK_REPO,
-  MarketplaceSourceMode,
-} from "../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+  localFrameworkSource,
+  remoteFrameworkSource,
+} from "../../../../src/contexts/distribution/contract/framework-source.js";
 import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
 
 function releasesOf(tags: string[]): ReleaseLister {
@@ -15,7 +16,7 @@ describe("ChooseMarketplaceSource", () => {
   describe("pinNewest", () => {
     it("returns a source that already names its release unchanged", async () => {
       const lister = releasesOf(["v9.9.9"]);
-      const source = MarketplaceSourceMode.remote(undefined, "v1.0.0");
+      const source = remoteFrameworkSource(undefined, "v1.0.0");
 
       const result = await new ChooseMarketplaceSource(lister).pinNewest(source);
 
@@ -25,7 +26,7 @@ describe("ChooseMarketplaceSource", () => {
 
     it("returns a local source unchanged without resolving a release", async () => {
       const lister = releasesOf(["v1.0.0"]);
-      const source = MarketplaceSourceMode.local("/abs/path");
+      const source = localFrameworkSource("/abs/path");
 
       const result = await new ChooseMarketplaceSource(lister).pinNewest(source);
 
@@ -37,21 +38,20 @@ describe("ChooseMarketplaceSource", () => {
       const lister = releasesOf(["v2.3.4", "v2.3.3"]);
 
       const result = await new ChooseMarketplaceSource(lister).pinNewest(
-        MarketplaceSourceMode.remote("acme/fw")
+        remoteFrameworkSource("acme/fw")
       );
 
-      expect(result.ref).toBe("v2.3.4");
-      expect(result.repo).toBe("acme/fw");
+      expect(result).toMatchObject({ repo: "acme/fw", ref: "v2.3.4" });
       expect(lister.listRootReleases).toHaveBeenCalledWith("acme/fw");
     });
 
     it("falls back to the tip when the repository has no root release", async () => {
       const result = await new ChooseMarketplaceSource(releasesOf([])).pinNewest(
-        MarketplaceSourceMode.remote()
+        remoteFrameworkSource()
       );
 
-      expect(result.ref).toBeUndefined();
-      expect(result.repo).toBe(DEFAULT_FRAMEWORK_REPO);
+      expect(result).toMatchObject({ repo: DEFAULT_FRAMEWORK_REPO });
+      expect(result).not.toHaveProperty("ref", expect.any(String));
     });
   });
 

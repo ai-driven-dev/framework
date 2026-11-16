@@ -13,7 +13,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
   distribution: [
     // what a marketplace is, and where it can be read from
     "src/contexts/distribution/domain/marketplace.ts",
-    "src/contexts/distribution/domain/marketplace-source-mode.ts",
     "src/contexts/distribution/contract/marketplace.ts",
     "src/contexts/distribution/contract/catalog.ts",
     "src/contexts/distribution/contract/requested-version-policy.ts",

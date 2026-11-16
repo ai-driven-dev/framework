@@ -505,20 +505,6 @@ export class MarketplaceOutDirNotEmptyError extends Error {
   }
 }
 
-export class MarketplaceSourceKindError extends Error {
-  constructor(expected: "remote" | "local") {
-    super(expected === "remote" ? "Not a remote source" : "Not a local source");
-    this.name = "MarketplaceSourceKindError";
-  }
-}
-
-export class EmptyLocalSourcePathError extends Error {
-  constructor() {
-    super("Local source path must not be empty.");
-    this.name = "EmptyLocalSourcePathError";
-  }
-}
-
 export class InvalidSetupToolIdError extends Error {
   constructor(id: string, validIds: readonly string[]) {
     super(`Invalid tool ID: "${id}". Valid IDs: ${validIds.join(", ")}`);

@@ -32,8 +32,7 @@ describe("parseSourceFlag", () => {
 
     const source = parseSourceFlag({ source: "remote", release: "v1.2.3" }, output);
 
-    expect(source?.kind).toBe("remote");
-    expect(source?.ref).toBe("v1.2.3");
+    expect(source).toMatchObject({ kind: "github", ref: "v1.2.3" });
   });
 
   it("resolves a local source's path against the working directory", () => {
@@ -41,8 +40,7 @@ describe("parseSourceFlag", () => {
 
     const source = parseSourceFlag({ source: "local", path: "./framework" }, output);
 
-    expect(source?.kind).toBe("local");
-    expect(source?.path).toBe(resolve("./framework"));
+    expect(source).toMatchObject({ kind: "local", path: resolve("./framework") });
   });
 
   it("refuses a local source with no --path, naming the flag it needs", () => {

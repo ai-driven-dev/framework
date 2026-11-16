@@ -43,7 +43,7 @@ Marketplace, source (github, url, git-subdir, npm, local), catalog, catalog entr
 | `MarketplaceSourceMode` | remote or local, non-empty local path | `domain/marketplace-source-mode.ts` |
 | Reserved name `aidd-framework` | refused on manual add | `domain/marketplace.ts:13`, `marketplace-add-use-case.ts:46` |
 
-Open point: `MarketplaceSourceMode` (remote/local) and the kernel's `PluginSource` (github/url/git-subdir/npm/local) say "where the marketplace comes from" twice. Two vocabularies for one concept: to unify or to justify in writing.
+Settled: `MarketplaceSourceMode` is gone. The framework source is `PluginSourceGitHub | PluginSourceLocal` of the kernel's `PluginSource`, built by `remoteFrameworkSource` and `localFrameworkSource` in `contract/framework-source.ts`, so a registration records the source as it stands.
 
 ### Domain services
 - Choice of the catalog reader (Copilot first, otherwise Claude): today in `plugin-catalog-repository-adapter.ts` (infra), although it is a precedence rule. To move up to the domain, the adapter only reading the file.
@@ -56,7 +56,7 @@ Open point: `MarketplaceSourceMode` (remote/local) and the kernel's `PluginSourc
 ### Ports (owner, consumers)
 | Port | Owner | Consumers |
 | --- | --- | --- |
-| `MarketplaceRegistry`, `MarketplaceTrustStore`, `MarketplaceCachePort`, `PluginCatalogRepository`, `PluginFetcher`, `RawCatalogFetcher` | distribution | distribution; `MarketplaceRegistry` also read by `framework` today (16 imports), tomorrow through `application/` and `contract/` only |
+| `MarketplaceRegistry`, `MarketplaceTrustStore`, `MarketplaceCachePort`, `PluginCatalogRepository`, `PluginFetcher`, `RawCatalogFetcher` | distribution | distribution; `MarketplaceRegistry` also read today by the orchestration of `clean` and by two presentation prompts (`plugin-pick-use-case`, `setup-plugins-prompt-use-case`), tomorrow through `application/` and `contract/` only |
 | `RepositoryReader`, `ReleaseLister` | `shared/ports` (capability-named, GitHub is one adapter) | distribution (raw catalog read, root releases and public-repo check), update (release body), see decision 1 |
 | `TokenProvider` | published by `auth` in `contexts/auth/contract/` | distribution and update as customers, see section 2 |
 | `HttpGet` | `shared/ports` | used by the shared GitHub adapter and by the adapters of auth and update |

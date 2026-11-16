@@ -2,8 +2,8 @@ import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_FRAMEWORK_REPO,
-  MarketplaceSourceMode,
-} from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+  remoteFrameworkSource,
+} from "../../../src/contexts/distribution/contract/framework-source.js";
 import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InputRequiredError } from "../../../src/shared/domain/errors.js";
@@ -28,11 +28,11 @@ describe("AskMarketplaceSource", () => {
 
       const result = await uc.execute({
         projectRoot: PROJECT_ROOT,
-        sourceFromCli: MarketplaceSourceMode.remote(),
+        sourceFromCli: remoteFrameworkSource(),
         interactive: false,
       });
 
-      expect(result.ref).toBe("v2.3.4");
+      expect(result).toMatchObject({ ref: "v2.3.4" });
       expect(resolver.listRootReleases).toHaveBeenCalledWith(DEFAULT_FRAMEWORK_REPO);
     });
 
@@ -58,8 +58,7 @@ describe("AskMarketplaceSource", () => {
 
       const result = await uc.execute({ projectRoot: PROJECT_ROOT, interactive: true });
 
-      expect(result.kind).toBe("remote");
-      expect(result.ref).toBe("v2.9.0");
+      expect(result).toMatchObject({ kind: "github", ref: "v2.9.0" });
     });
 
     it("maps the HEAD choice to an undefined ref", async () => {
@@ -72,8 +71,8 @@ describe("AskMarketplaceSource", () => {
 
       const result = await uc.execute({ projectRoot: PROJECT_ROOT, interactive: true });
 
-      expect(result.kind).toBe("remote");
-      expect(result.ref).toBeUndefined();
+      expect(result).toMatchObject({ kind: "github" });
+      expect(result).not.toHaveProperty("ref", expect.any(String));
     });
 
     it("labels the newest release as latest and offers HEAD last", async () => {
@@ -129,7 +128,7 @@ describe("AskMarketplaceSource", () => {
       expect(result.kind).toBe("local");
       // resolve() fills in the current drive letter on Windows for a rootless absolute path,
       // so the expectation has to be resolved the same way to name the same location.
-      expect(result.path).toBe(resolve("/abs/framework"));
+      expect(result).toMatchObject({ path: resolve("/abs/framework") });
     });
   });
 
@@ -141,11 +140,11 @@ describe("AskMarketplaceSource", () => {
 
       const result = await uc.execute({
         projectRoot: PROJECT_ROOT,
-        sourceFromCli: MarketplaceSourceMode.remote(),
+        sourceFromCli: remoteFrameworkSource(),
         interactive: true,
       });
 
-      expect(result.ref).toBe("v4.0.0");
+      expect(result).toMatchObject({ ref: "v4.0.0" });
     });
 
     it("pins an older release the user picks rather than the newest", async () => {
@@ -155,11 +154,11 @@ describe("AskMarketplaceSource", () => {
 
       const result = await uc.execute({
         projectRoot: PROJECT_ROOT,
-        sourceFromCli: MarketplaceSourceMode.remote(),
+        sourceFromCli: remoteFrameworkSource(),
         interactive: true,
       });
 
-      expect(result.ref).toBe("v3.0.0");
+      expect(result).toMatchObject({ ref: "v3.0.0" });
     });
   });
 });

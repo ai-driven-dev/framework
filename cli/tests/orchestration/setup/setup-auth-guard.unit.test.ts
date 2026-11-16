@@ -3,9 +3,12 @@ import type { TokenProvider } from "../../../src/contexts/auth/contract/token-pr
 import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import type { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
+import {
+  localFrameworkSource,
+  remoteFrameworkSource,
+} from "../../../src/contexts/distribution/contract/framework-source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
 import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
@@ -133,7 +136,7 @@ describe("RunSetup — auth guard for remote source", () => {
       ...flowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
-      source: MarketplaceSourceMode.remote(),
+      source: remoteFrameworkSource(),
       interactive: false,
     });
 
@@ -147,7 +150,7 @@ describe("RunSetup — auth guard for remote source", () => {
       ...flowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
-      source: MarketplaceSourceMode.remote(),
+      source: remoteFrameworkSource(),
       interactive: false,
     });
 
@@ -161,7 +164,7 @@ describe("RunSetup — auth guard for remote source", () => {
       ...flowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
-      source: MarketplaceSourceMode.remote(),
+      source: remoteFrameworkSource(),
       interactive: false,
     });
 
@@ -175,7 +178,7 @@ describe("RunSetup — auth guard for remote source", () => {
       ...flowTools(),
       supportsUserScopeActivation: () => true,
       projectRoot: PROJECT_ROOT,
-      source: MarketplaceSourceMode.local("/some/path"),
+      source: localFrameworkSource("/some/path"),
       interactive: false,
     });
 

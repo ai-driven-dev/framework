@@ -402,21 +402,6 @@ describe("every error in the catalog", () => {
         "Refusing to build: '/out' is not empty. Re-run with --force to overwrite files this build produces, or choose an empty --out directory.",
     },
     {
-      build: () => new errors.MarketplaceSourceKindError("remote"),
-      name: "MarketplaceSourceKindError",
-      message: "Not a remote source",
-    },
-    {
-      build: () => new errors.MarketplaceSourceKindError("local"),
-      name: "MarketplaceSourceKindError",
-      message: "Not a local source",
-    },
-    {
-      build: () => new errors.EmptyLocalSourcePathError(),
-      name: "EmptyLocalSourcePathError",
-      message: "Local source path must not be empty.",
-    },
-    {
       build: () => new errors.InvalidSetupToolIdError("zed", ["claude", "cursor"]),
       name: "InvalidSetupToolIdError",
       message: 'Invalid tool ID: "zed". Valid IDs: claude, cursor',

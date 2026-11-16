@@ -218,10 +218,10 @@ Gap with a written rule: "a use case never catches its own errors" does not desc
 | `merge.ts` | framework, tools, runtime | shared/domain |
 | `materialization/flat-paths.ts` | framework, tools, translate | shared/domain |
 | `materialization/relative-link-rewrite.ts`, `claude-root-path-rewrite.ts` | tools, translate | shared/domain (uses `node:path`, which must leave, see 10.1) |
-| `paths.ts` | 5 contexts + presentation + runtime | split: pure path comparison (`samePath`, `pathContainsOrEquals`, `posixRelative`) to shared/domain with the platform as a parameter and no `process.platform` default; `.aidd` layout constants and functions to their owner (marketplace cache: distribution; manifest: installation); telemetry imports only `AIDD_DIR` and `AIDD_CONFIG_FILENAME` |
+| `paths.ts` | 5 contexts + presentation + runtime | split, done: pure path comparison (`samePath`, `pathContainsOrEquals`, `posixRelative`) stays in shared/domain with the platform as a required parameter and no `process.platform` default; the marketplace cache layout is `distribution/domain/marketplace-cache-layout.ts`, the manifest and config layout `installation/domain/project-layout.ts`; the built-marketplace family and the two machine-wide file names stay in `shared/domain/layout/aidd-layout.ts` because no arrow of the map reaches their owner from every reader; telemetry imports nothing from it |
 | `scope.ts` | distribution, framework, tools, presentation | shared/domain, becomes the single `Scope` type |
 | `semver.ts` | framework, runtime/self-update | shared/domain if `installation` and `update` both import it (expected) |
-| `source.ts` | distribution, framework, tools, presentation | shared/domain provisional; natural owner: distribution; to settle with the `distribution` document |
+| `source.ts` | distribution, framework, tools, presentation | shared/domain, settled: the plugin source is the vocabulary of `distribution`, `tools` and `translate` alike, and no one of them can own it without the others importing it sideways |
 | `tool.ts` | all | shared/domain; move `assertValidAiToolId` (throws an error) and `parseToolOption` (CLI option parsing) to `presentation` |
 | `ports/file-reader.ts`, `file-writer.ts`, `hasher.ts`, `logger.ts` | 4 to 5 contexts | shared/ports |
 | `ports/prompter.ts` | framework, distribution, presentation | prompt port owned by `orchestration`, implemented by `presentation` (see 4.4) |
@@ -305,6 +305,6 @@ Decisions still to take: the mechanism that takes `node:path` out of the domain 
 
 Assumptions about neighbours, unverified:
 - `installation` and `host-registration` expose in `application/` one command per operation useful to the scenarios; the `context-boundary` guard already requires a declaration.
-- The owner of `source.ts` and of the latest-version resolver is settled by the `distribution` and `update` documents.
+- The owner of `source.ts` is shared/domain, settled in the table above; the owner of the latest-version resolver is settled by the `update` document.
 - The single drift comparison is exposed by `installation`; it receives the conflict resolver (`SyncConflictResolverUseCase` today).
 - The "importers" count must be redone after the `framework` split; table 10.2 is only an upper bound on the number of contexts.
