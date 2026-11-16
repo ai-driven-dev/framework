@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import { SetupToolsUseCase } from "../../../../../src/contexts/framework/application/setup/setup-tools-use-case.js";
+import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit-deps.js";
@@ -44,7 +44,7 @@ async function existingProject(configPath: string) {
     deps.pluginFetcher,
     deps.pluginDistributionReader
   );
-  const add = new PluginAddUseCase(
+  const add = new AddPlugin(
     deps.fs,
     deps.manifestRepo,
     distribution,

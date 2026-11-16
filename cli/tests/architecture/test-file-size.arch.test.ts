@@ -16,7 +16,7 @@ const BASELINE: readonly string[] = [
   "tests/contexts/framework/application/clean/clean-user-scope-use-case.integration.test.ts",
   "tests/contexts/framework/application/flows/marketplace-sync-native-activation.integration.test.ts",
   "tests/contexts/framework/application/flows/marketplace-sync-settings-migration.integration.test.ts",
-  "tests/contexts/framework/application/plugin/plugin-add-use-case.unit.test.ts",
+  "tests/contexts/installation/application/plugin/add-plugin.unit.test.ts",
   "tests/contexts/framework/application/plugin/plugin-remove-native-activation.integration.test.ts",
   "tests/contexts/installation/application/plugin/plugin-update-built-tree.unit.test.ts",
   "tests/contexts/translate/application/strategies/flat-build-strategy.integration.test.ts",

@@ -1,9 +1,9 @@
 import { join } from "node:path";
 import { describe, expect, it, type Mock, vi } from "vitest";
 import type { MarketplaceTrustStore } from "../../../../../src/contexts/distribution/ports/marketplace-trust-store.js";
-import type { PluginAdd } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
 import type { PluginInstallFromMarketplace } from "../../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-install-use-case.js";
+import type { PluginAdd } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { PluginPick } from "../../../../../src/presentation/prompts/plugin-pick-use-case.js";
 import {
@@ -182,7 +182,7 @@ describe("PluginInstallUseCase", () => {
   });
 
   describe("source arg routing", () => {
-    it("delegates to PluginAddUseCase when arg is an absolute local path", async () => {
+    it("delegates to AddPlugin when arg is an absolute local path", async () => {
       const addExecute = vi.fn().mockResolvedValue(undefined);
 
       const result = await makeUseCase({ addExecute }).execute({

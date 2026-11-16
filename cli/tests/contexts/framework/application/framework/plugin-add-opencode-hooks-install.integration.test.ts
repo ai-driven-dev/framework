@@ -6,7 +6,7 @@ import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
 
 import { join, posix } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -24,7 +24,7 @@ async function installSamplePlugin() {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const capturingLogger = new CapturingLogger();
   const registry = new InMemoryMarketplaceRegistry();
-  const useCase = new PluginAddUseCase(
+  const useCase = new AddPlugin(
     deps.fs,
     deps.manifestRepo,
     new PluginDistributionLoader(
@@ -47,7 +47,7 @@ async function installSamplePlugin() {
   return { deps, capturingLogger };
 }
 
-describe("PluginAddUseCase OpenCode hooks install (Phase 7)", () => {
+describe("AddPlugin OpenCode hooks install (Phase 7)", () => {
   it("writes every hooks/ script but the manifest under .opencode/hooks/<plugin>/", async () => {
     const { deps } = await installSamplePlugin();
 
@@ -76,7 +76,7 @@ describe("PluginAddUseCase OpenCode hooks install (Phase 7)", () => {
 
 // `plugin install` and `setup` reach OpenCode through ContentTranslator, never through
 // FlatBuildStrategy, so without flatHooksBridge there the namespaced script triggers nothing.
-describe("PluginAddUseCase OpenCode event bridge (Lot B)", () => {
+describe("AddPlugin OpenCode event bridge (Lot B)", () => {
   it("generates .opencode/plugin/<plugin>-hooks.js for a plugin's mapped hook", async () => {
     const { deps } = await installSamplePlugin();
 

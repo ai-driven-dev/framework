@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
@@ -51,8 +51,8 @@ function buildAddUseCase(
   deps: Deps,
   registry: InMemoryMarketplaceRegistry = deps.marketplaceRegistry,
   logger: Logger = deps.logger
-): PluginAddUseCase {
-  return new PluginAddUseCase(
+): AddPlugin {
+  return new AddPlugin(
     deps.fs,
     deps.manifestRepo,
     new PluginDistributionLoader(
@@ -98,7 +98,7 @@ function pluginNames(deps: Deps, toolId: AiToolId): string[] {
   return (deps.manifestRepo.getCurrent()?.getPlugins(toolId) ?? []).map((p) => p.name).sort();
 }
 
-describe("PluginAddUseCase", () => {
+describe("AddPlugin", () => {
   describe("add local plugin for claude", () => {
     it("writes plugin files and updates manifest", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
@@ -159,7 +159,7 @@ describe("PluginAddUseCase", () => {
         })
       );
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-      const useCase = new PluginAddUseCase(
+      const useCase = new AddPlugin(
         deps.fs,
         deps.manifestRepo,
         new PluginDistributionLoader(
@@ -206,7 +206,7 @@ describe("PluginAddUseCase", () => {
           addedAt: "2026-05-01T00:00:00.000Z",
         })
       );
-      const useCase = new PluginAddUseCase(
+      const useCase = new AddPlugin(
         deps.fs,
         deps.manifestRepo,
         new PluginDistributionLoader(
@@ -250,7 +250,7 @@ describe("PluginAddUseCase", () => {
       );
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-      const useCase = new PluginAddUseCase(
+      const useCase = new AddPlugin(
         deps.fs,
         deps.manifestRepo,
         new PluginDistributionLoader(
@@ -311,7 +311,7 @@ describe("PluginAddUseCase", () => {
         );
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
-        const useCase = new PluginAddUseCase(
+        const useCase = new AddPlugin(
           deps.fs,
           deps.manifestRepo,
           new PluginDistributionLoader(
@@ -353,7 +353,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-        const useCase = new PluginAddUseCase(
+        const useCase = new AddPlugin(
           deps.fs,
           deps.manifestRepo,
           new PluginDistributionLoader(
@@ -394,7 +394,7 @@ describe("PluginAddUseCase", () => {
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         // Cursor copies the per-target BUILT tree verbatim; seed it.
         deps.fs.setFile("/built/cursor/plugins/sample-plugin/skills/demo/SKILL.md", "# Demo skill");
-        const useCase = new PluginAddUseCase(
+        const useCase = new AddPlugin(
           deps.fs,
           deps.manifestRepo,
           new PluginDistributionLoader(
@@ -563,7 +563,7 @@ describe("PluginAddUseCase", () => {
         projectB.addTool(cursor, "1.0.0", []);
         const projectBRepo = new InMemoryManifestRepository(projectB, "/B");
         const registryB = await makeGithubRegistry("/B");
-        await new PluginAddUseCase(
+        await new AddPlugin(
           deps.fs,
           projectBRepo,
           new PluginDistributionLoader(
@@ -604,7 +604,7 @@ describe("PluginAddUseCase", () => {
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-        const useCase = new PluginAddUseCase(
+        const useCase = new AddPlugin(
           deps.fs,
           deps.manifestRepo,
           new PluginDistributionLoader(
@@ -640,7 +640,7 @@ describe("PluginAddUseCase", () => {
         await initAndInstall(deps, PROJECT_ROOT, codex);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-        const useCase = new PluginAddUseCase(
+        const useCase = new AddPlugin(
           deps.fs,
           deps.manifestRepo,
           new PluginDistributionLoader(
@@ -678,7 +678,7 @@ describe("PluginAddUseCase", () => {
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
-        const useCase = new PluginAddUseCase(
+        const useCase = new AddPlugin(
           deps.fs,
           deps.manifestRepo,
           new PluginDistributionLoader(
@@ -713,7 +713,7 @@ describe("PluginAddUseCase", () => {
         await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-        const useCase = new PluginAddUseCase(
+        const useCase = new AddPlugin(
           deps.fs,
           deps.manifestRepo,
           new PluginDistributionLoader(
@@ -751,7 +751,7 @@ describe("PluginAddUseCase", () => {
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
         deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
         const registry = await makeGithubRegistry(PROJECT_ROOT);
-        const useCase = new PluginAddUseCase(
+        const useCase = new AddPlugin(
           deps.fs,
           deps.manifestRepo,
           new PluginDistributionLoader(
@@ -806,7 +806,7 @@ describe("PluginAddUseCase", () => {
           })
         );
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
-        const useCase = new PluginAddUseCase(
+        const useCase = new AddPlugin(
           deps.fs,
           deps.manifestRepo,
           new PluginDistributionLoader(
@@ -862,7 +862,7 @@ describe("PluginAddUseCase", () => {
           addedAt: "2026-05-01T00:00:00.000Z",
         })
       );
-      const useCase = new PluginAddUseCase(
+      const useCase = new AddPlugin(
         deps.fs,
         deps.manifestRepo,
         new PluginDistributionLoader(deps.pluginFetcher, zeroFilesReader),

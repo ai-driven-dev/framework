@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Restore } from "../../../../../src/contexts/installation/application/restore/restore.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
@@ -34,7 +34,7 @@ async function installPlugin(
 ): Promise<void> {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   const pluginReader = new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes());
-  await new PluginAddUseCase(
+  await new AddPlugin(
     deps.fs,
     deps.manifestRepo,
     new PluginDistributionLoader(deps.pluginFetcher, pluginReader),

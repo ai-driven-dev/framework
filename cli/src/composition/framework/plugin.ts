@@ -1,10 +1,10 @@
 import { join } from "node:path";
 import { SearchPlugins } from "../../contexts/distribution/application/search-plugins.js";
-import { PluginAddUseCase } from "../../contexts/framework/application/plugin/plugin-add-use-case.js";
 import { PluginInstallFromMarketplaceUseCase } from "../../contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { PluginInstallUseCase } from "../../contexts/framework/application/plugin/plugin-install-use-case.js";
 import { PluginRemoveUseCase } from "../../contexts/framework/application/plugin/plugin-remove-use-case.js";
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
+import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../contexts/installation/application/plugin/plugin-distribution-loader.js";
 import {
   type BoundPluginMaterializer,
@@ -56,7 +56,7 @@ export function wirePlugin(base: Base, inst: Installation) {
     marketplaceRegistry,
     userManifestRepo
   );
-  const pluginAddUseCase = new PluginAddUseCase(
+  const pluginAddUseCase = new AddPlugin(
     fs,
     manifestRepo,
     new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),

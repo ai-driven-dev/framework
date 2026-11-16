@@ -15,8 +15,8 @@ import {
 import type { Marketplace } from "../../../distribution/domain/marketplace.js";
 import { resolvePluginSourceFromMarketplace } from "../../../distribution/domain/plugin-source-resolver.js";
 import type { MarketplaceRegistry } from "../../../distribution/ports/marketplace-registry.js";
+import type { PluginAdd } from "../../../installation/application/plugin/add-plugin.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { PluginAdd } from "./plugin-add-use-case.js";
 
 export interface PluginInstallFromMarketplaceOptions {
   pluginName: string;
@@ -150,7 +150,7 @@ export class PluginInstallFromMarketplaceUseCase implements PluginInstallFromMar
   }
 
   // Catalog-level version check. Policy controls whether mismatch is fatal or silent.
-  // Plugin-level (plugin.json) check happens in PluginAddUseCase.
+  // Plugin-level (plugin.json) check happens in AddPlugin.
   private assertOrCoerceCatalogVersion(
     entry: PluginCatalogEntry,
     requested: string | undefined,
@@ -163,7 +163,7 @@ export class PluginInstallFromMarketplaceUseCase implements PluginInstallFromMar
         );
       }
       // prefer-catalog always bypasses both the catalog-entry check (this site)
-      // and the downstream plugin.json on-disk check in PluginAddUseCase.
+      // and the downstream plugin.json on-disk check in AddPlugin.
       return undefined;
     }
     if (!requested || !entry.version || entry.version === requested) return requested;

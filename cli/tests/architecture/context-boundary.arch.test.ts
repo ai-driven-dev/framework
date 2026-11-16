@@ -50,7 +50,6 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the flows a command drives end to end
     "src/contexts/framework/application/setup-use-case.ts",
     "src/contexts/framework/application/setup/setup-tools-use-case.ts",
-    "src/contexts/framework/application/plugin/plugin-add-use-case.ts",
     "src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.ts",
     // what a display or a prompt reads to render a decision it does not make
     "src/contexts/framework/domain/setup-flow.ts",
@@ -74,12 +73,11 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/application/init-project.ts",
     "src/contexts/installation/application/install/install-ide-config.ts",
     "src/contexts/installation/application/install/install-runtime-config.ts",
-    "src/contexts/installation/application/materialize/plugin-translator.ts",
-    "src/contexts/installation/application/materialize/resolve-plugin-translator.ts",
     "src/contexts/installation/application/ownership/project-path-boundary.ts",
     "src/contexts/installation/application/plugin/plugin-distribution-loader.ts",
     "src/contexts/installation/application/plugin/plugin-helpers.ts",
     "src/contexts/installation/application/plugin/plugin-target-resolution.ts",
+    "src/contexts/installation/application/plugin/add-plugin.ts",
     "src/contexts/installation/application/plugin/plugin-materializer.ts",
     "src/contexts/installation/application/plugin/remove-project-plugin.ts",
     "src/contexts/installation/application/plugin/update-plugin.ts",

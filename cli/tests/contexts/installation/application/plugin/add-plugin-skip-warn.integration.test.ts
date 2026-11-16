@@ -2,7 +2,7 @@
  * `collectHooksSkips`'s non-empty branch; the warn format is pinned tool-agnostically below. */
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { PluginAddUseCase } from "../../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { ReadonlySkipList } from "../../../../../src/contexts/translate/domain/plugin-translation-skip.js";
@@ -17,7 +17,7 @@ import { registeredManifestProbes } from "../../../translate/testing/registered-
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
 
-describe("PluginAddUseCase skip warnings", () => {
+describe("AddPlugin skip warnings", () => {
   describe("when a plugin's hooks are now accepted (no skip entry)", () => {
     it("emits no logger.warn — OpenCode delivers sample-plugin's hooks instead of skipping them", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
@@ -25,7 +25,7 @@ describe("PluginAddUseCase skip warnings", () => {
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const capturingLogger = new CapturingLogger();
       const registry = new InMemoryMarketplaceRegistry();
-      const useCase = new PluginAddUseCase(
+      const useCase = new AddPlugin(
         deps.fs,
         deps.manifestRepo,
         new PluginDistributionLoader(

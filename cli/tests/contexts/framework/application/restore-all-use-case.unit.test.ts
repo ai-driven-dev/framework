@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RestoreAllUseCase } from "../../../../src/contexts/framework/application/global/restore-all-use-case.js";
-import { PluginAddUseCase } from "../../../../src/contexts/framework/application/plugin/plugin-add-use-case.js";
+import { AddPlugin } from "../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { ReportStatus } from "../../../../src/contexts/installation/application/report-status.js";
 import { Restore } from "../../../../src/contexts/installation/application/restore/restore.js";
@@ -43,7 +43,7 @@ async function installPlugin(
   toolId: AiToolId,
   pluginReader: PluginDistributionReaderAdapter
 ): Promise<void> {
-  await new PluginAddUseCase(
+  await new AddPlugin(
     deps.fs,
     deps.manifestRepo,
     new PluginDistributionLoader(deps.pluginFetcher, pluginReader),
@@ -324,7 +324,7 @@ describe("RestoreAllUseCase — plugin materialization", () => {
     await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
     const { reader } = countingReader(deps.fs);
     await installPlugin(deps, TOOL.claude, reader);
-    await new PluginAddUseCase(
+    await new AddPlugin(
       deps.fs,
       deps.manifestRepo,
       new PluginDistributionLoader(deps.pluginFetcher, reader),
