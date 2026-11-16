@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginContentEngine } from "../../../../../src/contexts/translate/domain/engine.js";
-import { FileHash } from "../../../../../src/shared/domain/file.js";
 import {
   type PluginComponentFile,
   PluginDistribution,

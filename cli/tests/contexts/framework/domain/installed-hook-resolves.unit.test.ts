@@ -11,7 +11,6 @@ import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/pr
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
 import { rewritePluginRootToken } from "../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { TOOL } from "../../tools/testing/catalog-of.js";
 import { hooksAcceptanceOf, nativeOf } from "../../tools/testing/plugin-mode.js";

@@ -1,6 +1,5 @@
 import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
 import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
-import { FileHash } from "../../../../src/shared/domain/file.js";
 import {
   type PluginComponentFile,
   type PluginComponents,

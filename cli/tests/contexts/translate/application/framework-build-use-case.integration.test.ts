@@ -589,8 +589,8 @@ const countingSink: Pick<DiskSink, "prepare" | "writePlugin" | "finish"> = {
 describe("what a build reports having written", () => {
   it("adds each layout step's own count per plugin, then what the layout wrote after them", async () => {
     const fs = await makeSeededFs();
-    const v = makeValidator();
-    const ap = makeAssetProvider();
+    const _v = makeValidator();
+    const _ap = makeAssetProvider();
     const uc = new BuildNativeTree(fs, new CapturingLogger(), countingSink, LAYOUT);
     const result = await uc.execute({
       sourceDir: SOURCE_DIR,
@@ -610,8 +610,8 @@ describe("what a build reports having written", () => {
       await fs.deleteDirectory(`${SOURCE_DIR}/plugins/aidd-test/${section}`);
     }
     const logger = new CapturingLogger();
-    const v = makeValidator();
-    const ap = makeAssetProvider();
+    const _v = makeValidator();
+    const _ap = makeAssetProvider();
     const uc = new BuildNativeTree(fs, logger, countingSink, LAYOUT);
     const result = await uc.execute({
       sourceDir: SOURCE_DIR,
