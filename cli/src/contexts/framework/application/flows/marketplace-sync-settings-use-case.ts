@@ -68,8 +68,6 @@ export interface MarketplaceSyncSettingsOptions {
   enablePlugins?: readonly string[];
 }
 
-type ActivationOutcome = HostRegistrationOutcome;
-
 export interface MarketplaceSyncSettingsResult {
   /** Tools whose own CLI actually ran, whether or not every step inside it succeeded. */
   activated: readonly ToolId[];
@@ -95,124 +93,88 @@ export interface MarketplaceSyncSettings {
   execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult>;
 }
 
-interface ActivationRun {
-  outcomes: ReadonlyMap<ToolId, ActivationOutcome>;
-  binaryMissing: readonly { toolId: ToolId; binary: string }[];
-  warnings: readonly string[];
-  errors: readonly { scope: string; message: string }[];
-}
-
 export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly manifestRepo: ManifestRepository,
-    private readonly marketplaceRegistry: MarketplaceRegistry,
-    private readonly hasher: Hasher,
-    private readonly logger: Logger,
-    private readonly registerPluginWithHost: RegisterPluginWithHost,
-    private readonly ensureBuilt: BuiltMarketplaceEnsurer,
-    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
-     * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
-     * already built before this runs, never from a path recomputed without one. */
-    private readonly userCacheRoot: () => string = () => "",
-    /** Re-registers the shared machine-scope source when this run finds no marketplace at all.
-     * Absent keeps the silent no-op instead of guessing what to register. */
-    private readonly marketplaceRegisterFrameworkUseCase?: Pick<
-      RegisterFrameworkMarketplace,
-      "execute"
-    >,
-    private readonly userSourceReferences?: UserSourceReferences,
-    private readonly currentVersionProvider?: VersionReader,
-    private readonly userManifestRepo?: ManifestRepository & Lock
+    private readonly loadContext: LoadSyncContext,
+    private readonly settingsFiles: SyncToolSettingsFiles,
+    private readonly activateNativeTools: ActivateNativeTools,
+    private readonly recordActivation: RecordActivation,
+    private readonly sharedSource: SharedFrameworkSource
   ) {}
 
-  async execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
-    if ((options.scope ?? "project") === "project" && this.userManifestRepo !== undefined) {
-      return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(options));
-    }
-    return this.executeLocked(options);
+  execute(options: MarketplaceSyncSettingsOptions): Promise<MarketplaceSyncSettingsResult> {
+    return this.loadContext.runLocked(options.scope ?? "project", () =>
+      this.executeLocked(options)
+    );
   }
 
   private async executeLocked(
     options: MarketplaceSyncSettingsOptions
   ): Promise<MarketplaceSyncSettingsResult> {
     const { projectRoot, tools } = options;
-    const manifestRepo = options.manifestRepo ?? this.manifestRepo;
     const scope = options.scope ?? "project";
-    const [manifest, initialMarketplaces] = await Promise.all([
-      manifestRepo.load().catch(() => null),
-      this.marketplaceRegistry.list(projectRoot),
-    ]);
-    if (manifest === null) return EMPTY_RESULT;
-    const recreatedMarketplaces = options.recreateFrameworkIfMissing
-      ? await this.ensureFrameworkRegistered(projectRoot, initialMarketplaces)
-      : initialMarketplaces;
-    const marketplaces =
-      options.marketplaceNames === undefined
-        ? recreatedMarketplaces
-        : recreatedMarketplaces.filter((m) => options.marketplaceNames?.includes(m.name));
-    if (marketplaces.length === 0) return EMPTY_RESULT;
-    const toolIds = this.selectToolIds(manifest, options.toolIds);
-    let anyToolUpdated = false;
+    const context = await this.loadContext.execute({
+      projectRoot,
+      toolIds: options.toolIds,
+      recreateFrameworkIfMissing: options.recreateFrameworkIfMissing,
+      manifestRepo: options.manifestRepo,
+      marketplaceNames: options.marketplaceNames,
+    });
+    if (context === null) return EMPTY_RESULT;
+    const { manifest, marketplaces } = context;
     // A user-scope run lands nothing under `projectRoot`, so no project settings file mirrors it.
-    if (scope === "project") {
-      for (const toolId of toolIds) {
-        if (tools.aiProfileIfAny(toolId)?.marketplaceRegistration()?.requiresNativeProof())
-          continue;
-        if (await this.syncTool(tools, toolId, projectRoot, manifest, marketplaces))
-          anyToolUpdated = true;
-      }
-    }
-    if (anyToolUpdated) await manifestRepo.save(manifest);
-    const activation = await this.activateNativeTools(
+    if (
+      scope === "project" &&
+      (await this.settingsFiles.syncProjectTools(
+        tools,
+        projectRoot,
+        manifest,
+        marketplaces,
+        context.toolIds
+      ))
+    )
+      await context.save();
+    const activation = await this.activateNativeTools.execute({
       tools,
       projectRoot,
-      manifest,
-      marketplaces,
-      toolIds,
+      context,
       scope,
-      options.enablePlugins ?? []
-    );
-    let declarativeChanged = false;
-    if (scope === "project") {
-      for (const [toolId, outcome] of activation.outcomes) {
-        const settings = tools.aiProfileIfAny(toolId)?.marketplaceRegistration();
-        if (settings?.requiresNativeProof() !== true) continue;
-        const hostNames = new Set(outcome.marketplaces.map((entry) => entry.hostName));
-        const provenRefs = outcome.pluginRefs.filter((ref) =>
-          [...hostNames].some((hostName) => ref.endsWith(`@${hostName}`))
-        );
-        if (
-          provenRefs.length > 0 &&
-          (await this.syncEnabledPluginsFile(
-            toolId,
-            projectRoot,
-            manifest,
-            marketplaces,
-            settings,
-            provenRefs
-          ))
-        )
-          declarativeChanged = true;
-      }
-    }
-    if (declarativeChanged) await manifestRepo.save(manifest);
+      enablePlugins: options.enablePlugins ?? [],
+    });
+    if (
+      scope === "project" &&
+      (await this.settingsFiles.syncProvenPlugins(
+        tools,
+        projectRoot,
+        manifest,
+        marketplaces,
+        activation.outcomes
+      ))
+    )
+      await context.save();
     // A refused or unproven host registration cannot establish a new shared-source claim.
     // User-scope runs have no project manifest for a later `clean` to decrement it.
     if (scope !== "user") {
-      await this.recordSharedSourceReference(projectRoot, marketplaces, activation.outcomes);
+      await this.sharedSource.recordSharedSourceReference(
+        projectRoot,
+        marketplaces,
+        activation.outcomes
+      );
     }
-    const wroteHashes = await this.recordWhatActivationWrote(tools, projectRoot, manifest, [
-      ...activation.outcomes.keys(),
-    ]);
-    const wroteRegistrations = this.recordNativeRegistrations(
+    const wroteHashes = await this.recordActivation.recordWhatActivationWrote(
+      tools,
+      projectRoot,
+      manifest,
+      [...activation.outcomes.keys()]
+    );
+    const wroteRegistrations = this.recordActivation.recordNativeRegistrations(
       tools,
       manifest,
       activation.outcomes,
       options.marketplaceNames !== undefined
     );
-    if (wroteHashes || wroteRegistrations) await manifestRepo.save(manifest);
-    await this.recordMachinePluginClaims(
+    if (wroteHashes || wroteRegistrations) await context.save();
+    await this.recordActivation.recordMachinePluginClaims(
       tools,
       manifest,
       activation.outcomes,
@@ -221,13 +183,110 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
       scope === "project" ? projectRoot : undefined
     );
     if (options.recreateFrameworkIfMissing === true && scope === "project") {
-      await this.purgeStaleProjectCache(projectRoot, marketplaces, activation);
+      await this.sharedSource.purgeStaleProjectCache(projectRoot, marketplaces, activation);
     }
     return {
       activated: [...activation.outcomes.keys()],
       binaryMissing: activation.binaryMissing,
       warnings: activation.warnings,
       errors: activation.errors,
+    };
+  }
+}
+
+export class BuildMarketplaceForTool {
+  constructor(
+    private readonly ensureBuilt: BuiltMarketplaceEnsurer,
+    private readonly logger: Logger
+  ) {}
+
+  /** The built tree, or `null` after a warning when the build failed. */
+  async execute(
+    toolId: ToolId,
+    marketplace: Marketplace,
+    projectRoot: string
+  ): Promise<string | null> {
+    try {
+      const { builtDir } = await this.ensureBuilt.execute({
+        projectRoot,
+        marketplace,
+        target: toolId as FrameworkBuildTarget,
+        mode: "marketplace",
+      });
+      return builtDir;
+    } catch (error) {
+      this.logger.warn(
+        `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: ${(error as Error).message}`
+      );
+      return null;
+    }
+  }
+}
+
+export interface SyncContextRequest {
+  projectRoot: string;
+  toolIds?: readonly ToolId[];
+  recreateFrameworkIfMissing?: boolean;
+  manifestRepo?: ManifestRepository;
+  marketplaceNames?: readonly string[];
+}
+
+/** What one sync run works on: the loaded manifest, the marketplaces it covers, the tools it
+ * touches, and the way to persist the manifest to the repository it was read from. */
+export interface SyncContext {
+  manifest: Manifest;
+  marketplaces: readonly Marketplace[];
+  toolIds: readonly ToolId[];
+  save(): Promise<void>;
+  /** What a host registration is checked against for one tool: the manifest's own record, the
+   * machine's, and the one persisted for this project. */
+  claimsOf(toolId: ToolId): RegistrationClaims;
+}
+
+export class LoadSyncContext {
+  constructor(
+    private readonly manifestRepo: ManifestRepository,
+    private readonly marketplaceRegistry: MarketplaceRegistry,
+    /** Re-registers the shared machine-scope source when this run finds no marketplace at all.
+     * Absent keeps the silent no-op instead of guessing what to register. */
+    private readonly marketplaceRegisterFrameworkUseCase?: Pick<
+      RegisterFrameworkMarketplace,
+      "execute"
+    >,
+    private readonly userManifestRepo?: ManifestRepository & Lock
+  ) {}
+
+  /** A project-scope run holds the machine manifest's lock; a user-scope one already works on it. */
+  runLocked<T>(scope: MarketplaceScope, work: () => Promise<T>): Promise<T> {
+    if (scope === "project" && this.userManifestRepo !== undefined) {
+      return this.userManifestRepo.withExclusiveAccess(work);
+    }
+    return work();
+  }
+
+  /** `null` when there is no manifest or no marketplace to sync, so the run has nothing to do. */
+  async execute(request: SyncContextRequest): Promise<SyncContext | null> {
+    const { projectRoot } = request;
+    const manifestRepo = request.manifestRepo ?? this.manifestRepo;
+    const [manifest, initialMarketplaces] = await Promise.all([
+      manifestRepo.load().catch(() => null),
+      this.marketplaceRegistry.list(projectRoot),
+    ]);
+    if (manifest === null) return null;
+    const recreatedMarketplaces = request.recreateFrameworkIfMissing
+      ? await this.ensureFrameworkRegistered(projectRoot, initialMarketplaces)
+      : initialMarketplaces;
+    const marketplaces =
+      request.marketplaceNames === undefined
+        ? recreatedMarketplaces
+        : recreatedMarketplaces.filter((m) => request.marketplaceNames?.includes(m.name));
+    if (marketplaces.length === 0) return null;
+    return {
+      manifest,
+      marketplaces,
+      toolIds: this.selectToolIds(manifest, request.toolIds),
+      save: () => manifestRepo.save(manifest),
+      claimsOf: (toolId) => this.claimsOf(toolId, manifest),
     };
   }
 
@@ -252,80 +311,14 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     return this.marketplaceRegistry.list(projectRoot);
   }
 
-  /**
-   * Never run before every tool's own native activation: a host's CLI needs the tree it is
-   * unregistering from to still exist, and a binary off `PATH` or a failed build can leave a
-   * registration still naming this project's own pre-migration cache. `resolveCacheCandidate`
-   * refuses anything that does not `realpath` strictly inside `projectRoot`.
-   */
-  private async purgeStaleProjectCache(
-    projectRoot: string,
-    marketplaces: readonly Marketplace[],
-    activation: ActivationRun
-  ): Promise<void> {
-    if (activation.errors.length > 0) return;
-    const framework = marketplaces.find((m) => frameworkSourceIsShared(m.name, m.scope));
-    if (framework === undefined) return;
-    if (activation.binaryMissing.length > 0) {
-      this.logger.warn(
-        "This project's own pre-migration framework cache kept: a requested tool's CLI " +
-          "was not on PATH this run, so its own registration may still point at it — run " +
-          "`aidd sync` again once every tool's CLI is on PATH."
-      );
-      return;
-    }
-    if ([...activation.outcomes.values()].some((outcome) => outcome.buildFailed)) {
-      this.logger.warn(
-        "This project's own pre-migration framework cache kept: a requested tool's build " +
-          "failed this run, so its own registration may still point at it — fix the build " +
-          "warning above, then run `aidd sync` again."
-      );
-      return;
-    }
-    const candidate = await resolveCacheCandidate(
-      this.fs,
-      this.logger,
-      projectRoot,
-      join(BUILT_CACHE_SUBDIR, FRAMEWORK_MARKETPLACE_NAME),
-      "This project's own pre-migration framework cache"
-    );
-    if (candidate === null) return;
-    await this.fs.deleteDirectory(candidate);
-    this.logger.info(`This project's own pre-migration framework cache purged: ${candidate}`);
-  }
-
-  /**
-   * Refreshed only after native activation proves that the host uses the shared source.
-   */
-  private async recordSharedSourceReference(
-    projectRoot: string,
-    marketplaces: readonly Marketplace[],
-    outcomes: ReadonlyMap<ToolId, ActivationOutcome>
-  ): Promise<void> {
-    if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {
-      return;
-    }
-    const framework = marketplaces.find((m) => frameworkSourceIsShared(m.name, m.scope));
-    if (framework === undefined) return;
-    if (
-      ![...outcomes.values()].some((outcome) =>
-        outcome.marketplaces.some((registration) => registration.alias === framework.name)
-      )
-    )
-      return;
-    await this.recordReferenceForRoot(projectRoot);
-  }
-
-  private async recordReferenceForRoot(root: string): Promise<void> {
-    if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {
-      return;
-    }
-    const userSourceReferences = this.userSourceReferences;
-    const currentVersionProvider = this.currentVersionProvider;
-    await toleratingUnreadableSourceReferences(this.logger, undefined, async () => {
-      const resolvedRoot = await resolveProjectRootForReferences(this.fs, root);
-      await userSourceReferences.addReference(currentVersionProvider.get(), resolvedRoot);
-    });
+  private claimsOf(toolId: ToolId, manifest: Manifest): RegistrationClaims {
+    return {
+      recorded: manifest.getNativeRegistrations(toolId),
+      machine: async () => (await this.userManifestRepo?.load())?.getNativeRegistrations(toolId),
+      machineKept: this.userManifestRepo !== undefined,
+      persistedProject: async () =>
+        (await this.manifestRepo.load())?.getNativeRegistrations(toolId),
+    };
   }
 
   private selectToolIds(
@@ -337,314 +330,64 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
     const requested = new Set(toolIds);
     return installed.filter((toolId) => requested.has(toolId));
   }
+}
 
-  /** Never a tool with no native activation, and never one whose binary is absent: neither wrote
-   * anything, so a settings file that differs for it differs because a person changed it. */
-  private async activateNativeTools(
+/** The project settings files a tool shares with its host, kept in step with the manifest. */
+export class SyncToolSettingsFiles {
+  constructor(
+    private readonly fs: FileReader & FileWriter,
+    private readonly hasher: Hasher,
+    private readonly logger: Logger,
+    private readonly buildMarketplace: BuildMarketplaceForTool
+  ) {}
+
+  /** Every tool that registers by its own settings file, never one that needs the host's proof. */
+  async syncProjectTools(
     tools: ToolCatalog,
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly Marketplace[],
-    toolIds: readonly ToolId[],
-    scope: MarketplaceScope,
-    enablePlugins: readonly string[]
-  ): Promise<ActivationRun> {
-    const outcomes = new Map<ToolId, ActivationOutcome>();
-    const binaryMissing: { toolId: ToolId; binary: string }[] = [];
-    const warnings: string[] = [];
-    const errors: { scope: string; message: string }[] = [];
+    toolIds: readonly ToolId[]
+  ): Promise<boolean> {
+    let anyToolUpdated = false;
     for (const toolId of toolIds) {
-      try {
-        const result = await this.registerPluginWithHost.execute({
-          tools,
+      if (tools.aiProfileIfAny(toolId)?.marketplaceRegistration()?.requiresNativeProof()) continue;
+      if (await this.syncTool(tools, toolId, projectRoot, manifest, marketplaces))
+        anyToolUpdated = true;
+    }
+    return anyToolUpdated;
+  }
+
+  /** Only the refs the host itself proved, for a tool whose settings file needs that proof. */
+  async syncProvenPlugins(
+    tools: ToolCatalog,
+    projectRoot: string,
+    manifest: Manifest,
+    marketplaces: readonly Marketplace[],
+    outcomes: ReadonlyMap<ToolId, ActivationOutcome>
+  ): Promise<boolean> {
+    let declarativeChanged = false;
+    for (const [toolId, outcome] of outcomes) {
+      const settings = tools.aiProfileIfAny(toolId)?.marketplaceRegistration();
+      if (settings?.requiresNativeProof() !== true) continue;
+      const hostNames = new Set(outcome.marketplaces.map((entry) => entry.hostName));
+      const provenRefs = outcome.pluginRefs.filter((ref) =>
+        [...hostNames].some((hostName) => ref.endsWith(`@${hostName}`))
+      );
+      if (
+        provenRefs.length > 0 &&
+        (await this.syncEnabledPluginsFile(
           toolId,
           projectRoot,
-          scope,
+          manifest,
           marketplaces,
-          claims: this.claimsOf(toolId, manifest),
-          build: (marketplace) => this.buildForTool(toolId, marketplace, projectRoot),
-          refsToEnable: (hostNameByAlias) =>
-            this.refsToEnableOn(
-              toolId,
-              manifest,
-              marketplaces,
-              hostNameByAlias,
-              scope,
-              enablePlugins
-            ),
-          userCacheRoot: this.userCacheRoot,
-          sink: { logger: this.logger, warnings },
-        });
-        if (result.status === "binary-missing") {
-          this.logger.warn(
-            `${result.binary} CLI not found on PATH — skipping native plugin activation.${
-              enablePlugins.length > 0 ? " Rerun `aidd setup --global` once it is installed." : ""
-            }`
-          );
-          binaryMissing.push({ toolId, binary: result.binary });
-        } else if (result.status === "activated") outcomes.set(toolId, result.outcome);
-      } catch (error) {
-        errors.push({ scope: toolId, message: (error as Error).message });
-      }
+          settings,
+          provenRefs
+        ))
+      )
+        declarativeChanged = true;
     }
-    return { outcomes, binaryMissing, warnings, errors };
-  }
-
-  private claimsOf(toolId: ToolId, manifest: Manifest): RegistrationClaims {
-    return {
-      recorded: manifest.getNativeRegistrations(toolId),
-      machine: async () => (await this.userManifestRepo?.load())?.getNativeRegistrations(toolId),
-      machineKept: this.userManifestRepo !== undefined,
-      persistedProject: async () =>
-        (await this.manifestRepo.load())?.getNativeRegistrations(toolId),
-    };
-  }
-
-  /** The refs this run enables: the manifest's own, plus the framework plugins a caller asked
-   * for, which only the framework marketplace can resolve. */
-  private refsToEnableOn(
-    toolId: ToolId,
-    manifest: Manifest,
-    marketplaces: readonly Marketplace[],
-    hostNameByAlias: ReadonlyMap<string, string>,
-    scope: MarketplaceScope,
-    enablePlugins: readonly string[]
-  ): string[] {
-    const frameworkHost = hostNameByAlias.get(FRAMEWORK_MARKETPLACE_NAME);
-    const requested =
-      frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
-    return [
-      ...new Set([
-        ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias, scope),
-        ...requested,
-      ]),
-    ];
-  }
-
-  /** Only for a tool this run actually activated. A `narrowed` run's `outcome` carries only the
-   * marketplace it touched, so every other entry must survive the merge; an unnarrowed run replaces
-   * outright, since anything absent from `outcome` is a dead registration nothing else ever drops.
-   * `pluginRefs` merge by the `@<hostName>` suffix only for a hostName no retained marketplace
-   * still owns — two local aliases may resolve to one hostName. */
-  private recordNativeRegistrations(
-    tools: ToolCatalog,
-    manifest: Manifest,
-    activated: ReadonlyMap<ToolId, ActivationOutcome>,
-    narrowed: boolean
-  ): boolean {
-    let changed = false;
-    for (const [toolId, outcome] of activated) {
-      const binary = this.nativeActivationBinary(tools, toolId);
-      if (binary === undefined) continue;
-      const existing = manifest.getNativeRegistrations(toolId);
-      const projected = [...outcome.marketplaces, ...outcome.preservedMarketplaces];
-      const touchedAliases = new Set(projected.map((m) => m.alias));
-      const touchedHostNames = new Set(projected.map((m) => m.hostName));
-      const retainedMarketplaces = narrowed
-        ? (existing?.marketplaces ?? []).filter((m) => !touchedAliases.has(m.alias))
-        : [];
-      const retainedHostNames = new Set(retainedMarketplaces.map((m) => m.hostName));
-      const retainedRefs = narrowed
-        ? (existing?.pluginRefs ?? []).filter(
-            (ref) =>
-              ![...touchedHostNames].some(
-                (hostName) => !retainedHostNames.has(hostName) && ref.endsWith(`@${hostName}`)
-              )
-          )
-        : [];
-      const preservedHostNames = new Set(outcome.preservedMarketplaces.map((m) => m.hostName));
-      const preservedRefs = (existing?.pluginRefs ?? []).filter((ref) =>
-        [...preservedHostNames].some((hostName) => ref.endsWith(`@${hostName}`))
-      );
-      const registrations: NativeRegistrations = {
-        binary,
-        marketplaces: [...retainedMarketplaces, ...projected],
-        pluginRefs: [...new Set([...retainedRefs, ...preservedRefs, ...outcome.pluginRefs])],
-        ...(existing?.pluginClaims === undefined ? {} : { pluginClaims: existing.pluginClaims }),
-      };
-      if (nativeRegistrationsEqual(existing, registrations)) continue;
-      manifest.setNativeRegistrations(toolId, registrations);
-      changed = true;
-    }
-    return changed;
-  }
-
-  /**
-   * A host's own CLI writes its registration into the very file `syncTool` had just hashed, so
-   * the hash is re-read from disk after activation rather than re-derived — what is stored is
-   * then the observation, not a guess at what the host would have written.
-   */
-  private async recordWhatActivationWrote(
-    tools: ToolCatalog,
-    projectRoot: string,
-    manifest: Manifest,
-    activated: readonly ToolId[]
-  ): Promise<boolean> {
-    let changed = false;
-    for (const toolId of activated) {
-      const settingsPath = this.marketplaceSettingsOf(tools, toolId)?.sharedSettingsFile();
-      if (settingsPath === undefined) continue;
-      const tracked = manifest
-        .getToolFiles(toolId)
-        .find((file) => file.relativePath === settingsPath);
-      if (tracked === undefined) continue;
-      const content = await this.fs.readFile(resolve(projectRoot, settingsPath)).catch(() => null);
-      if (content === null) continue;
-      const hash = this.hasher.hash(content);
-      if (hash.value === tracked.hash.value) continue;
-      manifest.updateTrackedFileHash(toolId, settingsPath, hash);
-      changed = true;
-    }
-    return changed;
-  }
-
-  private marketplaceSettingsOf(
-    tools: ToolCatalog,
-    toolId: ToolId
-  ): MarketplaceRegistrationAnswers | undefined {
-    return tools.aiProfileIfAny(toolId)?.marketplaceRegistration() ?? undefined;
-  }
-
-  private nativeActivationBinary(tools: ToolCatalog, toolId: ToolId): string | undefined {
-    return tools.aiProfileIfAny(toolId)?.nativeActivation()?.hostBinary();
-  }
-
-  private async recordMachinePluginClaims(
-    tools: ToolCatalog,
-    project: Manifest,
-    outcomes: ReadonlyMap<ToolId, ActivationOutcome>,
-    marketplaces: readonly Marketplace[],
-    scope: MarketplaceScope,
-    projectRoot?: string
-  ): Promise<void> {
-    if (this.userManifestRepo === undefined) return;
-    const machine = (await this.userManifestRepo.load()) ?? Manifest.create();
-    const root = projectRoot === undefined ? undefined : await this.fs.realpath(projectRoot);
-    let changed = false;
-    for (const [toolId, outcome] of outcomes) {
-      const machineRefs =
-        scope === "user" || enablementIsMachineGlobal(tools, toolId) ? outcome.pluginRefs : [];
-      const machineMarketplaces = outcome.catalogClaims.filter((registration) =>
-        marketplaces.some(
-          (marketplace) =>
-            marketplace.name === registration.alias &&
-            (marketplace.scope === "user" || enablementIsMachineGlobal(tools, toolId))
-        )
-      );
-      if (machineRefs.length === 0 && machineMarketplaces.length === 0) continue;
-      if (!machine.hasTool(toolId)) {
-        const version = project.getToolVersion(toolId);
-        if (version === undefined) continue;
-        machine.addTool(toolId, version, []);
-      }
-      const existing = machine.getNativeRegistrations(toolId);
-      const registered = [...(existing?.marketplaces ?? [])];
-      for (const registration of machineMarketplaces) {
-        const index = registered.findIndex(
-          (entry) => entry.alias === registration.alias && entry.hostName === registration.hostName
-        );
-        if (index >= 0) {
-          if (
-            registration.provenance === undefined ||
-            (registered[index].provenance !== undefined &&
-              sameNativeMarketplaceSource(registered[index].provenance, registration.provenance))
-          )
-            continue;
-          registered[index] = registration;
-        } else registered.push(registration);
-        changed = true;
-      }
-      const claims = [...(existing?.pluginClaims ?? [])].map((claim) => ({
-        ref: claim.ref,
-        dependents: [...claim.dependents],
-      }));
-      for (const ref of machineRefs) {
-        const claim = claims.find((candidate) => candidate.ref === ref);
-        if (claim === undefined) {
-          claims.push({ ref, dependents: root === undefined ? [] : [root] });
-          changed = true;
-        } else if (root !== undefined && !claim.dependents.includes(root)) {
-          claim.dependents.push(root);
-          changed = true;
-        }
-      }
-      if (changed)
-        machine.setNativeRegistrations(toolId, {
-          binary: existing?.binary ?? this.nativeActivationBinary(tools, toolId) ?? toolId,
-          marketplaces: registered,
-          pluginRefs: existing?.pluginRefs ?? [],
-          pluginClaims: claims,
-        });
-    }
-    if (changed) await this.userManifestRepo.save(machine);
-  }
-
-  /** Keyed by `hostName`, not `plugin.marketplace` (aidd's own alias): the host resolves the
-   * marketplace half of a ref against its own registry, which knows this catalog only by the
-   * name it declares itself. */
-  private pluginRefsToEnable(
-    toolId: ToolId,
-    manifest: Manifest,
-    marketplaces: readonly Marketplace[],
-    hostNameByAlias: ReadonlyMap<string, string>,
-    scope: MarketplaceScope
-  ): string[] {
-    const byName = new Map(marketplaces.map((m) => [m.name, m]));
-    const refs: string[] = [];
-    for (const plugin of manifest.getPlugins(toolId)) {
-      const marketplace = plugin.marketplace == null ? undefined : byName.get(plugin.marketplace);
-      if (marketplace === undefined) continue;
-      const hostName = hostNameByAlias.get(marketplace.name);
-      if (hostName === undefined) continue;
-      refs.push(`${plugin.name}@${hostName}`);
-    }
-    // Native-only global installs record successful activations, not copied plugin files.
-    // Claims also recover a selection an older sync dropped from its projection.
-    if (scope === "user") {
-      const native = manifest.getNativeRegistrations(toolId);
-      const provenHosts = [...hostNameByAlias.values()];
-      for (const ref of [
-        ...(native?.pluginRefs ?? []),
-        ...(native?.pluginClaims ?? []).map((claim) => claim.ref),
-      ]) {
-        if (provenHosts.some((hostName) => ref.endsWith(`@${hostName}`))) refs.push(ref);
-      }
-    }
-    return refs;
-  }
-
-  private async buildForTool(
-    toolId: ToolId,
-    marketplace: Marketplace,
-    projectRoot: string
-  ): Promise<string | null> {
-    try {
-      const { builtDir } = await this.ensureBuilt.execute({
-        projectRoot,
-        marketplace,
-        target: toolId as FrameworkBuildTarget,
-        mode: "marketplace",
-      });
-      return builtDir;
-    } catch (error) {
-      this.logger.warn(
-        `Native plugin activation — build '${marketplace.name}' for ${toolId} skipped: ${(error as Error).message}`
-      );
-      return null;
-    }
-  }
-
-  /**
-   * The registration pointing at these trees is written by the tool's own CLI, so nothing here
-   * needs the built paths back — but the build has to happen either way, including on a machine
-   * where that CLI is absent and activation stops short.
-   */
-  private async buildAllForTool(
-    toolId: ToolId,
-    marketplaces: readonly Marketplace[],
-    projectRoot: string
-  ): Promise<void> {
-    for (const m of marketplaces) await this.buildForTool(toolId, m, projectRoot);
+    return declarativeChanged;
   }
 
   private async syncTool(
@@ -695,7 +438,7 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   ): Promise<boolean> {
     // Building the tree is this CLI's job whoever registers it: a tool that is not installed
     // today may be tomorrow, and the tree is what any registration points at.
-    await this.buildAllForTool(toolId, marketplaces, projectRoot);
+    for (const m of marketplaces) await this.buildMarketplace.execute(toolId, m, projectRoot);
     return this.evictMarketplacesFromSharedFile(toolId, projectRoot, manifest, settings);
   }
 
@@ -790,6 +533,303 @@ export class MarketplaceSyncSettingsUseCase implements MarketplaceSyncSettings {
   }
 }
 
+type ActivationOutcome = HostRegistrationOutcome;
+
+export interface ActivationRun {
+  outcomes: ReadonlyMap<ToolId, ActivationOutcome>;
+  binaryMissing: readonly { toolId: ToolId; binary: string }[];
+  warnings: readonly string[];
+  errors: readonly { scope: string; message: string }[];
+}
+
+export interface ActivateNativeToolsRequest {
+  tools: ToolCatalog;
+  projectRoot: string;
+  context: SyncContext;
+  scope: MarketplaceScope;
+  enablePlugins: readonly string[];
+}
+
+export class ActivateNativeTools {
+  constructor(
+    private readonly registerPluginWithHost: RegisterPluginWithHost,
+    private readonly buildMarketplace: BuildMarketplaceForTool,
+    private readonly logger: Logger,
+    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
+     * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
+     * already built before this runs, never from a path recomputed without one. */
+    private readonly userCacheRoot: () => string = () => ""
+  ) {}
+
+  /** Never a tool with no native activation, and never one whose binary is absent: neither wrote
+   * anything, so a settings file that differs for it differs because a person changed it. */
+  async execute(request: ActivateNativeToolsRequest): Promise<ActivationRun> {
+    const { tools, projectRoot, context, scope, enablePlugins } = request;
+    const { manifest, marketplaces } = context;
+    const outcomes = new Map<ToolId, ActivationOutcome>();
+    const binaryMissing: { toolId: ToolId; binary: string }[] = [];
+    const warnings: string[] = [];
+    const errors: { scope: string; message: string }[] = [];
+    for (const toolId of context.toolIds) {
+      try {
+        const result = await this.registerPluginWithHost.execute({
+          tools,
+          toolId,
+          projectRoot,
+          scope,
+          marketplaces,
+          claims: context.claimsOf(toolId),
+          build: (marketplace) => this.buildMarketplace.execute(toolId, marketplace, projectRoot),
+          refsToEnable: (hostNameByAlias) =>
+            this.refsToEnableOn(
+              toolId,
+              manifest,
+              marketplaces,
+              hostNameByAlias,
+              scope,
+              enablePlugins
+            ),
+          userCacheRoot: this.userCacheRoot,
+          sink: { logger: this.logger, warnings },
+        });
+        if (result.status === "binary-missing") {
+          this.logger.warn(
+            `${result.binary} CLI not found on PATH — skipping native plugin activation.${
+              enablePlugins.length > 0 ? " Rerun `aidd setup --global` once it is installed." : ""
+            }`
+          );
+          binaryMissing.push({ toolId, binary: result.binary });
+        } else if (result.status === "activated") outcomes.set(toolId, result.outcome);
+      } catch (error) {
+        errors.push({ scope: toolId, message: (error as Error).message });
+      }
+    }
+    return { outcomes, binaryMissing, warnings, errors };
+  }
+
+  /** The refs this run enables: the manifest's own, plus the framework plugins a caller asked
+   * for, which only the framework marketplace can resolve. */
+  private refsToEnableOn(
+    toolId: ToolId,
+    manifest: Manifest,
+    marketplaces: readonly Marketplace[],
+    hostNameByAlias: ReadonlyMap<string, string>,
+    scope: MarketplaceScope,
+    enablePlugins: readonly string[]
+  ): string[] {
+    const frameworkHost = hostNameByAlias.get(FRAMEWORK_MARKETPLACE_NAME);
+    const requested =
+      frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
+    return [
+      ...new Set([
+        ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias, scope),
+        ...requested,
+      ]),
+    ];
+  }
+
+  /** Keyed by `hostName`, not `plugin.marketplace` (aidd's own alias): the host resolves the
+   * marketplace half of a ref against its own registry, which knows this catalog only by the
+   * name it declares itself. */
+  private pluginRefsToEnable(
+    toolId: ToolId,
+    manifest: Manifest,
+    marketplaces: readonly Marketplace[],
+    hostNameByAlias: ReadonlyMap<string, string>,
+    scope: MarketplaceScope
+  ): string[] {
+    const byName = new Map(marketplaces.map((m) => [m.name, m]));
+    const refs: string[] = [];
+    for (const plugin of manifest.getPlugins(toolId)) {
+      const marketplace = plugin.marketplace == null ? undefined : byName.get(plugin.marketplace);
+      if (marketplace === undefined) continue;
+      const hostName = hostNameByAlias.get(marketplace.name);
+      if (hostName === undefined) continue;
+      refs.push(`${plugin.name}@${hostName}`);
+    }
+    // Native-only global installs record successful activations, not copied plugin files.
+    // Claims also recover a selection an older sync dropped from its projection.
+    if (scope === "user") {
+      const native = manifest.getNativeRegistrations(toolId);
+      const provenHosts = [...hostNameByAlias.values()];
+      for (const ref of [
+        ...(native?.pluginRefs ?? []),
+        ...(native?.pluginClaims ?? []).map((claim) => claim.ref),
+      ]) {
+        if (provenHosts.some((hostName) => ref.endsWith(`@${hostName}`))) refs.push(ref);
+      }
+    }
+    return refs;
+  }
+}
+
+/** What a run observed or caused, written back into the manifests that track it. */
+export class RecordActivation {
+  constructor(
+    private readonly fs: FileReader & FileWriter,
+    private readonly hasher: Hasher,
+    private readonly userManifestRepo?: ManifestRepository & Lock
+  ) {}
+
+  /** Only for a tool this run actually activated. A `narrowed` run's `outcome` carries only the
+   * marketplace it touched, so every other entry must survive the merge; an unnarrowed run replaces
+   * outright, since anything absent from `outcome` is a dead registration nothing else ever drops.
+   * `pluginRefs` merge by the `@<hostName>` suffix only for a hostName no retained marketplace
+   * still owns — two local aliases may resolve to one hostName. */
+  recordNativeRegistrations(
+    tools: ToolCatalog,
+    manifest: Manifest,
+    activated: ReadonlyMap<ToolId, ActivationOutcome>,
+    narrowed: boolean
+  ): boolean {
+    let changed = false;
+    for (const [toolId, outcome] of activated) {
+      const binary = this.nativeActivationBinary(tools, toolId);
+      if (binary === undefined) continue;
+      const existing = manifest.getNativeRegistrations(toolId);
+      const projected = [...outcome.marketplaces, ...outcome.preservedMarketplaces];
+      const touchedAliases = new Set(projected.map((m) => m.alias));
+      const touchedHostNames = new Set(projected.map((m) => m.hostName));
+      const retainedMarketplaces = narrowed
+        ? (existing?.marketplaces ?? []).filter((m) => !touchedAliases.has(m.alias))
+        : [];
+      const retainedHostNames = new Set(retainedMarketplaces.map((m) => m.hostName));
+      const retainedRefs = narrowed
+        ? (existing?.pluginRefs ?? []).filter(
+            (ref) =>
+              ![...touchedHostNames].some(
+                (hostName) => !retainedHostNames.has(hostName) && ref.endsWith(`@${hostName}`)
+              )
+          )
+        : [];
+      const preservedHostNames = new Set(outcome.preservedMarketplaces.map((m) => m.hostName));
+      const preservedRefs = (existing?.pluginRefs ?? []).filter((ref) =>
+        [...preservedHostNames].some((hostName) => ref.endsWith(`@${hostName}`))
+      );
+      const registrations: NativeRegistrations = {
+        binary,
+        marketplaces: [...retainedMarketplaces, ...projected],
+        pluginRefs: [...new Set([...retainedRefs, ...preservedRefs, ...outcome.pluginRefs])],
+        ...(existing?.pluginClaims === undefined ? {} : { pluginClaims: existing.pluginClaims }),
+      };
+      if (nativeRegistrationsEqual(existing, registrations)) continue;
+      manifest.setNativeRegistrations(toolId, registrations);
+      changed = true;
+    }
+    return changed;
+  }
+
+  /**
+   * A host's own CLI writes its registration into the very file `syncTool` had just hashed, so
+   * the hash is re-read from disk after activation rather than re-derived — what is stored is
+   * then the observation, not a guess at what the host would have written.
+   */
+  async recordWhatActivationWrote(
+    tools: ToolCatalog,
+    projectRoot: string,
+    manifest: Manifest,
+    activated: readonly ToolId[]
+  ): Promise<boolean> {
+    let changed = false;
+    for (const toolId of activated) {
+      const settingsPath = this.marketplaceSettingsOf(tools, toolId)?.sharedSettingsFile();
+      if (settingsPath === undefined) continue;
+      const tracked = manifest
+        .getToolFiles(toolId)
+        .find((file) => file.relativePath === settingsPath);
+      if (tracked === undefined) continue;
+      const content = await this.fs.readFile(resolve(projectRoot, settingsPath)).catch(() => null);
+      if (content === null) continue;
+      const hash = this.hasher.hash(content);
+      if (hash.value === tracked.hash.value) continue;
+      manifest.updateTrackedFileHash(toolId, settingsPath, hash);
+      changed = true;
+    }
+    return changed;
+  }
+
+  private marketplaceSettingsOf(
+    tools: ToolCatalog,
+    toolId: ToolId
+  ): MarketplaceRegistrationAnswers | undefined {
+    return tools.aiProfileIfAny(toolId)?.marketplaceRegistration() ?? undefined;
+  }
+
+  private nativeActivationBinary(tools: ToolCatalog, toolId: ToolId): string | undefined {
+    return tools.aiProfileIfAny(toolId)?.nativeActivation()?.hostBinary();
+  }
+
+  async recordMachinePluginClaims(
+    tools: ToolCatalog,
+    project: Manifest,
+    outcomes: ReadonlyMap<ToolId, ActivationOutcome>,
+    marketplaces: readonly Marketplace[],
+    scope: MarketplaceScope,
+    projectRoot?: string
+  ): Promise<void> {
+    if (this.userManifestRepo === undefined) return;
+    const machine = (await this.userManifestRepo.load()) ?? Manifest.create();
+    const root = projectRoot === undefined ? undefined : await this.fs.realpath(projectRoot);
+    let changed = false;
+    for (const [toolId, outcome] of outcomes) {
+      const machineRefs =
+        scope === "user" || enablementIsMachineGlobal(tools, toolId) ? outcome.pluginRefs : [];
+      const machineMarketplaces = outcome.catalogClaims.filter((registration) =>
+        marketplaces.some(
+          (marketplace) =>
+            marketplace.name === registration.alias &&
+            (marketplace.scope === "user" || enablementIsMachineGlobal(tools, toolId))
+        )
+      );
+      if (machineRefs.length === 0 && machineMarketplaces.length === 0) continue;
+      if (!machine.hasTool(toolId)) {
+        const version = project.getToolVersion(toolId);
+        if (version === undefined) continue;
+        machine.addTool(toolId, version, []);
+      }
+      const existing = machine.getNativeRegistrations(toolId);
+      const registered = [...(existing?.marketplaces ?? [])];
+      for (const registration of machineMarketplaces) {
+        const index = registered.findIndex(
+          (entry) => entry.alias === registration.alias && entry.hostName === registration.hostName
+        );
+        if (index >= 0) {
+          if (
+            registration.provenance === undefined ||
+            (registered[index].provenance !== undefined &&
+              sameNativeMarketplaceSource(registered[index].provenance, registration.provenance))
+          )
+            continue;
+          registered[index] = registration;
+        } else registered.push(registration);
+        changed = true;
+      }
+      const claims = [...(existing?.pluginClaims ?? [])].map((claim) => ({
+        ref: claim.ref,
+        dependents: [...claim.dependents],
+      }));
+      for (const ref of machineRefs) {
+        const claim = claims.find((candidate) => candidate.ref === ref);
+        if (claim === undefined) {
+          claims.push({ ref, dependents: root === undefined ? [] : [root] });
+          changed = true;
+        } else if (root !== undefined && !claim.dependents.includes(root)) {
+          claim.dependents.push(root);
+          changed = true;
+        }
+      }
+      if (changed)
+        machine.setNativeRegistrations(toolId, {
+          binary: existing?.binary ?? this.nativeActivationBinary(tools, toolId) ?? toolId,
+          marketplaces: registered,
+          pluginRefs: existing?.pluginRefs ?? [],
+          pluginClaims: claims,
+        });
+    }
+    if (changed) await this.userManifestRepo.save(machine);
+  }
+}
+
 /** Order included: both sides are built from the same marketplace/plugin iteration order each
  * run, so a difference is real. Keeps a no-op sync from rewriting the manifest. */
 function nativeRegistrationsEqual(
@@ -828,4 +868,90 @@ function arraysEqual(a: readonly string[], b: readonly string[]): boolean {
 /** Whether enabling a plugin acts on the whole machine; true for an editor. */
 function enablementIsMachineGlobal(tools: ToolCatalog, toolId: ToolId): boolean {
   return tools.aiProfileIfAny(toolId)?.pluginEnablementIsMachineGlobal() ?? true;
+}
+
+/** The machine's shared framework source and this project's own pre-migration copy of it. */
+export class SharedFrameworkSource {
+  constructor(
+    private readonly fs: FileReader & FileWriter,
+    private readonly logger: Logger,
+    private readonly userSourceReferences?: UserSourceReferences,
+    private readonly currentVersionProvider?: VersionReader
+  ) {}
+
+  /**
+   * Never run before every tool's own native activation: a host's CLI needs the tree it is
+   * unregistering from to still exist, and a binary off `PATH` or a failed build can leave a
+   * registration still naming this project's own pre-migration cache. `resolveCacheCandidate`
+   * refuses anything that does not `realpath` strictly inside `projectRoot`.
+   */
+  async purgeStaleProjectCache(
+    projectRoot: string,
+    marketplaces: readonly Marketplace[],
+    activation: ActivationRun
+  ): Promise<void> {
+    if (activation.errors.length > 0) return;
+    const framework = marketplaces.find((m) => frameworkSourceIsShared(m.name, m.scope));
+    if (framework === undefined) return;
+    if (activation.binaryMissing.length > 0) {
+      this.logger.warn(
+        "This project's own pre-migration framework cache kept: a requested tool's CLI " +
+          "was not on PATH this run, so its own registration may still point at it — run " +
+          "`aidd sync` again once every tool's CLI is on PATH."
+      );
+      return;
+    }
+    if ([...activation.outcomes.values()].some((outcome) => outcome.buildFailed)) {
+      this.logger.warn(
+        "This project's own pre-migration framework cache kept: a requested tool's build " +
+          "failed this run, so its own registration may still point at it — fix the build " +
+          "warning above, then run `aidd sync` again."
+      );
+      return;
+    }
+    const candidate = await resolveCacheCandidate(
+      this.fs,
+      this.logger,
+      projectRoot,
+      join(BUILT_CACHE_SUBDIR, FRAMEWORK_MARKETPLACE_NAME),
+      "This project's own pre-migration framework cache"
+    );
+    if (candidate === null) return;
+    await this.fs.deleteDirectory(candidate);
+    this.logger.info(`This project's own pre-migration framework cache purged: ${candidate}`);
+  }
+
+  /**
+   * Refreshed only after native activation proves that the host uses the shared source.
+   */
+  async recordSharedSourceReference(
+    projectRoot: string,
+    marketplaces: readonly Marketplace[],
+    outcomes: ReadonlyMap<ToolId, ActivationOutcome>
+  ): Promise<void> {
+    if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {
+      return;
+    }
+    const framework = marketplaces.find((m) => frameworkSourceIsShared(m.name, m.scope));
+    if (framework === undefined) return;
+    if (
+      ![...outcomes.values()].some((outcome) =>
+        outcome.marketplaces.some((registration) => registration.alias === framework.name)
+      )
+    )
+      return;
+    await this.recordReferenceForRoot(projectRoot);
+  }
+
+  private async recordReferenceForRoot(root: string): Promise<void> {
+    if (this.userSourceReferences === undefined || this.currentVersionProvider === undefined) {
+      return;
+    }
+    const userSourceReferences = this.userSourceReferences;
+    const currentVersionProvider = this.currentVersionProvider;
+    await toleratingUnreadableSourceReferences(this.logger, undefined, async () => {
+      const resolvedRoot = await resolveProjectRootForReferences(this.fs, root);
+      await userSourceReferences.addReference(currentVersionProvider.get(), resolvedRoot);
+    });
+  }
 }

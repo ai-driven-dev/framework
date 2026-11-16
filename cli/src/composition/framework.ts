@@ -13,7 +13,15 @@ import { DoctorTrackedFilesUseCase } from "../contexts/framework/application/doc
 import { DoctorUseCase } from "../contexts/framework/application/doctor/doctor-use-case.js";
 import { MarketplaceCheckUseCase } from "../contexts/framework/application/flows/marketplace-check-use-case.js";
 import { MarketplaceRemoveUseCase } from "../contexts/framework/application/flows/marketplace-remove-use-case.js";
-import { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import {
+  ActivateNativeTools,
+  BuildMarketplaceForTool,
+  LoadSyncContext,
+  MarketplaceSyncSettingsUseCase,
+  RecordActivation,
+  SharedFrameworkSource,
+  SyncToolSettingsFiles,
+} from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
 import { DoctorAllUseCase } from "../contexts/framework/application/global/doctor-all-use-case.js";
 import { ResolveUpdateDecisionUseCase } from "../contexts/framework/application/global/resolve-update-decision-use-case.js";
 import { RestoreAllUseCase } from "../contexts/framework/application/global/restore-all-use-case.js";
@@ -247,25 +255,32 @@ export async function createDeps(
     currentVersionProvider,
     userConfigDir
   );
-  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
-    fs,
-    manifestRepo,
-    marketplaceRegistry,
-    hasher,
-    logger,
-    new RegisterPluginWithHost(
-      fs,
-      nativePluginActivators,
-      hostMarketplaceRegistries,
-      hostPluginRegistries,
-      nativeSources
-    ),
+  const buildMarketplaceForTool = new BuildMarketplaceForTool(
     ensureBuiltMarketplaceUseCase,
-    userConfigDir,
-    registerFrameworkMarketplace,
-    userSourceReferences,
-    currentVersionProvider,
-    userManifestRepo
+    logger
+  );
+  const marketplaceSyncSettingsUseCase = new MarketplaceSyncSettingsUseCase(
+    new LoadSyncContext(
+      manifestRepo,
+      marketplaceRegistry,
+      registerFrameworkMarketplace,
+      userManifestRepo
+    ),
+    new SyncToolSettingsFiles(fs, hasher, logger, buildMarketplaceForTool),
+    new ActivateNativeTools(
+      new RegisterPluginWithHost(
+        fs,
+        nativePluginActivators,
+        hostMarketplaceRegistries,
+        hostPluginRegistries,
+        nativeSources
+      ),
+      buildMarketplaceForTool,
+      logger,
+      userConfigDir
+    ),
+    new RecordActivation(fs, hasher, userManifestRepo),
+    new SharedFrameworkSource(fs, logger, userSourceReferences, currentVersionProvider)
   );
   const updateGitignore = new UpdateGitignore(fs);
   const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore);
