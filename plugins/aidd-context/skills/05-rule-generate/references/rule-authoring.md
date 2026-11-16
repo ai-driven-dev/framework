@@ -11,7 +11,6 @@ How to write and name a rule.
 - R5. Distinct bullets: none repeats, weakens or contradicts another.
 - R6. Group themes under `## <group>`, at most one tiny good-code example each.
 - R7. File it in the most specific category; slug is its prefix, then a kebab-case name.
-- R8. Start the body with `# <title>`, the title the `AGENTS.md` index shows.
 
 ## Categories
 
