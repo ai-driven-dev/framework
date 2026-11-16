@@ -12,7 +12,6 @@ import type { MarketplaceSyncSettings } from "../../../../src/contexts/framework
 import type { PluginInstallFromMarketplace } from "../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
-import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
 import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
 import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
@@ -22,6 +21,7 @@ import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
 import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
+import { setupMarketplaceRegistrar } from "../../../helpers/setup-marketplace-registrar.js";
 import { catalogOf, flowTools } from "../../tools/testing/catalog-of.js";
 
 function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
@@ -104,7 +104,7 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
     new InMemoryMarketplaceRegistry(),
     makeNoOpResolveMarketplace()
   );
-  const setupMarketplaceRegistration = new SetupMarketplaceRegistrationUseCase(
+  const setupMarketplaceRegistration = setupMarketplaceRegistrar(
     deps.fs,
     setupMarketplaceSourceUseCase,
     makeNoOpRegisterFramework(),

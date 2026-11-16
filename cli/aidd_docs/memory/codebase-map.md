@@ -134,7 +134,8 @@ src/
 ├── orchestration/    # the scenarios that chain contexts: one command class per verb, no business rule
 │   ├── doctor/    # running every doctor check over the installation
 │   ├── global/    # machine-wide runs over every installed tool
-│   └── marketplace/    # holding what is installed against what its marketplaces list
+│   ├── marketplace/    # holding what is installed against what its marketplaces list
+│   └── setup/    # registering the framework marketplace a setup chose
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
 │   │   ├── materialization/    # where content lands and how its links follow

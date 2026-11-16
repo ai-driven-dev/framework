@@ -39,10 +39,6 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     path: "src/contexts/installation/application/restore/restore-tool-files.ts",
     dependencies: 9,
   },
-  {
-    path: "src/contexts/framework/application/shared/setup-marketplace-registration-use-case.ts",
-    dependencies: 10,
-  },
   { path: "src/contexts/framework/application/plugin/plugin-add-use-case.ts", dependencies: 9 },
   { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", dependencies: 7 },
   {

@@ -1,23 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
-import type { TokenProvider } from "../../../../../src/contexts/auth/contract/token-provider.js";
-import type { RefreshMarketplace } from "../../../../../src/contexts/distribution/application/refresh-marketplace.js";
-import type { RegisterFrameworkMarketplace } from "../../../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import { MarketplaceSourceMode } from "../../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
-import type { ReleaseLister } from "../../../../../src/contexts/distribution/ports/release-lister.js";
-import type { RepositoryVisibility } from "../../../../../src/contexts/distribution/ports/repository-visibility.js";
-import { SetupMarketplaceSourceUseCase } from "../../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
-import { SetupMarketplaceRegistrationUseCase } from "../../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
-import { SetupFlow } from "../../../../../src/contexts/framework/domain/setup-flow.js";
-import { UserSourceReferencesAdapter } from "../../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import type { UserSourceReferences } from "../../../../../src/contexts/machine-claims/ports/user-source-references.js";
-import { CatalogFetchAuthError } from "../../../../../src/shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
-import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { FakeCurrentVersion } from "../../../../helpers/ports/fake-current-version.js";
-import { InMemoryEnvironment } from "../../../../helpers/ports/in-memory-environment.js";
-import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { KeepPrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { flowTools } from "../../../tools/testing/catalog-of.js";
+import type { TokenProvider } from "../../../src/contexts/auth/contract/token-provider.js";
+import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
+import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
+import { SetupMarketplaceSourceUseCase } from "../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
+import { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
+import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
+import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
+import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
+import { flowTools } from "../../contexts/tools/testing/catalog-of.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { FakeCurrentVersion } from "../../helpers/ports/fake-current-version.js";
+import { InMemoryEnvironment } from "../../helpers/ports/in-memory-environment.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { KeepPrompter } from "../../helpers/ports/scripted-prompter.js";
+import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
 
 const PROJECT_ROOT = "/test-project";
 const SKIP_SWITCH = "AIDD_SKIP_MARKETPLACE_REFRESH";
@@ -46,7 +46,7 @@ function makeUseCase(
   environment: InMemoryEnvironment,
   collaborators: Collaborators = {}
 ): {
-  useCase: SetupMarketplaceRegistrationUseCase;
+  useCase: ReturnType<typeof setupMarketplaceRegistrar>;
   refresh: Pick<RefreshMarketplace, "execute">;
   register: Pick<RegisterFrameworkMarketplace, "execute">;
 } {
@@ -54,7 +54,7 @@ function makeUseCase(
     execute: vi.fn().mockResolvedValue({ results: [], failedCount: 0 }),
   };
   const register = makeRegisterFramework(collaborators.registeredScope ?? "user");
-  const useCase = new SetupMarketplaceRegistrationUseCase(
+  const useCase = setupMarketplaceRegistrar(
     new InMemoryFileAdapter(),
     new SetupMarketplaceSourceUseCase(new KeepPrompter(), makeNoOpLatestResolver()),
     register,
@@ -82,7 +82,7 @@ async function register(
   return refresh;
 }
 
-describe("SetupMarketplaceRegistrationUseCase", () => {
+describe("RegisterMarketplace", () => {
   describe("catalog refresh", () => {
     it("refreshes the catalog when the environment carries no skip switch", async () => {
       const refresh = await register(new InMemoryEnvironment());

@@ -1,48 +1,21 @@
-import { CatalogFetchAuthError } from "../../../../shared/domain/errors.js";
-import type { PluginSource } from "../../../../shared/domain/source.js";
-import type { Environment } from "../../../../shared/ports/environment.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
-import type { VersionReader } from "../../../../shared/ports/version-reader.js";
-import type { TokenProvider } from "../../../auth/contract/token-provider.js";
-import type { RefreshMarketplace } from "../../../distribution/application/refresh-marketplace.js";
-import type {
-  RegisterFrameworkMarketplace,
-  RegisterFrameworkMarketplaceCommand,
-} from "../../../distribution/application/register-framework-marketplace.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../distribution/contract/marketplace.js";
+import type { FrameworkSource } from "../../../distribution/contract/framework-source.js";
 import type { MarketplaceSourceMode } from "../../../distribution/domain/marketplace-source-mode.js";
-import type { RepositoryVisibility } from "../../../distribution/ports/repository-visibility.js";
-import {
-  frameworkSourceIsShared,
-  resolveProjectRootForReferences,
-  toleratingUnreadableSourceReferences,
-} from "../../../machine-claims/application/shared-source-reference-support.js";
-import type { UserSourceReferences } from "../../../machine-claims/ports/user-source-references.js";
 import type { SetupFlow } from "../../domain/setup-flow.js";
 import type { SetupMarketplaceSourceUseCase } from "../setup/setup-marketplace-source-use-case.js";
 
-/**
- * The one sequence project-scope and machine-scope setup both run, in the same order and gated the
- * same way: resolve, guard remote auth, register, refresh.
- */
+/** Registers the chosen framework source for a setup. The registration sequence is not framework's:
+ * composition hands it in. */
+export type RegisterFrameworkSource = (
+  flow: Pick<SetupFlow, "projectRoot" | "scope">,
+  source: FrameworkSource | null
+) => Promise<void>;
+
+/** What project-scope and machine-scope setup ask of the marketplace: which source to register,
+ * then registering it. */
 export class SetupMarketplaceRegistrationUseCase {
   constructor(
-    private readonly fs: FileReader,
     private readonly setupMarketplaceSourceUseCase: SetupMarketplaceSourceUseCase,
-    private readonly marketplaceRegisterFrameworkUseCase: Pick<
-      RegisterFrameworkMarketplace,
-      "execute"
-    >,
-    private readonly marketplaceRefreshUseCase: Pick<RefreshMarketplace, "execute">,
-    private readonly currentVersionProvider: VersionReader,
-    private readonly logger: Logger,
-    private readonly environment: Environment,
-    private readonly tokenProvider?: TokenProvider,
-    private readonly releaseResolver?: RepositoryVisibility,
-    /** The registry of projects referencing the shared machine-scope source. Absent skips
-     * recording a reference rather than guessing one. */
-    private readonly userSourceReferences?: UserSourceReferences
+    private readonly register: RegisterFrameworkSource
   ) {}
 
   /** Resolves `flow`'s source, when it asks for one at all. Called before a caller's own manifest
@@ -56,71 +29,9 @@ export class SetupMarketplaceRegistrationUseCase {
     });
   }
 
-  /** Guards, registers and refreshes the source `resolveSourceIfNeeded` returned, once
-   * the caller's own manifest exists — a no-op when there was no source to register. */
+  /** Registers the source `resolveSourceIfNeeded` returned, once the caller's own manifest
+   * exists. A no-op when there was no source to register. */
   async registerIfPresent(flow: SetupFlow, source: MarketplaceSourceMode | null): Promise<void> {
-    if (source === null) return;
-    await this.guardRemoteAuth(source);
-    await this.registerMarketplace(flow, source);
-    await this.refreshCatalog(flow);
-  }
-
-  // Auth is only required to fetch a PRIVATE framework. A token can reach either;
-  // without one, allow public repos through and gate only private/unreachable ones.
-  private async guardRemoteAuth(source: MarketplaceSourceMode): Promise<void> {
-    if (source.kind !== "remote") return;
-    if (this.tokenProvider === undefined) return;
-    const token = await this.tokenProvider.resolve();
-    if (token !== null) return;
-    if (
-      this.releaseResolver !== undefined &&
-      (await this.releaseResolver.isRepoPublic(source.repo))
-    ) {
-      return;
-    }
-    throw new CatalogFetchAuthError(`https://github.com/${source.repo}`);
-  }
-
-  private async registerMarketplace(flow: SetupFlow, source: MarketplaceSourceMode): Promise<void> {
-    const opts = this.buildRegisterOptions(flow, source);
-    const result = await this.marketplaceRegisterFrameworkUseCase.execute(opts);
-    // `--scope user` has no project-scope manifest for a later `clean` to ever decrement this
-    // claim from, so absence, not a recorded reference, is the honest state there.
-    if (flow.scope === "user") return;
-    // The same name-and-scope predicate `sync` and `clean` apply before touching
-    // `references.json`: always true today, but a future change must not silently start writing a
-    // reference for a registration that is no longer the shared one.
-    if (frameworkSourceIsShared(FRAMEWORK_MARKETPLACE_NAME, result.scope)) {
-      await this.recordSharedSourceReference(flow.projectRoot);
-    }
-  }
-
-  // Written every time this runs, not only the first: another project on this machine may have
-  // registered the shared source before this one did, leaving this project's reference missing.
-  private async recordSharedSourceReference(projectRoot: string): Promise<void> {
-    if (this.userSourceReferences === undefined) return;
-    const userSourceReferences = this.userSourceReferences;
-    await toleratingUnreadableSourceReferences(this.logger, undefined, async () => {
-      const resolvedRoot = await resolveProjectRootForReferences(this.fs, projectRoot);
-      await userSourceReferences.addReference(this.currentVersionProvider.get(), resolvedRoot);
-    });
-  }
-
-  private buildRegisterOptions(
-    flow: SetupFlow,
-    source: MarketplaceSourceMode
-  ): RegisterFrameworkMarketplaceCommand {
-    const pluginSource = this.toPluginSource(source);
-    return { projectRoot: flow.projectRoot, pluginSource, force: true };
-  }
-
-  private toPluginSource(source: MarketplaceSourceMode): PluginSource {
-    if (source.kind === "local") return { kind: "local", path: source.path };
-    return { kind: "github", repo: source.repo, ref: source.ref };
-  }
-
-  private async refreshCatalog(flow: SetupFlow): Promise<void> {
-    if (this.environment.get("AIDD_SKIP_MARKETPLACE_REFRESH") === "1") return;
-    await this.marketplaceRefreshUseCase.execute({ projectRoot: flow.projectRoot });
+    await this.register(flow, source);
   }
 }

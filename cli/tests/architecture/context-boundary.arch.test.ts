@@ -39,6 +39,9 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/remove/find-marketplace-to-remove.ts",
     "src/contexts/distribution/application/remove/remove-marketplace.ts",
     "src/contexts/distribution/application/remove/find-user-marketplace.ts",
+    // registering the framework marketplace from a chosen source, for setup
+    "src/contexts/distribution/application/ensure-framework-marketplace.ts",
+    "src/contexts/distribution/contract/framework-source.ts",
     "src/contexts/distribution/contract/marketplace-removal.ts",
     // where this run's build of each registered marketplace lives, recomputed for a check
     "src/contexts/distribution/application/resolve-built-marketplaces.ts",
@@ -126,6 +129,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     // the user source references that moved here, and leave this list as each one moves into
     // orchestration behind a claims port.
     "src/contexts/machine-claims/application/native-plugin-ownership.ts",
+    "src/contexts/machine-claims/application/record-source-reference.ts",
     "src/contexts/machine-claims/application/shared-source-reference-support.ts",
     "src/contexts/machine-claims/application/user-plugin-ownership.ts",
     "src/contexts/machine-claims/application/user-scope-plugin-files.ts",

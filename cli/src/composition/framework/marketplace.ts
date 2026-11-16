@@ -1,4 +1,5 @@
 import { CheckMarketplaces } from "../../contexts/distribution/application/check-marketplaces.js";
+import { EnsureFrameworkMarketplace } from "../../contexts/distribution/application/ensure-framework-marketplace.js";
 import { FindMarketplaceToRemove } from "../../contexts/distribution/application/remove/find-marketplace-to-remove.js";
 import { FindUserMarketplace } from "../../contexts/distribution/application/remove/find-user-marketplace.js";
 import { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
@@ -21,10 +22,12 @@ import { RegisterPluginWithHost } from "../../contexts/host-registration/applica
 import { ListPluginSources } from "../../contexts/installation/application/list-plugin-sources.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/plugin/purge-marketplace-plugins.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/plugin/remove-plugins-from-marketplace.js";
+import { RecordSourceReference } from "../../contexts/machine-claims/application/record-source-reference.js";
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
 import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check.js";
 import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove.js";
 import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user.js";
+import { RegisterMarketplace } from "../../orchestration/setup/register-marketplace.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
 import type { Base } from "./base.js";
@@ -132,17 +135,16 @@ export function wireMarketplace(base: Base, inst: Installation) {
     prompter,
     releaseResolver
   );
-  const setupMarketplaceRegistration = new SetupMarketplaceRegistrationUseCase(
-    fs,
-    setupMarketplaceSourceUseCase,
-    registerFrameworkMarketplace,
+  const registerMarketplace = new RegisterMarketplace(
+    new EnsureFrameworkMarketplace(registerFrameworkMarketplace, tokenProvider, releaseResolver),
+    new RecordSourceReference(fs, currentVersionProvider, logger, userSourceReferences),
     refreshMarketplace,
-    currentVersionProvider,
-    logger,
-    environment,
-    tokenProvider,
-    releaseResolver,
-    userSourceReferences
+    environment
+  );
+  const setupMarketplaceRegistration = new SetupMarketplaceRegistrationUseCase(
+    setupMarketplaceSourceUseCase,
+    (flow, source) =>
+      registerMarketplace.execute({ projectRoot: flow.projectRoot, scope: flow.scope, source })
   );
   return {
     marketplaceRemoveUseCase,

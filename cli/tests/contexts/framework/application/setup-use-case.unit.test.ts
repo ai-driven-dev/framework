@@ -14,7 +14,6 @@ import type { PluginInstallFromMarketplace } from "../../../../src/contexts/fram
 import { SetupMachineScopeUseCase } from "../../../../src/contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
-import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
 import { DetectProjectContext } from "../../../../src/contexts/installation/application/detect-project-context.js";
 import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
@@ -41,6 +40,7 @@ import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapt
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { OverwritePrompter, ScriptedPrompter } from "../../../helpers/ports/scripted-prompter.js";
+import { setupMarketplaceRegistrar } from "../../../helpers/setup-marketplace-registrar.js";
 import { catalogOf, flowTools, TOOL } from "../../tools/testing/catalog-of.js";
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
@@ -157,7 +157,7 @@ async function buildUseCase(
   const marketplaceRefresh = makeNoOpMarketplaceRefresh();
   const marketplaceSyncSettingsUseCase =
     options?.marketplaceSyncSettingsUseCase ?? makeNoOpMarketplaceSyncSettings();
-  const setupMarketplaceRegistration = new SetupMarketplaceRegistrationUseCase(
+  const setupMarketplaceRegistration = setupMarketplaceRegistrar(
     deps.fs,
     setupMarketplaceSourceUseCase,
     marketplaceRegisterFramework,

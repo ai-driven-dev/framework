@@ -8,7 +8,6 @@ import type { RepositoryVisibility } from "../../../../src/contexts/distribution
 import type { PluginInstallFromMarketplace } from "../../../../src/contexts/framework/application/plugin/plugin-install-from-marketplace-use-case.js";
 import { SetupMarketplaceSourceUseCase } from "../../../../src/contexts/framework/application/setup/setup-marketplace-source-use-case.js";
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
-import { SetupMarketplaceRegistrationUseCase } from "../../../../src/contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
 import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
 import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
@@ -19,6 +18,7 @@ import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-b
 import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
 import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
+import { setupMarketplaceRegistrar } from "../../../helpers/setup-marketplace-registrar.js";
 import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
 import { catalogOf, flowTools, TOOL } from "../../tools/testing/catalog-of.js";
@@ -101,7 +101,7 @@ async function buildUseCaseWithConflict() {
     hostMarketplaceRegistries: new Map([[TOOL.claude, hostReader]]),
   });
 
-  const setupMarketplaceRegistration = new SetupMarketplaceRegistrationUseCase(
+  const setupMarketplaceRegistration = setupMarketplaceRegistrar(
     deps.fs,
     setupMarketplaceSourceUseCase,
     makeNoOpMarketplaceRegisterFramework(),
