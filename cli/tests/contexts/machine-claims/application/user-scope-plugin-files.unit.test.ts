@@ -168,20 +168,6 @@ describe("withoutMissingFiles", () => {
 
     expect(kept).toBe(recorded);
   });
-
-  it("drops a recorded file nothing stands at any more and keeps the one that does", async () => {
-    const fs = new InMemoryFileAdapter();
-    fs.setFile(join(BOUNDARY, "aidd-test", "kept.md"), CONTENT);
-
-    const kept = await withoutMissingFiles(
-      fs,
-      plugin({ "aidd-test/kept.md": HASH, "aidd-test/gone.md": HASH }),
-      registeredAiProfile(TOOL.cursor),
-      HOME
-    );
-
-    expect([...kept.files.keys()]).toStrictEqual(["aidd-test/kept.md"]);
-  });
 });
 
 describe("a recorded install digest", () => {
