@@ -14,6 +14,7 @@ import { SetupMachineScopeUseCase } from "../../../../src/contexts/framework/app
 import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
 import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
 import { DetectProjectContext } from "../../../../src/contexts/installation/application/detect-project-context.js";
+import { ConfigureMachineScope } from "../../../../src/contexts/installation/application/install/configure-machine-scope.js";
 import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
 import { ProjectContext } from "../../../../src/contexts/installation/contract/project-context.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
@@ -171,9 +172,9 @@ async function buildUseCase(
       ? undefined
       : new SetupMachineScopeUseCase(
           options.userManifestRepo,
+          new ConfigureMachineScope(options.userManifestRepo, deps.currentVersionProvider),
           setupMarketplaceRegistration,
-          marketplaceSyncSettingsUseCase,
-          deps.currentVersionProvider
+          marketplaceSyncSettingsUseCase
         );
   const useCase = new SetupUseCase(
     deps.fs,

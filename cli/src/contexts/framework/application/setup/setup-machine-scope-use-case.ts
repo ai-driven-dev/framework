@@ -1,7 +1,6 @@
 import type { Lock } from "../../../../shared/ports/lock.js";
-import type { VersionReader } from "../../../../shared/ports/version-reader.js";
+import type { ConfigureMachineScope } from "../../../installation/application/install/configure-machine-scope.js";
 import type { InstallToolsResult } from "../../../installation/application/install/install-tools.js";
-import { Manifest } from "../../../installation/domain/manifest.js";
 import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { SetupFlow } from "../../domain/setup-flow.js";
@@ -36,15 +35,18 @@ export type InstallGlobalPlugins = (options: {
 export class SetupMachineScopeUseCase {
   constructor(
     private readonly userManifestRepo: ManifestRepository & Lock,
+    private readonly configureMachineScope: Pick<
+      ConfigureMachineScope,
+      "whileLocked" | "initialize" | "registerTools"
+    >,
     private readonly setupMarketplaceRegistration: SetupMarketplaceRegistrationUseCase,
     private readonly marketplaceSyncSettingsUseCase: MarketplaceSyncSettings,
-    private readonly currentVersionProvider: VersionReader,
     private readonly installPlugins?: InstallGlobalPlugins
   ) {}
 
   async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
     const source = await this.setupMarketplaceRegistration.resolveSourceIfNeeded(flow);
-    return this.userManifestRepo.withExclusiveAccess(() => this.executeLocked(flow, source, tools));
+    return this.configureMachineScope.whileLocked(() => this.executeLocked(flow, source, tools));
   }
 
   private async executeLocked(
@@ -52,9 +54,9 @@ export class SetupMachineScopeUseCase {
     source: Awaited<ReturnType<SetupMarketplaceRegistrationUseCase["resolveSourceIfNeeded"]>>,
     tools: ToolCatalog
   ): Promise<SetupResult> {
-    const isNew = await this.initUserManifest();
+    const isNew = await this.configureMachineScope.initialize();
     await this.setupMarketplaceRegistration.registerIfPresent(flow, source);
-    await this.registerUserScopeTools(flow);
+    await this.configureMachineScope.registerTools(flow.aiTools);
     const plugins = await this.installGlobalPlugins(flow, tools);
     const activation: MarketplaceSyncSettingsResult =
       await this.marketplaceSyncSettingsUseCase.execute({
@@ -85,28 +87,5 @@ export class SetupMachineScopeUseCase {
       tools,
     });
     return plugins;
-  }
-
-  private async initUserManifest(): Promise<boolean> {
-    const existing = await this.userManifestRepo.load();
-    if (existing !== null) return false;
-    await this.userManifestRepo.save(Manifest.create());
-    return true;
-  }
-
-  /** Every requested AI tool gets a manifest entry with no files at all — the honest record of
-   * "registered at user scope, nothing installed under any project" — so tool selection has
-   * something to iterate. A tool already present is left alone rather than reset. */
-  private async registerUserScopeTools(flow: SetupFlow): Promise<void> {
-    const manifest = await this.userManifestRepo.load();
-    if (manifest === null) return;
-    const version = this.currentVersionProvider.get();
-    let changed = false;
-    for (const toolId of flow.aiTools) {
-      if (manifest.hasTool(toolId)) continue;
-      manifest.addTool(toolId, version, []);
-      changed = true;
-    }
-    if (changed) await this.userManifestRepo.save(manifest);
   }
 }

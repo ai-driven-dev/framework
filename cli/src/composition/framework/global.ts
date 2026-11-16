@@ -1,6 +1,7 @@
 import { ListFrameworkPlugins } from "../../contexts/distribution/application/plugin-source/list-framework-plugins.js";
 import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { DetectProjectContext } from "../../contexts/installation/application/detect-project-context.js";
+import { ConfigureMachineScope } from "../../contexts/installation/application/install/configure-machine-scope.js";
 import { InstallAiTool } from "../../contexts/installation/application/install/install-ai-tool.js";
 import { InstallIdeTool } from "../../contexts/installation/application/install/install-ide-tool.js";
 import { InstallTools } from "../../contexts/installation/application/install/install-tools.js";
@@ -74,9 +75,9 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
   );
   const setupMachineScopeUseCase = new SetupMachineScopeUseCase(
     userManifestRepo,
+    new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
     setupMarketplaceRegistration,
     marketplaceSyncSettingsUseCase,
-    currentVersionProvider,
     (options) => installGlobalPlugins.execute(options)
   );
   const statusUseCase = new ReportStatus(fs, manifestRepo, hasher, detectPluginDriftUseCase);
