@@ -34,6 +34,7 @@ The version-control conventions this project follows: branches, commits, and the
 
 ## Pull requests
 
+- Creation and asynchronous follow-up are distinct outcomes. The pull-request skill's follow-up action keeps the top-level caller responsible for checks and reviews; repository delivery contracts take precedence over the draft default. A linked request alone is not monitored.
 - A pull request stacked on another targets that branch, not `next`. Before merging the base, retarget the dependent one: `gh pr edit <n> --base next`. GitHub closes a pull request whose base branch is deleted, unless the deletion is the merge's own, so never delete a branch another open pull request targets.
 - A squash merge of the base leaves the dependent branch carrying the base's original commits, and it conflicts with `next`. Replay only its own commits: `git rebase --onto origin/next <base's last commit>`, then push with `--force-with-lease`.
 

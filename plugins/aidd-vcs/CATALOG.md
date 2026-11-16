@@ -51,9 +51,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-collect.md](skills/02-pull-request/actions/01-collect.md) | - |
 | `actions` | [02-draft.md](skills/02-pull-request/actions/02-draft.md) | - |
 | `actions` | [03-create.md](skills/02-pull-request/actions/03-create.md) | - |
+| `actions` | [04-follow-up.md](skills/02-pull-request/actions/04-follow-up.md) | - |
 | `assets` | [branch.md](skills/02-pull-request/assets/branch.md) | `VCS branch naming convention template` |
 | `assets` | [pull_request.md](skills/02-pull-request/assets/pull_request.md) | `VCS pull/merge request template` |
-| `-` | [SKILL.md](skills/02-pull-request/SKILL.md) | `Create a draft pull or merge request from the current branch, in whatever VCS tool the project uses. Use when the user wants to open a pull or merge request. Not for committing, pushing, or merging a branch.` |
+| `-` | [SKILL.md](skills/02-pull-request/SKILL.md) | `Create a pull or merge request and establish ownership of its check and review follow-up. Use when the user wants to open a pull or merge request. Not for committing, pushing, or merging a branch.` |
 
 #### `skills/03-release-tag`
 
