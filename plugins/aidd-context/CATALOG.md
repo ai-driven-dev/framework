@@ -107,14 +107,14 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [03-write.md](skills/04-skill-generate/actions/03-write.md) | - |
 | `actions` | [04-validate.md](skills/04-skill-generate/actions/04-validate.md) | - |
 | `assets` | [action-template.md](skills/04-skill-generate/assets/action-template.md) | - |
-| `assets` | [plan-table.md](skills/04-skill-generate/assets/plan-table.md) | - |
 | `assets` | [scope-frame.md](skills/04-skill-generate/assets/scope-frame.md) | - |
 | `assets` | [skill-template.md](skills/04-skill-generate/assets/skill-template.md) | `<description>` |
-| `references` | [hosts.md](skills/04-skill-generate/references/hosts.md) | - |
+| `references` | [naming.md](skills/04-skill-generate/references/naming.md) | - |
 | `references` | [runtime-validation.md](skills/04-skill-generate/references/runtime-validation.md) | - |
-| `references` | [scripts.md](skills/04-skill-generate/references/scripts.md) | - |
 | `references` | [skill-authoring.md](skills/04-skill-generate/references/skill-authoring.md) | - |
 | `references` | [skill-tree.md](skills/04-skill-generate/references/skill-tree.md) | - |
+| `references` | [tool-detect.md](skills/04-skill-generate/references/tool-detect.md) | - |
+| `references` | [tool-write.md](skills/04-skill-generate/references/tool-write.md) | - |
 | `scripts` | [check-skill.cjs](skills/04-skill-generate/scripts/check-skill.cjs) | - |
 | `scripts` | [scaffold-skill.cjs](skills/04-skill-generate/scripts/scaffold-skill.cjs) | - |
 | `-` | [SKILL.md](skills/04-skill-generate/SKILL.md) | `Creates or updates a skill across the host AI tools, when the user wants to create a skill, or to refactor, rewrite or reformat an existing one.` |

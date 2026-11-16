@@ -8,14 +8,12 @@ A request for a skill that does not exist yet.
 
 ## Process
 
-1. Detect the installed tools per [hosts.md](../references/hosts.md).
-2. Fill [scope-frame.md](../assets/scope-frame.md), proposing each field's value or asking one question.
-3. Check the name per the naming table of [skill-authoring.md](../references/skill-authoring.md), and state any overlap with an installed skill, or that none was found.
-4. Present the frame.
-5. End the turn and wait for the user's own answer.
-   - Revision: apply it, then repeat from step 3.
-   - Cancel: stop, cancelled.
-6. Read [plan](02-plan.md) once confirmed.
+1. Detect the installed hosts per [tool-detect.md](../references/tool-detect.md).
+2. Fill [scope-frame.md](../assets/scope-frame.md).
+3. Check the name per [naming.md](../references/naming.md).
+4. State any overlap with an installed skill, or that none was found.
+5. Present the frame, then end the turn and wait for the user's own answer.
+6. Read [plan](02-plan.md).
 
 ## Output
 

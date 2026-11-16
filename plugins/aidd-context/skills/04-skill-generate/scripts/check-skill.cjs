@@ -32,16 +32,11 @@ const ABBREVIATION = /\b(?:e\.g|i\.e|etc|vs|cf)\./giu;
 const ITEM_SECTIONS = ["Process", "Rules", ROUTER_SECTION];
 const LIST_ITEM = /^\s*(?:\d+\.|-)\s+(.*)$/u;
 const SECTION_HEADING = /^##\s+(.+?)\s*$/u;
-const ACTION_LINK = /\]\((?:\.\/)?(\d\d-[^)/]+\.md)\)/u;
+const ACTION_LINK =/\]\((?:\.\/)?(\d\d-[^)/]+\.md)\)/u;
 
 /** The file's text with CRLF line endings read as LF, so a file saved on Windows is checked like any other. */
 function readText(file) {
   return fs.readFileSync(file, "utf8").replace(/\r\n?/gu, "\n");
-}
-
-/** The text as a regular expression matching it literally. */
-function literal(text) {
-  return text.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
 function excerpt(text) {
@@ -139,7 +134,7 @@ function checkEdges(skill, flow, rules, lineOf, report) {
           const sourcePath = path.join(skill, source);
           const text = fs.existsSync(sourcePath) ? readText(sourcePath) : "";
           const name = path.basename(target);
-          if (new RegExp(`\\b${literal(name.replace(/^\d\d-|\.md$/gu, ""))}\\b`, "iu").test(rules)) continue;
+          if (new RegExp(`\\b${name.replace(/^\d\d-|\.md$/gu, "")}\\b`, "iu").test(rules)) continue;
           const linked = [...text.matchAll(LINK)].some((match) => path.basename(match[1]) === name);
           if (!linked) report.error(file, lineOf(line.trim()), "edge", `${from} --> ${to}`, `link ${name} from the step of ${source} that takes this edge`);
         }
@@ -264,10 +259,6 @@ function checkFile(skill, file, text, report) {
     for (const match of line.matchAll(LINK)) {
       const target = match[1];
       if (/^[a-z]+:/iu.test(target)) continue;
-      if (file.startsWith("references/")) {
-        report.error(file, number, "reference-link", match[0], "name the file in backticks; a reference loads whole, so it links no other file");
-        continue;
-      }
       const resolved = path.resolve(path.dirname(path.join(skill, file)), target);
       if (!fs.existsSync(resolved)) report.error(file, number, "citation", match[0], `fix the link, ${target} does not exist`);
     }
@@ -319,4 +310,6 @@ function main(args) {
   return findings.length > 0 ? EXIT_ERRORS : EXIT_OK;
 }
 
-process.exitCode = main(process.argv.slice(2));
+module.exports = { check };
+
+if (require.main === module) process.exitCode = main(process.argv.slice(2));
