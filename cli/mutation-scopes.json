@@ -81,8 +81,7 @@
         "src/contexts/framework/**/*.ts",
         "!src/contexts/framework/domain/reading/home-dir.ts"
       ],
-      "break": 92,
-      "shards": 4
+      "break": 92
     },
     "installation": {
       "mutate": [

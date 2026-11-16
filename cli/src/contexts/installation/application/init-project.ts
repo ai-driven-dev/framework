@@ -91,6 +91,14 @@ export class InitProject {
     return { manifest };
   }
 
+  /** Initializes a project that has no manifest yet and leaves one that has. Answers whether
+   * this call created it, which a caller reports as a fresh start or an already-set-up project. */
+  async initializeIfAbsent(options: Omit<InitProjectCommand, "force">): Promise<boolean> {
+    if ((await this.manifestRepo.load()) !== null) return false;
+    await this.execute({ ...options, force: false });
+    return true;
+  }
+
   private async persistInit(
     manifest: Manifest,
     projectRoot: string,

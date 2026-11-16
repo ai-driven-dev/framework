@@ -2909,6 +2909,10 @@
                     "message": "only the composition root imports the composition, see context-graph.arch.test.ts"
                   },
                   {
+                    "group": ["**/presentation/**"],
+                    "message": "presentation imports the contexts, never the reverse"
+                  },
+                  {
                     "group": ["**/auth/domain/**", "**/auth/ports/**", "**/auth/infrastructure/**"],
                     "message": "auth publishes its contract and its commands only: its domain, ports and infrastructure belong to the composition root, see context-boundary.arch.test.ts"
                   },

@@ -1,27 +1,27 @@
 import { describe, expect, it, vi } from "vitest";
-import type { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
-import type { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSourceMode } from "../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
-import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
-import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
-import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
-import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
-import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
-import type { PluginInstallFromMarketplace } from "../../../../src/orchestration/plugin/install-from-marketplace.js";
-import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
-import type { ToolId } from "../../../../src/shared/domain/tool.js";
-import { askMarketplaceSource } from "../../../helpers/ask-marketplace-source.js";
-import { marketplaceSync } from "../../../helpers/marketplace-sync.js";
-import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
-import { fakeEnsureBuiltMarketplace } from "../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
-import { setupMarketplaceRegistrar } from "../../../helpers/setup-marketplace-registrar.js";
-import { FakeHostActions } from "../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceRegistry } from "../../host-registration/testing/fake-host-marketplace-registry.js";
-import { catalogOf, flowTools, TOOL } from "../../tools/testing/catalog-of.js";
+import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
+import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
+import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
+import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
+import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
+import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
+import type { ToolId } from "../../../src/shared/domain/tool.js";
+import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
+import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
+import { catalogOf, flowTools, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
+import { marketplaceSync } from "../../helpers/marketplace-sync.js";
+import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
+import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
+import { InMemoryEnvironment } from "../../helpers/ports/in-memory-environment.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
+import { runSetupOf } from "../../helpers/run-setup-of.js";
+import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";
@@ -107,14 +107,16 @@ async function buildUseCaseWithConflict() {
     deps.logger,
     new InMemoryEnvironment()
   );
-  const useCase = new SetupUseCase(
+  const useCase = runSetupOf(
     deps.fs,
     deps.manifestRepo,
-    setupMarketplaceRegistration,
-    marketplaceSyncSettingsUseCase,
-    setupToolsUseCase,
-    setupPluginsPromptUseCase,
-    deps.currentVersionProvider
+    {
+      registration: setupMarketplaceRegistration,
+      installTools: setupToolsUseCase,
+      syncSettings: (options) => marketplaceSyncSettingsUseCase.execute(options),
+      version: deps.currentVersionProvider,
+    },
+    { plugins: (options) => setupPluginsPromptUseCase.execute(options) }
   );
   return { useCase, activator };
 }

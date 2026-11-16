@@ -14,7 +14,6 @@ import {
   SharedFrameworkSource,
   SyncToolSettingsFiles,
 } from "../../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { SetupMarketplaceRegistrationUseCase } from "../../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
 import { resolveHomeDir } from "../../contexts/framework/domain/reading/home-dir.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
@@ -30,6 +29,7 @@ import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove
 import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user.js";
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.js";
 import { RegisterMarketplace } from "../../orchestration/setup/register-marketplace.js";
+import { SetupMarketplaceRegistration } from "../../orchestration/setup/setup-marketplace-registration.js";
 import { userConfigDir } from "../../shared/infrastructure/user-config-dir.js";
 import { wireAddMarketplace } from "../distribution.js";
 import type { Base } from "./base.js";
@@ -143,7 +143,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     refreshMarketplace,
     environment
   );
-  const setupMarketplaceRegistration = new SetupMarketplaceRegistrationUseCase(
+  const setupMarketplaceRegistration = new SetupMarketplaceRegistration(
     (options) => askMarketplaceSource.execute(options),
     (flow, source) =>
       registerMarketplace.execute({ projectRoot: flow.projectRoot, scope: flow.scope, source })

@@ -5,9 +5,9 @@ import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distrib
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
 import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
 import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
-import { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
+import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import { flowTools } from "../../contexts/tools/testing/catalog-of.js";

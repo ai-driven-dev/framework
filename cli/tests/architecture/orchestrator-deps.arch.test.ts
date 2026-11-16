@@ -14,11 +14,6 @@ const MAX_CONSTRUCTOR_DEPENDENCIES = 5;
  * the exact counts still make any unreviewed growth fail this test.
  */
 const BASELINE: readonly { readonly path: string; readonly dependencies: number }[] = [
-  // Six checks, one per thing that can drift, reported at once: the fan-out is the feature.
-  // It resolves by giving each check a result type, not by removing a check.
-  // `setup` brings a project from nothing to correct, so it names each stage: registration,
-  // tool install, plugin prompt, settings sync, version, plus the machine-scope handoff.
-  { path: "src/contexts/framework/application/setup-use-case.ts", dependencies: 11 },
   // Five section generators reached inline through a switch on section name, plus the config
   // generator. It resolves by registering a generator per section type, not by dropping one.
   {

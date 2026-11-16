@@ -1,28 +1,28 @@
 import { describe, expect, it, vi } from "vitest";
-import type { TokenProvider } from "../../../../src/contexts/auth/contract/token-provider.js";
-import type { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
-import type { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import type { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
-import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSourceMode } from "../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
-import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
-import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
-import type { MarketplaceSyncSettings } from "../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
-import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
-import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
-import type { PluginInstallFromMarketplace } from "../../../../src/orchestration/plugin/install-from-marketplace.js";
-import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
-import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
-import { CatalogFetchAuthError } from "../../../../src/shared/domain/errors.js";
-import { askMarketplaceSource } from "../../../helpers/ask-marketplace-source.js";
-import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
-import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { OverwritePrompter } from "../../../helpers/ports/scripted-prompter.js";
-import { setupMarketplaceRegistrar } from "../../../helpers/setup-marketplace-registrar.js";
-import { catalogOf, flowTools } from "../../tools/testing/catalog-of.js";
+import type { TokenProvider } from "../../../src/contexts/auth/contract/token-provider.js";
+import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import type { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
+import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
+import type { MarketplaceSyncSettings } from "../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
+import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
+import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
+import type { PluginPick } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
+import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
+import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
+import { catalogOf, flowTools } from "../../contexts/tools/testing/catalog-of.js";
+import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
+import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
+import { InMemoryEnvironment } from "../../helpers/ports/in-memory-environment.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
+import { runSetupOf } from "../../helpers/run-setup-of.js";
+import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
 
 function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
   return {
@@ -112,18 +112,20 @@ async function buildSetupUseCase(tokenProvider: TokenProvider, isRepoPublic = fa
     tokenProvider,
     makeReleaseResolver(isRepoPublic)
   );
-  return new SetupUseCase(
+  return runSetupOf(
     deps.fs,
     deps.manifestRepo,
-    setupMarketplaceRegistration,
-    makeNoOpSyncSettings(),
-    setupToolsUseCase,
-    setupPluginsPromptUseCase,
-    deps.currentVersionProvider
+    {
+      registration: setupMarketplaceRegistration,
+      installTools: setupToolsUseCase,
+      syncSettings: (options) => makeNoOpSyncSettings().execute(options),
+      version: deps.currentVersionProvider,
+    },
+    { plugins: (options) => setupPluginsPromptUseCase.execute(options) }
   );
 }
 
-describe("SetupUseCase — auth guard for remote source", () => {
+describe("RunSetup — auth guard for remote source", () => {
   it("throws CatalogFetchAuthError when source is remote, no token, and repo is private", async () => {
     const useCase = await buildSetupUseCase(makeTokenProvider(null), false);
 

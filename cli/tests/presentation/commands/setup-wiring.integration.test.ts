@@ -3,7 +3,9 @@ import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { wireTools } from "../../../src/composition/tools.js";
 import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
-import type { SetupFlow } from "../../../src/contexts/framework/domain/setup-flow.js";
+import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
+import { RunSetup } from "../../../src/orchestration/setup/run-setup.js";
+import type { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
@@ -19,16 +21,18 @@ const setupMachineScope = vi.fn();
 const loadManifest = vi.fn();
 
 const createDeps = vi.fn(async () => ({
-  fs: new InMemoryFileAdapter(),
-  manifestRepo: manifestRepositoryLoading(loadManifest),
-  setupMarketplaceRegistration: { resolveSourceIfNeeded, registerIfPresent },
-  marketplaceSyncSettingsUseCase: { execute: activation },
-  setupToolsUseCase: { execute: setupTools },
-  setupPluginsPromptUseCase: { execute: setupPluginsPrompt },
-  currentVersionProvider: { get: () => "5.2.2" },
-  setupToolsPromptUseCase: { execute: setupToolsPrompt },
-  projectContextDetector: { execute: detectContext },
-  setupMachineScopeUseCase: { execute: setupMachineScope },
+  runSetup: new RunSetup(
+    {
+      registration: { resolveSourceIfNeeded, registerIfPresent },
+      installTools: { execute: setupTools },
+      syncSettings: activation,
+      version: { get: () => "5.2.2" },
+      detectContext: { execute: detectContext },
+      machineScope: { execute: setupMachineScope },
+    },
+    { plugins: setupPluginsPrompt, tools: setupToolsPrompt },
+    new InitProject(new InMemoryFileAdapter(), manifestRepositoryLoading(loadManifest))
+  ),
 }));
 
 const { globalSetupHelp, registerSetupCommand } = await import(

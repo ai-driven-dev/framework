@@ -1,5 +1,4 @@
 import { ListFrameworkPlugins } from "../../contexts/distribution/application/plugin-source/list-framework-plugins.js";
-import { SetupMachineScopeUseCase } from "../../contexts/framework/application/setup/setup-machine-scope-use-case.js";
 import { DetectProjectContext } from "../../contexts/installation/application/detect-project-context.js";
 import { ConfigureMachineScope } from "../../contexts/installation/application/install/configure-machine-scope.js";
 import { InstallAiTool } from "../../contexts/installation/application/install/install-ai-tool.js";
@@ -17,6 +16,7 @@ import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update
 import { RestoreAll } from "../../orchestration/global/restore-all.js";
 import { UpdateTools } from "../../orchestration/global/update-tools.js";
 import { InstallGlobalPlugins } from "../../orchestration/setup/install-global-plugins.js";
+import { SetupMachineScope } from "../../orchestration/setup/setup-machine-scope.js";
 import type { Base } from "./base.js";
 import type { Installation } from "./installation.js";
 import type { Marketplace } from "./marketplace.js";
@@ -73,12 +73,16 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     new ListFrameworkPlugins(marketplaceRegistry, resolveMarketplaceUseCase),
     new InstallUserPlugins(userManifestRepo, userPluginFileUpdater, logger)
   );
-  const setupMachineScopeUseCase = new SetupMachineScopeUseCase(
-    userManifestRepo,
+  const setupMachineScope = new SetupMachineScope(
     new ConfigureMachineScope(userManifestRepo, currentVersionProvider),
     setupMarketplaceRegistration,
-    marketplaceSyncSettingsUseCase,
-    (options) => installGlobalPlugins.execute(options)
+    (options) =>
+      marketplaceSyncSettingsUseCase.execute({
+        ...options,
+        scope: "user",
+        manifestRepo: userManifestRepo,
+      }),
+    installGlobalPlugins
   );
   const statusUseCase = new ReportStatus(fs, manifestRepo, hasher, detectPluginDriftUseCase);
   const restoreUseCase = new Restore(
@@ -116,7 +120,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     installIdeToolUseCase,
     setupToolsUseCase,
     projectContextDetector,
-    setupMachineScopeUseCase,
+    setupMachineScope,
     statusUseCase,
     restoreUseCase,
     statusAllUseCase,
@@ -124,3 +128,5 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     updateToolsUseCase,
   };
 }
+
+export type Global = ReturnType<typeof wireGlobal>;

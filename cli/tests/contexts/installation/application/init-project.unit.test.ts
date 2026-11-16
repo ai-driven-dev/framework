@@ -48,6 +48,34 @@ describe("init", () => {
     expect(deps.fs.getFile(docFile)).toBe("custom content");
   });
 
+  describe("initializeIfAbsent", () => {
+    it("creates the manifest and answers true when none exists", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+
+      const created = await new InitProject(deps.fs, deps.manifestRepo).initializeIfAbsent({
+        projectRoot: PROJECT_ROOT,
+        tools: catalogOf(),
+      });
+
+      expect(created).toBe(true);
+      expect(await deps.manifestRepo.load()).not.toBeNull();
+    });
+
+    it("leaves an existing manifest alone and answers false", async () => {
+      const deps = await buildUnitDeps(PROJECT_ROOT);
+      await initProject(deps, PROJECT_ROOT);
+      const before = deps.manifestRepo.saveCount;
+
+      const created = await new InitProject(deps.fs, deps.manifestRepo).initializeIfAbsent({
+        projectRoot: PROJECT_ROOT,
+        tools: catalogOf(),
+      });
+
+      expect(created).toBe(false);
+      expect(deps.manifestRepo.saveCount).toBe(before);
+    });
+  });
+
   describe("checkPreconditions", () => {
     it("passes when directory is truly empty", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);

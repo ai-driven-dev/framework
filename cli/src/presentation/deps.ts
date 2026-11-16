@@ -7,12 +7,8 @@ import type { SearchPlugins } from "../contexts/distribution/application/plugin-
 import type { RefreshMarketplace } from "../contexts/distribution/application/refresh-marketplace.js";
 import type { RegisterFrameworkMarketplace } from "../contexts/distribution/application/register-framework-marketplace.js";
 import type { MarketplaceSyncSettingsUseCase } from "../contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import type { SetupMachineScopeUseCase } from "../contexts/framework/application/setup/setup-machine-scope-use-case.js";
-import type { SetupMarketplaceRegistrationUseCase } from "../contexts/framework/application/shared/setup-marketplace-registration-use-case.js";
-import type { DetectProjectContext } from "../contexts/installation/application/detect-project-context.js";
 import type { InstallAiTool } from "../contexts/installation/application/install/install-ai-tool.js";
 import type { InstallIdeTool } from "../contexts/installation/application/install/install-ide-tool.js";
-import type { InstallTools } from "../contexts/installation/application/install/install-tools.js";
 import type { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
 import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
 import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.js";
@@ -56,6 +52,7 @@ import type { RemoveUserMarketplace } from "../orchestration/marketplace/remove-
 import type { InstallPlugin } from "../orchestration/plugin/install-plugin.js";
 import type { UpdateUserPlugin } from "../orchestration/plugin/update-user-plugin.js";
 import type { AskMarketplaceSource } from "../orchestration/setup/ask-marketplace-source.js";
+import type { RunSetup } from "../orchestration/setup/run-setup.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { Environment } from "../shared/ports/environment.js";
 import type { FileReader } from "../shared/ports/file-reader.js";
@@ -66,7 +63,6 @@ import type { Prompter } from "../shared/ports/prompter.js";
 import type { VersionReader } from "../shared/ports/version-reader.js";
 import type { CLIOutput } from "./output.js";
 import type { SetupPluginsPromptUseCase } from "./prompts/setup-plugins-prompt-use-case.js";
-import type { SetupToolsPromptUseCase } from "./prompts/setup-tools-prompt-use-case.js";
 
 export interface FactoryOptions {
   verbose: boolean;
@@ -141,15 +137,8 @@ export interface Deps {
   /** The registration check alone, reused directly by `doctor --scope user`. */
   doctorRegistrationUseCase: Pick<CheckRegistration, "execute">;
   askMarketplaceSource: Pick<AskMarketplaceSource, "execute">;
-  setupToolsUseCase: Pick<InstallTools, "execute">;
   setupPluginsPromptUseCase: Pick<SetupPluginsPromptUseCase, "execute">;
-  setupToolsPromptUseCase: Pick<SetupToolsPromptUseCase, "execute">;
-  projectContextDetector: Pick<DetectProjectContext, "execute">;
-  setupMarketplaceRegistration: Pick<
-    SetupMarketplaceRegistrationUseCase,
-    "resolveSourceIfNeeded" | "registerIfPresent"
-  >;
-  setupMachineScopeUseCase: Pick<SetupMachineScopeUseCase, "execute">;
+  runSetup: Pick<RunSetup, "execute">;
   selfUpdate: Pick<SelfUpdate, "execute">;
   statusUseCase: Pick<ReportStatus, "execute">;
   restoreUseCase: Pick<Restore, "execute">;

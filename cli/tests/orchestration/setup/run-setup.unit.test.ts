@@ -1,48 +1,44 @@
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import type { RefreshMarketplace } from "../../../../src/contexts/distribution/application/refresh-marketplace.js";
-import type { RegisterFrameworkMarketplace } from "../../../../src/contexts/distribution/application/register-framework-marketplace.js";
-import type { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
-import type { PluginCatalogEntry } from "../../../../src/contexts/distribution/contract/catalog.js";
-import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../src/contexts/distribution/contract/marketplace.js";
-import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { MarketplaceSourceMode } from "../../../../src/contexts/distribution/domain/marketplace-source-mode.js";
-import type { ReleaseLister } from "../../../../src/contexts/distribution/ports/release-lister.js";
-import type { RepositoryVisibility } from "../../../../src/contexts/distribution/ports/repository-visibility.js";
-import type { MarketplaceSyncSettings } from "../../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
-import { SetupMachineScopeUseCase } from "../../../../src/contexts/framework/application/setup/setup-machine-scope-use-case.js";
-import { SetupUseCase } from "../../../../src/contexts/framework/application/setup-use-case.js";
-import { SetupFlow } from "../../../../src/contexts/framework/domain/setup-flow.js";
-import { DetectProjectContext } from "../../../../src/contexts/installation/application/detect-project-context.js";
-import { ConfigureMachineScope } from "../../../../src/contexts/installation/application/install/configure-machine-scope.js";
-import { InstallTools } from "../../../../src/contexts/installation/application/install/install-tools.js";
-import { ProjectContext } from "../../../../src/contexts/installation/contract/project-context.js";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import type { ManifestRepository } from "../../../../src/contexts/installation/ports/manifest-repository.js";
-import { UserSourceReferencesAdapter } from "../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
-import type { UserSourceReferences } from "../../../../src/contexts/machine-claims/ports/user-source-references.js";
-import type { PluginInstallFromMarketplace } from "../../../../src/orchestration/plugin/install-from-marketplace.js";
-import type { PluginPick } from "../../../../src/presentation/prompts/plugin-pick-use-case.js";
-import { SetupPluginsPromptUseCase } from "../../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
-import { SetupToolsPromptUseCase } from "../../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
-import { UserScopeUnavailableError } from "../../../../src/shared/domain/errors.js";
-import type { ToolId } from "../../../../src/shared/domain/tool.js";
-import type { Lock } from "../../../../src/shared/ports/lock.js";
-import type { Logger } from "../../../../src/shared/ports/logger.js";
-import { askMarketplaceSource } from "../../../helpers/ask-marketplace-source.js";
-import {
-  buildUnitDeps,
-  initAndInstall,
-  initProject,
-} from "../../../helpers/ports/build-unit-deps.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { InMemoryEnvironment } from "../../../helpers/ports/in-memory-environment.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
-import { OverwritePrompter, ScriptedPrompter } from "../../../helpers/ports/scripted-prompter.js";
-import { setupMarketplaceRegistrar } from "../../../helpers/setup-marketplace-registrar.js";
-import { catalogOf, flowTools, TOOL } from "../../tools/testing/catalog-of.js";
+import type { RefreshMarketplace } from "../../../src/contexts/distribution/application/refresh-marketplace.js";
+import type { RegisterFrameworkMarketplace } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
+import type { ResolveMarketplace } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
+import type { PluginCatalogEntry } from "../../../src/contexts/distribution/contract/catalog.js";
+import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
+import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { MarketplaceSourceMode } from "../../../src/contexts/distribution/domain/marketplace-source-mode.js";
+import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
+import type { RepositoryVisibility } from "../../../src/contexts/distribution/ports/repository-visibility.js";
+import type { MarketplaceSyncSettings } from "../../../src/contexts/framework/application/flows/marketplace-sync-settings-use-case.js";
+import { DetectProjectContext } from "../../../src/contexts/installation/application/detect-project-context.js";
+import { ConfigureMachineScope } from "../../../src/contexts/installation/application/install/configure-machine-scope.js";
+import { InstallTools } from "../../../src/contexts/installation/application/install/install-tools.js";
+import { ProjectContext } from "../../../src/contexts/installation/contract/project-context.js";
+import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ManifestRepository } from "../../../src/contexts/installation/ports/manifest-repository.js";
+import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
+import type { PluginInstallFromMarketplace } from "../../../src/orchestration/plugin/install-from-marketplace.js";
+import { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
+import { SetupMachineScope } from "../../../src/orchestration/setup/setup-machine-scope.js";
+import type { PluginPick } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
+import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
+import { SetupToolsPromptUseCase } from "../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
+import { UserScopeUnavailableError } from "../../../src/shared/domain/errors.js";
+import type { ToolId } from "../../../src/shared/domain/tool.js";
+import type { Lock } from "../../../src/shared/ports/lock.js";
+import type { Logger } from "../../../src/shared/ports/logger.js";
+import { catalogOf, flowTools, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
+import { buildUnitDeps, initAndInstall, initProject } from "../../helpers/ports/build-unit-deps.js";
+import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
+import { InMemoryEnvironment } from "../../helpers/ports/in-memory-environment.js";
+import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
+import { runSetupOf } from "../../helpers/run-setup-of.js";
+import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {
@@ -167,26 +163,33 @@ async function buildUseCase(
     undefined,
     userSourceReferences
   );
-  const setupMachineScopeUseCase =
+  const machineScope =
     options?.userManifestRepo === undefined
       ? undefined
-      : new SetupMachineScopeUseCase(
-          options.userManifestRepo,
+      : new SetupMachineScope(
           new ConfigureMachineScope(options.userManifestRepo, deps.currentVersionProvider),
           setupMarketplaceRegistration,
-          marketplaceSyncSettingsUseCase
+          (syncOptions) => marketplaceSyncSettingsUseCase.execute(syncOptions)
         );
-  const useCase = new SetupUseCase(
+  const useCase = runSetupOf(
     deps.fs,
     deps.manifestRepo,
-    setupMarketplaceRegistration,
-    marketplaceSyncSettingsUseCase,
-    setupToolsUseCase,
-    setupPluginsPromptUseCase,
-    deps.currentVersionProvider,
-    setupToolsPromptUseCase,
-    options?.detectContext === true ? new DetectProjectContext(deps.fs) : undefined,
-    setupMachineScopeUseCase
+    {
+      registration: setupMarketplaceRegistration,
+      installTools: setupToolsUseCase,
+      syncSettings: (syncOptions) => marketplaceSyncSettingsUseCase.execute(syncOptions),
+      version: deps.currentVersionProvider,
+      detectContext:
+        options?.detectContext === true ? new DetectProjectContext(deps.fs) : undefined,
+      machineScope,
+    },
+    {
+      plugins: (promptOptions) => setupPluginsPromptUseCase.execute(promptOptions),
+      tools:
+        setupToolsPromptUseCase === undefined
+          ? undefined
+          : (promptOptions) => setupToolsPromptUseCase.execute(promptOptions),
+    }
   );
   return {
     useCase,
@@ -690,7 +693,7 @@ describe("setup --scope user", () => {
     expect(await deps.manifestRepo.load()).toBeNull();
   });
 
-  it("calls marketplace sync settings with scope user and the user manifest repo", async () => {
+  it("hands the machine-wide sync the tools it registered and the plugins it enabled", async () => {
     const userManifestRepo = new InMemoryManifestRepository();
     const marketplaceSyncSettingsUseCase =
       makeNoOpMarketplaceSyncSettings() as MarketplaceSyncSettings & {
@@ -704,7 +707,7 @@ describe("setup --scope user", () => {
     await useCase.execute(remoteFlow({ aiTools: [TOOL.claude], scope: "user" }), catalogOf());
 
     expect(marketplaceSyncSettingsUseCase.execute).toHaveBeenCalledWith(
-      expect.objectContaining({ scope: "user", manifestRepo: userManifestRepo })
+      expect.objectContaining({ toolIds: [TOOL.claude], enablePlugins: [] })
     );
   });
 

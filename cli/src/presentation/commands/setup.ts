@@ -1,10 +1,9 @@
 import { resolve } from "node:path";
 import { type Command, Option } from "commander";
 import { MarketplaceSourceMode } from "../../contexts/distribution/domain/marketplace-source-mode.js";
-import { SetupUseCase } from "../../contexts/framework/application/setup-use-case.js";
-import { SetupFlow } from "../../contexts/framework/domain/setup-flow.js";
 import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { AiToolProfile, ToolProfile } from "../../contexts/tools/contract/tool-profile.js";
+import { SetupFlow } from "../../orchestration/setup/setup-flow.js";
 import { CategoryMismatchError } from "../../shared/domain/errors.js";
 import type { DepsSliceFactory } from "../deps.js";
 import {
@@ -19,17 +18,7 @@ import { parseGlobalOptions, parseScopeFlag } from "./global-options.js";
 import { reportSyncActivation } from "./sync-native-activation.js";
 
 /** What this command reads of the graph. */
-type SetupKeys =
-  | "fs"
-  | "manifestRepo"
-  | "setupMarketplaceRegistration"
-  | "marketplaceSyncSettingsUseCase"
-  | "setupToolsUseCase"
-  | "setupPluginsPromptUseCase"
-  | "currentVersionProvider"
-  | "setupToolsPromptUseCase"
-  | "projectContextDetector"
-  | "setupMachineScopeUseCase";
+type SetupKeys = "runSetup";
 
 interface SetupCmdOptions {
   source?: "remote" | "local";
@@ -216,18 +205,7 @@ export function registerSetupCommand(
 
         const deps = await createDeps(projectRoot, { verbose }, output);
 
-        const result = await new SetupUseCase(
-          deps.fs,
-          deps.manifestRepo,
-          deps.setupMarketplaceRegistration,
-          deps.marketplaceSyncSettingsUseCase,
-          deps.setupToolsUseCase,
-          deps.setupPluginsPromptUseCase,
-          deps.currentVersionProvider,
-          deps.setupToolsPromptUseCase,
-          deps.projectContextDetector,
-          deps.setupMachineScopeUseCase
-        ).execute(flow, catalog);
+        const result = await deps.runSetup.execute(flow, catalog);
 
         if (interactive && result.context !== undefined) {
           printDetectedContext(output, result.context.describe());

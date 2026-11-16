@@ -51,7 +51,7 @@ export async function createDeps(
   const marketplace = wireMarketplace(base, inst);
   const plugin = wirePlugin(base, inst);
   const global = wireGlobal(base, inst, marketplace, plugin);
-  const setup = wireSetup(base, plugin);
+  const setup = wireSetup(base, plugin, marketplace, global);
   const doctor = wireDoctor(base, inst);
   const clean = wireClean(base, inst);
   const {
@@ -88,7 +88,6 @@ export async function createDeps(
     marketplaceCheckUseCase,
     marketplaceSyncSettingsUseCase,
     askMarketplaceSource,
-    setupMarketplaceRegistration,
   } = marketplace;
   const {
     pluginRemoveUseCase,
@@ -100,16 +99,13 @@ export async function createDeps(
   const {
     installAiToolUseCase,
     installIdeToolUseCase,
-    setupToolsUseCase,
-    projectContextDetector,
-    setupMachineScopeUseCase,
     statusUseCase,
     restoreUseCase,
     statusAllUseCase,
     restoreAllUseCase,
     updateToolsUseCase,
   } = global;
-  const { setupPluginsPromptUseCase, setupToolsPromptUseCase } = setup;
+  const { setupPluginsPromptUseCase, runSetup } = setup;
   const { doctorUseCase, doctorRegistrationUseCase, doctorAllUseCase } = doctor;
   const { uninstallTools, cleanUseCase, cleanUserScopeUseCase } = clean;
   const deps: Deps = {
@@ -147,12 +143,8 @@ export async function createDeps(
     doctorUseCase,
     doctorRegistrationUseCase,
     askMarketplaceSource,
-    setupToolsUseCase,
     setupPluginsPromptUseCase,
-    setupToolsPromptUseCase,
-    projectContextDetector,
-    setupMarketplaceRegistration,
-    setupMachineScopeUseCase,
+    runSetup,
     selfUpdate: update.selfUpdate,
     statusUseCase,
     restoreUseCase,

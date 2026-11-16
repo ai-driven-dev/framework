@@ -63,14 +63,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/distribution/application/plugin-source/list-framework-plugins.ts",
     "src/contexts/distribution/contract/plugin-source-match.ts",
   ],
-  // The largest context: while it had no entry the mechanism below skipped every framework
-  // file, so its interior was reached unchecked. Measured, composition root excluded.
-  framework: [
-    // the flows a command drives end to end
-    "src/contexts/framework/application/setup-use-case.ts",
-    // what a display or a prompt reads to render a decision it does not make
-    "src/contexts/framework/domain/setup-flow.ts",
-  ],
+  framework: [],
   installation: [
     // the rule inventory `framework rules` prints, one row per installed rule
     "src/contexts/installation/domain/installed-rule.ts",

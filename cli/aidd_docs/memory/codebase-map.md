@@ -24,9 +24,7 @@ src/
 │   │   └── ports/
 │   ├── framework/    # what is left of the old layout: the flows that setup, clean, doctor and plugin commands drive
 │   │   ├── application/
-│   │   │   ├── flows/
-│   │   │   ├── setup/
-│   │   │   └── shared/
+│   │   │   └── flows/
 │   │   └── domain/
 │   │       └── reading/    # the home directory a use case resolves when none is given
 │   ├── installation/    # the installation record, and what installs, restores and materializes it into a project
@@ -136,7 +134,7 @@ src/
 │   ├── global/    # machine-wide runs over every installed tool
 │   ├── marketplace/    # holding what is installed against what its marketplaces list
 │   ├── plugin/    # the plugin lifecycle, add to remove
-│   └── setup/    # registering the framework marketplace a setup chose, and the questions a plugin install asks
+│   └── setup/    # bringing a project from nothing to correct: the scenario, its flow, and the marketplace a setup registers
 ├── shared/    # what two or more contexts need. Imports no context
 │   ├── domain/    # the vocabulary: tool identity, source, paths, files, merge strategies, errors
 │   │   ├── materialization/    # where content lands and how its links follow

@@ -1,5 +1,5 @@
-import type { FrameworkSource } from "../../../distribution/contract/framework-source.js";
-import type { SetupFlow } from "../../domain/setup-flow.js";
+import type { FrameworkSource } from "../../contexts/distribution/contract/framework-source.js";
+import type { SetupFlow } from "./setup-flow.js";
 
 /** Registers the chosen framework source for a setup. The registration sequence is not framework's:
  * composition hands it in. */
@@ -18,7 +18,7 @@ export type ResolveFrameworkSource = (options: {
 
 /** What project-scope and machine-scope setup ask of the marketplace: which source to register,
  * then registering it. */
-export class SetupMarketplaceRegistrationUseCase {
+export class SetupMarketplaceRegistration {
   constructor(
     private readonly resolveSource: ResolveFrameworkSource,
     private readonly register: RegisterFrameworkSource

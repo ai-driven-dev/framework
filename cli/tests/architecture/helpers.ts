@@ -193,11 +193,7 @@ export const BASELINE: readonly {
   readonly edge: string;
   readonly imports: number;
   readonly files: number;
-}[] = [
-  // Three framework orchestrators still name the prompt classes they are handed, type-only.
-  // Inverting them into a port is a design change, so the edge is measured rather than moved.
-  { edge: "framework->presentation", imports: 2, files: 1 },
-];
+}[] = [];
 
 export function contextOf(file: string): string {
   const inContext = /^src\/contexts\/([^/]+)\//.exec(file);

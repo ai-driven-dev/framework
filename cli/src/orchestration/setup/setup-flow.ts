@@ -1,3 +1,7 @@
+import type { FrameworkSource } from "../../contexts/distribution/contract/framework-source.js";
+import type { NativeActivationReport } from "../../contexts/installation/application/install/install-ai-tool.js";
+import type { InstallToolsResult } from "../../contexts/installation/application/install/install-tools.js";
+import type { ProjectContext } from "../../contexts/installation/contract/project-context.js";
 import {
   InvalidPluginModeConfigError,
   InvalidSetupToolIdError,
@@ -5,10 +9,20 @@ import {
   UserScopeNoToolsError,
   UserScopePluginModeError,
   UserScopeUnsupportedAiToolsError,
-} from "../../../shared/domain/errors.js";
-import type { MarketplaceScope } from "../../../shared/domain/scope.js";
-import type { AiToolId, IdeToolId, ToolId } from "../../../shared/domain/tool.js";
-import type { MarketplaceSourceMode } from "../../distribution/domain/marketplace-source-mode.js";
+} from "../../shared/domain/errors.js";
+import type { MarketplaceScope } from "../../shared/domain/scope.js";
+import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";
+
+/** What a setup did: `initialized` when this run created the manifest it works on, `up-to-date`
+ * when one was already there. */
+export interface SetupResult {
+  readonly kind: "initialized" | "up-to-date";
+  readonly install: InstallToolsResult;
+  readonly activation: NativeActivationReport;
+  readonly context?: ProjectContext;
+  /** Set by a global run: the plugins it installed for every project. */
+  readonly globalPlugins?: readonly string[];
+}
 
 export type PluginInstallMode = "interactive" | "all" | "recommended" | "named" | "none";
 
@@ -26,7 +40,7 @@ export interface SetupFlowParams {
   ideToolIds: readonly IdeToolId[];
   /** Whether `--scope user` has anywhere to point this tool, as the tool answers it. */
   supportsUserScopeActivation: (toolId: ToolId) => boolean;
-  source?: MarketplaceSourceMode;
+  source?: FrameworkSource;
   aiTools?: readonly string[];
   ideTools?: readonly string[];
   pluginMode?: PluginInstallMode;
@@ -42,7 +56,7 @@ export interface SetupFlowParams {
 
 export class SetupFlow {
   readonly projectRoot: string;
-  readonly source?: MarketplaceSourceMode;
+  readonly source?: FrameworkSource;
   readonly aiTools: readonly AiToolId[];
   readonly ideTools: readonly IdeToolId[];
   readonly pluginMode: PluginInstallMode;

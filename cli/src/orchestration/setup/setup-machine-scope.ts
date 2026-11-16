@@ -1,25 +1,19 @@
-import type { Lock } from "../../../../shared/ports/lock.js";
-import type { ConfigureMachineScope } from "../../../installation/application/install/configure-machine-scope.js";
-import type { InstallToolsResult } from "../../../installation/application/install/install-tools.js";
-import type { ManifestRepository } from "../../../installation/ports/manifest-repository.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { SetupFlow } from "../../domain/setup-flow.js";
-import type {
-  MarketplaceSyncSettings,
-  MarketplaceSyncSettingsResult,
-} from "../flows/marketplace-sync-settings-use-case.js";
-import type { SetupResult } from "../setup-use-case.js";
-import type { SetupMarketplaceRegistrationUseCase } from "../shared/setup-marketplace-registration-use-case.js";
+import type { ConfigureMachineScope } from "../../contexts/installation/application/install/configure-machine-scope.js";
+import type { NativeActivationReport } from "../../contexts/installation/application/install/install-ai-tool.js";
+import type { InstallToolsResult } from "../../contexts/installation/application/install/install-tools.js";
+import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
+import type { InstallGlobalPlugins } from "./install-global-plugins.js";
+import type { SetupFlow, SetupResult } from "./setup-flow.js";
+import type { SetupMarketplaceRegistration } from "./setup-marketplace-registration.js";
 
-/** Copies the framework plugins a machine-scope setup chose into each tool's user configuration
- * and names them. The choice and the copy are not framework's: composition hands them in. */
-export type InstallGlobalPlugins = (options: {
+/** Drives native activation machine-wide, enabling the plugins a machine-scope setup installed.
+ * Which manifest it works on is not this scenario's: composition binds it. */
+export type SyncMachineScope = (options: {
   readonly projectRoot: string;
   readonly toolIds: SetupFlow["aiTools"];
+  readonly enablePlugins: readonly string[];
   readonly tools: ToolCatalog;
-  readonly mode: SetupFlow["pluginMode"];
-  readonly pluginNames: readonly string[];
-}) => Promise<{ readonly plugins: readonly string[] }>;
+}) => Promise<NativeActivationReport>;
 
 /**
  * `--scope user`: registers the shared framework source, installs the requested plugins in each
@@ -32,41 +26,40 @@ export type InstallGlobalPlugins = (options: {
  * that claim back from, so one recorded here could never be decremented. Absence is the honest
  * state until `clean --scope user` purges the source unconditionally regardless.
  */
-export class SetupMachineScopeUseCase {
+export class SetupMachineScope {
   constructor(
-    private readonly userManifestRepo: ManifestRepository & Lock,
     private readonly configureMachineScope: Pick<
       ConfigureMachineScope,
       "whileLocked" | "initialize" | "registerTools"
     >,
-    private readonly setupMarketplaceRegistration: SetupMarketplaceRegistrationUseCase,
-    private readonly marketplaceSyncSettingsUseCase: MarketplaceSyncSettings,
-    private readonly installPlugins?: InstallGlobalPlugins
+    private readonly registration: Pick<
+      SetupMarketplaceRegistration,
+      "resolveSourceIfNeeded" | "registerIfPresent"
+    >,
+    private readonly syncMachineScope: SyncMachineScope,
+    private readonly installPlugins?: Pick<InstallGlobalPlugins, "execute">
   ) {}
 
   async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
-    const source = await this.setupMarketplaceRegistration.resolveSourceIfNeeded(flow);
+    const source = await this.registration.resolveSourceIfNeeded(flow);
     return this.configureMachineScope.whileLocked(() => this.executeLocked(flow, source, tools));
   }
 
   private async executeLocked(
     flow: SetupFlow,
-    source: Awaited<ReturnType<SetupMarketplaceRegistrationUseCase["resolveSourceIfNeeded"]>>,
+    source: Awaited<ReturnType<SetupMarketplaceRegistration["resolveSourceIfNeeded"]>>,
     tools: ToolCatalog
   ): Promise<SetupResult> {
     const isNew = await this.configureMachineScope.initialize();
-    await this.setupMarketplaceRegistration.registerIfPresent(flow, source);
+    await this.registration.registerIfPresent(flow, source);
     await this.configureMachineScope.registerTools(flow.aiTools);
     const plugins = await this.installGlobalPlugins(flow, tools);
-    const activation: MarketplaceSyncSettingsResult =
-      await this.marketplaceSyncSettingsUseCase.execute({
-        projectRoot: flow.projectRoot,
-        scope: "user",
-        manifestRepo: this.userManifestRepo,
-        toolIds: flow.aiTools,
-        enablePlugins: plugins,
-        tools,
-      });
+    const activation = await this.syncMachineScope({
+      projectRoot: flow.projectRoot,
+      toolIds: flow.aiTools,
+      enablePlugins: plugins,
+      tools,
+    });
     const install: InstallToolsResult = { results: [] };
     const outcome = { install, activation, context: undefined, globalPlugins: plugins };
     return isNew ? { kind: "initialized", ...outcome } : { kind: "up-to-date", ...outcome };
@@ -79,7 +72,7 @@ export class SetupMachineScopeUseCase {
     tools: ToolCatalog
   ): Promise<readonly string[]> {
     if (this.installPlugins === undefined) return [];
-    const { plugins } = await this.installPlugins({
+    const { plugins } = await this.installPlugins.execute({
       projectRoot: flow.projectRoot,
       toolIds: flow.aiTools,
       mode: flow.pluginMode,
