@@ -1,0 +1,36 @@
+{
+  "host": "opencode",
+  "event": "session.idle",
+  "samples": [
+    {
+      "run": "log",
+      "payload": {
+        "id": "evt_1a9d1c40b002F4zzA7KEILVRJo",
+        "type": "session.idle",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000000"
+        }
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "id": "evt_1a9d1db7c002DO8S07MxLHHNW9",
+        "type": "session.idle",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000000"
+        }
+      }
+    },
+    {
+      "run": "level2",
+      "payload": {
+        "id": "evt_1a9d1db86002OM9WgGwQiN6uTP",
+        "type": "session.idle",
+        "properties": {
+          "sessionID": "00000000-0000-4000-8000-000000000000"
+        }
+      }
+    }
+  ]
+}

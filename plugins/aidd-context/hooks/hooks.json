@@ -5,7 +5,21 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/update_memory.js"
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs load",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: refresh project memory"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ${CLAUDE_PLUGIN_ROOT}/hooks/memory.cjs sync",
+            "timeout": 5,
+            "statusMessage": "AIDD Context: sync project memory"
           }
         ]
       }

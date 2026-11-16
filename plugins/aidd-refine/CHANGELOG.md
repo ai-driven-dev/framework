@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.2.0](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v3.1.2...aidd-refine-v3.2.0) (2026-11-13)
+
+
+### Features
+
+* **aidd-context:** lint memory files and hand a write's own errors back to the model ([2e808b6](https://github.com/ai-driven-dev/framework/commit/2e808b6444aa7872383630a55d794d3dc8a41b9a))
+* **aidd-context:** one memory entry on the hook contract ([76d6351](https://github.com/ai-driven-dev/framework/commit/76d63510706d332c495a287e9cfc7b296367591d))
+* **aidd-refine:** rename improve into review-conversation and read whole session trees ([#1068](https://github.com/ai-driven-dev/framework/issues/1068)) ([82c9d3d](https://github.com/ai-driven-dev/framework/commit/82c9d3da8c5e251be76c8c271663f2a5de6b35ef))
+* **refine:** make conversation reviews evidence-led and actionable ([#1153](https://github.com/ai-driven-dev/framework/issues/1153)) ([4869bb0](https://github.com/ai-driven-dev/framework/commit/4869bb043f6f1b098a5c5f8612ad7ef1f0be0c0d))
+
+
+### Documentation
+
+* rewrite the documentation set by audience ([#1131](https://github.com/ai-driven-dev/framework/issues/1131)) ([b90bffa](https://github.com/ai-driven-dev/framework/commit/b90bffada166c69f4e3952dd5e56abfcad540264))
+
+
+### Refactoring
+
+* **aidd-context:** lean project memory, one hook contract and one hook path in the CLI ([05f0bce](https://github.com/ai-driven-dev/framework/commit/05f0bce8444891a9df6c717431ddeea7f0e23a3b))
+
 ## [3.1.2](https://github.com/ai-driven-dev/framework/compare/aidd-refine-v3.1.1...aidd-refine-v3.1.2) (2026-10-26)
 
 

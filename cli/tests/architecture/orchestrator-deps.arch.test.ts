@@ -20,6 +20,13 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
   // `setup` brings a project from nothing to correct, so it names each stage: registration,
   // tool install, plugin prompt, settings sync, version, plus the machine-scope handoff.
   { path: "src/contexts/framework/application/setup-use-case.ts", injected: 11 },
+  // Its machine-scope counterpart names the same stages for the machine: the machine manifest,
+  // source registration, the plugins' global files, native activation, and the version each
+  // registered tool records.
+  {
+    path: "src/contexts/framework/application/setup/setup-machine-scope-use-case.ts",
+    injected: 5,
+  },
   // Five section generators reached inline through a switch on section name, plus the config
   // generator. It resolves by registering a generator per section type, not by dropping one.
   {
@@ -49,7 +56,7 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     injected: 10,
   },
   { path: "src/contexts/framework/application/plugin/plugin-add-use-case.ts", injected: 9 },
-  { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", injected: 8 },
+  { path: "src/contexts/translate/application/strategies/flat-build-strategy.ts", injected: 7 },
   {
     path: "src/contexts/framework/application/doctor/doctor-registration-use-case.ts",
     injected: 7,
@@ -82,9 +89,19 @@ const BASELINE: readonly { readonly path: string; readonly injected: number }[] 
     injected: 5,
   },
   { path: "src/contexts/framework/application/shared/apply-plugin-files-use-case.ts", injected: 5 },
+  // The sixth is the provider chosen for a target's agents: it changes the built agents, so
+  // the cache that keeps a build fresh must read it.
   {
     path: "src/contexts/framework/application/shared/ensure-built-marketplace-use-case.ts",
-    injected: 5,
+    injected: 6,
+  },
+  // Setting a model touches what each scope installed: the provider store, both manifests, both
+  // plugin updates, and native activation, since a host that installs plugins itself only sees a
+  // rebuild when driven; plus the files, home and environment that locate the main session's
+  // settings.
+  {
+    path: "src/contexts/framework/application/agents/set-agent-model-use-case.ts",
+    injected: 9,
   },
   {
     path: "src/contexts/translate/application/strategies/marketplace-build-strategy.ts",

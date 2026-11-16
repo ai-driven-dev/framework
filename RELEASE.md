@@ -29,7 +29,7 @@ flowchart TD
 | A release happens only when there is work | release-please cuts it |
 | The Release PR merges itself | Otherwise `main` briefly holds unversioned code |
 | The back-merge into `next` is automatic | Otherwise the manifest and changelog on `next` drift |
-| Promote with a **merge commit** | A squash can fail `Commitlint` and skip the release. A rebase breaks the back-merge |
+| `main` takes **merge commits** only, per `.github/rulesets/main.json` | A squash skips the release. A rebase breaks the back-merge |
 | Force a version with `release-as` in `release-please-config.json` | Remove it after the release |
 
 ## Weekly release
@@ -41,15 +41,16 @@ flowchart TD
 5. Publishing the release fires the announcements.
 6. `main` is back-merged into `next`.
 
-If the video, a bundle or a distribution fails, the release stays a draft.
-Once fixed: `gh release edit <tag> --draft=false --latest`.
+| A step fails | Then |
+| --- | --- |
+| The video, a bundle or a distribution | The release stays a draft. Once fixed: `gh release edit <tag> --draft=false --latest` |
+| The YouTube upload | Discord and Skool post without the video link |
+| The back-merge cannot push | `back-merge.yml` opens an issue |
 
 ## Hotfix
 
 1. Branch `hotfix/*` from `main`, fix, open a pull request to `main`.
 2. Write every commit as conventional: merge is the only method allowed, so none is squashed away.
-3. Merge with an empty description: `gh pr merge <n> --merge --body ""`.
+3. Merge with an empty description, or release-please lists the change twice: `gh pr merge <n> --merge --body ""`.
 4. release-please cuts a patch release.
 5. `main` is back-merged into `next`.
-
-The empty description matters: release-please reads a body as a second commit and lists the change twice.

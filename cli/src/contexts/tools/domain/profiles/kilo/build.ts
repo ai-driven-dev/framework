@@ -1,10 +1,8 @@
 /** Kilo's project distribution is flat. Its config and MCP format follow the OpenCode runtime,
  * but Kilo has its own .kilo/ discovery paths and bundled base configuration. */
 
-import { join, relative } from "node:path";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../../kernel/markdown.js";
 import {
-  flatHooksPathWithLoaderEntry,
   flatMcpKeyPrefix,
   genericFlatAgentPath,
   genericFlatRulePath,
@@ -14,23 +12,14 @@ import {
   relocateRelativeLinks,
   rewriteRelativeLinks,
 } from "../../../../../kernel/materialization/relative-link-rewrite.js";
-import type { FileReader } from "../../../../../kernel/ports/file-reader.js";
-import type { FileWriter } from "../../../../../kernel/ports/file-writer.js";
 import type { ToolBuildContract } from "../../build-contract.js";
+import { flatHooksArtifact } from "../../formats/hooks-descriptor.js";
 import { buildOpencodeFlatConfig } from "../../formats/opencode-mcp-merge.js";
 import { transformMcpToOpencode } from "../opencode/build.js";
+import { KILO_HOOKS } from "./hooks.js";
 import { kiloAgentFrontmatter } from "./kilo-agent.js";
 import { generateKiloHooksBridge } from "./kilo-hooks-bridge.js";
-import {
-  KILO_DIRECTORY,
-  KILO_HOOKS_DIR,
-  KILO_PLUGIN_DIR,
-  KILO_PLUGIN_ENTRY_BASENAME,
-  makeKiloHooksBridgePath,
-  resolveKiloConfigPath,
-} from "./kilo-paths.js";
-
-type FsType = FileReader & FileWriter;
+import { chooseKiloConfigPath, KILO_CONFIG_CANDIDATES, KILO_DIRECTORY } from "./kilo-paths.js";
 
 function kiloFlatAgentPath(plugin: string, rel: string): string {
   return genericFlatAgentPath(
@@ -60,15 +49,6 @@ function kiloFlatResolveTarget(plugin: string, rel: string): string {
   return kiloFlatEmittedTarget(plugin, rel) ?? rel;
 }
 
-function kiloFlatHooksPath(plugin: string, rel: string): string {
-  return flatHooksPathWithLoaderEntry(
-    KILO_HOOKS_DIR,
-    { dir: KILO_PLUGIN_DIR, baseName: KILO_PLUGIN_ENTRY_BASENAME },
-    plugin,
-    rel
-  );
-}
-
 function transformKiloFlatAgent(content: string, plugin: string, outName: string): string {
   const { frontmatter, body } = parseFrontmatter(content);
   const flatRelPath = kiloFlatAgentPath(plugin, `agents/${outName}`);
@@ -93,35 +73,15 @@ function transformKiloFlatRule(content: string, plugin: string, ruleRel: string)
   });
 }
 
-async function collectKiloRuleInstructions(
+function collectKiloMcp(
   builtPlugins: readonly string[],
-  sourceDir: string,
-  fs: FsType
-): Promise<string[]> {
-  const instructions: string[] = [];
-  for (const plugin of builtPlugins) {
-    const rulesSrc = join(sourceDir, "plugins", plugin, "rules");
-    if (!(await fs.fileExists(rulesSrc))) continue;
-    for (const absPath of await fs.listFilesRecursive(rulesSrc)) {
-      if (!absPath.endsWith(".md")) continue;
-      if (kiloRulePathScope(await fs.readFile(absPath)) !== undefined) continue;
-      const rel = relative(rulesSrc, absPath).replace(/\\/g, "/");
-      instructions.push(kiloFlatRulePath(plugin, `rules/${rel}`));
-    }
-  }
-  return instructions.sort();
-}
-
-async function collectKiloMcp(
-  builtPlugins: readonly string[],
-  sourceDir: string,
-  fs: FsType
-): Promise<Record<string, unknown>> {
+  pluginMcp: ReadonlyMap<string, string>
+): Record<string, unknown> {
   const incoming: Record<string, unknown> = {};
   for (const plugin of builtPlugins) {
-    const mcpSrc = `${sourceDir}/plugins/${plugin}/.mcp.json`;
-    if (!(await fs.fileExists(mcpSrc))) continue;
-    const transformed = JSON.parse(transformMcpToOpencode(await fs.readFile(mcpSrc))) as {
+    const raw = pluginMcp.get(plugin);
+    if (raw === undefined) continue;
+    const transformed = JSON.parse(transformMcpToOpencode(raw)) as {
       mcp?: Record<string, unknown>;
     };
     for (const [key, value] of Object.entries(transformed.mcp ?? {})) {
@@ -150,17 +110,7 @@ export function buildKiloFlatContract(): ToolBuildContract {
         transform: transformKiloFlatAgent,
       },
       mcp: { supported: false },
-      hooks: {
-        supported: true,
-        source: { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" },
-        path: kiloFlatHooksPath,
-        skipHooksJson: true,
-        hooksBridge: {
-          generate: generateKiloHooksBridge,
-          path: makeKiloHooksBridgePath,
-          skipIfSourceHas: KILO_PLUGIN_ENTRY_BASENAME,
-        },
-      },
+      hooks: flatHooksArtifact(KILO_HOOKS, { bridge: generateKiloHooksBridge }),
       rules: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "rules", inputExt: ".md" },
@@ -172,21 +122,29 @@ export function buildKiloFlatContract(): ToolBuildContract {
     },
     buildMarketplaceCatalog: null,
     buildMarketplaceEntry: null,
-    emitConfigArtifact: async (builtPlugins, outDir, sourceDir, fs, _validator, assetProvider) => {
-      const configPath = join(outDir, await resolveKiloConfigPath(outDir, fs));
-      const existing = (await fs.fileExists(configPath)) ? await fs.readFile(configPath) : null;
-      const incoming = await collectKiloMcp(builtPlugins, sourceDir, fs);
-      const asset = assetProvider.loadConfigAsset("kilo", "kilo.json");
-      const assetJson = typeof asset === "string" ? asset : JSON.stringify(asset);
-      const instructions = await collectKiloRuleInstructions(builtPlugins, sourceDir, fs);
-      // Generated Rule paths follow the user's own `instructions`, never duplicated on rebuild.
-      const base =
-        instructions.length > 0
-          ? JSON.stringify({ ...JSON.parse(assetJson), instructions })
-          : assetJson;
-      const mergedKeys = instructions.length > 0 ? ["instructions"] : [];
-      await fs.writeFile(configPath, buildOpencodeFlatConfig(base, existing, incoming, mergedKeys));
-      return 1;
+    configArtifact: {
+      reads: () => KILO_CONFIG_CANDIDATES,
+      probes: () => [],
+      assets: { tool: "kilo", names: ["kilo.json"] },
+      emit: ({ builtPlugins, pluginMcp, rules, existing, assets }) => {
+        const configPath = chooseKiloConfigPath((relPath) => existing.has(relPath));
+        const incoming = collectKiloMcp(builtPlugins, pluginMcp);
+        const asset = assets.get("kilo.json");
+        const assetJson = typeof asset === "string" ? asset : JSON.stringify(asset);
+        // Generated Rule paths follow the user's own `instructions`, never duplicated on rebuild.
+        const base =
+          rules.length > 0
+            ? JSON.stringify({ ...JSON.parse(assetJson), instructions: rules })
+            : assetJson;
+        const mergedKeys = rules.length > 0 ? ["instructions"] : [];
+        const config = buildOpencodeFlatConfig(
+          base,
+          existing.get(configPath) ?? null,
+          incoming,
+          mergedKeys
+        );
+        return [{ path: configPath, content: config }];
+      },
     },
   };
 }

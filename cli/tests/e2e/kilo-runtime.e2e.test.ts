@@ -325,16 +325,10 @@ describeKiloRuntime("E2E: real Kilo runtime", () => {
       );
       const bridgePath = join(generatedProject, ".kilo", "plugin", "aidd-context-hooks.js");
       expect(existsSync(bridgePath)).toBe(true);
-      const memoryScript = join(
-        generatedProject,
-        ".kilo",
-        "hooks",
-        "aidd-context",
-        "update_memory.js"
-      );
+      const memoryScript = join(generatedProject, ".kilo", "hooks", "aidd-context", "memory.cjs");
       expect(await readFile(memoryScript, "utf8")).toBe(
         await readFile(
-          join(REPOSITORY_ROOT, "plugins", "aidd-context", "hooks", "update_memory.js"),
+          join(REPOSITORY_ROOT, "plugins", "aidd-context", "hooks", "memory.cjs"),
           "utf8"
         )
       );

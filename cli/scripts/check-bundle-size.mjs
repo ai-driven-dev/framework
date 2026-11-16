@@ -55,8 +55,12 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // (+5.2 KB over its 712.9 KB skills profile); 0.3% measured headroom.
 // 722 KB: 720.2 KB, Antigravity portable agents and direct-local installation
 // (+2.1 KB over its 718.1 KB hooks build); 0.3% measured headroom.
-// 728 KB: 726.3 KB, Kilo flat Rules: emission, link relocation, `instructions` merge, install skip
-// (+6.1 KB over next's 720.2 KB); 0.2% measured headroom.
+// 747 KB: 732.4 KB, the machine-wide install of `setup --global` (+12.2 KB over the 720.2 KB
+// above); 2.0% measured headroom.
+// 772 KB: 756.0 KB, the seven host adapters shipped as product, inlined as text, Antigravity's
+// among them (+23.6 KB over the 732.4 KB above); 2.1% measured headroom.
+// 778 KB: 775.5 KB, Kilo flat Rules: emission, link relocation, `instructions` merge, install skip
+// (+5.2 KB over next's 770.3 KB); 0.3% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

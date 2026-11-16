@@ -46,13 +46,6 @@ describe("HooksCapability declarations", () => {
     ).toStrictEqual(["hooks"]);
   });
 
-  it("merges with the function the tool declares, and takes the incoming content whole without one", () => {
-    expect(
-      new HooksCapability({ outputPath: "h.json", mergeFn: (a, b) => `${a}+${b}` }).merge("x", "y")
-    ).toBe("x+y");
-    expect(new HooksCapability({ outputPath: "h.json" }).merge("x", "y")).toBe("y");
-  });
-
   it("lets the user's file win unless the tool declares otherwise", () => {
     expect(new HooksCapability({ outputPath: "h.json" }).getMergeStrategy()).toBe("user-prime");
     expect(

@@ -8,7 +8,9 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 
 | Surface | Validated by |
 | --- | --- |
-| Skills, agents, rules (markdown) | each action's own `## Test`, run end to end against a real project |
+| Skills (markdown) | the skill generator's validate step, and the pre-commit guards `skill-frontmatter`, `check-skill-argument-hints` and `architecture-rules` |
+| Agents (markdown) | `architecture-rules` over `plugins/*/agents/`, then run end to end against a real project |
+| Rules (markdown) | run end to end against a real project; no pre-commit guard reads them |
 | `scripts/` and bundled hooks | `node --test` under the wrapper below |
 | `cli/` | vitest, four projects — see the CLI bank |
 | `kanban/` | its own vitest suite. It shares no code with `cli/` |
@@ -28,6 +30,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 
 - A plugin never holds its own tests: `hooks/` ships recursively into user projects. Tests for a bundled script go in `scripts/__tests__/`.
 - The scripts suite writes into a git repository. Run it wrapped, never bare: unwrapped it can overwrite this repository's own `.git/hooks`, and `.git` is in no history.
+- A new or rewritten skill runs end to end on at least two small models from different providers before it ships, in a throwaway repository whose sessions are deleted after. It must stop at each wait and write only once approved.
 
 ## Run
 
@@ -40,7 +43,7 @@ How the project is tested: the layers, the tools, and the conventions. Where tes
 | `cd kanban && pnpm test` | the board |
 | `pnpm exec lefthook run pre-push` | the local gate before pushing |
 
-CI runs more: `validate.yml` re-runs the whole pre-commit over the whole tree on every push and pull request, and `cli-ci.yml` adds jobs no local hook has. Both are in `deployment.md`.
+CI runs more. `validate.yml` re-runs the whole pre-commit over the whole tree on every push and pull request. `cli-ci.yml` adds jobs no local hook has. Both are in `deployment.md`.
 
 ## Browser QA
 

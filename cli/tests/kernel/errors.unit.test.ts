@@ -482,25 +482,25 @@ describe("every error in the catalog", () => {
       build: () => new errors.UserScopeIdeToolsError(["vscode", "zed"]),
       name: "UserScopeIdeToolsError",
       message:
-        "--scope user installs no project files, so an IDE tool (vscode, zed) has nothing to install at user scope. Drop --ide, or run `aidd setup --ide <ids>` separately at project scope.",
+        "--global installs no project files, so an editor (vscode, zed) has nothing to install machine-wide. Drop it from --ide, or run `aidd setup --ide <ids>` separately in the project.",
     },
     {
       build: () => new errors.UserScopeUnsupportedAiToolsError(["cursor", "opencode"]),
       name: "UserScopeUnsupportedAiToolsError",
       message:
-        "--scope user drives native activation machine-wide, and cursor, opencode declares no user-scope settings this CLI can point at. Drop it from --ai, or run `aidd setup --ai <ids>` separately at project scope.",
+        "--global installs through an IDE's own plugin CLI or its user configuration directory, and neither exists for: cursor, opencode. Drop them from --ide, or run `aidd setup --ide <ids>` in the project instead.",
     },
     {
       build: () => new errors.UserScopeNoToolsError(),
       name: "UserScopeNoToolsError",
       message:
-        "--scope user with no --ai registers the shared source for no tool at all. Pass `--ai <ids>` naming which tool to activate machine-wide.",
+        "--global with no --ide registers the shared source for no tool at all. Pass `--ide <ids>` naming which tool to activate machine-wide.",
     },
     {
       build: () => new errors.UserScopePluginModeError(),
       name: "UserScopePluginModeError",
       message:
-        "--scope user has no manifest entry a plugin can be recorded against yet, so --plugins has nothing to enable. Drop --plugins, or run `aidd plugin install` separately at project scope.",
+        "--global cannot ask which plugins to install. Pass --plugins all, recommended, none, or comma-separated names.",
     },
     {
       build: () => new errors.UserScopeFilterUnsupportedError("--plugin", "sync"),

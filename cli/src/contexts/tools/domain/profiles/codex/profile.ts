@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { AgentsCapability } from "../../capabilities/agents-capability.js";
 import { CommandsCapability } from "../../capabilities/commands-capability.js";
 import { CONFIG_MCP } from "../../capabilities/config-refs.js";
-import { HooksCapability } from "../../capabilities/hooks-capability.js";
 import { McpCapability } from "../../capabilities/mcp-capability.js";
 import { PluginsCapability } from "../../capabilities/plugins-capability.js";
 import { RulesCapability } from "../../capabilities/rules-capability.js";
@@ -22,7 +21,7 @@ import {
   convertCommandFrontmatter,
   stripToolSuffix,
 } from "../../formats/command.js";
-import { PLUGIN_ROOT_TOKEN } from "../../formats/plugin-root-token.js";
+import { hooksConfigCapability, nativeHooksSupport } from "../../formats/hooks-descriptor.js";
 import { registerTool } from "../../registry.js";
 import {
   buildCodexContract,
@@ -31,6 +30,8 @@ import {
   stripCodexSkillFrontmatter,
 } from "./build.js";
 import { codexAgentFrontmatter, codexAgentToml } from "./codex-agent-toml.js";
+import { codexGlobalFilePath } from "./codex-paths.js";
+import { CODEX_HOOKS } from "./hooks.js";
 
 const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
@@ -47,66 +48,6 @@ export function rewriteCodexContent(content: string): string {
     /(@?)\.codex\/commands\/(\d+)[_-][^/]+\/([^\s]+)/g,
     "$1.codex/commands/aidd/$2/$3"
   );
-}
-
-const CONFIG_CODEX_HOOKS = "codex-hooks";
-
-// Measured: four consecutive `codex exec` sessions installed a plugin's hooks and ran
-// none of them — no warning, no line in the output — until `--dangerously-bypass-hook-trust`
-// made the same install run all three. Codex writes one `trusted_hash`
-// per hook under `[hooks.state]` when a person approves it; a hook with no entry is skipped in
-// silence, and nothing prompts for it outside a terminal.
-const CODEX_HOOKS_TRUST_NOTICE =
-  "Codex will not run this plugin's hooks until each one is trusted — approve the prompt " +
-  "once in an interactive session, or pass --dangerously-bypass-hook-trust to codex exec " +
-  "for a headless run. Until then, none of its hooks run and nothing says why.";
-
-const AIDD_HOOK_COMMAND = "node .aidd/scripts/update_memory.cjs";
-
-const AIDD_HOOK_ENTRY = {
-  type: "command",
-  command: AIDD_HOOK_COMMAND,
-  statusMessage: "Syncing AIDD memory...",
-  timeout: 30,
-};
-
-const AIDD_SESSION_START_ENTRY = {
-  matcher: "startup|resume",
-  hooks: [AIDD_HOOK_ENTRY],
-};
-
-type HookEntry = { type: string; command: string; [key: string]: unknown };
-type SessionStartEntry = { matcher?: string; hooks: HookEntry[]; [key: string]: unknown };
-type HooksRoot = { SessionStart?: SessionStartEntry[]; [key: string]: unknown };
-
-function isAiddHookPresent(entries: SessionStartEntry[]): boolean {
-  return entries.some((entry) => entry.hooks.some((hook) => hook.command === AIDD_HOOK_COMMAND));
-}
-
-function appendAiddEntry(entries: SessionStartEntry[]): SessionStartEntry[] {
-  if (isAiddHookPresent(entries)) return entries;
-  return [...entries, AIDD_SESSION_START_ENTRY];
-}
-
-function mergeSessionStart(existing: HooksRoot): HooksRoot {
-  const current = existing.SessionStart;
-  if (!Array.isArray(current)) {
-    return { ...existing, SessionStart: [AIDD_SESSION_START_ENTRY] };
-  }
-  return { ...existing, SessionStart: appendAiddEntry(current) };
-}
-
-export function mergeCodexHooksJson(existing: string): string {
-  let parsed: HooksRoot = {};
-  if (existing.trim()) {
-    try {
-      parsed = JSON.parse(existing) as HooksRoot;
-    } catch {
-      parsed = {};
-    }
-  }
-  const merged = mergeSessionStart(parsed);
-  return JSON.stringify(merged, null, 2);
 }
 
 function skillNameFromPath(fileName: string): string {
@@ -170,24 +111,17 @@ export const codex: AiTool<
       mergeFn: mergeCodexConfigToml,
       consumes: [CONFIG_MCP],
     }),
-    hooks: new HooksCapability({
-      outputPath: ".codex/hooks.json",
-      mergeStrategy: "user-prime",
-      entrySection: "SessionStart",
-      mergeFn: mergeCodexHooksJson,
-      consumes: [CONFIG_CODEX_HOOKS],
-    }),
+    hooks: hooksConfigCapability(CODEX_HOOKS),
     plugins: new PluginsCapability({
       mode: "native",
       pluginsDir: ".codex/plugins/",
       pluginManifestRelativePath: "plugin.json",
+      globalFiles: { dir: (homedir) => join(homedir, ".codex"), map: codexGlobalFilePath },
       acceptsMcp: true,
       translationMode: "marketplace",
       // Codex only enables plugins from its user-global config plus its own plugin cache; a
       // project-local settings file is inert, so the `codex` CLI is driven directly instead.
-      acceptsHooks: true,
-      hooksTrustNotice: CODEX_HOOKS_TRUST_NOTICE,
-      pluginRootToken: PLUGIN_ROOT_TOKEN,
+      ...nativeHooksSupport(CODEX_HOOKS),
       nativeActivation: {
         binary: "codex",
         upgradeVerb: "upgrade",
