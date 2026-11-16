@@ -96,7 +96,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File | Description |
 |------|---|
-| [SKILL.md](skills/03-context-generate/SKILL.md) | `Route a request to generate a context artifact (skill, rule, agent, command, or hook) to its generator when the kind is unnamed. A named kind triggers its generator directly. Not for listing existing artifacts.` |
+| [SKILL.md](skills/03-context-generate/SKILL.md) | `Routes a request to generate a skill, rule, agent, command or hook to its generator when the kind is unnamed, not for listing existing artifacts.` |
 
 #### `skills/04-skill-generate`
 
