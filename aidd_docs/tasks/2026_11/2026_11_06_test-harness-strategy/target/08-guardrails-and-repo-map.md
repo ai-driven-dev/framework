@@ -80,7 +80,7 @@ How it is enforced deterministically, given that `noRestrictedImports` cannot us
 | Folder size (at most 10 files) | 3 or 1 | review, or pre-commit if kept | the harness map deletes the test and its list and keeps the threshold in the grid; the overview instead asks to group commands in subfolders or revise the rule | `folder-size` and its list | Open: decision for the guideline PR (section 9) |
 | Comment volume; no id/date in a comment | 2 / 3 | review | the cap (raised twice) is deleted; the rule "no date/ticket" stays in `.claude/rules` and in the grid | `comments` | Decided: the cap has no proven effect |
 | An empty catch swallows nothing | 1 | pre-commit | Biome `noEmptyBlockStatements` or equivalent to verify | `catches-that-swallow` and its list that only shrinks | UNVERIFIED: exact equivalence not tested |
-| Errors: central catalogue, every class is thrown, every message that instructs names a real command | 1 / 3 | pre-commit for "thrown"; grid for "instructs" | knip for useless exports; grid of section 5 | `errors-that-are-thrown`, `errors-that-instruct` | knip does not see the import by a test (the test's own note); keep `errors-that-are-thrown` while it holds |
+| Errors: central catalogue, every class is thrown, every message that instructs names a real command | 1 | pre-commit | knip for useless exports; `errors-that-instruct` for "instructs" | `errors-that-are-thrown`, `errors-that-instruct` | knip does not see the import by a test (the test's own note); keep `errors-that-are-thrown` while it holds |
 | Maximum dependencies (6 runtime deps) | 1 | pre-commit | `package.json` check in a 5-line test | nothing | Written rule without a guard |
 | One adapter per port; adapter naming; typed port injection; `cli.ts` instantiates no adapter (violated at `cli.ts:23`) | 3 | review | grid of section 5 (port placement); "only composition instantiates" becomes mechanical through `composition/` | nothing | The `cli.ts:23` violation disappears with `composition/` |
 | A use case does not catch its own errors (59 `catch` in `application`) | 3 | review | grid; measure before deciding whether the rule stays written | nothing | Rule contradicted by the code; open (section 9) |
@@ -299,7 +299,7 @@ Open:
 2. `noFloatingPromises` is a `nursery` rule: accept it despite the risk of change between Biome versions?
 3. "A use case does not catch its errors" is contradicted by 59 `catch`: change the written rule or the code?
 4. `kanban/`: keep in CI without shipping, take out of the repository, or freeze?
-5. Test file size cap (overview section 10: 400 lines as a warning, 800 as a failure) against the rule here that no rule is a warning: the 400 threshold needs either to become a grid point or an `error` threshold.
+5. Settled: the test file size cap fails at 800 lines (`error`), and 400 lines is a point of the review grid, not a tool warning (overview section 10).
 6. `folder-size`: the harness map deletes the guard, while the overview asks to group commands in subfolders or revise the ten-files rule. To settle in the guideline PR.
 7. The 9 repository script tests that read workflow, lefthook or shell text (section 3): deleted in the map without evidence; verdict per test after the failure history is read.
 8. The three architecture tests `docs-do-not-lie`, `bundled-config-checkout`, `hooks-install-from-the-root`: merge into a `scripts/` guard or delete.

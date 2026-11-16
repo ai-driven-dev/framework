@@ -146,7 +146,7 @@
 | - | `tests/architecture/command-shape.arch.test.ts` | add | one file, one class of the same name, public execute, no UseCase suffix (08) |
 | - | `tests/architecture/old-layout-counter.arch.test.ts` | add | files left in runtime, kernel, framework only go down; deleted at the end of the migration (08 section 2.3) |
 | - | `tests/architecture/baseline-only-shrinks.arch.test.ts` | add | proposal: BASELINE entries compared with the committed value, never added (00 section 11) |
-| - | `tests/architecture/test-file-size.arch.test.ts` | add | 400 lines warning, 800 failure (07 section 1); 08 open item on the warning level |
+| - | `tests/architecture/test-file-size.arch.test.ts` | add | 800 lines failure; 400 lines is a review grid point, deliberately unchecked (07 section 1) |
 | - | `tests/architecture/kit-isolation.arch.test.ts` | add | a test never imports another context's kit (07 section 2.1) |
 | - | `tests/architecture/test-mirror-path.arch.test.ts` | add | every domain or application module has its mirror test or a written exception (07 section 7) |
 | `tests/golden/framework-build-golden.e2e.test.ts` | `tests/golden/framework-build.golden.test.ts` | rename | suffix by level; reduced to the file tree, then in memory once the pure engine lands (07 section 4.3) |
