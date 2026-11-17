@@ -3,10 +3,12 @@ import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-cata
 import { UnregisteredToolError } from "../../../src/shared/domain/errors.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 
-/** The catalog of every registered tool, as the composition root wires it. Built per call: a
- * catalog is a value, never shared state. */
+const catalog = wireTools();
+
+/** The catalog of every registered tool, as the composition root wires it, wired once: a catalog
+ * is an immutable value. */
 export function registeredTools(): ToolCatalog {
-  return wireTools();
+  return catalog;
 }
 
 function named<T extends ToolId>(ids: readonly T[], name: string): T {
@@ -15,8 +17,8 @@ function named<T extends ToolId>(ids: readonly T[], name: string): T {
   return found;
 }
 
-const ai = (name: string) => named(registeredTools().idsInCanonicalOrder("ai"), name);
-const ide = (name: string) => named(registeredTools().idsInCanonicalOrder("ide"), name);
+const ai = (name: string) => named(catalog.idsInCanonicalOrder("ai"), name);
+const ide = (name: string) => named(catalog.idsInCanonicalOrder("ide"), name);
 
 /** The registered ids, minted by the catalog: a test never writes a tool id as a string. */
 export const TOOL = {

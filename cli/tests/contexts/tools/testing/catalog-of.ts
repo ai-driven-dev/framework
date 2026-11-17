@@ -13,6 +13,7 @@ import {
 } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { UnregisteredToolError } from "../../../../src/shared/domain/errors.js";
 import type { AiToolId, ToolId, ToolIdResolver } from "../../../../src/shared/domain/tool.js";
+import { TOOL as REGISTERED_TOOL_IDS } from "../../../shared/testing/registered-tools.js";
 
 /** A catalog over the given profiles, the registered ones when none is given, canonical order
  * kept for the registered ones among them. Built inside the `it` that reads it: a catalog is a
@@ -67,23 +68,5 @@ export const flowTools = () => ({
   ideToolIds: catalogOf().idsInCanonicalOrder("ide"),
 });
 
-function named<T extends ToolId>(ids: readonly T[], name: string): T {
-  const found = ids.find((id) => id === name);
-  if (found === undefined) throw new UnregisteredToolError(name);
-  return found;
-}
-
-const ai = (name: string) => named(catalogOf().idsInCanonicalOrder("ai"), name);
-const ide = (name: string) => named(catalogOf().idsInCanonicalOrder("ide"), name);
-
-/** The registered ids, minted by the catalog: a test never writes a tool id as a string. */
-export const TOOL = {
-  claude: ai("claude"),
-  cursor: ai("cursor"),
-  copilot: ai("copilot"),
-  opencode: ai("opencode"),
-  kilo: ai("kilo"),
-  codex: ai("codex"),
-  antigravity: ai("antigravity"),
-  vscode: ide("vscode"),
-} as const;
+/** The registered ids, minted by the shared kit. */
+export const TOOL = REGISTERED_TOOL_IDS;
