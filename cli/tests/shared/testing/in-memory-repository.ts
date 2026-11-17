@@ -3,19 +3,19 @@ import type { Lock } from "../../../src/shared/ports/lock.js";
 
 /** A repository holding one record in memory, counting its saves. Exclusive access is granted
  * at once: nothing else contends for it. */
-export class InMemoryRepository<Record> implements Lock {
+export class InMemoryRepository<Held> implements Lock {
   saveCount = 0;
-  protected record: Record | null;
+  protected record: Held | null;
 
-  constructor(seed: Record | null = null) {
+  constructor(seed: Held | null = null) {
     this.record = seed;
   }
 
-  async load(): Promise<Record | null> {
+  async load(): Promise<Held | null> {
     return this.record;
   }
 
-  async save(record: Record): Promise<void> {
+  async save(record: Held): Promise<void> {
     this.saveCount += 1;
     this.record = record;
   }
@@ -24,16 +24,16 @@ export class InMemoryRepository<Record> implements Lock {
     return action();
   }
 
-  getCurrent(): Record | null {
+  getCurrent(): Held | null {
     return this.record;
   }
 }
 
 /** The repository's `load` and `withExclusiveAccess`, `load` failing any call made outside the
  * exclusive access. */
-export function loadsOnlyUnderLock<Record>(
-  repo: InMemoryRepository<Record>
-): Pick<InMemoryRepository<Record>, "load" | "withExclusiveAccess"> {
+export function loadsOnlyUnderLock<Held>(
+  repo: InMemoryRepository<Held>
+): Pick<InMemoryRepository<Held>, "load" | "withExclusiveAccess"> {
   let entered = false;
   return {
     load: () => {
