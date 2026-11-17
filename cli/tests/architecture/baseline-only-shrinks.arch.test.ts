@@ -14,7 +14,13 @@
  * What the ratchet does not hold:
  * - lists are chosen by naming convention, so a list whose name is unregistered, or one imported
  *   from outside `tests/architecture`, is not held;
- * - class static properties are not read.
+ * - class static properties are not read;
+ * - a function handed the list, declared in the file or imported from a relative path, may change
+ *   it, and so may a callback of a read member or a value read out of a record, which the
+ *   reading does not follow.
+ *
+ * A tolerated name may only be read: `read-only-uses.ts` holds the closed set of uses, and any
+ * other use, in any file of the folder, leaves the list unsized and fails.
  *
  * A list non-empty at the base that is gone at the head fails, since a rename would otherwise
  * restart its count: keep the name, or empty the list first. `RENAMED_LISTS` is the one way out,
@@ -370,26 +376,53 @@ describe("the guard itself", () => {
   it.each([
     "BASELINE = []",
     "BASELINE[0] = 'x'",
+    "BASELINE.length = 0",
     "delete BASELINE[0]",
     "BASELINE.push('x')",
     "BASELINE.splice(0, 1)",
-    "BASELINE.unshift('x')",
+    "BASELINE.copyWithin(0, 1)",
+    "BASELINE.fill('x')",
+    "BASELINE.sort()",
     "BASELINE.add('x')",
     "BASELINE.set('k', 'x')",
     "BASELINE.delete('x')",
     "(BASELINE as string[]).push('x')",
     "BASELINE!.push('x')",
     "((BASELINE)).push('x')",
-  ])("refuses a list that is mutated: %s", (statement) => {
+    "(BASELINE as string[])[BASELINE.length] = 'x'",
+    "BASELINE[0].push('x')",
+    "Object.assign(BASELINE, { k: 'x' })",
+    "Reflect.set(BASELINE, 'k', 'x')",
+    "Array.prototype.push.call(BASELINE, 'x')",
+    "mutate(BASELINE)",
+    "const alias = BASELINE",
+  ])("refuses a list used in a way that is not a read: %s", (statement) => {
     expect(unsizedLists(`const BASELINE = ['a'];\n${statement};`)).toEqual(["BASELINE"]);
   });
 
-  it("leaves a list that is only read, copied or looped over", () => {
-    expect(
-      list(
-        "const BASELINE = ['a'];\nBASELINE.map((x) => x);\nfor (const x of BASELINE) use(x);"
-      ).get("a.ts#BASELINE")
-    ).toBe(1);
+  it("refuses a list another file mutates, which that file imports", () => {
+    expect(unsizedLists("import { BASELINE } from './h.js';\nBASELINE.push('x');")).toEqual([
+      "BASELINE",
+    ]);
+  });
+
+  it.each([
+    "BASELINE.map((x) => x)",
+    "BASELINE.includes('a')",
+    "BASELINE.length",
+    "BASELINE[0]?.length",
+    "Object.keys(BASELINE)",
+    "Object.entries(BASELINE as object)",
+    "for (const x of BASELINE) use(x)",
+    "[...BASELINE, 'b']",
+    "expect(BASELINE).toEqual([])",
+    "check(BASELINE)",
+    "imported(BASELINE)",
+  ])("leaves a list that is only read: %s", (statement) => {
+    const declarations =
+      "import { imported } from './h.js';\nfunction check(list: unknown) {}\nconst BASELINE = ['a'];\n";
+
+    expect(list(`${declarations}${statement};`).get("a.ts#BASELINE")).toBe(1);
   });
 
   it("sees a declaration wherever it sits, not only at the start of a line", () => {

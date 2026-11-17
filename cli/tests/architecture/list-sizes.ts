@@ -11,9 +11,8 @@
  * a string literal in the same file.
  *
  * Anything else is `null`: a list that cannot be sized cannot be held. So are a name declared
- * twice in a file or bound by a destructuring, a `let` or `var`, and a list the file mutates by an
- * assignment, an increment, a `delete`, or a call to `push`, `splice`, `unshift`, `add`, `set` or
- * `delete`, through a cast, a non-null assertion or parentheses.
+ * twice in a file or bound by a destructuring, a `let` or `var`, and a list the file uses in any
+ * way other than reading it, which `read-only-uses.ts` lists as a closed set.
  */
 import { tmpdir } from "node:os";
 import {
@@ -22,12 +21,7 @@ import {
   type Expression,
   isArrayLiteralExpression,
   isAsExpression,
-  isAssignmentOperator,
-  isBinaryExpression,
   isBindingElement,
-  isCallExpression,
-  isDeleteExpression,
-  isElementAccessExpression,
   isIdentifier,
   isNewExpression,
   isNonNullExpression,
@@ -35,9 +29,6 @@ import {
   isNumericLiteral,
   isObjectLiteralExpression,
   isParenthesizedExpression,
-  isPostfixUnaryExpression,
-  isPrefixUnaryExpression,
-  isPropertyAccessExpression,
   isPropertyAssignment,
   isSatisfiesExpression,
   isShorthandPropertyAssignment,
@@ -49,17 +40,16 @@ import {
   type Node,
   NodeFlags,
   type SourceFile,
-  SyntaxKind,
 } from "typescript/unstable/ast";
 import { createVirtualFileSystem } from "typescript/unstable/fs";
 import { API } from "typescript/unstable/sync";
+import { namesUsedBeyondReading } from "./read-only-uses.js";
 
 /** The entries of each list by id, `<file>#<name>`, or `null` where the list cannot be sized. */
 export type ListSizes = Map<string, number | null>;
 
 const VIRTUAL_ROOT = `${tmpdir().replaceAll("\\", "/")}/list-sizes`;
 const SET_OR_MAP = new Set(["Set", "Map"]);
-const MUTATING_METHODS = new Set(["push", "splice", "unshift", "add", "set", "delete"]);
 const SINGLE_ENTRY = 1;
 
 /** What a file declares that sizing a list needs to look up. */
@@ -184,44 +174,6 @@ function isConstDeclaration(declaration: Node): boolean {
   return !!list && isVariableDeclarationList(list) && (list.flags & NodeFlags.Const) !== 0;
 }
 
-/** The name a reference stands on, through a cast, a non-null assertion, parentheses or a member. */
-function rootName(expression: Expression): string | null {
-  const value = unwrap(expression);
-  if (isIdentifier(value)) return value.text;
-  return isPropertyAccessExpression(value) || isElementAccessExpression(value)
-    ? rootName(value.expression)
-    : null;
-}
-
-function isIncrementOperator(operator: SyntaxKind): boolean {
-  return operator === SyntaxKind.PlusPlusToken || operator === SyntaxKind.MinusMinusToken;
-}
-
-/** The operand an increment or a decrement changes, or `undefined` where the node is neither. */
-function incrementedOperand(node: Node): Expression | undefined {
-  return (isPrefixUnaryExpression(node) || isPostfixUnaryExpression(node)) &&
-    isIncrementOperator(node.operator)
-    ? node.operand
-    : undefined;
-}
-
-/** The name a node changes in place or replaces, or `null` where it changes none. */
-function mutatedName(node: Node): string | null {
-  if (isBinaryExpression(node) && isAssignmentOperator(node.operatorToken.kind)) {
-    return rootName(node.left);
-  }
-  const operand = incrementedOperand(node);
-  if (operand) return rootName(operand);
-  if (isDeleteExpression(node)) return rootName(node.expression);
-  if (isCallExpression(node)) {
-    const callee = unwrap(node.expression);
-    return isPropertyAccessExpression(callee) && MUTATING_METHODS.has(callee.name.text)
-      ? rootName(callee.expression)
-      : null;
-  }
-  return null;
-}
-
 /** Every list `isTolerated` accepts in `source`, sized or `null`, by id. */
 function readFile(
   file: string,
@@ -230,7 +182,6 @@ function readFile(
   sizes: ListSizes
 ): void {
   const scope: FileScope = { stringNames: namesBoundToStrings(source) };
-  const mutated = new Set<string>();
   walk(source, (node) => {
     if (isVariableDeclaration(node)) {
       for (const name of boundNames(node.name).filter(isTolerated)) {
@@ -239,13 +190,9 @@ function readFile(
         sizes.set(id, alone ? sizeOf(node.initializer, scope) : null);
       }
     }
-    const name = mutatedName(node);
-    if (name !== null && isTolerated(name)) mutated.add(name);
   });
-  for (const name of mutated) {
-    const id = `${file}#${name}`;
-    if (sizes.has(id)) sizes.set(id, null);
-  }
+  for (const name of namesUsedBeyondReading(source, isTolerated))
+    sizes.set(`${file}#${name}`, null);
 }
 
 /**
