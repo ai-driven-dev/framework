@@ -1,5 +1,5 @@
 ---
-description: Apply when a transcript line, a usage record, the ledger, consent, a declaration or a report changes; nothing but the telemetry context counts what a billed model call consumed.
+description: Apply when a transcript line, a usage record, the ledger, consent, a declaration or a report changes.
 paths:
   - "src/contexts/telemetry/**/*.ts"
   - "src/composition/telemetry.ts"
@@ -21,13 +21,14 @@ paths:
 - A tool is one `UsageSource` (`list`, `read`, `decode(line, context?)`), registered once in `src/composition/telemetry.ts`.
 - `decode` is a pure function of its line and the context the file's earlier lines returned, which `ReadUsage` passes on and never reads.
 - A file's age is `read`'s (`modifiedAt`), not the source's.
-- The usage ledger, the bindings lock, the binding snapshot store and the consent history have a contract suite on fake and adapter; the other stores have none.
+- The usage ledger, the bindings lock, the binding snapshot store and the consent history have a contract suite on fake and adapter.
+- The other stores have none.
 - An adapter's own test keeps only what its medium adds and no fake can show: file names, bytes, modes, torn lines, a lock file's content.
 
 ## Suppliers
 
 - `shared/`: `Environment`, errors and the JSON readers of `domain/reading/`.
-- Outside callers import `telemetry/contract/` and `telemetry/application/`: Biome denies `domain/`, `ports/` and `infrastructure/` (`HELD_BY_BIOME` in `tests/architecture/helpers.ts`).
+- Outside callers import `telemetry/contract/` and `telemetry/application/`, and the composition root reaches the rest: Biome denies `domain/`, `ports/` and `infrastructure/` (`HELD_BY_BIOME` in `tests/architecture/helpers.ts`).
 
 ## Never
 

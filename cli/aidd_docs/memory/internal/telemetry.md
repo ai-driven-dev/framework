@@ -37,6 +37,7 @@ flowchart LR
 - The hooks and the CLI never call each other's code and meet only in files.
 - One fixture pins those formats on both sides: `scripts/__tests__/fixtures/telemetry-bindings/`, read by `tests/contexts/telemetry/telemetry-bindings-fixture.integration.test.ts` and the hook tests.
 - The plugin's hooks are plain Node under `plugins/aidd-telemetry/hooks/`, which tell Claude Code's payload from Codex's in `hooks/lib/tool.cjs`.
+- The plugin runs `aidd telemetry ingest --quiet` at session start (`plugins/aidd-telemetry/hooks/catch-up.cjs`).
 - Another tool's calls are attributed by branch, and hooks name the session with `AIDD_TELEMETRY_SESSION_ID` where the tool sets no variable.
 
 ## Where to look
@@ -47,7 +48,8 @@ flowchart LR
 | Where a call's repository comes from | `application/directory-resolver.ts`, `domain/repository-identity.ts` |
 | Which task a call belongs to | `domain/report/attribution.ts`, `domain/declaration/binding-resolution.ts` |
 | Whether a branch is declared, mirrored by `plugins/aidd-telemetry/hooks/lib/git.cjs` | `domain/branch-binding.ts` |
-| What counts as consent, and when a clone consented | `domain/telemetry-consent.ts`, `domain/consent/consent-history.ts` |
+| What counts as consent, and when a clone consented | `domain/telemetry-consent.ts`, `domain/consent/consent-history.ts`, `infrastructure/git/git-consent-adapter.ts` |
+| What a clone is | `domain/consent/clone-identity.ts` |
 | How a transcript is read from its saved offset | `infrastructure/sources/transcript-files.ts`, `domain/transcript-position.ts` |
 | Why a Codex file that moved is read from its start | `infrastructure/sources/codex/codex-transcript-source-adapter.ts` |
 | How the ledger lies on disk | `infrastructure/storage/ledger/usage-ledger-adapter.ts`, `application/ledger-upkeep.ts` |
@@ -65,3 +67,4 @@ flowchart LR
 - `tests/e2e/telemetry-journey.e2e.test.ts` drives the plugin's real hooks through a shim to the built binary.
 - `pnpm test:foreign-clock` (`scripts/test-foreign-clock.mjs`) runs the telemetry tests with `TZ` `Pacific/Kiritimati` and locale `ar_SA.UTF-8`, and CI runs it in `cli-coverage`.
 - A test that compares figures across zones sets `TZ` itself, while the locale is fixed at process start, so only a child process varies it.
+- `scripts/__tests__/telemetry-skills-name-real-commands.test.js` checks the skills' commands against the help golden.

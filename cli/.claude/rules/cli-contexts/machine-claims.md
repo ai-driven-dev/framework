@@ -1,5 +1,5 @@
 ---
-description: Apply when a claim a project holds on machine-wide state is recorded, released or proven safe to delete. The machine-claims context owns those claims.
+description: Apply when a project's claim on machine-wide state is recorded, released or proven safe to delete.
 paths:
   - "src/contexts/machine-claims/**/*.ts"
   - "src/composition/machine-claims.ts"
@@ -25,7 +25,7 @@ paths:
 
 ## Suppliers
 
-- `shared/`: errors, `Logger`, `Lock`, `FileReader`, `FileWriter`, `VersionReader`, scope, tool and layout.
+- `shared/`: errors, the error describer, `Logger`, `Lock`, `FileReader`, `FileWriter`, `VersionReader`, scope, tool, `aidd-layout`, paths and the installation file value.
 - No other context: it has no edge in `ALLOWED`.
 
 ## Never

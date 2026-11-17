@@ -22,10 +22,10 @@ paths:
 
 ## Suppliers
 
-- `auth/contract/token-provider.ts`: the token a release read may carry (edge `update->auth`).
+- `auth/contract/token-provider.ts`: the token the changelog read sends (edge `update->auth`), where the version read sends none.
 - `shared/ports/http-get.ts`: the release reads, handed in by `src/composition/update.ts`.
-- `src/composition/update.ts` passes in the bases read from `AIDD_SELF_UPDATE_API_BASE` and `AIDD_SELF_UPDATE_NPM_BASE`, which point the reads elsewhere for tests.
-- `shared/`: errors, `Logger`, `VersionReader`, semver.
+- `src/composition/update.ts` passes in the bases of the reads: `aidd_docs/memory/internal/decisions/self-update-version-source-npm.md` names them.
+- `shared/`: errors, `Logger`, `VersionReader`, `FileReader`, `FileWriter`, semver.
 
 ## Never
 
