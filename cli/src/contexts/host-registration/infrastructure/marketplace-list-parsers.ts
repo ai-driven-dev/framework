@@ -3,7 +3,7 @@ import type {
   MarketplaceSourcesDeclaration,
 } from "../../tools/contract/native-registration-spec.js";
 import type { NativeMarketplaceSource } from "../domain/native-marketplace-source.js";
-import type { NativeMarketplaceSourceListContract } from "../ports/host-marketplace-sources.js";
+import type { NativeMarketplaceSourceListContract } from "./native-marketplace-source-list-contract.js";
 
 type Sources = ReadonlyMap<string, NativeMarketplaceSource | null>;
 

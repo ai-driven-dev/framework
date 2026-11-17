@@ -59,7 +59,7 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/domain/manifest.ts",
     "src/contexts/installation/ports/manifest-repository.ts",
     "src/contexts/installation/domain/install-scope.ts",
-    // Transitional (aidd_docs/memory/internal/installation.md, I3): the flows still in framework build on these,
+    // Transitional: the flows still in framework build on these,
     // and leave this list as each one moves behind an installation command.
     "src/contexts/installation/application/doctor/check-file-references.ts",
     "src/contexts/installation/application/doctor/check-merge-files.ts",

@@ -1,7 +1,7 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
-import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostActions } from "./host-actions.js";
 import type { HostMarketplaceRegistry } from "./host-marketplace-registry.js";
+import type { HostMarketplaceSources } from "./host-marketplace-sources.js";
 import type { HostPluginRegistry } from "./host-plugin-registry.js";
 
 /** Everything the host registration reaches a host through, assembled once by composition so a

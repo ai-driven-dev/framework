@@ -3,15 +3,13 @@ import {
   type NativeMarketplaceSource,
   sameNativeMarketplaceSource,
 } from "../domain/native-marketplace-source.js";
+import type { NativeMarketplaceSourceReading } from "../domain/native-marketplace-source-reading.js";
 import type {
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
 } from "../domain/plugin-registry-reading.js";
 import type { NativeMarketplaceRegistration } from "../domain/registration-record.js";
-import type {
-  HostMarketplaceSources,
-  NativeMarketplaceSourceReading,
-} from "../ports/host-marketplace-sources.js";
+import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 
 export interface NativeMarketplaceSourceInspection {

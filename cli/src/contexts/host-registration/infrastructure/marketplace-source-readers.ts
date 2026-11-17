@@ -1,16 +1,14 @@
 import { spawnSync } from "node:child_process";
+import type { NativeMarketplaceSourceReading } from "../domain/native-marketplace-source-reading.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
-import type {
-  HostMarketplaceSources,
-  NativeMarketplaceSourceListContract,
-  NativeMarketplaceSourceReading,
-} from "../ports/host-marketplace-sources.js";
+import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import {
   hostExecutableLookup,
   resolveExecutableOnPath,
   runsThroughShell,
   windowsCommandLine,
 } from "./executable-on-path.js";
+import type { NativeMarketplaceSourceListContract } from "./native-marketplace-source-list-contract.js";
 
 export class HostRegistryMarketplaceSourceReaderAdapter implements HostMarketplaceSources {
   constructor(private readonly hostReader: HostMarketplaceRegistry) {}
