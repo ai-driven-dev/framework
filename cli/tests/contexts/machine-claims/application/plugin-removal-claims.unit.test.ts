@@ -4,7 +4,7 @@ import type { ListedMarketplace } from "../../../../src/contexts/machine-claims/
 import type { UserSourceReferences } from "../../../../src/contexts/machine-claims/ports/user-source-references.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { RecordingSourceReferences } from "./recording-source-references.js";
 
 const REF = "aidd-test@aidd-framework";
@@ -28,7 +28,7 @@ function guard(options: {
   });
   return claims.guardMessage(
     "codex",
-    registeredAiProfile(TOOL.codex),
+    registeredTools().aiProfile(TOOL.codex),
     REF,
     "aidd-framework",
     "aidd-framework",

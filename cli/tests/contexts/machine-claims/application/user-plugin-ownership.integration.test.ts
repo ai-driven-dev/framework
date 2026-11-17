@@ -1,30 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
-import { InstalledPlugin } from "../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { detachUserPlugin } from "../../../../src/contexts/machine-claims/application/user-plugin-ownership.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { TOOL } from "../../../shared/testing/registered-tools.js";
 import {
-  InMemoryManifestRepository,
+  InMemoryMachineManifest,
+  InMemoryMachineManifestRepository,
   loadingOnlyUnderLock,
-} from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { TOOL } from "../../tools/testing/catalog-of.js";
+} from "../testing/in-memory-machine-manifest.js";
+import { MachinePlugin } from "../testing/machine-plugin.js";
 
 function fixture(scope: "project" | "user" = "user", dependents: readonly string[] = ["/A", "/B"]) {
-  const manifest = Manifest.create();
-  manifest.addTool(TOOL.cursor, "1.0.0", []);
-  manifest.addPlugin(
-    TOOL.cursor,
-    InstalledPlugin.fromJSON({
-      name: "sample-plugin",
-      source: { kind: "local", path: "/fixture" },
-      version: "1.0.0",
-      strict: false,
-      files: {},
-      scope,
-      dependents: [...dependents],
-    })
-  );
-  return { repo: new InMemoryManifestRepository(manifest), fs: new InMemoryFileAdapter() };
+  const manifest = new InMemoryMachineManifest();
+  manifest.addPlugin(TOOL.cursor, new MachinePlugin({ name: "sample-plugin", scope, dependents }));
+  return { repo: new InMemoryMachineManifestRepository(manifest), fs: new InMemoryFileAdapter() };
 }
 
 describe("one project's canonical user plugin claim", () => {
@@ -59,7 +47,7 @@ describe("one project's canonical user plugin claim", () => {
   it("ignores a missing repo or manifest without inventing ownership", async () => {
     const fs = new InMemoryFileAdapter();
     await detachUserPlugin(undefined, fs, TOOL.cursor, "sample-plugin", "/A");
-    const repo = new InMemoryManifestRepository();
+    const repo = new InMemoryMachineManifestRepository();
     await detachUserPlugin(repo, fs, TOOL.cursor, "sample-plugin", "/A");
     expect(repo.getCurrent()).toBeNull();
     expect(repo.saveCount).toBe(0);

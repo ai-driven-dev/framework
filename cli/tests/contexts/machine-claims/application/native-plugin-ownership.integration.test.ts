@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
 import {
   detachNativePluginRefs,
   isMachineOwnedNativeRef,
 } from "../../../../src/contexts/machine-claims/application/native-plugin-ownership.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { TOOL } from "../../../shared/testing/registered-tools.js";
 import {
-  InMemoryManifestRepository,
+  InMemoryMachineManifest,
+  InMemoryMachineManifestRepository,
   loadingOnlyUnderLock,
-} from "../../../helpers/ports/in-memory-manifest-repository.js";
-import { TOOL } from "../../tools/testing/catalog-of.js";
+} from "../testing/in-memory-machine-manifest.js";
 
 const { codex } = TOOL;
 
@@ -17,8 +17,7 @@ const TARGET = "sample-plugin@real-catalog";
 const OTHER = "sample-plugin@other-catalog";
 
 function fixture() {
-  const machine = Manifest.create();
-  machine.addTool(codex, "1.0.0", []);
+  const machine = new InMemoryMachineManifest();
   machine.setNativeRegistrations(codex, {
     binary: "codex",
     marketplaces: [
@@ -31,7 +30,7 @@ function fixture() {
       { ref: OTHER, dependents: ["/A", "/C"] },
     ],
   });
-  return { repo: new InMemoryManifestRepository(machine), fs: new InMemoryFileAdapter() };
+  return { repo: new InMemoryMachineManifestRepository(machine), fs: new InMemoryFileAdapter() };
 }
 
 describe("one project's exact native host ref claim", () => {
@@ -40,15 +39,14 @@ describe("one project's exact native host ref claim", () => {
     expect(await isMachineOwnedNativeRef(f.repo, codex, TARGET)).toBe(true);
     expect(await isMachineOwnedNativeRef(f.repo, codex, "foreign@real-catalog")).toBe(false);
     expect(await isMachineOwnedNativeRef(f.repo, TOOL.copilot, TARGET)).toBe(false);
-    expect(await isMachineOwnedNativeRef(new InMemoryManifestRepository(), codex, TARGET)).toBe(
-      false
-    );
+    expect(
+      await isMachineOwnedNativeRef(new InMemoryMachineManifestRepository(), codex, TARGET)
+    ).toBe(false);
     expect(await isMachineOwnedNativeRef(undefined, codex, TARGET)).toBe(false);
   });
 
   it("recognizes no claim on a registration that records none", async () => {
-    const machine = Manifest.create();
-    machine.addTool(codex, "1.0.0", []);
+    const machine = new InMemoryMachineManifest();
     machine.setNativeRegistrations(codex, {
       binary: "codex",
       marketplaces: [],
@@ -56,7 +54,7 @@ describe("one project's exact native host ref claim", () => {
     });
 
     expect(
-      await isMachineOwnedNativeRef(new InMemoryManifestRepository(machine), codex, TARGET)
+      await isMachineOwnedNativeRef(new InMemoryMachineManifestRepository(machine), codex, TARGET)
     ).toBe(false);
   });
 
@@ -93,7 +91,7 @@ describe("one project's exact native host ref claim", () => {
     const f = fixture();
     await detachNativePluginRefs(f.repo, fs, "/A", new Map());
     await detachNativePluginRefs(
-      new InMemoryManifestRepository(),
+      new InMemoryMachineManifestRepository(),
       fs,
       "/A",
       new Map([[codex, [TARGET]]])
