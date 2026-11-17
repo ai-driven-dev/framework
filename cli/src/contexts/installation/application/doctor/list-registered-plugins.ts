@@ -1,5 +1,6 @@
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { RegisteredPlugin, RegisteredPlugins } from "../../contract/registered-plugins.js";
+import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import type { CheckInstallationCommand } from "./check-installation-command.js";
 import type { LoadManifest } from "./load-manifest.js";
 
@@ -12,7 +13,10 @@ export type ListRegisteredPluginsCommand = Pick<CheckInstallationCommand, "allow
  * assembles the same shape.
  */
 export class ListRegisteredPlugins {
-  constructor(private readonly loadManifest: LoadManifest) {}
+  constructor(
+    private readonly loadManifest: LoadManifest,
+    private readonly records: RegistrationRecordRules
+  ) {}
 
   async execute(command: ListRegisteredPluginsCommand): Promise<RegisteredPlugins> {
     const manifest = await this.loadManifest.execute();
@@ -22,7 +26,7 @@ export class ListRegisteredPlugins {
       const recorded = manifest.getNativeRegistrations(toolId);
       const expectedPlugins =
         recorded !== undefined
-          ? recorded.pluginRefs.map((ref) => ({ plugin: ref, ref }))
+          ? this.records.pluginRefsOf(recorded).map((ref) => ({ plugin: ref, ref }))
           : manifest.getPlugins(toolId).map((plugin) => ({
               plugin: plugin.name,
               ref:

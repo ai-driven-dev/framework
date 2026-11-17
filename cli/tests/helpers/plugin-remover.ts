@@ -1,3 +1,4 @@
+import { registrationRecordRules } from "../../src/composition/installation.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import type { MarketplaceRegistry } from "../../src/contexts/distribution/ports/marketplace-registry.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
@@ -52,6 +53,7 @@ export function pluginRemover(parts: PluginRemoverParts): RemovePlugin {
       marketplaceRegistry: parts.marketplaceRegistry,
       resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
         new PurgeDeclaredCache(fs, logger).resolveCandidate(cacheRoot, relativeSegments, label),
-    })
+    }),
+    registrationRecordRules
   );
 }

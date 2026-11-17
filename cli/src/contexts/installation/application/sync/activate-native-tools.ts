@@ -4,7 +4,11 @@ import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
-import type { HostRegistrationOutcome, NativeHostRegistration } from "../../ports/native-host.js";
+import type {
+  HostRegistrationOutcome,
+  NativeHostRegistration,
+  RegistrationRecordRules,
+} from "../../ports/native-host.js";
 import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.js";
 import type { SyncContext } from "./load-sync-context.js";
 
@@ -23,17 +27,22 @@ export interface ActivateNativeToolsRequest {
   enablePlugins: readonly string[];
 }
 
+/** The marketplace the requested plugins are enabled from. */
+export interface ActivationMarketplace {
+  readonly name: string;
+  /** Root of a user-scope marketplace's built tree, mirroring `CacheBuiltMarketplace`'s
+   * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
+   * already built before this runs, never from a path recomputed without one. */
+  readonly userCacheRoot: () => string;
+}
+
 export class ActivateNativeTools {
   constructor(
     private readonly registerPluginWithHost: NativeHostRegistration,
     private readonly buildMarketplace: BuildMarketplaceForTool,
     private readonly logger: Logger,
-    /** The marketplace the requested plugins are enabled from. */
-    private readonly frameworkMarketplaceName: string,
-    /** Root of a user-scope marketplace's built tree, mirroring `CacheBuiltMarketplace`'s
-     * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
-     * already built before this runs, never from a path recomputed without one. */
-    private readonly userCacheRoot: () => string = () => ""
+    private readonly marketplace: ActivationMarketplace,
+    private readonly records: RegistrationRecordRules
   ) {}
 
   /** Never a tool with no native activation, and never one whose binary is absent: neither wrote
@@ -67,7 +76,7 @@ export class ActivateNativeTools {
               scope,
               enablePlugins
             ),
-          userCacheRoot: this.userCacheRoot,
+          userCacheRoot: this.marketplace.userCacheRoot,
           sink: { logger: this.logger, warnings },
         });
         if (result.status === "binary-missing") {
@@ -95,7 +104,7 @@ export class ActivateNativeTools {
     scope: MarketplaceScope,
     enablePlugins: readonly string[]
   ): string[] {
-    const frameworkHost = hostNameByAlias.get(this.frameworkMarketplaceName);
+    const frameworkHost = hostNameByAlias.get(this.marketplace.name);
     const requested =
       frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
     return [
@@ -130,12 +139,7 @@ export class ActivateNativeTools {
     if (scope === "user") {
       const native = manifest.getNativeRegistrations(toolId);
       const provenHosts = [...hostNameByAlias.values()];
-      for (const ref of [
-        ...(native?.pluginRefs ?? []),
-        ...(native?.pluginClaims ?? []).map((claim) => claim.ref),
-      ]) {
-        if (provenHosts.some((hostName) => ref.endsWith(`@${hostName}`))) refs.push(ref);
-      }
+      if (native !== undefined) refs.push(...this.records.refsOnHosts(native, provenHosts));
     }
     return refs;
   }

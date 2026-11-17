@@ -8,6 +8,32 @@ import type {
 } from "../domain/manifest/native-registrations.js";
 import type { HostRefCountingTool, NativeHostTool } from "./tool-sections.js";
 
+/** What a clean announces of one tool's recorded registration. */
+export interface RegistrationPreview {
+  readonly binary: string;
+  readonly marketplaceCount: number;
+  readonly pluginRefCount: number;
+  readonly cachePaths: readonly string[];
+}
+
+/** What installation asks of the host registration to read a record it keeps. */
+export interface RegistrationRecordRules {
+  readonly pluginRefsOf: (record: RegistrationRecord) => readonly string[];
+  /** The ref a plugin has on the host, `undefined` when the alias was never registered. */
+  readonly refOf: (record: RegistrationRecord, plugin: string, alias: string) => string | undefined;
+  /** The refs, then the claimed refs, that sit on one of the host names. */
+  readonly refsOnHosts: (
+    record: Pick<RegistrationRecord, "pluginRefs"> & {
+      readonly pluginClaims?: readonly { readonly ref: string }[];
+    },
+    hostNames: readonly string[]
+  ) => string[];
+  readonly registrationPreview: (
+    record: RegistrationRecord,
+    cacheRoot: string | undefined
+  ) => RegistrationPreview;
+}
+
 /** What installation asks of a host to register marketplaces and enable refs. */
 export interface NativeHostRegistration {
   execute<M extends RegistrationSubject>(

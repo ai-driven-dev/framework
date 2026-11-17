@@ -8,7 +8,7 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
-import type { HostRegistrationOutcome } from "../../ports/native-host.js";
+import type { HostRegistrationOutcome, RegistrationRecordRules } from "../../ports/native-host.js";
 import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.js";
 
 /** The project settings files a tool shares with its host, kept in step with the manifest. */
@@ -17,7 +17,8 @@ export class SyncToolSettingsFiles {
     private readonly fs: FileReader & FileWriter,
     private readonly hasher: Hasher,
     private readonly logger: Logger,
-    private readonly buildMarketplace: BuildMarketplaceForTool
+    private readonly buildMarketplace: BuildMarketplaceForTool,
+    private readonly records: RegistrationRecordRules
   ) {}
 
   /** Every tool that registers by its own settings file, never one that needs the host's proof. */
@@ -49,9 +50,9 @@ export class SyncToolSettingsFiles {
     for (const [toolId, outcome] of outcomes) {
       const settings = tools.aiProfileIfAny(toolId)?.marketplaceRegistration();
       if (settings?.requiresNativeProof() !== true) continue;
-      const hostNames = new Set(outcome.marketplaces.map((entry) => entry.hostName));
-      const provenRefs = outcome.pluginRefs.filter((ref) =>
-        [...hostNames].some((hostName) => ref.endsWith(`@${hostName}`))
+      const provenRefs = this.records.refsOnHosts(
+        outcome,
+        outcome.marketplaces.map((entry) => entry.hostName)
       );
       if (
         provenRefs.length > 0 &&

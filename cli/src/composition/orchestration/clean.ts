@@ -28,12 +28,13 @@ export function wireClean(base: Base, inst: Installation) {
     marketplaceRegistry,
     withdrawFromHost,
   } = base;
-  const { updateGitignore } = inst;
+  const { updateGitignore, registrationRecordRules } = inst;
   const uninstallTools = new UninstallTools(
     fs,
     logger,
     manifestRepo,
-    detachProjectClaims(userManifestRepo, fs)
+    detachProjectClaims(userManifestRepo, fs),
+    registrationRecordRules
   );
   const purgeCache = new PurgeDeclaredCache(fs, logger);
   const claims = {
@@ -72,6 +73,7 @@ export function wireClean(base: Base, inst: Installation) {
     homeDir: resolveHomeDir,
     assertMcpRemovable: (plugin, tool, projectRoot) =>
       assertProjectMcpEntriesRemovable(fs, plugin, tool, projectRoot),
+    records: registrationRecordRules,
   });
   const cleanUseCase = new CleanProject(
     cleanProjectFiles,

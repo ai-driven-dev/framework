@@ -1,4 +1,10 @@
 import { homedir } from "node:os";
+import {
+  pluginRefsOf,
+  refOf,
+  refsOnHosts,
+  registrationPreview,
+} from "../contexts/host-registration/domain/registration-record.js";
 import { InstallIdeConfig } from "../contexts/installation/application/install/install-ide-config.js";
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/install-runtime-config.js";
 import { RunPostInstallPipeline } from "../contexts/installation/application/install/run-post-install-pipeline.js";
@@ -14,6 +20,7 @@ import { UpdateGitignore } from "../contexts/installation/application/update-git
 import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";
 import { BundledAssetProviderAdapter } from "../contexts/installation/infrastructure/assets/asset-loader.js";
 import type { AgentModelStore } from "../contexts/installation/ports/agent-model-store.js";
+import type { RegistrationRecordRules } from "../contexts/installation/ports/native-host.js";
 import type { PluginTranslation } from "../contexts/installation/ports/plugin/plugin-translation.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { TranslatePluginDistribution } from "../contexts/translate/application/translate-distribution.js";
@@ -23,6 +30,14 @@ import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Base } from "./shared.js";
 import { createFrameworkBuildUseCase, type FrameworkBuildDeps } from "./translate.js";
+
+/** The rules over a recorded registration, answered by the host registration that owns its meaning. */
+export const registrationRecordRules: RegistrationRecordRules = {
+  pluginRefsOf,
+  refOf,
+  refsOnHosts,
+  registrationPreview,
+};
 
 /** Builds a distribution into the aidd-owned cache, overwriting what a previous build left there. */
 export function cacheBuildFor(
@@ -145,6 +160,7 @@ export function wireInstallation(base: Base) {
     pluginListUseCase,
     builtMaterializationDeps,
     detectPluginDriftUseCase,
+    registrationRecordRules,
   };
 }
 

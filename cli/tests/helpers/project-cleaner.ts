@@ -1,3 +1,4 @@
+import { registrationRecordRules } from "../../src/composition/installation.js";
 import { ListMarketplaces } from "../../src/contexts/distribution/application/list-marketplaces.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
@@ -34,6 +35,7 @@ export function projectCleanerArgs(parts: ProjectCleanerParts): Constructed {
       homeDir: parts.homeDir ?? resolveHomeDir,
       assertMcpRemovable: (plugin, tool, projectRoot) =>
         assertProjectMcpEntriesRemovable(parts.fs, plugin, tool, projectRoot),
+      records: registrationRecordRules,
     }),
     new WithdrawFromHost(parts.fs, parts.logger, {
       activators: parts.activators ?? new Map(),

@@ -81,8 +81,12 @@ export function wirePlugin(base: Base, inst: Installation) {
     resolveMarketplaceUseCase,
     withdrawFromHost,
   } = base;
-  const { ensureBuiltMarketplaceUseCase, installRuntimeConfigUseCase, builtMaterializationDeps } =
-    inst;
+  const {
+    ensureBuiltMarketplaceUseCase,
+    installRuntimeConfigUseCase,
+    builtMaterializationDeps,
+    registrationRecordRules,
+  } = inst;
   const pluginRemoveUseCase = new RemovePlugin(
     fs,
     { project: manifestRepo, user: userManifestRepo },
@@ -97,7 +101,8 @@ export function wirePlugin(base: Base, inst: Installation) {
       userSourceReferences,
       marketplaceRegistry,
       resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),
-    })
+    }),
+    registrationRecordRules
   );
   const pluginAddUseCase = new AddPlugin(
     { fs: fs, hasher: hasher, logger: logger },

@@ -40,11 +40,11 @@ export function wireDoctor(base: Base, inst: Installation) {
     hostPluginRegistries,
     marketplaceRegistry,
   } = base;
-  const { detectPluginDriftUseCase } = inst;
+  const { detectPluginDriftUseCase, registrationRecordRules } = inst;
   const loadManifest = new LoadManifest(manifestRepo);
   const registrationOver = (manifests: LoadManifest) =>
     new CheckRegistration(
-      new ListRegisteredPlugins(manifests),
+      new ListRegisteredPlugins(manifests, registrationRecordRules),
       new ResolveBuiltMarketplaces(fs, marketplaceRegistry, userConfigDir, currentVersionProvider),
       new InspectDeclaredMarketplaces(fs, hostBinaryAvailableIn(nativePluginActivators)),
       new InspectHostRegistration(

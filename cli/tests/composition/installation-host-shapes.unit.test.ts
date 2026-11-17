@@ -12,7 +12,13 @@ import type {
   WithdrawFromHostCommand as HostWithdrawFromHostCommand,
 } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import type { NativeMarketplaceSource as HostNativeMarketplaceSource } from "../../src/contexts/host-registration/domain/native-marketplace-source.js";
-import type { RegistrationRecord as HostRegistrationRecord } from "../../src/contexts/host-registration/domain/registration-record.js";
+import type {
+  RegistrationRecord as HostRegistrationRecord,
+  pluginRefsOf,
+  refOf,
+  refsOnHosts,
+  registrationPreview,
+} from "../../src/contexts/host-registration/domain/registration-record.js";
 import type { PluginRemovalClaims } from "../../src/contexts/installation/application/removal/remove-plugin.js";
 import type {
   NativeMarketplaceSource,
@@ -25,6 +31,7 @@ import type {
   ProvenHostRefHandle,
   RegisterPluginWithHostCommand,
   RegisterPluginWithHostResult,
+  RegistrationRecordRules,
   RegistrationSubject,
   WithdrawFromHostCommand,
 } from "../../src/contexts/installation/ports/native-host.js";
@@ -60,6 +67,19 @@ describe("the record installation keeps of a registration", () => {
   it("holds what the host registration records, and nothing it would not", () => {
     expectTypeOf<RegistrationRecord>().toEqualTypeOf<HostRegistrationRecord>();
     expectTypeOf<NativeMarketplaceSource>().toEqualTypeOf<HostNativeMarketplaceSource>();
+  });
+});
+
+describe("the rules installation asks of the host registration over a record", () => {
+  it("are the host registration's own functions, member for member", () => {
+    expectTypeOf<RegistrationRecordRules["pluginRefsOf"]>().toEqualTypeOf<typeof pluginRefsOf>();
+    expectTypeOf<RegistrationRecordRules["refOf"]>().toEqualTypeOf<typeof refOf>();
+    // Spelled differently on each side, so identity fails where mutual acceptance holds.
+    expectTypeOf<RegistrationRecordRules["refsOnHosts"]>().toExtend<typeof refsOnHosts>();
+    expectTypeOf<typeof refsOnHosts>().toExtend<RegistrationRecordRules["refsOnHosts"]>();
+    expectTypeOf<RegistrationRecordRules["registrationPreview"]>().toEqualTypeOf<
+      typeof registrationPreview
+    >();
   });
 });
 

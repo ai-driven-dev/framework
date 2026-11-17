@@ -1,3 +1,4 @@
+import { registrationRecordRules } from "../../src/composition/installation.js";
 import { FindMarketplaceToRemove } from "../../src/contexts/distribution/application/remove/find-marketplace-to-remove.js";
 import { RemoveMarketplace } from "../../src/contexts/distribution/application/remove/remove-marketplace.js";
 import type { MarketplaceRegistry } from "../../src/contexts/distribution/ports/marketplace-registry.js";
@@ -16,7 +17,7 @@ export function projectMarketplaceRemover(
 ): RemoveProjectMarketplace {
   return new RemoveProjectMarketplace(
     new FindMarketplaceToRemove(registry),
-    new RemovePluginsFromMarketplace(manifestRepo, cleanup),
+    new RemovePluginsFromMarketplace(manifestRepo, cleanup, registrationRecordRules),
     new RemoveMarketplace(registry),
     (projectRoot, { nativeRefs, plugins }) =>
       cleanup.detachClaims(projectRoot, nativeRefs, plugins),

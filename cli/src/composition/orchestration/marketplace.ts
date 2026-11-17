@@ -102,7 +102,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
     refreshMarketplace,
     registerFrameworkMarketplace,
   } = base;
-  const { ensureBuiltMarketplaceUseCase } = inst;
+  const { ensureBuiltMarketplaceUseCase, registrationRecordRules } = inst;
   const nativeHostRegistrationGate = new NativeHostRegistrationGate(
     nativePluginActivators,
     hostPluginRegistries,
@@ -111,7 +111,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
   const projectCleanup = new RemoveProjectPlugin(fs, removalClaims(userManifestRepo, fs));
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace(
     new FindMarketplaceToRemove(marketplaceRegistry),
-    new RemovePluginsFromMarketplace(manifestRepo, projectCleanup),
+    new RemovePluginsFromMarketplace(manifestRepo, projectCleanup, registrationRecordRules),
     new RemoveMarketplace(marketplaceRegistry),
     detachClaimsOf(projectCleanup),
     prompter
@@ -165,7 +165,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
       registerFrameworkMarketplace,
       userManifestRepo
     ),
-    new SyncToolSettingsFiles(fs, hasher, logger, buildMarketplaceForTool),
+    new SyncToolSettingsFiles(fs, hasher, logger, buildMarketplaceForTool, registrationRecordRules),
     new ActivateNativeTools(
       new RegisterPluginWithHost(
         fs,
@@ -179,8 +179,8 @@ export function wireMarketplace(base: Base, inst: Installation) {
       ),
       buildMarketplaceForTool,
       logger,
-      FRAMEWORK_MARKETPLACE_NAME,
-      userConfigDir
+      { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: userConfigDir },
+      registrationRecordRules
     ),
     new RecordActivation(fs, hasher, sameNativeMarketplaceSource, userManifestRepo),
     new SharedFrameworkSource(

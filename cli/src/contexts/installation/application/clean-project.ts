@@ -16,7 +16,11 @@ import { aiddGitignoreEntries } from "../domain/manifest-gitignore-entries.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import { AIDD_CONFIG_FILENAME, PLUGIN_CACHE_SUBDIR } from "../domain/project-layout.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { ProjectRegistrationWithdrawal } from "../ports/native-host.js";
+import type {
+  ProjectRegistrationWithdrawal,
+  RegistrationPreview,
+  RegistrationRecordRules,
+} from "../ports/native-host.js";
 import type { ProjectPluginIntegration } from "../ports/tool-sections.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
 import {
@@ -27,7 +31,7 @@ import {
 import type { UpdateGitignore } from "./update-gitignore.js";
 
 /** What a project clean asks of the machine, answered where each one lives. */
-export interface ProjectCleanGuards {
+export interface ProjectCleanAsks {
   /** The one resolver for the OS home directory a clean ever calls. */
   readonly homeDir: () => string;
   /** Read-only proof that a plugin's MCP entries can be removed from the project. */
@@ -36,18 +40,14 @@ export interface ProjectCleanGuards {
     tool: ProjectPluginIntegration,
     projectRoot: string
   ) => Promise<void>;
+  /** What the host registration says of the registrations this project recorded. */
+  readonly records: RegistrationRecordRules;
 }
 
-export interface CleanNativeRegistrationPreview {
-  toolId: ToolId;
-  binary: string;
-  marketplaceCount: number;
-  pluginRefCount: number;
-  /** Absolute cache paths a `--force` run will attempt to purge — empty for a tool whose
-   * profile declares no `NativeActivation.pluginCacheDir`. An announcement, not a guarantee:
-   * whether a path is still there, and safe to purge, is known only once the host's CLI ran. */
-  cachePaths: readonly string[];
-}
+/** `cachePaths` are the absolute paths a `--force` run will attempt to purge — empty for a tool
+ * whose profile declares no `NativeActivation.pluginCacheDir`. An announcement, not a guarantee:
+ * whether a path is still there, and safe to purge, is known only once the host's CLI ran. */
+export type CleanNativeRegistrationPreview = RegistrationPreview & { readonly toolId: ToolId };
 
 /** What a project clean would do, read before anything is touched. */
 export interface ProjectCleanPlan {
@@ -80,14 +80,14 @@ export class CleanProject {
     private readonly manifestRepo: ManifestRepository,
     private readonly logger: Logger,
     private readonly updateGitignore: UpdateGitignore,
-    private readonly guards: ProjectCleanGuards
+    private readonly asks: ProjectCleanAsks
   ) {}
 
   /** `null` when this project installed nothing. */
   async plan(tools: ToolCatalog): Promise<ProjectCleanPlan | null> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return null;
-    const home = this.guards.homeDir();
+    const home = this.asks.homeDir();
     const toolFiles = manifest.getInstalledToolIds().map((toolId) => ({
       toolId,
       fileCount: manifest.getToolFiles(toolId).length + manifest.getMergeFiles(toolId).length,
@@ -115,7 +115,7 @@ export class CleanProject {
             overwriteEdited: force,
           });
         }
-        await this.guards.assertMcpRemovable(plugin, tool, projectRoot);
+        await this.asks.assertMcpRemovable(plugin, tool, projectRoot);
       }
     }
   }
@@ -140,7 +140,8 @@ export class CleanProject {
   private nativeRefs(manifest: Manifest): ReadonlyMap<ToolId, readonly string[]> {
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of manifest.getInstalledToolIds()) {
-      const refs = manifest.getNativeRegistrations(toolId)?.pluginRefs;
+      const recorded = manifest.getNativeRegistrations(toolId);
+      const refs = recorded === undefined ? undefined : this.asks.records.pluginRefsOf(recorded);
       if (refs !== undefined && refs.length > 0) nativeRefs.set(toolId, refs);
     }
     return nativeRefs;
@@ -193,10 +194,11 @@ export class CleanProject {
       const tool = tools.aiProfile(toolId);
       const refScopes = new Map<string, MarketplaceScope>();
       for (const plugin of manifest.getPlugins(toolId)) {
-        const hostName = registrations.marketplaces.find(
-          (m) => m.alias === plugin.marketplace
-        )?.hostName;
-        if (hostName !== undefined) refScopes.set(`${plugin.name}@${hostName}`, plugin.scope);
+        const ref =
+          plugin.marketplace === undefined
+            ? undefined
+            : this.asks.records.refOf(registrations, plugin.name, plugin.marketplace);
+        if (ref !== undefined) refScopes.set(ref, plugin.scope);
       }
       withdrawals.push({
         tool,
@@ -278,16 +280,7 @@ export class CleanProject {
       const cacheRoot = tools.isAiTool(toolId)
         ? tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(home)
         : undefined;
-      preview.push({
-        toolId,
-        binary: registrations.binary,
-        marketplaceCount: registrations.marketplaces.length,
-        pluginRefCount: registrations.pluginRefs.length,
-        cachePaths:
-          cacheRoot === undefined
-            ? []
-            : registrations.marketplaces.map((m) => join(cacheRoot, m.hostName)),
-      });
+      preview.push({ toolId, ...this.asks.records.registrationPreview(registrations, cacheRoot) });
     }
     return preview;
   }

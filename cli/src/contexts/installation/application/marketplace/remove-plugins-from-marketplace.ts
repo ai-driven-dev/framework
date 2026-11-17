@@ -4,6 +4,7 @@ import type { PluginClaims } from "../../contract/plugin-claims.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import type { ProjectIntegrationCleanup } from "../../ports/project-integration-cleanup.js";
 
 export interface RemovePluginsFromMarketplaceCommand {
@@ -30,7 +31,8 @@ interface OrphanRef {
 export class RemovePluginsFromMarketplace {
   constructor(
     private readonly manifestRepo: ManifestRepository,
-    private readonly cleanup: ProjectIntegrationCleanup
+    private readonly cleanup: ProjectIntegrationCleanup,
+    private readonly records: RegistrationRecordRules
   ) {}
 
   async execute(
@@ -41,11 +43,12 @@ export class RemovePluginsFromMarketplace {
     const orphans = this.collectOrphans(manifest, command.marketplace, command.tools);
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const { toolId, plugin } of orphans) {
-      const hostName = manifest
-        .getNativeRegistrations(toolId)
-        ?.marketplaces.find((m) => m.alias === plugin.marketplace)?.hostName;
-      if (hostName !== undefined)
-        nativeRefs.set(toolId, [...(nativeRefs.get(toolId) ?? []), `${plugin.name}@${hostName}`]);
+      const registrations = manifest.getNativeRegistrations(toolId);
+      const ref =
+        registrations === undefined
+          ? undefined
+          : this.records.refOf(registrations, plugin.name, command.marketplace);
+      if (ref !== undefined) nativeRefs.set(toolId, [...(nativeRefs.get(toolId) ?? []), ref]);
     }
     if (orphans.length === 0 || !(await command.confirm(orphans.length))) {
       return { orphanCount: orphans.length, removedCount: 0 };

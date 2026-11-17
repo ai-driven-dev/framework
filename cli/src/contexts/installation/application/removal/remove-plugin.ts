@@ -13,7 +13,7 @@ import type { NativeRegistrations } from "../../domain/manifest/native-registrat
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { HostWithdrawal } from "../../ports/native-host.js";
+import type { HostWithdrawal, RegistrationRecordRules } from "../../ports/native-host.js";
 import type {
   FlatMcpSection,
   PluginEnablementReach,
@@ -73,7 +73,8 @@ export class RemovePlugin {
     private readonly fs: FileWriter & FileReader,
     private readonly manifests: PluginRemovalManifests,
     private readonly withdrawFromHost: HostWithdrawal,
-    private readonly claims: PluginRemovalClaims
+    private readonly claims: PluginRemovalClaims,
+    private readonly records: RegistrationRecordRules
   ) {}
 
   async execute(options: PluginRemoveOptions): Promise<void> {
@@ -107,10 +108,8 @@ export class RemovePlugin {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
       const registrations = manifest.getNativeRegistrations(toolId);
       if (plugin?.marketplace === undefined || registrations === undefined) continue;
-      const hostName = registrations.marketplaces.find(
-        (m) => m.alias === plugin.marketplace
-      )?.hostName;
-      if (hostName !== undefined) nativeRefs.set(toolId, [`${pluginName}@${hostName}`]);
+      const ref = this.records.refOf(registrations, pluginName, plugin.marketplace);
+      if (ref !== undefined) nativeRefs.set(toolId, [ref]);
     }
     const removed = await this.removeFromTools(
       pluginName,

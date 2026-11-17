@@ -12,6 +12,7 @@ import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
+import type { RegistrationRecordRules } from "../ports/native-host.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
 import { requireManifest } from "./shared/require-manifest.js";
 
@@ -46,7 +47,8 @@ export class UninstallTools {
     private readonly fs: FileReader & FileWriter,
     private readonly logger: Logger,
     private readonly manifestRepo: ManifestRepository,
-    private readonly detachClaims: DetachProjectClaims
+    private readonly detachClaims: DetachProjectClaims,
+    private readonly records: RegistrationRecordRules
   ) {}
 
   async execute(command: UninstallToolsCommand): Promise<UninstallToolsResult[]> {
@@ -67,7 +69,8 @@ export class UninstallTools {
     );
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of toolIds) {
-      const refs = manifest.getNativeRegistrations(toolId)?.pluginRefs;
+      const recorded = manifest.getNativeRegistrations(toolId);
+      const refs = recorded === undefined ? undefined : this.records.pluginRefsOf(recorded);
       if (refs !== undefined && refs.length > 0) nativeRefs.set(toolId, refs);
     }
 

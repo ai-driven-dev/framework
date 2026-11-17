@@ -1,7 +1,11 @@
+import { registrationRecordRules } from "../../src/composition/installation.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { RegisterPluginWithHost } from "../../src/contexts/host-registration/application/register-plugin-with-host.js";
 import { sameNativeMarketplaceSource } from "../../src/contexts/host-registration/domain/native-marketplace-source.js";
-import { ActivateNativeTools } from "../../src/contexts/installation/application/sync/activate-native-tools.js";
+import {
+  ActivateNativeTools,
+  type ActivationMarketplace,
+} from "../../src/contexts/installation/application/sync/activate-native-tools.js";
 import { BuildMarketplaceForTool } from "../../src/contexts/installation/application/sync/build-marketplace-for-tool.js";
 import { LoadSyncContext } from "../../src/contexts/installation/application/sync/load-sync-context.js";
 import { RecordActivation } from "../../src/contexts/installation/application/sync/record-activation.js";
@@ -23,7 +27,7 @@ export interface MarketplaceSyncParts {
   hasher: ConstructorParameters<typeof RecordActivation>[1];
   logger: ConstructorParameters<typeof SharedFrameworkSource>[1];
   ensureBuilt: ConstructorParameters<typeof BuildMarketplaceForTool>[0];
-  userCacheRoot?: ConstructorParameters<typeof ActivateNativeTools>[4];
+  userCacheRoot?: ActivationMarketplace["userCacheRoot"];
   marketplaceRegisterFrameworkUseCase?: Loader[3];
   userSourceReferences?: ConstructorParameters<typeof RecordSourceReference>[4];
   currentVersionProvider?: ConstructorParameters<typeof RecordSourceReference>[1];
@@ -44,7 +48,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       parts.marketplaceRegisterFrameworkUseCase,
       parts.userManifestRepo
     ),
-    new SyncToolSettingsFiles(parts.fs, parts.hasher, parts.logger, build),
+    new SyncToolSettingsFiles(parts.fs, parts.hasher, parts.logger, build, registrationRecordRules),
     new ActivateNativeTools(
       new RegisterPluginWithHost(
         parts.fs,
@@ -58,8 +62,8 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       ),
       build,
       parts.logger,
-      FRAMEWORK_MARKETPLACE_NAME,
-      parts.userCacheRoot
+      { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: parts.userCacheRoot ?? (() => "") },
+      registrationRecordRules
     ),
     new RecordActivation(
       parts.fs,

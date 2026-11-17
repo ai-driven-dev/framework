@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import { CleanProject } from "../../../../src/contexts/installation/application/clean-project.js";
 import { UpdateGitignore } from "../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../src/contexts/installation/domain/manifest.js";
@@ -44,6 +45,7 @@ describe("CleanProject.assertRemovable", () => {
       {
         homeDir: () => "/home",
         assertMcpRemovable: async () => undefined,
+        records: registrationRecordRules,
       }
     );
 
@@ -78,6 +80,7 @@ describe("CleanProject.remove", () => {
       {
         homeDir: () => "/home",
         assertMcpRemovable: async () => undefined,
+        records: registrationRecordRules,
       }
     );
 

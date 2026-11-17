@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { registrationRecordRules } from "../../../../src/composition/installation.js";
 import {
   type DetachProjectClaims,
   UninstallTools,
@@ -37,7 +38,7 @@ function uninstaller(
   logger: Logger = new CapturingLogger(),
   detachClaims: DetachProjectClaims = noClaims
 ): UninstallTools {
-  return new UninstallTools(fs, logger, manifestRepo, detachClaims);
+  return new UninstallTools(fs, logger, manifestRepo, detachClaims, registrationRecordRules);
 }
 
 /** Records every path `deleteFile` is called with, so a test can prove where a plugin's

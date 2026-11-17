@@ -1,3 +1,4 @@
+import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { ResolveBuiltMarketplaces } from "../../../src/contexts/distribution/application/resolve-built-marketplaces.js";
 import type { MarketplaceRegistry } from "../../../src/contexts/distribution/ports/marketplace-registry.js";
 import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.js";
@@ -22,7 +23,7 @@ export function checkRegistrationOver(
   currentVersion: VersionReader
 ): CheckRegistration {
   return new CheckRegistration(
-    new ListRegisteredPlugins(loadManifest),
+    new ListRegisteredPlugins(loadManifest, registrationRecordRules),
     new ResolveBuiltMarketplaces(fs, registry, userCacheRoot, currentVersion),
     new InspectDeclaredMarketplaces(fs, hostAvailable),
     inspectHost
