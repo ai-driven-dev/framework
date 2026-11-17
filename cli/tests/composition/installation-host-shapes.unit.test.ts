@@ -1,4 +1,5 @@
 import { describe, expectTypeOf, it } from "vitest";
+import type { NativeHostRegistrationGate } from "../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import type {
   RegisterPluginWithHostCommand as HostRegisterPluginWithHostCommand,
   RegisterPluginWithHostResult as HostRegisterPluginWithHostResult,
@@ -12,12 +13,14 @@ import type {
 } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import type { NativeMarketplaceSource as HostNativeMarketplaceSource } from "../../src/contexts/host-registration/domain/native-marketplace-source.js";
 import type { RegistrationRecord as HostRegistrationRecord } from "../../src/contexts/host-registration/domain/registration-record.js";
+import type { PluginRemovalClaims } from "../../src/contexts/installation/application/removal/remove-plugin.js";
 import type {
   NativeMarketplaceSource,
   RegistrationRecord,
 } from "../../src/contexts/installation/domain/manifest/native-registrations.js";
 import type {
   ClaimedHostRef,
+  MarketplaceRemovalPlanner,
   ProjectSourceCommand,
   ProvenHostRefHandle,
   RegisterPluginWithHostCommand,
@@ -25,6 +28,7 @@ import type {
   RegistrationSubject,
   WithdrawFromHostCommand,
 } from "../../src/contexts/installation/ports/native-host.js";
+import type { pluginRemovalClaims } from "../../src/contexts/machine-claims/application/plugin-removal-claims.js";
 
 // Composition hands the host registration's objects to installation's ports. Method parameters
 // are compared bivariantly there, so these assertions are what holds the two shapes together.
@@ -56,5 +60,27 @@ describe("the record installation keeps of a registration", () => {
   it("holds what the host registration records, and nothing it would not", () => {
     expectTypeOf<RegistrationRecord>().toEqualTypeOf<HostRegistrationRecord>();
     expectTypeOf<NativeMarketplaceSource>().toEqualTypeOf<HostNativeMarketplaceSource>();
+  });
+});
+
+describe("the tool installation hands to the host and to the machine claims", () => {
+  type MachineClaims = ReturnType<typeof pluginRemovalClaims>;
+
+  it("is accepted by the catalogue removal plan", () => {
+    expectTypeOf<Parameters<MarketplaceRemovalPlanner["planMarketplaceRemoval"]>[0]>().toExtend<
+      Parameters<NativeHostRegistrationGate["planMarketplaceRemoval"]>[0]
+    >();
+  });
+
+  it("is accepted by the guard on a ref another project needs", () => {
+    expectTypeOf<Parameters<PluginRemovalClaims["guardMessage"]>[1]>().toExtend<
+      Parameters<MachineClaims["guardMessage"]>[1]
+    >();
+  });
+
+  it("is accepted by the proof of the files safe to delete", () => {
+    expectTypeOf<Parameters<PluginRemovalClaims["userFilesSafeToDelete"]>[1]>().toExtend<
+      Parameters<MachineClaims["userFilesSafeToDelete"]>[1]
+    >();
   });
 });

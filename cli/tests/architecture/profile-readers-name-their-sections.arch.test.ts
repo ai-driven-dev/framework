@@ -34,9 +34,15 @@ const NAMESPACE_IMPORT = new RegExp(
 );
 /** The catalog methods that answer a whole profile; `ToolCatalog["aiProfile"]` types it without
  * naming the profile. */
-const CATALOG_PROFILE_METHODS = "profile|aiProfile|ideProfile|aiProfileIfAny|sortedById";
+const CATALOG_PROFILE_METHODS = [
+  "profile",
+  "aiProfile",
+  "ideProfile",
+  "aiProfileIfAny",
+  "sortedById",
+];
 const CATALOG_INDEXED_ACCESS = new RegExp(
-  String.raw`\bToolCatalog\s*\[\s*["'](?:${CATALOG_PROFILE_METHODS})["']\s*\]`
+  String.raw`\bToolCatalog\s*\[\s*["'](?:${CATALOG_PROFILE_METHODS.join("|")})["']\s*\]`
 );
 
 function namesWholeProfile(text: string): boolean {
@@ -115,5 +121,14 @@ describe("a reader names the sections of a tool it reads", () => {
     expect(namesWholeProfile(listed)).toBe(true);
     expect(namesWholeProfile(sectionReExport)).toBe(false);
     expect(namesWholeProfile(idOnly)).toBe(false);
+  });
+
+  it("the guard itself: lists every catalog method that answers a whole profile", () => {
+    const answering = [
+      ...read("src/contexts/tools/contract/tool-catalog.ts").matchAll(
+        /^\s+(\w+)\([^)]*\):[^;]*\b(?:Ai|Ide)?ToolProfile\b/gm
+      ),
+    ].map((match) => match[1]);
+    expect([...new Set(answering)].sort()).toEqual([...CATALOG_PROFILE_METHODS].sort());
   });
 });
