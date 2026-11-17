@@ -7,7 +7,7 @@ import { PurgeMarketplacePlugins } from "../../src/contexts/installation/applica
 import type { ManifestRepository } from "../../src/contexts/installation/ports/manifest-repository.js";
 import type { RegistrationRecordRules } from "../../src/contexts/installation/ports/native-host.js";
 import { userScopeFilesSafeToDelete } from "../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
-import { RemoveUserMarketplace } from "../../src/orchestration/marketplace/remove-user.js";
+import { RemoveUserMarketplace } from "../../src/orchestration/marketplace/remove-user-marketplace.js";
 import { resolveHomeDir } from "../../src/shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../src/shared/ports/file-writer.js";

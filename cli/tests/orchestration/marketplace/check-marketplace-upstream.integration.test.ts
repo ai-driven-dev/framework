@@ -8,7 +8,7 @@ import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distributi
 import { ListPluginSources } from "../../../src/contexts/installation/application/marketplace/list-plugin-sources.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { CheckMarketplaceUpstream } from "../../../src/orchestration/marketplace/check.js";
+import { CheckMarketplaceUpstream } from "../../../src/orchestration/marketplace/check-marketplace-upstream.js";
 import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";

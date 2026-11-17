@@ -22,9 +22,9 @@ import { RecordSourceReference } from "../../contexts/machine-claims/application
 import { removalClaims } from "../../contexts/machine-claims/application/removal-claims.js";
 import { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.js";
 import { userScopeFilesSafeToDelete } from "../../contexts/machine-claims/application/user-scope-plugin-files.js";
-import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check.js";
-import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove.js";
-import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user.js";
+import { CheckMarketplaceUpstream } from "../../orchestration/marketplace/check-marketplace-upstream.js";
+import { RemoveProjectMarketplace } from "../../orchestration/marketplace/remove-project-marketplace.js";
+import { RemoveUserMarketplace } from "../../orchestration/marketplace/remove-user-marketplace.js";
 import { AskMarketplaceSource } from "../../orchestration/setup/ask-marketplace-source.js";
 import { RegisterMarketplace } from "../../orchestration/setup/register-marketplace.js";
 import {
