@@ -1,8 +1,8 @@
 import { GITKEEP_FILE, InstallationFile } from "../../../../../shared/domain/file.js";
 import { parseFrontmatter } from "../../../../../shared/domain/markdown.js";
 import type { Hasher } from "../../../../../shared/ports/hasher.js";
-import type { AiToolProfile } from "../../../../tools/contract/tool-profile.js";
 import type { ContentSection } from "../../../domain/canon.js";
+import type { ContentSections } from "../../../ports/tool-sections.js";
 
 /**
  * The shape every content-section answer exposes with identical arity, so this engine calls
@@ -18,7 +18,7 @@ export interface ContentSectionCapability {
 /** Per-section behaviour no uniform signature can express: which answers the profile gives for
  * the section, and how its frontmatter is converted. */
 export interface ContentSectionDescriptor<Cap extends ContentSectionCapability> {
-  answersOf(tool: AiToolProfile): Cap | null;
+  answersOf(tool: ContentSections): Cap | null;
   convertFrontmatter(
     cap: Cap,
     frontmatter: Record<string, unknown>,
@@ -27,7 +27,7 @@ export interface ContentSectionDescriptor<Cap extends ContentSectionCapability> 
 }
 
 export interface InstallContentSectionCommand {
-  toolConfig: AiToolProfile;
+  toolConfig: ContentSections;
   section: ContentSection;
   contentFiles: Map<string, string>;
 }
@@ -55,7 +55,7 @@ export class InstallContentSection<Cap extends ContentSectionCapability> {
     rawContent: string,
     section: ContentSection,
     cap: Cap,
-    toolConfig: AiToolProfile
+    toolConfig: ContentSections
   ): InstallationFile | null {
     if (!filePath.startsWith(`${section.directory}/`)) return null;
     const relativeFileName = filePath.slice(`${section.directory}/`.length);
@@ -83,7 +83,7 @@ export class InstallContentSection<Cap extends ContentSectionCapability> {
     relativeFileName: string,
     rawContent: string,
     cap: Cap,
-    toolConfig: AiToolProfile
+    toolConfig: ContentSections
   ): InstallationFile {
     const rewrittenRaw = toolConfig.rewriteContent(rawContent);
     const { frontmatter, body } = parseFrontmatter(rewrittenRaw);

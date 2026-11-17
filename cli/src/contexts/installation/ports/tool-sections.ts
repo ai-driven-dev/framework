@@ -1,4 +1,8 @@
 import type { ToolId } from "../../../shared/domain/tool.js";
+import type {
+  MarkdownSectionAnswers,
+  SkillsSectionAnswers,
+} from "../../tools/contract/tool-profile.js";
 import type { SignalDirectory } from "../../tools/contract/tool-vocabulary.js";
 
 /** A tool as far as a reader of its place in a project goes: where its files land, which of them
@@ -9,4 +13,12 @@ export interface ToolFootprint {
   readonly directory: string;
   machineLocalFiles(): readonly string[];
   signalDirectoryIn(projectRoot: string): SignalDirectory | null;
+}
+
+/** A tool as far as a reader of its content goes: the markdown and skills sections it declares,
+ * and its own conventions content is rewritten to. */
+export interface ContentSections {
+  markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
+  skillsSection(): SkillsSectionAnswers | null;
+  rewriteContent(content: string): string;
 }

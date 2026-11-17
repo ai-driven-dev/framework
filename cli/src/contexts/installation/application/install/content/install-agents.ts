@@ -1,10 +1,8 @@
 import type { InstallationFile } from "../../../../../shared/domain/file.js";
 import type { Hasher } from "../../../../../shared/ports/hasher.js";
-import type {
-  AiToolProfile,
-  MarkdownSectionAnswers,
-} from "../../../../tools/contract/tool-profile.js";
+import type { MarkdownSectionAnswers } from "../../../../tools/contract/tool-profile.js";
 import type { ContentSection } from "../../../domain/canon.js";
+import type { ContentSections } from "../../../ports/tool-sections.js";
 import { type ContentSectionDescriptor, InstallContentSection } from "./install-content-section.js";
 
 const agentsDescriptor: ContentSectionDescriptor<MarkdownSectionAnswers> = {
@@ -14,7 +12,7 @@ const agentsDescriptor: ContentSectionDescriptor<MarkdownSectionAnswers> = {
 };
 
 interface InstallAgentsCommand {
-  toolConfig: AiToolProfile;
+  toolConfig: ContentSections;
   section: ContentSection;
   contentFiles: Map<string, string>;
 }

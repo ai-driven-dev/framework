@@ -66,12 +66,6 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/host-registration/application/refresh-host-plugin.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/host-registration/application/register-plugin-with-host.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/agents/main-session-models.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/install/content/install-agents.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/install/content/install-commands.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/install/content/install-content-section.ts":
-    NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/install/content/install-rules.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/install/content/install-skills.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/install/install-runtime-config.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/materialize/flat-mcp-materializer.ts":
     NARROWS_IN_THIS_WAVE,
