@@ -6,9 +6,9 @@ import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
+import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { buildTree } from "../testing/build-tree.js";
-import { nativeOf } from "../testing/native-plugin-answers.js";
 import { translator } from "../testing/plugin-content-translator-kit.js";
 
 const SOURCE = resolve(process.cwd(), "tests/fixtures/framework-real");

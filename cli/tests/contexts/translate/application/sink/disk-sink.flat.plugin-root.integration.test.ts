@@ -3,12 +3,15 @@ import { describe, expect, it } from "vitest";
 import "../../../../../src/composition/translate.js";
 import { DiskSink } from "../../../../../src/contexts/translate/application/sink/disk-sink.js";
 import { McpConfigError } from "../../../../../src/shared/domain/errors.js";
-import type { ToolId } from "../../../../../src/shared/domain/tool.js";
+import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { declaredBuildContract } from "../../testing/registered-build-contracts.js";
+import {
+  buildContractOf,
+  declaredBuildContract,
+} from "../../testing/registered-build-contracts.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-plugin-root");
@@ -25,16 +28,15 @@ const ASSETS: AssetProvider = {
   loadSchema: () => ({}),
 };
 
-function flatTools(): ToolId[] {
+function flatTools(): AiToolId[] {
   return registeredTools()
-    .sortedById()
-    .map((profile) => profile.toolId)
+    .idsInCanonicalOrder("ai")
     .filter((id) => declaredBuildContract(id, "flat") !== null)
     .sort();
 }
 
 /** The flat tools that take a plugin's MCP servers. */
-function mcpTools(): ToolId[] {
+function mcpTools(): AiToolId[] {
   return flatTools().filter((id) => declaredBuildContract(id, "flat")?.artifacts.mcp.supported);
 }
 
@@ -61,9 +63,8 @@ function seeded(paths: readonly string[]): InMemoryFileAdapter {
   return fs;
 }
 
-async function build(tool: ToolId, fs: InMemoryFileAdapter): Promise<void> {
-  const contract = declaredBuildContract(tool, "flat");
-  if (contract === null) throw new Error(`${tool} has no flat contract`);
+async function build(tool: AiToolId, fs: InMemoryFileAdapter): Promise<void> {
+  const contract = buildContractOf(tool, "flat");
   const sink = new DiskSink(fs, { validate() {} }, ASSETS, new CapturingLogger());
   const target = { contract, mode: "flat", force: false, sourceDir: SOURCE, outDir: OUT } as const;
   await sink.prepare(target);

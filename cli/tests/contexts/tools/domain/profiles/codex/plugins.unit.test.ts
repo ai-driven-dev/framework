@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { codex } from "../../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { nativeOf } from "../../../testing/plugin-mode.js";
+import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.js";
 
 describe("codex plugins", () => {
   describe("capabilities.plugins", () => {

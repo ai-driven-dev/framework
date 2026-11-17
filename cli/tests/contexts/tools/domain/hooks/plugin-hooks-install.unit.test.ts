@@ -6,8 +6,9 @@ import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copil
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { nativeOf } from "../../../../shared/testing/native-plugin-answers.js";
 import { TOOL } from "../../testing/catalog-of.js";
-import { flatOf, hooksAcceptanceOf, nativeOf } from "../../testing/plugin-mode.js";
+import { flatOf, hooksAcceptanceOf } from "../../testing/plugin-mode.js";
 import { translatePlugin } from "../../testing/translate-plugin.js";
 
 /** A hook that arrives is not a hook that runs: every failure this covers installed cleanly

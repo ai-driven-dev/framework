@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
+import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.js";
 import { registeredAiConfig, TOOL } from "../../../testing/catalog-of.js";
-import { nativeOf } from "../../../testing/plugin-mode.js";
 import {
   pluginTreeShapeOf,
   rulesRows,

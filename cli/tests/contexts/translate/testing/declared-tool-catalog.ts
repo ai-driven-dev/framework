@@ -1,11 +1,10 @@
-import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
+import { RegisteredToolCatalog } from "../../../../src/contexts/tools/application/registered-tool-catalog.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
-import type {
-  AiToolProfile,
-  FrameworkBuildMode,
-} from "../../../../src/contexts/tools/contract/tool-profile.js";
+import type { FrameworkBuildMode } from "../../../../src/contexts/tools/contract/tool-profile.js";
+import type { BuiltToolConfig } from "../../../../src/contexts/tools/domain/profile/define-tool.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { buildContractOf } from "./registered-build-contracts.js";
 
 /** What a synthetic tool declares to the code that reads a catalog for probes and build modes. */
 export interface DeclaredTool {
@@ -16,36 +15,28 @@ export interface DeclaredTool {
 }
 
 /** A contract that stands for any declared mode: the code under test asks whether one exists. */
-function someBuildContract(): ToolBuildContract {
-  const contract = registeredTools().aiProfile(TOOL.opencode).buildContract("flat");
-  if (contract === null) throw new Error("the stand-in build contract is gone");
-  return contract;
-}
+const standInContract = () => buildContractOf(TOOL.opencode, "flat");
 
-function declaring(declared: DeclaredTool): AiToolProfile {
-  const contract = someBuildContract();
+function declaring(declared: DeclaredTool): BuiltToolConfig {
   return Object.create(registeredTools().aiProfile(declared.id), {
     distributionPaths: {
       value: (kind: "manifest" | "marketplace") =>
         (kind === "manifest" ? declared.manifestPaths : declared.marketplacePaths) ?? [],
     },
     buildContract: {
-      value: (mode: FrameworkBuildMode) => (declared.buildModes?.includes(mode) ? contract : null),
+      value: (mode: FrameworkBuildMode) =>
+        declared.buildModes?.includes(mode) ? standInContract() : null,
     },
   });
 }
 
-/** A catalog of only the given tools, in the order given for help and the registered order for
- * the rest, each declaring only what it is told. Reads delegate to the registered catalog, so
- * it answers every question the contract allows without inventing one. */
+/** The real catalog over only the given tools: help order is the order given, canonical order the
+ * registered one. Each tool declares only what it is told, so the catalog answers every question
+ * the contract allows, and refuses an id it was not given. */
 export function catalogDeclaring(tools: readonly DeclaredTool[]): ToolCatalog {
-  const profiles = new Map(tools.map((tool) => [tool.id, declaring(tool)]));
-  const inRegisteredOrder = registeredTools()
+  const byId = new Map(tools.map((tool) => [tool.id, declaring(tool)]));
+  const canonical = registeredTools()
     .idsInCanonicalOrder("ai")
-    .filter((id) => profiles.has(id));
-  return Object.create(registeredTools(), {
-    inHelpOrder: { value: () => tools.map((tool) => tool.id) },
-    idsInCanonicalOrder: { value: () => inRegisteredOrder },
-    aiProfile: { value: (id: AiToolId) => profiles.get(id) },
-  });
+    .flatMap((id) => byId.get(id) ?? []);
+  return new RegisteredToolCatalog([...byId.values()], canonical);
 }

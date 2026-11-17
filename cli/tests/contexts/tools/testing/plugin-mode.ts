@@ -1,7 +1,6 @@
 import type {
   FlatPluginAnswers,
   HooksAcceptance,
-  NativePluginAnswers,
   PluginAnswers,
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import { pluginAnswers } from "../../../../src/contexts/tools/domain/profile/plugin-answers.js";
@@ -25,12 +24,6 @@ import {
 /** The way a tool takes plugins, as its answers' own `kind` states it. */
 export function pluginModeOf(plugins: PluginAnswers): "native" | "flat" | "unsupported" {
   return plugins.kind;
-}
-
-/** A test about a native tool's answers: refuses any other kind rather than answering for it. */
-export function nativeOf(plugins: PluginAnswers | null | undefined): NativePluginAnswers {
-  if (plugins?.kind !== "native") throw new Error(`expected a native tool, got ${plugins?.kind}`);
-  return plugins;
 }
 
 /** A test about a flat tool's answers: refuses any other kind rather than answering for it. */

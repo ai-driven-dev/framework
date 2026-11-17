@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { cursor } from "../../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { nativeOf } from "../../../testing/plugin-mode.js";
+import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.js";
 
 describe("cursor plugins", () => {
   describe("capabilities.plugins", () => {
