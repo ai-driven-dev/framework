@@ -3,13 +3,9 @@
  * finding their neighbours and duplication creeps in unnoticed.
  */
 import { describe, expect, it } from "vitest";
-import { expectRatchet, sourceFiles } from "./helpers.js";
+import { COMPOSITION_DIR, expectRatchet, sourceFiles } from "./helpers.js";
 
 const MAX_FILES_PER_FOLDER = 10;
-
-/** The layout test pins this folder's exact contents: one module per context beside the root and
- * the shared module, so a count says nothing the set does not. */
-const FOLDERS_WITH_PINNED_CONTENTS: readonly string[] = ["src/composition"];
 
 /**
  * Directories over the limit, each with the count it carries and the reason it is still here.
@@ -39,7 +35,7 @@ function countsByDirectory(files: readonly string[]): Map<string, number> {
 
 function foldersOverLimit(files: readonly string[], limit: number): string[] {
   return [...countsByDirectory(files)]
-    .filter(([dir]) => !FOLDERS_WITH_PINNED_CONTENTS.includes(dir))
+    .filter(([dir]) => dir !== COMPOSITION_DIR)
     .filter(([, count]) => count > limit)
     .map(([dir]) => dir)
     .sort();

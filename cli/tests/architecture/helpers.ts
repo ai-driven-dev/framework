@@ -12,6 +12,11 @@ import {
 export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 export const SRC = join(CLI_ROOT, "src");
 
+/** The one folder the composition layout rule pins by exact contents; the folder-size rule
+ * leaves it out because a count says nothing that set does not. Deleting the layout rule leaves
+ * this folder unbounded: review owns that. */
+export const COMPOSITION_DIR = "src/composition";
+
 export const REPO_ROOT = resolve(CLI_ROOT, "..");
 
 export function canonicalPath(path: string): string {
