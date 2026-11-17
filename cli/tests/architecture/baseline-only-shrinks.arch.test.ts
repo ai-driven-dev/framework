@@ -4,7 +4,7 @@
  * is longer at the head fails. Nothing is committed beside the list, so a change cannot grow one
  * and raise a number to match: a shrink needs no second edit.
  *
- * A tolerated list is any declared `const` whose name holds `BASELINE`, plus the ones named in
+ * A tolerated list is any declared `const`, `let` or `var` whose name holds `BASELINE`, plus the ones named in
  * `OTHER_TOLERATED_LISTS`. A declaration of one that this reading cannot size fails, so a list
  * cannot go unseen. Only the top-level entries are counted, a record of arrays counting the
  * entries of its arrays. Raising a count or a method list inside an entry is held by the test
@@ -14,7 +14,11 @@
  * restart its count: keep the name, or empty the list first. `RENAMED_LISTS` is the one way out,
  * a rename that carries the old size to the new name. A list the base does not hold is not
  * compared, and one shrunk since the base is held only once the base contains the shrink.
- * A `RENAMED_LISTS` entry may go once the base holds the new name.
+ * A `RENAMED_LISTS` entry is needed only while the base holds the old list and lacks the new
+ * one, so it fails when the base already holds both (the new name would borrow a list that was
+ * there before) and when the tree no longer shows the rename. Where the base lacks the old list
+ * the entry carries nothing and is left alone, so one tree stays valid against `next` and
+ * against an integration branch that already took the rename; remove it once `next` has it.
  *
  * The base is the merge-base of `HEAD` with `ARCH_BASE_REF`, else with `origin/` and the branch a
  * pull request targets (`GITHUB_BASE_REF`), else with `origin/next`. A stacked branch names its
@@ -38,7 +42,7 @@ const OTHER_TOLERATED_LISTS: ReadonlySet<string> = new Set([
 
 /**
  * A list renamed since the base, by the id it had there, naming the id that carries its count on.
- * An entry leaves once the base holds the new name; none joins it to hide a list.
+ * An entry leaves once `next` holds the new name; none joins it to hide a list.
  */
 const RENAMED_LISTS: Readonly<Record<string, string>> = {
   "tests/architecture/ports-are-called.arch.test.ts#CAPABILITY_BASELINE":
@@ -72,13 +76,14 @@ function entriesOf(piece: string): number {
  * The first `=` after a name, then an array, an object, or a `new Set` or `new Map` of an array
  * (a Map's pairs count one each). Anything else leaves the list unsized, and the guard fails it.
  */
+const SPREAD = "...";
 const LIST_INITIALIZER = /^(?:=>|[^=])*=(?!>)\s*(?:new (?:Set|Map)(?:<[^(]*>)?\(\s*)?([[{])/;
 
-/** Entries of each tolerated list declared as `const <name> ... = ` in `text`, by name. */
+/** Entries of each tolerated list declared as `const <name> ... = ` in `text`, by name. A spread hides entries, so it leaves the list unsized. */
 function sizesByName(text: string): Map<string, number> {
   const code = codeOnly(text);
   const sizes = new Map<string, number>();
-  for (const declaration of code.matchAll(/\bconst (\w+)\b/g)) {
+  for (const declaration of code.matchAll(/\b(?:const|let|var) (\w+)\b/g)) {
     const name = declaration[1] as string;
     if (!isToleratedList(name)) continue;
     const afterName = declaration.index + declaration[0].length;
@@ -86,6 +91,7 @@ function sizesByName(text: string): Map<string, number> {
     if (!initializer) continue;
     const open = afterName + initializer[0].length - 1;
     const pieces = topLevelPieces(code.slice(open + 1, closingBracket(code, open)));
+    if (pieces.some((piece) => piece.startsWith(SPREAD))) continue;
     sizes.set(
       name,
       pieces.reduce((total, piece) => total + entriesOf(piece), 0)
@@ -101,20 +107,21 @@ function declaredListSizes(file: string, text: string): Map<string, number> {
 /** The tolerated lists a file declares at the start of a line that the sizing does not read. */
 function unsizedLists(text: string): string[] {
   const sized = sizesByName(text);
-  return [...text.matchAll(/^\s*(?:export\s+)?const (\w+)/gm)]
+  return [...text.matchAll(/^\s*(?:export\s+)?(?:const|let|var) (\w+)/gm)]
     .map((declaration) => declaration[1] as string)
     .filter((name) => isToleratedList(name) && !sized.has(name));
 }
 
 type Renames = Readonly<Record<string, string>>;
 
-/** A rename the tree no longer shows: the old name is still declared, or the new one is not. */
+/** A rename that no longer carries its list: the tree does not show it, or it borrows a list the base had. */
 function staleRenames(
   head: ReadonlyMap<string, number>,
+  base: ReadonlyMap<string, number>,
   renamed: Renames = RENAMED_LISTS
 ): string[] {
   return Object.entries(renamed).flatMap(([from, to]) =>
-    head.has(from) || !head.has(to)
+    head.has(from) || !head.has(to) || (base.has(from) && base.has(to))
       ? [`${from} -> ${to} is stale: remove it from RENAMED_LISTS`]
       : []
   );
@@ -224,7 +231,7 @@ describe("tolerated lists only shrink", () => {
     }
     const head = listsAtHead();
     const atBase = listsAtRevision(REPO_ROOT, base);
-    expect([...verdicts(head, atBase), ...staleRenames(head)]).toEqual([]);
+    expect([...verdicts(head, atBase), ...staleRenames(head, atBase)]).toEqual([]);
   });
 });
 
@@ -294,16 +301,33 @@ describe("the guard itself", () => {
     expect(verdicts(new Map([["a.ts#NEW_BASELINE", 3]]), base, renamed)).toEqual([
       "a.ts#NEW_BASELINE went from 2 to 3 entries since the base: a tolerated list only shrinks",
     ]);
-    expect(staleRenames(new Map([["a.ts#NEW_BASELINE", 2]]), renamed)).toEqual([]);
-    expect(
-      staleRenames(
-        new Map([
-          ["a.ts#OLD_BASELINE", 2],
-          ["a.ts#NEW_BASELINE", 2],
-        ]),
-        renamed
-      )
-    ).toHaveLength(1);
+  });
+
+  describe("a rename entry", () => {
+    const renamed = { "a.ts#OLD_BASELINE": "a.ts#NEW_BASELINE" };
+    const sizes = (...ids: string[]) => new Map(ids.map((id) => [id, 2]));
+    const OLD = "a.ts#OLD_BASELINE";
+    const NEW = "a.ts#NEW_BASELINE";
+
+    it("is kept while the base holds the old list and lacks the new one", () => {
+      expect(staleRenames(sizes(NEW), sizes(OLD), renamed)).toEqual([]);
+    });
+
+    it("is kept where the base lacks the old list, which an integration branch may", () => {
+      expect(staleRenames(sizes(NEW), sizes(NEW), renamed)).toEqual([]);
+    });
+
+    it("is stale when the base held both lists, the new name borrowing one that was there", () => {
+      expect(staleRenames(sizes(NEW), sizes(OLD, NEW), renamed)).toHaveLength(1);
+    });
+
+    it("is stale when the head still declares the old list", () => {
+      expect(staleRenames(sizes(OLD, NEW), sizes(OLD), renamed)).toHaveLength(1);
+    });
+
+    it("is stale when the head lacks the new list", () => {
+      expect(staleRenames(sizes(), sizes(OLD), renamed)).toHaveLength(1);
+    });
   });
 
   it("sees a list in the forms the tree declares one", () => {
@@ -314,6 +338,16 @@ describe("the guard itself", () => {
       )
     ).toBe(2);
     expect(list("const A_BASELINE = [/['`]/, /x/];").get("a.ts#A_BASELINE")).toBe(2);
+  });
+
+  it("leaves a list unsized when a spread hides its entries", () => {
+    expect(unsizedLists("const A_BASELINE = [...ROWS];")).toEqual(["A_BASELINE"]);
+    expect(unsizedLists("const A_BASELINE = [{ a: 1 }, ...ROWS];")).toEqual(["A_BASELINE"]);
+  });
+
+  it("reads a list declared with let or var as it reads a const", () => {
+    expect(list("let A_BASELINE = ['a'];\nvar B_BASELINE = ['a', 'b'];").size).toBe(2);
+    expect(unsizedLists("let A_BASELINE = compute();")).toEqual(["A_BASELINE"]);
   });
 
   it("names a declared list it cannot size", () => {
