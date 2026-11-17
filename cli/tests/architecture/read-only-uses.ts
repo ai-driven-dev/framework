@@ -3,10 +3,9 @@
  * appear only as:
  * - the receiver of a read member (`READ_MEMBERS`) that is not itself assigned, deleted or counted;
  * - an element read through a field (`LIST[key]?.count`);
- * - the argument of `Object.keys`, `Object.values` or `Object.entries`;
+ * - the argument of `Object.keys` or `Object.entries`;
  * - the iterable of a `for...of`, or a spread inside an array literal;
- * - an argument to `expect`, to a function the file declares, or to one it imports from a
- *   relative module.
+ * - an argument to one of `READING_CALLEES`.
  *
  * Any other appearance counts as a use beyond reading, so a way of changing a list nobody thought
  * of is refused by default. A cast, a non-null assertion and parentheses are looked through.
@@ -15,7 +14,6 @@
 import {
   type Identifier,
   isArrayLiteralExpression,
-  isArrowFunction,
   isAsExpression,
   isAssignmentOperator,
   isBinaryExpression,
@@ -23,11 +21,7 @@ import {
   isDeleteExpression,
   isElementAccessExpression,
   isForOfStatement,
-  isFunctionDeclaration,
-  isFunctionExpression,
   isIdentifier,
-  isImportDeclaration,
-  isNamedImports,
   isNonNullExpression,
   isParenthesizedExpression,
   isPostfixUnaryExpression,
@@ -36,35 +30,22 @@ import {
   isSatisfiesExpression,
   isShorthandPropertyAssignment,
   isSpreadElement,
-  isStringLiteral,
-  isVariableDeclaration,
   type Node,
   type SourceFile,
   SyntaxKind,
 } from "typescript/unstable/ast";
 
-const READ_MEMBERS = new Set([
-  "includes",
-  "has",
-  "keys",
-  "values",
-  "entries",
-  "length",
-  "size",
-  "map",
-  "filter",
-  "some",
-  "every",
-  "forEach",
-  "indexOf",
-  "join",
-  "flatMap",
-  "reduce",
-]);
-const OBJECT_READERS = new Set(["keys", "values", "entries"]);
+const READ_MEMBERS = new Set(["map", "flatMap"]);
+const OBJECT_READERS = new Set(["keys", "entries"]);
 const OBJECT = "Object";
-const ASSERTION = "expect";
-const RELATIVE_MODULE_PREFIX = ".";
+/**
+ * The only functions a tolerated list may be handed to, each read-only by its body:
+ * `expectRatchet` (tests/architecture/helpers.ts) copies both lists into
+ * Sets and filters them; `transitionalDrift` (context-graph.arch.test.ts) tests membership with
+ * `in` and walks the record with `Object.entries`. A name is trusted, its body is not re-checked:
+ * a same-named function written elsewhere to change the list is a limit.
+ */
+const READING_CALLEES = new Set(["expectRatchet", "transitionalDrift"]);
 
 function walk(node: Node, visit: (node: Node) => void): void {
   visit(node);
@@ -139,14 +120,12 @@ function isObjectReader(callee: Node): boolean {
   );
 }
 
-function isArgumentOfReader(use: Node, callables: ReadonlySet<string>): boolean {
+function isArgumentOfReader(use: Node): boolean {
   const call = use.parent;
   if (!(isCallExpression(call) && call.arguments.some((argument) => argument === use)))
     return false;
   const callee = call.expression;
-  return isIdentifier(callee)
-    ? callee.text === ASSERTION || callables.has(callee.text)
-    : isObjectReader(callee);
+  return isIdentifier(callee) ? READING_CALLEES.has(callee.text) : isObjectReader(callee);
 }
 
 function isIteratedOrSpread(use: Node): boolean {
@@ -157,12 +136,12 @@ function isIteratedOrSpread(use: Node): boolean {
   );
 }
 
-function isReadUse(reference: Node, callables: ReadonlySet<string>): boolean {
+function isReadUse(reference: Node): boolean {
   const use = outermost(reference);
   return (
     isReadMember(use) ||
     isElementReadThroughField(use) ||
-    isArgumentOfReader(use, callables) ||
+    isArgumentOfReader(use) ||
     isIteratedOrSpread(use)
   );
 }
@@ -176,51 +155,14 @@ function isReference(identifier: Identifier): boolean {
   return !labels && !picks;
 }
 
-function importsFromRelativeModule(node: Node): string[] {
-  if (!(isImportDeclaration(node) && isStringLiteral(node.moduleSpecifier))) return [];
-  const bindings = node.importClause?.namedBindings;
-  return node.moduleSpecifier.text.startsWith(RELATIVE_MODULE_PREFIX) &&
-    bindings &&
-    isNamedImports(bindings)
-    ? bindings.elements.map((element) => element.name.text)
-    : [];
-}
-
-function declaredFunction(node: Node): string[] {
-  if (isFunctionDeclaration(node) && node.name) return [node.name.text];
-  return isVariableDeclaration(node) &&
-    isIdentifier(node.name) &&
-    node.initializer &&
-    (isArrowFunction(node.initializer) || isFunctionExpression(node.initializer))
-    ? [node.name.text]
-    : [];
-}
-
-/** The functions a call may hand a list to: declared in the file, or imported from a relative path. */
-function callablesOf(source: SourceFile): Set<string> {
-  const names = new Set<string>();
-  walk(source, (node) => {
-    for (const name of [...declaredFunction(node), ...importsFromRelativeModule(node)]) {
-      names.add(name);
-    }
-  });
-  return names;
-}
-
 /** The names `isTolerated` accepts that `source` uses in a way other than reading them. */
 export function namesUsedBeyondReading(
   source: SourceFile,
   isTolerated: (name: string) => boolean
 ): Set<string> {
-  const callables = callablesOf(source);
   const names = new Set<string>();
   walk(source, (node) => {
-    if (
-      isIdentifier(node) &&
-      isTolerated(node.text) &&
-      isReference(node) &&
-      !isReadUse(node, callables)
-    ) {
+    if (isIdentifier(node) && isTolerated(node.text) && isReference(node) && !isReadUse(node)) {
       names.add(node.text);
     }
   });
