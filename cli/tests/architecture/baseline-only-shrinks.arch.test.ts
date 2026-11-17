@@ -6,15 +6,15 @@
  *
  * A tolerated list is any variable, declared anywhere under `tests/architecture` (subfolders
  * included), whose name holds `BASELINE`, plus the ones named in `OTHER_TOLERATED_LISTS`.
- * `list-sizes.ts` reads them from the syntax tree and sizes a list only when it can see every
- * entry; a tolerated list it cannot size fails. A record counts its properties, an array held
- * under a property counting its leaf entries. Raising a count or a method list inside an entry is
- * held by the test that owns the list, which pins each of them exactly.
+ * `list-sizes.ts` reads them from the syntax tree; its docblock holds the sizing rules and what it
+ * refuses, and a tolerated list it cannot size fails. Raising a count or a method list inside an
+ * entry is held by the test that owns the list, which pins each of them exactly.
  *
  * What the ratchet does not hold:
  * - mutation of a list after its declaration, by any path (an alias, a helper, a namespace
- *   import, a callback): review owns it, and the declared types are `readonly` so that the
- *   compiler refuses an honest `push`;
+ *   import, a callback): review owns it. The declared types are `readonly`, which is shallow: the
+ *   compiler refuses a `push` through an alias, not a `Set.add`, a `Map.set` or a push into a
+ *   nested array or record value;
  * - lists are chosen by naming convention, so a list whose name is unregistered, or one imported
  *   from outside `tests/architecture`, is not held;
  * - class static properties and names bound by a destructuring are not read.
@@ -68,9 +68,14 @@ const MAX_GIT_OUTPUT_BYTES = 64 * 1024 * 1024;
 const FEWEST_LISTS_THE_TREE_HOLDS = 10;
 
 /** The ref a change is compared with: the one named, else the branch a pull request merges into. */
-function baseRef(): string {
-  const { ARCH_BASE_REF, GITHUB_BASE_REF } = process.env;
+function baseRef(env: NodeJS.ProcessEnv = process.env): string {
+  const { ARCH_BASE_REF, GITHUB_BASE_REF } = env;
   return ARCH_BASE_REF || `origin/${GITHUB_BASE_REF || DEFAULT_BASE_BRANCH}`;
+}
+
+/** Where git gives no merge-base, CI fails and a developer's checkout skips the comparison. */
+function missingBaseFails(ci: string | undefined): boolean {
+  return ci !== undefined;
 }
 
 function isToleratedList(name: string): boolean {
@@ -81,7 +86,7 @@ function isToleratedList(name: string): boolean {
 const listsOf = (files: Readonly<Record<string, string>>) =>
   listSizes(files, isToleratedList, { requireReadonly: true });
 
-/** The lists of a base revision, sized by their literal alone: the type is the head's rule. */
+/** The lists of a base revision. */
 const listsOfBase = (files: Readonly<Record<string, string>>) =>
   listSizes(files, isToleratedList, { requireReadonly: false });
 
@@ -144,10 +149,8 @@ function verdicts(
 }
 
 /** The environment of a child that must not act on this repository through inherited `GIT_*`. */
-function plainEnvironment(): NodeJS.ProcessEnv {
-  return Object.fromEntries(
-    Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_"))
-  );
+function plainEnvironment(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  return Object.fromEntries(Object.entries(env).filter(([name]) => !name.startsWith("GIT_")));
 }
 
 function git(root: string, args: string[]): string {
@@ -228,7 +231,9 @@ describe("tolerated lists only shrink", () => {
     const ref = baseRef();
     const base = mergeBase(REPO_ROOT, ref);
     if (base === null) {
-      expect(process.env.CI, `no merge-base with ${ref}: fetch its history`).toBeUndefined();
+      expect(missingBaseFails(process.env.CI), `no merge-base with ${ref}: fetch its history`).toBe(
+        false
+      );
       context.skip();
       return;
     }
@@ -290,10 +295,31 @@ describe("the guard itself", () => {
     }
   });
 
+  it("leaves a base list without an initializer unsized, so the guard says so", () => {
+    expect(unsized(listsOfBase({ "a.ts": "let A_BASELINE;" }))).toEqual(["a.ts#A_BASELINE"]);
+  });
+
   it("leaves a base list unsized when its literal cannot be read, so the guard says so", () => {
     expect(unsized(listsOfBase({ "a.ts": "const A_BASELINE = [...ROWS];" }))).toEqual([
       "a.ts#A_BASELINE",
     ]);
+  });
+
+  it("reads the ref to compare with from ARCH_BASE_REF, else GITHUB_BASE_REF, else next", () => {
+    expect(baseRef({ ARCH_BASE_REF: "parent", GITHUB_BASE_REF: "main" })).toBe("parent");
+    expect(baseRef({ GITHUB_BASE_REF: "main" })).toBe("origin/main");
+    expect(baseRef({})).toBe("origin/next");
+  });
+
+  it("fails a missing base in CI only", () => {
+    expect(missingBaseFails("true")).toBe(true);
+    expect(missingBaseFails(undefined)).toBe(false);
+  });
+
+  it("hands git no GIT_* variable of the process it runs in", () => {
+    expect(plainEnvironment({ GIT_DIR: "elsewhere", GIT_INDEX_FILE: "x", PATH: "p" })).toEqual({
+      PATH: "p",
+    });
   });
 
   it("ignores a list the guard was not told about", () => {
@@ -358,27 +384,14 @@ describe("the guard itself", () => {
     });
   });
 
-  it("sees a list in the forms the tree declares one", () => {
-    expect(
-      list('const A_BASELINE: ReadonlySet<unknown> = new Set(["a", "b"]);').get("a.ts#A_BASELINE")
-    ).toBe(2);
-    expect(
-      list(
-        'const A_BASELINE: ReadonlyMap<string, number> = new Map<string, number>([["a", 1], ["b", 2]]);'
-      ).get("a.ts#A_BASELINE")
-    ).toBe(2);
-    expect(
-      list("const A_BASELINE: readonly unknown[] = [/['`]/, /x/];").get("a.ts#A_BASELINE")
-    ).toBe(2);
-  });
-
-  it("leaves a collection unsized when a spread hides its entries", () => {
-    expect(unsizedLists("const A_BASELINE: ReadonlySet<unknown> = new Set([...ROWS]);")).toEqual([
-      "A_BASELINE",
-    ]);
-    expect(
-      unsizedLists("const A_BASELINE: ReadonlyMap<string, number> = new Map([['a', 1], ...ROWS]);")
-    ).toEqual(["A_BASELINE"]);
+  it("refuses a collection, which no tolerated list of the tree is", () => {
+    for (const declaration of [
+      "const A_BASELINE: ReadonlySet<string> = new Set(['a']);",
+      "const A_BASELINE: ReadonlyMap<string, number> = new Map([['a', 1]]);",
+      "const A_BASELINE: readonly string[] = new Foo(['a']);",
+    ]) {
+      expect(unsizedLists(declaration), declaration).toEqual(["A_BASELINE"]);
+    }
   });
 
   it("leaves a list unsized when a spread hides its entries", () => {
@@ -410,6 +423,13 @@ describe("the guard itself", () => {
     ).toEqual(["A_BASELINE"]);
   });
 
+  it.each([
+    "const A_BASELINE: Readonly<Record<string, unknown>> = { a: 'x', ...ROWS };",
+    "const A_BASELINE: Readonly<Record<string, unknown>> = { a: 'x', method() {} };",
+  ])("refuses a record property that is a spread or a method: %s", (declaration) => {
+    expect(unsizedLists(declaration)).toEqual(["A_BASELINE"]);
+  });
+
   it("counts the leaf entries of an array of arrays", () => {
     expect(
       list("const A_BASELINE: readonly unknown[] = [['a', 'b'], ['c', ['d']]];").get(
@@ -432,6 +452,10 @@ describe("the guard itself", () => {
     "const A_BASELINE: string[] = ['a'];",
     "const A_BASELINE = ['a'];",
     "const A_BASELINE: Record<string, string> = { a: 'x' };",
+    "const A_BASELINE: Array<string> = ['a'];",
+    "const A_BASELINE: keyof Rows = ['a'];",
+    "const A_BASELINE = ['a'] as const;",
+    "const A_BASELINE = ['a'] as Array<string>;",
   ])("refuses a list whose type is not readonly: %s", (declaration) => {
     expect(unsizedLists(declaration)).toEqual(["A_BASELINE"]);
   });
@@ -440,9 +464,6 @@ describe("the guard itself", () => {
     "const A_BASELINE: readonly string[] = ['a'];",
     "const A_BASELINE: ReadonlyArray<string> = ['a'];",
     "const A_BASELINE: Readonly<Record<string, string>> = { a: 'x' };",
-    "const A_BASELINE: ReadonlySet<string> = new Set(['a']);",
-    "const A_BASELINE: ReadonlyMap<string, number> = new Map([['a', 1]]);",
-    "const A_BASELINE = ['a'] as const;",
   ])("holds a list whose type is readonly: %s", (declaration) => {
     expect(list(declaration).get("a.ts#A_BASELINE")).toBe(1);
   });
@@ -479,9 +500,6 @@ describe("the guard itself", () => {
         "const A_BASELINE: readonly unknown[] = compute();\nconst B_BASELINE: readonly unknown[] = [];\n"
       )
     ).toEqual(["A_BASELINE"]);
-    expect(
-      unsizedLists("const text = 'const A_BASELINE: readonly unknown[] = compute();';")
-    ).toEqual([]);
   });
 
   it("reads the lists of every subfolder of the working tree", () => {

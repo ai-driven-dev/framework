@@ -3,35 +3,30 @@
  * it cannot size, and mutation after the declaration, by any path, is out of scope and left to
  * review.
  *
- * A list is sized when it is a `const` whose initializer is an array literal, a record literal, or
- * a `new Set` or `new Map` over an array literal, and none holds a spread. An array counts its leaf
- * entries, so an array of arrays counts the entries of the inner ones. A record counts one per
- * property, a property whose value is an array literal counting the entries of that array; any
- * other value counts one only when it is a string, a number, an object literal, or a name bound to
- * a string literal in the same file.
+ * A list is sized when it is a `const` whose initializer is an array literal or a record literal,
+ * and none holds a spread. An array counts its leaf entries, so an array of arrays counts the
+ * entries of the inner ones, and an element that is a name or a call counts as 1. A record counts
+ * one per property, a property whose value is an array literal counting the entries of that array;
+ * any other value counts one only when it is a string, a number, an object literal, or a name
+ * bound to a string literal in the same file, so a record refuses a name or a call an array
+ * accepts.
  *
- * Refused, as `null`: a list that cannot be sized cannot be held, so a non-literal initializer, a
- * `let` or `var`, a type that is not readonly (`readonly T[]`, `ReadonlyArray`, `Readonly`,
- * `ReadonlySet`, `ReadonlyMap`, or `as const`; the compiler then blocks a `push` through an alias),
- * a spread, a record value the reading cannot see into, and a name declared twice in a file. The
- * `let`, `var` and type refusals are the head's: a base revision is sized by its literal alone
- * (`requireReadonly: false`). A name bound by a destructuring is not read at all.
+ * Refused, as `null`: a non-literal initializer (a `new Set` or `new Map` included), a `let` or
+ * `var`, a type that is not `readonly T[]`, `ReadonlyArray` or `Readonly`, a spread, a record
+ * property that is a method or a spread, a record value the reading cannot see into, and a name
+ * declared twice in a file. The readonly type is shallow: it makes the compiler refuse a `push`
+ * through an alias of the list, not an `add`, a `set` or a push into a nested array or record
+ * value. A name bound by a destructuring is not read at all.
  */
 import { tmpdir } from "node:os";
 import {
   type ArrayLiteralExpression,
   type Expression,
   isArrayLiteralExpression,
-  isAsExpression,
   isIdentifier,
-  isNewExpression,
-  isNoSubstitutionTemplateLiteral,
   isNumericLiteral,
   isObjectLiteralExpression,
-  isParenthesizedExpression,
   isPropertyAssignment,
-  isSatisfiesExpression,
-  isShorthandPropertyAssignment,
   isSpreadElement,
   isStringLiteral,
   isTypeOperatorNode,
@@ -51,16 +46,13 @@ import { API } from "typescript/unstable/sync";
 export type ListSizes = Map<string, number | null>;
 
 const VIRTUAL_ROOT = `${tmpdir().replaceAll("\\", "/")}/list-sizes`;
-const SET_OR_MAP = new Set(["Set", "Map"]);
 const SINGLE_ENTRY = 1;
-const READONLY_TYPES = new Set(["Readonly", "ReadonlyArray", "ReadonlySet", "ReadonlyMap"]);
-const CONST_ASSERTION = "const";
+const READONLY_TYPES = new Set(["Readonly", "ReadonlyArray"]);
 
 export interface ListSizeOptions {
   /**
-   * Refuse a list that is not a readonly `const`. The head requires it, to keep a caller from
-   * pushing through an alias; a base revision is sized by its literal alone, so a list that was
-   * not readonly there is still held.
+   * Refuse a list that is not a readonly `const`. The head requires it; a base revision is sized
+   * by its literal alone, so a list that was not readonly there is still held.
    */
   readonly requireReadonly: boolean;
 }
@@ -71,23 +63,11 @@ interface FileScope {
   readonly stringNames: ReadonlySet<string>;
 }
 
-function unwrap(expression: Expression): Expression {
-  return isAsExpression(expression) ||
-    isSatisfiesExpression(expression) ||
-    isParenthesizedExpression(expression)
-    ? unwrap(expression.expression)
-    : expression;
-}
-
 function walk(node: Node, visit: (node: Node) => void): void {
   visit(node);
   node.forEachChild((child) => {
     walk(child, visit);
   });
-}
-
-function isStringLiteralLike(expression: Expression): boolean {
-  return isStringLiteral(expression) || isNoSubstitutionTemplateLiteral(expression);
 }
 
 function namesBoundToStrings(source: SourceFile): Set<string> {
@@ -97,7 +77,7 @@ function namesBoundToStrings(source: SourceFile): Set<string> {
       isVariableDeclaration(node) &&
       isIdentifier(node.name) &&
       node.initializer &&
-      isStringLiteralLike(unwrap(node.initializer))
+      isStringLiteral(node.initializer)
     ) {
       names.add(node.name.text);
     }
@@ -105,16 +85,11 @@ function namesBoundToStrings(source: SourceFile): Set<string> {
   return names;
 }
 
-function entriesOf(array: ArrayLiteralExpression): number | null {
-  return array.elements.some(isSpreadElement) ? null : array.elements.length;
-}
-
 function leafEntriesOf(array: ArrayLiteralExpression): number | null {
   let total = 0;
   for (const element of array.elements) {
     if (isSpreadElement(element)) return null;
-    const value = unwrap(element);
-    const leaves = isArrayLiteralExpression(value) ? leafEntriesOf(value) : SINGLE_ENTRY;
+    const leaves = isArrayLiteralExpression(element) ? leafEntriesOf(element) : SINGLE_ENTRY;
     if (leaves === null) return null;
     total += leaves;
   }
@@ -123,25 +98,18 @@ function leafEntriesOf(array: ArrayLiteralExpression): number | null {
 
 function isSeenAsOneEntry(value: Expression, scope: FileScope): boolean {
   return (
-    isStringLiteralLike(value) ||
+    isStringLiteral(value) ||
     isNumericLiteral(value) ||
     isObjectLiteralExpression(value) ||
     (isIdentifier(value) && scope.stringNames.has(value.text))
   );
 }
 
-function recordValue(property: Node): Expression | undefined {
-  if (isPropertyAssignment(property)) return unwrap(property.initializer);
-  return isShorthandPropertyAssignment(property) && isIdentifier(property.name)
-    ? property.name
-    : undefined;
-}
-
 function recordSize(properties: readonly Node[], scope: FileScope): number | null {
   let total = 0;
   for (const property of properties) {
-    const value = recordValue(property);
-    if (!value) return null;
+    if (!isPropertyAssignment(property)) return null;
+    const value = property.initializer;
     const entries = isArrayLiteralExpression(value)
       ? leafEntriesOf(value)
       : isSeenAsOneEntry(value, scope)
@@ -153,21 +121,10 @@ function recordSize(properties: readonly Node[], scope: FileScope): number | nul
   return total;
 }
 
-function collectionSize(value: Expression): number | null {
-  if (!(isNewExpression(value) && isIdentifier(value.expression))) return null;
-  const [argument] = value.arguments ?? [];
-  const array = argument && unwrap(argument);
-  return SET_OR_MAP.has(value.expression.text) && array && isArrayLiteralExpression(array)
-    ? entriesOf(array)
-    : null;
-}
-
 function sizeOf(initializer: Expression | undefined, scope: FileScope): number | null {
   if (!initializer) return null;
-  const value = unwrap(initializer);
-  if (isArrayLiteralExpression(value)) return leafEntriesOf(value);
-  if (isObjectLiteralExpression(value)) return recordSize(value.properties, scope);
-  return collectionSize(value);
+  if (isArrayLiteralExpression(initializer)) return leafEntriesOf(initializer);
+  return isObjectLiteralExpression(initializer) ? recordSize(initializer.properties, scope) : null;
 }
 
 function isReadonlyType(type: Node | undefined): boolean {
@@ -180,19 +137,9 @@ function isReadonlyType(type: Node | undefined): boolean {
   );
 }
 
-function isConstAssertion(initializer: Expression | undefined): boolean {
-  return (
-    !!initializer &&
-    isAsExpression(initializer) &&
-    isTypeReferenceNode(initializer.type) &&
-    isIdentifier(initializer.type.typeName) &&
-    initializer.type.typeName.text === CONST_ASSERTION
-  );
-}
-
 /** A list the compiler will not let a caller push to, whatever it was imported as. */
 function isReadonlyList(declaration: VariableDeclaration): boolean {
-  return isReadonlyType(declaration.type) || isConstAssertion(declaration.initializer);
+  return isReadonlyType(declaration.type);
 }
 
 function isConstDeclaration(declaration: Node): boolean {
@@ -231,7 +178,6 @@ export function listSizes(
 ): ListSizes {
   const sizes: ListSizes = new Map();
   const paths = Object.keys(files);
-  if (paths.length === 0) return sizes;
   const at = (path: string) => `${VIRTUAL_ROOT}/${path}`;
   const config = JSON.stringify({
     compilerOptions: { noLib: true, noResolve: true, types: [] },
