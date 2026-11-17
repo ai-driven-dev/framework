@@ -122,7 +122,8 @@ export function wireMarketplace(base: Base, inst: Installation) {
       fs,
       userManifestRepo,
       nativeHostRegistrationGate,
-      quietUserScopeFilesSafeToDelete(fs)
+      quietUserScopeFilesSafeToDelete(fs),
+      registrationRecordRules
     ),
     new RemoveMarketplace(marketplaceRegistry),
     resolveHomeDir()

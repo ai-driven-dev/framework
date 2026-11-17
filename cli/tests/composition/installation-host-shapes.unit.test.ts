@@ -18,6 +18,9 @@ import type {
   refOf,
   refsOnHosts,
   registrationPreview,
+  withoutClaimedRef,
+  withoutMarketplace,
+  withoutRef,
 } from "../../src/contexts/host-registration/domain/registration-record.js";
 import type { PluginRemovalClaims } from "../../src/contexts/installation/application/removal/remove-plugin.js";
 import type {
@@ -79,6 +82,13 @@ describe("the rules installation asks of the host registration over a record", (
     expectTypeOf<typeof refsOnHosts>().toExtend<RegistrationRecordRules["refsOnHosts"]>();
     expectTypeOf<RegistrationRecordRules["registrationPreview"]>().toEqualTypeOf<
       typeof registrationPreview
+    >();
+    expectTypeOf<RegistrationRecordRules["withoutRef"]>().toEqualTypeOf<typeof withoutRef>();
+    expectTypeOf<RegistrationRecordRules["withoutClaimedRef"]>().toEqualTypeOf<
+      typeof withoutClaimedRef
+    >();
+    expectTypeOf<RegistrationRecordRules["withoutMarketplace"]>().toEqualTypeOf<
+      typeof withoutMarketplace
     >();
   });
 });

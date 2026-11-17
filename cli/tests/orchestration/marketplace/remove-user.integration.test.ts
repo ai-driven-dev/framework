@@ -11,6 +11,7 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import {
   catalogOf,
@@ -20,6 +21,7 @@ import {
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { REWRITTEN_BINARY, spiedRecordRules } from "../../helpers/spy-record-rules.js";
 import { userMarketplaceRemover } from "../../helpers/user-marketplace-remover.js";
 
 const ALIAS = "project-alias";
@@ -62,6 +64,7 @@ for (const toolId of [TOOL.codex]) {
         available?: boolean;
         failOnUninstall?: boolean;
         throwOnRemove?: boolean;
+        records?: RegistrationRecordRules;
       } = {}
     ) {
       const machine = Manifest.create();
@@ -99,7 +102,8 @@ for (const toolId of [TOOL.codex]) {
           new Map([[toolId, activator]]),
           new Map([[toolId, reader]]),
           new Map([[toolId, sourceReader()]])
-        )
+        ),
+        options.records
       );
       return { repo, registry, activator, useCase };
     }
@@ -154,6 +158,20 @@ for (const toolId of [TOOL.codex]) {
       expect(f.activator.uninstalledPlugins).toEqual([REF]);
       expect(f.activator.uninstalledPluginScopes).toEqual(["user"]);
       expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
+    });
+
+    it("writes the record the host rewrote once the catalogue is withdrawn", async () => {
+      const spy = spiedRecordRules();
+      const f = await fixture(enabled(), { records: spy.rules });
+      const before = structuredClone(f.repo.getCurrent()?.getNativeRegistrations(toolId));
+
+      await f.useCase.execute(options());
+
+      expect(spy.withoutMarketplace).toHaveBeenCalledExactlyOnceWith(before, ALIAS);
+      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)).toStrictEqual({
+        ...before,
+        binary: REWRITTEN_BINARY,
+      });
     });
 
     it("removes a proven empty catalogue without inventing missing plugin claims", async () => {

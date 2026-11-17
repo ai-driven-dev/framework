@@ -4,6 +4,9 @@ import {
   refOf,
   refsOnHosts,
   registrationPreview,
+  withoutClaimedRef,
+  withoutMarketplace,
+  withoutRef,
 } from "../contexts/host-registration/domain/registration-record.js";
 import { InstallIdeConfig } from "../contexts/installation/application/install/install-ide-config.js";
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/install-runtime-config.js";
@@ -37,6 +40,9 @@ export const registrationRecordRules: RegistrationRecordRules = {
   refOf,
   refsOnHosts,
   registrationPreview,
+  withoutRef,
+  withoutClaimedRef,
+  withoutMarketplace,
 };
 
 /** Builds a distribution into the aidd-owned cache, overwriting what a previous build left there. */

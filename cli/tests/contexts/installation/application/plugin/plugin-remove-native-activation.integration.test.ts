@@ -16,6 +16,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { REWRITTEN_BINARY, spiedRecordRules } from "../../../../helpers/spy-record-rules.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
@@ -273,6 +274,42 @@ describe("RemovePlugin undoes native activation", () => {
       expect(manifest.getNativeRegistrations(claude)?.pluginRefs).toEqual([]);
     }
   );
+
+  it("writes the record the host rewrote once the project ref is detached", async () => {
+    const spy = spiedRecordRules();
+    const manifest = Manifest.create();
+    manifest.addTool(claude, "test", []);
+    await installViaModeA(manifest);
+    const before = structuredClone(manifest.getNativeRegistrations(claude));
+    const remove = pluginRemover({
+      manifestRepo: new InMemoryManifestRepository(manifest),
+      activators: new Map([[claude, new FakeHostActions({ available: true })]]),
+      hostPluginRegistries: new Map([
+        [
+          claude,
+          new FakeHostPluginRegistry({
+            location: "/host/registry",
+            refs: new Map([[REF, { enabled: true, scope: "project" }]]),
+          }),
+        ],
+      ]),
+      nativeMarketplaceSources: new Map([[claude, verifiedSourceReader()]]),
+      records: spy.rules,
+    });
+
+    await remove.execute({
+      tools: catalogOf(),
+      pluginName: PLUGIN_NAME,
+      toolIds: [claude],
+      projectRoot: PROJECT_ROOT,
+    });
+
+    expect(spy.withoutRef).toHaveBeenCalledExactlyOnceWith(before, REF);
+    expect(manifest.getNativeRegistrations(claude)).toStrictEqual({
+      ...before,
+      binary: REWRITTEN_BINARY,
+    });
+  });
 
   describe("host registry preflight preserves project state", () => {
     const invalidReadings: {

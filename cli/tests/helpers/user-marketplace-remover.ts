@@ -1,9 +1,11 @@
+import { registrationRecordRules } from "../../src/composition/installation.js";
 import { FindUserMarketplace } from "../../src/contexts/distribution/application/remove/find-user-marketplace.js";
 import { RemoveMarketplace } from "../../src/contexts/distribution/application/remove/remove-marketplace.js";
 import type { MarketplaceRegistry } from "../../src/contexts/distribution/ports/marketplace-registry.js";
 import type { NativeHostRegistrationGate } from "../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { PurgeMarketplacePlugins } from "../../src/contexts/installation/application/marketplace/purge-marketplace-plugins.js";
 import type { ManifestRepository } from "../../src/contexts/installation/ports/manifest-repository.js";
+import type { RegistrationRecordRules } from "../../src/contexts/installation/ports/native-host.js";
 import { userScopeFilesSafeToDelete } from "../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import { RemoveUserMarketplace } from "../../src/orchestration/marketplace/remove-user.js";
 import { resolveHomeDir } from "../../src/shared/infrastructure/home-dir.js";
@@ -16,12 +18,18 @@ export function userMarketplaceRemover(
   fs: FileReader & FileWriter,
   repo: ManifestRepository & Lock,
   registry: MarketplaceRegistry,
-  nativeHost: NativeHostRegistrationGate
+  nativeHost: NativeHostRegistrationGate,
+  records: RegistrationRecordRules = registrationRecordRules
 ): RemoveUserMarketplace {
   return new RemoveUserMarketplace(
     new FindUserMarketplace(registry),
-    new PurgeMarketplacePlugins(fs, repo, nativeHost, (plugin, tool, home) =>
-      userScopeFilesSafeToDelete(fs, { debug() {}, info() {}, warn() {} }, plugin, tool, home)
+    new PurgeMarketplacePlugins(
+      fs,
+      repo,
+      nativeHost,
+      (plugin, tool, home) =>
+        userScopeFilesSafeToDelete(fs, { debug() {}, info() {}, warn() {} }, plugin, tool, home),
+      records
     ),
     new RemoveMarketplace(registry),
     resolveHomeDir()

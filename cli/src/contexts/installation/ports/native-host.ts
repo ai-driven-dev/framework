@@ -16,7 +16,17 @@ export interface RegistrationPreview {
   readonly cachePaths: readonly string[];
 }
 
-/** What installation asks of the host registration to read a record it keeps. */
+/** A claim the manifest keeps on a ref: only the ref is the host's business. */
+interface RecordedClaim {
+  readonly ref: string;
+}
+
+type ClaimedRecord = RegistrationRecord & { readonly pluginClaims?: readonly RecordedClaim[] };
+
+/** The record with its claims list always written, as the manifest rewrites it. */
+type WithClaims<R> = R & { readonly pluginClaims: readonly RecordedClaim[] };
+
+/** What installation asks of the host registration to read or rewrite a record it keeps. */
 export interface RegistrationRecordRules {
   readonly pluginRefsOf: (record: RegistrationRecord) => readonly string[];
   /** The ref a plugin has on the host, `undefined` when the alias was never registered. */
@@ -32,6 +42,12 @@ export interface RegistrationRecordRules {
     record: RegistrationRecord,
     cacheRoot: string | undefined
   ) => RegistrationPreview;
+  /** The record without one ref, every other entry untouched. */
+  readonly withoutRef: <R extends RegistrationRecord>(record: R, ref: string) => R;
+  /** The record without a ref and the claim the manifest keeps on it, claims list always written. */
+  readonly withoutClaimedRef: <R extends ClaimedRecord>(record: R, ref: string) => WithClaims<R>;
+  /** The record without a marketplace, nor any ref or claim on the host name it was registered under. */
+  readonly withoutMarketplace: <R extends ClaimedRecord>(record: R, alias: string) => WithClaims<R>;
 }
 
 /** What installation asks of a host to register marketplaces and enable refs. */

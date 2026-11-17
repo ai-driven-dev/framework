@@ -56,6 +56,7 @@ export class RemovePluginsFromMarketplace {
     const removedCount = await this.removeOrphans(
       manifest,
       orphans,
+      command.marketplace,
       command.tools,
       command.projectRoot
     );
@@ -79,6 +80,7 @@ export class RemovePluginsFromMarketplace {
   private async removeOrphans(
     manifest: Manifest,
     orphans: readonly OrphanRef[],
+    marketplace: string,
     tools: ToolCatalog,
     projectRoot: string
   ): Promise<number> {
@@ -94,16 +96,12 @@ export class RemovePluginsFromMarketplace {
       await this.cleanup.removeLocalIntegration(tool, plugin, projectRoot);
       await this.cleanup.deleteLocalFiles(tool, plugin, projectRoot);
       const registrations = manifest.getNativeRegistrations(toolId);
-      const hostName = registrations?.marketplaces.find(
-        (m) => m.alias === plugin.marketplace
-      )?.hostName;
-      if (registrations !== undefined && hostName !== undefined)
-        manifest.setNativeRegistrations(toolId, {
-          ...registrations,
-          pluginRefs: registrations.pluginRefs.filter(
-            (ref) => ref !== `${plugin.name}@${hostName}`
-          ),
-        });
+      const ref =
+        registrations === undefined
+          ? undefined
+          : this.records.refOf(registrations, plugin.name, marketplace);
+      if (registrations !== undefined && ref !== undefined)
+        manifest.setNativeRegistrations(toolId, this.records.withoutRef(registrations, ref));
       manifest.removePlugin(toolId, plugin.name);
     }
     await this.manifestRepo.save(manifest);

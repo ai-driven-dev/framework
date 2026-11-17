@@ -3,7 +3,10 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { MarketplaceRemovalPlanner } from "../../ports/native-host.js";
+import type {
+  MarketplaceRemovalPlanner,
+  RegistrationRecordRules,
+} from "../../ports/native-host.js";
 import type { UserPluginFileProof } from "../../ports/user-plugin-file-proof.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 
@@ -25,7 +28,8 @@ export class PurgeMarketplacePlugins {
     private readonly fs: FileWriter,
     private readonly repo: ManifestRepository & Lock,
     private readonly nativeHost: MarketplaceRemovalPlanner,
-    private readonly proveFiles: UserPluginFileProof
+    private readonly proveFiles: UserPluginFileProof,
+    private readonly records: RegistrationRecordRules
   ) {}
 
   /** The count of plugins and host plugin references removed. */
@@ -112,18 +116,10 @@ export class PurgeMarketplacePlugins {
       manifest.removePlugin(toolId, plugin.name);
     }
     for (const { toolId, registrations, registration } of nativeCalls) {
-      manifest.setNativeRegistrations(toolId, {
-        ...registrations,
-        marketplaces: registrations.marketplaces.filter(
-          (entry) => entry.alias !== registration.alias
-        ),
-        pluginRefs: registrations.pluginRefs.filter(
-          (ref) => !ref.endsWith(`@${registration.hostName}`)
-        ),
-        pluginClaims: (registrations.pluginClaims ?? []).filter(
-          (claim) => !claim.ref.endsWith(`@${registration.hostName}`)
-        ),
-      });
+      manifest.setNativeRegistrations(
+        toolId,
+        this.records.withoutMarketplace(registrations, registration.alias)
+      );
     }
     await command.forget();
     await this.repo.save(manifest);

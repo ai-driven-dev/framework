@@ -7,6 +7,7 @@ import type { HostPluginRegistry } from "../../../../../src/contexts/host-regist
 import type { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { RegistrationRecordRules } from "../../../../../src/contexts/installation/ports/native-host.js";
 import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../../../src/shared/infrastructure/home-dir.js";
@@ -15,6 +16,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { REWRITTEN_BINARY, spiedRecordRules } from "../../../../helpers/spy-record-rules.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
@@ -46,6 +48,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
         legacy?: boolean;
         hostRegistryUnavailable?: boolean;
         hostRegistryUnreadable?: boolean;
+        records?: RegistrationRecordRules;
       } = {}
     ) {
       const refs = options.refs ?? [REF];
@@ -101,6 +104,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
           : new Map([[toolId, reader]]),
         marketplaceRegistry: new InMemoryMarketplaceRegistry(),
         userManifestRepo: repo,
+        ...(options.records === undefined ? {} : { records: options.records }),
         nativeMarketplaceSources: options.sourceUnavailable
           ? new Map()
           : new Map([[toolId, sources]]),
@@ -287,6 +291,18 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
           { ref: REF, dependents: [] },
         ]);
       }
+    });
+
+    it("writes the record the host rewrote once the claimed ref is unregistered", async () => {
+      const spy = spiedRecordRules();
+      const f = fixture({ records: spy.rules });
+      const before = structuredClone(f.machine.getNativeRegistrations(toolId));
+      await execute(f.remove, REF);
+      expect(spy.withoutClaimedRef).toHaveBeenCalledExactlyOnceWith(before, REF);
+      expect(f.repo.getCurrent()?.getNativeRegistrations(toolId)).toStrictEqual({
+        ...before,
+        binary: REWRITTEN_BINARY,
+      });
     });
 
     it("unregisters only the exact host ref and removes only its machine projection", async () => {

@@ -9,7 +9,6 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -140,13 +139,14 @@ export class RemovePlugin {
     });
     const nativeTargets = toolIds.flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
-      return (registrations?.pluginClaims ?? [])
+      if (registrations === undefined) return [];
+      return (registrations.pluginClaims ?? [])
         .filter((claim) =>
           options.pluginName.includes("@")
             ? claim.ref === options.pluginName
             : claim.ref.startsWith(`${options.pluginName}@`)
         )
-        .map((claim) => ({ toolId, registrations: registrations as NativeRegistrations, claim }));
+        .map((claim) => ({ toolId, registrations, claim }));
     });
     if (targets.length === 0 && nativeTargets.length === 0)
       throw new PluginNotFoundError(options.pluginName);
@@ -194,13 +194,10 @@ export class RemovePlugin {
     );
     for (const target of nativeRemoval) {
       this.withdrawFromHost.uninstallProven(target.proven);
-      const claims =
-        target.registrations.pluginClaims?.filter((claim) => claim.ref !== target.claim.ref) ?? [];
-      manifest.setNativeRegistrations(target.toolId, {
-        ...target.registrations,
-        pluginRefs: target.registrations.pluginRefs.filter((ref) => ref !== target.claim.ref),
-        pluginClaims: claims,
-      });
+      manifest.setNativeRegistrations(
+        target.toolId,
+        this.records.withoutClaimedRef(target.registrations, target.claim.ref)
+      );
     }
     for (const { toolId, plugin, files } of safeFiles) {
       await deletePluginFilesForTool(
@@ -251,22 +248,17 @@ export class RemovePlugin {
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, tool, projectRoot);
       await removeProjectHooks(this.fs, plugin, tool, projectRoot);
-      const hostName = registrations?.marketplaces.find(
-        (m) => m.alias === plugin.marketplace
-      )?.hostName;
-      const ref = hostName === undefined ? undefined : `${plugin.name}@${hostName}`;
+      const ref =
+        registrations === undefined || plugin.marketplace === undefined
+          ? undefined
+          : this.records.refOf(registrations, plugin.name, plugin.marketplace);
       const canDetachRef =
         confirmed === true ||
         (ref !== undefined &&
           tool.pluginEnablementIsMachineGlobal() &&
           (await this.claims.isMachineOwned(toolId, ref)));
-      if (hostName !== undefined && registrations !== undefined && canDetachRef) {
-        manifest.setNativeRegistrations(toolId, {
-          ...registrations,
-          pluginRefs: registrations.pluginRefs.filter(
-            (ref) => ref !== `${plugin.name}@${hostName}`
-          ),
-        });
+      if (ref !== undefined && registrations !== undefined && canDetachRef) {
+        manifest.setNativeRegistrations(toolId, this.records.withoutRef(registrations, ref));
       }
       manifest.removePlugin(toolId, pluginName);
       removed = true;

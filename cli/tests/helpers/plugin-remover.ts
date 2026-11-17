@@ -4,6 +4,7 @@ import type { MarketplaceRegistry } from "../../src/contexts/distribution/ports/
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import { RemovePlugin } from "../../src/contexts/installation/application/removal/remove-plugin.js";
 import type { ManifestRepository } from "../../src/contexts/installation/ports/manifest-repository.js";
+import type { RegistrationRecordRules } from "../../src/contexts/installation/ports/native-host.js";
 import { pluginRemovalClaims } from "../../src/contexts/machine-claims/application/plugin-removal-claims.js";
 import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import type { UserSourceReferences } from "../../src/contexts/machine-claims/ports/user-source-references.js";
@@ -28,6 +29,7 @@ export interface PluginRemoverParts {
   marketplaceRegistry?: MarketplaceRegistry;
   userManifestRepo?: ManifestRepository & Lock;
   nativeMarketplaceSources?: Withdrawing[2]["sources"];
+  records?: RegistrationRecordRules;
 }
 
 export function pluginRemover(parts: PluginRemoverParts): RemovePlugin {
@@ -54,6 +56,6 @@ export function pluginRemover(parts: PluginRemoverParts): RemovePlugin {
       resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
         new PurgeDeclaredCache(fs, logger).resolveCandidate(cacheRoot, relativeSegments, label),
     }),
-    registrationRecordRules
+    parts.records ?? registrationRecordRules
   );
 }
