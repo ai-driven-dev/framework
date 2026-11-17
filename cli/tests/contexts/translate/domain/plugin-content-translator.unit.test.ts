@@ -1,12 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { parseToml } from "../../../../src/contexts/tools/domain/formats/toml.js";
-import { antigravity } from "../../../../src/contexts/tools/domain/profiles/antigravity/profile.js";
-import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { vscode } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import {
   agentContent,
@@ -21,6 +14,15 @@ import {
   skillContent,
   translator,
 } from "../testing/plugin-content-translator-kit.js";
+import {
+  antigravity,
+  claude,
+  codex,
+  copilot,
+  cursor,
+  opencode,
+  vscode,
+} from "../testing/registered-profiles.js";
 
 describe("PluginContentTranslator.translate()", () => {
   it.each([

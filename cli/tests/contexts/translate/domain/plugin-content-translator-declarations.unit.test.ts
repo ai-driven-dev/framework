@@ -6,13 +6,9 @@ import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencod
 import { vscode } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
-import { TOOL } from "../../tools/testing/catalog-of.js";
-import {
-  flatPlugins,
-  nativeOf,
-  nativePlugins,
-  unsupportedPlugins,
-} from "../../tools/testing/plugin-mode.js";
+import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { flatPlugins, nativePlugins, unsupportedPlugins } from "../../tools/testing/plugin-mode.js";
+import { nativeOf } from "../testing/native-plugin-answers.js";
 import {
   distOf,
   hooksDist,

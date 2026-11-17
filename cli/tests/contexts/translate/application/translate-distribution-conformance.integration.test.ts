@@ -6,9 +6,9 @@ import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
-import { nativeOf } from "../../tools/testing/plugin-mode.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { buildTree } from "../testing/build-tree.js";
+import { nativeOf } from "../testing/native-plugin-answers.js";
 import { translator } from "../testing/plugin-content-translator-kit.js";
 
 const SOURCE = resolve(process.cwd(), "tests/fixtures/framework-real");
@@ -137,8 +137,8 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
     await seedFromDirectory(tree, SOURCE, { useAbsolutePaths: true });
   });
 
-  it.each(catalogOf().idsInCanonicalOrder("ai"))("%s", async (id) => {
-    const tool = catalogOf().aiProfile(id);
+  it.each(registeredTools().idsInCanonicalOrder("ai"))("%s", async (id) => {
+    const tool = registeredTools().aiProfile(id);
     const plugins = tool.plugins();
     if (plugins === null) return;
     const native = plugins.kind === "native";
@@ -167,12 +167,12 @@ describe("path B (install) writes what path A (disk) writes, but for what DIVERG
     expect(agreed).toBeGreaterThan(100);
   });
 
-  const manifestCases = catalogOf()
+  const manifestCases = registeredTools()
     .idsInCanonicalOrder("ai")
     .flatMap((id) => SOURCES.map((source) => [id, source.name] as const));
   it.each(manifestCases)("%s installs the manifest of a %s source", async (id, sourceName) => {
     const source = SOURCES.find((s) => s.name === sourceName) ?? SOURCES[0];
-    const tool = catalogOf().aiProfile(id);
+    const tool = registeredTools().aiProfile(id);
     const plugins = tool.plugins();
     const dist = distributionOf(tree, "aidd-vcs", source);
     const own = translator

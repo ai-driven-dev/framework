@@ -1,10 +1,10 @@
 import { pluginManifestProbes } from "../../../../src/contexts/translate/domain/plugin-format.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { registeredTools } from "../../../shared/testing/registered-tools.js";
 
 /** Where a plugin manifest can sit across the registered tools, as the composition hands them
  * to the reader. */
 export function registeredManifestProbes() {
-  return pluginManifestProbes(catalogOf());
+  return pluginManifestProbes(registeredTools());
 }
 
 /** The same places as plain paths, as the translation engine takes them. */

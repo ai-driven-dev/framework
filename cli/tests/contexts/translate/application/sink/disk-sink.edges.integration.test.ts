@@ -17,7 +17,8 @@ import type { AssetProvider } from "../../../../../src/shared/ports/asset-provid
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { WindowsListingFileAdapter } from "../../../../helpers/ports/windows-listing-file-adapter.js";
-import { registeredFlatContract, TOOL } from "../../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { declaredBuildContract } from "../../testing/registered-build-contracts.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-edges-out");
@@ -354,7 +355,7 @@ describe("a tool's own config built from a plugin's MCP servers", () => {
   it.each([TOOL.codex, TOOL.opencode, TOOL.kilo] as const)(
     "names the hook script %s's server runs by its place in the output",
     async (tool) => {
-      const contract = registeredFlatContract(tool);
+      const contract = declaredBuildContract(tool, "flat");
       if (contract === null) throw new Error(`${tool} has no flat contract`);
       const fs = seeded({
         [`${PLUGIN_SRC}/hooks/hooks.json`]: "{}",

@@ -4,16 +4,16 @@ import {
   supportedBuildTargets,
 } from "../../../../src/contexts/translate/contract/build-targets.js";
 import { distributionProbesOf } from "../../../../src/contexts/translate/domain/plugin-format.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
-import { anEmptyContract, aProfile } from "../../tools/testing/profiles.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { catalogDeclaring } from "../testing/declared-tool-catalog.js";
 
 describe("distributionProbesOf", () => {
   // Order is behaviour: the reader takes the first probe that resolves, and a bare
   // `plugin.json` at the root is satisfied by almost any directory.
   it("puts the deepest path first and a bare filename last", () => {
-    const catalog = catalogOf([
-      aProfile(TOOL.claude).withManifestProbe(["plugin.json"]).build(),
-      aProfile(TOOL.copilot).withManifestProbe([".plugin/plugin.json", ".a/b/plugin.json"]).build(),
+    const catalog = catalogDeclaring([
+      { id: TOOL.claude, manifestPaths: ["plugin.json"] },
+      { id: TOOL.copilot, manifestPaths: [".plugin/plugin.json", ".a/b/plugin.json"] },
     ]);
 
     const probes = distributionProbesOf(catalog, "manifest");
@@ -26,9 +26,9 @@ describe("distributionProbesOf", () => {
   });
 
   it("reads the kind it was asked for, and nothing from a profile that declares none", () => {
-    const catalog = catalogOf([
-      aProfile(TOOL.claude).withMarketplaceProbe(["m.json"]).build(),
-      aProfile(TOOL.cursor).build(),
+    const catalog = catalogDeclaring([
+      { id: TOOL.claude, marketplacePaths: ["m.json"] },
+      { id: TOOL.cursor },
     ]);
 
     expect(distributionProbesOf(catalog, "marketplace")).toEqual([
@@ -38,13 +38,13 @@ describe("distributionProbesOf", () => {
   });
 
   it("breaks a tie between equally deep paths in the order the tools were registered", () => {
-    const cursorFirst = catalogOf([
-      aProfile(TOOL.cursor).withManifestProbe([".cursor-plugin/plugin.json"]).build(),
-      aProfile(TOOL.claude).withManifestProbe([".claude-plugin/plugin.json"]).build(),
+    const cursorFirst = catalogDeclaring([
+      { id: TOOL.cursor, manifestPaths: [".cursor-plugin/plugin.json"] },
+      { id: TOOL.claude, manifestPaths: [".claude-plugin/plugin.json"] },
     ]);
-    const claudeFirst = catalogOf([
-      aProfile(TOOL.claude).withManifestProbe([".claude-plugin/plugin.json"]).build(),
-      aProfile(TOOL.cursor).withManifestProbe([".cursor-plugin/plugin.json"]).build(),
+    const claudeFirst = catalogDeclaring([
+      { id: TOOL.claude, manifestPaths: [".claude-plugin/plugin.json"] },
+      { id: TOOL.cursor, manifestPaths: [".cursor-plugin/plugin.json"] },
     ]);
 
     expect(distributionProbesOf(cursorFirst, "manifest").map((probe) => probe.format)).toEqual([
@@ -60,12 +60,9 @@ describe("distributionProbesOf", () => {
 
 describe("buildTargetModesOf", () => {
   it("gives a tool one pair per contract it declares, and none for what it omits", () => {
-    const catalog = catalogOf([
-      aProfile(TOOL.claude)
-        .withBuildContract("marketplace", anEmptyContract())
-        .withBuildContract("flat", anEmptyContract())
-        .build(),
-      aProfile(TOOL.opencode).withBuildContract("flat", anEmptyContract()).build(),
+    const catalog = catalogDeclaring([
+      { id: TOOL.claude, buildModes: ["marketplace", "flat"] },
+      { id: TOOL.opencode, buildModes: ["flat"] },
     ]);
 
     expect(buildTargetModesOf(catalog)).toEqual([
@@ -78,7 +75,7 @@ describe("buildTargetModesOf", () => {
 
 describe("supportedBuildTargets", () => {
   it("lists the registered targets in the shared tool order, which the usage message prints", () => {
-    expect(supportedBuildTargets(catalogOf())).toEqual([
+    expect(supportedBuildTargets(registeredTools())).toEqual([
       "claude",
       "cursor",
       "copilot",

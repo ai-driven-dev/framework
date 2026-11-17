@@ -1,17 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
-import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { REPOSITORY_ROOT } from "../../../helpers/repository-root.js";
-import { catalogOf, registeredAiConfig, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { registeredManifestPaths } from "../../translate/testing/registered-manifest-probes.js";
+import { claude, codex, copilot, cursor, kilo, opencode } from "../testing/registered-profiles.js";
 
 /**
  * Prose — a skill, an agent, a rule — is translated: frontmatter converted, paths rewritten.
@@ -27,13 +22,13 @@ describe("a plugin's executable files survive being installed", () => {
   for (const relativePath of ARTEFACTS) {
     it(`${relativePath} is not what any tool's own rewrite would make of it`, () => {
       const content = pluginFile(relativePath);
-      const rewritten = catalogOf()
+      const rewritten = registeredTools()
         .idsInCanonicalOrder("ai")
-        .map((tool) => registeredAiConfig(tool).rewriteContent(content));
+        .map((tool) => registeredTools().aiProfile(tool).rewriteContent(content));
 
       // The rewrite is the thing the translator must not apply to this file. Where a tool's
       // rewrite happens to leave it alone, that is luck; where it does not, this names it.
-      const damagedBy = catalogOf()
+      const damagedBy = registeredTools()
         .idsInCanonicalOrder("ai")
         .filter((_, index) => rewritten[index] !== content);
       expect(

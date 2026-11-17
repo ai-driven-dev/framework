@@ -1,11 +1,11 @@
-import type { AiTool, IdeToolConfig } from "../../../../src/contexts/tools/domain/profile.js";
+import type { ToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
 import {
   type PluginComponentFile,
   type PluginComponents,
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { TOOL } from "../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../shared/testing/registered-tools.js";
 import { registeredManifestPaths } from "./registered-manifest-probes.js";
 
 export const translator = new PluginContentEngine(registeredManifestPaths());
@@ -70,7 +70,7 @@ export function makeDist(
   });
 }
 
-export function pathsFor(tool: AiTool | IdeToolConfig, dist = makeDist()): string[] {
+export function pathsFor(tool: ToolProfile, dist = makeDist()): string[] {
   return translator.translate(dist, tool).map((f) => f.relativePath);
 }
 
@@ -141,15 +141,12 @@ export function hooksDist(extra: PluginComponentFile[] = []): PluginDistribution
   return distOf([...hooks], { hooks });
 }
 
-export function treeOf(
-  tool: AiTool | IdeToolConfig,
-  dist: PluginDistribution
-): Record<string, string> {
+export function treeOf(tool: ToolProfile, dist: PluginDistribution): Record<string, string> {
   return Object.fromEntries(
     translator.translate(dist, tool).map((f) => [f.relativePath, f.content])
   );
 }
 
-export function installedPathsOf(tool: AiTool | IdeToolConfig, dist: PluginDistribution): string[] {
+export function installedPathsOf(tool: ToolProfile, dist: PluginDistribution): string[] {
   return Object.keys(treeOf(tool, dist)).sort();
 }

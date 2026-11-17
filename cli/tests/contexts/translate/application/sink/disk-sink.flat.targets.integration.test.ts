@@ -16,7 +16,7 @@ import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapt
 import { FRAMEWORK_REAL } from "../../../../helpers/fixture-setup.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
 // Avoid biome noTemplateCurlyInString: split literal for the placeholder.
@@ -39,7 +39,7 @@ async function buildFlat(
 ): Promise<void> {
   const logger = new CapturingLogger();
   const useCase = createFrameworkBuildUseCase(
-    catalogOf(),
+    registeredTools(),
     {
       fs: new FileAdapter(new HasherAdapter(), logger),
       assetProvider: new BundledAssetProviderAdapter(wireTools()),

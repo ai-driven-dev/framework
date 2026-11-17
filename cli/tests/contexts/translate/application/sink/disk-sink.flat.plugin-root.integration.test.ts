@@ -7,11 +7,8 @@ import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import {
-  registeredCatalog,
-  registeredFlatContract,
-  TOOL,
-} from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { declaredBuildContract } from "../../testing/registered-build-contracts.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-plugin-root");
@@ -29,16 +26,16 @@ const ASSETS: AssetProvider = {
 };
 
 function flatTools(): ToolId[] {
-  return registeredCatalog()
+  return registeredTools()
     .sortedById()
     .map((profile) => profile.toolId)
-    .filter((id) => registeredFlatContract(id) !== null)
+    .filter((id) => declaredBuildContract(id, "flat") !== null)
     .sort();
 }
 
 /** The flat tools that take a plugin's MCP servers. */
 function mcpTools(): ToolId[] {
-  return flatTools().filter((id) => registeredFlatContract(id)?.artifacts.mcp.supported);
+  return flatTools().filter((id) => declaredBuildContract(id, "flat")?.artifacts.mcp.supported);
 }
 
 /** A plugin whose MCP server and hook name `paths`, each under the plugin root. */
@@ -65,7 +62,7 @@ function seeded(paths: readonly string[]): InMemoryFileAdapter {
 }
 
 async function build(tool: ToolId, fs: InMemoryFileAdapter): Promise<void> {
-  const contract = registeredFlatContract(tool);
+  const contract = declaredBuildContract(tool, "flat");
   if (contract === null) throw new Error(`${tool} has no flat contract`);
   const sink = new DiskSink(fs, { validate() {} }, ASSETS, new CapturingLogger());
   const target = { contract, mode: "flat", force: false, sourceDir: SOURCE, outDir: OUT } as const;

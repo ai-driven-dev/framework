@@ -6,7 +6,8 @@ import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredCatalog, registeredFlatContract } from "../../../tools/testing/catalog-of.js";
+import { registeredTools } from "../../../../shared/testing/registered-tools.js";
+import { declaredBuildContract } from "../../testing/registered-build-contracts.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-agent-path");
@@ -24,10 +25,10 @@ const ASSETS: AssetProvider = {
 
 /** The registered tools that build flat and declare an agents artifact. */
 function flatTools(): ToolId[] {
-  return registeredCatalog()
+  return registeredTools()
     .sortedById()
     .map((profile) => profile.toolId)
-    .filter((id) => registeredFlatContract(id)?.artifacts.agents.supported === true);
+    .filter((id) => declaredBuildContract(id, "flat")?.artifacts.agents.supported === true);
 }
 
 /** Where the plugin keeps its agent: at the top of `agents/`, or in a folder under it. */
@@ -58,7 +59,7 @@ function seeded(agentFile: string, withReferences: boolean): InMemoryFileAdapter
 }
 
 async function writePlugin(tool: ToolId, fs: InMemoryFileAdapter): Promise<void> {
-  const contract = registeredFlatContract(tool);
+  const contract = declaredBuildContract(tool, "flat");
   if (contract === null) throw new Error(`${tool} has no flat contract`);
   const sink = new DiskSink(fs, { validate() {} }, ASSETS, new CapturingLogger());
   const target = {

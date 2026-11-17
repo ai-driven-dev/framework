@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import { TranslatePluginDistribution } from "../../../../src/contexts/translate/application/translate-distribution.js";
-import { TOOL } from "../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../shared/testing/registered-tools.js";
 import { claudeManifestContent, makeDist } from "../testing/plugin-content-translator-kit.js";
+import { codex } from "../testing/registered-profiles.js";
 
 describe("TranslatePluginDistribution", () => {
   it("carries the source manifest a probe names to a host that reads one", () => {
