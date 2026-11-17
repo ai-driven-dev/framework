@@ -421,6 +421,28 @@ describe("createDeps", () => {
       expect(activator.enabledPlugins).toEqual([`aidd-test@${FRAMEWORK_MARKETPLACE_NAME}`]);
     });
 
+    it("leaves the recorded manifests untouched when a second sync finds the host as recorded", async () => {
+      const { base, syncSettingsUseCase } = hostedFramework();
+      await base.registerFrameworkMarketplace.execute({
+        projectRoot: root,
+        pluginSource: {
+          kind: "local",
+          path: join(process.cwd(), "tests/fixtures/framework"),
+        },
+      });
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "1.0.0", []);
+      await base.manifestRepo.save(manifest);
+      await syncSettingsUseCase.execute({ projectRoot: root, tools, enablePlugins: ["aidd-test"] });
+      const projectSaves = vi.spyOn(base.manifestRepo, "save");
+      const machineSaves = vi.spyOn(base.userManifestRepo, "save");
+
+      await syncSettingsUseCase.execute({ projectRoot: root, tools, enablePlugins: ["aidd-test"] });
+
+      expect(projectSaves).not.toHaveBeenCalled();
+      expect(machineSaves).not.toHaveBeenCalled();
+    });
+
     it("replaces a recorded source that no longer matches what the host holds", async () => {
       const { base, syncSettingsUseCase } = hostedFramework();
       await base.registerFrameworkMarketplace.execute({
