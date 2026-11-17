@@ -13,7 +13,7 @@ const INLINE_RE_EXPORT = /^export\s+(?:type\s+)?(?:\*|\{[^}]*\})\s*(?:as\s+\w+\s
 const BARE_RE_EXPORT = /^export\s+(?:type\s+)?\{[^}]*\};$/m;
 
 /** Files re-exporting a symbol they do not define. This list may only shrink. */
-const BASELINE: string[] = [];
+const BASELINE: readonly string[] = [];
 
 function reExports(source: string): boolean {
   return INLINE_RE_EXPORT.test(source) || BARE_RE_EXPORT.test(source);

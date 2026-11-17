@@ -27,7 +27,7 @@ function resolveCitation(cited: string): string {
 }
 
 /** Paths cited in prose that no longer exist. This list may only shrink. */
-const BASELINE: string[] = [];
+const BASELINE: readonly string[] = [];
 
 /**
  * Where a cited path is an instruction rather than a record. `aidd_docs/tasks/` is absent on

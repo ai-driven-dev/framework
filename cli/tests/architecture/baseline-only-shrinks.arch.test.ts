@@ -243,28 +243,28 @@ describe("the guard itself", () => {
       3
     );
     expect(
-      list("const X_BASELINE = [{ path: 'a', n: 1, tags: [1, 2] }, { path: 'b', n: 2 }];").get(
-        "a.ts#X_BASELINE"
-      )
+      list(
+        "const X_BASELINE: readonly unknown[] = [{ path: 'a', n: 1, tags: [1, 2] }, { path: 'b', n: 2 }];"
+      ).get("a.ts#X_BASELINE")
     ).toBe(2);
     expect(
       list(
         'const BASELINE: Readonly<Record<string, { count: number }>> = { "a": { count: 1 }, "b": { count: 2 } };'
       ).get("a.ts#BASELINE")
     ).toBe(2);
-    expect(list("const BASELINE: string[] = [];").get("a.ts#BASELINE")).toBe(0);
+    expect(list("const BASELINE: readonly string[] = [];").get("a.ts#BASELINE")).toBe(0);
   });
 
   it("counts the pairs of a record of arrays, and the entries of a record of strings", () => {
     expect(
-      list('const TRANSITIONAL_PAIRS = { "a->b": ["x", "y"], "c->d": ["z"] };').get(
-        "a.ts#TRANSITIONAL_PAIRS"
-      )
+      list(
+        'const TRANSITIONAL_PAIRS: Readonly<Record<string, unknown>> = { "a->b": ["x", "y"], "c->d": ["z"] };'
+      ).get("a.ts#TRANSITIONAL_PAIRS")
     ).toBe(3);
     expect(
-      list('const STORED_ANSWERS_ALLOWED = { "k1": "why, one", "k2": "why two" };').get(
-        "a.ts#STORED_ANSWERS_ALLOWED"
-      )
+      list(
+        'const STORED_ANSWERS_ALLOWED: Readonly<Record<string, unknown>> = { "k1": "why, one", "k2": "why two" };'
+      ).get("a.ts#STORED_ANSWERS_ALLOWED")
     ).toBe(2);
   });
 
@@ -331,44 +331,66 @@ describe("the guard itself", () => {
   });
 
   it("sees a list in the forms the tree declares one", () => {
-    expect(list('const A_BASELINE = new Set(["a", "b"]);').get("a.ts#A_BASELINE")).toBe(2);
     expect(
-      list('const A_BASELINE = new Map<string, number>([["a", 1], ["b", 2]]);').get(
-        "a.ts#A_BASELINE"
-      )
+      list('const A_BASELINE: ReadonlySet<unknown> = new Set(["a", "b"]);').get("a.ts#A_BASELINE")
     ).toBe(2);
-    expect(list("const A_BASELINE = [/['`]/, /x/];").get("a.ts#A_BASELINE")).toBe(2);
+    expect(
+      list(
+        'const A_BASELINE: ReadonlyMap<string, number> = new Map<string, number>([["a", 1], ["b", 2]]);'
+      ).get("a.ts#A_BASELINE")
+    ).toBe(2);
+    expect(
+      list("const A_BASELINE: readonly unknown[] = [/['`]/, /x/];").get("a.ts#A_BASELINE")
+    ).toBe(2);
   });
 
   it("leaves a collection unsized when a spread hides its entries", () => {
-    expect(unsizedLists("const A_BASELINE = new Set([...ROWS]);")).toEqual(["A_BASELINE"]);
-    expect(unsizedLists("const A_BASELINE = new Map([['a', 1], ...ROWS]);")).toEqual([
+    expect(unsizedLists("const A_BASELINE: ReadonlySet<unknown> = new Set([...ROWS]);")).toEqual([
       "A_BASELINE",
     ]);
+    expect(
+      unsizedLists("const A_BASELINE: ReadonlyMap<string, number> = new Map([['a', 1], ...ROWS]);")
+    ).toEqual(["A_BASELINE"]);
   });
 
   it("leaves a list unsized when a spread hides its entries", () => {
-    expect(unsizedLists("const A_BASELINE = [...ROWS];")).toEqual(["A_BASELINE"]);
-    expect(unsizedLists("const A_BASELINE = [{ a: 1 }, ...ROWS];")).toEqual(["A_BASELINE"]);
+    expect(unsizedLists("const A_BASELINE: readonly unknown[] = [...ROWS];")).toEqual([
+      "A_BASELINE",
+    ]);
+    expect(unsizedLists("const A_BASELINE: readonly unknown[] = [{ a: 1 }, ...ROWS];")).toEqual([
+      "A_BASELINE",
+    ]);
   });
 
   it("sizes a record value only when it can see into it", () => {
     const record =
-      'const A_BASELINE = { "a": "x", "b": 2, "c": { n: 1 }, "d": WHY, "e": ["p", "q"] };';
+      'const A_BASELINE: Readonly<Record<string, unknown>> = { "a": "x", "b": 2, "c": { n: 1 }, "d": WHY, "e": ["p", "q"] };';
 
     expect(list(`${record}\nconst WHY = "y";`).get("a.ts#A_BASELINE")).toBe(6);
     expect(
-      unsizedLists('const A_BASELINE = { "a->b": PAIRS };\nconst PAIRS = ["x", "y"];')
+      unsizedLists(
+        'const A_BASELINE: Readonly<Record<string, unknown>> = { "a->b": PAIRS };\nconst PAIRS = ["x", "y"];'
+      )
     ).toEqual(["A_BASELINE"]);
-    expect(unsizedLists('const A_BASELINE = { "a": Object.freeze(["x"]) };')).toEqual([
-      "A_BASELINE",
-    ]);
-    expect(unsizedLists('const A_BASELINE = { "a": compute() };')).toEqual(["A_BASELINE"]);
+    expect(
+      unsizedLists(
+        'const A_BASELINE: Readonly<Record<string, unknown>> = { "a": Object.freeze(["x"]) };'
+      )
+    ).toEqual(["A_BASELINE"]);
+    expect(
+      unsizedLists('const A_BASELINE: Readonly<Record<string, unknown>> = { "a": compute() };')
+    ).toEqual(["A_BASELINE"]);
   });
 
   it("counts the leaf entries of an array of arrays", () => {
-    expect(list("const A_BASELINE = [['a', 'b'], ['c', ['d']]];").get("a.ts#A_BASELINE")).toBe(4);
-    expect(unsizedLists("const A_BASELINE = [['a', ...ROWS]];")).toEqual(["A_BASELINE"]);
+    expect(
+      list("const A_BASELINE: readonly unknown[] = [['a', 'b'], ['c', ['d']]];").get(
+        "a.ts#A_BASELINE"
+      )
+    ).toBe(4);
+    expect(unsizedLists("const A_BASELINE: readonly unknown[] = [['a', ...ROWS]];")).toEqual([
+      "A_BASELINE",
+    ]);
   });
 
   it("refuses a list declared with let or var, which a later assignment can replace", () => {
@@ -378,27 +400,60 @@ describe("the guard itself", () => {
     ]);
   });
 
+  it.each([
+    "const A_BASELINE: string[] = ['a'];",
+    "const A_BASELINE = ['a'];",
+    "const A_BASELINE: Record<string, string> = { a: 'x' };",
+  ])("refuses a list whose type is not readonly: %s", (declaration) => {
+    expect(unsizedLists(declaration)).toEqual(["A_BASELINE"]);
+  });
+
+  it.each([
+    "const A_BASELINE: readonly string[] = ['a'];",
+    "const A_BASELINE: ReadonlyArray<string> = ['a'];",
+    "const A_BASELINE: Readonly<Record<string, string>> = { a: 'x' };",
+    "const A_BASELINE: ReadonlySet<string> = new Set(['a']);",
+    "const A_BASELINE: ReadonlyMap<string, number> = new Map([['a', 1]]);",
+    "const A_BASELINE = ['a'] as const;",
+  ])("holds a list whose type is readonly: %s", (declaration) => {
+    expect(list(declaration).get("a.ts#A_BASELINE")).toBe(1);
+  });
+
   it("sees a declaration wherever it sits, not only at the start of a line", () => {
-    expect(list("/** x */ const A_BASELINE = ['a'];").get("a.ts#A_BASELINE")).toBe(1);
-    expect(unsizedLists("/** x */ const A_BASELINE = Array.of('a');")).toEqual(["A_BASELINE"]);
-    expect(list('const ALPHA = "aidd",\n  A_BASELINE = ["a", "b"];').get("a.ts#A_BASELINE")).toBe(
-      2
-    );
-    expect(list("function f() { const A_BASELINE = ['a']; }").get("a.ts#A_BASELINE")).toBe(1);
+    expect(
+      list("/** x */ const A_BASELINE: readonly unknown[] = ['a'];").get("a.ts#A_BASELINE")
+    ).toBe(1);
+    expect(unsizedLists("/** x */ const A_BASELINE: readonly unknown[] = Array.of('a');")).toEqual([
+      "A_BASELINE",
+    ]);
+    expect(
+      list('const ALPHA = "aidd",\n  A_BASELINE: readonly string[] = ["a", "b"];').get(
+        "a.ts#A_BASELINE"
+      )
+    ).toBe(2);
+    expect(
+      list("function f() { const A_BASELINE: readonly unknown[] = ['a']; }").get("a.ts#A_BASELINE")
+    ).toBe(1);
   });
 
   it("fails a list it cannot tell from another, and does not read a destructured name", () => {
-    expect(unsizedLists("const A_BASELINE = ['a'];\n{ const A_BASELINE = []; }")).toEqual([
-      "A_BASELINE",
-    ]);
+    expect(
+      unsizedLists(
+        "const A_BASELINE: readonly unknown[] = ['a'];\n{ const A_BASELINE: readonly unknown[] = []; }"
+      )
+    ).toEqual(["A_BASELINE"]);
     expect(list("const { A_BASELINE } = rows;").size).toBe(0);
   });
 
   it("names a declared list it cannot size", () => {
-    expect(unsizedLists("const A_BASELINE = compute();\nconst B_BASELINE = [];\n")).toEqual([
-      "A_BASELINE",
-    ]);
-    expect(unsizedLists("const text = 'const A_BASELINE = compute();';")).toEqual([]);
+    expect(
+      unsizedLists(
+        "const A_BASELINE: readonly unknown[] = compute();\nconst B_BASELINE: readonly unknown[] = [];\n"
+      )
+    ).toEqual(["A_BASELINE"]);
+    expect(
+      unsizedLists("const text = 'const A_BASELINE: readonly unknown[] = compute();';")
+    ).toEqual([]);
   });
 
   it("reads the lists of every subfolder of the working tree", () => {
@@ -406,7 +461,7 @@ describe("the guard itself", () => {
     try {
       const folder = join(root, ARCHITECTURE_DIRECTORY, "sub");
       mkdirSync(folder, { recursive: true });
-      writeFileSync(join(folder, "y.ts"), 'const NESTED_BASELINE = ["c"];\n');
+      writeFileSync(join(folder, "y.ts"), 'const NESTED_BASELINE: readonly unknown[] = ["c"];\n');
 
       expect(Object.fromEntries(listsOnDisk(root))).toEqual({
         "tests/architecture/sub/y.ts#NESTED_BASELINE": 1,
@@ -417,7 +472,7 @@ describe("the guard itself", () => {
   });
 
   it("names the file the compiler returned no source for", () => {
-    expect(() => listsOf({ "notes.txt": "const A_BASELINE = ['a'];" })).toThrow(
+    expect(() => listsOf({ "notes.txt": "const A_BASELINE: readonly unknown[] = ['a'];" })).toThrow(
       "the compiler returned no source for notes.txt"
     );
   });
@@ -432,8 +487,8 @@ describe("the guard itself", () => {
       git(root, ["config", "user.email", "t@example.com"]);
       git(root, ["config", "user.name", "t"]);
       git(root, ["config", "commit.gpgsign", "false"]);
-      writeFileSync(file, 'const BASELINE = ["a", "b"];\n');
-      writeFileSync(nested, 'const NESTED_BASELINE = ["c"];\n');
+      writeFileSync(file, 'const BASELINE: readonly unknown[] = ["a", "b"];\n');
+      writeFileSync(nested, 'const NESTED_BASELINE: readonly unknown[] = ["c"];\n');
       git(root, ["add", "."]);
       git(root, ["commit", "-q", "-m", "base"]);
       const base = git(root, ["rev-parse", "HEAD"]).trim();

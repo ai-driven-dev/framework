@@ -45,7 +45,7 @@ function selfReentryViolations(files: readonly string[]): string[] {
 }
 
 /** Empty on purpose: a file that fails this test is fixed, never listed. */
-const BASELINE: string[] = [];
+const BASELINE: readonly string[] = [];
 
 describe("a context reaches its own interior directly, never by climbing out and back in", () => {
   it("no file re-enters its own context under its own name", () => {

@@ -14,7 +14,7 @@ import {
 } from "./helpers.js";
 
 /** Files that fail the rule today. This list may only shrink. */
-const BASELINE: string[] = [];
+const BASELINE: readonly string[] = [];
 
 /** The functional area a file belongs to. Two callers in one area are still one area. */
 function areaOf(file: string): string {

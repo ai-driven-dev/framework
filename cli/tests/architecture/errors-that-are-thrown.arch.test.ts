@@ -29,7 +29,7 @@ function orphanErrors(declared: readonly string[], thrown: ReadonlySet<string>):
 }
 
 /** Empty and staying so: an error with no thrower is a missing code path or a leftover. */
-const BASELINE: string[] = [];
+const BASELINE: readonly string[] = [];
 
 describe("the error catalog carries no class nothing throws", () => {
   it("every declared error is thrown by some production file", () => {

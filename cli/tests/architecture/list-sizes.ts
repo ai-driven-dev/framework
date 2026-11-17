@@ -11,7 +11,8 @@
  * a string literal in the same file.
  *
  * Refused, as `null`: a list that cannot be sized cannot be held, so a non-literal initializer, a
- * `let` or `var`, a spread, a record value the reading cannot see into, and a name declared twice
+ * `let` or `var`, a type that is not readonly (`readonly T[]`, `ReadonlyArray`, `Readonly`,
+ * `ReadonlySet`, `ReadonlyMap`, or `as const`; the compiler then blocks a `push` through an alias), a spread, a record value the reading cannot see into, and a name declared twice
  * in a file. A name bound by a destructuring is not read at all.
  */
 import { tmpdir } from "node:os";
@@ -31,11 +32,15 @@ import {
   isShorthandPropertyAssignment,
   isSpreadElement,
   isStringLiteral,
+  isTypeOperatorNode,
+  isTypeReferenceNode,
   isVariableDeclaration,
   isVariableDeclarationList,
   type Node,
   NodeFlags,
   type SourceFile,
+  SyntaxKind,
+  type VariableDeclaration,
 } from "typescript/unstable/ast";
 import { createVirtualFileSystem } from "typescript/unstable/fs";
 import { API } from "typescript/unstable/sync";
@@ -46,6 +51,8 @@ export type ListSizes = Map<string, number | null>;
 const VIRTUAL_ROOT = `${tmpdir().replaceAll("\\", "/")}/list-sizes`;
 const SET_OR_MAP = new Set(["Set", "Map"]);
 const SINGLE_ENTRY = 1;
+const READONLY_TYPES = new Set(["Readonly", "ReadonlyArray", "ReadonlySet", "ReadonlyMap"]);
+const CONST_ASSERTION = "const";
 
 /** What a file declares that sizing a list needs to look up. */
 interface FileScope {
@@ -152,6 +159,31 @@ function sizeOf(initializer: Expression | undefined, scope: FileScope): number |
   return collectionSize(value);
 }
 
+function isReadonlyType(type: Node | undefined): boolean {
+  if (!type) return false;
+  if (isTypeOperatorNode(type)) return type.operator === SyntaxKind.ReadonlyKeyword;
+  return (
+    isTypeReferenceNode(type) &&
+    isIdentifier(type.typeName) &&
+    READONLY_TYPES.has(type.typeName.text)
+  );
+}
+
+function isConstAssertion(initializer: Expression | undefined): boolean {
+  return (
+    !!initializer &&
+    isAsExpression(initializer) &&
+    isTypeReferenceNode(initializer.type) &&
+    isIdentifier(initializer.type.typeName) &&
+    initializer.type.typeName.text === CONST_ASSERTION
+  );
+}
+
+/** A list the compiler will not let a caller push to, whatever it was imported as. */
+function isReadonlyList(declaration: VariableDeclaration): boolean {
+  return isReadonlyType(declaration.type) || isConstAssertion(declaration.initializer);
+}
+
 function isConstDeclaration(declaration: Node): boolean {
   const list = declaration.parent;
   return !!list && isVariableDeclarationList(list) && (list.flags & NodeFlags.Const) !== 0;
@@ -169,7 +201,7 @@ function readFile(
     if (isVariableDeclaration(node)) {
       if (isIdentifier(node.name) && isTolerated(node.name.text)) {
         const id = `${file}#${node.name.text}`;
-        const alone = !sizes.has(id) && isConstDeclaration(node);
+        const alone = !sizes.has(id) && isConstDeclaration(node) && isReadonlyList(node);
         sizes.set(id, alone ? sizeOf(node.initializer, scope) : null);
       }
     }

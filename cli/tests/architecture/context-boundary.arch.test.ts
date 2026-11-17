@@ -194,7 +194,7 @@ function reachesIntoInterior(
 }
 
 /** Reaches into a context's interior today; the list may only shrink. */
-const BASELINE: string[] = [];
+const BASELINE: readonly string[] = [];
 
 /**
  * What a context publishes in `contract/` exists for a reader outside it: another context,
