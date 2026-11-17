@@ -1,7 +1,6 @@
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import type { RegistrationClaims } from "../../../host-registration/contract/native-registration.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type {
@@ -9,6 +8,7 @@ import type {
   FrameworkMarketplaceRegistrar,
   InstallationMarketplaceRegistry,
 } from "../../ports/marketplace-sources.js";
+import type { RegistrationClaims } from "../../ports/native-host.js";
 
 export interface SyncContextRequest {
   projectRoot: string;

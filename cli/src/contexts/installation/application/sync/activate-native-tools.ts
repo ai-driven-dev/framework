@@ -1,11 +1,10 @@
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { HostRegistrationOutcome } from "../../../host-registration/contract/native-registration.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
-import type { NativeHostRegistration } from "../../ports/native-host.js";
+import type { HostRegistrationOutcome, NativeHostRegistration } from "../../ports/native-host.js";
 import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.js";
 import type { SyncContext } from "./load-sync-context.js";
 

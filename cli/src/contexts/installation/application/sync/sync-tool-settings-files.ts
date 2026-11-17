@@ -4,11 +4,11 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { HostRegistrationOutcome } from "../../../host-registration/contract/native-registration.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
+import type { HostRegistrationOutcome } from "../../ports/native-host.js";
 import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.js";
 
 /** The project settings files a tool shares with its host, kept in step with the manifest. */
