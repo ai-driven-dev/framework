@@ -10,7 +10,7 @@ import {
 import { MachinePlugin } from "../testing/machine-plugin.js";
 
 function fixture(scope: "project" | "user" = "user", dependents: readonly string[] = ["/A", "/B"]) {
-  const manifest = new InMemoryMachineManifest();
+  const manifest = new InMemoryMachineManifest(TOOL.cursor);
   manifest.addPlugin(TOOL.cursor, new MachinePlugin({ name: "sample-plugin", scope, dependents }));
   return { repo: new InMemoryMachineManifestRepository(manifest), fs: new InMemoryFileAdapter() };
 }

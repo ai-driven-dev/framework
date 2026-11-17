@@ -1,26 +1,38 @@
-import { expect } from "vitest";
 import type {
   MachineManifest,
   MachineManifestRepository,
   MachineNativeRegistrations,
   MachineUserPlugin,
 } from "../../../../src/contexts/machine-claims/ports/machine-manifest.js";
+import { ToolNotInManifestError } from "../../../../src/shared/domain/errors.js";
 import type { AiToolId, ToolId } from "../../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../../src/shared/ports/lock.js";
+import {
+  InMemoryRepository,
+  loadsOnlyUnderLock,
+} from "../../../shared/testing/in-memory-repository.js";
 
 /** A registration as the record keeps it: the fields a claim reads, plus whatever else travels
  * through a rewrite untouched. */
 type RecordedRegistrations = MachineNativeRegistrations & Readonly<Record<string, unknown>>;
 
+/** The machine-wide record as the real one answers it: a tool is written to only once the record
+ * holds it. */
 export class InMemoryMachineManifest implements MachineManifest {
+  private readonly installedTools: ReadonlySet<ToolId>;
   private readonly registrations = new Map<ToolId, RecordedRegistrations>();
   private readonly plugins = new Map<string, MachineUserPlugin[]>();
+
+  constructor(...installedTools: readonly ToolId[]) {
+    this.installedTools = new Set(installedTools);
+  }
 
   getNativeRegistrations(toolId: ToolId): RecordedRegistrations | undefined {
     return this.registrations.get(toolId);
   }
 
   setNativeRegistrations(toolId: ToolId, registrations: RecordedRegistrations): void {
+    this.requireInstalled(toolId);
     this.registrations.set(toolId, registrations);
   }
 
@@ -29,63 +41,33 @@ export class InMemoryMachineManifest implements MachineManifest {
   }
 
   addPlugin(toolId: AiToolId, plugin: MachineUserPlugin): void {
+    this.requireInstalled(toolId);
     this.plugins.set(toolId, [...this.getPlugins(toolId), plugin]);
   }
 
   updatePlugin(toolId: AiToolId, plugin: MachineUserPlugin): void {
+    this.requireInstalled(toolId);
     this.plugins.set(
       toolId,
       this.getPlugins(toolId).map((held) => (held.name === plugin.name ? plugin : held))
     );
   }
-}
 
-export class InMemoryMachineManifestRepository implements MachineManifestRepository, Lock {
-  saveCount = 0;
-  private manifest: InMemoryMachineManifest | null;
-
-  constructor(seed: InMemoryMachineManifest | null = null) {
-    this.manifest = seed;
-  }
-
-  async load(): Promise<InMemoryMachineManifest | null> {
-    return this.manifest;
-  }
-
-  async save(manifest: InMemoryMachineManifest): Promise<void> {
-    this.saveCount += 1;
-    this.manifest = manifest;
-  }
-
-  withExclusiveAccess<T>(action: () => Promise<T>): Promise<T> {
-    return action();
-  }
-
-  getCurrent(): InMemoryMachineManifest | null {
-    return this.manifest;
+  private requireInstalled(toolId: ToolId): void {
+    if (!this.installedTools.has(toolId)) throw new ToolNotInManifestError(toolId);
   }
 }
+
+export class InMemoryMachineManifestRepository
+  extends InMemoryRepository<InMemoryMachineManifest>
+  implements MachineManifestRepository {}
 
 /** The repository, failing any `load` made outside its `withExclusiveAccess`. */
 export function loadingOnlyUnderLock(
   repo: InMemoryMachineManifestRepository
 ): MachineManifestRepository & Lock {
-  let entered = false;
   return {
-    load: () => {
-      expect(entered).toBe(true);
-      return repo.load();
-    },
-    save(manifest: InMemoryMachineManifest) {
-      return repo.save(manifest);
-    },
-    withExclusiveAccess: async (action) => {
-      entered = true;
-      try {
-        return await action();
-      } finally {
-        entered = false;
-      }
-    },
+    ...loadsOnlyUnderLock(repo),
+    save: (manifest: InMemoryMachineManifest) => repo.save(manifest),
   };
 }

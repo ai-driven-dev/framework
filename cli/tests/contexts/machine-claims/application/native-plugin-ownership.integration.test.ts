@@ -17,7 +17,7 @@ const TARGET = "sample-plugin@real-catalog";
 const OTHER = "sample-plugin@other-catalog";
 
 function fixture() {
-  const machine = new InMemoryMachineManifest();
+  const machine = new InMemoryMachineManifest(codex);
   machine.setNativeRegistrations(codex, {
     binary: "codex",
     marketplaces: [
@@ -46,7 +46,7 @@ describe("one project's exact native host ref claim", () => {
   });
 
   it("recognizes no claim on a registration that records none", async () => {
-    const machine = new InMemoryMachineManifest();
+    const machine = new InMemoryMachineManifest(codex);
     machine.setNativeRegistrations(codex, {
       binary: "codex",
       marketplaces: [],
