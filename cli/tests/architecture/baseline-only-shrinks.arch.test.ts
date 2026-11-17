@@ -4,21 +4,24 @@
  * is longer at the head fails. Nothing is committed beside the list, so a change cannot grow one
  * and raise a number to match: a shrink needs no second edit.
  *
- * A tolerated list is any declared `const`, `let` or `var` whose name holds `BASELINE`, plus the ones named in
- * `OTHER_TOLERATED_LISTS`. A declaration of one that this reading cannot size fails, so a list
- * cannot go unseen. Only the top-level entries are counted, a record of arrays counting the
- * entries of its arrays. Raising a count or a method list inside an entry is held by the test
- * that owns the list, which pins each of them exactly.
+ * A tolerated list is any variable, declared anywhere in an architecture file, whose name holds
+ * `BASELINE`, plus the ones named in `OTHER_TOLERATED_LISTS`. `list-sizes.ts` reads them from the
+ * syntax tree and sizes a list only when it can see every entry; any other list fails, so a list
+ * cannot go unseen. A record counts its properties, an array held under a property counting its
+ * entries. Raising a count or a method list inside an entry is held by the test that owns the
+ * list, which pins each of them exactly.
  *
  * A list non-empty at the base that is gone at the head fails, since a rename would otherwise
  * restart its count: keep the name, or empty the list first. `RENAMED_LISTS` is the one way out,
  * a rename that carries the old size to the new name. A list the base does not hold is not
  * compared, and one shrunk since the base is held only once the base contains the shrink.
  * A `RENAMED_LISTS` entry is needed only while the base holds the old list and lacks the new
- * one, so it fails when the base already holds both (the new name would borrow a list that was
- * there before) and when the tree no longer shows the rename. Where the base lacks the old list
+ * one. It is stale, and fails, when the base already holds both (the new name would borrow a
+ * list that was there before), when the tree no longer shows the rename, and when another entry
+ * names the same target (each would silence a vanished list). Where the base lacks the old list
  * the entry carries nothing and is left alone, so one tree stays valid against `next` and
- * against an integration branch that already took the rename; remove it once `next` has it.
+ * against an integration branch that already took the rename. Nothing reports such an inert
+ * entry: a person removes it once `next` has the rename.
  *
  * The base is the merge-base of `HEAD` with `ARCH_BASE_REF`, else with `origin/` and the branch a
  * pull request targets (`GITHUB_BASE_REF`), else with `origin/next`. A stacked branch names its
@@ -31,7 +34,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CLI_ROOT, REPO_ROOT, read } from "./helpers.js";
-import { closingBracket, codeOnly, topLevelPieces } from "./source-shapes.js";
+import { type ListSizes, listSizes } from "./list-sizes.js";
 
 /** Shrink-only lists whose name does not say so. Register a list here by name, never by content. */
 const OTHER_TOLERATED_LISTS: ReadonlySet<string> = new Set([
@@ -64,64 +67,39 @@ function isToleratedList(name: string): boolean {
   return name.includes("BASELINE") || OTHER_TOLERATED_LISTS.has(name);
 }
 
-/** What a piece counts for: the entries of an array held under a key, otherwise itself. */
-function entriesOf(piece: string): number {
-  const keyed = /^(?:"[^"]*"|\w+)\s*:\s*\[/.exec(piece);
-  if (!keyed) return 1;
-  const open = keyed[0].length - 1;
-  return topLevelPieces(piece.slice(open + 1, closingBracket(piece, open))).length;
+/** The lists of `files`, each sized or `null` where the reading cannot size it. */
+const listsOf = (files: Readonly<Record<string, string>>) => listSizes(files, isToleratedList);
+
+/** The lists the guard can hold, by id. */
+function sized(lists: ListSizes): Map<string, number> {
+  return new Map(
+    [...lists].flatMap(([id, size]): [string, number][] => (size === null ? [] : [[id, size]]))
+  );
 }
 
-/**
- * The first `=` after a name, then an array, an object, or a `new Set` or `new Map` of an array
- * (a Map's pairs count one each). Anything else leaves the list unsized, and the guard fails it.
- */
-const SPREAD = "...";
-const LIST_INITIALIZER = /^(?:=>|[^=])*=(?!>)\s*(?:new (?:Set|Map)(?:<[^(]*>)?\(\s*)?([[{])/;
-
-/** Entries of each tolerated list declared as `const <name> ... = ` in `text`, by name. A spread hides entries, so it leaves the list unsized. */
-function sizesByName(text: string): Map<string, number> {
-  const code = codeOnly(text);
-  const sizes = new Map<string, number>();
-  for (const declaration of code.matchAll(/\b(?:const|let|var) (\w+)\b/g)) {
-    const name = declaration[1] as string;
-    if (!isToleratedList(name)) continue;
-    const afterName = declaration.index + declaration[0].length;
-    const initializer = LIST_INITIALIZER.exec(code.slice(afterName));
-    if (!initializer) continue;
-    const open = afterName + initializer[0].length - 1;
-    const pieces = topLevelPieces(code.slice(open + 1, closingBracket(code, open)));
-    if (pieces.some((piece) => piece.startsWith(SPREAD))) continue;
-    sizes.set(
-      name,
-      pieces.reduce((total, piece) => total + entriesOf(piece), 0)
-    );
-  }
-  return sizes;
-}
-
-function declaredListSizes(file: string, text: string): Map<string, number> {
-  return new Map([...sizesByName(text)].map(([name, size]) => [`${file}#${name}`, size]));
-}
-
-/** The tolerated lists a file declares at the start of a line that the sizing does not read. */
-function unsizedLists(text: string): string[] {
-  const sized = sizesByName(text);
-  return [...text.matchAll(/^\s*(?:export\s+)?(?:const|let|var) (\w+)/gm)]
-    .map((declaration) => declaration[1] as string)
-    .filter((name) => isToleratedList(name) && !sized.has(name));
+/** The ids of the lists the guard cannot hold. */
+function unsized(lists: ListSizes): string[] {
+  return [...lists].flatMap(([id, size]) => (size === null ? [id] : []));
 }
 
 type Renames = Readonly<Record<string, string>>;
 
-/** A rename that no longer carries its list: the tree does not show it, or it borrows a list the base had. */
+/**
+ * A rename that no longer carries its list: the tree does not show it, it borrows a list the base
+ * had, or another entry names the same target and so would carry a second list onto it. An old
+ * name is a key of the record, so the same source twice is a duplicate key the compiler refuses.
+ */
 function staleRenames(
   head: ReadonlyMap<string, number>,
   base: ReadonlyMap<string, number>,
   renamed: Renames = RENAMED_LISTS
 ): string[] {
+  const targets = Object.values(renamed);
   return Object.entries(renamed).flatMap(([from, to]) =>
-    head.has(from) || !head.has(to) || (base.has(from) && base.has(to))
+    head.has(from) ||
+    !head.has(to) ||
+    (base.has(from) && base.has(to)) ||
+    targets.indexOf(to) !== targets.lastIndexOf(to)
       ? [`${from} -> ${to} is stale: remove it from RENAMED_LISTS`]
       : []
   );
@@ -166,26 +144,25 @@ function git(root: string, args: string[]): string {
   });
 }
 
-/** The sizes of the lists the architecture files hold at `revision` of the repository at `root`. */
-function listsAtRevision(root: string, revision: string): Map<string, number> {
-  const files = git(root, ["ls-tree", "--name-only", revision, `${ARCHITECTURE_DIRECTORY}/`])
+/** The lists the architecture files hold at `revision` of the repository at `root`. */
+function listsAtRevision(root: string, revision: string): ListSizes {
+  const paths = git(root, ["ls-tree", "--name-only", revision, `${ARCHITECTURE_DIRECTORY}/`])
     .split("\n")
     .filter((path) => path.endsWith(".ts"));
-  return new Map(
-    files.flatMap((path) => [
-      ...declaredListSizes(path.replace(/^cli\//, ""), git(root, ["show", `${revision}:${path}`])),
-    ])
+  return listsOf(
+    Object.fromEntries(
+      paths.map((path) => [path.replace(/^cli\//, ""), git(root, ["show", `${revision}:${path}`])])
+    )
   );
 }
 
-function listsAtHead(): Map<string, number> {
-  const directory = join(CLI_ROOT, "tests", "architecture");
-  return new Map(
-    readdirSync(directory)
-      .filter((name) => name.endsWith(".ts"))
-      .flatMap((name) => [
-        ...declaredListSizes(`tests/architecture/${name}`, read(`tests/architecture/${name}`)),
-      ])
+function listsAtHead(): ListSizes {
+  return listsOf(
+    Object.fromEntries(
+      readdirSync(join(CLI_ROOT, "tests", "architecture"))
+        .filter((name) => name.endsWith(".ts"))
+        .map((name) => [`tests/architecture/${name}`, read(`tests/architecture/${name}`)])
+    )
   );
 }
 
@@ -213,12 +190,9 @@ describe("tolerated lists only shrink", () => {
   });
 
   it("sizes every tolerated list an architecture file declares", () => {
-    const unsized = readdirSync(join(CLI_ROOT, "tests", "architecture"))
-      .filter((name) => name.endsWith(".ts"))
-      .flatMap((name) =>
-        unsizedLists(read(`tests/architecture/${name}`)).map((list) => `${name}#${list}`)
-      );
-    expect(unsized, "a list the guard cannot size is a list it cannot hold").toEqual([]);
+    expect(unsized(listsAtHead()), "a list the guard cannot size is a list it cannot hold").toEqual(
+      []
+    );
   });
 
   it("holds no list longer, or gone, since the merge-base with the branch this one merges into", (context) => {
@@ -229,14 +203,16 @@ describe("tolerated lists only shrink", () => {
       context.skip();
       return;
     }
-    const head = listsAtHead();
-    const atBase = listsAtRevision(REPO_ROOT, base);
+    const head = sized(listsAtHead());
+    const atBase = sized(listsAtRevision(REPO_ROOT, base));
     expect([...verdicts(head, atBase), ...staleRenames(head, atBase)]).toEqual([]);
   });
 });
 
 describe("the guard itself", () => {
-  const list = (body: string) => declaredListSizes("a.ts", body);
+  const list = (body: string) => sized(listsOf({ "a.ts": body }));
+  const unsizedLists = (body: string) =>
+    unsized(listsOf({ "a.ts": body })).map((id) => id.replace("a.ts#", ""));
 
   it("counts the entries of a list of strings, of objects and of a record", () => {
     expect(list('const BASELINE: readonly string[] = ["a", "b", "c"];').get("a.ts#BASELINE")).toBe(
@@ -328,6 +304,12 @@ describe("the guard itself", () => {
     it("is stale when the head lacks the new list", () => {
       expect(staleRenames(sizes(), sizes(OLD), renamed)).toHaveLength(1);
     });
+
+    it("is stale, both of them, when another entry names the same target", () => {
+      const shared = { ...renamed, "a.ts#OTHER_BASELINE": NEW };
+
+      expect(staleRenames(sizes(NEW), sizes(OLD, "a.ts#OTHER_BASELINE"), shared)).toHaveLength(2);
+    });
   });
 
   it("sees a list in the forms the tree declares one", () => {
@@ -348,6 +330,22 @@ describe("the guard itself", () => {
   it("reads a list declared with let or var as it reads a const", () => {
     expect(list("let A_BASELINE = ['a'];\nvar B_BASELINE = ['a', 'b'];").size).toBe(2);
     expect(unsizedLists("let A_BASELINE = compute();")).toEqual(["A_BASELINE"]);
+  });
+
+  it("sees a declaration wherever it sits, not only at the start of a line", () => {
+    expect(list("/** x */ const A_BASELINE = ['a'];").get("a.ts#A_BASELINE")).toBe(1);
+    expect(unsizedLists("/** x */ const A_BASELINE = Array.of('a');")).toEqual(["A_BASELINE"]);
+    expect(list('const ALPHA = "aidd",\n  A_BASELINE = ["a", "b"];').get("a.ts#A_BASELINE")).toBe(
+      2
+    );
+    expect(list("function f() { const A_BASELINE = ['a']; }").get("a.ts#A_BASELINE")).toBe(1);
+  });
+
+  it("fails a list it cannot tell from another: declared twice, or bound by a destructuring", () => {
+    expect(unsizedLists("const A_BASELINE = ['a'];\n{ const A_BASELINE = []; }")).toEqual([
+      "A_BASELINE",
+    ]);
+    expect(unsizedLists("const { A_BASELINE } = rows;")).toEqual(["A_BASELINE"]);
   });
 
   it("names a declared list it cannot size", () => {
@@ -372,16 +370,9 @@ describe("the guard itself", () => {
       const base = git(root, ["rev-parse", "HEAD"]).trim();
       const atBase = listsAtRevision(root, base);
 
-      expect([...atBase]).toEqual([["tests/architecture/x.arch.test.ts#BASELINE", 2]]);
-      expect(
-        verdicts(
-          declaredListSizes(
-            "tests/architecture/x.arch.test.ts",
-            'const BASELINE = ["a", "b", "c"];'
-          ),
-          atBase
-        )
-      ).toHaveLength(1);
+      const id = "tests/architecture/x.arch.test.ts#BASELINE";
+      expect([...atBase]).toEqual([[id, 2]]);
+      expect(verdicts(new Map([[id, 3]]), sized(atBase))).toHaveLength(1);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
