@@ -9,19 +9,16 @@ import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copil
 import { buildCursorContract } from "../../../../../src/contexts/tools/domain/profiles/cursor/build.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentEngine } from "../../../../../src/contexts/translate/domain/engine.js";
 import { rewritePluginRootToken } from "../../../../../src/contexts/translate/domain/formats/plugin-root-token-rewrite.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { registeredManifestPaths } from "../../../translate/testing/registered-manifest-probes.js";
 import { TOOL } from "../../testing/catalog-of.js";
 import { hooksAcceptanceOf, nativeOf } from "../../testing/plugin-mode.js";
+import { translatePlugin } from "../../testing/translate-plugin.js";
 
 /**
  * A hook command pointing at nothing installs clean and does nothing, so the command is read
  * back out of what was installed and the file it names is looked for.
  */
-
-const translator = new PluginContentEngine(registeredManifestPaths());
 
 const PLUGIN = "aidd-telemetry";
 const SOURCE_TOKEN = nativeOf(claude.plugins()).rootToken() ?? "";
@@ -64,7 +61,7 @@ function commandTargets(manifest: string, tool: AiTool<WithSections<"layout">>):
 }
 
 function installed(tool: AiTool<WithSections<"layout">>): { paths: string[]; manifest: string } {
-  const { files } = translator.translateWithComponentPaths(distribution(), tool);
+  const { files } = translatePlugin(distribution(), tool);
   const root = nativeOf(tool.plugins()).pluginOutputDir(PLUGIN) ?? "";
   return {
     paths: files.map((file) => file.relativePath.replace(root, "")),
@@ -133,7 +130,7 @@ describe("the two ways a plugin gets installed", () => {
 
   it("deliver hooks exactly when the tool runs them", () => {
     for (const tool of [...HOOK_HOSTS, opencode]) {
-      const { files, skipped } = translator.translateWithComponentPaths(distribution(), tool);
+      const { files, skipped } = translatePlugin(distribution(), tool);
       const carriesHooks = files.some((file) => file.relativePath.endsWith(".cjs"));
 
       expect(carriesHooks, tool.toolId).toBe(hooksAcceptanceOf(tool).accepts);

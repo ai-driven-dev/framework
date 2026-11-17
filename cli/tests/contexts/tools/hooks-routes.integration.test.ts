@@ -2,7 +2,6 @@ import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "
 import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
 import { CLAUDE_HOOKS } from "../../../src/contexts/tools/domain/profiles/claude/hooks.js";
 import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
@@ -14,7 +13,7 @@ import { CLIOutput } from "../../../src/presentation/output.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { pathWithoutAidd } from "../../e2e/helpers.js";
 import { REPOSITORY_ROOT } from "../../helpers/repository-root.js";
-import { catalogOf, resolveRegisteredToolId } from "./testing/catalog-of.js";
+import { catalogOf } from "./testing/catalog-of.js";
 
 /**
  * Every route that writes or removes a tool's hook files, driven through the same use cases
@@ -102,6 +101,8 @@ async function writeSource(source: string): Promise<void> {
     })
   );
 }
+
+type Deps = Awaited<ReturnType<typeof deps>>;
 
 async function deps(project: string) {
   const { createDeps } = await import("../../../src/composition/container.js");
@@ -268,10 +269,14 @@ async function describeHookFiles(ws: Workspace, bases: readonly string[]): Promi
   return sections.length === 0 ? "no hook file\n" : sections.join("\n");
 }
 
-async function recordedPlugins(ws: Workspace, path: string, scope: string): Promise<string[]> {
-  const text = await readFile(path, "utf8").catch(() => null);
-  if (text === null) return [`${scope}: no manifest`];
-  const manifest = Manifest.fromJSON(JSON.parse(text), resolveRegisteredToolId);
+type RecordedManifest = NonNullable<Awaited<ReturnType<Deps["manifestRepo"]["load"]>>>;
+
+async function recordedPlugins(
+  ws: Workspace,
+  manifest: RecordedManifest | null,
+  scope: string
+): Promise<string[]> {
+  if (manifest === null) return [`${scope}: no manifest`];
   const lines: string[] = [];
   for (const toolId of manifest.getInstalledToolIds()) {
     for (const plugin of manifest.getPlugins(toolId)) {
@@ -298,9 +303,10 @@ async function recordedPlugins(ws: Workspace, path: string, scope: string): Prom
 }
 
 async function pluginsRecorded(ws: Workspace): Promise<string> {
+  const d = await deps(ws.project);
   const lines = [
-    ...(await recordedPlugins(ws, join(ws.project, ".aidd", "manifest.json"), "project")),
-    ...(await recordedPlugins(ws, join(ws.home, ".config", "aidd", "manifest.json"), "machine")),
+    ...(await recordedPlugins(ws, await d.manifestRepo.load(), "project")),
+    ...(await recordedPlugins(ws, await d.userManifestRepo.load(), "machine")),
   ];
   return `${normalize(lines.join("\n"), ws)}\n`;
 }

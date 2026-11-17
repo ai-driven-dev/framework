@@ -5,16 +5,13 @@ import { codex } from "../../../../../src/contexts/tools/domain/profiles/codex/p
 import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentEngine } from "../../../../../src/contexts/translate/domain/engine.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { registeredManifestPaths } from "../../../translate/testing/registered-manifest-probes.js";
 import { TOOL } from "../../testing/catalog-of.js";
 import { flatOf, hooksAcceptanceOf, nativeOf } from "../../testing/plugin-mode.js";
+import { translatePlugin } from "../../testing/translate-plugin.js";
 
 /** A hook that arrives is not a hook that runs: every failure this covers installed cleanly
  * and did nothing. */
-
-const translator = new PluginContentEngine(registeredManifestPaths());
 
 const SOURCE_TOKEN = nativeOf(claude.plugins()).rootToken() ?? "";
 const HOOK_COMMAND = `node ${SOURCE_TOKEN}/hooks/journal.cjs session-start`;
@@ -44,7 +41,7 @@ function pluginWithHookAndScript(): PluginDistribution {
 }
 
 function installedFor(tool: AiTool<WithSections<"layout">>) {
-  return translator.translateWithComponentPaths(pluginWithHookAndScript(), tool);
+  return translatePlugin(pluginWithHookAndScript(), tool);
 }
 
 function contentEndingWith(
