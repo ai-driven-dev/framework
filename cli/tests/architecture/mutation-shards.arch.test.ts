@@ -8,6 +8,7 @@ import {
   mutantCountOf,
   partition,
   scopeFiles,
+  scopeWeights,
   shardFiles,
 } from "../../scripts/mutation-shards.mjs";
 import { parseShard, scoreOf, shardConfig } from "../../scripts/run-mutation.mjs";
@@ -72,11 +73,10 @@ describe("splitting a scope into shards", () => {
     "keeps the heaviest shard of %s within a quarter of its fair share, or its heaviest file, in mutants",
     async (name, scope) => {
       const of = scope.shards ?? 1;
-      const parts = await cutScope(scope.mutate, sourceFiles(), of);
-      const mutants = new Map<string, number>();
-      for (const file of parts.flat()) mutants.set(file, await mutantCountOf(read(file), file));
-      const weight = (files: string[]) =>
-        files.reduce((sum, file) => sum + (mutants.get(file) ?? 0), 0);
+      const files = sourceFiles();
+      const mutantsIn = await scopeWeights(scope.mutate, files);
+      const parts = partition(scope.mutate, files, of, mutantsIn);
+      const weight = (shard: string[]) => shard.reduce((sum, file) => sum + mutantsIn(file), 0);
       const fair = weight(parts.flat()) / of;
       const heaviestFile = Math.max(...parts.flat().map((file) => weight([file])));
       expect(Math.max(...parts.map(weight)), name).toBeLessThanOrEqual(
