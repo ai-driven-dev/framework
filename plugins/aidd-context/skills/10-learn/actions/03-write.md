@@ -14,7 +14,7 @@ The rows the user validated or modified, and those skipped.
 2. Write each decision row with the writer, per [writer.md](../references/writer.md), planned before written.
    - Row replaces a decision: pass the replaced record.
    - Section the source never states: ask the user for it, never infer it.
-   - Writer exit non-zero: quote its output and end the run there, with no retry, no permission change and nothing more written.
+   - Writer exit non-zero: quote its output, then stop without a retry, a permission change or another write.
 3. Append the run to `learn.md` from [learn-record.md](../assets/learn-record.md).
    - Every row goes in with its decision, skipped ones included.
    - Task named or clearly linked: use its folder.

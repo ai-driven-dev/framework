@@ -16,4 +16,13 @@ node "$writer" --project "$project_root" --input "$decision_json" [--supersedes 
 | `--plan` | Writes nothing; lists each file with `create` or `update`. |
 | `--supersedes` | Marks the old record Superseded and links both records to each other. |
 
-The record is created in the project's existing decision folder, else `aidd_docs/memory/internal/decisions/`, named after the title; a name already taken is refused. The result is JSON: `operations` lists each `{path, op}`, `error` a `{code, message}`. Exit 0 means done, 1 a refusal, 2 bad usage, 3 a filesystem error; any non-zero exit comes with `error`.
+- Folder: the project's existing decision folder, else `aidd_docs/memory/internal/decisions/`.
+- Name: the title; a name already taken is refused.
+- Result: JSON, `operations` listing each `{path, op}`, or `error` holding `{code, message}`.
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | Done |
+| 1 | Refused |
+| 2 | Bad usage |
+| 3 | Filesystem error |

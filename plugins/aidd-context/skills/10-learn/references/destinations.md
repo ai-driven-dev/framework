@@ -6,14 +6,14 @@ Where a lesson goes, decided by its nature.
 
 | Lesson | Destination | Written by |
 | --- | --- | --- |
-| A fact, a convention or a pitfall | The existing file that already holds the subject, in `aidd_docs/memory/` or a root document; else the memory bank file nearest to it, never a new file | The host's native edit |
+| A fact, a convention or a pitfall | The existing file holding the subject, in `aidd_docs/memory/` or a root document | The host's native edit |
 | A choice made, with its alternatives | A decision record | `scripts/write-decision.cjs` |
 | A behavior to impose or automate | A generation: rule, skill, agent, command or hook | `aidd-context:03-context-generate` |
 
 ## Choosing
 
 - A behavior that can be verified or automated is a generation; otherwise it is a fact in an existing file.
-- Outside `aidd_docs/memory/`, a file is edited, never created.
+- A file is edited, never created.
 
 ## Change
 

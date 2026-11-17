@@ -10,7 +10,7 @@ The lessons, each with its cited passage and existing coverage.
 
 1. Fill [proposal-table.md](../assets/proposal-table.md) with one row per lesson, its destination per [destinations.md](../references/destinations.md).
    - Row skipped in an earlier `learn.md` of the task: leave it out.
-   - Lesson that fits a file and a generation: pick its destination per the choosing rule, the user changes it by modifying the row.
+   - Lesson that fits a file and a generation: pick one per the choosing rule.
 2. Present the table, then end the turn and wait for the user's own answer, a decision per row.
    - Modified: apply the change to the row.
 3. Every row skipped: say so, then stop.
