@@ -69,6 +69,15 @@ describe("splitting a scope into shards", () => {
     expect(await mutantCountOf("export const sum = 1 + 2;\n")).toBe(1);
   });
 
+  it("weighs each file of a scope by the mutants it holds, as mutantCountOf counts them", async () => {
+    const scope = scopes["tools-codex"] as Scope;
+    const files = sourceFiles();
+    const mutantsIn = await scopeWeights(scope.mutate, files);
+    for (const file of scopeFiles(scope.mutate, files)) {
+      expect(mutantsIn(file), file).toBe(await mutantCountOf(read(file), file));
+    }
+  });
+
   it.each(sharded)(
     "keeps the heaviest shard of %s within a quarter of its fair share, or its heaviest file, in mutants",
     async (name, scope) => {
