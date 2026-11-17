@@ -65,7 +65,6 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
     NARROWS_IN_THIS_WAVE,
   "src/contexts/host-registration/application/refresh-host-plugin.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/host-registration/application/register-plugin-with-host.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/agents/main-session-models.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/materialize/flat-mcp-materializer.ts":
     NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/materialize/mode-a-marketplace-translator.ts":

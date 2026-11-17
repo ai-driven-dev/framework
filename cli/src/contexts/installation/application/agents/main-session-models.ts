@@ -3,9 +3,9 @@ import type { Environment } from "../../../../shared/ports/environment.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { AgentModelStore } from "../../ports/agent-model-store.js";
 import type { MainSessionSettings } from "../../ports/main-session-settings.js";
+import type { AgentModelSection } from "../../ports/tool-sections.js";
 
 /** A tool whose main session's settings file a run changed, and that file. */
 export interface MainSessionChange {
@@ -101,7 +101,7 @@ export class MainSessionModels {
     return this.apply(tools, hosts, new Map(), dryRun);
   }
 
-  private profileOf(tools: ToolCatalog, host: string): AiToolProfile | null {
+  private profileOf(tools: ToolCatalog, host: string): AgentModelSection | null {
     const id = tools.aiToolId(host);
     return id === null ? null : tools.aiProfile(id);
   }
@@ -114,7 +114,7 @@ export class MainSessionModels {
    * file, a JSONC file that outranks its JSON twin, from the directory a machine-wide install
    * copies its files into. The twin is used only when it alone exists. Absent where neither
    * exists, or where aidd leaves the main session alone. */
-  private async settingsPath(profile: AiToolProfile): Promise<string | undefined> {
+  private async settingsPath(profile: AgentModelSection): Promise<string | undefined> {
     const settings = profile.agentModels()?.mainSettings() ?? null;
     if (settings === null) return undefined;
     const home = this.homedir();

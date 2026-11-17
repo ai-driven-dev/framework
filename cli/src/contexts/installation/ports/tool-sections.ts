@@ -1,7 +1,10 @@
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type {
+  AgentModelAnswers,
   MarkdownSectionAnswers,
   McpConfigAnswers,
+  NativeActivationAnswers,
+  PluginAnswers,
   SkillsSectionAnswers,
 } from "../../tools/contract/tool-profile.js";
 import type { SignalDirectory } from "../../tools/contract/tool-vocabulary.js";
@@ -31,4 +34,12 @@ export interface RuntimeConfigSection {
   runtimeFiles(): Readonly<Record<string, string>>;
   configFiles(): Readonly<Record<string, string>>;
   mcpConfig(): McpConfigAnswers | null;
+}
+
+/** A tool as far as a reader of its main session's model goes: the models it runs, the settings
+ * file its own CLI names and the directory a machine-wide install copies its files into. */
+export interface AgentModelSection {
+  agentModels(): AgentModelAnswers | null;
+  nativeActivation(): NativeActivationAnswers | undefined;
+  plugins(): PluginAnswers | null;
 }
