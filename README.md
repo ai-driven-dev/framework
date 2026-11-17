@@ -149,7 +149,7 @@ Plan, build, review, test, debug
 <a href="plugins/aidd-vcs/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🌿 aidd-vcs</h3>
-6 skills<br />
+7 skills<br />
 Commits, pull requests, release tags, issues
 </a>
 </td>
