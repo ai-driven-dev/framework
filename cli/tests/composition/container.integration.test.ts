@@ -367,10 +367,11 @@ describe("createDeps", () => {
     });
 
     it("registers the framework marketplace with the host and enables its plugins through the host's own registries", async () => {
-      // A host records the real location of a source it was given, never a symlinked temp path.
+      // A host records the real location of a source it was given, never a symlinked temp path:
+      // the native resolution, which also expands a Windows short name the way `fs.realpath` does.
       class RealpathHostActions extends FakeHostActions {
         override addMarketplace(source: string, scope?: unknown): void {
-          super.addMarketplace(realpathSync(source), scope);
+          super.addMarketplace(realpathSync.native(source), scope);
         }
       }
       const activator = new RealpathHostActions({ available: true });
