@@ -19,7 +19,7 @@ Where a lesson goes, decided by its nature.
 
 | Value | Meaning |
 | --- | --- |
-| new | Nothing holds it yet |
-| updates | Refines an existing entry |
-| replaces | Reverses an earlier entry, which the new one supersedes |
-| removes | The entry no longer holds, and nothing replaces it |
+| 🆕 new | Nothing holds it yet |
+| ✏️ updates | Refines an existing entry |
+| 🔁 replaces | Reverses an earlier entry, which the new one supersedes |
+| 🗑️ removes | The entry no longer holds, and nothing replaces it |

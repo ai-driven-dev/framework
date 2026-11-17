@@ -19,7 +19,7 @@ What a source holds that is worth keeping, and which source to read.
 | A personal taste | Drop |
 | Specific to the task in progress | Drop |
 | Has no passage of the source to cite | Drop |
-| A one-off bug fix, with no rule for other code | Drop |
+| A bug fix, unless it teaches a rule for other code | Drop |
 
 ## Source
 
