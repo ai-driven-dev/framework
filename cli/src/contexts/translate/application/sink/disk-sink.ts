@@ -433,9 +433,7 @@ export class DiskSink {
     if (file === undefined) return 0;
     const destPath = join(t.outDir, file.path(pluginName));
     if (!file.shared) await this.checkCollision(t, destPath, pluginName);
-    const existing =
-      file.shared && (await this.fs.fileExists(destPath)) ? await this.fs.readFile(destPath) : null;
-    if (existing !== null) assertParsableJson(existing, t.outDir, destPath);
+    const existing = file.shared ? await this.readSharedHooksTarget(t.outDir, destPath) : null;
     const raw = await this.fs.readFile(hooksSrc);
     const { content, warnings } = file.merge(
       existing,
@@ -446,6 +444,13 @@ export class DiskSink {
     for (const w of warnings) this.logger.warn(w);
     await this.fs.writeFile(destPath, content);
     return 1;
+  }
+
+  private async readSharedHooksTarget(outDir: string, destPath: string): Promise<string | null> {
+    if (!(await this.fs.fileExists(destPath))) return null;
+    const content = await this.fs.readFile(destPath);
+    assertParsableJson(content, outDir, destPath);
+    return content;
   }
 
   // OpenCode reads no hooks.json, so a plugin's declared hooks have no trigger there unless a

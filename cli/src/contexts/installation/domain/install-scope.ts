@@ -6,10 +6,10 @@ import type { AiToolId } from "../../../shared/domain/tool.js";
 
 export type InstallScope = "project" | "user";
 
-const VALID_SCOPES: readonly string[] = ["project", "user"];
+const VALID_SCOPES: ReadonlySet<unknown> = new Set<InstallScope>(["project", "user"]);
 
 export function isInstallScope(value: unknown): value is InstallScope {
-  return typeof value === "string" && VALID_SCOPES.includes(value);
+  return VALID_SCOPES.has(value);
 }
 
 export function parseInstallScope(value: string | undefined): InstallScope | undefined {

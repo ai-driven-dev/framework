@@ -28,10 +28,8 @@ The duplicate guard in `shared-framework-source.ts` and the equal-path line in `
 | Survivor | Verdict | Proof |
 | --- | --- | --- |
 | `contexts/translate/domain/engine.ts:348`, skills branch condition replaced by `false`, and its `"skills"` literal replaced by `""` | equivalent | `markdownSection(kind)` is `capabilities[kind] ?? null` and `skillsSection()` is `capabilities.skills ?? null` (`contexts/tools/domain/profile/define-tool.ts:306-307`). Both branches read the same value, the condition is a spelling. |
-| `contexts/translate/domain/engine.ts:396`, `colonIdx !== -1` replaced by `true` | equivalent | With `colonIdx === -1`, `name.slice(0)` returns `name`, which is what the fall-through returns. |
 | `contexts/translate/domain/engine.ts:393`, trailing `$` dropped from the command-prefix regex | limit | `.+` does not cross a newline, so the two regexes differ only for a command name holding one. No plugin manifest holds such a name. |
 | `contexts/translate/domain/engine.ts:241`, `[]` replaced by a one-element array | limit | The branch runs only when `hooksInstallPath` answers `null`, which a flat profile does when its hooks delivery declares no flat directory (`contexts/tools/domain/profile/plugin-answers.ts:112,125`). Measured over the registered profiles: opencode, kilo and antigravity (the flat ones) all answer a path for a hook script. No profile reaches the branch. |
-| `contexts/translate/application/sink/disk-sink.ts:438`, `existing !== null` replaced by `true` | equivalent | `assertParsableJson(null, ...)` runs `JSON.parse(null)`, which parses the text `null` and does not throw (`disk-sink.ts:544-551`), the same as skipping the call. |
 | `contexts/translate/infrastructure/schema-validator.ts:38`, `validateFn.errors ?? []` | limit | ajv sets `errors` whenever the data is invalid, and the branch runs only then. The fallback is a type-level guard. |
 | `contexts/translate/infrastructure/schema-validator.ts:39`, `e.message ?? "unknown error"` | limit | ajv always sets `message` (`messages: false` is not configured). Same type-level guard. |
 

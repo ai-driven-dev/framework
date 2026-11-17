@@ -392,9 +392,7 @@ function prefixCommandName(
 function stripCommandPrefix(name: string): string {
   const match = /^aidd:\d+:(.+)$/.exec(name);
   if (match) return match[1];
-  const colonIdx = name.lastIndexOf(":");
-  if (colonIdx !== -1) return name.slice(colonIdx + 1);
-  return name;
+  return name.slice(name.lastIndexOf(":") + 1);
 }
 
 function toPluginRelativePath(fullPath: string, toolDirectory: string): string {
