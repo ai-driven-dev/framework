@@ -3,7 +3,6 @@ import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type {
   NativeMarketplaceRegistration,
-  NativeMarketplaceSource,
   RegistrationRecord,
 } from "../domain/manifest/native-registrations.js";
 import type { HostRefCountingTool, NativeHostTool } from "./tool-sections.js";
@@ -21,7 +20,30 @@ interface RecordedClaim {
   readonly ref: string;
 }
 
-type ClaimedRecord = RegistrationRecord & { readonly pluginClaims?: readonly RecordedClaim[] };
+type ClaimedRecord<Claim extends RecordedClaim = RecordedClaim> = RegistrationRecord & {
+  readonly pluginClaims?: readonly Claim[];
+};
+
+/** A claim with the projects that hold it. */
+interface DependentClaim extends RecordedClaim {
+  readonly dependents: readonly string[];
+}
+
+/** What a run claims on a machine's record, and for which project. */
+interface CatalogueClaims {
+  readonly marketplaces: readonly RegisteredMarketplace[];
+  readonly refs: readonly string[];
+  /** The project root holding the claims, none when the project is unknown. */
+  readonly dependent: string | undefined;
+}
+
+/** The machine record once the claims are merged, and whether the merge changed anything. */
+interface MergedClaims {
+  readonly record: ClaimedRecord<DependentClaim> & {
+    readonly pluginClaims: readonly DependentClaim[];
+  };
+  readonly changed: boolean;
+}
 
 /** The record with its claims list always written, as the manifest rewrites it. */
 type WithClaims<R> = R & { readonly pluginClaims: readonly RecordedClaim[] };
@@ -33,7 +55,7 @@ export interface RegistrationRecordRules {
   /** The registration an alias stands for, `undefined` when it was never registered. */
   readonly marketplaceOf: (
     record: Pick<RegistrationRecord, "marketplaces">,
-    alias: string
+    alias: string | undefined
   ) => NativeMarketplaceRegistration | undefined;
   /** The claims on the refs sitting on the host name the alias was registered under. */
   readonly claimsOnMarketplace: <Claim extends RecordedClaim>(
@@ -69,6 +91,19 @@ export interface RegistrationRecordRules {
   readonly withoutClaimedRef: <R extends ClaimedRecord>(record: R, ref: string) => WithClaims<R>;
   /** The record without a marketplace, nor any ref or claim on the host name it was registered under. */
   readonly withoutMarketplace: <R extends ClaimedRecord>(record: R, alias: string) => WithClaims<R>;
+  /** The record a tool's activation leaves, `undefined` when it equals the one recorded. */
+  readonly afterActivation: <Claim extends RecordedClaim>(
+    existing: ClaimedRecord<Claim> | undefined,
+    outcome: Pick<HostRegistrationOutcome, "marketplaces" | "preservedMarketplaces" | "pluginRefs">,
+    binary: string,
+    narrowed: boolean
+  ) => ClaimedRecord<Claim> | undefined;
+  /** A machine's record with the claims of one run merged in. */
+  readonly mergeCatalogueClaims: (
+    existing: ClaimedRecord<DependentClaim> | undefined,
+    claimed: CatalogueClaims,
+    fallbackBinary: string
+  ) => MergedClaims;
 }
 
 /** What installation asks of a host to register marketplaces and enable refs. */
@@ -240,9 +275,3 @@ export type RegisterPluginWithHostResult =
   | { readonly status: "unconfigured" }
   | { readonly status: "binary-missing"; readonly binary: string }
   | { readonly status: "activated"; readonly outcome: HostRegistrationOutcome };
-
-/** Whether two sources name one marketplace; the composition hands in the host's rule. */
-export type SameMarketplaceSource = (
-  recorded: NativeMarketplaceSource,
-  current: NativeMarketplaceSource
-) => boolean;

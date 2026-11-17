@@ -8,7 +8,6 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract
 import type { MarketplaceRemover } from "../../contexts/distribution/ports/marketplace-remover.js";
 import { NativeHostRegistrationGate } from "../../contexts/host-registration/application/native-host-registration-gate.js";
 import { RegisterPluginWithHost } from "../../contexts/host-registration/application/register-plugin-with-host.js";
-import { sameNativeMarketplaceSource } from "../../contexts/host-registration/domain/native-marketplace-source.js";
 import { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.js";
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.js";
@@ -183,13 +182,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
       { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: userConfigDir },
       registrationRecordRules
     ),
-    new RecordActivation(
-      fs,
-      hasher,
-      sameNativeMarketplaceSource,
-      registrationRecordRules,
-      userManifestRepo
-    ),
+    new RecordActivation(fs, hasher, registrationRecordRules, userManifestRepo),
     new SharedFrameworkSource(
       fs,
       logger,

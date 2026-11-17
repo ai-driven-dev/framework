@@ -7,32 +7,21 @@ import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
-import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
-import type {
-  HostRegistrationOutcome,
-  RegisteredMarketplace,
-  RegistrationRecordRules,
-  SameMarketplaceSource,
-} from "../../ports/native-host.js";
+import type { HostRegistrationOutcome, RegistrationRecordRules } from "../../ports/native-host.js";
 
 /** What a run observed or caused, written back into the manifests that track it. */
 export class RecordActivation {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly hasher: Hasher,
-    private readonly sameSource: SameMarketplaceSource,
     private readonly records: RegistrationRecordRules,
     private readonly userManifestRepo?: ManifestRepository & Lock
   ) {}
 
-  /** Only for a tool this run actually activated. A `narrowed` run's `outcome` carries only the
-   * marketplace it touched, so every other entry must survive the merge; an unnarrowed run replaces
-   * outright, since anything absent from `outcome` is a dead registration nothing else ever drops.
-   * `pluginRefs` merge by the `@<hostName>` suffix only for a hostName no retained marketplace
-   * still owns — two local aliases may resolve to one hostName. */
+  /** Only for a tool this run actually activated. */
   recordNativeRegistrations(
     tools: ToolCatalog,
     manifest: Manifest,
@@ -43,33 +32,13 @@ export class RecordActivation {
     for (const [toolId, outcome] of activated) {
       const binary = this.nativeActivationBinary(tools, toolId);
       if (binary === undefined) continue;
-      const existing = manifest.getNativeRegistrations(toolId);
-      const projected = [...outcome.marketplaces, ...outcome.preservedMarketplaces];
-      const touchedAliases = new Set(projected.map((m) => m.alias));
-      const touchedHostNames = new Set(projected.map((m) => m.hostName));
-      const retainedMarketplaces = narrowed
-        ? (existing?.marketplaces ?? []).filter((m) => !touchedAliases.has(m.alias))
-        : [];
-      const retainedHostNames = new Set(retainedMarketplaces.map((m) => m.hostName));
-      const releasedHostNames = [...touchedHostNames].filter(
-        (hostName) => !retainedHostNames.has(hostName)
-      );
-      const retainedRefs = narrowed
-        ? (existing?.pluginRefs ?? []).filter(
-            (ref) => !this.records.refOnAnyHost(ref, releasedHostNames)
-          )
-        : [];
-      const preservedHostNames = new Set(outcome.preservedMarketplaces.map((m) => m.hostName));
-      const preservedRefs = (existing?.pluginRefs ?? []).filter((ref) =>
-        this.records.refOnAnyHost(ref, preservedHostNames)
-      );
-      const registrations: NativeRegistrations = {
+      const registrations = this.records.afterActivation(
+        manifest.getNativeRegistrations(toolId),
+        outcome,
         binary,
-        marketplaces: [...retainedMarketplaces, ...projected],
-        pluginRefs: [...new Set([...retainedRefs, ...preservedRefs, ...outcome.pluginRefs])],
-        ...(existing?.pluginClaims === undefined ? {} : { pluginClaims: existing.pluginClaims }),
-      };
-      if (nativeRegistrationsEqual(existing, registrations, this.sameSource)) continue;
+        narrowed
+      );
+      if (registrations === undefined) continue;
       manifest.setNativeRegistrations(toolId, registrations);
       changed = true;
     }
@@ -144,84 +113,16 @@ export class RecordActivation {
         if (version === undefined) continue;
         machine.addTool(toolId, version, []);
       }
-      const existing = machine.getNativeRegistrations(toolId);
-      const registered = [...(existing?.marketplaces ?? [])];
-      for (const registration of machineMarketplaces) {
-        const index = registered.findIndex(
-          (entry) => entry.alias === registration.alias && entry.hostName === registration.hostName
-        );
-        if (index >= 0) {
-          if (
-            registration.provenance === undefined ||
-            (registered[index].provenance !== undefined &&
-              this.sameSource(registered[index].provenance, registration.provenance))
-          )
-            continue;
-          registered[index] = registration;
-        } else registered.push(registration);
-        changed = true;
-      }
-      const claims = [...(existing?.pluginClaims ?? [])].map((claim) => ({
-        ref: claim.ref,
-        dependents: [...claim.dependents],
-      }));
-      for (const ref of machineRefs) {
-        const claim = claims.find((candidate) => candidate.ref === ref);
-        if (claim === undefined) {
-          claims.push({ ref, dependents: root === undefined ? [] : [root] });
-          changed = true;
-        } else if (root !== undefined && !claim.dependents.includes(root)) {
-          claim.dependents.push(root);
-          changed = true;
-        }
-      }
-      if (changed)
-        machine.setNativeRegistrations(toolId, {
-          binary: existing?.binary ?? this.nativeActivationBinary(tools, toolId) ?? toolId,
-          marketplaces: registered,
-          pluginRefs: existing?.pluginRefs ?? [],
-          pluginClaims: claims,
-        });
+      const merged = this.records.mergeCatalogueClaims(
+        machine.getNativeRegistrations(toolId),
+        { marketplaces: machineMarketplaces, refs: machineRefs, dependent: root },
+        this.nativeActivationBinary(tools, toolId) ?? toolId
+      );
+      changed ||= merged.changed;
+      if (changed) machine.setNativeRegistrations(toolId, merged.record);
     }
     if (changed) await this.userManifestRepo.save(machine);
   }
-}
-
-/** Order included: both sides are built from the same marketplace/plugin iteration order each
- * run, so a difference is real. Keeps a no-op sync from rewriting the manifest. */
-function nativeRegistrationsEqual(
-  a: NativeRegistrations | undefined,
-  b: NativeRegistrations,
-  sameSource: SameMarketplaceSource
-): boolean {
-  if (a === undefined) return false;
-  return (
-    a.binary === b.binary &&
-    marketplaceRegistrationsEqual(a.marketplaces, b.marketplaces, sameSource) &&
-    arraysEqual(a.pluginRefs, b.pluginRefs)
-  );
-}
-
-function marketplaceRegistrationsEqual(
-  a: readonly RegisteredMarketplace[],
-  b: readonly RegisteredMarketplace[],
-  sameSource: SameMarketplaceSource
-): boolean {
-  return (
-    a.length === b.length &&
-    a.every((value, index) => {
-      const other = b[index];
-      if (other === undefined || value.alias !== other.alias || value.hostName !== other.hostName)
-        return false;
-      if (value.provenance === undefined || other.provenance === undefined)
-        return value.provenance === other.provenance;
-      return sameSource(value.provenance, other.provenance);
-    })
-  );
-}
-
-function arraysEqual(a: readonly string[], b: readonly string[]): boolean {
-  return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
 /** Whether enabling a plugin acts on the whole machine; true for an editor. */

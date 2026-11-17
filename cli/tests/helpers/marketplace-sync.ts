@@ -1,7 +1,6 @@
 import { registrationRecordRules } from "../../src/composition/installation.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { RegisterPluginWithHost } from "../../src/contexts/host-registration/application/register-plugin-with-host.js";
-import { sameNativeMarketplaceSource } from "../../src/contexts/host-registration/domain/native-marketplace-source.js";
 import {
   ActivateNativeTools,
   type ActivationMarketplace,
@@ -65,13 +64,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: parts.userCacheRoot ?? (() => "") },
       registrationRecordRules
     ),
-    new RecordActivation(
-      parts.fs,
-      parts.hasher,
-      sameNativeMarketplaceSource,
-      registrationRecordRules,
-      parts.userManifestRepo
-    ),
+    new RecordActivation(parts.fs, parts.hasher, registrationRecordRules, parts.userManifestRepo),
     new SharedFrameworkSource(
       parts.fs,
       parts.logger,

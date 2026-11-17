@@ -13,10 +13,12 @@ import type {
 } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import type { NativeMarketplaceSource as HostNativeMarketplaceSource } from "../../src/contexts/host-registration/domain/native-marketplace-source.js";
 import type {
+  afterActivation,
   claimsOnMarketplace,
   RegistrationRecord as HostRegistrationRecord,
   isQualifiedRef,
   marketplaceOf,
+  mergeCatalogueClaims,
   pluginRefsOf,
   refOf,
   refOnAnyHost,
@@ -103,6 +105,12 @@ describe("the rules installation asks of the host registration over a record", (
     >();
     expectTypeOf<RegistrationRecordRules["withoutMarketplace"]>().toEqualTypeOf<
       typeof withoutMarketplace
+    >();
+    expectTypeOf<RegistrationRecordRules["afterActivation"]>().toEqualTypeOf<
+      typeof afterActivation
+    >();
+    expectTypeOf<RegistrationRecordRules["mergeCatalogueClaims"]>().toEqualTypeOf<
+      typeof mergeCatalogueClaims
     >();
   });
 });

@@ -1,5 +1,8 @@
 import { join } from "node:path";
-import type { NativeMarketplaceSource } from "./native-marketplace-source.js";
+import {
+  type NativeMarketplaceSource,
+  sameNativeMarketplaceSource,
+} from "./native-marketplace-source.js";
 
 /** One marketplace registration a tool's own CLI was asked to make — aidd's own local name for it
  * (`alias`, what this project's registry is keyed by) beside what the host actually registered it
@@ -27,9 +30,14 @@ interface RecordedClaim {
 }
 
 /** A record together with the claims the manifest keeps beside it. */
-type ClaimedRegistrationRecord = RegistrationRecord & {
-  readonly pluginClaims?: readonly RecordedClaim[];
+type ClaimedRegistrationRecord<Claim extends RecordedClaim = RecordedClaim> = RegistrationRecord & {
+  readonly pluginClaims?: readonly Claim[];
 };
+
+/** A claim with the projects that hold it. */
+interface DependentClaim extends RecordedClaim {
+  readonly dependents: readonly string[];
+}
 
 /** The record with its claims list always written, as the manifest rewrites it. */
 type WithClaims<R> = R & { readonly pluginClaims: readonly RecordedClaim[] };
@@ -39,6 +47,29 @@ interface RegistrationPreview {
   readonly marketplaceCount: number;
   readonly pluginRefCount: number;
   readonly cachePaths: readonly string[];
+}
+
+/** What one tool's activation reported, which its record is rebuilt from. */
+interface ActivationOutcome {
+  readonly marketplaces: readonly NativeMarketplaceRegistration[];
+  readonly preservedMarketplaces: readonly NativeMarketplaceRegistration[];
+  readonly pluginRefs: readonly string[];
+}
+
+/** What a run claims on a machine's record, and for which project. */
+interface CatalogueClaims {
+  readonly marketplaces: readonly NativeMarketplaceRegistration[];
+  readonly refs: readonly string[];
+  /** The project root holding the claims, none when the project is unknown. */
+  readonly dependent: string | undefined;
+}
+
+/** The machine record once the claims are merged, and whether the merge changed anything. */
+interface MergedClaims {
+  readonly record: ClaimedRegistrationRecord<DependentClaim> & {
+    readonly pluginClaims: readonly DependentClaim[];
+  };
+  readonly changed: boolean;
 }
 
 const CATALOGUE_SEPARATOR = "@";
@@ -71,14 +102,14 @@ export function pluginRefsOf(record: RegistrationRecord | undefined): readonly s
 /** The registration aidd's local name stands for, `undefined` when it was never registered. */
 export function marketplaceOf(
   record: Pick<RegistrationRecord, "marketplaces">,
-  alias: string
+  alias: string | undefined
 ): NativeMarketplaceRegistration | undefined {
   return record.marketplaces.find((entry) => entry.alias === alias);
 }
 
 const hostNameOf = (
   record: Pick<RegistrationRecord, "marketplaces">,
-  alias: string
+  alias: string | undefined
 ): string | undefined => marketplaceOf(record, alias)?.hostName;
 
 /** The claims on the refs sitting on the host name the alias was registered under. */
@@ -105,8 +136,7 @@ export function refOf(
   plugin: string,
   alias: string | undefined
 ): string | undefined {
-  const hostName =
-    record === undefined || alias === undefined ? undefined : hostNameOf(record, alias);
+  const hostName = record === undefined ? undefined : hostNameOf(record, alias);
   return hostName === undefined ? undefined : refOnHostName(plugin, hostName);
 }
 
@@ -163,4 +193,160 @@ export function refsOnHosts(
   return [...record.pluginRefs, ...(record.pluginClaims ?? []).map((claim) => claim.ref)].filter(
     (ref) => refOnAnyHost(ref, hostNames)
   );
+}
+
+/**
+ * The record a tool's activation leaves, `undefined` when it equals the one recorded. A narrowed
+ * run reports only the marketplaces it touched, so every other entry survives; an unnarrowed run
+ * replaces outright, since anything it does not report is a dead registration. Refs are kept by
+ * the host name they sit on, and only for a host name no retained marketplace still owns: two
+ * aliases may share one. Order counts, both sides being built in the same order each run.
+ */
+export function afterActivation<Claim extends RecordedClaim>(
+  existing: ClaimedRegistrationRecord<Claim> | undefined,
+  outcome: ActivationOutcome,
+  binary: string,
+  narrowed: boolean
+): ClaimedRegistrationRecord<Claim> | undefined {
+  const projected = [...outcome.marketplaces, ...outcome.preservedMarketplaces];
+  const recordedRefs = existing?.pluginRefs ?? [];
+  const retainedMarketplaces = narrowed ? untouchedBy(existing?.marketplaces ?? [], projected) : [];
+  const released = releasedHostNames(projected, retainedMarketplaces);
+  const retainedRefs = narrowed ? recordedRefs.filter((ref) => !refOnAnyHost(ref, released)) : [];
+  const preservedHostNames = hostNamesOf(outcome.preservedMarketplaces);
+  const preservedRefs = recordedRefs.filter((ref) => refOnAnyHost(ref, preservedHostNames));
+  const activated: ClaimedRegistrationRecord<Claim> = {
+    binary,
+    marketplaces: [...retainedMarketplaces, ...projected],
+    pluginRefs: [...new Set([...retainedRefs, ...preservedRefs, ...outcome.pluginRefs])],
+    ...(existing?.pluginClaims === undefined ? {} : { pluginClaims: existing.pluginClaims }),
+  };
+  return existing !== undefined && sameActivation(existing, activated) ? undefined : activated;
+}
+
+const hostNamesOf = (marketplaces: readonly NativeMarketplaceRegistration[]): Set<string> =>
+  new Set(marketplaces.map((entry) => entry.hostName));
+
+function untouchedBy(
+  recorded: readonly NativeMarketplaceRegistration[],
+  touched: readonly NativeMarketplaceRegistration[]
+): NativeMarketplaceRegistration[] {
+  const touchedAliases = new Set(touched.map((entry) => entry.alias));
+  return recorded.filter((entry) => !touchedAliases.has(entry.alias));
+}
+
+function releasedHostNames(
+  touched: readonly NativeMarketplaceRegistration[],
+  retained: readonly NativeMarketplaceRegistration[]
+): string[] {
+  const stillOwned = hostNamesOf(retained);
+  return [...hostNamesOf(touched)].filter((hostName) => !stillOwned.has(hostName));
+}
+
+function sameActivation(recorded: RegistrationRecord, activated: RegistrationRecord): boolean {
+  return (
+    recorded.binary === activated.binary &&
+    sameInOrder(recorded.marketplaces, activated.marketplaces, sameMarketplace) &&
+    sameInOrder(recorded.pluginRefs, activated.pluginRefs, (a, b) => a === b)
+  );
+}
+
+function sameMarketplace(
+  a: NativeMarketplaceRegistration,
+  b: NativeMarketplaceRegistration
+): boolean {
+  if (a.alias !== b.alias || a.hostName !== b.hostName) return false;
+  if (a.provenance === undefined || b.provenance === undefined)
+    return a.provenance === b.provenance;
+  return sameNativeMarketplaceSource(a.provenance, b.provenance);
+}
+
+function sameInOrder<T>(a: readonly T[], b: readonly T[], same: (x: T, y: T) => boolean): boolean {
+  return a.length === b.length && a.every((value, index) => same(value, b[index]));
+}
+
+/**
+ * A machine's record with the claims of one run merged in: a marketplace is added, or replaced
+ * when the claim proves another source than the recorded one; a ref gains the dependent as a
+ * holder of its claim. The fallback binary names the record only when none was recorded.
+ */
+export function mergeCatalogueClaims(
+  existing: ClaimedRegistrationRecord<DependentClaim> | undefined,
+  claimed: CatalogueClaims,
+  fallbackBinary: string
+): MergedClaims {
+  const marketplaces = mergeMarketplaceClaims(existing?.marketplaces ?? [], claimed.marketplaces);
+  const claims = mergeRefClaims(existing?.pluginClaims ?? [], claimed.refs, claimed.dependent);
+  return {
+    record: {
+      binary: existing?.binary ?? fallbackBinary,
+      marketplaces: marketplaces.entries,
+      pluginRefs: existing?.pluginRefs ?? [],
+      pluginClaims: claims.entries,
+    },
+    changed: marketplaces.changed || claims.changed,
+  };
+}
+
+interface Merged<Entry> {
+  readonly entries: Entry[];
+  readonly changed: boolean;
+}
+
+function mergeMarketplaceClaims(
+  recorded: readonly NativeMarketplaceRegistration[],
+  claimed: readonly NativeMarketplaceRegistration[]
+): Merged<NativeMarketplaceRegistration> {
+  const entries = [...recorded];
+  let changed = false;
+  for (const claim of claimed) {
+    const index = entries.findIndex(
+      (entry) => entry.alias === claim.alias && entry.hostName === claim.hostName
+    );
+    if (index < 0) {
+      entries.push(claim);
+      changed = true;
+    } else if (provesAnotherSource(claim, entries[index])) {
+      entries[index] = claim;
+      changed = true;
+    }
+  }
+  return { entries, changed };
+}
+
+/** A claim without a source proves nothing, so it never displaces a recorded entry. */
+function provesAnotherSource(
+  claim: NativeMarketplaceRegistration,
+  recorded: NativeMarketplaceRegistration
+): boolean {
+  return (
+    claim.provenance !== undefined &&
+    (recorded.provenance === undefined ||
+      !sameNativeMarketplaceSource(recorded.provenance, claim.provenance))
+  );
+}
+
+interface HeldClaim {
+  readonly ref: string;
+  readonly dependents: string[];
+}
+
+function mergeRefClaims(
+  recorded: readonly DependentClaim[],
+  refs: readonly string[],
+  dependent: string | undefined
+): Merged<HeldClaim> {
+  const entries = recorded.map((claim) => ({ ref: claim.ref, dependents: [...claim.dependents] }));
+  let changed = false;
+  for (const ref of refs) {
+    const claim = entries.find((candidate) => candidate.ref === ref);
+    if (claim === undefined) {
+      entries.push({ ref, dependents: dependent === undefined ? [] : [dependent] });
+      changed = true;
+    } else if (dependent !== undefined && !claim.dependents.includes(dependent)) {
+      claim.dependents.push(dependent);
+      changed = true;
+    }
+  }
+  return { entries, changed };
 }

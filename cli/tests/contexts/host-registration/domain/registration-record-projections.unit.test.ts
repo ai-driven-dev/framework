@@ -43,6 +43,7 @@ describe("registration record projections", () => {
     expect(refOf(recordWith(), "p", "other")).toBe("p@second");
     expect(refOf(recordWith(), "p", "missing")).toBeUndefined();
     expect(refOf(undefined, "p", "other")).toBeUndefined();
+    expect(refOf(recordWith(), "p", undefined)).toBeUndefined();
   });
 
   describe("withoutRef", () => {

@@ -1,8 +1,10 @@
 import { homedir } from "node:os";
 import {
+  afterActivation,
   claimsOnMarketplace,
   isQualifiedRef,
   marketplaceOf,
+  mergeCatalogueClaims,
   pluginRefsOf,
   refOf,
   refOnAnyHost,
@@ -55,6 +57,8 @@ export const registrationRecordRules: RegistrationRecordRules = {
   withoutRef,
   withoutClaimedRef,
   withoutMarketplace,
+  afterActivation,
+  mergeCatalogueClaims,
 };
 
 /** Builds a distribution into the aidd-owned cache, overwriting what a previous build left there. */
