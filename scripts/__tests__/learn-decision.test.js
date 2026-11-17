@@ -56,7 +56,7 @@ test("writes a new decision record in the default folder, named after its title"
   assert.match(adr, /## Decision\n\nEvery package installs with pnpm\.\n/);
   assert.match(adr, /## Alternatives\n\nnpm: slower installs, no workspace protocol\.\n/);
   assert.match(adr, /## Consequences\n\nContributors need pnpm on their machine\.\n/);
-  assert.doesNotMatch(adr, /Supersede|<|-->/);
+  assert.doesNotMatch(adr, /Supersede|[<>]/);
 });
 
 test("writes into the decision folder the project already has", (t) => {

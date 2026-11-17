@@ -197,6 +197,7 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `assets` | [adr-template.md](skills/10-learn/assets/adr-template.md) | - |
 | `assets` | [learn-record.md](skills/10-learn/assets/learn-record.md) | - |
 | `assets` | [proposal-table.md](skills/10-learn/assets/proposal-table.md) | - |
+| `assets` | [report.md](skills/10-learn/assets/report.md) | - |
 | `references` | [destinations.md](skills/10-learn/references/destinations.md) | - |
 | `references` | [signals.md](skills/10-learn/references/signals.md) | - |
 | `references` | [writer.md](skills/10-learn/references/writer.md) | - |

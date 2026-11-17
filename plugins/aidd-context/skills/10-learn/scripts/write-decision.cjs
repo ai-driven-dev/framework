@@ -109,7 +109,7 @@ function main(argv) {
   const dir = decisionDir(project);
   const created = `${dir}/${slug}.md`;
   const createdFull = path.join(project, created);
-  if (fs.existsSync(createdFull)) refuse(`${created} already exists.`);
+  if (options["--plan"] && fs.existsSync(createdFull)) refuse(`${created} already exists.`);
   const operations = [{ path: created, op: "create" }];
   let supersedes = null;
   let oldFull = null;
