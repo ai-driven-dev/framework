@@ -1,7 +1,13 @@
 import { homedir } from "node:os";
 import {
+  claimsOnMarketplace,
+  isQualifiedRef,
+  marketplaceOf,
   pluginRefsOf,
   refOf,
+  refOnAnyHost,
+  refOnHostName,
+  refSelectedBy,
   refsOnHosts,
   registrationPreview,
   withoutClaimedRef,
@@ -37,6 +43,12 @@ import { createFrameworkBuildUseCase, type FrameworkBuildDeps } from "./translat
 /** The rules over a recorded registration, answered by the host registration that owns its meaning. */
 export const registrationRecordRules: RegistrationRecordRules = {
   pluginRefsOf,
+  marketplaceOf,
+  claimsOnMarketplace,
+  refOnAnyHost,
+  refOnHostName,
+  isQualifiedRef,
+  refSelectedBy,
   refOf,
   refsOnHosts,
   registrationPreview,

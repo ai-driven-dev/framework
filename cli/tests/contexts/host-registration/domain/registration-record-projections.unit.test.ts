@@ -1,8 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  claimsOnMarketplace,
+  isQualifiedRef,
+  marketplaceOf,
   pluginRefsOf,
   refOf,
+  refOnAnyHost,
+  refOnHostName,
+  refSelectedBy,
   refsOnHosts,
   registrationPreview,
   withoutClaimedRef,
@@ -23,14 +29,20 @@ const recordWith = () => ({
 });
 
 describe("registration record projections", () => {
-  it("lists the recorded plugin refs", () => {
+  it("lists the recorded plugin refs, none when nothing was recorded", () => {
     const record = recordWith();
     expect(pluginRefsOf(record)).toBe(record.pluginRefs);
+    expect(pluginRefsOf(undefined)).toEqual([]);
+  });
+
+  it("names a plugin's ref on a host catalogue by the host name", () => {
+    expect(refOnHostName("p", "catalog")).toBe("p@catalog");
   });
 
   it("builds a ref from the plugin and the host name of its alias", () => {
     expect(refOf(recordWith(), "p", "other")).toBe("p@second");
     expect(refOf(recordWith(), "p", "missing")).toBeUndefined();
+    expect(refOf(undefined, "p", "other")).toBeUndefined();
   });
 
   describe("withoutRef", () => {
@@ -150,6 +162,74 @@ describe("registration record projections", () => {
     it("reads a record without claims", () => {
       const { pluginClaims: _claims, ...bare } = recordWith();
       expect(refsOnHosts(bare, ["catalog"])).toEqual(["a@catalog", "c@catalog"]);
+    });
+  });
+
+  describe("marketplaceOf", () => {
+    it("finds the registration of an alias by identity", () => {
+      const record = recordWith();
+      expect(marketplaceOf(record, "other")).toBe(record.marketplaces[1]);
+    });
+
+    it("finds nothing for an alias that was never registered", () => {
+      expect(marketplaceOf(recordWith(), "missing")).toBeUndefined();
+    });
+  });
+
+  describe("claimsOnMarketplace", () => {
+    it("keeps the claims on the host name of the alias, by identity", () => {
+      const record = recordWith();
+      const claims = claimsOnMarketplace(record, "other");
+      expect(claims).toEqual([claim("b@second")]);
+      expect(claims[0]).toBe(record.pluginClaims[1]);
+    });
+
+    it("matches the host name exactly, not a longer name ending the same way", () => {
+      const record = { ...recordWith(), pluginClaims: [claim("a@old-catalog")] };
+      expect(claimsOnMarketplace(record, "local")).toEqual([]);
+    });
+
+    it("keeps no claim for an alias that was never registered", () => {
+      const record = { ...recordWith(), pluginClaims: [claim("a@undefined")] };
+      expect(claimsOnMarketplace(record, "missing")).toEqual([]);
+    });
+
+    it("reads a record without claims", () => {
+      const { pluginClaims: _claims, ...bare } = recordWith();
+      expect(claimsOnMarketplace(bare, "local")).toEqual([]);
+    });
+  });
+
+  describe("plugin selectors", () => {
+    it("takes a selector with a catalogue for an exact ref", () => {
+      expect(isQualifiedRef("p@catalog")).toBe(true);
+      expect(isQualifiedRef("p")).toBe(false);
+    });
+
+    it("selects a ref exactly when the selector names its catalogue", () => {
+      expect(refSelectedBy("p@catalog", "p@catalog")).toBe(true);
+      expect(refSelectedBy("p@second", "p@catalog")).toBe(false);
+      expect(refSelectedBy("pp@catalog", "p@catalog")).toBe(false);
+      expect(refSelectedBy("p@catalog-two", "p@catalog")).toBe(false);
+    });
+
+    it("selects every catalogue's ref of a bare plugin name, and no longer name", () => {
+      expect(refSelectedBy("p@catalog", "p")).toBe(true);
+      expect(refSelectedBy("p@second", "p")).toBe(true);
+      expect(refSelectedBy("pp@catalog", "p")).toBe(false);
+      expect(refSelectedBy("p-extra", "p")).toBe(false);
+    });
+  });
+
+  describe("refOnAnyHost", () => {
+    it("holds for a ref on one of the host names, and for none else", () => {
+      expect(refOnAnyHost("a@catalog", ["second", "catalog"])).toBe(true);
+      expect(refOnAnyHost("a@catalog", ["second"])).toBe(false);
+      expect(refOnAnyHost("a@catalog", [])).toBe(false);
+    });
+
+    it("matches the host name exactly, not a longer name ending the same way", () => {
+      expect(refOnAnyHost("a@old-catalog", ["catalog"])).toBe(false);
     });
   });
 });

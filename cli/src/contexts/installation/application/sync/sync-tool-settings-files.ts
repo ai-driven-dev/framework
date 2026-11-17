@@ -195,7 +195,7 @@ export class SyncToolSettingsFiles {
         source: marketplace.source,
       });
       if (entryKey == null) continue;
-      refs.push(`${plugin.name}@${entryKey}`);
+      refs.push(this.records.refOnHostName(plugin.name, entryKey));
     }
     return refs;
   }

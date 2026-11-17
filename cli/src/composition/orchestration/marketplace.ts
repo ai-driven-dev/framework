@@ -183,7 +183,13 @@ export function wireMarketplace(base: Base, inst: Installation) {
       { name: FRAMEWORK_MARKETPLACE_NAME, userCacheRoot: userConfigDir },
       registrationRecordRules
     ),
-    new RecordActivation(fs, hasher, sameNativeMarketplaceSource, userManifestRepo),
+    new RecordActivation(
+      fs,
+      hasher,
+      sameNativeMarketplaceSource,
+      registrationRecordRules,
+      userManifestRepo
+    ),
     new SharedFrameworkSource(
       fs,
       logger,

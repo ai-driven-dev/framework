@@ -31,7 +31,7 @@ export interface ActivateNativeToolsRequest {
 export interface ActivationMarketplace {
   readonly name: string;
   /** Root of a user-scope marketplace's built tree, mirroring `CacheBuiltMarketplace`'s
-   * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
+   * own `userCacheRoot`: the version a drift is decided against comes from `builtDir` itself,
    * already built before this runs, never from a path recomputed without one. */
   readonly userCacheRoot: () => string;
 }
@@ -106,7 +106,9 @@ export class ActivateNativeTools {
   ): string[] {
     const frameworkHost = hostNameByAlias.get(this.marketplace.name);
     const requested =
-      frameworkHost === undefined ? [] : enablePlugins.map((name) => `${name}@${frameworkHost}`);
+      frameworkHost === undefined
+        ? []
+        : enablePlugins.map((name) => this.records.refOnHostName(name, frameworkHost));
     return [
       ...new Set([
         ...this.pluginRefsToEnable(toolId, manifest, marketplaces, hostNameByAlias, scope),
@@ -132,7 +134,7 @@ export class ActivateNativeTools {
       if (marketplace === undefined) continue;
       const hostName = hostNameByAlias.get(marketplace.name);
       if (hostName === undefined) continue;
-      refs.push(`${plugin.name}@${hostName}`);
+      refs.push(this.records.refOnHostName(plugin.name, hostName));
     }
     // Native-only global installs record successful activations, not copied plugin files.
     // Claims also recover a selection an older sync dropped from its projection.

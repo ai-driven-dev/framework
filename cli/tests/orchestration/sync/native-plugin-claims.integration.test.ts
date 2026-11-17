@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.js";
@@ -257,7 +258,8 @@ for (const [toolId, catalogPath] of [
             userScopeFileGuard,
             fakeBuiltDeps()
           ),
-          new CapturingLogger()
+          new CapturingLogger(),
+          registrationRecordRules
         ),
         new RefreshHostPlugin(
           new Map([[toolId, activator]]),
@@ -291,7 +293,8 @@ for (const [toolId, catalogPath] of [
               userScopeFileGuard,
               fakeBuiltDeps()
             ),
-            new CapturingLogger()
+            new CapturingLogger(),
+            registrationRecordRules
           ),
           new RefreshHostPlugin(
             new Map([[toolId, failed]]),

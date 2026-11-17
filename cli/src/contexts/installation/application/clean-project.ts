@@ -44,7 +44,7 @@ export interface ProjectCleanAsks {
   readonly records: RegistrationRecordRules;
 }
 
-/** `cachePaths` are the absolute paths a `--force` run will attempt to purge — empty for a tool
+/** `cachePaths` are the absolute paths a `--force` run will attempt to purge: empty for a tool
  * whose profile declares no `NativeActivation.pluginCacheDir`. An announcement, not a guarantee:
  * whether a path is still there, and safe to purge, is known only once the host's CLI ran. */
 export type CleanNativeRegistrationPreview = RegistrationPreview & { readonly toolId: ToolId };
@@ -141,8 +141,8 @@ export class CleanProject {
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of manifest.getInstalledToolIds()) {
       const recorded = manifest.getNativeRegistrations(toolId);
-      const refs = recorded === undefined ? undefined : this.asks.records.pluginRefsOf(recorded);
-      if (refs !== undefined && refs.length > 0) nativeRefs.set(toolId, refs);
+      const refs = this.asks.records.pluginRefsOf(recorded);
+      if (refs.length > 0) nativeRefs.set(toolId, refs);
     }
     return nativeRefs;
   }
@@ -194,6 +194,8 @@ export class CleanProject {
       const tool = tools.aiProfile(toolId);
       const refScopes = new Map<string, MarketplaceScope>();
       for (const plugin of manifest.getPlugins(toolId)) {
+        // Limit: a plugin without a marketplace has no ref to count; only a hand-edited manifest
+        // lacks one, and no real manifest has been seen to.
         const ref =
           plugin.marketplace === undefined
             ? undefined

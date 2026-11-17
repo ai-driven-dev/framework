@@ -69,6 +69,7 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       parts.fs,
       parts.hasher,
       sameNativeMarketplaceSource,
+      registrationRecordRules,
       parts.userManifestRepo
     ),
     new SharedFrameworkSource(

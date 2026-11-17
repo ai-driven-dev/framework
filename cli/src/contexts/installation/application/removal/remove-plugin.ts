@@ -141,16 +141,12 @@ export class RemovePlugin {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
       return (registrations.pluginClaims ?? [])
-        .filter((claim) =>
-          options.pluginName.includes("@")
-            ? claim.ref === options.pluginName
-            : claim.ref.startsWith(`${options.pluginName}@`)
-        )
+        .filter((claim) => this.records.refSelectedBy(claim.ref, options.pluginName))
         .map((claim) => ({ toolId, registrations, claim }));
     });
     if (targets.length === 0 && nativeTargets.length === 0)
       throw new PluginNotFoundError(options.pluginName);
-    if (!options.pluginName.includes("@") && nativeTargets.length > 1) {
+    if (!this.records.isQualifiedRef(options.pluginName) && nativeTargets.length > 1) {
       throw new Error(
         `Native plugin '${options.pluginName}' has multiple catalogues; use the exact <plugin>@<catalogue> ref.`
       );
@@ -248,8 +244,10 @@ export class RemovePlugin {
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, tool, projectRoot);
       await removeProjectHooks(this.fs, plugin, tool, projectRoot);
+      // Limit: a plugin without a marketplace has no ref to detach; only a hand-edited manifest
+      // lacks one, and no real manifest has been seen to.
       const ref =
-        registrations === undefined || plugin.marketplace === undefined
+        plugin.marketplace === undefined
           ? undefined
           : this.records.refOf(registrations, plugin.name, plugin.marketplace);
       const canDetachRef =

@@ -28,14 +28,35 @@ type WithClaims<R> = R & { readonly pluginClaims: readonly RecordedClaim[] };
 
 /** What installation asks of the host registration to read or rewrite a record it keeps. */
 export interface RegistrationRecordRules {
-  readonly pluginRefsOf: (record: RegistrationRecord) => readonly string[];
-  /** The ref a plugin has on the host, `undefined` when the alias was never registered. */
-  readonly refOf: (record: RegistrationRecord, plugin: string, alias: string) => string | undefined;
+  /** The refs recorded on the host, none when nothing was recorded. */
+  readonly pluginRefsOf: (record: RegistrationRecord | undefined) => readonly string[];
+  /** The registration an alias stands for, `undefined` when it was never registered. */
+  readonly marketplaceOf: (
+    record: Pick<RegistrationRecord, "marketplaces">,
+    alias: string
+  ) => NativeMarketplaceRegistration | undefined;
+  /** The claims on the refs sitting on the host name the alias was registered under. */
+  readonly claimsOnMarketplace: <Claim extends RecordedClaim>(
+    record: Pick<RegistrationRecord, "marketplaces"> & { readonly pluginClaims?: readonly Claim[] },
+    alias: string
+  ) => readonly Claim[];
+  /** Whether a ref sits on one of the host names. */
+  readonly refOnAnyHost: (ref: string, hostNames: Iterable<string>) => boolean;
+  /** Whether a plugin selector names its catalogue, so it can only mean one exact ref. */
+  readonly isQualifiedRef: (selector: string) => boolean;
+  /** A qualified selector is one exact ref; a bare plugin name selects it in every catalogue. */
+  readonly refSelectedBy: (ref: string, selector: string) => boolean;
+  /** The ref a plugin has on a host catalogue, which the host knows by its own name. */
+  readonly refOnHostName: (plugin: string, hostName: string) => string;
+  /** The ref a plugin has on the host, `undefined` when nothing was recorded for the alias. */
+  readonly refOf: (
+    record: RegistrationRecord | undefined,
+    plugin: string,
+    alias: string
+  ) => string | undefined;
   /** The refs, then the claimed refs, that sit on one of the host names. */
   readonly refsOnHosts: (
-    record: Pick<RegistrationRecord, "pluginRefs"> & {
-      readonly pluginClaims?: readonly { readonly ref: string }[];
-    },
+    record: Pick<ClaimedRecord, "pluginRefs" | "pluginClaims">,
     hostNames: readonly string[]
   ) => string[];
   readonly registrationPreview: (

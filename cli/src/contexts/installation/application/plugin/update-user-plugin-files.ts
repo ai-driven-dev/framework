@@ -5,6 +5,7 @@ import type { RegistrationRecord } from "../../domain/manifest/native-registrati
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { RegistrationRecordRules } from "../../ports/native-host.js";
 import type { ActivatedTool } from "../../ports/tool-sections.js";
 import type { ContainmentCheck } from "./global-plugin-files.js";
 import type { PluginMaterializer } from "./plugin-materializer.js";
@@ -35,7 +36,8 @@ export class UpdateUserPluginFiles {
   constructor(
     private readonly repo: ManifestRepository & Lock,
     private readonly materializer: PluginMaterializer,
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    private readonly records: RegistrationRecordRules
   ) {}
 
   async execute(options: UpdateUserPluginFilesCommand): Promise<string[]> {
@@ -68,9 +70,7 @@ export class UpdateUserPluginFiles {
         .filter(
           (claim) =>
             options.pluginNames === undefined ||
-            options.pluginNames.some((name) =>
-              name.includes("@") ? claim.ref === name : claim.ref.startsWith(`${name}@`)
-            )
+            options.pluginNames.some((name) => this.records.refSelectedBy(claim.ref, name))
         )
         .map((claim) => ({ toolId, claim, registrations: manifest.getNativeRegistrations(toolId) }))
     );
@@ -80,8 +80,9 @@ export class UpdateUserPluginFiles {
     if (
       options.pluginNames?.some(
         (name) =>
-          !name.includes("@") &&
-          nativeTargets.filter(({ claim }) => claim.ref.startsWith(`${name}@`)).length > 1
+          !this.records.isQualifiedRef(name) &&
+          nativeTargets.filter(({ claim }) => this.records.refSelectedBy(claim.ref, name)).length >
+            1
       )
     ) {
       throw new Error(

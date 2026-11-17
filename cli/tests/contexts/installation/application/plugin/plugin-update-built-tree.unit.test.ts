@@ -82,7 +82,8 @@ function makeUpdateUseCase(
           translate: translateDistribution,
         }
       ),
-      deps.logger
+      deps.logger,
+      deps.registrationRecordRules
     ),
     nativeHost,
     isStrictlyWithinUserScope
@@ -97,7 +98,6 @@ async function installStalePlugin(
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
   deps.fs.setFile(BUILT_SKILL, "# Demo skill");
-
   await new AddPlugin(
     { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },

@@ -152,7 +152,12 @@ export function wirePlugin(base: Base, inst: Installation) {
     installRuntimeConfigUseCase
   );
   const userPluginUpdateUseCase = new UpdateUserPlugin(
-    new UpdateUserPluginFiles(userManifestRepo, pluginMaterializer, logger),
+    new UpdateUserPluginFiles(
+      userManifestRepo,
+      pluginMaterializer,
+      logger,
+      registrationRecordRules
+    ),
     new RefreshHostPlugin(nativePluginActivators, hostPluginRegistries, nativeSources),
     isStrictlyWithinUserScope
   );

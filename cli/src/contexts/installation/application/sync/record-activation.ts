@@ -14,6 +14,7 @@ import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
 import type {
   HostRegistrationOutcome,
   RegisteredMarketplace,
+  RegistrationRecordRules,
   SameMarketplaceSource,
 } from "../../ports/native-host.js";
 
@@ -23,6 +24,7 @@ export class RecordActivation {
     private readonly fs: FileReader & FileWriter,
     private readonly hasher: Hasher,
     private readonly sameSource: SameMarketplaceSource,
+    private readonly records: RegistrationRecordRules,
     private readonly userManifestRepo?: ManifestRepository & Lock
   ) {}
 
@@ -49,17 +51,17 @@ export class RecordActivation {
         ? (existing?.marketplaces ?? []).filter((m) => !touchedAliases.has(m.alias))
         : [];
       const retainedHostNames = new Set(retainedMarketplaces.map((m) => m.hostName));
+      const releasedHostNames = [...touchedHostNames].filter(
+        (hostName) => !retainedHostNames.has(hostName)
+      );
       const retainedRefs = narrowed
         ? (existing?.pluginRefs ?? []).filter(
-            (ref) =>
-              ![...touchedHostNames].some(
-                (hostName) => !retainedHostNames.has(hostName) && ref.endsWith(`@${hostName}`)
-              )
+            (ref) => !this.records.refOnAnyHost(ref, releasedHostNames)
           )
         : [];
       const preservedHostNames = new Set(outcome.preservedMarketplaces.map((m) => m.hostName));
       const preservedRefs = (existing?.pluginRefs ?? []).filter((ref) =>
-        [...preservedHostNames].some((hostName) => ref.endsWith(`@${hostName}`))
+        this.records.refOnAnyHost(ref, preservedHostNames)
       );
       const registrations: NativeRegistrations = {
         binary,

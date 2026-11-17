@@ -41,23 +41,66 @@ interface RegistrationPreview {
   readonly cachePaths: readonly string[];
 }
 
-const refOnHost = (ref: string, hostName: string): boolean => ref.endsWith(`@${hostName}`);
+const CATALOGUE_SEPARATOR = "@";
 
-export function pluginRefsOf(record: RegistrationRecord): readonly string[] {
-  return record.pluginRefs;
+const refOnHost = (ref: string, hostName: string): boolean =>
+  ref.endsWith(`${CATALOGUE_SEPARATOR}${hostName}`);
+
+/** Whether a ref sits on one of the host names. */
+export function refOnAnyHost(ref: string, hostNames: Iterable<string>): boolean {
+  return [...hostNames].some((hostName) => refOnHost(ref, hostName));
 }
 
-function hostNameOf(record: RegistrationRecord, alias: string): string | undefined {
-  return record.marketplaces.find((entry) => entry.alias === alias)?.hostName;
+/** Whether a plugin selector names its catalogue, so it can only mean one exact ref. */
+export function isQualifiedRef(selector: string): boolean {
+  return selector.includes(CATALOGUE_SEPARATOR);
 }
 
+/** A qualified selector is one exact ref; a bare plugin name selects it in every catalogue. */
+export function refSelectedBy(ref: string, selector: string): boolean {
+  return isQualifiedRef(selector)
+    ? ref === selector
+    : ref.startsWith(`${selector}${CATALOGUE_SEPARATOR}`);
+}
+
+/** The refs recorded on the host, none when nothing was recorded. */
+export function pluginRefsOf(record: RegistrationRecord | undefined): readonly string[] {
+  return record?.pluginRefs ?? [];
+}
+
+/** The registration aidd's local name stands for, `undefined` when it was never registered. */
+export function marketplaceOf(
+  record: Pick<RegistrationRecord, "marketplaces">,
+  alias: string
+): NativeMarketplaceRegistration | undefined {
+  return record.marketplaces.find((entry) => entry.alias === alias);
+}
+
+const hostNameOf = (record: RegistrationRecord, alias: string): string | undefined =>
+  marketplaceOf(record, alias)?.hostName;
+
+/** The claims on the refs sitting on the host name the alias was registered under. */
+export function claimsOnMarketplace<Claim extends RecordedClaim>(
+  record: Pick<RegistrationRecord, "marketplaces"> & { readonly pluginClaims?: readonly Claim[] },
+  alias: string
+): readonly Claim[] {
+  const hostName = marketplaceOf(record, alias)?.hostName;
+  if (hostName === undefined) return [];
+  return (record.pluginClaims ?? []).filter((claim) => refOnHost(claim.ref, hostName));
+}
+
+/** The ref a plugin has on a host catalogue, which the host knows by its own name. */
+export const refOnHostName = (plugin: string, hostName: string): string =>
+  `${plugin}${CATALOGUE_SEPARATOR}${hostName}`;
+
+/** The ref a plugin has on the host, `undefined` when nothing was recorded for the alias. */
 export function refOf(
-  record: RegistrationRecord,
+  record: RegistrationRecord | undefined,
   plugin: string,
   alias: string
 ): string | undefined {
-  const hostName = hostNameOf(record, alias);
-  return hostName === undefined ? undefined : `${plugin}@${hostName}`;
+  const hostName = record === undefined ? undefined : hostNameOf(record, alias);
+  return hostName === undefined ? undefined : refOnHostName(plugin, hostName);
 }
 
 export function withoutRef<R extends RegistrationRecord>(record: R, ref: string): R {
@@ -111,6 +154,6 @@ export function refsOnHosts(
   hostNames: readonly string[]
 ): string[] {
   return [...record.pluginRefs, ...(record.pluginClaims ?? []).map((claim) => claim.ref)].filter(
-    (ref) => hostNames.some((hostName) => refOnHost(ref, hostName))
+    (ref) => refOnAnyHost(ref, hostNames)
   );
 }

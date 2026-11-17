@@ -10,13 +10,19 @@ import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installa
 import type { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/errors.js";
-import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import {
+  buildDist,
+  installViaModeA,
+  MARKETPLACE_NAME,
+  PLUGIN_NAME,
+  REF,
+  verifiedSourceReader,
+} from "../../../../helpers/framework-plugin-on-claude.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { REWRITTEN_BINARY, spiedRecordRules } from "../../../../helpers/spy-record-rules.js";
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
@@ -24,60 +30,6 @@ import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/cat
 const { claude } = TOOL;
 
 const PROJECT_ROOT = "/test-project";
-const MARKETPLACE_NAME = "aidd-framework";
-const PLUGIN_NAME = "aidd-telemetry";
-const REF = `${PLUGIN_NAME}@${MARKETPLACE_NAME}`;
-
-function buildDist(): PluginDistribution {
-  return new PluginDistribution({
-    manifest: { name: PLUGIN_NAME, version: "1.0.0" },
-    format: claude,
-    files: [{ relativePath: "commands/hello.md", content: "# Hello" }],
-    components: {
-      commands: [{ relativePath: "commands/hello.md", content: "# Hello" }],
-      agents: [],
-      rules: [],
-      skills: [],
-      hooks: [],
-      mcp: [],
-    },
-  });
-}
-
-async function installViaModeA(manifest: Manifest): Promise<void> {
-  await new ModeAMarketplaceTranslator().addPlugin(
-    buildDist(),
-    registeredAiProfile(claude),
-    { kind: "local", path: "/plugin-source" },
-    PROJECT_ROOT,
-    manifest,
-    MARKETPLACE_NAME
-  );
-  manifest.setNativeRegistrations(claude, {
-    binary: "claude",
-    marketplaces: [
-      {
-        alias: MARKETPLACE_NAME,
-        hostName: MARKETPLACE_NAME,
-        provenance: { kind: "registry", source: "/plugin-source" },
-      },
-    ],
-    pluginRefs: [REF],
-  });
-}
-
-function verifiedSourceReader() {
-  return {
-    read: async () => ({
-      location: "/host/catalogue",
-      entries: new Map([
-        [MARKETPLACE_NAME, { kind: "registry" as const, source: "/plugin-source" }],
-        ["upstream", { kind: "registry" as const, source: "/plugin-source" }],
-      ]),
-    }),
-  };
-}
-
 function buildRemoveUseCase(
   activator: FakeHostActions,
   logger: CapturingLogger,
@@ -274,42 +226,6 @@ describe("RemovePlugin undoes native activation", () => {
       expect(manifest.getNativeRegistrations(claude)?.pluginRefs).toEqual([]);
     }
   );
-
-  it("writes the record the host rewrote once the project ref is detached", async () => {
-    const spy = spiedRecordRules();
-    const manifest = Manifest.create();
-    manifest.addTool(claude, "test", []);
-    await installViaModeA(manifest);
-    const before = structuredClone(manifest.getNativeRegistrations(claude));
-    const remove = pluginRemover({
-      manifestRepo: new InMemoryManifestRepository(manifest),
-      activators: new Map([[claude, new FakeHostActions({ available: true })]]),
-      hostPluginRegistries: new Map([
-        [
-          claude,
-          new FakeHostPluginRegistry({
-            location: "/host/registry",
-            refs: new Map([[REF, { enabled: true, scope: "project" }]]),
-          }),
-        ],
-      ]),
-      nativeMarketplaceSources: new Map([[claude, verifiedSourceReader()]]),
-      records: spy.rules,
-    });
-
-    await remove.execute({
-      tools: catalogOf(),
-      pluginName: PLUGIN_NAME,
-      toolIds: [claude],
-      projectRoot: PROJECT_ROOT,
-    });
-
-    expect(spy.withoutRef).toHaveBeenCalledExactlyOnceWith(before, REF);
-    expect(manifest.getNativeRegistrations(claude)).toStrictEqual({
-      ...before,
-      binary: REWRITTEN_BINARY,
-    });
-  });
 
   describe("host registry preflight preserves project state", () => {
     const invalidReadings: {

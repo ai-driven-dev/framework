@@ -6,22 +6,31 @@ import type { RegistrationRecordRules } from "../../src/contexts/installation/po
  * a record the host rewrote from one the use case built itself. */
 export const REWRITTEN_BINARY = "rewritten-by-the-host";
 
-const rewritten = <R extends { readonly binary: string }>(record: R): R => ({
-  ...record,
-  binary: REWRITTEN_BINARY,
-});
+type CallOf<Rule extends keyof RegistrationRecordRules> = (
+  ...asked: Parameters<RegistrationRecordRules[Rule]>
+) => void;
 
 /** The record rules with each rewrite spied and answering a record only the host could have
- * produced. The lookups stay the real ones. */
+ * produced. The lookups stay the real ones. A spy records what the rule was asked: a mock cannot
+ * keep a rule's generic signature, so the rule itself is an arrow that calls it. */
 export function spiedRecordRules() {
-  const withoutRef = vi.fn(rewritten);
-  const withoutClaimedRef = vi.fn(rewritten);
-  const withoutMarketplace = vi.fn(rewritten);
-  const rules = {
+  const withoutRef = vi.fn<CallOf<"withoutRef">>();
+  const withoutClaimedRef = vi.fn<CallOf<"withoutClaimedRef">>();
+  const withoutMarketplace = vi.fn<CallOf<"withoutMarketplace">>();
+  const rules: RegistrationRecordRules = {
     ...registrationRecordRules,
-    withoutRef,
-    withoutClaimedRef,
-    withoutMarketplace,
-  } as RegistrationRecordRules;
+    withoutRef: (record, ref) => {
+      withoutRef(record, ref);
+      return { ...record, binary: REWRITTEN_BINARY };
+    },
+    withoutClaimedRef: (record, ref) => {
+      withoutClaimedRef(record, ref);
+      return { ...record, binary: REWRITTEN_BINARY, pluginClaims: record.pluginClaims ?? [] };
+    },
+    withoutMarketplace: (record, alias) => {
+      withoutMarketplace(record, alias);
+      return { ...record, binary: REWRITTEN_BINARY, pluginClaims: record.pluginClaims ?? [] };
+    },
+  };
   return { rules, withoutRef, withoutClaimedRef, withoutMarketplace };
 }

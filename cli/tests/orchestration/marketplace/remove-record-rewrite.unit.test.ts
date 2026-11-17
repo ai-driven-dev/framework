@@ -12,6 +12,7 @@ import { projectMarketplaceRemover } from "../../helpers/project-marketplace-rem
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../helpers/spy-record-rules.js";
 
 const PROJECT_ROOT = "/test-project";
+const EPOCH = "1970-01-01T00:00:00.000Z";
 
 describe("the record a project marketplace removal writes", () => {
   it("writes the record the host rewrote once an orphan's ref is detached", async () => {
@@ -51,7 +52,7 @@ describe("the record a project marketplace removal writes", () => {
         name: "awesome",
         source: { kind: "github", repo: "owner/awesome" },
         scope: "project",
-        addedAt: "2026-04-29T10:00:00.000Z",
+        addedAt: EPOCH,
       })
     );
     const before = structuredClone(manifest.getNativeRegistrations(TOOL.claude));

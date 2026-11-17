@@ -13,9 +13,15 @@ import type {
 } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import type { NativeMarketplaceSource as HostNativeMarketplaceSource } from "../../src/contexts/host-registration/domain/native-marketplace-source.js";
 import type {
+  claimsOnMarketplace,
   RegistrationRecord as HostRegistrationRecord,
+  isQualifiedRef,
+  marketplaceOf,
   pluginRefsOf,
   refOf,
+  refOnAnyHost,
+  refOnHostName,
+  refSelectedBy,
   refsOnHosts,
   registrationPreview,
   withoutClaimedRef,
@@ -77,9 +83,17 @@ describe("the rules installation asks of the host registration over a record", (
   it("are the host registration's own functions, member for member", () => {
     expectTypeOf<RegistrationRecordRules["pluginRefsOf"]>().toEqualTypeOf<typeof pluginRefsOf>();
     expectTypeOf<RegistrationRecordRules["refOf"]>().toEqualTypeOf<typeof refOf>();
-    // Spelled differently on each side, so identity fails where mutual acceptance holds.
-    expectTypeOf<RegistrationRecordRules["refsOnHosts"]>().toExtend<typeof refsOnHosts>();
-    expectTypeOf<typeof refsOnHosts>().toExtend<RegistrationRecordRules["refsOnHosts"]>();
+    expectTypeOf<RegistrationRecordRules["refsOnHosts"]>().toEqualTypeOf<typeof refsOnHosts>();
+    expectTypeOf<RegistrationRecordRules["marketplaceOf"]>().toEqualTypeOf<typeof marketplaceOf>();
+    expectTypeOf<RegistrationRecordRules["claimsOnMarketplace"]>().toEqualTypeOf<
+      typeof claimsOnMarketplace
+    >();
+    expectTypeOf<RegistrationRecordRules["refOnHostName"]>().toEqualTypeOf<typeof refOnHostName>();
+    expectTypeOf<RegistrationRecordRules["refOnAnyHost"]>().toEqualTypeOf<typeof refOnAnyHost>();
+    expectTypeOf<RegistrationRecordRules["isQualifiedRef"]>().toEqualTypeOf<
+      typeof isQualifiedRef
+    >();
+    expectTypeOf<RegistrationRecordRules["refSelectedBy"]>().toEqualTypeOf<typeof refSelectedBy>();
     expectTypeOf<RegistrationRecordRules["registrationPreview"]>().toEqualTypeOf<
       typeof registrationPreview
     >();

@@ -70,8 +70,8 @@ export class UninstallTools {
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const toolId of toolIds) {
       const recorded = manifest.getNativeRegistrations(toolId);
-      const refs = recorded === undefined ? undefined : this.records.pluginRefsOf(recorded);
-      if (refs !== undefined && refs.length > 0) nativeRefs.set(toolId, refs);
+      const refs = this.records.pluginRefsOf(recorded);
+      if (refs.length > 0) nativeRefs.set(toolId, refs);
     }
 
     const results: UninstallToolsResult[] = [];

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
@@ -82,7 +83,8 @@ function fixture(
         userScopeFileGuard,
         fakeBuiltDeps()
       ),
-      logger
+      logger,
+      registrationRecordRules
     ),
     new RefreshHostPlugin(new Map([[toolId, activator]]), new Map([[toolId, reader]])),
     isStrictlyWithinUserScope

@@ -32,7 +32,7 @@ export class ListRegisteredPlugins {
               ref:
                 plugin.marketplace === undefined
                   ? undefined
-                  : `${plugin.name}@${plugin.marketplace}`,
+                  : this.records.refOnHostName(plugin.name, plugin.marketplace),
             }));
       tools.push({ toolId, expectedPlugins });
     }

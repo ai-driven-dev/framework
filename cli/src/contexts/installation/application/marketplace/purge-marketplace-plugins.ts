@@ -54,19 +54,16 @@ export class PurgeMarketplacePlugins {
     const native = tools.idsInCanonicalOrder("ai").flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
-      return registrations.marketplaces
-        .filter((registration) => registration.alias === marketplace)
-        .map((registration) => ({ toolId, registrations, registration }));
+      const registration = this.records.marketplaceOf(registrations, marketplace);
+      return registration === undefined ? [] : [{ toolId, registrations, registration }];
     });
     if (plugins.length === 0 && native.length === 0) {
       throw new Error(
         `Cannot prove AIDD ownership of user-scope marketplace '${marketplace}': no canonical plugin or host catalogue claim.`
       );
     }
-    const nativeRefs = native.flatMap(({ registrations, registration }) =>
-      (registrations.pluginClaims ?? []).filter((claim) =>
-        claim.ref.endsWith(`@${registration.hostName}`)
-      )
+    const nativeRefs = native.flatMap(({ registrations }) =>
+      this.records.claimsOnMarketplace(registrations, marketplace)
     );
     const dependents = [
       ...new Set([

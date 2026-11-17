@@ -44,10 +44,7 @@ export class RemovePluginsFromMarketplace {
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const { toolId, plugin } of orphans) {
       const registrations = manifest.getNativeRegistrations(toolId);
-      const ref =
-        registrations === undefined
-          ? undefined
-          : this.records.refOf(registrations, plugin.name, command.marketplace);
+      const ref = this.records.refOf(registrations, plugin.name, command.marketplace);
       if (ref !== undefined) nativeRefs.set(toolId, [...(nativeRefs.get(toolId) ?? []), ref]);
     }
     if (orphans.length === 0 || !(await command.confirm(orphans.length))) {
@@ -96,10 +93,7 @@ export class RemovePluginsFromMarketplace {
       await this.cleanup.removeLocalIntegration(tool, plugin, projectRoot);
       await this.cleanup.deleteLocalFiles(tool, plugin, projectRoot);
       const registrations = manifest.getNativeRegistrations(toolId);
-      const ref =
-        registrations === undefined
-          ? undefined
-          : this.records.refOf(registrations, plugin.name, marketplace);
+      const ref = this.records.refOf(registrations, plugin.name, marketplace);
       if (registrations !== undefined && ref !== undefined)
         manifest.setNativeRegistrations(toolId, this.records.withoutRef(registrations, ref));
       manifest.removePlugin(toolId, plugin.name);

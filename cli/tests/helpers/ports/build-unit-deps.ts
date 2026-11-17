@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { wireTools } from "../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
@@ -93,6 +94,7 @@ export async function buildUnitDeps(_projectRoot: string) {
     fs,
     manifestRepo,
     userManifestRepo,
+    registrationRecordRules,
     logger,
     assetProvider,
     pluginFetcher,
