@@ -123,8 +123,6 @@ export const ALLOWED = new Set([
   "update->auth",
   // Installation reads the installed tools' profiles.
   "installation->tools",
-  // Transitional (M-I1): the exact imports and the way out are in reference-context.md.
-  "installation->host-registration",
   // Permanent: the target context map gives host-registration the contract of tools
   // (target/04-tools-and-translate.md, "Others reach tools only through its application/ and
   // contract/"). Biome keeps tools' domain and application out of reach.
@@ -137,9 +135,7 @@ export const ALLOWED = new Set([
  * admits these imports and no other, so a new import under an existing row fails instead of
  * riding in. The lists only shrink: a pair the code no longer holds fails until removed.
  */
-export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
-  "installation->host-registration": [],
-};
+export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {};
 
 /**
  * The contexts whose interior is held by Biome's folder groups instead of the public-surface
