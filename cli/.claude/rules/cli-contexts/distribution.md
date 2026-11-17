@@ -1,5 +1,5 @@
 ---
-description: Apply when marketplace registration, catalog fetching or the marketplace registry, trust store and cache change; the distribution context owns where content comes from and how it is fetched.
+description: Apply when marketplace registration, catalog fetching, or the marketplace registry, trust store and cache change. The distribution context owns where content comes from and how it is fetched.
 paths:
   - "src/contexts/distribution/**/*.ts"
   - "src/composition/distribution.ts"
@@ -11,28 +11,25 @@ paths:
 ## Reason to change
 
 - Where a plugin's content comes from: which marketplaces are registered, trusted and cached, and how a catalog or a release is fetched.
-- Its language is `src/contexts/distribution/glossary.md`; a name in the code means what that page says.
-- Its shape is the strict reference: `reference-context.md`, beside this page.
+- Its language is `src/contexts/distribution/glossary.md`, its shape `reference-context.md`.
 
 ## Ports
 
-- `MarketplaceRegistry`, `MarketplaceTrustStore`, `MarketplaceCachePort`: each contract kit in `tests/contexts/distribution/testing/` runs on the in-memory fake and on the real adapter, so a test over the fake can be trusted. The cases of the registry kit are the ones the adapter answers over a directory.
-- `MarketplaceRemover`, `ReleaseLister`, `RepositoryVisibility`, `PluginFetcher`, `PluginCatalogRepository`, `RawCatalogFetcher`: no contract kit yet. The reservations are in `aidd_docs/memory/internal/distribution.md`.
-- `MarketplaceRemover` is held here and implemented by the remove commands of `orchestration/marketplace`; `composition/orchestration/marketplace.ts` hands it to `wireAddMarketplace`, which builds `AddMarketplace`.
+- `MarketplaceRegistry`, `MarketplaceTrustStore`, `MarketplaceCachePort`: each contract kit in `tests/contexts/distribution/testing/` runs on the fake and on the real adapter, bar the registry's `updateVersion`.
+- `MarketplaceRemover`, `ReleaseLister`, `RepositoryVisibility`, `PluginFetcher`, `PluginCatalogRepository`, `RawCatalogFetcher`: no contract kit yet.
+- `MarketplaceRemover` is answered by `src/composition/orchestration/marketplace.ts`, which hands it to the add command.
+- Outside importers reach only the modules listed for distribution in `context-boundary.arch.test.ts`.
 
 ## Suppliers
 
-- `auth`: the `TokenProvider` contract, for the adapters that read a private source.
-- `shared/`: errors, `Logger`, paths and the source value.
-- Nothing from `framework/`: biome denies it, and `biome-guards-bite.arch.test.ts` plants it.
+- `auth/contract/token-provider.ts`: the token for a private source (edge `distribution->auth`).
+- `shared/`: errors, `Logger`, paths, the source value, `HttpGet`, `Prompter`, `Hasher`.
+- `simple-git`: the git fetch, in the plugin fetcher adapter.
 
 ## Never
 
-- Import `framework/`: framework asks for a marketplace, distribution never asks back.
-- Change what a command prints or writes: the use-case tests, the contract kits, the adapter integration tests and the e2e `marketplace-add-conflict.e2e.test.ts` freeze the behaviour; the goldens hold help text only.
-- Fix `marketplace add --overwrite` in passing. It removes the old entry before it fetches the new one, so a fetch that fails leaves the old entry gone. `add-marketplace.unit.test.ts` pins that as it is (D1, `aidd_docs/memory/internal/distribution.md`), and the fix flips that test.
-
-## Limits
-
-- `updateVersion` is held by no contract case and the adapter's own lines are not reached by any test; the in-memory fake is the only arm. A case would be new behaviour, not a move. Vanishes when a caller relies on it, then one adapter-arm contract case.
-- The registry case "keeps one user entry for every project" has no one-line break to plant in the adapter arm: `userPath()` takes no project argument, so there is nothing to bend. It is proven on the fake only.
+- Import `framework/` or any other context but auth: callers ask distribution, it never asks back.
+- Branch on a catalog's origin above the domain: each foreign shape has a parser in `domain/catalog-parsers/`, tested on a real fixture, yielding the one catalog shape.
+- Put a technical constant in a port, a command or the domain: base URLs, TTLs and error patterns belong to the adapter, and an adapter catches only to type a raw error.
+- Change what a command prints or writes: the use-case tests, the contract kits and `marketplace-add-conflict.e2e.test.ts` freeze it.
+- Fix `marketplace add --overwrite` in passing: it removes the old entry before the fetch, and `add-marketplace.unit.test.ts` pins that.

@@ -1,26 +1,26 @@
 ---
-description: Apply when a token is read, stored or checked; the auth context owns the one GitHub token, and nothing else reads it.
+description: Apply when a token is read, stored or checked. The auth context owns the one GitHub token, and nothing else reads it.
 paths:
   - "src/contexts/auth/**/*.ts"
   - "src/composition/auth.ts"
   - "tests/contexts/auth/**/*.ts"
-  - "src/contexts/*/application/**/*.ts"
 ---
 
 # Auth
 
 ## Reason to change
 
-- One GitHub credential: kept, found, checked, removed. Auth never makes a business call with it.
-- Its language is `src/contexts/auth/glossary.md`; a name in the code means what that page says.
-- Its shape is the strict reference: `reference-context.md`, beside this page.
+- One GitHub credential: kept, found, checked, removed, never used for a business call.
+- Its language is `src/contexts/auth/glossary.md`.
+- Its shape follows `reference-context.md`, beside this page.
 
 ## Ports
 
 - `CredentialRecordRepository`: the record of each level, read, saved and deleted by level.
 - `ExternalTokenSource`, `CliAuthProvider`: a provider's token and its identity check (`gh`).
 - `IdentityVerifier`: who a stored token belongs to.
-- Published in `contract/`: `TokenProvider` (distribution, framework, update) and the credential types (presentation).
+- `contract/`: `TokenProvider`, read by distribution and update through the `ALLOWED` edges.
+- `contract/`: the credential types, read by presentation.
 
 ## Suppliers
 
@@ -30,5 +30,5 @@ paths:
 ## Never
 
 - Read a token variable or `auth.json` outside the context.
-- Refuse a command for a missing token: authorization surfaces as `CatalogFetchAuthError` on a 401.
-- Restate the source order elsewhere: it is `sourcesInOrder`, described once in `aidd_docs/memory/internal/auth.md`.
+- Refuse a command for a missing token: a 401 surfaces as `CatalogFetchAuthError` at fetch time.
+- Restate the source order: `sourcesInOrder` is described once in the auth page of `aidd_docs/memory/internal/`.
