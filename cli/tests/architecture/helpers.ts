@@ -113,17 +113,18 @@ export function contextNames(): string[] {
     .sort();
 }
 
-/** Exactly these edges between contexts, plus every context to shared. Every row is the target
- * context map (target/00-overview.md, section 4); a row that is debt goes in `TRANSITIONAL_PAIRS`. */
+/** Exactly these edges between contexts, plus every context to shared. Every row is a row of the
+ * target context map (target/00-overview.md, section 4); a row that is debt goes in
+ * `TRANSITIONAL_PAIRS`. */
 export const ALLOWED = new Set([
   "translate->tools",
-  // The token a fetch carries (`contract/token-provider.ts`); a row of the target context map.
+  // The token a fetch carries (`contract/token-provider.ts`).
   "distribution->auth",
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
   // Installation reads the installed tools' profiles.
   "installation->tools",
-  // Permanent: the target context map gives host-registration the contract of tools
+  // The target context map gives host-registration the contract of tools
   // (target/04-tools-and-translate.md, "Others reach tools only through its application/ and
   // contract/"). Biome keeps tools' domain and application out of reach.
   "host-registration->tools",
