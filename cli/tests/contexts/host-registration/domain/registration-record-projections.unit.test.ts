@@ -84,6 +84,7 @@ describe("registration record projections", () => {
       expect(next.marketplaces[0]).toBe(record.marketplaces[1]);
       expect(next.pluginRefs).toEqual(["b@second"]);
       expect(next.pluginClaims).toEqual([claim("b@second")]);
+      expect(next.pluginClaims[0]).toBe(record.pluginClaims[1]);
     });
 
     it("matches the host name suffix exactly, not a longer name ending the same way", () => {
