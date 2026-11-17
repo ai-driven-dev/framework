@@ -1,6 +1,7 @@
-import type { ToolId } from "../../../shared/domain/tool.js";
+import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type {
   MarkdownSectionAnswers,
+  McpConfigAnswers,
   SkillsSectionAnswers,
 } from "../../tools/contract/tool-profile.js";
 import type { SignalDirectory } from "../../tools/contract/tool-vocabulary.js";
@@ -21,4 +22,13 @@ export interface ContentSections {
   markdownSection(kind: "commands" | "agents" | "rules"): MarkdownSectionAnswers | null;
   skillsSection(): SkillsSectionAnswers | null;
   rewriteContent(content: string): string;
+}
+
+/** A tool as far as a reader of its runtime and config files goes: which it ships, and the mcp
+ * file it declares. */
+export interface RuntimeConfigSection {
+  readonly toolId: AiToolId;
+  runtimeFiles(): Readonly<Record<string, string>>;
+  configFiles(): Readonly<Record<string, string>>;
+  mcpConfig(): McpConfigAnswers | null;
 }

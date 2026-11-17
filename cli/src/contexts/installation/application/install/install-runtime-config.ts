@@ -8,9 +8,10 @@ import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { AiToolProfile, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
+import type { SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
+import type { RuntimeConfigSection } from "../../ports/tool-sections.js";
 import type { RunPostInstallPipeline } from "./run-post-install-pipeline.js";
 
 export interface InstallRuntimeConfigCommand {
@@ -55,7 +56,7 @@ export class InstallRuntimeConfig {
   }
 
   async ensurePluginRuntimeFiles(
-    profile: AiToolProfile,
+    profile: RuntimeConfigSection,
     projectRoot: string,
     manifest: Manifest
   ): Promise<void> {
@@ -120,7 +121,7 @@ export class InstallRuntimeConfig {
   }
 
   private async resolveConfigPath(
-    profile: AiToolProfile,
+    profile: RuntimeConfigSection,
     fileName: string,
     outputPath: string,
     options: InstallRuntimeConfigCommand
