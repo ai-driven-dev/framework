@@ -16,7 +16,7 @@ paths:
 ## Ports
 
 - `ManifestRepository`, `FileMerger`, `Platform`, `PluginDistributionReader`: held here, implemented by this context's adapters. Composition hands each to the commands.
-- No contract kit yet for these four. The reservations are in `aidd_docs/memory/internal/installation.md`.
+- No contract kit yet for these four.
 
 ## Suppliers
 

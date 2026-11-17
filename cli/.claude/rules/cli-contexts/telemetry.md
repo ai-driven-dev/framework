@@ -14,7 +14,7 @@ paths:
 
 - What a tool's own transcripts say a model call consumed, and how that is stored, attributed and reported.
 - Its language is `src/contexts/telemetry/glossary.md`, its shape `reference-context.md` bar the exceptions listed there.
-- Where the code is: the telemetry page of the memory bank.
+- Where the code is: `aidd_docs/memory/internal/telemetry.md`.
 
 ## Ports
 
