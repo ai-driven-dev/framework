@@ -1,14 +1,12 @@
 import { join } from "node:path";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type {
-  MarketplaceRegistrationAnswers,
-  ToolProfile,
-} from "../../../tools/contract/tool-profile.js";
+import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type {
   InspectDeclaredMarketplacesResult,
   UndeclaredMarketplace,
 } from "../../contract/inspect-declared-marketplaces-result.js";
+import type { SettingsDeclaringTool } from "../../ports/host-tool.js";
 
 export interface InspectDeclaredMarketplacesCommand {
   readonly projectRoot: string;
@@ -51,7 +49,7 @@ export class InspectDeclaredMarketplaces {
   }
 
   private untrackedSettingsOf(
-    tool: ToolProfile
+    tool: SettingsDeclaringTool
   ): { file: string; registration: MarketplaceRegistrationAnswers } | undefined {
     if (tool.kind !== "ai") return undefined;
     // No machine-local file means the tool writes no machine-local registration at all, so
@@ -76,7 +74,7 @@ export class InspectDeclaredMarketplaces {
     return new Set(settings.registration.declaredMarketplaceNames(parsed));
   }
 
-  private canRegisterItself(tool: ToolProfile): boolean {
+  private canRegisterItself(tool: SettingsDeclaringTool): boolean {
     const activation = tool.kind === "ai" ? tool.nativeActivation() : undefined;
     if (activation === undefined) return true;
     return this.hostAvailable(activation.hostBinary());

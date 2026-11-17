@@ -42,8 +42,6 @@ function wholeProfileReaders(): string[] {
     .sort();
 }
 
-const NARROWS_IN_THIS_WAVE =
-  "takes the whole profile but reads a few sections; it leaves the list when it names them in a port";
 const TRANSLATE_HANDOFF =
   "hands the profile to the plugin translation pipeline, which translate's engine reads in full; it narrows when translate declares its own profile input";
 const HOST_HANDOFF_AFTER_EDGE_WAVE =
@@ -53,18 +51,6 @@ const OUTSIDE_WAVE =
 
 /** Shrink-only: a file that stops naming the whole profile leaves the list, and none joins it. */
 const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
-  "src/contexts/host-registration/application/host-marketplace-source-conflict.ts":
-    NARROWS_IN_THIS_WAVE,
-  "src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.ts":
-    NARROWS_IN_THIS_WAVE,
-  "src/contexts/host-registration/application/native-host-registration-gate.ts":
-    NARROWS_IN_THIS_WAVE,
-  "src/contexts/host-registration/application/native-marketplace-source-proof.ts":
-    NARROWS_IN_THIS_WAVE,
-  "src/contexts/host-registration/application/read-marketplace-catalog-identity.ts":
-    NARROWS_IN_THIS_WAVE,
-  "src/contexts/host-registration/application/refresh-host-plugin.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/host-registration/application/register-plugin-with-host.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/materialize/built-tree-materialization-translator.ts":
     TRANSLATE_HANDOFF,
   "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts":

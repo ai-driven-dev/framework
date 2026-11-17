@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import type { MarketplaceCatalogIdentity } from "../domain/marketplace-source-conflict.js";
+import type { CatalogProbeTool } from "../ports/host-tool.js";
 
 /**
  * What a directory's own catalog declares about itself — `name` and its plugin names, never
@@ -13,7 +13,7 @@ import type { MarketplaceCatalogIdentity } from "../domain/marketplace-source-co
  */
 export async function readMarketplaceCatalogIdentity(
   fs: FileReader,
-  tool: ToolProfile,
+  tool: CatalogProbeTool,
   dir: string
 ): Promise<MarketplaceCatalogIdentity | undefined> {
   const path = marketplaceCatalogProbePath(tool, dir);
@@ -34,7 +34,10 @@ export async function readMarketplaceCatalogIdentity(
  * back `undefined` can report *which file* it found nothing readable at. `undefined` for the same
  * reason the read would answer nothing: not an AI tool, or one whose profile declares no
  * `distributionPaths("marketplace")`. */
-export function marketplaceCatalogProbePath(tool: ToolProfile, dir: string): string | undefined {
+export function marketplaceCatalogProbePath(
+  tool: CatalogProbeTool,
+  dir: string
+): string | undefined {
   if (tool.kind !== "ai") return undefined;
   const catalogRelative = tool.distributionPaths("marketplace")[0];
   return catalogRelative === undefined ? undefined : join(dir, catalogRelative);

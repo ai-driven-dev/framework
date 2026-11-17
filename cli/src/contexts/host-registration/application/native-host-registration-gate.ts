@@ -1,5 +1,4 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type {
   NativeMarketplaceRegistration,
   RegistrationRecord,
@@ -7,6 +6,7 @@ import type {
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
+import type { NativeHostTool } from "../ports/host-tool.js";
 import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,
@@ -22,7 +22,7 @@ export class NativeHostRegistrationGate {
   /** `registrations` carries the claims on its refs beside the host data: the gate reads only
    * their `ref` and hands the claims it kept back as they came. */
   async planMarketplaceRemoval<Claim extends { readonly ref: string }>(
-    tool: AiToolProfile,
+    tool: NativeHostTool,
     registrations: RegistrationRecord & { readonly pluginClaims?: readonly Claim[] },
     registration: NativeMarketplaceRegistration,
     projectRoot: string

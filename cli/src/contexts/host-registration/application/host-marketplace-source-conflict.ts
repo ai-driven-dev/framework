@@ -1,5 +1,4 @@
 import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import type {
   MarketplaceSourceDrift,
   MarketplaceSourceDriftFound,
@@ -14,6 +13,7 @@ import {
   marketplaceSourceDrift,
 } from "../domain/marketplace-source-drift.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
+import type { CatalogProbeTool } from "../ports/host-tool.js";
 import { readMarketplaceCatalogIdentity } from "./read-marketplace-catalog-identity.js";
 
 export type HostMarketplaceSourceCheck =
@@ -49,7 +49,7 @@ async function resolvedOrSelf(fs: FileReader, path: string): Promise<string> {
  */
 export async function hostMarketplaceSourceConflict(
   fs: FileReader,
-  tool: ToolProfile,
+  tool: CatalogProbeTool,
   reader: HostMarketplaceRegistry,
   requestedSource: string,
   requestedIdentity: MarketplaceCatalogIdentity,

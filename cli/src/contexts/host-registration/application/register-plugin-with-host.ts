@@ -13,7 +13,6 @@ import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type { MarketplaceSourceDriftFound } from "../contract/marketplace-source-drift.js";
 import {
   describePluginDiff,
@@ -29,6 +28,7 @@ import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
+import type { CatalogProbeTool, NativeHostTool } from "../ports/host-tool.js";
 import { hostMarketplaceSourceConflict, isDriftFound } from "./host-marketplace-source-conflict.js";
 import { inspectNativeMarketplaceSource } from "./native-marketplace-source-proof.js";
 import {
@@ -121,7 +121,7 @@ interface MarketplaceClaim {
 interface Run {
   readonly tools: ToolCatalog;
   readonly toolId: ToolId;
-  readonly profile: AiToolProfile;
+  readonly profile: NativeHostTool & CatalogProbeTool;
   readonly activator: HostActions;
   readonly projectRoot: string;
   readonly claims: RegistrationClaims;
@@ -459,7 +459,9 @@ export class RegisterPluginWithHost {
 
   /** The host's marketplace registry, for a tool whose profile declares one: a reader a test or a
    * caller hands for any other tool is never consulted. */
-  private marketplaceRegistryOf(profile: AiToolProfile): HostMarketplaceRegistry | undefined {
+  private marketplaceRegistryOf(
+    profile: NativeHostTool & CatalogProbeTool
+  ): HostMarketplaceRegistry | undefined {
     return profile.nativeActivation()?.keepsMarketplaceRegistry() === true
       ? this.hosts.marketplaceRegistries.get(profile.toolId)
       : undefined;

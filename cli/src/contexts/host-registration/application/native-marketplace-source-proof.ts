@@ -1,4 +1,3 @@
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import {
   type NativeMarketplaceSource,
   sameNativeMarketplaceSource,
@@ -11,6 +10,7 @@ import type {
 import type { NativeMarketplaceRegistration } from "../domain/registration-record.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
+import type { NativeHostTool } from "../ports/host-tool.js";
 
 export interface NativeMarketplaceSourceInspection {
   readonly status: "absent" | "owned" | "unproven";
@@ -69,7 +69,7 @@ export async function assertNoForeignNativeRefs(
   hostName: string,
   ownedRefs: ReadonlySet<string>,
   projectRoot: string,
-  tool: AiToolProfile | undefined
+  tool: NativeHostTool | undefined
 ): Promise<ReadonlyMap<string, HostPluginRegistryEntry>> {
   if (reader === undefined)
     throw new Error(
