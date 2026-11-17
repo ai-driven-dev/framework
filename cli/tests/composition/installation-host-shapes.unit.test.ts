@@ -9,6 +9,12 @@ import type {
   ProjectSourceCommand as HostProjectSourceCommand,
   WithdrawFromHostCommand as HostWithdrawFromHostCommand,
 } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
+import type { NativeMarketplaceSource as HostNativeMarketplaceSource } from "../../src/contexts/host-registration/domain/native-marketplace-source.js";
+import type { RegistrationRecord as HostRegistrationRecord } from "../../src/contexts/host-registration/domain/registration-record.js";
+import type {
+  NativeMarketplaceSource,
+  RegistrationRecord,
+} from "../../src/contexts/installation/domain/manifest/native-registrations.js";
 import type {
   ClaimedHostRef,
   ProjectSourceCommand,
@@ -37,5 +43,12 @@ describe("the registration installation asks for", () => {
 
   it("is answered in terms installation reads", () => {
     expectTypeOf<HostRegisterPluginWithHostResult>().toExtend<RegisterPluginWithHostResult>();
+  });
+});
+
+describe("the record installation keeps of a registration", () => {
+  it("holds what the host registration records, and nothing it would not", () => {
+    expectTypeOf<RegistrationRecord>().toEqualTypeOf<HostRegistrationRecord>();
+    expectTypeOf<NativeMarketplaceSource>().toEqualTypeOf<HostNativeMarketplaceSource>();
   });
 });

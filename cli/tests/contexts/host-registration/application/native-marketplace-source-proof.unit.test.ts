@@ -3,11 +3,9 @@ import {
   assertNoForeignNativeRefs,
   inspectNativeMarketplaceSource,
 } from "../../../../src/contexts/host-registration/application/native-marketplace-source-proof.js";
-import type {
-  HostMarketplaceSources,
-  NativeMarketplaceSource,
-} from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
-import type { NativeMarketplaceRegistration } from "../../../../src/contexts/host-registration/contract/registration-record.js";
+import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
+import type { NativeMarketplaceRegistration } from "../../../../src/contexts/host-registration/domain/registration-record.js";
+import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
 

@@ -5,20 +5,24 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
-import { sameNativeMarketplaceSource } from "../../../host-registration/contract/host-marketplace-sources.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
-import type { HostRegistrationOutcome, RegisteredMarketplace } from "../../ports/native-host.js";
+import type {
+  HostRegistrationOutcome,
+  RegisteredMarketplace,
+  SameMarketplaceSource,
+} from "../../ports/native-host.js";
 
 /** What a run observed or caused, written back into the manifests that track it. */
 export class RecordActivation {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly hasher: Hasher,
+    private readonly sameSource: SameMarketplaceSource,
     private readonly userManifestRepo?: ManifestRepository & Lock
   ) {}
 
@@ -63,7 +67,7 @@ export class RecordActivation {
         pluginRefs: [...new Set([...retainedRefs, ...preservedRefs, ...outcome.pluginRefs])],
         ...(existing?.pluginClaims === undefined ? {} : { pluginClaims: existing.pluginClaims }),
       };
-      if (nativeRegistrationsEqual(existing, registrations)) continue;
+      if (nativeRegistrationsEqual(existing, registrations, this.sameSource)) continue;
       manifest.setNativeRegistrations(toolId, registrations);
       changed = true;
     }
@@ -148,7 +152,7 @@ export class RecordActivation {
           if (
             registration.provenance === undefined ||
             (registered[index].provenance !== undefined &&
-              sameNativeMarketplaceSource(registered[index].provenance, registration.provenance))
+              this.sameSource(registered[index].provenance, registration.provenance))
           )
             continue;
           registered[index] = registration;
@@ -185,19 +189,21 @@ export class RecordActivation {
  * run, so a difference is real. Keeps a no-op sync from rewriting the manifest. */
 function nativeRegistrationsEqual(
   a: NativeRegistrations | undefined,
-  b: NativeRegistrations
+  b: NativeRegistrations,
+  sameSource: SameMarketplaceSource
 ): boolean {
   if (a === undefined) return false;
   return (
     a.binary === b.binary &&
-    marketplaceRegistrationsEqual(a.marketplaces, b.marketplaces) &&
+    marketplaceRegistrationsEqual(a.marketplaces, b.marketplaces, sameSource) &&
     arraysEqual(a.pluginRefs, b.pluginRefs)
   );
 }
 
 function marketplaceRegistrationsEqual(
   a: readonly RegisteredMarketplace[],
-  b: readonly RegisteredMarketplace[]
+  b: readonly RegisteredMarketplace[],
+  sameSource: SameMarketplaceSource
 ): boolean {
   return (
     a.length === b.length &&
@@ -207,7 +213,7 @@ function marketplaceRegistrationsEqual(
         return false;
       if (value.provenance === undefined || other.provenance === undefined)
         return value.provenance === other.provenance;
-      return sameNativeMarketplaceSource(value.provenance, other.provenance);
+      return sameSource(value.provenance, other.provenance);
     })
   );
 }

@@ -1,8 +1,8 @@
 import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { RegistrationRecord } from "../../../host-registration/contract/registration-record.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
+import type { RegistrationRecord } from "../../domain/manifest/native-registrations.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";

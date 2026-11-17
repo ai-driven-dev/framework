@@ -14,22 +14,20 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
-import type {
-  HostMarketplaceSources,
-  NativeMarketplaceSource,
-} from "../contract/host-marketplace-sources.js";
 import type { MarketplaceSourceDriftFound } from "../contract/marketplace-source-drift.js";
-import type {
-  NativeMarketplaceRegistration,
-  RegistrationRecord,
-} from "../contract/registration-record.js";
 import {
   describePluginDiff,
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
 } from "../domain/marketplace-source-conflict.js";
+import type { NativeMarketplaceSource } from "../domain/native-marketplace-source.js";
+import type {
+  NativeMarketplaceRegistration,
+  RegistrationRecord,
+} from "../domain/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
+import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 import { hostMarketplaceSourceConflict, isDriftFound } from "./host-marketplace-source-conflict.js";
 import { inspectNativeMarketplaceSource } from "./native-marketplace-source-proof.js";

@@ -1,15 +1,17 @@
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import {
-  type HostMarketplaceSources,
   type NativeMarketplaceSource,
-  type NativeMarketplaceSourceReading,
   sameNativeMarketplaceSource,
-} from "../contract/host-marketplace-sources.js";
-import type { NativeMarketplaceRegistration } from "../contract/registration-record.js";
+} from "../domain/native-marketplace-source.js";
 import type {
   HostPluginRegistryEntry,
   HostPluginRegistryReading,
 } from "../domain/plugin-registry-reading.js";
+import type { NativeMarketplaceRegistration } from "../domain/registration-record.js";
+import type {
+  HostMarketplaceSources,
+  NativeMarketplaceSourceReading,
+} from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
 
 export interface NativeMarketplaceSourceInspection {

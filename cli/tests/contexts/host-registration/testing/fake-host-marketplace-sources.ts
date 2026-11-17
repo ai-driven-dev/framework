@@ -1,8 +1,8 @@
+import type { NativeMarketplaceSource } from "../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
 import type {
   HostMarketplaceSources,
-  NativeMarketplaceSource,
   NativeMarketplaceSourceReading,
-} from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+} from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { FakeHostActions } from "./fake-host-actions.js";
 
 /** A fake host listing, not an ownership oracle: initial host state and add-result names are explicit. */

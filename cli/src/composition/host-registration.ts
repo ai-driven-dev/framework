@@ -1,4 +1,3 @@
-import type { HostMarketplaceSources } from "../contexts/host-registration/contract/host-marketplace-sources.js";
 import { HostCliAdapter } from "../contexts/host-registration/infrastructure/host-cli-adapter.js";
 import { marketplaceListContract } from "../contexts/host-registration/infrastructure/marketplace-list-parsers.js";
 import { InstallLocationsByNameReader } from "../contexts/host-registration/infrastructure/marketplace-registry-reader.js";
@@ -13,6 +12,7 @@ import {
 } from "../contexts/host-registration/infrastructure/plugin-registry-readers.js";
 import type { HostActions } from "../contexts/host-registration/ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../contexts/host-registration/ports/host-marketplace-registry.js";
+import type { HostMarketplaceSources } from "../contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../contexts/host-registration/ports/host-plugin-registry.js";
 import type {
   MarketplaceRegistryLayout,

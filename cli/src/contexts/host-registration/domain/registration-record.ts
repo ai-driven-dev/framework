@@ -1,4 +1,4 @@
-import type { NativeMarketplaceSource } from "./host-marketplace-sources.js";
+import type { NativeMarketplaceSource } from "./native-marketplace-source.js";
 
 /** One marketplace registration a tool's own CLI was asked to make — aidd's own local name for it
  * (`alias`, what this project's registry is keyed by) beside what the host actually registered it

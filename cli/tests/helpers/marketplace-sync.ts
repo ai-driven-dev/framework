@@ -1,5 +1,6 @@
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
 import { RegisterPluginWithHost } from "../../src/contexts/host-registration/application/register-plugin-with-host.js";
+import { sameNativeMarketplaceSource } from "../../src/contexts/host-registration/domain/native-marketplace-source.js";
 import { ActivateNativeTools } from "../../src/contexts/installation/application/sync/activate-native-tools.js";
 import { BuildMarketplaceForTool } from "../../src/contexts/installation/application/sync/build-marketplace-for-tool.js";
 import { LoadSyncContext } from "../../src/contexts/installation/application/sync/load-sync-context.js";
@@ -60,7 +61,12 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
       FRAMEWORK_MARKETPLACE_NAME,
       parts.userCacheRoot
     ),
-    new RecordActivation(parts.fs, parts.hasher, parts.userManifestRepo),
+    new RecordActivation(
+      parts.fs,
+      parts.hasher,
+      sameNativeMarketplaceSource,
+      parts.userManifestRepo
+    ),
     new SharedFrameworkSource(
       parts.fs,
       parts.logger,

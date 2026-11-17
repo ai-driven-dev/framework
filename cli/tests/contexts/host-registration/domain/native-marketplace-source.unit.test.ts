@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   type NativeMarketplaceSource,
   sameNativeMarketplaceSource,
-} from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+} from "../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
 
 const registry = (source: string): NativeMarketplaceSource => ({ kind: "registry", source });
 

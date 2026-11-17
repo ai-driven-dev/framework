@@ -1,11 +1,12 @@
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
-import type {
-  NativeMarketplaceRegistration,
-  RegistrationRecord,
-} from "../../host-registration/contract/registration-record.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
+import type {
+  NativeMarketplaceRegistration,
+  NativeMarketplaceSource,
+  RegistrationRecord,
+} from "../domain/manifest/native-registrations.js";
 
 /** Registers a tool's marketplaces with its own host and enables the refs a run asks for. The
  * host registration owns it and hands over the real one, which satisfies this shape. */
@@ -194,3 +195,10 @@ export type RegisterPluginWithHostResult =
   | { readonly status: "unconfigured" }
   | { readonly status: "binary-missing"; readonly binary: string }
   | { readonly status: "activated"; readonly outcome: HostRegistrationOutcome };
+
+/** Whether two sources name one marketplace. The host registration owns the comparison and the
+ * composition hands it over, so a recorded source and a current one are judged by one rule. */
+export type SameMarketplaceSource = (
+  recorded: NativeMarketplaceSource,
+  current: NativeMarketplaceSource
+) => boolean;

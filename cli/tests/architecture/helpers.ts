@@ -138,13 +138,7 @@ export const ALLOWED = new Set([
  * riding in. The lists only shrink: a pair the code no longer holds fails until removed.
  */
 export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
-  "installation->host-registration": [
-    "src/contexts/installation/application/plugin/update-user-plugin-files.ts -> src/contexts/host-registration/contract/registration-record.ts",
-    "src/contexts/installation/application/sync/record-activation.ts -> src/contexts/host-registration/contract/host-marketplace-sources.ts",
-    "src/contexts/installation/domain/manifest/native-registrations.ts -> src/contexts/host-registration/contract/host-marketplace-sources.ts",
-    "src/contexts/installation/domain/manifest/native-registrations.ts -> src/contexts/host-registration/contract/registration-record.ts",
-    "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/registration-record.ts",
-  ],
+  "installation->host-registration": [],
 };
 
 /**

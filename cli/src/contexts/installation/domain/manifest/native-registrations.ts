@@ -1,8 +1,32 @@
-import type { NativeMarketplaceSource } from "../../../host-registration/contract/host-marketplace-sources.js";
-import type {
-  NativeMarketplaceRegistration,
-  RegistrationRecord,
-} from "../../../host-registration/contract/registration-record.js";
+/** Source currently selected by the host for a named native plugin marketplace. */
+export type NativeMarketplaceSource =
+  | { readonly kind: "registry"; readonly source: string }
+  | {
+      readonly kind: "effective-list";
+      readonly root: string;
+      readonly sourceType: string;
+      readonly source: string;
+    };
+
+/** One marketplace registration a tool's own CLI was asked to make — aidd's own local name for it
+ * (`alias`, what this project's registry is keyed by) beside what the host actually registered it
+ * under (`hostName`, the catalog's own declared name, which every host-facing call must use
+ * instead). The two differ whenever a project chooses a local alias its catalog does not declare
+ * itself under, a supported capability. */
+export interface NativeMarketplaceRegistration {
+  readonly alias: string;
+  readonly hostName: string;
+  /** Missing on legacy records: never infer current host ownership from the name alone. */
+  readonly provenance?: NativeMarketplaceSource;
+}
+
+/** What aidd asked a host's own CLI to register: the host data only. The installation manifest
+ * stores it, and the claims on its refs stay with the manifest. */
+export interface RegistrationRecord {
+  readonly binary: string;
+  readonly marketplaces: readonly NativeMarketplaceRegistration[];
+  readonly pluginRefs: readonly string[];
+}
 
 export interface NativeRegistrations extends RegistrationRecord {
   readonly pluginClaims?: readonly NativePluginClaim[];

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/contract/host-marketplace-sources.js";
+import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 
 export type MarketplaceSourcesScenario =
   | { kind: "holds"; name: string; source: string }

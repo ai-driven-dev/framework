@@ -6,7 +6,6 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
-import type { RegistrationRecord } from "../contract/registration-record.js";
 import {
   judgeConfirmation,
   judgeEmptiness,
@@ -14,6 +13,7 @@ import {
   type PurgeVerdict,
 } from "../domain/cache-purge-policy.js";
 import type { HostPluginRegistryReading } from "../domain/plugin-registry-reading.js";
+import type { RegistrationRecord } from "../domain/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostPorts } from "../ports/host-ports.js";
