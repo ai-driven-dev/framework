@@ -66,7 +66,6 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/host-registration/application/refresh-host-plugin.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/host-registration/application/register-plugin-with-host.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/agents/main-session-models.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/init-project.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/install/content/install-agents.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/install/content/install-commands.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/install/content/install-content-section.ts":
@@ -85,7 +84,6 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/installation/application/plugin/global-plugin-files.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/plugin/plugin-target-resolution.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/removal/remove-project-plugin.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/report-status.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/restore/generate-tool-distribution.ts":
     NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/restore/restore-tool-files.ts": NARROWS_IN_THIS_WAVE,

@@ -8,16 +8,16 @@ import { AIDD_DIR } from "../../../shared/domain/layout/aidd-layout.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
+import type { ToolFootprint } from "../ports/tool-sections.js";
 import { UpdateGitignore } from "./update-gitignore.js";
 
 /** The files of a tool's own signal directory the framework put there: markdown files whose
  * frontmatter names a framework command. Empty when the tool declares no signal directory. */
 export async function detectToolSignals(
   fs: FileReader,
-  tool: ToolProfile,
+  tool: ToolFootprint,
   projectRoot: string
 ): Promise<string[]> {
   const signal = tool.signalDirectoryIn(projectRoot);

@@ -6,9 +6,9 @@ import type { AiToolId, ToolCategory, ToolId } from "../../../shared/domain/tool
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Hasher } from "../../../shared/ports/hasher.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { ToolProfile } from "../../tools/contract/tool-profile.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
+import type { ToolFootprint } from "../ports/tool-sections.js";
 import type { DetectPluginDrift } from "./shared/detect-plugin-drift.js";
 import { requireManifest } from "./shared/require-manifest.js";
 
@@ -111,7 +111,7 @@ export class ReportStatus implements StatusQuery {
   }
 
   private async checkOneTool(
-    tool: ToolProfile,
+    tool: ToolFootprint,
     manifest: Manifest,
     projectRoot: string
   ): Promise<ToolStatus> {
