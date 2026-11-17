@@ -31,13 +31,22 @@ export interface ContentSections {
   rewriteContent(content: string): string;
 }
 
+/** A tool as far as a reader of the config files it names goes. */
+export interface ConfigFilesSection {
+  readonly toolId: AiToolId;
+  configFiles(): Readonly<Record<string, string>>;
+}
+
 /** A tool as far as a reader of its runtime and config files goes: which it ships, and the mcp
  * file it declares. */
-export interface RuntimeConfigSection {
-  readonly toolId: AiToolId;
+export interface RuntimeConfigSection extends ConfigFilesSection {
   runtimeFiles(): Readonly<Record<string, string>>;
-  configFiles(): Readonly<Record<string, string>>;
   mcpConfig(): McpConfigAnswers | null;
+}
+
+/** A tool as far as a reader of the config it writes into a project goes. */
+export interface ConfigWritesSection {
+  configWrites(): readonly ConfigWrite[];
 }
 
 /** A tool as far as a reader of its main session's model goes: the models it runs, the settings
@@ -70,13 +79,14 @@ export interface FlatMcpSection {
  * hooks and its flat MCP file. */
 export type ProjectPluginIntegration = PluginPlacement & ProjectHooksSection & FlatMcpSection;
 
-/** A tool as far as rebuilding its distribution goes: an editor writes its config, an AI tool also
- * writes its content sections and the config files it names. */
-export type RestoredTool =
-  | { readonly kind: "ide"; configWrites(): readonly ConfigWrite[] }
-  | ({
-      readonly kind: "ai";
-      readonly toolId: AiToolId;
-      configWrites(): readonly ConfigWrite[];
-      configFiles(): Readonly<Record<string, string>>;
-    } & ContentSections);
+/** An editor as far as rebuilding its distribution goes: it writes its config. */
+export type RestoredIdeTool = { readonly kind: "ide" } & ConfigWritesSection;
+
+/** An AI tool as far as rebuilding its distribution goes: its config, the config files it names
+ * and its content sections. */
+export type RestoredAiTool = { readonly kind: "ai" } & ConfigWritesSection &
+  ConfigFilesSection &
+  ContentSections;
+
+/** A tool as far as rebuilding its distribution goes. */
+export type RestoredTool = RestoredIdeTool | RestoredAiTool;

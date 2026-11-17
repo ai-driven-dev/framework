@@ -4,7 +4,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { ContentSection, FrameworkDescriptor } from "../../domain/canon.js";
 import type { Platform } from "../../ports/platform.js";
-import type { RestoredTool } from "../../ports/tool-sections.js";
+import type { RestoredAiTool, RestoredIdeTool, RestoredTool } from "../../ports/tool-sections.js";
 import { InstallAgents } from "../install/content/install-agents.js";
 import { InstallCommands } from "../install/content/install-commands.js";
 import { InstallRules } from "../install/content/install-rules.js";
@@ -35,7 +35,7 @@ export class GenerateToolDistribution {
   }
 
   private async generateIdeToolFiles(
-    config: RestoredTool,
+    config: RestoredIdeTool,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     projectRoot: string
@@ -51,7 +51,7 @@ export class GenerateToolDistribution {
   }
 
   private async generateAiToolFiles(
-    config: Extract<RestoredTool, { kind: "ai" }>,
+    config: RestoredAiTool,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     projectRoot: string
@@ -70,9 +70,7 @@ export class GenerateToolDistribution {
     return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...outputPathFiles]);
   }
 
-  private buildConfigOutputPathFiles(
-    config: Extract<RestoredTool, { kind: "ai" }>
-  ): InstallationFile[] {
+  private buildConfigOutputPathFiles(config: RestoredAiTool): InstallationFile[] {
     if (this.assetProvider === undefined) return [];
     const outputPaths = config.configFiles();
     const files: InstallationFile[] = [];
@@ -91,7 +89,7 @@ export class GenerateToolDistribution {
   }
 
   private generateCapabilitySectionFiles(
-    config: Extract<RestoredTool, { kind: "ai" }>,
+    config: RestoredAiTool,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>
   ): InstallationFile[] {
@@ -103,7 +101,7 @@ export class GenerateToolDistribution {
   }
 
   private generateSectionFiles(
-    config: Extract<RestoredTool, { kind: "ai" }>,
+    config: RestoredAiTool,
     section: ContentSection,
     contentFiles: Map<string, string>
   ): InstallationFile[] {
