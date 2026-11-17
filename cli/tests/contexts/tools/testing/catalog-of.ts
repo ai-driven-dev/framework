@@ -1,5 +1,4 @@
 import { RegisteredToolCatalog } from "../../../../src/contexts/tools/application/registered-tool-catalog.js";
-import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
 import type { ToolCatalog } from "../../../../src/contexts/tools/contract/tool-catalog.js";
 import type {
   AiToolProfile,
@@ -51,12 +50,6 @@ export function registeredAiConfig(id: AiToolId): AiTool {
   const config = registeredConfig(id);
   if (config.kind !== "ai") throw new UnregisteredToolError(id);
   return config;
-}
-
-/** The flat build contract a registered tool declares, or null when it declares none. */
-export function registeredFlatContract(id: ToolId): ToolBuildContract | null {
-  const config = registeredConfig(id);
-  return config.kind === "ai" ? config.buildContract("flat") : null;
 }
 
 /** What the code under test asks to turn a written id into a registered one. */
