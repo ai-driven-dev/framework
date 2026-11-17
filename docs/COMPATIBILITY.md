@@ -13,6 +13,7 @@ What each AI tool receives from the framework.
 | Kilo Code | `.kilo/` | ❌ | ✅ | ✅ | ✅ | ❌ | Some events |
 | Codex | `.codex/` | ✅ | ✅ | ✅ | ✅ | Marketplace only | ✅ |
 | Antigravity CLI | `.agents/` | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Kimi Code CLI | `.kimi-code/` | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
 
 <!--support:end-->
 

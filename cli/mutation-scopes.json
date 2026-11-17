@@ -15,6 +15,7 @@
         "!src/contexts/tools/domain/profiles/copilot/**/*.ts",
         "!src/contexts/tools/domain/profiles/cursor/**/*.ts",
         "!src/contexts/tools/domain/profiles/kilo/**/*.ts",
+        "!src/contexts/tools/domain/profiles/kimi/**/*.ts",
         "!src/contexts/tools/domain/profiles/opencode/**/*.ts"
       ],
       "break": 94,
@@ -75,6 +76,10 @@
     "tools-kilo": {
       "mutate": "src/contexts/tools/domain/profiles/kilo/**/*.ts",
       "break": 64
+    },
+    "tools-kimi": {
+      "mutate": "src/contexts/tools/domain/profiles/kimi/**/*.ts",
+      "break": 96
     },
     "canary": {
       "mutate": [

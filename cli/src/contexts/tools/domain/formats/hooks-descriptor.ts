@@ -243,6 +243,18 @@ export function nativeHooksSupport(descriptor: HooksDescriptor): {
   };
 }
 
+/** A flat tool that runs no hook, so it has no descriptor: the reason is shown when a plugin's
+ * hooks are skipped. */
+export function noFlatHooks(reason: string): {
+  readonly acceptsHooks: false;
+  readonly hooksUnsupportedReason: string;
+} {
+  return { acceptsHooks: false, hooksUnsupportedReason: reason };
+}
+
+/** The build side of {@link noFlatHooks}: no hook script and no hooks file. */
+export const NO_HOOKS_ARTIFACT: ArtifactContract = { supported: false };
+
 /** A flat tool's plugins capability, as far as hooks go. */
 export function flatHooksSupport(
   descriptor: HooksDescriptor & { readonly flat: FlatHooksRoute },

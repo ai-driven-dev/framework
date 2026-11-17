@@ -59,6 +59,8 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // above); 2.0% measured headroom.
 // 772 KB: 756.0 KB, the seven host adapters shipped as product, inlined as text, Antigravity's
 // among them (+23.6 KB over the 732.4 KB above); 2.1% measured headroom.
+// 775 KB: 772.8 KB, Kimi Code CLI's flat profile for skills and agents (+2.5 KB over next's
+// 770.3 KB); 0.3% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

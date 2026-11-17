@@ -15,6 +15,8 @@ import { buildCursorFlatContract } from "../../../../src/contexts/tools/domain/p
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
 import { buildKiloFlatContract } from "../../../../src/contexts/tools/domain/profiles/kilo/build.js";
 import { kilo } from "../../../../src/contexts/tools/domain/profiles/kilo/profile.js";
+import { buildKimiFlatContract } from "../../../../src/contexts/tools/domain/profiles/kimi/build.js";
+import { kimi } from "../../../../src/contexts/tools/domain/profiles/kimi/profile.js";
 import { buildOpencodeFlatContract } from "../../../../src/contexts/tools/domain/profiles/opencode/build.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 
@@ -34,6 +36,7 @@ const FLAT_CONTRACTS: ReadonlyArray<[HooksDeclaringTool, () => ToolBuildContract
   [codex, buildCodexFlatContract],
   [kilo, buildKiloFlatContract],
   [antigravity, buildAntigravityFlatContract],
+  [kimi, buildKimiFlatContract],
   [opencode, buildOpencodeFlatContract],
 ];
 

@@ -104,6 +104,7 @@ describe("a hook or MCP command naming an agent lands on the file the agents bui
       "copilot",
       "cursor",
       "kilo",
+      "kimi",
       "opencode",
     ]);
   });
@@ -121,7 +122,7 @@ describe("a hook or MCP command naming an agent lands on the file the agents bui
     // Kilo and OpenCode read no rewritten hooks.json and take MCP through their own config
     // step, so neither has a rewritten reference to check. Antigravity takes no MCP and hands
     // each hook command to its wrapper base64-encoded, so no reference reads as text there.
-    const rewrites = !["antigravity", "kilo", "opencode"].includes(tool);
+    const rewrites = !["antigravity", "kilo", "kimi", "opencode"].includes(tool);
     expect(references.length > 0, "a rewritten reference exists").toBe(rewrites);
   });
 });

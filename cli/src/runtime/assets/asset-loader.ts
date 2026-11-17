@@ -30,6 +30,7 @@ const CONFIG_ASSETS: Readonly<Record<ToolId, Readonly<Record<string, ConfigAsset
   copilot: { "vscode-settings.json": copilotVscodeSettings },
   kilo: { "kilo.json": kiloJson },
   antigravity: {},
+  kimi: {},
   opencode: { "opencode.json": opencodeJson, "opencode-events.js": opencodeEvents },
   codex: { "config.toml": codexConfigToml },
   vscode: {

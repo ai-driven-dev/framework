@@ -29,6 +29,7 @@ const FLAT_TARGETS = [
   "opencode",
   "kilo",
   "antigravity",
+  "kimi",
 ] as const;
 
 const FROZEN_CELLS = new Set<string>([

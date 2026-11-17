@@ -6,6 +6,7 @@ import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/prof
 import { parseToml } from "../../../../src/contexts/tools/domain/profiles/codex/toml.js";
 import { copilot } from "../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
+import { kimi } from "../../../../src/contexts/tools/domain/profiles/kimi/profile.js";
 import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { vscodeToolConfig } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import type { ToolConfig } from "../../../../src/contexts/tools/domain/registry.js";
@@ -314,6 +315,15 @@ describe("PluginContentTranslator.translate()", () => {
       expect(pathsFor(antigravity)).toEqual([
         ".agents/agents/sample-plugin-reviewer/agent.md",
         ".agents/skills/sample-plugin-hello/SKILL.md",
+      ]);
+    });
+  });
+
+  describe("kimi target (flat mode, one-level skills)", () => {
+    it("emits a skill as .kimi-code/skills/<plugin>-<skill>/ and an agent as one file", () => {
+      expect(pathsFor(kimi)).toEqual([
+        ".kimi-code/agents/sample-plugin-reviewer.md",
+        ".kimi-code/skills/sample-plugin-hello/SKILL.md",
       ]);
     });
   });

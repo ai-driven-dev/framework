@@ -1,0 +1,8 @@
+no hook file
+
+# recorded
+project kimi aidd-telemetry scope=project: 0 hook files
+  projectHooks null
+  dependents []
+project kimi nativeRegistrations pluginRefs null
+machine: no manifest

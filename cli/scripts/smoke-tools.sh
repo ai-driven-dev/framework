@@ -17,7 +17,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLI="$ROOT/dist/cli.js"
 FRAMEWORK_FIXTURE="$ROOT/tests/fixtures/framework"
 
-AI_TOOLS=(claude cursor copilot codex opencode kilo antigravity)
+AI_TOOLS=(claude cursor copilot codex opencode kilo antigravity kimi)
 IDE_TOOLS=(vscode)
 
 # Canonical leaf-command surface. Coverage = exercised / total.
@@ -344,6 +344,9 @@ if true; then
     elif [[ "$t" == antigravity ]]; then
       # Antigravity reads the shared `.agents/` root, not a directory named after itself.
       [[ -d "$BASE/.agents/skills" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
+    elif [[ "$t" == kimi ]]; then
+      # Kimi Code CLI's own root is `.kimi-code/`, not `.kimi/`.
+      [[ -d "$BASE/.kimi-code/skills" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
     else
       [[ -d "$BASE/.${t}" ]] && ok "$t dir present" || bad "$t dir missing after --ai all"
     fi

@@ -50,6 +50,7 @@ src/
 │   │   │       ├── copilot/
 │   │   │       ├── cursor/
 │   │   │       ├── kilo/
+│   │   │       ├── kimi/
 │   │   │       ├── opencode/
 │   │   │       └── vscode/
 │   │   └── infrastructure/
