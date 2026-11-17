@@ -261,7 +261,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # the architecture suite reads each tolerated list at the merge-base with next
+          # the architecture suite reads each tolerated list at the merge-base with the target branch (see target doc 08, 2.3)
           fetch-depth: 0
       - name: Install pnpm
         run: corepack enable
@@ -287,7 +287,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # the architecture suite reads each tolerated list at the merge-base with next
+          # the architecture suite reads each tolerated list at the merge-base with the target branch (see target doc 08, 2.3)
           fetch-depth: 0
       # The runner image carries Google's chrome apt source, whose mirror serves a stale index a
       # few times a day ("Hash Sum mismatch") and fails the whole update; expect comes from ubuntu.
@@ -529,7 +529,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # the architecture suite reads each tolerated list at the merge-base with next
+          # the architecture suite reads each tolerated list at the merge-base with the target branch (see target doc 08, 2.3)
           fetch-depth: 0
       - name: Install pnpm
         run: corepack enable
