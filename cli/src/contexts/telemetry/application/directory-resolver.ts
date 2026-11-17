@@ -55,7 +55,7 @@ export class DirectoryResolver {
     const run = new ResolutionRun(
       this.locator,
       this.consentSource,
-      await RememberedResolutions.load(this.store),
+      await RememberedResolutions.load(this.store, this.environment.now),
       await ConsentLog.load(this.history),
       this.environment
     );
@@ -178,13 +178,7 @@ export class ResolutionRun {
     if (id === null) return { skipped: "outside-repo" };
     // A clone the platform cannot identify cannot be told from another: fail closed.
     if (located.clone === null) return { skipped: "unreadable-consent" };
-    const current = this.remembered.remember(
-      dir,
-      id,
-      located.root,
-      located.clone,
-      this.environment.now
-    );
+    const current = this.remembered.remember(dir, id, located.root, located.clone);
     const others = this.remembered
       .ownersOf(dir)
       .filter((owner) => !sameClone(owner.clone, current.clone));

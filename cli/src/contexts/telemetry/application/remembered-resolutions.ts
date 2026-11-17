@@ -14,11 +14,12 @@ export class RememberedResolutions {
 
   private constructor(
     private readonly store: ResolutionStore,
-    private readonly sightings: Map<string, RepositoryResolution>
+    private readonly sightings: Map<string, RepositoryResolution>,
+    private readonly now: () => Date
   ) {}
 
-  static async load(store: ResolutionStore): Promise<RememberedResolutions> {
-    return new RememberedResolutions(store, await store.load());
+  static async load(store: ResolutionStore, now: () => Date): Promise<RememberedResolutions> {
+    return new RememberedResolutions(store, await store.load(), now);
   }
 
   /** Keeps the first sighting of a directory in a clone, and what it was found to be since. */
@@ -26,8 +27,7 @@ export class RememberedResolutions {
     dir: string,
     repositoryId: string,
     root: string,
-    clone: CloneIdentity,
-    now: () => Date
+    clone: CloneIdentity
   ): RepositoryResolution {
     const key = resolutionKey(dir, clone);
     const held = this.sightings.get(key);
@@ -36,7 +36,7 @@ export class RememberedResolutions {
       repository_id: repositoryId,
       root,
       clone,
-      seen_at: held?.seen_at ?? now().toISOString(),
+      seen_at: held?.seen_at ?? this.now().toISOString(),
     };
     if (sameResolution(held, seen)) return seen;
     this.sightings.set(key, seen);
