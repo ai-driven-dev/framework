@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  hostNameOf,
   pluginRefsOf,
   refOf,
   refsOnHosts,
@@ -27,11 +26,6 @@ describe("registration record projections", () => {
   it("lists the recorded plugin refs", () => {
     const record = recordWith();
     expect(pluginRefsOf(record)).toBe(record.pluginRefs);
-  });
-
-  it("names the host catalogue an alias was registered under", () => {
-    expect(hostNameOf(recordWith(), "local")).toBe("catalog");
-    expect(hostNameOf(recordWith(), "missing")).toBeUndefined();
   });
 
   it("builds a ref from the plugin and the host name of its alias", () => {

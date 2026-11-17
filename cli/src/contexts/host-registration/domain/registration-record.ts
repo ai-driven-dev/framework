@@ -22,19 +22,19 @@ export interface RegistrationRecord {
 }
 
 /** A claim the manifest keeps on a ref: only the ref is the host's business. */
-export interface RecordedClaim {
+interface RecordedClaim {
   readonly ref: string;
 }
 
 /** A record together with the claims the manifest keeps beside it. */
-export type ClaimedRegistrationRecord = RegistrationRecord & {
+type ClaimedRegistrationRecord = RegistrationRecord & {
   readonly pluginClaims?: readonly RecordedClaim[];
 };
 
 /** The record with its claims list always written, as the manifest rewrites it. */
 type WithClaims<R> = R & { readonly pluginClaims: readonly RecordedClaim[] };
 
-export interface RegistrationPreview {
+interface RegistrationPreview {
   readonly binary: string;
   readonly marketplaceCount: number;
   readonly pluginRefCount: number;
@@ -47,7 +47,7 @@ export function pluginRefsOf(record: RegistrationRecord): readonly string[] {
   return record.pluginRefs;
 }
 
-export function hostNameOf(record: RegistrationRecord, alias: string): string | undefined {
+function hostNameOf(record: RegistrationRecord, alias: string): string | undefined {
   return record.marketplaces.find((entry) => entry.alias === alias)?.hostName;
 }
 
