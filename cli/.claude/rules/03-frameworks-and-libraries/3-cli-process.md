@@ -7,29 +7,14 @@ paths:
 
 # The CLI Process
 
-## Exit
-
 - Never fire and forget: `unref()` and floating promises die with the process.
-- Deferred work rides an online command (`ONLINE_COMMAND_PATHS` in `cli.ts`), awaits behind a timeout, or runs detached.
+- Deferred work rides an online command (`ONLINE_COMMAND_PATHS` in `presentation/hooks/update-notice-hooks.ts`), awaits behind a timeout, or runs detached.
 - The hot path is offline: read cache, print, return.
 - Assert a side effect against the built binary (e2e or `pnpm smoke`).
-
-## Channels
-
-- `stdout`: info, success, results.
-- `stderr`: debug, warnings, errors.
-- A conflict or skip is `warn`, never `error`.
-- One-line final summary.
-
-## Formatting
-
-- `CLIOutput` routes by level, nothing else.
-- Rendering: `presentation/display/`. Deciding: the use case.
-
-## Exit codes
-
-- `0`: did what was asked.
-- `1`: thrown error, unhealthy `doctor`, guard needing a TTY.
+- `stdout` carries info, success and results; `stderr` carries debug, warnings and errors.
+- A conflict or skip is `warn`, never `error`; end with a one-line summary.
+- `CLIOutput` routes by level, nothing else; rendering lives in `presentation/display/`, deciding in the command.
+- Exit `0` when it did what was asked; exit `1` on a thrown error, an unhealthy `doctor` or a guard needing a TTY.
 - `errorHandler.handle` alone turns a domain failure into a code.
-- A command may exit on a pre-use-case refusal: missing flag, non-interactive guard.
-- Nothing under `contexts/`, `shared/` calls `process.exit` (`biome-plugins/no-process-exit.grit`).
+- A command may exit before the command runs on a refusal: missing flag, non-interactive guard.
+- `process.exit` stays out of `shared/`, `contexts/` and two presentation files: `biome-plugins/no-process-exit.grit`.
