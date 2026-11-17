@@ -113,11 +113,11 @@ export function contextNames(): string[] {
     .sort();
 }
 
-/** Exactly these edges between contexts, plus every context to shared. */
+/** Exactly these edges between contexts, plus every context to shared. Every row is the target
+ * context map (target/00-overview.md, section 4); a row that is debt goes in `TRANSITIONAL_PAIRS`. */
 export const ALLOWED = new Set([
   "translate->tools",
-  // The token a fetch carries (`contract/token-provider.ts`), until each of the two splits
-  // from the host of the doctor and setup scenarios.
+  // The token a fetch carries (`contract/token-provider.ts`); a row of the target context map.
   "distribution->auth",
   // The token the changelog fetch carries (`contract/token-provider.ts`).
   "update->auth",
