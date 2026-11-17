@@ -74,7 +74,7 @@ A use case is a command: one file, one class of the same name, one public `execu
 | `describe` names a situation ("when the manifest is missing") | mandatory | 31 % of `describe` are bare identifiers; 20 files have none, 13 of them e2e |
 | `it` names an observable result ("lists the tools without writing") | mandatory | titles are already clear at ~97 %: keep |
 | One subject per file | one test file per module or per command | same measure as the first row |
-| Max size | 800 lines (failure); 400 lines is a review grid point, not checked | 14 files exceed 800 in the whole suite; the code map splits the 11 of them under `tests/contexts/framework` by subject (the largest about 3,100 lines) |
+| Max size | 800 lines (failure); 400 lines is a review grid point, not checked | 8 files exceed 800 in the whole suite, the `BASELINE` of `test-file-size`; a file leaves it when it is split by subject |
 | `it.each` | only for inputs of one behaviour; not to hide 10 behaviours | 8.5 % of `it` are expanded |
 | `E2E:` prefix | removed: the suffix and the folder say it | 28 occurrences |
 | Mirror | tests mirror `src/` of the target layout: `tests/<source path>/<module>.<level>.test.ts` | see section 7 |
@@ -336,7 +336,7 @@ Each step is deliverable alone and does not depend on the previous one unless st
 | 3 | Fix the mutation triggers (tooling no longer launches the matrix) | no | about 15 job-min per PR on average |
 | 4 | E2E policy: one per command and per family of failure, the rest moves down to integration | no | main time lever (76 % of the time is in 255 e2e tests) |
 | 5 | Contract suite of the file port (fake + real); extract the merge from the fake | no | verifies the base of 113 importers |
-| 6 | Split the 14 files > 800 lines (11 under `tests/contexts/framework`, per the code map), one subject per file; the size failure threshold takes effect | no | readability for the agent |
+| 6 | Split the 8 files > 800 lines (the `BASELINE` of `test-file-size`), one subject per file; the size failure threshold takes effect | no | readability for the agent |
 | 7 | One golden update mechanism; jscpd on `tests/` | no | consistency, measure |
 | 8 | Profile conformance suite, migrate one profile then the others | partial (injectable registry) | about 500 to 800 lines |
 | 9 | New scheduled host contract job (on the existing weekly schedule) + recorded fixtures | no | covers the 1st cause of bugs |
