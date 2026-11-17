@@ -4,12 +4,17 @@
  * is longer at the head fails. Nothing is committed beside the list, so a change cannot grow one
  * and raise a number to match: a shrink needs no second edit.
  *
- * A tolerated list is any variable, declared anywhere in an architecture file, whose name holds
- * `BASELINE`, plus the ones named in `OTHER_TOLERATED_LISTS`. `list-sizes.ts` reads them from the
- * syntax tree and sizes a list only when it can see every entry; any other list fails, so a list
- * cannot go unseen. A record counts its properties, an array held under a property counting its
- * entries. Raising a count or a method list inside an entry is held by the test that owns the
- * list, which pins each of them exactly.
+ * A tolerated list is any variable, declared anywhere under `tests/architecture` (subfolders
+ * included), whose name holds `BASELINE`, plus the ones named in `OTHER_TOLERATED_LISTS`.
+ * `list-sizes.ts` reads them from the syntax tree and sizes a list only when it can see every
+ * entry; a tolerated list it cannot size fails. A record counts its properties, an array held
+ * under a property counting its leaf entries. Raising a count or a method list inside an entry is
+ * held by the test that owns the list, which pins each of them exactly.
+ *
+ * What the ratchet does not hold:
+ * - lists are chosen by naming convention, so a list whose name is unregistered, or one imported
+ *   from outside `tests/architecture`, is not held;
+ * - class static properties are not read.
  *
  * A list non-empty at the base that is gone at the head fails, since a rename would otherwise
  * restart its count: keep the name, or empty the list first. `RENAMED_LISTS` is the one way out,
@@ -32,7 +37,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { CLI_ROOT, REPO_ROOT, read } from "./helpers.js";
 import { type ListSizes, listSizes } from "./list-sizes.js";
 
@@ -52,7 +57,9 @@ const RENAMED_LISTS: Readonly<Record<string, string>> = {
     "tests/architecture/ports-are-called.arch.test.ts#SECTION_BASELINE",
 };
 
-const ARCHITECTURE_DIRECTORY = "cli/tests/architecture";
+const ARCHITECTURE_DIRECTORY = "tests/architecture";
+const CLI_DIRECTORY = "cli";
+const ARCHITECTURE_DIRECTORY_IN_REPO = `${CLI_DIRECTORY}/${ARCHITECTURE_DIRECTORY}`;
 const DEFAULT_BASE_BRANCH = "next";
 const MAX_GIT_OUTPUT_BYTES = 64 * 1024 * 1024;
 const FEWEST_LISTS_THE_TREE_HOLDS = 10;
@@ -146,12 +153,21 @@ function git(root: string, args: string[]): string {
 
 /** The lists the architecture files hold at `revision` of the repository at `root`. */
 function listsAtRevision(root: string, revision: string): ListSizes {
-  const paths = git(root, ["ls-tree", "--name-only", revision, `${ARCHITECTURE_DIRECTORY}/`])
+  const paths = git(root, [
+    "ls-tree",
+    "-r",
+    "--name-only",
+    revision,
+    `${ARCHITECTURE_DIRECTORY_IN_REPO}/`,
+  ])
     .split("\n")
     .filter((path) => path.endsWith(".ts"));
   return listsOf(
     Object.fromEntries(
-      paths.map((path) => [path.replace(/^cli\//, ""), git(root, ["show", `${revision}:${path}`])])
+      paths.map((path) => [
+        path.replace(`${CLI_DIRECTORY}/`, ""),
+        git(root, ["show", `${revision}:${path}`]),
+      ])
     )
   );
 }
@@ -159,9 +175,10 @@ function listsAtRevision(root: string, revision: string): ListSizes {
 function listsAtHead(): ListSizes {
   return listsOf(
     Object.fromEntries(
-      readdirSync(join(CLI_ROOT, "tests", "architecture"))
-        .filter((name) => name.endsWith(".ts"))
-        .map((name) => [`tests/architecture/${name}`, read(`tests/architecture/${name}`)])
+      readdirSync(join(CLI_ROOT, ARCHITECTURE_DIRECTORY), { recursive: true, encoding: "utf8" })
+        .map((name) => `${ARCHITECTURE_DIRECTORY}/${name.replaceAll("\\", "/")}`)
+        .filter((path) => path.endsWith(".ts"))
+        .map((path) => [path, read(path)])
     )
   );
 }
@@ -175,12 +192,17 @@ function mergeBase(root: string, ref: string): string | null {
 }
 
 describe("tolerated lists only shrink", () => {
+  let head: ListSizes;
+  beforeAll(() => {
+    head = listsAtHead();
+  });
+
   it("reads the lists of the tree, so a rule selecting none cannot pass", () => {
-    expect(listsAtHead().size).toBeGreaterThan(FEWEST_LISTS_THE_TREE_HOLDS);
+    expect(head.size).toBeGreaterThan(FEWEST_LISTS_THE_TREE_HOLDS);
   });
 
   it("registers the lists that do not carry BASELINE in their name", () => {
-    const ids = [...listsAtHead().keys()];
+    const ids = [...head.keys()];
     for (const name of OTHER_TOLERATED_LISTS) {
       expect(
         ids.some((id) => id.endsWith(`#${name}`)),
@@ -190,9 +212,7 @@ describe("tolerated lists only shrink", () => {
   });
 
   it("sizes every tolerated list an architecture file declares", () => {
-    expect(unsized(listsAtHead()), "a list the guard cannot size is a list it cannot hold").toEqual(
-      []
-    );
+    expect(unsized(head), "a list the guard cannot size is a list it cannot hold").toEqual([]);
   });
 
   it("holds no list longer, or gone, since the merge-base with the branch this one merges into", (context) => {
@@ -203,9 +223,9 @@ describe("tolerated lists only shrink", () => {
       context.skip();
       return;
     }
-    const head = sized(listsAtHead());
+    const sizedHead = sized(head);
     const atBase = sized(listsAtRevision(REPO_ROOT, base));
-    expect([...verdicts(head, atBase), ...staleRenames(head, atBase)]).toEqual([]);
+    expect([...verdicts(sizedHead, atBase), ...staleRenames(sizedHead, atBase)]).toEqual([]);
   });
 });
 
@@ -398,21 +418,39 @@ describe("the guard itself", () => {
   it("goes red against a real base when a list grew, with no second edit to hide it", () => {
     const root = mkdtempSync(join(tmpdir(), "baseline-only-shrinks-"));
     try {
-      const file = join(root, ARCHITECTURE_DIRECTORY, "x.arch.test.ts");
-      mkdirSync(join(root, ARCHITECTURE_DIRECTORY), { recursive: true });
+      const file = join(root, ARCHITECTURE_DIRECTORY_IN_REPO, "x.arch.test.ts");
+      const nested = join(root, ARCHITECTURE_DIRECTORY_IN_REPO, "sub", "y.ts");
+      mkdirSync(join(root, ARCHITECTURE_DIRECTORY_IN_REPO, "sub"), { recursive: true });
       git(root, ["init", "-q"]);
       git(root, ["config", "user.email", "t@example.com"]);
       git(root, ["config", "user.name", "t"]);
       git(root, ["config", "commit.gpgsign", "false"]);
       writeFileSync(file, 'const BASELINE = ["a", "b"];\n');
+      writeFileSync(nested, 'const NESTED_BASELINE = ["c"];\n');
       git(root, ["add", "."]);
       git(root, ["commit", "-q", "-m", "base"]);
       const base = git(root, ["rev-parse", "HEAD"]).trim();
       const atBase = listsAtRevision(root, base);
 
       const id = "tests/architecture/x.arch.test.ts#BASELINE";
-      expect([...atBase]).toEqual([[id, 2]]);
-      expect(verdicts(new Map([[id, 3]]), sized(atBase))).toHaveLength(1);
+      expect(Object.fromEntries(atBase)).toEqual({
+        [id]: 2,
+        "tests/architecture/sub/y.ts#NESTED_BASELINE": 1,
+      });
+      const nestedId = "tests/architecture/sub/y.ts#NESTED_BASELINE";
+      expect(verdicts(new Map([[id, 3]]), sized(atBase))).toEqual([
+        `${id} went from 2 to 3 entries since the base: a tolerated list only shrinks`,
+        `${nestedId} held 1 entries at the base and is gone: keep its name, or empty it first`,
+      ]);
+      expect(
+        verdicts(
+          new Map([
+            [id, 2],
+            [nestedId, 3],
+          ]),
+          sized(atBase)
+        )
+      ).toHaveLength(1);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
