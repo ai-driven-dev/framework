@@ -46,7 +46,6 @@ function buildUseCase(
     ...pluginInstall,
   };
   const syncSettingsMock: MarketplaceSyncSettings = {
-    preflightUserMarketplaceSource: vi.fn().mockResolvedValue(undefined),
     execute: vi.fn().mockResolvedValue({ updatedTools: [] }),
     ...syncSettings,
   };

@@ -4,7 +4,7 @@
 
 | Id | Severity | Limit | Rule |
 | --- | --- | --- | --- |
-| M1 | error | 25 words | a sentence over the limit outside a table, list item, heading, code or diagram: make it one of those |
+| M1 | error | 25 words | a sentence over the limit outside a table, list item, heading, code or diagram: make it one |
 | M2 | warning | none | a date, which goes stale |
 | M3 | error | none | a template slot left unfilled, fences included |
 | M4 | error | none | a backticked file path that names nothing on disk |
@@ -16,7 +16,7 @@
 
 | Rule | Keep | Drop | A line the user wrote |
 | --- | --- | --- | --- |
-| Non-derivable | the macro and the why: a decision and its constraint, a convention the files repeat without stating, a gotcha that surprises a newcomer, the stack and how the main parts fit, the domain words a contributor must know | a fact one open file re-derives, anything true of every such project | exempt |
+| Non-derivable | the macro and the why: a decision and its constraint, an unstated convention, a gotcha that surprises a newcomer, the stack and how parts fit, domain words | a fact one open file re-derives, anything true of every such project | exempt |
 | Points to the code | a path or a command | a copy of a schema, a file tree, a dependency list | exempt |
 | One fact, one home | - | the copy, the fact keeps its home | bound |
 | No version | `React` | `React 19` | bound |

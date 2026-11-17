@@ -2,4 +2,4 @@
 # GitHub assigns these reviewers automatically when a pull request is opened.
 # Only AIDD Maintainers can approve and merge - see GOVERNANCE.md.
 # See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
-*       @ai-driven-dev/trusted-partners
+*       @ai-driven-dev/framework-reviewers

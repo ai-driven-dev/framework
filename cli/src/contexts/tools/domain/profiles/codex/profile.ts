@@ -32,7 +32,6 @@ import {
 import { codexAgentFrontmatter, codexAgentToml } from "./codex-agent-toml.js";
 import { codexGlobalFilePath } from "./codex-paths.js";
 import { CODEX_HOOKS } from "./hooks.js";
-import { codexUserFileOverrides } from "./user-file-overrides.js";
 
 const DIRECTORY = ".codex/";
 const TOOL_SUFFIX = ".codex.md";
@@ -118,7 +117,6 @@ export const codex: AiTool<
       pluginsDir: ".codex/plugins/",
       pluginManifestRelativePath: "plugin.json",
       globalFiles: { dir: (homedir) => join(homedir, ".codex"), map: codexGlobalFilePath },
-      userFileOverrides: codexUserFileOverrides,
       acceptsMcp: true,
       translationMode: "marketplace",
       // Codex only enables plugins from its user-global config plus its own plugin cache; a

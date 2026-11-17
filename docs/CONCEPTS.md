@@ -44,10 +44,10 @@ aidd_docs/
 
 ### How it stays correct
 
-- At each write, a hook checks the format of the file written and tells the AI what to fix. It checks lines, not sections, and never blocks a write.
+- At each turn end, a hook checks the memory lines the turn wrote, names a line it lost, and tells the AI what to fix. It checks lines, not sections, and never blocks.
 - A refresh runs the same rules over the whole bank, and a model judges only the content.
 
 ### How it reaches your AI
 
 - A block in `CLAUDE.md` or `AGENTS.md` points to the memory.
-- A hook refreshes that block at the start of each session.
+- A hook refreshes that block at each session start and turn end.

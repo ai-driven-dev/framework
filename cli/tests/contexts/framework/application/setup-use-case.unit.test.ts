@@ -65,10 +65,7 @@ function makeNoOpMarketplaceRefresh(): RefreshMock {
 }
 
 function makeNoOpMarketplaceSyncSettings(): MarketplaceSyncSettings {
-  return {
-    preflightUserMarketplaceSource: vi.fn().mockResolvedValue(undefined),
-    execute: vi.fn().mockResolvedValue({ updatedTools: [] }),
-  };
+  return { execute: vi.fn().mockResolvedValue({ updatedTools: [] }) };
 }
 
 function makeNoOpPluginPick(): PluginPick {

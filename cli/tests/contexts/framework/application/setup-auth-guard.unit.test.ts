@@ -78,10 +78,7 @@ function makeNoOpRefresh(): MarketplaceRefresh {
 }
 
 function makeNoOpSyncSettings(): MarketplaceSyncSettings {
-  return {
-    preflightUserMarketplaceSource: vi.fn().mockResolvedValue(undefined),
-    execute: vi.fn().mockResolvedValue({ updatedTools: [] }),
-  };
+  return { execute: vi.fn().mockResolvedValue({ updatedTools: [] }) };
 }
 
 function makeTokenProvider(token: string | null): TokenProvider {
