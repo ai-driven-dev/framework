@@ -35,7 +35,7 @@ type ClaimedRegistrationRecord<Claim extends RecordedClaim = RecordedClaim> = Re
 };
 
 /** A claim with the projects that hold it. */
-interface DependentClaim extends RecordedClaim {
+export interface DependentClaim extends RecordedClaim {
   readonly dependents: readonly string[];
 }
 
@@ -99,7 +99,8 @@ export function pluginRefsOf(record: RegistrationRecord | undefined): readonly s
   return record?.pluginRefs ?? [];
 }
 
-/** The registration aidd's local name stands for, `undefined` when it was never registered. */
+/** The registration aidd's local name stands for, `undefined` when the alias is absent or was
+ * never registered. */
 export function marketplaceOf(
   record: Pick<RegistrationRecord, "marketplaces">,
   alias: string | undefined

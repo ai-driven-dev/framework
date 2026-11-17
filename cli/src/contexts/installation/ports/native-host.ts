@@ -3,6 +3,7 @@ import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type {
   NativeMarketplaceRegistration,
+  NativePluginClaim,
   RegistrationRecord,
 } from "../domain/manifest/native-registrations.js";
 import type { HostRefCountingTool, NativeHostTool } from "./tool-sections.js";
@@ -24,11 +25,6 @@ type ClaimedRecord<Claim extends RecordedClaim = RecordedClaim> = RegistrationRe
   readonly pluginClaims?: readonly Claim[];
 };
 
-/** A claim with the projects that hold it. */
-interface DependentClaim extends RecordedClaim {
-  readonly dependents: readonly string[];
-}
-
 /** What a run claims on a machine's record, and for which project. */
 interface CatalogueClaims {
   readonly marketplaces: readonly RegisteredMarketplace[];
@@ -39,8 +35,8 @@ interface CatalogueClaims {
 
 /** The machine record once the claims are merged, and whether the merge changed anything. */
 interface MergedClaims {
-  readonly record: ClaimedRecord<DependentClaim> & {
-    readonly pluginClaims: readonly DependentClaim[];
+  readonly record: ClaimedRecord<NativePluginClaim> & {
+    readonly pluginClaims: readonly NativePluginClaim[];
   };
   readonly changed: boolean;
 }
@@ -100,7 +96,7 @@ export interface RegistrationRecordRules {
   ) => ClaimedRecord<Claim> | undefined;
   /** A machine's record with the claims of one run merged in. */
   readonly mergeCatalogueClaims: (
-    existing: ClaimedRecord<DependentClaim> | undefined,
+    existing: ClaimedRecord<NativePluginClaim> | undefined,
     claimed: CatalogueClaims,
     fallbackBinary: string
   ) => MergedClaims;

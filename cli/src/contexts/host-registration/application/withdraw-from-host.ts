@@ -12,7 +12,7 @@ import {
   type PurgeVerdict,
 } from "../domain/cache-purge-policy.js";
 import type { HostPluginRegistryReading } from "../domain/plugin-registry-reading.js";
-import type { RegistrationRecord } from "../domain/registration-record.js";
+import type { DependentClaim, RegistrationRecord } from "../domain/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostPorts } from "../ports/host-ports.js";
@@ -102,12 +102,6 @@ export interface ProvenHostRef {
   readonly scope: MarketplaceScope;
 }
 
-/** One plugin ref the machine-wide record claims, with the projects that still need it. */
-export interface MachineRefClaim {
-  readonly ref: string;
-  readonly dependents: readonly string[];
-}
-
 /** What a project clean depends on that this context may not read itself. */
 export interface ProjectCleanFacts {
   readonly projectRoot: string;
@@ -120,7 +114,7 @@ export interface ProjectCleanFacts {
   /** The alias the framework's own marketplace is registered under. */
   readonly frameworkAlias: string;
   /** The machine-wide claims on `tool`'s refs; `undefined` when no machine record exists. */
-  machineClaims(tool: AiToolId): Promise<readonly MachineRefClaim[] | undefined>;
+  machineClaims(tool: AiToolId): Promise<readonly DependentClaim[] | undefined>;
   /** Runs `action` holding the machine record's lock when there is one to lock. */
   exclusive<T>(action: () => Promise<T>): Promise<T>;
   readonly resolveCacheCandidate: CacheCandidateResolver;
