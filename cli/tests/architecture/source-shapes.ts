@@ -1,13 +1,20 @@
 /**
  * The few text readings the architecture tests share: they see source as text, so a comma or a
- * bracket inside a comment or a string must never be read as code.
+ * bracket inside a comment, a string or a regular expression must never be read as code.
+ */
+
+/**
+ * A string, a comment, or a regular expression literal. A `/` opens a regular expression only
+ * after something that is not a value (not a word, `)` or `]`, bar `return`), else it divides.
  */
 const STRINGS_AND_COMMENTS =
-  /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g;
+  /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|\/\*[\s\S]*?\*\/|\/\/[^\n]*|(?:(?<=\breturn\s+)|(?<![\w)\]]\s*))\/(?:[^/\\\n[]|\\.|\[(?:[^\]\\\n]|\\.)*\])+\/[a-z]*/g;
 
-/** The code with comments dropped and string contents emptied, so neither adds a comma or a bracket. */
+const COMMENT = /^\/[/*]/;
+
+/** The code with comments dropped and string and regular expression contents emptied, so none adds a comma or a bracket. */
 export function codeOnly(source: string): string {
-  return source.replace(STRINGS_AND_COMMENTS, (text) => (text.startsWith("/") ? "" : '""'));
+  return source.replace(STRINGS_AND_COMMENTS, (text) => (COMMENT.test(text) ? "" : '""'));
 }
 
 /** The index of the bracket closing the one at `open`, counting every kind and skipping `=>`. */
