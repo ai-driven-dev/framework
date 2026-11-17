@@ -29,7 +29,7 @@ The duplicate guard in `shared-framework-source.ts` and the equal-path line in `
 | --- | --- | --- |
 | `contexts/translate/domain/engine.ts:348`, skills branch condition replaced by `false`, and its `"skills"` literal replaced by `""` | equivalent | `markdownSection(kind)` is `capabilities[kind] ?? null` and `skillsSection()` is `capabilities.skills ?? null` (`contexts/tools/domain/profile/define-tool.ts:306-307`). Both branches read the same value, the condition is a spelling. |
 | `contexts/translate/domain/engine.ts:393`, trailing `$` dropped from the command-prefix regex | limit | `.+` does not cross a newline, so the two regexes differ only for a command name holding one. No plugin manifest holds such a name. |
-| `contexts/translate/infrastructure/schema-validator.ts:38`, `validateFn.errors ?? []` | limit | ajv sets `errors` whenever the data is invalid, and the branch runs only then. The fallback is a type-level guard. |
-| `contexts/translate/infrastructure/schema-validator.ts:39`, `e.message ?? "unknown error"` | limit | ajv always sets `message` (`messages: false` is not configured). Same type-level guard. |
+| `contexts/translate/infrastructure/schema-validator.ts:38`, `[]` replaced by a one-element array in `validateFn.errors ?? []` | limit, not covered | The right side of `??` never runs: ajv sets `errors` whenever the data is invalid, and the branch runs only then. The fallback is a type-level guard. |
+| `contexts/translate/infrastructure/schema-validator.ts:39`, `"unknown error"` replaced by `""` in `e.message ?? "unknown error"` | limit, not covered | The right side of `??` never runs: ajv always sets `message` (`messages: false` is not configured). Same type-level guard. |
 
 A limit is a case no real input reaches. If one does, the mutant stops being equivalent and a test replaces the limit.
