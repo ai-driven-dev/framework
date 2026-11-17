@@ -5,7 +5,6 @@ import type { AiToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import {
   judgeConfirmation,
   judgeEmptiness,
@@ -17,6 +16,7 @@ import type { RegistrationRecord } from "../domain/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostPorts } from "../ports/host-ports.js";
+import type { NativeHostTool } from "../ports/host-tool.js";
 import { bestEffortNativeCall } from "./best-effort-native-call.js";
 import {
   assertNoForeignNativeRefs,
@@ -52,7 +52,7 @@ export interface WithdrawnPlugin {
 }
 
 export interface WithdrawFromHostCommand {
-  readonly tool: AiToolProfile;
+  readonly tool: NativeHostTool;
   readonly plugin: WithdrawnPlugin;
   readonly projectRoot: string;
   readonly registrations: RegistrationRecord | undefined;
@@ -79,7 +79,7 @@ export type CacheCandidateResolver = WithdrawalClaims["resolveCacheCandidate"];
 
 /** A tool whose host holds registrations this project or machine made. */
 export interface RegisteredTool {
-  readonly tool: AiToolProfile;
+  readonly tool: NativeHostTool;
   readonly registrations: RegistrationRecord;
   /** Root of the host's own plugin cache; absent when the host keeps none. */
   readonly cacheRoot: string | undefined;

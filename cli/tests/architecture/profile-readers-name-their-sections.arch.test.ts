@@ -79,7 +79,6 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/installation/application/restore/apply-plugin-files.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/restore/restore-all-plugins.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/ports/plugin/plugin-translation.ts": TRANSLATE_HANDOFF,
-  "src/contexts/host-registration/contract/withdrawal.ts": HOST_HANDOFF_AFTER_EDGE_WAVE,
   "src/contexts/installation/application/clean-project.ts": HOST_HANDOFF_AFTER_EDGE_WAVE,
   "src/contexts/installation/application/purge-user-scope-files.ts": HOST_HANDOFF_AFTER_EDGE_WAVE,
   "src/contexts/installation/application/removal/remove-plugin.ts": HOST_HANDOFF_AFTER_EDGE_WAVE,
