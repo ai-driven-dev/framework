@@ -2,8 +2,10 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { wireHostRegistration } from "../../src/composition/host-registration.js";
-import { nativeRegistrationsOf } from "../../src/composition/native-registrations.js";
+import {
+  nativeRegistrationsOf,
+  wireHostRegistration,
+} from "../../src/composition/host-registration.js";
 import { DuplicateToolIdError, UnregisteredToolError } from "../../src/shared/domain/errors.js";
 import { catalogOf, registeredConfig, TOOL } from "../contexts/tools/testing/catalog-of.js";
 import { listContractOf } from "../helpers/list-command-contract.js";

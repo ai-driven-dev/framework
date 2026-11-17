@@ -184,7 +184,7 @@
     "src/composition/auth.ts": "Composition modules of the contexts no scope mutates: they construct adapters and hand them to commands, with no rule of their own. What drives them is the in-process command tests and the e2e suite, which the mutation run leaves out (vitest.mutation.config.ts), so every mutant there would survive for a reason that says nothing about the tests.",
     "src/composition/distribution.ts": "Composition module: same reason as src/composition/auth.ts.",
     "src/composition/host-registration.ts": "Composition module: same reason as src/composition/auth.ts.",
-    "src/composition/native-registrations.ts": "Composition module: same reason as src/composition/auth.ts.",
+    "src/composition/machine-claims.ts": "Composition module: same reason as src/composition/auth.ts.",
     "src/composition/recipes.ts": "Composition module: same reason as src/composition/auth.ts.",
     "src/composition/tools.ts": "Composition module: same reason as src/composition/auth.ts.",
     "src/composition/update.ts": "Composition module: same reason as src/composition/auth.ts."

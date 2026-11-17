@@ -5,7 +5,6 @@ import { ManifestRepositoryAdapter } from "../contexts/installation/infrastructu
 import { PlatformAdapter } from "../contexts/installation/infrastructure/platform-adapter.js";
 import { PluginDistributionReaderAdapter } from "../contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { UserManifestRepositoryAdapter } from "../contexts/installation/infrastructure/user-manifest-repository-adapter.js";
-import { UserSourceReferencesAdapter } from "../contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
 import type { FactoryOptions } from "../presentation/deps.js";
@@ -23,6 +22,7 @@ import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import { wireAuth } from "./auth.js";
 import { wireDistribution } from "./distribution.js";
 import { wireHostRegistration } from "./host-registration.js";
+import { wireMachineClaims } from "./machine-claims.js";
 
 /** The adapters and context wirings every area reads: the file system, the manifests, auth, host
  * registration and distribution. Built once per graph. */
@@ -68,9 +68,7 @@ export function wireBase(
     marketplaceSources: nativeSources,
     pluginRegistries: hostPluginRegistries,
   } = wireHostRegistration(tools);
-  // Built ahead of every use case that reads a shared-source claim: it depends only on `fs`
-  // and `userConfigDir`, neither of which distribution's own wiring produces.
-  const userSourceReferences = new UserSourceReferencesAdapter(fs, userConfigDir);
+  const { userSourceReferences } = wireMachineClaims(fs);
   const {
     pluginFetcher,
     marketplaceRegistry,

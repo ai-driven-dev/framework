@@ -20,11 +20,11 @@ import type {
 } from "../contexts/tools/contract/native-registration-spec.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import type { NativeActivation } from "../contexts/tools/domain/native-registration/native-activation.js";
+import type { BuiltToolConfig } from "../contexts/tools/domain/profile/define-tool.js";
 import { REGISTERED_PROFILES } from "../contexts/tools/domain/profiles/registered-profiles.js";
-import { UnregisteredToolError } from "../shared/domain/errors.js";
+import { DuplicateToolIdError, UnregisteredToolError } from "../shared/domain/errors.js";
 import type { AiToolId, ToolId } from "../shared/domain/tool.js";
 import { resolveHomeDir } from "../shared/infrastructure/home-dir.js";
-import { nativeRegistrationsOf } from "./native-registrations.js";
 
 /** One line per layout: a layout declared in a profile with no line here fails to compile. */
 const PLUGIN_READERS = {
@@ -36,6 +36,22 @@ const PLUGIN_READERS = {
 const MARKETPLACE_READERS = {
   "install-locations-by-name": (file) => new InstallLocationsByNameReader(file),
 } satisfies Record<MarketplaceRegistryLayout, (file: string) => HostMarketplaceRegistry>;
+
+/** The native activation each given profile declares, by tool id. A profile that declares none
+ * has no entry, and a tool registered twice is refused rather than resolved to its first copy. */
+export function nativeRegistrationsOf(
+  profiles: readonly BuiltToolConfig[]
+): ReadonlyMap<ToolId, NativeActivation> {
+  const seen = new Set<ToolId>();
+  const registrations = new Map<ToolId, NativeActivation>();
+  for (const profile of profiles) {
+    if (seen.has(profile.toolId)) throw new DuplicateToolIdError(profile.toolId);
+    seen.add(profile.toolId);
+    const activation = profile.kind === "ai" ? profile.nativeActivation() : undefined;
+    if (activation !== undefined) registrations.set(profile.toolId, activation);
+  }
+  return registrations;
+}
 
 export interface HostRegistrationDeps {
   /** Keyed by the binary each activation declares. */
