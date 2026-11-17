@@ -3,10 +3,6 @@ import {
   NativePluginCliError,
   UnreadableBuiltCatalogError,
 } from "../../../shared/domain/errors.js";
-import {
-  parseBuiltMarketplaceDir,
-  parseUserBuiltMarketplaceDir,
-} from "../../../shared/domain/layout/aidd-layout.js";
 import { samePath, samePathSegment } from "../../../shared/domain/paths.js";
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
@@ -14,6 +10,10 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { MarketplaceSourceDriftFound } from "../contract/marketplace-source-drift.js";
+import {
+  parseBuiltMarketplaceDir,
+  parseUserBuiltMarketplaceDir,
+} from "../domain/built-marketplace-location.js";
 import {
   describePluginDiff,
   type MarketplaceCatalogIdentity,

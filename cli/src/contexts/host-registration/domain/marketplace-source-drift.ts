@@ -1,11 +1,11 @@
+import { samePathSegment } from "../../../shared/domain/paths.js";
+import { compareSemver, isSemver } from "../../../shared/domain/semver.js";
+import type { MarketplaceSourceDrift } from "../contract/marketplace-source-drift.js";
 import {
   parseBuiltMarketplaceDir,
   parseBuiltMarketplaceDirAtAnyRoot,
   parseUserBuiltMarketplaceDir,
-} from "../../../shared/domain/layout/aidd-layout.js";
-import { samePathSegment } from "../../../shared/domain/paths.js";
-import { compareSemver, isSemver } from "../../../shared/domain/semver.js";
-import type { MarketplaceSourceDrift } from "../contract/marketplace-source-drift.js";
+} from "./built-marketplace-location.js";
 
 /** Every path a caller hands `marketplaceSourceDrift` — `userCacheRoot`, `projectRoot` and the two
  * sources compared against them — is expected already `realpath`'d: this decides a migration story
