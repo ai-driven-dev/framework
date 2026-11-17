@@ -12,7 +12,7 @@ const GUARD = path.resolve(__dirname, "..", "check-cli-type-honesty.mjs");
  * directory. Both cli/src and cli/tests must exist: a missing one throws ENOENT, which exits
  * non-zero with no breach and would pass an exit-code-only assertion for the wrong reason.
  */
-const ALLOWED_CAST_FILE = "cli/src/contexts/translate/application/translate-source.ts";
+const ALLOWED_CAST_FILE = "cli/src/contexts/translate/application/build-native-tree.ts";
 const A_CAST = "const parsed = raw as unknown as SourceMarketplace;";
 
 function plant(dir, files) {
@@ -61,7 +61,7 @@ test("an allowance nobody spends is named, so a fixed cast drops its entry", () 
   const stale = runOn({ [ALLOWED_CAST_FILE]: "export const parsed: SourceMarketplace = build();" });
 
   assert.equal(stale.status, 1);
-  assert.match(stale.output, /translate-source\.ts no longer casts - drop its CASTS_ALLOWED entry/);
+  assert.match(stale.output, /build-native-tree\.ts no longer casts - drop its CASTS_ALLOWED entry/);
 });
 
 const MINTS_A_TOOL_ID = [

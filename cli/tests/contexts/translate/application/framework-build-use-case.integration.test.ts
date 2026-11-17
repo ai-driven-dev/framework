@@ -1,8 +1,8 @@
 import { join, resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { buildCopilotMarketplaceContract } from "../../../../src/contexts/tools/domain/profiles/copilot/build.js";
+import { BuildNativeTree } from "../../../../src/contexts/translate/application/build-native-tree.js";
 import type { DiskSink } from "../../../../src/contexts/translate/application/sink/disk-sink.js";
-import { BuildNativeTree } from "../../../../src/contexts/translate/application/translate-source.js";
 import type { JsonSchemaValidator } from "../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FrameworkPlaceholderInPluginError,

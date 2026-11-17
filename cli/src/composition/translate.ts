@@ -1,9 +1,9 @@
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
-import { DiskSink } from "../contexts/translate/application/sink/disk-sink.js";
 import {
   BuildNativeTree,
   type FrameworkBuildContext,
-} from "../contexts/translate/application/translate-source.js";
+} from "../contexts/translate/application/build-native-tree.js";
+import { DiskSink } from "../contexts/translate/application/sink/disk-sink.js";
 import { AjvSchemaValidatorAdapter } from "../contexts/translate/infrastructure/schema-validator.js";
 import type { AssetProvider } from "../shared/ports/asset-provider.js";
 import type { FileReader } from "../shared/ports/file-reader.js";

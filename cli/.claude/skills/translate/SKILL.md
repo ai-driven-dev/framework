@@ -28,7 +28,7 @@ capability and port modules listed as public), never an internal file. The whole
 | The canonical framework-doc shape | `domain/canon.ts` |
 | The canonical single-plugin shape | `domain/plugin-distribution.ts` |
 | Build targets and modes | `domain/build-target.ts` |
-| The `aidd translate` use-case | `application/translate-source.ts` (`BuildNativeTree`) |
+| The `aidd translate` use-case | `application/build-native-tree.ts` (`BuildNativeTree`) |
 | The disk sink every build writes through (never per tool) | `application/sink/` |
 | Schema validation for marketplace/plugin manifests | `infrastructure/schema-validator.ts` |
 

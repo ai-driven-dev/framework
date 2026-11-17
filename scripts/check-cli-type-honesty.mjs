@@ -69,7 +69,7 @@ const TOOL_ID_PREDICATE_HOLDERS = new Set([
  * decision rather than a default. */
 const CASTS_ALLOWED = new Map([
   [
-    "src/contexts/translate/application/translate-source.ts",
+    "src/contexts/translate/application/build-native-tree.ts",
     "SourceMarketplace carries an index signature beside typed optional members, so no " +
       "parsed `Record<string, unknown>` can ever satisfy it; narrowing it honestly would " +
       "mean rejecting catalogs the builder accepts today",

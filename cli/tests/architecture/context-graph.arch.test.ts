@@ -181,7 +181,7 @@ describe("the guard itself", () => {
       "src/contexts/translate/contract/build-targets.ts"
     );
     const permitted = edgeBetween(
-      "src/contexts/translate/application/translate-source.ts",
+      "src/contexts/translate/application/build-native-tree.ts",
       "src/contexts/tools/domain/registry.ts"
     );
 

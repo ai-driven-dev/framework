@@ -7,8 +7,8 @@ import type {
 } from "../../../../../src/contexts/tools/contract/build-contract.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
+import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/build-native-tree.js";
 import { DiskSink } from "../../../../../src/contexts/translate/application/sink/disk-sink.js";
-import type { BuildNativeTree } from "../../../../../src/contexts/translate/application/translate-source.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
 import {
   FlatTargetExistsError,

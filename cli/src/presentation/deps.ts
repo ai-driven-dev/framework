@@ -35,7 +35,7 @@ import type { ReadTranscriptRetention } from "../contexts/telemetry/application/
 import type {
   BuildNativeTree,
   FrameworkBuildContext,
-} from "../contexts/translate/application/translate-source.js";
+} from "../contexts/translate/application/build-native-tree.js";
 import type { PrintUpdateNotice } from "../contexts/update/application/print-update-notice.js";
 import type { RefreshUpdateCheck } from "../contexts/update/application/refresh-update-check.js";
 import type { SelfUpdate } from "../contexts/update/application/self-update.js";

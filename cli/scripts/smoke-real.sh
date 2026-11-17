@@ -124,7 +124,7 @@ MKT="aidd-smoke-$(date +%s)-$$"
 MKT_USER="$MKT-user"
 echo "Marketplace/plugin name for this run: $MKT (machine scope: $MKT_USER)"
 
-# `translate-source.ts`'s `buildPlugin`, the path cursor and opencode install by, resolves a
+# `build-native-tree.ts`'s `buildPlugin`, the path cursor and opencode install by, resolves a
 # plugin directory as `plugins/<entry.name>` and never reads `source`, so the directory must
 # be renamed too and `source` kept in step for every resolution path to agree.
 derive_fixture() {
