@@ -3,12 +3,10 @@ import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-cata
 import { UnregisteredToolError } from "../../../src/shared/domain/errors.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 
-const catalog = wireTools();
-
-/** The catalog of every registered tool, as the composition root wires it, wired once: a catalog
- * is an immutable value. */
+/** The catalog of every registered tool, as the composition root wires it: wired on each call, so
+ * no test shares one. */
 export function registeredTools(): ToolCatalog {
-  return catalog;
+  return wireTools();
 }
 
 function named<T extends ToolId>(ids: readonly T[], name: string): T {
@@ -17,17 +15,20 @@ function named<T extends ToolId>(ids: readonly T[], name: string): T {
   return found;
 }
 
-const ai = (name: string) => named(catalog.idsInCanonicalOrder("ai"), name);
-const ide = (name: string) => named(catalog.idsInCanonicalOrder("ide"), name);
-
-/** The registered ids, minted by the catalog: a test never writes a tool id as a string. */
-export const TOOL = {
-  claude: ai("claude"),
-  cursor: ai("cursor"),
-  copilot: ai("copilot"),
-  opencode: ai("opencode"),
-  kilo: ai("kilo"),
-  codex: ai("codex"),
-  antigravity: ai("antigravity"),
-  vscode: ide("vscode"),
-} as const;
+/** The registered ids, minted by a catalog local to this initializer: a test never writes a tool id
+ * as a string. */
+export const TOOL = (() => {
+  const catalog = wireTools();
+  const ai = (name: string) => named(catalog.idsInCanonicalOrder("ai"), name);
+  const ide = (name: string) => named(catalog.idsInCanonicalOrder("ide"), name);
+  return {
+    claude: ai("claude"),
+    cursor: ai("cursor"),
+    copilot: ai("copilot"),
+    opencode: ai("opencode"),
+    kilo: ai("kilo"),
+    codex: ai("codex"),
+    antigravity: ai("antigravity"),
+    vscode: ide("vscode"),
+  } as const;
+})();

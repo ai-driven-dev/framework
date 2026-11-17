@@ -68,5 +68,6 @@ export const flowTools = () => ({
   ideToolIds: catalogOf().idsInCanonicalOrder("ide"),
 });
 
-/** The registered ids, minted by the shared kit. */
+/** The registered ids, minted by the shared kit. Transitional alias: callers move to
+ * tests/shared/testing/registered-tools.ts, then this goes. */
 export const TOOL = REGISTERED_TOOL_IDS;
