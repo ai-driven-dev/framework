@@ -1,27 +1,25 @@
 # Destinations
 
-Every destination starts from the approved learning packet.
+Where a lesson goes, decided by its nature.
 
-| Destination | Use when | Apply |
-| ----------- | -------- | ----- |
-| memory | durable project fact, convention, or gotcha | write the packet into the matching memory entry |
-| ADR | explicit choice with context and consequences | write the packet to `aidd_docs/memory/internal/decisions/<slug>.md` through [ADR template](../assets/adr-template.md) |
-| contract | enforceable behavior already owned by an existing project contract file | write the packet by amending that file |
-| rule | enforceable coding or agent behavior with no existing owner | send the packet to rule-generate |
-| skill | reusable workflow worth a dedicated skill | send the packet to skill-generate |
+## Destinations
 
-Reconciliation:
+| Lesson | Destination | Written by |
+| --- | --- | --- |
+| A fact, a convention or a pitfall | The existing file that already holds the subject, in `aidd_docs/memory/` or a root document; the memory bank when none does | The host's native edit |
+| A choice made, with its alternatives | A decision record | `scripts/write-decision.cjs` |
+| A behavior to impose or automate | A generation: rule, skill, agent, command or hook | `aidd-context:03-context-generate` |
 
-| Value | Apply |
+## Choosing
+
+- A behavior that can be verified or automated is a generation; otherwise it is a fact in an existing file.
+- Outside `aidd_docs/memory/`, a file is edited, never created.
+
+## Change
+
+| Value | Meaning |
 | --- | --- |
-| updates | replace the existing entry; do not add contradictions |
-| supersedes | replace the entry; link both decision records for an ADR |
-| retracts | remove the entry; delete the file only when nothing remains |
-
-Rules:
-
-- If the project memory bank is missing, say what is missing and ask before handing off to project-memory.
-- If the destination structure is unclear, ask. Do not invent a new taxonomy.
-- Prefer the narrowest destination that can own the lesson.
-- The user may choose another destination after seeing the recommendation.
-- Write memory, ADRs, and contract amendments directly. Hand off rules and skills.
+| new | Nothing holds it yet |
+| updates | Refines an existing entry |
+| replaces | Reverses an earlier entry, which the new one supersedes |
+| removes | The entry no longer holds, and nothing replaces it |
