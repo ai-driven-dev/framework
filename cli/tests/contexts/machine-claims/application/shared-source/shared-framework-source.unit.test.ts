@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { SharedFrameworkSource } from "../../../../src/contexts/machine-claims/application/shared-source/shared-framework-source.js";
-import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { TOOL } from "../../tools/testing/catalog-of.js";
+import { SharedFrameworkSource } from "../../../../../src/contexts/machine-claims/application/shared-source/shared-framework-source.js";
+import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const SHARED = { name: "aidd-framework", scope: "user" } as const;
 const REGISTERED_AS_SHARED = new Map([

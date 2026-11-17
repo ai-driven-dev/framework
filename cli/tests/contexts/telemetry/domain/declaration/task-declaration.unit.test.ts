@@ -6,7 +6,7 @@ import {
   renderSessionDeclaration,
   requestOf,
   SESSION_DECLARATION_FIELDS,
-} from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+} from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 
 const NOW = new Date("2026-10-09T10:00:00.000Z");
 

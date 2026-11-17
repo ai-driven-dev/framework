@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   branchRoleOf,
   currentBranchOf,
-} from "../../../../src/contexts/telemetry/domain/declaration/branch-role.js";
+} from "../../../../../src/contexts/telemetry/domain/declaration/branch-role.js";
 
 describe("the ref a branch is read from", () => {
   it.each([

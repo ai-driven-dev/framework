@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { BranchConfigBinding } from "../../../../src/contexts/telemetry/domain/branch-binding.js";
-import { resolveBinding } from "../../../../src/contexts/telemetry/domain/declaration/binding-resolution.js";
+import type { BranchConfigBinding } from "../../../../../src/contexts/telemetry/domain/branch-binding.js";
+import { resolveBinding } from "../../../../../src/contexts/telemetry/domain/declaration/binding-resolution.js";
 import type {
   SessionCarry,
   SessionDeclaration,
-} from "../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
+} from "../../../../../src/contexts/telemetry/domain/declaration/task-declaration.js";
 
 const declaration = (
   session_id: string,

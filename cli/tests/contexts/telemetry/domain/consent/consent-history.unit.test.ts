@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CloneIdentity } from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
+import type { CloneIdentity } from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 import {
   type ConsentEvent,
   covers,
@@ -8,7 +8,7 @@ import {
   parseConsentEvent,
   parseConsentRecords,
   renderConsentEvent,
-} from "../../../../src/contexts/telemetry/domain/consent/consent-history.js";
+} from "../../../../../src/contexts/telemetry/domain/consent/consent-history.js";
 
 const A: CloneIdentity = { path: "/a/.git", dev: "1", ino: "7", birthtimeMs: 1_000 };
 const B: CloneIdentity = { ...A, ino: "8" };

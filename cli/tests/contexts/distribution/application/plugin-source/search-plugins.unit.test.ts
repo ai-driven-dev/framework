@@ -1,13 +1,13 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FetchMarketplaceSource } from "../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
-import { SearchPlugins } from "../../../../src/contexts/distribution/application/plugin-source/search-plugins.js";
-import { ResolveMarketplace } from "../../../../src/contexts/distribution/application/resolve-marketplace.js";
-import { Marketplace } from "../../../../src/contexts/distribution/domain/marketplace.js";
-import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
-import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FetchMarketplaceSource } from "../../../../../src/contexts/distribution/application/fetch-marketplace-source.js";
+import { SearchPlugins } from "../../../../../src/contexts/distribution/application/plugin-source/search-plugins.js";
+import { ResolveMarketplace } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
+import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
+import { PluginCatalogRepositoryAdapter } from "../../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
+import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
+import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MKT1_PATH = "/mkt1";

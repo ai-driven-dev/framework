@@ -6,7 +6,7 @@ import {
   parseCloneIdentity,
   type StatFacts,
   sameClone,
-} from "../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
+} from "../../../../../src/contexts/telemetry/domain/consent/clone-identity.js";
 
 const STAT: StatFacts = {
   dev: 16n,
