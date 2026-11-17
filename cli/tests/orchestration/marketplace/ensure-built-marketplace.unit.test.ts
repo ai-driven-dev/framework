@@ -17,12 +17,13 @@ import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 type RegisteredCommand = Parameters<EnsureBuiltMarketplace["execute"]>[0];
 
 const PROJECT_ROOT = "/proj";
+const EPOCH = "1970-01-01T00:00:00.000Z";
 
 const marketplace = Marketplace.create({
   name: "aidd-framework",
   source: { kind: "local", path: "/src/framework" },
   scope: "project",
-  addedAt: "2026-06-29T00:00:00.000Z",
+  addedAt: EPOCH,
 });
 
 const cacheResult: EnsureBuiltMarketplaceResult = {
