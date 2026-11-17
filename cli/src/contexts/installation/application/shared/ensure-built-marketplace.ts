@@ -65,7 +65,9 @@ const UNVERSIONED = "unversioned";
  * transformed content a build produces: resolves the source, then caches its build.
  */
 export interface BuiltMarketplaceEnsurer {
-  execute(options: EnsureBuiltMarketplaceCommand): Promise<EnsureBuiltMarketplaceResult>;
+  readonly execute: (
+    options: EnsureBuiltMarketplaceCommand
+  ) => Promise<EnsureBuiltMarketplaceResult>;
 }
 
 /**

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ListFrameworkPlugins } from "../../../../../src/contexts/distribution/application/plugin-source/list-framework-plugins.js";
+import type { ResolveMarketplaceCommand } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
 import type { PluginCatalogEntry } from "../../../../../src/contexts/distribution/contract/catalog.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import type { MarketplaceScope } from "../../../../../src/shared/domain/scope.js";
@@ -29,7 +30,7 @@ function framework(scope: MarketplaceScope, source: Marketplace["source"]): Mark
 }
 
 function setup(marketplaces: Marketplace[]) {
-  const resolve = vi.fn(async ({ marketplace }: { marketplace: Marketplace }) => ({
+  const resolve = vi.fn(async ({ marketplace }: ResolveMarketplaceCommand) => ({
     marketplace,
     catalog: { plugins: CATALOG },
     localPath: "/fw",

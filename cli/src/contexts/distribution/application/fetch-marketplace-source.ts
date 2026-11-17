@@ -11,8 +11,11 @@ import type { RawCatalogFetcher } from "../ports/raw-catalog-fetcher.js";
 
 const CLAUDE_CATALOG_PATH = ".claude-plugin/marketplace.json";
 
+/** What fetching reads of a marketplace: its name and where it is fetched from. */
+type FetchableMarketplace = Pick<Marketplace, "name" | "source">;
+
 export interface FetchMarketplaceSourceCommand {
-  marketplace: Marketplace;
+  marketplace: FetchableMarketplace;
   cacheDir: string;
   fetchOptions?: PluginFetchOptions;
 }
@@ -39,7 +42,7 @@ export class FetchMarketplaceSource {
   }
 
   private async probeAndMaybeFallback(
-    marketplace: Marketplace,
+    marketplace: FetchableMarketplace,
     cacheDir: string,
     fetchOptions?: PluginFetchOptions
   ): Promise<string> {
@@ -72,7 +75,7 @@ export class FetchMarketplaceSource {
 
   private async runFallback(
     fs: FileWriter,
-    marketplace: Marketplace,
+    marketplace: FetchableMarketplace,
     cacheDir: string,
     fetchOptions?: PluginFetchOptions
   ): Promise<string> {
