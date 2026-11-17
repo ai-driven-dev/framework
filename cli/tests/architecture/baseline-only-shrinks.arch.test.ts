@@ -149,8 +149,9 @@ function verdicts(
 }
 
 /**
- * The problems of `head` against the lists of the base, or `null` to skip the comparison, where
- * `base` is `null`. Any defined `ci` counts as CI, and a base list that cannot be sized fails.
+ * The problems of `head` against the lists of the base, or `null` to skip the comparison, which
+ * happens only when `base` is `null` outside CI. Any defined `ci` counts as CI, and under CI a
+ * missing base fails. A base list that cannot be sized fails.
  */
 function compareWithBase(
   head: ListSizes,
