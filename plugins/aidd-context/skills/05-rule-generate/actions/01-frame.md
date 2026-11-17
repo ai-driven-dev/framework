@@ -14,7 +14,7 @@ The request.
    - Drop a host: confirm a remove, then an add from that source.
 2. Confirm the hosts per [hosts.md](../references/hosts.md).
    - Existing rule: reuse its `targets`.
-   - Otherwise: detect the installed hosts, then ask, naming what each receives.
+   - Otherwise: propose the detected hosts, naming what each receives, and let the user change them at the plan.
    - None detected: offer `codex`, a line in the root `AGENTS.md` index.
    - Index declined: stop, unsupported.
    - Publish: keep each source's own `targets`, adding hosts only when the user asks.

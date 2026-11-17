@@ -15,7 +15,7 @@ A request for a new agent, or an existing agent file to refactor.
 3. Propose one name per [agent-authoring.md](../references/agent-authoring.md).
    - Existing agent: keep its name unless the request renames it.
    - Rename: name the old file for the user to delete, since the writer removes nothing.
-4. Ask where the agent goes, the detected hosts or a plugin source.
+4. Propose the detected hosts as where the agent goes, a plugin source as the other choice, changeable at the plan.
 5. Read [plan](02-plan.md).
 
 ## Output

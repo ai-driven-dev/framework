@@ -16,6 +16,7 @@ The request and its source: the confirmed frame, or the existing skill.
 4. List each addition beyond the source and the request.
 5. Merge two actions that share most logic.
 6. Fill one row per action in `| # | Slug | Title | Input -> output | Rules | Cases in | Next, on condition | Check step |`.
+   - Single action: list its fields and its file path instead.
    - Other file: give its path, kind and change.
 7. Take each target from the confirmed frame.
    - Existing skill: take each root of [tool-write.md](../references/tool-write.md) that holds it.
