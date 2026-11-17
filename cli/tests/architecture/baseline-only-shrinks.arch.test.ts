@@ -78,7 +78,12 @@ function isToleratedList(name: string): boolean {
 }
 
 /** The lists of `files`, each sized or `null` where the reading cannot size it. */
-const listsOf = (files: Readonly<Record<string, string>>) => listSizes(files, isToleratedList);
+const listsOf = (files: Readonly<Record<string, string>>) =>
+  listSizes(files, isToleratedList, { requireReadonly: true });
+
+/** The lists of a base revision, sized by their literal alone: the type is the head's rule. */
+const listsOfBase = (files: Readonly<Record<string, string>>) =>
+  listSizes(files, isToleratedList, { requireReadonly: false });
 
 /** The lists the guard can hold, by id. */
 function sized(lists: ListSizes): Map<string, number> {
@@ -165,7 +170,7 @@ function listsAtRevision(root: string, revision: string): ListSizes {
   ])
     .split("\n")
     .filter((path) => path.endsWith(".ts"));
-  return listsOf(
+  return listsOfBase(
     Object.fromEntries(
       paths.map((path) => [
         path.replace(`${CLI_DIRECTORY}/`, ""),
@@ -228,7 +233,11 @@ describe("tolerated lists only shrink", () => {
       return;
     }
     const sizedHead = sized(head);
-    const atBase = sized(listsAtRevision(REPO_ROOT, base));
+    const baseLists = listsAtRevision(REPO_ROOT, base);
+    expect(unsized(baseLists), "a list the base holds and the guard cannot size is unheld").toEqual(
+      []
+    );
+    const atBase = sized(baseLists);
     expect([...verdicts(sizedHead, atBase), ...staleRenames(sizedHead, atBase)]).toEqual([]);
   });
 });
@@ -266,6 +275,25 @@ describe("the guard itself", () => {
         'const STORED_ANSWERS_ALLOWED: Readonly<Record<string, unknown>> = { "k1": "why, one", "k2": "why two" };'
       ).get("a.ts#STORED_ANSWERS_ALLOWED")
     ).toBe(2);
+  });
+
+  it("holds a list that grew over a base list whatever its type was", () => {
+    const grown = sized(listsOf({ "a.ts": "const A_BASELINE: readonly string[] = ['a', 'b'];" }));
+    for (const declaration of [
+      "const A_BASELINE: string[] = ['a'];",
+      "let A_BASELINE = ['a'];",
+      "const A_BASELINE = ['a'];",
+    ]) {
+      expect(verdicts(grown, sized(listsOfBase({ "a.ts": declaration }))), declaration).toEqual([
+        "a.ts#A_BASELINE went from 1 to 2 entries since the base: a tolerated list only shrinks",
+      ]);
+    }
+  });
+
+  it("leaves a base list unsized when its literal cannot be read, so the guard says so", () => {
+    expect(unsized(listsOfBase({ "a.ts": "const A_BASELINE = [...ROWS];" }))).toEqual([
+      "a.ts#A_BASELINE",
+    ]);
   });
 
   it("ignores a list the guard was not told about", () => {

@@ -12,8 +12,10 @@
  *
  * Refused, as `null`: a list that cannot be sized cannot be held, so a non-literal initializer, a
  * `let` or `var`, a type that is not readonly (`readonly T[]`, `ReadonlyArray`, `Readonly`,
- * `ReadonlySet`, `ReadonlyMap`, or `as const`; the compiler then blocks a `push` through an alias), a spread, a record value the reading cannot see into, and a name declared twice
- * in a file. A name bound by a destructuring is not read at all.
+ * `ReadonlySet`, `ReadonlyMap`, or `as const`; the compiler then blocks a `push` through an alias),
+ * a spread, a record value the reading cannot see into, and a name declared twice in a file. The
+ * `let`, `var` and type refusals are the head's: a base revision is sized by its literal alone
+ * (`requireReadonly: false`). A name bound by a destructuring is not read at all.
  */
 import { tmpdir } from "node:os";
 import {
@@ -53,6 +55,15 @@ const SET_OR_MAP = new Set(["Set", "Map"]);
 const SINGLE_ENTRY = 1;
 const READONLY_TYPES = new Set(["Readonly", "ReadonlyArray", "ReadonlySet", "ReadonlyMap"]);
 const CONST_ASSERTION = "const";
+
+export interface ListSizeOptions {
+  /**
+   * Refuse a list that is not a readonly `const`. The head requires it, to keep a caller from
+   * pushing through an alias; a base revision is sized by its literal alone, so a list that was
+   * not readonly there is still held.
+   */
+  readonly requireReadonly: boolean;
+}
 
 /** What a file declares that sizing a list needs to look up. */
 interface FileScope {
@@ -194,15 +205,16 @@ function readFile(
   file: string,
   source: SourceFile,
   isTolerated: (name: string) => boolean,
-  sizes: ListSizes
+  sizes: ListSizes,
+  options: ListSizeOptions
 ): void {
   const scope: FileScope = { stringNames: namesBoundToStrings(source) };
   walk(source, (node) => {
     if (isVariableDeclaration(node)) {
       if (isIdentifier(node.name) && isTolerated(node.name.text)) {
         const id = `${file}#${node.name.text}`;
-        const alone = !sizes.has(id) && isConstDeclaration(node) && isReadonlyList(node);
-        sizes.set(id, alone ? sizeOf(node.initializer, scope) : null);
+        const held = !options.requireReadonly || (isConstDeclaration(node) && isReadonlyList(node));
+        sizes.set(id, !sizes.has(id) && held ? sizeOf(node.initializer, scope) : null);
       }
     }
   });
@@ -214,7 +226,8 @@ function readFile(
  */
 export function listSizes(
   files: Readonly<Record<string, string>>,
-  isTolerated: (name: string) => boolean
+  isTolerated: (name: string) => boolean,
+  options: ListSizeOptions
 ): ListSizes {
   const sizes: ListSizes = new Map();
   const paths = Object.keys(files);
@@ -236,7 +249,7 @@ export function listSizes(
     for (const path of paths) {
       const source = project?.program.getSourceFile(at(path));
       if (!source) throw new Error(`the compiler returned no source for ${path}`);
-      readFile(path, source, isTolerated, sizes);
+      readFile(path, source, isTolerated, sizes, options);
     }
   } finally {
     api.close();
