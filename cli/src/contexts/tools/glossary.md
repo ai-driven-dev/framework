@@ -5,7 +5,7 @@ The language of the `tools` context. A name in the code means what this page say
 | Term | Meaning | In the code |
 | --- | --- | --- |
 | Profile | The declaration of one tool the CLI targets, an AI assistant or an editor. Only the factory builds one; a caller asks it questions | `defineAiTool`, `defineIdeTool`, `BuiltToolConfig`, `domain/profiles/<tool>/profile.ts` |
-| Profile as asked | What an outside caller sees of a profile: answers, never structure | `AiToolProfile`, `IdeToolProfile`, `contract/tool-profile.ts` |
+| Profile as asked | What an outside caller sees of a profile: answers, never structure; readers outside `tools` name the sections they read, not the whole profile | `AiToolProfile`, `IdeToolProfile`, `contract/tool-profile.ts` |
 | Catalog | The registered profiles, asked by id or walked in one of three orders, never mixed: registration order for help (`inHelpOrder`), the shared tool vocabulary's order for install, uninstall and listing (`idsInCanonicalOrder`), sorted by id for setup and doctor (`sortedById`). Built once, handed to every use case | `ToolCatalog`, `RegisteredToolCatalog`, `wireTools` |
 | Registration list | The one list of profiles the catalog is built from; a new tool adds its line | `REGISTERED_PROFILES` |
 | Contract | The only folder another context or presentation imports from `tools`: the answers, the catalog and the build contract | `contract/` |

@@ -20,7 +20,7 @@ paths:
 
 ## Suppliers
 
-- `tools`: the `ToolCatalog`, each profile's capabilities and the config artifacts it consumes.
+- `tools`: the `ToolCatalog`; each reader takes only the profile sections it names in `ports/tool-sections.ts`.
 - `translate`: none. The translation comes in as a value that satisfies this context's own `ports/plugin/plugin-translation.ts`.
 - `host-registration`: none. The registration, the withdrawal and the source comparison come in as values that satisfy this context's own `ports/native-host.ts`; the manifest names the record by its own type.
 - `distribution`: none. The registry, the fetch and the chosen plugins come in as values that satisfy this context's own `ports/`.

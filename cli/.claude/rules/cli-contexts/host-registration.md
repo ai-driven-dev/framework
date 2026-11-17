@@ -26,7 +26,7 @@ paths:
 ## Suppliers
 
 - `shared/`: errors, scope, tool id.
-- `src/composition/host-registration.ts`: the only reader of `tools`' declarations.
+- `tools`: its `contract/`. Readers take the profile through `ports/host-tool.ts`, and `src/composition/host-registration.ts` picks the registry readers from each tool's declared location.
 
 ## Never
 
