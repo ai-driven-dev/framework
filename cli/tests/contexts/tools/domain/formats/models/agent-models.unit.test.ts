@@ -30,17 +30,17 @@ describe("withAgentModels()", () => {
     ).toBe(`name = "aidd-orchestrator-explorer"
 description = "Reviews the work"
 model = "gpt-6-luna"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "high"
 developer_instructions = "Review.\\n"
 `);
   });
 
-  it("gives the reviewer the smart model, prefixed by the provider where the host wants it", () => {
+  it("gives the reviewer the light model, prefixed by the provider where the host wants it", () => {
     expect(
       write(withAgentModels(buildOpencodeFlatContract(), "opencode", "mistral"), "reviewer.md")
     ).toBe(`---
 description: 'Reviews the work'
-model: 'mistral/mistral-large-4#high'
+model: 'mistral/mistral-small-latest#high'
 mode: 'subagent'
 ---
 Review.
@@ -50,7 +50,7 @@ Review.
   it("gives a Cursor agent the model of its role", () => {
     expect(
       write(withAgentModels(buildCursorFlatContract(), "cursor", "anthropic"), "reviewer.md")
-    ).toContain("claude-opus-5-5");
+    ).toContain("claude-haiku-5-5");
   });
 
   it("uses the host's own id for a model it names differently", () => {
@@ -60,7 +60,7 @@ Review.
 name: 'aidd-orchestrator-validator'
 description: 'Reviews the work'
 model: 'claude-haiku-5.5'
-reasoningEffort: 'medium'
+reasoningEffort: 'high'
 include-custom-instructions: true
 ---
 Review.
@@ -81,7 +81,7 @@ Review.
     ).toBe(`---
 description: 'Reviews the work'
 model: 'anthropic/claude-haiku-5-5'
-variant: 'medium'
+variant: 'high'
 mode: 'subagent'
 ---
 Review.

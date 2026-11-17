@@ -25,9 +25,10 @@ export interface SetAgentModelOptions {
   readonly hosts: readonly AgentHost[];
   /** Absent, the hosts go back to the IDE's model. */
   readonly provider?: string;
-  /** `"user"` also refreshes what `setup --global` installed; the provider and the main
-   * session's model hold for the whole machine either way. */
+  /** `"user"` also refreshes what `setup --global` installed; the provider is machine-wide. */
   readonly scope: MarketplaceScope;
+  /** Update agent models while preserving every main-session setting and ownership record. */
+  readonly agentsOnly?: boolean;
 }
 
 export interface SetAgentModelResult {
@@ -53,8 +54,8 @@ interface FileChange {
  * The setter for agent models, run once the install has succeeded. Records the provider each
  * host's agents run on, which every later build of that host applies, re-installs this
  * project's plugins so they carry it, then points the host's main session at the provider's
- * main-tier model in the host's own user settings, machine-wide like the provider and never a
- * file a project tracks, recording what that replaced so unsetting restores it.
+ * main-tier model in the host's own user settings, recording what that replaced so unsetting
+ * restores it. `agentsOnly` skips that last step entirely.
  */
 export class SetAgentModelUseCase {
   constructor(
@@ -87,7 +88,12 @@ export class SetAgentModelUseCase {
       await this.store.saveProviders(before);
       throw error;
     }
-    return { reinstalled, ...(await this.applyMainModels(options.hosts, chosen)) };
+    return {
+      reinstalled,
+      ...(options.agentsOnly
+        ? { changed: [], skipped: [] }
+        : await this.applyMainModels(options.hosts, chosen)),
+    };
   }
 
   /** `clean --global`: forgets every host's provider and gives each main session back what it

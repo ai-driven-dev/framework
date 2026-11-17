@@ -1,4 +1,4 @@
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseFrontmatter } from "../../src/kernel/markdown.js";
@@ -42,10 +42,12 @@ describe("E2E: aidd setup --provider on a project", () => {
         fakeHome
       );
       expect(set.exitCode, set.stderr).toBe(0);
-      expect(await agentModel(projectDir)).toBe("mistral/mistral-large-4#high");
+      expect(await agentModel(projectDir)).toBe("mistral/mistral-small-latest#high");
       expect(await mainModel(fakeHome)).toBe("mistral/mistral-large-4");
       expect(await readFile(join(projectDir, "opencode.json"), "utf8")).not.toContain('"model"');
-      expect(set.stdout).toContain("opencode reviewer: mistral/mistral-large-4 (high)");
+      expect(set.stdout).toContain(
+        "opencode explorer, executor, validator, reviewer: mistral/mistral-small-latest (high)"
+      );
 
       const unset = await runCli(
         [...SETUP, ...install, "--provider", "none"],
@@ -85,6 +87,51 @@ describe("E2E: aidd setup --provider on a project", () => {
       expect(clean.stdout).toContain("opencode main session: restored in");
       expect(await fileExists(join(fakeHome, ".config", "opencode", "opencode.jsonc"))).toBe(false);
       expect(await fileExists(join(fakeHome, ".config", "opencode", "agents"))).toBe(false);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("reruns global agent models without changing main-session settings", async () => {
+    const { projectDir, fakeHome, cleanup } = await createTestEnv("agent-models-global-only");
+    try {
+      const global = [
+        "setup",
+        "--global",
+        "--source",
+        "local",
+        "--path",
+        REPOSITORY_ROOT,
+        "--ide",
+        "opencode",
+        "--plugins",
+        "aidd-orchestrator",
+        "--yes",
+      ];
+      const initial = await runCli([...global, "--provider", "mistral"], projectDir, fakeHome);
+      expect(initial.exitCode, initial.stderr).toBe(0);
+
+      const settingsPath = join(fakeHome, ".config", "opencode", "opencode.jsonc");
+      await writeFile(settingsPath, '{\n  "model": "personal/model"\n}\n');
+      const rerun = await runCli(
+        [...global, "--provider", "openai", "--agents-only"],
+        projectDir,
+        fakeHome
+      );
+
+      expect(rerun.exitCode, rerun.stderr).toBe(0);
+      expect(rerun.stdout).toContain("main session unchanged");
+      expect(await readFile(settingsPath, "utf8")).toBe('{\n  "model": "personal/model"\n}\n');
+      const userAgent = join(
+        fakeHome,
+        ".config",
+        "opencode",
+        "agents",
+        "aidd-orchestrator-reviewer.md"
+      );
+      expect(parseFrontmatter(await readFile(userAgent, "utf8")).frontmatter.model).toEqual(
+        expect.stringContaining("openai/")
+      );
     } finally {
       await cleanup();
     }

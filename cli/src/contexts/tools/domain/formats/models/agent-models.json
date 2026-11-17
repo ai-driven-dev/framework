@@ -9,13 +9,13 @@
     "explorer": "light",
     "executor": "light",
     "validator": "light",
-    "reviewer": "smart"
+    "reviewer": "light"
   },
   "providers": {
     "openai": {
       "smart": { "model": "gpt-6.1-sol", "effort": "high" },
       "standard": { "model": "gpt-6.1-terra", "effort": "medium" },
-      "light": { "model": "gpt-6-luna", "effort": "medium" }
+      "light": { "model": "gpt-6-luna", "effort": "high" }
     },
     "anthropic": {
       "smart": {
@@ -30,7 +30,7 @@
       },
       "light": {
         "model": "claude-haiku-5-5",
-        "effort": "medium",
+        "effort": "high",
         "nativeModels": { "copilot": "claude-haiku-5.5" }
       }
     },
