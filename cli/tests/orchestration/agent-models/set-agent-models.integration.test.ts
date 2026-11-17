@@ -447,4 +447,18 @@ describe("SetAgentModels", () => {
     ).rejects.toThrow('Provider "mistral" is not supported for "claude". Use: anthropic.');
     expect(fs.listAll()).toStrictEqual([]);
   });
+
+  it("refuses a provider for a host that runs no agent provider at all", async () => {
+    const { fs, useCase } = setup();
+
+    await expect(
+      useCase.execute({
+        projectRoot: PROJECT,
+        hosts: [TOOL.antigravity],
+        provider: "anthropic",
+        scope: "project",
+      })
+    ).rejects.toThrow('No agent provider is supported for "antigravity".');
+    expect(fs.listAll()).toStrictEqual([]);
+  });
 });

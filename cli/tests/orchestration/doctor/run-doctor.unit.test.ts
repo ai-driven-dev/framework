@@ -14,9 +14,12 @@ import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-de
 
 const PROJECT_ROOT = "/test-project";
 
-const issue = (message: string): DoctorIssue => ({ severity: "warning", message, fix: "" });
+const issueOf =
+  (severity: DoctorIssue["severity"]) =>
+  (message: string): DoctorIssue => ({ severity, message, fix: "" });
 
-async function runDoctor(category?: "ai") {
+async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "warning") {
+  const issue = issueOf(severity);
   const deps = await buildUnitDeps(PROJECT_ROOT);
   await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
   const loadManifest = new LoadManifest(deps.manifestRepo);
@@ -33,13 +36,16 @@ async function runDoctor(category?: "ai") {
   vi.spyOn(checks.layout, "execute").mockResolvedValue([issue("layout")]);
   const registration = { execute: async () => [issue("registration")] };
   const authentication = { execute: async () => [issue("authentication")] };
-  const report = await new RunDoctor(
+  return await new RunDoctor(
     new LoadManifestForDoctor(loadManifest),
     checks,
     registration,
     authentication
   ).execute({ projectRoot: PROJECT_ROOT, tools: catalogOf(), category });
-  return report.issues.map((i) => i.message);
+}
+
+async function runDoctor(category?: "ai") {
+  return (await reportOf(category)).issues.map((i) => i.message);
 }
 
 describe("RunDoctor", () => {
@@ -56,5 +62,13 @@ describe("RunDoctor", () => {
 
   it("leaves the project layout and the authentication out when a category narrows the run", async () => {
     expect(await runDoctor("ai")).toEqual(["tracked", "merge", "references", "registration"]);
+  });
+
+  it("is healthy when every issue is only informational", async () => {
+    expect((await reportOf(undefined, "info")).healthy).toBe(true);
+  });
+
+  it.each(["warning", "error"] as const)("is not healthy over %s issues", async (severity) => {
+    expect((await reportOf(undefined, severity)).healthy).toBe(false);
   });
 });
