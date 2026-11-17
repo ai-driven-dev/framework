@@ -149,9 +149,8 @@ function verdicts(
 }
 
 /**
- * The problems of `head` against the lists of the base, or `null` to skip the comparison. `base` is
- * `null` where git gives no merge-base: that skips, except in CI, where any defined `ci` counts
- * and a missing base fails. A base list that cannot be sized fails, never dropped.
+ * The problems of `head` against the lists of the base, or `null` to skip the comparison, where
+ * `base` is `null`. Any defined `ci` counts as CI, and a base list that cannot be sized fails.
  */
 function compareWithBase(
   head: ListSizes,
@@ -357,6 +356,31 @@ describe("the guard itself", () => {
     expect(compareWithBase(head, base, undefined, "origin/next")).toEqual([
       "a.ts#A_BASELINE is held at the base and the guard cannot size it",
     ]);
+  });
+
+  describe("a rename between the base and the head", () => {
+    const renamed = { "a.ts#OLD_BASELINE": "a.ts#NEW_BASELINE" };
+
+    it("is stale when the head still holds the old list", () => {
+      const head: ListSizes = new Map([
+        ["a.ts#OLD_BASELINE", 2],
+        ["a.ts#NEW_BASELINE", 2],
+      ]);
+      const base: ListSizes = new Map([["a.ts#OLD_BASELINE", 2]]);
+
+      expect(compareWithBase(head, base, undefined, "x", renamed)).toEqual([
+        "a.ts#OLD_BASELINE -> a.ts#NEW_BASELINE is stale: remove it from RENAMED_LISTS",
+      ]);
+    });
+
+    it("carries the old size to the new name, so growth is held", () => {
+      const head: ListSizes = new Map([["a.ts#NEW_BASELINE", 3]]);
+      const base: ListSizes = new Map([["a.ts#OLD_BASELINE", 2]]);
+
+      expect(compareWithBase(head, base, undefined, "x", renamed)).toEqual([
+        "a.ts#NEW_BASELINE went from 2 to 3 entries since the base: a tolerated list only shrinks",
+      ]);
+    });
   });
 
   it("compares the sized lists of the head with the base", () => {

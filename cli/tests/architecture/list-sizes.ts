@@ -1,9 +1,8 @@
 /**
  * The guard sizes the declared literal of each tolerated list and holds that size; it refuses what
- * it cannot size, and mutation after the declaration, by any path, is out of scope and left to
- * review.
+ * it cannot size.
  *
- * A list is sized when it is a `const` whose initializer is an array literal or a record literal,
+ * A list is sized when its initializer is an array literal or a record literal,
  * and none holds a spread. An array counts its leaf entries, so an array of arrays counts the
  * entries of the inner ones, and an element that is a name or a call counts as 1. A record counts
  * one per property, a property whose value is an array literal counting the entries of that array;
