@@ -1,20 +1,15 @@
 /**
  * The few text readings the architecture tests share: they see source as text, so a comma or a
- * bracket inside a comment, a string or a regular expression must never be read as code.
+ * bracket inside a comment must never be read as code. A string or a regular expression holding
+ * one is a limit: no constructor of the tree has one.
  */
 
-/**
- * A string, a comment, or a regular expression literal. A `/` opens a regular expression only
- * after something that is not a value (not a word, `)` or `]`, bar `return`), else it divides.
- */
-const STRINGS_AND_COMMENTS =
-  /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|\/\*[\s\S]*?\*\/|\/\/[^\n]*|(?:(?<=\breturn\s+)|(?<![\w)\]]\s*))\/(?:[^/\\\n[]|\\.|\[(?:[^\]\\\n]|\\.)*\])+\/[a-z]*/g;
+/** A block or a line comment. */
+const COMMENTS = /\/\*[\s\S]*?\*\/|\/\/[^\n]*/g;
 
-const COMMENT = /^\/[/*]/;
-
-/** The code with comments dropped and string and regular expression contents emptied, so none adds a comma or a bracket. */
+/** The code with comments dropped, so none adds a comma or a bracket. */
 export function codeOnly(source: string): string {
-  return source.replace(STRINGS_AND_COMMENTS, (text) => (COMMENT.test(text) ? "" : '""'));
+  return source.replace(COMMENTS, "");
 }
 
 /** The index of the bracket closing the one at `open`, counting every kind and skipping `=>`. */

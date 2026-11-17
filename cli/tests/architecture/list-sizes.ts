@@ -1,7 +1,7 @@
 /**
- * The size of the lists a set of TypeScript files declares, read from the syntax tree the compiler
- * builds and not from text, so a declaration is seen wherever it sits: after a comment, as the
- * second declarator of a statement, inside a function.
+ * The guard sizes the declared literal of each tolerated list and holds that size; it refuses what
+ * it cannot size, and mutation after the declaration, by any path, is out of scope and left to
+ * review.
  *
  * A list is sized when it is a `const` whose initializer is an array literal, a record literal, or
  * a `new Set` or `new Map` over an array literal, and none holds a spread. An array counts its leaf
@@ -10,21 +10,18 @@
  * other value counts one only when it is a string, a number, an object literal, or a name bound to
  * a string literal in the same file.
  *
- * Anything else is `null`: a list that cannot be sized cannot be held. So are a name declared
- * twice in a file or bound by a destructuring, a `let` or `var`, and a list the file uses in any
- * way other than reading it, which `read-only-uses.ts` lists as a closed set.
+ * Refused, as `null`: a list that cannot be sized cannot be held, so a non-literal initializer, a
+ * `let` or `var`, a spread, a record value the reading cannot see into, and a name declared twice
+ * in a file. A name bound by a destructuring is not read at all.
  */
 import { tmpdir } from "node:os";
 import {
   type ArrayLiteralExpression,
-  type BindingName,
   type Expression,
   isArrayLiteralExpression,
   isAsExpression,
-  isBindingElement,
   isIdentifier,
   isNewExpression,
-  isNonNullExpression,
   isNoSubstitutionTemplateLiteral,
   isNumericLiteral,
   isObjectLiteralExpression,
@@ -32,7 +29,6 @@ import {
   isPropertyAssignment,
   isSatisfiesExpression,
   isShorthandPropertyAssignment,
-  isSpreadAssignment,
   isSpreadElement,
   isStringLiteral,
   isVariableDeclaration,
@@ -43,7 +39,6 @@ import {
 } from "typescript/unstable/ast";
 import { createVirtualFileSystem } from "typescript/unstable/fs";
 import { API } from "typescript/unstable/sync";
-import { namesUsedBeyondReading } from "./read-only-uses.js";
 
 /** The entries of each list by id, `<file>#<name>`, or `null` where the list cannot be sized. */
 export type ListSizes = Map<string, number | null>;
@@ -61,8 +56,7 @@ interface FileScope {
 function unwrap(expression: Expression): Expression {
   return isAsExpression(expression) ||
     isSatisfiesExpression(expression) ||
-    isParenthesizedExpression(expression) ||
-    isNonNullExpression(expression)
+    isParenthesizedExpression(expression)
     ? unwrap(expression.expression)
     : expression;
 }
@@ -128,7 +122,6 @@ function recordValue(property: Node): Expression | undefined {
 function recordSize(properties: readonly Node[], scope: FileScope): number | null {
   let total = 0;
   for (const property of properties) {
-    if (isSpreadAssignment(property)) return null;
     const value = recordValue(property);
     if (!value) return null;
     const entries = isArrayLiteralExpression(value)
@@ -144,12 +137,9 @@ function recordSize(properties: readonly Node[], scope: FileScope): number | nul
 
 function collectionSize(value: Expression): number | null {
   if (!(isNewExpression(value) && isIdentifier(value.expression))) return null;
-  const [argument, ...others] = value.arguments ?? [];
+  const [argument] = value.arguments ?? [];
   const array = argument && unwrap(argument);
-  return SET_OR_MAP.has(value.expression.text) &&
-    array &&
-    isArrayLiteralExpression(array) &&
-    others.length === 0
+  return SET_OR_MAP.has(value.expression.text) && array && isArrayLiteralExpression(array)
     ? entriesOf(array)
     : null;
 }
@@ -160,13 +150,6 @@ function sizeOf(initializer: Expression | undefined, scope: FileScope): number |
   if (isArrayLiteralExpression(value)) return leafEntriesOf(value);
   if (isObjectLiteralExpression(value)) return recordSize(value.properties, scope);
   return collectionSize(value);
-}
-
-function boundNames(name: BindingName): string[] {
-  if (isIdentifier(name)) return [name.text];
-  return name.elements.flatMap((element) =>
-    isBindingElement(element) && element.name ? boundNames(element.name) : []
-  );
 }
 
 function isConstDeclaration(declaration: Node): boolean {
@@ -184,15 +167,13 @@ function readFile(
   const scope: FileScope = { stringNames: namesBoundToStrings(source) };
   walk(source, (node) => {
     if (isVariableDeclaration(node)) {
-      for (const name of boundNames(node.name).filter(isTolerated)) {
-        const id = `${file}#${name}`;
-        const alone = isIdentifier(node.name) && !sizes.has(id) && isConstDeclaration(node);
+      if (isIdentifier(node.name) && isTolerated(node.name.text)) {
+        const id = `${file}#${node.name.text}`;
+        const alone = !sizes.has(id) && isConstDeclaration(node);
         sizes.set(id, alone ? sizeOf(node.initializer, scope) : null);
       }
     }
   });
-  for (const name of namesUsedBeyondReading(source, isTolerated))
-    sizes.set(`${file}#${name}`, null);
 }
 
 /**

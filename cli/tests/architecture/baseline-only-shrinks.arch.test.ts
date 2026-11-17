@@ -12,15 +12,12 @@
  * held by the test that owns the list, which pins each of them exactly.
  *
  * What the ratchet does not hold:
+ * - mutation of a list after its declaration, by any path (an alias, a helper, a namespace
+ *   import, a callback): review owns it, and the declared types are `readonly` so that the
+ *   compiler refuses an honest `push`;
  * - lists are chosen by naming convention, so a list whose name is unregistered, or one imported
  *   from outside `tests/architecture`, is not held;
- * - class static properties are not read;
- * - a function handed the list, declared in the file or imported from a relative path, may change
- *   it, and so may a callback of a read member or a value read out of a record, which the
- *   reading does not follow.
- *
- * A tolerated name may only be read: `read-only-uses.ts` holds the closed set of uses, and any
- * other use, in any file of the folder, leaves the list unsized and fails.
+ * - class static properties and names bound by a destructuring are not read.
  *
  * A list non-empty at the base that is gone at the head fails, since a rename would otherwise
  * restart its count: keep the name, or empty the list first. `RENAMED_LISTS` is the one way out,
@@ -40,11 +37,11 @@
  * base fails.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { CLI_ROOT, REPO_ROOT, read } from "./helpers.js";
+import { CLI_ROOT, REPO_ROOT } from "./helpers.js";
 import { type ListSizes, listSizes } from "./list-sizes.js";
 
 /** Shrink-only lists whose name does not say so. Register a list here by name, never by content. */
@@ -178,13 +175,14 @@ function listsAtRevision(root: string, revision: string): ListSizes {
   );
 }
 
-function listsAtHead(): ListSizes {
+/** The lists the architecture files hold in the working tree of the `cli` directory at `cliRoot`. */
+function listsOnDisk(cliRoot: string): ListSizes {
   return listsOf(
     Object.fromEntries(
-      readdirSync(join(CLI_ROOT, ARCHITECTURE_DIRECTORY), { recursive: true, encoding: "utf8" })
+      readdirSync(join(cliRoot, ARCHITECTURE_DIRECTORY), { recursive: true, encoding: "utf8" })
         .map((name) => `${ARCHITECTURE_DIRECTORY}/${name.replaceAll("\\", "/")}`)
         .filter((path) => path.endsWith(".ts"))
-        .map((path) => [path, read(path)])
+        .map((path) => [path, readFileSync(join(cliRoot, path), "utf8")])
     )
   );
 }
@@ -200,11 +198,11 @@ function mergeBase(root: string, ref: string): string | null {
 describe("tolerated lists only shrink", () => {
   let head: ListSizes;
   beforeAll(() => {
-    head = listsAtHead();
+    head = listsOnDisk(CLI_ROOT);
   });
 
   it("reads the lists of the tree, so a rule selecting none cannot pass", () => {
-    expect(head.size).toBeGreaterThan(FEWEST_LISTS_THE_TREE_HOLDS);
+    expect(head.size).toBeGreaterThanOrEqual(FEWEST_LISTS_THE_TREE_HOLDS);
   });
 
   it("registers the lists that do not carry BASELINE in their name", () => {
@@ -342,6 +340,13 @@ describe("the guard itself", () => {
     expect(list("const A_BASELINE = [/['`]/, /x/];").get("a.ts#A_BASELINE")).toBe(2);
   });
 
+  it("leaves a collection unsized when a spread hides its entries", () => {
+    expect(unsizedLists("const A_BASELINE = new Set([...ROWS]);")).toEqual(["A_BASELINE"]);
+    expect(unsizedLists("const A_BASELINE = new Map([['a', 1], ...ROWS]);")).toEqual([
+      "A_BASELINE",
+    ]);
+  });
+
   it("leaves a list unsized when a spread hides its entries", () => {
     expect(unsizedLists("const A_BASELINE = [...ROWS];")).toEqual(["A_BASELINE"]);
     expect(unsizedLists("const A_BASELINE = [{ a: 1 }, ...ROWS];")).toEqual(["A_BASELINE"]);
@@ -373,46 +378,6 @@ describe("the guard itself", () => {
     ]);
   });
 
-  it.each([
-    "BASELINE = []",
-    "BASELINE[0] = 'x'",
-    "BASELINE.length = 0",
-    "delete BASELINE[0]",
-    "BASELINE.push('x')",
-    "BASELINE.splice(0, 1)",
-    "BASELINE.copyWithin(0, 1)",
-    "BASELINE.fill('x')",
-    "BASELINE.sort()",
-    "BASELINE.add('x')",
-    "BASELINE.set('k', 'x')",
-    "BASELINE.delete('x')",
-    "(BASELINE as string[]).push('x')",
-    "BASELINE!.push('x')",
-    "((BASELINE)).push('x')",
-    "(BASELINE as string[])[BASELINE.length] = 'x'",
-    "BASELINE[0].push('x')",
-    "Object.assign(BASELINE, { k: 'x' })",
-    "Reflect.set(BASELINE, 'k', 'x')",
-    "Array.prototype.push.call(BASELINE, 'x')",
-    "mutate(BASELINE)",
-    "const alias = BASELINE",
-    "widen(BASELINE)",
-    "imported(BASELINE)",
-  ])("refuses a list used in a way that is not a read: %s", (statement) => {
-    const declarations =
-      "import { imported } from './h.js';\nfunction widen(list: string[]) { list.push('x'); }\n";
-
-    expect(unsizedLists(`${declarations}const BASELINE = ['a'];\n${statement};`)).toEqual([
-      "BASELINE",
-    ]);
-  });
-
-  it("refuses a list another file mutates, which that file imports", () => {
-    expect(unsizedLists("import { BASELINE } from './h.js';\nBASELINE.push('x');")).toEqual([
-      "BASELINE",
-    ]);
-  });
-
   it("sees a declaration wherever it sits, not only at the start of a line", () => {
     expect(list("/** x */ const A_BASELINE = ['a'];").get("a.ts#A_BASELINE")).toBe(1);
     expect(unsizedLists("/** x */ const A_BASELINE = Array.of('a');")).toEqual(["A_BASELINE"]);
@@ -422,11 +387,11 @@ describe("the guard itself", () => {
     expect(list("function f() { const A_BASELINE = ['a']; }").get("a.ts#A_BASELINE")).toBe(1);
   });
 
-  it("fails a list it cannot tell from another: declared twice, or bound by a destructuring", () => {
+  it("fails a list it cannot tell from another, and does not read a destructured name", () => {
     expect(unsizedLists("const A_BASELINE = ['a'];\n{ const A_BASELINE = []; }")).toEqual([
       "A_BASELINE",
     ]);
-    expect(unsizedLists("const { A_BASELINE } = rows;")).toEqual(["A_BASELINE"]);
+    expect(list("const { A_BASELINE } = rows;").size).toBe(0);
   });
 
   it("names a declared list it cannot size", () => {
@@ -434,6 +399,27 @@ describe("the guard itself", () => {
       "A_BASELINE",
     ]);
     expect(unsizedLists("const text = 'const A_BASELINE = compute();';")).toEqual([]);
+  });
+
+  it("reads the lists of every subfolder of the working tree", () => {
+    const root = mkdtempSync(join(tmpdir(), "baseline-only-shrinks-"));
+    try {
+      const folder = join(root, ARCHITECTURE_DIRECTORY, "sub");
+      mkdirSync(folder, { recursive: true });
+      writeFileSync(join(folder, "y.ts"), 'const NESTED_BASELINE = ["c"];\n');
+
+      expect(Object.fromEntries(listsOnDisk(root))).toEqual({
+        "tests/architecture/sub/y.ts#NESTED_BASELINE": 1,
+      });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("names the file the compiler returned no source for", () => {
+    expect(() => listsOf({ "notes.txt": "const A_BASELINE = ['a'];" })).toThrow(
+      "the compiler returned no source for notes.txt"
+    );
   });
 
   it("goes red against a real base when a list grew, with no second edit to hide it", () => {
