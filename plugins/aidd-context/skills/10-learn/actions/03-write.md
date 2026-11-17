@@ -15,14 +15,15 @@ The rows the user validated or modified, and those skipped.
    - Row replaces a decision: pass the replaced record.
    - Section the source never states: ask the user for it, never infer it.
    - Writer exit non-zero: quote its output, then stop without a retry, a permission change or another write.
-3. Append the run to `learn.md` from [learn-record.md](../assets/learn-record.md).
+3. Hand each generation row to `aidd-context:03-context-generate`, one at a time, with its cited passage.
+   - Generator done: continue at the next step, since its report does not end this run.
+4. Append the run to `learn.md` from [learn-record.md](../assets/learn-record.md).
    - Every row goes in with its decision, skipped ones included.
    - Task named or clearly linked: use its folder.
    - No task: propose `aidd_docs/tasks/<yyyy_mm>/<yyyy_mm_dd>_<slug>/learn.md` with a slug you pick, then ask to keep or decline it.
    - Record declined: the user's answer is the trace.
-4. Hand each generation row to `aidd-context:03-context-generate`, one at a time, with its `learn.md` line.
 5. Read back each file written and check `learn.md` still holds its earlier passages.
-6. Report from [report.md](../assets/report.md).
+6. Report by filling [report.md](../assets/report.md), its three lines and nothing else.
 
 ## Output
 
