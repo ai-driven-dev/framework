@@ -366,7 +366,7 @@ describe("createDeps", () => {
       expect(await readFile(userEntries, "utf8")).toContain(FRAMEWORK_MARKETPLACE_NAME);
     });
 
-    it("registers the framework marketplace with the host and enables its plugins through the host's own registries", async () => {
+    function hostedFramework() {
       // A host records the real location of a source it was given, never a symlinked temp path:
       // the native resolution, which also expands a Windows short name the way `fs.realpath` does.
       class RealpathHostActions extends FakeHostActions {
@@ -395,6 +395,11 @@ describe("createDeps", () => {
         ]),
       };
       const { syncSettingsUseCase } = wireMarketplace(withHost, wireInstallation(withHost));
+      return { activator, base, syncSettingsUseCase };
+    }
+
+    it("registers the framework marketplace with the host and enables its plugins through the host's own registries", async () => {
+      const { activator, base, syncSettingsUseCase } = hostedFramework();
       await base.registerFrameworkMarketplace.execute({
         projectRoot: root,
         pluginSource: {
@@ -414,6 +419,39 @@ describe("createDeps", () => {
 
       expect(activator.addedMarketplaces).toHaveLength(1);
       expect(activator.enabledPlugins).toEqual([`aidd-test@${FRAMEWORK_MARKETPLACE_NAME}`]);
+    });
+
+    it("replaces a recorded source that no longer matches what the host holds", async () => {
+      const { base, syncSettingsUseCase } = hostedFramework();
+      await base.registerFrameworkMarketplace.execute({
+        projectRoot: root,
+        pluginSource: {
+          kind: "local",
+          path: join(process.cwd(), "tests/fixtures/framework"),
+        },
+      });
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.claude, "1.0.0", []);
+      await base.manifestRepo.save(manifest);
+      await syncSettingsUseCase.execute({ projectRoot: root, tools, enablePlugins: ["aidd-test"] });
+      const recorded = (await base.manifestRepo.load())?.getNativeRegistrations(TOOL.claude);
+      if (recorded === undefined) throw new Error("the first sync recorded nothing");
+      const staled = await base.manifestRepo.load();
+      if (staled === null) throw new Error("the first sync saved no manifest");
+      staled.setNativeRegistrations(TOOL.claude, {
+        ...recorded,
+        marketplaces: recorded.marketplaces.map((entry) => ({
+          ...entry,
+          provenance: { kind: "registry", source: "elsewhere" },
+        })),
+      });
+      await base.manifestRepo.save(staled);
+
+      await syncSettingsUseCase.execute({ projectRoot: root, tools, enablePlugins: ["aidd-test"] });
+
+      expect(
+        (await base.manifestRepo.load())?.getNativeRegistrations(TOOL.claude)?.marketplaces
+      ).toEqual(recorded.marketplaces);
     });
 
     it("refuses a project clean whose plugin's MCP entries cannot be read back", async () => {
