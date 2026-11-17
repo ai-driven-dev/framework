@@ -19,13 +19,13 @@ export interface ResolveBuiltMarketplacesCommand {
 /**
  * Recomputes, never reads back, where each registered marketplace was built for each tool:
  * `builtMarketplaceDir` and `userBuiltMarketplaceDir` are the same pure functions
- * `EnsureBuiltMarketplace` calls to decide where it builds, so nothing here triggers a build.
+ * `CacheBuiltMarketplace` calls to decide where it builds, so nothing here triggers a build.
  */
 export class ResolveBuiltMarketplaces {
   constructor(
     private readonly fs: FileReader,
     private readonly registry: MarketplaceRegistry,
-    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s own
+    /** Root of a user-scope marketplace's built tree, mirroring `CacheBuiltMarketplace`'s own
      * `userCacheRoot`. No default: a caller with nothing real to pass would silently recompute a
      * path this run never built. */
     private readonly userCacheRoot: () => string,

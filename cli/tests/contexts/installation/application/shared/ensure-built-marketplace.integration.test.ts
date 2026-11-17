@@ -8,11 +8,12 @@ import type {
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import type { FrameworkBuild } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import {
-  EnsureBuiltMarketplace,
+  CacheBuiltMarketplace,
   type FrameworkBuilds,
 } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
 import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
+import { EnsureBuiltMarketplace } from "../../../../../src/orchestration/marketplace/ensure-built-marketplace.js";
 import {
   BUILT_CACHE_SUBDIR,
   builtMarketplaceDir,
@@ -102,14 +103,16 @@ function fakeVersion(value: string): VersionReader {
 
 const USER_CACHE_ROOT = "/user-cache";
 
-/** The use case as production wires it, with the user cache and the version fixed. */
+/** The use case as production wires it: a resolver in front of the cache, the user cache and the
+ * version fixed. */
 function buildEnsurer(
   fs: InMemoryFileAdapter,
   resolveMarketplace: Pick<ResolveMarketplace, "execute">,
   builds: FrameworkBuilds,
   version: VersionReader = fakeVersion("5.0.0")
 ): EnsureBuiltMarketplace {
-  return new EnsureBuiltMarketplace(fs, resolveMarketplace, builds, version, () => USER_CACHE_ROOT);
+  const cache = new CacheBuiltMarketplace(fs, builds, version, () => USER_CACHE_ROOT);
+  return new EnsureBuiltMarketplace(resolveMarketplace, cache);
 }
 
 describe("builtMarketplaceDir", () => {
@@ -120,7 +123,7 @@ describe("builtMarketplaceDir", () => {
   });
 });
 
-describe("EnsureBuiltMarketplace", () => {
+describe("EnsureBuiltMarketplace over its cache", () => {
   let fs: InMemoryFileAdapter;
   let builds: number;
   let buildFor: BuildFor;

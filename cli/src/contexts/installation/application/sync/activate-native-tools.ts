@@ -30,7 +30,7 @@ export class ActivateNativeTools {
     private readonly logger: Logger,
     /** The marketplace the requested plugins are enabled from. */
     private readonly frameworkMarketplaceName: string,
-    /** Root of a user-scope marketplace's built tree, mirroring `EnsureBuiltMarketplace`'s
+    /** Root of a user-scope marketplace's built tree, mirroring `CacheBuiltMarketplace`'s
      * own `userCacheRoot` — the version a drift is decided against comes from `builtDir` itself,
      * already built before this runs, never from a path recomputed without one. */
     private readonly userCacheRoot: () => string = () => ""

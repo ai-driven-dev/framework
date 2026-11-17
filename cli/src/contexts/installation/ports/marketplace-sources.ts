@@ -38,16 +38,6 @@ export interface PluginFetcher {
   fetch(source: PluginSource, cacheDir: string, options?: PluginFetchOptions): Promise<string>;
 }
 
-/** Brings a marketplace to a local path and reads the version its catalog declares. The
- * distribution owns the resolution and hands over the real one, which satisfies this shape. */
-export interface MarketplaceResolver {
-  execute(options: {
-    marketplace: DeclaredMarketplace;
-    projectRoot: string;
-    forceRefresh?: boolean;
-  }): Promise<{ localPath: string; catalog: { readonly version?: string } | null }>;
-}
-
 /** Registers the machine-scope framework source again, from the source a caller carries. */
 export interface FrameworkMarketplaceRegistrar {
   execute(options: { projectRoot: string; pluginSource?: PluginSource }): Promise<unknown>;

@@ -10,7 +10,7 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { VersionReader } from "../../../../shared/ports/version-reader.js";
 import type { FrameworkBuildMode } from "../../../tools/contract/tool-profile.js";
-import type { DeclaredMarketplace, MarketplaceResolver } from "../../ports/marketplace-sources.js";
+import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
 
 /** One framework build, as the cache runs it. Its result is not read. */
 export interface FrameworkBuild {
@@ -50,24 +50,33 @@ export interface EnsureBuiltMarketplaceResult {
   readonly rebuilt: boolean;
 }
 
+/** Where a marketplace's source landed on this machine, and the version its catalog declares. The
+ * distribution resolves it and hands over the real one, which satisfies this shape. */
+export interface ResolvedMarketplace {
+  readonly localPath: string;
+  readonly catalog: { readonly version?: string } | null;
+}
+
 const SENTINEL_FILE = ".build-version";
 const UNVERSIONED = "unversioned";
 
 /**
  * Guarantees a per-target built tree exists in cache, so install consumers read the same
- * transformed content a build produces. Owns source resolution, staleness, and the guard-safe
- * outDir: build to temp then copy when the cache nests under the source.
+ * transformed content a build produces: resolves the source, then caches its build.
  */
 export interface BuiltMarketplaceEnsurer {
   execute(options: EnsureBuiltMarketplaceCommand): Promise<EnsureBuiltMarketplaceResult>;
 }
 
-export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
+/**
+ * The disk half of the ensurer: staleness, the build and the guard-safe outDir (build to temp then
+ * copy when the cache nests under the source), for a source already resolved.
+ */
+export class CacheBuiltMarketplace {
   private readonly memo = new Map<string, EnsureBuiltMarketplaceResult>();
 
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly resolveMarketplace: MarketplaceResolver,
     private readonly builds: FrameworkBuilds,
     private readonly version: VersionReader,
     /**
@@ -78,7 +87,10 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
     private readonly userCacheRoot: () => string
   ) {}
 
-  async execute(options: EnsureBuiltMarketplaceCommand): Promise<EnsureBuiltMarketplaceResult> {
+  async execute(
+    options: EnsureBuiltMarketplaceCommand,
+    resolved: ResolvedMarketplace
+  ): Promise<EnsureBuiltMarketplaceResult> {
     // `resolve()`, matching `sourceDir` below: on Windows a drive-less `projectRoot` yields a
     // drive-less `builtDir` here while the build resolves its own outDir copy for validation only,
     // leaving the write target diverging from the path that gets checked. Both scopes need it.
@@ -92,11 +104,6 @@ export class EnsureBuiltMarketplace implements BuiltMarketplaceEnsurer {
           )
         : builtMarketplaceDir(options.projectRoot, options.marketplace.name, options.target)
     );
-    const resolved = await this.resolveMarketplace.execute({
-      marketplace: options.marketplace,
-      projectRoot: options.projectRoot,
-      forceRefresh: options.forceRefresh,
-    });
     const variant = await this.builds.variant(options.target);
     const sentinel = this.sentinelValue(resolved.catalog?.version, variant);
     const memoKey = `${options.marketplace.name}:${options.target}:${sentinel}`;

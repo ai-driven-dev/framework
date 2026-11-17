@@ -6,7 +6,8 @@ import { ListInstalledRules } from "../contexts/installation/application/list-in
 import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
 import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.js";
 import {
-  EnsureBuiltMarketplace,
+  type BuiltMarketplaceEnsurer,
+  CacheBuiltMarketplace,
   type FrameworkBuilds,
 } from "../contexts/installation/application/shared/ensure-built-marketplace.js";
 import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.js";
@@ -17,6 +18,7 @@ import type { PluginTranslation } from "../contexts/installation/ports/plugin/pl
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { TranslatePluginDistribution } from "../contexts/translate/application/translate-distribution.js";
 import { pluginManifestProbes } from "../contexts/translate/domain/plugin-format.js";
+import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Base } from "./shared.js";
@@ -65,7 +67,7 @@ export function debugOnly(logger: Logger): Logger {
 
 /** What a restore needs to rebuild through the build pipeline. */
 export function builtMaterializationDepsOf(
-  ensureBuilt: EnsureBuiltMarketplace,
+  ensureBuilt: BuiltMarketplaceEnsurer,
   marketplaceRegistry: Base["marketplaceRegistry"],
   translate: PluginTranslation
 ) {
@@ -95,12 +97,15 @@ export function wireInstallation(base: Base) {
     logger: debugOnly(logger),
   });
   const agentModelStore = new AgentModelStoreAdapter(fs, userConfigDir);
-  const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplace(
+  const cacheBuiltMarketplace = new CacheBuiltMarketplace(
     fs,
-    resolveMarketplaceUseCase,
     frameworkBuildsOf(tools, frameworkBuildFor, agentModelStore),
     currentVersionProvider,
     userConfigDir
+  );
+  const ensureBuiltMarketplaceUseCase = new EnsureBuiltMarketplace(
+    resolveMarketplaceUseCase,
+    cacheBuiltMarketplace
   );
   const detectPluginDriftUseCase = new DetectPluginDrift(fs);
   const updateGitignore = new UpdateGitignore(fs);
