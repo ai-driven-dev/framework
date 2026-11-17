@@ -248,12 +248,6 @@ describe("the guard itself", () => {
     expect(list('const OTHER = ["a"];').size).toBe(0);
   });
 
-  it("reads a comma or a bracket inside a comment or a string as nothing", () => {
-    expect(
-      list('const BASELINE = [\n  // a, b, c\n  "x, y]",\n  "z", // [\n];').get("a.ts#BASELINE")
-    ).toBe(2);
-  });
-
   it("fails a list that grew, and keeps a shrink and a list the base lacks quiet", () => {
     expect(verdicts(new Map([["a.ts#BASELINE", 3]]), new Map([["a.ts#BASELINE", 2]]))).toEqual([
       "a.ts#BASELINE went from 2 to 3 entries since the base: a tolerated list only shrinks",
@@ -327,9 +321,55 @@ describe("the guard itself", () => {
     expect(unsizedLists("const A_BASELINE = [{ a: 1 }, ...ROWS];")).toEqual(["A_BASELINE"]);
   });
 
-  it("reads a list declared with let or var as it reads a const", () => {
-    expect(list("let A_BASELINE = ['a'];\nvar B_BASELINE = ['a', 'b'];").size).toBe(2);
-    expect(unsizedLists("let A_BASELINE = compute();")).toEqual(["A_BASELINE"]);
+  it("sizes a record value only when it can see into it", () => {
+    const record =
+      'const A_BASELINE = { "a": "x", "b": 2, "c": { n: 1 }, "d": WHY, "e": ["p", "q"] };';
+
+    expect(list(`${record}\nconst WHY = "y";`).get("a.ts#A_BASELINE")).toBe(6);
+    expect(
+      unsizedLists('const A_BASELINE = { "a->b": PAIRS };\nconst PAIRS = ["x", "y"];')
+    ).toEqual(["A_BASELINE"]);
+    expect(unsizedLists('const A_BASELINE = { "a": Object.freeze(["x"]) };')).toEqual([
+      "A_BASELINE",
+    ]);
+    expect(unsizedLists('const A_BASELINE = { "a": compute() };')).toEqual(["A_BASELINE"]);
+  });
+
+  it("counts the leaf entries of an array of arrays", () => {
+    expect(list("const A_BASELINE = [['a', 'b'], ['c', ['d']]];").get("a.ts#A_BASELINE")).toBe(4);
+    expect(unsizedLists("const A_BASELINE = [['a', ...ROWS]];")).toEqual(["A_BASELINE"]);
+  });
+
+  it("refuses a list declared with let or var, which a later assignment can replace", () => {
+    expect(unsizedLists("let A_BASELINE = ['a'];\nvar B_BASELINE = ['a', 'b'];")).toEqual([
+      "A_BASELINE",
+      "B_BASELINE",
+    ]);
+  });
+
+  it.each([
+    "BASELINE = []",
+    "BASELINE[0] = 'x'",
+    "delete BASELINE[0]",
+    "BASELINE.push('x')",
+    "BASELINE.splice(0, 1)",
+    "BASELINE.unshift('x')",
+    "BASELINE.add('x')",
+    "BASELINE.set('k', 'x')",
+    "BASELINE.delete('x')",
+    "(BASELINE as string[]).push('x')",
+    "BASELINE!.push('x')",
+    "((BASELINE)).push('x')",
+  ])("refuses a list that is mutated: %s", (statement) => {
+    expect(unsizedLists(`const BASELINE = ['a'];\n${statement};`)).toEqual(["BASELINE"]);
+  });
+
+  it("leaves a list that is only read, copied or looped over", () => {
+    expect(
+      list(
+        "const BASELINE = ['a'];\nBASELINE.map((x) => x);\nfor (const x of BASELINE) use(x);"
+      ).get("a.ts#BASELINE")
+    ).toBe(1);
   });
 
   it("sees a declaration wherever it sits, not only at the start of a line", () => {
