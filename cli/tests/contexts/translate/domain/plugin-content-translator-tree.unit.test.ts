@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
-import { flatPlugins } from "../../tools/testing/plugin-mode.js";
+import { contractToolProfile } from "../testing/contract-tool-profile.js";
+import { flatPluginsStub } from "../testing/flat-plugins-stub.js";
 import {
   CLAUDE_ROOT_TOKEN,
   CODEX_ROOT_TOKEN,
@@ -22,6 +18,7 @@ import {
   translator,
   treeOf,
 } from "../testing/plugin-content-translator-kit.js";
+import { claude, codex, cursor, opencode } from "../testing/registered-profiles.js";
 
 describe("a plugin of one skill, its action and its asset", () => {
   it("lays the whole skill tree under the plugin directory claude expands, beside the manifest", () => {
@@ -83,10 +80,9 @@ describe("a plugin's hooks", () => {
 });
 
 describe("a flat target that rewrites what it hosts", () => {
-  const rewriting = {
-    ...opencode,
-    rewriteContent: (content: string) => content.replace("SOURCE", "REWRITTEN"),
-  };
+  const rewriting = contractToolProfile(opencode, {
+    rewriteContent: (content) => content.replace("SOURCE", "REWRITTEN"),
+  });
 
   it("rewrites a skill's prose and carries its asset as it is", () => {
     const skills = [
@@ -101,24 +97,21 @@ describe("a flat target that rewrites what it hosts", () => {
 });
 
 describe("a flat target whose loader is triggered by a generated bridge", () => {
-  const bridged = withSections(
-    opencode,
-    flatPlugins(
-      {
-        kind: "bridge",
-        flat: {
-          dir: ".stub/hooks/",
-          bridge: {
-            generate: (raw: string, plugin: string) =>
-              raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
-            path: (plugin: string) => `.stub/plugin/${plugin}.js`,
-            skipIfSourceHas: "own-plugin.js",
-          },
+  const bridged = contractToolProfile(opencode, {
+    plugins: flatPluginsStub({
+      namespacePrefix: "aidd-",
+      hooks: { accepts: true },
+      layout: {
+        hooksDir: ".stub/hooks/",
+        hooksBridge: {
+          generate: (raw, plugin) =>
+            raw.includes("PreToolUse") ? `bridge(${plugin}):${raw}` : null,
+          path: (plugin) => `.stub/plugin/${plugin}.js`,
+          skipIfSourceHas: "own-plugin.js",
         },
       },
-      "aidd-"
-    )
-  );
+    }),
+  });
 
   it("generates the bridge from the plugin's own hooks manifest", () => {
     expect(treeOf(bridged, hooksDist())).toEqual({

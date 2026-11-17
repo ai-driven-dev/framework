@@ -1,14 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { claude } from "../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { codex } from "../../../../src/contexts/tools/domain/profiles/codex/profile.js";
-import { cursor } from "../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { opencode } from "../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { vscode } from "../../../../src/contexts/tools/domain/profiles/vscode/profile.js";
 import { parseFrontmatter } from "../../../../src/shared/domain/markdown.js";
-import { withSections } from "../../../helpers/ports/stub-ai-tool.js";
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
-import { flatPlugins, nativePlugins, unsupportedPlugins } from "../../tools/testing/plugin-mode.js";
+import { contractToolProfile } from "../testing/contract-tool-profile.js";
+import { flatPluginsStub } from "../testing/flat-plugins-stub.js";
+import { nativePluginsStub } from "../testing/native-plugins-stub.js";
 import {
   distOf,
   hooksDist,
@@ -19,6 +15,8 @@ import {
   translator,
   treeOf,
 } from "../testing/plugin-content-translator-kit.js";
+import { claude, codex, cursor, opencode, vscode } from "../testing/registered-profiles.js";
+import { unsupportedPluginsStub } from "../testing/unsupported-plugins-stub.js";
 
 describe("a plugin's mcp declaration", () => {
   it("lands at the name cursor reads it under", () => {
@@ -29,13 +27,12 @@ describe("a plugin's mcp declaration", () => {
   });
 
   it("is dropped by a target that hosts none", () => {
-    const refusingMcp = withSections(claude, {
-      ...nativePlugins({
+    const refusingMcp = contractToolProfile(claude, {
+      plugins: nativePluginsStub({
         pluginRootToken: "$X_PLUGIN_ROOT",
         pluginsDir: ".claude/plugins/",
-        manifestRelativePath: null,
+        mcp: { accepts: false, relativePath: ".mcp.json" },
       }),
-      mcp: null,
     });
     const mcp = [makeFile(".mcp.json", mcpJsonContent)];
     expect(treeOf(refusingMcp, distOf([...mcp], { mcp }))).toEqual({});
@@ -77,10 +74,12 @@ describe("what a person still has to do before a hook runs", () => {
 });
 
 describe("a target that runs no hook a plugin ships", () => {
-  const refusingHooks = withSections(
-    opencode,
-    flatPlugins({ kind: "none", reason: "OpenCode runs no hook a plugin ships." }, "aidd-")
-  );
+  const refusingHooks = contractToolProfile(opencode, {
+    plugins: flatPluginsStub({
+      namespacePrefix: "aidd-",
+      hooks: { accepts: false, reason: "OpenCode runs no hook a plugin ships." },
+    }),
+  });
 
   it("records the refusal against the plugin and the target", () => {
     expect(translator.translateWithComponentPaths(hooksDist(), refusingHooks).skipped).toEqual([
@@ -147,7 +146,9 @@ describe("a target that hosts no plugin", () => {
   });
 
   it("produces nothing for a tool declaring plugins unsupported", () => {
-    const unsupported = withSections(claude, unsupportedPlugins("Claude hosts no plugin here."));
+    const unsupported = contractToolProfile(claude, {
+      plugins: unsupportedPluginsStub("Claude hosts no plugin here."),
+    });
     expect(translator.translateWithComponentPaths(makeDist(), unsupported)).toEqual(emptyResult);
   });
 });
