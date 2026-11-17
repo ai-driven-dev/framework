@@ -38,8 +38,8 @@ export interface CleanUserScopeResult {
  * `aidd clean --scope user`: undoes the machine-scope registration and purges the shared source
  * itself, which a project-scope `clean` refuses to do for a registration every project shares.
  *
- * A user manifest is optional: an absent one skips the host-registration steps rather than guessing,
- * while the whitelist purge, reading nothing from the manifest, still runs. Order is a hard
+ * A user manifest is optional: an absent one leaves the host-registration steps nothing to undo, and
+ * the whitelist purge, reading nothing from the manifest, runs regardless. Order is a hard
  * constraint — every plugin ref uninstalled, then every marketplace unregistered, both through the
  * host's own CLI at scope `"user"`, before any cache is purged.
  */
@@ -66,19 +66,18 @@ export class CleanUserScope {
     if (dryRunResult !== null) return dryRunResult;
     this.purgeFiles.assertNothingDepends(inspection);
 
-    if (manifestFound) {
-      const withdrawals = await this.purgeFiles.proveWithdrawals(options.tools);
-      this.withdrawFromHost.assertUserHostsReachable(withdrawals);
-      await this.withdrawFromHost.proveUserRegistrations(withdrawals, options.projectRoot);
-      // Undoing a host's own registration must happen before any purge: a host's own CLI resolves
-      // what it is unregistering against the built tree still on disk, and the purge removes
-      // exactly that tree. Absent a manifest there is nothing recorded to undo.
-      await this.withdrawFromHost.withdrawUserRegistrations(
-        withdrawals,
-        (cacheRoot, relativeSegments, label) =>
-          this.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label)
-      );
-    }
+    const withdrawals = await this.purgeFiles.proveWithdrawals(options.tools);
+    this.withdrawFromHost.assertUserHostsReachable(withdrawals);
+    await this.withdrawFromHost.proveUserRegistrations(withdrawals, options.projectRoot);
+    // Undoing a host's own registration must happen before any purge: a host's own CLI resolves
+    // what it is unregistering against the built tree still on disk, and the purge removes
+    // exactly that tree. Absent a manifest there is nothing recorded to undo, so there are no
+    // withdrawals and each step below does nothing.
+    await this.withdrawFromHost.withdrawUserRegistrations(
+      withdrawals,
+      (cacheRoot, relativeSegments, label) =>
+        this.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label)
+    );
     await this.purgeFiles.purge(options.tools, options.projectRoot);
 
     return { dryRun: false, manifestFound, preview };

@@ -2,12 +2,6 @@
 
 Survivors of the mutation scopes that are closed by a proof instead of a test, with the line that carries the proof. A survivor killed by a test is not listed: the test names it. Paths are under `cli/src/`.
 
-## orchestration
-
-| Survivor | Verdict | Proof |
-| --- | --- | --- |
-| `orchestration/clean/clean-user-scope.ts:70`, `if (manifestFound)` replaced by `true` | equivalent | `manifestFound` is `manifest !== null` (`contexts/installation/application/purge-user-scope-files.ts:73`). With no manifest, `proveWithdrawals` returns `[]` (same file, line 85). `assertUserHostsReachable` (`contexts/host-registration/application/withdraw-from-host.ts:548`), `proveUserRegistrations` (563-567) and `withdrawUserRegistrations` (634, then `purgeMarketplaceCaches` over an empty map, 663) only loop over their argument, so all three do nothing on `[]`. The only difference is one extra manifest read that answers `null`. |
-
 ## machine-claims
 
 | Survivor | Verdict | Proof |

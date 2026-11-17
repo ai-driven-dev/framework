@@ -78,9 +78,10 @@ export class RemovePlugin {
 
   async execute(options: PluginRemoveOptions): Promise<void> {
     if (options.scope === "user") {
-      if (this.manifests.user === undefined)
+      const repo = this.manifests.user;
+      if (repo === undefined)
         throw new Error("User manifest repository is required for user-scope plugin removal.");
-      return this.manifests.user.withExclusiveAccess(() => this.removeUserPlugin(options));
+      return repo.withExclusiveAccess(() => this.removeUserPlugin(repo, options));
     }
     const { pluginName, toolIds, projectRoot, tools } = options;
     const manifest = await requireManifest(this.manifests.project);
@@ -125,10 +126,10 @@ export class RemovePlugin {
     }
   }
 
-  private async removeUserPlugin(options: PluginRemoveOptions): Promise<void> {
-    const repo = this.manifests.user;
-    if (repo === undefined)
-      throw new Error("User manifest repository is required for user-scope plugin removal.");
+  private async removeUserPlugin(
+    repo: ManifestRepository,
+    options: PluginRemoveOptions
+  ): Promise<void> {
     const manifest = await requireManifest(repo);
     const toolIds = resolvePluginToolIds(options.toolIds, manifest, options.tools);
     const targets = toolIds.flatMap((toolId) => {
