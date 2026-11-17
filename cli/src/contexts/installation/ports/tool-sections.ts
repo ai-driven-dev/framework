@@ -1,6 +1,7 @@
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type {
   AgentModelAnswers,
+  ConfigWrite,
   MarkdownSectionAnswers,
   McpConfigAnswers,
   NativeActivationAnswers,
@@ -68,3 +69,14 @@ export interface FlatMcpSection {
 /** A tool as far as taking a plugin's project integration out goes: where its files land, its
  * hooks and its flat MCP file. */
 export type ProjectPluginIntegration = PluginPlacement & ProjectHooksSection & FlatMcpSection;
+
+/** A tool as far as rebuilding its distribution goes: an editor writes its config, an AI tool also
+ * writes its content sections and the config files it names. */
+export type RestoredTool =
+  | { readonly kind: "ide"; configWrites(): readonly ConfigWrite[] }
+  | ({
+      readonly kind: "ai";
+      readonly toolId: AiToolId;
+      configWrites(): readonly ConfigWrite[];
+      configFiles(): Readonly<Record<string, string>>;
+    } & ContentSections);

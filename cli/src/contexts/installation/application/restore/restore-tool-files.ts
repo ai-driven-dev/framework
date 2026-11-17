@@ -8,11 +8,11 @@ import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
 import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { ToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { FrameworkDescriptor } from "../../domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { Platform } from "../../ports/platform.js";
+import type { RestoredTool } from "../../ports/tool-sections.js";
 import { GenerateToolDistribution } from "./generate-tool-distribution.js";
 import { RestoreMergeFiles } from "./restore-merge-files.js";
 import { RestoreRegularFiles } from "./restore-regular-files.js";
@@ -85,7 +85,7 @@ export class RestoreToolFiles {
 
   private async buildDistributionMap(
     options: RestoreToolFilesCommand,
-    config: ToolProfile
+    config: RestoredTool
   ): Promise<Map<string, InstallationFile>> {
     const { descriptor, contentFiles, projectRoot } = options;
     const distribution = await new GenerateToolDistribution(

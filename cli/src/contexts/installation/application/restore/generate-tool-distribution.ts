@@ -2,9 +2,9 @@ import { InstallationFile, removeRedundantGitkeeps } from "../../../../shared/do
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { AiToolProfile, ToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { ContentSection, FrameworkDescriptor } from "../../domain/canon.js";
 import type { Platform } from "../../ports/platform.js";
+import type { RestoredTool } from "../../ports/tool-sections.js";
 import { InstallAgents } from "../install/content/install-agents.js";
 import { InstallCommands } from "../install/content/install-commands.js";
 import { InstallRules } from "../install/content/install-rules.js";
@@ -12,7 +12,7 @@ import { InstallSkills } from "../install/content/install-skills.js";
 import { InstallConfig } from "../install/install-config.js";
 
 interface GenerateToolDistributionCommand {
-  config: ToolProfile;
+  config: RestoredTool;
   descriptor: FrameworkDescriptor;
   contentFiles: Map<string, string>;
   projectRoot: string;
@@ -35,7 +35,7 @@ export class GenerateToolDistribution {
   }
 
   private async generateIdeToolFiles(
-    config: ToolProfile,
+    config: RestoredTool,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     projectRoot: string
@@ -51,7 +51,7 @@ export class GenerateToolDistribution {
   }
 
   private async generateAiToolFiles(
-    config: AiToolProfile,
+    config: Extract<RestoredTool, { kind: "ai" }>,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>,
     projectRoot: string
@@ -70,7 +70,9 @@ export class GenerateToolDistribution {
     return removeRedundantGitkeeps([...sectionFiles, ...configFiles, ...outputPathFiles]);
   }
 
-  private buildConfigOutputPathFiles(config: AiToolProfile): InstallationFile[] {
+  private buildConfigOutputPathFiles(
+    config: Extract<RestoredTool, { kind: "ai" }>
+  ): InstallationFile[] {
     if (this.assetProvider === undefined) return [];
     const outputPaths = config.configFiles();
     const files: InstallationFile[] = [];
@@ -89,7 +91,7 @@ export class GenerateToolDistribution {
   }
 
   private generateCapabilitySectionFiles(
-    config: AiToolProfile,
+    config: Extract<RestoredTool, { kind: "ai" }>,
     descriptor: FrameworkDescriptor,
     contentFiles: Map<string, string>
   ): InstallationFile[] {
@@ -101,7 +103,7 @@ export class GenerateToolDistribution {
   }
 
   private generateSectionFiles(
-    config: AiToolProfile,
+    config: Extract<RestoredTool, { kind: "ai" }>,
     section: ContentSection,
     contentFiles: Map<string, string>
   ): InstallationFile[] {
