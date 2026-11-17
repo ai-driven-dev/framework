@@ -52,12 +52,12 @@ export interface RegistrationRecordRules {
   readonly refOf: (
     record: RegistrationRecord | undefined,
     plugin: string,
-    alias: string
+    alias: string | undefined
   ) => string | undefined;
   /** The refs, then the claimed refs, that sit on one of the host names. */
   readonly refsOnHosts: (
     record: Pick<ClaimedRecord, "pluginRefs" | "pluginClaims">,
-    hostNames: readonly string[]
+    hostNames: Iterable<string>
   ) => string[];
   readonly registrationPreview: (
     record: RegistrationRecord,

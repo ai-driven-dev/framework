@@ -29,6 +29,7 @@ export class ListRegisteredPlugins {
           ? this.records.pluginRefsOf(recorded).map((ref) => ({ plugin: ref, ref }))
           : manifest.getPlugins(toolId).map((plugin) => ({
               plugin: plugin.name,
+              // Limit: with no recorded registration the fallback assumes the alias equals the host name.
               ref:
                 plugin.marketplace === undefined
                   ? undefined

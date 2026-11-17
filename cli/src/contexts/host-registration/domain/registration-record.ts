@@ -76,15 +76,17 @@ export function marketplaceOf(
   return record.marketplaces.find((entry) => entry.alias === alias);
 }
 
-const hostNameOf = (record: RegistrationRecord, alias: string): string | undefined =>
-  marketplaceOf(record, alias)?.hostName;
+const hostNameOf = (
+  record: Pick<RegistrationRecord, "marketplaces">,
+  alias: string
+): string | undefined => marketplaceOf(record, alias)?.hostName;
 
 /** The claims on the refs sitting on the host name the alias was registered under. */
 export function claimsOnMarketplace<Claim extends RecordedClaim>(
   record: Pick<RegistrationRecord, "marketplaces"> & { readonly pluginClaims?: readonly Claim[] },
   alias: string
 ): readonly Claim[] {
-  const hostName = marketplaceOf(record, alias)?.hostName;
+  const hostName = hostNameOf(record, alias);
   if (hostName === undefined) return [];
   return (record.pluginClaims ?? []).filter((claim) => refOnHost(claim.ref, hostName));
 }
@@ -93,13 +95,18 @@ export function claimsOnMarketplace<Claim extends RecordedClaim>(
 export const refOnHostName = (plugin: string, hostName: string): string =>
   `${plugin}${CATALOGUE_SEPARATOR}${hostName}`;
 
-/** The ref a plugin has on the host, `undefined` when nothing was recorded for the alias. */
+/**
+ * The ref a plugin has on the host, `undefined` when nothing was recorded for the alias.
+ * Limit: a plugin without a marketplace has no alias to look up and so no ref; only a
+ * hand-edited manifest lacks one, and no real manifest has been seen to.
+ */
 export function refOf(
   record: RegistrationRecord | undefined,
   plugin: string,
-  alias: string
+  alias: string | undefined
 ): string | undefined {
-  const hostName = record === undefined ? undefined : hostNameOf(record, alias);
+  const hostName =
+    record === undefined || alias === undefined ? undefined : hostNameOf(record, alias);
   return hostName === undefined ? undefined : refOnHostName(plugin, hostName);
 }
 
@@ -151,7 +158,7 @@ export function registrationPreview(
 /** The refs, then the claimed refs, that sit on one of the proven host names. */
 export function refsOnHosts(
   record: Pick<ClaimedRegistrationRecord, "pluginRefs" | "pluginClaims">,
-  hostNames: readonly string[]
+  hostNames: Iterable<string>
 ): string[] {
   return [...record.pluginRefs, ...(record.pluginClaims ?? []).map((claim) => claim.ref)].filter(
     (ref) => refOnAnyHost(ref, hostNames)

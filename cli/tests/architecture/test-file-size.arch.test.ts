@@ -9,9 +9,10 @@ import { CLI_ROOT, expectRatchet, read } from "./helpers.js";
 
 const MAX_LINES = 800;
 
-// Test files over the cap, each with the lines it carries. The list may only shrink: a file
-// that grows fails, one that gets shorter lowers its count here, and an entry leaves when its
-// file is split under the cap.
+// Test files over the cap, each with the lines it carries. An entry leaves when its file is
+// split under the cap, and a shorter file lowers its count.
+// Limit: raising a count in the same change that grows the file passes; the diff of this list
+// is where that is reviewed.
 const BASELINE: Readonly<Record<string, number>> = {
   "tests/orchestration/clean/clean-native-cache.integration.test.ts": 1015,
   "tests/orchestration/clean/clean-use-case.unit.test.ts": 3093,

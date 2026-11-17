@@ -194,12 +194,7 @@ export class CleanProject {
       const tool = tools.aiProfile(toolId);
       const refScopes = new Map<string, MarketplaceScope>();
       for (const plugin of manifest.getPlugins(toolId)) {
-        // Limit: a plugin without a marketplace has no ref to count; only a hand-edited manifest
-        // lacks one, and no real manifest has been seen to.
-        const ref =
-          plugin.marketplace === undefined
-            ? undefined
-            : this.asks.records.refOf(registrations, plugin.name, plugin.marketplace);
+        const ref = this.asks.records.refOf(registrations, plugin.name, plugin.marketplace);
         if (ref !== undefined) refScopes.set(ref, plugin.scope);
       }
       withdrawals.push({

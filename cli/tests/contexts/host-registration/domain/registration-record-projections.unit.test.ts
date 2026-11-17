@@ -93,15 +93,15 @@ describe("registration record projections", () => {
       expect(next.pluginClaims[0]).toBe(record.pluginClaims[1]);
     });
 
-    it("matches the host name suffix exactly, not a longer name ending the same way", () => {
+    it("matches the host name suffix exactly, not a longer name around it", () => {
       const record = {
         ...recordWith(),
-        pluginRefs: ["a@catalog", "b@old-catalog"],
-        pluginClaims: [claim("b@old-catalog")],
+        pluginRefs: ["a@catalog", "b@old-catalog", "c@catalog-two"],
+        pluginClaims: [claim("b@old-catalog"), claim("c@catalog-two")],
       };
       const next = withoutMarketplace(record, "local");
-      expect(next.pluginRefs).toEqual(["b@old-catalog"]);
-      expect(next.pluginClaims).toEqual([claim("b@old-catalog")]);
+      expect(next.pluginRefs).toEqual(["b@old-catalog", "c@catalog-two"]);
+      expect(next.pluginClaims).toEqual([claim("b@old-catalog"), claim("c@catalog-two")]);
     });
 
     it("keeps every ref when the alias is unknown, even one ending in the word undefined", () => {
@@ -184,8 +184,11 @@ describe("registration record projections", () => {
       expect(claims[0]).toBe(record.pluginClaims[1]);
     });
 
-    it("matches the host name exactly, not a longer name ending the same way", () => {
-      const record = { ...recordWith(), pluginClaims: [claim("a@old-catalog")] };
+    it("matches the host name exactly, not a longer name around it", () => {
+      const record = {
+        ...recordWith(),
+        pluginClaims: [claim("a@old-catalog"), claim("a@catalog-two")],
+      };
       expect(claimsOnMarketplace(record, "local")).toEqual([]);
     });
 
@@ -228,8 +231,10 @@ describe("registration record projections", () => {
       expect(refOnAnyHost("a@catalog", [])).toBe(false);
     });
 
-    it("matches the host name exactly, not a longer name ending the same way", () => {
+    it("matches the host name exactly, not a longer name around it", () => {
       expect(refOnAnyHost("a@old-catalog", ["catalog"])).toBe(false);
+      expect(refOnAnyHost("a@catalog-two", ["catalog"])).toBe(false);
+      expect(refOnAnyHost("a@catalog", new Set(["catalog"]))).toBe(true);
     });
   });
 });

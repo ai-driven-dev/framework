@@ -106,7 +106,7 @@ export class RemovePlugin {
     for (const toolId of resolvedToolIds) {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
       const registrations = manifest.getNativeRegistrations(toolId);
-      if (plugin?.marketplace === undefined || registrations === undefined) continue;
+      if (plugin === undefined) continue;
       const ref = this.records.refOf(registrations, pluginName, plugin.marketplace);
       if (ref !== undefined) nativeRefs.set(toolId, [ref]);
     }
@@ -244,12 +244,7 @@ export class RemovePlugin {
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, tool, projectRoot);
       await removeProjectHooks(this.fs, plugin, tool, projectRoot);
-      // Limit: a plugin without a marketplace has no ref to detach; only a hand-edited manifest
-      // lacks one, and no real manifest has been seen to.
-      const ref =
-        plugin.marketplace === undefined
-          ? undefined
-          : this.records.refOf(registrations, plugin.name, plugin.marketplace);
+      const ref = this.records.refOf(registrations, plugin.name, plugin.marketplace);
       const canDetachRef =
         confirmed === true ||
         (ref !== undefined &&
