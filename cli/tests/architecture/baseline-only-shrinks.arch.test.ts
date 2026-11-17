@@ -11,13 +11,10 @@
  * entry is held by the test that owns the list, which pins each of them exactly.
  *
  * What the ratchet does not hold:
- * - mutation of a list after its declaration, by any path (an alias, a helper, a namespace
- *   import, a callback): review owns it. The declared types are `readonly`, which is shallow: the
- *   compiler refuses a `push` through an alias, not a `Set.add`, a `Map.set` or a push into a
- *   nested array or record value;
+ * - mutation of a list after its declaration, by any path: review owns it, and the readonly type
+ *   is shallow, as `list-sizes.ts` says along with what it does not read;
  * - lists are chosen by naming convention, so a list whose name is unregistered, or one imported
- *   from outside `tests/architecture`, is not held;
- * - class static properties and names bound by a destructuring are not read.
+ *   from outside `tests/architecture`, is not held.
  *
  * A list non-empty at the base that is gone at the head fails, since a rename would otherwise
  * restart its count: keep the name, or empty the list first. `RENAMED_LISTS` is the one way out,
@@ -37,10 +34,18 @@
  * base fails.
  */
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { CLI_ROOT, REPO_ROOT } from "./helpers.js";
 import { type ListSizes, listSizes } from "./list-sizes.js";
 
@@ -71,11 +76,6 @@ const FEWEST_LISTS_THE_TREE_HOLDS = 10;
 function baseRef(env: NodeJS.ProcessEnv = process.env): string {
   const { ARCH_BASE_REF, GITHUB_BASE_REF } = env;
   return ARCH_BASE_REF || `origin/${GITHUB_BASE_REF || DEFAULT_BASE_BRANCH}`;
-}
-
-/** Where git gives no merge-base, CI fails and a developer's checkout skips the comparison. */
-function missingBaseFails(ci: string | undefined): boolean {
-  return ci !== undefined;
 }
 
 function isToleratedList(name: string): boolean {
@@ -146,6 +146,32 @@ function verdicts(
       : [];
   });
   return [...grown, ...vanished];
+}
+
+/**
+ * The problems of `head` against the lists of the base, or `null` to skip the comparison. `base` is
+ * `null` where git gives no merge-base: that skips, except in CI, where any defined `ci` counts
+ * and a missing base fails. A base list that cannot be sized fails, never dropped.
+ */
+function compareWithBase(
+  head: ListSizes,
+  base: ListSizes | null,
+  ci: string | undefined,
+  ref: string,
+  renamed: Renames = RENAMED_LISTS
+): string[] | null {
+  if (base === null)
+    return ci === undefined ? null : [`no merge-base with ${ref}: fetch its history`];
+  const unsizedAtBase = unsized(base).map(
+    (id) => `${id} is held at the base and the guard cannot size it`
+  );
+  if (unsizedAtBase.length > 0) return unsizedAtBase;
+  const sizedHead = sized(head);
+  const sizedBase = sized(base);
+  return [
+    ...verdicts(sizedHead, sizedBase, renamed),
+    ...staleRenames(sizedHead, sizedBase, renamed),
+  ];
 }
 
 /** The environment of a child that must not act on this repository through inherited `GIT_*`. */
@@ -230,20 +256,14 @@ describe("tolerated lists only shrink", () => {
   it("holds no list longer, or gone, since the merge-base with the branch this one merges into", (context) => {
     const ref = baseRef();
     const base = mergeBase(REPO_ROOT, ref);
-    if (base === null) {
-      expect(missingBaseFails(process.env.CI), `no merge-base with ${ref}: fetch its history`).toBe(
-        false
-      );
-      context.skip();
-      return;
-    }
-    const sizedHead = sized(head);
-    const baseLists = listsAtRevision(REPO_ROOT, base);
-    expect(unsized(baseLists), "a list the base holds and the guard cannot size is unheld").toEqual(
-      []
+    const problems = compareWithBase(
+      head,
+      base === null ? null : listsAtRevision(REPO_ROOT, base),
+      process.env.CI,
+      ref
     );
-    const atBase = sized(baseLists);
-    expect([...verdicts(sizedHead, atBase), ...staleRenames(sizedHead, atBase)]).toEqual([]);
+    if (problems === null) context.skip();
+    else expect(problems).toEqual([]);
   });
 });
 
@@ -309,11 +329,45 @@ describe("the guard itself", () => {
     expect(baseRef({ ARCH_BASE_REF: "parent", GITHUB_BASE_REF: "main" })).toBe("parent");
     expect(baseRef({ GITHUB_BASE_REF: "main" })).toBe("origin/main");
     expect(baseRef({})).toBe("origin/next");
+    expect(baseRef({ GITHUB_BASE_REF: "" })).toBe("origin/next");
+    expect(baseRef({ ARCH_BASE_REF: "", GITHUB_BASE_REF: "main" })).toBe("origin/main");
   });
 
-  it("fails a missing base in CI only", () => {
-    expect(missingBaseFails("true")).toBe(true);
-    expect(missingBaseFails(undefined)).toBe(false);
+  describe("a base git does not give", () => {
+    const head: ListSizes = new Map([["a.ts#A_BASELINE", 1]]);
+
+    it("skips outside CI", () => {
+      expect(compareWithBase(head, null, undefined, "origin/next")).toBeNull();
+    });
+
+    it.each(["true", "1", ""])("fails when CI is %j", (ci) => {
+      expect(compareWithBase(head, null, ci, "origin/next")).toEqual([
+        "no merge-base with origin/next: fetch its history",
+      ]);
+    });
+  });
+
+  it("fails a base list it cannot size instead of dropping it", () => {
+    const head: ListSizes = new Map([["a.ts#A_BASELINE", 1]]);
+    const base: ListSizes = new Map([
+      ["a.ts#A_BASELINE", null],
+      ["b.ts#B_BASELINE", 1],
+    ]);
+
+    expect(compareWithBase(head, base, undefined, "origin/next")).toEqual([
+      "a.ts#A_BASELINE is held at the base and the guard cannot size it",
+    ]);
+  });
+
+  it("compares the sized lists of the head with the base", () => {
+    const base: ListSizes = new Map([["a.ts#A_BASELINE", 1]]);
+
+    expect(compareWithBase(new Map([["a.ts#A_BASELINE", 2]]), base, undefined, "x", {})).toEqual([
+      "a.ts#A_BASELINE went from 1 to 2 entries since the base: a tolerated list only shrinks",
+    ]);
+    expect(compareWithBase(new Map([["a.ts#A_BASELINE", 1]]), base, undefined, "x", {})).toEqual(
+      []
+    );
   });
 
   it("hands git no GIT_* variable of the process it runs in", () => {
@@ -442,10 +496,11 @@ describe("the guard itself", () => {
   });
 
   it("refuses a list declared with let or var, which a later assignment can replace", () => {
-    expect(unsizedLists("let A_BASELINE = ['a'];\nvar B_BASELINE = ['a', 'b'];")).toEqual([
-      "A_BASELINE",
-      "B_BASELINE",
-    ]);
+    expect(
+      unsizedLists(
+        "let A_BASELINE: readonly string[] = ['a'];\nvar B_BASELINE: readonly string[] = ['a', 'b'];"
+      )
+    ).toEqual(["A_BASELINE", "B_BASELINE"]);
   });
 
   it.each([
@@ -525,15 +580,18 @@ describe("the guard itself", () => {
 
   it("goes red against a real base when a list grew, with no second edit to hide it", () => {
     const root = mkdtempSync(join(tmpdir(), "baseline-only-shrinks-"));
+    const elsewhere = join(root, "the-git-dir-of-the-process");
     try {
       const file = join(root, ARCHITECTURE_DIRECTORY_IN_REPO, "x.arch.test.ts");
       const nested = join(root, ARCHITECTURE_DIRECTORY_IN_REPO, "sub", "y.ts");
       mkdirSync(join(root, ARCHITECTURE_DIRECTORY_IN_REPO, "sub"), { recursive: true });
+      vi.stubEnv("GIT_DIR", elsewhere);
       git(root, ["init", "-q"]);
       git(root, ["config", "user.email", "t@example.com"]);
       git(root, ["config", "user.name", "t"]);
       git(root, ["config", "commit.gpgsign", "false"]);
       writeFileSync(file, 'const BASELINE: readonly unknown[] = ["a", "b"];\n');
+      writeFileSync(join(root, ARCHITECTURE_DIRECTORY_IN_REPO, "notes.md"), "not a source file\n");
       writeFileSync(nested, 'const NESTED_BASELINE: readonly unknown[] = ["c"];\n');
       git(root, ["add", "."]);
       git(root, ["commit", "-q", "-m", "base"]);
@@ -559,7 +617,9 @@ describe("the guard itself", () => {
           sized(atBase)
         )
       ).toHaveLength(1);
+      expect(existsSync(elsewhere), "git acted on the GIT_DIR of the process").toBe(false);
     } finally {
+      vi.unstubAllEnvs();
       rmSync(root, { recursive: true, force: true });
     }
   });

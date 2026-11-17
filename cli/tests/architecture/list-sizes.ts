@@ -11,12 +11,14 @@
  * bound to a string literal in the same file, so a record refuses a name or a call an array
  * accepts.
  *
- * Refused, as `null`: a non-literal initializer (a `new Set` or `new Map` included), a `let` or
- * `var`, a type that is not `readonly T[]`, `ReadonlyArray` or `Readonly`, a spread, a record
- * property that is a method or a spread, a record value the reading cannot see into, and a name
- * declared twice in a file. The readonly type is shallow: it makes the compiler refuse a `push`
- * through an alias of the list, not an `add`, a `set` or a push into a nested array or record
- * value. A name bound by a destructuring is not read at all.
+ * Refused, as `null`: a non-literal initializer (a `new Set` or `new Map` included), a spread, any
+ * record property that is not `key: value`, a record value the reading cannot see into, and a name
+ * declared twice in a file. At the head, also a `let` or `var`, and a type that is not
+ * `readonly T[]`, `ReadonlyArray` or `Readonly`. The readonly type is shallow: it makes the
+ * compiler refuse a `push` through an alias of the list, not a push into a nested array or record
+ * value, nor a call that changes a nested collection.
+ *
+ * Not read: a name bound by a destructuring, and a class static property.
  */
 import { tmpdir } from "node:os";
 import {
@@ -37,7 +39,6 @@ import {
   NodeFlags,
   type SourceFile,
   SyntaxKind,
-  type VariableDeclaration,
 } from "typescript/unstable/ast";
 import { createVirtualFileSystem } from "typescript/unstable/fs";
 import { API } from "typescript/unstable/sync";
@@ -137,11 +138,6 @@ function isReadonlyType(type: Node | undefined): boolean {
   );
 }
 
-/** A list the compiler will not let a caller push to, whatever it was imported as. */
-function isReadonlyList(declaration: VariableDeclaration): boolean {
-  return isReadonlyType(declaration.type);
-}
-
 function isConstDeclaration(declaration: Node): boolean {
   const list = declaration.parent;
   return !!list && isVariableDeclarationList(list) && (list.flags & NodeFlags.Const) !== 0;
@@ -160,7 +156,8 @@ function readFile(
     if (isVariableDeclaration(node)) {
       if (isIdentifier(node.name) && isTolerated(node.name.text)) {
         const id = `${file}#${node.name.text}`;
-        const held = !options.requireReadonly || (isConstDeclaration(node) && isReadonlyList(node));
+        const held =
+          !options.requireReadonly || (isConstDeclaration(node) && isReadonlyType(node.type));
         sizes.set(id, !sizes.has(id) && held ? sizeOf(node.initializer, scope) : null);
       }
     }
