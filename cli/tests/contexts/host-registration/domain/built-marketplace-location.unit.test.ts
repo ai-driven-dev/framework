@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { win32 } from "node:path";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   parseBuiltMarketplaceDir,
   parseBuiltMarketplaceDirAtAnyRoot,
@@ -231,6 +232,32 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
       projectRoot: "C:\\work\\repos\\other-project",
       marketplaceName: "aidd-framework",
       target: "codex",
+    });
+  });
+
+  describe("on a host whose path join is backslash-separated", () => {
+    afterEach(() => {
+      vi.doUnmock("node:path");
+      vi.resetModules();
+    });
+
+    it("still finds the marker, though the layout names it with backslashes", async () => {
+      vi.resetModules();
+      vi.doMock("node:path", async (importOriginal) => ({
+        ...(await importOriginal<typeof import("node:path")>()),
+        join: win32.join,
+      }));
+      const { parseBuiltMarketplaceDirAtAnyRoot: parseOnWin32Host } = await import(
+        "../../../../src/contexts/host-registration/domain/built-marketplace-location.js"
+      );
+
+      expect(
+        parseOnWin32Host("C:\\proj\\.aidd\\cache\\built\\aidd-framework\\claude", "win32")
+      ).toEqual({
+        projectRoot: "C:\\proj",
+        marketplaceName: "aidd-framework",
+        target: "claude",
+      });
     });
   });
 });
