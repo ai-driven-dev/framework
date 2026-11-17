@@ -4,8 +4,8 @@ import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { PluginPlacement } from "../../ports/tool-sections.js";
 
 /**
  * Whether a resolved path sits strictly inside a resolved boundary. Composition supplies the
@@ -21,7 +21,7 @@ export async function readGlobalPluginFiles(
   fs: FileReader,
   hasher: Hasher,
   builtDir: string,
-  tool: AiToolProfile,
+  tool: PluginPlacement,
   dist: PluginDistribution
 ): Promise<InstallationFile[]> {
   const machine = tool.plugins()?.globalFiles() ?? null;
@@ -54,7 +54,7 @@ export async function readGlobalPluginFiles(
  */
 export async function assertGlobalFilesWritable(
   fs: FileReader & FileWriter,
-  tool: AiToolProfile,
+  tool: PluginPlacement,
   plugin: Pick<InstalledPlugin, "name" | "files"> | undefined,
   pluginName: string,
   files: readonly InstallationFile[],

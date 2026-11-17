@@ -43,3 +43,9 @@ export interface AgentModelSection {
   nativeActivation(): NativeActivationAnswers | undefined;
   plugins(): PluginAnswers | null;
 }
+
+/** A tool as far as a reader of where its plugins land goes: its id and the delivery it declares. */
+export interface PluginPlacement {
+  readonly toolId: AiToolId;
+  plugins(): PluginAnswers | null;
+}

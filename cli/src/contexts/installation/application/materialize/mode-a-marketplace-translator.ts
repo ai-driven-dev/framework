@@ -1,9 +1,9 @@
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
 import type { ReadonlySkipList } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { PluginSource } from "../../../../shared/domain/source.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { PluginPlacement } from "../../ports/tool-sections.js";
 import { resolveScopeForInstall } from "../plugin/plugin-target-resolution.js";
 import type { PluginTranslator } from "./plugin-translator.js";
 
@@ -19,7 +19,7 @@ export class ModeAMarketplaceTranslator implements PluginTranslator {
 
   async addPlugin(
     dist: PluginDistribution,
-    tool: AiToolProfile,
+    tool: PluginPlacement,
     source: PluginSource,
     _projectRoot: string,
     manifest: Manifest,
