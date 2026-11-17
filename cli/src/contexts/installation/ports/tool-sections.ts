@@ -63,11 +63,16 @@ export interface PluginPlacement {
   plugins(): PluginAnswers | null;
 }
 
-/** A tool as far as the host that activates its plugins goes: its id, the activation it declares,
- * whether plugin enablement is machine-wide and which of the host's refs it still uses. */
-export interface NativeHostSection {
+/** A tool as far as refreshing one of its host's native refs goes: its id and the activation it
+ * declares. */
+export interface ActivatedHostSection {
   readonly toolId: AiToolId;
   nativeActivation(): NativeActivationAnswers | undefined;
+}
+
+/** A tool as far as the host that activates its plugins goes: the activation it declares,
+ * whether plugin enablement is machine-wide and which of the host's refs it still uses. */
+export interface NativeHostSection extends ActivatedHostSection {
   pluginEnablementIsMachineGlobal(): boolean;
   hostRefInUse(enabled: boolean): boolean;
 }

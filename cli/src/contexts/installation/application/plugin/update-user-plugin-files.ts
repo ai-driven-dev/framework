@@ -1,11 +1,11 @@
 import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { RegistrationRecord } from "../../domain/manifest/native-registrations.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { ActivatedHostSection } from "../../ports/tool-sections.js";
 import type { ContainmentCheck } from "./global-plugin-files.js";
 import type { PluginMaterializer } from "./plugin-materializer.js";
 import { resolvePluginToolIds } from "./plugin-target-resolution.js";
@@ -18,7 +18,7 @@ export interface ProvenNativeRefresh {
 
 /** Proves, then refreshes, one AIDD-owned native ref on its host. The scenario supplies it. */
 export type RefreshNativeRef = (request: {
-  readonly tool: AiToolProfile;
+  readonly tool: ActivatedHostSection;
   readonly ref: string;
   readonly projectRoot: string;
   readonly registrations: RegistrationRecord | undefined;

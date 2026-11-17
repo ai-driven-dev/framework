@@ -73,7 +73,6 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/installation/application/plugin/plugin-helpers.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/plugin/plugin-materializer.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/plugin/update-plugin.ts": TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/plugin/update-user-plugin-files.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/restore/apply-plugin-files.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/restore/restore-all-plugins.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/ports/plugin/plugin-translation.ts": TRANSLATE_HANDOFF,
