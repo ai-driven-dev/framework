@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { dirname, join, posix } from "node:path";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type {
   ProjectHookEntry,
   ProjectHooksFormat,
@@ -11,6 +10,7 @@ import type {
   InstalledPlugin,
   ProjectHooksProvenance,
 } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 
 /** `overwriteEdited` lifts only the "edited after install" refusals, never an ownership proof. */
@@ -26,7 +26,7 @@ export async function assertProjectHooksUnchanged(
   fs: FileReader,
   pluginName: string,
   provenance: ProjectHooksProvenance | undefined,
-  tool: AiToolProfile,
+  tool: ProjectHooksSection,
   projectRoot: string,
   { overwriteEdited = false }: ProjectHooksGuard = {}
 ): Promise<{ existing: string | null }> {
@@ -87,7 +87,7 @@ export async function assertProjectHooksUnchanged(
 export async function assertProjectHooksRemovable(
   fs: FileReader,
   plugin: InstalledPlugin,
-  tool: AiToolProfile,
+  tool: ProjectHooksSection,
   projectRoot: string,
   guard: ProjectHooksGuard = {}
 ): Promise<void> {
@@ -99,7 +99,7 @@ export async function removeRecordedProjectHooks(
   fs: FileReader & FileWriter,
   pluginName: string,
   provenance: ProjectHooksProvenance | undefined,
-  tool: AiToolProfile,
+  tool: ProjectHooksSection,
   projectRoot: string,
   guard: ProjectHooksGuard = {}
 ): Promise<boolean> {
@@ -138,7 +138,7 @@ export async function removeRecordedProjectHooks(
 export async function removeProjectHooks(
   fs: FileReader & FileWriter,
   plugin: InstalledPlugin,
-  tool: AiToolProfile,
+  tool: ProjectHooksSection,
   projectRoot: string,
   guard: ProjectHooksGuard = {}
 ): Promise<boolean> {

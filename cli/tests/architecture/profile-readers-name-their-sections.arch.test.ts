@@ -65,17 +65,9 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
     NARROWS_IN_THIS_WAVE,
   "src/contexts/host-registration/application/refresh-host-plugin.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/host-registration/application/register-plugin-with-host.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/materialize/flat-mcp-materializer.ts":
-    NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/materialize/project-hooks-materializer.ts":
-    NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/removal/remove-project-plugin.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/restore/generate-tool-distribution.ts":
     NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/restore/restore-tool-files.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/application/shared/remove-project-hooks.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/ports/project-integration-cleanup.ts": NARROWS_IN_THIS_WAVE,
-  "src/contexts/installation/ports/user-plugin-file-proof.ts": NARROWS_IN_THIS_WAVE,
   "src/contexts/installation/application/materialize/built-tree-materialization-translator.ts":
     TRANSLATE_HANDOFF,
   "src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.ts":

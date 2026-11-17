@@ -9,9 +9,9 @@ import type {
 } from "../../../../shared/domain/plugin/plugin-translation-skip.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { ProjectHooksLocation } from "../../../tools/contract/tool-vocabulary.js";
 import type { ProjectHooksProvenance } from "../../domain/plugins/installed-plugin.js";
+import type { ProjectHooksSection } from "../../ports/tool-sections.js";
 import {
   assertProjectHooksUnchanged,
   OVERWRITE_EDITED_HINT,
@@ -33,7 +33,7 @@ export class ProjectHooksMaterializer {
 
   async materialize(
     dist: PluginDistribution,
-    tool: AiToolProfile,
+    tool: ProjectHooksSection,
     projectRoot: string
   ): Promise<ReadonlySkipList> {
     return (await this.materializeWithProvenance(dist, tool, projectRoot)).skipped;
@@ -41,7 +41,7 @@ export class ProjectHooksMaterializer {
 
   async materializeWithProvenance(
     dist: PluginDistribution,
-    tool: AiToolProfile,
+    tool: ProjectHooksSection,
     projectRoot: string,
     previous?: ProjectHooksProvenance,
     guard: ProjectHooksGuard = {}

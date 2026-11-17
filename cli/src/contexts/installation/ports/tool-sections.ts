@@ -7,7 +7,10 @@ import type {
   PluginAnswers,
   SkillsSectionAnswers,
 } from "../../tools/contract/tool-profile.js";
-import type { SignalDirectory } from "../../tools/contract/tool-vocabulary.js";
+import type {
+  ProjectHooksLocation,
+  SignalDirectory,
+} from "../../tools/contract/tool-vocabulary.js";
 
 /** A tool as far as a reader of its place in a project goes: where its files land, which of them
  * stay on the machine, and where its own commands sit. The tools context owns the profile and the
@@ -49,3 +52,19 @@ export interface PluginPlacement {
   readonly toolId: AiToolId;
   plugins(): PluginAnswers | null;
 }
+
+/** A tool as far as a reader of its project hooks goes: its id and where the project takes them. */
+export interface ProjectHooksSection {
+  readonly toolId: AiToolId;
+  projectHooksDelivery(): ProjectHooksLocation | null;
+}
+
+/** A tool as far as a reader of its flat plugin MCP file goes: its id and that file. */
+export interface FlatMcpSection {
+  readonly toolId: AiToolId;
+  flatPluginMcp(): McpConfigAnswers | null;
+}
+
+/** A tool as far as taking a plugin's project integration out goes: where its files land, its
+ * hooks and its flat MCP file. */
+export type ProjectPluginIntegration = PluginPlacement & ProjectHooksSection & FlatMcpSection;

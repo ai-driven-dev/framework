@@ -8,8 +8,8 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
+import type { FlatMcpSection } from "../../ports/tool-sections.js";
 
 export async function refreshTrackedMcpConfigHash(
   fs: FileReader,
@@ -29,7 +29,7 @@ export async function materializeFlatMcp(
   fs: FileReader & FileWriter,
   hasher: Hasher,
   dist: PluginDistribution,
-  tool: AiToolProfile,
+  tool: FlatMcpSection,
   projectRoot: string,
   previousMcpEntries: ReadonlyMap<string, string>
 ): Promise<{

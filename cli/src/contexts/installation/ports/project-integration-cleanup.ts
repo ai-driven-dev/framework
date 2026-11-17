@@ -1,20 +1,20 @@
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
+import type { ProjectPluginIntegration } from "./tool-sections.js";
 
 /** Takes a plugin's project-scope integration out of a project: hooks, MCP entries and files. */
 export interface ProjectIntegrationCleanup {
   assertLocalIntegrationRemovable(
-    tool: AiToolProfile,
+    tool: ProjectPluginIntegration,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void>;
   removeLocalIntegration(
-    tool: AiToolProfile,
+    tool: ProjectPluginIntegration,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void>;
   deleteLocalFiles(
-    tool: AiToolProfile,
+    tool: ProjectPluginIntegration,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void>;

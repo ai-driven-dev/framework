@@ -2,9 +2,9 @@ import { join } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { RemovedPlugin } from "../../contract/plugin-claims.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
+import type { FlatMcpSection, ProjectPluginIntegration } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
@@ -13,7 +13,7 @@ import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remov
 export async function assertProjectMcpEntriesRemovable(
   fs: FileReader,
   plugin: InstalledPlugin,
-  tool: AiToolProfile,
+  tool: FlatMcpSection,
   projectRoot: string
 ): Promise<void> {
   await planProjectMcpRemoval(fs, plugin, tool, projectRoot);
@@ -22,7 +22,7 @@ export async function assertProjectMcpEntriesRemovable(
 async function planProjectMcpRemoval(
   fs: FileReader,
   plugin: InstalledPlugin,
-  tool: AiToolProfile,
+  tool: FlatMcpSection,
   projectRoot: string
 ): Promise<{ output: string; content: string } | undefined> {
   if (plugin.mcpEntries.size === 0) return undefined;
@@ -58,7 +58,7 @@ export class RemoveProjectPlugin {
   ) {}
 
   async assertLocalIntegrationRemovable(
-    tool: AiToolProfile,
+    tool: ProjectPluginIntegration,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
@@ -67,7 +67,7 @@ export class RemoveProjectPlugin {
   }
 
   async removeLocalIntegration(
-    tool: AiToolProfile,
+    tool: ProjectPluginIntegration,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {
@@ -80,7 +80,7 @@ export class RemoveProjectPlugin {
   }
 
   async deleteLocalFiles(
-    tool: AiToolProfile,
+    tool: ProjectPluginIntegration,
     plugin: InstalledPlugin,
     projectRoot: string
   ): Promise<void> {

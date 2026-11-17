@@ -8,6 +8,7 @@ import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin, PluginScope } from "../../domain/plugins/installed-plugin.js";
+import type { PluginPlacement } from "../../ports/tool-sections.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import type { ProjectHooksGuard } from "../shared/remove-project-hooks.js";
 import { resolveBaseDirFromRecord } from "./plugin-target-resolution.js";
@@ -41,7 +42,7 @@ export async function deleteOldFiles(
 export async function deletePluginFilesForTool(
   files: ReadonlyMap<string, string>,
   scope: PluginScope,
-  tool: AiToolProfile,
+  tool: PluginPlacement,
   projectRoot: string,
   fs: FileWriter,
   ownerScope: "project" | "user" = "project"
