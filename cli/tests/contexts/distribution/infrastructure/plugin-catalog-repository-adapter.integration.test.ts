@@ -3,18 +3,18 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { PluginCatalogRepositoryAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import {
   InvalidPluginManifestError,
   MalformedMarketplaceCatalogError,
 } from "../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
+import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/framework");
 const COPILOT_FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins/copilot-format");
 
 function makeAdapter(): PluginCatalogRepositoryAdapter {
-  return new PluginCatalogRepositoryAdapter(new FileAdapter(new HasherAdapter()));
+  return new PluginCatalogRepositoryAdapter(new FileAdapter(new DeterministicHasher()));
 }
 
 describe("PluginCatalogRepositoryAdapter", () => {

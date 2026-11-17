@@ -6,9 +6,9 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
-import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { PluginFetchError } from "../../../../src/shared/domain/errors.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
+import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 
 const execFileAsync = promisify(execFile);
 const FIXTURE_DIR = join(process.cwd(), "tests/fixtures/plugins");
@@ -52,7 +52,7 @@ async function setupBareRepoWithPlugin(repoPath: string, workPath: string): Prom
 }
 
 function makeAdapter(): PluginFetcherAdapter {
-  return new PluginFetcherAdapter(new FileAdapter(new HasherAdapter()));
+  return new PluginFetcherAdapter(new FileAdapter(new DeterministicHasher()));
 }
 
 describe("PluginFetcherAdapter", () => {
