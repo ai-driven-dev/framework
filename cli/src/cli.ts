@@ -6,13 +6,13 @@ import { wireTools } from "./composition/tools.js";
 import { registerAuthCommand } from "./presentation/commands/auth.js";
 import { registerCleanCommand } from "./presentation/commands/clean.js";
 import { registerDoctorCommand } from "./presentation/commands/doctor.js";
-import { registerFrameworkCommand } from "./presentation/commands/framework.js";
 import { registerMarketplaceCommand } from "./presentation/commands/marketplace.js";
 import { runMenuLoop } from "./presentation/commands/menu.js";
 import { registerPluginCommand } from "./presentation/commands/plugin.js";
 import { registerSetupCommand } from "./presentation/commands/setup.js";
 import { registerSyncCommand } from "./presentation/commands/sync.js";
 import { registerTelemetryCommand } from "./presentation/commands/telemetry.js";
+import { registerToolConfigCommand } from "./presentation/commands/tool-config.js";
 import { registerTranslateCommand } from "./presentation/commands/translate.js";
 import { registerUpdateCommand } from "./presentation/commands/update.js";
 import type { DepsFactory, MenuDepsFactory } from "./presentation/deps.js";
@@ -40,7 +40,7 @@ program
   .option("--verbose", "Show detailed diagnostic output", false);
 
 registerSetupCommand(program, tools, createDeps);
-registerFrameworkCommand(program, tools, createDeps);
+registerToolConfigCommand(program, tools, createDeps);
 registerTranslateCommand(program, tools, createDeps);
 registerPluginCommand(program, tools, createDeps, createMenuDeps);
 registerMarketplaceCommand(program, tools, createDeps, createMenuDeps);

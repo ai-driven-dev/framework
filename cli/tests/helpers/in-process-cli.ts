@@ -56,7 +56,7 @@ type Register = (
 const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
   async () => (await import("../../src/presentation/commands/setup.js")).registerSetupCommand,
   async () =>
-    (await import("../../src/presentation/commands/framework.js")).registerFrameworkCommand,
+    (await import("../../src/presentation/commands/tool-config.js")).registerToolConfigCommand,
   async () =>
     (await import("../../src/presentation/commands/translate.js")).registerTranslateCommand,
   async () => (await import("../../src/presentation/commands/plugin.js")).registerPluginCommand,

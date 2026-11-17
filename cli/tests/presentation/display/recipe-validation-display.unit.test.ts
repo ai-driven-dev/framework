@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderRecipeValidation } from "../../../src/presentation/display/framework-display.js";
+import { renderRecipeValidation } from "../../../src/presentation/display/tool-config-display.js";
 
 const root = "/project";
 

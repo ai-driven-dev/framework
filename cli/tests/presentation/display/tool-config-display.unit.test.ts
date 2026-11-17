@@ -4,7 +4,7 @@ import {
   printToolInstalled,
   printToolRemoved,
   printUpdateResult,
-} from "../../../src/presentation/display/framework-display.js";
+} from "../../../src/presentation/display/tool-config-display.js";
 import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
 

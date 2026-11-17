@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertKnownToolId } from "../../../src/presentation/commands/framework.js";
+import { assertKnownToolId } from "../../../src/presentation/commands/tool-config.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
 describe("assertKnownToolId", () => {

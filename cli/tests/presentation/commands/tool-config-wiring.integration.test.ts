@@ -23,8 +23,8 @@ const createDeps = vi.fn(async () => ({
   currentVersionProvider: { get: currentVersion },
 }));
 
-const { registerFrameworkCommand } = await import(
-  "../../../src/presentation/commands/framework.js"
+const { registerToolConfigCommand } = await import(
+  "../../../src/presentation/commands/tool-config.js"
 );
 
 const PROJECT_ROOT = process.cwd();
@@ -78,7 +78,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerFrameworkCommand(program, CATALOG, createDeps);
+  registerToolConfigCommand(program, CATALOG, createDeps);
   await program.parseAsync(["node", "aidd", "framework", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -373,7 +373,7 @@ describe("aidd framework — how every subcommand builds its graph and reports a
 describe("aidd framework — the help surface", () => {
   function frameworkCommand(): Command {
     const program = new Command();
-    registerFrameworkCommand(program, CATALOG, createDeps);
+    registerToolConfigCommand(program, CATALOG, createDeps);
     const framework = program.commands.find((command) => command.name() === "framework");
     if (framework === undefined) throw new Error("framework command was not registered");
     return framework;

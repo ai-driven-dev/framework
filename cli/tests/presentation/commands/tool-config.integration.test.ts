@@ -11,7 +11,11 @@ let home: string;
 let cleanup: () => Promise<void>;
 
 beforeEach(async () => {
-  ({ projectDir: project, fakeHome: home, cleanup } = await createTestEnv("framework-in-process"));
+  ({
+    projectDir: project,
+    fakeHome: home,
+    cleanup,
+  } = await createTestEnv("tool-config-in-process"));
   await seedEmptyManifest(project);
 });
 

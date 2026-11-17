@@ -5,23 +5,23 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { AiToolId, IdeToolId, ToolId } from "../../shared/domain/tool.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import {
+  printInstalledRules,
+  printInstalledRulesJson,
+} from "../display/installed-rules-display.js";
+import { reportNativeActivation } from "../display/sync-display.js";
+import {
   printToolAlreadyInstalled,
   printToolInstalled,
   printToolRemoved,
   printUpdateResult,
   renderRecipeValidation,
-} from "../display/framework-display.js";
-import {
-  printInstalledRules,
-  printInstalledRulesJson,
-} from "../display/installed-rules-display.js";
-import { reportNativeActivation } from "../display/sync-display.js";
+} from "../display/tool-config-display.js";
 import { ErrorHandler } from "../error-handler.js";
 import type { CLIOutput } from "../output.js";
 import { parseGlobalOptions } from "./global-options.js";
 
 /** What this command reads of the graph. */
-type FrameworkKeys =
+type ToolConfigKeys =
   | "currentVersionProvider"
   | "installAiToolUseCase"
   | "manifestRepo"
@@ -41,8 +41,8 @@ export function assertKnownToolId(raw: string, catalog: ToolCatalog): ToolId {
   return toolId;
 }
 
-async function runFrameworkInstall(
-  deps: Pick<Deps, FrameworkKeys>,
+async function installTool(
+  deps: Pick<Deps, ToolConfigKeys>,
   output: CLIOutput,
   projectRoot: string,
   raw: string,
@@ -58,7 +58,7 @@ async function runFrameworkInstall(
 }
 
 async function installAiTool(
-  deps: Pick<Deps, FrameworkKeys>,
+  deps: Pick<Deps, ToolConfigKeys>,
   output: CLIOutput,
   projectRoot: string,
   toolId: AiToolId,
@@ -86,7 +86,7 @@ async function installAiTool(
 }
 
 async function installIdeTool(
-  deps: Pick<Deps, FrameworkKeys>,
+  deps: Pick<Deps, ToolConfigKeys>,
   output: CLIOutput,
   projectRoot: string,
   toolId: IdeToolId,
@@ -110,8 +110,8 @@ async function installIdeTool(
   printToolInstalled(output, result.toolId, result.fileCount, result.warnings);
 }
 
-async function runFrameworkRemove(
-  deps: Pick<Deps, FrameworkKeys>,
+async function removeTool(
+  deps: Pick<Deps, ToolConfigKeys>,
   output: CLIOutput,
   projectRoot: string,
   raw: string,
@@ -128,8 +128,8 @@ async function runFrameworkRemove(
   printToolRemoved(output, results[0].toolId, totalFileCount);
 }
 
-async function runFrameworkUpdate(
-  deps: Pick<Deps, FrameworkKeys>,
+async function updateTools(
+  deps: Pick<Deps, ToolConfigKeys>,
   output: CLIOutput,
   projectRoot: string,
   raw: string | undefined,
@@ -149,16 +149,16 @@ async function runFrameworkUpdate(
   printUpdateResult(output, result.updatedTools, result.errors);
 }
 
-export function registerFrameworkCommand(
+export function registerToolConfigCommand(
   program: Command,
   catalog: ToolCatalog,
-  createDeps: DepsSliceFactory<FrameworkKeys>
+  createDeps: DepsSliceFactory<ToolConfigKeys>
 ): void {
-  const framework = program
+  const toolConfig = program
     .command("framework")
     .description("Manage the framework's lifecycle on installed tools");
 
-  framework
+  toolConfig
     .command("install")
     .description(
       "Install a tool's runtime configuration from bundled assets — acts on the framework alone (see `setup`, which bootstraps the whole project)"
@@ -171,13 +171,13 @@ export function registerFrameworkCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        await runFrameworkInstall(deps, output, projectRoot, cmdOptions.tool, cmdOptions, catalog);
+        await installTool(deps, output, projectRoot, cmdOptions.tool, cmdOptions, catalog);
       } catch (error) {
         errorHandler.handle(error);
       }
     });
 
-  framework
+  toolConfig
     .command("remove")
     .description(
       "Remove a tool's generated configuration files — removes the framework only (see `clean`, which removes all of AIDD)"
@@ -188,13 +188,13 @@ export function registerFrameworkCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        await runFrameworkRemove(deps, output, projectRoot, cmdOptions.tool, catalog);
+        await removeTool(deps, output, projectRoot, cmdOptions.tool, catalog);
       } catch (error) {
         errorHandler.handle(error);
       }
     });
 
-  framework
+  toolConfig
     .command("update")
     .description(
       "Re-install tool configs from bundled CLI assets, moving to a new version (all installed tools if --tool is omitted; see `marketplace refresh`, which re-fetches catalogs instead)"
@@ -206,13 +206,13 @@ export function registerFrameworkCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        await runFrameworkUpdate(deps, output, projectRoot, cmdOptions.tool, cmdOptions, catalog);
+        await updateTools(deps, output, projectRoot, cmdOptions.tool, cmdOptions, catalog);
       } catch (error) {
         errorHandler.handle(error);
       }
     });
 
-  framework
+  toolConfig
     .command("rules")
     .description("List the rules installed in this project, across every AI tool")
     .option("--json", "Print the inventory as JSON")
@@ -232,7 +232,7 @@ export function registerFrameworkCommand(
       }
     });
 
-  framework
+  toolConfig
     .command("validate-recipes [paths...]")
     .description("Validate recipe structure, examples, and local links without changing files")
     .option("--all", "Include project recipes under aidd_docs/recipes", false)
