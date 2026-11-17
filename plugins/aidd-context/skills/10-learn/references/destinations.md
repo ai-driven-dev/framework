@@ -6,7 +6,7 @@ Where a lesson goes, decided by its nature.
 
 | Lesson | Destination | Written by |
 | --- | --- | --- |
-| A fact, a convention or a pitfall | The existing file that already holds the subject, in `aidd_docs/memory/` or a root document; the memory bank when none does | The host's native edit |
+| A fact, a convention or a pitfall | The existing file that already holds the subject, in `aidd_docs/memory/` or a root document; else the memory bank file nearest to it, never a new file | The host's native edit |
 | A choice made, with its alternatives | A decision record | `scripts/write-decision.cjs` |
 | A behavior to impose or automate | A generation: rule, skill, agent, command or hook | `aidd-context:03-context-generate` |
 
