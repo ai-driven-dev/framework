@@ -3,11 +3,11 @@ import type { RegistrationRecord } from "../domain/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
-import type { NativeHostTool } from "../ports/host-tool.js";
+import type { ActivatedTool } from "../ports/host-tool.js";
 import { inspectNativeMarketplaceSource } from "./native-marketplace-source-proof.js";
 
 export interface RefreshHostPluginCommand {
-  readonly tool: NativeHostTool;
+  readonly tool: ActivatedTool;
   readonly ref: string;
   readonly projectRoot: string;
   readonly registrations?: RegistrationRecord;

@@ -24,11 +24,24 @@ export type SettingsDeclaringTool =
       nativeActivation(): NativeActivationAnswers | undefined;
     };
 
-/** A tool as far as the host that activates its plugins goes: which host it is, whether plugin
- * enablement is machine-wide, and which of the host's refs it still counts as in use. */
-export interface NativeHostTool {
+/** A tool as far as a reader of the host's records for it goes: its id. */
+export interface HostedTool {
   readonly toolId: AiToolId;
+}
+
+/** A tool as far as naming the host that activates its plugins goes: its id and the activation it
+ * declares. */
+export interface ActivatedTool extends HostedTool {
   nativeActivation(): NativeActivationAnswers | undefined;
-  pluginEnablementIsMachineGlobal(): boolean;
+}
+
+/** A tool as far as counting which of the host's refs it still uses goes. */
+export interface HostRefCounter {
   hostRefInUse(enabled: boolean): boolean;
+}
+
+/** A tool as far as registering a plugin with its host goes: which host it is, whether plugin
+ * enablement is machine-wide, and which of the host's refs it still counts as in use. */
+export interface NativeHostTool extends ActivatedTool, HostRefCounter {
+  pluginEnablementIsMachineGlobal(): boolean;
 }
