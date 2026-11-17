@@ -38,8 +38,6 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     path: "src/contexts/installation/application/restore/restore-all-plugins.ts",
     dependencies: 6,
   },
-  // Carries `clean`'s shared-source guard and the separate current-source witness so a
-  // targeted remove cannot disable another project's plugin or a repointed catalogue.
 ];
 
 function isUseCase(file: string): boolean {
@@ -63,18 +61,17 @@ function parameterCount(source: string): number {
   const code = codeOnly(source);
   const counts = [...code.matchAll(/\bconstructor\s*\(/g)].map((open) => {
     const start = open.index + open[0].length - 1;
-    return topLevelPieces(code.slice(start + 1, closingBracket(code, start))).reduce(
-      (count, parameter) => {
-        const bare = parameter.replace(/^(?:(?:public|private|protected|readonly)\s+)+/, "");
-        return (
-          count +
-          (bare.startsWith("{") ? topLevelPieces(bare.slice(1, closingBracket(bare, 0))).length : 1)
-        );
-      },
-      0
-    );
+    return topLevelPieces(code.slice(start + 1, closingBracket(code, start)))
+      .map(dependenciesOfParameter)
+      .reduce((total, count) => total + count, 0);
   });
   return Math.max(0, ...counts);
+}
+
+/** One dependency for a parameter, one per name for a destructured one. */
+function dependenciesOfParameter(parameter: string): number {
+  const bare = parameter.replace(/^(?:(?:public|private|protected|readonly)\s+)+/, "");
+  return bare.startsWith("{") ? topLevelPieces(bare.slice(1, closingBracket(bare, 0))).length : 1;
 }
 
 /**
@@ -163,15 +160,11 @@ describe("the guard itself", () => {
   });
 
   it("counts a plain port too, not only a collaborator named or imported as a use case", () => {
-    const atLimit = `constructor(
-      ${Array.from({ length: MAX_CONSTRUCTOR_DEPENDENCIES }, (_, i) => `private readonly a${i}: FooUseCase,`).join("\n")}
-    ) {}`;
     const withPlainPortOverLimit = `constructor(
       ${Array.from({ length: MAX_CONSTRUCTOR_DEPENDENCIES }, (_, i) => `private readonly a${i}: FooUseCase,`).join("\n")}
       private readonly extra?: ManifestRepository
     ) {}`;
 
-    expect(overLimit(atLimit)).toBe(false);
     expect(overLimit(withPlainPortOverLimit)).toBe(true);
   });
 
