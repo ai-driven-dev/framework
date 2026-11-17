@@ -8,16 +8,13 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type {
-  CacheCandidateResolver,
-  UserRegistrationWithdrawal,
-} from "../../host-registration/contract/withdrawal.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../ports/marketplace-sources.js";
+import type { CacheCandidateResolver, UserRegistrationWithdrawal } from "../ports/native-host.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
 
 /** What a machine-scope purge asks of the machine, answered where each one lives. */

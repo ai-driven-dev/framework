@@ -139,9 +139,7 @@ export const ALLOWED = new Set([
  */
 export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
   "installation->host-registration": [
-    "src/contexts/installation/application/clean-project.ts -> src/contexts/host-registration/contract/withdrawal.ts",
     "src/contexts/installation/application/plugin/update-user-plugin-files.ts -> src/contexts/host-registration/contract/registration-record.ts",
-    "src/contexts/installation/application/purge-user-scope-files.ts -> src/contexts/host-registration/contract/withdrawal.ts",
     "src/contexts/installation/application/sync/activate-native-tools.ts -> src/contexts/host-registration/contract/native-registration.ts",
     "src/contexts/installation/application/sync/load-sync-context.ts -> src/contexts/host-registration/contract/native-registration.ts",
     "src/contexts/installation/application/sync/record-activation.ts -> src/contexts/host-registration/contract/host-marketplace-sources.ts",
@@ -151,7 +149,6 @@ export const TRANSITIONAL_PAIRS: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/domain/manifest/native-registrations.ts -> src/contexts/host-registration/contract/registration-record.ts",
     "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/native-registration.ts",
     "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/registration-record.ts",
-    "src/contexts/installation/ports/native-host.ts -> src/contexts/host-registration/contract/withdrawal.ts",
   ],
 };
 
