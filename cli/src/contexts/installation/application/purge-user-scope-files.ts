@@ -9,12 +9,12 @@ import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type { Manifest } from "../domain/manifest.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../ports/marketplace-sources.js";
 import type { CacheCandidateResolver, UserRegistrationWithdrawal } from "../ports/native-host.js";
+import type { PluginPlacement } from "../ports/tool-sections.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
 
 /** What a machine-scope purge asks of the machine, answered where each one lives. */
@@ -25,7 +25,7 @@ export interface UserScopeGuards {
   /** The files of a user-scope plugin proven to sit inside the user scope. */
   readonly safeFiles: (
     plugin: InstalledPlugin,
-    tool: AiToolProfile
+    tool: PluginPlacement
   ) => Promise<ReadonlyMap<string, string>>;
   readonly resolveCacheCandidate: CacheCandidateResolver;
   /** The name the framework marketplace is registered under. */

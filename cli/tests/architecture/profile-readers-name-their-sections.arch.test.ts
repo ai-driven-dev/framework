@@ -57,8 +57,6 @@ function wholeProfileReaders(): string[] {
 
 const TRANSLATE_HANDOFF =
   "hands the profile to the plugin translation pipeline, which translate's engine reads in full; it narrows when translate declares its own profile input";
-const HOST_HANDOFF_AFTER_EDGE_WAVE =
-  "hands the tool to a host-registration contract or port; it narrows once installation no longer reaches host-registration";
 const PRESENTATION_FILTER =
   "filters the catalog's whole profiles to the AI tools that activate at user scope with a type guard, then reads five members; presentation has no ports/ to name a section in";
 const OUTSIDE_WAVE =
@@ -79,10 +77,6 @@ const PROFILE_READERS_ALLOWED: Readonly<Record<string, string>> = {
   "src/contexts/installation/application/restore/apply-plugin-files.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/application/restore/restore-all-plugins.ts": TRANSLATE_HANDOFF,
   "src/contexts/installation/ports/plugin/plugin-translation.ts": TRANSLATE_HANDOFF,
-  "src/contexts/installation/application/clean-project.ts": HOST_HANDOFF_AFTER_EDGE_WAVE,
-  "src/contexts/installation/application/purge-user-scope-files.ts": HOST_HANDOFF_AFTER_EDGE_WAVE,
-  "src/contexts/installation/application/removal/remove-plugin.ts": HOST_HANDOFF_AFTER_EDGE_WAVE,
-  "src/contexts/installation/ports/native-host.ts": HOST_HANDOFF_AFTER_EDGE_WAVE,
   "src/contexts/translate/application/translate-distribution.ts": OUTSIDE_WAVE,
   "src/contexts/translate/domain/engine.ts": OUTSIDE_WAVE,
   "src/presentation/commands/setup.ts": PRESENTATION_FILTER,

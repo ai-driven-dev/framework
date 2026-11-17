@@ -9,12 +9,12 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { HostWithdrawal } from "../../ports/native-host.js";
+import type { PluginRemovalTool } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
 import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import {
@@ -33,7 +33,7 @@ export interface PluginRemovalClaims extends RemovalClaims {
   isMachineOwned(toolId: ToolId, ref: string): Promise<boolean>;
   guardMessage(
     binary: string,
-    tool: AiToolProfile,
+    tool: PluginRemovalTool,
     ref: string,
     marketplaceAlias: string,
     hostName: string,
@@ -46,7 +46,7 @@ export interface PluginRemovalClaims extends RemovalClaims {
   ): Promise<string | null>;
   userFilesSafeToDelete(
     plugin: InstalledPlugin,
-    tool: AiToolProfile
+    tool: PluginRemovalTool
   ): Promise<ReadonlyMap<string, string>>;
 }
 
@@ -273,7 +273,7 @@ export class RemovePlugin {
 
   private async removeMcpEntries(
     plugin: InstalledPlugin,
-    tool: AiToolProfile,
+    tool: PluginRemovalTool,
     projectRoot: string
   ): Promise<void> {
     if (plugin.mcpEntries.size === 0) return;

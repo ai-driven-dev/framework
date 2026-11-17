@@ -1,12 +1,12 @@
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type {
   NativeMarketplaceRegistration,
   NativeMarketplaceSource,
   RegistrationRecord,
 } from "../domain/manifest/native-registrations.js";
+import type { NativeHostSection } from "./tool-sections.js";
 
 /** What installation asks of a host to register marketplaces and enable refs. */
 export interface NativeHostRegistration {
@@ -44,7 +44,7 @@ export interface MarketplaceRemovalActions {
 export interface MarketplaceRemovalPlanner {
   /** The claims on the refs come back as given, narrowed to the catalogue. */
   planMarketplaceRemoval<Claim extends { readonly ref: string }>(
-    tool: AiToolProfile,
+    tool: NativeHostSection,
     registrations: RegistrationRecord & { readonly pluginClaims?: readonly Claim[] },
     registration: NativeMarketplaceRegistration,
     projectRoot: string
@@ -81,7 +81,7 @@ interface WithdrawnPlugin {
 }
 
 export interface WithdrawFromHostCommand {
-  readonly tool: AiToolProfile;
+  readonly tool: NativeHostSection;
   readonly plugin: WithdrawnPlugin;
   readonly projectRoot: string;
   readonly registrations: RegistrationRecord | undefined;
@@ -106,7 +106,7 @@ export interface ClaimedHostRef {
 export type CacheCandidateResolver = WithdrawalClaims["resolveCacheCandidate"];
 
 interface RegisteredTool {
-  readonly tool: AiToolProfile;
+  readonly tool: NativeHostSection;
   readonly registrations: RegistrationRecord;
   readonly cacheRoot: string | undefined;
 }

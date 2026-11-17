@@ -11,13 +11,13 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
-import type { AiToolProfile } from "../../tools/contract/tool-profile.js";
 import type { Manifest } from "../domain/manifest.js";
 import { aiddGitignoreEntries } from "../domain/manifest-gitignore-entries.js";
 import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import { AIDD_CONFIG_FILENAME, PLUGIN_CACHE_SUBDIR } from "../domain/project-layout.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { ProjectRegistrationWithdrawal } from "../ports/native-host.js";
+import type { ProjectPluginIntegration } from "../ports/tool-sections.js";
 import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
 import {
   assertProjectHooksRemovable,
@@ -33,7 +33,7 @@ export interface ProjectCleanGuards {
   /** Read-only proof that a plugin's MCP entries can be removed from the project. */
   readonly assertMcpRemovable: (
     plugin: InstalledPlugin,
-    tool: AiToolProfile,
+    tool: ProjectPluginIntegration,
     projectRoot: string
   ) => Promise<void>;
 }
@@ -313,7 +313,7 @@ export class CleanProject {
    * clean removes it, behind its containment check. */
   private async deleteToolPluginFiles(
     manifest: Manifest,
-    tool: AiToolProfile,
+    tool: ProjectPluginIntegration,
     projectRoot: string
   ): Promise<number> {
     let count = 0;
