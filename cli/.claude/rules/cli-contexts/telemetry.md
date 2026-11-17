@@ -1,5 +1,5 @@
 ---
-description: Apply when a transcript line, a usage record, the ledger, consent, a declaration or a report changes. The telemetry context owns what a billed model call consumed, and nothing else counts it.
+description: Apply when a transcript line, a usage record, the ledger, consent, a declaration or a report changes; nothing but the telemetry context counts what a billed model call consumed.
 paths:
   - "src/contexts/telemetry/**/*.ts"
   - "src/composition/telemetry.ts"
@@ -20,16 +20,19 @@ paths:
 
 - A tool is one `UsageSource` (`list`, `read`, `decode(line, context?)`), registered once in `src/composition/telemetry.ts`.
 - `decode` is a pure function of its line and the context the file's earlier lines returned, which `ReadUsage` passes on and never reads.
-- Four stores have a contract suite on fake and adapter: the usage ledger, the bindings lock, the binding snapshot store and the consent history.
+- A file's age is `read`'s (`modifiedAt`), not the source's.
+- The usage ledger, the bindings lock, the binding snapshot store and the consent history have a contract suite on fake and adapter; the other stores have none.
+- An adapter's own test keeps only what its medium adds and no fake can show: file names, bytes, modes, torn lines, a lock file's content.
 
 ## Suppliers
 
 - `shared/`: `Environment`, errors and the JSON readers of `domain/reading/`.
-- Outside callers import `telemetry/contract/` only.
+- Outside callers import `telemetry/contract/` and `telemetry/application/`: Biome denies `domain/`, `ports/` and `infrastructure/` (`HELD_BY_BIOME` in `tests/architecture/helpers.ts`).
 
 ## Never
 
 - Count a running total: only a call's own usage is a record.
 - Keep state in a source between two lines: what a later line needs travels as the returned context.
 - Name a tool in a store, the attribution or the report.
-- Pin a line format without a real record: one fixture per observed format change, grouped by the README beside them.
+- Pin a line format without a real record: one fixture per observed format change, and `tests/fixtures/codex-usage/README.md` gives the grouping rule.
+- Leave a line no reader classifies: the replay fails a Claude line by its unrecognised note and a Codex line by the declared list of line types.

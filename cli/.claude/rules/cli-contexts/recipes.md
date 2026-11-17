@@ -1,5 +1,5 @@
 ---
-description: Apply when recipe sheets are checked for structure, examples and local links. The recipes context owns the rules, and nothing else reads a recipe.
+description: Apply when recipe sheets are checked for structure, examples and local links; the recipes context owns the rules, and nothing else reads a recipe.
 paths:
   - "src/contexts/recipes/**/*.ts"
   - "src/composition/recipes.ts"
@@ -29,7 +29,4 @@ paths:
 
 - Read the disk in `application/` or `domain/`: files arrive through `RecipeFiles`.
 - Import another context: recipes knows none.
-- Change a finding's `fix` text or the report layout.
-- The domain tests, `validate-recipes.unit.test.ts` and `tests/e2e/validate-recipes.e2e.test.ts` freeze the findings.
-- The display test freezes the table, and the goldens hold help text only.
-- Name an exception or a settled ambiguity here: they live in `reference-context.md`.
+- Change a finding's `fix` text or the report layout: the domain tests, `validate-recipes.unit.test.ts` and `tests/e2e/validate-recipes.e2e.test.ts` freeze the findings, the display test freezes the table and the goldens hold help text only.

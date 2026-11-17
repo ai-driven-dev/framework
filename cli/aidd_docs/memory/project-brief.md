@@ -18,12 +18,16 @@
 | --- | --- |
 | Framework | the canonical agents, commands, rules, skills and templates |
 | Manifest | `.aidd/manifest.json`, every installed file with its hash and install scope |
+| Plugin | capability files grouped under one name, installed per tool from a marketplace |
 | Marketplace | where plugins come from, registered per project or per machine |
+| Context | a bounded area of this codebase, the unit that owns a concern |
+| Capability | a kind of configuration a tool profile declares it hosts: mcp, hooks or settings |
 | Usage record | one billed model call, counted once and stored on this machine |
 
 ## Key features
 
 | Feature | Entry |
 | --- | --- |
+| Install plugins, driving a tool's own CLI where its project files are inert | `aidd plugin install` |
 | Build a target-native plugin tree, recording nothing | `aidd translate` |
 | Count Claude Code and Codex consumption from local files, with no service and no upload | `aidd telemetry` |

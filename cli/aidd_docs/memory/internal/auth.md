@@ -1,6 +1,8 @@
 # Auth
 
-No user accounts: one GitHub token gates private marketplaces and plugin sources. Language: `src/contexts/auth/glossary.md`; shape: the `reference-context.md` rule.
+- No user accounts: one GitHub token gates private marketplaces and plugin sources.
+- Language: `src/contexts/auth/glossary.md`.
+- Shape: the `reference-context.md` rule.
 
 ## Credentials
 
@@ -17,8 +19,10 @@ No user accounts: one GitHub token gates private marketplaces and plugin sources
 
 ## Authorization and sessions
 
-- No roles, no scopes, and no command is refused for lacking a token; a 401 surfaces at fetch time as `CatalogFetchAuthError`.
+- No roles, no scopes, and no command is refused for lacking a token.
+- A 401 surfaces at fetch time as `CatalogFetchAuthError`.
 - No sessions and no refresh: a `stored` token lives until `auth logout`, which removes the first record in level order.
 - `CachedTokenProvider.resolve()` memoizes per process, a failure included, so `gh` is spawned at most once per invocation.
-- An absent `gh` answers null silently, while a non-zero exit or a 3 second timeout throws and aborts the command.
+- An absent `gh` and a 3 second timeout both answer null silently.
+- A non-zero exit throws and aborts the command.
 - With `AIDD_TOKEN` set, `auth status` verifies it as a stored user credential with nothing on disk.

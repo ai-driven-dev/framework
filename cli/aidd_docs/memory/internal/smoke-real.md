@@ -14,7 +14,8 @@
 
 - `HOME` stays real.
 - `AIDD_USER_CONFIG_DIR` is relocated into the run's temp root and exported before the first `aidd` call.
-- `identity.json` does not follow, since `resolveAiddConfigDir()` refuses the variable, so a phase relying on relocated identity reaches the real profile.
+- `identity.json` follows it: it sits in the telemetry directory, `<user config dir>/telemetry`.
+- `AIDD_TELEMETRY_DIR` is the separate override of that directory, and the script does not set it.
 - Every `--scope user` call passes `--no-default-marketplace`, or `setup --scope user` registers the reserved name at every host.
 - A tool whose binary is absent from `PATH` is skipped, never failed.
 

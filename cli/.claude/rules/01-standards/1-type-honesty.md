@@ -7,4 +7,8 @@ paths:
 
 # Type Honesty
 
-- No widening cast, and no `@ts-expect-error` or `@ts-ignore` in `src/`: `scripts/check-cli-type-honesty.mjs` enforces both, and its `CASTS_ALLOWED` lists each surviving cast.
+- No widening cast (`as unknown as`, `as any`, `as never`) in `src/` or `tests/`: `CASTS_ALLOWED` in `scripts/check-cli-type-honesty.mjs` lists each surviving cast.
+- No `@ts-expect-error` or `@ts-ignore` in `src/`: the same script enforces it.
+- A test proving non-compilation may use `@ts-expect-error`.
+- `noTsIgnore` in `cli/biome.json` refuses `@ts-ignore` everywhere.
+- `scripts/check-cli-type-honesty.mjs` runs from the repository root: it reads `process.cwd()/cli`.

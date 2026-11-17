@@ -1,6 +1,8 @@
 # Distribution
 
-Where a plugin's content comes from: the registered marketplaces, the trust given to a source, the cache and the fetch. Language: `src/contexts/distribution/glossary.md`; shape: the `reference-context.md` rule.
+- Where a plugin's content comes from: the registered marketplaces, the trust given to a source, the cache and the fetch.
+- Language: `src/contexts/distribution/glossary.md`.
+- Shape: the `reference-context.md` rule.
 
 ## Gotchas
 

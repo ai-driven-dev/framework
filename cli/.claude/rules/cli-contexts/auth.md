@@ -1,5 +1,5 @@
 ---
-description: Apply when a token is read, stored or checked. The auth context owns the one GitHub token, and nothing else reads it.
+description: Apply when a token is read, stored or checked; the auth context owns the one GitHub token, and nothing else reads it.
 paths:
   - "src/contexts/auth/**/*.ts"
   - "src/composition/auth.ts"
@@ -25,10 +25,11 @@ paths:
 ## Suppliers
 
 - `shared/ports/environment.ts`: a token handed to the run in a variable.
+- `shared/ports/http-get.ts`: the identity check's request.
 - `shared/`: errors, `Logger`, `AIDD_DIR`.
 
 ## Never
 
 - Read a token variable or `auth.json` outside the context.
-- Refuse a command for a missing token: a 401 surfaces as `CatalogFetchAuthError` at fetch time.
-- Restate the source order: `sourcesInOrder` is described once in the auth page of `aidd_docs/memory/internal/`.
+- Refuse a command for a missing token: `aidd_docs/memory/internal/auth.md` says where a 401 surfaces.
+- Restate the source order: `sourcesInOrder` is described once in `aidd_docs/memory/internal/auth.md`.

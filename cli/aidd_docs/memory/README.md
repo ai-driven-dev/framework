@@ -12,6 +12,7 @@ The `cli/` bank. What a memory bank is: [`aidd_docs/memory/README.md`](../../../
 
 ## Maintaining
 
-- One file per concern; point to the code instead of copying it.
+- One file per concern.
+- Point to the code instead of copying it.
 - Describe the current state only, with no plan and no personal note.
 - Change a file in the same pull request as the code it describes.
