@@ -211,12 +211,14 @@ describe("aidd setup — the agents' provider", () => {
     const lines = await run("--ide", "opencode,kilo", "--provider", "mistral");
     const start = lines.indexOf("Models on mistral, for every project on this machine:");
 
-    expect(lines.slice(start, start + 7)).toEqual([
+    expect(lines.slice(start, start + 9)).toEqual([
       "Models on mistral, for every project on this machine:",
       "  opencode main session: mistral/mistral-large-4, written in /home/.config/opencode/opencode.json",
-      "  opencode explorer, executor, validator, reviewer: mistral/mistral-small-latest (high)",
+      "  opencode reviewer: mistral/mistral-large-4 (high)",
+      "  opencode explorer, executor, validator: mistral/mistral-small-latest (high)",
       "  kilo main session: not managed by aidd, still the IDE's choice",
-      "  kilo explorer, executor, validator, reviewer: mistral/mistral-small-latest (high)",
+      "  kilo reviewer: mistral/mistral-large-4 (high)",
+      "  kilo explorer, executor, validator: mistral/mistral-small-latest (high)",
       "Agents updated: aidd-orchestrator.",
       OTHER_PROJECTS("opencode,kilo", "mistral"),
     ]);

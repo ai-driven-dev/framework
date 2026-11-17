@@ -9,7 +9,7 @@
     "explorer": "light",
     "executor": "light",
     "validator": "light",
-    "reviewer": "light"
+    "reviewer": "smart"
   },
   "providers": {
     "openai": {

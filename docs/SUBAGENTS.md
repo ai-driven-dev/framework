@@ -45,7 +45,7 @@ Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so 
 | [Explorer](../plugins/aidd-orchestrator/agents/explorer.md) | light | Find files and symbols, trace a flow, answer a codebase question before a change | The answer, with sources and unknowns | No |
 | [Executor](../plugins/aidd-orchestrator/agents/executor.md) | light | Write or fix code and docs within a defined scope, then verify them | `COMPLETE`, `INCOMPLETE` or `BLOCKED`, with changes and checks run | Yes |
 | [Validator](../plugins/aidd-orchestrator/agents/validator.md) | light | Confirm delivered work meets the request and its acceptance criteria | `Validated: yes` or `no`, with what failed | No; runs checks |
-| [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | light | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
+| [Reviewer](../plugins/aidd-orchestrator/agents/reviewer.md) | smart | Find defects, contradictions, duplication and needless complexity in finished work | `no actionable findings`, `changes needed` or `insufficient evidence`, with findings | No; only the review report a workflow asks for |
 
 ## 📦 Install
 
@@ -70,9 +70,9 @@ aidd setup --global --ide codex,opencode --plugins all --provider openai --agent
 
 | Tier | Runs | openai | anthropic | mistral |
 | --- | --- | --- | --- | --- |
-| smart | Available for custom role mappings | `gpt-6.1-sol` | `claude-opus-5-5` | `mistral-large-4` |
+| smart | Reviewer | `gpt-6.1-sol` | `claude-opus-5-5` | `mistral-large-4` |
 | standard | Main session | `gpt-6.1-terra` | `claude-sonnet-5-5` | `mistral-large-4` |
-| light | All four subagents | `gpt-6-luna` | `claude-haiku-5-5` | `mistral-small-latest` |
+| light | Explorer, executor, validator | `gpt-6-luna` | `claude-haiku-5-5` | `mistral-small-latest` |
 
 Claude Code takes anthropic, Codex openai, Copilot openai or anthropic, Cursor anthropic, OpenCode and Kilo all three. A run takes one provider, so every `--ide` it names must take it: `--ide claude,codex` is refused. The mapping lives in [`agent-models.json`](../cli/src/contexts/tools/domain/formats/models/agent-models.json).
 

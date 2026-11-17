@@ -79,7 +79,7 @@ setup --global --source local --path <checkout> --ide <tool> --plugins all --yes
 → sync the managed Agents instruction section
 ```
 
-The CLI owns installation and model generation. All four agents use Haiku/high on Claude and Luna/high on Codex and OpenCode; main-session settings stay untouched. Other detected tools retain their saved provider. A managed OpenCode installation uses its existing reload helper.
+The CLI owns installation and model generation. Explorer, executor and validator use Haiku/high on Claude and Luna/high on Codex and OpenCode. Reviewer keeps its smart/high profile; main-session settings stay untouched. Other detected tools retain their saved provider. A managed OpenCode installation uses its existing reload helper.
 
 Commands and model/plugin details appear as they run, followed by one result per tool: `OK`, `WARN` or `FAIL` (`DELEGATED` for managed OpenCode). Any warning or failure exits nonzero; fix the reported cause and rerun. `OK` covers the CLI installation and registration checks, not a live agent session; restart your tools to load the changes.
 

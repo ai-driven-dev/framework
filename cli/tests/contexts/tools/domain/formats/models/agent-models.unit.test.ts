@@ -35,12 +35,12 @@ developer_instructions = "Review.\\n"
 `);
   });
 
-  it("gives the reviewer the light model, prefixed by the provider where the host wants it", () => {
+  it("gives the reviewer the smart model, prefixed by the provider where the host wants it", () => {
     expect(
       write(withAgentModels(buildOpencodeFlatContract(), "opencode", "mistral"), "reviewer.md")
     ).toBe(`---
 description: 'Reviews the work'
-model: 'mistral/mistral-small-latest#high'
+model: 'mistral/mistral-large-4#high'
 mode: 'subagent'
 ---
 Review.
@@ -50,7 +50,7 @@ Review.
   it("gives a Cursor agent the model of its role", () => {
     expect(
       write(withAgentModels(buildCursorFlatContract(), "cursor", "anthropic"), "reviewer.md")
-    ).toContain("claude-haiku-5-5");
+    ).toContain("claude-opus-5-5");
   });
 
   it("uses the host's own id for a model it names differently", () => {

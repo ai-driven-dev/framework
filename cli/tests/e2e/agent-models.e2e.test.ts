@@ -42,12 +42,10 @@ describe("E2E: aidd setup --provider on a project", () => {
         fakeHome
       );
       expect(set.exitCode, set.stderr).toBe(0);
-      expect(await agentModel(projectDir)).toBe("mistral/mistral-small-latest#high");
+      expect(await agentModel(projectDir)).toBe("mistral/mistral-large-4#high");
       expect(await mainModel(fakeHome)).toBe("mistral/mistral-large-4");
       expect(await readFile(join(projectDir, "opencode.json"), "utf8")).not.toContain('"model"');
-      expect(set.stdout).toContain(
-        "opencode explorer, executor, validator, reviewer: mistral/mistral-small-latest (high)"
-      );
+      expect(set.stdout).toContain("opencode reviewer: mistral/mistral-large-4 (high)");
 
       const unset = await runCli(
         [...SETUP, ...install, "--provider", "none"],
@@ -130,7 +128,7 @@ describe("E2E: aidd setup --provider on a project", () => {
         "aidd-orchestrator-reviewer.md"
       );
       expect(parseFrontmatter(await readFile(userAgent, "utf8")).frontmatter.model).toEqual(
-        expect.stringContaining("openai/")
+        "openai/gpt-6.1-sol#high"
       );
     } finally {
       await cleanup();
