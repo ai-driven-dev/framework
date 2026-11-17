@@ -39,3 +39,4 @@
 
 - A project-scope `clean --force` protects a `scope: "user"` registration on the scope, not the name, as `tests/orchestration/clean/clean-shared-ref-guard.integration.test.ts` and `tests/e2e/clean-shared-ref-codex.e2e.test.ts` assert.
 - `clean --scope user --force` deletes the `aidd-framework` entry alone, so another machine-scope entry survives, pointing at a removed `cache/built/`.
+- A project's `clean --force` removes the shared user-scope Cursor directory, so `doctor` reports its plugins not installed on this machine and `aidd sync` restores them.

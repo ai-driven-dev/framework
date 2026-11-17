@@ -15,7 +15,7 @@ paths:
 
 ## Ports
 
-- `MarketplaceRegistry`, `MarketplaceTrustStore`, `MarketplaceCachePort`: each contract kit in `tests/contexts/distribution/testing/` runs on the fake and on the real adapter, bar the registry's `updateVersion`.
+- `MarketplaceRegistry`, `MarketplaceTrustStore`, `MarketplaceCachePort`: each contract kit in `tests/contexts/distribution/testing/` runs on the fake and on the real adapter.
 - `updateVersion` has a caller, `RefreshMarketplace`, and no contract case: no test reaches the adapter's own lines.
 - The registry case "keeps one user entry for every project" has no one-line break to plant in the adapter arm: `userPath()` takes no project argument.
 - `MarketplaceRemover`, `ReleaseLister`, `RepositoryVisibility`, `PluginFetcher`, `PluginCatalogRepository`, `RawCatalogFetcher`: no contract kit yet.

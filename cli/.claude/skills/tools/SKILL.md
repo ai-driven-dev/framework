@@ -6,7 +6,7 @@ description: >
   mcp/hooks/plugins/config) and its plugin delivery. Use when adding a new AI or IDE tool,
   changing what a tool declares, or declaring a tool's `aidd translate` build contract. Do NOT
   use for the canonical-to-native translation pipeline itself — use `translate`. Do NOT use for
-  where plugin content comes from: see the distribution context rule. Do NOT use for manifest or install
+  where plugin content comes from. See the distribution context rule. Do NOT use for manifest or install
   orchestration — use `framework`.
 ---
 
