@@ -155,19 +155,23 @@ function uncalledSectionMethods(
           `([\\w$]+)(\\([^()]*\\))?\\??\\.${name}${isGetter ? "\\b(?!\\s*\\()" : "\\s*\\("}`,
           "g"
         );
-        const called = [...bodies].some(([caller, body]) =>
-          [...body.matchAll(use)].some((match) => {
-            const receiver = match[1] as string;
-            if (caller === file && receiver === "this") return true;
-            if (caller === file) return false;
-            if (isStatic) return receiver === className;
-            if (match[2] !== undefined) {
-              return (
-                /Section$/.test(receiver) || (receiver === "section" && match[2] === `("${key}")`)
-              );
-            }
-            return namesSection(receiver, key);
-          })
+        // The regex is slow on a 1.8MB tree (about 70ms a member) and a use spells `.name`:
+        // a substring test drops every body that cannot match before the regex reads it.
+        const called = [...bodies].some(
+          ([caller, body]) =>
+            body.includes(`.${name}`) &&
+            [...body.matchAll(use)].some((match) => {
+              const receiver = match[1] as string;
+              if (caller === file && receiver === "this") return true;
+              if (caller === file) return false;
+              if (isStatic) return receiver === className;
+              if (match[2] !== undefined) {
+                return (
+                  /Section$/.test(receiver) || (receiver === "section" && match[2] === `("${key}")`)
+                );
+              }
+              return namesSection(receiver, key);
+            })
         );
         if (!called) uncalled.push(`${file} :: ${className}.${name}`);
       }
