@@ -8,7 +8,6 @@ import {
   userBuiltMarketplaceDir,
 } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
-import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
@@ -19,6 +18,7 @@ import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-buil
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";

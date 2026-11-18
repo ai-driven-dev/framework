@@ -16,7 +16,6 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { AIDD_DIR } from "../../../src/shared/domain/layout/aidd-layout.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -24,6 +23,7 @@ import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { projectCleaner } from "../../helpers/project-cleaner.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";

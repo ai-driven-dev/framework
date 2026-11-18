@@ -11,7 +11,6 @@ import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
 } from "../../../src/shared/domain/layout/aidd-layout.js";
-import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
@@ -23,6 +22,7 @@ import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const { claude } = TOOL;

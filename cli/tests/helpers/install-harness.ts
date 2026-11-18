@@ -24,9 +24,8 @@ import { FileAdapter } from "../../src/shared/infrastructure/file-adapter.js";
 import { HasherAdapter } from "../../src/shared/infrastructure/hasher-adapter.js";
 import type { Prompter } from "../../src/shared/ports/prompter.js";
 import type { VersionReader } from "../../src/shared/ports/version-reader.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../shared/testing/registered-manifest-probes.js";
-import { resolveRegisteredToolId } from "../shared/testing/registered-tools.js";
+import { registeredTools, resolveRegisteredToolId } from "../shared/testing/registered-tools.js";
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };
 export const OverwritePrompter = SilentPrompterAdapter;
@@ -217,7 +216,7 @@ export function buildDeps(projectRoot: string) {
   const runPostInstallPipeline = new RunPostInstallPipeline(
     manifestRepo,
     updateGitignore,
-    catalogOf()
+    registeredTools()
   );
   const trackedConfigFiles = new TrackedConfigFiles(fs, hasher, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
@@ -225,13 +224,13 @@ export function buildDeps(projectRoot: string) {
     fs,
     assetProvider,
     runPostInstallPipeline,
-    catalogOf()
+    registeredTools()
   );
   const installIdeConfig = new InstallIdeConfig(
     trackedConfigFiles,
     assetProvider,
     runPostInstallPipeline,
-    catalogOf()
+    registeredTools()
   );
   const currentVersionProvider: VersionReader = new CurrentVersionAdapter();
   return {
@@ -269,7 +268,7 @@ export async function initProject(
     deps.fs,
     deps.manifestRepo,
     deps.updateGitignore,
-    catalogOf()
+    registeredTools()
   );
   await initUseCase.execute({ projectRoot });
 }
@@ -281,7 +280,7 @@ export async function installTool(
 ) {
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = "test";
-  if (catalogOf().isIdeTool(toolId)) {
+  if (registeredTools().isIdeTool(toolId)) {
     return deps.installIdeConfig.execute({
       toolId,
       projectRoot,

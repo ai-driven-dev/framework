@@ -25,10 +25,9 @@ import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
-import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 import { marketplaceSync } from "../marketplace-sync.js";
 import { checkRegistrationOver } from "./build-check-registration.js";
 import { DeterministicHasher } from "./deterministic-hasher.js";
@@ -63,7 +62,7 @@ export async function buildUnitDeps(_projectRoot: string) {
   const runPostInstallPipeline = new RunPostInstallPipeline(
     manifestRepo,
     updateGitignore,
-    catalogOf()
+    registeredTools()
   );
   const trackedConfigFiles = new TrackedConfigFiles(fs, hasher, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
@@ -71,13 +70,13 @@ export async function buildUnitDeps(_projectRoot: string) {
     fs,
     assetProvider,
     runPostInstallPipeline,
-    catalogOf()
+    registeredTools()
   );
   const installIdeConfig = new InstallIdeConfig(
     trackedConfigFiles,
     assetProvider,
     runPostInstallPipeline,
-    catalogOf()
+    registeredTools()
   );
 
   const currentVersionProvider = new FakeCurrentVersion();
@@ -126,7 +125,7 @@ export async function initProject(
     deps.fs,
     deps.manifestRepo,
     deps.updateGitignore,
-    catalogOf()
+    registeredTools()
   );
   await initUseCase.execute({ projectRoot });
 }
@@ -138,7 +137,7 @@ export async function installTool(
 ) {
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = "test";
-  if (catalogOf().isIdeTool(toolId)) {
+  if (registeredTools().isIdeTool(toolId)) {
     return deps.installIdeConfig.execute({
       toolId,
       projectRoot,
@@ -186,8 +185,8 @@ export function buildDoctorUseCase(
       tracked: new CheckTrackedFiles(loadManifest, deps.fs),
       merge: new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
       references: new CheckFileReferences(loadManifest, deps.fs),
-      layout: new CheckProjectLayout(loadManifest, deps.fs, catalogOf()),
-      plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs, catalogOf())),
+      layout: new CheckProjectLayout(loadManifest, deps.fs, registeredTools()),
+      plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs, registeredTools())),
     },
     checkRegistrationOver(
       loadManifest,
@@ -199,10 +198,10 @@ export function buildDoctorUseCase(
       registeredHostInspector(deps.fs, hostRegistries, new Map()),
       () => "/user-cache",
       { get: () => "1.0.0" },
-      catalogOf()
+      registeredTools()
     ),
     { execute: async () => [] },
-    catalogOf()
+    registeredTools()
   );
 }
 

@@ -8,8 +8,8 @@ import type { HostPluginRegistryReading } from "../../../../src/contexts/host-re
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
-import { FakeHostActions } from "../testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../testing/fake-host-plugin-registry.js";

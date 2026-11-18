@@ -13,11 +13,11 @@ import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/
 import { CLIOutput } from "../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../src/presentation/terminal/prompter-adapter.js";
 import { BUILT_CACHE_SUBDIR } from "../../src/shared/domain/layout/aidd-layout.js";
-import { FakeHostActions } from "../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { hostRecord } from "../helpers/host-record-reading.js";
+import { FakeHostActions } from "../shared/testing/fake-host-actions.js";
 import { TOOL } from "../shared/testing/registered-tools.js";
 
 describe("createDeps", () => {

@@ -1,8 +1,7 @@
 import { ModeAMarketplaceTranslator } from "../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import type { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../src/shared/domain/plugin/plugin-distribution.js";
-import { registeredAiProfile } from "../contexts/tools/testing/catalog-of.js";
-import { TOOL } from "../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../shared/testing/registered-tools.js";
 
 const { claude } = TOOL;
 const PROJECT_ROOT = "/test-project";
@@ -30,7 +29,7 @@ export function buildDist(): PluginDistribution {
 export async function installViaModeA(manifest: Manifest): Promise<void> {
   await new ModeAMarketplaceTranslator().addPlugin(
     buildDist(),
-    registeredAiProfile(claude),
+    registeredTools().aiProfile(claude),
     { kind: "local", path: "/plugin-source" },
     PROJECT_ROOT,
     manifest,

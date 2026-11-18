@@ -7,7 +7,7 @@ import {
   HostRegistryMarketplaceSourceReaderAdapter,
   NativeMarketplaceSourceReaderAdapter,
 } from "../../../../src/contexts/host-registration/infrastructure/marketplace-source-readers.js";
-import { FakeHostActions } from "../testing/fake-host-actions.js";
+import { FakeHostActions } from "../../../shared/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../testing/fake-host-marketplace-sources.js";
 import {
   describeHostMarketplaceSourcesContract,

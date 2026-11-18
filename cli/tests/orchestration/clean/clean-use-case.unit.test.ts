@@ -15,7 +15,6 @@ import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor
 import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestration/clean/clean-project.js";
 import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
-import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
@@ -26,6 +25,7 @@ import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marke
 import { RecordingPrompter } from "../../helpers/ports/recording-prompter.js";
 import { type ProjectCleanerParts, projectCleanerArgs } from "../../helpers/project-cleaner.js";
 import { userScopeCleaner } from "../../helpers/user-scope-cleaner.js";
+import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
