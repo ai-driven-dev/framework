@@ -31,4 +31,8 @@ describe("FileHash", () => {
     expect(() => new FileHash("g41d8cd98f00b204e9800998ecf8427e")).toThrow();
     expect(() => new FileHash("D41D8CD98F00B204E9800998ECF8427E")).toThrow();
   });
+
+  it("of() hashes the UTF-8 bytes of the content with MD5", () => {
+    expect(FileHash.of("héllo").value).toBe("be50e8478cf24ff3595bc7307fb91b50");
+  });
 });

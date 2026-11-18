@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
 import { dirname, join, posix } from "node:path";
+import { FileHash } from "../../../../shared/domain/file.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type {
@@ -55,7 +55,7 @@ export async function assertProjectHooksUnchanged(
   const current = currentEntries.map(
     ({ event, entry }) => `${event}\u0000${entry.command}\u0000${digestEntry(entry)}`
   );
-  if (provenance.entries.some(({ digest }) => !/^[0-9a-f]{32}$/.test(digest))) {
+  if (provenance.entries.some(({ digest }) => !FileHash.isDigest(digest))) {
     throw new Error(
       `${toolName} project hooks for '${pluginName}' have an unproven install digest; detach refused.`
     );
@@ -70,7 +70,7 @@ export async function assertProjectHooksUnchanged(
     const path = join(projectRoot, relativePath);
     await assertProjectPathWithinRoot(fs, projectRoot, path);
     if (!(await fs.fileExists(path))) continue;
-    if (!/^[0-9a-f]{32}$/.test(digest)) {
+    if (!FileHash.isDigest(digest)) {
       throw new Error(
         `${toolName} hook script '${relativePath}' has an unproven install digest; detach refused.`
       );
@@ -147,7 +147,7 @@ export async function removeProjectHooks(
 
 /** Hash of one merged hook entry, independent of other plugins' entries. */
 export function digestEntry(entry: ProjectHookEntry): string {
-  return createHash("md5").update(JSON.stringify(entry), "utf-8").digest("hex");
+  return FileHash.of(JSON.stringify(entry)).value;
 }
 
 export function recordedProjectHookEntries(

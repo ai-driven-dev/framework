@@ -102,14 +102,7 @@ export class BuiltTreeMaterializationTranslator implements PluginTranslator {
     const files = deliversHooksToProject
       ? withoutHooksPrefix(builtFiles, dist.manifest.name)
       : builtFiles;
-    const mcp = await materializeFlatMcp(
-      this.fs,
-      this.hasher,
-      dist,
-      tool,
-      projectRoot,
-      previousMcpEntries
-    );
+    const mcp = await materializeFlatMcp(this.fs, dist, tool, projectRoot, previousMcpEntries);
     await refreshTrackedMcpConfigHash(
       this.fs,
       manifest,

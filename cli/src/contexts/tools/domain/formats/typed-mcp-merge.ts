@@ -1,7 +1,6 @@
-import { createHash } from "node:crypto";
 import { InvalidMcpServerConfigError, McpConfigError } from "../../../../shared/domain/errors.js";
+import { FileHash } from "../../../../shared/domain/file.js";
 import { stripJsonComments } from "../../../../shared/domain/reading/jsonc.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 
 type RawServer =
   | { command: string; args?: string[]; env?: Record<string, string>; disabled?: boolean }
@@ -72,8 +71,7 @@ const MCP_COLLISION_REASON =
 export function mergeTypedMcp(
   existingContent: string | null,
   incomingTransformed: string,
-  previousEntriesForThisPlugin: ReadonlyMap<string, string>,
-  hasher: Hasher
+  previousEntriesForThisPlugin: ReadonlyMap<string, string>
 ): {
   mergedContent: string;
   contributedEntries: ReadonlyMap<string, string>;
@@ -84,10 +82,9 @@ export function mergeTypedMcp(
   const incoming = parseIncoming(incomingTransformed);
   const { cleaned, editedPreviousEntries } = stripPreviousEntries(
     mcp,
-    previousEntriesForThisPlugin,
-    hasher
+    previousEntriesForThisPlugin
   );
-  return { ...applyIncoming(full, cleaned, incoming, hasher), editedPreviousEntries };
+  return { ...applyIncoming(full, cleaned, incoming), editedPreviousEntries };
 }
 
 /**
@@ -166,14 +163,13 @@ function parseIncoming(transformed: string): Record<string, unknown> {
 
 function stripPreviousEntries(
   existing: Record<string, unknown>,
-  previous: ReadonlyMap<string, string>,
-  hasher: Hasher
+  previous: ReadonlyMap<string, string>
 ): { cleaned: Record<string, unknown>; editedPreviousEntries: readonly string[] } {
   const result = { ...existing };
   const editedPreviousEntries: string[] = [];
   for (const [name, digest] of previous) {
     if (!(name in result)) continue;
-    if (hasher.hash(JSON.stringify(result[name])).value === digest) delete result[name];
+    if (FileHash.of(JSON.stringify(result[name])).value === digest) delete result[name];
     else editedPreviousEntries.push(name);
   }
   return { cleaned: result, editedPreviousEntries };
@@ -182,8 +178,7 @@ function stripPreviousEntries(
 function applyIncoming(
   full: Record<string, unknown>,
   cleanedMcp: Record<string, unknown>,
-  incoming: Record<string, unknown>,
-  hasher: Hasher
+  incoming: Record<string, unknown>
 ): {
   mergedContent: string;
   contributedEntries: ReadonlyMap<string, string>;
@@ -198,19 +193,19 @@ function applyIncoming(
       continue;
     }
     mcp[name] = server;
-    contributed.set(name, hasher.hash(JSON.stringify(server)).value);
+    contributed.set(name, FileHash.of(JSON.stringify(server)).value);
   }
   const mergedContent = JSON.stringify({ ...full, mcp }, null, 2);
   return { mergedContent, contributedEntries: contributed, collisions };
 }
 
 function assertContributedServerUnchanged(name: string, server: unknown, digest: string): void {
-  if (!/^[0-9a-f]{32}$/.test(digest)) {
+  if (!FileHash.isDigest(digest)) {
     throw new Error(
       `OpenCode MCP server '${name}' has an unproven install digest; removal refused.`
     );
   }
-  const current = createHash("md5").update(JSON.stringify(server)).digest("hex");
+  const current = FileHash.of(JSON.stringify(server)).value;
   if (current !== digest) {
     throw new Error(`OpenCode MCP server '${name}' was edited after install; removal refused.`);
   }

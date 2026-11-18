@@ -59,14 +59,7 @@ export class ModeBFlatMaterializationTranslator implements PluginTranslator {
   ): Promise<{ skipped: ReadonlySkipList; written?: number }> {
     const ctx = this.resolveFlatToolContext(tool, dist, projectRoot);
     if (ctx === null) return { skipped: [] };
-    const mcp = await materializeFlatMcp(
-      this.fs,
-      this.hasher,
-      dist,
-      tool,
-      projectRoot,
-      previousMcpEntries
-    );
+    const mcp = await materializeFlatMcp(this.fs, dist, tool, projectRoot, previousMcpEntries);
     await refreshTrackedMcpConfigHash(
       this.fs,
       manifest,

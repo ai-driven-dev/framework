@@ -6,7 +6,6 @@ import {
   KiloDualConfigError,
   OpencodeDualConfigError,
 } from "../../../../../src/shared/domain/errors.js";
-import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 
 const withFiles =
   (...relPaths: string[]) =>
@@ -79,11 +78,10 @@ function opencodeMcp(): McpConfigPart {
 }
 
 describe("the opencode file an McpConfigPart merges into", () => {
-  const hasher = new HasherAdapter();
   const incoming = JSON.stringify({ mcp: { added: { type: "remote", url: "https://a" } } });
 
   it("contributes a plugin's servers and hands back what to remove them by", () => {
-    const merged = opencodeMcp().mergePluginServers(null, incoming, new Map(), hasher);
+    const merged = opencodeMcp().mergePluginServers(null, incoming, new Map());
 
     expect([...merged.contributedEntries.keys()]).toStrictEqual(["added"]);
     const removed = opencodeMcp().removePluginServers(

@@ -1,10 +1,8 @@
-import { createHash } from "node:crypto";
 import { FileHash } from "../domain/file.js";
 import type { Hasher } from "../ports/hasher.js";
 
 export class HasherAdapter implements Hasher {
   hash(content: string): FileHash {
-    const hex = createHash("md5").update(content).digest("hex");
-    return new FileHash(hex);
+    return FileHash.of(content);
   }
 }

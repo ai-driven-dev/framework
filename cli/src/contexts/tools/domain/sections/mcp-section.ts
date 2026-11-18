@@ -1,4 +1,3 @@
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { ConfigRef } from "../../contract/config-refs.js";
 import { mcpJsonToToml, mergeJsonUserPrime } from "../formats/mcp-format.js";
 import {
@@ -127,10 +126,9 @@ export class McpConfigPart {
   mergePluginServers(
     existing: string | null,
     incomingTransformed: string,
-    previousEntries: ReadonlyMap<string, string>,
-    hasher: Hasher
+    previousEntries: ReadonlyMap<string, string>
   ): ReturnType<typeof mergeTypedMcp> {
-    return mergeTypedMcp(existing, incomingTransformed, previousEntries, hasher);
+    return mergeTypedMcp(existing, incomingTransformed, previousEntries);
   }
 
   /** Removes the servers a plugin contributed, refusing one edited since. */

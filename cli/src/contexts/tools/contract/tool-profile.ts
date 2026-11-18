@@ -1,4 +1,4 @@
-import type { ConfigAsset, FileHash } from "../../../shared/domain/file.js";
+import type { ConfigAsset } from "../../../shared/domain/file.js";
 import type { FlatHooksLoaderEntry } from "../../../shared/domain/materialization/flat-paths.js";
 import type { MergeStrategy } from "../../../shared/domain/merge.js";
 import type { AiToolId, IdeToolId } from "../../../shared/domain/tool.js";
@@ -143,8 +143,7 @@ export interface McpConfigAnswers {
   mergePluginServers(
     existing: string | null,
     incomingTransformed: string,
-    previousEntries: ReadonlyMap<string, string>,
-    hasher: { hash(content: string): FileHash }
+    previousEntries: ReadonlyMap<string, string>
   ): McpPluginMerge;
   /** Removes the servers a plugin contributed, refusing one edited since. */
   removePluginServers(existing: string, entries: ReadonlyMap<string, string>): string;

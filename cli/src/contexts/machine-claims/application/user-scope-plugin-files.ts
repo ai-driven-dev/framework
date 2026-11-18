@@ -1,5 +1,5 @@
 import { dirname, join, posix } from "node:path";
-import type { InstallationFile } from "../../../shared/domain/file.js";
+import { FileHash, type InstallationFile } from "../../../shared/domain/file.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Logger } from "../../../shared/ports/logger.js";
 import { isStrictlyWithinUserScope } from "../domain/user-scope-containment.js";
@@ -31,7 +31,7 @@ export async function userScopeFilesSafeToDelete(
       resolvedCandidate !== null &&
       isStrictlyWithinUserScope(resolvedCandidate, resolvedBoundary)
     ) {
-      if (!/^[0-9a-f]{32}$/.test(hash)) {
+      if (!FileHash.isDigest(hash)) {
         throw new Error(
           `${toolId}: '${plugin.name}' file '${relativePath}' has an unproven install digest; removal refused.`
         );

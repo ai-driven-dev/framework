@@ -7,7 +7,6 @@ import type {
 import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { FlatMcpSection } from "../../ports/tool-sections.js";
 
@@ -27,7 +26,6 @@ export async function refreshTrackedMcpConfigHash(
 
 export async function materializeFlatMcp(
   fs: FileReader & FileWriter,
-  hasher: Hasher,
   dist: PluginDistribution,
   tool: FlatMcpSection,
   projectRoot: string,
@@ -48,7 +46,7 @@ export async function materializeFlatMcp(
   const existingContent = await readExistingJson(fs, outputPath);
   const transformed = mcpCap.transform(dist.components.mcp[0].content);
   const { mergedContent, contributedEntries, collisions, editedPreviousEntries } =
-    mcpCap.mergePluginServers(existingContent, transformed, previousMcpEntries, hasher);
+    mcpCap.mergePluginServers(existingContent, transformed, previousMcpEntries);
   if (editedPreviousEntries.length > 0) {
     throw new Error(
       `MCP server '${editedPreviousEntries[0]}' was edited after install; reinstall refused.`
