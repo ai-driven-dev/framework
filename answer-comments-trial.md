@@ -16,4 +16,4 @@ This thread must receive no further reply.
 
 ## Owner
 
-Owner: none.
+Owner: QA.
