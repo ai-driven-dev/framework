@@ -60,6 +60,7 @@ function namesWholeProfile(text: string): boolean {
   );
 }
 
+// Written limit: an element-access alias of a profile (`tools["aiProfile"](id)`, `profiles[0]`) is not read; no file under src/ writes one.
 const CATALOG_PROFILE_CALL = new RegExp(String.raw`\.(?:${CATALOG_PROFILE_METHODS.join("|")})\(`);
 
 function wholeProfileReaders(): string[] {
