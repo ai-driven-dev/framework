@@ -1,7 +1,7 @@
 import type { ResolveMarketplace } from "../../contexts/distribution/application/resolve-marketplace.js";
+import type { CacheBuiltMarketplace } from "../../contexts/installation/application/marketplace/cache-built-marketplace.js";
 import type {
   BuiltMarketplaceEnsurer,
-  CacheBuiltMarketplace,
   EnsureBuiltMarketplaceCommand,
   EnsureBuiltMarketplaceResult,
 } from "../../contexts/installation/application/shared/ensure-built-marketplace.js";

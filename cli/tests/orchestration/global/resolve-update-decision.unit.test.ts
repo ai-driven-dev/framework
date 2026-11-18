@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  BulkConflictState,
-  ResolveUpdateDecision,
-} from "../../../src/orchestration/global/resolve-update-decision.js";
+import { BulkConflictState } from "../../../src/orchestration/global/bulk-conflict-state.js";
+import { ResolveUpdateDecision } from "../../../src/orchestration/global/resolve-update-decision.js";
 import { InputRequiredError } from "../../../src/shared/domain/errors.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 

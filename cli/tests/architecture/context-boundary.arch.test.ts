@@ -74,6 +74,8 @@ const PUBLIC_MODULES: Readonly<Record<string, readonly string[]>> = {
     "src/contexts/installation/contract/plugin-claims.ts",
     // the installed plugins that name a marketplace, held against its catalog
     "src/contexts/installation/application/marketplace/list-plugin-sources.ts",
+    // the disk half of the built marketplace cache, which the orchestration wraps
+    "src/contexts/installation/application/marketplace/cache-built-marketplace.ts",
     "src/contexts/installation/contract/plugin-sources.ts",
     "src/contexts/installation/application/doctor/check-tracked-files.ts",
     "src/contexts/installation/application/update-gitignore.ts",

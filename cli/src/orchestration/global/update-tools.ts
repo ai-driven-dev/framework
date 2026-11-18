@@ -4,7 +4,8 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { GlobalExecutionError } from "../../shared/domain/errors.js";
 import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
 import type { VersionReader } from "../../shared/ports/version-reader.js";
-import { BulkConflictState, type ResolveUpdateDecision } from "./resolve-update-decision.js";
+import { BulkConflictState } from "./bulk-conflict-state.js";
+import type { ResolveUpdateDecision } from "./resolve-update-decision.js";
 
 const CATEGORIES: readonly ToolCategory[] = ["ai", "ide"];
 

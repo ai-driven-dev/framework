@@ -20,12 +20,12 @@ import { InstallIdeConfig } from "../contexts/installation/application/install/i
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/install-runtime-config.js";
 import { RunPostInstallPipeline } from "../contexts/installation/application/install/run-post-install-pipeline.js";
 import { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
+import { CacheBuiltMarketplace } from "../contexts/installation/application/marketplace/cache-built-marketplace.js";
 import { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
 import { DetectPluginDrift } from "../contexts/installation/application/shared/detect-plugin-drift.js";
-import {
-  type BuiltMarketplaceEnsurer,
-  CacheBuiltMarketplace,
-  type FrameworkBuilds,
+import type {
+  BuiltMarketplaceEnsurer,
+  FrameworkBuilds,
 } from "../contexts/installation/application/shared/ensure-built-marketplace.js";
 import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.js";
 import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";

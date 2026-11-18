@@ -5,8 +5,8 @@ import type {
   ResolveMarketplaceResult,
 } from "../../../src/contexts/distribution/application/resolve-marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { CacheBuiltMarketplace } from "../../../src/contexts/installation/application/marketplace/cache-built-marketplace.js";
 import type {
-  CacheBuiltMarketplace,
   EnsureBuiltMarketplaceCommand,
   EnsureBuiltMarketplaceResult,
   ResolvedMarketplace,
