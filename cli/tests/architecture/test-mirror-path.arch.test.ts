@@ -1,7 +1,8 @@
 /**
  * A module of a context has its test at the same path under `tests/`: `src/contexts/x/domain/y.ts`
  * is tested by `tests/contexts/x/domain/y.<level>.test.ts`, level being unit, integration or
- * contract. A test of the same name in another folder does not count.
+ * contract, or `y.<facet>.<level>.test.ts` where a module's test is split by facet. A test of the
+ * same name in another folder does not count.
  *
  * Two kinds of module owe no test of their own, and both are computed, never listed: a module left
  * with no runtime statement once its type declarations are stripped, and a module of a tool's
@@ -11,6 +12,7 @@
  * Limit: `declarationEnd` counts brackets inside string literals; a type alias whose string holds
  * an unbalanced bracket hides the code after it. No module does that today.
  */
+import { posix } from "node:path";
 import { describe, expect, it } from "vitest";
 import { expectRatchet, read, sourceFiles, testFiles } from "./helpers.js";
 import { closingBracket, codeOnly, scanBrackets } from "./source-shapes.js";
@@ -38,7 +40,6 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/host-registration/domain/cache-purge-policy.ts",
   "src/contexts/host-registration/domain/registration-record.ts",
   "src/contexts/host-registration/infrastructure/marketplace-list-parsers.ts",
-  "src/contexts/host-registration/infrastructure/plugin-registry-readers.ts",
   "src/contexts/installation/application/agents/agent-plugin-hosts.ts",
   "src/contexts/installation/application/agents/agent-providers.ts",
   "src/contexts/installation/application/agents/main-session-models.ts",
@@ -119,7 +120,6 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/tools/domain/profiles/opencode/opencode-hooks-bridge.ts",
   "src/contexts/tools/domain/sections/models-section.ts",
   "src/contexts/translate/application/shared-plugin-helpers.ts",
-  "src/contexts/translate/application/sink/disk-sink.ts",
   "src/contexts/translate/contract/build-targets.ts",
   "src/contexts/translate/domain/canon-format.ts",
   "src/contexts/translate/domain/engine.ts",
@@ -153,9 +153,14 @@ function isProfileData(module: string, source: string): boolean {
   return module.startsWith(PROFILE_FOLDER) && !declaresBehaviour(source);
 }
 
-function mirrorTestsOf(module: string): string[] {
-  const mirrored = module.replace(/^src\//, "tests/").replace(/\.ts$/, "");
-  return TEST_LEVELS.map((level) => `${mirrored}.${level}.test.ts`);
+/** `<base>.<level>.test.ts`, or `<base>.<facet>.<level>.test.ts`, in the module's mirror folder. */
+function isMirrorTest(module: string, test: string): boolean {
+  const mirrorFolder = posix.dirname(module.replace(/^src\//, "tests/"));
+  if (posix.dirname(test) !== mirrorFolder) return false;
+  const base = posix.basename(module, ".ts");
+  return new RegExp(`^${base}\\.(?:[\\w-]+\\.)*(?:${TEST_LEVELS.join("|")})\\.test\\.ts$`).test(
+    posix.basename(test)
+  );
 }
 
 function ownedModules(): string[] {
@@ -168,10 +173,9 @@ function missingMirrors(
   tests: readonly string[],
   sourceOf: (module: string) => string
 ): string[] {
-  const present = new Set(tests);
   return modules
     .filter((module) => !isTypeOnly(sourceOf(module)) && !isProfileData(module, sourceOf(module)))
-    .filter((module) => !mirrorTestsOf(module).some((test) => present.has(test)))
+    .filter((module) => !tests.some((test) => isMirrorTest(module, test)))
     .sort();
 }
 
@@ -203,6 +207,24 @@ describe("a module has its test at the mirror path", () => {
 
     it.each(TEST_LEVELS)("clears a %s test at the mirror path", (level) => {
       expect(missing([`tests/contexts/x/domain/y.${level}.test.ts`])).toEqual([]);
+    });
+
+    it("clears a facet test at the mirror path", () => {
+      expect(missing(["tests/contexts/x/domain/y.edges.integration.test.ts"])).toEqual([]);
+    });
+
+    it("clears a test with a facet of several segments at the mirror path", () => {
+      expect(missing(["tests/contexts/x/domain/y.flat.agent-path.integration.test.ts"])).toEqual(
+        []
+      );
+    });
+
+    it("flags a facet test that sits in another folder", () => {
+      expect(missing(["tests/contexts/x/application/y.edges.unit.test.ts"])).toEqual([module]);
+    });
+
+    it("flags a test of another module whose name only starts like it", () => {
+      expect(missing(["tests/contexts/x/domain/yy.unit.test.ts"])).toEqual([module]);
     });
 
     it("excludes a type-only module", () => {
