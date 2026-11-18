@@ -1,4 +1,8 @@
-/** A test of a context imports its own kit and the shared one, never another context's kit. */
+/**
+ * A test of a context imports its own kit and the shared one, never another context's kit. A
+ * helper or a file of the shared kit belongs to no context, so it imports no context's kit at all:
+ * a kit reached through a helper is the same reach, one file removed.
+ */
 import { describe, expect, it } from "vitest";
 import { INTERNAL_IMPORT, read, resolveImportTarget, tsFilesUnder } from "./helpers.js";
 
@@ -12,7 +16,7 @@ const kitOwner = (target: string): string | null =>
 
 function foreignKitImports(file: string, source: string): string[] {
   const own = contextOfTest(file);
-  if (own === null) return [];
+  if (own === null && !/^tests\/(?:helpers|shared)\//.test(file)) return [];
   return [...source.matchAll(INTERNAL_IMPORT)].flatMap((match) => {
     const specifier = match[1] ?? "";
     const owner = kitOwner(resolveImportTarget(file, specifier));
@@ -36,6 +40,19 @@ describe("a test never imports another context's kit", () => {
     expect(foreignKitImports(test, `import type { F } from "../../b/testing/k.js";`)).toHaveLength(
       1
     );
+  });
+
+  it("flags any context's kit imported from a helper or the shared kit", () => {
+    const kit = `import { f } from "../../contexts/b/testing/k.js";`;
+    expect(foreignKitImports("tests/helpers/ports/h.ts", kit)).toHaveLength(1);
+    expect(foreignKitImports("tests/shared/testing/h.ts", kit)).toHaveLength(1);
+    expect(foreignKitImports("tests/composition/c.test.ts", kit)).toEqual([]);
+  });
+
+  it("holds across tests/helpers and tests/shared", () => {
+    const files = [...tsFilesUnder("tests/helpers"), ...tsFilesUnder("tests/shared")];
+    expect(files.length).toBeGreaterThan(20);
+    expect(files.flatMap((file) => foreignKitImports(file, read(file)))).toEqual([]);
   });
 
   it("clears the context's own kit and the shared kit", () => {

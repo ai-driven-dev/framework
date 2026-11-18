@@ -14,5 +14,5 @@ The language of the `translate` context. A name in the code means what this page
 | Native tree | The tree a tool's own plugin CLI installs, built from the canon | `BuildNativeTree`, `FrameworkBuild` |
 | Flat layout | Where a flat plugin's files land and how its hooks bridge is generated | `domain/flat-layout.ts` (answers come from tools) |
 | Divergence | A path where the sink and the engine are known to differ in bytes, listed and meant to shrink | `DIVERGENCES` in `translate-distribution-conformance.integration.test.ts` |
-| Plugin-root token | The variable a plugin's files use for their own directory, rewritten to the one a tool expands | `rewritePluginRootToken` |
+| Plugin-root token | The variable a plugin's files use for their own directory, rewritten to the one a tool expands | `rewritePluginRootToken`, `tools/contract/plugin-root-token.ts` |
 | Manifest probe | Where a tool keeps a plugin manifest, built from the registered profiles | `pluginManifestProbes`, `DistributionProbe` (`domain/`) |

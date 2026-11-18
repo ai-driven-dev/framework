@@ -97,7 +97,7 @@ Provisional until `installation` and its `Manifest` aggregate migrate: auth's ag
 - `tests/contexts/<ctx>/testing/`, one subject per file: auth's holds record builders (`credential-records.ts`), one fake per port (`in-memory-credential-record-repository.ts`, `fake-identity-verifier.ts`, `fake-cli-auth-provider.ts`), the command builders (`auth-builders.ts`) and the three contract suites.
 - A fake keeps what the port keeps, no more: the in-memory repository keeps records, never text, because the port has no operation that writes an unreadable file.
 - A builder gives a neutral double for every dependency, `with*` for what a test overrides, and `build()` (`aLogOut().withRecords(records).build()`).
-- A kit is never imported by another context's tests. A written rule: no tool checks it yet. `knip` reports an unused kit export, since the kit is outside `tests/helpers/**`.
+- A kit is never imported by another context's tests, nor by `tests/helpers/**` or `tests/shared/**`: `kit-isolation.arch.test.ts`. Another context is reached from a test through its `application/` and `contract/` only, `ports/` included in what is closed: `test-cross-context-imports.arch.test.ts`. `knip` reports an unused kit export, since the kit is outside `tests/helpers/**`.
 
 ## 7. Contract-suite template
 
@@ -148,6 +148,8 @@ Auth's pass is Appendix A of `aidd_docs/tasks/2026_11/2026_11_06_test-harness-st
 | R5 `ports/` and `contract/` held like the other layers | `biome-context-parity.arch.test.ts` | "holds a ports folder to what the domain is held to, and a contract folder to no sibling" |
 | R6 a port method has a caller, contract included | `ports-are-called.arch.test.ts` | "reads a contract folder as ports, and a folder merely ending in ports as none" |
 | R7 `composition/` known, imported by the root only | `old-layout-count.arch.test.ts`, `context-graph.arch.test.ts`, `earned-sharing.arch.test.ts`, `biome.json` | section 5, composition |
+| R8 a kit is imported by its own context only | `kit-isolation.arch.test.ts` | its "flags any context's kit imported from a helper or the shared kit" |
+| R9 a test reaches another context through `application/` and `contract/` only | `test-cross-context-imports.arch.test.ts` | its "flags every folder of another context but its application and contract" |
 | Constructor cap 5 | `orchestrator-deps.arch.test.ts` | "flags a constructor past the limit and clears one sitting at the limit" |
 | Code size | not in force here, see section 8 | the code-size branch's own `code-size.arch.test.ts` |
 
@@ -156,7 +158,7 @@ Auth's pass is Appendix A of `aidd_docs/tasks/2026_11/2026_11_06_test-harness-st
 - A missing capability is a missing file: no `hooks.ts`, no hooks.
 - A caller asks a plugin section a question and never reads its fields; `plugins-are-asked-not-read.arch.test.ts` holds it. Its `STORED_ANSWERS_ALLOWED` lists the declared values a caller needs as written, each with its reason (`aidd_docs/tasks/2026_11/2026_11_06_test-harness-strategy/plan-tools-clean.md` section 3.1): shrink-only, an entry the code no longer matches fails the test.
 
-Written rules no tool checks: the glossary, a kit imported by its own context only, one subject per test file, the test challenge pass.
+Written rules no tool checks: the glossary, one subject per test file, the test challenge pass.
 
 ### Exceptions
 
