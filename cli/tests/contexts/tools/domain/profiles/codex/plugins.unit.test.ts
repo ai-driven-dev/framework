@@ -11,6 +11,7 @@ describe("codex plugins", () => {
       expect(activation).toEqual({
         binary: "codex",
         upgradeVerb: "upgrade",
+        upgradeLocalMarketplaces: false,
         enableVerb: "add",
         disableVerb: "remove",
         pluginCacheDir: expect.any(Function),
