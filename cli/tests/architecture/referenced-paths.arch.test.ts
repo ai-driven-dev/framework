@@ -16,10 +16,10 @@ const FENCED_BLOCK = /```[\s\S]*?```/g;
  * `application/` or `domain/` prefix is deliberately not matched: `application/json` is a
  * media type and `domain/ports` names a fragment, so a wider regex reports more noise than
  * drift. A name that continues a longer path (`application/shared/x.ts`) is that path's own
- * segment, not an area.
+ * segment, not an area, and so is a hyphenated folder name (`cli-contexts/`).
  */
 const CITED_PATH =
-  /\b(?:src|tests)\/[A-Za-z0-9_./-]+|\b(?:kernel|contexts|presentation|runtime)\/[A-Za-z0-9_./-]+|(?<!\/)\bshared\/[A-Za-z0-9_./-]+/g;
+  /\b(?:src|tests)\/[A-Za-z0-9_./-]+|(?<!-)\b(?:kernel|contexts|presentation|runtime)\/[A-Za-z0-9_./-]+|(?<!\/)\bshared\/[A-Za-z0-9_./-]+/g;
 
 /** `src/`-relative citations resolve under `src/`; rooted ones resolve as written. */
 function resolveCitation(cited: string): string {
@@ -128,6 +128,12 @@ describe("the guard itself", () => {
 
   it("reads a shared/ segment of a longer path as part of it, not as an area", () => {
     expect(citedInProse("Through `application/shared/remove-project-hooks.ts`.")).toEqual([]);
+  });
+
+  it("reads contexts/ inside a hyphenated folder name as part of that name, not as an area", () => {
+    expect(
+      citedInProse("See [the rule](.claude/rules/cli-contexts/reference-context.md).")
+    ).toEqual([]);
   });
 
   it("checks a path under shared/ like one under contexts/", () => {
