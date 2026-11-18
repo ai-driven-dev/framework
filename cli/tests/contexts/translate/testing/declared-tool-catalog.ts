@@ -27,7 +27,7 @@ function declaring(declared: DeclaredTool): Built {
       (kind === "manifest" ? declared.manifestPaths : declared.marketplacePaths) ?? [],
     buildContract: (mode) => (declared.buildModes?.includes(mode) ? standInContract() : null),
   } satisfies Pick<AiToolProfile, "distributionPaths" | "buildContract">;
-  // Only a factory builds a profile; the registered one is, and what derives from it is too.
+  // Only defineAiTool brands a profile; the derived value inherits the registered one's brand at runtime, the one untyped seam.
   return Object.create(
     registeredTools().aiProfile(declared.id),
     Object.fromEntries(Object.entries(overrides).map(([name, value]) => [name, { value }]))
