@@ -2,10 +2,8 @@
  * A test file past 800 lines stops being one situation and becomes a pile: a reader cannot hold
  * it, and the next case lands wherever there is room. 400 lines is a review point, not checked.
  */
-import { readdirSync } from "node:fs";
-import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CLI_ROOT, expectRatchet, read } from "./helpers.js";
+import { expectRatchet, read, testFiles } from "./helpers.js";
 
 const MAX_LINES = 800;
 
@@ -29,15 +27,12 @@ function lineCount(text: string): number {
   return text.split("\n").length - 1;
 }
 
-function testFiles(): string[] {
-  return readdirSync(join(CLI_ROOT, "tests"), { recursive: true, encoding: "utf8" })
-    .map((entry) => join("tests", entry).split(sep).join("/"))
-    .filter((path) => path.endsWith(".test.ts") && !path.startsWith("tests/fixtures/"))
-    .sort();
+function measuredTestFiles(): string[] {
+  return testFiles().filter((path) => !path.startsWith("tests/fixtures/"));
 }
 
 function measuredCounts(): Map<string, number> {
-  return new Map(testFiles().map((path) => [path, lineCount(read(path))]));
+  return new Map(measuredTestFiles().map((path) => [path, lineCount(read(path))]));
 }
 
 /** The grandfathered files whose line count differs from the recorded one, with the direction. */
@@ -122,6 +117,6 @@ describe("the guard itself", () => {
   });
 
   it("walks tests/ and finds this file", () => {
-    expect(testFiles()).toContain("tests/architecture/test-file-size.arch.test.ts");
+    expect(measuredTestFiles()).toContain("tests/architecture/test-file-size.arch.test.ts");
   });
 });

@@ -28,6 +28,14 @@ export function sourceFiles(): string[] {
   return srcFiles();
 }
 
+/** Every `*.test.ts` under `tests/`, as a `tests/...` path, sorted. */
+export function testFiles(): string[] {
+  return readdirSync(join(CLI_ROOT, "tests"), { recursive: true, encoding: "utf8" })
+    .map((entry) => canonicalPath(join("tests", entry)))
+    .filter((path) => path.endsWith(".test.ts"))
+    .sort();
+}
+
 export function read(relativePath: string): string {
   return readFileSync(join(CLI_ROOT, relativePath), "utf8");
 }

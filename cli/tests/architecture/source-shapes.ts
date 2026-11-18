@@ -12,15 +12,29 @@ export function codeOnly(source: string): string {
   return source.replace(COMMENTS, "");
 }
 
-/** The index of the bracket closing the one at `open`, counting every kind and skipping `=>`. */
-export function closingBracket(text: string, open: number): number {
+/**
+ * The index of the first character of `text` from `from` on that `isEnd` accepts, given the
+ * bracket depth before it, counting every kind and skipping `=>`; the text length when none does.
+ */
+export function scanBrackets(
+  text: string,
+  from: number,
+  isEnd: (char: string, depth: number) => boolean
+): number {
   let depth = 0;
-  for (let at = open; at < text.length; at++) {
-    if (text[at] === "=" && text[at + 1] === ">") at++;
-    else if ("([{<".includes(text[at] as string)) depth++;
-    else if (")]}>".includes(text[at] as string) && --depth === 0) return at;
+  for (let at = from; at < text.length; at++) {
+    const char = text[at] as string;
+    if (char === "=" && text[at + 1] === ">") at++;
+    else if (isEnd(char, depth)) return at;
+    else if ("([{<".includes(char)) depth++;
+    else if (")]}>".includes(char)) depth--;
   }
   return text.length;
+}
+
+/** The index of the bracket closing the one at `open`, counting every kind and skipping `=>`. */
+export function closingBracket(text: string, open: number): number {
+  return scanBrackets(text, open, (char, depth) => depth === 1 && ")]}>".includes(char));
 }
 
 /** The pieces of `text` between the commas that sit outside every bracket. */

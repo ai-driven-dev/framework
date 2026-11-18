@@ -6,12 +6,14 @@
  * Two kinds of module owe no test of their own, and both are computed, never listed: a module left
  * with no runtime statement once its type declarations are stripped, and a data file of a tool's
  * profiles, which conformance and golden tests hold. Every other miss is in `MIRROR_BASELINE`.
+ * Ambient declaration files (`.d.ts`) are no module: they hold no runtime to test.
+ *
+ * Limit: `declarationEnd` counts brackets inside string literals; a type alias whose string holds
+ * an unbalanced bracket hides the code after it. No module does that today.
  */
-import { readdirSync } from "node:fs";
-import { join, sep } from "node:path";
 import { describe, expect, it } from "vitest";
-import { CLI_ROOT, expectRatchet, read, sourceFiles } from "./helpers.js";
-import { closingBracket, codeOnly } from "./source-shapes.js";
+import { expectRatchet, read, sourceFiles, testFiles } from "./helpers.js";
+import { closingBracket, codeOnly, scanBrackets } from "./source-shapes.js";
 
 const CONTEXT_MODULE = /^src\/contexts\/.*(?<!\.d)\.ts$/;
 const PROFILE_DATA_FOLDER = "src/contexts/tools/domain/profiles/";
@@ -117,14 +119,8 @@ const MIRROR_BASELINE: readonly string[] = [
 /** The end of a type declaration: the brace closing an interface, else the next top-level `;`. */
 function declarationEnd(code: string, from: number, keyword: string | undefined): number {
   if (keyword === "interface") return closingBracket(code, code.indexOf("{", from)) + 1;
-  let depth = 0;
-  for (let at = from; at < code.length; at++) {
-    if (code[at] === "=" && code[at + 1] === ">") at++;
-    else if ("([{<".includes(code[at] as string)) depth++;
-    else if (")]}>".includes(code[at] as string)) depth--;
-    else if (code[at] === ";" && depth === 0) return at + 1;
-  }
-  return code.length;
+  const semicolon = scanBrackets(code, from, (char, depth) => char === ";" && depth === 0);
+  return Math.min(semicolon + 1, code.length);
 }
 
 function withoutTypeDeclarations(code: string): string {
@@ -145,12 +141,6 @@ function isProfileData(module: string): boolean {
 function mirrorTestsOf(module: string): string[] {
   const mirrored = module.replace(/^src\//, "tests/").replace(/\.ts$/, "");
   return TEST_LEVELS.map((level) => `${mirrored}.${level}.test.ts`);
-}
-
-function testFiles(): string[] {
-  return readdirSync(join(CLI_ROOT, "tests"), { recursive: true, encoding: "utf8" })
-    .map((entry) => join("tests", entry).split(sep).join("/"))
-    .filter((path) => path.endsWith(".test.ts"));
 }
 
 function ownedModules(): string[] {
