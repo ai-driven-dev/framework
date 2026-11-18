@@ -18,7 +18,7 @@ paths:
 
 - `RecipeFiles`: reads one recipe and lists the recipes of a directory.
 - Its contract kit runs on the in-memory fake and on the disk adapter, so a test over the fake can be trusted.
-- The context has no `contract/`: nothing outside it imports its types.
+- The context has no `contract/`: presentation reads `ValidateRecipes` and `ValidateRecipesResult` from `application/validate-recipes.ts`.
 
 ## Suppliers
 

@@ -2,7 +2,7 @@
 
 Question: which tests of a context earn their place, and what proves each deletion.
 
-A migrating PR delivers the pass inside the PR. A deletion without its proof is not merged.
+A PR that deletes tests delivers the pass inside the PR. A deletion without its proof is not merged.
 
 1. Run the deterministic pre-filter over the context's tests; it yields candidates, never verdicts.
    - Unique coverage per test file: cover the context's sources with every file, then without each, and compare covered statements and branches in `coverage-final.json`.

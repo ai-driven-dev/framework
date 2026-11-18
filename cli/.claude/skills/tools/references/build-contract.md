@@ -4,8 +4,8 @@
 
 ## Artifact symmetry
 
-- A plugin carries six artifact kinds: `skills`, `agents`, `mcp`, `hooks`, `rules`, `commands`.
-- The contract holds one `ArtifactContract` per kind and no kind-specific field, so there is no `transformAgent`.
+- A plugin carries these artifact kinds: `skills`, `agents`, `mcp`, `hooks`, `rules`, `commands`.
+- The contract holds one `ArtifactContract` per kind; a kind's own need is an optional field of that union (`rewriteSkillName`, `mcpServersKey`, `hooksFile`), never a per-kind method such as `transformAgent`.
 - An unsupported kind is `{ supported: false }`: the build warns and skips it.
 - A new tool behavior is a field on the contract, never a `tool` or `kind` branch in the sink.
 
@@ -32,6 +32,6 @@
 ## Where it lives
 
 - `domain/profiles/<tool>/build.ts` exports `build<Tool>Contract`, `build<Tool>MarketplaceContract` (copilot) or `build<Tool>FlatContract`.
-- The profile lists them in `buildContracts: { marketplace?, flat? }`; a mode left out answers `null` from `buildContract(mode)`.
-- `createFrameworkBuildUseCase` in `composition/translate.ts` asks the catalog for that contract; a tool with none for the mode gets "Unsupported target/mode combination".
+- The profile lists them in `buildContracts: { marketplace?, flat? }`; a mode left out answers `null` from `buildContract(mode, provider)`.
+- `createFrameworkBuildUseCase` in `composition/translate.ts` returns `undefined` for a pair with no contract, and `presentation/commands/translate.ts` reports it as an unsupported target and mode combination.
 - The MCP namespacing rule is in `plugin-sections.md`.

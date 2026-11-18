@@ -26,10 +26,10 @@ paths:
 
 - Outside callers import `contract/` and `application/` only; Biome shuts `domain/`, `ports/` and `infrastructure/` (`HELD_BY_BIOME` in `tests/architecture/helpers.ts`).
 - The engine calls each profile's `rewriteContent` and never names a tool: a branch on a tool is a question its profile answers.
-- The engine writes nothing; `DiskSink` writes every artifact kind through the contract and never rewrites content.
-- Sink and engine still differ in bytes on the paths `DIVERGENCES` lists in `translate-distribution-conformance.integration.test.ts`; the list only shrinks.
+- The engine writes nothing; `DiskSink` writes every artifact kind through the contract and, on top of the engine, rewrites only relative links and the plugin-root token and path.
+- The install path and `DiskSink` still differ in bytes on what `DIVERGENCES` and `MANIFEST_DIVERGENCES` list in `translate-distribution-conformance.integration.test.ts`; the list only shrinks.
 
 ## Tests
 
-- `tests/contexts/translate/` mirrors the source; `testing/` holds the kit (`plugin-content-translator-kit.ts`, `declared-tool-catalog.ts`, `synthetic-tool-profile.ts`); a rewrite is proven on a fixture that carries the marker it rewrites.
+- `tests/contexts/translate/` follows the source folders; `testing/` holds the kit (`plugin-content-translator-kit.ts`, `declared-tool-catalog.ts`, `synthetic-tool-profile.ts`); a rewrite is proven on a fixture that carries the marker it rewrites.
 - `tests/golden/framework-build-golden.golden.test.ts` freezes a full build per target; its machine-independence rules are in the `test` skill.

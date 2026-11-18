@@ -1,6 +1,6 @@
 # Content rewrite
 
-`rewriteContent(content: string): string` is declared by `AiTool` in `domain/profile.ts` and implemented in each `domain/profiles/<tool>/profile.ts`. Every file that reaches a tool's tree passes through it.
+`rewriteContent(content: string): string` is declared by `AiTool` in `domain/profile.ts` and implemented in each `domain/profiles/<tool>/profile.ts`. Every markdown file that reaches a tool's tree passes through it; the engine carries any other file byte for byte (`isProse` in `translate/domain/engine.ts`).
 
 ## Callers
 
@@ -13,7 +13,7 @@
 
 - One direction, one argument, per tool; there is no reverse and no shared base helper.
 - The CLI writes owned files from the canonical source and never reads a tool's tree back, so an inverse has no caller.
-- `DOCS_DIR` is a constant in `shared/domain/paths.ts`; a profile that needs it imports it.
+- `DOCS_DIR` is a constant private to `domain/profiles/copilot/profile.ts`, its only user.
 
 ## What a profile does
 

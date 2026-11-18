@@ -31,7 +31,7 @@ flowchart LR
 1. Create `domain/profiles/<tool>/profile.ts`, and `build.ts` when the tool is a build target.
 2. Add one line to `REGISTERED_PROFILES` before the IDE tools, and to `CANONICAL_PROFILES` in `domain/profiles/registered-profiles.ts`.
 3. Write the id once, in the profile; `tool-addition-cost.arch.test.ts` lists the files that may still name a tool.
-4. For a tool that runs hooks, add `hooks.ts`, a host adapter in `assets/hooks-runtime/` and one payload fixture per relayed event.
+4. For a tool that runs hooks, add `hooks.ts` and one payload fixture per relayed event; a host-hook tool also adds `assets/hooks-runtime/host-<tool>.cjs`, a bridge tool reuses `host-bridge.cjs` through `declareBridgeHooks`.
 5. Run the conformance suite in `tests/contexts/tools/testing/`: it walks the list and checks the profile, which needs no test of its own for declared data.
 
 A string transform used by one profile stays in its folder; one used by two goes to `domain/formats/`.
