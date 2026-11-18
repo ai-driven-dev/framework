@@ -1,8 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const installAiTool = vi.fn();
 const installIdeTool = vi.fn();
@@ -29,7 +28,7 @@ const { registerToolConfigCommand } = await import(
 );
 
 const PROJECT_ROOT = process.cwd();
-const CATALOG = catalogOf();
+const CATALOG = registeredTools();
 
 let written: string[] = [];
 let errors: string[] = [];
