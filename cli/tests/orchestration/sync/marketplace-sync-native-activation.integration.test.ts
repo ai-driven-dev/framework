@@ -14,7 +14,6 @@ import {
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -24,6 +23,7 @@ import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const { claude } = TOOL;
 
@@ -537,7 +537,7 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
       ),
       () => "/user-cache",
       { get: () => "1.0.0" },
-      catalogOf()
+      registeredTools()
     );
     // `SyncSettings.execute` mutates the loaded manifest in place, so one
     // load kept across both doctor calls sees the sync that runs in between.

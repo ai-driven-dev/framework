@@ -18,7 +18,6 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { catalogOf, registeredAiConfig } from "../../contexts/tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { pluginRemover } from "../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -32,6 +31,7 @@ import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marke
 import { userMarketplaceRemover } from "../../helpers/user-marketplace-remover.js";
 import { userScopeCleaner } from "../../helpers/user-scope-cleaner.js";
 import { userScopeFileGuard } from "../../helpers/user-scope-file-guard.js";
+import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 for (const [toolId, catalogPath] of [

@@ -27,7 +27,7 @@ import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
+import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 import { marketplaceSync } from "../marketplace-sync.js";
 import { checkRegistrationOver } from "./build-check-registration.js";

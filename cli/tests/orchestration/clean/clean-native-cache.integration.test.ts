@@ -19,12 +19,12 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { projectCleaner } from "../../helpers/project-cleaner.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 // Resolve once for this in-memory fixture, then inject it into CleanProject: Stryker reuses
@@ -726,7 +726,7 @@ describe("clean purges a host's own plugin cache", () => {
     const activator = new FakeHostActions({ available: true });
     // The real adapter, resolved from the same sentinel the cache root is composed from — a
     // fake reader built independently of `homeDir` could never catch the two halves drifting.
-    const reader = wireHostRegistration(catalogOf(), SENTINEL_HOME).marketplaceRegistries.get(
+    const reader = wireHostRegistration(registeredTools(), SENTINEL_HOME).marketplaceRegistries.get(
       TOOL.claude
     );
     if (reader === undefined) throw new Error("claude must declare marketplaceRegistry");

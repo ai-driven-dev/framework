@@ -14,7 +14,6 @@ import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-dis
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { fakeBuiltDeps } from "../../helpers/ports/fake-build-sources.js";
@@ -22,6 +21,7 @@ import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { userScopeFileGuard } from "../../helpers/user-scope-file-guard.js";
+import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const { copilot, cursor } = TOOL;

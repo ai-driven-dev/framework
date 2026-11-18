@@ -25,7 +25,7 @@ import { HasherAdapter } from "../../src/shared/infrastructure/hasher-adapter.js
 import type { Prompter } from "../../src/shared/ports/prompter.js";
 import type { VersionReader } from "../../src/shared/ports/version-reader.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../contexts/translate/testing/registered-manifest-probes.js";
+import { registeredManifestProbes } from "../shared/testing/registered-manifest-probes.js";
 import { resolveRegisteredToolId } from "../shared/testing/registered-tools.js";
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };

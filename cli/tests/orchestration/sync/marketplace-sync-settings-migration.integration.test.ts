@@ -21,7 +21,6 @@ import { FakeHostActions } from "../../contexts/host-registration/testing/fake-h
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -31,6 +30,7 @@ import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/project";
 const CLAUDE_BUILT_DIR = "/shared/built/claude";
@@ -1392,7 +1392,7 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
       ),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION),
-      catalogOf()
+      registeredTools()
     );
 
     const before = await doctor.execute({

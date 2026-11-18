@@ -17,7 +17,6 @@ import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -27,9 +26,10 @@ import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marke
 import { RecordingPrompter } from "../../helpers/ports/recording-prompter.js";
 import { type ProjectCleanerParts, projectCleanerArgs } from "../../helpers/project-cleaner.js";
 import { userScopeCleaner } from "../../helpers/user-scope-cleaner.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
-const AT_PROJECT = { tools: catalogOf(), projectRoot: PROJECT_ROOT } as const;
+const AT_PROJECT = { tools: registeredTools(), projectRoot: PROJECT_ROOT } as const;
 const md5 = (content: string): string => createHash("md5").update(content, "utf-8").digest("hex");
 
 /** Test-double host catalogues, deliberately seeded without consulting the manifest claim. */

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { PluginContentEngine } from "../../../../src/contexts/translate/domain/engine.js";
 import { PluginDistribution } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../shared/testing/native-plugin-answers.js";
+import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
-import { registeredManifestPaths } from "../../translate/testing/registered-manifest-probes.js";
 import { codex, cursor, opencode } from "../testing/registered-profiles.js";
 
 const translator = new PluginContentEngine(registeredManifestPaths());

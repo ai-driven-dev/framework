@@ -13,7 +13,6 @@ import { ManifestUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { restoreAllPluginsOf, restoreOf } from "../../helpers/ports/build-restore.js";
 import {
   buildUnitDeps,
@@ -30,6 +29,7 @@ import {
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
+import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";

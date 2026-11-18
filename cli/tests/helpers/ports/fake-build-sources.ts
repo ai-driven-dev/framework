@@ -1,6 +1,6 @@
 import type { BuiltMaterializationDeps } from "../../../src/contexts/installation/application/shared/built-materialization-deps.js";
 import { TranslatePluginDistribution } from "../../../src/contexts/translate/application/translate-plugin-distribution.js";
-import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
+import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { fakeEnsureBuiltMarketplace } from "./fake-ensure-built-marketplace.js";
 import { InMemoryMarketplaceRegistry } from "./in-memory-marketplace-registry.js";
 

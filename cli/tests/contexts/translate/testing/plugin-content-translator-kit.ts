@@ -5,8 +5,8 @@ import {
   type PluginComponents,
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { registeredManifestPaths } from "../../../shared/testing/registered-manifest-probes.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
-import { registeredManifestPaths } from "./registered-manifest-probes.js";
 
 export const translator = new PluginContentEngine(registeredManifestPaths());
 

@@ -7,11 +7,11 @@ import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 import {
   buildContractOf,
   declaredBuildContract,
-} from "../../testing/registered-build-contracts.js";
+} from "../../../../shared/testing/registered-build-contracts.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 // resolve(), not the bare literal: on Windows a leading "/" is drive-relative.
 const OUT = resolve("/tmp/aidd-flat-plugin-root");

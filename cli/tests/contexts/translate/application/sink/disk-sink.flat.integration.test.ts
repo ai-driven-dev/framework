@@ -18,9 +18,9 @@ import type { AssetProvider } from "../../../../../src/shared/ports/asset-provid
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
+import { buildContractOf } from "../../../../shared/testing/registered-build-contracts.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { buildTree } from "../../testing/build-tree.js";
-import { buildContractOf } from "../../testing/registered-build-contracts.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // resolve(): on Windows a leading "/" gets the current drive, as production's resolve(outDir) does.

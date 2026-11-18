@@ -1,5 +1,5 @@
-import { pluginManifestProbes } from "../../../../src/contexts/translate/domain/plugin-format.js";
-import { registeredTools } from "../../../shared/testing/registered-tools.js";
+import { pluginManifestProbes } from "../../../src/contexts/translate/domain/plugin-format.js";
+import { registeredTools } from "./registered-tools.js";
 
 /** Where a plugin manifest can sit across the registered tools, as the composition hands them
  * to the reader. */
