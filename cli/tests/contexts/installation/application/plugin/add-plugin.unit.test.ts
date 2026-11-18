@@ -1,12 +1,10 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import {
   DuplicatePluginError,
@@ -19,10 +17,9 @@ import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-u
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const { cursor, copilot, opencode, codex } = TOOL;
 
@@ -41,15 +38,15 @@ const GITHUB_SOURCE = {
 
 type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
 
-class RefusingMarketplaceRegistry extends InMemoryMarketplaceRegistry {
-  override async list(): Promise<readonly Marketplace[]> {
+class RefusingMarketplaceRegistry extends FakeMarketplaceRegistry {
+  override async list(): ReturnType<FakeMarketplaceRegistry["list"]> {
     throw new Error("the registry was consulted");
   }
 }
 
 function buildAddUseCase(
   deps: Deps,
-  registry: InMemoryMarketplaceRegistry = deps.marketplaceRegistry,
+  registry: FakeMarketplaceRegistry = new FakeMarketplaceRegistry(),
   logger: Logger = deps.logger
 ): AddPlugin {
   return new AddPlugin(
@@ -58,7 +55,7 @@ function buildAddUseCase(
     {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+        deps.pluginDistributionReader
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
@@ -72,14 +69,15 @@ async function makeUseCase(deps: Deps) {
 }
 
 async function saveMarketplace(
-  registry: InMemoryMarketplaceRegistry,
+  registry: FakeMarketplaceRegistry,
   name: string,
   source: { kind: "github"; repo: string } | { kind: "local"; path: string }
 ): Promise<void> {
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({ name, source, scope: "project", addedAt: "2026-05-01T00:00:00.000Z" })
-  );
+  registry.seed(PROJECT_ROOT, {
+    name,
+    source,
+    scope: "project",
+  });
 }
 
 function localAdd(toolId: AiToolId, path = PLUGIN_FIXTURE, replace?: boolean) {
@@ -89,7 +87,7 @@ function localAdd(toolId: AiToolId, path = PLUGIN_FIXTURE, replace?: boolean) {
     projectRoot: PROJECT_ROOT,
     interactive: false,
     replace,
-    tools: catalogOf(),
+    tools: registeredTools(),
   };
 }
 
@@ -104,7 +102,7 @@ describe("AddPlugin", () => {
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await useCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -125,7 +123,7 @@ describe("AddPlugin", () => {
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await useCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -133,7 +131,7 @@ describe("AddPlugin", () => {
       });
       await expect(
         useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
@@ -147,16 +145,12 @@ describe("AddPlugin", () => {
     it("skips fetch and registers plugin reference without materializing files", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      const registry = new InMemoryMarketplaceRegistry();
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name: "aidd-framework",
-          source: { kind: "github", repo: "ai-driven-dev/framework" },
-          scope: "project",
-          addedAt: "2026-05-01T00:00:00.000Z",
-        })
-      );
+      const registry = new FakeMarketplaceRegistry();
+      registry.seed(PROJECT_ROOT, {
+        name: "aidd-framework",
+        source: { kind: "github", repo: "ai-driven-dev/framework" },
+        scope: "project",
+      });
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
       const useCase = new AddPlugin(
         { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
@@ -164,14 +158,14 @@ describe("AddPlugin", () => {
         {
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
         }
       );
       await useCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         source: {
           kind: "git-subdir",
           url: "https://github.com/ai-driven-dev/framework.git",
@@ -194,23 +188,19 @@ describe("AddPlugin", () => {
     it("throws MissingPluginMetadataError when pluginMetadata is absent for github marketplace", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      const registry = new InMemoryMarketplaceRegistry();
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name: "aidd-framework",
-          source: { kind: "github", repo: "ai-driven-dev/framework" },
-          scope: "project",
-          addedAt: "2026-05-01T00:00:00.000Z",
-        })
-      );
+      const registry = new FakeMarketplaceRegistry();
+      registry.seed(PROJECT_ROOT, {
+        name: "aidd-framework",
+        source: { kind: "github", repo: "ai-driven-dev/framework" },
+        scope: "project",
+      });
       const useCase = new AddPlugin(
         { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
@@ -218,7 +208,7 @@ describe("AddPlugin", () => {
       );
       await expect(
         useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: {
             kind: "git-subdir",
             url: "https://github.com/ai-driven-dev/framework.git",
@@ -235,16 +225,12 @@ describe("AddPlugin", () => {
     it("preserves fetch behavior for local marketplace plugin", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-      const registry = new InMemoryMarketplaceRegistry();
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name: "local-mkt",
-          source: { kind: "local", path: "/mkt-source" },
-          scope: "project",
-          addedAt: "2026-05-01T00:00:00.000Z",
-        })
-      );
+      const registry = new FakeMarketplaceRegistry();
+      registry.seed(PROJECT_ROOT, {
+        name: "local-mkt",
+        source: { kind: "local", path: "/mkt-source" },
+        scope: "project",
+      });
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
       const useCase = new AddPlugin(
@@ -253,14 +239,14 @@ describe("AddPlugin", () => {
         {
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
         }
       );
       await useCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -275,17 +261,13 @@ describe("AddPlugin", () => {
   });
 
   describe("per-tool install strategy (github marketplace)", () => {
-    async function makeGithubRegistry(projectRoot: string): Promise<InMemoryMarketplaceRegistry> {
-      const registry = new InMemoryMarketplaceRegistry();
-      await registry.save(
-        projectRoot,
-        Marketplace.create({
-          name: "aidd-framework",
-          source: { kind: "github", repo: "ai-driven-dev/framework" },
-          scope: "project",
-          addedAt: "2026-05-01T00:00:00.000Z",
-        })
-      );
+    async function makeGithubRegistry(projectRoot: string): Promise<FakeMarketplaceRegistry> {
+      const registry = new FakeMarketplaceRegistry();
+      registry.seed(projectRoot, {
+        name: "aidd-framework",
+        source: { kind: "github", repo: "ai-driven-dev/framework" },
+        scope: "project",
+      });
       return registry;
     }
 
@@ -313,14 +295,14 @@ describe("AddPlugin", () => {
           {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
-              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+              deps.pluginDistributionReader
             ),
             marketplaceRegistry: await makeGithubRegistry(PROJECT_ROOT),
             ...fakeBuildSources(),
           }
         );
         await useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
@@ -354,14 +336,14 @@ describe("AddPlugin", () => {
           {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
-              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+              deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
           }
         );
         await useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
@@ -394,14 +376,14 @@ describe("AddPlugin", () => {
           {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
-              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+              deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
           }
         );
         await useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
@@ -431,7 +413,7 @@ describe("AddPlugin", () => {
 
       async function addForCursor(deps: Deps, logger: Logger, replace?: boolean): Promise<void> {
         await buildAddUseCase(deps, await makeGithubRegistry(PROJECT_ROOT), logger).execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
@@ -512,7 +494,7 @@ describe("AddPlugin", () => {
         deps.fs.setFile(cursorSkillAt(), "# Their own skill");
 
         await buildAddUseCase(deps).execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
           toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
@@ -562,13 +544,13 @@ describe("AddPlugin", () => {
           {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
-              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+              deps.pluginDistributionReader
             ),
             marketplaceRegistry: registryB,
             ...fakeBuildSources(),
           }
         ).execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [cursor],
           projectRoot: "/B",
@@ -602,14 +584,14 @@ describe("AddPlugin", () => {
           {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
-              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+              deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
           }
         );
         await useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [codex],
           projectRoot: PROJECT_ROOT,
@@ -637,14 +619,14 @@ describe("AddPlugin", () => {
           {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
-              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+              deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
           }
         );
         await useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [codex],
           projectRoot: PROJECT_ROOT,
@@ -674,14 +656,14 @@ describe("AddPlugin", () => {
           {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
-              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+              deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
           }
         );
         await useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
@@ -708,14 +690,14 @@ describe("AddPlugin", () => {
           {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
-              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+              deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
           }
         );
         await useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
@@ -745,14 +727,14 @@ describe("AddPlugin", () => {
           {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
-              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+              deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
           }
         );
         await useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [copilot],
           projectRoot: PROJECT_ROOT,
@@ -782,16 +764,12 @@ describe("AddPlugin", () => {
           "# Demo skill"
         );
         await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-        const registry = new InMemoryMarketplaceRegistry();
-        await registry.save(
-          PROJECT_ROOT,
-          Marketplace.create({
-            name: "local-mkt",
-            source: { kind: "local", path: "/mkt-source" },
-            scope: "project",
-            addedAt: "2026-05-01T00:00:00.000Z",
-          })
-        );
+        const registry = new FakeMarketplaceRegistry();
+        registry.seed(PROJECT_ROOT, {
+          name: "local-mkt",
+          source: { kind: "local", path: "/mkt-source" },
+          scope: "project",
+        });
         const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
         const useCase = new AddPlugin(
           { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
@@ -799,14 +777,14 @@ describe("AddPlugin", () => {
           {
             distributionLoader: new PluginDistributionLoader(
               deps.pluginFetcher,
-              new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+              deps.pluginDistributionReader
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
           }
         );
         await useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
           toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
@@ -838,16 +816,12 @@ describe("AddPlugin", () => {
             components: { commands: [], agents: [], rules: [], skills: [], hooks: [], mcp: [] },
           }),
       };
-      const registry = new InMemoryMarketplaceRegistry();
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name: "local-mkt",
-          source: { kind: "local", path: "/mkt-source" },
-          scope: "project",
-          addedAt: "2026-05-01T00:00:00.000Z",
-        })
-      );
+      const registry = new FakeMarketplaceRegistry();
+      registry.seed(PROJECT_ROOT, {
+        name: "local-mkt",
+        source: { kind: "local", path: "/mkt-source" },
+        scope: "project",
+      });
       const useCase = new AddPlugin(
         { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
@@ -858,7 +832,7 @@ describe("AddPlugin", () => {
         }
       );
       await useCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         source: { kind: "local", path: "/some-plugin" },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -876,7 +850,7 @@ describe("AddPlugin", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-      const registry = new InMemoryMarketplaceRegistry();
+      const registry = new FakeMarketplaceRegistry();
       await saveMarketplace(registry, "aidd-framework", {
         kind: "github",
         repo: "ai-driven-dev/framework",
@@ -925,7 +899,7 @@ describe("AddPlugin", () => {
 
   describe("github marketplace re-registration", () => {
     async function registerTwice(deps: Deps, replace: boolean | undefined): Promise<void> {
-      const registry = new InMemoryMarketplaceRegistry();
+      const registry = new FakeMarketplaceRegistry();
       await saveMarketplace(registry, "aidd-framework", {
         kind: "github",
         repo: "ai-driven-dev/framework",
@@ -938,7 +912,7 @@ describe("AddPlugin", () => {
         marketplace: "aidd-framework",
         interactive: false,
         pluginMetadata: { name: "sample-plugin", version: "1.0.0", strict: false },
-        tools: catalogOf(),
+        tools: registeredTools(),
       };
       await useCase.execute(options);
       await useCase.execute({ ...options, replace });
@@ -966,7 +940,7 @@ describe("AddPlugin", () => {
       deps.fs.setFile("/built/opencode/.opencode/skills/sample-plugin/demo/SKILL.md", "# Demo");
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       deps.pluginFetcher.register(GITHUB_SOURCE, PLUGIN_FIXTURE);
-      const registry = new InMemoryMarketplaceRegistry();
+      const registry = new FakeMarketplaceRegistry();
       await saveMarketplace(registry, "aidd-framework", {
         kind: "github",
         repo: "ai-driven-dev/framework",
@@ -974,7 +948,7 @@ describe("AddPlugin", () => {
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
 
       await buildAddUseCase(deps, registry).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         source: GITHUB_SOURCE,
         toolIds: [opencode],
         projectRoot: PROJECT_ROOT,
@@ -1063,7 +1037,7 @@ describe("AddPlugin", () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-      const registry = new InMemoryMarketplaceRegistry();
+      const registry = new FakeMarketplaceRegistry();
       await saveMarketplace(registry, "local-mkt", { kind: "local", path: "/mkt-source" });
 
       await buildAddUseCase(deps, registry).execute({
@@ -1087,11 +1061,11 @@ describe("AddPlugin", () => {
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       deps.pluginFetcher.register(GITHUB_SOURCE, PLUGIN_FIXTURE);
-      const registry = new InMemoryMarketplaceRegistry();
+      const registry = new FakeMarketplaceRegistry();
       await saveMarketplace(registry, "local-mkt", { kind: "local", path: "/mkt-source" });
 
       await buildAddUseCase(deps, registry).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         source: GITHUB_SOURCE,
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -1118,7 +1092,9 @@ describe("AddPlugin", () => {
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const logger = new CapturingLogger();
 
-      await buildAddUseCase(deps, deps.marketplaceRegistry, logger).execute(localAdd(opencode));
+      await buildAddUseCase(deps, new FakeMarketplaceRegistry(), logger).execute(
+        localAdd(opencode)
+      );
 
       expect(logger.infoMessages).toStrictEqual([]);
     });

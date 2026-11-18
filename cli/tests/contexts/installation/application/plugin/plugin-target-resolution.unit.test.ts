@@ -7,7 +7,7 @@ import {
 } from "../../../../../src/contexts/installation/application/plugin/plugin-target-resolution.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UnresolvableUserScopeError } from "../../../../../src/shared/domain/errors.js";
-import { registeredAiProfile, registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const { cursor } = TOOL;
 
@@ -20,7 +20,7 @@ describe("resolvePluginToolIds()", () => {
     manifest.addTool(cursor, "1.0.0", []);
     manifest.addTool(TOOL.claude, "1.0.0", []);
 
-    expect(resolvePluginToolIds("all", manifest, registeredCatalog())).toStrictEqual([
+    expect(resolvePluginToolIds("all", manifest, registeredTools())).toStrictEqual([
       "claude",
       "cursor",
     ]);
@@ -29,8 +29,8 @@ describe("resolvePluginToolIds()", () => {
 
 describe("resolveScopeForInstall()", () => {
   it("reads the scope a fresh install writes from the tool's own profile", () => {
-    expect(resolveScopeForInstall(registeredAiProfile(cursor))).toBe("user");
-    expect(resolveScopeForInstall(registeredAiProfile(TOOL.claude))).toBe("project");
+    expect(resolveScopeForInstall(registeredTools().aiProfile(cursor))).toBe("user");
+    expect(resolveScopeForInstall(registeredTools().aiProfile(TOOL.claude))).toBe("project");
   });
 });
 
@@ -40,7 +40,7 @@ describe("resolveBaseDirFromRecord() — the manifest's recorded scope, not the 
     // scope: "project" must still resolve under projectRoot.
     const baseDir = resolveBaseDirFromRecord(
       "project",
-      registeredAiProfile(cursor),
+      registeredTools().aiProfile(cursor),
       "/proj",
       homedir
     );
@@ -49,7 +49,12 @@ describe("resolveBaseDirFromRecord() — the manifest's recorded scope, not the 
   });
 
   it("resolves user scope to the tool's user-scope plugins dir", () => {
-    const baseDir = resolveBaseDirFromRecord("user", registeredAiProfile(cursor), "/proj", homedir);
+    const baseDir = resolveBaseDirFromRecord(
+      "user",
+      registeredTools().aiProfile(cursor),
+      "/proj",
+      homedir
+    );
     expect(baseDir).toBe(join(HOME, ".cursor", "plugins", "local"));
   });
 
@@ -57,7 +62,7 @@ describe("resolveBaseDirFromRecord() — the manifest's recorded scope, not the 
   // than quietly resolve under projectRoot; claude declares no user-scope directory at all.
   it("throws, rather than falling back to projectRoot, when the tool declares no user-scope directory", () => {
     expect(() =>
-      resolveBaseDirFromRecord("user", registeredAiProfile(TOOL.claude), "/proj", homedir)
+      resolveBaseDirFromRecord("user", registeredTools().aiProfile(TOOL.claude), "/proj", homedir)
     ).toThrow(UnresolvableUserScopeError);
   });
 });
@@ -69,7 +74,7 @@ describe("resolvePluginToolIds() order", () => {
       manifest.addTool(id, "1.0.0", []);
     }
 
-    expect(resolvePluginToolIds("all", manifest, registeredCatalog())).toStrictEqual([
+    expect(resolvePluginToolIds("all", manifest, registeredTools())).toStrictEqual([
       "copilot",
       "opencode",
       "kilo",

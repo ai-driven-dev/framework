@@ -5,12 +5,17 @@ import {
   readGlobalPluginFiles,
 } from "../../../../../src/contexts/installation/application/plugin/global-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
+import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+
+/** The machine-claims answer for a path it judges inside the user directory. */
+const insideUserScope: IsWithinUserScope = () => true;
+/** The machine-claims answer for a path it judges outside the user directory. */
+const outsideUserScope: IsWithinUserScope = () => false;
 
 const BUILT = "/cache/built/opencode";
 
@@ -38,7 +43,7 @@ describe("readGlobalPluginFiles", () => {
       tree,
       new DeterministicHasher(),
       BUILT,
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       distribution("aidd-dev", ["agents/reviewer.md", "agents/nested/ignored.md", "skills/x.md"])
     );
 
@@ -53,7 +58,7 @@ describe("readGlobalPluginFiles", () => {
       tree,
       new DeterministicHasher(),
       BUILT,
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       distribution("aidd-qa", [])
     );
 
@@ -64,12 +69,12 @@ describe("readGlobalPluginFiles", () => {
     await expect(
       assertGlobalFilesWritable(
         new InMemoryFileAdapter(),
-        registeredAiProfile(TOOL.claude),
+        registeredTools().aiProfile(TOOL.claude),
         undefined,
         "aidd-dev",
         [],
         "/h",
-        isStrictlyWithinUserScope
+        insideUserScope
       )
     ).rejects.toThrow("claude: no machine-scope directory is declared.");
   });
@@ -79,7 +84,7 @@ describe("readGlobalPluginFiles", () => {
       tree,
       new DeterministicHasher(),
       BUILT,
-      registeredAiProfile(TOOL.claude),
+      registeredTools().aiProfile(TOOL.claude),
       distribution("aidd-dev", ["agents/reviewer.md"])
     );
 
@@ -101,12 +106,12 @@ describe("assertGlobalFilesWritable", () => {
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         undefined,
         "aidd-dev",
         [file("agents/a.md")],
         HOME,
-        isStrictlyWithinUserScope
+        insideUserScope
       )
     ).resolves.toBe(DIR);
   });
@@ -119,12 +124,12 @@ describe("assertGlobalFilesWritable", () => {
       await expect(
         assertGlobalFilesWritable(
           fs,
-          registeredAiProfile(TOOL.opencode),
+          registeredTools().aiProfile(TOOL.opencode),
           undefined,
           "aidd-dev",
           [file(path)],
           HOME,
-          isStrictlyWithinUserScope
+          outsideUserScope
         )
       ).rejects.toThrow(`opencode: 'aidd-dev' path '${path}' escapes ${DIR}.`);
     }
@@ -137,12 +142,12 @@ describe("assertGlobalFilesWritable", () => {
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         undefined,
         "aidd-dev",
         [file("agents/a.md")],
         HOME,
-        isStrictlyWithinUserScope
+        outsideUserScope
       )
     ).rejects.toThrow(`opencode: 'aidd-dev' parent '${under("agents")}' escapes ${DIR}.`);
   });
@@ -153,12 +158,12 @@ describe("assertGlobalFilesWritable", () => {
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         undefined,
         "aidd-dev",
         [file("agents/a.md")],
         HOME,
-        isStrictlyWithinUserScope
+        insideUserScope
       )
     ).rejects.toThrow(
       `opencode: '${under("agents", "a.md")}' already exists and was not installed by aidd`
@@ -178,12 +183,12 @@ describe("assertGlobalFilesWritable", () => {
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         owned,
         "aidd-dev",
         [file("agents/owned.md")],
         HOME,
-        isStrictlyWithinUserScope
+        insideUserScope
       )
     ).resolves.toBe(DIR);
   });
@@ -201,12 +206,12 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         undefined,
         "aidd-dev",
         [file("agents/deep/a.md")],
         "/home/me",
-        isStrictlyWithinUserScope
+        insideUserScope
       )
     ).resolves.toBe(DIR);
   });
@@ -218,12 +223,12 @@ describe("assertGlobalFilesWritable on a filesystem that rejects a missing path"
     await expect(
       assertGlobalFilesWritable(
         fs,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         undefined,
         "aidd-dev",
         [file("agents/deep/a.md")],
         "/home/me",
-        isStrictlyWithinUserScope
+        outsideUserScope
       )
     ).rejects.toThrow(`opencode: 'aidd-dev' parent '${join(DIR, "agents")}' escapes ${DIR}.`);
   });

@@ -4,7 +4,7 @@ import { PluginDistributionLoader } from "../../../../../src/contexts/installati
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../../../../src/contexts/installation/domain/project-layout.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const source = { kind: "local" as const, path: "/source" };
 const dist = new PluginDistribution({

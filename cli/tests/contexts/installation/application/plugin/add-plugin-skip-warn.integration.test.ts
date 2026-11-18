@@ -4,15 +4,13 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { ReadonlySkipList } from "../../../../../src/shared/domain/plugin/plugin-translation-skip.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -24,21 +22,21 @@ describe("AddPlugin skip warnings", () => {
       await initAndInstall(deps, PROJECT_ROOT, TOOL.opencode);
       await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
       const capturingLogger = new CapturingLogger();
-      const registry = new InMemoryMarketplaceRegistry();
+      const registry = new FakeMarketplaceRegistry();
       const useCase = new AddPlugin(
         { fs: deps.fs, hasher: deps.hasher, logger: capturingLogger },
         { project: deps.manifestRepo, user: deps.userManifestRepo },
         {
           distributionLoader: new PluginDistributionLoader(
             deps.pluginFetcher,
-            new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+            deps.pluginDistributionReader
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
         }
       );
       await useCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,

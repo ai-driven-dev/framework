@@ -1,10 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import {
   buildUnitDeps,
   initAndInstall,
@@ -13,8 +11,8 @@ import {
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const EXTRA_PLUGIN_FIXTURE = join(
   process.cwd(),
@@ -28,6 +26,7 @@ type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
 
 async function buildOpencodeProject(): Promise<{
   deps: Deps;
+  registry: FakeMarketplaceRegistry;
   logger: CapturingLogger;
   useCase: AddPlugin;
 }> {
@@ -43,24 +42,25 @@ async function buildOpencodeProject(): Promise<{
     JSON.stringify({ mcpServers: { "local-tool": { command: "node", args: ["./server.js"] } } })
   );
   const logger = new CapturingLogger();
+  const registry = new FakeMarketplaceRegistry();
   const useCase = new AddPlugin(
     { fs: deps.fs, hasher: deps.hasher, logger: logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
     {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+        deps.pluginDistributionReader
       ),
-      marketplaceRegistry: deps.marketplaceRegistry,
+      marketplaceRegistry: registry,
       ...fakeBuildSources(),
     }
   );
-  return { deps, logger, useCase };
+  return { deps, logger, useCase, registry };
 }
 
 function addLocal(useCase: AddPlugin, path: string, replace?: boolean): Promise<void> {
   return useCase.execute({
-    tools: catalogOf(),
+    tools: registeredTools(),
     source: { kind: "local", path },
     toolIds: [TOOL.opencode],
     projectRoot: PROJECT_ROOT,
@@ -136,7 +136,7 @@ describe("AddPlugin and opencode MCP servers", () => {
         })
       );
       await useCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         source: { kind: "local", path: dir },
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
@@ -151,7 +151,7 @@ describe("AddPlugin and opencode MCP servers", () => {
     deps.fs.setFile(join(MCP_PLUGIN_DIR, "hooks/pre.js"), "mcp-plugin updated script");
 
     await useCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       source: { kind: "local", path: MCP_PLUGIN_DIR },
       toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
@@ -203,7 +203,7 @@ describe("AddPlugin and opencode MCP servers", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         source: { kind: "local", path: MCP_PLUGIN_DIR },
         toolIds: [TOOL.codex],
         projectRoot: PROJECT_ROOT,
@@ -235,7 +235,7 @@ describe("AddPlugin and opencode MCP servers", () => {
   it.each(["local", "github marketplace"] as const)(
     "refuses %s replacement of an edited MCP contribution before saving or rewriting files",
     async (route) => {
-      const { deps, useCase } = await buildOpencodeProject();
+      const { deps, registry, useCase } = await buildOpencodeProject();
       await seedFromDirectory(deps.fs, EXTRA_PLUGIN_FIXTURE, { useAbsolutePaths: true });
       await addLocal(useCase, EXTRA_PLUGIN_FIXTURE);
       await addLocal(useCase, MCP_PLUGIN_DIR);
@@ -251,19 +251,15 @@ describe("AddPlugin and opencode MCP servers", () => {
       });
       deps.fs.setFile(OPENCODE_JSON, userConfig);
       if (route === "github marketplace")
-        await deps.marketplaceRegistry.save(
-          PROJECT_ROOT,
-          Marketplace.create({
-            name: "aidd-framework",
-            source: { kind: "github", repo: "ai-driven-dev/framework" },
-            scope: "project",
-            addedAt: "2026-05-01T00:00:00.000Z",
-          })
-        );
+        registry.seed(PROJECT_ROOT, {
+          name: "aidd-framework",
+          source: { kind: "github", repo: "ai-driven-dev/framework" },
+          scope: "project",
+        });
 
       await expect(
         useCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           source: { kind: "local", path: MCP_PLUGIN_DIR },
           toolIds: [TOOL.opencode],
           projectRoot: PROJECT_ROOT,

@@ -4,17 +4,14 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import { codex } from "../../../../../src/contexts/tools/domain/profiles/codex/profile.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -30,14 +27,14 @@ async function installWithLogger(toolId: AiToolId) {
     {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+        deps.pluginDistributionReader
       ),
-      marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+      marketplaceRegistry: new FakeMarketplaceRegistry(),
       ...fakeBuildSources(),
     }
   );
   await useCase.execute({
-    tools: catalogOf(),
+    tools: registeredTools(),
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,
@@ -52,7 +49,7 @@ describe("AddPlugin hook trust notice", () => {
 
     expect(logger.infoMessages).toHaveLength(1);
     expect(logger.infoMessages[0]).toBe(
-      `Plugin "sample-plugin" (codex): ${nativeOf(codex.plugins()).trustNotice()}`
+      `Plugin "sample-plugin" (codex): ${nativeOf(registeredTools().aiProfile(TOOL.codex).plugins()).trustNotice()}`
     );
     expect(logger.warnMessages).toEqual([]);
   });

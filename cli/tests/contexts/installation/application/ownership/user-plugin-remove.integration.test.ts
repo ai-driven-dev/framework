@@ -2,8 +2,6 @@ import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
-import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { RegistrationRecordRules } from "../../../../../src/contexts/installation/ports/native-host.js";
@@ -14,15 +12,17 @@ import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../../../helpers/spy-record-rules.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../testing/fake-host-actions.js";
+import type { FakeNativeSource } from "../../testing/fake-host-marketplace-sources.js";
+import type { FixedHostRegistry } from "../../testing/fake-host-plugin-registry.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const REF = "test-plugin@real-catalog";
 const OTHER = "test-plugin@other-catalog";
 
-function sourceFor(toolId: AiToolId, catalogue: string): NativeMarketplaceSource {
+function sourceFor(toolId: AiToolId, catalogue: string): FakeNativeSource {
   return toolId === "codex"
     ? {
         kind: "effective-list",
@@ -72,7 +72,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
       const hostRefs =
         options.hostRefs ??
         new Map(refs.map((ref) => [ref, { enabled: true, scope: "user" as const }]));
-      const reader: HostPluginRegistry = {
+      const reader: FixedHostRegistry = {
         read: async () =>
           options.hostRegistryUnreadable
             ? { location: "/host/registry", unreadable: "invalid host registry" }
@@ -101,7 +101,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
         hostPluginRegistries: options.hostRegistryUnavailable
           ? new Map()
           : new Map([[toolId, reader]]),
-        marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+        marketplaceRegistry: new FakeMarketplaceRegistry(),
         userManifestRepo: repo,
         ...(options.records === undefined ? {} : { records: options.records }),
         nativeMarketplaceSources: options.sourceUnavailable
@@ -113,7 +113,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
 
     const execute = (remove: ReturnType<typeof pluginRemover>, pluginName: string) =>
       remove.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName,
         toolIds: [toolId],
         projectRoot: "/A",
@@ -354,13 +354,13 @@ describe("Cursor user plugin boundary", () => {
     const remove = pluginRemover({
       fs,
       manifestRepo: new InMemoryManifestRepository(Manifest.create()),
-      marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+      marketplaceRegistry: new FakeMarketplaceRegistry(),
       userManifestRepo: repo,
     });
     fs.setFile(path, "user-edited plugin.json");
     await expect(
       remove.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "sample-plugin",
         toolIds: [TOOL.cursor],
         projectRoot: "/A",
@@ -371,7 +371,7 @@ describe("Cursor user plugin boundary", () => {
     expect(repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
     fs.setFile(path, "owned bytes");
     await remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: "sample-plugin",
       toolIds: [TOOL.cursor],
       projectRoot: "/A",
@@ -411,7 +411,7 @@ describe("Cursor user plugin boundary", () => {
           fs,
           new CapturingLogger(),
           owned,
-          registeredAiProfile(TOOL.cursor),
+          registeredTools().aiProfile(TOOL.cursor),
           resolveHomeDir()
         )
       ).size
@@ -419,12 +419,12 @@ describe("Cursor user plugin boundary", () => {
     const remove = pluginRemover({
       fs,
       manifestRepo: new InMemoryManifestRepository(Manifest.create()),
-      marketplaceRegistry: new InMemoryMarketplaceRegistry(),
+      marketplaceRegistry: new FakeMarketplaceRegistry(),
       userManifestRepo: repo,
     });
     await expect(
       remove.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "sample-plugin",
         toolIds: [TOOL.cursor],
         projectRoot: "/A",

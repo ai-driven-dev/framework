@@ -9,9 +9,9 @@ import {
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../../../helpers/spy-record-rules.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 
 const { claude } = TOOL;
 const PROJECT_ROOT = "/test-project";
@@ -40,7 +40,7 @@ describe("the record a project plugin removal writes", () => {
     });
 
     await remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,

@@ -12,9 +12,9 @@ import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const ALIAS = "my-local-alias";
@@ -46,7 +46,7 @@ async function seedManifest(): Promise<Manifest> {
   manifest.addTool(TOOL.claude, "test", []);
   await new ModeAMarketplaceTranslator().addPlugin(
     buildDist(),
-    registeredAiProfile(TOOL.claude),
+    registeredTools().aiProfile(TOOL.claude),
     { kind: "local", path: "/plugin-source" },
     PROJECT_ROOT,
     manifest,
@@ -128,7 +128,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -149,7 +149,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -171,7 +171,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -189,7 +189,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     manifest.addTool(TOOL.claude, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.claude),
+      registeredTools().aiProfile(TOOL.claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -212,7 +212,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -238,7 +238,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     );
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -258,7 +258,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger });
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -274,7 +274,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     manifest.addTool(TOOL.copilot, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.copilot),
+      registeredTools().aiProfile(TOOL.copilot),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -303,7 +303,7 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [TOOL.copilot],
         projectRoot: PROJECT_ROOT,

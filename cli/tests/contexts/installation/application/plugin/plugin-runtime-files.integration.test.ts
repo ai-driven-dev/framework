@@ -9,7 +9,7 @@ import { buildUnitDeps } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const ROOT = "/test-project";
 const FIXTURE = join(REPOSITORY_ROOT, "cli/tests/fixtures/plugins/claude-format/sample-plugin");
@@ -52,7 +52,7 @@ async function legacyProject() {
   );
   const addPlugin = () =>
     add.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       source: { kind: "local", path: FIXTURE },
       toolIds: [TOOL.opencode],
       projectRoot: ROOT,
@@ -85,7 +85,7 @@ describe("plugin runtime files on an existing tool", () => {
     if (!manifest || !plugin) throw new Error("fixture plugin was not installed");
     manifest.updatePlugin(TOOL.opencode, plugin.withVersion("0.0.0"));
     await update.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolIds: [TOOL.opencode],
       projectRoot: ROOT,
     });
@@ -107,7 +107,7 @@ describe("plugin runtime files on an existing tool", () => {
 
     expect(
       await update.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         toolIds: [TOOL.opencode],
         projectRoot: ROOT,
       })

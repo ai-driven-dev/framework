@@ -12,9 +12,9 @@ import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../testing/fake-host-actions.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 
 const { claude, cursor, codex } = TOOL;
 
@@ -59,7 +59,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const remove = pluginRemover({ fs, manifestRepo: projectRepo, userManifestRepo: userRepo });
 
     await remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [cursor],
       projectRoot: ROOT,
@@ -100,7 +100,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     });
 
     await remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [cursor],
       projectRoot: ROOT,
@@ -128,7 +128,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const remove = pluginRemover({ manifestRepo: projectRepo, userManifestRepo: userRepo });
 
     await remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: NAME,
       toolIds: "all",
       projectRoot: ROOT,
@@ -152,7 +152,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     await expect(
       remove.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: NAME,
         toolIds: [cursor],
         projectRoot: ROOT,
@@ -171,7 +171,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     await expect(
       remove.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: NAME,
         toolIds: [cursor],
         projectRoot: ROOT,
@@ -202,7 +202,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     });
 
     await remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [cursor],
       projectRoot: ROOT,
@@ -236,7 +236,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     await expect(
       remove.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: NAME,
         toolIds: [cursor],
         projectRoot: ROOT,
@@ -267,7 +267,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     await expect(
       remove.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: NAME,
         toolIds: [cursor],
         projectRoot: ROOT,
@@ -298,7 +298,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const remove = pluginRemover({ manifestRepo: repo, userManifestRepo: userRepo });
 
     await remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [claude],
       projectRoot: ROOT,
@@ -417,7 +417,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const marketplaces = f.record.getNativeRegistrations(claude)?.marketplaces;
 
     await f.remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [claude],
       projectRoot: ROOT,
@@ -444,7 +444,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       const f = fixture(options);
 
       await f.remove.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: NAME,
         toolIds: [claude],
         projectRoot: ROOT,
@@ -466,7 +466,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const f = fixture({ enabled: false });
 
     await f.remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [claude],
       projectRoot: ROOT,
@@ -486,7 +486,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const f = fixture({ available: false, registrations: false });
 
     await f.remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [claude],
       projectRoot: ROOT,
@@ -548,7 +548,7 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     });
 
     await remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: NAME,
       toolIds: "all",
       projectRoot: ROOT,

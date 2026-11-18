@@ -1,10 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
@@ -12,10 +10,9 @@ import {
   translateDistribution,
 } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -35,28 +32,21 @@ const PLUGIN_METADATA = { name: "sample-plugin", version: "1.0.0", strict: false
 
 type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
 
-async function makeGithubRegistry(): Promise<InMemoryMarketplaceRegistry> {
-  const registry = new InMemoryMarketplaceRegistry();
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name: "aidd-framework",
-      source: { kind: "github", repo: "ai-driven-dev/framework" },
-      scope: "project",
-      addedAt: "2026-05-01T00:00:00.000Z",
-    })
-  );
+async function makeGithubRegistry(): Promise<FakeMarketplaceRegistry> {
+  const registry = new FakeMarketplaceRegistry();
+  registry.seed(PROJECT_ROOT, {
+    name: "aidd-framework",
+    source: { kind: "github", repo: "ai-driven-dev/framework" },
+    scope: "project",
+  });
   return registry;
 }
 
-function makeUpdateUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): UpdatePlugin {
+function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): UpdatePlugin {
   return new UpdatePlugin(
     deps.fs,
     deps.manifestRepo,
-    new PluginDistributionLoader(
-      deps.pluginFetcher,
-      new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
-    ),
+    new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
     deps.hasher,
     {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -72,7 +62,7 @@ function makeUpdateUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): U
  * version so update sees it as stale and re-fetches. */
 async function installStaleGithubPlugin(
   deps: Deps,
-  registry: InMemoryMarketplaceRegistry,
+  registry: FakeMarketplaceRegistry,
   toolId: AiToolId
 ): Promise<void> {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
@@ -84,13 +74,13 @@ async function installStaleGithubPlugin(
     {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+        deps.pluginDistributionReader
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     }
   ).execute({
-    tools: catalogOf(),
+    tools: registeredTools(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,
@@ -120,7 +110,7 @@ describe("UpdatePlugin — Mode A marketplace tools (claude/codex/copilot)", () 
     expect(deps.fs.listAll().some((p) => p.includes(".claude/plugins/"))).toBe(false);
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
@@ -142,7 +132,7 @@ describe("UpdatePlugin — Mode A marketplace tools (claude/codex/copilot)", () 
     await installStaleGithubPlugin(deps, registry, TOOL.claude);
 
     await makeUpdateUseCase(deps, registry).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
@@ -165,7 +155,7 @@ describe("UpdatePlugin — flat-mode tools are unaffected (regression guard)", (
     deps.fs.setFile(BUILT_OPENCODE_SKILL, "# Demo skill v2");
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
     });

@@ -3,9 +3,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
-import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/errors.js";
@@ -21,10 +18,14 @@ import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../testing/fake-host-actions.js";
+import {
+  FakeHostPluginRegistry,
+  type FixedHostRegistry,
+  type FixedRegistryReading,
+} from "../../testing/fake-host-plugin-registry.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const { claude } = TOOL;
 
@@ -82,7 +83,7 @@ describe("RemovePlugin undoes native activation", () => {
       });
       await expect(
         remove.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           pluginName: PLUGIN_NAME,
           toolIds: [claude],
           projectRoot: PROJECT_ROOT,
@@ -144,7 +145,7 @@ describe("RemovePlugin undoes native activation", () => {
     });
 
     await remove.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -172,16 +173,12 @@ describe("RemovePlugin undoes native activation", () => {
       const repo = new InMemoryManifestRepository(manifest);
       const activator = new FakeHostActions({ available: true });
       const logger = new CapturingLogger();
-      const registry = new InMemoryMarketplaceRegistry();
-      await registry.save(
-        PROJECT_ROOT,
-        Marketplace.create({
-          name,
-          scope,
-          source: { kind: "local", path: "/plugin-source" },
-          addedAt: "2026-09-16T00:00:00Z",
-        })
-      );
+      const registry = new FakeMarketplaceRegistry();
+      registry.seed(PROJECT_ROOT, {
+        name,
+        scope,
+        source: { kind: "local", path: "/plugin-source" },
+      });
       const ledgerError = new UnreadableUserSourceReferencesError(
         "/references.json",
         "invalid JSON"
@@ -212,7 +209,7 @@ describe("RemovePlugin undoes native activation", () => {
       });
 
       await remove.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [claude],
         projectRoot: PROJECT_ROOT,
@@ -229,7 +226,7 @@ describe("RemovePlugin undoes native activation", () => {
   describe("host registry preflight preserves project state", () => {
     const invalidReadings: {
       name: string;
-      reading: HostPluginRegistryReading;
+      reading: FixedRegistryReading;
       diagnostic: string;
     }[] = [
       {
@@ -261,7 +258,7 @@ describe("RemovePlugin undoes native activation", () => {
         diagnostic: "/host/registry",
       },
     ];
-    const registryFailures: { name: string; reader?: HostPluginRegistry; message: string }[] = [
+    const registryFailures: { name: string; reader?: FixedHostRegistry; message: string }[] = [
       {
         name: "no reader",
         message: `claude: '${REF}' has no readable host plugin registry; uninstall refused before project changes.`,
@@ -269,7 +266,7 @@ describe("RemovePlugin undoes native activation", () => {
       ...[new Error("registry unavailable"), "registry unavailable"].map((error, index) => ({
         name: `reader throws ${index === 0 ? "Error" : "string"}`,
         reader: {
-          read: async (): Promise<HostPluginRegistryReading> => {
+          read: async (): Promise<FixedRegistryReading> => {
             throw error;
           },
         },
@@ -310,7 +307,7 @@ describe("RemovePlugin undoes native activation", () => {
 
         await expect(
           remove.execute({
-            tools: catalogOf(),
+            tools: registeredTools(),
             pluginName: PLUGIN_NAME,
             toolIds: [claude],
             projectRoot: PROJECT_ROOT,
@@ -331,7 +328,7 @@ describe("RemovePlugin undoes native activation", () => {
     manifest.addTool(claude, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile(claude),
+      registeredTools().aiProfile(claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -348,7 +345,7 @@ describe("RemovePlugin undoes native activation", () => {
     });
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -405,7 +402,7 @@ describe("RemovePlugin undoes native activation", () => {
     });
     await expect(
       removeUseCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [claude],
         projectRoot: PROJECT_ROOT,
@@ -471,7 +468,7 @@ describe("RemovePlugin undoes native activation", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [claude],
         projectRoot: PROJECT_ROOT,
@@ -503,7 +500,7 @@ describe("RemovePlugin undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -523,7 +520,7 @@ describe("RemovePlugin undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -552,7 +549,7 @@ describe("RemovePlugin undoes native activation", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [claude],
         projectRoot: PROJECT_ROOT,
@@ -572,7 +569,7 @@ describe("RemovePlugin undoes native activation", () => {
     manifest.addTool(claude, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile(claude),
+      registeredTools().aiProfile(claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -581,7 +578,7 @@ describe("RemovePlugin undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -606,7 +603,7 @@ describe("RemovePlugin undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -627,7 +624,7 @@ describe("RemovePlugin undoes native activation", () => {
     manifest.addTool(claude, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile(claude),
+      registeredTools().aiProfile(claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -647,7 +644,7 @@ describe("RemovePlugin undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -685,7 +682,7 @@ describe("RemovePlugin undoes native activation", () => {
     manifest.addTool(claude, "test", []);
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile(claude),
+      registeredTools().aiProfile(claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -705,7 +702,7 @@ describe("RemovePlugin undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -731,7 +728,7 @@ describe("RemovePlugin undoes native activation", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [claude],
         projectRoot: PROJECT_ROOT,
@@ -761,7 +758,7 @@ describe("RemovePlugin undoes native activation", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [claude],
         projectRoot: PROJECT_ROOT,
@@ -801,7 +798,7 @@ describe("RemovePlugin undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -832,7 +829,7 @@ describe("RemovePlugin undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -855,7 +852,7 @@ describe("RemovePlugin undoes native activation", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,
@@ -877,7 +874,7 @@ describe("RemovePlugin undoes native activation", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [claude],
         projectRoot: PROJECT_ROOT,
@@ -908,7 +905,7 @@ describe("RemovePlugin undoes only the activation this project made", () => {
     await manifestRepo.save(manifest);
 
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [claude],
       projectRoot: PROJECT_ROOT,

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { PluginMaterializer } from "../../../../../src/contexts/installation/application/plugin/plugin-materializer.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { isStrictlyWithinUserScope } from "../../../../../src/contexts/machine-claims/domain/user-scope-containment.js";
+import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
@@ -12,7 +12,12 @@ import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { userScopeFileGuard } from "../../../../helpers/user-scope-file-guard.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+
+/** The machine-claims answer for a path it judges inside the user directory. */
+const insideUserScope: IsWithinUserScope = () => true;
+/** The machine-claims answer for a path it judges outside the user directory. */
+const outsideUserScope: IsWithinUserScope = () => false;
 
 const { cursor } = TOOL;
 
@@ -54,10 +59,10 @@ describe("PluginMaterializer public update contract", () => {
       expect(
         await f.updater.update(
           f.plugin,
-          registeredAiProfile(cursor),
+          registeredTools().aiProfile(cursor),
           "/A",
           f.logger,
-          isStrictlyWithinUserScope
+          insideUserScope
         )
       ).toBeNull();
       expect(await f.fs.fileExists(join(f.base, "sample-plugin/skills/demo/SKILL.md"))).toBe(false);
@@ -70,10 +75,10 @@ describe("PluginMaterializer public update contract", () => {
     const f = fixture();
     const result = await f.updater.update(
       f.plugin,
-      registeredAiProfile(cursor),
+      registeredTools().aiProfile(cursor),
       "/A",
       f.logger,
-      isStrictlyWithinUserScope
+      insideUserScope
     );
     expect(result?.version).toBe("1.0.0");
     expect(result?.scope).toBe("user");
@@ -91,13 +96,7 @@ describe("PluginMaterializer public update contract", () => {
     );
     await f.fs.writeFile(join(f.base, "../foreign.txt"), "foreign");
     await expect(
-      f.updater.update(
-        unsafe,
-        registeredAiProfile(cursor),
-        "/A",
-        f.logger,
-        isStrictlyWithinUserScope
-      )
+      f.updater.update(unsafe, registeredTools().aiProfile(cursor), "/A", f.logger, insideUserScope)
     ).rejects.toThrow(
       "cursor: 'sample-plugin' has unsafe recorded files; update refused without dropping its machine claim."
     );
@@ -112,10 +111,10 @@ describe("PluginMaterializer public update contract", () => {
 
     const result = await f.updater.update(
       owned,
-      registeredAiProfile(cursor),
+      registeredTools().aiProfile(cursor),
       "/A",
       f.logger,
-      isStrictlyWithinUserScope
+      insideUserScope
     );
 
     expect(await f.fs.readFile(join(f.base, path))).toBe(f.content);
@@ -128,10 +127,10 @@ describe("PluginMaterializer public update contract", () => {
     await expect(
       f.updater.update(
         f.plugin,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         "/A",
         f.logger,
-        isStrictlyWithinUserScope
+        insideUserScope
       )
     ).rejects.toThrow("run `aidd setup --global`");
   });
@@ -140,16 +139,16 @@ describe("PluginMaterializer public update contract", () => {
     const f = fixture();
     const plan = await f.updater.planUpdate(
       f.plugin,
-      registeredAiProfile(cursor),
+      registeredTools().aiProfile(cursor),
       "/A",
       f.logger,
       false,
-      isStrictlyWithinUserScope
+      insideUserScope
     );
     if (plan === null) throw new Error("Expected upgrade plan");
     await f.fs.writeFile("/foreign/skills/demo/SKILL.md", "foreign");
     f.fs.setSymlink(join(f.base, "sample-plugin"), "/foreign");
-    await expect(f.updater.applyUpdate(plan, f.logger, isStrictlyWithinUserScope)).rejects.toThrow(
+    await expect(f.updater.applyUpdate(plan, f.logger, outsideUserScope)).rejects.toThrow(
       `cursor: 'sample-plugin' directory is not safely inside ${f.base}; update refused.`
     );
     expect(await f.fs.readFile("/foreign/skills/demo/SKILL.md")).toBe("foreign");

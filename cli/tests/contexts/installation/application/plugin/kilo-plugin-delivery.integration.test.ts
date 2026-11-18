@@ -8,7 +8,7 @@ import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit
 import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const ROOT = "/test-project";
 const FIXTURE = join(REPOSITORY_ROOT, "cli/tests/fixtures/plugins/claude-format/sample-plugin");
@@ -36,7 +36,7 @@ async function existingProject(configPath: string) {
     ideTools: [],
     force: false,
     version: "test",
-    tools: catalogOf(),
+    tools: registeredTools(),
   };
   await setup.execute(setupOptions);
   await seedFromDirectory(deps.fs, FIXTURE, { useAbsolutePaths: true });
@@ -56,7 +56,7 @@ async function existingProject(configPath: string) {
   );
   const install = () =>
     add.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       source: { kind: "local", path: FIXTURE },
       toolIds: [TOOL.kilo],
       projectRoot: ROOT,
@@ -109,7 +109,7 @@ describe.each(["kilo.jsonc", ".kilo/kilo.jsonc"])(
       await deps.fs.deleteFile(join(ROOT, BRIDGE));
       expect(
         await update.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           toolIds: [TOOL.kilo],
           projectRoot: ROOT,
         })
