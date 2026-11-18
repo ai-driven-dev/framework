@@ -1,106 +1,59 @@
 import { homedir as nodeHomedir } from "node:os";
 import { dirname, join } from "node:path";
-import {
-  ActiveMachineDependentsError,
-  PluginNotFoundError,
-} from "../../../../shared/domain/errors.js";
+import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { HostWithdrawal, RegistrationRecordRules } from "../../ports/native-host.js";
-import type {
-  FlatMcpSection,
-  PluginEnablementReach,
-  PluginPlacement,
-} from "../../ports/tool-sections.js";
+import type { RegistrationRecordRules } from "../../ports/native-host.js";
+import type { FlatMcpSection } from "../../ports/tool-sections.js";
 import { assertProjectPathWithinRoot } from "../ownership/project-path-boundary.js";
-import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import {
   resolveBaseDirFromRecord,
   resolvePluginToolIds,
 } from "../plugin/plugin-target-resolution.js";
 import { assertProjectHooksRemovable, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import { requireManifest } from "../shared/require-manifest.js";
-import { assertProjectMcpEntriesRemovable, type RemovalClaims } from "./remove-project-plugin.js";
-
-/** What a removal asks the machine scope, supplied by the composition root: who else owns a ref,
- * whether another project still needs it, which cache path is provably inside its root, which of a
- * plugin's files are provably inside the user scope, and the home directory they are read under. */
-export interface PluginRemovalClaims extends RemovalClaims {
-  readonly home: string;
-  readonly isMachineOwned: (toolId: ToolId, ref: string) => Promise<boolean>;
-  readonly guardMessage: (
-    binary: string,
-    tool: PluginEnablementReach,
-    ref: string,
-    marketplaceAlias: string,
-    hostName: string,
-    projectRoot: string
-  ) => Promise<string | undefined>;
-  readonly resolveCacheCandidate: (
-    cacheRoot: string,
-    relativeSegments: string,
-    label: string
-  ) => Promise<string | null>;
-  readonly userFilesSafeToDelete: (
-    plugin: InstalledPlugin,
-    tool: PluginPlacement
-  ) => Promise<ReadonlyMap<string, string>>;
-}
-
-/** The project manifest, and the machine one a user-scope removal is serialised through. */
-export interface PluginRemovalManifests {
-  readonly project: ManifestRepository;
-  readonly user?: ManifestRepository & Lock;
-}
+import type { ProjectPluginWithdrawal } from "./project-plugin-withdrawal.js";
+import { assertProjectMcpEntriesRemovable } from "./remove-project-plugin.js";
 
 export interface PluginRemoveOptions {
   pluginName: string;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
-  tools: ToolCatalog;
-  scope?: "project" | "user";
 }
 
 export class RemovePlugin<Proof> {
   constructor(
     private readonly fs: FileWriter & FileReader,
-    private readonly manifests: PluginRemovalManifests,
-    private readonly withdrawFromHost: HostWithdrawal<Proof>,
-    private readonly claims: PluginRemovalClaims,
-    private readonly records: RegistrationRecordRules
+    private readonly projectRepo: ManifestRepository,
+    private readonly withdrawal: ProjectPluginWithdrawal<Proof>,
+    private readonly records: RegistrationRecordRules,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: PluginRemoveOptions): Promise<void> {
-    if (options.scope === "user") {
-      const repo = this.manifests.user;
-      if (repo === undefined)
-        throw new Error("User manifest repository is required for user-scope plugin removal.");
-      return repo.withExclusiveAccess(() => this.removeUserPlugin(repo, options));
-    }
-    const { pluginName, toolIds, projectRoot, tools } = options;
-    const manifest = await requireManifest(this.manifests.project);
-    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, tools);
+    const { pluginName, toolIds, projectRoot } = options;
+    const manifest = await requireManifest(this.projectRepo);
+    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
     const named = resolvedToolIds.flatMap((toolId) => {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
       return plugin === undefined ? [] : [{ toolId, plugin }];
     });
     for (const { toolId, plugin } of named) {
-      await assertProjectMcpEntriesRemovable(this.fs, plugin, tools.aiProfile(toolId), projectRoot);
-      await assertProjectHooksRemovable(this.fs, plugin, tools.aiProfile(toolId), projectRoot);
-      if (plugin.marketplace !== undefined)
-        await this.withdrawFromHost.assertProjectSource({
-          tool: tools.aiProfile(toolId),
-          plugin: { name: plugin.name, marketplace: plugin.marketplace, scope: plugin.scope },
-          projectRoot,
-          registrations: manifest.getNativeRegistrations(toolId),
-          isMachineOwned: (ref) => this.claims.isMachineOwned(toolId, ref),
-        });
+      const tool = this.tools.aiProfile(toolId);
+      await assertProjectMcpEntriesRemovable(this.fs, plugin, tool, projectRoot);
+      await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot);
+      await this.withdrawal.assertSource(
+        toolId,
+        tool,
+        plugin,
+        projectRoot,
+        manifest.getNativeRegistrations(toolId)
+      );
     }
     const userTools = resolvedToolIds.filter((toolId) =>
       manifest.getPlugins(toolId).some((p) => p.name === pluginName && p.scope === "user")
@@ -111,137 +64,36 @@ export class RemovePlugin<Proof> {
       const ref = this.records.refOf(registrations, pluginName, plugin.marketplace);
       if (ref !== undefined) nativeRefs.set(toolId, [ref]);
     }
-    const removed = await this.removeFromTools(
-      pluginName,
-      resolvedToolIds,
-      tools,
-      projectRoot,
-      manifest
-    );
+    const removed = await this.removeFromTools(pluginName, resolvedToolIds, projectRoot, manifest);
     if (!removed) throw new PluginNotFoundError(pluginName);
-    await this.manifests.project.save(manifest);
-    await this.claims.detachNativeRefs(projectRoot, nativeRefs);
+    await this.projectRepo.save(manifest);
+    await this.withdrawal.detachNativeRefs(projectRoot, nativeRefs);
     for (const toolId of userTools) {
-      await this.claims.detachUserPlugin(toolId, pluginName, projectRoot);
+      await this.withdrawal.detachUserPlugin(toolId, pluginName, projectRoot);
     }
-  }
-
-  private async removeUserPlugin(
-    repo: ManifestRepository,
-    options: PluginRemoveOptions
-  ): Promise<void> {
-    const manifest = await requireManifest(repo);
-    const toolIds = resolvePluginToolIds(options.toolIds, manifest, options.tools);
-    const targets = toolIds.flatMap((toolId) => {
-      const plugin = manifest
-        .getPlugins(toolId)
-        .find((p) => p.name === options.pluginName && p.scope === "user");
-      return plugin === undefined ? [] : [{ toolId, plugin }];
-    });
-    const nativeTargets = toolIds.flatMap((toolId) => {
-      const registrations = manifest.getNativeRegistrations(toolId);
-      if (registrations === undefined) return [];
-      return (registrations.pluginClaims ?? [])
-        .filter((claim) => this.records.refSelectedBy(claim.ref, options.pluginName))
-        .map((claim) => ({ toolId, registrations, claim }));
-    });
-    if (targets.length === 0 && nativeTargets.length === 0)
-      throw new PluginNotFoundError(options.pluginName);
-    if (!this.records.isQualifiedRef(options.pluginName) && nativeTargets.length > 1) {
-      throw new Error(
-        `Native plugin '${options.pluginName}' has multiple catalogues; use the exact <plugin>@<catalogue> ref.`
-      );
-    }
-    const dependents = [
-      ...new Set([
-        ...targets.flatMap(({ plugin }) => plugin.dependents),
-        ...nativeTargets.flatMap(({ claim }) => claim.dependents),
-      ]),
-    ];
-    if (dependents.length > 0) {
-      throw new ActiveMachineDependentsError(
-        `user-scope plugin '${options.pluginName}'`,
-        dependents
-      );
-    }
-    const safeFiles = await Promise.all(
-      targets.map(async ({ toolId, plugin }) => {
-        const files = await this.claims.userFilesSafeToDelete(
-          plugin,
-          options.tools.aiProfile(toolId)
-        );
-        if (files.size !== plugin.files.size)
-          throw new Error(
-            `Refusing partial removal of user-scope plugin '${plugin.name}': a tracked file escaped its boundary.`
-          );
-        return { toolId, plugin, files };
-      })
-    );
-    const nativeRemoval = await Promise.all(
-      nativeTargets.map(async ({ toolId, registrations, claim }) => ({
-        toolId,
-        registrations,
-        claim,
-        proven: await this.withdrawFromHost.proveClaimedRef(
-          registrations,
-          { tool: toolId, ref: claim.ref },
-          options.projectRoot
-        ),
-      }))
-    );
-    for (const target of nativeRemoval) {
-      this.withdrawFromHost.uninstallProven(target.proven);
-      manifest.setNativeRegistrations(
-        target.toolId,
-        this.records.withoutClaimedRef(target.registrations, target.claim.ref)
-      );
-    }
-    for (const { toolId, plugin, files } of safeFiles) {
-      await deletePluginFilesForTool(
-        files,
-        "user",
-        options.tools.aiProfile(toolId),
-        options.projectRoot,
-        this.fs,
-        "user"
-      );
-      manifest.removePlugin(toolId, plugin.name);
-    }
-    await repo.save(manifest);
   }
 
   private async removeFromTools(
     pluginName: string,
     toolIds: AiToolId[],
-    tools: ToolCatalog,
     projectRoot: string,
     manifest: Manifest
   ): Promise<boolean> {
     let removed = false;
     for (const toolId of toolIds) {
-      const tool = tools.aiProfile(toolId);
+      const tool = this.tools.aiProfile(toolId);
       const plugins = manifest.getPlugins(toolId);
       const plugin = plugins.find((p) => p.name === pluginName);
       if (plugin === undefined) continue;
       const registrations = manifest.getNativeRegistrations(toolId);
       const baseDir = resolveBaseDirFromRecord(plugin.scope, tool, projectRoot, nodeHomedir);
-      const confirmed =
-        plugin.marketplace === undefined
-          ? undefined
-          : await this.withdrawFromHost.execute({
-              tool,
-              plugin: { name: plugin.name, marketplace: plugin.marketplace, scope: plugin.scope },
-              projectRoot,
-              registrations,
-              claims: {
-                isMachineOwned: (ref) => this.claims.isMachineOwned(toolId, ref),
-                guardMessage: (binary, ref, alias, hostName) =>
-                  this.claims.guardMessage(binary, tool, ref, alias, hostName, projectRoot),
-                resolveCacheCandidate: (cacheRoot, relativeSegments, label) =>
-                  this.claims.resolveCacheCandidate(cacheRoot, relativeSegments, label),
-              },
-              pluginCacheRoot: tool.nativeActivation()?.pluginCacheRoot(this.claims.home),
-            });
+      const confirmed = await this.withdrawal.withdraw(
+        toolId,
+        tool,
+        plugin,
+        projectRoot,
+        registrations
+      );
       if (plugin.scope !== "user") await this.deletePluginFiles(plugin.files, baseDir);
       await this.removeMcpEntries(plugin, tool, projectRoot);
       await removeProjectHooks(this.fs, plugin, tool, projectRoot);
@@ -249,9 +101,7 @@ export class RemovePlugin<Proof> {
       if (
         ref !== undefined &&
         registrations !== undefined &&
-        (confirmed === true ||
-          (tool.pluginEnablementIsMachineGlobal() &&
-            (await this.claims.isMachineOwned(toolId, ref))))
+        (await this.withdrawal.canDetachRef(toolId, tool, confirmed, ref))
       ) {
         manifest.setNativeRegistrations(toolId, this.records.withoutRef(registrations, ref));
       }

@@ -8,7 +8,7 @@ import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { resolveHomeDir } from "../../../../../src/shared/infrastructure/home-dir.js";
-import { pluginRemover } from "../../../../helpers/plugin-remover.js";
+import { userPluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -94,9 +94,8 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
           ),
         }),
       };
-      const remove = pluginRemover({
+      const remove = userPluginRemover({
         fs,
-        manifestRepo: new InMemoryManifestRepository(Manifest.create()),
         activators: new Map([[toolId, activator]]),
         hostPluginRegistries: options.hostRegistryUnavailable
           ? new Map()
@@ -111,13 +110,11 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
       return { machine, repo, fs, activator, remove };
     }
 
-    const execute = (remove: ReturnType<typeof pluginRemover>, pluginName: string) =>
+    const execute = (remove: ReturnType<typeof userPluginRemover>, pluginName: string) =>
       remove.execute({
-        tools: registeredTools(),
         pluginName,
         toolIds: [toolId],
         projectRoot: "/A",
-        scope: "user",
       });
 
     it.each([{ hostRegistryUnavailable: true }, { hostRegistryUnreadable: true }])(
@@ -351,31 +348,26 @@ describe("Cursor user plugin boundary", () => {
     const fs = new InMemoryFileAdapter();
     const path = join(homedir(), ".cursor/plugins/local/sample-plugin/plugin.json");
     fs.setFile(path, "owned bytes");
-    const remove = pluginRemover({
+    const remove = userPluginRemover({
       fs,
-      manifestRepo: new InMemoryManifestRepository(Manifest.create()),
       marketplaceRegistry: new FakeMarketplaceRegistry(),
       userManifestRepo: repo,
     });
     fs.setFile(path, "user-edited plugin.json");
     await expect(
       remove.execute({
-        tools: registeredTools(),
         pluginName: "sample-plugin",
         toolIds: [TOOL.cursor],
         projectRoot: "/A",
-        scope: "user",
       })
     ).rejects.toThrow(/edited.*plugin.json|plugin.json.*edited/);
     expect(fs.getFile(path)).toBe("user-edited plugin.json");
     expect(repo.getCurrent()?.getPlugins(TOOL.cursor)).toHaveLength(1);
     fs.setFile(path, "owned bytes");
     await remove.execute({
-      tools: registeredTools(),
       pluginName: "sample-plugin",
       toolIds: [TOOL.cursor],
       projectRoot: "/A",
-      scope: "user",
     });
     expect(fs.getFile(path)).toBeUndefined();
     expect(repo.getCurrent()?.getPlugins(TOOL.cursor)).toEqual([]);
@@ -416,19 +408,16 @@ describe("Cursor user plugin boundary", () => {
         )
       ).size
     ).toBe(0);
-    const remove = pluginRemover({
+    const remove = userPluginRemover({
       fs,
-      manifestRepo: new InMemoryManifestRepository(Manifest.create()),
       marketplaceRegistry: new FakeMarketplaceRegistry(),
       userManifestRepo: repo,
     });
     await expect(
       remove.execute({
-        tools: registeredTools(),
         pluginName: "sample-plugin",
         toolIds: [TOOL.cursor],
         projectRoot: "/A",
-        scope: "user",
       })
     ).rejects.toThrow(/tracked file escaped its boundary/);
     expect(fs.getFile(join(foreignPath, "skills/demo/SKILL.md"))).toBe("foreign bytes");

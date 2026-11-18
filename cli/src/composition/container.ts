@@ -93,6 +93,7 @@ export async function createDeps(
   } = marketplace;
   const {
     pluginRemoveUseCase,
+    userPluginRemove,
     pluginUpdateUseCase,
     userPluginUpdateUseCase,
     searchPlugins,
@@ -124,6 +125,7 @@ export async function createDeps(
     logOut,
     checkStatus,
     pluginRemoveUseCase,
+    userPluginRemove,
     pluginListUseCase,
     pluginUpdateUseCase,
     userPluginUpdateUseCase,

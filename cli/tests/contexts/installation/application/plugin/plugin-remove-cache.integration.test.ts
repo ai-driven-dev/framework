@@ -128,7 +128,6 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -149,7 +148,6 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -171,7 +169,6 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -212,7 +209,6 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const removeUseCase = verifiedClaudeRemoval(fs, manifestRepo, logger, activator);
 
     await removeUseCase.execute({
-      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -238,7 +234,6 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     );
 
     await removeUseCase.execute({
-      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -258,7 +253,6 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger });
 
     await removeUseCase.execute({
-      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -303,7 +297,6 @@ describe("RemovePlugin purges the plugin's own cache subtree", () => {
 
     await expect(
       removeUseCase.execute({
-        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [TOOL.copilot],
         projectRoot: PROJECT_ROOT,

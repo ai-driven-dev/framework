@@ -68,7 +68,6 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger: new CLIOutput(false) });
     await removeUseCase.execute({
-      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
@@ -107,7 +106,6 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger: new CLIOutput(false) });
     await removeUseCase.execute({
-      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
@@ -145,7 +143,6 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger: new CLIOutput(false) });
     await expect(
       removeUseCase.execute({
-        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,

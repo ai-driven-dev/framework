@@ -2,9 +2,9 @@ import type { ToolId } from "../../../shared/domain/tool.js";
 import type { FileReader } from "../../../shared/ports/file-reader.js";
 import type { Lock } from "../../../shared/ports/lock.js";
 import type { Logger } from "../../../shared/ports/logger.js";
-import type { MachineManifestRepository, UserScopePluginFiles } from "../ports/machine-manifest.js";
+import type { MachineManifestRepository } from "../ports/machine-manifest.js";
 import type { MarketplaceListing } from "../ports/marketplace-listing.js";
-import type { PluginEnablementReach, UserScopeTool } from "../ports/user-scope-tool.js";
+import type { PluginEnablementReach } from "../ports/user-scope-tool.js";
 import type { UserSourceReferences } from "../ports/user-source-references.js";
 import { isMachineOwnedNativeRef } from "./native-plugin-ownership.js";
 import { removalClaims } from "./removal-claims.js";
@@ -16,7 +16,6 @@ import {
   resolveProjectRootForReferences,
   toleratingUnreadableSourceReferences,
 } from "./shared-source-reference-support.js";
-import { userScopeFilesSafeToDelete } from "./user-scope-plugin-files.js";
 
 export interface PluginRemovalClaimsDeps {
   readonly repo: (MachineManifestRepository & Lock) | undefined;
@@ -90,8 +89,6 @@ export function pluginRemovalClaims(deps: PluginRemovalClaimsDeps) {
     isMachineOwned: (toolId: ToolId, ref: string) => isMachineOwnedNativeRef(repo, toolId, ref),
     guardMessage,
     resolveCacheCandidate: deps.resolveCacheCandidate,
-    userFilesSafeToDelete: (plugin: UserScopePluginFiles<unknown>, tool: UserScopeTool) =>
-      userScopeFilesSafeToDelete(fs, logger, plugin, tool, deps.home),
     ...removalClaims(repo, fs),
   };
 }

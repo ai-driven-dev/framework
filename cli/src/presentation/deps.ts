@@ -12,6 +12,7 @@ import type { ListInstalledRules } from "../contexts/installation/application/li
 import type { ListPlugins } from "../contexts/installation/application/plugin/list-plugins.js";
 import type { UpdatePlugin } from "../contexts/installation/application/plugin/update-plugin.js";
 import type { RemovePlugin } from "../contexts/installation/application/removal/remove-plugin.js";
+import type { UserPluginRemoveOptions } from "../contexts/installation/application/removal/remove-user-plugin.js";
 import type { ReportStatus } from "../contexts/installation/application/report-status.js";
 import type { RestoreTool } from "../contexts/installation/application/restore/project/restore-tool.js";
 import type { UninstallTools } from "../contexts/installation/application/uninstall-tools.js";
@@ -111,6 +112,8 @@ export interface Deps {
   logOut: Pick<LogOut, "execute">;
   checkStatus: Pick<CheckStatus, "execute">;
   pluginRemoveUseCase: Pick<RemovePlugin<unknown>, "execute">;
+  /** The user-scope removal, its home directory already bound. */
+  userPluginRemove: { execute: (options: Omit<UserPluginRemoveOptions, "home">) => Promise<void> };
   pluginListUseCase: Pick<ListPlugins, "execute">;
   pluginUpdateUseCase: Pick<UpdatePlugin, "execute">;
   userPluginUpdateUseCase: Pick<UpdateUserPlugin, "execute">;

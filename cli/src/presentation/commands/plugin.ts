@@ -19,6 +19,7 @@ import { spawnCliCommand } from "./spawn-cli-command.js";
 /** What this command reads of the graph. */
 type PluginKeys =
   | "pluginRemoveUseCase"
+  | "userPluginRemove"
   | "pluginListUseCase"
   | "pluginInstallUseCase"
   | "searchPlugins"
@@ -73,13 +74,10 @@ export function registerPluginCommand(
         const toolIds = parseToolOption(cmdOptions.tool, catalog);
         const scope = parseInstallScope(cmdOptions.scope) ?? "project";
         const deps = await createDeps(projectRoot, { verbose }, output);
-        await deps.pluginRemoveUseCase.execute({
-          pluginName: name,
-          toolIds,
-          projectRoot,
-          scope,
-          tools: catalog,
-        });
+        const removal = { pluginName: name, toolIds, projectRoot };
+        await (scope === "user" ? deps.userPluginRemove : deps.pluginRemoveUseCase).execute(
+          removal
+        );
         if (scope === "project") {
           reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
         }

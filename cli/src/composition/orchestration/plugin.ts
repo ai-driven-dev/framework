@@ -15,7 +15,13 @@ import {
 } from "../../contexts/installation/application/plugin/plugin-materializer.js";
 import { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.js";
 import { UpdateUserPluginFiles } from "../../contexts/installation/application/plugin/update-user-plugin-files.js";
+import { ProjectPluginWithdrawal } from "../../contexts/installation/application/removal/project-plugin-withdrawal.js";
 import { RemovePlugin } from "../../contexts/installation/application/removal/remove-plugin.js";
+import {
+  RemoveUserPlugin,
+  type UserPluginRemoveOptions,
+} from "../../contexts/installation/application/removal/remove-user-plugin.js";
+import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { pluginRemovalClaims } from "../../contexts/machine-claims/application/plugin-removal-claims.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
 import {
@@ -62,9 +68,18 @@ export const userScopeFileGuard: UserScopeFileGuard = {
   assertWriteBoundary: assertUserScopeWriteBoundary,
 };
 
+/** A user-scope removal under the machine's home directory, which the command line does not know. */
+export function underMachineHome(removal: Pick<RemoveUserPlugin<unknown>, "execute">) {
+  return {
+    execute: (options: Omit<UserPluginRemoveOptions, "home">) =>
+      removal.execute({ ...options, home: resolveHomeDir() }),
+  };
+}
+
 /** The plugin lifecycle: add, install, update and remove. */
 export function wirePlugin(base: Base, inst: Installation) {
   const {
+    tools,
     fs,
     hasher,
     logger,
@@ -81,7 +96,6 @@ export function wirePlugin(base: Base, inst: Installation) {
     marketplaceTrustStore,
     resolveMarketplaceUseCase,
     withdrawFromHost,
-    tools,
   } = base;
   const {
     ensureBuiltMarketplaceUseCase,
@@ -91,20 +105,34 @@ export function wirePlugin(base: Base, inst: Installation) {
   } = inst;
   const pluginRemoveUseCase = new RemovePlugin(
     fs,
-    { project: manifestRepo, user: userManifestRepo },
-    withdrawFromHost,
-    pluginRemovalClaims({
-      repo: userManifestRepo,
-      fs,
-      logger,
-      home: resolveHomeDir(),
-      platform: process.platform,
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-      userSourceReferences,
-      marketplaceRegistry,
-      resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),
-    }),
-    registrationRecordRules
+    manifestRepo,
+    new ProjectPluginWithdrawal(
+      withdrawFromHost,
+      pluginRemovalClaims({
+        repo: userManifestRepo,
+        fs,
+        logger,
+        home: resolveHomeDir(),
+        platform: process.platform,
+        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+        userSourceReferences,
+        marketplaceRegistry,
+        resolveCacheCandidate: purgeCandidateResolverOf(new PurgeDeclaredCache(fs, logger)),
+      })
+    ),
+    registrationRecordRules,
+    tools
+  );
+  const userPluginRemove = underMachineHome(
+    new RemoveUserPlugin(
+      userManifestRepo,
+      withdrawFromHost,
+      registrationRecordRules,
+      new UserScopePluginFiles(fs, (plugin, tool, home) =>
+        userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)
+      ),
+      tools
+    )
   );
   const pluginAddUseCase = new AddPlugin(
     { fs: fs, hasher: hasher, logger: logger },
@@ -166,6 +194,7 @@ export function wirePlugin(base: Base, inst: Installation) {
   );
   return {
     pluginRemoveUseCase,
+    userPluginRemove,
     pluginUpdateUseCase,
     userPluginUpdateUseCase,
     pluginInstallUseCase,

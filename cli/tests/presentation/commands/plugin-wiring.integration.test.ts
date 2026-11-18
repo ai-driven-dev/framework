@@ -5,6 +5,7 @@ import { prompterAnswering } from "../../helpers/ports/index.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const pluginRemove = vi.fn();
+const userPluginRemove = vi.fn();
 const pluginList = vi.fn();
 const pluginInstall = vi.fn();
 const pluginSearch = vi.fn();
@@ -16,6 +17,7 @@ const spawn = vi.fn();
 
 const createDeps = vi.fn(async () => ({
   pluginRemoveUseCase: { execute: pluginRemove },
+  userPluginRemove: { execute: userPluginRemove },
   pluginListUseCase: { execute: pluginList },
   pluginInstallUseCase: { execute: pluginInstall },
   searchPlugins: { execute: pluginSearch },
@@ -55,6 +57,7 @@ beforeEach(() => {
     return true;
   });
   pluginRemove.mockResolvedValue(undefined);
+  userPluginRemove.mockResolvedValue(undefined);
   pluginList.mockResolvedValue(new Map([["claude", [{ name: "aidd-dev", version: "1.0.0" }]]]));
   pluginInstall.mockResolvedValue({ kind: "marketplace", installed: ["aidd-dev"] });
   pluginSearch.mockResolvedValue({ hits: [] });
@@ -137,13 +140,26 @@ describe("aidd plugin remove", () => {
       pluginName: "aidd-dev",
       toolIds: "all",
       projectRoot: PROJECT_ROOT,
-      scope: "project",
-      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
+    expect(userPluginRemove).not.toHaveBeenCalled();
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
       marketplaceNames: undefined,
     });
+  });
+
+  it("sends a user-scope removal to the machine remover alone, without re-driving activation", async () => {
+    expect(await run("remove", "aidd-dev", "--scope", "user")).toEqual([
+      "Plugin 'aidd-dev' removed.",
+    ]);
+
+    expect(userPluginRemove).toHaveBeenCalledWith({
+      pluginName: "aidd-dev",
+      toolIds: "all",
+      projectRoot: PROJECT_ROOT,
+    });
+    expect(pluginRemove).not.toHaveBeenCalled();
+    expect(activation).not.toHaveBeenCalled();
   });
 
   it("names a refused activation and fails the process, saying nothing was removed", async () => {

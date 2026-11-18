@@ -18,7 +18,7 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
-import { pluginRemover } from "../../helpers/plugin-remover.js";
+import { pluginRemover, userPluginRemover } from "../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { fakeBuiltDeps } from "../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
@@ -375,18 +375,17 @@ for (const [toolId, catalogPath] of [
         cacheRoot === undefined ? undefined : join(cacheRoot, hostName, "test-plugin", "skill.md");
       if (cachedBytes !== undefined)
         removeFs.setFile(cachedBytes, "B still uses this cached plugin");
-      const remove = (repo: InMemoryManifestRepository) =>
-        pluginRemover({
-          fs: removeFs,
-          manifestRepo: repo,
-          activators: new Map([[toolId, activator]]),
-          hostPluginRegistries: new Map([[toolId, hostReader]]),
-          marketplaceRegistry: registry,
-          userManifestRepo: user,
-          nativeMarketplaceSources: sources,
-        });
+      const removing = (repo: InMemoryManifestRepository) => ({
+        fs: removeFs,
+        manifestRepo: repo,
+        activators: new Map([[toolId, activator]]),
+        hostPluginRegistries: new Map([[toolId, hostReader]]),
+        marketplaceRegistry: registry,
+        userManifestRepo: user,
+        nativeMarketplaceSources: sources,
+      });
+      const remove = (repo: InMemoryManifestRepository) => pluginRemover(removing(repo));
       await remove(a).execute({
-        tools: registeredTools(),
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/A",
@@ -398,7 +397,6 @@ for (const [toolId, catalogPath] of [
         { ref, dependents: ["/B"] },
       ]);
       await remove(b).execute({
-        tools: registeredTools(),
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/B",
@@ -407,12 +405,10 @@ for (const [toolId, catalogPath] of [
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: [] },
       ]);
-      await remove(a).execute({
-        tools: registeredTools(),
+      await userPluginRemover(removing(a)).execute({
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/A",
-        scope: "user",
       });
       expect(activator.uninstalledPlugins).toEqual([ref]);
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);

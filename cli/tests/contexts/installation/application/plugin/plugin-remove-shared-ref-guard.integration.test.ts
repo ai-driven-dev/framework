@@ -10,7 +10,7 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 import { FakeUserSourceReferences } from "../../testing/fake-user-source-references.js";
 
@@ -133,7 +133,6 @@ describe("plugin remove guards a ref another project on this machine still needs
 
     await expect(
       removeUseCase.execute({
-        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [TOOL.codex],
         projectRoot: PROJECT_ROOT,
@@ -207,7 +206,6 @@ describe("plugin remove guards a ref another project on this machine still needs
     );
 
     await removeUseCase.execute({
-      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.codex],
       projectRoot: PROJECT_ROOT,
@@ -265,7 +263,6 @@ describe("plugin remove guards a ref another project on this machine still needs
 
     await expect(
       removeUseCase.execute({
-        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [TOOL.codex],
         projectRoot: PROJECT_ROOT,
@@ -291,7 +288,6 @@ describe("plugin remove guards a ref another project on this machine still needs
 
     await expect(
       removeUseCase.execute({
-        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [TOOL.codex],
         projectRoot: PROJECT_ROOT,
@@ -326,7 +322,6 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
-          tools: registeredTools(),
           pluginName: PLUGIN_NAME,
           toolIds: [TOOL.codex],
           projectRoot: PROJECT_ROOT,
@@ -352,7 +347,6 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
-          tools: registeredTools(),
           pluginName: PLUGIN_NAME,
           toolIds: [TOOL.codex],
           projectRoot: PROJECT_ROOT,
@@ -379,7 +373,6 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
-          tools: registeredTools(),
           pluginName: PLUGIN_NAME,
           toolIds: [TOOL.codex],
           projectRoot: PROJECT_ROOT,
@@ -403,7 +396,6 @@ describe("plugin remove guards a ref another project on this machine still needs
 
       await expect(
         removeUseCase.execute({
-          tools: registeredTools(),
           pluginName: PLUGIN_NAME,
           toolIds: [TOOL.codex],
           projectRoot: PROJECT_ROOT,

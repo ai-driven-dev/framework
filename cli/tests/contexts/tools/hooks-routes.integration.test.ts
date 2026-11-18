@@ -383,7 +383,7 @@ async function run(route: Route, toolId: AiToolId): Promise<string> {
   }
   const wired = await deps(ws.project);
   if (route === "plugin-remove") {
-    const removal = { tools: catalogOf(), pluginName: "aidd-context", toolIds: [toolId] };
+    const removal = { pluginName: "aidd-context", toolIds: [toolId] };
     await wired.pluginRemoveUseCase.execute({ ...removal, projectRoot: ws.project });
     return `${await describeHookFiles(ws, bases)}\n# recorded\n${await pluginsRecorded(ws)}`;
   }

@@ -8,12 +8,12 @@ import {
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
-import { pluginRemover } from "../../../../helpers/plugin-remover.js";
+import { pluginRemover, userPluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 
 const { claude, cursor, codex } = TOOL;
@@ -59,7 +59,6 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const remove = pluginRemover({ fs, manifestRepo: projectRepo, userManifestRepo: userRepo });
 
     await remove.execute({
-      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [cursor],
       projectRoot: ROOT,
@@ -100,7 +99,6 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     });
 
     await remove.execute({
-      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [cursor],
       projectRoot: ROOT,
@@ -114,31 +112,23 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
   });
 
   it("user removal skips a project-scoped copy and other names with active dependents", async () => {
-    const project = manifest();
-    project.addPlugin(cursor, plugin({ scope: "project" }));
     const machine = manifest();
     machine.addPlugin(cursor, plugin({ name: "other-plugin", dependents: [OTHER] }));
     machine.addPlugin(cursor, plugin());
     machine.addPlugin(claude, plugin({ scope: "project", dependents: [OTHER] }));
-    const projectBefore = project.toJSON();
     const otherBefore = machine.getPlugins(cursor)[0].toJSON();
     const claudeBefore = machine.getPlugins(claude)[0].toJSON();
     const userRepo = new InMemoryManifestRepository(machine);
-    const projectRepo = new InMemoryManifestRepository(project, ROOT);
-    const remove = pluginRemover({ manifestRepo: projectRepo, userManifestRepo: userRepo });
+    const remove = userPluginRemover({ userManifestRepo: userRepo });
 
     await remove.execute({
-      tools: registeredTools(),
       pluginName: NAME,
       toolIds: "all",
       projectRoot: ROOT,
-      scope: "user",
     });
 
     expect(machine.getPlugins(cursor).map((entry) => entry.toJSON())).toEqual([otherBefore]);
     expect(machine.getPlugins(claude).map((entry) => entry.toJSON())).toEqual([claudeBefore]);
-    expect(project.toJSON()).toEqual(projectBefore);
-    expect(projectRepo.saveCount).toBe(0);
     expect(userRepo.saveCount).toBe(1);
   });
 
@@ -147,38 +137,18 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     machine.addPlugin(cursor, plugin({ scope: "project" }));
     const before = machine.toJSON();
     const userRepo = new InMemoryManifestRepository(machine);
-    const projectRepo = new InMemoryManifestRepository(manifest(), ROOT);
-    const remove = pluginRemover({ manifestRepo: projectRepo, userManifestRepo: userRepo });
+    const remove = userPluginRemover({ userManifestRepo: userRepo });
 
     await expect(
       remove.execute({
-        tools: registeredTools(),
         pluginName: NAME,
         toolIds: [cursor],
         projectRoot: ROOT,
-        scope: "user",
       })
     ).rejects.toThrow(PluginNotFoundError);
 
     expect(machine.toJSON()).toEqual(before);
     expect(userRepo.saveCount).toBe(0);
-    expect(projectRepo.saveCount).toBe(0);
-  });
-
-  it("requires a user repository before attempting user removal", async () => {
-    const projectRepo = new InMemoryManifestRepository(manifest(), ROOT);
-    const remove = pluginRemover({ manifestRepo: projectRepo });
-
-    await expect(
-      remove.execute({
-        tools: registeredTools(),
-        pluginName: NAME,
-        toolIds: [cursor],
-        projectRoot: ROOT,
-        scope: "user",
-      })
-    ).rejects.toThrow("User manifest repository is required for user-scope plugin removal.");
-    expect(projectRepo.saveCount).toBe(0);
   });
 
   it("explicit user removal deletes the proven global file without touching the project copy", async () => {
@@ -195,18 +165,15 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     fs.setFile(userPath, content);
     fs.setFile(projectPath, "project bytes");
     const userRepo = new InMemoryManifestRepository(machine);
-    const remove = pluginRemover({
+    const remove = userPluginRemover({
       fs,
-      manifestRepo: new InMemoryManifestRepository(manifest(), ROOT),
       userManifestRepo: userRepo,
     });
 
     await remove.execute({
-      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [cursor],
       projectRoot: ROOT,
-      scope: "user",
     });
 
     expect(await fs.fileExists(userPath)).toBe(false);
@@ -228,19 +195,16 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
       [join(base, "../outside.md")]: content,
     });
     const userRepo = new InMemoryManifestRepository(machine);
-    const remove = pluginRemover({
+    const remove = userPluginRemover({
       fs,
-      manifestRepo: new InMemoryManifestRepository(manifest(), ROOT),
       userManifestRepo: userRepo,
     });
 
     await expect(
       remove.execute({
-        tools: registeredTools(),
         pluginName: NAME,
         toolIds: [cursor],
         projectRoot: ROOT,
-        scope: "user",
       })
     ).rejects.toThrow(
       `Refusing partial removal of user-scope plugin '${NAME}': a tracked file escaped its boundary.`
@@ -267,7 +231,6 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
     await expect(
       remove.execute({
-        tools: registeredTools(),
         pluginName: NAME,
         toolIds: [cursor],
         projectRoot: ROOT,
@@ -298,7 +261,6 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const remove = pluginRemover({ manifestRepo: repo, userManifestRepo: userRepo });
 
     await remove.execute({
-      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [claude],
       projectRoot: ROOT,
@@ -417,7 +379,6 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const marketplaces = f.record.getNativeRegistrations(claude)?.marketplaces;
 
     await f.remove.execute({
-      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [claude],
       projectRoot: ROOT,
@@ -444,7 +405,6 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
       const f = fixture(options);
 
       await f.remove.execute({
-        tools: registeredTools(),
         pluginName: NAME,
         toolIds: [claude],
         projectRoot: ROOT,
@@ -466,7 +426,6 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const f = fixture({ enabled: false });
 
     await f.remove.execute({
-      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [claude],
       projectRoot: ROOT,
@@ -486,7 +445,6 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     const f = fixture({ available: false, registrations: false });
 
     await f.remove.execute({
-      tools: registeredTools(),
       pluginName: NAME,
       toolIds: [claude],
       projectRoot: ROOT,
@@ -548,7 +506,6 @@ describe("native removal preserves unconfirmed refs and addresses the recorded c
     });
 
     await remove.execute({
-      tools: registeredTools(),
       pluginName: NAME,
       toolIds: "all",
       projectRoot: ROOT,
