@@ -1,16 +1,23 @@
 import { describe, expect, it } from "vitest";
+import { registrationRecordRules } from "../../../src/composition/installation.js";
+import type { ResolveBuiltMarketplaces } from "../../../src/contexts/distribution/application/resolve-built-marketplaces.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.js";
 import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
+import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.js";
+import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
+import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 
 const PROJECT_ROOT = "/project";
@@ -321,5 +328,38 @@ describe("CheckRegistration — order", () => {
     );
 
     expect(issues.map((issue) => issue.severity)).toStrictEqual(["warning", "error"]);
+  });
+});
+
+describe("the tools whose built marketplaces are resolved", () => {
+  it("are the AI tools the manifest holds, and no IDE tool", async () => {
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.claude, "test", []);
+    manifest.addTool(TOOL.vscode, "test", []);
+    const resolved: (readonly string[])[] = [];
+    const builds: Pick<ResolveBuiltMarketplaces, "execute"> = {
+      execute: async ({ toolIds }) => {
+        resolved.push(toolIds);
+        return { registeredNames: [], userCacheRoot: "/user-cache", built: new Map() };
+      },
+    };
+    const check = new CheckRegistration(
+      new ListRegisteredPlugins(
+        new LoadManifest(new InMemoryManifestRepository(manifest)),
+        registrationRecordRules
+      ),
+      builds,
+      new InspectDeclaredMarketplaces(new InMemoryFileAdapter(), () => false),
+      { execute: async () => ({ findings: [] }) }
+    );
+
+    await check.execute({
+      projectRoot: PROJECT_ROOT,
+      allowedIds: null,
+      tools: catalogOf(),
+      globalInstall: true,
+    });
+
+    expect(resolved).toStrictEqual([[TOOL.claude]]);
   });
 });
