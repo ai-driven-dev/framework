@@ -3,6 +3,7 @@ import { ListMarketplaces } from "../../contexts/distribution/application/list-m
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { CleanProject as CleanProjectFiles } from "../../contexts/installation/application/clean-project.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
+import { RemoveProjectFiles } from "../../contexts/installation/application/removal/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/application/removal/remove-project-plugin.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
@@ -69,12 +70,17 @@ export function wireClean(base: Base, inst: Installation) {
     logger,
     prompter
   );
-  const cleanProjectFiles = new CleanProjectFiles(fs, manifestRepo, logger, updateGitignore, {
-    homeDir: resolveHomeDir,
-    assertMcpRemovable: (plugin, tool, projectRoot) =>
-      assertProjectMcpEntriesRemovable(fs, plugin, tool, projectRoot),
-    records: registrationRecordRules,
-  });
+  const cleanProjectFiles = new CleanProjectFiles(
+    fs,
+    manifestRepo,
+    {
+      homeDir: resolveHomeDir,
+      assertMcpRemovable: (plugin, tool, projectRoot) =>
+        assertProjectMcpEntriesRemovable(fs, plugin, tool, projectRoot),
+      records: registrationRecordRules,
+    },
+    new RemoveProjectFiles(fs, manifestRepo, logger, updateGitignore)
+  );
   const cleanUseCase = new CleanProject(
     cleanProjectFiles,
     withdrawFromHost,
