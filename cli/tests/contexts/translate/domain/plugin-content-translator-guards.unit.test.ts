@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
+import { anEmptyContract } from "../../../shared/testing/empty-build-contract.js";
 import { contractToolProfile } from "../testing/contract-tool-profile.js";
-import { anEmptyBuildContract } from "../testing/empty-build-contract.js";
 import { flatPluginsStub } from "../testing/flat-plugins-stub.js";
 import { markdownSectionInstalling } from "../testing/markdown-section-stub.js";
 import { nativePluginsStub } from "../testing/native-plugins-stub.js";
@@ -21,9 +21,9 @@ const agents = [makeFile("agents/rev.md", "---\nname: rev\n---\n\nReview.\n")];
 const agentDist = distOf([...agents], { agents });
 
 const hostingAgents = (path: (plugin: string, rel: string) => string): ToolBuildContract =>
-  anEmptyBuildContract({
+  anEmptyContract({
     artifacts: {
-      ...anEmptyBuildContract().artifacts,
+      ...anEmptyContract().artifacts,
       agents: {
         supported: true,
         source: { kind: "filteredTree", srcDir: "agents", inputExt: ".md" },

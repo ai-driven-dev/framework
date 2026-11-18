@@ -1,5 +1,5 @@
+import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
-import { parseToml } from "../../../../src/contexts/tools/domain/formats/toml.js";
 import { parseFrontmatter, serializeFrontmatter } from "../../../../src/shared/domain/markdown.js";
 import {
   agentContent,

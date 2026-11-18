@@ -10,7 +10,7 @@ import {
   type ProfileSections,
 } from "../../../src/contexts/tools/domain/profile.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import { anEmptyContract } from "../../contexts/tools/testing/profiles.js";
+import { anEmptyContract } from "../../shared/testing/empty-build-contract.js";
 
 export function stubAiTool(toolId: AiToolId, capabilities: ProfileSections): AiTool & ProfileBrand {
   return defineAiTool({

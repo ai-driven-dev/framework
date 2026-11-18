@@ -1,9 +1,7 @@
-import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/build-contract.js";
+import type { ToolBuildContract } from "../../../src/contexts/tools/contract/build-contract.js";
 
 /** A contract that builds nothing: the emptiest valid one. */
-export function anEmptyBuildContract(
-  overrides: Partial<ToolBuildContract> = {}
-): ToolBuildContract {
+export function anEmptyContract(overrides: Partial<ToolBuildContract> = {}): ToolBuildContract {
   return {
     manifestFileRelative: null,
     synthesizeManifest: null,

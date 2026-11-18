@@ -2,7 +2,6 @@ import type { ToolBuildContract } from "../../../../src/contexts/tools/contract/
 import type {
   AiToolProfile,
   FlatInstallSection,
-  FrameworkBuildMode,
   MarkdownSectionAnswers,
   PluginAnswers,
   SkillsSectionAnswers,
@@ -32,36 +31,43 @@ export interface ProfileAnswers {
   readonly rewriteContent?: (content: string) => string;
 }
 
+/** The base itself, its own members replaced by `overrides`. */
+function derived<Base extends object>(base: Base, overrides: Partial<Base>): Base {
+  const own = Object.fromEntries(
+    Object.entries(overrides).map(([name, value]) => [name, { value }])
+  );
+  return Object.create(base, own);
+}
+
 /** A tool as the contract states it: the base's answers, but for the ones given. */
 export function contractToolProfile(
   base: AiToolProfile,
   answers: ProfileAnswers = {}
 ): AiToolProfile {
   const { sections = {}, plugins, flatContract } = answers;
-  return Object.create(base, {
-    directory: { value: answers.directory ?? base.directory },
-    plugins: { value: () => (plugins === undefined ? base.plugins() : plugins) },
-    markdownSection: {
-      value: (kind: "commands" | "agents" | "rules") =>
-        sections[kind] === undefined ? base.markdownSection(kind) : sections[kind],
-    },
-    skillsSection: {
-      value: () => (sections.skills === undefined ? base.skillsSection() : sections.skills),
-    },
-    buildContract: {
-      value: (mode: FrameworkBuildMode, provider?: string) =>
-        mode === "flat" && flatContract !== undefined
-          ? flatContract
-          : base.buildContract(mode, provider),
-    },
-    flatInstallPath: {
-      value:
-        answers.flatInstallPath ??
-        ((section: FlatInstallSection, pluginName: string, fileName: string) =>
-          base.flatInstallPath(section, pluginName, fileName)),
-    },
-    rewriteContent: {
-      value: answers.rewriteContent ?? ((content: string) => base.rewriteContent(content)),
-    },
-  });
+  const overrides = {
+    directory: answers.directory ?? base.directory,
+    plugins: () => (plugins === undefined ? base.plugins() : plugins),
+    markdownSection: (kind) =>
+      sections[kind] === undefined ? base.markdownSection(kind) : sections[kind],
+    skillsSection: () => (sections.skills === undefined ? base.skillsSection() : sections.skills),
+    buildContract: (mode, provider) =>
+      mode === "flat" && flatContract !== undefined
+        ? flatContract
+        : base.buildContract(mode, provider),
+    flatInstallPath:
+      answers.flatInstallPath ??
+      ((section, pluginName, fileName) => base.flatInstallPath(section, pluginName, fileName)),
+    rewriteContent: answers.rewriteContent ?? ((content) => base.rewriteContent(content)),
+  } satisfies Pick<
+    AiToolProfile,
+    | "directory"
+    | "plugins"
+    | "markdownSection"
+    | "skillsSection"
+    | "buildContract"
+    | "flatInstallPath"
+    | "rewriteContent"
+  >;
+  return derived(base, overrides);
 }

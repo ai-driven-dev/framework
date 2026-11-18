@@ -1,7 +1,7 @@
 import type { AiToolProfile } from "../../../../src/contexts/tools/contract/tool-profile.js";
+import { anEmptyContract } from "../../../shared/testing/empty-build-contract.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { contractToolProfile, type ProfileAnswers } from "./contract-tool-profile.js";
-import { anEmptyBuildContract } from "./empty-build-contract.js";
 import { flatPluginsStub } from "./flat-plugins-stub.js";
 
 /** A tool of its own: no section, a flat plugin refusing hooks, an empty flat contract, its files
@@ -12,7 +12,7 @@ export function syntheticToolProfile(answers: ProfileAnswers = {}): AiToolProfil
     directory,
     plugins: flatPluginsStub(),
     sections: { commands: null, agents: null, rules: null, skills: null },
-    flatContract: anEmptyBuildContract(),
+    flatContract: anEmptyContract(),
     flatInstallPath: (section, pluginName, fileName) =>
       `${directory}${section}/${pluginName}/${fileName}`,
     rewriteContent: (content) => content,
