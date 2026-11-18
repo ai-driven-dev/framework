@@ -65,14 +65,13 @@ export interface NativeKitExtra extends Partial<NativeLayoutParams>, Partial<Man
 }
 
 export function nativePlugins(extra: NativeKitExtra = {}): PluginSet {
-  const { hooks, manifestRelativePath, pluginRootToken, translationMode, ...layout } = extra;
+  const { hooks, manifestRelativePath, pluginRootToken, ...layout } = extra;
   return {
     layout: nativeLayout({ pluginsDir: ".fake/plugins/", ...layout }),
     manifest: manifestSection({
       manifestRelativePath: manifestRelativePath ?? null,
       // biome-ignore lint/suspicious/noTemplateCurlyInString: the placeholder a host expands
       pluginRootToken: pluginRootToken ?? "${FAKE_PLUGIN_ROOT}",
-      ...(translationMode === undefined ? {} : { translationMode }),
     }),
     hooks: { delivery: hooks ?? { kind: "plugin-file" } },
   };

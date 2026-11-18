@@ -92,7 +92,6 @@ function nativeAnswers(
   return {
     ...deliveryOf(layout, hooks),
     kind: "native",
-    translatesAsMarketplace: () => manifest.translationMode === "marketplace",
     pluginOutputDir: (name) => `${layout.pluginsDir}${name}/`,
     manifestPath: () => manifest.manifestRelativePath,
     rootToken: () => manifest.pluginRootToken,

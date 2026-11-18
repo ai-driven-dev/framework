@@ -326,7 +326,6 @@ export const copilot = defineAiTool({
     manifest: manifestSection({
       manifestRelativePath: "plugin.json",
       pluginRootToken: hooksSupport.rootToken,
-      translationMode: "marketplace",
     }),
     models: new ModelsSection({
       providers: ["openai", "anthropic"],

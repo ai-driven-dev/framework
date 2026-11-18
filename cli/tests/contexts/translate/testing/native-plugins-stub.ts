@@ -27,7 +27,6 @@ export function nativePluginsStub(stub: NativePluginsStub = {}): NativePluginAns
   return {
     ...pluginDeliveryAccepting(hooks),
     kind: "native",
-    translatesAsMarketplace: () => false,
     pluginOutputDir: (pluginName) => `${pluginsDir}${pluginName}/`,
     manifestPath: () => manifestPath,
     rootToken: () => pluginRootToken,

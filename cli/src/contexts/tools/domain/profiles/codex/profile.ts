@@ -139,7 +139,6 @@ export const codex = defineAiTool({
     }),
     manifest: manifestSection({
       manifestRelativePath: "plugin.json",
-      translationMode: "marketplace",
       pluginRootToken: hooksSupport.rootToken,
     }),
     models: new ModelsSection({ providers: ["openai"] }),

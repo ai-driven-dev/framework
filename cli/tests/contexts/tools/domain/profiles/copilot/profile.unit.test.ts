@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CONFIG_MCP } from "../../../../../../src/contexts/tools/contract/config-refs.js";
 import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { nativeOf } from "../../../../../shared/testing/native-plugin-answers.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.js";
 import { registeredAiConfig } from "../../../testing/catalog-of.js";
 import {
@@ -41,10 +40,6 @@ describe("copilot declarations the rest of the CLI reads", () => {
       .config?.transform(JSON.stringify({ mcpServers: { a: { command: "node" } } }));
     expect(JSON.parse(written)).toStrictEqual({ servers: { a: { command: "node" } } });
     expect(copilot.section("mcp").config?.consumes(CONFIG_MCP)).toBe(true);
-  });
-
-  it("translates plugins for its own marketplace", () => {
-    expect(nativeOf(copilot.plugins()).translatesAsMarketplace()).toBe(true);
   });
 
   it("drives its own CLI with the verbs it answers to", () => {

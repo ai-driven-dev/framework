@@ -70,15 +70,6 @@ describe("where a flat tool puts the hooks of a plugin", () => {
 });
 
 describe("what a native tool answers", () => {
-  it("builds as neutral native until its manifest says marketplace", () => {
-    expect(nativeOf(answersOf(nativePlugins())).translatesAsMarketplace()).toBe(false);
-    expect(
-      nativeOf(
-        answersOf(nativePlugins({ translationMode: "marketplace" }))
-      ).translatesAsMarketplace()
-    ).toBe(true);
-  });
-
   it("delivers no mcp, lands hooks in the plugin, and names a plugin's directory", () => {
     const answers = nativeOf(answersOf(nativePlugins({ pluginsDir: ".x/plugins/" })));
 

@@ -23,7 +23,7 @@ function requirePlugins<T>(plugins: T | null): T {
 }
 
 describe("resolveTranslator", () => {
-  describe("when translationMode is marketplace", () => {
+  describe("when the plugins do not materialize from the built tree", () => {
     it("returns ModeAMarketplaceTranslator", () => {
       const deps = buildDeps();
       const plugins = registeredTools().aiProfile(TOOL.claude).plugins();

@@ -52,10 +52,6 @@ describe("codex plugins", () => {
       expect(codex.marketplaceRegistration()).toBeNull();
     });
 
-    it("keeps the marketplace translation mode", () => {
-      expect(nativeOf(codex.plugins()).translatesAsMarketplace()).toBe(true);
-    });
-
     it("warns that Codex runs no hook it has not been told to trust, and how to tell it", () => {
       expect(nativeOf(codex.plugins()).trustNotice()).toBe(
         "Codex will not run this plugin's hooks until each one is trusted — approve the prompt " +

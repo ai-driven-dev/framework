@@ -143,7 +143,6 @@ export const claude = defineAiTool({
     manifest: manifestSection({
       manifestRelativePath: "plugin.json",
       pluginRootToken: hooksSupport.rootToken,
-      translationMode: "marketplace",
     }),
     // Its main session reads the model from the user settings file `nativeActivation` names.
     models: new ModelsSection({

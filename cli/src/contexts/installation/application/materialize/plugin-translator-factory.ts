@@ -14,20 +14,14 @@ export interface TranslatorDeps {
 }
 
 /**
- * Resolves the translation adapter for a tool's plugin answers, or `null` when none applies.
+ * Resolves the translation adapter for a tool's plugin answers.
  *
  * A materializing tool copies the per-target BUILT tree verbatim, so installed bytes match the
  * build's own output; a raw local-path install falls back to flat materialization.
  */
-export function resolveTranslator(
-  plugins: PluginAnswers,
-  deps: TranslatorDeps
-): PluginTranslator | null {
+export function resolveTranslator(plugins: PluginAnswers, deps: TranslatorDeps): PluginTranslator {
   if (plugins.materializesFromBuiltTree()) {
     return new BuiltTreeMaterializationTranslator(deps.fs, deps.hasher, deps.built);
   }
-  if (plugins.kind === "native" && plugins.translatesAsMarketplace()) {
-    return new ModeAMarketplaceTranslator();
-  }
-  return null;
+  return new ModeAMarketplaceTranslator();
 }

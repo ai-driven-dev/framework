@@ -74,8 +74,6 @@ export interface FlatLayout {
 /** A tool that installs a plugin through its own plugin CLI, as an outside caller asks it. */
 export interface NativePluginAnswers extends PluginDelivery {
   readonly kind: "native";
-  /** Whether the plugin is installed by registering a marketplace with the host. */
-  translatesAsMarketplace(): boolean;
   /** The directory a plugin's files land in. */
   pluginOutputDir(pluginName: string): string;
   /** The manifest file relative to that directory, or null when the tool takes none. */
