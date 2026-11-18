@@ -10,11 +10,7 @@ import type { PluginSource } from "../../../src/shared/domain/source.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import {
-  registeredAiProfile,
-  registeredCatalog,
-  TOOL,
-} from "../../contexts/tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
@@ -201,7 +197,7 @@ async function sync(setup: SyncSetup = {}) {
       ],
     ]),
   });
-  const result = await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+  const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
   const written = (await fs.fileExists(SHARED_SETTINGS))
     ? (JSON.parse(await fs.readFile(SHARED_SETTINGS)) as Record<string, unknown>)
     : undefined;
@@ -429,7 +425,6 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       toolIds: [TOOL.claude],
     });
@@ -477,7 +472,6 @@ describe("toolIds narrows which tool's CLI is driven", () => {
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       toolIds: [TOOL.claude],
     });
@@ -601,7 +595,6 @@ describe("a project whose manifest also lists a tool with no plugin system", () 
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 

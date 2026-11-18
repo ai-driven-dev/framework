@@ -69,7 +69,6 @@ async function runUserScopeSync(
         });
   const activation = await deps.syncSettingsUseCase.execute({
     projectRoot,
-    tools: catalog,
     scope: "user",
     toolIds,
     recreateFrameworkIfMissing: true,
@@ -115,7 +114,6 @@ async function runSyncAction(
     // settings file restoration regenerates, which must be on disk before that CLI runs.
     const activation = await deps.syncSettingsUseCase.execute({
       projectRoot,
-      tools,
       recreateFrameworkIfMissing: true,
     });
     printActivationOutcome(output, activation);
@@ -153,7 +151,6 @@ async function runScopedSync(
   // installed tool's activation.
   const activation = await deps.syncSettingsUseCase.execute({
     projectRoot,
-    tools: catalog,
     toolIds: result.tools.map((tool) => tool.toolId),
     recreateFrameworkIfMissing: true,
   });

@@ -3,14 +3,11 @@ import type { LoadSyncContext } from "../../contexts/installation/application/sy
 import type { RecordActivation } from "../../contexts/installation/application/sync/record-activation.js";
 import type { SyncToolSettingsFiles } from "../../contexts/installation/application/sync/sync-tool-settings-files.js";
 import type { SharedFrameworkSource } from "../../contexts/machine-claims/application/shared-source/shared-framework-source.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 
 export interface SyncSettingsOptions {
   projectRoot: string;
-  /** The profiles of the tools this run may ask, handed per call. */
-  tools: ToolCatalog;
   /** Limits both the settings sync and the native activation to these tools; every
    * installed tool when absent. */
   toolIds?: readonly ToolId[];
@@ -78,7 +75,7 @@ export class SyncSettings {
   }
 
   private async executeLocked(options: SyncSettingsOptions): Promise<SyncSettingsResult> {
-    const { projectRoot, tools } = options;
+    const { projectRoot } = options;
     const scope = options.scope ?? "project";
     const context = await this.loadContext.execute({
       projectRoot,
@@ -93,7 +90,6 @@ export class SyncSettings {
     if (
       scope === "project" &&
       (await this.settingsFiles.syncProjectTools(
-        tools,
         projectRoot,
         manifest,
         marketplaces,
@@ -102,7 +98,6 @@ export class SyncSettings {
     )
       await context.save();
     const activation = await this.activateNativeTools.execute({
-      tools,
       projectRoot,
       context,
       scope,
@@ -111,7 +106,6 @@ export class SyncSettings {
     if (
       scope === "project" &&
       (await this.settingsFiles.syncProvenPlugins(
-        tools,
         projectRoot,
         manifest,
         marketplaces,
@@ -129,20 +123,17 @@ export class SyncSettings {
       );
     }
     const wroteHashes = await this.recordActivation.recordWhatActivationWrote(
-      tools,
       projectRoot,
       manifest,
       [...activation.outcomes.keys()]
     );
     const wroteRegistrations = this.recordActivation.recordNativeRegistrations(
-      tools,
       manifest,
       activation.outcomes,
       options.marketplaceNames !== undefined
     );
     if (wroteHashes || wroteRegistrations) await context.save();
     await this.recordActivation.recordMachinePluginClaims(
-      tools,
       manifest,
       activation.outcomes,
       marketplaces,

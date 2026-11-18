@@ -1,7 +1,6 @@
 import type { MarketplaceScope } from "../../../../shared/domain/scope.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
 import type {
@@ -20,7 +19,6 @@ export interface ActivationRun {
 }
 
 export interface ActivateNativeToolsRequest {
-  tools: ToolCatalog;
   projectRoot: string;
   context: SyncContext;
   scope: MarketplaceScope;
@@ -48,7 +46,7 @@ export class ActivateNativeTools {
   /** Never a tool with no native activation, and never one whose binary is absent: neither wrote
    * anything, so a settings file that differs for it differs because a person changed it. */
   async execute(request: ActivateNativeToolsRequest): Promise<ActivationRun> {
-    const { tools, projectRoot, context, scope, enablePlugins } = request;
+    const { projectRoot, context, scope, enablePlugins } = request;
     const { manifest, marketplaces } = context;
     const outcomes = new Map<ToolId, HostRegistrationOutcome>();
     const binaryMissing: { toolId: ToolId; binary: string }[] = [];
@@ -62,10 +60,7 @@ export class ActivateNativeTools {
           scope,
           marketplaces,
           claims: context.claimsOf(toolId),
-          build: async (marketplace) =>
-            tools.isAiTool(toolId)
-              ? this.buildMarketplace.execute(toolId, marketplace, projectRoot)
-              : null,
+          build: (marketplace) => this.buildMarketplace.forTool(toolId, marketplace, projectRoot),
           refsToEnable: (hostNameByAlias) =>
             this.refsToEnableOn(
               toolId,

@@ -63,7 +63,6 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/installation/application/restore/project/restore-global.ts",
   "src/contexts/installation/application/restore/restore-drift-entries.ts",
   "src/contexts/installation/application/sync/activate-native-tools.ts",
-  "src/contexts/installation/application/sync/build-marketplace-for-tool.ts",
   "src/contexts/installation/application/sync/load-sync-context.ts",
   "src/contexts/installation/application/sync/record-activation.ts",
   "src/contexts/installation/application/sync/sync-tool-settings-files.ts",

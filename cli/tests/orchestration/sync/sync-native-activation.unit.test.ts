@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { SyncNativeActivation } from "../../../src/orchestration/sync/sync-native-activation.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 
-const CATALOG = catalogOf();
+const _CATALOG = catalogOf();
 const OUTCOME = {
   activated: [],
   binaryMissing: [],
@@ -17,12 +17,10 @@ describe("SyncNativeActivation", () => {
 
     const outcome = await new SyncNativeActivation(syncSettings).execute({
       projectRoot: "/project",
-      tools: CATALOG,
     });
 
     expect(syncSettings.execute).toHaveBeenCalledWith({
       projectRoot: "/project",
-      tools: CATALOG,
       marketplaceNames: undefined,
     });
     expect(outcome).toBe(OUTCOME);
@@ -33,13 +31,11 @@ describe("SyncNativeActivation", () => {
 
     await new SyncNativeActivation(syncSettings).execute({
       projectRoot: "/project",
-      tools: CATALOG,
       marketplaceNames: ["market-b"],
     });
 
     expect(syncSettings.execute).toHaveBeenCalledWith({
       projectRoot: "/project",
-      tools: CATALOG,
       marketplaceNames: ["market-b"],
     });
   });

@@ -18,19 +18,19 @@ export class RecordActivation {
     private readonly fs: FileReader & FileWriter,
     private readonly hasher: Hasher,
     private readonly records: RegistrationRecordRules,
+    private readonly tools: ToolCatalog,
     private readonly userManifestRepo?: ManifestRepository & Lock
   ) {}
 
   /** Only for a tool this run actually activated. */
   recordNativeRegistrations(
-    tools: ToolCatalog,
     manifest: Manifest,
     activated: ReadonlyMap<ToolId, HostRegistrationOutcome>,
     narrowed: boolean
   ): boolean {
     let changed = false;
     for (const [toolId, outcome] of activated) {
-      const binary = this.nativeActivationBinary(tools, toolId);
+      const binary = this.nativeActivationBinary(toolId);
       if (binary === undefined) continue;
       const registrations = this.records.afterActivation(
         manifest.getNativeRegistrations(toolId),
@@ -51,14 +51,13 @@ export class RecordActivation {
    * then the observation, not a guess at what the host would have written.
    */
   async recordWhatActivationWrote(
-    tools: ToolCatalog,
     projectRoot: string,
     manifest: Manifest,
     activated: readonly ToolId[]
   ): Promise<boolean> {
     let changed = false;
     for (const toolId of activated) {
-      const settingsPath = this.marketplaceSettingsOf(tools, toolId)?.sharedSettingsFile();
+      const settingsPath = this.marketplaceSettingsOf(toolId)?.sharedSettingsFile();
       if (settingsPath === undefined) continue;
       const tracked = manifest
         .getToolFiles(toolId)
@@ -74,19 +73,15 @@ export class RecordActivation {
     return changed;
   }
 
-  private marketplaceSettingsOf(
-    tools: ToolCatalog,
-    toolId: ToolId
-  ): MarketplaceRegistrationAnswers | undefined {
-    return tools.aiProfileIfAny(toolId)?.marketplaceRegistration() ?? undefined;
+  private marketplaceSettingsOf(toolId: ToolId): MarketplaceRegistrationAnswers | undefined {
+    return this.tools.aiProfileIfAny(toolId)?.marketplaceRegistration() ?? undefined;
   }
 
-  private nativeActivationBinary(tools: ToolCatalog, toolId: ToolId): string | undefined {
-    return tools.aiProfileIfAny(toolId)?.nativeActivation()?.hostBinary();
+  private nativeActivationBinary(toolId: ToolId): string | undefined {
+    return this.tools.aiProfileIfAny(toolId)?.nativeActivation()?.hostBinary();
   }
 
   async recordMachinePluginClaims(
-    tools: ToolCatalog,
     project: Manifest,
     outcomes: ReadonlyMap<ToolId, HostRegistrationOutcome>,
     marketplaces: readonly DeclaredMarketplace[],
@@ -99,12 +94,12 @@ export class RecordActivation {
     let changed = false;
     for (const [toolId, outcome] of outcomes) {
       const machineRefs =
-        scope === "user" || enablementIsMachineGlobal(tools, toolId) ? outcome.pluginRefs : [];
+        scope === "user" || this.enablementIsMachineGlobal(toolId) ? outcome.pluginRefs : [];
       const machineMarketplaces = outcome.catalogClaims.filter((registration) =>
         marketplaces.some(
           (marketplace) =>
             marketplace.name === registration.alias &&
-            (marketplace.scope === "user" || enablementIsMachineGlobal(tools, toolId))
+            (marketplace.scope === "user" || this.enablementIsMachineGlobal(toolId))
         )
       );
       if (machineRefs.length === 0 && machineMarketplaces.length === 0) continue;
@@ -116,16 +111,16 @@ export class RecordActivation {
       const merged = this.records.mergeCatalogueClaims(
         machine.getNativeRegistrations(toolId),
         { marketplaces: machineMarketplaces, refs: machineRefs, dependent: root },
-        this.nativeActivationBinary(tools, toolId) ?? toolId
+        this.nativeActivationBinary(toolId) ?? toolId
       );
       changed ||= merged.changed;
       if (changed) machine.setNativeRegistrations(toolId, merged.record);
     }
     if (changed) await this.userManifestRepo.save(machine);
   }
-}
 
-/** Whether enabling a plugin acts on the whole machine; true for an editor. */
-function enablementIsMachineGlobal(tools: ToolCatalog, toolId: ToolId): boolean {
-  return tools.aiProfileIfAny(toolId)?.pluginEnablementIsMachineGlobal() ?? true;
+  /** Whether enabling a plugin acts on the whole machine; true for an editor. */
+  private enablementIsMachineGlobal(toolId: ToolId): boolean {
+    return this.tools.aiProfileIfAny(toolId)?.pluginEnablementIsMachineGlobal() ?? true;
+  }
 }

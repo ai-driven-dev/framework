@@ -41,11 +41,11 @@ describe("the machine record is saved once any tool of the run changed it", () =
       new InMemoryFileAdapter(),
       new DeterministicHasher(),
       registrationRecordRules,
+      registeredCatalog(),
       repo
     );
 
     await record.recordMachinePluginClaims(
-      registeredCatalog(),
       project,
       new Map([
         [claude, outcomeOf(CLAIMED_REF)],

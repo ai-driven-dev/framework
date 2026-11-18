@@ -15,7 +15,7 @@ import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory
 import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, registeredCatalog, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -109,7 +109,7 @@ describe("install claude plugin via Mode A (integration)", () => {
     );
 
     const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, hasher, activator);
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const shared = JSON.parse(
       await fs.readFile(resolve(PROJECT_ROOT, ".claude/settings.json"))
@@ -172,7 +172,7 @@ describe("install claude plugin via Mode A (integration)", () => {
       })
     );
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const shared = JSON.parse(
       await fs.readFile(resolve(PROJECT_ROOT, ".claude/settings.json"))

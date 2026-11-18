@@ -17,12 +17,7 @@ import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
-import {
-  catalogOf,
-  registeredAiConfig,
-  registeredCatalog,
-  TOOL,
-} from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, registeredAiConfig, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { pluginRemover } from "../../helpers/plugin-remover.js";
@@ -229,13 +224,11 @@ for (const [toolId, catalogPath] of [
           nativeSources: sources,
         });
       await syncOf(a).execute({
-        tools: registeredCatalog(),
         projectRoot: "/A",
         toolIds: [toolId],
       });
       enabled = true;
       await syncOf(b).execute({
-        tools: registeredCatalog(),
         projectRoot: "/B",
         toolIds: [toolId],
       });
@@ -368,7 +361,6 @@ for (const [toolId, catalogPath] of [
         nativeSources: sources,
       });
       await foreignUseCase.execute({
-        tools: registeredCatalog(),
         projectRoot: "/foreign",
         toolIds: [toolId],
       });

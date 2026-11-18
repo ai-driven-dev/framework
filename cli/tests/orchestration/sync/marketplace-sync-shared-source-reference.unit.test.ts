@@ -11,7 +11,7 @@ import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claim
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
@@ -99,7 +99,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       nativeSources: proof.sources,
     });
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(await userSourceReferences.listAllReferencingProjects()).toContain(PROJECT_ROOT);
   });
@@ -137,7 +137,6 @@ describe("the shared source's own reference, recorded by sync", () => {
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -175,7 +174,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       currentVersionProvider: new FakeCurrentVersion(VERSION),
     });
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(await userSourceReferences.listAllReferencingProjects()).not.toContain(PROJECT_ROOT);
   });
@@ -219,7 +218,6 @@ describe("the shared source's own reference, recorded by sync", () => {
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -228,7 +226,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       FRAMEWORK_MARKETPLACE_NAME
     );
     expect(activator.addedMarketplaces).toEqual(["/built/claude"]);
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
     expect(await userSourceReferences.listAllReferencingProjects()).toContain(PROJECT_ROOT);
   });
 
@@ -247,7 +245,6 @@ describe("the shared source's own reference, recorded by sync", () => {
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -287,7 +284,7 @@ describe("the shared source's own reference, recorded by sync", () => {
     });
 
     // No `recreateFrameworkIfMissing` — the same call shape `syncNativeActivation` uses.
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(await registry.list(PROJECT_ROOT)).toEqual([]);
   });
@@ -303,7 +300,6 @@ describe("the shared source's own reference, recorded by sync", () => {
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -340,7 +336,6 @@ describe("a project with no manifest to sync", () => {
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -368,7 +363,6 @@ describe("a project with no manifest to sync", () => {
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 

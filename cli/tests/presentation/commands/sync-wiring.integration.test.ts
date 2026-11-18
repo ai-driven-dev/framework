@@ -4,7 +4,7 @@ import {
   ManifestUnavailableError,
   UnregisteredToolError,
 } from "../../../src/shared/domain/errors.js";
-import { catalogOf, registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
 
 const restoreAll = vi.fn();
@@ -95,7 +95,6 @@ describe("aidd sync — the whole project", () => {
     );
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredCatalog(),
       recreateFrameworkIfMissing: true,
     });
     expect(restoreAll.mock.invocationCallOrder[0]).toBeLessThan(
@@ -196,7 +195,6 @@ describe("aidd sync --tool", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredCatalog(),
       toolIds: ["claude"],
       recreateFrameworkIfMissing: true,
     });
@@ -272,7 +270,6 @@ describe("aidd sync --scope user", () => {
     expect(await run("--scope", "user")).toEqual(["Synced native activation for: claude"]);
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredCatalog(),
       scope: "user",
       toolIds: undefined,
       recreateFrameworkIfMissing: true,

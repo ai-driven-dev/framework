@@ -21,7 +21,7 @@ import { FakeHostActions } from "../../contexts/host-registration/testing/fake-h
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -139,7 +139,6 @@ describe("SyncSettings — sync migrates a project installed before the shared s
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -169,7 +168,6 @@ describe("SyncSettings — sync migrates a project installed before the shared s
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -225,7 +223,6 @@ describe("SyncSettings — codex and copilot refuse the same name from a differe
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -264,7 +261,6 @@ describe("SyncSettings — codex and copilot refuse the same name from a differe
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -312,7 +308,7 @@ describe("SyncSettings — codex and copilot refuse the same name from a differe
       ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
     });
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.addedMarketplaces).toEqual([]);
@@ -381,7 +377,6 @@ describe("SyncSettings — codex and copilot refuse the same name from a differe
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -432,7 +427,7 @@ describe("SyncSettings — fresh Claude host provenance", () => {
     return {
       activator,
       logger,
-      result: await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT }),
+      result: await useCase.execute({ projectRoot: PROJECT_ROOT }),
     };
   }
 
@@ -521,7 +516,6 @@ describe("SyncSettings — the host still tracks another, unmigrated project's c
 
     const before = await fs.readFile(`${foreignProjectCache}/${CATALOG_RELATIVE}`);
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -583,7 +577,6 @@ describe("SyncSettings — the host still tracks another, unmigrated project's c
 
     const before = await fs.readFile(`${sharedBuiltDir()}/${CATALOG_RELATIVE}`);
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -654,7 +647,6 @@ describe("SyncSettings — the host still tracks another, unmigrated project's c
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -683,7 +675,6 @@ describe("SyncSettings — the host still tracks another, unmigrated project's c
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -747,7 +738,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -785,7 +775,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -833,7 +822,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -870,7 +858,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -906,7 +893,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -987,7 +973,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1043,7 +1028,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1073,7 +1057,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1112,7 +1095,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1144,7 +1126,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1171,7 +1152,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1196,7 +1176,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
       scope: "user",
@@ -1221,7 +1200,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -1244,7 +1222,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1276,7 +1253,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1307,7 +1283,6 @@ describe("SyncSettings — purging this project's own pre-migration cache", () =
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       recreateFrameworkIfMissing: true,
     });
@@ -1486,7 +1461,6 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
     });
 
     const syncResult = await sync.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_A,
       recreateFrameworkIfMissing: true,
     });

@@ -1,29 +1,23 @@
-import { resolve } from "node:path";
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { MarketplaceRegistrationAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { DeclaredMarketplace } from "../../ports/marketplace-sources.js";
 import type { HostRegistrationOutcome, RegistrationRecordRules } from "../../ports/native-host.js";
 import type { BuildMarketplaceForTool } from "./build-marketplace-for-tool.js";
+import type { TrackedSettingsFile } from "./tracked-settings-file.js";
 
 /** The project settings files a tool shares with its host, kept in step with the manifest. */
 export class SyncToolSettingsFiles {
   constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly hasher: Hasher,
-    private readonly logger: Logger,
+    private readonly settingsFile: TrackedSettingsFile,
     private readonly buildMarketplace: BuildMarketplaceForTool,
-    private readonly records: RegistrationRecordRules
+    private readonly records: RegistrationRecordRules,
+    private readonly tools: ToolCatalog
   ) {}
 
   /** Every tool that registers by its own settings file, never one that needs the host's proof. */
   async syncProjectTools(
-    tools: ToolCatalog,
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly DeclaredMarketplace[],
@@ -31,16 +25,15 @@ export class SyncToolSettingsFiles {
   ): Promise<boolean> {
     let anyToolUpdated = false;
     for (const toolId of toolIds) {
-      if (tools.aiProfileIfAny(toolId)?.marketplaceRegistration()?.requiresNativeProof()) continue;
-      if (await this.syncTool(tools, toolId, projectRoot, manifest, marketplaces))
-        anyToolUpdated = true;
+      if (this.tools.aiProfileIfAny(toolId)?.marketplaceRegistration()?.requiresNativeProof())
+        continue;
+      if (await this.syncTool(toolId, projectRoot, manifest, marketplaces)) anyToolUpdated = true;
     }
     return anyToolUpdated;
   }
 
   /** Only the refs the host itself proved, for a tool whose settings file needs that proof. */
   async syncProvenPlugins(
-    tools: ToolCatalog,
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly DeclaredMarketplace[],
@@ -48,7 +41,7 @@ export class SyncToolSettingsFiles {
   ): Promise<boolean> {
     let declarativeChanged = false;
     for (const [toolId, outcome] of outcomes) {
-      const settings = tools.aiProfileIfAny(toolId)?.marketplaceRegistration();
+      const settings = this.tools.aiProfileIfAny(toolId)?.marketplaceRegistration();
       if (settings?.requiresNativeProof() !== true) continue;
       const provenRefs = this.records.refsOnHosts(
         outcome,
@@ -71,13 +64,12 @@ export class SyncToolSettingsFiles {
   }
 
   private async syncTool(
-    tools: ToolCatalog,
     toolId: ToolId,
     projectRoot: string,
     manifest: Manifest,
     marketplaces: readonly DeclaredMarketplace[]
   ): Promise<boolean> {
-    const profile = tools.aiProfileIfAny(toolId);
+    const profile = this.tools.aiProfileIfAny(toolId);
     const marketplaceSettings = profile?.marketplaceRegistration();
     if (profile == null || marketplaceSettings == null) return false;
     return this.syncToolSettings(
@@ -137,16 +129,15 @@ export class SyncToolSettingsFiles {
     manifest: Manifest,
     settings: MarketplaceRegistrationAnswers
   ): Promise<boolean> {
-    const sharedPath = resolve(projectRoot, settings.sharedSettingsFile());
-    const shared = await this.loadSettings(sharedPath);
+    const shared = await this.settingsFile.load(projectRoot, settings.sharedSettingsFile());
     const without = settings.withoutMarketplaces(shared);
     if (without === null) return false;
-    const content = JSON.stringify(without, null, 2);
-    await this.fs.writeFile(sharedPath, content);
-    manifest.updateTrackedFileHash(
+    await this.settingsFile.write(
+      manifest,
       toolId,
+      projectRoot,
       settings.sharedSettingsFile(),
-      this.hasher.hash(content)
+      without
     );
     return true;
   }
@@ -159,19 +150,18 @@ export class SyncToolSettingsFiles {
     settings: MarketplaceRegistrationAnswers,
     provenRefs?: readonly string[]
   ): Promise<boolean> {
-    const pluginsPath = resolve(projectRoot, settings.sharedSettingsFile());
-    const json = await this.loadSettings(pluginsPath);
+    const json = await this.settingsFile.load(projectRoot, settings.sharedSettingsFile());
     const enabled = settings.withEnabledPlugins(
       json,
       this.refsToEnable(settings, toolId, manifest, marketplaces, provenRefs)
     );
     if (enabled === null) return false;
-    const content = JSON.stringify(enabled, null, 2);
-    await this.fs.writeFile(pluginsPath, content);
-    manifest.updateTrackedFileHash(
+    await this.settingsFile.write(
+      manifest,
       toolId,
+      projectRoot,
       settings.sharedSettingsFile(),
-      this.hasher.hash(content)
+      enabled
     );
     return true;
   }
@@ -198,24 +188,5 @@ export class SyncToolSettingsFiles {
       refs.push(this.records.refOnHostName(plugin.name, entryKey));
     }
     return refs;
-  }
-
-  // These files are co-owned and the machine-local one is untracked and gitignored, which is
-  // exactly the kind of file people hand-edit: a trailing comma must not take the whole sync
-  // down with it.
-  private async loadSettings(absPath: string): Promise<Record<string, unknown>> {
-    if (!(await this.fs.fileExists(absPath))) return {};
-    const content = await this.fs.readFile(absPath);
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(content);
-    } catch {
-      this.logger.warn(`Ignoring malformed JSON in ${absPath}; rewriting the keys this CLI owns.`);
-      return {};
-    }
-    if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as Record<string, unknown>;
-    }
-    return {};
   }
 }

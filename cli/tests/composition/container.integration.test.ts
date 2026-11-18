@@ -329,7 +329,6 @@ describe("createDeps", () => {
 
       await syncSettingsUseCase.execute({
         projectRoot: root,
-        tools,
         recreateFrameworkIfMissing: true,
       });
 
@@ -359,7 +358,6 @@ describe("createDeps", () => {
 
       await syncSettingsUseCase.execute({
         projectRoot: root,
-        tools,
         recreateFrameworkIfMissing: true,
       });
 
@@ -414,7 +412,6 @@ describe("createDeps", () => {
 
       await syncSettingsUseCase.execute({
         projectRoot: root,
-        tools,
         enablePlugins: ["aidd-test"],
       });
 
@@ -434,11 +431,11 @@ describe("createDeps", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "1.0.0", []);
       await base.manifestRepo.save(manifest);
-      await syncSettingsUseCase.execute({ projectRoot: root, tools, enablePlugins: ["aidd-test"] });
+      await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
       const projectSaves = vi.spyOn(base.manifestRepo, "save");
       const machineSaves = vi.spyOn(base.userManifestRepo, "save");
 
-      await syncSettingsUseCase.execute({ projectRoot: root, tools, enablePlugins: ["aidd-test"] });
+      await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
 
       expect(projectSaves).not.toHaveBeenCalled();
       expect(machineSaves).not.toHaveBeenCalled();
@@ -456,7 +453,7 @@ describe("createDeps", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "1.0.0", []);
       await base.manifestRepo.save(manifest);
-      await syncSettingsUseCase.execute({ projectRoot: root, tools, enablePlugins: ["aidd-test"] });
+      await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
       const recorded = hostRecord(
         (await base.manifestRepo.load())?.getNativeRegistrations(TOOL.claude)
       );
@@ -472,7 +469,7 @@ describe("createDeps", () => {
       });
       await base.manifestRepo.save(staled);
 
-      await syncSettingsUseCase.execute({ projectRoot: root, tools, enablePlugins: ["aidd-test"] });
+      await syncSettingsUseCase.execute({ projectRoot: root, enablePlugins: ["aidd-test"] });
 
       expect(
         (await base.manifestRepo.load())?.getNativeRegistrations(TOOL.claude)?.marketplaces

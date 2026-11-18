@@ -60,13 +60,12 @@ export class RefreshAgentPlugins {
   }
 
   private async activate(
-    { projectRoot, tools }: RefreshAgentPluginsOptions,
+    { projectRoot }: RefreshAgentPluginsOptions,
     toolIds: readonly AiToolId[],
     scope?: MarketplaceScope
   ): Promise<void> {
     const { errors } = await this.syncSettings.execute({
       projectRoot,
-      tools,
       toolIds,
       ...(scope === undefined ? {} : { scope }),
     });

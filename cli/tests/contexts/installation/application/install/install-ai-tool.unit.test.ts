@@ -240,7 +240,6 @@ describe("InstallAiTool", () => {
       expect(syncSettingsMock.execute).toHaveBeenCalledOnce();
       expect(syncSettingsMock.execute).toHaveBeenCalledWith({
         projectRoot: PROJECT_ROOT,
-        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
       });
     });
 

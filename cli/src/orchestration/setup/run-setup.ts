@@ -24,7 +24,6 @@ export interface SetupSteps {
   /** Drives native activation for this project. */
   readonly syncSettings: (options: {
     readonly projectRoot: string;
-    readonly tools: ToolCatalog;
   }) => Promise<NativeActivationReport>;
   readonly version: VersionReader;
   readonly detectContext?: Pick<DetectProjectContext, "execute">;
@@ -75,7 +74,7 @@ export class RunSetup {
     await this.steps.registration.registerIfPresent(flow, source);
     const install = await this.installTools(flow, context, tools);
     if (flow.registerDefaultMarketplace) await this.promptPlugins(flow, tools);
-    const activation = await this.steps.syncSettings({ projectRoot: flow.projectRoot, tools });
+    const activation = await this.steps.syncSettings({ projectRoot: flow.projectRoot });
     return this.buildResult(isNew, install, activation, context);
   }
 

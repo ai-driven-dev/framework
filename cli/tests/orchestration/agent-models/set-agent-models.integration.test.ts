@@ -45,7 +45,7 @@ function setup(
   seed?.(manifest);
   const updates: Omit<UpdatePluginCommand, "tools">[] = [];
   const userUpdates: Omit<UpdatePluginCommand, "tools">[] = [];
-  const activations: Omit<SyncSettingsOptions, "tools">[] = [];
+  const activations: SyncSettingsOptions[] = [];
   const store = new AgentModelStoreAdapter(fs, () => CONFIG);
   const refresh = new RefreshAgentPlugins(
     new AgentPluginHosts(
@@ -66,7 +66,7 @@ function setup(
       },
     },
     {
-      execute: async ({ tools: _tools, ...options }) => {
+      execute: async (options) => {
         activations.push(options);
         return { activated: [], binaryMissing: [], warnings: [], errors: [], failed: false };
       },

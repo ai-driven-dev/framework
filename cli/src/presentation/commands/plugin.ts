@@ -81,10 +81,7 @@ export function registerPluginCommand(
           tools: catalog,
         });
         if (scope === "project") {
-          reportNativeActivation(
-            output,
-            await deps.syncNativeActivation.execute({ projectRoot, tools: catalog })
-          );
+          reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
         }
         printPluginRemoved(output, name);
       } catch (error) {
@@ -151,7 +148,6 @@ export function registerPluginCommand(
             output,
             await deps.syncNativeActivation.execute({
               projectRoot,
-              tools: catalog,
               marketplaceNames: cmdOptions.from !== undefined ? [cmdOptions.from] : undefined,
             })
           );
@@ -207,10 +203,7 @@ export function registerPluginCommand(
           tools: catalog,
         });
         if (scope === "project") {
-          reportNativeActivation(
-            output,
-            await deps.syncNativeActivation.execute({ projectRoot, tools: catalog })
-          );
+          reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
         }
         printPluginsUpdated(output, updated);
       } catch (error) {

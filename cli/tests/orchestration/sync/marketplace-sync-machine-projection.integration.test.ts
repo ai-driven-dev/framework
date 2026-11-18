@@ -9,7 +9,7 @@ import { FakeHostActions } from "../../contexts/host-registration/testing/fake-h
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
@@ -190,7 +190,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         ),
       });
 
-      const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
+      const result = await sync.execute({ projectRoot });
 
       expect(result.activated).toEqual(["claude"]);
       expect(result.errors).toStrictEqual([]);
@@ -269,7 +269,6 @@ describe("native plugin ownership follows the host's activation scope", () => {
     });
 
     const result = await sync.execute({
-      tools: registeredCatalog(),
       projectRoot,
       scope: "user",
     });
@@ -351,7 +350,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       ),
     });
 
-    const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
+    const result = await sync.execute({ projectRoot });
 
     expect(result.errors).toEqual([]);
     const projectMarketplaces = projectRepo
@@ -458,7 +457,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       ),
     });
 
-    const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
+    const result = await sync.execute({ projectRoot });
 
     expect(result.activated).toEqual(["codex"]);
     expect(activator.enabledPlugins).toEqual([ref]);
@@ -482,7 +481,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       },
     ]);
 
-    await sync.execute({ tools: registeredCatalog(), projectRoot });
+    await sync.execute({ projectRoot });
     expect(machineRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginClaims).toEqual([
       { ref: otherRef, dependents: ["/B"] },
       { ref, dependents: ["/B", "/resolved-codex-project"] },
@@ -560,12 +559,10 @@ describe("native plugin ownership follows the host's activation scope", () => {
     });
 
     await sync.execute({
-      tools: registeredCatalog(),
       projectRoot,
       marketplaceNames: ["market-b"],
     });
     await sync.execute({
-      tools: registeredCatalog(),
       projectRoot,
       marketplaceNames: ["market-a"],
     });
@@ -646,7 +643,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       ),
     });
 
-    const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
+    const result = await sync.execute({ projectRoot });
 
     expect(result.errors).toEqual([]);
     expect(projectRepo.getCurrent()?.getNativeRegistrations(codex)?.pluginRefs ?? []).toEqual([]);
@@ -715,7 +712,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       userManifestRepo: machineRepo,
     });
 
-    const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
+    const result = await sync.execute({ projectRoot });
 
     expect(result.errors).toEqual([{ scope: "codex", message: "host plugin registry unreadable" }]);
     expect(activator.enabledPlugins).toEqual([]);
@@ -787,7 +784,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       userManifestRepo: machineRepo,
     });
 
-    const result = await sync.execute({ tools: registeredCatalog(), projectRoot });
+    const result = await sync.execute({ projectRoot });
 
     expect(result.errors).toEqual([]);
     expect(activator.enabledPlugins).toEqual([]);

@@ -40,7 +40,7 @@ export interface InstallAiToolResult {
 
 /** Re-registers the native settings of what a run propagated. Supplied by the composition root. */
 export interface ActivatePropagatedPlugins {
-  execute(options: { projectRoot: string; tools: ToolCatalog }): Promise<NativeActivationReport>;
+  execute(options: { projectRoot: string }): Promise<NativeActivationReport>;
 }
 
 /** The one thing propagation asks of the plugin installer: put a named marketplace plugin on a
@@ -105,9 +105,7 @@ export class InstallAiTool {
       await this.propagatePlugin(plugin, toolId, projectRoot, propagated, warnings, tools);
     }
     const activation =
-      propagated.length > 0
-        ? await this.activatePropagated.execute({ projectRoot, tools })
-        : undefined;
+      propagated.length > 0 ? await this.activatePropagated.execute({ projectRoot }) : undefined;
     return {
       runtimeResult,
       propagatedPlugins: propagated,

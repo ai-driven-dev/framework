@@ -8,7 +8,7 @@ import { FakeHostActions } from "../../contexts/host-registration/testing/fake-h
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
@@ -81,7 +81,6 @@ async function globalActivation(toolId: AiToolId) {
   });
   const options = { projectRoot: "/project", scope: "user" as const, manifestRepo: userRepo };
   const setup = await sync.execute({
-    tools: registeredCatalog(),
     ...options,
     enablePlugins: ["test-plugin"],
   });
@@ -109,7 +108,7 @@ describe.each([TOOL.claude, TOOL.copilot] as const)("global %s native plugins", 
         refs.delete(REF);
       }
 
-      const result = await sync.execute({ ...options, tools: registeredCatalog() });
+      const result = await sync.execute({ ...options });
 
       expect(result.errors).toEqual([]);
       expect(result.warnings).toEqual([]);

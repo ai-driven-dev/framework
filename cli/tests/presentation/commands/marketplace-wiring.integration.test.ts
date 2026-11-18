@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parsePluginSourceShorthand } from "../../../src/shared/domain/source.js";
-import { catalogOf, registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { prompterAnswering } from "../../helpers/ports/index.js";
 
 const marketplaceAdd = vi.fn();
@@ -132,7 +132,6 @@ describe("aidd marketplace add", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredCatalog(),
       marketplaceNames: ["market-b"],
     });
   });
@@ -311,7 +310,6 @@ describe("aidd marketplace remove", () => {
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
-      tools: registeredCatalog(),
       marketplaceNames: undefined,
     });
   });

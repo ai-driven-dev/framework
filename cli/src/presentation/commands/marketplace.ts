@@ -102,7 +102,6 @@ export function registerMarketplaceCommand(
             output,
             await deps.syncNativeActivation.execute({
               projectRoot,
-              tools,
               marketplaceNames: [result.marketplace.name],
             })
           );
@@ -154,10 +153,7 @@ export function registerMarketplaceCommand(
           scope,
         });
         if (scope !== "user") {
-          reportNativeActivation(
-            output,
-            await deps.syncNativeActivation.execute({ projectRoot, tools })
-          );
+          reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
         }
         printMarketplaceRemoved(output, result.marketplace.name, result.removedPluginCount);
       } catch (error) {
@@ -181,10 +177,7 @@ export function registerMarketplaceCommand(
           name,
           force: cmdOptions.force,
         });
-        reportNativeActivation(
-          output,
-          await deps.syncNativeActivation.execute({ projectRoot, tools })
-        );
+        reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));
         printRefreshResults(output, results);
         if (failedCount > 0) process.exit(1);
       } catch (error) {

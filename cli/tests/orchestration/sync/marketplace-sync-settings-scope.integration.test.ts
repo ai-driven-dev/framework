@@ -6,7 +6,7 @@ import type { UserSourceReferences } from "../../../src/contexts/machine-claims/
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
@@ -122,7 +122,6 @@ describe("settings synchronization under the machine ownership lock", () => {
     async (scope) => {
       const f = await fixture();
       const result = await f.sync.execute({
-        tools: registeredCatalog(),
         projectRoot: PROJECT_ROOT,
         scope,
       });
@@ -138,7 +137,6 @@ describe("settings synchronization under the machine ownership lock", () => {
   it("does not reacquire the project ownership lock during an explicit user-scope sync", async () => {
     const f = await fixture();
     const result = await f.sync.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -154,9 +152,7 @@ describe("settings synchronization under the machine ownership lock", () => {
     f.acquireLock.mockImplementationOnce(() => {
       throw error;
     });
-    await expect(
-      f.sync.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT })
-    ).rejects.toBe(error);
+    await expect(f.sync.execute({ projectRoot: PROJECT_ROOT })).rejects.toBe(error);
     expect(f.load).not.toHaveBeenCalled();
     expect(f.projectRepo.saveCount).toBe(0);
     expect(f.machineRepo.saveCount).toBe(0);
@@ -185,7 +181,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       nativeSources: proof.sources,
     });
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     // No plugin declared here, so nothing to enable: this asserts the marketplace
     // registration path ran at all, and the next test declares one for enablePlugin.
@@ -233,7 +229,6 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -289,7 +284,6 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -340,7 +334,6 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
       enablePlugins: ["aidd-telemetry"],
@@ -365,7 +358,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
     });
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     // resolve(): the write carries a drive letter on win32, which a forward-slash template
     // literal never matches.
@@ -391,7 +384,6 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
     });
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -426,7 +418,6 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
     });
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       scope: "user",
     });
@@ -461,7 +452,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       nativeSources: proof.sources,
     });
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(added).toHaveLength(1);
   });

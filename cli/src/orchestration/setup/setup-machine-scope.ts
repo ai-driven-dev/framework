@@ -12,7 +12,6 @@ export type SyncMachineScope = (options: {
   readonly projectRoot: string;
   readonly toolIds: SetupFlow["aiTools"];
   readonly enablePlugins: readonly string[];
-  readonly tools: ToolCatalog;
 }) => Promise<NativeActivationReport>;
 
 /**
@@ -58,7 +57,6 @@ export class SetupMachineScope {
       projectRoot: flow.projectRoot,
       toolIds: flow.aiTools,
       enablePlugins: plugins,
-      tools,
     });
     const install: InstallToolsResult = { results: [] };
     const outcome = { install, activation, context: undefined, globalPlugins: plugins };

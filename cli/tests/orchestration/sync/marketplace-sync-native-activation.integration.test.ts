@@ -14,7 +14,7 @@ import {
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -185,7 +185,7 @@ describe("syncing settings registers the plugin with the host's own CLI", () => 
     const { useCase, registry } = buildSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.enabledPlugins).toContain(REF);
     expect(activator.enabledPlugins[0]).toBe(REF);
@@ -196,7 +196,7 @@ describe("syncing settings registers the plugin with the host's own CLI", () => 
     const { useCase, registry } = buildSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.enabledPlugins).toEqual([]);
   });
@@ -208,7 +208,7 @@ describe("syncing settings registers the plugin with the host's own CLI", () => 
     const { useCase, registry } = buildSync(activator, "a-marketplace-nobody-added");
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.enabledPlugins).toEqual([]);
     const answered = answeredRegistry(claude, { location: "/registry", refs: new Map() }, true);
@@ -225,7 +225,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     const { useCase, registry, manifestRepo } = buildSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const reloaded = await manifestRepo.load();
     expect(reloaded?.getNativeRegistrations(claude)).toEqual({
@@ -246,7 +246,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     const { useCase, registry, manifestRepo } = buildSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const reloaded = await manifestRepo.load();
     expect(reloaded?.getNativeRegistrations(claude)).toBeUndefined();
@@ -270,7 +270,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     if (staleManifest) await manifestRepo.save(staleManifest);
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.enabledPlugins).toContain(REF);
     const reloaded = await manifestRepo.load();
@@ -315,7 +315,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
     });
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.enabledPlugins).toEqual([`${PLUGIN}@${CATALOG_NAME}`]);
     expect(activator.enabledPlugins).not.toContain(REF);
@@ -358,7 +358,7 @@ describe("registering a marketplace does not wait for a plugin to point at it", 
     });
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.addedMarketplaces).not.toEqual([]);
   });
@@ -387,7 +387,7 @@ describe("what native activation leaves behind is not reported as the user's dri
     });
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
     // The port is synchronous and the host CLI's write is not, so let the writes the
     // activator queued actually land before reading the file back.
     await activator.settled();
@@ -419,14 +419,14 @@ describe("what native activation leaves behind is not reported as the user's dri
       ensureBuilt: fakeEnsureBuiltMarketplace(),
     });
     await registry.save(PROJECT_ROOT, marketplace());
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
     const hashAfterSync = (await manifestRepo.load())
       ?.getToolFiles(claude)
       .find((file) => file.relativePath === SETTINGS_PATH)?.hash;
 
     const edited = `${await fs.readFile(settingsAbsolutePath)}\n`;
     await fs.writeFile(settingsAbsolutePath, edited);
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const tracked = (await manifestRepo.load())
       ?.getToolFiles(claude)
@@ -496,7 +496,7 @@ describe("reclaiming a dead registration asks and acts on the host's own name", 
     });
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([CATALOG_NAME]);
     expect(activator.removedMarketplaces).not.toContain(MARKETPLACE);
@@ -554,7 +554,7 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
       before.some((issue) => issue.severity === "error" && issue.fix.includes("aidd sync"))
     ).toBe(true);
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const after = await doctorRegistration.execute({
       manifest,
@@ -632,7 +632,7 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
     if (staleManifest) await manifestRepo.save(staleManifest);
 
     // Unnarrowed — no `marketplaceNames`, the shape `sync` and `setup` both run.
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
     expect(recorded?.pluginRefs).not.toContain("plugin-dead@host-dead");
@@ -731,14 +731,13 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
     await registry.save(PROJECT_ROOT, aliasMarketplace(ALIAS_X));
     await registry.save(PROJECT_ROOT, aliasMarketplace(ALIAS_Y));
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
     const beforeNarrow = (await manifestRepo.load())?.getNativeRegistrations(claude);
     expect(beforeNarrow?.pluginRefs, "both refs recorded before the narrowed run").toEqual(
       expect.arrayContaining([`${PLUGIN_X}@${SHARED_HOST_NAME}`, `${PLUGIN_Y}@${SHARED_HOST_NAME}`])
     );
 
     await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
       marketplaceNames: [ALIAS_X],
     });
@@ -825,7 +824,6 @@ describe("what reclaiming a dead registration says", () => {
     await registry.save(PROJECT_ROOT, marketplace());
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -847,7 +845,7 @@ describe("what reclaiming a dead registration says", () => {
     const { useCase, registry } = reclaimSync(activator);
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([]);
     expect(activator.forcedRemovals).toEqual([]);
@@ -865,7 +863,7 @@ describe("what reclaiming a dead registration says", () => {
     const { useCase, registry } = reclaimSync(activator, source, userRoot);
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(activator.removedMarketplaces).toEqual([CATALOG_NAME]);
     expect(activator.forcedRemovals).toEqual([true]);
@@ -882,7 +880,6 @@ describe("what reclaiming a dead registration says", () => {
     await registry.save(PROJECT_ROOT, marketplace());
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -901,7 +898,6 @@ describe("what reclaiming a dead registration says", () => {
     await registry.save(PROJECT_ROOT, marketplace());
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -975,7 +971,6 @@ describe("a ref the host had enabled before this project asked belongs to the pe
     await registry.save(PROJECT_ROOT, marketplace());
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -998,8 +993,8 @@ describe("a ref the host had enabled before this project asked belongs to the pe
     );
     await registry.save(PROJECT_ROOT, marketplace());
 
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
-    await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
+    await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     const recorded = (await manifestRepo.load())?.getNativeRegistrations(claude);
     expect(recorded?.pluginRefs).toEqual([REF]);
@@ -1019,7 +1014,6 @@ describe("a ref the host had enabled before this project asked belongs to the pe
     await registry.save(PROJECT_ROOT, marketplace());
 
     const result = await useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 

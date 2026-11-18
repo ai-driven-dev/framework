@@ -19,7 +19,7 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
-import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -212,7 +212,7 @@ async function recovery(options: RecoveryOptions = {}) {
     ]),
     nativeSources: new Map([[TOOL.claude, native]]),
   });
-  const result = await useCase.execute({ tools: registeredCatalog(), projectRoot: ROOT });
+  const result = await useCase.execute({ projectRoot: ROOT });
   return { activator, manifest, repo, logger, fs, result, useCase };
 }
 
@@ -417,7 +417,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     });
     expect(result.errors).toEqual([]);
     const saveCount = repo.saveCount;
-    const second = await useCase.execute({ tools: registeredCatalog(), projectRoot: ROOT });
+    const second = await useCase.execute({ projectRoot: ROOT });
     expect(second).toEqual({ activated: ["claude"], ...CLEAN_RUN });
     expect(repo.saveCount).toBe(saveCount);
     expect(activator.addedMarketplaces).toEqual([BUILT]);
@@ -616,7 +616,7 @@ async function ownedNativeSettings(
 describe("proven native catalogues update declarative settings only when required", () => {
   it("projects enabled refs from two distinct owned Copilot catalogues into the tracked shared settings", async () => {
     const f = await ownedNativeSettings({ names: ["first", "second"] });
-    const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
+    const result = await f.sync.execute({ projectRoot: ROOT });
     const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
     expect(result).toEqual({ activated: ["copilot"], ...CLEAN_RUN });
     expect(JSON.parse(content)).toEqual({
@@ -639,7 +639,7 @@ describe("proven native catalogues update declarative settings only when require
 
   it("persists a missing declarative ref's hash even when native and machine ownership are already unchanged", async () => {
     const f = await ownedNativeSettings();
-    await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
+    await f.sync.execute({ projectRoot: ROOT });
     const content = await f.fs.readFile(resolve(ROOT, f.settingsPath));
     expect(JSON.parse(content).enabledPlugins).toEqual({ "review-first@first-catalog": true });
     expect(f.projectRepo.getCurrent()?.getToolFiles(TOOL.copilot)[0]?.hash.value).toBe(
@@ -647,7 +647,7 @@ describe("proven native catalogues update declarative settings only when require
     );
     expect(f.projectRepo.saveCount).toBe(1);
     expect(f.machineRepo.saveCount).toBe(0);
-    await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
+    await f.sync.execute({ projectRoot: ROOT });
     expect(f.projectRepo.saveCount).toBe(1);
     expect(f.machineRepo.saveCount).toBe(0);
   });
@@ -655,7 +655,7 @@ describe("proven native catalogues update declarative settings only when require
   it("leaves malformed Copilot settings untouched without parsing warnings when no native refs are proven", async () => {
     const settings = "{ personalSetting: true,";
     const f = await ownedNativeSettings({ withPlugins: false, settings });
-    const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
+    const result = await f.sync.execute({ projectRoot: ROOT });
     expect(result).toEqual({ activated: ["copilot"], ...CLEAN_RUN });
     expect(await f.fs.readFile(resolve(ROOT, f.settingsPath))).toBe(settings);
     expect(f.logger.warnMessages).toEqual([]);
@@ -668,7 +668,7 @@ describe("proven native catalogues update declarative settings only when require
       toolId: TOOL.codex,
       cachedRoot: "/host/cache/copied-marketplace",
     });
-    const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
+    const result = await f.sync.execute({ projectRoot: ROOT });
     expect(result).toEqual({ activated: ["codex"], ...CLEAN_RUN });
     expect(f.activator.addedMarketplaces).toEqual(["/built/codex/first"]);
     expect(f.activator.removedMarketplaces).toEqual([]);
@@ -695,7 +695,7 @@ describe("proven native catalogues update declarative settings only when require
       cachedCatalogue: "second",
       cachedRoot: "/host/cache/second-copy",
     });
-    const result = await f.sync.execute({ tools: registeredCatalog(), projectRoot: ROOT });
+    const result = await f.sync.execute({ projectRoot: ROOT });
     expect(result.errors).toEqual([]);
     expect(f.activator.addedMarketplaces).toEqual(["/built/codex/second"]);
     const expected = f.registrations.map((registration) => ({
@@ -784,7 +784,7 @@ describe("shared framework references follow any successful native tool outcome"
           ],
         ]),
       });
-      const result = await sync.execute({ tools: registeredCatalog(), projectRoot: ROOT, scope });
+      const result = await sync.execute({ projectRoot: ROOT, scope });
       expect(result.activated).toEqual(["claude", "codex"]);
       expect(result.errors).toEqual([]);
       expect(result.warnings.join(" ")).toContain("host source unproven");

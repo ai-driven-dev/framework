@@ -8,7 +8,7 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -278,7 +278,6 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
       });
 
       const result = await f.useCase.execute({
-        tools: registeredCatalog(),
         projectRoot: PROJECT_ROOT,
         marketplaceNames: [CATALOG],
       });
@@ -320,7 +319,6 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
     });
 
     const result = await fixture.useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -340,7 +338,6 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
     });
 
     const result = await fixture.useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -355,7 +352,7 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
   it("refreshes only an exact canonically owned catalogue without foreign refs", async () => {
     const fixture = makeSync(toolId, { machine: canonicallyOwned(toolId) });
 
-    await fixture.useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(fixture.activator.refreshedCatalogs).toEqual([CATALOG]);
     expect(fixture.activator.enabledPlugins).toEqual([PLUGIN_REF]);
@@ -405,7 +402,6 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
     });
 
     const result = await fixture.useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -482,7 +478,7 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
         hostReader,
       });
 
-      await fixture.useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+      await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
 
       expect(fixture.activator.addedMarketplaces).toEqual([]);
       expect(fixture.activator.removedMarketplaces).toEqual([]);
@@ -506,7 +502,6 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
     });
 
     const result = await fixture.useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -523,7 +518,6 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
     });
 
     const result = await fixture.useCase.execute({
-      tools: registeredCatalog(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -539,7 +533,7 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
   it("activates a freshly added AIDD ref without a redundant refresh", async () => {
     const fixture = makeSync(toolId);
 
-    await fixture.useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
+    await fixture.useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(fixture.activator.addedMarketplaces).toEqual([`/built/${toolId}`]);
     expect(fixture.activator.enabledPlugins).toEqual([PLUGIN_REF]);
