@@ -47,6 +47,13 @@ const CLAUDE_METRICS = new Set([
   "claude_code.session.count",
   "claude_code.token.usage",
 ]);
+const CLAUDE_QUERY_SOURCES = new Set([
+  "main",
+  "subagent",
+  "auxiliary",
+  "plugin_model_complete",
+  "plugin_model_classify",
+]);
 const CODEX_EVENTS = new Set(["codex.conversation_starts", "codex.sse_event", "codex.tool_result"]);
 const IDENTITY_ATTRIBUTES = new Set(["user.email", "user.account_id", "organization.id"]);
 const NON_TEXT_ATTRIBUTES = new Set([
@@ -480,7 +487,9 @@ export function selectTransfers(line: string, options: SyncOptions): Transfer[] 
             if (at) a.set("event.timestamp", at);
             else a.delete("event.timestamp");
           }
-          const safe = safeAttributes(a);
+          const safe = safeAttributes(a).filter(
+            ({ key }) => options.config !== CLAUDE_CONFIG_ID || key !== "query_source"
+          );
           if (
             options.config === CLAUDE_CONFIG_ID &&
             (event === "api_request" || event === "claude_code.api_request")
@@ -554,7 +563,10 @@ export function selectTransfers(line: string, options: SyncOptions): Transfer[] 
                   point.attributes
                 )
               );
-              const safe = safeAttributes(a);
+              const safe = safeAttributes(a).filter(
+                ({ key, value }) =>
+                  key !== "query_source" || CLAUDE_QUERY_SOURCES.has(value.stringValue)
+              );
               const effort = array(point.attributes)
                 .map(object)
                 .find((entry) => entry.key === "effort");
