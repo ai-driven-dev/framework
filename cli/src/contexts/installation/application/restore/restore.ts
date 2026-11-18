@@ -1,24 +1,14 @@
 import { join } from "node:path";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
-import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { FrameworkDescriptor } from "../../domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { FileMerger } from "../../ports/file-merger.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { PluginFetcher } from "../../ports/marketplace-sources.js";
-import type { Platform } from "../../ports/platform.js";
-import type { PluginDistributionReader } from "../../ports/plugin/plugin-distribution-reader.js";
-import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
 import { requireManifest } from "../shared/require-manifest.js";
-import { RestoreAllPlugins, type RestoreAllPluginsResult } from "./restore-all-plugins.js";
-import { RestoreToolFiles, type RestoreToolFilesResult } from "./restore-tool-files.js";
+import type { RestoreAllPlugins, RestoreAllPluginsResult } from "./restore-all-plugins.js";
+import type { RestoreToolFiles, RestoreToolFilesResult } from "./restore-tool-files.js";
 
 /**
  * Where each config artifact sits in the canonical source, asked of every registered profile
@@ -46,7 +36,6 @@ interface RestoreCommand {
   interactive?: boolean;
   manifest?: Manifest;
   pluginName?: string;
-  tools: ToolCatalog;
 }
 
 interface RestoreCtx {
@@ -60,7 +49,6 @@ interface RestoreCtx {
   fileFilter: ((p: string) => boolean) | null;
   toolIds: string[];
   pluginName?: string;
-  tools: ToolCatalog;
 }
 
 interface RestoreResult {
@@ -77,16 +65,11 @@ interface RestoreResult {
 
 export class Restore {
   constructor(
-    private readonly fs: FileReader & FileWriter & FileMerger,
+    private readonly fs: FileReader,
     private readonly manifestRepo: ManifestRepository,
-    private readonly hasher: Hasher,
-    private readonly logger: Logger,
-    private readonly platform: Platform,
-    private readonly prompter: Prompter,
-    private readonly pluginFetcher?: PluginFetcher,
-    private readonly pluginDistributionReader?: PluginDistributionReader,
-    private readonly assetProvider?: AssetProvider,
-    private readonly builtDeps?: BuiltMaterializationDeps
+    private readonly restoreToolFiles: RestoreToolFiles,
+    private readonly restoreAllPlugins: RestoreAllPlugins,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: RestoreCommand): Promise<RestoreResult> {
@@ -100,7 +83,7 @@ export class Restore {
     manifest: Manifest
   ): Promise<RestoreCtx> {
     const resolvedVersion = options.version ?? "unknown";
-    const configRefs = configRefsOf(options.tools);
+    const configRefs = configRefsOf(this.tools);
     return {
       manifest,
       descriptor: this.buildStaticDescriptor(resolvedVersion, configRefs),
@@ -114,7 +97,6 @@ export class Restore {
       fileFilter: buildFileFilter(options.files),
       toolIds: options.toolIds?.length ? options.toolIds : manifest.getInstalledToolIds(),
       pluginName: options.pluginName,
-      tools: options.tools,
     };
   }
 
@@ -127,43 +109,21 @@ export class Restore {
   }
 
   private async runToolRestores(ctx: RestoreCtx): Promise<RestoreToolFilesResult[]> {
-    const restoreToolFiles = new RestoreToolFiles(
-      this.fs,
-      this.hasher,
-      this.logger,
-      this.platform,
-      this.prompter,
-      this.assetProvider
-    );
     const results: RestoreToolFilesResult[] = [];
     for (const toolId of ctx.toolIds) {
-      results.push(await restoreToolFiles.execute({ toolId, ...ctx }));
+      results.push(await this.restoreToolFiles.execute({ toolId, ...ctx }));
     }
     return results;
   }
 
   private async runPluginRestore(ctx: RestoreCtx): Promise<RestoreAllPluginsResult> {
-    if (
-      this.pluginFetcher === undefined ||
-      this.pluginDistributionReader === undefined ||
-      this.builtDeps === undefined
-    ) {
-      return { totalFiles: 0, pluginNames: [], nativeOnlyToolIds: [] };
-    }
-    return new RestoreAllPlugins(
-      this.fs,
-      this.hasher,
-      this.pluginFetcher,
-      this.pluginDistributionReader,
-      this.builtDeps
-    ).execute({
+    return this.restoreAllPlugins.execute({
       projectRoot: ctx.projectRoot,
       manifest: ctx.manifest,
       fileFilter: ctx.fileFilter,
       pluginName: ctx.pluginName,
       toolIds: ctx.toolIds,
       force: ctx.force,
-      tools: ctx.tools,
     });
   }
 

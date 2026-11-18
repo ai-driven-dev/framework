@@ -4,9 +4,8 @@ import type { Restore } from "../../../../../../src/contexts/installation/applic
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { ManifestUnavailableError } from "../../../../../../src/shared/domain/errors.js";
 import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, TOOL } from "../../../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../../tools/testing/catalog-of.js";
 
-const CATALOG = catalogOf();
 const CURRENT = "9.9.9";
 const RESTORED: Awaited<ReturnType<Restore["execute"]>> = {
   tools: [],
@@ -26,7 +25,7 @@ function setup(manifest: Manifest | null) {
   return { useCase, restore, load };
 }
 
-const command = { projectRoot: "/p", force: false, interactive: false, tools: CATALOG };
+const command = { projectRoot: "/p", force: false, interactive: false };
 
 describe("RestoreTool", () => {
   it("restores the tool at the version the manifest recorded, handing over the manifest it read", async () => {
@@ -45,7 +44,6 @@ describe("RestoreTool", () => {
       interactive: false,
       manifest,
       pluginName: "p",
-      tools: CATALOG,
     });
     expect(load).toHaveBeenCalledTimes(1);
   });

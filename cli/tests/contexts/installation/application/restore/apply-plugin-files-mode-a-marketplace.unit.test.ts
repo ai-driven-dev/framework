@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
+import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { restoreAllPluginsOf } from "../../../../helpers/ports/build-restore.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
@@ -47,19 +48,20 @@ async function makeGithubRegistry(): Promise<InMemoryMarketplaceRegistry> {
 }
 
 function makeRestoreUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): RestoreAllPlugins {
-  return new RestoreAllPlugins(
-    deps.fs,
-    deps.hasher,
-    deps.pluginFetcher,
-    new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes()),
-    {
+  return restoreAllPluginsOf({
+    ...deps,
+    pluginDistributionReader: new PluginDistributionReaderAdapter(
+      deps.fs,
+      registeredManifestProbes()
+    ),
+    builtDeps: {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
       platform: process.platform,
       homedir: () => HOME,
       translate: translateDistribution,
-    }
-  );
+    },
+  });
 }
 
 /** Installs a github-sourced marketplace plugin on claude, so its manifest entry carries
@@ -117,7 +119,6 @@ describe("RestoreAllPlugins — Mode A marketplace tools (claude/codex/copilot)"
     }
 
     const result = await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -151,7 +152,6 @@ describe("RestoreAllPlugins — Mode A marketplace tools (claude/codex/copilot)"
     await deps.fs.writeFile(join(PROJECT_ROOT, untrackedPath), "keep me");
 
     await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -173,7 +173,6 @@ describe("RestoreAllPlugins — Mode A marketplace tools (claude/codex/copilot)"
     expect(before?.files.size).toBe(0);
 
     const result = await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,

@@ -1,19 +1,16 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import {
-  RestoreToolFiles,
-  type RestoreToolFilesCommand,
-} from "../../../../../src/contexts/installation/application/restore/restore-tool-files.js";
+import type { RestoreToolFilesCommand } from "../../../../../src/contexts/installation/application/restore/restore-tool-files.js";
 import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
+import { restoreToolFilesOf } from "../../../../helpers/ports/build-restore.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
-import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { KeepPrompter, OverwritePrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";
@@ -83,13 +80,12 @@ function restore(
   prompter: Prompter = new OverwritePrompter(),
   logger = new CapturingLogger()
 ) {
-  return new RestoreToolFiles(
-    installed.fs,
-    installed.hasher,
+  return restoreToolFilesOf({
+    fs: installed.fs,
+    hasher: installed.hasher,
     logger,
-    new FakePlatform("linux"),
-    prompter
-  ).execute({
+    prompter,
+  }).execute({
     toolId: TOOL.vscode,
     manifest: installed.manifest,
     descriptor,
@@ -99,7 +95,6 @@ function restore(
     force: true,
     interactive: false,
     fileFilter: null,
-    tools: catalogOf(),
     ...overrides,
   });
 }

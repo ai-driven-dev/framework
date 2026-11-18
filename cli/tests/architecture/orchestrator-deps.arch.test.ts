@@ -29,21 +29,12 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     path: "src/contexts/installation/application/restore/generate-tool-distribution.ts",
     dependencies: 9,
   },
-  { path: "src/contexts/installation/application/restore/restore.ts", dependencies: 12 },
-  {
-    path: "src/contexts/installation/application/restore/restore-tool-files.ts",
-    dependencies: 9,
-  },
   {
     path: "src/contexts/installation/application/install/install-ide-tool.ts",
     dependencies: 6,
   },
   {
     path: "src/contexts/installation/application/plugin/update-plugin.ts",
-    dependencies: 6,
-  },
-  {
-    path: "src/contexts/installation/application/restore/restore-all-plugins.ts",
     dependencies: 6,
   },
 ];

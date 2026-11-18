@@ -57,7 +57,6 @@ export class RestoreAll {
         files,
         force,
         interactive,
-        tools,
       });
       return {
         totalRestored: result.totalRestored,

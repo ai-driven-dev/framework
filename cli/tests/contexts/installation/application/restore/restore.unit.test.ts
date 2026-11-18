@@ -2,11 +2,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { Restore } from "../../../../../src/contexts/installation/application/restore/restore.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { restoreAllPluginsOf, restoreOf } from "../../../../helpers/ports/build-restore.js";
 import {
   buildUnitDeps,
   FIXTURE_DIR,
@@ -15,7 +15,6 @@ import {
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources, fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
-import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import {
   KeepPrompter,
   OverwritePrompter,
@@ -73,18 +72,11 @@ function makeRestoreUseCase(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   prompter = new OverwritePrompter()
 ) {
-  return new Restore(
-    deps.fs,
-    deps.manifestRepo,
-    deps.hasher,
-    deps.logger,
-    new FakePlatform("linux"),
+  return restoreOf({
+    ...deps,
     prompter,
-    deps.pluginFetcher,
-    deps.pluginDistributionReader,
-    undefined,
-    fakeBuiltDeps()
-  );
+    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+  });
 }
 
 describe("restore", () => {
@@ -94,7 +86,6 @@ describe("restore", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf(),
         frameworkPath: FIXTURE_DIR,
         version: "test",
         projectRoot: PROJECT_ROOT,
@@ -107,7 +98,6 @@ describe("restore", () => {
     await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
 
     const result = await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -124,7 +114,6 @@ describe("restore", () => {
     await deps.fs.writeFile(settingsPath, '{"modified": true}');
 
     const result = await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -145,7 +134,6 @@ describe("restore", () => {
     await deps.fs.deleteFile(settingsPath);
 
     const result = await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -164,7 +152,6 @@ describe("restore", () => {
     await deps.fs.writeFile(settingsPath, '{"modified": true}');
 
     const result = await makeRestoreUseCase(deps, new KeepPrompter()).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -187,7 +174,6 @@ describe("restore", () => {
     await deps.fs.writeFile(cursorPath, '{"modified": true}');
 
     await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -216,7 +202,6 @@ describe("restore", () => {
     await deps.fs.writeFile(codexPluginFile, "CORRUPTED CODEX");
 
     await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -239,7 +224,6 @@ describe("restore", () => {
     await deps.fs.writeFile(claudePluginFile, "CORRUPTED CLAUDE");
 
     await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -264,7 +248,6 @@ describe("restore", () => {
     await deps.fs.writeFile(codexPluginFile, "CORRUPTED CODEX");
 
     await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -283,7 +266,6 @@ describe("restore", () => {
     await deps.fs.writeFile(untrackedPath, "user added content");
 
     await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -301,7 +283,6 @@ describe("restore", () => {
     await deps.fs.deleteFile(settingsPath);
 
     const result = await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -322,7 +303,6 @@ describe("restore", () => {
 
     await expect(
       makeRestoreUseCase(deps).execute({
-        tools: catalogOf(),
         frameworkPath: FIXTURE_DIR,
         version: "test",
         projectRoot: PROJECT_ROOT,
@@ -341,7 +321,6 @@ describe("restore", () => {
 
     const prompter = new RecordingPrompter("overwrite");
     await makeRestoreUseCase(deps, prompter).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -361,7 +340,6 @@ describe("restore", () => {
 
     const prompter = new RecordingPrompter("overwrite");
     await makeRestoreUseCase(deps, prompter).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -380,7 +358,6 @@ describe("restore", () => {
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
       const result = await makeRestoreUseCase(deps).execute({
-        tools: catalogOf(),
         frameworkPath: FIXTURE_DIR,
         version: "test",
         projectRoot: PROJECT_ROOT,
@@ -402,7 +379,6 @@ describe("restore", () => {
       );
 
       const result = await makeRestoreUseCase(deps).execute({
-        tools: catalogOf(),
         frameworkPath: FIXTURE_DIR,
         version: "test",
         projectRoot: PROJECT_ROOT,
@@ -422,7 +398,6 @@ describe("restore", () => {
       await deps.fs.deleteFile(settingsPath);
 
       const result = await makeRestoreUseCase(deps).execute({
-        tools: catalogOf(),
         frameworkPath: FIXTURE_DIR,
         version: "test",
         projectRoot: PROJECT_ROOT,
@@ -446,7 +421,6 @@ describe("restore", () => {
       );
 
       const result = await makeRestoreUseCase(deps, new KeepPrompter()).execute({
-        tools: catalogOf(),
         frameworkPath: FIXTURE_DIR,
         version: "test",
         projectRoot: PROJECT_ROOT,
@@ -473,7 +447,6 @@ describe("restore", () => {
 
       await expect(
         makeRestoreUseCase(deps).execute({
-          tools: catalogOf(),
           frameworkPath: FIXTURE_DIR,
           version: "test",
           projectRoot: PROJECT_ROOT,
@@ -495,7 +468,6 @@ describe("restore", () => {
       );
 
       const result = await makeRestoreUseCase(deps).execute({
-        tools: catalogOf(),
         frameworkPath: FIXTURE_DIR,
         version: "test",
         projectRoot: PROJECT_ROOT,
@@ -508,29 +480,6 @@ describe("restore", () => {
     });
   });
 });
-
-function withoutPluginSources(deps: Awaited<ReturnType<typeof buildUnitDeps>>): Restore {
-  return new Restore(
-    deps.fs,
-    deps.manifestRepo,
-    deps.hasher,
-    deps.logger,
-    new FakePlatform("linux"),
-    new OverwritePrompter()
-  );
-}
-
-function withFetcherOnly(deps: Awaited<ReturnType<typeof buildUnitDeps>>): Restore {
-  return new Restore(
-    deps.fs,
-    deps.manifestRepo,
-    deps.hasher,
-    deps.logger,
-    new FakePlatform("linux"),
-    new OverwritePrompter(),
-    deps.pluginFetcher
-  );
-}
 
 async function loadedManifest(deps: Awaited<ReturnType<typeof buildUnitDeps>>): Promise<Manifest> {
   const manifest = await deps.manifestRepo.load();
@@ -546,56 +495,11 @@ describe("restore — consent to overwrite", () => {
 
     await expect(
       makeRestoreUseCase(deps).execute({
-        tools: catalogOf(),
         frameworkPath: FIXTURE_DIR,
         version: "test",
         projectRoot: PROJECT_ROOT,
       })
     ).rejects.toThrow("--force");
-  });
-});
-
-describe("restore — plugin sources", () => {
-  const PLUGIN_FILE = join(PROJECT_ROOT, ".claude/plugins/sample-plugin/commands/greet.md");
-
-  async function claudeWithCorruptedPlugin() {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
-    await installPlugin(deps, TOOL.claude);
-    await deps.fs.writeFile(PLUGIN_FILE, "CORRUPTED");
-    return deps;
-  }
-
-  it("leaves plugin files alone when no plugin source is wired", async () => {
-    const deps = await claudeWithCorruptedPlugin();
-
-    const result = await withoutPluginSources(deps).execute({
-      tools: catalogOf(),
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
-
-    expect(result.totalPluginFilesRestored).toBe(0);
-    expect(result.restoredPluginNames).toStrictEqual([]);
-    expect(result.nativeOnlyToolIds).toStrictEqual([]);
-    expect(deps.fs.getFile(PLUGIN_FILE)).toBe("CORRUPTED");
-  });
-
-  it("leaves plugin files alone when only the fetcher is wired", async () => {
-    const deps = await claudeWithCorruptedPlugin();
-
-    const result = await withFetcherOnly(deps).execute({
-      tools: catalogOf(),
-      frameworkPath: FIXTURE_DIR,
-      version: "test",
-      projectRoot: PROJECT_ROOT,
-      force: true,
-    });
-
-    expect(result.totalPluginFilesRestored).toBe(0);
-    expect(deps.fs.getFile(PLUGIN_FILE)).toBe("CORRUPTED");
   });
 });
 
@@ -612,7 +516,6 @@ describe("restore — persisting the manifest", () => {
     await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/keybindings.json"), "[]");
 
     await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -630,7 +533,6 @@ describe("restore — persisting the manifest", () => {
     const handed = Manifest.fromJSON(stored.toJSON(), resolveRegisteredToolId);
 
     await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -655,7 +557,6 @@ describe("restore — persisting the manifest", () => {
     );
 
     await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -679,7 +580,6 @@ describe("restore — totals", () => {
     ]);
 
     const result = await makeRestoreUseCase(deps, prompter).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -701,7 +601,6 @@ describe("restore — the framework path", () => {
     await deps.fs.deleteFile(keybindings);
 
     await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: "/partial-framework",
       version: "test",
       projectRoot: PROJECT_ROOT,
@@ -733,7 +632,6 @@ describe("restore — the file selection", () => {
     files: string[]
   ): Promise<string[]> {
     const result = await makeRestoreUseCase(deps).execute({
-      tools: catalogOf(),
       frameworkPath: FIXTURE_DIR,
       version: "test",
       projectRoot: PROJECT_ROOT,

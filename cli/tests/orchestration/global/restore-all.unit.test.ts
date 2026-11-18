@@ -5,7 +5,7 @@ import { AddPlugin } from "../../../src/contexts/installation/application/plugin
 import { PluginDistributionLoader } from "../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { ReportStatus } from "../../../src/contexts/installation/application/report-status.js";
 import { RestoreGlobal } from "../../../src/contexts/installation/application/restore/project/restore-global.js";
-import { Restore } from "../../../src/contexts/installation/application/restore/restore.js";
+import type { Restore } from "../../../src/contexts/installation/application/restore/restore.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { RestoreAll } from "../../../src/orchestration/global/restore-all.js";
@@ -14,6 +14,7 @@ import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
+import { restoreAllPluginsOf, restoreOf } from "../../helpers/ports/build-restore.js";
 import {
   buildUnitDeps,
   initAndInstall,
@@ -21,9 +22,12 @@ import {
   installTool,
 } from "../../helpers/ports/build-unit-deps.js";
 import { CheckboxRecordingPrompter } from "../../helpers/ports/checkbox-recording-prompter.js";
-import { fakeBuildSources, translateDistribution } from "../../helpers/ports/fake-build-sources.js";
+import {
+  fakeBuildSources,
+  fakeBuiltDeps,
+  translateDistribution,
+} from "../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
-import { FakePlatform } from "../../helpers/ports/fake-platform.js";
 import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
 
@@ -75,18 +79,15 @@ function makeRestoreAll(
     deps.hasher,
     new DetectPluginDrift(deps.fs)
   );
-  const restoreUseCase = new Restore(
-    deps.fs,
-    deps.manifestRepo,
-    deps.hasher,
-    deps.logger,
-    new FakePlatform("linux"),
+  const restoreUseCase = restoreOf({
+    ...deps,
     prompter,
-    deps.pluginFetcher,
-    pluginReader,
-    deps.assetProvider,
-    builtDeps(deps)
-  );
+    plugins: restoreAllPluginsOf({
+      ...deps,
+      pluginDistributionReader: pluginReader,
+      builtDeps: builtDeps(deps),
+    }),
+  });
   return new RestoreAll(
     prompter,
     statusUseCase,
@@ -392,14 +393,11 @@ describe("RestoreAll — consent to overwrite", () => {
       deps.hasher,
       new DetectPluginDrift(deps.fs)
     );
-    const restoreUseCase = new Restore(
-      deps.fs,
-      deps.manifestRepo,
-      deps.hasher,
-      deps.logger,
-      new FakePlatform("linux"),
-      prompter
-    );
+    const restoreUseCase = restoreOf({
+      ...deps,
+      prompter,
+      plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+    });
     const seen = recordAsks(restoreUseCase);
     await new RestoreAll(
       prompter,
@@ -435,14 +433,11 @@ describe("RestoreAll — native-only tools", () => {
       deps.hasher,
       new DetectPluginDrift(deps.fs)
     );
-    const restoreUseCase = new Restore(
-      deps.fs,
-      deps.manifestRepo,
-      deps.hasher,
-      deps.logger,
-      new FakePlatform("linux"),
-      prompter
-    );
+    const restoreUseCase = restoreOf({
+      ...deps,
+      prompter,
+      plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+    });
     restoreUseCase.execute = async () => ({
       tools: [],
       totalRestored: 0,
@@ -487,14 +482,11 @@ function restoreAllDelegatingTo(
     deps.hasher,
     new DetectPluginDrift(deps.fs)
   );
-  const restoreUseCase = new Restore(
-    deps.fs,
-    deps.manifestRepo,
-    deps.hasher,
-    deps.logger,
-    new FakePlatform("linux"),
-    prompter
-  );
+  const restoreUseCase = restoreOf({
+    ...deps,
+    prompter,
+    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+  });
   restoreUseCase.execute = delegate;
   return new RestoreAll(
     prompter,

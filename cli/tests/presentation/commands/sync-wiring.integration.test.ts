@@ -191,7 +191,6 @@ describe("aidd sync --tool", () => {
       force: false,
       interactive: false,
       pluginName: undefined,
-      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,

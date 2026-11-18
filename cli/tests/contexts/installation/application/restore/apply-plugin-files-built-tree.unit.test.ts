@@ -4,8 +4,9 @@ import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
+import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { restoreAllPluginsOf } from "../../../../helpers/ports/build-restore.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
   fakeBuildSources,
@@ -47,19 +48,20 @@ async function makeRegistry(): Promise<InMemoryMarketplaceRegistry> {
 }
 
 function makeRestoreUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): RestoreAllPlugins {
-  return new RestoreAllPlugins(
-    deps.fs,
-    deps.hasher,
-    deps.pluginFetcher,
-    new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes()),
-    {
+  return restoreAllPluginsOf({
+    ...deps,
+    pluginDistributionReader: new PluginDistributionReaderAdapter(
+      deps.fs,
+      registeredManifestProbes()
+    ),
+    builtDeps: {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
       homedir,
       platform: process.platform,
       translate: translateDistribution,
-    }
-  );
+    },
+  });
 }
 
 /** Installs a cursor marketplace plugin so its manifest entry carries `marketplace`. */
@@ -116,7 +118,6 @@ describe("RestoreAllPlugins — built-tree materialization", () => {
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
     const result = await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -158,7 +159,6 @@ describe("RestoreAllPlugins — built-tree materialization", () => {
     }
 
     const result = await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,
@@ -182,7 +182,6 @@ describe("RestoreAllPlugins — built-tree materialization", () => {
     expect(before).toHaveLength(1);
 
     await makeRestoreUseCase(deps, registry).execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       manifest,
       fileFilter: null,

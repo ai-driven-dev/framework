@@ -8,9 +8,15 @@ import { InstallUserPlugins } from "../../contexts/installation/application/inst
 import { ListInstalledTools } from "../../contexts/installation/application/list-installed-tools.js";
 import { ReportStatus } from "../../contexts/installation/application/report-status.js";
 import { ResolveSyncConflict } from "../../contexts/installation/application/resolve-sync-conflict.js";
+import { ApplyPluginFiles } from "../../contexts/installation/application/restore/apply-plugin-files.js";
+import { GenerateToolDistribution } from "../../contexts/installation/application/restore/generate-tool-distribution.js";
 import { RestoreGlobal } from "../../contexts/installation/application/restore/project/restore-global.js";
 import { RestoreTool } from "../../contexts/installation/application/restore/project/restore-tool.js";
 import { Restore } from "../../contexts/installation/application/restore/restore.js";
+import { RestoreAllPlugins } from "../../contexts/installation/application/restore/restore-all-plugins.js";
+import { RestoreMergeFiles } from "../../contexts/installation/application/restore/restore-merge-files.js";
+import { RestoreRegularFiles } from "../../contexts/installation/application/restore/restore-regular-files.js";
+import { RestoreToolFiles } from "../../contexts/installation/application/restore/restore-tool-files.js";
 import { UpdateTool } from "../../contexts/installation/application/update/update-tool.js";
 import { ReportAllStatus } from "../../orchestration/global/report-all-status.js";
 import { ResolveUpdateDecision } from "../../orchestration/global/resolve-update-decision.js";
@@ -90,17 +96,29 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
     installGlobalPlugins
   );
   const statusUseCase = new ReportStatus(fs, manifestRepo, hasher, detectPluginDriftUseCase);
+  const restoreToolFiles = new RestoreToolFiles(
+    new GenerateToolDistribution(fs, hasher, platform, assetProvider),
+    new RestoreRegularFiles(fs, prompter),
+    new RestoreMergeFiles(fs, hasher, prompter),
+    logger,
+    base.tools
+  );
+  const restoreAllPlugins = new RestoreAllPlugins(
+    new ApplyPluginFiles(
+      fs,
+      hasher,
+      pluginFetcher,
+      pluginDistributionReader,
+      builtMaterializationDeps
+    ),
+    base.tools
+  );
   const restoreUseCase = new Restore(
     fs,
     manifestRepo,
-    hasher,
-    logger,
-    platform,
-    prompter,
-    pluginFetcher,
-    pluginDistributionReader,
-    assetProvider,
-    builtMaterializationDeps
+    restoreToolFiles,
+    restoreAllPlugins,
+    base.tools
   );
   const statusAllUseCase = new ReportAllStatus(statusUseCase);
   const restoreAllUseCase = new RestoreAll(

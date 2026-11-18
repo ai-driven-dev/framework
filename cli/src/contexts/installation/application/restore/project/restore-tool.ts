@@ -1,5 +1,4 @@
 import type { VersionReader } from "../../../../../shared/ports/version-reader.js";
-import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../../ports/manifest-repository.js";
 import { requireManifest } from "../../shared/require-manifest.js";
 import type { Restore } from "../restore.js";
@@ -13,7 +12,6 @@ export interface RestoreToolCommand {
   force: boolean;
   interactive: boolean;
   pluginName?: string;
-  tools: ToolCatalog;
 }
 
 /** Restores one tool of a project from its own record, loaded here so nothing above holds it. */
@@ -35,7 +33,6 @@ export class RestoreTool {
       interactive: command.interactive,
       manifest,
       pluginName: command.pluginName,
-      tools: command.tools,
     });
   }
 }

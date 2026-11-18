@@ -1,21 +1,14 @@
 import { type FileHash, InstallationFile } from "../../../../shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../shared/domain/merge.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { Prompter } from "../../../../shared/ports/prompter.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { FrameworkDescriptor } from "../../domain/canon.js";
 import type { Manifest } from "../../domain/manifest.js";
-import type { FileMerger } from "../../ports/file-merger.js";
-import type { Platform } from "../../ports/platform.js";
 import type { RestoredTool } from "../../ports/tool-sections.js";
-import { GenerateToolDistribution } from "./generate-tool-distribution.js";
-import { RestoreMergeFiles } from "./restore-merge-files.js";
-import { RestoreRegularFiles } from "./restore-regular-files.js";
+import type { GenerateToolDistribution } from "./generate-tool-distribution.js";
+import type { RestoreMergeFiles } from "./restore-merge-files.js";
+import type { RestoreRegularFiles } from "./restore-regular-files.js";
 
 export interface RestoreToolFilesCommand {
   /** Unvalidated text: the restore refuses one no profile declares. */
@@ -28,8 +21,6 @@ export interface RestoreToolFilesCommand {
   force: boolean;
   interactive: boolean;
   fileFilter: ((p: string) => boolean) | null;
-  /** The tool profiles the restore asks. */
-  tools: ToolCatalog;
 }
 
 interface SectionRestoreResult {
@@ -56,17 +47,16 @@ export interface RestoreToolFilesResult {
 
 export class RestoreToolFiles {
   constructor(
-    private readonly fs: FileReader & FileWriter & FileMerger,
-    private readonly hasher: Hasher,
+    private readonly generateToolDistribution: GenerateToolDistribution,
+    private readonly restoreRegularFiles: RestoreRegularFiles,
+    private readonly restoreMergeFiles: RestoreMergeFiles,
     private readonly logger: Logger,
-    private readonly platform: Platform,
-    private readonly prompter: Prompter,
-    private readonly assetProvider?: AssetProvider
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: RestoreToolFilesCommand): Promise<RestoreToolFilesResult> {
     this.logger.info(`Checking ${options.toolId} for files to restore...`);
-    const config = options.tools.profile(options.toolId);
+    const config = this.tools.profile(options.toolId);
     const { toolId } = config;
     const distMap = await this.buildDistributionMap(options, config);
     const section = await this.restoreSection(options, distMap);
@@ -88,12 +78,12 @@ export class RestoreToolFiles {
     config: RestoredTool
   ): Promise<Map<string, InstallationFile>> {
     const { descriptor, contentFiles, projectRoot } = options;
-    const distribution = await new GenerateToolDistribution(
-      this.fs,
-      this.hasher,
-      this.platform,
-      this.assetProvider
-    ).execute({ config, descriptor, contentFiles, projectRoot });
+    const distribution = await this.generateToolDistribution.execute({
+      config,
+      descriptor,
+      contentFiles,
+      projectRoot,
+    });
     return new Map(distribution.map((f) => [f.relativePath, f]));
   }
 
@@ -101,7 +91,7 @@ export class RestoreToolFiles {
     options: RestoreToolFilesCommand,
     distMap: Map<string, InstallationFile>
   ): Promise<SectionRestoreResult | null> {
-    return new RestoreRegularFiles(this.fs, this.prompter).execute({
+    return this.restoreRegularFiles.execute({
       manifestFiles: options.manifest.getToolFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,
@@ -115,7 +105,7 @@ export class RestoreToolFiles {
     options: RestoreToolFilesCommand,
     distMap: Map<string, InstallationFile>
   ): Promise<MergeSectionRestoreResult | null> {
-    return new RestoreMergeFiles(this.fs, this.hasher, this.prompter).execute({
+    return this.restoreMergeFiles.execute({
       mergeFiles: options.manifest.getMergeFiles(options.toolId),
       distMap,
       projectRoot: options.projectRoot,

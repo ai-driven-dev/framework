@@ -1,15 +1,15 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Restore } from "../../../../../src/contexts/installation/application/restore/restore.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
+import { restoreAllPluginsOf, restoreOf } from "../../../../helpers/ports/build-restore.js";
 import {
   buildUnitDeps,
   FIXTURE_DIR,
   initAndInstall,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
+import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { OverwritePrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../tools/testing/catalog-of.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -42,17 +42,11 @@ async function installedThenDeleted(toolId: ToolId, relativePath: string) {
 }
 
 async function restore(deps: Awaited<ReturnType<typeof buildUnitDeps>>, toolId: ToolId) {
-  await new Restore(
-    deps.fs,
-    deps.manifestRepo,
-    deps.hasher,
-    deps.logger,
-    new FakePlatform("linux"),
-    new OverwritePrompter(),
-    deps.pluginFetcher,
-    deps.pluginDistributionReader
-  ).execute({
-    tools: catalogOf(),
+  await restoreOf({
+    ...deps,
+    prompter: new OverwritePrompter(),
+    plugins: restoreAllPluginsOf({ ...deps, builtDeps: fakeBuiltDeps() }),
+  }).execute({
     frameworkPath: FIXTURE_DIR,
     version: "test",
     projectRoot: PROJECT_ROOT,

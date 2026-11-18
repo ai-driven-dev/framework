@@ -1,5 +1,4 @@
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../../../domain/manifest.js";
 import type { ManifestRepository } from "../../../ports/manifest-repository.js";
 import { requireManifest } from "../../shared/require-manifest.js";
@@ -11,7 +10,6 @@ export interface RestoreGlobalCommand {
   files?: string[];
   force: boolean;
   interactive: boolean;
-  tools: ToolCatalog;
 }
 
 export interface RestoreGlobalResult {
@@ -63,7 +61,6 @@ export class RestoreGlobal {
       force: command.force || command.interactive,
       interactive: command.interactive,
       manifest,
-      tools: command.tools,
     });
     return {
       totalRestored: result.totalRestored,

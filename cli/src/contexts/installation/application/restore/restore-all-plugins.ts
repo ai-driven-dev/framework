@@ -1,17 +1,11 @@
 import { join } from "node:path";
 import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
-import type { PluginFetcher } from "../../ports/marketplace-sources.js";
-import type { PluginDistributionReader } from "../../ports/plugin/plugin-distribution-reader.js";
-import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";
-import { ApplyPluginFiles } from "./apply-plugin-files.js";
+import type { ApplyPluginFiles } from "./apply-plugin-files.js";
 
 interface RestoreAllPluginsCommand {
   projectRoot: string;
@@ -21,8 +15,6 @@ interface RestoreAllPluginsCommand {
   /** Restrict which AI tools' plugins get touched. Undefined means every installed AI tool (unscoped). */
   toolIds?: readonly string[];
   force?: boolean;
-  /** The tool profiles the restore asks. */
-  tools: ToolCatalog;
 }
 
 export interface RestoreAllPluginsResult {
@@ -37,31 +29,20 @@ export interface RestoreAllPluginsResult {
 
 export class RestoreAllPlugins {
   constructor(
-    private readonly fs: FileReader & FileWriter,
-    private readonly hasher: Hasher,
-    private readonly pluginFetcher: PluginFetcher,
-    private readonly pluginDistributionReader: PluginDistributionReader,
-    private readonly builtDeps: BuiltMaterializationDeps
+    private readonly applyPluginFiles: ApplyPluginFiles,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: RestoreAllPluginsCommand): Promise<RestoreAllPluginsResult> {
-    const {
-      projectRoot,
-      manifest,
-      fileFilter,
-      pluginName,
-      toolIds,
-      force = false,
-      tools,
-    } = options;
+    const { projectRoot, manifest, fileFilter, pluginName, toolIds, force = false } = options;
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     let totalFiles = 0;
     const restoredNames = new Set<string>();
     const nativeOnlyToolIds: AiToolId[] = [];
-    for (const toolId of tools.idsInCanonicalOrder("ai")) {
+    for (const toolId of this.tools.idsInCanonicalOrder("ai")) {
       if (!manifest.hasTool(toolId)) continue;
       if (toolIds !== undefined && !toolIds.includes(toolId)) continue;
-      const toolConfig = tools.aiProfile(toolId);
+      const toolConfig = this.tools.aiProfile(toolId);
       const targets = this.targetPlugins(toolId, manifest, pluginName);
       if (
         targets.length > 0 &&
@@ -113,13 +94,7 @@ export class RestoreAllPlugins {
     const pluginNames: string[] = [];
     const targets = this.targetPlugins(toolId, manifest, pluginName);
     for (const plugin of targets) {
-      const filesWritten = await new ApplyPluginFiles(
-        this.fs,
-        this.hasher,
-        this.pluginFetcher,
-        this.pluginDistributionReader,
-        this.builtDeps
-      ).execute({
+      const filesWritten = await this.applyPluginFiles.execute({
         toolId,
         plugin,
         tool: toolConfig,

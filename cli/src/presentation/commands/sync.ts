@@ -97,7 +97,7 @@ async function runSyncAction(
     }
 
     if (cmdOptions.tool !== undefined) {
-      await runScopedSync(deps, output, projectRoot, fileArgs, cmdOptions, tools, cmdOptions.tool);
+      await runScopedSync(deps, output, projectRoot, fileArgs, cmdOptions, cmdOptions.tool);
       return;
     }
 
@@ -133,7 +133,6 @@ async function runScopedSync(
   projectRoot: string,
   fileArgs: string[],
   cmdOptions: SyncCmdOptions,
-  catalog: ToolCatalog,
   toolName: string
 ): Promise<void> {
   const result = await deps.restoreToolUseCase.execute({
@@ -143,7 +142,6 @@ async function runScopedSync(
     force: cmdOptions.force,
     interactive: process.stdout.isTTY,
     pluginName: cmdOptions.plugin,
-    tools: catalog,
   });
   printToolRestoreOutcome(output, result);
 
