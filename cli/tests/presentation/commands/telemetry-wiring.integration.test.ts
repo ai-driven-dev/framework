@@ -312,11 +312,19 @@ describe("aidd telemetry identity", () => {
     expect(stdout()).toContain("Installation ID: installation-id");
   });
 
+  it("reports an unavailable installation ID when none exists", async () => {
+    identity.show.mockResolvedValue({ status: "unset" });
+    checkInstallationId.mockResolvedValueOnce(null);
+    expect(await run("identity")).toBeNull();
+    expect(stdout()).toContain("Installation ID: unavailable.");
+  });
+
   it("names the person it is given", async () => {
     identity.set.mockResolvedValue({ status: "set", personId: "person-a" });
     await run("identity", "person-a");
     expect(identity.set).toHaveBeenCalledWith("person-a");
     expect(stdout()).toContain('"person-a"');
+    expect(checkInstallationId).not.toHaveBeenCalled();
   });
 
   it("removes the identity with --off", async () => {
@@ -324,6 +332,7 @@ describe("aidd telemetry identity", () => {
     await run("identity", "--off");
     expect(identity.off).toHaveBeenCalled();
     expect(stdout()).toContain("removed");
+    expect(checkInstallationId).not.toHaveBeenCalled();
   });
 
   it("exits 1 for an identifier it refuses", async () => {
@@ -657,13 +666,14 @@ describe("the telemetry command surface", () => {
     const program = new Command().name("aidd");
     registerTelemetryCommand(program);
     const telemetry = program.commands.find((command) => command.name() === "telemetry");
-    const helps = [telemetry, ...(telemetry?.commands ?? [])].map((command) => ({
-      invocation: command === telemetry ? "aidd telemetry" : `aidd telemetry ${command?.name()}`,
-      help: command?.helpInformation().trimEnd(),
-    }));
-    for (const { invocation, help } of helps) {
-      expect(help, invocation).toBe(golden.find((entry) => entry.invocation === invocation)?.help);
-    }
+    if (!telemetry) throw new Error("telemetry command was not registered");
+    const checkHelp = (command: Command, invocation: string) => {
+      expect(command.helpInformation().trimEnd(), invocation).toBe(
+        golden.find((entry) => entry.invocation === invocation)?.help
+      );
+      for (const child of command.commands) checkHelp(child, `${invocation} ${child.name()}`);
+    };
+    checkHelp(telemetry, "aidd telemetry");
   });
 
   it.each([
@@ -688,6 +698,14 @@ describe("telemetry otel init", () => {
 
 describe("native telemetry commands", () => {
   let previousExitCode: typeof process.exitCode;
+  const sessionArgs = [
+    "otel",
+    "run",
+    "--config=claude",
+    "--tenant=acme",
+    "--endpoint=http://127.0.0.1:3000",
+    "--yes",
+  ];
 
   beforeEach(() => {
     previousExitCode = process.exitCode;
@@ -801,5 +819,68 @@ describe("native telemetry commands", () => {
       })
     );
     expect(stdout()).toContain("Private OTLP capture: /private/claude.jsonl");
+  });
+
+  it("forwards the chosen session options and reports the observations sent", async () => {
+    vi.stubEnv("AIDD_OTEL_TOKEN", "test-token");
+    const runOtel = vi.spyOn(otel, "runOtelSession").mockResolvedValue(17);
+    expect(
+      await run(
+        ...sessionArgs,
+        "--model=haiku",
+        "--follow-up=next question",
+        "--include-repository",
+        "--include-installation-id",
+        "--",
+        "first question"
+      )
+    ).toBeNull();
+    expect(runOtel).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: "claude",
+        tenant: "acme",
+        endpoint: "http://127.0.0.1:3000",
+        yes: true,
+        model: "haiku",
+        followUp: "next question",
+        includeRepository: true,
+        includeInstallationId: true,
+        cwd: process.cwd(),
+        prompt: "first question",
+        token: "test-token",
+        signal: expect.any(AbortSignal),
+        retainCapture: undefined,
+      })
+    );
+    expect(stdout()).toContain("Sent 17 OTLP observations from this execution.");
+  });
+
+  it("reports when the provider produced no supported observations", async () => {
+    vi.spyOn(otel, "runOtelSession").mockResolvedValue(0);
+    expect(await run(...sessionArgs, "--", "reply OK")).toBe(1);
+    expect(stderr()).toContain("The execution produced no supported OTLP observations to send.");
+  });
+
+  it("passes an empty token when no credential is configured", async () => {
+    vi.stubEnv("AIDD_OTEL_TOKEN", undefined);
+    const runOtel = vi.spyOn(otel, "runOtelSession").mockResolvedValue(1);
+    expect(await run(...sessionArgs, "--", "reply OK")).toBeNull();
+    expect(runOtel).toHaveBeenCalledWith(expect.objectContaining({ token: "" }));
+  });
+
+  it.each(["SIGINT", "SIGTERM"] as const)("aborts on %s and removes its handlers", async (name) => {
+    const previousInt = process.listeners("SIGINT");
+    const previousTerm = process.listeners("SIGTERM");
+    const previous = name === "SIGINT" ? previousInt : previousTerm;
+    vi.spyOn(otel, "runOtelSession").mockImplementation(async ({ signal }) => {
+      const cancel = process.listeners(name).find((listener) => !previous.includes(listener));
+      expect(cancel).toBeDefined();
+      cancel?.(name);
+      expect(signal?.aborted).toBe(true);
+      return 1;
+    });
+    expect(await run(...sessionArgs, "--", "reply OK")).toBeNull();
+    expect(process.listeners("SIGINT")).toEqual(previousInt);
+    expect(process.listeners("SIGTERM")).toEqual(previousTerm);
   });
 });
