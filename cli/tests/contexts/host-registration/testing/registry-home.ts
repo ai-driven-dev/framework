@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { afterEach, beforeEach } from "vitest";
 import { wireHostRegistration } from "../../../../src/composition/host-registration.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
-import { catalogOf } from "../../tools/testing/catalog-of.js";
+import { registeredTools } from "../../../shared/testing/registered-tools.js";
 import { scratchDirectory } from "./scratch-directory.js";
 
 /**
@@ -32,7 +32,9 @@ export function registryHome() {
       await writeFile(path, content, "utf8");
     },
     readerFor(tool: AiToolId) {
-      const reader = wireHostRegistration(catalogOf(), scratch.dir).pluginRegistries.get(tool);
+      const reader = wireHostRegistration(registeredTools(), scratch.dir).pluginRegistries.get(
+        tool
+      );
       if (reader === undefined) throw new Error(`no reader declared for ${tool}`);
       return reader;
     },

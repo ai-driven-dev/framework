@@ -7,7 +7,7 @@ import type { NativeMarketplaceSource } from "../../../../src/contexts/host-regi
 import type { NativeMarketplaceRegistration } from "../../../../src/contexts/host-registration/domain/registration-record.js";
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 
 const SOURCE: NativeMarketplaceSource = {
   kind: "effective-list",
@@ -37,7 +37,7 @@ describe("current native marketplace source proof", () => {
         "real-catalog",
         new Set(),
         "/project-b",
-        toolId && registeredAiProfile(toolId)
+        toolId && registeredTools().aiProfile(toolId)
       );
       if (toolId === "copilot") await expect(result).resolves.toEqual(refs);
       else await expect(result).rejects.toThrow(/foreign host ref/);
@@ -100,7 +100,7 @@ describe("current native marketplace source proof", () => {
         "real-catalog",
         new Set(["mine@real-catalog"]),
         "/project-b",
-        registeredAiProfile(TOOL.claude)
+        registeredTools().aiProfile(TOOL.claude)
       )
     ).rejects.toThrow(/foreign host ref 'foreign@real-catalog'/);
     expect(requestedRoot).toBe("/project-b");
@@ -113,7 +113,7 @@ describe("current native marketplace source proof", () => {
         "real-catalog",
         new Set(),
         "/project-b",
-        registeredAiProfile(TOOL.claude)
+        registeredTools().aiProfile(TOOL.claude)
       )
     ).rejects.toThrow(/reader unavailable/);
     await expect(
@@ -122,7 +122,7 @@ describe("current native marketplace source proof", () => {
         "real-catalog",
         new Set(),
         "/project-b",
-        registeredAiProfile(TOOL.claude)
+        registeredTools().aiProfile(TOOL.claude)
       )
     ).rejects.toThrow(/EACCES/);
     await expect(
@@ -135,7 +135,7 @@ describe("current native marketplace source proof", () => {
         "real-catalog",
         new Set(),
         "/project-b",
-        registeredAiProfile(TOOL.claude)
+        registeredTools().aiProfile(TOOL.claude)
       )
     ).rejects.toThrow(/real-catalog.*host plugin registry read failed.*EACCES/);
     expect(
@@ -144,7 +144,7 @@ describe("current native marketplace source proof", () => {
         "real-catalog",
         new Set(),
         "/project-b",
-        registeredAiProfile(TOOL.claude)
+        registeredTools().aiProfile(TOOL.claude)
       )
     ).toEqual(new Map());
   });
@@ -160,7 +160,7 @@ describe("current native marketplace source proof", () => {
         "real-catalog",
         new Set(["mine@real-catalog"]),
         "/project-b",
-        registeredAiProfile(TOOL.claude)
+        registeredTools().aiProfile(TOOL.claude)
       )
     ).toEqual(refs);
   });

@@ -3,7 +3,7 @@ import { NativeHostRegistrationGate } from "../../../../src/contexts/host-regist
 import type { HostMarketplaceSources } from "../../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
-import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { FakeHostActions } from "../testing/fake-host-actions.js";
 
 const { copilot, codex } = TOOL;
@@ -38,7 +38,7 @@ describe("native host registration gate", () => {
     );
     await expect(
       gate.planMarketplaceRemoval(
-        registeredAiProfile(copilot),
+        registeredTools().aiProfile(copilot),
         registrations,
         registrations.marketplaces[0],
         "/A"
@@ -70,7 +70,7 @@ describe("native host registration gate", () => {
       ])
     );
     const plan = await gate.planMarketplaceRemoval(
-      registeredAiProfile(copilot),
+      registeredTools().aiProfile(copilot),
       { binary: "copilot", marketplaces: [registration], pluginRefs: [] },
       registration,
       "/A"
@@ -119,7 +119,7 @@ describe("native host registration gate", () => {
 
     await expect(
       gate.planMarketplaceRemoval(
-        registeredAiProfile(codex),
+        registeredTools().aiProfile(codex),
         provenCodex,
         provenCodex.marketplaces[0],
         "/project-b"
@@ -139,7 +139,7 @@ describe("native host registration gate", () => {
 
     await expect(
       gate.planMarketplaceRemoval(
-        registeredAiProfile(codex),
+        registeredTools().aiProfile(codex),
         { ...provenCodex, marketplaces: [{ alias: "alias", hostName: HOST }] },
         { alias: "alias", hostName: HOST },
         "/project-b"
@@ -160,7 +160,12 @@ describe("native host registration gate", () => {
       new NativeHostRegistrationGate(new Map([[copilot, activator]]), new Map()),
     ]) {
       await expect(
-        gate.planMarketplaceRemoval(registeredAiProfile(copilot), registrations, registration, "/A")
+        gate.planMarketplaceRemoval(
+          registeredTools().aiProfile(copilot),
+          registrations,
+          registration,
+          "/A"
+        )
       ).rejects.toThrow(/CLI or host registry unavailable/);
     }
     for (const registry of [
@@ -175,7 +180,7 @@ describe("native host registration gate", () => {
       );
       await expect(
         gate.planMarketplaceRemoval(
-          registeredAiProfile(codex),
+          registeredTools().aiProfile(codex),
           provenCodex,
           provenCodex.marketplaces[0],
           "/A"
@@ -195,7 +200,7 @@ describe("native host registration gate", () => {
     );
     await expect(
       gate.planMarketplaceRemoval(
-        registeredAiProfile(codex),
+        registeredTools().aiProfile(codex),
         provenCodex,
         provenCodex.marketplaces[0],
         "/A"
@@ -208,14 +213,14 @@ describe("native host registration gate", () => {
     );
     expect(
       await safe.planMarketplaceRemoval(
-        registeredAiProfile(codex),
+        registeredTools().aiProfile(codex),
         provenCodex,
         provenCodex.marketplaces[0],
         "/A"
       )
     ).toMatchObject({ activator, refs: [claim] });
     const plan = await safe.planMarketplaceRemoval(
-      registeredAiProfile(codex),
+      registeredTools().aiProfile(codex),
       provenCodex,
       provenCodex.marketplaces[0],
       "/A"

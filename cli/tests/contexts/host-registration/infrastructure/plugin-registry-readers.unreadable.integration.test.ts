@@ -1,7 +1,7 @@
 import { chmod } from "node:fs/promises";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { TOOL } from "../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../shared/testing/registered-tools.js";
 import { PROJECT, registryHome } from "../testing/registry-home.js";
 
 const { home, write, readerFor } = registryHome();

@@ -6,7 +6,7 @@ import {
 import { userBuiltMarketplaceDir } from "../../../../src/shared/domain/layout/aidd-layout.js";
 import { errnoError, FaultingFileAdapter } from "../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredProfile, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.js";
 
 const NAME = "aidd-framework";
@@ -36,7 +36,7 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
 
     const check = await hostMarketplaceSourceConflict(
       fs,
-      registeredProfile(TOOL.claude),
+      registeredTools().profile(TOOL.claude),
       reader,
       requestedSource,
       { name: NAME, pluginNames: [] },
@@ -70,7 +70,7 @@ describe("hostMarketplaceSourceConflict — resolving every path through the sam
 
     const check = await hostMarketplaceSourceConflict(
       fs,
-      registeredProfile(TOOL.claude),
+      registeredTools().profile(TOOL.claude),
       reader,
       requestedSource,
       { name: NAME, pluginNames: [] },
@@ -108,7 +108,7 @@ describe("hostMarketplaceSourceConflict — without a drift context", () => {
 
     const check = await hostMarketplaceSourceConflict(
       fs,
-      registeredProfile(TOOL.claude),
+      registeredTools().profile(TOOL.claude),
       reader,
       "/requested",
       {

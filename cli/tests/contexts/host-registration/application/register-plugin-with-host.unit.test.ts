@@ -8,7 +8,7 @@ import type { HostPluginRegistryReading } from "../../../../src/contexts/host-re
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredCatalog, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { FakeHostActions } from "../testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../testing/fake-host-marketplace-sources.js";
@@ -75,7 +75,7 @@ function setup(
   );
   const run = (toolId: ToolId = TOOL.claude) =>
     command.execute({
-      tools: registeredCatalog(),
+      tools: registeredTools(),
       toolId,
       projectRoot: "/p",
       scope: "project",
@@ -114,7 +114,7 @@ describe("register plugin with host", () => {
       process.platform
     );
     const result = await command.execute({
-      tools: registeredCatalog(),
+      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: "/p",
       scope: "project",

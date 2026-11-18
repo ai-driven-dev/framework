@@ -5,7 +5,7 @@ import { WithdrawFromHost } from "../../../../src/contexts/host-registration/app
 import type { HostMarketplaceRegistry } from "../../../../src/contexts/host-registration/ports/host-marketplace-registry.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
-import { catalogOf, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { FakeHostActions } from "../testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../testing/fake-host-marketplace-registry.js";
 
@@ -16,7 +16,7 @@ const LOCATION = "/host/known_marketplaces.json";
 
 function userWithdrawal(cacheRoot: string | undefined): UserRegistrationWithdrawal {
   return {
-    tool: catalogOf().aiProfile(TOOL.claude),
+    tool: registeredTools().aiProfile(TOOL.claude),
     registrations: {
       binary: "claude",
       marketplaces: [{ alias: HOST_NAME, hostName: HOST_NAME }],

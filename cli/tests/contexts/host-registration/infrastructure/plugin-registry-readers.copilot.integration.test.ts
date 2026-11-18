@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TOOL } from "../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../shared/testing/registered-tools.js";
 import { PROJECT, registryHome } from "../testing/registry-home.js";
 
 const { write, readerFor } = registryHome();
