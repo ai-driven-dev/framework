@@ -1,4 +1,3 @@
-export { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 export { CapturingLogger } from "./capturing-logger.js";
 export { CheckboxRecordingPrompter } from "./checkbox-recording-prompter.js";
 export { DeterministicHasher } from "./deterministic-hasher.js";

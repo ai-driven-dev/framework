@@ -36,6 +36,14 @@ export function testFiles(): string[] {
     .sort();
 }
 
+/** Every `.ts` file under a `cli/`-relative directory, kits and helpers included, as a `cli/`-relative path, sorted. */
+export function tsFilesUnder(dir: string): string[] {
+  return readdirSync(join(CLI_ROOT, dir), { recursive: true, encoding: "utf8" })
+    .map((entry) => canonicalPath(join(dir, entry)))
+    .filter((path) => path.endsWith(".ts"))
+    .sort();
+}
+
 export function read(relativePath: string): string {
   return readFileSync(join(CLI_ROOT, relativePath), "utf8");
 }
