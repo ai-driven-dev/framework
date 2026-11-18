@@ -1,4 +1,5 @@
 import { registrationRecordRules } from "../../src/composition/installation.js";
+import { quietUserScopeFilesSafeToDelete } from "../../src/composition/orchestration/marketplace.js";
 import { FindUserMarketplace } from "../../src/contexts/distribution/application/remove/find-user-marketplace.js";
 import { RemoveMarketplace } from "../../src/contexts/distribution/application/remove/remove-marketplace.js";
 import type { MarketplaceRegistry } from "../../src/contexts/distribution/ports/marketplace-registry.js";
@@ -7,7 +8,6 @@ import { PurgeMarketplacePlugins } from "../../src/contexts/installation/applica
 import { UserScopePluginFiles } from "../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import type { ManifestRepository } from "../../src/contexts/installation/ports/manifest-repository.js";
 import type { RegistrationRecordRules } from "../../src/contexts/installation/ports/native-host.js";
-import { userScopeFilesSafeToDelete } from "../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import { RemoveUserMarketplace } from "../../src/orchestration/marketplace/remove-user-marketplace.js";
 import { resolveHomeDir } from "../../src/shared/infrastructure/home-dir.js";
 import type { FileReader } from "../../src/shared/ports/file-reader.js";
@@ -28,9 +28,7 @@ export function userMarketplaceRemover(
     new PurgeMarketplacePlugins(
       repo,
       nativeHost,
-      new UserScopePluginFiles(fs, (plugin, tool, home) =>
-        userScopeFilesSafeToDelete(fs, { debug() {}, info() {}, warn() {} }, plugin, tool, home)
-      ),
+      new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
       records,
       registeredTools()
     ),
