@@ -43,6 +43,8 @@ export class MainSessionLocator {
       ?.userSettingsFile(home, (name) => this.environment.get(name));
     if (own !== undefined) return own;
     const globalDir = profile.plugins()?.globalFiles()?.dir(home);
+    // No registered tool reaches this: each one with main settings declares a user settings file
+    // or a plugin directory. Kept as a known mutation survivor.
     if (globalDir === undefined) return undefined;
     const path = join(globalDir, settings.file);
     const twin = path.replace(/c$/, "");

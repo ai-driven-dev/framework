@@ -41,7 +41,6 @@ const MIRROR_BASELINE: readonly string[] = [
   "src/contexts/host-registration/infrastructure/marketplace-list-parsers.ts",
   "src/contexts/installation/application/agents/agent-plugin-hosts.ts",
   "src/contexts/installation/application/agents/agent-providers.ts",
-  "src/contexts/installation/application/agents/main-session-models.ts",
   "src/contexts/installation/application/doctor/check-plugin-drift.ts",
   "src/contexts/installation/application/doctor/list-registered-plugins.ts",
   "src/contexts/installation/application/doctor/load-manifest-for-doctor.ts",

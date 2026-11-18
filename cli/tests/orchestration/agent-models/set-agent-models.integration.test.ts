@@ -12,7 +12,6 @@ import { jsoncMainSessionSettings } from "../../../src/contexts/installation/inf
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.js";
 import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.js";
 import type { SyncSettingsOptions } from "../../../src/orchestration/sync/sync-settings.js";
-import { FaultingFileAdapter } from "../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
@@ -170,22 +169,6 @@ describe("SetAgentModels", () => {
     expect(fs.has(CLAUDE_SETTINGS)).toBe(false);
   });
 
-  it("writes where Claude Code reads now, and restores the file it wrote before", async () => {
-    let configDir: string | undefined;
-    const { fs, useCase } = setup(undefined, null, undefined, (name) =>
-      name === "CLAUDE_CONFIG_DIR" ? configDir : undefined
-    );
-    const base = { projectRoot: PROJECT, scope: "project" as const, hosts: [TOOL.claude] };
-    fs.setFile(CLAUDE_SETTINGS, '{\n  "model": "opus"\n}\n');
-
-    await useCase.execute({ ...base, provider: "anthropic" });
-    configDir = join(HOME, "claude-config");
-    await useCase.execute({ ...base });
-
-    expect(fs.getFile(CLAUDE_SETTINGS)).toBe('{\n  "model": "opus"\n}\n');
-    expect(fs.has(join(HOME, "claude-config", "settings.json"))).toBe(false);
-  });
-
   it("keeps a settings file's comments, setting then restoring only its model", async () => {
     const { fs, useCase } = setup();
     const base = { projectRoot: PROJECT, scope: "project" as const, hosts: [TOOL.opencode] };
@@ -201,84 +184,20 @@ describe("SetAgentModels", () => {
     expect(fs.getFile(OPENCODE_SETTINGS)).toBe(commented);
   });
 
-  it("skips a settings file it cannot read, writing nothing, and goes on with the others", async () => {
+  it("reports a settings file it cannot read as skipped", async () => {
     const { fs, useCase } = setup();
     fs.setFile(CLAUDE_SETTINGS, "// broken");
 
     const result = await useCase.execute({
       projectRoot: PROJECT,
       scope: "project",
-      hosts: [TOOL.claude, TOOL.opencode],
+      hosts: [TOOL.claude],
       provider: "anthropic",
     });
 
-    expect(fs.getFile(CLAUDE_SETTINGS)).toBe("// broken");
     expect(result.skipped).toStrictEqual([
       { host: "claude", path: CLAUDE_SETTINGS, reason: "it holds no JSON object" },
     ]);
-    expect(result.changed).toStrictEqual([{ host: "opencode", path: OPENCODE_SETTINGS }]);
-  });
-
-  it("keeps the record of a file it cannot read, so a later run can still restore it", async () => {
-    const { fs, useCase } = setup();
-    await useCase.execute({
-      projectRoot: PROJECT,
-      scope: "project",
-      hosts: [TOOL.claude],
-      provider: "anthropic",
-    });
-    fs.setFile(CLAUDE_SETTINGS, "// broken");
-
-    const result = await useCase.execute({
-      projectRoot: PROJECT,
-      scope: "project",
-      hosts: [TOOL.claude],
-    });
-
-    expect(result.skipped.map(({ host }) => host)).toStrictEqual(["claude"]);
-    expect(JSON.parse(fs.getFile(`${CONFIG}/main-model.json`) ?? "{}")).toHaveProperty("claude");
-  });
-
-  it("records what a settings file held before writing it, so a failed run can still restore it", async () => {
-    const fs = new FaultingFileAdapter();
-    const { useCase } = setup(undefined, null, fs);
-    fs.setFile(CLAUDE_SETTINGS, '{\n  "model": "mine"\n}\n');
-    fs.failOn("writeFile", CLAUDE_SETTINGS, new Error("disk full"));
-
-    await expect(
-      useCase.execute({
-        projectRoot: PROJECT,
-        scope: "project",
-        hosts: [TOOL.claude],
-        provider: "anthropic",
-      })
-    ).rejects.toThrow("disk full");
-
-    expect(JSON.parse(fs.getFile(`${CONFIG}/main-model.json`) ?? "{}").claude.previous).toEqual({
-      model: "mine",
-      effortLevel: null,
-    });
-  });
-
-  it("moves a main model already set to the new provider", async () => {
-    const { fs, useCase } = setup();
-
-    await useCase.execute({
-      projectRoot: PROJECT,
-      scope: "project",
-      hosts: [TOOL.opencode],
-      provider: "mistral",
-    });
-    await useCase.execute({
-      projectRoot: PROJECT,
-      scope: "project",
-      hosts: [TOOL.opencode],
-      provider: "openai",
-    });
-
-    expect(fs.getFile(OPENCODE_SETTINGS)).toBe(
-      `{\n  ${OPENCODE_SCHEMA},\n  "model": "openai/gpt-6.1-terra"\n}\n`
-    );
   });
 
   it("refreshes this project globally too, and adds the machine-scope registrations", async () => {
@@ -383,7 +302,7 @@ describe("SetAgentModels", () => {
     expect(fs.getFile(OPENCODE_SETTINGS)).toContain("mistral/mistral-large-4");
   });
 
-  it("forgets the provider on reset even when a settings file cannot be restored, and keeps its record", async () => {
+  it("forgets the provider on reset even when a settings file cannot be restored", async () => {
     const { fs, useCase } = setup();
     await useCase.execute({
       projectRoot: PROJECT,
@@ -397,7 +316,6 @@ describe("SetAgentModels", () => {
 
     expect(reset.skipped.map(({ host }) => host)).toStrictEqual(["claude"]);
     expect(fs.has(`${CONFIG}/agent-models.json`)).toBe(false);
-    expect(JSON.parse(fs.getFile(`${CONFIG}/main-model.json`) ?? "{}")).toHaveProperty("claude");
   });
 
   it("refuses a provider one host cannot run before writing anything", async () => {

@@ -31,4 +31,11 @@ describe("MainSessionLocator", () => {
   it("answers no models and no path for a tool that is not an AI host", async () => {
     expect(await locator().locate(TOOL.vscode)).toStrictEqual({ models: null, path: undefined });
   });
+
+  it("answers its models and no path for a tool that declares a user settings file but leaves its main session alone", async () => {
+    const located = await locator().locate(TOOL.copilot);
+
+    expect(located.models).not.toBeNull();
+    expect(located.path).toBeUndefined();
+  });
 });
