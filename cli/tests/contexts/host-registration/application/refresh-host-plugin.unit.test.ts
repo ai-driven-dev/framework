@@ -1,30 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { RefreshHostPlugin } from "../../../../src/contexts/host-registration/application/refresh-host-plugin.js";
+import type { RegistrationRecord } from "../../../../src/contexts/host-registration/domain/registration-record.js";
 import type { HostPluginRegistry } from "../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import type { NativeRegistrations } from "../../../../src/contexts/installation/domain/manifest/native-registrations.js";
-import { registeredAiProfile, TOOL } from "../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
 import { FakeHostActions } from "../testing/fake-host-actions.js";
 
 const { copilot, codex } = TOOL;
 
 const REF = "test-plugin@real-catalog";
 const HOST = "real-catalog";
-const registrations: NativeRegistrations = {
+const registrations: RegistrationRecord = {
   binary: "copilot",
   marketplaces: [{ alias: "alias", hostName: HOST }],
   pluginRefs: [REF],
-  pluginClaims: [{ ref: REF, dependents: [] }],
 };
 const reader = (refs?: ReadonlyMap<string, { enabled: boolean }>) =>
   ({ read: async () => ({ location: "/host/registry", refs }) }) satisfies HostPluginRegistry;
 const enabled = () => new Map([[REF, { enabled: true }]]);
-const refresh = (
-  tool: typeof copilot,
-  command: RefreshHostPlugin,
-  recorded?: NativeRegistrations
-) =>
+const refresh = (tool: typeof copilot, command: RefreshHostPlugin, recorded?: RegistrationRecord) =>
   command.execute({
-    tool: registeredAiProfile(tool),
+    tool: registeredTools().aiProfile(tool),
     ref: REF,
     projectRoot: "/A",
     registrations: recorded,
