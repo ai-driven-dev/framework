@@ -92,7 +92,6 @@ describe("aidd framework install", () => {
       force: false,
       version: "5.2.2",
       propagatePlugins: true,
-      tools: catalogOf(),
     });
     expect(installIdeTool).not.toHaveBeenCalled();
   });

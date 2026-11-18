@@ -1,6 +1,5 @@
 import type { AiToolId, ToolId } from "../../../../shared/domain/tool.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -29,7 +28,6 @@ export interface InstallAiToolOptions {
   force: boolean;
   version: string;
   propagatePlugins: boolean;
-  tools: ToolCatalog;
 }
 
 export interface InstallAiToolResult {
@@ -59,7 +57,6 @@ export interface MarketplacePluginInstaller {
     autoSelect: boolean;
     replace: boolean;
     requestedVersionPolicy: "prefer-catalog";
-    tools: ToolCatalog;
   }): Promise<unknown>;
 }
 
@@ -73,7 +70,7 @@ export class InstallAiTool {
   ) {}
 
   async execute(options: InstallAiToolOptions): Promise<InstallAiToolResult> {
-    const { toolId, projectRoot, force, version, propagatePlugins, tools } = options;
+    const { toolId, projectRoot, force, version, propagatePlugins } = options;
     const manifest = (await this.manifestRepo.load()) ?? Manifest.create();
     const runtimeResult = await this.installRuntimeConfig.execute({
       toolId,
@@ -85,14 +82,13 @@ export class InstallAiTool {
     if (runtimeResult.skipped || !propagatePlugins) {
       return { runtimeResult, propagatedPlugins: [], propagationWarnings: [] };
     }
-    return this.propagateAndSync(toolId, projectRoot, runtimeResult, tools);
+    return this.propagateAndSync(toolId, projectRoot, runtimeResult);
   }
 
   private async propagateAndSync(
     toolId: AiToolId,
     projectRoot: string,
-    runtimeResult: InstallRuntimeConfigResult,
-    tools: ToolCatalog
+    runtimeResult: InstallRuntimeConfigResult
   ): Promise<InstallAiToolResult> {
     const freshManifest = await this.manifestRepo.load();
     if (freshManifest === null) {
@@ -104,7 +100,7 @@ export class InstallAiTool {
     const propagated: string[] = [];
     const warnings: string[] = [];
     for (const plugin of plugins) {
-      await this.propagatePlugin(plugin, toolId, projectRoot, propagated, warnings, tools);
+      await this.propagatePlugin(plugin, toolId, projectRoot, propagated, warnings);
     }
     const activation =
       propagated.length > 0 ? await this.activatePropagated.execute({ projectRoot }) : undefined;
@@ -140,8 +136,7 @@ export class InstallAiTool {
     toolId: AiToolId,
     projectRoot: string,
     propagated: string[],
-    warnings: string[],
-    tools: ToolCatalog
+    warnings: string[]
   ): Promise<void> {
     if (plugin.marketplace === undefined) {
       this.warnNoMarketplace(plugin.name, toolId, warnings);
@@ -158,7 +153,6 @@ export class InstallAiTool {
         autoSelect: true,
         replace: true,
         requestedVersionPolicy: "prefer-catalog",
-        tools,
       });
       propagated.push(plugin.name);
     } catch (err) {

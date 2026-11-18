@@ -282,7 +282,6 @@ describe("aidd sync --scope user", () => {
       projectRoot: PROJECT_ROOT,
       scope: "user",
       rebuild: true,
-      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith(expect.objectContaining({ scope: "user" }));
   });

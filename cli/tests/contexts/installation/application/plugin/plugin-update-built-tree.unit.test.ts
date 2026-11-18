@@ -78,7 +78,8 @@ function makeUpdateUseCase(
         }
       ),
       deps.logger,
-      deps.registrationRecordRules
+      deps.registrationRecordRules,
+      registeredTools()
     ),
     nativeHost,
     insideUserScope
@@ -100,9 +101,9 @@ async function installStalePlugin(deps: Deps, registry: FakeMarketplaceRegistry)
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }
+    },
+    registeredTools()
   ).execute({
-    tools: registeredTools(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: [cursor],
     projectRoot: PROJECT_ROOT,
@@ -188,7 +189,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
 
     await expect(
       makeUpdateUseCase(deps, registry).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -219,7 +219,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
 
     await expect(
       makeUpdateUseCase(deps, registry).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -253,7 +252,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
 
       expect(
         await makeUpdateUseCase(deps, registry, nativeHost).execute({
-          tools: registeredTools(),
           toolIds: [copilot, cursor],
           projectRoot: PROJECT_ROOT,
           scope: "user",
@@ -325,7 +323,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
 
     expect(
       await makeUpdateUseCase(deps, registry, nativeHost).execute({
-        tools: registeredTools(),
         pluginNames: ["native-plugin@aidd-catalog", "sample-plugin"],
         toolIds: [copilot, cursor],
         projectRoot: PROJECT_ROOT,
@@ -377,7 +374,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
 
     await expect(
       makeUpdateUseCase(deps, registry, nativeHost).execute({
-        tools: registeredTools(),
         pluginNames: ["sample-plugin", "native-plugin"],
         toolIds: [cursor, copilot],
         projectRoot: PROJECT_ROOT,
@@ -415,7 +411,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
 
     expect(
       await makeUpdateUseCase(deps, registry).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -461,7 +456,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
 
     expect(
       await makeUpdateUseCase(deps, registry, undefined, ensureBuilt).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -485,7 +479,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
     deps.fs.setFile(BUILT_SKILL, "# Demo skill v2");
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
-      tools: registeredTools(),
       toolIds: [cursor],
       projectRoot: PROJECT_ROOT,
       scope: "user",
@@ -508,7 +501,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
     await installStalePlugin(deps, registry);
 
     await makeUpdateUseCase(deps, registry).execute({
-      tools: registeredTools(),
       toolIds: [cursor],
       projectRoot: PROJECT_ROOT,
       scope: "user",
@@ -536,7 +528,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
     const savesBefore = deps.userManifestRepo.saveCount;
     expect(
       await makeUpdateUseCase(deps, registry).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -557,7 +548,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
     deps.fs.setFile(join(foreign, "skills/demo/SKILL.md"), "foreign bytes");
     await expect(
       makeUpdateUseCase(deps, registry).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -579,7 +569,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
     const savesBefore = deps.userManifestRepo.saveCount;
     await expect(
       makeUpdateUseCase(deps, registry).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -605,7 +594,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
 
     await expect(
       makeUpdateUseCase(deps, registry).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -630,7 +618,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
     const savesBefore = deps.userManifestRepo.saveCount;
     await expect(
       makeUpdateUseCase(deps, registry).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -657,7 +644,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
 
     await expect(
       makeUpdateUseCase(deps, registry, nativeHost).execute({
-        tools: registeredTools(),
         toolIds: [copilot, cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -740,7 +726,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
     const savesBefore = deps.userManifestRepo.saveCount;
 
     const operation = makeUpdateUseCase(deps, registry, nativeHost).execute({
-      tools: registeredTools(),
       toolIds: [copilot, cursor],
       projectRoot: PROJECT_ROOT,
       scope: "user",
@@ -777,7 +762,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
     );
     expect(
       await makeUpdateUseCase(deps, registry).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",
@@ -809,7 +793,6 @@ describe("UpdatePlugin — built-tree materialization", () => {
     await deps.userManifestRepo.save(machine);
     expect(
       await makeUpdateUseCase(deps, registry).execute({
-        tools: registeredTools(),
         toolIds: [cursor],
         projectRoot: PROJECT_ROOT,
         scope: "user",

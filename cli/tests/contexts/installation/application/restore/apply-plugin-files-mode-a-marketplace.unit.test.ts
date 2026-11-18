@@ -69,9 +69,9 @@ async function installGithubPlugin(deps: Deps, registry: FakeMarketplaceRegistry
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }
+    },
+    registeredTools()
   ).execute({
-    tools: registeredTools(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,

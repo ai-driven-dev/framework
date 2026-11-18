@@ -1,6 +1,7 @@
 import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
@@ -37,7 +38,8 @@ export class UpdateUserPluginFiles {
     private readonly repo: ManifestRepository & Lock,
     private readonly materializer: PluginMaterializer,
     private readonly logger: Logger,
-    private readonly records: RegistrationRecordRules
+    private readonly records: RegistrationRecordRules,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: UpdateUserPluginFilesCommand): Promise<string[]> {
@@ -51,8 +53,8 @@ export class UpdateUserPluginFiles {
       throw new Error(
         "No machine manifest: cannot prove AIDD ownership for user-scope plugin update."
       );
-    const manifest = Manifest.fromJSON(loaded.toJSON(), (raw) => options.tools.toolId(raw));
-    const toolIds = resolvePluginToolIds(options.toolIds, manifest, options.tools);
+    const manifest = Manifest.fromJSON(loaded.toJSON(), (raw) => this.tools.toolId(raw));
+    const toolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     const targets = toolIds.flatMap((toolId) =>
       manifest
         .getPlugins(toolId)
@@ -94,7 +96,7 @@ export class UpdateUserPluginFiles {
     for (const { toolId, plugin } of targets) {
       const plan = await this.materializer.planUpdate(
         plugin,
-        options.tools.aiProfile(toolId),
+        this.tools.aiProfile(toolId),
         options.projectRoot,
         this.logger,
         options.rebuild === true,
@@ -107,7 +109,7 @@ export class UpdateUserPluginFiles {
         toolId,
         claim,
         refresh: await options.refreshNative({
-          tool: options.tools.aiProfile(toolId),
+          tool: this.tools.aiProfile(toolId),
           ref: claim.ref,
           projectRoot: options.projectRoot,
           registrations,

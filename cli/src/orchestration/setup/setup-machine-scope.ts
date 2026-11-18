@@ -1,7 +1,6 @@
 import type { ConfigureMachineScope } from "../../contexts/installation/application/install/configure-machine-scope.js";
 import type { NativeActivationReport } from "../../contexts/installation/application/install/install-ai-tool.js";
 import type { InstallToolsResult } from "../../contexts/installation/application/install/install-tools.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { InstallGlobalPlugins } from "./install-global-plugins.js";
 import type { SetupFlow, SetupResult } from "./setup-flow.js";
 import type { SetupMarketplaceRegistration } from "./setup-marketplace-registration.js";
@@ -39,20 +38,19 @@ export class SetupMachineScope {
     private readonly installPlugins: Pick<InstallGlobalPlugins, "execute">
   ) {}
 
-  async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
+  async execute(flow: SetupFlow): Promise<SetupResult> {
     const source = await this.registration.resolveSourceIfNeeded(flow);
-    return this.configureMachineScope.whileLocked(() => this.executeLocked(flow, source, tools));
+    return this.configureMachineScope.whileLocked(() => this.executeLocked(flow, source));
   }
 
   private async executeLocked(
     flow: SetupFlow,
-    source: Awaited<ReturnType<SetupMarketplaceRegistration["resolveSourceIfNeeded"]>>,
-    tools: ToolCatalog
+    source: Awaited<ReturnType<SetupMarketplaceRegistration["resolveSourceIfNeeded"]>>
   ): Promise<SetupResult> {
     const isNew = await this.configureMachineScope.initialize();
     await this.registration.registerIfPresent(flow, source);
     await this.configureMachineScope.registerTools(flow.aiTools);
-    const plugins = await this.installGlobalPlugins(flow, tools);
+    const plugins = await this.installGlobalPlugins(flow);
     const activation = await this.syncMachineScope({
       projectRoot: flow.projectRoot,
       toolIds: flow.aiTools,
@@ -65,16 +63,12 @@ export class SetupMachineScope {
 
   /** Copies the chosen plugins' global files and returns their names, which every tool with
    * native activation then enables machine-wide. */
-  private async installGlobalPlugins(
-    flow: SetupFlow,
-    tools: ToolCatalog
-  ): Promise<readonly string[]> {
+  private async installGlobalPlugins(flow: SetupFlow): Promise<readonly string[]> {
     const { plugins } = await this.installPlugins.execute({
       projectRoot: flow.projectRoot,
       toolIds: flow.aiTools,
       mode: flow.pluginMode,
       pluginNames: flow.pluginNames,
-      tools,
     });
     return plugins;
   }

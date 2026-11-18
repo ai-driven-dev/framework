@@ -46,7 +46,12 @@ function setup(seed: Manifest | null = defaultManifest()) {
     }
   );
   const applyUpdate = vi.fn(async (plan: PlannedUserPluginFileUpdate) => plan.next);
-  const useCase = new InstallUserPlugins(repo, { planUpdate, applyUpdate }, new CapturingLogger());
+  const useCase = new InstallUserPlugins(
+    repo,
+    { planUpdate, applyUpdate },
+    new CapturingLogger(),
+    registeredTools()
+  );
   return { repo, useCase, planUpdate, applyUpdate };
 }
 
@@ -62,7 +67,7 @@ function run(
   plugins: readonly PluginSourceMatch[],
   toolIds: readonly ToolId[] = [TOOL.claude, TOOL.opencode]
 ) {
-  return useCase.execute({ tools: registeredTools(), projectRoot: "/project", toolIds, plugins });
+  return useCase.execute({ projectRoot: "/project", toolIds, plugins });
 }
 
 describe("InstallUserPlugins", () => {

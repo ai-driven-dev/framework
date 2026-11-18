@@ -31,10 +31,10 @@ async function installWithLogger(toolId: AiToolId) {
       ),
       marketplaceRegistry: new FakeMarketplaceRegistry(),
       ...fakeBuildSources(),
-    }
+    },
+    registeredTools()
   );
   await useCase.execute({
-    tools: registeredTools(),
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,

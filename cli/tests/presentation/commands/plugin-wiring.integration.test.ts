@@ -106,13 +106,13 @@ describe("aidd plugin — the group with no subcommand", () => {
 describe("aidd plugin list", () => {
   it("sweeps every installed tool when none was named", async () => {
     expect(await run("list")).toEqual(["claude:", "  aidd-dev@1.0.0"]);
-    expect(pluginList).toHaveBeenCalledWith({ toolIds: "all", tools: CATALOG });
+    expect(pluginList).toHaveBeenCalledWith({ toolIds: "all" });
   });
 
   it("narrows to the one tool that was named", async () => {
     await run("list", "--tool", "codex");
 
-    expect(pluginList).toHaveBeenCalledWith({ toolIds: ["codex"], tools: CATALOG });
+    expect(pluginList).toHaveBeenCalledWith({ toolIds: ["codex"] });
   });
 
   it("refuses a tool no profile declares, before any use case runs", async () => {
@@ -166,12 +166,11 @@ describe("aidd plugin remove", () => {
 });
 
 describe("aidd plugin install", () => {
-  it("hands the pick, the tools and the terminal through, and names what landed", async () => {
+  it("hands the pick and the terminal through, and names what landed", async () => {
     expect(await run("install", "aidd-dev")).toEqual(["Installed 'aidd-dev'."]);
     expect(pluginInstall).toHaveBeenCalledWith({
       pluginArg: "aidd-dev",
       toolIds: "all",
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       interactive: false,
       fromMarketplace: undefined,
@@ -292,7 +291,6 @@ describe("aidd plugin update", () => {
         toolIds: [toolId],
         projectRoot: PROJECT_ROOT,
         scope: "user",
-        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
       });
       expect(pluginUpdate).not.toHaveBeenCalled();
     }
@@ -305,7 +303,6 @@ describe("aidd plugin update", () => {
       toolIds: "all",
       projectRoot: PROJECT_ROOT,
       scope: "project",
-      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(activation).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,

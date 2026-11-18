@@ -48,7 +48,6 @@ export interface PluginAddOptions {
   source: PluginSource;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
-  tools: ToolCatalog;
   interactive: boolean;
   marketplace?: string;
   requiredVersion?: string;
@@ -97,6 +96,7 @@ export class AddPlugin implements PluginAdd {
     host: AddPluginHost,
     manifests: AddPluginManifests,
     sources: AddPluginSources,
+    private readonly tools: ToolCatalog,
     private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
   ) {
     ({ fs: this.fs, hasher: this.hasher, logger: this.logger } = host);
@@ -116,7 +116,7 @@ export class AddPlugin implements PluginAdd {
 
   private async executeLocked(options: PluginAddOptions): Promise<void> {
     const { source, toolIds, projectRoot, marketplace } = options;
-    const resolveToolId: ToolIdResolver = (raw) => options.tools.toolId(raw);
+    const resolveToolId: ToolIdResolver = (raw) => this.tools.toolId(raw);
     const manifest = Manifest.fromJSON(
       (await requireManifest(this.manifestRepo)).toJSON(),
       resolveToolId
@@ -126,7 +126,7 @@ export class AddPlugin implements PluginAdd {
       existingMachine === null
         ? Manifest.create()
         : Manifest.fromJSON(existingMachine.toJSON(), resolveToolId);
-    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, options.tools);
+    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
     const installedBefore = pluginsInstalledBefore(manifest, resolvedToolIds);
     if (marketplace !== undefined && (await this.isGithubMarketplace(marketplace, projectRoot))) {
       await this.addGithubMarketplacePlugin(options, resolvedToolIds, manifest, machine);
@@ -163,12 +163,11 @@ export class AddPlugin implements PluginAdd {
         pluginMetadata.name,
         toolIds,
         manifest,
-        options.projectRoot,
-        options.tools
+        options.projectRoot
       );
     if (options.replace === true) this.dropExistingPlugin(pluginMetadata.name, toolIds, manifest);
     else this.validateNoDuplicates(pluginMetadata.name, toolIds, manifest);
-    const adapterMap = this.buildAdapterMap(toolIds, options.tools);
+    const adapterMap = this.buildAdapterMap(toolIds);
     const flatToolIds = toolIds.filter((id) => adapterMap.get(id)?.mode === "flat");
     const nativeToolIds = toolIds.filter((id) => adapterMap.get(id)?.mode !== "flat");
     if (flatToolIds.length > 0) {
@@ -184,13 +183,10 @@ export class AddPlugin implements PluginAdd {
     await this.registerNativeGithubPlugins(options, nativeToolIds, manifest);
   }
 
-  private buildAdapterMap(
-    toolIds: AiToolId[],
-    tools: ToolCatalog
-  ): Map<AiToolId, PluginTranslator | null> {
+  private buildAdapterMap(toolIds: AiToolId[]): Map<AiToolId, PluginTranslator | null> {
     const map = new Map<AiToolId, PluginTranslator | null>();
     for (const id of toolIds) {
-      map.set(id, this.resolveAdapter(tools.aiProfile(id)));
+      map.set(id, this.resolveAdapter(this.tools.aiProfile(id)));
     }
     return map;
   }
@@ -211,7 +207,7 @@ export class AddPlugin implements PluginAdd {
           version,
           source,
           pluginMetadata.strict,
-          resolveScopeForInstall(options.tools.aiProfile(toolId)),
+          resolveScopeForInstall(this.tools.aiProfile(toolId)),
           marketplace
         )
       );
@@ -255,8 +251,7 @@ export class AddPlugin implements PluginAdd {
         pluginName,
         resolvedToolIds,
         manifest,
-        projectRoot,
-        options.tools
+        projectRoot
       );
     const { prevMcpMap, prevHooksMap } = this.prepareForInstall(
       pluginName,
@@ -273,8 +268,7 @@ export class AddPlugin implements PluginAdd {
       marketplace,
       prevMcpMap,
       prevHooksMap,
-      machine,
-      options.tools
+      machine
     );
   }
 
@@ -282,13 +276,12 @@ export class AddPlugin implements PluginAdd {
     pluginName: string,
     toolIds: readonly AiToolId[],
     manifest: Manifest,
-    projectRoot: string,
-    tools: ToolCatalog
+    projectRoot: string
   ): Promise<void> {
     for (const toolId of toolIds) {
       const previous = manifest.getPlugins(toolId).find((plugin) => plugin.name === pluginName);
       if (previous === undefined) continue;
-      const tool = tools.aiProfile(toolId);
+      const tool = this.tools.aiProfile(toolId);
       await assertProjectMcpEntriesRemovable(this.fs, previous, tool, projectRoot);
       await assertProjectHooksRemovable(this.fs, previous, tool, projectRoot);
     }
@@ -328,13 +321,12 @@ export class AddPlugin implements PluginAdd {
     marketplace: string | undefined,
     prevMcpMap: Map<AiToolId, ReadonlyMap<string, string>>,
     prevHooksMap: Map<AiToolId, ProjectHooksProvenance>,
-    machine: Manifest,
-    tools: ToolCatalog
+    machine: Manifest
   ): Promise<void> {
     const allSkipped: ReadonlySkipList[] = [];
     const allNotices: ReadonlyNoticeList[] = [];
     for (const toolId of toolIds) {
-      const tool = tools.aiProfile(toolId);
+      const tool = this.tools.aiProfile(toolId);
       await this.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
       const foreignDir = await this.userScopeDirNotInstalledHere(
         dist.manifest.name,

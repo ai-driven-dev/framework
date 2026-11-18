@@ -60,7 +60,8 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }
+    },
+    catalogOf()
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);
   const logger = options.logger === null ? undefined : (options.logger ?? deps.logger);
@@ -113,7 +114,6 @@ describe("InstallFromMarketplace", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf(),
       pluginName: "sample-plugin",
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -142,7 +142,6 @@ describe("InstallFromMarketplace", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf(),
         pluginName: "missing",
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -181,7 +180,6 @@ describe("InstallFromMarketplace", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -219,7 +217,6 @@ describe("InstallFromMarketplace", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf(),
       pluginName: "sample-plugin",
       fromMarketplace: "mkt2",
       toolIds: [TOOL.claude],
@@ -247,7 +244,6 @@ describe("InstallFromMarketplace", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf(),
         pluginName: "sample-plugin",
         version: "1.0.0",
         toolIds: [TOOL.claude],
@@ -274,7 +270,6 @@ describe("InstallFromMarketplace", () => {
 
     await expect(
       useCase.execute({
-        tools: catalogOf(),
         pluginName: "sample-plugin",
         version: "9.9.9",
         toolIds: [TOOL.claude],
@@ -314,7 +309,6 @@ describe("InstallFromMarketplace", () => {
     );
 
     await useCase.execute({
-      tools: catalogOf(),
       pluginName: "sample-plugin",
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -354,7 +348,6 @@ describe("InstallFromMarketplace", () => {
 
       await expect(
         useCase.execute({
-          tools: catalogOf(),
           pluginName: "sample-plugin",
           version: "1.0.0",
           toolIds: [TOOL.claude],
@@ -386,7 +379,6 @@ describe("InstallFromMarketplace", () => {
 
       await expect(
         useCase.execute({
-          tools: catalogOf(),
           pluginName: "sample-plugin",
           version: "1.0.0",
           requestedVersionPolicy: "prefer-catalog",
@@ -420,7 +412,6 @@ describe("InstallFromMarketplace", () => {
       );
 
       await useCase.execute({
-        tools: catalogOf(),
         pluginName: "sample-plugin",
         version: "1.0.0",
         requestedVersionPolicy: "prefer-catalog",
@@ -465,7 +456,6 @@ describe("InstallFromMarketplace", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf(),
       pluginName: "sample-plugin",
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
@@ -492,7 +482,6 @@ describe("InstallFromMarketplace", () => {
       await saveLocalMarketplace(registry, "mkt2", MKT2_DIR);
 
       const result = await useCase.execute({
-        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -517,7 +506,6 @@ describe("InstallFromMarketplace", () => {
 
       await expect(
         useCase.execute({
-          tools: catalogOf(),
           pluginName: "sample-plugin",
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
@@ -537,7 +525,6 @@ describe("InstallFromMarketplace", () => {
       await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
 
       const result = await useCase.execute({
-        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -554,7 +541,6 @@ describe("InstallFromMarketplace", () => {
       await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
 
       const result = await useCase.execute({
-        tools: catalogOf(),
         pluginName: "sample-plugin",
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -578,7 +564,6 @@ describe("InstallFromMarketplace", () => {
       await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
 
       await useCase.execute({
-        tools: catalogOf(),
         pluginName: "sample-plugin",
         version: "1.0.0",
         toolIds: [TOOL.claude],
@@ -602,7 +587,6 @@ describe("InstallFromMarketplace", () => {
       await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
 
       await useCase.execute({
-        tools: catalogOf(),
         pluginName: "sample-plugin",
         requestedVersionPolicy: "prefer-catalog",
         toolIds: [TOOL.claude],
@@ -625,7 +609,6 @@ describe("InstallFromMarketplace", () => {
       await saveLocalMarketplace(registry, "mkt1", MKT1_DIR);
 
       await useCase.execute({
-        tools: catalogOf(),
         pluginName: "sample-plugin",
         version: "1.0.0",
         requestedVersionPolicy: "prefer-catalog",

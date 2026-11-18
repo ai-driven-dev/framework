@@ -72,10 +72,10 @@ async function installPlugin(
       ),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
-    }
+    },
+    registeredTools()
   );
   await addUseCase.execute({
-    tools: registeredTools(),
     source: { kind: "local", path: fixture },
     toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,

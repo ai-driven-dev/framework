@@ -47,13 +47,19 @@ function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): Updat
   return new UpdatePlugin(
     deps.manifestRepo,
     new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-    new ReplacePluginFiles(deps.fs, deps.hasher, {
-      ensureBuilt: fakeEnsureBuiltMarketplace(),
-      marketplaceRegistry: registry,
-      platform: process.platform,
-      homedir: () => HOME,
-      translate: translateDistribution,
-    })
+    new ReplacePluginFiles(
+      deps.fs,
+      deps.hasher,
+      {
+        ensureBuilt: fakeEnsureBuiltMarketplace(),
+        marketplaceRegistry: registry,
+        platform: process.platform,
+        homedir: () => HOME,
+        translate: translateDistribution,
+      },
+      registeredTools()
+    ),
+    registeredTools()
   );
 }
 
@@ -77,9 +83,9 @@ async function installStaleGithubPlugin(
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }
+    },
+    registeredTools()
   ).execute({
-    tools: registeredTools(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,
@@ -109,7 +115,6 @@ describe("UpdatePlugin — Mode A marketplace tools (claude/codex/copilot)", () 
     expect(deps.fs.listAll().some((p) => p.includes(".claude/plugins/"))).toBe(false);
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
-      tools: registeredTools(),
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
@@ -131,7 +136,6 @@ describe("UpdatePlugin — Mode A marketplace tools (claude/codex/copilot)", () 
     await installStaleGithubPlugin(deps, registry, TOOL.claude);
 
     await makeUpdateUseCase(deps, registry).execute({
-      tools: registeredTools(),
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
@@ -154,7 +158,6 @@ describe("UpdatePlugin — flat-mode tools are unaffected (regression guard)", (
     deps.fs.setFile(BUILT_OPENCODE_SKILL, "# Demo skill v2");
 
     const updated = await makeUpdateUseCase(deps, registry).execute({
-      tools: registeredTools(),
       toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
     });

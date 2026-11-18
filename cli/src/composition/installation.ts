@@ -165,7 +165,7 @@ export function wireInstallation(base: Base) {
     tools
   );
   const listInstalledRulesUseCase = new ListInstalledRules(fs, process.platform, tools);
-  const pluginListUseCase = new ListPlugins(manifestRepo);
+  const pluginListUseCase = new ListPlugins(manifestRepo, tools);
   // Restore re-materializes through the build pipeline, matching what install wrote:
   // rewriting raw content instead would itself be drift.
   const builtMaterializationDeps = builtMaterializationDepsOf(

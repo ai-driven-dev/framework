@@ -53,11 +53,11 @@ async function existingProject(configPath: string) {
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     },
+    registeredTools(),
     deps.installRuntimeConfigUseCase
   );
   const install = () =>
     add.execute({
-      tools: registeredTools(),
       source: { kind: "local", path: FIXTURE },
       toolIds: [TOOL.kilo],
       projectRoot: ROOT,
@@ -66,7 +66,8 @@ async function existingProject(configPath: string) {
   const update = new UpdatePlugin(
     deps.manifestRepo,
     distribution,
-    new ReplacePluginFiles(deps.fs, deps.hasher, fakeBuiltDeps()),
+    new ReplacePluginFiles(deps.fs, deps.hasher, fakeBuiltDeps(), registeredTools()),
+    registeredTools(),
     deps.installRuntimeConfigUseCase
   );
   return { deps, setup, setupOptions, install, update };
@@ -108,7 +109,6 @@ describe.each(["kilo.jsonc", ".kilo/kilo.jsonc"])(
       await deps.fs.deleteFile(join(ROOT, BRIDGE));
       expect(
         await update.execute({
-          tools: registeredTools(),
           toolIds: [TOOL.kilo],
           projectRoot: ROOT,
         })

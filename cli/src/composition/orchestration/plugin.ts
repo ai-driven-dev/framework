@@ -81,6 +81,7 @@ export function wirePlugin(base: Base, inst: Installation) {
     marketplaceTrustStore,
     resolveMarketplaceUseCase,
     withdrawFromHost,
+    tools,
   } = base;
   const {
     ensureBuiltMarketplaceUseCase,
@@ -114,6 +115,7 @@ export function wirePlugin(base: Base, inst: Installation) {
       ensureBuilt: ensureBuiltMarketplaceUseCase,
       translate: builtMaterializationDeps.translate,
     },
+    tools,
     installRuntimeConfigUseCase
   );
   const pluginInstallFromMarketplaceUseCase = new InstallFromMarketplace(
@@ -130,7 +132,7 @@ export function wirePlugin(base: Base, inst: Installation) {
     prompter
   );
   const pluginInstallUseCase = new InstallPlugin(
-    new PlanPluginInstall(manifestRepo),
+    new PlanPluginInstall(manifestRepo, tools),
     pluginPickUseCase,
     pluginAddUseCase,
     pluginInstallFromMarketplaceUseCase,
@@ -147,7 +149,8 @@ export function wirePlugin(base: Base, inst: Installation) {
   const pluginUpdateUseCase = new UpdatePlugin(
     manifestRepo,
     new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-    new ReplacePluginFiles(fs, hasher, builtMaterializationDeps),
+    new ReplacePluginFiles(fs, hasher, builtMaterializationDeps, tools),
+    tools,
     installRuntimeConfigUseCase
   );
   const userPluginUpdateUseCase = new UpdateUserPlugin(
@@ -155,7 +158,8 @@ export function wirePlugin(base: Base, inst: Installation) {
       userManifestRepo,
       pluginMaterializer,
       logger,
-      registrationRecordRules
+      registrationRecordRules,
+      tools
     ),
     new RefreshHostPlugin(nativePluginActivators, hostPluginRegistries, nativeSources),
     isStrictlyWithinUserScope

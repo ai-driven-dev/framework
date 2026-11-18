@@ -39,7 +39,6 @@ export interface SetupQuestions {
     readonly mode: PluginInstallMode;
     readonly pluginNames: readonly string[];
     readonly interactive: boolean;
-    readonly tools: ToolCatalog;
   }) => Promise<unknown>;
   readonly tools?: (options: {
     readonly interactive: boolean;
@@ -62,7 +61,7 @@ export class RunSetup {
   ) {}
 
   async execute(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
-    if (flow.scope === "user") return this.runMachineScope(flow, tools);
+    if (flow.scope === "user") return this.runMachineScope(flow);
     const context = await this.detectContext(flow);
     // Resolved before the manifest is initialized: a non-interactive run with no --source must
     // reject before it ever writes .aidd/manifest.json or touches .gitignore, not after.
@@ -70,14 +69,14 @@ export class RunSetup {
     const isNew = await this.initProject.initializeIfAbsent({ projectRoot: flow.projectRoot });
     await this.steps.registration.registerIfPresent(flow, source);
     const install = await this.installTools(flow, context, tools);
-    if (flow.registerDefaultMarketplace) await this.promptPlugins(flow, tools);
+    if (flow.registerDefaultMarketplace) await this.promptPlugins(flow);
     const activation = await this.steps.syncSettings({ projectRoot: flow.projectRoot });
     return this.buildResult(isNew, install, activation, context);
   }
 
-  private async runMachineScope(flow: SetupFlow, tools: ToolCatalog): Promise<SetupResult> {
+  private async runMachineScope(flow: SetupFlow): Promise<SetupResult> {
     if (this.steps.machineScope === undefined) throw new UserScopeUnavailableError();
-    return this.steps.machineScope.execute(flow, tools);
+    return this.steps.machineScope.execute(flow);
   }
 
   private async detectContext(flow: SetupFlow): Promise<ProjectContext | undefined> {
@@ -116,13 +115,12 @@ export class RunSetup {
     });
   }
 
-  private async promptPlugins(flow: SetupFlow, tools: ToolCatalog): Promise<void> {
+  private async promptPlugins(flow: SetupFlow): Promise<void> {
     await this.questions.plugins({
       projectRoot: flow.projectRoot,
       mode: flow.pluginMode,
       pluginNames: [...flow.pluginNames],
       interactive: flow.interactive,
-      tools,
     });
   }
 

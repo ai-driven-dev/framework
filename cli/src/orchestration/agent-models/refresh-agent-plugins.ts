@@ -1,6 +1,5 @@
 import type { AgentPluginHosts } from "../../contexts/installation/application/agents/agent-plugin-hosts.js";
 import type { UpdatePlugin } from "../../contexts/installation/application/plugin/update-plugin.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { UpdateUserPlugin } from "../plugin/update-user-plugin.js";
@@ -8,7 +7,6 @@ import type { SyncSettings } from "../sync/sync-settings.js";
 
 export interface RefreshAgentPluginsOptions {
   readonly projectRoot: string;
-  readonly tools: ToolCatalog;
   readonly hosts: readonly AiToolId[];
   /** `"user"` also re-activates what `setup --global` installed. */
   readonly scope: MarketplaceScope;
@@ -30,13 +28,12 @@ export class RefreshAgentPlugins {
 
   /** The plugins re-installed with the new models. */
   async execute(options: RefreshAgentPluginsOptions): Promise<readonly string[]> {
-    const { projectRoot, tools, hosts } = options;
+    const { projectRoot, hosts } = options;
     const placed = await this.pluginHosts.locate(hosts);
     const rewritten = new Set<string>();
     if (placed.userPlugins.length > 0) {
       const names = await this.updateUserPlugin.execute({
         toolIds: [...placed.userPlugins],
-        tools,
         projectRoot,
         scope: "user",
         rebuild: true,
@@ -46,7 +43,6 @@ export class RefreshAgentPlugins {
     if (placed.projectPlugins.length > 0) {
       const names = await this.updatePlugin.execute({
         toolIds: [...placed.projectPlugins],
-        tools,
         projectRoot,
         rebuild: true,
       });

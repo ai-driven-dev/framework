@@ -87,7 +87,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
   const projectContextDetector = new DetectProjectContext(fs);
   const installGlobalPlugins = new InstallGlobalPlugins(
     new ListFrameworkPlugins(marketplaceRegistry, resolveMarketplaceUseCase),
-    new InstallUserPlugins(userManifestRepo, userPluginFileUpdater, logger)
+    new InstallUserPlugins(userManifestRepo, userPluginFileUpdater, logger, base.tools)
   );
   const setupMachineScope = new SetupMachineScope(
     new ConfigureMachineScope(userManifestRepo, currentVersionProvider),

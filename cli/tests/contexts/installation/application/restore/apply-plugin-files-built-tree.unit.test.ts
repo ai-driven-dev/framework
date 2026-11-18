@@ -72,9 +72,9 @@ async function installMarketplacePlugin(
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }
+    },
+    registeredTools()
   ).execute({
-    tools: registeredTools(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: [TOOL.cursor],
     projectRoot: PROJECT_ROOT,

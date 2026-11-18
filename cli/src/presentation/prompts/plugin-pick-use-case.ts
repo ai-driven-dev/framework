@@ -6,7 +6,6 @@ import type {
 import type { Marketplace } from "../../contexts/distribution/domain/marketplace.js";
 import type { MarketplaceRegistry } from "../../contexts/distribution/ports/marketplace-registry.js";
 import type { PluginAdd } from "../../contexts/installation/application/plugin/add-plugin.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import {
   InteractiveOnlyError,
   InvalidPluginManifestError,
@@ -18,7 +17,6 @@ import type { Prompter } from "../../shared/ports/prompter.js";
 export interface PluginPickOptions {
   toolIds: AiToolId[] | "all";
   projectRoot: string;
-  tools: ToolCatalog;
   interactive: boolean;
 }
 
@@ -95,7 +93,6 @@ export class PluginPickUseCase implements PluginPick {
         source: entry.source,
         toolIds: options.toolIds,
         projectRoot: options.projectRoot,
-        tools: options.tools,
         interactive: options.interactive,
         marketplace: marketplace.name,
         pluginMetadata: {

@@ -6,7 +6,6 @@ import type {
   PlanPluginInstallCommand,
 } from "../../contexts/installation/application/plugin/plan-plugin-install.js";
 import { parsePluginSpec } from "../../contexts/installation/contract/plugin-spec.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { InteractiveOnlyError } from "../../shared/domain/errors.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
@@ -15,7 +14,6 @@ import type { PluginInstallFromMarketplace } from "./install-from-marketplace.js
 export interface PluginInstallOptions {
   pluginArg: string | undefined;
   toolIds: AiToolId[] | "all";
-  tools: ToolCatalog;
   projectRoot: string;
   interactive: boolean;
   fromMarketplace?: string;
@@ -33,7 +31,6 @@ export interface PickPlugin {
   execute(options: {
     toolIds: AiToolId[] | "all";
     projectRoot: string;
-    tools: ToolCatalog;
     interactive: boolean;
   }): Promise<{ installed: readonly string[] }>;
 }
@@ -53,7 +50,6 @@ export class InstallPlugin {
       await this.planPluginInstall.execute({
         toolIds: options.toolIds,
         scope: options.scope,
-        tools: options.tools,
       });
     }
     if (options.pluginArg === undefined) return this.executeNoArg(options);
@@ -73,7 +69,6 @@ export class InstallPlugin {
     const result = await this.pickPlugin.execute({
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
-      tools: options.tools,
       interactive: true,
     });
     return { kind: "picked", installed: result.installed };
@@ -90,7 +85,6 @@ export class InstallPlugin {
       source,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
-      tools: options.tools,
       interactive: options.interactive,
     });
     return { kind: "local", installed: [] };
@@ -104,7 +98,6 @@ export class InstallPlugin {
       fromMarketplace: options.fromMarketplace,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
-      tools: options.tools,
       interactive: options.interactive,
       autoSelect: options.yes ?? false,
     });

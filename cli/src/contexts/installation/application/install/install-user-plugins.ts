@@ -12,7 +12,6 @@ import type {
 export interface InstallUserPluginsCommand {
   readonly projectRoot: string;
   readonly toolIds: readonly ToolId[];
-  readonly tools: ToolCatalog;
   /** The plugins to copy, each with the source it resolved to. */
   readonly plugins: readonly UserPluginChoice[];
 }
@@ -33,7 +32,8 @@ export class InstallUserPlugins {
   constructor(
     private readonly repo: ManifestRepository,
     private readonly materializer: BoundPluginMaterializer,
-    private readonly logger: Logger
+    private readonly logger: Logger,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: InstallUserPluginsCommand): Promise<void> {
@@ -43,7 +43,7 @@ export class InstallUserPlugins {
     }
     const plans: { readonly plan: PlannedUserPluginFileUpdate; readonly owned: boolean }[] = [];
     for (const toolId of command.toolIds) {
-      const tool = command.tools.profile(toolId);
+      const tool = this.tools.profile(toolId);
       if (tool.kind !== "ai" || tool.plugins()?.copiesFilesGlobally() !== true) continue;
       for (const { entry, source, marketplaceName } of command.plugins) {
         const owned = manifest.getPlugins(toolId).find((plugin) => plugin.name === entry.name);

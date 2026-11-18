@@ -34,8 +34,8 @@ describe("ListPlugins", () => {
     it("returns map with installed plugins for requested tool", async () => {
       const manifest = makeManifestWithPlugin();
       const repo = makeManifestRepository(manifest);
-      const useCase = new ListPlugins(repo);
-      const result = await useCase.execute({ toolIds: [TOOL.claude], tools: registeredTools() });
+      const useCase = new ListPlugins(repo, registeredTools());
+      const result = await useCase.execute({ toolIds: [TOOL.claude] });
       expect(result.has(TOOL.claude)).toBe(true);
       const plugins = result.get(TOOL.claude) ?? [];
       expect(plugins).toHaveLength(1);
@@ -47,9 +47,18 @@ describe("ListPlugins", () => {
       const manifest = Manifest.create();
       manifest.addTool(TOOL.claude, "1.0.0", []);
       const repo = makeManifestRepository(manifest);
-      const useCase = new ListPlugins(repo);
-      const result = await useCase.execute({ toolIds: [TOOL.claude], tools: registeredTools() });
+      const useCase = new ListPlugins(repo, registeredTools());
+      const result = await useCase.execute({ toolIds: [TOOL.claude] });
       expect(result.get(TOOL.claude)).toHaveLength(0);
+    });
+
+    it("resolves a request for every tool through the target resolver", async () => {
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.cursor, "1.0.0", []);
+      manifest.addTool(TOOL.claude, "1.0.0", []);
+      const useCase = new ListPlugins(makeManifestRepository(manifest), registeredTools());
+      const result = await useCase.execute({ toolIds: "all" });
+      expect([...result.keys()]).toEqual([TOOL.claude, TOOL.cursor]);
     });
   });
 });

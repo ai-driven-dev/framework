@@ -51,7 +51,7 @@ async function installTool(
 ): Promise<void> {
   const toolId = assertKnownToolId(raw, catalog);
   if (catalog.isAiTool(toolId)) {
-    await installAiTool(deps, output, projectRoot, toolId, cmdOptions, catalog);
+    await installAiTool(deps, output, projectRoot, toolId, cmdOptions);
   } else {
     await installIdeTool(deps, output, projectRoot, toolId, cmdOptions, catalog);
   }
@@ -62,8 +62,7 @@ async function installAiTool(
   output: CLIOutput,
   projectRoot: string,
   toolId: AiToolId,
-  cmdOptions: { force: boolean; plugins: boolean },
-  catalog: ToolCatalog
+  cmdOptions: { force: boolean; plugins: boolean }
 ): Promise<void> {
   const version = deps.currentVersionProvider.get();
   const result = await deps.installAiToolUseCase.execute({
@@ -72,7 +71,6 @@ async function installAiTool(
     force: cmdOptions.force,
     version,
     propagatePlugins: cmdOptions.plugins,
-    tools: catalog,
   });
   if (result.runtimeResult.skipped) {
     printToolAlreadyInstalled(output, toolId);

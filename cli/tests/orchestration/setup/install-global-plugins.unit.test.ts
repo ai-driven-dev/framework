@@ -4,7 +4,7 @@ import {
   InstallGlobalPlugins,
   type InstallGlobalPluginsOptions,
 } from "../../../src/orchestration/setup/install-global-plugins.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 
 function match(name: string, recommended: boolean): PluginSourceMatch {
   return {
@@ -38,7 +38,6 @@ function run(
   pluginNames: string[] = []
 ) {
   return useCase.execute({
-    tools: catalogOf(),
     projectRoot: "/project",
     toolIds: [TOOL.opencode],
     mode,

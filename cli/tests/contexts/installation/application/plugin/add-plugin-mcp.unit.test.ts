@@ -53,14 +53,14 @@ async function buildOpencodeProject(): Promise<{
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }
+    },
+    registeredTools()
   );
   return { deps, logger, useCase, registry };
 }
 
 function addLocal(useCase: AddPlugin, path: string, replace?: boolean): Promise<void> {
   return useCase.execute({
-    tools: registeredTools(),
     source: { kind: "local", path },
     toolIds: [TOOL.opencode],
     projectRoot: PROJECT_ROOT,
@@ -136,7 +136,6 @@ describe("AddPlugin and opencode MCP servers", () => {
         })
       );
       await useCase.execute({
-        tools: registeredTools(),
         source: { kind: "local", path: dir },
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
@@ -151,7 +150,6 @@ describe("AddPlugin and opencode MCP servers", () => {
     deps.fs.setFile(join(MCP_PLUGIN_DIR, "hooks/pre.js"), "mcp-plugin updated script");
 
     await useCase.execute({
-      tools: registeredTools(),
       source: { kind: "local", path: MCP_PLUGIN_DIR },
       toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
@@ -203,7 +201,6 @@ describe("AddPlugin and opencode MCP servers", () => {
       );
 
       await useCase.execute({
-        tools: registeredTools(),
         source: { kind: "local", path: MCP_PLUGIN_DIR },
         toolIds: [TOOL.codex],
         projectRoot: PROJECT_ROOT,
@@ -259,7 +256,6 @@ describe("AddPlugin and opencode MCP servers", () => {
 
       await expect(
         useCase.execute({
-          tools: registeredTools(),
           source: { kind: "local", path: MCP_PLUGIN_DIR },
           toolIds: [TOOL.opencode],
           projectRoot: PROJECT_ROOT,

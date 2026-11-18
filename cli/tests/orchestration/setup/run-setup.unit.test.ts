@@ -357,7 +357,6 @@ describe("setup without TTY", () => {
 
       expect(pluginInstallFromMarketplace.execute).toHaveBeenCalledTimes(1);
       expect(pluginInstallFromMarketplace.execute).toHaveBeenCalledWith({
-        tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
         pluginName: "aidd-context",
         toolIds: "all",
         projectRoot: PROJECT_ROOT,

@@ -10,29 +10,29 @@ import type { ManifestRepository } from "../../ports/manifest-repository.js";
 export interface PlanPluginInstallCommand {
   readonly toolIds: AiToolId[] | "all";
   readonly scope: InstallScope;
-  readonly tools: ToolCatalog;
 }
 
 /** Refuses a plugin install whose scope a targeted tool cannot honour, before anything is fetched. */
 export class PlanPluginInstall {
-  constructor(private readonly manifestRepo: ManifestRepository) {}
+  constructor(
+    private readonly manifestRepo: ManifestRepository,
+    private readonly tools: ToolCatalog
+  ) {}
 
   async execute(command: PlanPluginInstallCommand): Promise<void> {
-    const { tools, scope } = command;
-    for (const toolId of await this.targets(command.toolIds, tools)) {
-      const requiresUserScope = tools.aiProfile(toolId).plugins()?.requiresUserScope() === true;
+    const { scope } = command;
+    for (const toolId of await this.targets(command.toolIds)) {
+      const requiresUserScope =
+        this.tools.aiProfile(toolId).plugins()?.requiresUserScope() === true;
       assertToolSupportsScope(toolId, scope, getToolSupportedScope(requiresUserScope));
     }
   }
 
-  private async targets(
-    toolIds: AiToolId[] | "all",
-    tools: ToolCatalog
-  ): Promise<readonly AiToolId[]> {
+  private async targets(toolIds: AiToolId[] | "all"): Promise<readonly AiToolId[]> {
     if (toolIds !== "all") return toolIds;
     const manifest = await this.manifestRepo.load();
-    if (manifest === null) return tools.idsInCanonicalOrder("ai");
+    if (manifest === null) return this.tools.idsInCanonicalOrder("ai");
     const installed = manifest.getInstalledToolIds();
-    return tools.idsInCanonicalOrder("ai").filter((id) => installed.includes(id));
+    return this.tools.idsInCanonicalOrder("ai").filter((id) => installed.includes(id));
   }
 }

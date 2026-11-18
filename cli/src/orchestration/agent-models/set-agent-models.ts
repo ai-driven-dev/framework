@@ -46,7 +46,7 @@ export class SetAgentModels {
     const before = await this.providers.record(options.hosts, chosen);
     let reinstalled: readonly string[];
     try {
-      reinstalled = await this.refresh.execute({ ...options, tools });
+      reinstalled = await this.refresh.execute(options);
     } catch (error) {
       // A rebuild that failed leaves the machine on the provider it had.
       await this.providers.restore(before);

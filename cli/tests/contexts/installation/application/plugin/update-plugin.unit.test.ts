@@ -54,19 +54,25 @@ async function setup(
       distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, reader),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
-    }
+    },
+    registeredTools()
   );
   const updateUseCase = new UpdatePlugin(
     deps.manifestRepo,
     new PluginDistributionLoader(options.fetcher ?? deps.pluginFetcher, reader),
-    new ReplacePluginFiles(deps.fs, deps.hasher, options.builtDeps ?? fakeBuiltDeps())
+    new ReplacePluginFiles(
+      deps.fs,
+      deps.hasher,
+      options.builtDeps ?? fakeBuiltDeps(),
+      registeredTools()
+    ),
+    registeredTools()
   );
   return { addUseCase, updateUseCase };
 }
 
 async function addLocal(addUseCase: AddPlugin, path = PLUGIN_FIXTURE): Promise<void> {
   await addUseCase.execute({
-    tools: registeredTools(),
     source: { kind: "local", path },
     toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,
@@ -96,7 +102,6 @@ describe("UpdatePlugin", () => {
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const { addUseCase, updateUseCase } = await setup(deps);
     await addUseCase.execute({
-      tools: registeredTools(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
@@ -105,7 +110,6 @@ describe("UpdatePlugin", () => {
     const machineBefore = deps.userManifestRepo.getCurrent()?.toJSON();
     expect(
       await updateUseCase.execute({
-        tools: registeredTools(),
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
       })
@@ -118,7 +122,6 @@ describe("UpdatePlugin", () => {
     await initAndInstall(deps, PROJECT_ROOT, TOOL.cursor);
     const { addUseCase, updateUseCase } = await setup(deps);
     await addUseCase.execute({
-      tools: registeredTools(),
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: [TOOL.cursor],
       projectRoot: PROJECT_ROOT,
@@ -126,7 +129,6 @@ describe("UpdatePlugin", () => {
     });
     await expect(
       updateUseCase.execute({
-        tools: registeredTools(),
         pluginNames: ["sample-plugin"],
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
@@ -141,7 +143,6 @@ describe("UpdatePlugin", () => {
       const { addUseCase, updateUseCase } = await setup(deps);
 
       await addUseCase.execute({
-        tools: registeredTools(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -152,7 +153,6 @@ describe("UpdatePlugin", () => {
       const contentBefore = deps.fs.getFile(pluginFile);
 
       await updateUseCase.execute({
-        tools: registeredTools(),
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
@@ -169,7 +169,6 @@ describe("UpdatePlugin", () => {
       const { addUseCase, updateUseCase } = await setup(deps);
 
       await addUseCase.execute({
-        tools: registeredTools(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -185,7 +184,6 @@ describe("UpdatePlugin", () => {
       await deps.manifestRepo.save(manifest);
 
       await updateUseCase.execute({
-        tools: registeredTools(),
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
@@ -206,7 +204,6 @@ describe("UpdatePlugin", () => {
       await addLocal(addUseCase);
 
       const updated = await updateUseCase.execute({
-        tools: registeredTools(),
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
@@ -222,7 +219,6 @@ describe("UpdatePlugin", () => {
       await recordVersion(deps, "sample-plugin", "0.0.1");
 
       const updated = await updateUseCase.execute({
-        tools: registeredTools(),
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
@@ -241,7 +237,6 @@ describe("UpdatePlugin", () => {
       await recordVersion(deps, "extra-plugin", "0.0.1");
 
       const updated = await updateUseCase.execute({
-        tools: registeredTools(),
         pluginNames: ["extra-plugin"],
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -264,7 +259,6 @@ describe("UpdatePlugin", () => {
       await addLocal(addUseCase);
 
       await updateUseCase.execute({
-        tools: registeredTools(),
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });
@@ -290,7 +284,6 @@ describe("UpdatePlugin", () => {
       await recordVersion(deps, "sample-plugin", "0.0.1");
 
       await updateUseCase.execute({
-        tools: registeredTools(),
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       });

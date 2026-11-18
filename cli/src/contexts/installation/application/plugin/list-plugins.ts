@@ -8,17 +8,19 @@ import { resolvePluginToolIds } from "./plugin-target-resolution.js";
 
 export interface ListPluginsCommand {
   toolIds: AiToolId[] | "all";
-  tools: ToolCatalog;
 }
 
 export type ListPluginsResult = Map<AiToolId, readonly InstalledPlugin[]>;
 
 export class ListPlugins {
-  constructor(private readonly manifestRepo: ManifestRepository) {}
+  constructor(
+    private readonly manifestRepo: ManifestRepository,
+    private readonly tools: ToolCatalog
+  ) {}
 
   async execute(options: ListPluginsCommand): Promise<ListPluginsResult> {
     const manifest = await requireManifest(this.manifestRepo);
-    const resolvedToolIds = resolvePluginToolIds(options.toolIds, manifest, options.tools);
+    const resolvedToolIds = resolvePluginToolIds(options.toolIds, manifest, this.tools);
     return this.buildResult(resolvedToolIds, manifest);
   }
 

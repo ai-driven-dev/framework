@@ -3,7 +3,7 @@ import type { AgentPluginPlacement } from "../../../src/contexts/installation/ap
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 
 const PROJECT = "/project";
 
@@ -47,7 +47,7 @@ function refreshOver(placed: Placed, activationErrors: string[] = []) {
     }
   );
   const run = (scope: MarketplaceScope) =>
-    useCase.execute({ projectRoot: PROJECT, tools: catalogOf(), hosts: [TOOL.claude], scope });
+    useCase.execute({ projectRoot: PROJECT, hosts: [TOOL.claude], scope });
   return { run, calls, activations };
 }
 

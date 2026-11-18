@@ -5,7 +5,6 @@ import {
   type RequestedVersionPolicy,
 } from "../../contexts/distribution/contract/requested-version-policy.js";
 import type { PluginAdd } from "../../contexts/installation/application/plugin/add-plugin.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { VersionMismatchError } from "../../shared/domain/errors.js";
 import type { AiToolId } from "../../shared/domain/tool.js";
 import type { Logger } from "../../shared/ports/logger.js";
@@ -18,7 +17,6 @@ export interface PluginInstallFromMarketplaceOptions {
   fromMarketplace?: string;
   toolIds: AiToolId[] | "all";
   projectRoot: string;
-  tools: ToolCatalog;
   interactive: boolean;
   autoSelect?: boolean;
   /** When true, drop existing plugin entry before adding (idempotent setup re-runs). */
@@ -70,7 +68,6 @@ export class InstallFromMarketplace implements PluginInstallFromMarketplace {
       source: chosen.source,
       toolIds: options.toolIds,
       projectRoot: options.projectRoot,
-      tools: options.tools,
       interactive: options.interactive,
       marketplace: chosen.marketplaceName,
       requiredVersion,

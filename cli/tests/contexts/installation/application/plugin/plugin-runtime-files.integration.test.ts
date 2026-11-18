@@ -41,17 +41,18 @@ async function legacyProject() {
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     },
+    registeredTools(),
     deps.installRuntimeConfigUseCase
   );
   const update = new UpdatePlugin(
     deps.manifestRepo,
     new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-    new ReplacePluginFiles(deps.fs, deps.hasher, fakeBuiltDeps()),
+    new ReplacePluginFiles(deps.fs, deps.hasher, fakeBuiltDeps(), registeredTools()),
+    registeredTools(),
     deps.installRuntimeConfigUseCase
   );
   const addPlugin = () =>
     add.execute({
-      tools: registeredTools(),
       source: { kind: "local", path: FIXTURE },
       toolIds: [TOOL.opencode],
       projectRoot: ROOT,
@@ -84,7 +85,6 @@ describe("plugin runtime files on an existing tool", () => {
     if (!manifest || !plugin) throw new Error("fixture plugin was not installed");
     manifest.updatePlugin(TOOL.opencode, plugin.withVersion("0.0.0"));
     await update.execute({
-      tools: registeredTools(),
       toolIds: [TOOL.opencode],
       projectRoot: ROOT,
     });
@@ -106,7 +106,6 @@ describe("plugin runtime files on an existing tool", () => {
 
     expect(
       await update.execute({
-        tools: registeredTools(),
         toolIds: [TOOL.opencode],
         projectRoot: ROOT,
       })

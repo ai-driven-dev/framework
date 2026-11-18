@@ -1,13 +1,11 @@
 import type { ListFrameworkPlugins } from "../../contexts/distribution/application/plugin-source/list-framework-plugins.js";
 import type { PluginSourceMatch } from "../../contexts/distribution/contract/plugin-source-match.js";
 import type { InstallUserPlugins } from "../../contexts/installation/application/install/install-user-plugins.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 
 export interface InstallGlobalPluginsOptions {
   readonly projectRoot: string;
   readonly toolIds: readonly ToolId[];
-  readonly tools: ToolCatalog;
   readonly mode: "interactive" | "all" | "recommended" | "named" | "none";
   readonly pluginNames: readonly string[];
 }
@@ -35,7 +33,6 @@ export class InstallGlobalPlugins {
     await this.installUserPlugins.execute({
       projectRoot: options.projectRoot,
       toolIds: options.toolIds,
-      tools: options.tools,
       plugins: chosen,
     });
     return { plugins: chosen.map((match) => match.entry.name) };

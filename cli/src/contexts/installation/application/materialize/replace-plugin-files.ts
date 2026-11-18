@@ -1,8 +1,10 @@
 import { homedir as nodeHomedir } from "node:os";
 import type { PluginDistribution } from "../../../../shared/domain/plugin/plugin-distribution.js";
+import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
+import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AiToolProfile } from "../../../tools/contract/tool-profile.js";
 import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
@@ -20,7 +22,7 @@ import { resolvePluginTranslator } from "./resolve-plugin-translator.js";
 export interface ReplacePluginFilesCommand {
   readonly plugin: InstalledPlugin;
   readonly dist: PluginDistribution;
-  readonly tool: AiToolProfile;
+  readonly toolId: AiToolId;
   readonly projectRoot: string;
   readonly manifest: Manifest;
 }
@@ -31,11 +33,13 @@ export class ReplacePluginFiles {
   constructor(
     private readonly fs: FileReader & FileWriter,
     private readonly hasher: Hasher,
-    private readonly builtDeps: BuiltMaterializationDeps
+    private readonly builtDeps: BuiltMaterializationDeps,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: ReplacePluginFilesCommand): Promise<void> {
-    const { plugin, dist, tool, projectRoot, manifest } = command;
+    const { plugin, dist, toolId, projectRoot, manifest } = command;
+    const tool = this.tools.aiProfile(toolId);
     const baseDir = resolveBaseDirFromRecord(plugin.scope, tool, projectRoot, nodeHomedir);
     await deleteOldFiles(plugin.files, baseDir, this.fs);
     const translator = this.resolveTranslator(tool);

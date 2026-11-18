@@ -65,7 +65,6 @@ async function runUserScopeSync(
           projectRoot,
           scope: "user",
           rebuild: true,
-          tools: catalog,
         });
   const activation = await deps.syncSettingsUseCase.execute({
     projectRoot,

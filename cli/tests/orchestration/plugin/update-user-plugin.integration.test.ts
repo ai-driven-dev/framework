@@ -84,14 +84,14 @@ function fixture(
         fakeBuiltDeps()
       ),
       logger,
-      registrationRecordRules
+      registrationRecordRules,
+      catalogOf()
     ),
     new RefreshHostPlugin(new Map([[toolId, activator]]), new Map([[toolId, reader]])),
     isStrictlyWithinUserScope
   );
   const execute = (pluginName: string | readonly string[], rebuild?: boolean) =>
     update.execute({
-      tools: catalogOf(),
       pluginNames: typeof pluginName === "string" ? [pluginName] : [...pluginName],
       toolIds: [toolId],
       projectRoot: "/A",
@@ -100,7 +100,6 @@ function fixture(
     });
   const executeAll = () =>
     update.execute({
-      tools: catalogOf(),
       toolIds: [toolId],
       projectRoot: "/A",
       scope: "user",

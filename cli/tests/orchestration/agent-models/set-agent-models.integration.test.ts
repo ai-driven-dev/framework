@@ -43,8 +43,8 @@ function setup(
 ) {
   const manifest = Manifest.create();
   seed?.(manifest);
-  const updates: Omit<UpdatePluginCommand, "tools">[] = [];
-  const userUpdates: Omit<UpdatePluginCommand, "tools">[] = [];
+  const updates: UpdatePluginCommand[] = [];
+  const userUpdates: UpdatePluginCommand[] = [];
   const activations: SyncSettingsOptions[] = [];
   const store = new AgentModelStoreAdapter(fs, () => CONFIG);
   const refresh = new RefreshAgentPlugins(
@@ -53,14 +53,14 @@ function setup(
       new InMemoryManifestRepository(userManifest, CONFIG)
     ),
     {
-      execute: async ({ tools: _tools, ...options }) => {
+      execute: async (options) => {
         if (updateFails) throw new Error("build failed");
         updates.push(options);
         return ["aidd-orchestrator"];
       },
     },
     {
-      execute: async ({ tools: _tools, ...options }) => {
+      execute: async (options) => {
         userUpdates.push(options);
         return [];
       },

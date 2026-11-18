@@ -101,7 +101,6 @@ export function registerPluginCommand(
         const deps = await createDeps(projectRoot, { verbose }, output);
         const result = await deps.pluginListUseCase.execute({
           toolIds,
-          tools: catalog,
         });
         printInstalledPlugins(output, result);
       } catch (error) {
@@ -137,7 +136,6 @@ export function registerPluginCommand(
           const result = await deps.pluginInstallUseCase.execute({
             pluginArg,
             toolIds,
-            tools: catalog,
             projectRoot,
             interactive: process.stdout.isTTY,
             fromMarketplace: cmdOptions.from,
@@ -200,7 +198,6 @@ export function registerPluginCommand(
           toolIds,
           projectRoot,
           scope,
-          tools: catalog,
         });
         if (scope === "project") {
           reportNativeActivation(output, await deps.syncNativeActivation.execute({ projectRoot }));

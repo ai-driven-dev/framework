@@ -59,7 +59,8 @@ function buildAddUseCase(
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }
+    },
+    registeredTools()
   );
 }
 
@@ -102,7 +103,6 @@ describe("AddPlugin", () => {
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await useCase.execute({
-        tools: registeredTools(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -123,7 +123,6 @@ describe("AddPlugin", () => {
       await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
       const useCase = await makeUseCase(deps);
       await useCase.execute({
-        tools: registeredTools(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -131,7 +130,6 @@ describe("AddPlugin", () => {
       });
       await expect(
         useCase.execute({
-          tools: registeredTools(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
@@ -162,10 +160,10 @@ describe("AddPlugin", () => {
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        }
+        },
+        registeredTools()
       );
       await useCase.execute({
-        tools: registeredTools(),
         source: {
           kind: "git-subdir",
           url: "https://github.com/ai-driven-dev/framework.git",
@@ -204,11 +202,11 @@ describe("AddPlugin", () => {
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        }
+        },
+        registeredTools()
       );
       await expect(
         useCase.execute({
-          tools: registeredTools(),
           source: {
             kind: "git-subdir",
             url: "https://github.com/ai-driven-dev/framework.git",
@@ -243,10 +241,10 @@ describe("AddPlugin", () => {
           ),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        }
+        },
+        registeredTools()
       );
       await useCase.execute({
-        tools: registeredTools(),
         source: { kind: "local", path: PLUGIN_FIXTURE },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -299,10 +297,10 @@ describe("AddPlugin", () => {
             ),
             marketplaceRegistry: await makeGithubRegistry(PROJECT_ROOT),
             ...fakeBuildSources(),
-          }
+          },
+          registeredTools()
         );
         await useCase.execute({
-          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
@@ -340,10 +338,10 @@ describe("AddPlugin", () => {
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }
+          },
+          registeredTools()
         );
         await useCase.execute({
-          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
@@ -380,10 +378,10 @@ describe("AddPlugin", () => {
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }
+          },
+          registeredTools()
         );
         await useCase.execute({
-          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
@@ -413,7 +411,6 @@ describe("AddPlugin", () => {
 
       async function addForCursor(deps: Deps, logger: Logger, replace?: boolean): Promise<void> {
         await buildAddUseCase(deps, await makeGithubRegistry(PROJECT_ROOT), logger).execute({
-          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
@@ -494,7 +491,6 @@ describe("AddPlugin", () => {
         deps.fs.setFile(cursorSkillAt(), "# Their own skill");
 
         await buildAddUseCase(deps).execute({
-          tools: registeredTools(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
           toolIds: [cursor],
           projectRoot: PROJECT_ROOT,
@@ -548,9 +544,9 @@ describe("AddPlugin", () => {
             ),
             marketplaceRegistry: registryB,
             ...fakeBuildSources(),
-          }
+          },
+          registeredTools()
         ).execute({
-          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [cursor],
           projectRoot: "/B",
@@ -588,10 +584,10 @@ describe("AddPlugin", () => {
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }
+          },
+          registeredTools()
         );
         await useCase.execute({
-          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [codex],
           projectRoot: PROJECT_ROOT,
@@ -623,10 +619,10 @@ describe("AddPlugin", () => {
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }
+          },
+          registeredTools()
         );
         await useCase.execute({
-          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [codex],
           projectRoot: PROJECT_ROOT,
@@ -660,10 +656,10 @@ describe("AddPlugin", () => {
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }
+          },
+          registeredTools()
         );
         await useCase.execute({
-          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
@@ -694,10 +690,10 @@ describe("AddPlugin", () => {
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }
+          },
+          registeredTools()
         );
         await useCase.execute({
-          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
@@ -731,10 +727,10 @@ describe("AddPlugin", () => {
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }
+          },
+          registeredTools()
         );
         await useCase.execute({
-          tools: registeredTools(),
           source: GIT_SUBDIR_SOURCE,
           toolIds: [copilot],
           projectRoot: PROJECT_ROOT,
@@ -781,10 +777,10 @@ describe("AddPlugin", () => {
             ),
             marketplaceRegistry: registry,
             ...fakeBuildSources(),
-          }
+          },
+          registeredTools()
         );
         await useCase.execute({
-          tools: registeredTools(),
           source: { kind: "local", path: PLUGIN_FIXTURE },
           toolIds: [opencode],
           projectRoot: PROJECT_ROOT,
@@ -829,10 +825,10 @@ describe("AddPlugin", () => {
           distributionLoader: new PluginDistributionLoader(deps.pluginFetcher, zeroFilesReader),
           marketplaceRegistry: registry,
           ...fakeBuildSources(),
-        }
+        },
+        registeredTools()
       );
       await useCase.execute({
-        tools: registeredTools(),
         source: { kind: "local", path: "/some-plugin" },
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -948,7 +944,6 @@ describe("AddPlugin", () => {
       const fetchSpy = vi.spyOn(deps.pluginFetcher, "fetch");
 
       await buildAddUseCase(deps, registry).execute({
-        tools: registeredTools(),
         source: GITHUB_SOURCE,
         toolIds: [opencode],
         projectRoot: PROJECT_ROOT,
@@ -1065,7 +1060,6 @@ describe("AddPlugin", () => {
       await saveMarketplace(registry, "local-mkt", { kind: "local", path: "/mkt-source" });
 
       await buildAddUseCase(deps, registry).execute({
-        tools: registeredTools(),
         source: GITHUB_SOURCE,
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,

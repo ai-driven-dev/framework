@@ -32,10 +32,10 @@ async function installSamplePlugin() {
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
-    }
+    },
+    registeredTools()
   );
   await useCase.execute({
-    tools: registeredTools(),
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [TOOL.opencode],
     projectRoot: PROJECT_ROOT,

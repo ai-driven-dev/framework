@@ -252,7 +252,8 @@ for (const [toolId, catalogPath] of [
             fakeBuiltDeps()
           ),
           new CapturingLogger(),
-          registrationRecordRules
+          registrationRecordRules,
+          catalogOf()
         ),
         new RefreshHostPlugin(
           new Map([[toolId, activator]]),
@@ -264,7 +265,6 @@ for (const [toolId, catalogPath] of [
       if (toolId === "copilot") {
         expect(
           await update.execute({
-            tools: catalogOf(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -287,7 +287,8 @@ for (const [toolId, catalogPath] of [
               fakeBuiltDeps()
             ),
             new CapturingLogger(),
-            registrationRecordRules
+            registrationRecordRules,
+            catalogOf()
           ),
           new RefreshHostPlugin(
             new Map([[toolId, failed]]),
@@ -298,7 +299,6 @@ for (const [toolId, catalogPath] of [
         );
         await expect(
           failingUpdate.execute({
-            tools: catalogOf(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",
@@ -311,7 +311,6 @@ for (const [toolId, catalogPath] of [
       } else {
         await expect(
           update.execute({
-            tools: catalogOf(),
             pluginNames: ["test-plugin"],
             toolIds: [toolId],
             projectRoot: "/A",

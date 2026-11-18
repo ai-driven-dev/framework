@@ -7,22 +7,16 @@ import type { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
+import type { RuntimeConfigSection } from "../../ports/tool-sections.js";
 import type { InstallRuntimeConfig } from "../install/config/install-runtime-config.js";
-import type {
-  ReplacePluginFiles,
-  ReplacePluginFilesCommand,
-} from "../materialize/replace-plugin-files.js";
+import type { ReplacePluginFiles } from "../materialize/replace-plugin-files.js";
 import { requireManifest } from "../shared/require-manifest.js";
 import type { PluginDistributionLoader } from "./plugin-distribution-loader.js";
 import { resolvePluginToolIds } from "./plugin-target-resolution.js";
 
-/** The tool a plugin is updated for, as a replacement of its files reads it. */
-type PluginTool = ReplacePluginFilesCommand["tool"];
-
 export interface UpdatePluginCommand {
   pluginNames?: string[];
   toolIds: AiToolId[] | "all";
-  tools: ToolCatalog;
   projectRoot: string;
   scope?: "project" | "user";
   /** Re-materialize at the same version: the source or the build changed, not the plugin's
@@ -35,20 +29,21 @@ export class UpdatePlugin {
     private readonly manifestRepo: ManifestRepository,
     private readonly distributionLoader: PluginDistributionLoader,
     private readonly replacePluginFiles: ReplacePluginFiles,
+    private readonly tools: ToolCatalog,
     private readonly pluginRuntime?: Pick<InstallRuntimeConfig, "ensurePluginRuntimeFiles">
   ) {}
 
   async execute(options: UpdatePluginCommand): Promise<string[]> {
     if (options.scope === "user")
       throw new Error("User-scope plugin update requires UpdateUserPluginFiles.");
-    const { pluginNames, toolIds, projectRoot, tools } = options;
+    const { pluginNames, toolIds, projectRoot } = options;
     const manifest = await requireManifest(this.manifestRepo);
-    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, tools);
+    const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, this.tools);
     const cacheDir = join(projectRoot, PLUGIN_CACHE_SUBDIR);
     const updated: string[] = [];
     for (const toolId of resolvedToolIds) {
       const names = await this.updatePluginsForTool(
-        options.tools.aiProfile(toolId),
+        this.tools.aiProfile(toolId),
         pluginNames,
         projectRoot,
         cacheDir,
@@ -62,7 +57,7 @@ export class UpdatePlugin {
   }
 
   private async updatePluginsForTool(
-    tool: PluginTool,
+    tool: RuntimeConfigSection,
     pluginNames: string[] | undefined,
     projectRoot: string,
     cacheDir: string,
@@ -90,7 +85,7 @@ export class UpdatePlugin {
 
   private async updateOnePlugin(
     plugin: InstalledPlugin,
-    tool: PluginTool,
+    tool: RuntimeConfigSection,
     projectRoot: string,
     cacheDir: string,
     manifest: Manifest,
@@ -103,7 +98,13 @@ export class UpdatePlugin {
     });
     await this.pluginRuntime?.ensurePluginRuntimeFiles(tool, projectRoot, manifest);
     if (!rebuild && compareSemver(dist.manifest.version, plugin.version) <= 0) return false;
-    await this.replacePluginFiles.execute({ plugin, dist, tool, projectRoot, manifest });
+    await this.replacePluginFiles.execute({
+      plugin,
+      dist,
+      toolId,
+      projectRoot,
+      manifest,
+    });
     return true;
   }
 }
