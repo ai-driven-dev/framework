@@ -1,5 +1,4 @@
 import type { DoctorReport } from "../../contexts/installation/contract/doctor-issue.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { GlobalExecutionError } from "../../shared/domain/errors.js";
 import type { RunDoctor } from "../doctor/run-doctor.js";
 
@@ -13,28 +12,23 @@ export interface DoctorAllResult {
 }
 
 /** The doctor over every category, as a command asks for it. */
-export type DoctorAll = (
-  projectRoot: string,
-  tools: ToolCatalog,
-  pluginName?: string
-) => Promise<DoctorAllResult>;
+export type DoctorAll = (projectRoot: string, pluginName?: string) => Promise<DoctorAllResult>;
 
 /** Runs the doctor once per category and reports both, so one category that cannot be checked
  * never hides the other. */
 export async function doctorAll(
   doctor: Pick<RunDoctor, "execute">,
   projectRoot: string,
-  tools: ToolCatalog,
   pluginName?: string
 ): Promise<DoctorAllResult> {
   const errors: GlobalExecutionError[] = [];
   const ai = await runScope(
-    () => doctor.execute({ projectRoot, category: "ai", pluginName, tools }),
+    () => doctor.execute({ projectRoot, category: "ai", pluginName }),
     "ai",
     errors
   );
   const ide = await runScope(
-    () => doctor.execute({ projectRoot, category: "ide", pluginName, tools }),
+    () => doctor.execute({ projectRoot, category: "ide", pluginName }),
     "ide",
     errors
   );

@@ -179,7 +179,7 @@ describe("createDeps", () => {
       manifest.addTool(TOOL.claude, "1.0.0", []);
       await manifestRepo.save(manifest);
 
-      const result = await doctorAllUseCase.execute(root, tools);
+      const result = await doctorAllUseCase.execute(root);
 
       expect(result.errors).toEqual([]);
       expect(result.ai?.toolHealth).toEqual([
@@ -198,7 +198,7 @@ describe("createDeps", () => {
       manifest.addTool(TOOL.claude, "1.0.0", []);
       await manifestRepo.save(manifest);
 
-      const report = await doctorUseCase.execute({ projectRoot: root, tools });
+      const report = await doctorUseCase.execute({ projectRoot: root });
 
       expect(report.issues.map((issue) => issue.message)).not.toContain("Not authenticated");
     });

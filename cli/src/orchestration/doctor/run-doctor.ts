@@ -15,7 +15,6 @@ export interface DoctorOptions {
   projectRoot: string;
   category?: ToolCategory;
   pluginName?: string;
-  tools: ToolCatalog;
 }
 
 /** The installation's own checks, assembled in composition. */
@@ -38,22 +37,23 @@ export class RunDoctor {
     private readonly load: LoadManifestForDoctor,
     private readonly checks: DoctorChecks,
     private readonly registration: Pick<CheckRegistration, "execute">,
-    private readonly authentication: Pick<CheckAuthentication, "execute">
+    private readonly authentication: Pick<CheckAuthentication, "execute">,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: DoctorOptions): Promise<DoctorReport> {
-    const { projectRoot, category, pluginName, tools } = options;
-    const allowedIds = category ? new Set<string>(tools.idsInCanonicalOrder(category)) : null;
+    const { projectRoot, category, pluginName } = options;
+    const allowedIds = category ? new Set<string>(this.tools.idsInCanonicalOrder(category)) : null;
     const installed: InstalledToolsView = await this.load.execute({ allowedIds });
     const check = { projectRoot, allowedIds };
     const issues = [
       ...(await this.checks.tracked.execute(check)),
       ...(await this.checks.merge.execute(check)),
       ...(await this.checks.references.execute(check)),
-      ...(await this.registration.execute({ projectRoot, allowedIds, tools })),
+      ...(await this.registration.execute({ projectRoot, allowedIds })),
     ];
     if (!category) {
-      issues.push(...(await this.checks.layout.execute({ projectRoot, tools })));
+      issues.push(...(await this.checks.layout.execute({ projectRoot })));
       issues.push(...(await this.authentication.execute()));
     }
     const pluginIssues = await this.checks.plugin.execute({

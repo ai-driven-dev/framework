@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { doctorAll } from "../../../src/orchestration/global/doctor-all.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import {
   buildDoctorUseCase,
   buildUnitDeps,
@@ -50,8 +49,8 @@ function verdictOf(result: Awaited<ReturnType<typeof doctorAll>>) {
 function doctorAllOver(deps: Awaited<ReturnType<typeof buildUnitDeps>>) {
   const doctor = buildDoctorUseCase(deps);
   return {
-    execute: (projectRoot: string, tools: ToolCatalog, pluginName?: string) =>
-      doctorAll(doctor, projectRoot, tools, pluginName),
+    execute: (projectRoot: string, pluginName?: string) =>
+      doctorAll(doctor, projectRoot, pluginName),
   };
 }
 
@@ -60,7 +59,7 @@ describe("doctorAll", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const useCase = doctorAllOver(deps);
 
-    const result = await useCase.execute(PROJECT_ROOT, catalogOf());
+    const result = await useCase.execute(PROJECT_ROOT);
 
     expect(result).toStrictEqual({
       ai: null,
@@ -78,7 +77,7 @@ describe("doctorAll", () => {
     const { deps, manifest } = await depsWithBothCategories();
     const useCase = doctorAllOver(deps);
 
-    const result = await useCase.execute(PROJECT_ROOT, catalogOf());
+    const result = await useCase.execute(PROJECT_ROOT);
 
     expect(result).toStrictEqual({
       ai: {
@@ -104,7 +103,7 @@ describe("doctorAll", () => {
     await deleteOneTrackedFile(deps, manifest, TOOL.claude);
     const useCase = doctorAllOver(deps);
 
-    const result = await useCase.execute(PROJECT_ROOT, catalogOf());
+    const result = await useCase.execute(PROJECT_ROOT);
 
     expect(verdictOf(result)).toStrictEqual([false, false, true, []]);
   });
@@ -114,7 +113,7 @@ describe("doctorAll", () => {
     await deleteOneTrackedFile(deps, manifest, TOOL.vscode);
     const useCase = doctorAllOver(deps);
 
-    const result = await useCase.execute(PROJECT_ROOT, catalogOf());
+    const result = await useCase.execute(PROJECT_ROOT);
 
     expect(verdictOf(result)).toStrictEqual([false, true, false, []]);
   });
@@ -131,7 +130,7 @@ describe("doctorAll", () => {
         },
       };
 
-      const result = await doctorAll(doctor, PROJECT_ROOT, catalogOf());
+      const result = await doctorAll(doctor, PROJECT_ROOT);
 
       expect(result.healthy).toBe(false);
       expect(result.errors).toStrictEqual([{ scope: unchecked, message: "could not be checked" }]);
@@ -154,7 +153,7 @@ describe("doctorAll", () => {
     await deps.manifestRepo.save(manifest);
     const useCase = doctorAllOver(deps);
 
-    const result = await useCase.execute(PROJECT_ROOT, catalogOf());
+    const result = await useCase.execute(PROJECT_ROOT);
 
     const missing = {
       toolId: TOOL.claude,

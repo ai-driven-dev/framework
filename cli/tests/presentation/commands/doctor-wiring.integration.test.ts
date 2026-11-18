@@ -100,11 +100,7 @@ describe("aidd doctor — every tool at once", () => {
       "",
       "Installation is healthy",
     ]);
-    expect(doctorAll).toHaveBeenCalledWith(
-      PROJECT_ROOT,
-      expect.objectContaining({ inHelpOrder: expect.any(Function) }),
-      undefined
-    );
+    expect(doctorAll).toHaveBeenCalledWith(PROJECT_ROOT, undefined);
     expect(statusAll).toHaveBeenCalledWith(PROJECT_ROOT);
   });
 
@@ -189,11 +185,7 @@ describe("aidd doctor — every tool at once", () => {
 
     const lines = await run("--plugin", "aidd-dev");
 
-    expect(doctorAll).toHaveBeenCalledWith(
-      PROJECT_ROOT,
-      expect.objectContaining({ inHelpOrder: expect.any(Function) }),
-      "aidd-dev"
-    );
+    expect(doctorAll).toHaveBeenCalledWith(PROJECT_ROOT, "aidd-dev");
     expect(errors.join("")).toBe("");
     expect(lines[lines.length - 1]).toBe("Installation is healthy");
   });
@@ -303,7 +295,6 @@ describe("aidd doctor --tool", () => {
       projectRoot: PROJECT_ROOT,
       category: "ai",
       pluginName: undefined,
-      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
     });
     expect(statusScoped).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
@@ -415,7 +406,6 @@ describe("aidd doctor --scope user", () => {
     expect(doctorRegistration).toHaveBeenCalledWith({
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: expect.objectContaining({ inHelpOrder: expect.any(Function) }),
       globalInstall: true,
     });
     expect(doctorAll).not.toHaveBeenCalled();

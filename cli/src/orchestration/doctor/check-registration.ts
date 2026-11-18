@@ -17,7 +17,6 @@ import type { AiToolId } from "../../shared/domain/tool.js";
 export interface CheckRegistrationCommand {
   projectRoot: string;
   allowedIds: Set<string> | null;
-  tools: ToolCatalog;
   /** A global install declares nothing in a project's settings, so it skips that check. */
   globalInstall?: boolean;
 }
@@ -37,15 +36,16 @@ export class CheckRegistration {
     private readonly listPlugins: ListRegisteredPlugins,
     private readonly builds: Pick<ResolveBuiltMarketplaces, "execute">,
     private readonly declared: InspectDeclaredMarketplaces,
-    private readonly inspectHost: Pick<InspectHostRegistration, "execute">
+    private readonly inspectHost: Pick<InspectHostRegistration, "execute">,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: CheckRegistrationCommand): Promise<DoctorIssue[]> {
-    const { projectRoot, allowedIds, tools } = command;
+    const { projectRoot, allowedIds } = command;
     const registered = await this.listPlugins.execute({ allowedIds });
     const aiToolIds: AiToolId[] = [];
     for (const { toolId } of registered.tools) {
-      if (tools.isAiTool(toolId)) aiToolIds.push(toolId);
+      if (this.tools.isAiTool(toolId)) aiToolIds.push(toolId);
     }
     const { registeredNames, userCacheRoot, built } = await this.builds.execute({
       projectRoot,
@@ -94,7 +94,7 @@ export class CheckRegistration {
   ): Promise<DoctorIssue[]> {
     const hosts: InspectedHost[] = [];
     for (const { toolId, expectedPlugins } of registered) {
-      if (!command.tools.isAiTool(toolId)) continue;
+      if (!this.tools.isAiTool(toolId)) continue;
       hosts.push({
         tool: toolId,
         expectedPlugins,

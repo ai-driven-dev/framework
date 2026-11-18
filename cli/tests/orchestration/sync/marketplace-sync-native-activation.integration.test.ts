@@ -536,7 +536,8 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
         new Map()
       ),
       () => "/user-cache",
-      { get: () => "1.0.0" }
+      { get: () => "1.0.0" },
+      catalogOf()
     );
     // `SyncSettings.execute` mutates the loaded manifest in place, so one
     // load kept across both doctor calls sees the sync that runs in between.
@@ -548,7 +549,6 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
       manifest,
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: catalogOf(),
     });
     expect(
       before.some((issue) => issue.severity === "error" && issue.fix.includes("aidd sync"))
@@ -560,7 +560,6 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
       manifest,
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: catalogOf(),
     });
     expect(after.filter((issue) => issue.severity === "error")).toEqual([]);
   });

@@ -66,12 +66,12 @@ async function issuesFor(
     (binary) => activators.get(binary)?.isAvailable() ?? false,
     registeredHostInspector(fs, new Map(), new Map()),
     () => "/user-cache",
-    { get: () => "1.0.0" }
+    { get: () => "1.0.0" },
+    catalogOf()
   ).execute({
     manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds,
-    tools: catalogOf(),
     globalInstall: machine,
   });
 }
@@ -192,12 +192,12 @@ async function nativeIssuesFor(
     (binary) => activators.get(binary)?.isAvailable() ?? false,
     registeredHostInspector(fs, hostRegistries, new Map()),
     () => "/user-cache",
-    { get: () => "1.0.0" }
+    { get: () => "1.0.0" },
+    catalogOf()
   ).execute({
     manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds: null,
-    tools: catalogOf(),
   });
 }
 
@@ -350,13 +350,13 @@ describe("the tools whose built marketplaces are resolved", () => {
       ),
       builds,
       new InspectDeclaredMarketplaces(new InMemoryFileAdapter(), () => false, catalogOf()),
-      { execute: async () => ({ findings: [] }) }
+      { execute: async () => ({ findings: [] }) },
+      catalogOf()
     );
 
     await check.execute({
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: catalogOf(),
       globalInstall: true,
     });
 

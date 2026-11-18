@@ -134,8 +134,9 @@ async function doctorSays(registry: HostPluginRegistryReading): Promise<string> 
       new Map()
     ),
     () => "/user-cache",
-    { get: () => "1.0.0" }
-  ).execute({ manifest, projectRoot: "/A", allowedIds: null, tools: catalogOf() });
+    { get: () => "1.0.0" },
+    catalogOf()
+  ).execute({ manifest, projectRoot: "/A", allowedIds: null });
   return issues.length === 0 ? "none" : issues.map((i) => `${i.severity}: ${i.message}`).join("\n");
 }
 

@@ -11,7 +11,6 @@ import type { CheckRegistrationCommand } from "../../../src/orchestration/doctor
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
-import { registeredTools } from "../../shared/testing/registered-tools.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
 
 /** The registration check wired as the composition root wires it. */
@@ -23,13 +22,14 @@ export function checkRegistrationOver(
   inspectHost: InspectHostRegistration,
   userCacheRoot: () => string,
   currentVersion: VersionReader,
-  tools: ToolCatalog = registeredTools()
+  tools: ToolCatalog
 ): CheckRegistration {
   return new CheckRegistration(
     new ListRegisteredPlugins(loadManifest, registrationRecordRules),
     new ResolveBuiltMarketplaces(fs, registry, userCacheRoot, currentVersion),
     new InspectDeclaredMarketplaces(fs, hostAvailable, tools),
-    inspectHost
+    inspectHost,
+    tools
   );
 }
 

@@ -27,7 +27,7 @@ async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "wa
     tracked: new CheckTrackedFiles(loadManifest, deps.fs),
     merge: new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
     references: new CheckFileReferences(loadManifest, deps.fs),
-    layout: new CheckProjectLayout(loadManifest, deps.fs),
+    layout: new CheckProjectLayout(loadManifest, deps.fs, catalogOf()),
     plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs, catalogOf())),
   };
   vi.spyOn(checks.tracked, "execute").mockResolvedValue([issue("tracked")]);
@@ -40,8 +40,9 @@ async function reportOf(category?: "ai", severity: DoctorIssue["severity"] = "wa
     new LoadManifestForDoctor(loadManifest),
     checks,
     registration,
-    authentication
-  ).execute({ projectRoot: PROJECT_ROOT, tools: catalogOf(), category });
+    authentication,
+    catalogOf()
+  ).execute({ projectRoot: PROJECT_ROOT, category });
 }
 
 async function runDoctor(category?: "ai") {

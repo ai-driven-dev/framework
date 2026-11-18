@@ -1391,14 +1391,14 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
         new Map([[TOOL.claude, hostReader]])
       ),
       () => USER_CACHE_ROOT,
-      fakeVersion(CURRENT_VERSION)
+      fakeVersion(CURRENT_VERSION),
+      catalogOf()
     );
 
     const before = await doctor.execute({
       manifest,
       projectRoot: PROJECT_A,
       allowedIds: null,
-      tools: catalogOf(),
     });
     expect(before.some((issue) => issue.fix.includes("aidd sync"))).toBe(true);
 
@@ -1470,7 +1470,6 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
       manifest,
       projectRoot: PROJECT_A,
       allowedIds: null,
-      tools: catalogOf(),
     });
     expect(after).toEqual([]);
 

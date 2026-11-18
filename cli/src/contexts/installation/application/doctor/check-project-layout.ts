@@ -7,29 +7,28 @@ import type { LoadManifest } from "./load-manifest.js";
 
 export interface CheckProjectLayoutCommand {
   projectRoot: string;
-  tools: ToolCatalog;
 }
 
 export class CheckProjectLayout {
   constructor(
     private readonly loadManifest: LoadManifest,
-    private readonly fs: FileReader
+    private readonly fs: FileReader,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: CheckProjectLayoutCommand): Promise<DoctorIssue[]> {
-    const { projectRoot, tools } = command;
+    const { projectRoot } = command;
     const manifest = await this.loadManifest.execute();
-    return this.checkOrphanedDirectories(manifest, projectRoot, tools);
+    return this.checkOrphanedDirectories(manifest, projectRoot);
   }
 
   private async checkOrphanedDirectories(
     manifest: Manifest,
-    projectRoot: string,
-    tools: ToolCatalog
+    projectRoot: string
   ): Promise<DoctorIssue[]> {
     const issues: DoctorIssue[] = [];
     const installedToolDirs = manifest.getInstalledDirectories();
-    for (const tool of tools.sortedById()) {
+    for (const tool of this.tools.sortedById()) {
       if ((await detectToolSignals(this.fs, tool, projectRoot)).length > 0) {
         if (!installedToolDirs.has(tool.directory)) {
           issues.push({

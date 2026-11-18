@@ -6,7 +6,7 @@ import {
   extractMarkdownLinkTargets,
 } from "../../../src/contexts/installation/domain/markdown-references.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import {
   buildDoctorUseCase,
   buildUnitDeps,
@@ -91,7 +91,6 @@ describe("doctor", () => {
 
     const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -110,18 +109,16 @@ describe("doctor", () => {
       throw new Error("Manifest is corrupted");
     };
     const useCase = buildDoctorUseCase({ ...deps, manifestRepo: corruptRepo });
-    await expect(
-      useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT })
-    ).rejects.toThrow("Manifest is corrupted");
+    await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow(
+      "Manifest is corrupted"
+    );
   });
 
   it("fails if project is not initialized", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
 
     const useCase = buildDoctorUseCase(deps);
-    await expect(
-      useCase.execute({ tools: catalogOf(), projectRoot: PROJECT_ROOT })
-    ).rejects.toThrow("aidd setup");
+    await expect(useCase.execute({ projectRoot: PROJECT_ROOT })).rejects.toThrow("aidd setup");
   });
 
   it("warns about tool directory not registered in manifest", async () => {
@@ -136,7 +133,6 @@ describe("doctor", () => {
 
     const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -158,7 +154,6 @@ describe("doctor", () => {
 
     const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -178,7 +173,6 @@ describe("doctor", () => {
 
     const useCase = buildDoctorUseCase(deps);
     const report = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
     });
 
@@ -197,7 +191,6 @@ describe("doctor", () => {
 
       const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -219,7 +212,6 @@ describe("doctor", () => {
 
       const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -241,7 +233,6 @@ describe("doctor", () => {
 
       const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -259,7 +250,6 @@ describe("doctor", () => {
 
       const useCase = buildDoctorUseCase(deps);
       const report = await useCase.execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -292,7 +282,6 @@ describe("doctor", () => {
       const { deps, manifest } = await installedBothCategories();
 
       const report = await buildDoctorUseCase(deps).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
       });
 
@@ -306,7 +295,6 @@ describe("doctor", () => {
       const { deps, manifest } = await installedBothCategories();
 
       const report = await buildDoctorUseCase(deps).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         category: "ide",
       });
@@ -325,7 +313,6 @@ describe("doctor", () => {
       );
 
       const report = await buildDoctorUseCase(deps).execute({
-        tools: catalogOf(),
         projectRoot: PROJECT_ROOT,
         category: "ai",
       });

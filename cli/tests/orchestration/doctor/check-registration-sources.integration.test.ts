@@ -116,13 +116,13 @@ async function issuesFor(
     () => false,
     registeredHostInspector(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
     () => "/user-cache",
-    fakeVersion("1.0.0")
+    fakeVersion("1.0.0"),
+    catalogOf()
   );
   const issues = await useCase.execute({
     manifest,
     projectRoot: PROJECT_ROOT,
     allowedIds: null,
-    tools: catalogOf(),
   });
   // Not filtered by `NAME`, this project's own local alias: a conflict message names the
   // catalog's own declared name, which a test may diverge from the alias entirely.
@@ -288,7 +288,8 @@ describe("CheckRegistration — marketplace source conflicts", () => {
       () => false,
       registeredHostInspector(fs, new Map(), new Map()),
       () => "/user-cache",
-      fakeVersion("1.0.0")
+      fakeVersion("1.0.0"),
+      catalogOf()
     );
 
     await expect(
@@ -296,7 +297,6 @@ describe("CheckRegistration — marketplace source conflicts", () => {
         manifest,
         projectRoot: PROJECT_ROOT,
         allowedIds: null,
-        tools: catalogOf(),
       })
     ).resolves.toStrictEqual([]);
   });
@@ -333,14 +333,14 @@ describe("CheckRegistration — marketplace source conflicts", () => {
       () => false,
       registeredHostInspector(fs, new Map(), new Map([[TOOL.codex, hostReader]])),
       () => "/user-cache",
-      fakeVersion("1.0.0")
+      fakeVersion("1.0.0"),
+      catalogOf()
     );
 
     const issues = await useCase.execute({
       manifest,
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: catalogOf(),
     });
 
     expect(issues).toStrictEqual([]);
@@ -387,14 +387,14 @@ describe("CheckRegistration — marketplace source conflicts", () => {
       () => false,
       registeredHostInspector(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
       () => "/user-cache",
-      fakeVersion("1.0.0")
+      fakeVersion("1.0.0"),
+      catalogOf()
     );
 
     await useCase.execute({
       manifest,
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: catalogOf(),
     });
 
     expect(hostReader.reads).toBe(2);
@@ -436,13 +436,13 @@ describe("CheckRegistration — user-scope marketplace source drift", () => {
       () => false,
       registeredHostInspector(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
       () => USER_CACHE_ROOT,
-      fakeVersion(CURRENT_VERSION)
+      fakeVersion(CURRENT_VERSION),
+      catalogOf()
     );
     return useCase.execute({
       manifest,
       projectRoot: PROJECT_ROOT,
       allowedIds: null,
-      tools: catalogOf(),
     });
   }
 

@@ -177,7 +177,7 @@ export function buildDoctorUseCase(
       tracked: new CheckTrackedFiles(loadManifest, deps.fs),
       merge: new CheckMergeFiles(loadManifest, deps.fs, deps.hasher),
       references: new CheckFileReferences(loadManifest, deps.fs),
-      layout: new CheckProjectLayout(loadManifest, deps.fs),
+      layout: new CheckProjectLayout(loadManifest, deps.fs, catalogOf()),
       plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(deps.fs, catalogOf())),
     },
     checkRegistrationOver(
@@ -189,9 +189,11 @@ export function buildDoctorUseCase(
         deps.nativePluginActivators.get(TOOL.codex)?.isAvailable() === true,
       registeredHostInspector(deps.fs, hostRegistries, new Map()),
       () => "/user-cache",
-      { get: () => "1.0.0" }
+      { get: () => "1.0.0" },
+      catalogOf()
     ),
-    { execute: async () => [] }
+    { execute: async () => [] },
+    catalogOf()
   );
 }
 

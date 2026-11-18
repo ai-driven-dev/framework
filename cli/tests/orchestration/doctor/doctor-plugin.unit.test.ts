@@ -83,7 +83,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
       tracked: new CheckTrackedFiles(loadManifest, fs),
       merge: new CheckMergeFiles(loadManifest, fs, noopHasher),
       references: new CheckFileReferences(loadManifest, fs),
-      layout: new CheckProjectLayout(loadManifest, fs),
+      layout: new CheckProjectLayout(loadManifest, fs, catalogOf()),
       plugin: new CheckPluginDrift(loadManifest, new DetectPluginDrift(fs, catalogOf())),
     },
     checkRegistrationOver(
@@ -93,9 +93,11 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
       () => false,
       registeredHostInspector(fs, new Map(), new Map()),
       () => "/user-cache",
-      { get: () => "1.0.0" }
+      { get: () => "1.0.0" },
+      catalogOf()
     ),
-    { execute: async () => [] }
+    { execute: async () => [] },
+    catalogOf()
   );
 }
 
@@ -108,7 +110,6 @@ describe("DoctorUseCase — plugin integrity", () => {
 
       const report = await useCase.execute({
         projectRoot: "/proj",
-        tools: catalogOf(),
       });
 
       expect(report.pluginIssues).toHaveLength(1);
@@ -127,7 +128,6 @@ describe("DoctorUseCase — plugin integrity", () => {
 
       const report = await useCase.execute({
         projectRoot: "/proj",
-        tools: catalogOf(),
       });
 
       expect(report.pluginIssues).toHaveLength(1);
@@ -144,7 +144,6 @@ describe("DoctorUseCase — plugin integrity", () => {
 
       const report = await useCase.execute({
         projectRoot: "/proj",
-        tools: catalogOf(),
       });
 
       expect(report.pluginIssues).toHaveLength(0);
@@ -159,7 +158,6 @@ describe("DoctorUseCase — plugin integrity", () => {
 
       const report = await useCase.execute({
         projectRoot: "/proj",
-        tools: catalogOf(),
         pluginName: "other-plugin",
       });
 

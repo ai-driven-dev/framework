@@ -9,7 +9,6 @@ import { CheckTrackedFiles } from "../../contexts/installation/application/docto
 import { ListRegisteredPlugins } from "../../contexts/installation/application/doctor/list-registered-plugins.js";
 import { LoadManifest } from "../../contexts/installation/application/doctor/load-manifest.js";
 import { LoadManifestForDoctor } from "../../contexts/installation/application/doctor/load-manifest-for-doctor.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import { CheckAuthentication } from "../../orchestration/doctor/check-authentication.js";
 import { CheckRegistration } from "../../orchestration/doctor/check-registration.js";
 import { RunDoctor } from "../../orchestration/doctor/run-doctor.js";
@@ -54,7 +53,8 @@ export function wireDoctor(base: Base, inst: Installation) {
         hostMarketplaceRegistries,
         process.platform,
         tools
-      )
+      ),
+      tools
     );
   const doctorUseCase = new RunDoctor(
     new LoadManifestForDoctor(loadManifest),
@@ -62,17 +62,18 @@ export function wireDoctor(base: Base, inst: Installation) {
       tracked: new CheckTrackedFiles(loadManifest, fs),
       merge: new CheckMergeFiles(loadManifest, fs, hasher),
       references: new CheckFileReferences(loadManifest, fs),
-      layout: new CheckProjectLayout(loadManifest, fs),
+      layout: new CheckProjectLayout(loadManifest, fs, tools),
       plugin: new CheckPluginDrift(loadManifest, detectPluginDriftUseCase),
     },
     registrationOver(loadManifest),
-    new CheckAuthentication(tokenProvider)
+    new CheckAuthentication(tokenProvider),
+    tools
   );
   // `doctor --scope user` checks the same registrations against the machine-wide manifest.
   const doctorRegistrationUseCase = registrationOver(new LoadManifest(userManifestRepo));
   const doctorAllUseCase = {
-    execute: (projectRoot: string, catalog: ToolCatalog, pluginName?: string) =>
-      doctorAll(doctorUseCase, projectRoot, catalog, pluginName),
+    execute: (projectRoot: string, pluginName?: string) =>
+      doctorAll(doctorUseCase, projectRoot, pluginName),
   };
   return { doctorUseCase, doctorRegistrationUseCase, doctorAllUseCase };
 }

@@ -32,10 +32,9 @@ async function runFullDoctor(
   deps: Pick<Deps, DoctorKeys>,
   output: CLIOutput,
   projectRoot: string,
-  tools: ToolCatalog,
   pluginName: string | undefined
 ): Promise<void> {
-  const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, tools, pluginName);
+  const doctorResult = await deps.doctorAllUseCase.execute(projectRoot, pluginName);
   const statusResult = await deps.statusAllUseCase.execute(projectRoot);
   printReportErrors(output, doctorResult.errors);
 
@@ -79,7 +78,6 @@ async function runScopedDoctor(
     projectRoot,
     category,
     pluginName,
-    tools,
   });
   const statusReport = await deps.statusUseCase.execute({
     projectRoot,
@@ -154,7 +152,6 @@ async function runUserScopeDoctor(
   const issues = await deps.doctorRegistrationUseCase.execute({
     projectRoot,
     allowedIds,
-    tools,
     globalInstall: true,
   });
   printScopeIssues(output, "User scope", { issues });
@@ -209,7 +206,7 @@ export function registerDoctorCommand(
             cmdOptions.plugin
           );
         } else {
-          await runFullDoctor(deps, output, projectRoot, tools, cmdOptions.plugin);
+          await runFullDoctor(deps, output, projectRoot, cmdOptions.plugin);
         }
       } catch (error) {
         errorHandler.handle(error);

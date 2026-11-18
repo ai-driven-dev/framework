@@ -33,9 +33,8 @@ async function issuesFor(onDisk: Record<string, string>) {
     ])
   );
   const load = new LoadManifest(new InMemoryManifestRepository(manifestTrackingClaude()));
-  return new CheckProjectLayout(load, new InMemoryFileAdapter(files, hasher)).execute({
+  return new CheckProjectLayout(load, new InMemoryFileAdapter(files, hasher), catalogOf()).execute({
     projectRoot: PROJECT_ROOT,
-    tools: catalogOf(),
   });
 }
 
