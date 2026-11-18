@@ -11,8 +11,9 @@ import { CheckTrackedFiles } from "../../../src/contexts/installation/applicatio
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { LoadManifestForDoctor } from "../../../src/contexts/installation/application/doctor/load-manifest-for-doctor.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
-import { InstallIdeConfig } from "../../../src/contexts/installation/application/install/install-ide-config.js";
-import { InstallRuntimeConfig } from "../../../src/contexts/installation/application/install/install-runtime-config.js";
+import { InstallIdeConfig } from "../../../src/contexts/installation/application/install/config/install-ide-config.js";
+import { InstallRuntimeConfig } from "../../../src/contexts/installation/application/install/config/install-runtime-config.js";
+import { TrackedConfigFiles } from "../../../src/contexts/installation/application/install/config/tracked-config-files.js";
 import { RunPostInstallPipeline } from "../../../src/contexts/installation/application/install/run-post-install-pipeline.js";
 import { ResolveSyncConflict } from "../../../src/contexts/installation/application/resolve-sync-conflict.js";
 import { DetectPluginDrift } from "../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
@@ -59,17 +60,15 @@ export async function buildUnitDeps(_projectRoot: string) {
   const marketplaceRegistry = new InMemoryMarketplaceRegistry();
   const updateGitignore = new UpdateGitignore(fs);
   const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore);
+  const trackedConfigFiles = new TrackedConfigFiles(fs, hasher, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
+    trackedConfigFiles,
     fs,
-    hasher,
-    logger,
     assetProvider,
     runPostInstallPipeline
   );
   const installIdeConfig = new InstallIdeConfig(
-    fs,
-    hasher,
-    logger,
+    trackedConfigFiles,
     assetProvider,
     runPostInstallPipeline
   );

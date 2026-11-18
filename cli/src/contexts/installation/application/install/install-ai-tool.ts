@@ -4,7 +4,10 @@ import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { InstallRuntimeConfig, InstallRuntimeConfigResult } from "./install-runtime-config.js";
+import type {
+  InstallRuntimeConfig,
+  InstallRuntimeConfigResult,
+} from "./config/install-runtime-config.js";
 
 /** What native activation did for a run, as the command that asked for it reports it. */
 export interface NativeActivationReport {

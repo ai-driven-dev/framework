@@ -13,7 +13,7 @@ import type { Manifest } from "../../domain/manifest.js";
 import { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { InstallRuntimeConfig } from "../install/install-runtime-config.js";
+import type { InstallRuntimeConfig } from "../install/config/install-runtime-config.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
 import type { BuiltMaterializationDeps } from "../shared/built-materialization-deps.js";

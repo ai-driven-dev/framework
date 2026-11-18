@@ -6,8 +6,9 @@ import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { InstallIdeConfig } from "../install/install-ide-config.js";
-import type { InstallRuntimeConfig } from "../install/install-runtime-config.js";
+import type { InstallIdeConfig } from "../install/config/install-ide-config.js";
+import type { InstallRuntimeConfig } from "../install/config/install-runtime-config.js";
+import type { BeforeWriteGate } from "../install/config/tracked-config-files.js";
 import type { ResolveSyncConflict } from "../resolve-sync-conflict.js";
 
 export interface UpdateToolCommand {
@@ -48,10 +49,7 @@ export class UpdateTool {
     }
   }
 
-  private buildFileGuard(
-    manifest: Manifest,
-    command: UpdateToolCommand
-  ): (relativePath: string) => Promise<"write" | "skip"> {
+  private buildFileGuard(manifest: Manifest, command: UpdateToolCommand): BeforeWriteGate {
     const hashes = new Map<string, FileHash>();
     for (const f of manifest.getToolFiles(command.toolId)) hashes.set(f.relativePath, f.hash);
     return async (relativePath: string) => {
@@ -71,7 +69,7 @@ export class UpdateTool {
   private async runInstall(
     command: UpdateToolCommand,
     manifest: Manifest,
-    onBeforeWriteRegularFile: (relativePath: string) => Promise<"write" | "skip">
+    onBeforeWriteRegularFile: BeforeWriteGate
   ): Promise<UpdateToolResult> {
     const { toolId, projectRoot, version, tools } = command;
     const install = {

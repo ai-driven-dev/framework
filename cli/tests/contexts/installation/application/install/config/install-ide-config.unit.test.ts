@@ -1,11 +1,12 @@
 import { join } from "node:path";
-import { describe, expect, it, vi } from "vitest";
-import { InstallIdeConfig } from "../../../../../src/contexts/installation/application/install/install-ide-config.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
-import { buildUnitDeps, initProject } from "../../../../helpers/ports/build-unit-deps.js";
-import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { describe, expect, it } from "vitest";
+import { InstallIdeConfig } from "../../../../../../src/contexts/installation/application/install/config/install-ide-config.js";
+import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
+import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
+import type { AssetProvider } from "../../../../../../src/shared/ports/asset-provider.js";
+import { buildUnitDeps, initProject } from "../../../../../helpers/ports/build-unit-deps.js";
+import { StubAssetProvider } from "../../../../../helpers/ports/stub-asset-provider.js";
+import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const KEYBINDINGS = ".vscode/keybindings.json";
@@ -15,9 +16,7 @@ function buildUseCase(
   assets: AssetProvider = deps.assetProvider
 ) {
   return new InstallIdeConfig(
-    deps.fs,
-    deps.hasher,
-    deps.logger,
+    new TrackedConfigFiles(deps.fs, deps.hasher, deps.logger),
     assets,
     deps.runPostInstallPipeline
   );
@@ -76,37 +75,6 @@ describe("InstallIdeConfig", () => {
       skipped: true,
       warnings: [],
     });
-  });
-
-  it("tracks a file the caller chose to skip under the hash it has on disk", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-    await buildUseCase(deps).execute({
-      tools: registeredTools(),
-      toolId: TOOL.vscode,
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      force: false,
-      version: "1.0.0",
-    });
-    const userContent = '[{"key": "ctrl+k"}]';
-    await deps.fs.writeFile(join(PROJECT_ROOT, KEYBINDINGS), userContent);
-
-    await buildUseCase(deps).execute({
-      tools: registeredTools(),
-      toolId: TOOL.vscode,
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      force: true,
-      version: "1.0.0",
-      onBeforeWriteRegularFile: async (path) => (path === KEYBINDINGS ? "skip" : "write"),
-    });
-
-    expect(deps.fs.getFile(join(PROJECT_ROOT, KEYBINDINGS))).toBe(userContent);
-    expect(manifest.getToolFiles(TOOL.vscode)).toStrictEqual([
-      { relativePath: KEYBINDINGS, hash: deps.hasher.hash(userContent) },
-    ]);
   });
 
   it("writes an asset answered as text verbatim", async () => {
@@ -189,14 +157,13 @@ describe("InstallIdeConfig", () => {
     expect(content).toContain('"editor.formatOnSave"');
   });
 
-  it("skips user-owned untracked settings file and emits warning", async () => {
+  it("leaves a user-owned untracked settings file out of the files it installs", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
-
-    await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/settings.json"), '{"user": true}');
-
-    const warnSpy = vi.spyOn(deps.logger, "warn");
+    const settingsPath = join(PROJECT_ROOT, ".vscode/settings.json");
+    await deps.fs.writeFile(settingsPath, '{"user": true}');
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
+
     const result = await buildUseCase(deps).execute({
       tools: registeredTools(),
       toolId: TOOL.vscode,
@@ -206,9 +173,7 @@ describe("InstallIdeConfig", () => {
       version: "1.0.0",
     });
 
-    expect(result.skipped).toBe(false);
-    const settingsTracked = result.files.some((f) => f.relativePath === ".vscode/settings.json");
-    expect(settingsTracked).toBe(false);
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(".vscode/settings.json"));
+    expect(result.files.map((file) => file.relativePath)).not.toContain(".vscode/settings.json");
+    expect(deps.fs.getFile(settingsPath)).toBe('{"user": true}');
   });
 });

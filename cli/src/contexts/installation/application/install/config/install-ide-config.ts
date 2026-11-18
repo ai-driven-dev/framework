@@ -1,0 +1,98 @@
+import { basename } from "node:path";
+import type { InstallationFile } from "../../../../../shared/domain/file.js";
+import type { IdeToolId } from "../../../../../shared/domain/tool.js";
+import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
+import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
+import type { SettingsFileAnswers } from "../../../../tools/contract/tool-profile.js";
+import type { Manifest } from "../../../domain/manifest.js";
+import type { RunPostInstallPipeline } from "../run-post-install-pipeline.js";
+import type { BeforeWriteGate, TrackedConfigFiles } from "./tracked-config-files.js";
+
+export interface InstallIdeConfigCommand {
+  toolId: IdeToolId;
+  projectRoot: string;
+  manifest: Manifest;
+  force: boolean;
+  version: string;
+  /** The profiles the install answers from: the tool's own and every installed one. */
+  tools: ToolCatalog;
+  /** Optional per-file gate for the update path. Returns "skip" to leave the file unwritten. Defaults to always-write. */
+  onBeforeWriteRegularFile?: BeforeWriteGate;
+}
+
+export interface InstallIdeConfigResult {
+  toolId: IdeToolId;
+  fileCount: number;
+  files: InstallationFile[];
+  skipped: boolean;
+  warnings: string[];
+}
+
+export class InstallIdeConfig {
+  constructor(
+    private readonly trackedConfigFiles: TrackedConfigFiles,
+    private readonly assets: AssetProvider,
+    private readonly runPostInstallPipeline: RunPostInstallPipeline
+  ) {}
+
+  async execute(options: InstallIdeConfigCommand): Promise<InstallIdeConfigResult> {
+    const { toolId, manifest, force } = options;
+    if (manifest.hasTool(toolId) && !force) {
+      return { toolId, fileCount: 0, files: [], skipped: true, warnings: [] };
+    }
+    const { regularFiles, mergeFiles } = await this.buildSettingsFiles(options);
+    const allTracked = await this.trackedConfigFiles.writeAndTrack(
+      regularFiles,
+      options.projectRoot,
+      options.onBeforeWriteRegularFile
+    );
+    const mergeEntries = await this.trackedConfigFiles.mergeAndTrack(
+      mergeFiles,
+      options.projectRoot
+    );
+    const allFiles = [...regularFiles, ...mergeFiles];
+    manifest.addTool(toolId, options.version, allTracked, mergeEntries);
+    await this.runPostInstallPipeline.execute({
+      projectRoot: options.projectRoot,
+      manifest,
+      tools: options.tools,
+    });
+    return {
+      toolId,
+      fileCount: allFiles.length,
+      files: allFiles,
+      skipped: false,
+      warnings: [],
+    };
+  }
+
+  private async buildSettingsFiles(
+    options: InstallIdeConfigCommand
+  ): Promise<{ regularFiles: InstallationFile[]; mergeFiles: InstallationFile[] }> {
+    const capabilities = options.tools.ideProfile(options.toolId).settingsFiles();
+    const regularFiles: InstallationFile[] = [];
+    const mergeFiles: InstallationFile[] = [];
+    for (const capability of capabilities) {
+      const file = await this.buildSettingsFile(capability, options);
+      if (file === null) continue;
+      if (file.mergeStrategy !== "none") mergeFiles.push(file);
+      else regularFiles.push(file);
+    }
+    return { regularFiles, mergeFiles };
+  }
+
+  private async buildSettingsFile(
+    capability: SettingsFileAnswers,
+    options: InstallIdeConfigCommand
+  ): Promise<InstallationFile | null> {
+    const outputPath = capability.outputPath();
+    if (
+      await this.trackedConfigFiles.isUserOwned(outputPath, options.projectRoot, options.manifest)
+    )
+      return null;
+    const fileName = basename(outputPath);
+    const asset = this.assets.loadConfigAsset(options.toolId, fileName);
+    const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
+    return this.trackedConfigFiles.fileOf(outputPath, content, capability.mergeStrategy());
+  }
+}

@@ -16,8 +16,9 @@ import {
   withoutMarketplace,
   withoutRef,
 } from "../contexts/host-registration/domain/registration-record.js";
-import { InstallIdeConfig } from "../contexts/installation/application/install/install-ide-config.js";
-import { InstallRuntimeConfig } from "../contexts/installation/application/install/install-runtime-config.js";
+import { InstallIdeConfig } from "../contexts/installation/application/install/config/install-ide-config.js";
+import { InstallRuntimeConfig } from "../contexts/installation/application/install/config/install-runtime-config.js";
+import { TrackedConfigFiles } from "../contexts/installation/application/install/config/tracked-config-files.js";
 import { RunPostInstallPipeline } from "../contexts/installation/application/install/run-post-install-pipeline.js";
 import { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
 import { CacheBuiltMarketplace } from "../contexts/installation/application/marketplace/cache-built-marketplace.js";
@@ -149,17 +150,15 @@ export function wireInstallation(base: Base) {
   const detectPluginDriftUseCase = new DetectPluginDrift(fs, tools);
   const updateGitignore = new UpdateGitignore(fs);
   const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore);
+  const trackedConfigFiles = new TrackedConfigFiles(fs, hasher, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
+    trackedConfigFiles,
     fs,
-    hasher,
-    logger,
     assetProvider,
     runPostInstallPipeline
   );
   const installIdeConfig = new InstallIdeConfig(
-    fs,
-    hasher,
-    logger,
+    trackedConfigFiles,
     assetProvider,
     runPostInstallPipeline
   );

@@ -27,6 +27,7 @@ src/
 │   │   │   ├── agents/    # the provider each tool's agents run on, and the main session's model in the tool's user settings
 │   │   │   ├── doctor/    # the checks over what the manifest tracks
 │   │   │   ├── install/
+│   │   │   │   ├── config/    # a tool's settings and config files written, and tracked in the manifest
 │   │   │   │   └── content/
 │   │   │   ├── marketplace/    # what a marketplace holds in a project: its plugin sources, and the plugins removed with it
 │   │   │   ├── materialize/    # a plugin's files translated for one tool and written

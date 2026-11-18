@@ -5,8 +5,9 @@ import { wireTools } from "../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
 import { PluginFetcherAdapter } from "../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { InitProject } from "../../src/contexts/installation/application/init-project.js";
-import { InstallIdeConfig } from "../../src/contexts/installation/application/install/install-ide-config.js";
-import { InstallRuntimeConfig } from "../../src/contexts/installation/application/install/install-runtime-config.js";
+import { InstallIdeConfig } from "../../src/contexts/installation/application/install/config/install-ide-config.js";
+import { InstallRuntimeConfig } from "../../src/contexts/installation/application/install/config/install-runtime-config.js";
+import { TrackedConfigFiles } from "../../src/contexts/installation/application/install/config/tracked-config-files.js";
 import { RunPostInstallPipeline } from "../../src/contexts/installation/application/install/run-post-install-pipeline.js";
 import { UpdateGitignore } from "../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
@@ -214,17 +215,15 @@ export function buildDeps(projectRoot: string) {
   const pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const updateGitignore = new UpdateGitignore(fs);
   const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore);
+  const trackedConfigFiles = new TrackedConfigFiles(fs, hasher, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
+    trackedConfigFiles,
     fs,
-    hasher,
-    logger,
     assetProvider,
     runPostInstallPipeline
   );
   const installIdeConfig = new InstallIdeConfig(
-    fs,
-    hasher,
-    logger,
+    trackedConfigFiles,
     assetProvider,
     runPostInstallPipeline
   );

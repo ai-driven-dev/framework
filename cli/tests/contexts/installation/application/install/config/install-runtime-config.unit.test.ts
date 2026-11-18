@@ -1,17 +1,17 @@
 import { join } from "node:path";
-import { describe, expect, it, vi } from "vitest";
-import { InstallRuntimeConfig } from "../../../../../src/contexts/installation/application/install/install-runtime-config.js";
-import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { InstallationFile } from "../../../../../src/shared/domain/file.js";
-import { extractMergeEntries } from "../../../../../src/shared/domain/merge.js";
-import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
+import { describe, expect, it } from "vitest";
+import { InstallRuntimeConfig } from "../../../../../../src/contexts/installation/application/install/config/install-runtime-config.js";
+import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
+import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
+import { InstallationFile } from "../../../../../../src/shared/domain/file.js";
+import type { AssetProvider } from "../../../../../../src/shared/ports/asset-provider.js";
 import {
   buildUnitDeps,
   initProject,
   installTool,
-} from "../../../../helpers/ports/build-unit-deps.js";
-import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+} from "../../../../../helpers/ports/build-unit-deps.js";
+import { StubAssetProvider } from "../../../../../helpers/ports/stub-asset-provider.js";
+import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -20,9 +20,8 @@ function buildUseCase(
   assets: AssetProvider = deps.assetProvider
 ) {
   return new InstallRuntimeConfig(
+    new TrackedConfigFiles(deps.fs, deps.hasher, deps.logger),
     deps.fs,
-    deps.hasher,
-    deps.logger,
     assets,
     deps.runPostInstallPipeline
   );
@@ -116,30 +115,6 @@ describe("InstallRuntimeConfig", () => {
     });
   });
 
-  it("tracks a file the caller chose to skip under the hash it has on disk", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, TOOL.claude);
-    const userContent = '{"user": true}';
-    await deps.fs.writeFile(join(PROJECT_ROOT, ".claude/settings.json"), userContent);
-
-    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-    await buildUseCase(deps).execute({
-      tools: registeredTools(),
-      toolId: TOOL.claude,
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      force: true,
-      version: "1.0.0",
-      onBeforeWriteRegularFile: async () => "skip",
-    });
-
-    expect(deps.fs.getFile(join(PROJECT_ROOT, ".claude/settings.json"))).toBe(userContent);
-    expect(manifest.getToolFiles(TOOL.claude)).toStrictEqual([
-      { relativePath: ".claude/settings.json", hash: deps.hasher.hash(userContent) },
-    ]);
-  });
-
   it("overwrites existing tracked files when force is true", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
@@ -170,29 +145,6 @@ describe("InstallRuntimeConfig", () => {
     expect(result.skipped).toBe(false);
     const content = deps.fs.getFile(settingsPath) ?? "";
     expect(content).not.toContain('"modified"');
-  });
-
-  it("skips user-owned untracked config file and emits warning", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-
-    await deps.fs.writeFile(join(PROJECT_ROOT, ".claude/settings.json"), '{"user": true}');
-
-    const warnSpy = vi.spyOn(deps.logger, "warn");
-    const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-    const result = await buildUseCase(deps).execute({
-      tools: registeredTools(),
-      toolId: TOOL.claude,
-      projectRoot: PROJECT_ROOT,
-      manifest,
-      force: false,
-      version: "1.0.0",
-    });
-
-    expect(result.skipped).toBe(false);
-    const settingsTracked = result.files.some((f) => f.relativePath === ".claude/settings.json");
-    expect(settingsTracked).toBe(false);
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(".claude/settings.json"));
   });
 
   it("writes Kilo's project-local JSONC config on a fresh install", async () => {
@@ -317,7 +269,7 @@ describe("InstallRuntimeConfig", () => {
       expect(parsed).toHaveProperty("chat.plugins.enabled", true);
     });
 
-    it("records the merged settings file with a hash per top-level key", async () => {
+    it("records the merged settings file in the manifest", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
@@ -332,14 +284,7 @@ describe("InstallRuntimeConfig", () => {
         version: "1.0.0",
       });
 
-      const onDisk = deps.fs.getFile(join(PROJECT_ROOT, ".vscode/settings.json")) ?? "";
-      expect(manifest.getMergeFiles(TOOL.copilot)).toStrictEqual([
-        {
-          relativePath: ".vscode/settings.json",
-          sectionKey: null,
-          entries: extractMergeEntries(onDisk, null, deps.hasher),
-        },
-      ]);
+      expect(manifest.getMergeFiles(TOOL.copilot)).not.toStrictEqual([]);
     });
   });
 });

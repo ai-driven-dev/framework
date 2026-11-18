@@ -2,8 +2,11 @@ import type { AiToolId, IdeToolId } from "../../../../shared/domain/tool.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { InstallIdeConfig, InstallIdeConfigResult } from "./install-ide-config.js";
-import type { InstallRuntimeConfig, InstallRuntimeConfigResult } from "./install-runtime-config.js";
+import type { InstallIdeConfig, InstallIdeConfigResult } from "./config/install-ide-config.js";
+import type {
+  InstallRuntimeConfig,
+  InstallRuntimeConfigResult,
+} from "./config/install-runtime-config.js";
 
 export type ToolInstallResult = InstallRuntimeConfigResult | InstallIdeConfigResult;
 

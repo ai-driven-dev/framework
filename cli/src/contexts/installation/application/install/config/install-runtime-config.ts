@@ -1,18 +1,15 @@
 import { join } from "node:path";
-import { InstallationFile } from "../../../../shared/domain/file.js";
-import { extractMergeEntries, type MergeFileEntry } from "../../../../shared/domain/merge.js";
-import type { AiToolId } from "../../../../shared/domain/tool.js";
-import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { Hasher } from "../../../../shared/ports/hasher.js";
-import type { Logger } from "../../../../shared/ports/logger.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
-import type { SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
-import type { Manifest } from "../../domain/manifest.js";
-import type { FileMerger } from "../../ports/file-merger.js";
-import type { RuntimeConfigSection } from "../../ports/tool-sections.js";
-import type { RunPostInstallPipeline } from "./run-post-install-pipeline.js";
+import type { InstallationFile } from "../../../../../shared/domain/file.js";
+import type { AiToolId } from "../../../../../shared/domain/tool.js";
+import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
+import type { FileReader } from "../../../../../shared/ports/file-reader.js";
+import type { FileWriter } from "../../../../../shared/ports/file-writer.js";
+import type { ToolCatalog } from "../../../../tools/contract/tool-catalog.js";
+import type { SettingsFileAnswers } from "../../../../tools/contract/tool-profile.js";
+import type { Manifest } from "../../../domain/manifest.js";
+import type { RuntimeConfigSection } from "../../../ports/tool-sections.js";
+import type { RunPostInstallPipeline } from "../run-post-install-pipeline.js";
+import type { BeforeWriteGate, TrackedConfigFiles } from "./tracked-config-files.js";
 
 export interface InstallRuntimeConfigCommand {
   toolId: AiToolId;
@@ -23,7 +20,7 @@ export interface InstallRuntimeConfigCommand {
   /** The profiles the install answers from: the tool's own and every installed one. */
   tools: ToolCatalog;
   /** Optional per-file gate for the update path. Returns "skip" to leave the file unwritten. Defaults to always-write. */
-  onBeforeWriteRegularFile?: (relativePath: string) => Promise<"write" | "skip">;
+  onBeforeWriteRegularFile?: BeforeWriteGate;
 }
 
 export interface InstallRuntimeConfigResult {
@@ -36,9 +33,8 @@ export interface InstallRuntimeConfigResult {
 
 export class InstallRuntimeConfig {
   constructor(
-    private readonly fs: FileReader & FileWriter & FileMerger,
-    private readonly hasher: Hasher,
-    private readonly logger: Logger,
+    private readonly trackedConfigFiles: TrackedConfigFiles,
+    private readonly fs: FileReader & FileWriter,
     private readonly assets: AssetProvider,
     private readonly runPostInstallPipeline: RunPostInstallPipeline
   ) {}
@@ -67,7 +63,7 @@ export class InstallRuntimeConfig {
       const asset = this.assets.loadConfigAsset(toolId, fileName);
       const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
       await this.fs.writeFile(path, content);
-      manifest.updateTrackedFileHash(toolId, relativePath, this.hasher.hash(content));
+      manifest.updateTrackedFileHash(toolId, relativePath, this.trackedConfigFiles.hashOf(content));
     }
   }
 
@@ -76,13 +72,15 @@ export class InstallRuntimeConfig {
     mergeFiles: InstallationFile[],
     options: InstallRuntimeConfigCommand
   ): Promise<void> {
-    const allTracked = await this.writeRegularFiles(
+    const allTracked = await this.trackedConfigFiles.writeAndTrack(
       regularFiles,
       options.projectRoot,
       options.onBeforeWriteRegularFile
     );
-    await this.writeMergeFiles(mergeFiles, options.projectRoot);
-    const mergeEntries = await this.buildMergeEntries(mergeFiles, options.projectRoot);
+    const mergeEntries = await this.trackedConfigFiles.mergeAndTrack(
+      mergeFiles,
+      options.projectRoot
+    );
     options.manifest.addTool(options.toolId, options.version, allTracked, mergeEntries);
     await this.runPostInstallPipeline.execute({
       projectRoot: options.projectRoot,
@@ -100,7 +98,14 @@ export class InstallRuntimeConfig {
       const resolvedPath = await this.resolveConfigPath(profile, fileName, outputPath, options);
       const asset = this.assets.loadConfigAsset(options.toolId, fileName);
       let content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
-      if (await this.isUserOwned(resolvedPath, options)) continue;
+      if (
+        await this.trackedConfigFiles.isUserOwned(
+          resolvedPath,
+          options.projectRoot,
+          options.manifest
+        )
+      )
+        continue;
       const mcp = profile.mcpConfig();
       if (mcp?.isFrameworkPrimeJson(fileName)) {
         content = mcp.frameworkConfigOver(
@@ -109,13 +114,7 @@ export class InstallRuntimeConfig {
           {}
         );
       }
-      files.push(
-        new InstallationFile({
-          relativePath: resolvedPath,
-          content,
-          hash: this.hasher.hash(content),
-        })
-      );
+      files.push(this.trackedConfigFiles.fileOf(resolvedPath, content));
     }
     return files;
   }
@@ -164,74 +163,6 @@ export class InstallRuntimeConfig {
       this.assets.loadConfigAsset(options.toolId, fileName)
     );
     if (content === null) return null;
-    return new InstallationFile({
-      relativePath: cap.outputPath(),
-      content,
-      hash: this.hasher.hash(content),
-      mergeStrategy: cap.mergeStrategy(),
-    });
-  }
-
-  private async isUserOwned(
-    relativePath: string,
-    options: InstallRuntimeConfigCommand
-  ): Promise<boolean> {
-    const fullPath = join(options.projectRoot, relativePath);
-    if (!(await this.fs.fileExists(fullPath))) return false;
-    if (options.manifest.isFileTracked(relativePath)) return false;
-    this.logger.warn(`Skipping ${relativePath} — exists but not tracked by aidd`);
-    return true;
-  }
-
-  private async writeRegularFiles(
-    files: InstallationFile[],
-    projectRoot: string,
-    onBeforeWrite?: (relativePath: string) => Promise<"write" | "skip">
-  ): Promise<InstallationFile[]> {
-    const allTracked: InstallationFile[] = [];
-    for (const file of files) {
-      const decision = onBeforeWrite ? await onBeforeWrite(file.relativePath) : "write";
-      if (decision === "skip") {
-        const diskFile = await this.buildSkippedFileEntry(file, projectRoot);
-        allTracked.push(diskFile);
-        continue;
-      }
-      await this.fs.writeFile(join(projectRoot, file.relativePath), file.content);
-      allTracked.push(file);
-    }
-    return allTracked;
-  }
-
-  private async buildSkippedFileEntry(
-    file: InstallationFile,
-    projectRoot: string
-  ): Promise<InstallationFile> {
-    const diskPath = join(projectRoot, file.relativePath);
-    const diskHash = await this.fs.readFileHash(diskPath);
-    return new InstallationFile({ relativePath: file.relativePath, content: "", hash: diskHash });
-  }
-
-  private async writeMergeFiles(files: InstallationFile[], projectRoot: string): Promise<void> {
-    for (const file of files) {
-      await this.fs.mergeJsonFile(
-        join(projectRoot, file.relativePath),
-        file.content,
-        file.mergeStrategy
-      );
-    }
-  }
-
-  private async buildMergeEntries(
-    files: InstallationFile[],
-    projectRoot: string
-  ): Promise<MergeFileEntry[]> {
-    const entries: MergeFileEntry[] = [];
-    for (const file of files) {
-      const fullPath = join(projectRoot, file.relativePath);
-      const diskContent = await this.fs.readFile(fullPath);
-      const hashes = extractMergeEntries(diskContent, null, this.hasher);
-      entries.push({ relativePath: file.relativePath, sectionKey: null, entries: hashes });
-    }
-    return entries;
+    return this.trackedConfigFiles.fileOf(cap.outputPath(), content, cap.mergeStrategy());
   }
 }

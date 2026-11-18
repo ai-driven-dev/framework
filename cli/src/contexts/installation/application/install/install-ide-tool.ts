@@ -10,7 +10,7 @@ import type { SettingsFileAnswers } from "../../../tools/contract/tool-profile.j
 import type { Manifest } from "../../domain/manifest.js";
 import type { FileMerger } from "../../ports/file-merger.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
-import type { InstallIdeConfig, InstallIdeConfigResult } from "./install-ide-config.js";
+import type { InstallIdeConfig, InstallIdeConfigResult } from "./config/install-ide-config.js";
 import type { RunPostInstallPipeline } from "./run-post-install-pipeline.js";
 
 export interface InstallIdeToolCommand {

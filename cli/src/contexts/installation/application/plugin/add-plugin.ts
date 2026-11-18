@@ -28,7 +28,7 @@ import { PLUGIN_CACHE_SUBDIR } from "../../domain/project-layout.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { InstallationMarketplaceRegistry } from "../../ports/marketplace-sources.js";
 import type { PluginTranslation } from "../../ports/plugin/plugin-translation.js";
-import type { InstallRuntimeConfig } from "../install/install-runtime-config.js";
+import type { InstallRuntimeConfig } from "../install/config/install-runtime-config.js";
 import type { PluginTranslator } from "../materialize/plugin-translator.js";
 import { resolvePluginTranslator } from "../materialize/resolve-plugin-translator.js";
 import { assertProjectMcpEntriesRemovable } from "../removal/remove-project-plugin.js";
