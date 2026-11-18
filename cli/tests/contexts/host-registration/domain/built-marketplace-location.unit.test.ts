@@ -27,34 +27,6 @@ describe("parseUserBuiltMarketplaceDir()", () => {
   });
 });
 
-describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
-  it("reads back a relative project root of a single segment", () => {
-    expect(
-      parseBuiltMarketplaceDirAtAnyRoot("p/.aidd/cache/built/mkt/claude", "linux")
-    ).toStrictEqual({
-      projectRoot: "p",
-      marketplaceName: "mkt",
-      target: "claude",
-    });
-  });
-
-  it("is undefined when only part of the marker matches", () => {
-    expect(parseBuiltMarketplaceDirAtAnyRoot("/p/.aidd/cache/other/mkt/claude", "linux")).toBe(
-      undefined
-    );
-  });
-
-  it("matches the marker segment by segment, never as one string", () => {
-    expect(
-      parseBuiltMarketplaceDirAtAnyRoot("/p/.aidd/cache/built/mkt/claude", "linux")
-    ).toStrictEqual({
-      projectRoot: "/p",
-      marketplaceName: "mkt",
-      target: "claude",
-    });
-  });
-});
-
 describe("parseUserBuiltMarketplaceDir()", () => {
   it("reads back the version, marketplace name and target userBuiltMarketplaceDir encoded", () => {
     const path = userBuiltMarketplaceDir("/user-cache", "5.0.0", "aidd-framework", "claude");
@@ -153,6 +125,32 @@ describe("parseBuiltMarketplaceDir()", () => {
 });
 
 describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
+  it("reads back a relative project root of a single segment", () => {
+    expect(
+      parseBuiltMarketplaceDirAtAnyRoot("p/.aidd/cache/built/mkt/claude", "linux")
+    ).toStrictEqual({
+      projectRoot: "p",
+      marketplaceName: "mkt",
+      target: "claude",
+    });
+  });
+
+  it("is undefined when only part of the marker matches", () => {
+    expect(parseBuiltMarketplaceDirAtAnyRoot("/p/.aidd/cache/other/mkt/claude", "linux")).toBe(
+      undefined
+    );
+  });
+
+  it("matches the marker segment by segment, never as one string", () => {
+    expect(
+      parseBuiltMarketplaceDirAtAnyRoot("/p/.aidd/cache/built/mkt/claude", "linux")
+    ).toStrictEqual({
+      projectRoot: "/p",
+      marketplaceName: "mkt",
+      target: "claude",
+    });
+  });
+
   it("reads back the project root alongside the name and target, with no root known in advance", () => {
     expect(
       parseBuiltMarketplaceDirAtAnyRoot(
