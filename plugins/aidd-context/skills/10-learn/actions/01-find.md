@@ -21,7 +21,3 @@ The request, with an optional hint naming a file, a diff or a review.
 ## Output
 
 The lessons to propose, each with its cited passage and its existing coverage.
-
-## Rules
-
-- Write no file.

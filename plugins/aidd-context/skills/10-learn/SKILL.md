@@ -23,5 +23,5 @@ flowchart LR
 
 - If a cited reference cannot be read, stop and report the missing file.
 - Write only what the user validated.
-- Preserve user edits and touch only the files a lesson names.
+- Touch only the files a lesson names.
 - Write project files only, never personal or global memory.

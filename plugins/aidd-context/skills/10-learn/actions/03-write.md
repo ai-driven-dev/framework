@@ -10,8 +10,8 @@ The rows the user validated or modified, and those skipped.
 
 1. Edit each existing-file row at its path with the host's native edit, anchored on its subject.
    - No file holds the subject: edit the memory bank file nearest to it.
-   - Edit in an existing file: place it under the section that owns the subject, not after the last line.
-2. Write each decision row with the writer, per [writer.md](../references/writer.md), planned before written.
+   - Place it under the section that owns the subject, not after the last line.
+2. Write each decision row with the writer, per [writer.md](../references/writer.md).
    - Row replaces a decision: pass the replaced record.
    - Section the source never states: ask the user for it, never infer it.
    - Writer exit non-zero: quote its output, then stop without a retry, a permission change or another write.

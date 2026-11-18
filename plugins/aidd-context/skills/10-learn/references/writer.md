@@ -3,7 +3,7 @@
 Run `scripts/write-decision.cjs` to write a decision record from the ADR template.
 
 ```sh
-node "$writer" --project "$project_root" --input "$decision_json" [--supersedes "$old_record"] [--plan]
+node "$writer" --project "$project_root" --input "$decision_json" [--supersedes "$old_record"]
 ```
 
 - `$writer`: the absolute path of `scripts/write-decision.cjs`, next to the loaded `SKILL.md`.
@@ -13,7 +13,6 @@ node "$writer" --project "$project_root" --input "$decision_json" [--supersedes 
 
 | Option | Effect |
 | --- | --- |
-| `--plan` | Writes nothing; lists each file with `create` or `update`. |
 | `--supersedes` | Marks the old record Superseded and links both records to each other. |
 
 - Folder: the project's existing decision folder, else `aidd_docs/memory/internal/decisions/`.
