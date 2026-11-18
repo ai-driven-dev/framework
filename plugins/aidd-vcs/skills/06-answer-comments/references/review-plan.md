@@ -6,6 +6,8 @@ Run `scripts/prepare-review.cjs` to turn the snapshot and the classifications in
 node "$planner" --input "$review_json"
 ```
 
-- `$planner`: the absolute path of `scripts/prepare-review.cjs`, next to the loaded `SKILL.md`.
-- `$review_json`: a temporary file outside the project, following `review-input.schema.json`.
-- Result: JSON on stdout, following `review-output.schema.json`.
+| Parameter | Value |
+| --- | --- |
+| `$planner` | The absolute path of `scripts/prepare-review.cjs`, next to the loaded `SKILL.md`. |
+| `$review_json` | A temporary file outside the project, following `review-input.schema.json`. |
+| stdout | JSON following `review-output.schema.json`. |
