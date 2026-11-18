@@ -3,13 +3,11 @@ import type { RemoveMarketplace } from "../../contexts/distribution/application/
 import type { MarketplaceRemovalResult } from "../../contexts/distribution/contract/marketplace-removal.js";
 import type { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.js";
 import type { DetachPluginClaims } from "../../contexts/installation/contract/plugin-claims.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 
 export interface RemoveProjectMarketplaceCommand {
   name: string;
-  tools: ToolCatalog;
   projectRoot: string;
   autoConfirm: boolean;
   scope?: MarketplaceScope;
@@ -31,7 +29,6 @@ export class RemoveProjectMarketplace {
     const marketplace = await this.find.execute({ name, projectRoot, scope: command.scope });
     const removal = await this.plugins.execute({
       marketplace: name,
-      tools: command.tools,
       projectRoot,
       confirm: (count) =>
         command.autoConfirm

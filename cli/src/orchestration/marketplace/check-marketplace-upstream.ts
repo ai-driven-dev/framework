@@ -2,11 +2,9 @@ import type { CheckMarketplaces } from "../../contexts/distribution/application/
 import type { StaleMarketplace } from "../../contexts/distribution/contract/marketplace-catalogs.js";
 import type { ListPluginSources } from "../../contexts/installation/application/marketplace/list-plugin-sources.js";
 import type { PluginSource } from "../../contexts/installation/contract/plugin-sources.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 
 export interface CheckMarketplaceUpstreamCommand {
   projectRoot: string;
-  tools: ToolCatalog;
   staleMaxDays?: number;
 }
 
@@ -37,7 +35,7 @@ export class CheckMarketplaceUpstream {
       projectRoot: command.projectRoot,
       staleMaxDays: command.staleMaxDays,
     });
-    const installed = await this.sources.execute({ tools: command.tools });
+    const installed = await this.sources.execute();
     const upstreamRemoved: UpstreamRemoved[] = [];
     const skipped: SkippedMarketplace[] = [];
     for (const { marketplace, plugins, error } of readings) {

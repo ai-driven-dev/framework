@@ -9,7 +9,6 @@ import type { ProjectIntegrationCleanup } from "../../ports/project-integration-
 
 export interface RemovePluginsFromMarketplaceCommand {
   marketplace: string;
-  tools: ToolCatalog;
   projectRoot: string;
   /** Asked once, with how many plugins came from the marketplace, and only when there are some. */
   confirm: (orphanCount: number) => Promise<boolean>;
@@ -32,7 +31,8 @@ export class RemovePluginsFromMarketplace {
   constructor(
     private readonly manifestRepo: ManifestRepository,
     private readonly cleanup: ProjectIntegrationCleanup,
-    private readonly records: RegistrationRecordRules
+    private readonly records: RegistrationRecordRules,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(
@@ -40,7 +40,7 @@ export class RemovePluginsFromMarketplace {
   ): Promise<RemovePluginsFromMarketplaceResult> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return { orphanCount: 0, removedCount: 0 };
-    const orphans = this.collectOrphans(manifest, command.marketplace, command.tools);
+    const orphans = this.collectOrphans(manifest, command.marketplace);
     const nativeRefs = new Map<ToolId, readonly string[]>();
     for (const { toolId, plugin } of orphans) {
       const registrations = manifest.getNativeRegistrations(toolId);
@@ -54,19 +54,14 @@ export class RemovePluginsFromMarketplace {
       manifest,
       orphans,
       command.marketplace,
-      command.tools,
       command.projectRoot
     );
     return { orphanCount: orphans.length, removedCount, claims: { nativeRefs, plugins: orphans } };
   }
 
-  private collectOrphans(
-    manifest: Manifest,
-    marketplaceName: string,
-    tools: ToolCatalog
-  ): OrphanRef[] {
+  private collectOrphans(manifest: Manifest, marketplaceName: string): OrphanRef[] {
     const orphans: OrphanRef[] = [];
-    for (const toolId of tools.idsInCanonicalOrder("ai")) {
+    for (const toolId of this.tools.idsInCanonicalOrder("ai")) {
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.marketplace === marketplaceName) orphans.push({ toolId, plugin });
       }
@@ -78,18 +73,17 @@ export class RemovePluginsFromMarketplace {
     manifest: Manifest,
     orphans: readonly OrphanRef[],
     marketplace: string,
-    tools: ToolCatalog,
     projectRoot: string
   ): Promise<number> {
     for (const { toolId, plugin } of orphans) {
       await this.cleanup.assertLocalIntegrationRemovable(
-        tools.aiProfile(toolId),
+        this.tools.aiProfile(toolId),
         plugin,
         projectRoot
       );
     }
     for (const { toolId, plugin } of orphans) {
-      const tool = tools.aiProfile(toolId);
+      const tool = this.tools.aiProfile(toolId);
       await this.cleanup.removeLocalIntegration(tool, plugin, projectRoot);
       await this.cleanup.deleteLocalFiles(tool, plugin, projectRoot);
       const registrations = manifest.getNativeRegistrations(toolId);

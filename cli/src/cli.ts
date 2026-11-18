@@ -43,7 +43,7 @@ registerSetupCommand(program, tools, createDeps);
 registerToolConfigCommand(program, tools, createDeps);
 registerTranslateCommand(program, tools, createDeps);
 registerPluginCommand(program, tools, createDeps, createMenuDeps);
-registerMarketplaceCommand(program, tools, createDeps, createMenuDeps);
+registerMarketplaceCommand(program, createDeps, createMenuDeps);
 registerAuthCommand(program, createDeps);
 registerSyncCommand(program, tools, createDeps);
 registerUpdateCommand(program, createDeps);

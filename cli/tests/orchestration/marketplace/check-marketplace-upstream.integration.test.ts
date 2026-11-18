@@ -9,13 +9,14 @@ import { ListPluginSources } from "../../../src/contexts/installation/applicatio
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CheckMarketplaceUpstream } from "../../../src/orchestration/marketplace/check-marketplace-upstream.js";
-import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
+import { registeredTools } from "../../shared/testing/registered-tools.js";
 
 const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
 const PROJECT_ROOT = "/test-project";
@@ -33,7 +34,7 @@ async function buildUseCase() {
   );
   const useCase = new CheckMarketplaceUpstream(
     new CheckMarketplaces(registry, resolveMarketplace),
-    new ListPluginSources(manifestRepo)
+    new ListPluginSources(manifestRepo, registeredTools())
   );
   return { useCase, registry, manifestRepo };
 }
@@ -76,7 +77,7 @@ describe("what is reported about a marketplace", () => {
     await registry.save(PROJECT_ROOT, fixtureMarketplace("fresh"));
     await registry.updateLastFetched(PROJECT_ROOT, "fresh", "project", new Date().toISOString());
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, tools: registeredCatalog() });
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(result.stale.map((m) => m.name)).toStrictEqual(["never"]);
   });
@@ -89,12 +90,10 @@ describe("what is reported about a marketplace", () => {
 
     const narrowed = await useCase.execute({
       projectRoot: PROJECT_ROOT,
-      tools: registeredCatalog(),
       staleMaxDays: 1,
     });
     const byDefault = await useCase.execute({
       projectRoot: PROJECT_ROOT,
-      tools: registeredCatalog(),
     });
 
     expect(narrowed.stale.map((m) => m.name)).toStrictEqual(["recent"]);
@@ -113,7 +112,7 @@ describe("what is reported about a marketplace", () => {
       })
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, tools: registeredCatalog() });
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(result.skipped).toHaveLength(1);
     expect(result.skipped[0]?.marketplace).toBe("unreachable");
@@ -127,7 +126,7 @@ describe("what counts as removed upstream", () => {
     await manifestWith(manifestRepo, installedFrom("awesome", "dev"));
     await registry.save(PROJECT_ROOT, fixtureMarketplace("awesome"));
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, tools: registeredCatalog() });
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(result.upstreamRemoved).toStrictEqual([]);
     expect(result.skipped).toStrictEqual([]);
@@ -142,7 +141,7 @@ describe("what counts as removed upstream", () => {
     );
     await registry.save(PROJECT_ROOT, fixtureMarketplace("awesome"));
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, tools: registeredCatalog() });
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(result.upstreamRemoved).toStrictEqual([
       { marketplace: "awesome", plugin: "ghost", toolId: TOOL.claude },
@@ -154,7 +153,7 @@ describe("what counts as removed upstream", () => {
     await manifestWith(manifestRepo, installedFrom("elsewhere", "ghost"));
     await registry.save(PROJECT_ROOT, fixtureMarketplace("awesome"));
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, tools: registeredCatalog() });
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(result.upstreamRemoved).toStrictEqual([]);
   });
@@ -172,7 +171,7 @@ describe("what counts as removed upstream", () => {
       })
     );
 
-    const result = await useCase.execute({ projectRoot: PROJECT_ROOT, tools: registeredCatalog() });
+    const result = await useCase.execute({ projectRoot: PROJECT_ROOT });
 
     expect(result.upstreamRemoved).toStrictEqual([]);
     expect(result.skipped).toStrictEqual([]);

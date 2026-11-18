@@ -13,11 +13,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { RegistrationRecordRules } from "../../../src/contexts/installation/ports/native-host.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
-import {
-  catalogOf,
-  resolveRegisteredToolId,
-  TOOL,
-} from "../../contexts/tools/testing/catalog-of.js";
+import { resolveRegisteredToolId, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -34,7 +30,6 @@ function options() {
     projectRoot: "/A",
     autoConfirm: true,
     scope: "user" as const,
-    tools: catalogOf(),
   };
 }
 

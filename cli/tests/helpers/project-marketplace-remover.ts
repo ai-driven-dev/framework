@@ -8,6 +8,7 @@ import type { ManifestRepository } from "../../src/contexts/installation/ports/m
 import type { RegistrationRecordRules } from "../../src/contexts/installation/ports/native-host.js";
 import { RemoveProjectMarketplace } from "../../src/orchestration/marketplace/remove-project-marketplace.js";
 import type { Prompter } from "../../src/shared/ports/prompter.js";
+import { registeredTools } from "../shared/testing/registered-tools.js";
 
 /** The project marketplace removal as composition wires it, over a given cleanup. */
 export function projectMarketplaceRemover(
@@ -19,7 +20,7 @@ export function projectMarketplaceRemover(
 ): RemoveProjectMarketplace {
   return new RemoveProjectMarketplace(
     new FindMarketplaceToRemove(registry),
-    new RemovePluginsFromMarketplace(manifestRepo, cleanup, records),
+    new RemovePluginsFromMarketplace(manifestRepo, cleanup, records, registeredTools()),
     new RemoveMarketplace(registry),
     (projectRoot, { nativeRefs, plugins }) =>
       cleanup.detachClaims(projectRoot, nativeRefs, plugins),

@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import { parseInstallScope } from "../../contexts/installation/domain/install-scope.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 import { parsePluginSourceShorthand } from "../../shared/domain/source.js";
 import type { DepsSliceFactory, MenuDepsSliceFactory } from "../deps.js";
@@ -29,7 +28,6 @@ type MarketplaceKeys =
 
 export function registerMarketplaceCommand(
   program: Command,
-  tools: ToolCatalog,
   createDeps: DepsSliceFactory<MarketplaceKeys>,
   createMenuDeps: MenuDepsSliceFactory<"prompter">
 ): void {
@@ -148,7 +146,6 @@ export function registerMarketplaceCommand(
         ).execute({
           name,
           projectRoot,
-          tools,
           autoConfirm: cmdOptions.yes ?? false,
           scope,
         });
@@ -193,7 +190,7 @@ export function registerMarketplaceCommand(
       const errorHandler = new ErrorHandler(output);
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
-        const result = await deps.marketplaceCheckUseCase.execute({ projectRoot, tools });
+        const result = await deps.marketplaceCheckUseCase.execute({ projectRoot });
         printMarketplaceCheck(output, result);
       } catch (error) {
         errorHandler.handle(error);

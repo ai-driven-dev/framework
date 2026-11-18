@@ -12,6 +12,7 @@ import { ListPluginSources } from "../../contexts/installation/application/marke
 import { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.js";
 import { RemovePluginsFromMarketplace } from "../../contexts/installation/application/marketplace/remove-plugins-from-marketplace.js";
 import { RemoveProjectPlugin } from "../../contexts/installation/application/removal/remove-project-plugin.js";
+import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { ActivateNativeTools } from "../../contexts/installation/application/sync/activate-native-tools.js";
 import { BuildMarketplaceForTool } from "../../contexts/installation/application/sync/build-marketplace-for-tool.js";
 import { LoadSyncContext } from "../../contexts/installation/application/sync/load-sync-context.js";
@@ -111,7 +112,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
   const projectCleanup = new RemoveProjectPlugin(fs, removalClaims(userManifestRepo, fs));
   const marketplaceRemoveUseCase = new RemoveProjectMarketplace(
     new FindMarketplaceToRemove(marketplaceRegistry),
-    new RemovePluginsFromMarketplace(manifestRepo, projectCleanup, registrationRecordRules),
+    new RemovePluginsFromMarketplace(manifestRepo, projectCleanup, registrationRecordRules, tools),
     new RemoveMarketplace(marketplaceRegistry),
     detachClaimsOf(projectCleanup),
     prompter
@@ -119,11 +120,11 @@ export function wireMarketplace(base: Base, inst: Installation) {
   const userMarketplaceRemoveUseCase = new RemoveUserMarketplace(
     new FindUserMarketplace(marketplaceRegistry),
     new PurgeMarketplacePlugins(
-      fs,
       userManifestRepo,
       nativeHostRegistrationGate,
-      quietUserScopeFilesSafeToDelete(fs),
-      registrationRecordRules
+      new UserScopePluginFiles(fs, quietUserScopeFilesSafeToDelete(fs)),
+      registrationRecordRules,
+      tools
     ),
     new RemoveMarketplace(marketplaceRegistry),
     resolveHomeDir()
@@ -132,10 +133,9 @@ export function wireMarketplace(base: Base, inst: Installation) {
   // scenarios answer distribution's `MarketplaceRemover`.
   const marketplaceRemover: MarketplaceRemover = {
     remove: async (request) => {
-      const removal = { ...request, tools };
       await (request.scope === "user"
-        ? userMarketplaceRemoveUseCase.execute(removal)
-        : marketplaceRemoveUseCase.execute(removal));
+        ? userMarketplaceRemoveUseCase.execute(request)
+        : marketplaceRemoveUseCase.execute(request));
     },
   };
   const addMarketplace = wireAddMarketplace(
@@ -145,7 +145,7 @@ export function wireMarketplace(base: Base, inst: Installation) {
   );
   const marketplaceCheckUseCase = new CheckMarketplaceUpstream(
     new CheckMarketplaces(marketplaceRegistry, resolveMarketplaceUseCase),
-    new ListPluginSources(manifestRepo)
+    new ListPluginSources(manifestRepo, tools)
   );
   const buildMarketplaceForTool = new BuildMarketplaceForTool(
     ensureBuiltMarketplaceUseCase,

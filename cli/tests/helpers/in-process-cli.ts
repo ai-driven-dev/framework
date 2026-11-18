@@ -60,8 +60,12 @@ const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
   async () =>
     (await import("../../src/presentation/commands/translate.js")).registerTranslateCommand,
   async () => (await import("../../src/presentation/commands/plugin.js")).registerPluginCommand,
-  async () =>
-    (await import("../../src/presentation/commands/marketplace.js")).registerMarketplaceCommand,
+  async () => {
+    const { registerMarketplaceCommand } = await import(
+      "../../src/presentation/commands/marketplace.js"
+    );
+    return (program, _tools, deps, menu) => registerMarketplaceCommand(program, deps, menu);
+  },
   async () => {
     const { registerAuthCommand } = await import("../../src/presentation/commands/auth.js");
     return (program, _tools, createDeps) => registerAuthCommand(program, createDeps);

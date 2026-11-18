@@ -1,5 +1,4 @@
 import { ActiveMachineDependentsError } from "../../../../shared/domain/errors.js";
-import type { FileWriter } from "../../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -7,12 +6,10 @@ import type {
   MarketplaceRemovalPlanner,
   RegistrationRecordRules,
 } from "../../ports/native-host.js";
-import type { UserPluginFileProof } from "../../ports/user-plugin-file-proof.js";
-import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
+import type { UserScopePluginFiles } from "../removal/user-scope-plugin-files.js";
 
 export interface PurgeMarketplacePluginsCommand {
   marketplace: string;
-  tools: ToolCatalog;
   projectRoot: string;
   home: string;
   /** Runs once the machine lock is held, before anything is read from the user record. */
@@ -25,11 +22,11 @@ export interface PurgeMarketplacePluginsCommand {
  * installed from it, and the host's catalogue and plugin claims, once none is still in use. */
 export class PurgeMarketplacePlugins {
   constructor(
-    private readonly fs: FileWriter,
     private readonly repo: ManifestRepository & Lock,
     private readonly nativeHost: MarketplaceRemovalPlanner,
-    private readonly proveFiles: UserPluginFileProof,
-    private readonly records: RegistrationRecordRules
+    private readonly userScopePluginFiles: UserScopePluginFiles,
+    private readonly records: RegistrationRecordRules,
+    private readonly tools: ToolCatalog
   ) {}
 
   /** The count of plugins and host plugin references removed. */
@@ -38,20 +35,20 @@ export class PurgeMarketplacePlugins {
   }
 
   private async purgeLocked(command: PurgeMarketplacePluginsCommand): Promise<number> {
-    const { marketplace, tools, projectRoot, home } = command;
+    const { marketplace, projectRoot, home } = command;
     await command.whileLocked();
     const manifest = await this.repo.load();
     if (manifest === null)
       throw new Error(
         `Cannot prove AIDD ownership of user-scope marketplace '${marketplace}': no user manifest.`
       );
-    const plugins = tools.idsInCanonicalOrder("ai").flatMap((toolId) =>
+    const plugins = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) =>
       manifest
         .getPlugins(toolId)
         .filter((plugin) => plugin.scope === "user" && plugin.marketplace === marketplace)
         .map((plugin) => ({ toolId, plugin }))
     );
-    const native = tools.idsInCanonicalOrder("ai").flatMap((toolId) => {
+    const native = this.tools.idsInCanonicalOrder("ai").flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
       const registration = this.records.marketplaceOf(registrations, marketplace);
@@ -75,7 +72,11 @@ export class PurgeMarketplacePlugins {
       throw new ActiveMachineDependentsError(`user-scope marketplace '${marketplace}'`, dependents);
     const safeFiles = await Promise.all(
       plugins.map(async ({ toolId, plugin }) => {
-        const files = await this.proveFiles(plugin, tools.aiProfile(toolId), home);
+        const files = await this.userScopePluginFiles.proven(
+          plugin,
+          this.tools.aiProfile(toolId),
+          home
+        );
         if (files.size !== plugin.files.size)
           throw new Error(
             `Refusing partial user-scope marketplace removal: '${plugin.name}' has a tracked file outside its boundary.`
@@ -89,7 +90,7 @@ export class PurgeMarketplacePlugins {
         registrations,
         registration,
         ...(await this.nativeHost.planMarketplaceRemoval(
-          tools.aiProfile(toolId),
+          this.tools.aiProfile(toolId),
           registrations,
           registration,
           projectRoot
@@ -102,14 +103,7 @@ export class PurgeMarketplacePlugins {
       activator.removeMarketplace(registration.hostName, "user");
     }
     for (const { toolId, plugin, files } of safeFiles) {
-      await deletePluginFilesForTool(
-        files,
-        "user",
-        tools.aiProfile(toolId),
-        projectRoot,
-        this.fs,
-        "user"
-      );
+      await this.userScopePluginFiles.remove(files, this.tools.aiProfile(toolId), projectRoot);
       manifest.removePlugin(toolId, plugin.name);
     }
     for (const { toolId, registrations, registration } of nativeCalls) {

@@ -2,12 +2,10 @@ import type { FindUserMarketplace } from "../../contexts/distribution/applicatio
 import type { RemoveMarketplace } from "../../contexts/distribution/application/remove/remove-marketplace.js";
 import type { MarketplaceRemovalResult } from "../../contexts/distribution/contract/marketplace-removal.js";
 import type { PurgeMarketplacePlugins } from "../../contexts/installation/application/marketplace/purge-marketplace-plugins.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { MarketplaceScope } from "../../shared/domain/scope.js";
 
 export interface RemoveUserMarketplaceCommand {
   name: string;
-  tools: ToolCatalog;
   projectRoot: string;
   autoConfirm: boolean;
   scope?: MarketplaceScope;
@@ -28,7 +26,6 @@ export class RemoveUserMarketplace {
     const marketplace = await this.find.execute({ name, projectRoot });
     const removedPluginCount = await this.purge.execute({
       marketplace: name,
-      tools: command.tools,
       projectRoot,
       home: this.home,
       whileLocked: async () => {

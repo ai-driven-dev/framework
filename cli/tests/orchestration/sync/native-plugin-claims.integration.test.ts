@@ -332,7 +332,6 @@ for (const [toolId, catalogPath] of [
       );
       await expect(
         removeMarketplace.execute({
-          tools: catalogOf(),
           name: alias,
           projectRoot: "/A",
           autoConfirm: true,
@@ -419,7 +418,6 @@ for (const [toolId, catalogPath] of [
       expect(user.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([]);
       enabled = false;
       await removeMarketplace.execute({
-        tools: catalogOf(),
         name: alias,
         projectRoot: "/A",
         autoConfirm: true,
