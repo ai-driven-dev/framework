@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
@@ -12,6 +11,7 @@ import { catalogOf, registeredAiProfile, TOOL } from "../../contexts/tools/testi
 import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 
 const { copilot } = TOOL;
 const HOST = "real-catalog";
@@ -127,11 +127,10 @@ async function doctorSays(registry: HostPluginRegistryReading): Promise<string> 
     new InMemoryFileAdapter(),
     new InMemoryMarketplaceRegistry(),
     () => false,
-    new InspectHostRegistration(
+    registeredHostInspector(
       new InMemoryFileAdapter(),
       new Map([[copilot, new FakeHostPluginRegistry(registry)]]),
-      new Map(),
-      process.platform
+      new Map()
     ),
     () => "/user-cache",
     { get: () => "1.0.0" }

@@ -175,7 +175,8 @@ export function wireMarketplace(base: Base, inst: Installation) {
           pluginRegistries: hostPluginRegistries,
           sources: nativeSources,
         },
-        process.platform
+        process.platform,
+        tools
       ),
       buildMarketplaceForTool,
       logger,

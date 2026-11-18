@@ -70,7 +70,6 @@ export class CheckRegistration {
   ): Promise<DoctorIssue[]> {
     const declared: InspectDeclaredMarketplacesResult = await this.declared.execute({
       projectRoot: command.projectRoot,
-      tools: command.tools,
       toolIds,
       marketplaceNames,
     });
@@ -105,7 +104,6 @@ export class CheckRegistration {
     const { findings } = await this.inspectHost.execute({
       projectRoot: command.projectRoot,
       userCacheRoot,
-      tools: command.tools,
       hosts,
     });
     return findings.map((finding) => this.issueOf(finding));

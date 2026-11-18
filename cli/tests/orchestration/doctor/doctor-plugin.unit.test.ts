@@ -1,7 +1,6 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import { CheckFileReferences } from "../../../src/contexts/installation/application/doctor/check-file-references.js";
 import { CheckMergeFiles } from "../../../src/contexts/installation/application/doctor/check-merge-files.js";
 import { CheckPluginDrift } from "../../../src/contexts/installation/application/doctor/check-plugin-drift.js";
@@ -20,6 +19,7 @@ import type { Hasher } from "../../../src/shared/ports/hasher.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { checkRegistrationOver } from "../../helpers/ports/build-check-registration.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";
@@ -91,7 +91,7 @@ function makeDoctorUseCase(fs: FileReader, manifest: Manifest): RunDoctor {
       fs,
       new InMemoryMarketplaceRegistry(),
       () => false,
-      new InspectHostRegistration(fs, new Map(), new Map(), process.platform),
+      registeredHostInspector(fs, new Map(), new Map()),
       () => "/user-cache",
       { get: () => "1.0.0" }
     ),

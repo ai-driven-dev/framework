@@ -41,7 +41,6 @@ export interface InspectedHost {
 export interface InspectHostRegistrationCommand {
   readonly projectRoot: string;
   readonly userCacheRoot: string;
-  readonly tools: ToolCatalog;
   readonly hosts: readonly InspectedHost[];
 }
 
@@ -62,7 +61,8 @@ export class InspectHostRegistration {
      * registry is ever looked up here. */
     private readonly marketplaceRegistries: ReadonlyMap<AiToolId, HostMarketplaceRegistry>,
     /** The platform whose path rules decide what a host's stored source names. */
-    private readonly platform: string
+    private readonly platform: string,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: InspectHostRegistrationCommand): Promise<InspectHostRegistrationResult> {
@@ -77,7 +77,7 @@ export class InspectHostRegistration {
     host: InspectedHost
   ): Promise<HostRegistrationFinding[]> {
     const { tool } = host;
-    if (command.tools.aiProfile(tool).nativeActivation() === undefined) return [];
+    if (this.tools.aiProfile(tool).nativeActivation() === undefined) return [];
     if (host.expectedPlugins.length === 0) return [];
     const reading = await this.pluginRegistries.get(tool)?.read(command.projectRoot);
     const answered = answeredRegistry(tool, reading, true);
@@ -109,7 +109,7 @@ export class InspectHostRegistration {
     host: InspectedHost
   ): Promise<HostRegistrationFinding[]> {
     const { tool } = host;
-    const profile = command.tools.aiProfile(tool);
+    const profile = this.tools.aiProfile(tool);
     if (profile.nativeActivation()?.keepsMarketplaceRegistry() !== true) return [];
     const reader = this.marketplaceRegistries.get(tool);
     if (reader === undefined) return [];

@@ -39,6 +39,7 @@ export function wireDoctor(base: Base, inst: Installation) {
     hostMarketplaceRegistries,
     hostPluginRegistries,
     marketplaceRegistry,
+    tools,
   } = base;
   const { detectPluginDriftUseCase, registrationRecordRules } = inst;
   const loadManifest = new LoadManifest(manifestRepo);
@@ -46,12 +47,13 @@ export function wireDoctor(base: Base, inst: Installation) {
     new CheckRegistration(
       new ListRegisteredPlugins(manifests, registrationRecordRules),
       new ResolveBuiltMarketplaces(fs, marketplaceRegistry, userConfigDir, currentVersionProvider),
-      new InspectDeclaredMarketplaces(fs, hostBinaryAvailableIn(nativePluginActivators)),
+      new InspectDeclaredMarketplaces(fs, hostBinaryAvailableIn(nativePluginActivators), tools),
       new InspectHostRegistration(
         fs,
         hostPluginRegistries,
         hostMarketplaceRegistries,
-        process.platform
+        process.platform,
+        tools
       )
     );
   const doctorUseCase = new RunDoctor(
@@ -69,8 +71,8 @@ export function wireDoctor(base: Base, inst: Installation) {
   // `doctor --scope user` checks the same registrations against the machine-wide manifest.
   const doctorRegistrationUseCase = registrationOver(new LoadManifest(userManifestRepo));
   const doctorAllUseCase = {
-    execute: (projectRoot: string, tools: ToolCatalog, pluginName?: string) =>
-      doctorAll(doctorUseCase, projectRoot, tools, pluginName),
+    execute: (projectRoot: string, catalog: ToolCatalog, pluginName?: string) =>
+      doctorAll(doctorUseCase, projectRoot, catalog, pluginName),
   };
   return { doctorUseCase, doctorRegistrationUseCase, doctorAllUseCase };
 }

@@ -1,7 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import { answeredRegistry } from "../../../src/contexts/host-registration/domain/host-registration-answers.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
@@ -24,6 +23,7 @@ import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-buil
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 
 const { claude } = TOOL;
 
@@ -530,11 +530,10 @@ describe("what doctor tells a person to run becomes true once sync has run", () 
       fs,
       registry,
       (binary) => binary === claude && activator.isAvailable(),
-      new InspectHostRegistration(
+      registeredHostInspector(
         fs,
         new Map([[claude, new RegistryBoundToActivator(activator)]]),
-        new Map(),
-        process.platform
+        new Map()
       ),
       () => "/user-cache",
       { get: () => "1.0.0" }

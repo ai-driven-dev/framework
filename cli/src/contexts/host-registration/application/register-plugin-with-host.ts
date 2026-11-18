@@ -81,7 +81,6 @@ export interface RegistrationClaims {
 }
 
 export interface RegisterPluginWithHostCommand<M extends RegistrationSubject> {
-  readonly tools: ToolCatalog;
   readonly toolId: ToolId;
   readonly projectRoot: string;
   readonly scope: MarketplaceScope;
@@ -119,7 +118,6 @@ interface MarketplaceClaim {
 }
 
 interface Run {
-  readonly tools: ToolCatalog;
   readonly toolId: ToolId;
   readonly profile: NativeHostTool & CatalogProbeTool;
   readonly activator: HostActions;
@@ -147,7 +145,8 @@ export class RegisterPluginWithHost {
      * from a map still registers. */
     private readonly hosts: HostRegistries,
     /** The platform whose path rules compare what a host stored with what this run resolved. */
-    private readonly platform: string
+    private readonly platform: string,
+    private readonly tools: ToolCatalog
   ) {}
 
   /** Registers every marketplace with the tool's own CLI and enables the refs this run asks
@@ -156,15 +155,14 @@ export class RegisterPluginWithHost {
   async execute<M extends RegistrationSubject>(
     command: RegisterPluginWithHostCommand<M>
   ): Promise<RegisterPluginWithHostResult> {
-    const { tools, toolId, projectRoot, scope, marketplaces, claims, sink } = command;
-    const profile = tools.aiProfileIfAny(toolId);
+    const { toolId, projectRoot, scope, marketplaces, claims, sink } = command;
+    const profile = this.tools.aiProfileIfAny(toolId);
     const binary = profile?.nativeActivation()?.hostBinary();
     const activator = binary === undefined ? undefined : this.activators.get(binary);
     if (profile === null || binary === undefined || activator === undefined)
       return { status: "unconfigured" };
     if (!activator.isAvailable()) return { status: "binary-missing", binary };
     const run: Run = {
-      tools,
       toolId,
       profile,
       activator,

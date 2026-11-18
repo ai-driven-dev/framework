@@ -71,11 +71,11 @@ function setup(
               ],
             ]),
     },
-    process.platform
+    process.platform,
+    registeredTools()
   );
   const run = (toolId: ToolId = TOOL.claude) =>
     command.execute({
-      tools: registeredTools(),
       toolId,
       projectRoot: "/p",
       scope: "project",
@@ -111,10 +111,10 @@ describe("register plugin with host", () => {
       new InMemoryFileAdapter(),
       new Map(),
       { marketplaceRegistries: new Map(), pluginRegistries: new Map(), sources: new Map() },
-      process.platform
+      process.platform,
+      registeredTools()
     );
     const result = await command.execute({
-      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: "/p",
       scope: "project",

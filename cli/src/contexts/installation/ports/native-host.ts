@@ -1,6 +1,5 @@
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type {
   NativeMarketplaceRegistration,
   NativePluginClaim,
@@ -250,7 +249,6 @@ export interface RegistrationClaims {
 }
 
 export interface RegisterPluginWithHostCommand<M extends RegistrationSubject> {
-  readonly tools: ToolCatalog;
   readonly toolId: ToolId;
   readonly projectRoot: string;
   readonly scope: MarketplaceScope;

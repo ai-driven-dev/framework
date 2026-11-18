@@ -6,7 +6,6 @@ import {
 } from "../../../src/contexts/distribution/application/register-framework-marketplace.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import type { HostActions } from "../../../src/contexts/host-registration/ports/host-actions.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
@@ -31,6 +30,7 @@ import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-buil
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 
 const PROJECT_ROOT = "/project";
 const CLAUDE_BUILT_DIR = "/shared/built/claude";
@@ -1405,7 +1405,7 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
       }),
       registry,
       () => false,
-      new InspectHostRegistration(
+      registeredHostInspector(
         new InMemoryFileAdapter({
           [`${sharedBuiltDir}/${CATALOG_RELATIVE}`]: JSON.stringify({
             name: FRAMEWORK_MARKETPLACE_NAME,
@@ -1413,8 +1413,7 @@ describe("SyncSettings + CheckRegistration — the full migration cycle", () => 
           }),
         }),
         new Map(),
-        new Map([[TOOL.claude, hostReader]]),
-        process.platform
+        new Map([[TOOL.claude, hostReader]])
       ),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION)

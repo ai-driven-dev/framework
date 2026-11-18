@@ -57,7 +57,6 @@ export class ActivateNativeTools {
     for (const toolId of context.toolIds) {
       try {
         const result = await this.registerPluginWithHost.execute({
-          tools,
           toolId,
           projectRoot,
           scope,

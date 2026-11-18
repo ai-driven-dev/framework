@@ -33,7 +33,7 @@ export function registeredProfile(id: ToolId): ToolProfile {
   return catalogOf().profile(id);
 }
 
-/** The registered catalog: what an edge hands a use case that asks its tools per call. */
+/** The registered catalog: what an edge hands a use case that still takes its tools per call. */
 export function registeredCatalog(): ToolCatalog {
   return catalogOf();
 }

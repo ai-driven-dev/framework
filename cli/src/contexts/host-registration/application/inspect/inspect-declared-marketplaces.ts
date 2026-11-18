@@ -10,7 +10,6 @@ import type { SettingsDeclaringTool } from "../../ports/host-tool.js";
 
 export interface InspectDeclaredMarketplacesCommand {
   readonly projectRoot: string;
-  readonly tools: ToolCatalog;
   readonly toolIds: readonly string[];
   readonly marketplaceNames: readonly string[];
 }
@@ -24,7 +23,8 @@ export class InspectDeclaredMarketplaces {
   constructor(
     private readonly fs: FileReader,
     /** Whether the host CLI behind a `NativeActivation.hostBinary()` is on the PATH. */
-    private readonly hostAvailable: (binary: string) => boolean
+    private readonly hostAvailable: (binary: string) => boolean,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(
@@ -33,7 +33,7 @@ export class InspectDeclaredMarketplaces {
     const findings: UndeclaredMarketplace[] = [];
     if (command.marketplaceNames.length === 0) return { findings };
     for (const toolId of command.toolIds) {
-      const profile = command.tools.profile(toolId);
+      const profile = this.tools.profile(toolId);
       const settings = this.untrackedSettingsOf(profile);
       if (settings === undefined) continue;
       // A tool that writes its own registration cannot have written one while its binary was out

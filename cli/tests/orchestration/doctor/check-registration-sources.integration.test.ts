@@ -1,7 +1,6 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
-import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import {
   builtMarketplaceDir,
@@ -14,6 +13,7 @@ import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 
 function fakeVersion(value: string): VersionReader {
   return { get: () => value };
@@ -114,12 +114,7 @@ async function issuesFor(
     fs,
     registry,
     () => false,
-    new InspectHostRegistration(
-      fs,
-      new Map(),
-      new Map([[TOOL.claude, hostReader]]),
-      process.platform
-    ),
+    registeredHostInspector(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
     () => "/user-cache",
     fakeVersion("1.0.0")
   );
@@ -291,7 +286,7 @@ describe("CheckRegistration — marketplace source conflicts", () => {
       fs,
       registry,
       () => false,
-      new InspectHostRegistration(fs, new Map(), new Map(), process.platform),
+      registeredHostInspector(fs, new Map(), new Map()),
       () => "/user-cache",
       fakeVersion("1.0.0")
     );
@@ -336,12 +331,7 @@ describe("CheckRegistration — marketplace source conflicts", () => {
       fs,
       registry,
       () => false,
-      new InspectHostRegistration(
-        fs,
-        new Map(),
-        new Map([[TOOL.codex, hostReader]]),
-        process.platform
-      ),
+      registeredHostInspector(fs, new Map(), new Map([[TOOL.codex, hostReader]])),
       () => "/user-cache",
       fakeVersion("1.0.0")
     );
@@ -395,12 +385,7 @@ describe("CheckRegistration — marketplace source conflicts", () => {
       fs,
       registry,
       () => false,
-      new InspectHostRegistration(
-        fs,
-        new Map(),
-        new Map([[TOOL.claude, hostReader]]),
-        process.platform
-      ),
+      registeredHostInspector(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
       () => "/user-cache",
       fakeVersion("1.0.0")
     );
@@ -449,12 +434,7 @@ describe("CheckRegistration — user-scope marketplace source drift", () => {
       fs,
       registry,
       () => false,
-      new InspectHostRegistration(
-        fs,
-        new Map(),
-        new Map([[TOOL.claude, hostReader]]),
-        process.platform
-      ),
+      registeredHostInspector(fs, new Map(), new Map([[TOOL.claude, hostReader]])),
       () => USER_CACHE_ROOT,
       fakeVersion(CURRENT_VERSION)
     );

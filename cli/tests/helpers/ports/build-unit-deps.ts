@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import { registrationRecordRules } from "../../../src/composition/installation.js";
 import { wireTools } from "../../../src/composition/tools.js";
 import { PluginCatalogRepositoryAdapter } from "../../../src/contexts/distribution/infrastructure/plugin-catalog-repository-adapter.js";
-import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
+import type { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import { CheckFileReferences } from "../../../src/contexts/installation/application/doctor/check-file-references.js";
 import { CheckMergeFiles } from "../../../src/contexts/installation/application/doctor/check-merge-files.js";
 import { CheckPluginDrift } from "../../../src/contexts/installation/application/doctor/check-plugin-drift.js";
@@ -36,6 +36,7 @@ import { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "./in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "./in-memory-marketplace-registry.js";
+import { registeredHostInspector } from "./registered-host-inspector.js";
 import { seedFromDirectory } from "./seed-from-directory.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
@@ -186,7 +187,7 @@ export function buildDoctorUseCase(
       (binary) =>
         binary === TOOL.codex &&
         deps.nativePluginActivators.get(TOOL.codex)?.isAvailable() === true,
-      new InspectHostRegistration(deps.fs, hostRegistries, new Map(), process.platform),
+      registeredHostInspector(deps.fs, hostRegistries, new Map()),
       () => "/user-cache",
       { get: () => "1.0.0" }
     ),

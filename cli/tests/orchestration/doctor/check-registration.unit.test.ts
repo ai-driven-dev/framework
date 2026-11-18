@@ -3,7 +3,6 @@ import { registrationRecordRules } from "../../../src/composition/installation.j
 import type { ResolveBuiltMarketplaces } from "../../../src/contexts/distribution/application/resolve-built-marketplaces.js";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { InspectDeclaredMarketplaces } from "../../../src/contexts/host-registration/application/inspect/inspect-declared-marketplaces.js";
-import { InspectHostRegistration } from "../../../src/contexts/host-registration/application/inspect/inspect-host-registration.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.js";
@@ -19,6 +18,7 @@ import { buildCheckRegistration } from "../../helpers/ports/build-check-registra
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
 
 const PROJECT_ROOT = "/project";
 const LOCAL_SETTINGS = `${PROJECT_ROOT}/.claude/settings.local.json`;
@@ -64,7 +64,7 @@ async function issuesFor(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
-    new InspectHostRegistration(fs, new Map(), new Map(), process.platform),
+    registeredHostInspector(fs, new Map(), new Map()),
     () => "/user-cache",
     { get: () => "1.0.0" }
   ).execute({
@@ -190,7 +190,7 @@ async function nativeIssuesFor(
     fs,
     registry,
     (binary) => activators.get(binary)?.isAvailable() ?? false,
-    new InspectHostRegistration(fs, hostRegistries, new Map(), process.platform),
+    registeredHostInspector(fs, hostRegistries, new Map()),
     () => "/user-cache",
     { get: () => "1.0.0" }
   ).execute({
@@ -349,7 +349,7 @@ describe("the tools whose built marketplaces are resolved", () => {
         registrationRecordRules
       ),
       builds,
-      new InspectDeclaredMarketplaces(new InMemoryFileAdapter(), () => false),
+      new InspectDeclaredMarketplaces(new InMemoryFileAdapter(), () => false, catalogOf()),
       { execute: async () => ({ findings: [] }) }
     );
 

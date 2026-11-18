@@ -6,10 +6,12 @@ import type { InspectHostRegistration } from "../../../src/contexts/host-registr
 import { ListRegisteredPlugins } from "../../../src/contexts/installation/application/doctor/list-registered-plugins.js";
 import { LoadManifest } from "../../../src/contexts/installation/application/doctor/load-manifest.js";
 import type { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
+import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import type { CheckRegistrationCommand } from "../../../src/orchestration/doctor/check-registration.js";
 import { CheckRegistration } from "../../../src/orchestration/doctor/check-registration.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
+import { registeredTools } from "../../shared/testing/registered-tools.js";
 import { InMemoryManifestRepository } from "./in-memory-manifest-repository.js";
 
 /** The registration check wired as the composition root wires it. */
@@ -20,12 +22,13 @@ export function checkRegistrationOver(
   hostAvailable: (binary: string) => boolean,
   inspectHost: InspectHostRegistration,
   userCacheRoot: () => string,
-  currentVersion: VersionReader
+  currentVersion: VersionReader,
+  tools: ToolCatalog = registeredTools()
 ): CheckRegistration {
   return new CheckRegistration(
     new ListRegisteredPlugins(loadManifest, registrationRecordRules),
     new ResolveBuiltMarketplaces(fs, registry, userCacheRoot, currentVersion),
-    new InspectDeclaredMarketplaces(fs, hostAvailable),
+    new InspectDeclaredMarketplaces(fs, hostAvailable, tools),
     inspectHost
   );
 }

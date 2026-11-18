@@ -13,6 +13,7 @@ import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/applicatio
 import { RecordSourceReference } from "../../src/contexts/machine-claims/application/record-source-reference.js";
 import { SharedFrameworkSource } from "../../src/contexts/machine-claims/application/shared-source/shared-framework-source.js";
 import { SyncSettings } from "../../src/orchestration/sync/sync-settings.js";
+import { registeredTools } from "../shared/testing/registered-tools.js";
 import { FakeCurrentVersion } from "./ports/fake-current-version.js";
 
 type Hosts = ConstructorParameters<typeof RegisterPluginWithHost>;
@@ -57,7 +58,8 @@ export function marketplaceSync(parts: MarketplaceSyncParts): SyncSettings {
           pluginRegistries: parts.hostPluginRegistries ?? new Map(),
           sources: parts.nativeSources ?? new Map(),
         },
-        process.platform
+        process.platform,
+        registeredTools()
       ),
       build,
       parts.logger,
