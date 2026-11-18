@@ -6,6 +6,7 @@ const { spawnSync } = require("node:child_process");
 const { test } = require("node:test");
 const SCRIPT = path.resolve(__dirname, "../../plugins/aidd-vcs/skills/06-answer-comments/scripts/prepare-review.cjs");
 const MARKER = "<!-- aidd-answer-comments-summary -->";
+const posted = (text, kind) => `${text}\n\n<!-- aidd-answer-comments:${kind} -->`;
 const thread = (id = "t1", more = {}) => ({ id, url: `https://example.com/${id}`, resolved: false, replyAuthors: ["me"], ...more });
 const classification = (kind = "answer", more = {}) => ({ threadId: "t1", kind, text: "The code explains this.", source: "src/code.js", ...more });
 const input = (more = {}) => ({ account: "me", threads: [thread()], classifications: [classification()], ...more });
@@ -36,23 +37,23 @@ test("closed threads supply history, never replies, resolutions or pending quest
 
 test("a supplied decision overrides a waiting question and is remembered on the next run", (t) => {
   const run = runner(t);
-  const request = input({ threads: [thread("t1", { lastReply: "What next? Answer here." })], classifications: [classification("user-call")], decisions: [{ threadId: "t1", text: "archive", source: "chat:message-1" }] });
+  const request = input({ threads: [thread("t1", { lastReply: posted("What next?", "user-call") })], classifications: [classification("user-call")], decisions: [{ threadId: "t1", text: "archive", source: "chat:message-1" }] });
   const result = run(request);
-  assert.deepEqual(result.threads, [{ threadId: "t1", reply: "Decision: archive", resolve: true }]);
+  assert.deepEqual(result.threads, [{ threadId: "t1", reply: posted("archive", "decided"), resolve: true }]);
   assert.deepEqual(result.pending, []);
   const again = run({ ...request, decisions: [], summaries: [summary("s1", { body: result.summary.body })] });
   assert.deepEqual(again.threads, result.threads);
   assert.equal(again.summary.operation, "unchanged");
-  const acknowledged = run({ ...request, decisions: [], threads: [thread("t1", { lastReply: "Decision: archive" })], summaries: [summary("s1", { body: result.summary.body })] });
+  const acknowledged = run({ ...request, decisions: [], threads: [thread("t1", { lastReply: posted("archive", "decided") })], summaries: [summary("s1", { body: result.summary.body })] });
   assert.deepEqual(acknowledged.threads, [{ threadId: "t1", resolve: true }]);
 });
 
 test("a new message after a decision requires a fresh classification instead of resolving the reopened thread", (t) => {
   const run = runner(t);
-  const first = run(input({ threads: [thread("t1", { lastReply: "What next? Answer here." })], decisions: [{ threadId: "t1", text: "archive", source: "chat:message-1" }] }));
+  const first = run(input({ threads: [thread("t1", { lastReply: posted("What next?", "user-call") })], decisions: [{ threadId: "t1", text: "archive", source: "chat:message-1" }] }));
   const changed = input({ threads: [thread("t1", { lastReply: "What about the next release?" })], classifications: [classification("user-call", { text: "Keep or delete the next release?" })], summaries: [summary("s1", { body: first.summary.body })] });
   const result = run(changed);
-  assert.deepEqual(result.threads, [{ threadId: "t1", reply: "Keep or delete the next release? Answer here." }]);
+  assert.deepEqual(result.threads, [{ threadId: "t1", reply: posted("Keep or delete the next release?", "user-call") }]);
   assert.equal(result.pending[0].kind, "user-call");
   assert.doesNotMatch(result.summary.body, /"kind":"decided"/);
   const missing = run({ ...changed, classifications: [] });
@@ -64,7 +65,7 @@ test("a new message after a decision requires a fresh classification instead of 
 
 test("a new reply ID detects a repeated question without persisting its body", (t) => {
   const run = runner(t);
-  const initialThread = thread("t1", { lastReply: "What next? Answer here.", lastReplyId: "message-1" });
+  const initialThread = thread("t1", { lastReply: posted("What next?", "user-call"), lastReplyId: "message-1" });
   const first = run(input({ threads: [initialThread], decisions: [{ threadId: "t1", text: "archive", source: "chat:message-1" }] }));
   assert.match(first.summary.body, /"observation":"[a-f\d]{64}"/);
   assert.doesNotMatch(first.summary.body, /What next\?|"observedReplyId"|"observedReply":/);
@@ -76,11 +77,11 @@ test("a new reply ID detects a repeated question without persisting its body", (
 
 test("editing a message under the same reply ID invalidates an old decision", (t) => {
   const run = runner(t);
-  const initialThread = thread("t1", { lastReply: "What next? Answer here.", lastReplyId: "message-1" });
+  const initialThread = thread("t1", { lastReply: posted("What next?", "user-call"), lastReplyId: "message-1" });
   const first = run(input({ threads: [initialThread], decisions: [{ threadId: "t1", text: "archive", source: "chat:decision" }] }));
   const changed = input({ threads: [{ ...initialThread, lastReply: "Actually, what about the next release?" }], classifications: [classification("user-call", { text: "Keep or delete the next release?" })], summaries: [summary("s1", { body: first.summary.body })] });
   const result = run(changed);
-  assert.deepEqual(result.threads, [{ threadId: "t1", reply: "Keep or delete the next release? Answer here." }]);
+  assert.deepEqual(result.threads, [{ threadId: "t1", reply: posted("Keep or delete the next release?", "user-call") }]);
   assert.equal(result.pending[0].kind, "user-call");
   const missing = run({ ...changed, classifications: [] });
   assert.deepEqual(missing.threads, []);
@@ -117,7 +118,7 @@ test("a waiting question is skipped and keeps all options in the handover and su
   const question = "Choose retain, archive or delete?";
   const request = input({ classifications: [classification("user-call", { text: question })] });
   const first = run(request);
-  assert.equal(first.threads[0].reply, `${question} Answer here.`);
+  assert.equal(first.threads[0].reply, posted(question, "user-call"));
   assert.match(first.summary.body, /retain, archive or delete/);
   const again = run({ ...request, threads: [thread("t1", { lastReply: first.threads[0].reply })] });
   assert.deepEqual(again.threads, []);
@@ -125,16 +126,27 @@ test("a waiting question is skipped and keeps all options in the handover and su
   assert.equal(again.pending[0].url, thread().url);
 });
 
+test("a waiting thread is recognized by its hidden kind, whatever the visible wording or language", (t) => {
+  const run = runner(t);
+  const asked = thread("t1", { lastReply: posted("Conserver, archiver ou supprimer ? Réponds ici.", "user-call") });
+  assert.deepEqual(run(input({ threads: [asked], classifications: [classification("user-call", { text: "Garder ou supprimer ?" })] })).threads, []);
+  assert.equal(run(input({ threads: [asked] })).code, 1);
+  const pending = thread("t1", { lastReply: posted("Reste à faire : renommer le titre.", "todo") });
+  assert.equal(run(input({ threads: [pending] })).code, 1);
+  const visibleOnly = thread("t1", { lastReply: "Is the user-call todo settled? Answer here. To do." });
+  assert.deepEqual(run(input({ threads: [visibleOnly] })).threads, [{ threadId: "t1", reply: posted("The code explains this. (src/code.js)", "answer"), resolve: true }]);
+});
+
 test("an open question gets no fabricated options", (t) => {
   const result = runner(t)(input({ classifications: [classification("user-call", { text: "What should happen?" })] }));
-  assert.equal(result.threads[0].reply, "What should happen? Answer here.");
+  assert.equal(result.threads[0].reply, posted("What should happen?", "user-call"));
 });
 
 test("todo waits without a commit and remains todo after an unrelated commit", (t) => {
   const run = runner(t);
-  const request = input({ threads: [thread("t1", { lastReply: "Change the name. To do." })], classifications: [classification("todo", { text: "Change the name." })] });
+  const request = input({ threads: [thread("t1", { lastReply: posted("Change the name.", "todo") })], classifications: [classification("todo", { text: "Change the name." })] });
   assert.deepEqual(run(request).threads, []);
-  const afterCommit = run({ ...request, threads: [thread("t1", { lastReply: "Change the name. To do.", newCommit: true })] });
+  const afterCommit = run({ ...request, threads: [thread("t1", { lastReply: posted("Change the name.", "todo"), newCommit: true })] });
   assert.deepEqual(afterCommit.threads, []);
   assert.equal(afterCommit.pending[0].kind, "todo");
   assert.match(afterCommit.summary.body, /### To do/);

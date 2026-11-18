@@ -6,17 +6,24 @@ The pull or merge request and any decisions supplied in the conversation.
 
 ## Process
 
-1. Collect the review snapshot per [review-plan.md](../references/review-plan.md) through the VCS tool.
-2. Draft classifications and replies for open threads per [comment-kinds.md](../references/comment-kinds.md).
+1. Collect the review snapshot per [review-plan.md](../references/review-plan.md).
+2. Classify each open thread per [comment-kinds.md](../references/comment-kinds.md).
    - A decision was supplied: associate it with its thread and source.
-3. Run the planner per `review-plan.md`.
+3. Select lasting feedback per [learnings.md](../references/learnings.md).
+4. Run the planner per `review-plan.md`.
    - Non-zero exit: quote its error and stop.
-4. Apply only its thread operations through the VCS tool.
-5. Check the affected threads against the plan.
-   - Mismatch: refresh the snapshot and repeat from step 3 until they match.
-6. Report the plan's linked pending decisions and changes.
-7. Read [summarize](02-summarize.md).
+   - Summary needs a choice: present its candidates and wait for the user's choice before rerunning with it.
+   - Threads are unknown: classify them from their evidence and rerun, leaving unproven ones unknown.
+5. Apply its thread operations, then its summary operation when the summary is ready.
+6. Refresh the snapshot and check the threads and the stored summary against the plan.
+   - Mismatch: repeat from step 4 until they match.
+7. Report the pending decisions and changes with their links, and any thread left unknown.
+8. If learnings exist, offer the skill that captures durable project learnings with the summary as input.
 
 ## Output
 
-The applied operations, linked pending items and review snapshot.
+The applied operations, the summary's status, the linked pending items and the proposed learnings.
+
+## Rules
+
+- Write no rule, memory or skill.

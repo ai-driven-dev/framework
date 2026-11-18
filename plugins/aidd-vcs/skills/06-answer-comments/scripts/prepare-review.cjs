@@ -10,9 +10,7 @@ const STATE_OPEN = "<!-- aidd-answer-comments-state ";
 const STATE_CLOSE = " -->";
 const STATE_VERSION = 1;
 const SUMMARY_HEADING = "## Review comments";
-const ANSWER_HERE = "Answer here.";
-const TO_DO = "To do.";
-const DECISION_PREFIX = "Decision: ";
+const kindMarker = (kind) => `<!-- aidd-answer-comments:${kind} -->`;
 const NEW_SUMMARY = "new";
 const SHORT_SHA_LENGTH = 9;
 const MAX_TEXT_LINES = 2;
@@ -22,7 +20,8 @@ const TRAILING_SOURCE = /\([^()]*\)\.?\s*$/;
 const DECIDED = "decided";
 const CLASSIFIED_KINDS = ["done", "answer", "user-call", "todo"];
 const STORED_KINDS = [...CLASSIFIED_KINDS, DECIDED];
-const SOURCED_KINDS = ["done", "answer", DECIDED];
+const CITED_KINDS = ["done", "answer"];
+const SOURCED_KINDS = [...CITED_KINDS, DECIDED];
 const PENDING_SECTIONS = [["user-call", "FAQ: your call"], ["todo", "To do"]];
 
 // Input checks: each returns its value or throws the refusal.
@@ -55,7 +54,7 @@ function checkEntry(item, name, kinds) {
 
 function checkClassification(item) {
   checkEntry(item, "classification", CLASSIFIED_KINDS);
-  if (SOURCED_KINDS.includes(item.kind) && TRAILING_SOURCE.test(item.text)) fail("classification.text must not end with its source; the reply appends it.");
+  if (CITED_KINDS.includes(item.kind) && TRAILING_SOURCE.test(item.text)) fail("classification.text must not end with its source; the reply appends it.");
 }
 
 function checkStoredEntry(item) {
@@ -136,18 +135,14 @@ function priorState(body) {
   return { entries: [...entries.values()], learnings: learnings(state.learnings) };
 }
 
-// Replies: the script owns every suffix, so a rerun recognizes its own reply.
+// Replies: visible words are the model's, in the thread's language; a hidden kind marker lets a rerun recognize them.
 const observationOf = (thread) => createHash("sha256").update(JSON.stringify([thread.lastReplyId ?? null, thread.lastReply ?? null])).digest("hex");
 const flatten = (value) => value.replace(/\s*\r?\n\s*/g, " ").trim();
-const withoutSuffix = (value) => value.replace(/\s*(?:Answer here\.|To do\.)\s*$/, "").trim();
 const shortSource = (item) => item.kind === "done" ? item.source.slice(0, SHORT_SHA_LENGTH) : item.source;
 
 function replyOf(item) {
-  const value = withoutSuffix(item.text);
-  if (item.kind === "user-call") return `${value} ${ANSWER_HERE}`;
-  if (item.kind === "todo") return `${value} ${TO_DO}`;
-  if (item.kind === DECIDED) return `${DECISION_PREFIX}${value}`;
-  return `${value} (${shortSource(item)})`;
+  const visible = CITED_KINDS.includes(item.kind) ? `${item.text} (${shortSource(item)})` : item.text;
+  return `${visible}\n\n${kindMarker(item.kind)}`;
 }
 
 // A remembered entry still describes the thread when nothing new was said in it.
@@ -161,12 +156,12 @@ function entryFor(thread, old, { classifications, decisions }) {
   return classifications.get(thread.id) ?? (current ? old : undefined);
 }
 
-const lastReplyEndsWith = (thread, suffix) => !thread.resolved && Boolean(thread.lastReply?.trimEnd().endsWith(suffix));
+const lastReplyIs = (thread, kind) => !thread.resolved && Boolean(thread.lastReply?.trimEnd().endsWith(kindMarker(kind)));
 
 // Returns whether the thread still waits; refuses a classification that would talk over the wait.
 function stillWaits(thread, item) {
-  const waitsForDecision = lastReplyEndsWith(thread, ANSWER_HERE) && item.kind !== DECIDED;
-  const waitsForCommit = lastReplyEndsWith(thread, TO_DO) && !thread.newCommit && item.kind !== DECIDED;
+  const waitsForDecision = lastReplyIs(thread, "user-call") && item.kind !== DECIDED;
+  const waitsForCommit = lastReplyIs(thread, "todo") && !thread.newCommit && item.kind !== DECIDED;
   if (waitsForDecision && item.kind !== "user-call") fail(`Thread ${thread.id} awaits a decision.`);
   if (waitsForCommit && item.kind !== "todo") fail(`Thread ${thread.id} awaits a pushed commit.`);
   return waitsForDecision || waitsForCommit;
@@ -207,7 +202,7 @@ function countsLine(values) {
 function pendingSection(kind, heading, pending) {
   const items = pending.filter((item) => item.kind === kind);
   if (!items.length) return [];
-  const bullet = (item, i) => kind === "user-call" ? `${i + 1}. **${flatten(withoutSuffix(item.text))}**` : `- ${flatten(withoutSuffix(item.text))}`;
+  const bullet = (item, i) => kind === "user-call" ? `${i + 1}. **${flatten(item.text)}**` : `- ${flatten(item.text)}`;
   return ["", `### ${heading}`, "", ...items.map((item, i) => `${bullet(item, i)} ([thread](${item.url}))`)];
 }
 

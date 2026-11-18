@@ -10,35 +10,32 @@ node "$script" --input "$review_json"
 
 | Field | Value |
 | --- | --- |
-| `account` | Current VCS account's login, matching `replyAuthors` and summary authors. |
-| `threads` | Complete snapshot, including resolved threads, as `{id, url, resolved, replyAuthors, lastReply?, lastReplyId?, newCommit?}`, where `replyAuthors` lists the login of each reply's author, excluding the thread's opening comment. |
-| `classifications` | Proposed `{threadId, kind, text, source?}` entries, with `kind` from `comment-kinds.md`. |
-| `decisions` | Explicit user choices as `{threadId, text, source}`, where `source` identifies the user's message. |
-| `summaries` | Existing comments as `{id, author, body}`, including the full bodies. |
-| `summaryChoice` | The comment ID the user chose or agreed to adopt, or `"new"` when they chose a new legacy replacement. |
-| `learnings` | Proposed `{text, url}` items, with each URL pointing to its review thread. |
+| `account` | The current VCS account's login. |
+| `threads` | Every thread, resolved ones included, as `{id, url, resolved, replyAuthors, lastReply?, lastReplyId?, newCommit?}`. |
+| `classifications` | `{threadId, kind, text, source?}` per [comment-kinds.md](comment-kinds.md). |
+| `decisions` | `{threadId, text, source}` for each choice the user stated. |
+| `summaries` | Existing pull or merge request comments as `{id, author, body}`, full bodies. |
+| `summaryChoice` | The comment ID the user chose, or `"new"` to replace a legacy summary. |
+| `learnings` | `{text, url}`, each URL pointing to its thread. |
 
-All fields except `account` and `threads` are optional arrays or choices. `classifications`, `decisions`, `summaries` and `learnings` default to empty arrays.
+Only `account` and `threads` are required.
 
-`text` is the reply, question, change or decision without a status suffix, in at most two lines; a `done` or `answer` text never ends with its source, which the script appends. A `done` source is the pushed commit's SHA; an `answer` source is its file, commit or other evidence. `newCommit` says whether a commit was pushed since the thread's last reply, not whether it fixes the request. The model supplies the classification and verifies the meaning of its evidence.
-
-Supply the last reply's native ID or URL as `lastReplyId` when available; change detection fingerprints both the ID and text, detecting edits and repeated text under a new ID without storing the message. In an open thread, remembered classifications survive the same message or their expected reply; new content needs a fresh classification or remains unknown. Closed threads retain their known historical classification unless the current input replaces it.
-
-Take `account`, `replyAuthors` and summary authors from the same API in the same form, since the script only compares them: on GitHub, GraphQL `viewer.login` and `author.login`, never mixing REST bot logins such as `name[bot]`. A resolved thread the current account never replied in is out of scope: leave it unclassified; it is neither counted nor reported unknown.
+- `replyAuthors` lists the login of each reply's author, the thread's opening comment excluded.
+- Take every login from the same API in the same form, since the planner only compares them: on GitHub, GraphQL `viewer.login` and `author.login`, never a REST bot login such as `name[bot]`.
+- A resolved thread the current account never replied in is out of scope: leave it unclassified.
+- `lastReplyId` is the last reply's native ID or URL, so an edited or repeated message is detected.
+- `newCommit` says whether a commit was pushed since the last reply, not whether it fixes the request.
+- For a legacy summary without hidden state, pass its learnings worth keeping in `learnings`.
 
 ## Output
 
 | Field | Value |
 | --- | --- |
-| `threads` | Allowed `{threadId, reply?, resolve?}` operations, independent of summary readiness. |
-| `pending` | Remaining open `user-call` and `todo` entries, including skipped waiting threads, with their IDs and links. |
-| `summary` | A `status` of `ready`, `needs-choice` or `unknown`. |
-| `unknown` | Snapshot thread IDs without a current or persisted classification. |
+| `threads` | `{threadId, reply?, resolve?}` operations to apply, whatever the summary's status. |
+| `pending` | Open `user-call` and `todo` entries, with their links. |
+| `summary` | `ready` with `operation` (`create`, `update`, `unchanged`), `targetId` and `body`; `needs-choice` with `candidates` and `allowNew`; or `unknown`. |
+| `unknown` | Thread IDs with neither a classification nor a remembered kind. |
 
-A ready summary supplies `operation` (`create`, `update`, `unchanged`), `targetId` for an existing target, and `body`. Pass `body` directly from parsed JSON or an input file to the connector without retyping it, so its hidden state survives the next run. A choice supplies candidate IDs and `allowNew`; ask the user and rerun with `summaryChoice`. Unknown history supplies no publishable body; recover classifications from evidence before rerunning, without treating resolution or old prose totals as a kind.
+Post each `reply` and the summary `body` exactly as returned, so their hidden markers survive the next run.
 
-For an untyped legacy summary, include its learnings worth retaining in `learnings`; prose totals are never imported.
-
-The script owns waiting detection, reply suffixes, decision acknowledgements, resolution eligibility, summary targeting, counts and rendering. It remembers decisions and learnings in the summary, excludes resolved threads from operations and pending questions, and preserves settled historical counts by thread ID. On a partial previous run it emits only a missing resolution when the expected reply is already present.
-
-The JSON result's `error` explains a refusal at exit 1 or bad usage/input reading at exit 2. Exit 0 means preparation completed, even when a summary needs a choice or has unknown history. No network call or file write occurs. The connector still collects the snapshot and applies allowed operations; the script cannot prove that collection is exhaustive or that the model interpreted a decision or evidence correctly.
+Exit 0 prepared, 1 refused, 2 bad usage or unreadable input; `error` explains a non-zero exit. The planner never calls the network or writes a file, and cannot prove the snapshot is complete or a classification is right.
