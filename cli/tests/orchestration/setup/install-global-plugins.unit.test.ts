@@ -84,11 +84,30 @@ describe("InstallGlobalPlugins", () => {
     expect(install).not.toHaveBeenCalled();
   });
 
-  it("installs nothing, and reads no catalogue, for --plugins none", async () => {
-    const { useCase, list, install } = setup();
+  it.each(["none", "interactive"] as const)(
+    "installs nothing, and reads no catalogue, in %s mode",
+    async (mode) => {
+      const { useCase, list, install } = setup();
 
-    expect((await run(useCase, "none")).plugins).toEqual([]);
-    expect(list).not.toHaveBeenCalled();
-    expect(install).not.toHaveBeenCalled();
+      expect((await run(useCase, mode)).plugins).toEqual([]);
+      expect(list).not.toHaveBeenCalled();
+      expect(install).not.toHaveBeenCalled();
+    }
+  );
+
+  it("reads the catalogue of the project it installs for", async () => {
+    const { useCase, list } = setup();
+
+    await run(useCase, "all");
+
+    expect(list).toHaveBeenCalledWith({ projectRoot: "/project" });
+  });
+
+  it("names every plugin the catalog does not carry", async () => {
+    const { useCase } = setup();
+
+    await expect(run(useCase, "named", ["aidd-nope", "aidd-gone"])).rejects.toThrow(
+      "Not in the framework catalog: aidd-nope, aidd-gone."
+    );
   });
 });

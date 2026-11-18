@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_FRAMEWORK_REPO,
+  localFrameworkSource,
   remoteFrameworkSource,
 } from "../../../src/contexts/distribution/contract/framework-source.js";
 import type { ReleaseLister } from "../../../src/contexts/distribution/ports/release-lister.js";
@@ -159,6 +160,33 @@ describe("AskMarketplaceSource", () => {
       });
 
       expect(result).toMatchObject({ ref: "v3.0.0" });
+    });
+
+    it("asks nothing when the command line already names the ref", async () => {
+      const resolver = makeResolver(["v4.0.0"]);
+      const uc = askMarketplaceSource(new ScriptedPrompter([]), resolver);
+
+      const result = await uc.execute({
+        projectRoot: PROJECT_ROOT,
+        sourceFromCli: remoteFrameworkSource(undefined, "v1.2.3"),
+        interactive: true,
+      });
+
+      expect(result).toMatchObject({ ref: "v1.2.3" });
+      expect(resolver.listRootReleases).not.toHaveBeenCalled();
+    });
+
+    it("asks nothing when the command line names a local source", async () => {
+      const resolver = makeResolver(["v4.0.0"]);
+      const uc = askMarketplaceSource(new ScriptedPrompter([]), resolver);
+
+      const result = await uc.execute({
+        projectRoot: PROJECT_ROOT,
+        sourceFromCli: localFrameworkSource("/abs/framework"),
+        interactive: true,
+      });
+
+      expect(result).toMatchObject({ kind: "local" });
     });
   });
 });

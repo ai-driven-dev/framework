@@ -62,6 +62,12 @@ describe("SetupFlow", () => {
       expect(stray).toThrow(InvalidPluginModeConfigError);
       expect(stray).toThrow('Plugin names provided but mode is "all" (expected "named").');
     });
+
+    it("reads an unsaid mode as none when names arrive", () => {
+      expect(() => makeFlow({ pluginNames: ["my-plugin"] })).toThrow(
+        'Plugin names provided but mode is "none" (expected "named").'
+      );
+    });
   });
 
   describe("defaults for what a caller leaves unsaid", () => {
