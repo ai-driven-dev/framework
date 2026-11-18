@@ -20,7 +20,7 @@ const SUPPORT_RECORD = `${ROOT}cli/tests/golden/snapshots/tool-support/surface.j
 
 const PLUGIN_CONFIG = `${ROOT}docs/assets/plugins/plugins.json`;
 
-const SCRIPT_REFERENCE = /\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"]+)/g;
+const SCRIPT_REFERENCE = /\$\{CLAUDE_PLUGIN_ROOT\}\/([^\s"\\]+)/g;
 const SURFACES = [
   ["skills", "Skills"],
   ["agents", "Agents"],

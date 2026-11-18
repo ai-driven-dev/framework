@@ -12,6 +12,8 @@ Decide the mode as `mode.md` says, then read only it and the current zone's refe
 
 Delegate to the agent each zone names, by its role, so every run delegates the same way; without it, give the same brief to the host's default subagent. Parallelize independent work when it is faster. Repeat the responsible zone when delegated work returns an actionable gap.
 
+When delegating exploration or execution, include the relevant paths, task, essential project constraints, expected result, and checks. Explorer and executor may start without the project's instruction files. Delegate a large-file investigation to explorer and request a concise answer with source references.
+
 ```mermaid
 ---
 title: SDLC orchestration

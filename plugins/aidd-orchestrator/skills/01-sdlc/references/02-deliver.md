@@ -4,6 +4,8 @@
 
 Turn the contract into a plan, then give the `executor` agent the plan. It implements it, calls the validation skills, and repairs whatever they report until they pass. Include architecture conformance whenever the project documents architecture. Run an end-to-end journey after every other validation when the plan calls for one, and none otherwise.
 
+When the plan has separable implementation tasks, delegate each with its owned paths, required project constraints, acceptance criteria, and checks. Keep dependent work together, and resolve any missing context the executor reports.
+
 Commit and push the validated work through the commit skill. Send only the clean committed candidate to Check.
 
 ```mermaid

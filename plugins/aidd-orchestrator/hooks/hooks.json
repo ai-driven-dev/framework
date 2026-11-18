@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/large-read.cjs\"",
+            "timeout": 5,
+            "statusMessage": "AIDD Orchestrator: check large file"
+          }
+        ]
+      }
+    ]
+  }
+}

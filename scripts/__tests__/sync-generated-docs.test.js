@@ -19,7 +19,14 @@ function scratchTree() {
   };
   write(
     "plugins/aidd-x/hooks/hooks.json",
-    JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/a.js" }] }] } })
+    JSON.stringify({
+      hooks: {
+        SessionStart: [{ hooks: [
+          { command: 'node "${CLAUDE_PLUGIN_ROOT}/hooks/a.js"' },
+          { command: "node ${CLAUDE_PLUGIN_ROOT}/hooks/b.js" },
+        ] }],
+      },
+    })
   );
   write(
     "cli/tests/golden/snapshots/tool-support/surface.json",
@@ -66,7 +73,7 @@ test("an empty block is reported stale, and syncing fills it from the tree", () 
     assert.equal(run(["--root", root]).status, 0);
     const catalog = fs.readFileSync(path.join(root, "docs/CATALOG.md"), "utf8");
     const compatibility = fs.readFileSync(path.join(root, "docs/COMPATIBILITY.md"), "utf8");
-    assert.match(catalog, /\| `SessionStart` \| `hooks\/a\.js` \|/);
+    assert.match(catalog, /\| `SessionStart` \| `hooks\/a\.js` · `hooks\/b\.js` \|/);
     assert.match(compatibility, /\| Claude Code \| `\.claude\/` \| ✅ \| ✅ \| ✅ \| ✅ \| Marketplace only \| Some events \|/);
     assert.doesNotMatch(compatibility, /Rules|Commands/);
     assert.match(catalog, /\| `helper` \| Does a small job \|/);
