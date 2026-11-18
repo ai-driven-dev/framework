@@ -3,7 +3,15 @@
  * inside the areas it crosses instead of asking their entry points.
  */
 import { describe, expect, it } from "vitest";
-import { expectRatchet, read, sourceFiles } from "./helpers.js";
+import {
+  commandFiles,
+  commandSourceOf,
+  expectRatchet,
+  isCommandHome,
+  KNOWN_COMMAND_FILE,
+  read,
+  sourceFiles,
+} from "./helpers.js";
 import { closingBracket, codeOnly, topLevelPieces } from "./source-shapes.js";
 
 /** Above this, a command takes on more dependencies than it can answer for, injected or instantiated. */
@@ -40,17 +48,13 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
   },
 ];
 
-function isUseCase(file: string): boolean {
-  return /^src\/(?:contexts\/[^/]+\/application|orchestration)\//.test(file);
-}
-
-/** A command is named by its verb, so no suffix finds one: it is a class with a public `execute`. */
 const COMMAND_CLASSES = new Set(
   sourceFiles()
-    .filter((file) => isUseCase(file) && /^\s+(?:async )?execute\(/m.test(read(file)))
-    .flatMap((file) =>
-      [...read(file).matchAll(/export (?:abstract )?class (\w+)/g)].map((m) => m[1])
-    )
+    .filter(isCommandHome)
+    .flatMap((file) => {
+      const { classes, executes } = commandSourceOf(read(file));
+      return executes ? classes : [];
+    })
 );
 
 /**
@@ -95,9 +99,11 @@ function overLimit(source: string, commands?: ReadonlySet<string>): boolean {
 
 describe("orchestrators depend on entry points, not on parts", () => {
   it(`no command takes more than ${MAX_CONSTRUCTOR_DEPENDENCIES} dependencies, injected or instantiated`, () => {
-    const candidates = sourceFiles().filter(isUseCase);
+    const candidates = commandFiles();
     // A rule that selects nothing passes forever: this filter named a tree the files left.
-    expect(candidates.length, "the rule selects no file — its scope is stale").toBeGreaterThan(20);
+    expect(candidates, "the rule selects no known command: its scope is stale").toContain(
+      KNOWN_COMMAND_FILE
+    );
     const violations = candidates.filter((file) => overLimit(read(file)));
 
     const { added, fixed } = expectRatchet(
@@ -133,8 +139,8 @@ describe("the guard itself", () => {
   });
 
   it("reads a context's commands and the orchestration as the files it holds", () => {
-    expect(isUseCase("src/orchestration/setup/setup.ts")).toBe(true);
-    expect(isUseCase("src/contexts/auth/domain/credential-record.ts")).toBe(false);
+    expect(isCommandHome("src/orchestration/setup/setup.ts")).toBe(true);
+    expect(isCommandHome("src/contexts/auth/domain/credential-record.ts")).toBe(false);
   });
 
   it("counts an optional constructor dependency, not just a required one", () => {

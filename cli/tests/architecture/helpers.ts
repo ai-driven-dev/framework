@@ -8,6 +8,7 @@ import {
   matchesGlob as scopeGlob,
   sourceFiles as srcFiles,
 } from "../../scripts/mutation-shards.mjs";
+import { codeOnly } from "./source-shapes.js";
 
 export const CLI_ROOT = resolve(import.meta.dirname, "..", "..");
 export const SRC = join(CLI_ROOT, "src");
@@ -343,4 +344,43 @@ export function unresolvedCommandMentions(text: string, declared: ReadonlySet<st
     missing.push(`${first} ${second}`);
   }
   return missing;
+}
+
+/** Where a command lives: a context's application layer, or an orchestration. */
+export function isCommandHome(file: string): boolean {
+  return /^src\/(?:contexts\/[^/]+\/application|orchestration)\//.test(file);
+}
+
+/** A command file the rules above are known to select, so a scope that drifts off the tree fails. */
+export const KNOWN_COMMAND_FILE = "src/orchestration/global/update-tools.ts";
+
+export function commandFiles(): string[] {
+  return sourceFiles().filter(isCommandHome);
+}
+
+const CLASS_DECLARATION = /(?:^|[\s;{}])class\s+(\w+)/g;
+const EXECUTE_METHOD = /(?:^|[\s;{}])(?:(public|private|protected)\s+)?(?:async\s+)?execute\(/g;
+
+export interface CommandSource {
+  /** Every class the file declares, exported or not. */
+  readonly classes: readonly string[];
+  /** Some `execute` method of any visibility, or an interface member of that name. */
+  readonly executes: boolean;
+  /** An `execute` method marked private or protected. */
+  readonly hidesExecute: boolean;
+}
+
+/**
+ * The one reading of what makes a file a command, shared by every rule that selects commands: a
+ * command is a class with a public `execute`, and no suffix finds one. A file declaring no class
+ * holds a port, not a command.
+ */
+export function commandSourceOf(source: string): CommandSource {
+  const code = codeOnly(source);
+  const modifiers = [...code.matchAll(EXECUTE_METHOD)].map((match) => match[1]);
+  return {
+    classes: [...code.matchAll(CLASS_DECLARATION)].map((match) => match[1] ?? ""),
+    executes: modifiers.length > 0,
+    hidesExecute: modifiers.some((modifier) => modifier === "private" || modifier === "protected"),
+  };
 }
