@@ -23,17 +23,12 @@ export class TrackedConfigFiles {
     private readonly logger: Logger
   ) {}
 
-  /** The hash the manifest records for `content`. */
-  hashOf(content: string): FileHash {
-    return FileHash.of(content);
-  }
-
   /** A file whose hash is that of `content`. */
   fileOf(relativePath: string, content: string, mergeStrategy?: MergeStrategy): InstallationFile {
     return new InstallationFile({
       relativePath,
       content,
-      hash: this.hashOf(content),
+      hash: FileHash.of(content),
       mergeStrategy,
     });
   }

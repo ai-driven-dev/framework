@@ -25,7 +25,7 @@ paths:
 ## Suppliers
 
 - `auth/contract/token-provider.ts`: the token for a private source (edge `distribution->auth`).
-- `shared/`: errors, `Logger`, `aidd-layout`, the source value, scope, tool, `FileReader`, `FileWriter`, `VersionReader`, `HttpGet`, `Prompter`, `Hasher`.
+- `shared/`: errors, `Logger`, `aidd-layout`, the source value, scope, tool, `FileReader`, `FileWriter`, `VersionReader`, `HttpGet`, `Prompter`, `FileHash`.
 - `simple-git`: the git fetch, in the plugin fetcher adapter.
 
 ## Never

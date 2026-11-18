@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { InstallationFile } from "../../../../../shared/domain/file.js";
+import { FileHash, type InstallationFile } from "../../../../../shared/domain/file.js";
 import type { AiToolId } from "../../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../../shared/ports/file-reader.js";
@@ -63,7 +63,7 @@ export class InstallRuntimeConfig {
       const asset = this.assets.loadConfigAsset(toolId, fileName);
       const content = typeof asset === "string" ? asset : JSON.stringify(asset, null, 2);
       await this.fs.writeFile(path, content);
-      manifest.updateTrackedFileHash(toolId, relativePath, this.trackedConfigFiles.hashOf(content));
+      manifest.updateTrackedFileHash(toolId, relativePath, FileHash.of(content));
     }
   }
 
