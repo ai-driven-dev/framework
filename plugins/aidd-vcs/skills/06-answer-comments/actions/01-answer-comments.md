@@ -23,7 +23,3 @@ The pull or merge request and any decisions supplied in the conversation.
 ## Output
 
 The applied operations, the summary's status, the linked pending items and the proposed learnings.
-
-## Rules
-
-- Write no rule, memory or skill.

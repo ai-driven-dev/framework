@@ -22,4 +22,4 @@ flowchart LR
 - Reach the pull or merge request through the VCS tool `aidd_docs/memory/vcs.md` names, else the one the remote points to.
 - Read code and history as evidence.
 - Leave waiting detection, resolution, counts, summary selection and rendering to `scripts/prepare-review.cjs`.
-- Never modify source, commit, push, or merge the request.
+- Never modify source, write a rule, memory or skill, commit, push, or merge the request.
