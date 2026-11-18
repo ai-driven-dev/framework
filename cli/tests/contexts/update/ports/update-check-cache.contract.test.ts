@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { UpdateCheckCacheAdapter } from "../../../../src/contexts/update/infrastructure/update-check-cache-adapter.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryUpdateCheckCache } from "../testing/in-memory-update-check-cache.js";
 import { describeUpdateCheckCacheContract } from "../testing/update-check-cache-contract.js";
 
@@ -26,7 +26,7 @@ describeUpdateCheckCacheContract("the in-memory cache", async () => {
 describeUpdateCheckCacheContract("UpdateCheckCacheAdapter over a directory", async () => {
   const dir = await mkdtemp(join(tmpdir(), "aidd-update-cache-"));
   return {
-    cache: new UpdateCheckCacheAdapter(new FileAdapter(new DeterministicHasher()), () => dir),
+    cache: new UpdateCheckCacheAdapter(new FileAdapter(new HasherAdapter()), () => dir),
     keepFromEarlierRelease: (entry) =>
       writeFile(join(dir, "update-check.json"), JSON.stringify(entry)),
     keepUnreadable: async () => {

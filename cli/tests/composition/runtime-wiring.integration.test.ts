@@ -24,8 +24,8 @@ import {
 import { setupQuestionsOf, setupStepsOf } from "../../src/composition/orchestration/setup.js";
 import { wireTools } from "../../src/composition/tools.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { isStrictlyWithinUserScope } from "../../src/contexts/machine-claims/domain/user-scope-containment.js";
+import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { catalogOf, registeredAiProfile } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";

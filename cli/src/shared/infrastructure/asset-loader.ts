@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { AssetNotFoundError } from "../../../../shared/domain/errors.js";
-import type { ConfigAsset, SchemaName } from "../../../../shared/domain/file.js";
-import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
+import { AssetNotFoundError } from "../domain/errors.js";
+import type { ConfigAsset, SchemaName } from "../domain/file.js";
+import type { AssetProvider } from "../ports/asset-provider.js";
 
 /** The one thing the loader asks of a tool catalog: a profile that can hand back a shipped config. */
 interface ConfigAssetCatalog {
@@ -48,7 +48,7 @@ export class BundledAssetProviderAdapter implements AssetProvider {
 
   private readSchemaFileFromDisk(fileName: string): object {
     const candidates = [
-      new URL(`../../../../../assets/schemas/${fileName}`, import.meta.url),
+      new URL(`../../../assets/schemas/${fileName}`, import.meta.url),
       new URL(`./${fileName}`, import.meta.url),
     ];
     for (const url of candidates) {

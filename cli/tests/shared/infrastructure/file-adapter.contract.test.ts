@@ -1,8 +1,8 @@
 import { mkdtemp, realpath, rm, symlink } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
-import { HasherAdapter } from "../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { describeFileContract, type FileSubject } from "../../helpers/ports/file-port-contract.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 

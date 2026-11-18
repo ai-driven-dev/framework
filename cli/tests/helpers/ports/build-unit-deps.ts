@@ -20,11 +20,11 @@ import { DetectPluginDrift } from "../../../src/contexts/installation/applicatio
 import { UpdateTool } from "../../../src/contexts/installation/application/update/update-tool.js";
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
-import { BundledAssetProviderAdapter } from "../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { PluginDistributionReaderAdapter } from "../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
+import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";

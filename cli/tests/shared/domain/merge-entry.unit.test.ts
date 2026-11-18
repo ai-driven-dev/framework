@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { HasherAdapter } from "../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import {
   extractMergeEntries,
   hashJsonEntries,
   removeEntriesFromJson,
 } from "../../../src/shared/domain/merge.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import type { Hasher } from "../../../src/shared/ports/hasher.js";
 
 const hasher: Hasher = new HasherAdapter();

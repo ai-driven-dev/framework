@@ -8,8 +8,8 @@ vi.mock("node:fs/promises", async (importOriginal) => {
   return { ...actual, rename: vi.fn(actual.rename) };
 });
 
-import { HasherAdapter } from "../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 
 // What the file port contract cannot observe stays here: the rename step, the stop at a

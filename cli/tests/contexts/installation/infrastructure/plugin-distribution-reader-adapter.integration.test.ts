@@ -2,7 +2,6 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { HasherAdapter } from "../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import {
   InvalidPluginManifestError,
@@ -13,6 +12,7 @@ import type {
   PluginDistribution,
 } from "../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { FileAdapter } from "../../../../src/shared/infrastructure/file-adapter.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { TOOL } from "../../../shared/testing/registered-tools.js";
 import { MANIFEST_PROBES } from "../testing/manifest-probes.js";

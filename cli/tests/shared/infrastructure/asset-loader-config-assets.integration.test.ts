@@ -1,10 +1,10 @@
 import { existsSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { wireTools } from "../../../../../src/composition/tools.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
-import { AssetNotFoundError } from "../../../../../src/shared/domain/errors.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { wireTools } from "../../../src/composition/tools.js";
+import { AssetNotFoundError } from "../../../src/shared/domain/errors.js";
+import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
+import { registeredTools, TOOL } from "../testing/registered-tools.js";
 
 const CONFIGS = fileURLToPath(new URL("../../../assets/configs/", import.meta.url));
 const catalog = wireTools();

@@ -1,8 +1,8 @@
 import { parse as parseToml } from "smol-toml";
 import { describe, expect, it } from "vitest";
-import { wireTools } from "../../../../../src/composition/tools.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
-import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { wireTools } from "../../../src/composition/tools.js";
+import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
+import { TOOL } from "../testing/registered-tools.js";
 
 const { vscode } = TOOL;
 

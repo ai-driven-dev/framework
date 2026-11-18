@@ -11,18 +11,17 @@ import { TrackedConfigFiles } from "../../src/contexts/installation/application/
 import { RunPostInstallPipeline } from "../../src/contexts/installation/application/install/run-post-install-pipeline.js";
 import { UpdateGitignore } from "../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
-import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";
-import { HasherAdapter } from "../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import { JsonFileMergerAdapter } from "../../src/contexts/installation/infrastructure/json-file-merger-adapter.js";
 import { ManifestRepositoryAdapter } from "../../src/contexts/installation/infrastructure/manifest-repository-adapter.js";
 import { PluginDistributionReaderAdapter } from "../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import type { Platform } from "../../src/contexts/installation/ports/platform.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { SilentPrompterAdapter } from "../../src/presentation/terminal/prompter-adapter.js";
-
 import type { AiToolId, IdeToolId } from "../../src/shared/domain/tool.js";
+import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { CurrentVersionAdapter } from "../../src/shared/infrastructure/current-version-adapter.js";
 import { FileAdapter } from "../../src/shared/infrastructure/file-adapter.js";
+import { HasherAdapter } from "../../src/shared/infrastructure/hasher-adapter.js";
 import type { Prompter } from "../../src/shared/ports/prompter.js";
 import type { VersionReader } from "../../src/shared/ports/version-reader.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";

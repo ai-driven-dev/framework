@@ -30,12 +30,12 @@ import type {
 } from "../contexts/installation/application/shared/ensure-built-marketplace.js";
 import { UpdateGitignore } from "../contexts/installation/application/update-gitignore.js";
 import { AgentModelStoreAdapter } from "../contexts/installation/infrastructure/agent-model-store-adapter.js";
-import { BundledAssetProviderAdapter } from "../contexts/installation/infrastructure/assets/asset-loader.js";
 import type { AgentModelStore } from "../contexts/installation/ports/agent-model-store.js";
 import type { RegistrationRecordRules } from "../contexts/installation/ports/native-host.js";
 import type { PluginTranslation } from "../contexts/installation/ports/plugin/plugin-translation.js";
 import type { ToolCatalog } from "../contexts/tools/contract/tool-catalog.js";
 import { EnsureBuiltMarketplace } from "../orchestration/marketplace/ensure-built-marketplace.js";
+import { BundledAssetProviderAdapter } from "../shared/infrastructure/asset-loader.js";
 import { userConfigDir } from "../shared/infrastructure/user-config-dir.js";
 import type { Logger } from "../shared/ports/logger.js";
 import type { Base } from "./shared.js";
