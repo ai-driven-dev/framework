@@ -52,17 +52,20 @@ export class MainSessionModels {
       const provider = chosen.get(host);
       const record = mainModels[host];
       const { models, path: current } = await this.mainSessionLocator.locate(host);
-      let path = record?.path ?? current;
-      try {
-        // Restored where it was written, once unset or once the host reads another file.
-        if (record !== undefined && (provider === undefined || record.path !== current)) {
+      // Restored where it was written, once unset or once the host reads another file.
+      if (record !== undefined && (provider === undefined || record.path !== current)) {
+        try {
           const content = await this.readIfAny(record.path);
           const next = this.settings.planRemoval(content, record);
           delete mainModels[host];
           if (next !== content) changes.push({ host, path: record.path, content: next });
+        } catch (error) {
+          skipped.push({ host, path: record.path, reason: (error as Error).message });
+          continue;
         }
-        if (provider === undefined || current === undefined || models === null) continue;
-        path = current;
+      }
+      if (provider === undefined || current === undefined || models === null) continue;
+      try {
         const plan = this.settings.planInstall(
           current,
           await this.readIfAny(current),
@@ -73,7 +76,7 @@ export class MainSessionModels {
         mainModels[host] = plan.record;
         changes.push({ host, path: current, content: plan.content });
       } catch (error) {
-        if (path !== undefined) skipped.push({ host, path, reason: (error as Error).message });
+        skipped.push({ host, path: current, reason: (error as Error).message });
       }
     }
     const outcome = { changed: changes.map(({ host, path }) => ({ host, path })), skipped };
