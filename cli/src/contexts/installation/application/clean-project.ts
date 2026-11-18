@@ -110,11 +110,9 @@ export class CleanProject {
       if (!tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         const tool = tools.aiProfile(toolId);
-        if (tool.projectHooksDelivery() !== null) {
-          await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot, {
-            overwriteEdited: force,
-          });
-        }
+        await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot, {
+          overwriteEdited: force,
+        });
         await this.asks.assertMcpRemovable(plugin, tool, projectRoot);
       }
     }
@@ -253,8 +251,7 @@ export class CleanProject {
     projectRoot: string,
     hooksGuard: ProjectHooksGuard
   ): Promise<number> {
-    if (!tools.isAiTool(toolId) || tools.aiProfile(toolId).projectHooksDelivery() === null)
-      return 0;
+    if (!tools.isAiTool(toolId)) return 0;
     let count = 0;
     for (const plugin of manifest.getPlugins(toolId)) {
       if (
@@ -300,7 +297,8 @@ export class CleanProject {
   }
 
   /** A user-scope plugin lives under the OS home, never under `projectRoot`: only the machine
-   * clean removes it, behind its containment check. */
+   * clean removes it, behind its containment check. `deletePluginFilesForTool` deletes nothing for
+   * a user-scope plugin it does not own. */
   private async deleteToolPluginFiles(
     manifest: Manifest,
     tool: ProjectPluginIntegration,
@@ -308,7 +306,6 @@ export class CleanProject {
   ): Promise<number> {
     let count = 0;
     for (const plugin of manifest.getPlugins(tool.toolId)) {
-      if (plugin.scope === "user") continue;
       const deleted = await deletePluginFilesForTool(
         plugin.files,
         plugin.scope,
