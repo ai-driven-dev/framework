@@ -6,7 +6,7 @@ Where things live. `tests/architecture/codebase-map.arch.test.ts` holds the tree
 src/
 ├── composition/    # one wiring module per context, called by container.ts
 │   └── orchestration/    # the wiring of each scenario
-├── contexts/    # bounded contexts, read through contract/ only
+├── contexts/    # bounded contexts; another context reads contract/ only, presentation and orchestration also application/
 │   ├── auth/    # the one GitHub token
 │   │   ├── application/
 │   │   ├── contract/
@@ -177,6 +177,6 @@ src/
 | What | Where |
 | --- | --- |
 | a command | `presentation/commands/`, its logic in the context that owns the concept |
-| a tool | one directory under `contexts/tools/domain/profiles/` |
+| a tool | one directory under `contexts/tools/domain/profiles/`, procedure in the `tools` skill |
 | a port used by one context | its `ports/`, adapter in its `infrastructure/` |
 | a port used by two | `shared/ports/`, adapter in `shared/infrastructure/` |

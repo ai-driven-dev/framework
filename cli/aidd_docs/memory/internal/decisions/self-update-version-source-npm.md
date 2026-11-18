@@ -9,12 +9,12 @@
 
 ## Decision
 
-Resolve the latest version from the public npm registry dist-tags endpoint (`registry.npmjs.org/-/package/@ai-driven-dev/cli/dist-tags`) — the same source `npm install -g @ai-driven-dev/cli@latest` pulls from. The GitHub release body is fetched best-effort for the changelog only; its 404 is swallowed, yielding an empty changelog rather than a failure.
+Resolve the latest version from the public npm registry dist-tags endpoint (`registry.npmjs.org/-/package/@ai-driven-dev/cli/dist-tags`), the same source `npm install -g @ai-driven-dev/cli@latest` pulls from. The GitHub release body is fetched best-effort for the changelog only; its 404 is swallowed, yielding an empty changelog rather than a failure.
 
 ## Alternatives
 
-- **Make the repo public.** Zero code, keeps the changelog, but it is an infra/product decision on a separate timeline (repo is "private for now, public soon") and would leave self-update fragile against any future re-privatization.
-- **Require a GitHub token for self-update.** Forces every user of a public npm package to hold a GitHub token — wrong ergonomics, and hits the 60/hr unauthenticated rate limit.
+- Make the repo public. Zero code, keeps the changelog, but it is an infra/product decision on a separate timeline (repo is "private for now, public soon") and would leave self-update fragile against any future re-privatization.
+- Require a GitHub token for self-update. Forces every user of a public npm package to hold a GitHub token: wrong ergonomics, and hits the 60/hr unauthenticated rate limit.
 
 ## Consequences
 
