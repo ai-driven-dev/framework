@@ -7,11 +7,11 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -89,7 +89,7 @@ function build(activator: FakeHostActions) {
   const fs = seededCatalogs();
   const manifest = manifestWithTwoPlugins();
   const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   return {
     registry,
     fs,

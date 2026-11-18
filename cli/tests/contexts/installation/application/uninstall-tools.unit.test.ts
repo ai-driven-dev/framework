@@ -17,12 +17,12 @@ import {
 import { type FileHash, InstallationFile } from "../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../src/shared/domain/merge.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import type { FileReader } from "../../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../src/shared/ports/file-writer.js";
 import type { Logger } from "../../../../src/shared/ports/logger.js";
 import { buildUnitDeps, initProject, installTool } from "../../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
@@ -48,7 +48,7 @@ function uninstaller(
   );
 }
 
-const hasher = new DeterministicHasher();
+const hasher = new HasherAdapter();
 const SETTINGS = ".claude/settings.json";
 const AGENTS = "AGENTS.md";
 const MCP = ".mcp.json";

@@ -4,9 +4,9 @@ import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
@@ -119,7 +119,7 @@ function buildUseCase(
 
 describe("plugin remove guards a ref another project on this machine still needs", () => {
   it("refuses a machine-global ref without a canonical machine claim even when source and references look AIDD-owned", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     const references = seedReferences(fs, []);
     fs.setFile(`${PROJECT_ROOT}/user-note.md`, "user bytes");
     const activator = new FakeHostActions({ available: true });
@@ -150,7 +150,7 @@ describe("plugin remove guards a ref another project on this machine still needs
   });
 
   it("detaches only A's canonical claim while B's machine-global host ref remains enabled", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     const references = seedReferences(fs, [OTHER_PROJECT]);
     const siblingRef = `aidd-dev@${FRAMEWORK_MARKETPLACE_NAME}`;
     const otherCatalogueRef = `${PLUGIN_NAME}@other-mkt`;
@@ -244,7 +244,7 @@ describe("plugin remove guards a ref another project on this machine still needs
   it("refuses an unclaimed machine-global ref by hostName even when its alias is shared", async () => {
     const HOST_NAME = "upstream";
     const HOST_REF = `${PLUGIN_NAME}@${HOST_NAME}`;
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     const references = seedReferences(fs, [OTHER_PROJECT]);
     const activator = new FakeHostActions({ available: true });
     const manifest = seedManifest();
@@ -277,7 +277,7 @@ describe("plugin remove guards a ref another project on this machine still needs
   });
 
   it("refuses legacy removal without native registrations before any host or local mutation", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     const references = seedReferences(fs, []);
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
@@ -305,7 +305,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
   describe("a machine-global ref outside the shared source", () => {
     it("refuses an unclaimed ref even when another marketplace is unrelated to the framework source", async () => {
-      const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+      const fs = new InMemoryFileAdapter({}, new HasherAdapter());
       const references = seedReferences(fs, [OTHER_PROJECT]);
       const activator = new FakeHostActions({ available: true });
       const logger = new CapturingLogger();
@@ -338,7 +338,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     });
 
     it("refuses an unclaimed ref whose marketplace the project's local registry no longer lists", async () => {
-      const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+      const fs = new InMemoryFileAdapter({}, new HasherAdapter());
       const references = seedReferences(fs, [OTHER_PROJECT]);
       const activator = new FakeHostActions({ available: true });
       const logger = new CapturingLogger();
@@ -366,7 +366,7 @@ describe("plugin remove guards a ref another project on this machine still needs
 
   describe("without one of the optional shared-source registries", () => {
     it("still refuses unclaimed machine-global removal without references.json", async () => {
-      const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+      const fs = new InMemoryFileAdapter({}, new HasherAdapter());
       seedReferences(fs, [OTHER_PROJECT]);
       const activator = new FakeHostActions({ available: true });
       const removeUseCase = pluginRemover({
@@ -390,7 +390,7 @@ describe("plugin remove guards a ref another project on this machine still needs
     });
 
     it("still refuses unclaimed machine-global removal without a local marketplace registry", async () => {
-      const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+      const fs = new InMemoryFileAdapter({}, new HasherAdapter());
       const references = seedReferences(fs, [OTHER_PROJECT]);
       const activator = new FakeHostActions({ available: true });
       const removeUseCase = pluginRemover({

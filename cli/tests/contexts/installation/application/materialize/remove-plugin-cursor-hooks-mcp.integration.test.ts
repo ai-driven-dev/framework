@@ -9,8 +9,8 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import type { ProjectHooksProvenance } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CLIOutput } from "../../../../../src/presentation/output.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -91,7 +91,7 @@ async function installPlugin(
 ) {
   const adapter = new ModeBFlatMaterializationTranslator(
     fs,
-    new DeterministicHasher(),
+    new HasherAdapter(),
     () => STUB_HOME,
     translateDistribution
   );
@@ -204,7 +204,7 @@ describe("plugin remove unmerges Cursor project hooks (Phase 7, Task 3)", () => 
     manifest.removePlugin(TOOL.cursor, PLUGIN_NAME);
     const translator = new ModeBFlatMaterializationTranslator(
       fs,
-      new DeterministicHasher(),
+      new HasherAdapter(),
       () => STUB_HOME,
       translateDistribution
     );

@@ -5,7 +5,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -13,7 +13,7 @@ import { TOOL } from "../../../../shared/testing/registered-tools.js";
 const PROJECT_ROOT = "/project";
 const DOC = ".claude/rules/doc.md";
 const PLUGIN_DOC = ".claude/plugins/sample/agents/reviewer.md";
-const hasher = new DeterministicHasher();
+const hasher = new HasherAdapter();
 
 function brokenIn(relativePath: string, ref: string) {
   return {

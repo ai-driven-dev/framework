@@ -4,7 +4,7 @@ import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { CursorProjectScopeUnsupportedError } from "../../../../../src/shared/domain/errors.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import {
   errnoError,
@@ -37,7 +37,7 @@ function buildDist(name = "test-plugin"): PluginDistribution {
 
 function buildAdapter(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter();
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   return {
     adapter: new ModeBFlatMaterializationTranslator(
       fs,
@@ -306,7 +306,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       fs.failOn("readFile", join(PROJECT_ROOT, "opencode.json"), errnoError("EACCES"));
       const adapter = new ModeBFlatMaterializationTranslator(
         fs,
-        new DeterministicHasher(),
+        new HasherAdapter(),
         () => "/stub-home",
         translateDistribution
       );

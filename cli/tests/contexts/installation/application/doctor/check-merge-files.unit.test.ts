@@ -3,7 +3,7 @@ import { CheckMergeFiles } from "../../../../../src/contexts/installation/applic
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -11,7 +11,7 @@ import { TOOL } from "../../../../shared/testing/registered-tools.js";
 const PROJECT_ROOT = "/project";
 const MERGE_PATH = ".vscode/settings.json";
 const KEY = "editor.formatOnSave";
-const hasher = new DeterministicHasher();
+const hasher = new HasherAdapter();
 
 const MISSING_FILE = {
   severity: "error",

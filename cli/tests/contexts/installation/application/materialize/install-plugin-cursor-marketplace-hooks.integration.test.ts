@@ -8,7 +8,7 @@ import type { PluginTranslator } from "../../../../../src/contexts/installation/
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -67,7 +67,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+    const translator = new BuiltTreeMaterializationTranslator(fs, new HasherAdapter(), {
       platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -97,7 +97,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
     fs.setFile(`${BUILT}/plugins/${PLUGIN_NAME}/hooks/post.js`, "module.exports = () => {};");
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "test", []);
-    const translator = new BuiltTreeMaterializationTranslator(fs, new DeterministicHasher(), {
+    const translator = new BuiltTreeMaterializationTranslator(fs, new HasherAdapter(), {
       platform: process.platform,
       homedir: () => HOME,
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -127,7 +127,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     manifest.addTool(TOOL.cursor, "test", []);
     const translator: PluginTranslator = new ModeBFlatMaterializationTranslator(
       fs,
-      new DeterministicHasher(),
+      new HasherAdapter(),
       () => HOME,
       translateDistribution
     );
@@ -150,7 +150,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     manifest.addTool(TOOL.cursor, "test", []);
     const translator: PluginTranslator = new BuiltTreeMaterializationTranslator(
       fs,
-      new DeterministicHasher(),
+      new HasherAdapter(),
       {
         platform: process.platform,
         homedir: () => HOME,

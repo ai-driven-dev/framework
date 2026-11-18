@@ -8,11 +8,11 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/c
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { FakeCurrentVersion } from "../../helpers/ports/fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
@@ -72,7 +72,7 @@ function frameworkMarketplace(): Marketplace {
 
 describe("the shared source's own reference, recorded by sync", () => {
   it("records this project's reference when the framework marketplace is already registered", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     fs.setFile(`${PROJECT_ROOT}/marker`, "");
     seedFrameworkCatalog(fs);
     const manifestRepo = await manifestRepoWithClaudeInstalled();
@@ -89,7 +89,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -107,7 +107,7 @@ describe("the shared source's own reference, recorded by sync", () => {
   // `references.json` is a help, not an authority: a corrupted copy must never block `sync`,
   // which does not depend on it.
   it("warns and still completes sync when references.json is corrupted", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     fs.setFile(`${PROJECT_ROOT}/marker`, "");
     fs.setFile("/fake-home/.config/aidd/references.json", "not json");
     seedFrameworkCatalog(fs);
@@ -126,7 +126,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger,
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -145,7 +145,7 @@ describe("the shared source's own reference, recorded by sync", () => {
   });
 
   it("never records a reference to a marketplace registered at project scope", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     fs.setFile(`${PROJECT_ROOT}/marker`, "");
     const manifestRepo = await manifestRepoWithClaudeInstalled();
     const registry = new InMemoryMarketplaceRegistry();
@@ -167,7 +167,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       userSourceReferences,
@@ -182,7 +182,7 @@ describe("the shared source's own reference, recorded by sync", () => {
   // A clone whose committed manifest predates this machine's own copy of the registry finds
   // `marketplaces` empty, and nothing about a fresh clone ever populates that registry.
   it("recreates the framework marketplace when this machine's registry holds nothing at all", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     fs.setFile(`${PROJECT_ROOT}/marker`, "");
     seedFrameworkCatalog(fs);
     const manifestRepo = await manifestRepoWithClaudeInstalled();
@@ -206,7 +206,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -231,7 +231,7 @@ describe("the shared source's own reference, recorded by sync", () => {
   });
 
   it("stays a silent no-op when no recreate use case was wired in", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     const manifestRepo = await manifestRepoWithClaudeInstalled();
     const registry = new InMemoryMarketplaceRegistry();
 
@@ -239,7 +239,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
     });
@@ -260,7 +260,7 @@ describe("the shared source's own reference, recorded by sync", () => {
   // Every marketplace and plugin command reaches this same `execute`, where an empty registry is
   // a deliberate choice, never a fresh clone: recreating it would undo a `marketplace remove`.
   it("does not recreate the framework marketplace unless the caller asks for it", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     fs.setFile(`${PROJECT_ROOT}/marker`, "");
     const manifestRepo = await manifestRepoWithClaudeInstalled();
     const registry = new InMemoryMarketplaceRegistry(); // empty, on purpose
@@ -275,7 +275,7 @@ describe("the shared source's own reference, recorded by sync", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegisterFrameworkUseCase: registerFramework,
@@ -291,10 +291,10 @@ describe("the shared source's own reference, recorded by sync", () => {
 
   it("stays a silent no-op when asked to recreate with nothing wired to do it", async () => {
     const useCase = marketplaceSync({
-      fs: new InMemoryFileAdapter({}, new DeterministicHasher()),
+      fs: new InMemoryFileAdapter({}, new HasherAdapter()),
       manifestRepo: await manifestRepoWithClaudeInstalled(),
       marketplaceRegistry: new InMemoryMarketplaceRegistry(),
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
     });
@@ -326,10 +326,10 @@ describe("a project with no manifest to sync", () => {
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
     const activator = new FakeHostActions({ available: true });
     const useCase = marketplaceSync({
-      fs: new InMemoryFileAdapter({}, new DeterministicHasher()),
+      fs: new InMemoryFileAdapter({}, new HasherAdapter()),
       manifestRepo: new InMemoryManifestRepository(),
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -353,10 +353,10 @@ describe("a project with no manifest to sync", () => {
     const registry = new InMemoryMarketplaceRegistry();
     await registry.save(PROJECT_ROOT, frameworkMarketplace());
     const useCase = marketplaceSync({
-      fs: new InMemoryFileAdapter({}, new DeterministicHasher()),
+      fs: new InMemoryFileAdapter({}, new HasherAdapter()),
       manifestRepo: new UnloadableManifestRepository(),
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[claude, new FakeHostActions({ available: true })]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),

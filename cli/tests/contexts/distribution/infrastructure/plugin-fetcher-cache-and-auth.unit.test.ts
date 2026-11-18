@@ -44,7 +44,7 @@ import type { TokenProvider } from "../../../../src/contexts/auth/contract/token
 import { PluginFetcherAdapter } from "../../../../src/contexts/distribution/infrastructure/plugin-fetcher-adapter.js";
 import { PluginFetchError } from "../../../../src/shared/domain/errors.js";
 import type { PluginSource } from "../../../../src/shared/domain/source.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
 const CACHE = "/tmp/cache";
@@ -61,7 +61,7 @@ let lastFs: InMemoryFileAdapter;
 
 function adapter(token?: string, files: Record<string, string> = {}): PluginFetcherAdapter {
   reset();
-  lastFs = new InMemoryFileAdapter(files, new DeterministicHasher());
+  lastFs = new InMemoryFileAdapter(files, new HasherAdapter());
   const provider: TokenProvider | undefined =
     token === undefined ? undefined : { resolve: async () => token };
   return new PluginFetcherAdapter(lastFs, provider);

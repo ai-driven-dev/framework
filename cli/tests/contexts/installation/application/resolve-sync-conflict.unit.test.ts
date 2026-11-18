@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ResolveSyncConflict } from "../../../../src/contexts/installation/application/resolve-sync-conflict.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
 const DISK_PATH = "/project/target.md";
@@ -8,7 +8,7 @@ const CONTENT_A = "content A";
 const CONTENT_B = "content B";
 
 function buildDeps() {
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const fs = new InMemoryFileAdapter({}, hasher);
   const resolver = new ResolveSyncConflict(fs);
   return { hasher, fs, resolver };

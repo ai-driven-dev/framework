@@ -6,13 +6,13 @@ import type { HostMarketplaceSources } from "../../../src/contexts/host-registra
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -73,7 +73,7 @@ describe("native catalogue source provenance", () => {
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[toolId, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -441,7 +441,7 @@ describe("native catalogue source provenance", () => {
         fs,
         manifestRepo: projectRepo,
         marketplaceRegistry: registry,
-        hasher: new DeterministicHasher(),
+        hasher: new HasherAdapter(),
         logger: new CapturingLogger(),
         activators: new Map([[codex, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -546,7 +546,7 @@ describe("native catalogue source provenance", () => {
         fs,
         manifestRepo: projectRepo,
         marketplaceRegistry: registry,
-        hasher: new DeterministicHasher(),
+        hasher: new HasherAdapter(),
         logger: new CapturingLogger(),
         activators: new Map([[copilot, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -622,7 +622,7 @@ describe("native catalogue source provenance", () => {
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[codex, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -672,7 +672,7 @@ describe("native catalogue source provenance", () => {
       fs,
       manifestRepo: new InMemoryManifestRepository(projectB),
       marketplaceRegistry: registryB,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[codex, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),

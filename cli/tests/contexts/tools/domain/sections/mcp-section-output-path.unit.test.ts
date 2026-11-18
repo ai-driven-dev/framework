@@ -6,7 +6,7 @@ import {
   KiloDualConfigError,
   OpencodeDualConfigError,
 } from "../../../../../src/shared/domain/errors.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 
 const withFiles =
   (...relPaths: string[]) =>
@@ -79,7 +79,7 @@ function opencodeMcp(): McpConfigPart {
 }
 
 describe("the opencode file an McpConfigPart merges into", () => {
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const incoming = JSON.stringify({ mcp: { added: { type: "remote", url: "https://a" } } });
 
   it("contributes a plugin's servers and hands back what to remove them by", () => {

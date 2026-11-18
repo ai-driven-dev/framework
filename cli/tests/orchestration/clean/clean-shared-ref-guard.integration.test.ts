@@ -12,9 +12,9 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -272,7 +272,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   );
 
   it("keeps codex's ref enabled and names the other project still referencing the shared source", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     seedReferences(fs, [OTHER_PROJECT]);
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
@@ -304,7 +304,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   });
 
   it("leaves an unclaimed machine-global Codex ref enabled after the last local reference", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     seedReferences(fs, []);
     const activator = new FakeHostActions({ available: true });
 
@@ -334,7 +334,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   });
 
   it("still disables claude's ref even with another project referencing the shared source", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     seedReferences(fs, [OTHER_PROJECT]);
     const activator = new FakeHostActions({ available: true });
 
@@ -361,7 +361,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   });
 
   it("leaves both unclaimed Codex refs enabled despite a distinct project catalogue", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     seedReferences(fs, [OTHER_PROJECT]);
     const activator = new FakeHostActions({ available: true });
     const logger = new CapturingLogger();
@@ -397,7 +397,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   });
 
   it("leaves both unclaimed Codex refs enabled when the project catalogue is listed first", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     seedReferences(fs, [OTHER_PROJECT]);
     const activator = new FakeHostActions({ available: true });
 
@@ -429,7 +429,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   });
 
   it("leaves an unclaimed global Codex ref enabled even without a recorded project reference", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     // No references.json at all: no claim of this project's own to drop, and nothing else
     // referencing the source to guard on either.
     const activator = new FakeHostActions({ available: true });
@@ -459,7 +459,7 @@ describe("clean guards a ref another project on this machine still needs", () =>
   // "This project's own claim was never recorded" and "no other project references it" are
   // different facts: only `OTHER_PROJECT` is named here, and its live claim still guards.
   it("keeps codex's ref enabled when this project's own claim was never recorded but another project's still is", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     fs.setFile(`${USER_CONFIG_DIR}/references.json`, JSON.stringify({ "1.0.0": [OTHER_PROJECT] }));
     fs.setFile(`${OTHER_PROJECT}/marker`, OTHER_PROJECT_BYTES);
     const activator = new FakeHostActions({ available: true });

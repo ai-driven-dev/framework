@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { resolveTranslator } from "../../../../../src/contexts/installation/application/materialize/plugin-translator-factory.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 function buildDeps(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter();
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   return {
     fs,
     hasher,

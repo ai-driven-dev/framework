@@ -8,7 +8,7 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
@@ -41,7 +41,7 @@ describe("readGlobalPluginFiles", () => {
   it("reads the plugin's skills and the agents its source ships, keyed under the user directory", async () => {
     const files = await readGlobalPluginFiles(
       tree,
-      new DeterministicHasher(),
+      new HasherAdapter(),
       BUILT,
       registeredTools().aiProfile(TOOL.opencode),
       distribution("aidd-dev", ["agents/reviewer.md", "agents/nested/ignored.md", "skills/x.md"])
@@ -56,7 +56,7 @@ describe("readGlobalPluginFiles", () => {
   it("reads nothing for a plugin whose source ships no agent and no skill in the tree", async () => {
     const files = await readGlobalPluginFiles(
       tree,
-      new DeterministicHasher(),
+      new HasherAdapter(),
       BUILT,
       registeredTools().aiProfile(TOOL.opencode),
       distribution("aidd-qa", [])
@@ -82,7 +82,7 @@ describe("readGlobalPluginFiles", () => {
   it("reads nothing for a tool that copies no global file", async () => {
     const files = await readGlobalPluginFiles(
       tree,
-      new DeterministicHasher(),
+      new HasherAdapter(),
       BUILT,
       registeredTools().aiProfile(TOOL.claude),
       distribution("aidd-dev", ["agents/reviewer.md"])
@@ -93,7 +93,7 @@ describe("readGlobalPluginFiles", () => {
 });
 
 describe("assertGlobalFilesWritable", () => {
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const HOME = "/home/me";
   const DIR = join(HOME, ".config", "opencode");
   const under = (...parts: string[]) => join(DIR, ...parts);
@@ -195,7 +195,7 @@ describe("assertGlobalFilesWritable", () => {
 });
 
 describe("assertGlobalFilesWritable on a filesystem that rejects a missing path", () => {
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const DIR = join("/home/me", ".config", "opencode");
   const file = (relativePath: string) =>
     new InstallationFile({ relativePath, content: "new", hash: hasher.hash("new") });

@@ -11,12 +11,12 @@ import {
   builtMarketplaceDir,
   userBuiltMarketplaceDir,
 } from "../../../src/shared/domain/layout/aidd-layout.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -116,7 +116,7 @@ function buildSync(activator: FakeHostActions, pluginMarketplace?: string) {
   const registry = new InMemoryMarketplaceRegistry();
   const fs = seededBuiltCatalog();
   const manifestRepo = manifestWithPlugin(pluginMarketplace);
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   return {
     registry,
     fs,
@@ -301,7 +301,7 @@ describe("nativeRegistrations reflects what the host's own CLI was asked to regi
       }),
     });
     const manifestRepo = manifestWithPlugin();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
@@ -344,7 +344,7 @@ describe("registering a marketplace does not wait for a plugin to point at it", 
     const manifest = Manifest.create();
     manifest.addTool(claude, "test", []);
     const manifestRepo = new InMemoryManifestRepository(manifest);
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
@@ -371,7 +371,7 @@ describe("what native activation leaves behind is not reported as the user's dri
     const registry = new InMemoryMarketplaceRegistry();
     const fs = seededBuiltCatalog();
     const manifestRepo = manifestWithPlugin();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT);
     const activator = new ActivatorThatWritesSettings(fs, settingsAbsolutePath);
     const useCase = marketplaceSync({
@@ -406,7 +406,7 @@ describe("what native activation leaves behind is not reported as the user's dri
     const registry = new InMemoryMarketplaceRegistry();
     const fs = new InMemoryFileAdapter();
     const manifestRepo = manifestWithPlugin();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const settingsAbsolutePath = settingsPathIn(PROJECT_ROOT);
     const useCase = marketplaceSync({
       fs,
@@ -456,7 +456,7 @@ describe("reclaiming a dead registration asks and acts on the host's own name", 
       }),
     });
     const manifestRepo = manifestWithPlugin();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
@@ -603,7 +603,7 @@ describe("an unnarrowed run replaces the whole recorded entry (lot 9 review C-B1
       )
     );
     const manifestRepo = new InMemoryManifestRepository(manifest);
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
@@ -705,7 +705,7 @@ describe("a narrowed run preserves another alias's refs at a shared hostName (lo
       )
     );
     const manifestRepo = new InMemoryManifestRepository(manifest);
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const useCase = marketplaceSync({
       fs,
       manifestRepo,
@@ -781,7 +781,7 @@ describe("what reclaiming a dead registration says", () => {
       fs,
       manifestRepo: manifestWithPlugin(),
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger,
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -944,7 +944,7 @@ function buildSyncReadingHost(
     fs: seededBuiltCatalog(),
     manifestRepo,
     marketplaceRegistry: registry,
-    hasher: new DeterministicHasher(),
+    hasher: new HasherAdapter(),
     logger,
     activators: new Map([[claude, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(),

@@ -3,15 +3,15 @@ import { describe, expect, it } from "vitest";
 import { TrackedConfigFiles } from "../../../../../../src/contexts/installation/application/install/config/tracked-config-files.js";
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { extractMergeEntries } from "../../../../../../src/shared/domain/merge.js";
+import { HasherAdapter } from "../../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../../helpers/ports/in-memory-file-adapter.js";
 import { TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const ROOT = "/project";
 
 function setup(seed: Record<string, string> = {}) {
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const fs = new InMemoryFileAdapter(seed, hasher);
   const logger = new CapturingLogger();
   return { hasher, fs, logger, files: new TrackedConfigFiles(fs, hasher, logger) };

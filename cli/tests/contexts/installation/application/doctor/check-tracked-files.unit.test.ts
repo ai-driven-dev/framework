@@ -7,7 +7,7 @@ import { LoadManifest } from "../../../../../src/contexts/installation/applicati
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -15,7 +15,7 @@ import { TOOL } from "../../../../shared/testing/registered-tools.js";
 const PROJECT_ROOT = "/project";
 const FILE = ".claude/rules/one.md";
 const CONTENT = "one\n";
-const hasher = new DeterministicHasher();
+const hasher = new HasherAdapter();
 
 const MISSING = {
   severity: "error",

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { InstallSkills } from "../../../../../../src/contexts/installation/application/install/content/install-skills.js";
 import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
 import { GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
-import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const claude = registeredTools().aiProfile(TOOL.claude);
@@ -23,7 +23,7 @@ const skillsSectionWithEntry: ContentSection = {
 };
 
 function buildUseCase() {
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const useCase = new InstallSkills(hasher);
   return { hasher, useCase };
 }

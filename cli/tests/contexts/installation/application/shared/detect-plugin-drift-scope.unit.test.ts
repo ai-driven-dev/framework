@@ -4,13 +4,13 @@ import { describe, expect, it } from "vitest";
 import { DetectPluginDrift } from "../../../../../src/contexts/installation/application/shared/detect-plugin-drift.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/proj";
 const USER_PLUGINS_DIR = join(homedir(), ".cursor", "plugins", "local");
-const HASHER = new DeterministicHasher();
+const HASHER = new HasherAdapter();
 const HASH_OF_ONE = HASHER.hash("one").value;
 const HASH_OF_TWO = HASHER.hash("two").value;
 

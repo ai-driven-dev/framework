@@ -4,10 +4,10 @@ import type { RestoreToolFilesCommand } from "../../../../../src/contexts/instal
 import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import type { Prompter } from "../../../../../src/shared/ports/prompter.js";
 import { restoreToolFilesOf } from "../../../../helpers/ports/build-restore.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { KeepPrompter, OverwritePrompter } from "../../../../helpers/ports/scripted-prompter.js";
 import { TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -38,12 +38,12 @@ function contentFiles(extensions = EXTENSIONS_CONTENT): Map<string, string> {
 
 interface Installed {
   fs: InMemoryFileAdapter;
-  hasher: DeterministicHasher;
+  hasher: HasherAdapter;
   manifest: Manifest;
 }
 
 function installedVscode(extraTracked: string[] = []): Installed {
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const fs = new InMemoryFileAdapter(
     {
       [join(PROJECT_ROOT, KEYBINDINGS)]: KEYBINDINGS_CONTENT,

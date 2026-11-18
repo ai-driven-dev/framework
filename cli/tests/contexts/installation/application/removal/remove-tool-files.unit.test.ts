@@ -7,8 +7,8 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { MergeFileEntry } from "../../../../../src/shared/domain/merge.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
@@ -16,7 +16,7 @@ const ROOT = "/test-project";
 const AGENTS = "AGENTS.md";
 const SETTINGS = ".claude/settings.json";
 const MCP = ".mcp.json";
-const hasher = new DeterministicHasher();
+const hasher = new HasherAdapter();
 
 function tracked(relativePath: string, content: string): InstallationFile {
   return new InstallationFile({ relativePath, content: "", hash: hasher.hash(content) });

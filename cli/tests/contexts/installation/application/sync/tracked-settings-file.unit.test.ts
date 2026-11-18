@@ -1,8 +1,8 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { TrackedSettingsFile } from "../../../../../src/contexts/installation/application/sync/tracked-settings-file.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 
 const ROOT = "/project";
@@ -12,7 +12,7 @@ const ABSOLUTE = resolve(ROOT, SETTINGS);
 function setup(files: Record<string, string> = {}) {
   const fs = new InMemoryFileAdapter(files);
   const logger = new CapturingLogger();
-  return { fs, logger, file: new TrackedSettingsFile(fs, new DeterministicHasher(), logger) };
+  return { fs, logger, file: new TrackedSettingsFile(fs, new HasherAdapter(), logger) };
 }
 
 describe("TrackedSettingsFile.load", () => {

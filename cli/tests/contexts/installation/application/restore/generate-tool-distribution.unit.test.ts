@@ -6,7 +6,7 @@ import type { ToolProfile } from "../../../../../src/contexts/tools/contract/too
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/shared/infrastructure/asset-loader.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -34,7 +34,7 @@ const contentFiles = new Map([
   ["config/vscode/settings.json", '{"editor.tabSize": 2}'],
 ]);
 
-const hasher = new DeterministicHasher();
+const hasher = new HasherAdapter();
 const assets = new BundledAssetProviderAdapter(wireTools());
 
 function generate(

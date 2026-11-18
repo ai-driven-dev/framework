@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -42,7 +42,7 @@ function buildDist(name = "aidd-context"): PluginDistribution {
 describe("install opencode plugin via Mode B (integration)", () => {
   it("materializes project commands and namespaced native agents", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
       hasher,
@@ -70,7 +70,7 @@ describe("install opencode plugin via Mode B (integration)", () => {
 
   it("does not write any file under user home for project-scope flat tools", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
       hasher,
@@ -94,7 +94,7 @@ describe("install opencode plugin via Mode B (integration)", () => {
 
   it("registers plugin in manifest with files map keyed by relative path", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
       hasher,

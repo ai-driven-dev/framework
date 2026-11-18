@@ -15,11 +15,11 @@ import { PluginDistributionReaderAdapter } from "../../../src/contexts/installat
 import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { pluginRemover } from "../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { fakeBuiltDeps } from "../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
@@ -214,7 +214,7 @@ for (const [toolId, catalogPath] of [
           }),
           manifestRepo,
           marketplaceRegistry: registry,
-          hasher: new DeterministicHasher(),
+          hasher: new HasherAdapter(),
           logger: new CapturingLogger(),
           activators: new Map([[toolId, activator]]),
           ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),
@@ -247,7 +247,7 @@ for (const [toolId, catalogPath] of [
               new FixturePluginFetcher(),
               new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
             ),
-            new DeterministicHasher(),
+            new HasherAdapter(),
             userScopeFileGuard,
             fakeBuiltDeps()
           ),
@@ -282,7 +282,7 @@ for (const [toolId, catalogPath] of [
                 new FixturePluginFetcher(),
                 new PluginDistributionReaderAdapter(updateFs, registeredManifestProbes())
               ),
-              new DeterministicHasher(),
+              new HasherAdapter(),
               userScopeFileGuard,
               fakeBuiltDeps()
             ),
@@ -349,7 +349,7 @@ for (const [toolId, catalogPath] of [
         }),
         manifestRepo: foreign,
         marketplaceRegistry: registry,
-        hasher: new DeterministicHasher(),
+        hasher: new HasherAdapter(),
         logger: new CapturingLogger(),
         activators: new Map([[toolId, new FakeHostActions({ available: true })]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(() => builtDir),

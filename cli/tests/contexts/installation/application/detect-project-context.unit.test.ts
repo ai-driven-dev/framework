@@ -1,14 +1,14 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { DetectProjectContext } from "../../../../src/contexts/installation/application/detect-project-context.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 
 const PROJECT_ROOT = "/proj";
 
 describe("DetectProjectContext", () => {
   it("detects typescript via tsconfig.json", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     await fs.writeFile(join(PROJECT_ROOT, "tsconfig.json"), "{}");
     const detector = new DetectProjectContext(fs);
     const ctx = await detector.execute({ projectRoot: PROJECT_ROOT });
@@ -18,7 +18,7 @@ describe("DetectProjectContext", () => {
   });
 
   it("detects python via pyproject.toml", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     await fs.writeFile(join(PROJECT_ROOT, "pyproject.toml"), "[project]");
     const detector = new DetectProjectContext(fs);
     const ctx = await detector.execute({ projectRoot: PROJECT_ROOT });
@@ -26,7 +26,7 @@ describe("DetectProjectContext", () => {
   });
 
   it("detects monorepo via pnpm-workspace.yaml", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     await fs.writeFile(join(PROJECT_ROOT, "pnpm-workspace.yaml"), "packages:\n  - 'packages/*'");
     const detector = new DetectProjectContext(fs);
     const ctx = await detector.execute({ projectRoot: PROJECT_ROOT });
@@ -34,7 +34,7 @@ describe("DetectProjectContext", () => {
   });
 
   it("detects monorepo via package.json workspaces field", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     await fs.writeFile(
       join(PROJECT_ROOT, "package.json"),
       JSON.stringify({ workspaces: ["packages/*"] })
@@ -46,7 +46,7 @@ describe("DetectProjectContext", () => {
   });
 
   it("detects framework via .aidd/manifest.json presence", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     await fs.writeFile(join(PROJECT_ROOT, ".aidd/manifest.json"), "{}");
     const detector = new DetectProjectContext(fs);
     const ctx = await detector.execute({ projectRoot: PROJECT_ROOT });
@@ -54,7 +54,7 @@ describe("DetectProjectContext", () => {
   });
 
   it("returns unknown stack when no signals match", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     const detector = new DetectProjectContext(fs);
     const ctx = await detector.execute({ projectRoot: PROJECT_ROOT });
     expect(ctx.stack).toBe("unknown");
@@ -63,7 +63,7 @@ describe("DetectProjectContext", () => {
   });
 
   it("reads a project holding only unrelated files as an unknown stack", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     await fs.writeFile(join(PROJECT_ROOT, "README.md"), "# hello");
     const detector = new DetectProjectContext(fs);
     const ctx = await detector.execute({ projectRoot: PROJECT_ROOT });
@@ -71,7 +71,7 @@ describe("DetectProjectContext", () => {
   });
 
   it("does not read a package.json without a workspaces field as a monorepo", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     await fs.writeFile(join(PROJECT_ROOT, "package.json"), JSON.stringify({ name: "solo" }));
     const detector = new DetectProjectContext(fs);
     const ctx = await detector.execute({ projectRoot: PROJECT_ROOT });
@@ -79,7 +79,7 @@ describe("DetectProjectContext", () => {
   });
 
   it("describe returns hyphen-readable summary", async () => {
-    const fs = new InMemoryFileAdapter({}, new DeterministicHasher());
+    const fs = new InMemoryFileAdapter({}, new HasherAdapter());
     await fs.writeFile(join(PROJECT_ROOT, "tsconfig.json"), "{}");
     await fs.writeFile(join(PROJECT_ROOT, "pnpm-workspace.yaml"), "packages:");
     const detector = new DetectProjectContext(fs);

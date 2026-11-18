@@ -3,7 +3,7 @@ import { CheckProjectLayout } from "../../../../../src/contexts/installation/app
 import { LoadManifest } from "../../../../../src/contexts/installation/application/doctor/load-manifest.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -11,7 +11,7 @@ import { registeredTools, TOOL } from "../../../../shared/testing/registered-too
 const PROJECT_ROOT = "/project";
 const CLAUDE_COMMAND = ".claude/commands/plan.md";
 const SIGNAL = "---\nname: aidd:01:plan\ndescription: Plan\n---\n";
-const hasher = new DeterministicHasher();
+const hasher = new HasherAdapter();
 
 function manifestTrackingClaude(): Manifest {
   const manifest = Manifest.create();

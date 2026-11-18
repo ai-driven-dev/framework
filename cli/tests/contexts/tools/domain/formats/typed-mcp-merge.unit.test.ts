@@ -4,9 +4,9 @@ import {
   mergeTypedMcp,
   unmergeTypedMcp,
 } from "../../../../../src/contexts/tools/domain/formats/typed-mcp-merge.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 
-const hasher = new DeterministicHasher();
+const hasher = new HasherAdapter();
 
 const LOCAL_SERVER = { type: "local", command: ["node", "server.js"], enabled: true };
 const REMOTE_SERVER = { type: "remote", url: "https://example.com/mcp", enabled: true };

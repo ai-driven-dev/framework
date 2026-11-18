@@ -5,12 +5,12 @@ import type { HostPluginRegistry } from "../../../src/contexts/host-registration
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -141,7 +141,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
         fs,
         manifestRepo: projectRepo,
         marketplaceRegistry: registry,
-        hasher: new DeterministicHasher(),
+        hasher: new HasherAdapter(),
         logger: new CapturingLogger(),
         activators: new Map([[claude, activator]]),
         ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -254,7 +254,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -327,7 +327,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[claude, activator]]),
       ensureBuilt: {
@@ -444,7 +444,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[codex, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -536,7 +536,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[codex, activator]]),
       ensureBuilt: {
@@ -630,7 +630,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[codex, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -704,7 +704,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[codex, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -776,7 +776,7 @@ describe("native plugin ownership follows the host's activation scope", () => {
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[codex, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),

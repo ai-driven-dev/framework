@@ -7,9 +7,9 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { PluginSource } from "../../../../../src/shared/domain/source.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -26,7 +26,7 @@ function syncWithProvenFreshHost(
   fs: InMemoryFileAdapter,
   manifestRepo: InMemoryManifestRepository,
   registry: FakeMarketplaceRegistry,
-  hasher: DeterministicHasher,
+  hasher: HasherAdapter,
   logger: CapturingLogger,
   activator: FakeHostActions
 ): SyncSettings {
@@ -133,7 +133,7 @@ describe("install codex plugin via Mode A (integration)", () => {
   it("drives the codex CLI and writes no project-local config.json", async () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
     const activator = new FakeHostActions({ available: true });
@@ -173,7 +173,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       fs,
       manifestRepo,
       registry,
-      new DeterministicHasher(),
+      new HasherAdapter(),
       new CapturingLogger(),
       activator
     );
@@ -199,7 +199,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       fs,
       manifestRepo,
       registry,
-      new DeterministicHasher(),
+      new HasherAdapter(),
       logger,
       activator
     );
@@ -220,7 +220,7 @@ describe("install codex plugin via Mode A (integration)", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.codex, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),

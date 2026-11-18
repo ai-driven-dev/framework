@@ -14,8 +14,8 @@ import {
   MarketplaceAlreadyRegisteredError,
   TrustDeniedError,
 } from "../../../../src/shared/domain/errors.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import type { Prompter } from "../../../../src/shared/ports/prompter.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../../helpers/ports/in-memory-marketplace-registry.js";
@@ -33,7 +33,7 @@ class DenyPrompter extends KeepPrompter {
 }
 
 async function buildUseCase(prompter: Prompter = new KeepPrompter()) {
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const fs = new InMemoryFileAdapter({}, hasher);
   await seedFromDirectory(fs, MARKETPLACE_FIXTURE, { useAbsolutePaths: true });
   const registry = new InMemoryMarketplaceRegistry();

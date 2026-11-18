@@ -25,12 +25,12 @@ import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import { CLIOutput } from "../../../src/presentation/output.js";
 import type { AiToolId, IdeToolId } from "../../../src/shared/domain/tool.js";
 import { BundledAssetProviderAdapter } from "../../../src/shared/infrastructure/asset-loader.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
 import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 import { marketplaceSync } from "../marketplace-sync.js";
 import { checkRegistrationOver } from "./build-check-registration.js";
-import { DeterministicHasher } from "./deterministic-hasher.js";
 import { FakeCurrentVersion } from "./fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "./fake-ensure-built-marketplace.js";
 import { FixturePluginFetcher } from "./fixture-plugin-fetcher.js";
@@ -45,7 +45,7 @@ const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 /** Builds in-memory deps for use-case unit tests, the file adapter pre-seeded with the
  * framework fixture content under absolute paths. */
 export async function buildUnitDeps(_projectRoot: string) {
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const fs = new InMemoryFileAdapter({}, hasher);
   const manifestRepo = new InMemoryManifestRepository();
   const userManifestRepo = new InMemoryManifestRepository();

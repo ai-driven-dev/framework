@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
@@ -85,7 +85,7 @@ function buildDist(): PluginDistribution {
 describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
   it("merges converted hooks.json into the project's .cursor/hooks.json with camelCase events", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
       hasher,
@@ -118,7 +118,7 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
   // biome-ignore lint/suspicious/noTemplateCurlyInString: describes the Claude hook placeholder
   it("rewrites ${CLAUDE_PLUGIN_ROOT}/ to the project's own .cursor/hooks/<plugin>/ in hook commands", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
       hasher,
@@ -146,7 +146,7 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
   it("writes mcp.json at plugin root with the source content unchanged", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
       hasher,
@@ -175,7 +175,7 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
   it("tracks mcp.json in Plugin.files for uninstall; hooks.json is not (it isn't under the plugin's own baseDir)", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
       hasher,
@@ -204,7 +204,7 @@ describe("install cursor plugin with hooks and mcp (Phase 6)", () => {
 
   it("emits no skip warnings for hooks or mcp", async () => {
     const fs = new InMemoryFileAdapter();
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const adapter = new ModeBFlatMaterializationTranslator(
       fs,
       hasher,

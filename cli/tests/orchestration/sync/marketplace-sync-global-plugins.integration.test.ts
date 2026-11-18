@@ -4,12 +4,12 @@ import type { HostPluginRegistryEntry } from "../../../src/contexts/host-registr
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -53,7 +53,7 @@ async function globalActivation(toolId: AiToolId) {
     fs,
     manifestRepo: new InMemoryManifestRepository(Manifest.create()),
     marketplaceRegistry: registry,
-    hasher: new DeterministicHasher(),
+    hasher: new HasherAdapter(),
     logger: new CapturingLogger(),
     activators: new Map([[toolId, activator]]),
     ensureBuilt: fakeEnsureBuiltMarketplace(),

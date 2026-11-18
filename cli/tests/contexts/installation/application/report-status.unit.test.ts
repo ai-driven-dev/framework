@@ -10,8 +10,8 @@ import {
 import { InstallationFile } from "../../../../src/shared/domain/file.js";
 import { compareSemver } from "../../../../src/shared/domain/semver.js";
 import type { ToolId } from "../../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../../src/shared/infrastructure/hasher-adapter.js";
 import { buildUnitDeps } from "../../../helpers/ports/build-unit-deps.js";
-import { DeterministicHasher } from "../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../helpers/ports/in-memory-manifest-repository.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
@@ -21,7 +21,7 @@ const TRACKED = ".claude/rules/one.md";
 const CONTENT = "one\n";
 const MERGE_PATH = ".vscode/settings.json";
 const KEY = "editor.formatOnSave";
-const hasher = new DeterministicHasher();
+const hasher = new HasherAdapter();
 
 function tracking(manifest: Manifest, toolId: ToolId, relativePath: string, content: string) {
   manifest.addTool(toolId, "test", [

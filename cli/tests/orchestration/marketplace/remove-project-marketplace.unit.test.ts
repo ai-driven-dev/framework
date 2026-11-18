@@ -11,7 +11,7 @@ import {
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,
 } from "../../../src/shared/domain/errors.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -78,7 +78,7 @@ class RecordingFileAdapter extends InMemoryFileAdapter {
 }
 
 function buildUseCase() {
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const fs = new RecordingFileAdapter({}, hasher);
   const manifestRepo = new InMemoryManifestRepository();
   const registry = new InMemoryMarketplaceRegistry();
@@ -439,7 +439,7 @@ describe("which plugins a removal orphans", () => {
         strict: false,
         files: {},
         mcpEntries: {
-          mine: new DeterministicHasher().hash(JSON.stringify({ type: "local" })).value,
+          mine: new HasherAdapter().hash(JSON.stringify({ type: "local" })).value,
         },
         scope: "project",
         marketplace: "awesome",
@@ -495,7 +495,7 @@ describe("which plugins a removal orphans", () => {
         strict: false,
         files: {},
         mcpEntries: {
-          mine: new DeterministicHasher().hash(JSON.stringify({ type: "local" })).value,
+          mine: new HasherAdapter().hash(JSON.stringify({ type: "local" })).value,
         },
         scope: "project",
         marketplace: "awesome",
@@ -540,7 +540,7 @@ describe("which plugins a removal orphans", () => {
         strict: false,
         files: {},
         mcpEntries: {
-          mine: new DeterministicHasher().hash(JSON.stringify({ type: "local" })).value,
+          mine: new HasherAdapter().hash(JSON.stringify({ type: "local" })).value,
         },
         scope: "project",
         marketplace: "awesome",
@@ -600,7 +600,7 @@ describe("which plugins a removal orphans", () => {
           strict: false,
           files: {},
           mcpEntries: {
-            [name]: new DeterministicHasher().hash(JSON.stringify({ type: "local" })).value,
+            [name]: new HasherAdapter().hash(JSON.stringify({ type: "local" })).value,
           },
           scope: "project",
           marketplace: "awesome",

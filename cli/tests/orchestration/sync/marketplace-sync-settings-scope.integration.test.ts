@@ -3,11 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import type { UserSourceReferences } from "../../../src/contexts/machine-claims/ports/user-source-references.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { FakeCurrentVersion } from "../../helpers/ports/fake-current-version.js";
 import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
@@ -100,7 +100,7 @@ describe("settings synchronization under the machine ownership lock", () => {
       fs,
       manifestRepo: projectRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -173,7 +173,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       fs: seededBuiltCatalog(),
       manifestRepo: manifestWithTool(),
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -220,7 +220,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       fs: catalog,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -277,7 +277,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -310,7 +310,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       fs,
       manifestRepo: new InMemoryManifestRepository(manifest),
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.copilot, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -352,7 +352,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       fs,
       manifestRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -377,7 +377,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       manifestRepo: constructedRepo,
       userManifestRepo: machineRepo,
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -409,7 +409,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       fs: seededBuiltCatalog(),
       manifestRepo: manifestWithTool(),
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),
@@ -442,7 +442,7 @@ describe("SyncSettings — the activation scope a caller asks for", () => {
       fs: seededBuiltCatalog(),
       manifestRepo: manifestWithTool(),
       marketplaceRegistry: registry,
-      hasher: new DeterministicHasher(),
+      hasher: new HasherAdapter(),
       logger: new CapturingLogger(),
       activators: new Map([[TOOL.claude, activator]]),
       ensureBuilt: fakeEnsureBuiltMarketplace(),

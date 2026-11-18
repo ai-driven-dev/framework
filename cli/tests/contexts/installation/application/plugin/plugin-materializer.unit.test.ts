@@ -6,8 +6,8 @@ import { PluginMaterializer } from "../../../../../src/contexts/installation/app
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { IsWithinUserScope } from "../../../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { FixturePluginFetcher } from "../../../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -23,7 +23,7 @@ const { cursor } = TOOL;
 
 function fixture(installedVersion = "0.0.1") {
   const fs = new InMemoryFileAdapter();
-  const hasher = new DeterministicHasher();
+  const hasher = new HasherAdapter();
   const logger = new CapturingLogger();
   const content = "# Updated skill";
   const skill = { relativePath: "skills/demo/SKILL.md", content };

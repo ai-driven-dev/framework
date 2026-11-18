@@ -4,9 +4,9 @@ import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installa
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { marketplaceSync } from "../../../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
-import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -23,7 +23,7 @@ function syncWithProvenFreshHost(
   fs: InMemoryFileAdapter,
   manifestRepo: InMemoryManifestRepository,
   registry: FakeMarketplaceRegistry,
-  hasher: DeterministicHasher,
+  hasher: HasherAdapter,
   activator: FakeHostActions
 ): SyncSettings {
   return marketplaceSync({
@@ -80,7 +80,7 @@ describe("install claude plugin via Mode A (integration)", () => {
   it("leaves the registration to claude and keeps only what it owns", async () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
     // Claude drives its own registration; it does not enable plugins that way.
@@ -127,7 +127,7 @@ describe("install claude plugin via Mode A (integration)", () => {
   it("takes a registration left in the shared file by an older install out of it", async () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
-    const hasher = new DeterministicHasher();
+    const hasher = new HasherAdapter();
     const manifestRepo = new InMemoryManifestRepository();
     const registry = new FakeMarketplaceRegistry();
     // Claude drives its own registration; it does not enable plugins that way.
