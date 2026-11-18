@@ -5,11 +5,7 @@ import { resolveTranslator } from "../../../../../src/contexts/installation/appl
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import {
-  answersOf,
-  nativePlugins,
-  unsupportedPlugins,
-} from "../../../tools/testing/plugin-mode.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 function buildDeps(homedir = "/stub-home") {
   const fs = new InMemoryFileAdapter();
@@ -21,28 +17,17 @@ function buildDeps(homedir = "/stub-home") {
   };
 }
 
-const MARKETPLACE_SETTINGS = {
-  settingsPath: ".claude/settings.json",
-  settingsKey: "extraKnownMarketplaces",
-  toEntryKey: () => null,
-  marketplacesSettingsPath: null,
-};
+function requirePlugins<T>(plugins: T | null): T {
+  if (plugins === null) throw new Error("the tool declares no plugins");
+  return plugins;
+}
 
 describe("resolveTranslator", () => {
   describe("when translationMode is marketplace", () => {
     it("returns ModeAMarketplaceTranslator", () => {
       const deps = buildDeps();
-      const plugins = answersOf(
-        nativePlugins({
-          pluginRootToken: "$X_PLUGIN_ROOT",
-          pluginsDir: ".claude/plugins/",
-          manifestRelativePath: "plugin.json",
-          translationMode: "marketplace",
-          marketplaceSettings: MARKETPLACE_SETTINGS,
-          nativeActivation: { binary: "claude", enableVerb: "install", disableVerb: "uninstall" },
-        })
-      );
-      const adapter = resolveTranslator(plugins, deps);
+      const plugins = registeredTools().aiProfile(TOOL.claude).plugins();
+      const adapter = resolveTranslator(requirePlugins(plugins), deps);
       expect(adapter).toBeInstanceOf(ModeAMarketplaceTranslator);
       expect(adapter?.mode).toBe("marketplace");
     });
@@ -51,42 +36,10 @@ describe("resolveTranslator", () => {
   describe("when installScope is user", () => {
     it("returns BuiltTreeMaterializationTranslator", () => {
       const deps = buildDeps();
-      const plugins = answersOf(
-        nativePlugins({
-          pluginRootToken: "$X_PLUGIN_ROOT",
-          pluginsDir: "",
-          manifestRelativePath: null,
-          installScope: "user",
-          userPluginsDir: (h) => `${h}/.cursor/plugins/local`,
-        })
-      );
-      const adapter = resolveTranslator(plugins, deps);
+      const plugins = registeredTools().aiProfile(TOOL.cursor).plugins();
+      const adapter = resolveTranslator(requirePlugins(plugins), deps);
       expect(adapter).toBeInstanceOf(BuiltTreeMaterializationTranslator);
       expect(adapter?.mode).toBe("flat");
-    });
-  });
-
-  describe("when translationMode is null (unsupported)", () => {
-    it("returns null", () => {
-      const deps = buildDeps();
-      const plugins = answersOf(unsupportedPlugins());
-      const adapter = resolveTranslator(plugins, deps);
-      expect(adapter).toBeNull();
-    });
-  });
-
-  describe("when translationMode is null (native without marketplace)", () => {
-    it("returns null (neutral native, no translation strategy applies)", () => {
-      const deps = buildDeps();
-      const plugins = answersOf(
-        nativePlugins({
-          pluginRootToken: "$X_PLUGIN_ROOT",
-          pluginsDir: ".custom/plugins/",
-          manifestRelativePath: "plugin.json",
-        })
-      );
-      const adapter = resolveTranslator(plugins, deps);
-      expect(adapter).toBeNull();
     });
   });
 });

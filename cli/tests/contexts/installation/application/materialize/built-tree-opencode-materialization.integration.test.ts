@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
@@ -8,8 +7,8 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const PROJECT_ROOT = "/proj";
 const BUILT = "/built/opencode";
@@ -45,17 +44,13 @@ function distWithHooks(): PluginDistribution {
   });
 }
 
-async function makeRegistry(): Promise<InMemoryMarketplaceRegistry> {
-  const registry = new InMemoryMarketplaceRegistry();
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name: "aidd-framework",
-      source: { kind: "local", path: "/src/framework" },
-      scope: "project",
-      addedAt: "2026-01-01T00:00:00Z",
-    })
-  );
+async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
+  const registry = new FakeMarketplaceRegistry();
+  registry.seed(PROJECT_ROOT, {
+    name: "aidd-framework",
+    source: { kind: "local", path: "/src/framework" },
+    scope: "project",
+  });
   return registry;
 }
 
@@ -82,7 +77,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     await translator.addPlugin(
       dist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -119,7 +114,7 @@ describe("BuiltTreeMaterializationTranslator — opencode (integration)", () => 
 
     await translator.addPlugin(
       distWithHooks(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -153,7 +148,7 @@ describe("BuiltTreeMaterializationTranslator — what the opencode flat tree nev
     });
     return translator.addPlugin(
       distribution,
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -250,7 +245,7 @@ describe("BuiltTreeMaterializationTranslator — kilo (integration)", () => {
 
     await translator.addPlugin(
       distribution,
-      registeredAiProfile(TOOL.kilo),
+      registeredTools().aiProfile(TOOL.kilo),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

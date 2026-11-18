@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 function buildDist(name = "test-plugin"): PluginDistribution {
   return new PluginDistribution({
@@ -35,7 +35,7 @@ describe("ModeAMarketplaceTranslator", () => {
       const dist = buildDist("aidd-context");
       await adapter.addPlugin(
         dist,
-        registeredAiProfile(TOOL.claude),
+        registeredTools().aiProfile(TOOL.claude),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
@@ -55,7 +55,7 @@ describe("ModeAMarketplaceTranslator", () => {
 
       const result = await adapter.addPlugin(
         buildDist("aidd-context"),
-        registeredAiProfile(TOOL.claude),
+        registeredTools().aiProfile(TOOL.claude),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,
@@ -74,7 +74,7 @@ describe("ModeAMarketplaceTranslator", () => {
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        registeredAiProfile(TOOL.claude),
+        registeredTools().aiProfile(TOOL.claude),
         { kind: "local", path: "/plugin-source" },
         "/project",
         manifest,

@@ -1,16 +1,13 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildOpencodeFlatContract } from "../../../../../src/contexts/tools/domain/profiles/opencode/build.js";
-import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
-import { PluginContentEngine } from "../../../../../src/contexts/translate/domain/engine.js";
+import { createPluginTranslation } from "../../../../../src/composition/translate.js";
 import {
   type PluginComponentFile,
   PluginDistribution,
 } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestPaths } from "../../../translate/testing/registered-manifest-probes.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PLUGINS_DIR = join(REPOSITORY_ROOT, "plugins");
 
@@ -41,15 +38,17 @@ function makeTelemetryLikeDist(): PluginDistribution {
 }
 
 function modeBSkillPaths(dist: PluginDistribution): string[] {
-  return new PluginContentEngine(registeredManifestPaths())
-    .translate(dist, opencode)
-    .map((f) => f.relativePath)
+  return createPluginTranslation(registeredTools())
+    .execute({ distribution: dist, tool: registeredTools().aiProfile(TOOL.opencode) })
+    .files.map((f) => f.relativePath)
     .filter((p) => p.startsWith(".opencode/skills/"))
     .sort();
 }
 
 function builtTreeSkillPaths(dist: PluginDistribution): string[] {
-  const skillsArtifact = buildOpencodeFlatContract().artifacts.skills;
+  const contract = registeredTools().aiProfile(TOOL.opencode).buildContract("flat");
+  if (contract === null) throw new Error("opencode declares no flat build contract");
+  const skillsArtifact = contract.artifacts.skills;
   if (!skillsArtifact.supported) throw new Error("opencode flat skills artifact unsupported");
   return dist.components.skills.map((f) => skillsArtifact.path(PLUGIN_NAME, f.relativePath)).sort();
 }

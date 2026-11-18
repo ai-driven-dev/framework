@@ -4,7 +4,7 @@ import { resolvePluginTranslator } from "../../../../../src/contexts/installatio
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredConfig, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 function deps(): TranslatorDeps {
   return {
@@ -16,6 +16,6 @@ function deps(): TranslatorDeps {
 
 describe("resolvePluginTranslator", () => {
   it("answers nothing for a tool that is not an AI tool", () => {
-    expect(resolvePluginTranslator(registeredConfig(TOOL.vscode), deps())).toBeNull();
+    expect(resolvePluginTranslator(registeredTools().profile(TOOL.vscode), deps())).toBeNull();
   });
 });

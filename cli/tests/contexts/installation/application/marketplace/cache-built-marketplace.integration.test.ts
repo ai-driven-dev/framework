@@ -1,18 +1,17 @@
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
+import { createFrameworkBuildUseCase } from "../../../../../src/composition/translate.js";
 import type {
   ResolveMarketplace,
   ResolveMarketplaceCommand,
 } from "../../../../../src/contexts/distribution/application/resolve-marketplace.js";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { CacheBuiltMarketplace } from "../../../../../src/contexts/installation/application/marketplace/cache-built-marketplace.js";
 import type {
   FrameworkBuild,
   FrameworkBuilds,
 } from "../../../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
-import { buildCopilotFlatContract } from "../../../../../src/contexts/tools/domain/profiles/copilot/build.js";
-import type { JsonSchemaValidator } from "../../../../../src/contexts/translate/ports/json-schema-validator.js";
+import type { DeclaredMarketplace } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
 import { EnsureBuiltMarketplace } from "../../../../../src/orchestration/marketplace/ensure-built-marketplace.js";
 import {
   BUILT_CACHE_SUBDIR,
@@ -23,10 +22,10 @@ import type { VersionReader } from "../../../../../src/shared/ports/version-read
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
-import { buildTree } from "../../../translate/testing/build-tree.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT = "/proj";
+
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 const PLUGIN = "aidd-test";
 
@@ -35,10 +34,6 @@ const MINIMAL_MANIFEST_SCHEMA = {
   required: ["name"],
   properties: { name: { type: "string" } },
 };
-
-function noopValidator(): JsonSchemaValidator {
-  return { validate: () => undefined };
-}
 
 function stubAssetProvider(): AssetProvider {
   return {
@@ -49,32 +44,29 @@ function stubAssetProvider(): AssetProvider {
   };
 }
 
-function makeMarketplace(): Marketplace {
-  return Marketplace.create({
+function makeMarketplace(): DeclaredMarketplace {
+  return {
     name: "aidd-framework",
     source: { kind: "local", path: "/src/framework" },
     scope: "project",
-    addedAt: "2026-06-29T00:00:00.000Z",
-  });
+  };
 }
 
 /** A published source: its version changes when its content does, so it can be believed. */
-function makeRemoteMarketplace(): Marketplace {
-  return Marketplace.create({
+function makeRemoteMarketplace(): DeclaredMarketplace {
+  return {
     name: "aidd-framework",
     source: { kind: "github", repo: "ai-driven-dev/framework" },
     scope: "project",
-    addedAt: "2026-06-29T00:00:00.000Z",
-  });
+  };
 }
 
-function makeUserMarketplace(): Marketplace {
-  return Marketplace.create({
+function makeUserMarketplace(): DeclaredMarketplace {
+  return {
     name: "shared-mkt",
     source: { kind: "local", path: "/src/framework" },
     scope: "user",
-    addedAt: "2026-06-29T00:00:00.000Z",
-  });
+  };
 }
 
 function fakeResolve(
@@ -450,17 +442,14 @@ describe("force behavior at the cache-rebuild path", () => {
     memFs.setFile(agentPath, "stale cache content from a previous build");
 
     const realBuildFor: BuildFor = (_target, _mode) => {
-      const validator = noopValidator();
-      const assetProvider = stubAssetProvider();
-      return buildTree(
-        memFs,
-        validator,
-        assetProvider,
-        new CapturingLogger(),
-        buildCopilotFlatContract(),
-        "flat",
-        true // force:true, mirrors deps.ts wiring for every *:flat target
+      const build = createFrameworkBuildUseCase(
+        registeredTools(),
+        { fs: memFs, assetProvider: stubAssetProvider(), logger: new CapturingLogger() },
+        // force:true mirrors deps.ts wiring for every *:flat target
+        { target: TOOL.copilot, mode: "flat", outDir: builtDir, force: true }
       );
+      if (build === undefined) throw new Error("copilot declares no flat build contract");
+      return build;
     };
 
     const uc = buildEnsurer(memFs, fakeResolve(FIXTURE_DIR, "1.0.0"), buildsOf(realBuildFor));

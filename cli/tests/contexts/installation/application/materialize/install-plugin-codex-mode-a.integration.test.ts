@@ -2,7 +2,6 @@
 // `~/.codex/config.toml` and plugin cache, so a project-local settings file is inert.
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.js";
@@ -14,11 +13,11 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -26,7 +25,7 @@ const MARKETPLACE_NAME = "aidd-framework";
 function syncWithProvenFreshHost(
   fs: InMemoryFileAdapter,
   manifestRepo: InMemoryManifestRepository,
-  registry: InMemoryMarketplaceRegistry,
+  registry: FakeMarketplaceRegistry,
   hasher: DeterministicHasher,
   logger: CapturingLogger,
   activator: FakeHostActions
@@ -84,34 +83,30 @@ function buildDist(name = "aidd-context"): PluginDistribution {
 
 async function seedCodexPlugin(
   manifestRepo: InMemoryManifestRepository,
-  registry: InMemoryMarketplaceRegistry,
+  registry: FakeMarketplaceRegistry,
   source: PluginSource = { kind: "local", path: "/marketplace-source" }
 ): Promise<void> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.codex, "test", []);
   await new ModeAMarketplaceTranslator().addPlugin(
     buildDist(),
-    registeredAiProfile(TOOL.codex),
+    registeredTools().aiProfile(TOOL.codex),
     { kind: "local", path: "/plugin-source" },
     PROJECT_ROOT,
     manifest,
     MARKETPLACE_NAME
   );
   await manifestRepo.save(manifest);
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name: MARKETPLACE_NAME,
-      source,
-      scope: "project",
-      addedAt: "2026-01-01T00:00:00Z",
-    })
-  );
+  registry.seed(PROJECT_ROOT, {
+    name: MARKETPLACE_NAME,
+    source,
+    scope: "project",
+  });
 }
 
 async function seedTwoCodexPlugins(
   manifestRepo: InMemoryManifestRepository,
-  registry: InMemoryMarketplaceRegistry
+  registry: FakeMarketplaceRegistry
 ): Promise<void> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.codex, "test", []);
@@ -119,7 +114,7 @@ async function seedTwoCodexPlugins(
   for (const name of ["aidd-context", "aidd-vcs"]) {
     await translator.addPlugin(
       buildDist(name),
-      registeredAiProfile(TOOL.codex),
+      registeredTools().aiProfile(TOOL.codex),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -127,15 +122,11 @@ async function seedTwoCodexPlugins(
     );
   }
   await manifestRepo.save(manifest);
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name: MARKETPLACE_NAME,
-      source: { kind: "local", path: "/marketplace-source" },
-      scope: "project",
-      addedAt: "2026-01-01T00:00:00Z",
-    })
-  );
+  registry.seed(PROJECT_ROOT, {
+    name: MARKETPLACE_NAME,
+    source: { kind: "local", path: "/marketplace-source" },
+    scope: "project",
+  });
 }
 
 describe("install codex plugin via Mode A (integration)", () => {
@@ -144,7 +135,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     await seedBuiltCatalog(fs);
     const hasher = new DeterministicHasher();
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     const activator = new FakeHostActions({ available: true });
     await seedCodexPlugin(manifestRepo, registry);
 
@@ -171,7 +162,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     const activator = new FakeHostActions({ available: true });
     await seedCodexPlugin(manifestRepo, registry, {
       kind: "github",
@@ -196,7 +187,7 @@ describe("install codex plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     const logger = new CapturingLogger();
     const activator = new FakeHostActions({
       available: true,
@@ -221,7 +212,7 @@ describe("install codex plugin via Mode A (integration)", () => {
   it("skips activation when the codex CLI is unavailable", async () => {
     const fs = new InMemoryFileAdapter();
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     const activator = new FakeHostActions({ available: false });
     await seedCodexPlugin(manifestRepo, registry);
 

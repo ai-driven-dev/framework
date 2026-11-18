@@ -11,9 +11,7 @@ import {
   FaultingFileAdapter,
 } from "../../../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
-import { unsupportedPlugins } from "../../../tools/testing/plugin-mode.js";
-import { aProfile } from "../../../tools/testing/profiles.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -67,7 +65,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
@@ -84,7 +82,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const dist = buildDist("test-plugin");
       await adapter.addPlugin(
         dist,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
@@ -110,7 +108,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       });
       await adapter.addPlugin(
         emptyDist,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
@@ -131,7 +129,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       await expect(
         adapter.addPlugin(
           dist,
-          registeredAiProfile(TOOL.claude),
+          registeredTools().aiProfile(TOOL.claude),
           { kind: "local", path: "/plugin-source" },
           PROJECT_ROOT,
           manifest,
@@ -141,16 +139,14 @@ describe("ModeBFlatMaterializationTranslator", () => {
     });
   });
 
-  describe("when tool takes no plugin at all", () => {
+  describe("when a flat tool is given the project scope", () => {
     it("does not refuse the project scope the way a native tool does", async () => {
       const { adapter } = buildAdapter();
       const manifest = Manifest.create();
       manifest.addTool(TOOL.antigravity, "test", []);
-      const profile = aProfile(TOOL.antigravity).withPlugins(unsupportedPlugins()).build();
-
       const added = adapter.addPlugin(
         buildDist("test-plugin"),
-        profile,
+        registeredTools().aiProfile(TOOL.antigravity),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
@@ -182,7 +178,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       });
       await adapter.addPlugin(
         mcpOnlyDist,
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,
@@ -233,7 +229,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const scriptPath = join(PROJECT_ROOT, ".cursor/hooks/hooks-plugin/pre.js");
       await adapter.addPlugin(
         hooksDist(),
-        registeredAiProfile(TOOL.cursor),
+        registeredTools().aiProfile(TOOL.cursor),
         source,
         PROJECT_ROOT,
         manifest,
@@ -244,7 +240,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       const reinstall = (guard?: { overwriteEdited: boolean }) =>
         adapter.addPlugin(
           hooksDist(),
-          registeredAiProfile(TOOL.cursor),
+          registeredTools().aiProfile(TOOL.cursor),
           source,
           PROJECT_ROOT,
           cursorManifest(),
@@ -292,7 +288,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       await expect(
         adapter.addPlugin(
           mcpDist({}),
-          registeredAiProfile(TOOL.opencode),
+          registeredTools().aiProfile(TOOL.opencode),
           { kind: "local", path: "/plugin-source" },
           PROJECT_ROOT,
           manifest,
@@ -320,7 +316,7 @@ describe("ModeBFlatMaterializationTranslator", () => {
       await expect(
         adapter.addPlugin(
           mcpDist({ "local-tool": { command: "node", args: ["./server.js"] } }),
-          registeredAiProfile(TOOL.opencode),
+          registeredTools().aiProfile(TOOL.opencode),
           { kind: "local", path: "/plugin-source" },
           PROJECT_ROOT,
           manifest,

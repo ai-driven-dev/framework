@@ -9,7 +9,7 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const STUB_HOME = "/tmp/test-home";
@@ -58,7 +58,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -68,7 +68,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger: new CLIOutput(false) });
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
@@ -97,7 +97,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -107,7 +107,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger: new CLIOutput(false) });
     await removeUseCase.execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       pluginName: PLUGIN_NAME,
       toolIds: [TOOL.opencode],
       projectRoot: PROJECT_ROOT,
@@ -133,7 +133,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -145,7 +145,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     const removeUseCase = pluginRemover({ fs, manifestRepo, logger: new CLIOutput(false) });
     await expect(
       removeUseCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: PLUGIN_NAME,
         toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,
@@ -165,7 +165,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     manifest.addTool(TOOL.opencode, "test", []);
     await translator.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -183,7 +183,7 @@ describe("remove opencode plugin: unmerge MCP entries (Phase 5)", () => {
     await expect(
       translator.addPlugin(
         buildDist(),
-        registeredAiProfile(TOOL.opencode),
+        registeredTools().aiProfile(TOOL.opencode),
         { kind: "local", path: "/plugin-source" },
         PROJECT_ROOT,
         manifest,

@@ -2,7 +2,6 @@
  * a built tree's plugin-scoped `hooks/hooks.json` lands in a directory Cursor never reads. */
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { BuiltTreeMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/built-tree-materialization-translator.js";
 import { ModeBFlatMaterializationTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-b-flat-materialization-translator.js";
 import type { PluginTranslator } from "../../../../../src/contexts/installation/application/materialize/plugin-translator.js";
@@ -13,12 +12,8 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import {
-  registeredAiConfig,
-  registeredAiProfile,
-  TOOL,
-} from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const PROJECT_ROOT = "/proj";
 const HOME = "/home/u";
@@ -55,17 +50,13 @@ function dist(): PluginDistribution {
   });
 }
 
-async function makeRegistry(): Promise<InMemoryMarketplaceRegistry> {
-  const registry = new InMemoryMarketplaceRegistry();
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name: "aidd-framework",
-      source: { kind: "local", path: "/src/framework" },
-      scope: "project",
-      addedAt: "2026-01-01T00:00:00Z",
-    })
-  );
+async function makeRegistry(): Promise<FakeMarketplaceRegistry> {
+  const registry = new FakeMarketplaceRegistry();
+  registry.seed(PROJECT_ROOT, {
+    name: "aidd-framework",
+    source: { kind: "local", path: "/src/framework" },
+    scope: "project",
+  });
   return registry;
 }
 
@@ -86,7 +77,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
 
     const { skipped } = await translator.addPlugin(
       dist(),
-      registeredAiProfile(TOOL.cursor),
+      registeredTools().aiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -116,7 +107,7 @@ describe("BuiltTreeMaterializationTranslator — cursor marketplace hooks (Phase
 
     await translator.addPlugin(
       dist(),
-      registeredAiProfile(TOOL.cursor),
+      registeredTools().aiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -142,7 +133,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     );
     await translator.addPlugin(
       dist(),
-      registeredAiProfile(TOOL.cursor),
+      registeredTools().aiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -170,7 +161,7 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
     );
     await translator.addPlugin(
       dist(),
-      registeredAiProfile(TOOL.cursor),
+      registeredTools().aiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -182,7 +173,9 @@ describe("Cursor's two install routes agree on hooks destination (Phase 7, Task 
   // Read from cursor.ts's own declaration, never hard-coded: both translators regressing to
   // plugin scope together would still pass a route-against-route comparison.
   function declaredHooksDestination(toolId: AiToolId): "plugin" | "project" {
-    return registeredAiConfig(toolId).projectHooksDelivery() === null ? "plugin" : "project";
+    return registeredTools().aiProfile(toolId).projectHooksDelivery() === null
+      ? "plugin"
+      : "project";
   }
 
   it("both routes write to the destination cursor.ts declares — a plugin.hooksDestination change breaks this", async () => {

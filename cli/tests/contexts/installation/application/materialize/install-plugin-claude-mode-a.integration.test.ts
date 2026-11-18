@@ -1,6 +1,5 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import type { SyncSettings } from "../../../../../src/orchestration/sync/sync-settings.js";
@@ -11,11 +10,11 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -23,7 +22,7 @@ const MARKETPLACE_NAME = "aidd-framework";
 function syncWithProvenFreshHost(
   fs: InMemoryFileAdapter,
   manifestRepo: InMemoryManifestRepository,
-  registry: InMemoryMarketplaceRegistry,
+  registry: FakeMarketplaceRegistry,
   hasher: DeterministicHasher,
   activator: FakeHostActions
 ): SyncSettings {
@@ -83,7 +82,7 @@ describe("install claude plugin via Mode A (integration)", () => {
     await seedBuiltCatalog(fs);
     const hasher = new DeterministicHasher();
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     // Claude drives its own registration; it does not enable plugins that way.
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const manifest = Manifest.create();
@@ -91,22 +90,18 @@ describe("install claude plugin via Mode A (integration)", () => {
 
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.claude),
+      registeredTools().aiProfile(TOOL.claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
       MARKETPLACE_NAME
     );
     await manifestRepo.save(manifest);
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: MARKETPLACE_NAME,
-        source: { kind: "local", path: "/marketplace-source" },
-        scope: "project",
-        addedAt: "2026-01-01T00:00:00Z",
-      })
-    );
+    registry.seed(PROJECT_ROOT, {
+      name: MARKETPLACE_NAME,
+      source: { kind: "local", path: "/marketplace-source" },
+      scope: "project",
+    });
 
     const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, hasher, activator);
     await useCase.execute({ projectRoot: PROJECT_ROOT });
@@ -134,7 +129,7 @@ describe("install claude plugin via Mode A (integration)", () => {
     await seedBuiltCatalog(fs);
     const hasher = new DeterministicHasher();
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     // Claude drives its own registration; it does not enable plugins that way.
     const activator = new FakeHostActions({ available: true, enablesPlugins: false });
     const manifest = Manifest.create();
@@ -142,22 +137,18 @@ describe("install claude plugin via Mode A (integration)", () => {
 
     await new ModeAMarketplaceTranslator().addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.claude),
+      registeredTools().aiProfile(TOOL.claude),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
       MARKETPLACE_NAME
     );
     await manifestRepo.save(manifest);
-    await registry.save(
-      PROJECT_ROOT,
-      Marketplace.create({
-        name: MARKETPLACE_NAME,
-        source: { kind: "local", path: "/marketplace-source" },
-        scope: "project",
-        addedAt: "2026-01-01T00:00:00Z",
-      })
-    );
+    registry.seed(PROJECT_ROOT, {
+      name: MARKETPLACE_NAME,
+      source: { kind: "local", path: "/marketplace-source" },
+      scope: "project",
+    });
 
     const useCase = syncWithProvenFreshHost(fs, manifestRepo, registry, hasher, activator);
 

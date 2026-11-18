@@ -6,7 +6,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const STUB_HOME = "/tmp/test-home";
 const PROJECT_ROOT = "/test-project";
@@ -46,7 +46,7 @@ describe("install cursor plugin via Mode B (integration)", () => {
 
     await adapter.addPlugin(
       buildDist("aidd-context"),
-      registeredAiProfile(TOOL.cursor),
+      registeredTools().aiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -70,7 +70,7 @@ describe("install cursor plugin via Mode B (integration)", () => {
 
     await adapter.addPlugin(
       buildDist("aidd-context"),
-      registeredAiProfile(TOOL.cursor),
+      registeredTools().aiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -101,7 +101,7 @@ describe("install cursor plugin via Mode B (integration)", () => {
 
     await adapter.addPlugin(
       buildDist("aidd-context"),
-      registeredAiProfile(TOOL.cursor),
+      registeredTools().aiProfile(TOOL.cursor),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,

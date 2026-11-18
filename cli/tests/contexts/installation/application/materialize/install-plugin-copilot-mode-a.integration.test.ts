@@ -1,6 +1,5 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -10,11 +9,11 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
-import { FakeHostActions } from "../../../host-registration/testing/fake-host-actions.js";
-import { FakeHostMarketplaceSources } from "../../../host-registration/testing/fake-host-marketplace-sources.js";
-import { FakeHostPluginRegistry } from "../../../host-registration/testing/fake-host-plugin-registry.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeHostActions } from "../../testing/fake-host-actions.js";
+import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.js";
+import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKETPLACE_NAME = "aidd-framework";
@@ -54,28 +53,24 @@ async function seedBuiltCatalog(fs: InMemoryFileAdapter, name = MARKETPLACE_NAME
 
 async function seedCopilotPlugin(
   manifestRepo: InMemoryManifestRepository,
-  registry: InMemoryMarketplaceRegistry
+  registry: FakeMarketplaceRegistry
 ): Promise<void> {
   const manifest = Manifest.create();
   manifest.addTool(TOOL.copilot, "test", []);
   await new ModeAMarketplaceTranslator().addPlugin(
     buildDist(),
-    registeredAiProfile(TOOL.copilot),
+    registeredTools().aiProfile(TOOL.copilot),
     { kind: "github", repo: "ai-driven-dev/framework" },
     PROJECT_ROOT,
     manifest,
     MARKETPLACE_NAME
   );
   await manifestRepo.save(manifest);
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name: MARKETPLACE_NAME,
-      source: { kind: "github", repo: "ai-driven-dev/framework" },
-      scope: "project",
-      addedAt: "2026-01-01T00:00:00Z",
-    })
-  );
+  registry.seed(PROJECT_ROOT, {
+    name: MARKETPLACE_NAME,
+    source: { kind: "github", repo: "ai-driven-dev/framework" },
+    scope: "project",
+  });
 }
 
 function buildDist(name = "aidd-context"): PluginDistribution {
@@ -99,7 +94,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     const hasher = new DeterministicHasher();
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     await seedCopilotPlugin(manifestRepo, registry);
     const settingsPath = resolve(PROJECT_ROOT, ".github/copilot/settings.json");
     const foreignSettings = JSON.stringify({
@@ -125,7 +120,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     const activator = new FakeHostActions({ available: true });
     await seedCopilotPlugin(manifestRepo, registry);
 
@@ -162,7 +157,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     // A missing source does not by itself prove who owns the host registration.
     const activator = new FakeHostActions({
       available: true,
@@ -197,7 +192,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     await seedCopilotPlugin(manifestRepo, registry);
     const activator = new FakeHostActions({
       available: true,
@@ -225,7 +220,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     // Held, and the source resolves: another project is alive behind it. Taking the
     // name would break that project, and both would then steal it back on every sync.
     const activator = new FakeHostActions({
@@ -256,7 +251,7 @@ describe("install copilot plugin via Mode A (integration)", () => {
     const fs = new InMemoryFileAdapter();
     await seedBuiltCatalog(fs);
     const manifestRepo = new InMemoryManifestRepository();
-    const registry = new InMemoryMarketplaceRegistry();
+    const registry = new FakeMarketplaceRegistry();
     // The tool offers no way to tell a dead registration from a live one, which must
     // read as "leave it alone" rather than as permission.
     const activator = new FakeHostActions({

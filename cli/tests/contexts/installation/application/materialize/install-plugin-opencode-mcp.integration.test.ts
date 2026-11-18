@@ -6,7 +6,7 @@ import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plug
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { translateDistribution } from "../../../../helpers/ports/fake-build-sources.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { registeredAiProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const STUB_HOME = "/tmp/test-home";
@@ -60,7 +60,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -82,7 +82,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -104,7 +104,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -126,7 +126,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -140,7 +140,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     manifest.removePlugin(TOOL.opencode, PLUGIN_NAME);
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -165,7 +165,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     });
     await adapter.addPlugin(
       buildDist(PLUGIN_NAME, mcpV1),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -184,7 +184,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
     });
     await adapter.addPlugin(
       buildDist(PLUGIN_NAME, mcpV2),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -215,7 +215,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -237,7 +237,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
 
     await adapter.addPlugin(
       buildDist(PLUGIN_NAME, emptyMcp),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -261,7 +261,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
 
     await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
@@ -286,7 +286,7 @@ describe("install opencode plugin with MCP (Phase 4b integration)", () => {
 
     const { skipped } = await adapter.addPlugin(
       buildDist(),
-      registeredAiProfile(TOOL.opencode),
+      registeredTools().aiProfile(TOOL.opencode),
       { kind: "local", path: "/plugin-source" },
       PROJECT_ROOT,
       manifest,
