@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -6,6 +6,7 @@ import {
   builtMaterializationDepsOf,
   cacheBuildFor,
   debugOnly,
+  wireInstallation,
 } from "../../src/composition/installation.js";
 import { hostBinaryAvailableIn } from "../../src/composition/orchestration/doctor.js";
 import { userScopeSyncOf } from "../../src/composition/orchestration/global.js";
@@ -14,6 +15,7 @@ import {
   detachClaimsOf,
   quietUserScopeFilesSafeToDelete,
   registerForFlow,
+  wireMarketplace,
 } from "../../src/composition/orchestration/marketplace.js";
 import {
   pluginCacheDir,
@@ -22,15 +24,19 @@ import {
   withinUserScope,
 } from "../../src/composition/orchestration/plugin.js";
 import { setupQuestionsOf, setupStepsOf } from "../../src/composition/orchestration/setup.js";
+import { wireBase } from "../../src/composition/shared.js";
 import { wireTools } from "../../src/composition/tools.js";
+import { Marketplace } from "../../src/contexts/distribution/domain/marketplace.js";
+import { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { isStrictlyWithinUserScope } from "../../src/contexts/machine-claims/domain/user-scope-containment.js";
 import { BundledAssetProviderAdapter } from "../../src/shared/infrastructure/asset-loader.js";
 import { catalogOf, registeredAiProfile } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
+import { CapturingOutput } from "../helpers/ports/capturing-output.js";
 import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../helpers/ports/seed-from-directory.js";
-import { TOOL } from "../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../shared/testing/registered-tools.js";
 
 describe("hostBinaryAvailableIn", () => {
   const available = hostBinaryAvailableIn(
@@ -95,6 +101,63 @@ describe("quietUserScopeFilesSafeToDelete", () => {
     );
 
     expect([...safe]).toStrictEqual([]);
+  });
+});
+
+describe("the user marketplace removal the composition binds", () => {
+  let home: string;
+
+  beforeEach(async () => {
+    home = await mkdtemp(join(tmpdir(), "aidd-user-removal-"));
+    await mkdir(join(home, ".cursor", "plugins", "local"), { recursive: true });
+    vi.stubEnv("HOME", home);
+    vi.stubEnv("AIDD_USER_CONFIG_DIR", join(home, "config"));
+  });
+
+  afterEach(async () => {
+    vi.unstubAllEnvs();
+    await rm(home, { recursive: true, force: true });
+  });
+
+  it("refuses a plugin file outside the user-scope directory without logging why", async () => {
+    const output = new CapturingOutput(false);
+    const machine = Manifest.create();
+    machine.addTool(TOOL.cursor, "1.0.0", []);
+    machine.addPlugin(
+      TOOL.cursor,
+      InstalledPlugin.fromJSON({
+        name: "aidd-test",
+        source: { kind: "local", path: "/some/path" },
+        version: "1.0.0",
+        strict: false,
+        files: { "../escape.md": "0".repeat(32) },
+        scope: "user",
+        marketplace: "team",
+      })
+    );
+    const base = {
+      ...wireBase("/project", { verbose: false }, output, registeredTools()),
+      nativePluginActivators: new Map(),
+      hostPluginRegistries: new Map(),
+      nativeSources: new Map(),
+    };
+    await base.userManifestRepo.save(machine);
+    await base.marketplaceRegistry.save(
+      "/project",
+      Marketplace.create({
+        name: "team",
+        source: { kind: "github", repo: "org/team" },
+        scope: "user",
+        addedAt: "2026-09-01T00:00:00.000Z",
+      })
+    );
+
+    const removal = wireMarketplace(base, wireInstallation(base)).userMarketplaceRemoveUseCase;
+    await expect(
+      removal.execute({ name: "team", projectRoot: "/project", autoConfirm: true, scope: "user" })
+    ).rejects.toThrow("has a tracked file outside its boundary");
+
+    expect(output.lines).toStrictEqual([]);
   });
 });
 
