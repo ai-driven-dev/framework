@@ -119,6 +119,25 @@ describe("doctorAll", () => {
     expect(verdictOf(result)).toStrictEqual([false, true, false, []]);
   });
 
+  it.each(["ai", "ide"] as const)(
+    "is not healthy when the %s scope could not be checked, whatever the other found",
+    async (unchecked) => {
+      const { deps } = await depsWithBothCategories();
+      const real = buildDoctorUseCase(deps);
+      const doctor = {
+        execute: (options: Parameters<typeof real.execute>[0]) => {
+          if (options.category === unchecked) throw new Error("could not be checked");
+          return real.execute(options);
+        },
+      };
+
+      const result = await doctorAll(doctor, PROJECT_ROOT, catalogOf());
+
+      expect(result.healthy).toBe(false);
+      expect(result.errors).toStrictEqual([{ scope: unchecked, message: "could not be checked" }]);
+    }
+  );
+
   it("carries the ai scope's plugin issues", async () => {
     const { deps, manifest } = await depsWithBothCategories();
     manifest.addPlugin(
