@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -7,6 +6,7 @@ import { InstalledPlugin } from "../../../../../src/contexts/installation/domain
 import type { RegistrationRecordRules } from "../../../../../src/contexts/installation/ports/native-host.js";
 import { userScopeFilesSafeToDelete } from "../../../../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { resolveHomeDir } from "../../../../../src/shared/infrastructure/home-dir.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
@@ -341,7 +341,7 @@ describe("Cursor user plugin boundary", () => {
         version: "1.0.0",
         strict: false,
         files: {
-          "sample-plugin/plugin.json": createHash("md5").update("owned bytes").digest("hex"),
+          "sample-plugin/plugin.json": new HasherAdapter().hash("owned bytes").value,
         },
         scope: "user",
         dependents: [],

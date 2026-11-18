@@ -1,10 +1,10 @@
-import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RemoveProjectFiles } from "../../../../../src/contexts/installation/application/removal/remove-project-files.js";
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
@@ -39,7 +39,7 @@ describe("RemoveProjectFiles.remove", () => {
     manifest.addPlugin(
       TOOL.claude,
       localPlugin("aidd-context").withFiles(
-        new Map([["skills/x.md", createHash("md5").update("x").digest("hex")]])
+        new Map([["skills/x.md", new HasherAdapter().hash("x").value]])
       )
     );
     const fs = new InMemoryFileAdapter();
@@ -73,7 +73,7 @@ describe("RemoveProjectFiles.remove", () => {
       TOOL.cursor,
       InstalledPlugin.withProjectHooks(localPlugin("aidd-context"), {
         entries: [],
-        scripts: new Map([[script, createHash("md5").update("// installed").digest("hex")]]),
+        scripts: new Map([[script, new HasherAdapter().hash("// installed").value]]),
       })
     );
     const fs = new InMemoryFileAdapter();

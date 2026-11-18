@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -15,6 +14,7 @@ import { CURSOR_HOOKS } from "../../../src/contexts/tools/domain/profiles/cursor
 import { CleanProject as ProductionCleanUseCase } from "../../../src/orchestration/clean/clean-project.js";
 import { FileHash, InstallationFile } from "../../../src/shared/domain/file.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
@@ -30,7 +30,7 @@ import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js"
 
 const PROJECT_ROOT = "/test-project";
 const AT_PROJECT = { tools: registeredTools(), projectRoot: PROJECT_ROOT } as const;
-const md5 = (content: string): string => createHash("md5").update(content, "utf-8").digest("hex");
+const md5 = (content: string): string => new HasherAdapter().hash(content).value;
 
 /** Test-double host catalogues, deliberately seeded without consulting the manifest claim. */
 function nativeSourcesOnHost(): ReadonlyMap<AiToolId, HostMarketplaceSources> {

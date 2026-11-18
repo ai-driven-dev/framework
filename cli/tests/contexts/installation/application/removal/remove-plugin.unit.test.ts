@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
@@ -10,6 +9,7 @@ import {
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.js";
@@ -263,7 +263,7 @@ describe("RemovePlugin", () => {
           }),
           {
             entries: [],
-            scripts: new Map([[script, createHash("md5").update("// installed").digest("hex")]]),
+            scripts: new Map([[script, new HasherAdapter().hash("// installed").value]]),
           }
         )
       );
@@ -341,7 +341,7 @@ describe("RemovePlugin", () => {
       fs.setFile(ownedConfig, JSON.stringify({ mcp: { srv: server, mine: {} } }));
       const manifestRepo = manifestHolding(TOOL.opencode, {
         name: "aidd-context",
-        mcpEntries: { srv: createHash("md5").update(JSON.stringify(server)).digest("hex") },
+        mcpEntries: { srv: new HasherAdapter().hash(JSON.stringify(server)).value },
       });
 
       await removeUseCaseOver(fs, manifestRepo).execute({

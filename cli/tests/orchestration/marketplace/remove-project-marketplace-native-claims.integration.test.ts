@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -8,6 +7,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { errnoError, FaultingFileAdapter } from "../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -151,15 +151,13 @@ describe("project marketplace removal against machine native claims", () => {
             {
               event: "preToolUse",
               command: "node ./.cursor/hooks/sample-plugin/pre.js",
-              digest: createHash("md5")
-                .update(JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" }))
-                .digest("hex"),
+              digest: new HasherAdapter().hash(
+                JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" })
+              ).value,
             },
           ],
           scripts: {
-            ".cursor/hooks/sample-plugin/pre.js": createHash("md5")
-              .update("A's hook")
-              .digest("hex"),
+            ".cursor/hooks/sample-plugin/pre.js": new HasherAdapter().hash("A's hook").value,
           },
         },
       })
@@ -309,15 +307,13 @@ describe("project marketplace removal against machine native claims", () => {
             {
               event: "preToolUse",
               command: "node ./.cursor/hooks/sample-plugin/pre.js",
-              digest: createHash("md5")
-                .update(JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" }))
-                .digest("hex"),
+              digest: new HasherAdapter().hash(
+                JSON.stringify({ command: "node ./.cursor/hooks/sample-plugin/pre.js" })
+              ).value,
             },
           ],
           scripts: {
-            ".cursor/hooks/sample-plugin/pre.js": createHash("md5")
-              .update("A's hook")
-              .digest("hex"),
+            ".cursor/hooks/sample-plugin/pre.js": new HasherAdapter().hash("A's hook").value,
           },
         },
       })

@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -7,6 +6,7 @@ import {
   removeProjectHooks,
 } from "../../../../../src/contexts/installation/application/shared/remove-project-hooks.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import {
   errnoError,
   FaultingFileAdapter,
@@ -45,9 +45,7 @@ function plugin(options: { entry?: boolean; script?: string } = {}): InstalledPl
             {
               event: "preToolUse",
               command,
-              digest: createHash("md5")
-                .update(JSON.stringify(entry(PLUGIN)))
-                .digest("hex"),
+              digest: new HasherAdapter().hash(JSON.stringify(entry(PLUGIN))).value,
             },
           ]
         : [],
@@ -55,9 +53,7 @@ function plugin(options: { entry?: boolean; script?: string } = {}): InstalledPl
         options.script === undefined
           ? {}
           : {
-              [`.cursor/hooks/${PLUGIN}/pre.js`]: createHash("md5")
-                .update(options.script)
-                .digest("hex"),
+              [`.cursor/hooks/${PLUGIN}/pre.js`]: new HasherAdapter().hash(options.script).value,
             },
     },
   });
@@ -133,7 +129,7 @@ describe("removeProjectHooks", () => {
       ...installed,
       projectHooks: {
         entries: installed.projectHooks?.entries ?? [],
-        scripts: { [path]: createHash("md5").update(script).digest("hex") },
+        scripts: { [path]: new HasherAdapter().hash(script).value },
       },
     });
 
@@ -158,7 +154,7 @@ describe("removeProjectHooks", () => {
         ...installed,
         projectHooks: {
           entries: installed.projectHooks?.entries ?? [],
-          scripts: { [path]: createHash("md5").update(script).digest("hex") },
+          scripts: { [path]: new HasherAdapter().hash(script).value },
         },
       });
 
@@ -244,12 +240,12 @@ describe("removeProjectHooks", () => {
           {
             event: "preToolUse",
             command: first.command,
-            digest: createHash("md5").update(JSON.stringify(first)).digest("hex"),
+            digest: new HasherAdapter().hash(JSON.stringify(first)).value,
           },
           {
             event: "postToolUse",
             command: second.command,
-            digest: createHash("md5").update(JSON.stringify(second)).digest("hex"),
+            digest: new HasherAdapter().hash(JSON.stringify(second)).value,
           },
         ],
         scripts: {},

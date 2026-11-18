@@ -1,9 +1,8 @@
-import { createHash } from "node:crypto";
 import type { MarketplaceTrustStore } from "../../../src/contexts/distribution/ports/marketplace-trust-store.js";
 import type { PluginSource } from "../../../src/shared/domain/source.js";
 import { serializePluginSource } from "../../../src/shared/domain/source.js";
 
-/** Pure in-memory MarketplaceTrustStore, one set per project, keyed by MD5 of the canonical serialized source. */
+/** Pure in-memory MarketplaceTrustStore, one set per project, keyed by the canonical serialized source. */
 export class InMemoryMarketplaceTrustStore implements MarketplaceTrustStore {
   private readonly trusted = new Set<string>();
 
@@ -19,6 +18,6 @@ export class InMemoryMarketplaceTrustStore implements MarketplaceTrustStore {
     const serialized = serializePluginSource(source);
     const sortedKeys = Object.keys(serialized).sort();
     const canonical = JSON.stringify(serialized, sortedKeys);
-    return `${projectRoot}:${createHash("md5").update(canonical, "utf-8").digest("hex")}`;
+    return `${projectRoot}:${canonical}`;
   }
 }

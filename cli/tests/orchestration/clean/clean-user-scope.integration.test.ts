@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -11,6 +10,7 @@ import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugi
 import { UserSourceReferencesAdapter } from "../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
 import type { MarketplaceScope } from "../../../src/shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
@@ -492,9 +492,7 @@ describe("clean --scope user", () => {
       false,
       "user"
     )
-      .withFiles(
-        new Map([["shared/skills/x.md", createHash("md5").update("shared bytes").digest("hex")]])
-      )
+      .withFiles(new Map([["shared/skills/x.md", new HasherAdapter().hash("shared bytes").value]]))
       .withDependents(["/B"]);
     machine.addPlugin(TOOL.cursor, shared);
     machine.addPlugin(

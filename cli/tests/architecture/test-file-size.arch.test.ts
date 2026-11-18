@@ -14,7 +14,7 @@ const MAX_LINES = 800;
 const BASELINE: Readonly<Record<string, number>> = {
   "tests/orchestration/clean/clean-native-cache.integration.test.ts": 996,
   "tests/orchestration/clean/clean-use-case.unit.test.ts": 3093,
-  "tests/orchestration/clean/clean-user-scope.integration.test.ts": 1874,
+  "tests/orchestration/clean/clean-user-scope.integration.test.ts": 1872,
   "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts": 1027,
   "tests/orchestration/sync/marketplace-sync-settings-migration.integration.test.ts": 1479,
   "tests/contexts/installation/application/plugin/add-plugin.unit.test.ts": 1096,

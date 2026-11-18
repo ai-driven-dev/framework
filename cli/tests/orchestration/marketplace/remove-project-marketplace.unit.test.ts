@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../src/contexts/distribution/contract/marketplace.js";
@@ -378,7 +377,7 @@ describe("which plugins a removal orphans", () => {
           {
             event: "preToolUse",
             command,
-            digest: createHash("md5").update(JSON.stringify(entry)).digest("hex"),
+            digest: new HasherAdapter().hash(JSON.stringify(entry)).value,
           },
         ],
         scripts: {},

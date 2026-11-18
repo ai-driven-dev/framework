@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -8,6 +7,7 @@ import {
   type PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
+import { HasherAdapter } from "../../../../../src/shared/infrastructure/hasher-adapter.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
@@ -187,7 +187,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
     const machine = manifest();
     machine.addPlugin(
       cursor,
-      plugin({ files: { [relative]: createHash("md5").update(content).digest("hex") } })
+      plugin({ files: { [relative]: new HasherAdapter().hash(content).value } })
     );
     const fs = new InMemoryFileAdapter();
     const userPath = join(homedir(), ".cursor", "plugins", "local", relative);
@@ -217,7 +217,7 @@ describe("plugin removal selects the recorded owner, name and tool", () => {
 
   it("refuses a partial user removal before deleting safe files when another tracked path escapes", async () => {
     const content = "installed bytes";
-    const hash = createHash("md5").update(content).digest("hex");
+    const hash = new HasherAdapter().hash(content).value;
     const relative = `${NAME}/owned.md`;
     const machine = manifest();
     machine.addPlugin(cursor, plugin({ files: { [relative]: hash, "../outside.md": hash } }));

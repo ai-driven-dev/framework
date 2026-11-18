@@ -1,8 +1,8 @@
-import { createHash } from "node:crypto";
 import { join, posix, resolve } from "node:path";
 import type { FileMerger } from "../../../src/contexts/installation/ports/file-merger.js";
-import { FileHash } from "../../../src/shared/domain/file.js";
+import type { FileHash } from "../../../src/shared/domain/file.js";
 import { type MergeStrategy, mergeIntoJsonFile } from "../../../src/shared/domain/merge.js";
+import { HasherAdapter } from "../../../src/shared/infrastructure/hasher-adapter.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../../src/shared/ports/file-writer.js";
 import type { Hasher } from "../../../src/shared/ports/hasher.js";
@@ -29,7 +29,7 @@ export class InMemoryFileAdapter implements FileReader, FileWriter, FileMerger {
   private missingRealpathRejects = false;
 
   constructor(seed: Record<string, string> = {}, hasher?: Hasher) {
-    this.hasher = hasher ?? new DefaultHasher();
+    this.hasher = hasher ?? new HasherAdapter();
     for (const [path, content] of Object.entries(seed)) {
       this.setFile(path, content);
     }
@@ -229,11 +229,4 @@ function enoent(syscall: string, path: string): Error {
   return Object.assign(new Error(`ENOENT: no such file or directory, ${syscall} '${path}'`), {
     code: "ENOENT",
   });
-}
-
-class DefaultHasher implements Hasher {
-  hash(content: string): FileHash {
-    const hex = createHash("md5").update(content, "utf-8").digest("hex");
-    return new FileHash(hex);
-  }
 }
