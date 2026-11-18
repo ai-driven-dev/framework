@@ -1,5 +1,5 @@
 /**
- * A context's domain does no I/O (`0-hexagonal.md`), and the file ports are how I/O reaches
+ * A context's domain does no I/O (`cli-architecture.md`), and the file ports are how I/O reaches
  * it: a domain file that names `shared/ports/file-reader` or `file-writer` is handed the disk.
  * `domain/ports/` declares interfaces and may name them.
  *

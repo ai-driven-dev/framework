@@ -77,7 +77,7 @@
                 "patterns": [
                   {
                     "group": ["**/contexts/**", "**/presentation/**", "**/infrastructure/**"],
-                    "message": "shared/domain holds pure rules and imports no context, no layer above it and no adapter: see 0-contexts.md"
+                    "message": "shared/domain holds pure rules and imports no context, no layer above it and no adapter: see cli-architecture.md"
                   },
                   {
                     "group": ["**/composition/**"],
@@ -250,7 +250,7 @@
                 "patterns": [
                   {
                     "group": ["**/contexts/**", "**/presentation/**", "**/infrastructure/**"],
-                    "message": "shared/ports declares an interface and imports no context, no layer above it and no adapter: see 0-contexts.md"
+                    "message": "shared/ports declares an interface and imports no context, no layer above it and no adapter: see cli-architecture.md"
                   },
                   {
                     "group": ["**/composition/**"],

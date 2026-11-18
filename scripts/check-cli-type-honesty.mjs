@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Enforces the one invariant of cli/.claude/rules/00-architecture/0-hexagonal.md that a
+// Enforces the one invariant of cli/.claude/rules/01-standards/1-type-honesty.md that a
 // linter cannot express: no value is widened away from the type it claims to hold.
 // Dependency direction belongs to biome, whose per-layer `noRestrictedImports` overrides
 // match the resolved path — a hand-picked prefix here goes stale the moment a layer moves.
@@ -135,7 +135,7 @@ for (const cliPath of CASTS_ALLOWED.keys()) {
 
 if (breaches.length > 0) {
   console.error(`cli type-honesty breaches:\n${breaches.join("\n")}`);
-  console.error("Contract: cli/.claude/rules/00-architecture/0-hexagonal.md");
+  console.error("Contract: cli/.claude/rules/01-standards/1-type-honesty.md");
   process.exit(1);
 }
 

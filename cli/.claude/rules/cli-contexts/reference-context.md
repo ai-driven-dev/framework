@@ -31,7 +31,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 ## 3. Command template
 
 - One file, one class named by a verb and its intent, a public `execute` taking an `XCommand` or nothing and returning an `XResult` declared in the same file: `src/contexts/auth/application/log-out.ts`, and `log-in.ts` for one with input.
-- A command orchestrates, the aggregate decides, errors follow `0-error-handling.md`, the constructor takes at most 5 dependencies (`orchestrator-deps.arch.test.ts`).
+- A command orchestrates, the aggregate decides, errors follow `cli-architecture.md`, the constructor takes at most 5 dependencies (`orchestrator-deps.arch.test.ts`).
 - A command takes no `process`: an environment value comes through `shared/ports/environment.ts`, `noRestrictedGlobals` in `biome.json`.
 
 ## 4. Domain template
@@ -63,7 +63,7 @@ src/contexts/<ctx>/                 tests mirror it in tests/contexts/<ctx>/, pl
 
 ## 8. Naming, tests and mutation
 
-- A port file is its interface and an adapter is `*Adapter` in `infrastructure/`; other names follow `1-conventions.md` and tests follow `cli-tests.md`.
+- A port file is its interface and an adapter is `*Adapter` in `infrastructure/`; other names follow `cli-architecture.md` and tests follow `cli-tests.md`.
 - A migration PR delivers the test challenge pass, `.claude/skills/test/references/test-challenge-pass.md`, and a planted tree for each new rule, absent case included.
 - A context has its own scope and floor in `mutation-scopes.json` and a `test:mutation:<scope>` script, `mutation-covers-source.arch.test.ts`; floors and runs are in `aidd_docs/memory/testing.md`.
 
