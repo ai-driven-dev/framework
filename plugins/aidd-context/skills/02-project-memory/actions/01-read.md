@@ -18,7 +18,8 @@ The project root, and the bank when one exists.
 8. Head each bank change with its number and file, then a `diff` block: `- ` lines quoting the bank lines exactly, `+ ` lines with the new text. Its reason follows in a few words.
 9. For a file to remove, the block quotes every line of it.
 10. Put the questions the code cannot answer apart, after the items, as `Q1`, `Q2`.
-11. End with how to answer: `ok`, or `not 2`.
+11. If choices remain, end with how to answer them: `ok` approves undecided numbered items, or `not 2` rejects item 2. Ask for a reply only for those remaining choices.
+12. When all choices are settled, continue to [write](02-write.md) without waiting for another reply.
 
 ## Output
 
@@ -27,5 +28,8 @@ The list of changes, and the person's answers.
 ## Rules
 
 - Write no file.
-- Only what the code cannot say becomes a question, at most eight.
-- Read `ok` as yes to every numbered item, and `not 2` as no to that one; `ok` never answers a question, ask it again.
+- Use the person's exact words for choices and answers; never invent an answer.
+- Ask only unresolved material choices the repo cannot answer, at most eight.
+- Reuse an explicit answer to the same proposed edit; do not ask it again. A prior no remains no unless the person explicitly reverses it.
+- General approval before a proposal answers no unknown choice and does not approve a replacement or removal.
+- Read `ok` as yes to each undecided numbered item, and `not 2` as no to item 2; `ok` never answers a question.

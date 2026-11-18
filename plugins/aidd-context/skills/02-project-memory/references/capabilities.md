@@ -22,11 +22,12 @@
 | `ui` | `ui.md` | front-end rules, routing, accessibility | a web frontend framework (not React Native), or a `components/`, `pages/` or `views/` dir | no | `design.md`, `forms.md`, `navigation.md` |
 | `mobile` | `mobile.md` | mobile app: platform, native access, release | an `ios/` or `android/` dir, React Native, or Flutter | no | - |
 | `desktop` | `desktop.md` | desktop app: framework, native access, packaging | Electron, Tauri, or a native desktop toolkit | no | - |
+| `browsing` | `browsing.md` | browser setup and project browsing rules | a browser configured for project work, or the user's confirmed browser choice; a UI alone does not count | no | - |
 
 | Case | Do |
 | --- | --- |
 | A template line in `{{…}}` | a question the writer answers; with no answer it is dropped |
 | A conditional row with no answer at all | writes no file; an always row is written whatever |
 
-- Detect from the table and a concrete repo fact, never the domain.
+- Detect from the table and a concrete repo fact, never the domain; for browsing, a confirmed browser choice also qualifies.
 - A file present means its capability held when the bank was written.

@@ -68,6 +68,8 @@ Config: `release-please-config.json`, eleven packages. Manifest: `.release-pleas
 
 `make reload` installs every plugin into the installed hosts with `aidd setup --global` from this checkout, then syncs generic delegation guidance; details in `scripts/dev-sync.sh`.
 
+When changing shared instructions, align `AGENTS.md`, `CLAUDE.md`, the template and global copies, preserving project memory and personal rules. `make reload` updates only the managed Agents section of global instructions.
+
 ## Monitoring
 
 None. Failures are a red run; `back-merge.yml` opens an issue when it cannot push.

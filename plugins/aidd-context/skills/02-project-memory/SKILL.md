@@ -12,13 +12,15 @@ argument-hint: setup | refresh
 flowchart LR
   request((request)) --> read["read<br>actions/01-read.md"]
   read -->|"nothing to change"| done((done))
-  read -->|"one message"| user((user answers))
-  user --> write["write<br>actions/02-write.md"]
+  read -->|"choices remain"| user((user answers))
+  read -->|"choices settled"| write
+  user --> write
+  write["write<br>actions/02-write.md"]
   write --> wire["wire<br>actions/03-wire.md"]
   wire --> done
 ```
 
-- Each box: read its action file, then follow it.
+- Each box: read its action file, then follow it. Ask and wait only when choices remain unresolved.
 
 ## Transversal rules
 

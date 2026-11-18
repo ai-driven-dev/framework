@@ -132,6 +132,7 @@ test("scaffold lays out an empty project: on-demand folders, the docs README, ev
       assert.match(result.stdout, new RegExp(`^- ${MEMORY}/${file.replace(".", "\\.")}$`, "mu"), file);
     }
     assert.equal(exists(root, `${MEMORY}/backlog.md`), false, "an unnamed conditional file is not created");
+    assert.equal(exists(root, `${MEMORY}/browsing.md`), false, "browsing is not created without an explicit choice");
   });
 });
 
@@ -141,6 +142,8 @@ test("scaffold keeps what the team has: a file, one kept on demand, an accepted 
     [`${MEMORY}/internal/vcs.md`]: "# VCS\n",
     [`${MEMORY}/integration.md`]: "# Integrations\n",
     [`${MEMORY}/external/infra.md`]: "# Infra\n",
+    [`${MEMORY}/browsing.md`]: "# Existing browser rules\n",
+    [`${MEMORY}/internal/browsing.md`]: "# Existing on-demand browser rules\n",
     "aidd_docs/README.md": "# Team README\n",
   };
   within(files, (root) => {
@@ -158,6 +161,16 @@ test("scaffold run twice creates nothing the second time and says so", () => {
     const again = run(root, "scaffold");
     assert.equal(again.status, 0, again.stderr);
     assert.equal(again.stdout, "created: nothing\n");
+  });
+});
+
+test("scaffold creates explicitly requested browsing memory and managed wiring includes it", () => {
+  within({ "CLAUDE.md": `${OPEN}\n${CLOSE}\n` }, (root) => {
+    const result = run(root, "scaffold", "browsing.md");
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(read(root, `${MEMORY}/browsing.md`), template("memory/browsing.md"));
+    assert.deepEqual(require(HOOK).sync(root), []);
+    assert.match(read(root, "CLAUDE.md"), /^@aidd_docs\/memory\/browsing\.md$/mu);
   });
 });
 

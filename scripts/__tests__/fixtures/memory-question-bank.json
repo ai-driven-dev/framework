@@ -168,5 +168,10 @@
   {"id":"GL3","capability":"root","file":"GUIDELINES.md","heading":null,"question":"drift recovery","from":"GUIDELINES.md","status":"dropped","reason":"generic drift recovery"},
   {"id":"CO1","capability":"root","file":"CONTRIBUTING.md","heading":null,"question":"house conventions","from":"CONTRIBUTING.md","status":"dropped","reason":"no plugin reads CONTRIBUTING.md; memory-rules.md holds the conventions"},
   {"id":"MR1","capability":"root","file":"README.md","heading":null,"question":"load tiers, file index, maintenance rules","from":"memory/README.md","status":"dropped","reason":"load tiers and file index are the README template and the memory hook"},
-  {"id":"AG1","capability":"root","file":"AGENTS.md","heading":null,"question":"-","from":"AGENTS.md","status":"dropped","reason":"the AGENTS template is identical and asks no slot"}
+  {"id":"AG1","capability":"root","file":"AGENTS.md","heading":null,"question":"-","from":"AGENTS.md","status":"dropped","reason":"the AGENTS template is identical and asks no slot"},
+  {"id":"BR1","capability":"browsing","file":"browsing.md","heading":"Tool setup","question":"Which browser tool or MCP is configured for project work, how is it invoked, and which mode does it use?","from":"browsing.md","status":"slot"},
+  {"id":"BR2","capability":"browsing","file":"browsing.md","heading":"Tool setup","question":"Which browser profile or account should project work use?","from":"browsing.md","status":"slot"},
+  {"id":"BR3","capability":"browsing","file":"browsing.md","heading":"Links","question":"Should links open in the integrated or external browser?","from":"browsing.md","status":"slot"},
+  {"id":"BR4","capability":"browsing","file":"browsing.md","heading":"Links","question":"What starting URL or discovery path does project work use?","from":"browsing.md","status":"slot"},
+  {"id":"BR5","capability":"browsing","file":"browsing.md","heading":"Authentication","question":"How is authenticated access reached without recording secrets?","from":"browsing.md","status":"slot"}
 ]

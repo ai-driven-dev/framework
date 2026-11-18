@@ -25,4 +25,5 @@ The written bank.
 - Fill a created file's template with the list's lines, dropping an empty section and an unanswered question.
 - A file the team keeps in `internal/` or `external/`, or under an Accepted name, is written there.
 - Replace or remove a bank line only on a yes; a move out of the bank counts as a removal.
-- A caller's instruction may answer for the person on an addition, never on a replace or a removal.
+- A caller's general instruction may answer for the person on an addition, but does not approve a replacement or removal; an explicit yes to that same proposed change does.
+- Keep existing browsing memory when browser configuration is missing or unavailable; that alone is not approval to remove or replace it.

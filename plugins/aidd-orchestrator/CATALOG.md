@@ -25,10 +25,10 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 
 | File | Description |
 |------|---|
-| [executor.md](agents/executor.md) | `Implements assigned work within defined scope. Use to write or revise code and documentation, verify the result, and repair failures against the requested outcome.` |
-| [explorer.md](agents/explorer.md) | `Explores a codebase to answer scoped questions. Use to locate files and symbols, trace execution or dependencies, and return relevant code with an explanation before changes.` |
-| [reviewer.md](agents/reviewer.md) | `Reviews the quality and coherence of finished work. Use to find concrete defects, contradictions, duplication, and unnecessary complexity against project conventions and the real need.` |
-| [validator.md](agents/validator.md) | `Validates that delivered work satisfies the request and acceptance criteria. Use to independently confirm completion and explain failures or missing verification.` |
+| [executor.md](agents/executor.md) | `Implements a provided plan within a defined scope. Use to change code or documentation, verify the result, and repair failures.` |
+| [explorer.md](agents/explorer.md) | `Investigates scoped questions across code, documentation, services, or the web. Use to distill substantial sources into concise, sourced findings.` |
+| [reviewer.md](agents/reviewer.md) | `Reviews implemented work after a plan or when an executor raises a concern. Use to find defects, contradictions, duplication, and needless complexity.` |
+| [validator.md](agents/validator.md) | `Independently verifies an outcome or configuration. Use to confirm completed changes, external services, or data state and report evidence or failures.` |
 
 ### `skills`
 

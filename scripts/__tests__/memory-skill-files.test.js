@@ -11,7 +11,7 @@ const { RULES } = require(path.join(PLUGIN, "skills/02-project-memory/scripts/li
 
 const CAPABILITIES = [
   ...Array(6).fill("core"),
-  ...["ecosystem", "backlog", "deployment", "api", "cli", "package", "auth", "database", "data", "messaging", "realtime", "ui", "mobile", "desktop"],
+  ...["ecosystem", "backlog", "deployment", "api", "cli", "package", "auth", "database", "data", "messaging", "realtime", "ui", "mobile", "desktop", "browsing"],
 ];
 const HEADER = ["Capability", "File", "Meaning", "Detected when", "Always", "Accepted names"];
 const { UNFINISHED } = require("./helpers/unfinished-marker.js");
