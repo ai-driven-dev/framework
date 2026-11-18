@@ -132,9 +132,9 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
   });
 
   it("is undefined when only part of the marker matches", () => {
-    expect(parseBuiltMarketplaceDirAtAnyRoot("/p/.aidd/cache/other/mkt/claude", "linux")).toBe(
-      undefined
-    );
+    expect(
+      parseBuiltMarketplaceDirAtAnyRoot("/p/.aidd/cache/other/mkt/claude", "linux")
+    ).toBeUndefined();
   });
 
   it("matches the marker segment by segment, never as one string", () => {
@@ -153,7 +153,7 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
         "/other-project/.aidd/cache/built/aidd-framework/claude",
         "linux"
       )
-    ).toEqual({
+    ).toStrictEqual({
       projectRoot: "/other-project",
       marketplaceName: "aidd-framework",
       target: "claude",
@@ -166,7 +166,7 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
         "/work/repos/other-project/.aidd/cache/built/aidd-framework/codex",
         "linux"
       )
-    ).toEqual({
+    ).toStrictEqual({
       projectRoot: "/work/repos/other-project",
       marketplaceName: "aidd-framework",
       target: "codex",
@@ -194,7 +194,7 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
         "C:\\other-project\\.AIDD\\CACHE\\BUILT\\aidd-framework\\claude",
         "win32"
       )
-    ).toEqual({
+    ).toStrictEqual({
       projectRoot: "C:\\other-project",
       marketplaceName: "aidd-framework",
       target: "claude",
@@ -209,7 +209,7 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
         "C:\\proj\\.aidd\\cache\\built\\aidd-framework\\claude",
         "win32"
       )
-    ).toEqual({
+    ).toStrictEqual({
       projectRoot: "C:\\proj",
       marketplaceName: "aidd-framework",
       target: "claude",
@@ -222,7 +222,7 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
         "C:\\work\\repos\\other-project\\.aidd\\cache\\built\\aidd-framework\\codex",
         "win32"
       )
-    ).toEqual({
+    ).toStrictEqual({
       projectRoot: "C:\\work\\repos\\other-project",
       marketplaceName: "aidd-framework",
       target: "codex",
@@ -247,7 +247,7 @@ describe("parseBuiltMarketplaceDirAtAnyRoot()", () => {
 
       expect(
         parseOnWin32Host("C:\\proj\\.aidd\\cache\\built\\aidd-framework\\claude", "win32")
-      ).toEqual({
+      ).toStrictEqual({
         projectRoot: "C:\\proj",
         marketplaceName: "aidd-framework",
         target: "claude",
