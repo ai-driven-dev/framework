@@ -175,7 +175,7 @@ Brainstorm, challenge, fact-check
 <a href="plugins/aidd-orchestrator/README.md">
 <img align="right" alt="stable" src="https://img.shields.io/badge/stable-2da44e?style=flat-square" />
 <h3>🎼 aidd-orchestrator</h3>
-3 skills · 4 agents · 1 hook<br />
+3 skills · 4 agents<br />
 Feature flow, issue-to-PR automation, backlog
 </a>
 </td>

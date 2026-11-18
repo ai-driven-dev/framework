@@ -36,8 +36,6 @@ sequenceDiagram
 
 Each step is optional: the main session calls only the agents the task needs, and repeats execution when validation or review finds a gap.
 
-Explorer and executor start without project instructions on supported hosts, so include essential constraints in their brief. For the optional Claude Code large-read guard, see the [orchestrator configuration](../plugins/aidd-orchestrator/README.md#large-reads-in-claude-code).
-
 Only `/aidd-orchestrator:01-sdlc` names an agent, by its role (`validator`), so a run delegates the same way every time; other workflows ask for a responsibility. The host resolves the role to its install, `aidd-orchestrator:validator` from the Claude Code marketplace or `aidd-orchestrator-validator` in a project distribution, or gives the brief to its default subagent when the agent is not installed.
 
 ## 🧭 Which agent for which task

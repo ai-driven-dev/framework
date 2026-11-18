@@ -292,17 +292,4 @@ describe("buildClaudeFlatContract()", () => {
       ].join("\n")
     );
   });
-
-  it.each(["true", "false"])("preserves omitClaudeMd: %s in flat agent builds", (value) => {
-    const transform = supported(buildClaudeFlatContract().artifacts.agents).transform;
-    const source = AGENT_SOURCE.replace("model: opus", `model: opus\nomitClaudeMd: ${value}`);
-
-    expect(transform?.(source, "aidd-dev", "planner.md")).toContain(`omitClaudeMd: ${value}`);
-  });
-
-  it("leaves omitClaudeMd absent in flat agent builds when the source does not set it", () => {
-    const transform = supported(buildClaudeFlatContract().artifacts.agents).transform;
-
-    expect(transform?.(AGENT_SOURCE, "aidd-dev", "planner.md")).not.toContain("omitClaudeMd");
-  });
 });

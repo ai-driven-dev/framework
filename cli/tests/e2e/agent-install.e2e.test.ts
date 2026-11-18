@@ -8,28 +8,16 @@ import { createTestEnv, runCli } from "./helpers.js";
 
 const PLUGIN = "aidd-orchestrator";
 const SOURCE_DIR = join(REPOSITORY_ROOT, "plugins", PLUGIN, "agents");
-const isLightContextAgent = (id: string) => /-(explorer|executor)$/.test(id);
 
 /** Where each host loads a project's agents, and the frontmatter it reads beyond the description. */
 const HOSTS = [
-  {
-    host: "claude",
-    dir: ".claude/agents",
-    ext: ".md",
-    extra: (id: string) => ({
-      name: id,
-      ...(isLightContextAgent(id) ? { omitClaudeMd: true } : {}),
-    }),
-  },
+  { host: "claude", dir: ".claude/agents", ext: ".md", extra: (id: string) => ({ name: id }) },
   { host: "codex", dir: ".codex/agents", ext: ".toml", extra: (id: string) => ({ name: id }) },
   {
     host: "copilot",
     dir: ".github/agents",
     ext: ".agent.md",
-    extra: (id: string) => ({
-      name: id,
-      "include-custom-instructions": !isLightContextAgent(id),
-    }),
+    extra: (id: string) => ({ name: id, "include-custom-instructions": true }),
   },
   { host: "cursor", dir: ".cursor/agents", ext: ".md", extra: (id: string) => ({ name: id }) },
   { host: "opencode", dir: ".opencode/agents", ext: ".md", extra: () => ({ mode: "subagent" }) },
@@ -71,42 +59,6 @@ describe.concurrent("E2E: the shipped agents, installed into each host", () => {
             ...extra(id),
           });
           expect(body, `${host} ${file}`).toBe(source.body);
-        }
-      } finally {
-        await cleanup();
-      }
-    }
-  );
-
-  it.each(["claude", "copilot"])(
-    "%s keeps the two agents' context settings in the marketplace build",
-    async (host) => {
-      const { tempDir, projectDir, fakeHome, cleanup } = await createTestEnv(
-        `agent-plugin-${host}`
-      );
-      try {
-        const outDir = join(tempDir, "dist");
-        const build = await runCli(
-          ["translate", REPOSITORY_ROOT, "--to", host, "--out", outDir],
-          projectDir,
-          fakeHome
-        );
-        expect(build.exitCode, build.stderr).toBe(0);
-
-        for (const role of ["explorer", "executor", "reviewer", "validator"]) {
-          const content = await readFile(
-            join(outDir, "plugins", PLUGIN, "agents", `${role}.md`),
-            "utf8"
-          );
-          const { frontmatter } = parseFrontmatter(content);
-          const lightContext = role === "explorer" || role === "executor";
-          if (host === "claude") {
-            expect(frontmatter.omitClaudeMd, role).toBe(lightContext ? true : undefined);
-            expect(frontmatter).not.toHaveProperty("include-custom-instructions");
-          } else {
-            expect(frontmatter["include-custom-instructions"], role).toBe(!lightContext);
-            expect(frontmatter).not.toHaveProperty("omitClaudeMd");
-          }
         }
       } finally {
         await cleanup();

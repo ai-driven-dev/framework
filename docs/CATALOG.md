@@ -126,12 +126,6 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 | `reviewer` | Reviews the quality and coherence of finished work |
 | `validator` | Validates that delivered work satisfies the request and acceptance criteria |
 
-**Hooks**
-
-| Event | Runs |
-| --- | --- |
-| `PreToolUse` | `hooks/large-read.cjs` |
-
 <!--extras-aidd-orchestrator:end-->
 
 ## 🎨 aidd-ui
