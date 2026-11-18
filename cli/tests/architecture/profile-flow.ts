@@ -124,8 +124,10 @@ export function wholeProfileFlows(
   files: readonly string[],
   exemptCallees: readonly string[]
 ): string[] {
+  // The compiler names its files with forward slashes, a Windows cwd included.
+  const root = cwd.replaceAll("\\", "/");
   return withRealProject(cwd, (project) =>
-    flowsIn(project, profileModule, files, exemptCallees, (path) => `${cwd}/${path}`)
+    flowsIn(project, profileModule, files, exemptCallees, (path) => `${root}/${path}`)
   );
 }
 
