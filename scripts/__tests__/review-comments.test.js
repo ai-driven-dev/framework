@@ -137,6 +137,18 @@ test("a waiting thread is recognized by its hidden kind, whatever the visible wo
   assert.deepEqual(run(input({ threads: [visibleOnly] })).threads, [{ threadId: "t1", reply: posted("The code explains this. (src/code.js)", "answer"), resolve: true }]);
 });
 
+test("the summary counts decisions and speaks the labels the model supplies", (t) => {
+  const run = runner(t);
+  const decided = { threads: [thread("t1"), thread("t2")], classifications: [classification(), classification("todo", { threadId: "t2", text: "Renommer le titre." })], decisions: [{ threadId: "t1", text: "Décision : archiver.", source: "user message" }] };
+  assert.match(run(input(decided)).summary.body, /^## Review comments\n[\s\S]*Done: 0\. Answered: 0\. Decided: 1\.[\s\S]*### To do\n\n- Renommer le titre\. \(\[thread\]/);
+  const labels = { title: "Commentaires de review", done: "Faits", answered: "Répondus", decided: "Décidés", userCall: "À trancher", todo: "À faire", learnings: "À retenir", thread: "fil" };
+  const body = run(input({ ...decided, labels, learnings: [{ text: "Garder les fils courts.", url: "https://example.com/t1" }] })).summary.body;
+  assert.match(body, /^## Commentaires de review\n[\s\S]*Faits: 0\. Répondus: 0\. Décidés: 1\.[\s\S]*### À faire\n\n- Renommer le titre\. \(\[fil\]\(https:\/\/example\.com\/t2\)\)[\s\S]*### À retenir\n/);
+  assert.doesNotMatch(body, /Done|Answered|To do|Learnings|\[thread\]/);
+  assert.equal(run(input({ labels: { heading: "x" } })).code, 1);
+  assert.equal(run(input({ labels: { todo: "" } })).code, 1);
+});
+
 test("an open question gets no fabricated options", (t) => {
   const result = runner(t)(input({ classifications: [classification("user-call", { text: "What should happen?" })] }));
   assert.equal(result.threads[0].reply, posted("What should happen?", "user-call"));

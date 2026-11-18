@@ -9,7 +9,7 @@ const SUMMARY_MARKER = "<!-- aidd-answer-comments-summary -->";
 const STATE_OPEN = "<!-- aidd-answer-comments-state ";
 const STATE_CLOSE = " -->";
 const STATE_VERSION = 1;
-const SUMMARY_HEADING = "## Review comments";
+const LEGACY_HEADING = "## Review comments";
 const kindMarker = (kind) => `<!-- aidd-answer-comments:${kind} -->`;
 const NEW_SUMMARY = "new";
 const SHORT_SHA_LENGTH = 9;
@@ -22,7 +22,9 @@ const CLASSIFIED_KINDS = ["done", "answer", "user-call", "todo"];
 const STORED_KINDS = [...CLASSIFIED_KINDS, DECIDED];
 const CITED_KINDS = ["done", "answer"];
 const SOURCED_KINDS = [...CITED_KINDS, DECIDED];
-const PENDING_SECTIONS = [["user-call", "FAQ: your call"], ["todo", "To do"]];
+const PENDING_SECTIONS = [["user-call", "userCall"], ["todo", "todo"]];
+// Visible summary words; the model replaces any of them in the language it writes in.
+const DEFAULT_LABELS = { title: "Review comments", done: "Done", answered: "Answered", decided: "Decided", userCall: "FAQ: your call", todo: "To do", learnings: "Learnings to keep", thread: "thread" };
 
 // Input checks: each returns its value or throws the refusal.
 const fail = (message) => { throw new Error(message); };
@@ -80,6 +82,15 @@ const learnings = (items) => array(items, "learnings").map((item) => {
 // A resolved thread the current account never replied in belongs to someone else's history.
 const outOfScope = (thread, account) => thread.resolved && !thread.replyAuthors.includes(account);
 
+function labelsOf(value) {
+  object(value, "labels");
+  for (const [key, label] of Object.entries(value)) {
+    if (!(key in DEFAULT_LABELS)) fail(`Unknown label ${key}.`);
+    line(label, `labels.${key}`);
+  }
+  return { ...DEFAULT_LABELS, ...value };
+}
+
 function readInput(input) {
   object(input, "input");
   const account = line(input.account, "account");
@@ -97,7 +108,7 @@ function readInput(input) {
     line(item.source, "decision.source");
     if (!threads.has(item.threadId)) fail(`Unknown decision thread ${item.threadId}.`);
   }
-  return { account, threads, classifications, decisions, learnings: learnings(input.learnings ?? []) };
+  return { account, threads, classifications, decisions, learnings: learnings(input.learnings ?? []), labels: labelsOf(input.labels ?? {}) };
 }
 
 // Summary targeting: only the current account's comments are candidates.
@@ -106,7 +117,7 @@ function selectSummary(input) {
   for (const item of summaries) { line(item.author, "summary.author"); text(item.body, "summary.body"); }
   const owned = summaries.filter((item) => item.author === input.account);
   const marked = owned.filter((item) => item.body.includes(SUMMARY_MARKER));
-  const legacy = owned.filter((item) => !item.body.includes(SUMMARY_MARKER) && item.body.startsWith(SUMMARY_HEADING));
+  const legacy = owned.filter((item) => !item.body.includes(SUMMARY_MARKER) && item.body.startsWith(LEGACY_HEADING));
   if (input.summaryChoice !== undefined) return chosenSummary(line(input.summaryChoice, "summaryChoice"), marked, legacy);
   if (marked.length === 1) return { status: "ready", target: marked[0] };
   if (marked.length) return { status: "needs-choice", candidates: marked.map(({ id }) => id), allowNew: false };
@@ -192,25 +203,26 @@ function planThreads(review, priorEntries) {
 }
 
 // Rendering: the visible summary, then its hidden state for the next run.
-function countsLine(values) {
+function countsLine(values, labels) {
   const done = values.filter((item) => item.kind === "done");
   const shas = [...new Set(done.map(shortSource))];
-  const answered = values.filter((item) => item.kind === "answer").length;
-  return `Done: ${done.length}${shas.length ? ` (${shas.join(", ")})` : ""}. Answered: ${answered}.`;
+  const count = (kind) => values.filter((item) => item.kind === kind).length;
+  return `${labels.done}: ${done.length}${shas.length ? ` (${shas.join(", ")})` : ""}. ${labels.answered}: ${count("answer")}. ${labels.decided}: ${count(DECIDED)}.`;
 }
 
-function pendingSection(kind, heading, pending) {
+function pendingSection(kind, heading, pending, link) {
   const items = pending.filter((item) => item.kind === kind);
   if (!items.length) return [];
   const bullet = (item, i) => kind === "user-call" ? `${i + 1}. **${flatten(item.text)}**` : `- ${flatten(item.text)}`;
-  return ["", `### ${heading}`, "", ...items.map((item, i) => `${bullet(item, i)} ([thread](${item.url}))`)];
+  return ["", `### ${heading}`, "", ...items.map((item, i) => `${bullet(item, i)} ${link(item.url)}`)];
 }
 
-function render(entries, lessons, pending) {
+function render(entries, lessons, pending, labels) {
   const values = [...entries.values()].sort((a, b) => a.threadId.localeCompare(b.threadId));
-  const lines = [SUMMARY_HEADING, "", SUMMARY_MARKER, "", countsLine(values)];
-  for (const [kind, heading] of PENDING_SECTIONS) lines.push(...pendingSection(kind, heading, pending));
-  if (lessons.length) lines.push("", "### Learnings to keep", "", ...lessons.map((item) => `- ${item.text} ([thread](${item.url}))`));
+  const link = (url) => `([${labels.thread}](${url}))`;
+  const lines = [`## ${labels.title}`, "", SUMMARY_MARKER, "", countsLine(values, labels)];
+  for (const [kind, key] of PENDING_SECTIONS) lines.push(...pendingSection(kind, labels[key], pending, link));
+  if (lessons.length) lines.push("", `### ${labels.learnings}`, "", ...lessons.map((item) => `- ${item.text} ${link(item.url)}`));
   const state = JSON.stringify({ version: STATE_VERSION, entries: values, learnings: lessons }).replace(/</g, "\\u003c").replace(/>/g, "\\u003e");
   return `${lines.join("\n")}\n\n${STATE_OPEN}${state}${STATE_CLOSE}`;
 }
@@ -231,7 +243,7 @@ function prepare(input) {
   const lessons = [...new Map([...prior.learnings, ...review.learnings].map((item) => [JSON.stringify(item), item])).values()];
   const isOpen = (item) => review.threads.has(item.threadId) && !review.threads.get(item.threadId).resolved;
   const pending = [...entries.values()].filter((item) => isOpen(item) && PENDING_SECTIONS.some(([kind]) => kind === item.kind));
-  return { threads: operations, pending, summary: planSummary(selection, unknown, render(entries, lessons, pending)), unknown };
+  return { threads: operations, pending, summary: planSummary(selection, unknown, render(entries, lessons, pending, review.labels)), unknown };
 }
 
 function main(argv) {

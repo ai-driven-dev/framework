@@ -17,6 +17,7 @@ node "$script" --input "$review_json"
 | `summaries` | Existing pull or merge request comments as `{id, author, body}`, full bodies. |
 | `summaryChoice` | The comment ID the user chose, or `"new"` to replace a legacy summary. |
 | `learnings` | `{text, url}`, each URL pointing to its thread. |
+| `labels` | The summary's visible words, in the replies' language: any of `title`, `done`, `answered`, `decided`, `userCall`, `todo`, `learnings`, `thread`. English when omitted. |
 
 Only `account` and `threads` are required.
 
