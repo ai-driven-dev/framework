@@ -9,8 +9,8 @@ import {
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../../../helpers/spy-record-rules.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { FakeHostActions } from "../../testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 
 const { claude } = TOOL;

@@ -9,8 +9,8 @@ import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { FakeHostActions } from "../../testing/fake-host-actions.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 import { FakeUserSourceReferences } from "../../testing/fake-user-source-references.js";
 

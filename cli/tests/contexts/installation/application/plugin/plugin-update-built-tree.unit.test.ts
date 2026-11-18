@@ -18,8 +18,8 @@ import {
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
 import { userScopeFileGuard } from "../../../../helpers/user-scope-file-guard.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { FakeHostActions } from "../../testing/fake-host-actions.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 /** The machine-claims answer for a path it judges inside the user directory. */

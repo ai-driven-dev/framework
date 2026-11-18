@@ -1,4 +1,4 @@
-import type { FakeHostActions } from "./fake-host-actions.js";
+import type { FakeHostActions } from "../../../shared/testing/fake-host-actions.js";
 
 /** The source a host selects for a native marketplace, as far as a registration reads it. */
 export type FakeNativeSource =

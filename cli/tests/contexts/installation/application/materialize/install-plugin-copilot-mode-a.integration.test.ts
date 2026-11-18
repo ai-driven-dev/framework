@@ -9,8 +9,8 @@ import { DeterministicHasher } from "../../../../helpers/ports/deterministic-has
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { FakeHostActions } from "../../testing/fake-host-actions.js";
 import { FakeHostMarketplaceSources } from "../../testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";

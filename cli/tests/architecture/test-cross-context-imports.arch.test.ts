@@ -7,7 +7,9 @@
  *
  * Written limits, not caught here: a value alias (`import { X } from "<closed>"; export const H =
  * X`) hands the interior out without a re-export, and `vi.importActual("<closed>")` reaches it
- * without a static import. Neither occurs in the tree today.
+ * without a static import. Function wrappers such as
+ * `tests/shared/testing/registered-manifest-probes.ts` hand out values derived from closed
+ * folders, which the decision on shared test catalogs allows.
  */
 import { describe, expect, it } from "vitest";
 import { INTERNAL_IMPORT, read, resolveImportTarget, tsFilesUnder } from "./helpers.js";
@@ -36,38 +38,18 @@ function foreignInteriorImports(file: string, source: string): string[] {
 
 const INLINE_RE_EXPORT =
   /^export\s+(?:type\s+)?(?:\*|\{[^}]*\})\s*(?:as\s+\w+\s*)?from\s+["']([^"']+)["']/gm;
-const NAMESPACE_IMPORT = /^import\s+\*\s+as\s+(\w+)\s+from\s+["']([^"']+)["']/gm;
-const BARE_RE_EXPORT = /^export\s+(?:type\s+)?\{([^}]*)\};?$/gm;
-
 const reachesClosed = (target: string): boolean =>
   closedFolderOwner(target) !== null || /^tests\/contexts\/[^/]+\/testing\//.test(target);
 
-/** Re-exports of a closed folder or a context kit from a helper or the shared kit: written as
- * `export ... from`, or as `export { ns }` of a namespace imported from one. A named import
- * re-exported bare is biome's `noExportedImports`. */
+/** Re-exports of a closed folder or a context kit from a helper or the shared kit, written as
+ * `export ... from`. An imported name re-exported bare, a namespace included, is biome's
+ * `noExportedImports`. */
 function launderedInteriors(file: string, source: string): string[] {
   if (!/^tests\/(?:helpers|shared)\//.test(file)) return [];
-  const inline = [...source.matchAll(INLINE_RE_EXPORT)]
+  return [...source.matchAll(INLINE_RE_EXPORT)]
     .map((match) => match[1] ?? "")
-    .filter(
-      (specifier) =>
-        specifier.startsWith(".") && reachesClosed(resolveImportTarget(file, specifier))
-    );
-  const namespaces = new Set(
-    [...source.matchAll(NAMESPACE_IMPORT)]
-      .filter(
-        (match) =>
-          (match[2] ?? "").startsWith(".") &&
-          reachesClosed(resolveImportTarget(file, match[2] ?? ""))
-      )
-      .map((match) => match[1] ?? "")
-  );
-  const bare = [...source.matchAll(BARE_RE_EXPORT)]
-    .flatMap((match) =>
-      (match[1] ?? "").split(",").map((part) => (part.trim().split(/\s+as\s+/)[0] ?? "").trim())
-    )
-    .filter((name) => namespaces.has(name));
-  return [...inline, ...bare].map((what) => `${file}: re-exports a closed folder: ${what}`);
+    .filter((specifier) => reachesClosed(resolveImportTarget(file, specifier)))
+    .map((what) => `${file}: re-exports a closed folder: ${what}`);
 }
 
 describe("a test never reaches another context's domain or infrastructure", () => {
@@ -108,7 +90,7 @@ describe("a helper never hands a foreign interior back out", () => {
     expect(files.flatMap((file) => launderedInteriors(file, read(file)))).toEqual([]);
   });
 
-  it("flags an inline and a namespace re-export of a closed folder or a kit", () => {
+  it("flags an inline re-export, written relative or with @/, of a closed folder or a kit", () => {
     const helper = "tests/shared/testing/k.ts";
     const interior = "../../../src/contexts/b/domain/m.js";
     expect(launderedInteriors(helper, `export { f } from "${interior}";`)).toHaveLength(1);
@@ -116,7 +98,7 @@ describe("a helper never hands a foreign interior back out", () => {
       launderedInteriors(helper, `export * from "../../contexts/b/testing/k.js";`)
     ).toHaveLength(1);
     expect(
-      launderedInteriors(helper, `import * as h from "${interior}";\nexport { h };`)
+      launderedInteriors(helper, `export { f } from "@/contexts/b/domain/m.js";`)
     ).toHaveLength(1);
     expect(
       launderedInteriors(helper, `export { f } from "../../../src/contexts/b/ports/m.js";`)

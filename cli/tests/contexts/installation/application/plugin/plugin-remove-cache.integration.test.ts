@@ -12,8 +12,8 @@ import { pluginRemover } from "../../../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
+import { FakeHostActions } from "../../../../shared/testing/fake-host-actions.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
-import { FakeHostActions } from "../../testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../testing/fake-host-plugin-registry.js";
 
 const PROJECT_ROOT = "/test-project";
