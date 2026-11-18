@@ -15,6 +15,7 @@ The pull or merge request and any decisions supplied in the conversation.
    - Summary needs a choice: present its candidates and wait for the user's choice before rerunning with it.
    - Threads are unknown: classify them from their evidence and rerun, leaving unproven ones unknown.
 5. Apply its thread operations, then its summary operation when the summary is ready.
+   - An operation's result is lost: refresh the snapshot before retrying it, since a repeated post duplicates it.
 6. Refresh the snapshot and check the threads and the stored summary against the plan.
    - Mismatch: repeat from step 4 until they match.
 7. Report the pending decisions and changes with their links, and any thread left unknown.
