@@ -33,8 +33,8 @@ paths:
 - E-T8: the generated hooks bridge keeps two property seams no test reads.
 - E-T10: the profile folders keep their `*-paths.ts`, `*-agent.ts` and `build.ts` files.
 - E-T11: each hooks bridge template keeps its own run, stop and answer functions, which differ in bytes.
-- M-T2: the catalog passed to a use case at call time (migration state).
-- Each is in section 9 of `reference-context.md`, with the line it deviates from and when it goes; the ambiguities this context settled are rows T-A1 to T-A14 there, T-A9 having become E-T11.
+- Each E-T exception above is in section 9 of `reference-context.md`, with the line it deviates from and when it goes; the ambiguities this context settled are rows T-A1 to T-A14 there, T-A9 having become E-T11.
+- The catalog reaches a use case in its constructor, never as a method parameter or an options field. Held by `catalog-in-constructor.arch.test.ts`, with an empty baseline.
 
 ## Tests
 

@@ -12,6 +12,11 @@ export function codeOnly(source: string): string {
   return source.replace(COMMENTS, "");
 }
 
+/** The code with each comment blanked in place, so an offset and a line still match the file. */
+export function blankComments(source: string): string {
+  return source.replace(COMMENTS, (comment) => comment.replace(/[^\n]/g, " "));
+}
+
 /**
  * The index of the first character of `text` from `from` on that `isEnd` accepts, given the
  * bracket depth before it, counting every kind and skipping `=>`; the text length when none does.
