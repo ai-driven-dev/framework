@@ -7,7 +7,7 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -29,7 +29,7 @@ function options(aiTools: AiToolId[], ideTools: IdeToolId[]) {
     ideTools,
     force: false,
     version: VERSION,
-    tools: catalogOf(),
+    tools: registeredTools(),
   };
 }
 

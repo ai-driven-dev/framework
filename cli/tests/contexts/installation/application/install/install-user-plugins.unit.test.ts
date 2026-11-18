@@ -9,7 +9,7 @@ import { FileHash, InstallationFile } from "../../../../../src/shared/domain/fil
 import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const HASH = "0".repeat(32);
 
@@ -62,7 +62,7 @@ function run(
   plugins: readonly PluginSourceMatch[],
   toolIds: readonly ToolId[] = [TOOL.claude, TOOL.opencode]
 ) {
-  return useCase.execute({ tools: catalogOf(), projectRoot: "/project", toolIds, plugins });
+  return useCase.execute({ tools: registeredTools(), projectRoot: "/project", toolIds, plugins });
 }
 
 describe("InstallUserPlugins", () => {

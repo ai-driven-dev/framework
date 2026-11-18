@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { InstallAgents } from "../../../../../../src/contexts/installation/application/install/content/install-agents.js";
 import type { ContentSection } from "../../../../../../src/contexts/installation/domain/canon.js";
-import { claude } from "../../../../../../src/contexts/tools/domain/profiles/claude/profile.js";
-import { copilot } from "../../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
 import { GITKEEP_FILE } from "../../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../../helpers/ports/deterministic-hasher.js";
+import { registeredTools, TOOL } from "../../../../../shared/testing/registered-tools.js";
+
+const claude = registeredTools().aiProfile(TOOL.claude);
+const copilot = registeredTools().aiProfile(TOOL.copilot);
 
 const _DOCS_DIR = "aidd_docs";
 

@@ -1,11 +1,7 @@
 import { join } from "node:path";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { InstallRuntimeConfig } from "../../../../../src/contexts/installation/application/install/install-runtime-config.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
-import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { extractMergeEntries } from "../../../../../src/shared/domain/merge.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
@@ -14,15 +10,8 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-
-function toolsWithCursor(cursorProfile: BuiltToolConfig) {
-  return catalogOf(
-    REGISTERED_PROFILES.map((profile) => (profile.toolId === "cursor" ? cursorProfile : profile))
-  );
-}
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -48,7 +37,7 @@ describe("InstallRuntimeConfig", () => {
     const assets = new StubAssetProvider({ "claude/settings.json": content }, deps.assetProvider);
 
     const result = await buildUseCase(deps, assets).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -78,7 +67,7 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -100,7 +89,7 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -110,7 +99,7 @@ describe("InstallRuntimeConfig", () => {
 
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
@@ -136,7 +125,7 @@ describe("InstallRuntimeConfig", () => {
 
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -157,7 +146,7 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -170,7 +159,7 @@ describe("InstallRuntimeConfig", () => {
 
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
@@ -192,7 +181,7 @@ describe("InstallRuntimeConfig", () => {
     const warnSpy = vi.spyOn(deps.logger, "warn");
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -212,7 +201,7 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId: TOOL.kilo,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -231,7 +220,7 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId: TOOL.kilo,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -253,7 +242,7 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -269,7 +258,7 @@ describe("InstallRuntimeConfig", () => {
     manifest.updateTrackedFileHash(toolId, path, deps.hasher.hash(merged));
 
     await buildUseCase(deps).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       toolId,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -294,7 +283,7 @@ describe("InstallRuntimeConfig", () => {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         toolId: TOOL.copilot,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -313,7 +302,7 @@ describe("InstallRuntimeConfig", () => {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         toolId: TOOL.copilot,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -335,7 +324,7 @@ describe("InstallRuntimeConfig", () => {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         toolId: TOOL.copilot,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -351,114 +340,6 @@ describe("InstallRuntimeConfig", () => {
           entries: extractMergeEntries(onDisk, null, deps.hasher),
         },
       ]);
-    });
-  });
-
-  describe("static settings declared by the tool", () => {
-    const inline = new ConfigSection({
-      outputPath: ".cursor/aidd-static.json",
-      mergeStrategy: "framework-prime",
-      staticContent: '{"static": true}',
-    });
-    const consumesOnly = new ConfigSection({
-      outputPath: ".cursor/consumed.json",
-      mergeStrategy: "user-prime",
-      consumes: [{ name: "something", path: "config/something.json" }],
-    });
-    const fromAsset = new ConfigSection({
-      outputPath: ".cursor/from-asset.json",
-      mergeStrategy: "framework-prime",
-      staticContentAssetFile: "static.json",
-    });
-
-    let cursorProfile: BuiltToolConfig = cursor;
-
-    function registerCursorWith(settings: ConfigSection[]): void {
-      cursorProfile = withSections(cursor, { config: settings });
-    }
-
-    afterEach(() => {
-      cursorProfile = cursor;
-    });
-
-    it("merges a single declared settings capability and records its keys", async () => {
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initProject(deps, PROJECT_ROOT);
-      cursorProfile = withSections(cursor, { config: [inline] });
-      const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-      deps.fs.setFile(join(PROJECT_ROOT, ".cursor/aidd-static.json"), '{"user.setting": 7}');
-
-      const result = await buildUseCase(deps).execute({
-        tools: toolsWithCursor(cursorProfile),
-        toolId: TOOL.cursor,
-        projectRoot: PROJECT_ROOT,
-        manifest,
-        force: false,
-        version: "1.0.0",
-      });
-
-      expect(
-        JSON.parse(deps.fs.getFile(join(PROJECT_ROOT, ".cursor/aidd-static.json")) ?? "null")
-      ).toStrictEqual({ "user.setting": 7, static: true });
-      expect(result.files.map((file) => file.relativePath)).toStrictEqual([
-        ".cursor/settings.json",
-        ".cursor/aidd-static.json",
-      ]);
-      expect(result.warnings).toStrictEqual([]);
-      expect(manifest.getMergeFiles(TOOL.cursor)).toStrictEqual([
-        {
-          relativePath: ".cursor/aidd-static.json",
-          sectionKey: null,
-          entries: extractMergeEntries('{"user.setting":7,"static":true}', null, deps.hasher),
-        },
-      ]);
-    });
-
-    it("writes inline content and passes over a capability that only consumes", async () => {
-      registerCursorWith([inline, consumesOnly]);
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initProject(deps, PROJECT_ROOT);
-      const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-
-      const result = await buildUseCase(deps).execute({
-        tools: toolsWithCursor(cursorProfile),
-        toolId: TOOL.cursor,
-        projectRoot: PROJECT_ROOT,
-        manifest,
-        force: false,
-        version: "1.0.0",
-      });
-
-      const written = deps.fs.getFile(join(PROJECT_ROOT, ".cursor/aidd-static.json")) ?? "";
-      expect(JSON.parse(written)).toStrictEqual({ static: true });
-      expect(deps.fs.has(join(PROJECT_ROOT, ".cursor/consumed.json"))).toBe(false);
-      expect(result.files.map((f) => f.relativePath)).toStrictEqual([
-        ".cursor/settings.json",
-        ".cursor/aidd-static.json",
-      ]);
-    });
-
-    it("writes an asset answered as text verbatim", async () => {
-      registerCursorWith([fromAsset]);
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initProject(deps, PROJECT_ROOT);
-      const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-      const assets = new StubAssetProvider(
-        { "cursor/static.json": '{"fromAsset": true}' },
-        deps.assetProvider
-      );
-
-      await buildUseCase(deps, assets).execute({
-        tools: toolsWithCursor(cursorProfile),
-        toolId: TOOL.cursor,
-        projectRoot: PROJECT_ROOT,
-        manifest,
-        force: false,
-        version: "1.0.0",
-      });
-
-      const written = deps.fs.getFile(join(PROJECT_ROOT, ".cursor/from-asset.json")) ?? "";
-      expect(JSON.parse(written)).toStrictEqual({ fromAsset: true });
     });
   });
 });

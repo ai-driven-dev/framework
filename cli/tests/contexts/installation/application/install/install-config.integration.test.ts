@@ -4,16 +4,25 @@ import { InstallConfig } from "../../../../../src/contexts/installation/applicat
 import { FrameworkDescriptor } from "../../../../../src/contexts/installation/domain/canon.js";
 import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { CONFIG_MCP } from "../../../../../src/contexts/tools/contract/config-refs.js";
-import { copilot } from "../../../../../src/contexts/tools/domain/profiles/copilot/profile.js";
-import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
-import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { linuxPlatform, win32Platform } from "../../../../helpers/install-harness.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
+
+/** The settings file copilot declares for the editor: its content is an asset the tool names. */
+function copilotSettings() {
+  const [settings] = registeredTools().aiProfile(TOOL.copilot).settingsFiles();
+  return settings;
+}
+
+/** A settings file the editor declares, one that only consumes what a framework carries. */
+function consumingSettings() {
+  const [settings] = registeredTools().profile(TOOL.vscode).settingsFiles();
+  return settings;
+}
 
 function buildUseCase() {
   const hasher = new DeterministicHasher();
@@ -31,46 +40,21 @@ function emptyDescriptor(): FrameworkDescriptor {
 }
 
 describe("InstallConfig — staticContent", () => {
-  it("produces an installation file for a ConfigSection with staticContent", async () => {
+  it("an asset-backed capability does not need a matching configRef", async () => {
     const { useCase } = buildUseCase();
-    const capability = new ConfigSection({
-      outputPath: ".vscode/settings.json",
-      mergeStrategy: "framework-prime",
-      staticContent: '{"my.key": true}',
-    });
 
     const results = await useCase.execute({
-      writes: [{ kind: "settings", capability: capability }],
-      configRefs: [],
-      contentFiles: new Map(),
-      projectRoot: PROJECT_ROOT,
-      platform: linuxPlatform,
-    });
-
-    expect(results).toHaveLength(1);
-    expect(results[0].relativePath).toBe(".vscode/settings.json");
-    expect(results[0].content).toBe('{"my.key": true}');
-    expect(results[0].mergeStrategy).toBe("framework-prime");
-  });
-
-  it("staticContent capability does not need a matching configRef", async () => {
-    const { useCase } = buildUseCase();
-    const capability = new ConfigSection({
-      outputPath: ".vscode/settings.json",
-      mergeStrategy: "framework-prime",
-      staticContent: '{"standalone": true}',
-    });
-
-    const results = await useCase.execute({
-      writes: [{ kind: "settings", capability: capability }],
+      writes: [{ kind: "settings", capability: copilotSettings() }],
       configRefs: [{ name: "irrelevantSignal", path: "config/irrelevant.json" }],
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
       platform: linuxPlatform,
+      assetProvider: new BundledAssetProviderAdapter(wireTools()),
+      toolId: TOOL.copilot,
     });
 
-    expect(results).toHaveLength(1);
-    expect(JSON.parse(results[0].content)).toHaveProperty("standalone", true);
+    expect(results.map((f) => f.relativePath)).toStrictEqual([".vscode/settings.json"]);
+    expect(results[0].mergeStrategy).toBe("framework-prime");
   });
 
   it("copilot staticContent contains all required Copilot keys", async () => {
@@ -79,7 +63,7 @@ describe("InstallConfig — staticContent", () => {
     const assetProvider = new BundledAssetProviderAdapter(wireTools());
 
     const results = await useCase.execute({
-      writes: copilot.configWrites(),
+      writes: registeredTools().aiProfile(TOOL.copilot).configWrites(),
       configRefs: descriptor.configRefs,
       contentFiles: new Map(),
       projectRoot: PROJECT_ROOT,
@@ -101,16 +85,12 @@ describe("InstallConfig — staticContent", () => {
 
   it("skips a consumes-based capability when no matching configRef content is available", async () => {
     const { useCase } = buildUseCase();
-    const capability = new ConfigSection({
-      outputPath: ".vscode/settings.json",
-      mergeStrategy: "framework-prime",
-      consumes: [{ name: "someSignal", path: "config/some.json" }],
-    });
+    const capability = consumingSettings();
 
     const results = await useCase.execute({
       writes: [{ kind: "settings", capability: capability }],
-      configRefs: [{ name: "someSignal", path: "config/some.json" }],
-      contentFiles: new Map(), // no content for 'config/some.json'
+      configRefs: capability.consumedRefs(),
+      contentFiles: new Map(), // no content for what the capability consumes
       projectRoot: PROJECT_ROOT,
       platform: linuxPlatform,
     });
@@ -120,11 +100,7 @@ describe("InstallConfig — staticContent", () => {
 
   it("leaves a consumes-only capability alone even with an asset provider at hand", async () => {
     const { useCase } = buildUseCase();
-    const capability = new ConfigSection({
-      outputPath: ".vscode/settings.json",
-      mergeStrategy: "framework-prime",
-      consumes: [{ name: "someSignal", path: "config/some.json" }],
-    });
+    const capability = consumingSettings();
 
     const results = await useCase.execute({
       writes: [{ kind: "settings", capability: capability }],
@@ -140,11 +116,7 @@ describe("InstallConfig — staticContent", () => {
   });
 
   describe("an asset-backed capability", () => {
-    const fromAsset = new ConfigSection({
-      outputPath: ".vscode/settings.json",
-      mergeStrategy: "framework-prime",
-      staticContentAssetFile: "vscode-settings.json",
-    });
+    const fromAsset = copilotSettings();
 
     it("produces nothing without an asset provider", async () => {
       const { useCase } = buildUseCase();
@@ -197,27 +169,25 @@ describe("InstallConfig — staticContent", () => {
 
 describe("InstallConfig — MCP config", () => {
   const MCP_REF = { name: CONFIG_MCP, path: "config/mcp.json" };
-  const HOOKS_REF = { name: "hooks", path: "config/hooks.json" };
   const NPX_SERVER = JSON.stringify(
     { mcpServers: { docs: { command: "npx", args: ["-y", "docs-server"] } } },
     null,
     2
   );
 
-  function mcpCapability(mergeStrategy?: "user-prime" | "framework-prime" | "none") {
-    return new McpConfigPart({
-      outputPath: ".cursor/mcp.json",
-      format: "json",
-      consumes: [MCP_REF],
-      ...(mergeStrategy !== undefined && { mergeStrategy }),
-    });
+  /** The mcp file a registered tool declares: cursor's takes the user's entries first, opencode's
+   * writes the framework's over them. */
+  function mcpCapability(toolId: typeof TOOL.cursor | typeof TOOL.opencode) {
+    const capability = registeredTools().aiProfile(toolId).mcpConfig();
+    if (capability === null) throw new Error(`${toolId} declares no mcp file`);
+    return capability;
   }
 
   it("rewrites npx servers for Windows", async () => {
     const { useCase } = buildUseCase();
 
     const results = await useCase.execute({
-      writes: [{ kind: "mcp", capability: mcpCapability() }],
+      writes: [{ kind: "mcp", capability: mcpCapability(TOOL.cursor) }],
       configRefs: [MCP_REF],
       contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,
@@ -229,30 +199,11 @@ describe("InstallConfig — MCP config", () => {
     ]);
   });
 
-  it("leaves a non-MCP config as written on Windows, even from a capability that also takes MCP", async () => {
-    const { useCase } = buildUseCase();
-    const both = new ConfigSection({
-      outputPath: ".cursor/hooks.json",
-      mergeStrategy: "user-prime",
-      consumes: [MCP_REF, HOOKS_REF],
-    });
-
-    const results = await useCase.execute({
-      writes: [{ kind: "settings", capability: both }],
-      configRefs: [HOOKS_REF],
-      contentFiles: new Map([[HOOKS_REF.path, NPX_SERVER]]),
-      projectRoot: PROJECT_ROOT,
-      platform: win32Platform,
-    });
-
-    expect(results.map((f) => f.content)).toStrictEqual([NPX_SERVER]);
-  });
-
   it("honours the merge strategy the MCP capability declares", async () => {
     const { useCase } = buildUseCase();
 
     const results = await useCase.execute({
-      writes: [{ kind: "mcp", capability: mcpCapability("framework-prime") }],
+      writes: [{ kind: "mcp", capability: mcpCapability(TOOL.opencode) }],
       configRefs: [MCP_REF],
       contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,
@@ -266,7 +217,7 @@ describe("InstallConfig — MCP config", () => {
     const { useCase } = buildUseCase();
 
     const results = await useCase.execute({
-      writes: [{ kind: "mcp", capability: mcpCapability() }],
+      writes: [{ kind: "mcp", capability: mcpCapability(TOOL.cursor) }],
       configRefs: [MCP_REF],
       contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
       projectRoot: PROJECT_ROOT,

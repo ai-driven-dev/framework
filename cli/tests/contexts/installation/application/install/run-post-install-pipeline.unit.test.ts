@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { RunPostInstallPipeline } from "../../../../../src/contexts/installation/application/install/run-post-install-pipeline.js";
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -27,7 +27,7 @@ describe("post-install pipeline", () => {
     if (manifest === null) throw new Error("manifest not found");
 
     await new RunPostInstallPipeline(deps.manifestRepo, deps.updateGitignore).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       projectRoot: PROJECT_ROOT,
       manifest,
     });
@@ -49,7 +49,7 @@ describe("post-install pipeline", () => {
 
     const recordingGitignore = new RecordingGitignoreUseCase(deps.fs);
     await new RunPostInstallPipeline(deps.manifestRepo, recordingGitignore).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       projectRoot: PROJECT_ROOT,
       manifest,
     });
@@ -67,7 +67,7 @@ describe("post-install pipeline", () => {
     if (manifest === null) throw new Error("manifest not found");
 
     await new RunPostInstallPipeline(deps.manifestRepo, deps.updateGitignore).execute({
-      tools: catalogOf(),
+      tools: registeredTools(),
       projectRoot: PROJECT_ROOT,
       manifest,
     });

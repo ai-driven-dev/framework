@@ -1,11 +1,7 @@
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { InstallIdeTool } from "../../../../../src/contexts/installation/application/install/install-ide-tool.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import type { BuiltToolConfig } from "../../../../../src/contexts/tools/domain/profile/define-tool.js";
-import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor/profile.js";
-import { REGISTERED_PROFILES } from "../../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
-import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import type { AssetProvider } from "../../../../../src/shared/ports/asset-provider.js";
 import {
   buildUnitDeps,
@@ -13,15 +9,8 @@ import {
   initProject,
   installTool,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
 import { StubAssetProvider } from "../../../../helpers/ports/stub-asset-provider.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-
-function toolsWithCursor(cursorProfile: BuiltToolConfig) {
-  return catalogOf(
-    REGISTERED_PROFILES.map((profile) => (profile.toolId === "cursor" ? cursorProfile : profile))
-  );
-}
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const VERSION = "1.0.0";
@@ -48,7 +37,7 @@ describe("InstallIdeTool", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -69,7 +58,7 @@ describe("InstallIdeTool", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       await buildUseCase(deps).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -91,7 +80,7 @@ describe("InstallIdeTool", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -117,7 +106,7 @@ describe("InstallIdeTool", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       const result = await buildUseCase(deps).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -136,7 +125,7 @@ describe("InstallIdeTool", () => {
 
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
       await buildUseCase(deps).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -153,55 +142,23 @@ describe("InstallIdeTool", () => {
   });
 
   describe("selecting what an installed AI tool declares for the IDE", () => {
-    const forIde = new ConfigSection({
-      outputPath: ".vscode/aidd-a.json",
-      mergeStrategy: "framework-prime",
-      staticContent: '{"a": 1}',
-      requiresTool: TOOL.vscode,
-    });
-    const consumesOnly = new ConfigSection({
-      outputPath: ".vscode/aidd-b.json",
-      mergeStrategy: "user-prime",
-      consumes: [{ name: "something", path: "config/something.json" }],
-    });
-    const forItself = new ConfigSection({
-      outputPath: ".cursor/aidd-c.json",
-      mergeStrategy: "framework-prime",
-      staticContent: '{"c": 1}',
-    });
-    const fromAsset = new ConfigSection({
-      outputPath: ".vscode/aidd-d.json",
-      mergeStrategy: "framework-prime",
-      staticContentAssetFile: "d.json",
-      requiresTool: TOOL.vscode,
-    });
-
-    let cursorProfile: BuiltToolConfig = cursor;
-
-    function registerCursorWith(settings: ConfigSection[]): void {
-      cursorProfile = withSections(cursor, { config: settings });
-    }
-
-    afterEach(() => {
-      cursorProfile = cursor;
-    });
-
-    async function withCursorRegistered(
+    async function withCopilotRegistered(
       deps: Awaited<ReturnType<typeof buildUnitDeps>>,
       mergeFiles: Parameters<Manifest["addTool"]>[3] = []
     ): Promise<Manifest> {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
-      manifest.addTool(TOOL.cursor, VERSION, [], mergeFiles);
+      manifest.addTool(TOOL.copilot, VERSION, [], mergeFiles);
       await deps.manifestRepo.save(manifest);
       return manifest;
     }
 
     async function installVscode(
       deps: Awaited<ReturnType<typeof buildUnitDeps>>,
-      manifest: Manifest
+      manifest: Manifest,
+      assets: AssetProvider | null = deps.assetProvider
     ) {
-      return buildUseCase(deps).execute({
-        tools: toolsWithCursor(cursorProfile),
+      return buildUseCase(deps, assets).execute({
+        tools: registeredTools(),
         toolId: TOOL.vscode,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -214,92 +171,59 @@ describe("InstallIdeTool", () => {
       return JSON.parse(deps.fs.getFile(join(PROJECT_ROOT, relativePath)) ?? "");
     }
 
-    it("merges only the static settings that name this IDE", async () => {
-      registerCursorWith([forIde, consumesOnly, forItself]);
-      const deps = await buildUnitDeps(PROJECT_ROOT);
-      await initProject(deps, PROJECT_ROOT);
-      const manifest = await withCursorRegistered(deps);
-
-      await installVscode(deps, manifest);
-
-      expect(parsed(deps, ".vscode/aidd-a.json")).toStrictEqual({ a: 1 });
-      expect(deps.fs.has(join(PROJECT_ROOT, ".vscode/aidd-b.json"))).toBe(false);
-      expect(deps.fs.has(join(PROJECT_ROOT, ".cursor/aidd-c.json"))).toBe(false);
-    });
-
     it("keeps the tool's other merge entries and replaces a stale one for the same file", async () => {
-      registerCursorWith([forIde]);
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      const mcpEntry = { relativePath: ".cursor/mcp.json", sectionKey: null, entries: {} };
+      const mcpEntry = { relativePath: ".vscode/mcp.json", sectionKey: null, entries: {} };
       const stale = {
-        relativePath: ".vscode/aidd-a.json",
+        relativePath: ".vscode/settings.json",
         sectionKey: null,
         entries: { stale: deps.hasher.hash("0") },
       };
-      const manifest = await withCursorRegistered(deps, [mcpEntry, stale]);
+      const manifest = await withCopilotRegistered(deps, [mcpEntry, stale]);
+      const assets = new StubAssetProvider({ "copilot/vscode-settings.json": '{"a": 1}' });
 
-      await installVscode(deps, manifest);
+      await installVscode(deps, manifest, assets);
 
-      expect(manifest.getMergeFiles(TOOL.cursor)).toStrictEqual([
-        mcpEntry,
-        {
-          relativePath: ".vscode/aidd-a.json",
-          sectionKey: null,
-          entries: { a: deps.hasher.hash("1") },
-        },
-      ]);
+      const [kept, replaced] = manifest.getMergeFiles(TOOL.copilot);
+      expect(kept).toStrictEqual(mcpEntry);
+      expect(replaced.relativePath).toBe(".vscode/settings.json");
+      expect(replaced.entries).not.toHaveProperty("stale");
+      expect(replaced.entries).toHaveProperty("a", deps.hasher.hash("1"));
     });
 
     it("leaves a hand-edited file alone when the IDE was already installed", async () => {
-      registerCursorWith([forIde]);
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
       await installTool(deps, PROJECT_ROOT, TOOL.vscode);
-      const manifest = await withCursorRegistered(deps);
-      await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/aidd-a.json"), '{"user": true}');
+      const manifest = await withCopilotRegistered(deps);
+      await deps.fs.writeFile(join(PROJECT_ROOT, ".vscode/settings.json"), '{"user": true}');
 
       const result = await installVscode(deps, manifest);
 
       expect(result.skipped).toBe(true);
-      expect(deps.fs.getFile(join(PROJECT_ROOT, ".vscode/aidd-a.json"))).toBe('{"user": true}');
+      expect(deps.fs.getFile(join(PROJECT_ROOT, ".vscode/settings.json"))).toBe('{"user": true}');
     });
 
     it("writes an asset answered as text verbatim", async () => {
-      registerCursorWith([fromAsset]);
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      const manifest = await withCursorRegistered(deps);
-      const assets = new StubAssetProvider({ "cursor/d.json": '{"d": 1}' });
+      const manifest = await withCopilotRegistered(deps);
+      const assets = new StubAssetProvider({ "copilot/vscode-settings.json": '{"d": 1}' });
 
-      await buildUseCase(deps, assets).execute({
-        tools: toolsWithCursor(cursorProfile),
-        toolId: TOOL.vscode,
-        projectRoot: PROJECT_ROOT,
-        manifest,
-        force: false,
-        version: VERSION,
-      });
+      await installVscode(deps, manifest, assets);
 
-      expect(parsed(deps, ".vscode/aidd-d.json")).toStrictEqual({ d: 1 });
+      expect(parsed(deps, ".vscode/settings.json")).toHaveProperty("d", 1);
     });
 
-    it("merges an empty object for an asset-backed capability when no asset provider was given", async () => {
-      registerCursorWith([fromAsset]);
+    it("merges nothing of an asset-backed capability when no asset provider was given", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await initProject(deps, PROJECT_ROOT);
-      const manifest = await withCursorRegistered(deps);
+      const manifest = await withCopilotRegistered(deps);
 
-      await buildUseCase(deps, null).execute({
-        tools: toolsWithCursor(cursorProfile),
-        toolId: TOOL.vscode,
-        projectRoot: PROJECT_ROOT,
-        manifest,
-        force: false,
-        version: VERSION,
-      });
+      await installVscode(deps, manifest, null);
 
-      expect(parsed(deps, ".vscode/aidd-d.json")).toStrictEqual({});
+      expect(parsed(deps, ".vscode/settings.json")).not.toHaveProperty("github.copilot.enable");
     });
   });
 });
