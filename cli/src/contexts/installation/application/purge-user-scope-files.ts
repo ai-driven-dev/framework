@@ -1,43 +1,19 @@
 import { ActiveMachineDependentsError } from "../../../shared/domain/errors.js";
-import {
-  USER_SOURCE_REFERENCES_FILENAME,
-  userBuiltCacheRoot,
-} from "../../../shared/domain/layout/aidd-layout.js";
 import type { ToolId } from "../../../shared/domain/tool.js";
-import type { FileReader } from "../../../shared/ports/file-reader.js";
-import type { FileWriter } from "../../../shared/ports/file-writer.js";
 import type { Lock } from "../../../shared/ports/lock.js";
-import type { Logger } from "../../../shared/ports/logger.js";
 import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import type { Manifest } from "../domain/manifest.js";
-import type { InstalledPlugin } from "../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
-import type { InstallationMarketplaceRegistry } from "../ports/marketplace-sources.js";
-import type { CacheCandidateResolver, UserRegistrationWithdrawal } from "../ports/native-host.js";
-import type { PluginPlacement } from "../ports/tool-sections.js";
-import { deletePluginFilesForTool } from "./plugin/plugin-helpers.js";
-
-/** What a machine-scope purge asks of the machine, answered where each one lives. */
-export interface UserScopeGuards {
-  readonly userConfigDir: () => string;
-  /** The one resolver for the OS home directory a user-scope plugin's files sit under. */
-  readonly homeDir: () => string;
-  /** The files of a user-scope plugin proven to sit inside the user scope. */
-  readonly safeFiles: (
-    plugin: InstalledPlugin,
-    tool: PluginPlacement
-  ) => Promise<ReadonlyMap<string, string>>;
-  readonly resolveCacheCandidate: CacheCandidateResolver;
-  /** The name the framework marketplace is registered under. */
-  readonly frameworkMarketplaceName: string;
-}
+import type { UserRegistrationWithdrawal } from "../ports/native-host.js";
+import type { PurgeMachineState } from "./removal/purge-machine-state.js";
+import type { UserScopePluginFiles } from "./removal/user-scope-plugin-files.js";
 
 /** What the user manifest and the cache say before anything is removed. */
 export interface UserScopeInspection {
   manifestFound: boolean;
   toolIds: readonly ToolId[];
   activePluginDependents: readonly string[];
-  /** Every version directory found under `userConfigDir()/cache/built/` — read structurally,
+  /** Every version directory found under `userConfigDir()/cache/built/` read structurally,
    * never trusted from any one tool's own manifest entry. */
   builtVersions: readonly string[];
   referencingProjects: readonly string[];
@@ -50,11 +26,11 @@ export interface UserScopeInspection {
  */
 export class PurgeUserScopeFiles {
   constructor(
-    private readonly fs: FileReader & FileWriter,
     private readonly userManifestRepo: ManifestRepository & Lock,
-    private readonly logger: Logger,
-    private readonly marketplaceRegistry: InstallationMarketplaceRegistry,
-    private readonly guards: UserScopeGuards
+    private readonly purgeMachineState: PurgeMachineState,
+    /** The one resolver for the OS home directory a user-scope plugin's files sit under. */
+    private readonly homeDir: () => string,
+    private readonly userScopePluginFiles: UserScopePluginFiles
   ) {}
 
   /** Runs `action` holding the user manifest's lock. */
@@ -71,7 +47,7 @@ export class PurgeUserScopeFiles {
       manifestFound: manifest !== null,
       toolIds: manifest?.getInstalledToolIds() ?? [],
       activePluginDependents: this.activeDependents(manifest, tools),
-      builtVersions: await this.listBuiltVersions(),
+      builtVersions: await this.purgeMachineState.builtVersions(),
       referencingProjects: await referencingProjects(),
     };
   }
@@ -88,7 +64,10 @@ export class PurgeUserScopeFiles {
   async purge(tools: ToolCatalog, projectRoot: string): Promise<void> {
     const manifest = await this.userManifestRepo.load();
     if (manifest !== null) await this.purgeUserPluginFiles(manifest, tools, projectRoot);
-    await this.purgeWhitelistedMachineState(projectRoot);
+    await this.purgeMachineState.purge(projectRoot);
+    // The manifest's own repository is the single writer of `manifest.json`; deleting through
+    // it, never a second path to the same file, is what keeps that true.
+    await this.userManifestRepo.delete();
   }
 
   /** Refuses when anything still depends on what a purge would remove. */
@@ -127,32 +106,16 @@ export class PurgeUserScopeFiles {
     ];
   }
 
-  private async listBuiltVersions(): Promise<readonly string[]> {
-    const root = userBuiltCacheRoot(this.guards.userConfigDir());
-    let entries: string[];
-    try {
-      entries = await this.fs.listDirectory(root);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
-      throw error;
-    }
-    const versions = new Set<string>();
-    for (const entry of entries) {
-      const version = entry.split("/")[0];
-      if (version) versions.add(version);
-    }
-    return [...versions].sort();
-  }
-
   private async assertTrackedUserPluginFilesSafe(
     manifest: Manifest,
     tools: ToolCatalog
   ): Promise<void> {
+    const home = this.homeDir();
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.scope !== "user") continue;
-        const safe = await this.guards.safeFiles(plugin, tools.aiProfile(toolId));
+        const safe = await this.userScopePluginFiles.proven(plugin, tools.aiProfile(toolId), home);
         if (safe.size !== plugin.files.size) {
           throw new Error(
             `User clean refused: a tracked file of '${plugin.name}' escaped its user-scope boundary; canonical claims retained.`
@@ -166,7 +129,7 @@ export class PurgeUserScopeFiles {
    * machine claim owns. A tool that is not an AI tool never records one, so a manifest naming one
    * is corrupt, not something to guess a host for. */
   private withdrawalsOf(manifest: Manifest, tools: ToolCatalog): UserRegistrationWithdrawal[] {
-    const home = this.guards.homeDir();
+    const home = this.homeDir();
     return manifest.getInstalledToolIds().flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
@@ -187,7 +150,7 @@ export class PurgeUserScopeFiles {
   }
 
   /** The one tree this whitelist purges outside `userConfigDir()` itself: a user-scope plugin's
-   * own files, listed by the user manifest and never deleted without the containment check — a
+   * own files, listed by the user manifest and never deleted without the containment check a
    * `..` segment a corrupted entry carries, or a plugin directory that became a symlink after
    * install, is left in place and named. */
   private async purgeUserPluginFiles(
@@ -195,94 +158,15 @@ export class PurgeUserScopeFiles {
     tools: ToolCatalog,
     projectRoot: string
   ): Promise<void> {
+    const home = this.homeDir();
     for (const toolId of manifest.getInstalledToolIds()) {
       if (!tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.scope !== "user") continue;
-        const files = await this.guards.safeFiles(plugin, tools.aiProfile(toolId));
-        await deletePluginFilesForTool(
-          files,
-          plugin.scope,
-          tools.aiProfile(toolId),
-          projectRoot,
-          this.fs,
-          "user"
-        );
+        const tool = tools.aiProfile(toolId);
+        const files = await this.userScopePluginFiles.proven(plugin, tool, home);
+        await this.userScopePluginFiles.remove(files, tool, projectRoot);
       }
     }
-  }
-
-  private async purgeWhitelistedMachineState(projectRoot: string): Promise<void> {
-    await this.purgeWhitelistedPath("cache/built", (candidate) =>
-      this.fs.deleteDirectory(candidate)
-    );
-    // Other user marketplaces keep their registered sources. Plugin fetches belong to the
-    // machine manifest being removed, whose active dependents were checked before any purge.
-    const frameworkSource = `cache/marketplaces/${this.guards.frameworkMarketplaceName}`;
-    for (const path of [frameworkSource, "cache/plugin-cache"]) {
-      await this.purgeWhitelistedPath(path, (candidate) => this.fs.deleteDirectory(candidate));
-    }
-    await this.purgeEmptyCacheShell("cache/marketplaces");
-    // The self-update check cache, written into the same `cache/` directory by any online
-    // command: left behind it keeps the shell below non-empty, the one occupant that made
-    // "leaves nothing of aidd's on the machine" false in the ordinary case.
-    await this.purgeWhitelistedPath("cache/update-check.json", (candidate) =>
-      this.fs.deleteFile(candidate)
-    );
-    await this.purgeEmptyCacheShell();
-    // Where the same cache was written before it moved under `cache/`; the reader still falls
-    // back to it and an older CLI on this machine may still write it.
-    await this.purgeWhitelistedPath("update-check.json", (candidate) =>
-      this.fs.deleteFile(candidate)
-    );
-    await this.purgeWhitelistedPath(USER_SOURCE_REFERENCES_FILENAME, (candidate) =>
-      this.fs.deleteFile(candidate)
-    );
-    // The manifest's own repository is the single writer of `manifest.json` — deleting through
-    // it, never a second path to the same file, is what keeps that true.
-    await this.marketplaceRegistry.delete(
-      projectRoot,
-      this.guards.frameworkMarketplaceName,
-      "user"
-    );
-    await this.userManifestRepo.delete();
-  }
-
-  /** Remove a cache directory only once proven empty, with the same containment as every
-   * whitelist candidate: another marketplace or a future cache writer may still use it. */
-  private async purgeEmptyCacheShell(path = "cache"): Promise<void> {
-    const candidate = await this.guards.resolveCacheCandidate(
-      this.guards.userConfigDir(),
-      path,
-      `user scope: ${path}`
-    );
-    if (candidate === null) return;
-    let entries: string[];
-    try {
-      entries = await this.fs.listDirectory(candidate);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
-      throw error;
-    }
-    if (entries.length > 0) return;
-    await this.fs.deleteDirectory(candidate);
-    this.logger.info(`user scope: ${path} purged: ${candidate}`);
-  }
-
-  /** Never `userConfigDir()` itself, and never on a manifest's word: every fixed whitelist entry
-   * is still resolved through the containment check before it is touched — defense in depth
-   * against one of those directories having become a symlink since it was last written. */
-  private async purgeWhitelistedPath(
-    path: string,
-    remove: (candidate: string) => Promise<void>
-  ): Promise<void> {
-    const candidate = await this.guards.resolveCacheCandidate(
-      this.guards.userConfigDir(),
-      path,
-      `user scope: ${path}`
-    );
-    if (candidate === null) return;
-    await remove(candidate);
-    this.logger.info(`user scope: ${path} purged: ${candidate}`);
   }
 }

@@ -2,6 +2,9 @@ import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/cont
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import type { HostPorts } from "../../src/contexts/host-registration/ports/host-ports.js";
 import { PurgeUserScopeFiles } from "../../src/contexts/installation/application/purge-user-scope-files.js";
+import type { MachineStateGuards } from "../../src/contexts/installation/application/removal/purge-machine-state.js";
+import { PurgeMachineState } from "../../src/contexts/installation/application/removal/purge-machine-state.js";
+import { UserScopePluginFiles } from "../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { ReleaseClaims } from "../../src/contexts/machine-claims/application/release-claims.js";
 import { userScopeFilesSafeToDelete } from "../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
@@ -14,10 +17,10 @@ type Purge = ConstructorParameters<typeof PurgeUserScopeFiles>;
 
 /** What a test names; everything else is the empty or in-memory default. */
 export interface UserScopeCleanerParts extends Partial<HostPorts> {
-  repo: Purge[1];
-  fs?: Purge[0];
-  logger?: Purge[2];
-  marketplaceRegistry?: Purge[3];
+  repo: Purge[0];
+  fs?: ConstructorParameters<typeof PurgeMachineState>[0];
+  logger?: ConstructorParameters<typeof PurgeMachineState>[1];
+  marketplaceRegistry?: ConstructorParameters<typeof PurgeMachineState>[2];
   userConfigDir?: () => string;
   homeDir?: () => string;
   userSourceReferences?: ConstructorParameters<typeof ReleaseClaims>[4];
@@ -29,21 +32,25 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
   const logger = parts.logger ?? new CapturingLogger();
   const homeDir = parts.homeDir ?? (() => "/fake-home");
   const purgeCache = new PurgeDeclaredCache(fs, logger);
+  const guards: MachineStateGuards = {
+    userConfigDir: parts.userConfigDir ?? (() => "/fake-home/.config/aidd"),
+    resolveCacheCandidate: (cacheRoot, segments, label) =>
+      purgeCache.resolveCandidate(cacheRoot, segments, label),
+    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+  };
   return new CleanUserScope(
     new PurgeUserScopeFiles(
-      fs,
       parts.repo,
-      logger,
-      parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry(),
-      {
-        userConfigDir: parts.userConfigDir ?? (() => "/fake-home/.config/aidd"),
-        homeDir,
-        safeFiles: (plugin, tool) =>
-          userScopeFilesSafeToDelete(fs, logger, plugin, tool, homeDir()),
-        resolveCacheCandidate: (cacheRoot, segments, label) =>
-          purgeCache.resolveCandidate(cacheRoot, segments, label),
-        frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-      }
+      new PurgeMachineState(
+        fs,
+        logger,
+        parts.marketplaceRegistry ?? new InMemoryMarketplaceRegistry(),
+        guards
+      ),
+      homeDir,
+      new UserScopePluginFiles(fs, (plugin, tool, home) =>
+        userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)
+      )
     ),
     new WithdrawFromHost(fs, logger, {
       activators: parts.activators ?? new Map(),

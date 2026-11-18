@@ -3,8 +3,11 @@ import { ListMarketplaces } from "../../contexts/distribution/application/list-m
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { CleanProject as CleanProjectFiles } from "../../contexts/installation/application/clean-project.js";
 import { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
+import type { MachineStateGuards } from "../../contexts/installation/application/removal/purge-machine-state.js";
+import { PurgeMachineState } from "../../contexts/installation/application/removal/purge-machine-state.js";
 import { RemoveProjectFiles } from "../../contexts/installation/application/removal/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/application/removal/remove-project-plugin.js";
+import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
 import { PurgeDeclaredCache } from "../../contexts/machine-claims/application/purge-declared-cache.js";
@@ -49,19 +52,19 @@ export function wireClean(base: Base, inst: Installation) {
     purgeCache,
     frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
   };
+  const guards: MachineStateGuards = {
+    userConfigDir,
+    resolveCacheCandidate: (cacheRoot, segments, label) =>
+      purgeCache.resolveCandidate(cacheRoot, segments, label),
+    frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
+  };
   const purgeUserScopeFiles = new PurgeUserScopeFiles(
-    fs,
     userManifestRepo,
-    logger,
-    marketplaceRegistry,
-    {
-      userConfigDir,
-      homeDir: homedir,
-      safeFiles: (plugin, tool) => userScopeFilesSafeToDelete(fs, logger, plugin, tool, homedir()),
-      resolveCacheCandidate: (cacheRoot, segments, label) =>
-        purgeCache.resolveCandidate(cacheRoot, segments, label),
-      frameworkMarketplaceName: FRAMEWORK_MARKETPLACE_NAME,
-    }
+    new PurgeMachineState(fs, logger, marketplaceRegistry, guards),
+    homedir,
+    new UserScopePluginFiles(fs, (plugin, tool, home) =>
+      userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)
+    )
   );
   const cleanUserScopeUseCase = new CleanUserScope(
     purgeUserScopeFiles,
