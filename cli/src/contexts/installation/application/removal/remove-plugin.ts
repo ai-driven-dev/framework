@@ -86,9 +86,11 @@ export class RemovePlugin {
     const { pluginName, toolIds, projectRoot, tools } = options;
     const manifest = await requireManifest(this.manifests.project);
     const resolvedToolIds = resolvePluginToolIds(toolIds, manifest, tools);
-    for (const toolId of resolvedToolIds) {
+    const named = resolvedToolIds.flatMap((toolId) => {
       const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
-      if (plugin === undefined) continue;
+      return plugin === undefined ? [] : [{ toolId, plugin }];
+    });
+    for (const { toolId, plugin } of named) {
       await assertProjectMcpEntriesRemovable(this.fs, plugin, tools.aiProfile(toolId), projectRoot);
       await assertProjectHooksRemovable(this.fs, plugin, tools.aiProfile(toolId), projectRoot);
       if (plugin.marketplace !== undefined)
@@ -104,10 +106,8 @@ export class RemovePlugin {
       manifest.getPlugins(toolId).some((p) => p.name === pluginName && p.scope === "user")
     );
     const nativeRefs = new Map<ToolId, readonly string[]>();
-    for (const toolId of resolvedToolIds) {
-      const plugin = manifest.getPlugins(toolId).find((p) => p.name === pluginName);
+    for (const { toolId, plugin } of named) {
       const registrations = manifest.getNativeRegistrations(toolId);
-      if (plugin === undefined) continue;
       const ref = this.records.refOf(registrations, pluginName, plugin.marketplace);
       if (ref !== undefined) nativeRefs.set(toolId, [ref]);
     }
@@ -246,12 +246,13 @@ export class RemovePlugin {
       await this.removeMcpEntries(plugin, tool, projectRoot);
       await removeProjectHooks(this.fs, plugin, tool, projectRoot);
       const ref = this.records.refOf(registrations, plugin.name, plugin.marketplace);
-      const canDetachRef =
-        confirmed === true ||
-        (ref !== undefined &&
-          tool.pluginEnablementIsMachineGlobal() &&
-          (await this.claims.isMachineOwned(toolId, ref)));
-      if (ref !== undefined && registrations !== undefined && canDetachRef) {
+      if (
+        ref !== undefined &&
+        registrations !== undefined &&
+        (confirmed === true ||
+          (tool.pluginEnablementIsMachineGlobal() &&
+            (await this.claims.isMachineOwned(toolId, ref))))
+      ) {
         manifest.setNativeRegistrations(toolId, this.records.withoutRef(registrations, ref));
       }
       manifest.removePlugin(toolId, pluginName);
