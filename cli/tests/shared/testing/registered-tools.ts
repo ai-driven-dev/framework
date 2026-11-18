@@ -1,13 +1,16 @@
 import { wireTools } from "../../../src/composition/tools.js";
 import type { ToolCatalog } from "../../../src/contexts/tools/contract/tool-catalog.js";
 import { UnregisteredToolError } from "../../../src/shared/domain/errors.js";
-import type { ToolId } from "../../../src/shared/domain/tool.js";
+import type { ToolId, ToolIdResolver } from "../../../src/shared/domain/tool.js";
 
 /** The catalog of every registered tool, as the composition root wires it: wired on each call, so
  * no test shares one. */
 export function registeredTools(): ToolCatalog {
   return wireTools();
 }
+
+/** What the code under test asks to turn a written id into a registered one. */
+export const resolveRegisteredToolId: ToolIdResolver = (raw) => registeredTools().toolId(raw);
 
 function named<T extends ToolId>(ids: readonly T[], name: string): T {
   const found = ids.find((id) => id === name);

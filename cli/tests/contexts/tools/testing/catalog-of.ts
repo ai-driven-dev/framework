@@ -12,7 +12,10 @@ import {
 } from "../../../../src/contexts/tools/domain/profiles/registered-profiles.js";
 import { UnregisteredToolError } from "../../../../src/shared/domain/errors.js";
 import type { AiToolId, ToolId, ToolIdResolver } from "../../../../src/shared/domain/tool.js";
-import { TOOL as REGISTERED_TOOL_IDS } from "../../../shared/testing/registered-tools.js";
+import {
+  TOOL as REGISTERED_TOOL_IDS,
+  resolveRegisteredToolId as registeredToolIdResolver,
+} from "../../../shared/testing/registered-tools.js";
 
 /** A catalog over the given profiles, the registered ones when none is given, canonical order
  * kept for the registered ones among them. Built inside the `it` that reads it: a catalog is a
@@ -52,9 +55,6 @@ export function registeredAiConfig(id: AiToolId): AiTool {
   return config;
 }
 
-/** What the code under test asks to turn a written id into a registered one. */
-export const resolveRegisteredToolId: ToolIdResolver = (raw) => catalogOf().toolId(raw);
-
 export const flowTools = () => ({
   registeredToolIds: catalogOf().idsInCanonicalOrder(),
   aiToolIds: catalogOf().idsInCanonicalOrder("ai"),
@@ -64,3 +64,6 @@ export const flowTools = () => ({
 /** The registered ids, minted by the shared kit. Transitional alias: callers move to
  * tests/shared/testing/registered-tools.ts, then this goes. */
 export const TOOL = REGISTERED_TOOL_IDS;
+
+/** The shared resolver, under the name its callers here already use. */
+export const resolveRegisteredToolId: ToolIdResolver = registeredToolIdResolver;

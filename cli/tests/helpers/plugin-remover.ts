@@ -1,9 +1,9 @@
 import { registrationRecordRules } from "../../src/composition/installation.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../src/contexts/distribution/contract/marketplace.js";
-import type { MarketplaceRegistry } from "../../src/contexts/distribution/ports/marketplace-registry.js";
 import { WithdrawFromHost } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import { RemovePlugin } from "../../src/contexts/installation/application/removal/remove-plugin.js";
 import type { ManifestRepository } from "../../src/contexts/installation/ports/manifest-repository.js";
+import type { InstallationMarketplaceRegistry } from "../../src/contexts/installation/ports/marketplace-sources.js";
 import type { RegistrationRecordRules } from "../../src/contexts/installation/ports/native-host.js";
 import { pluginRemovalClaims } from "../../src/contexts/machine-claims/application/plugin-removal-claims.js";
 import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/application/purge-declared-cache.js";
@@ -26,7 +26,7 @@ export interface PluginRemoverParts {
   activators?: Withdrawing[2]["activators"];
   hostPluginRegistries?: Withdrawing[2]["pluginRegistries"];
   userSourceReferences?: UserSourceReferences;
-  marketplaceRegistry?: MarketplaceRegistry;
+  marketplaceRegistry?: InstallationMarketplaceRegistry;
   userManifestRepo?: ManifestRepository & Lock;
   nativeMarketplaceSources?: Withdrawing[2]["sources"];
   records?: RegistrationRecordRules;
