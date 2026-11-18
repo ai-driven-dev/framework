@@ -18,7 +18,7 @@ import { FakeHostPluginRegistry } from "../contexts/host-registration/testing/fa
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { hostRecord } from "../helpers/host-record-reading.js";
 import { FakeHostActions } from "../shared/testing/fake-host-actions.js";
-import { TOOL } from "../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../shared/testing/registered-tools.js";
 
 describe("createDeps", () => {
   const tools = catalogOf();
@@ -509,6 +509,22 @@ describe("createDeps", () => {
     expect(
       await readFile(join(root, ".github", "agents", "aidd-test-code-reviewer.agent.md"), "utf8")
     ).toContain("aidd-test-code-reviewer");
+  });
+
+  it("hands the IDE settings propagation the bundled assets, so a settings file kept in an asset is written", async () => {
+    const base = wireBase(root, { verbose: false }, undefined, registeredTools());
+    const manifest = Manifest.create();
+    manifest.addTool(TOOL.copilot, "1.0.0", []);
+    await base.manifestRepo.save(manifest);
+
+    await wireInstallation(base).propagateAiSettingsToIde.execute({
+      ideId: TOOL.vscode,
+      projectRoot: root,
+    });
+
+    expect(
+      JSON.parse(await readFile(join(root, ".vscode", "settings.json"), "utf8"))
+    ).toHaveProperty("github.copilot.enable");
   });
 
   it("hands the menu a manifest repository that resolves tool ids through the catalog", async () => {
