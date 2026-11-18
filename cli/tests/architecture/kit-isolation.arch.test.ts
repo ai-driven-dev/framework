@@ -2,6 +2,10 @@
  * A test of a context imports its own kit and the shared one, never another context's kit. A
  * helper or a file of the shared kit belongs to no context, so it imports no context's kit at all:
  * a kit reached through a helper is the same reach, one file removed.
+ *
+ * Scope: the tests of a context, plus the helpers and the shared kit that could hand a kit out.
+ * Orchestration, presentation, composition, e2e and golden tests compose contexts and are free to
+ * import any context's kit.
  */
 import { describe, expect, it } from "vitest";
 import { INTERNAL_IMPORT, read, resolveImportTarget, tsFilesUnder } from "./helpers.js";
