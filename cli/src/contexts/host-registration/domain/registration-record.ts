@@ -141,14 +141,14 @@ export function pluginRefsOf(record: RegistrationRecordData | undefined): readon
 /** The registration aidd's local name stands for, `undefined` when the alias is absent or was
  * never registered. */
 export function marketplaceOf(
-  record: RegistrationRecordData,
+  record: RegistrationRecordData | undefined,
   alias: string | undefined
 ): NativeMarketplaceRegistration | undefined {
   return recordedMarketplaces(record).find((entry) => entry.alias === alias);
 }
 
 const hostNameOf = (
-  record: RegistrationRecordData,
+  record: RegistrationRecordData | undefined,
   alias: string | undefined
 ): string | undefined => marketplaceOf(record, alias)?.hostName;
 
@@ -176,7 +176,7 @@ export function refOf(
   plugin: string,
   alias: string | undefined
 ): string | undefined {
-  const hostName = record === undefined ? undefined : hostNameOf(record, alias);
+  const hostName = hostNameOf(record, alias);
   return hostName === undefined ? undefined : refOnHostName(plugin, hostName);
 }
 

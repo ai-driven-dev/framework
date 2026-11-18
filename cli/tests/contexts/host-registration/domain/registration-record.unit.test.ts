@@ -3,6 +3,7 @@ import type { NativeMarketplaceRegistration } from "../../../../src/contexts/hos
 import {
   type RegistrationRecord,
   readRegistrationRecord,
+  recordedRegistrations,
   registrationRecordData,
 } from "../../../../src/contexts/host-registration/domain/registration-record.js";
 
@@ -68,6 +69,45 @@ describe("registration record: what a tool's own CLI was asked to register", () 
         marketplaces: [{ alias: "local", hostName: "declared" }],
         pluginRefs: ["a@declared", "b@declared"],
       });
+    });
+  });
+
+  describe("read from hand-edited data", () => {
+    it("reads no plugin ref from a pluginRefs that is no list", () => {
+      expect(readRegistrationRecord({ binary: "codex", pluginRefs: "a@declared" })).toStrictEqual({
+        binary: "codex",
+        marketplaces: [],
+        pluginRefs: [],
+      });
+    });
+
+    it("keeps only the plugin refs that are text", () => {
+      expect(
+        readRegistrationRecord({ binary: "codex", pluginRefs: ["a@declared", 5, null] })?.pluginRefs
+      ).toStrictEqual(["a@declared"]);
+    });
+
+    it("reads no marketplace from a marketplaces that is no list", () => {
+      expect(
+        readRegistrationRecord({ binary: "codex", marketplaces: { alias: "a", hostName: "h" } })
+      ).toStrictEqual({ binary: "codex", marketplaces: [], pluginRefs: [] });
+    });
+
+    it("skips a marketplace entry that is no registration and keeps the others", () => {
+      expect(
+        readRegistrationRecord({
+          binary: "codex",
+          marketplaces: [5, { alias: "local", hostName: "declared" }],
+        })?.marketplaces
+      ).toStrictEqual([{ alias: "local", hostName: "declared" }]);
+    });
+  });
+
+  it("holds an empty record, naming no binary, for data that names none", () => {
+    expect(recordedRegistrations({})).toStrictEqual({
+      binary: "",
+      marketplaces: [],
+      pluginRefs: [],
     });
   });
 
