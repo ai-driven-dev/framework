@@ -4,182 +4,251 @@
 // Pure preparation: no network or writes. JSON on stdout; exit 0 prepared, 1 refused, 2 usage/read error.
 const fs = require("node:fs");
 const { createHash } = require("node:crypto");
-const MARKER = "<!-- aidd-answer-comments-summary -->";
-const STATE = "<!-- aidd-answer-comments-state ";
-const KINDS = ["done", "answer", "user-call", "todo", "decided"];
+
+const SUMMARY_MARKER = "<!-- aidd-answer-comments-summary -->";
+const STATE_OPEN = "<!-- aidd-answer-comments-state ";
+const STATE_CLOSE = " -->";
+const STATE_VERSION = 1;
+const SUMMARY_HEADING = "## Review comments";
+const ANSWER_HERE = "Answer here.";
+const TO_DO = "To do.";
+const DECISION_PREFIX = "Decision: ";
+const NEW_SUMMARY = "new";
+const SHORT_SHA_LENGTH = 9;
+const MAX_TEXT_LINES = 2;
+const COMMIT_SHA = /^[a-f\d]{7,40}$/i;
+const FINGERPRINT = /^[a-f\d]{64}$/;
+const TRAILING_SOURCE = /\([^()]*\)\.?\s*$/;
+const DECIDED = "decided";
+const CLASSIFIED_KINDS = ["done", "answer", "user-call", "todo"];
+const STORED_KINDS = [...CLASSIFIED_KINDS, DECIDED];
+const SOURCED_KINDS = ["done", "answer", DECIDED];
+const PENDING_SECTIONS = [["user-call", "FAQ: your call"], ["todo", "To do"]];
+
+// Input checks: each returns its value or throws the refusal.
 const fail = (message) => { throw new Error(message); };
 const filled = (value) => typeof value === "string" && value.trim().length > 0;
 const array = (value, name) => Array.isArray(value) ? value : fail(`${name} must be an array.`);
 const text = (value, name) => filled(value) ? value : fail(`${name} must be non-empty text.`);
 const line = (value, name) => /[\r\n]/.test(text(value, name)) ? fail(`${name} must be one line.`) : value;
 const object = (value, name) => value && typeof value === "object" && !Array.isArray(value) ? value : fail(`${name} must be an object.`);
-const observationOf = (thread) => createHash("sha256").update(JSON.stringify([thread.lastReplyId ?? null, thread.lastReply ?? null])).digest("hex");
+const short = (value, name) => text(value, name).split(/\r?\n/).length > MAX_TEXT_LINES ? fail(`${name} must fit in ${MAX_TEXT_LINES} lines.`) : value;
 
 function index(items, key, name) {
   const result = new Map();
   for (const item of array(items, name)) {
-    object(item, name);
-    const id = line(item[key], `${name}.${key}`);
+    const id = line(object(item, name)[key], `${name}.${key}`);
     if (result.has(id) && JSON.stringify(result.get(id)) !== JSON.stringify(item)) fail(`${name}: conflicting ${id}.`);
     result.set(id, item);
   }
   return result;
 }
 
-function classification(item, name, historical = false) {
+function checkEntry(item, name, kinds) {
   object(item, name);
   line(item.threadId, `${name}.threadId`);
-  if (!KINDS.includes(item.kind) || (!historical && item.kind === "decided")) fail(`${name}: unsupported kind.`);
-  text(item.text, `${name}.text`);
-  if (item.text.split(/\r?\n/).length > 2) fail(`${name}.text must fit in two lines.`);
-  if (["done", "answer", "decided"].includes(item.kind)) line(item.source, `${name}.source`);
-  if (item.kind === "done" && !/^[a-f\d]{7,40}$/i.test(item.source)) fail(`${name}.source must be a pushed commit SHA.`);
-  if (!historical && ["done", "answer"].includes(item.kind) && /\([^()]*\)\.?\s*$/.test(item.text)) fail(`${name}.text must not end with its source; the reply appends it.`);
-  if (historical) {
-    line(item.url, `${name}.url`);
-    if (!/^[a-f\d]{64}$/.test(item.observation)) fail(`${name}.observation must be a reply fingerprint.`);
-  }
+  if (!kinds.includes(item.kind)) fail(`${name}: unsupported kind.`);
+  short(item.text, `${name}.text`);
+  if (SOURCED_KINDS.includes(item.kind)) line(item.source, `${name}.source`);
+  if (item.kind === "done" && !COMMIT_SHA.test(item.source)) fail(`${name}.source must be a pushed commit SHA.`);
 }
 
-function priorState(body) {
-  if (!body.includes(STATE)) return { entries: [], learnings: [] };
-  const parts = body.split(STATE);
-  if (parts.length !== 2 || !parts[1].includes(" -->")) fail("Invalid review state.");
-  let state;
-  try { state = JSON.parse(parts[1].slice(0, parts[1].indexOf(" -->"))); }
-  catch { fail("Invalid review state JSON."); }
-  object(state, "review state");
-  if (state.version !== 1) fail("Unsupported review state version.");
-  const entries = index(state.entries, "threadId", "review state entries");
-  for (const item of entries.values()) classification(item, "review state entry", true);
-  return { entries: [...entries.values()], learnings: learnings(state.learnings) };
+function checkClassification(item) {
+  checkEntry(item, "classification", CLASSIFIED_KINDS);
+  if (SOURCED_KINDS.includes(item.kind) && TRAILING_SOURCE.test(item.text)) fail("classification.text must not end with its source; the reply appends it.");
 }
 
-function learnings(items) {
-  return array(items, "learnings").map((item) => {
-    object(item, "learning");
-    return { text: line(item.text, "learning.text"), url: line(item.url, "learning.url") };
-  });
+function checkStoredEntry(item) {
+  checkEntry(item, "review state entry", STORED_KINDS);
+  line(item.url, "review state entry.url");
+  if (!FINGERPRINT.test(item.observation)) fail("review state entry.observation must be a reply fingerprint.");
 }
 
-function targetOf(input) {
-  const summaries = [...index(input.summaries ?? [], "id", "summaries").values()];
-  for (const item of summaries) { line(item.author, "summary.author"); text(item.body, "summary.body"); }
-  const owned = summaries.filter((item) => item.author === input.account);
-  const marked = owned.filter((item) => item.body.includes(MARKER));
-  const legacy = owned.filter((item) => !item.body.includes(MARKER) && item.body.startsWith("## Review comments"));
-  const choice = input.summaryChoice;
-  if (choice !== undefined) {
-    line(choice, "summaryChoice");
-    if (choice === "new") {
-      if (marked.length) fail("Choose an existing marked summary.");
-      return { status: "ready" };
-    }
-    const target = [...marked, ...(marked.length ? [] : legacy)].find((item) => item.id === choice);
-    if (!target) fail("summaryChoice is not an eligible summary owned by the current account.");
-    return { status: "ready", target };
-  }
-  if (marked.length === 1) return { status: "ready", target: marked[0] };
-  if (marked.length || legacy.length) return { status: "needs-choice", candidates: (marked.length ? marked : legacy).map(({ id }) => id), allowNew: !marked.length };
-  return { status: "ready" };
+function checkThread(thread) {
+  line(thread.url, "thread.url");
+  if (typeof thread.resolved !== "boolean") fail("thread.resolved must be boolean.");
+  array(thread.replyAuthors, "thread.replyAuthors").forEach((author) => line(author, "thread.replyAuthors[]"));
+  if (thread.lastReply !== undefined && typeof thread.lastReply !== "string") fail("thread.lastReply must be text.");
+  if (thread.lastReplyId !== undefined) line(thread.lastReplyId, "thread.lastReplyId");
+  if (thread.newCommit !== undefined && typeof thread.newCommit !== "boolean") fail("thread.newCommit must be boolean.");
 }
 
-const flatten = (value) => value.replace(/\s*\r?\n\s*/g, " ").trim();
-const withoutSuffix = (value) => value.replace(/\s*(?:Answer here\.|To do\.)\s*$/, "").trim();
-function replyOf(item) {
-  const value = withoutSuffix(item.text);
-  if (item.kind === "user-call") return `${value} Answer here.`;
-  if (item.kind === "todo") return `${value} To do.`;
-  if (item.kind === "decided") return `Decision: ${value}`;
-  return `${value} (${item.kind === "done" ? item.source.slice(0, 9) : item.source})`;
-}
+const learnings = (items) => array(items, "learnings").map((item) => {
+  object(item, "learning");
+  return { text: line(item.text, "learning.text"), url: line(item.url, "learning.url") };
+});
 
-function render(entries, lessons, pendingThreads) {
-  const values = [...entries.values()].sort((a, b) => a.threadId.localeCompare(b.threadId));
-  const done = values.filter((item) => item.kind === "done");
-  const shas = [...new Set(done.map((item) => item.source.slice(0, 9)))];
-  const lines = ["## Review comments", "", MARKER, "", `Done: ${done.length}${shas.length ? ` (${shas.join(", ")})` : ""}. Answered: ${values.filter((item) => item.kind === "answer").length}.`];
-  for (const [kind, heading] of [["user-call", "FAQ: your call"], ["todo", "To do"]]) {
-    const pending = pendingThreads.filter((item) => item.kind === kind);
-    if (pending.length) lines.push("", `### ${heading}`, "", ...pending.map((item, i) => kind === "user-call" ? `${i + 1}. **${flatten(withoutSuffix(item.text))}** ([thread](${item.url}))` : `- ${flatten(withoutSuffix(item.text))} ([thread](${item.url}))`));
-  }
-  if (lessons.length) lines.push("", "### Learnings to keep", "", ...lessons.map((item) => `- ${item.text} ([thread](${item.url}))`));
-  const state = JSON.stringify({ version: 1, entries: values, learnings: lessons }).replace(/</g, "\\u003c").replace(/>/g, "\\u003e");
-  return `${lines.join("\n")}\n\n${STATE}${state} -->`;
-}
+// A resolved thread the current account never replied in belongs to someone else's history.
+const outOfScope = (thread, account) => thread.resolved && !thread.replyAuthors.includes(account);
 
-function prepare(input) {
+function readInput(input) {
   object(input, "input");
-  line(input.account, "account");
+  const account = line(input.account, "account");
   const threads = index(input.threads, "id", "threads");
-  const outOfScope = (thread) => thread.resolved && !thread.replyAuthors.includes(input.account);
-  for (const item of threads.values()) {
-    line(item.url, "thread.url");
-    if (typeof item.resolved !== "boolean") fail("thread.resolved must be boolean.");
-    array(item.replyAuthors, "thread.replyAuthors").forEach((author) => line(author, "thread.replyAuthors[]"));
-    if (item.lastReply !== undefined && typeof item.lastReply !== "string") fail("thread.lastReply must be text.");
-    if (item.lastReplyId !== undefined) line(item.lastReplyId, "thread.lastReplyId");
-    if (item.newCommit !== undefined && typeof item.newCommit !== "boolean") fail("thread.newCommit must be boolean.");
-  }
-  const classes = index(input.classifications ?? [], "threadId", "classifications");
-  for (const item of classes.values()) {
-    classification(item, "classification");
+  threads.forEach(checkThread);
+  const classifications = index(input.classifications ?? [], "threadId", "classifications");
+  for (const item of classifications.values()) {
+    checkClassification(item);
     if (!threads.has(item.threadId)) fail(`Unknown classification thread ${item.threadId}.`);
-    if (outOfScope(threads.get(item.threadId))) fail(`Thread ${item.threadId} is resolved and the current account never replied in it; leave it unclassified.`);
+    if (outOfScope(threads.get(item.threadId), account)) fail(`Thread ${item.threadId} is resolved and the current account never replied in it; leave it unclassified.`);
   }
   const decisions = index(input.decisions ?? [], "threadId", "decisions");
   for (const item of decisions.values()) {
-    text(item.text, "decision.text"); line(item.source, "decision.source");
-    if (item.text.split(/\r?\n/).length > 2) fail("decision.text must fit in two lines.");
+    short(item.text, "decision.text");
+    line(item.source, "decision.source");
     if (!threads.has(item.threadId)) fail(`Unknown decision thread ${item.threadId}.`);
   }
-  const selection = targetOf(input);
-  const prior = selection.target ? priorState(selection.target.body) : { entries: [], learnings: [] };
-  const entries = new Map(prior.entries.map((item) => [item.threadId, item]));
+  return { account, threads, classifications, decisions, learnings: learnings(input.learnings ?? []) };
+}
+
+// Summary targeting: only the current account's comments are candidates.
+function selectSummary(input) {
+  const summaries = [...index(input.summaries ?? [], "id", "summaries").values()];
+  for (const item of summaries) { line(item.author, "summary.author"); text(item.body, "summary.body"); }
+  const owned = summaries.filter((item) => item.author === input.account);
+  const marked = owned.filter((item) => item.body.includes(SUMMARY_MARKER));
+  const legacy = owned.filter((item) => !item.body.includes(SUMMARY_MARKER) && item.body.startsWith(SUMMARY_HEADING));
+  if (input.summaryChoice !== undefined) return chosenSummary(line(input.summaryChoice, "summaryChoice"), marked, legacy);
+  if (marked.length === 1) return { status: "ready", target: marked[0] };
+  if (marked.length) return { status: "needs-choice", candidates: marked.map(({ id }) => id), allowNew: false };
+  if (legacy.length) return { status: "needs-choice", candidates: legacy.map(({ id }) => id), allowNew: true };
+  return { status: "ready" };
+}
+
+function chosenSummary(choice, marked, legacy) {
+  if (choice === NEW_SUMMARY) return marked.length ? fail("Choose an existing marked summary.") : { status: "ready" };
+  const eligible = marked.length ? marked : legacy;
+  const target = eligible.find((item) => item.id === choice);
+  return target ? { status: "ready", target } : fail("summaryChoice is not an eligible summary owned by the current account.");
+}
+
+function priorState(body) {
+  if (!body.includes(STATE_OPEN)) return { entries: [], learnings: [] };
+  const parts = body.split(STATE_OPEN);
+  if (parts.length !== 2 || !parts[1].includes(STATE_CLOSE)) fail("Invalid review state.");
+  let state;
+  try { state = JSON.parse(parts[1].slice(0, parts[1].indexOf(STATE_CLOSE))); }
+  catch { fail("Invalid review state JSON."); }
+  object(state, "review state");
+  if (state.version !== STATE_VERSION) fail("Unsupported review state version.");
+  const entries = index(state.entries, "threadId", "review state entries");
+  entries.forEach(checkStoredEntry);
+  return { entries: [...entries.values()], learnings: learnings(state.learnings) };
+}
+
+// Replies: the script owns every suffix, so a rerun recognizes its own reply.
+const observationOf = (thread) => createHash("sha256").update(JSON.stringify([thread.lastReplyId ?? null, thread.lastReply ?? null])).digest("hex");
+const flatten = (value) => value.replace(/\s*\r?\n\s*/g, " ").trim();
+const withoutSuffix = (value) => value.replace(/\s*(?:Answer here\.|To do\.)\s*$/, "").trim();
+const shortSource = (item) => item.kind === "done" ? item.source.slice(0, SHORT_SHA_LENGTH) : item.source;
+
+function replyOf(item) {
+  const value = withoutSuffix(item.text);
+  if (item.kind === "user-call") return `${value} ${ANSWER_HERE}`;
+  if (item.kind === "todo") return `${value} ${TO_DO}`;
+  if (item.kind === DECIDED) return `${DECISION_PREFIX}${value}`;
+  return `${value} (${shortSource(item)})`;
+}
+
+// A remembered entry still describes the thread when nothing new was said in it.
+const stillCurrent = (thread, old) => Boolean(old) && (thread.resolved || old.observation === observationOf(thread) || thread.lastReply === replyOf(old));
+
+function entryFor(thread, old, { classifications, decisions }) {
+  const decision = decisions.get(thread.id);
+  if (decision) return { threadId: thread.id, kind: DECIDED, text: decision.text, source: decision.source };
+  const current = stillCurrent(thread, old);
+  if (current && !thread.resolved && old.kind === DECIDED) return old;
+  return classifications.get(thread.id) ?? (current ? old : undefined);
+}
+
+const lastReplyEndsWith = (thread, suffix) => !thread.resolved && Boolean(thread.lastReply?.trimEnd().endsWith(suffix));
+
+// Returns whether the thread still waits; refuses a classification that would talk over the wait.
+function stillWaits(thread, item) {
+  const waitsForDecision = lastReplyEndsWith(thread, ANSWER_HERE) && item.kind !== DECIDED;
+  const waitsForCommit = lastReplyEndsWith(thread, TO_DO) && !thread.newCommit && item.kind !== DECIDED;
+  if (waitsForDecision && item.kind !== "user-call") fail(`Thread ${thread.id} awaits a decision.`);
+  if (waitsForCommit && item.kind !== "todo") fail(`Thread ${thread.id} awaits a pushed commit.`);
+  return waitsForDecision || waitsForCommit;
+}
+
+function operationFor(thread, item) {
+  const operation = { threadId: thread.id };
+  const reply = replyOf(item);
+  if (reply !== thread.lastReply) operation.reply = reply;
+  if (SOURCED_KINDS.includes(item.kind)) operation.resolve = true;
+  return operation.reply || operation.resolve ? operation : undefined;
+}
+
+function planThreads(review, priorEntries) {
+  const entries = new Map(priorEntries.map((item) => [item.threadId, item]));
   const operations = [];
   const unknown = [];
-  for (const thread of threads.values()) {
-    if (outOfScope(thread)) continue;
-    const decision = decisions.get(thread.id);
-    const old = entries.get(thread.id);
-    const observation = observationOf(thread);
-    const sameReply = old?.observation === observation;
-    const reusable = old && (thread.resolved || sameReply || thread.lastReply === replyOf(old));
-    const settled = !thread.resolved && old?.kind === "decided" && reusable;
-    let item = decision ? { threadId: thread.id, kind: "decided", text: decision.text, source: decision.source } : settled ? old : classes.get(thread.id) ?? (reusable ? old : undefined);
+  for (const thread of review.threads.values()) {
+    if (outOfScope(thread, review.account)) continue;
+    const item = entryFor(thread, entries.get(thread.id), review);
     if (!item) { entries.delete(thread.id); unknown.push(thread.id); continue; }
-    const waitsForDecision = !thread.resolved && thread.lastReply?.trimEnd().endsWith("Answer here.") && item.kind !== "decided";
-    const waitsForCommit = !thread.resolved && thread.lastReply?.trimEnd().endsWith("To do.") && !thread.newCommit;
-    if (waitsForDecision && item.kind !== "user-call") fail(`Thread ${thread.id} awaits a decision.`);
-    if (waitsForCommit && item.kind !== "todo" && item.kind !== "decided") fail(`Thread ${thread.id} awaits a pushed commit.`);
-    item = { ...item, url: thread.url, observation };
-    entries.set(thread.id, item);
-    if (thread.resolved || waitsForDecision || (waitsForCommit && item.kind !== "decided")) continue;
-    const reply = replyOf(item);
-    const resolve = ["done", "answer", "decided"].includes(item.kind);
-    const operation = { threadId: thread.id };
-    if (reply !== thread.lastReply) operation.reply = reply;
-    if (resolve) operation.resolve = true;
-    if (operation.reply || operation.resolve) operations.push(operation);
+    const waits = stillWaits(thread, item);
+    entries.set(thread.id, { ...item, url: thread.url, observation: observationOf(thread) });
+    const operation = thread.resolved || waits ? undefined : operationFor(thread, item);
+    if (operation) operations.push(operation);
   }
-  const lessons = [...new Map([...prior.learnings, ...learnings(input.learnings ?? [])].map((item) => [JSON.stringify(item), item])).values()];
-  const pending = [...entries.values()].filter((item) => threads.has(item.threadId) && !threads.get(item.threadId).resolved && ["user-call", "todo"].includes(item.kind));
-  let summary;
-  if (selection.status === "needs-choice") summary = selection;
-  else if (unknown.length) summary = { status: "unknown" };
-  else {
-    const body = render(entries, lessons, pending);
-    summary = { status: "ready", operation: selection.target ? selection.target.body === body ? "unchanged" : "update" : "create", ...(selection.target ? { targetId: selection.target.id } : {}), body };
-  }
-  return { threads: operations, pending, summary, unknown };
+  return { entries, operations, unknown };
+}
+
+// Rendering: the visible summary, then its hidden state for the next run.
+function countsLine(values) {
+  const done = values.filter((item) => item.kind === "done");
+  const shas = [...new Set(done.map(shortSource))];
+  const answered = values.filter((item) => item.kind === "answer").length;
+  return `Done: ${done.length}${shas.length ? ` (${shas.join(", ")})` : ""}. Answered: ${answered}.`;
+}
+
+function pendingSection(kind, heading, pending) {
+  const items = pending.filter((item) => item.kind === kind);
+  if (!items.length) return [];
+  const bullet = (item, i) => kind === "user-call" ? `${i + 1}. **${flatten(withoutSuffix(item.text))}**` : `- ${flatten(withoutSuffix(item.text))}`;
+  return ["", `### ${heading}`, "", ...items.map((item, i) => `${bullet(item, i)} ([thread](${item.url}))`)];
+}
+
+function render(entries, lessons, pending) {
+  const values = [...entries.values()].sort((a, b) => a.threadId.localeCompare(b.threadId));
+  const lines = [SUMMARY_HEADING, "", SUMMARY_MARKER, "", countsLine(values)];
+  for (const [kind, heading] of PENDING_SECTIONS) lines.push(...pendingSection(kind, heading, pending));
+  if (lessons.length) lines.push("", "### Learnings to keep", "", ...lessons.map((item) => `- ${item.text} ([thread](${item.url}))`));
+  const state = JSON.stringify({ version: STATE_VERSION, entries: values, learnings: lessons }).replace(/</g, "\\u003c").replace(/>/g, "\\u003e");
+  return `${lines.join("\n")}\n\n${STATE_OPEN}${state}${STATE_CLOSE}`;
+}
+
+function planSummary(selection, unknown, body) {
+  if (selection.status === "needs-choice") return selection;
+  if (unknown.length) return { status: "unknown" };
+  if (!selection.target) return { status: "ready", operation: "create", body };
+  const operation = selection.target.body === body ? "unchanged" : "update";
+  return { status: "ready", operation, targetId: selection.target.id, body };
+}
+
+function prepare(input) {
+  const review = readInput(input);
+  const selection = selectSummary(input);
+  const prior = selection.target ? priorState(selection.target.body) : { entries: [], learnings: [] };
+  const { entries, operations, unknown } = planThreads(review, prior.entries);
+  const lessons = [...new Map([...prior.learnings, ...review.learnings].map((item) => [JSON.stringify(item), item])).values()];
+  const isOpen = (item) => review.threads.has(item.threadId) && !review.threads.get(item.threadId).resolved;
+  const pending = [...entries.values()].filter((item) => isOpen(item) && PENDING_SECTIONS.some(([kind]) => kind === item.kind));
+  return { threads: operations, pending, summary: planSummary(selection, unknown, render(entries, lessons, pending)), unknown };
+}
+
+function main(argv) {
+  if (argv.length !== 2 || argv[0] !== "--input") throw Object.assign(new Error("Usage: node prepare-review.cjs --input <review.json>"), { usage: true });
+  let input;
+  try { input = JSON.parse(fs.readFileSync(argv[1], "utf8")); }
+  catch (error) { throw Object.assign(new Error(`Cannot read review JSON: ${error.message}`), { usage: true }); }
+  return prepare(input);
 }
 
 try {
-  if (process.argv.length !== 4 || process.argv[2] !== "--input") throw Object.assign(new Error("Usage: node prepare-review.cjs --input <review.json>"), { usage: true });
-  let input;
-  try { input = JSON.parse(fs.readFileSync(process.argv[3], "utf8")); }
-  catch (error) { throw Object.assign(new Error(`Cannot read review JSON: ${error.message}`), { usage: true }); }
-  process.stdout.write(`${JSON.stringify(prepare(input), null, 2)}\n`);
+  process.stdout.write(`${JSON.stringify(main(process.argv.slice(2)), null, 2)}\n`);
 } catch (error) {
   process.stdout.write(`${JSON.stringify({ error: error.message })}\n`);
   process.exitCode = error.usage ? 2 : 1;
