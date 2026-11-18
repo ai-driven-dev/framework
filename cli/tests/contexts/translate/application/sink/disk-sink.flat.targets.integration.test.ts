@@ -3,10 +3,7 @@ import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { wireTools } from "../../../../../src/composition/tools.js";
 import { createFrameworkBuildUseCase } from "../../../../../src/composition/translate.js";
-import { BundledAssetProviderAdapter } from "../../../../../src/contexts/installation/infrastructure/assets/asset-loader.js";
-import { HasherAdapter } from "../../../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import type { FrameworkBuildTarget } from "../../../../../src/contexts/translate/contract/build-targets.js";
 import {
   FlatMergeTargetNotJsonError,
@@ -15,7 +12,9 @@ import {
 import { FileAdapter } from "../../../../../src/shared/infrastructure/file-adapter.js";
 import { FRAMEWORK_REAL } from "../../../../helpers/fixture-setup.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
+import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { REPOSITORY_ROOT } from "../../../../helpers/repository-root.js";
+import { bundledAssetProvider } from "../../../../shared/testing/bundled-asset-provider.js";
 import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
@@ -41,8 +40,8 @@ async function buildFlat(
   const useCase = createFrameworkBuildUseCase(
     registeredTools(),
     {
-      fs: new FileAdapter(new HasherAdapter(), logger),
-      assetProvider: new BundledAssetProviderAdapter(wireTools()),
+      fs: new FileAdapter(new DeterministicHasher(), logger),
+      assetProvider: bundledAssetProvider(),
       logger,
     },
     { target, mode: "flat", outDir: out, force: options.force ?? false }
