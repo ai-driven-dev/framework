@@ -26,8 +26,11 @@ describe("post-install pipeline", () => {
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
 
-    await new RunPostInstallPipeline(deps.manifestRepo, deps.updateGitignore).execute({
-      tools: registeredTools(),
+    await new RunPostInstallPipeline(
+      deps.manifestRepo,
+      deps.updateGitignore,
+      registeredTools()
+    ).execute({
       projectRoot: PROJECT_ROOT,
       manifest,
     });
@@ -48,8 +51,11 @@ describe("post-install pipeline", () => {
     if (manifest === null) throw new Error("manifest not found");
 
     const recordingGitignore = new RecordingGitignoreUseCase(deps.fs);
-    await new RunPostInstallPipeline(deps.manifestRepo, recordingGitignore).execute({
-      tools: registeredTools(),
+    await new RunPostInstallPipeline(
+      deps.manifestRepo,
+      recordingGitignore,
+      registeredTools()
+    ).execute({
       projectRoot: PROJECT_ROOT,
       manifest,
     });
@@ -66,8 +72,11 @@ describe("post-install pipeline", () => {
     const manifest = await deps.manifestRepo.load();
     if (manifest === null) throw new Error("manifest not found");
 
-    await new RunPostInstallPipeline(deps.manifestRepo, deps.updateGitignore).execute({
-      tools: registeredTools(),
+    await new RunPostInstallPipeline(
+      deps.manifestRepo,
+      deps.updateGitignore,
+      registeredTools()
+    ).execute({
       projectRoot: PROJECT_ROOT,
       manifest,
     });

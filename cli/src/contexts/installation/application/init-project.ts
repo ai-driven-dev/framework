@@ -11,7 +11,7 @@ import type { ToolCatalog } from "../../tools/contract/tool-catalog.js";
 import { Manifest } from "../domain/manifest.js";
 import type { ManifestRepository } from "../ports/manifest-repository.js";
 import type { ToolFootprint } from "../ports/tool-sections.js";
-import { UpdateGitignore } from "./update-gitignore.js";
+import type { UpdateGitignore } from "./update-gitignore.js";
 
 /** The files of a tool's own signal directory the framework put there: markdown files whose
  * frontmatter names a framework command. Empty when the tool declares no signal directory. */
@@ -36,7 +36,6 @@ export async function detectToolSignals(
 interface InitProjectCommand {
   projectRoot: string;
   force?: boolean;
-  tools: ToolCatalog;
 }
 
 interface InitProjectResult {
@@ -46,14 +45,16 @@ interface InitProjectResult {
 export class InitProject {
   constructor(
     private readonly fs: FileReader & FileWriter,
-    private readonly manifestRepo: ManifestRepository
+    private readonly manifestRepo: ManifestRepository,
+    private readonly updateGitignore: UpdateGitignore,
+    private readonly tools: ToolCatalog
   ) {}
 
   private async refuseUnlessInitializable(
     existing: Manifest | null,
-    options: Pick<InitProjectCommand, "projectRoot" | "force" | "tools">
+    options: Pick<InitProjectCommand, "projectRoot" | "force">
   ): Promise<void> {
-    const { projectRoot, force, tools } = options;
+    const { projectRoot, force } = options;
 
     if (force) {
       if (existing === null) {
@@ -68,13 +69,13 @@ export class InitProject {
       );
     }
 
-    if (await this.hasAiddSignals(projectRoot, tools)) {
+    if (await this.hasAiddSignals(projectRoot)) {
       throw new AiddFilesDetectedError();
     }
   }
 
-  private async hasAiddSignals(projectRoot: string, tools: ToolCatalog): Promise<boolean> {
-    for (const tool of tools.sortedById()) {
+  private async hasAiddSignals(projectRoot: string): Promise<boolean> {
+    for (const tool of this.tools.sortedById()) {
       if ((await detectToolSignals(this.fs, tool, projectRoot)).length > 0) return true;
     }
     return false;
@@ -96,8 +97,8 @@ export class InitProject {
     existing: Manifest | null,
     options: InitProjectCommand
   ): Promise<InitProjectResult> {
-    const { projectRoot, force = false, tools } = options;
-    await this.refuseUnlessInitializable(existing, { projectRoot, force, tools });
+    const { projectRoot, force = false } = options;
+    await this.refuseUnlessInitializable(existing, { projectRoot, force });
 
     // The refusal above leaves a record exactly when `force` asked to reuse it.
     const manifest = existing ?? Manifest.create();
@@ -112,7 +113,7 @@ export class InitProject {
   ): Promise<void> {
     await this.manifestRepo.save(manifest);
     if (!force) {
-      await new UpdateGitignore(this.fs).execute(projectRoot, [`${AIDD_DIR}/cache/`]);
+      await this.updateGitignore.execute(projectRoot, [`${AIDD_DIR}/cache/`]);
     }
   }
 }

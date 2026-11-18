@@ -81,7 +81,6 @@ export class InstallAiTool {
       manifest,
       force,
       version,
-      tools,
     });
     if (runtimeResult.skipped || !propagatePlugins) {
       return { runtimeResult, propagatedPlugins: [], propagationWarnings: [] };

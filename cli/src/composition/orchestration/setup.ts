@@ -75,7 +75,13 @@ export function wireAgentModels(
 }
 
 /** `setup`: the questions it asks about plugins and tools, and the scenario that runs them. */
-export function wireSetup(base: Base, p: Plugin, m: Marketplace, g: Global) {
+export function wireSetup(
+  base: Base,
+  inst: Pick<Installation, "updateGitignore">,
+  p: Plugin,
+  m: Marketplace,
+  g: Global
+) {
   const { fs, manifestRepo, prompter } = base;
   const { marketplaceRegistry, resolveMarketplaceUseCase } = base;
   const { pluginInstallFromMarketplaceUseCase, pluginPickUseCase } = p;
@@ -89,7 +95,7 @@ export function wireSetup(base: Base, p: Plugin, m: Marketplace, g: Global) {
   const runSetup = new RunSetup(
     setupStepsOf(base, m, g),
     setupQuestionsOf(setupPluginsPromptUseCase, setupToolsPromptUseCase),
-    new InitProject(fs, manifestRepo)
+    new InitProject(fs, manifestRepo, inst.updateGitignore, base.tools)
   );
   return { setupPluginsPromptUseCase, runSetup };
 }

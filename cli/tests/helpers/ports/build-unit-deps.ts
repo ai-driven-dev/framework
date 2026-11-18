@@ -59,18 +59,24 @@ export async function buildUnitDeps(_projectRoot: string) {
   const _pluginCatalogRepository = new PluginCatalogRepositoryAdapter(fs);
   const marketplaceRegistry = new InMemoryMarketplaceRegistry();
   const updateGitignore = new UpdateGitignore(fs);
-  const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore);
+  const runPostInstallPipeline = new RunPostInstallPipeline(
+    manifestRepo,
+    updateGitignore,
+    catalogOf()
+  );
   const trackedConfigFiles = new TrackedConfigFiles(fs, hasher, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
     trackedConfigFiles,
     fs,
     assetProvider,
-    runPostInstallPipeline
+    runPostInstallPipeline,
+    catalogOf()
   );
   const installIdeConfig = new InstallIdeConfig(
     trackedConfigFiles,
     assetProvider,
-    runPostInstallPipeline
+    runPostInstallPipeline,
+    catalogOf()
   );
 
   const currentVersionProvider = new FakeCurrentVersion();
@@ -115,8 +121,13 @@ export async function initProject(
   deps: Awaited<ReturnType<typeof buildUnitDeps>>,
   projectRoot: string
 ): Promise<void> {
-  const initUseCase = new InitProject(deps.fs, deps.manifestRepo);
-  await initUseCase.execute({ projectRoot, tools: catalogOf() });
+  const initUseCase = new InitProject(
+    deps.fs,
+    deps.manifestRepo,
+    deps.updateGitignore,
+    catalogOf()
+  );
+  await initUseCase.execute({ projectRoot });
 }
 
 export async function installTool(
@@ -128,7 +139,6 @@ export async function installTool(
   const version = "test";
   if (catalogOf().isIdeTool(toolId)) {
     return deps.installIdeConfig.execute({
-      tools: catalogOf(),
       toolId,
       projectRoot,
       manifest,
@@ -137,7 +147,6 @@ export async function installTool(
     });
   }
   return deps.installRuntimeConfigUseCase.execute({
-    tools: catalogOf(),
     toolId,
     projectRoot,
     manifest,

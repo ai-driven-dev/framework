@@ -23,7 +23,8 @@ function buildUseCase(
     new TrackedConfigFiles(deps.fs, deps.hasher, deps.logger),
     deps.fs,
     assets,
-    deps.runPostInstallPipeline
+    deps.runPostInstallPipeline,
+    registeredTools()
   );
 }
 
@@ -36,7 +37,6 @@ describe("InstallRuntimeConfig", () => {
     const assets = new StubAssetProvider({ "claude/settings.json": content }, deps.assetProvider);
 
     const result = await buildUseCase(deps, assets).execute({
-      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -66,7 +66,6 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     const result = await buildUseCase(deps).execute({
-      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -88,7 +87,6 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -98,7 +96,6 @@ describe("InstallRuntimeConfig", () => {
 
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
@@ -121,7 +118,6 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -134,7 +130,6 @@ describe("InstallRuntimeConfig", () => {
 
     const reloaded = (await deps.manifestRepo.load()) ?? Manifest.create();
     const result = await buildUseCase(deps).execute({
-      tools: registeredTools(),
       toolId: TOOL.claude,
       projectRoot: PROJECT_ROOT,
       manifest: reloaded,
@@ -153,7 +148,6 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: registeredTools(),
       toolId: TOOL.kilo,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -172,7 +166,6 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: registeredTools(),
       toolId: TOOL.kilo,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -194,7 +187,6 @@ describe("InstallRuntimeConfig", () => {
     const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
     await buildUseCase(deps).execute({
-      tools: registeredTools(),
       toolId,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -210,7 +202,6 @@ describe("InstallRuntimeConfig", () => {
     manifest.updateTrackedFileHash(toolId, path, deps.hasher.hash(merged));
 
     await buildUseCase(deps).execute({
-      tools: registeredTools(),
       toolId,
       projectRoot: PROJECT_ROOT,
       manifest,
@@ -235,7 +226,6 @@ describe("InstallRuntimeConfig", () => {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
-        tools: registeredTools(),
         toolId: TOOL.copilot,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -254,7 +244,6 @@ describe("InstallRuntimeConfig", () => {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
-        tools: registeredTools(),
         toolId: TOOL.copilot,
         projectRoot: PROJECT_ROOT,
         manifest,
@@ -276,7 +265,6 @@ describe("InstallRuntimeConfig", () => {
       const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
 
       await buildUseCase(deps).execute({
-        tools: registeredTools(),
         toolId: TOOL.copilot,
         projectRoot: PROJECT_ROOT,
         manifest,

@@ -6,6 +6,10 @@ import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.
 
 const PROJECT_ROOT = "/test-project";
 
+function initOf(deps: Awaited<ReturnType<typeof buildUnitDeps>>): InitProject {
+  return new InitProject(deps.fs, deps.manifestRepo, deps.updateGitignore, registeredTools());
+}
+
 function countingLoads(repo: { load: () => Promise<unknown> }): () => number {
   let reads = 0;
   const load = repo.load.bind(repo);
@@ -20,8 +24,8 @@ describe("init", () => {
   it("reads the manifest once, whether it initializes or refuses", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const reads = countingLoads(deps.manifestRepo);
-    const init = new InitProject(deps.fs, deps.manifestRepo);
-    const command = { projectRoot: PROJECT_ROOT, tools: registeredTools() };
+    const init = initOf(deps);
+    const command = { projectRoot: PROJECT_ROOT };
 
     await init.execute(command);
     expect(reads()).toBe(1);
@@ -34,9 +38,8 @@ describe("init", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     const reads = countingLoads(deps.manifestRepo);
 
-    await new InitProject(deps.fs, deps.manifestRepo).initializeIfAbsent({
+    await initOf(deps).initializeIfAbsent({
       projectRoot: PROJECT_ROOT,
-      tools: registeredTools(),
     });
 
     expect(reads()).toBe(1);
@@ -44,9 +47,8 @@ describe("init", () => {
 
   it("creates a v5 manifest with no tools", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    const result = await new InitProject(deps.fs, deps.manifestRepo).execute({
+    const result = await initOf(deps).execute({
       projectRoot: PROJECT_ROOT,
-      tools: registeredTools(),
     });
 
     expect(result.manifest).not.toBeNull();
@@ -61,9 +63,8 @@ describe("init", () => {
 
   it("does not create an aidd_docs directory", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
-    await new InitProject(deps.fs, deps.manifestRepo).execute({
+    await initOf(deps).execute({
       projectRoot: PROJECT_ROOT,
-      tools: registeredTools(),
     });
 
     const docsFiles = deps.fs.listUnder(join(PROJECT_ROOT, "aidd_docs"));
@@ -75,9 +76,8 @@ describe("init", () => {
     const docFile = join(PROJECT_ROOT, ".claude", "CLAUDE.md");
     await deps.fs.writeFile(docFile, "custom content");
 
-    await new InitProject(deps.fs, deps.manifestRepo).execute({
+    await initOf(deps).execute({
       projectRoot: PROJECT_ROOT,
-      tools: registeredTools(),
     });
 
     expect(deps.fs.getFile(docFile)).toBe("custom content");
@@ -87,9 +87,8 @@ describe("init", () => {
     it("creates the manifest and answers true when none exists", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
 
-      const created = await new InitProject(deps.fs, deps.manifestRepo).initializeIfAbsent({
+      const created = await initOf(deps).initializeIfAbsent({
         projectRoot: PROJECT_ROOT,
-        tools: registeredTools(),
       });
 
       expect(created).toBe(true);
@@ -101,9 +100,8 @@ describe("init", () => {
       await initProject(deps, PROJECT_ROOT);
       const before = deps.manifestRepo.saveCount;
 
-      const created = await new InitProject(deps.fs, deps.manifestRepo).initializeIfAbsent({
+      const created = await initOf(deps).initializeIfAbsent({
         projectRoot: PROJECT_ROOT,
-        tools: registeredTools(),
       });
 
       expect(created).toBe(false);
@@ -120,9 +118,8 @@ describe("init", () => {
       );
 
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).execute({
+        initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
-          tools: registeredTools(),
         })
       ).rejects.toThrow("AIDD files detected but no manifest found");
     });
@@ -135,23 +132,20 @@ describe("init", () => {
       );
 
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).execute({
+        initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
-          tools: registeredTools(),
         })
       ).resolves.toHaveProperty("manifest");
     });
 
     it("aborts when already initialized without --force", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await new InitProject(deps.fs, deps.manifestRepo).execute({
+      await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
-        tools: registeredTools(),
       });
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).execute({
+        initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
-          tools: registeredTools(),
         })
       ).rejects.toThrow(/Already initialized/);
     });
@@ -160,20 +154,17 @@ describe("init", () => {
     // a user to run `aidd init --force` points them at something that does not exist.
     it("names a real recovery path, not the nonexistent `aidd init --force`", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await new InitProject(deps.fs, deps.manifestRepo).execute({
+      await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
-        tools: registeredTools(),
       });
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).execute({
+        initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
-          tools: registeredTools(),
         })
       ).rejects.toThrow(/aidd clean --force/);
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).execute({
+        initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
-          tools: registeredTools(),
         })
       ).rejects.not.toThrow(/aidd init --force/);
     });
@@ -181,25 +172,22 @@ describe("init", () => {
     it("--force: fails with guidance when no manifest exists", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).execute({
+        initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
           force: true,
-          tools: registeredTools(),
         })
       ).rejects.toThrow("No AIDD manifest found");
     });
 
     it("--force: passes when manifest exists", async () => {
       const deps = await buildUnitDeps(PROJECT_ROOT);
-      await new InitProject(deps.fs, deps.manifestRepo).execute({
+      await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
-        tools: registeredTools(),
       });
       await expect(
-        new InitProject(deps.fs, deps.manifestRepo).execute({
+        initOf(deps).execute({
           projectRoot: PROJECT_ROOT,
           force: true,
-          tools: registeredTools(),
         })
       ).resolves.toHaveProperty("manifest");
     });
@@ -211,10 +199,9 @@ describe("init", () => {
       await initProject(deps, PROJECT_ROOT);
       await deps.fs.writeFile(join(PROJECT_ROOT, ".gitignore"), "# User-owned\n");
       const before = (await deps.manifestRepo.load())?.toJSON();
-      const result = await new InitProject(deps.fs, deps.manifestRepo).execute({
+      const result = await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
         force: true,
-        tools: registeredTools(),
       });
       expect(result.manifest.toJSON()).toEqual(before);
       expect(deps.fs.getFile(join(PROJECT_ROOT, ".gitignore"))).toBe("# User-owned\n");
@@ -228,10 +215,9 @@ describe("init", () => {
       const manifestBefore = await deps.manifestRepo.load();
       const toolsBefore = manifestBefore?.getInstalledToolIds() ?? [];
 
-      await new InitProject(deps.fs, deps.manifestRepo).execute({
+      await initOf(deps).execute({
         projectRoot: PROJECT_ROOT,
         force: true,
-        tools: registeredTools(),
       });
 
       const manifestAfter = await deps.manifestRepo.load();

@@ -66,7 +66,7 @@ export class InstallIdeTool {
     if (toMerge.length === 0) return;
     const existingEntries = [...manifest.getMergeFiles(aiId)];
     for (const cap of toMerge) {
-      await this.mergeAndTrack(cap, projectRoot, aiId, existingEntries, manifest, tools);
+      await this.mergeAndTrack(cap, projectRoot, aiId, existingEntries, manifest);
     }
   }
 
@@ -75,8 +75,7 @@ export class InstallIdeTool {
     projectRoot: string,
     aiId: AiToolId,
     existingEntries: MergeFileEntry[],
-    manifest: Manifest,
-    tools: ToolCatalog
+    manifest: Manifest
   ): Promise<void> {
     const fullPath = join(projectRoot, cap.outputPath());
     const content = this.resolveCapabilityContent(cap, aiId);
@@ -93,11 +92,7 @@ export class InstallIdeTool {
       newEntry,
     ];
     manifest.updateToolMergeFiles(aiId, updated);
-    await this.runPostInstallPipeline.execute({
-      projectRoot,
-      manifest,
-      tools,
-    });
+    await this.runPostInstallPipeline.execute({ projectRoot, manifest });
   }
 
   private resolveCapabilityContent(cap: SettingsFileAnswers, aiId: AiToolId): string {

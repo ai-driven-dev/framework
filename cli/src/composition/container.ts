@@ -51,7 +51,7 @@ export async function createDeps(
   const marketplace = wireMarketplace(base, inst);
   const plugin = wirePlugin(base, inst);
   const global = wireGlobal(base, inst, marketplace, plugin);
-  const setup = wireSetup(base, plugin, marketplace, global);
+  const setup = wireSetup(base, inst, plugin, marketplace, global);
   const doctor = wireDoctor(base, inst);
   const clean = wireClean(base, inst);
   const setAgentModels = wireAgentModels(base, inst, plugin, marketplace);

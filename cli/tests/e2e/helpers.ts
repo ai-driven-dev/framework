@@ -15,6 +15,7 @@ import { promisify } from "node:util";
 import { afterAll, inject } from "vitest";
 import { createDeps } from "../../src/composition/container.js";
 import { InitProject } from "../../src/contexts/installation/application/init-project.js";
+import { UpdateGitignore } from "../../src/contexts/installation/application/update-gitignore.js";
 import { environmentWithoutGitVariables as withoutGitEnv } from "../../src/contexts/telemetry/infrastructure/git/git-environment.js";
 import { CLIOutput } from "../../src/presentation/output.js";
 import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
@@ -325,9 +326,13 @@ export async function runCliFast(
 export async function initProject(projectDir: string, _frameworkPath: string): Promise<void> {
   const output = new CLIOutput(false);
   const deps = await createDeps(projectDir, { verbose: false }, output, catalogOf());
-  await new InitProject(deps.fs, deps.manifestRepo).execute({
+  await new InitProject(
+    deps.fs,
+    deps.manifestRepo,
+    new UpdateGitignore(deps.fs),
+    catalogOf()
+  ).execute({
     projectRoot: projectDir,
-    tools: catalogOf(),
   });
 }
 

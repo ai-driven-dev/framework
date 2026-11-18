@@ -1,5 +1,4 @@
 import type { AiToolId, IdeToolId } from "../../../../shared/domain/tool.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
 import type { InstallIdeConfig, InstallIdeConfigResult } from "./config/install-ide-config.js";
@@ -16,7 +15,6 @@ export interface InstallToolsOptions {
   ideTools: readonly IdeToolId[];
   force: boolean;
   version: string;
-  tools: ToolCatalog;
 }
 
 export interface InstallToolsResult {
@@ -56,7 +54,6 @@ export class InstallTools {
       manifest,
       force: options.force,
       version: options.version,
-      tools: options.tools,
     });
   }
 
@@ -71,7 +68,6 @@ export class InstallTools {
       manifest,
       force: options.force,
       version: options.version,
-      tools: options.tools,
     });
   }
 }

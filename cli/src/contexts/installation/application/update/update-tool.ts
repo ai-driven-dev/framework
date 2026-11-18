@@ -77,7 +77,6 @@ export class UpdateTool {
       manifest,
       force: true,
       version,
-      tools,
       onBeforeWriteRegularFile,
     };
     const result = tools.isAiTool(toolId)

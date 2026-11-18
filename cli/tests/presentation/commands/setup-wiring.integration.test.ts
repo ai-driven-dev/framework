@@ -7,6 +7,7 @@ import {
   remoteFrameworkSource,
 } from "../../../src/contexts/distribution/contract/framework-source.js";
 import { InitProject } from "../../../src/contexts/installation/application/init-project.js";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { RunSetup } from "../../../src/orchestration/setup/run-setup.js";
 import type { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
@@ -24,21 +25,29 @@ const setupMachineScope = vi.fn();
 const loadManifest = vi.fn();
 const setAgentModel = vi.fn();
 
-const createDeps = vi.fn(async () => ({
-  runSetup: new RunSetup(
-    {
-      registration: { resolveSourceIfNeeded, registerIfPresent },
-      installTools: { execute: setupTools },
-      syncSettings: activation,
-      version: { get: () => "5.2.2" },
-      detectContext: { execute: detectContext },
-      machineScope: { execute: setupMachineScope },
-    },
-    { plugins: setupPluginsPrompt, tools: setupToolsPrompt },
-    new InitProject(new InMemoryFileAdapter(), manifestRepositoryLoading(loadManifest))
-  ),
-  setAgentModels: { execute: setAgentModel, reset: vi.fn() },
-}));
+const createDeps = vi.fn(async () => {
+  const fs = new InMemoryFileAdapter();
+  return {
+    runSetup: new RunSetup(
+      {
+        registration: { resolveSourceIfNeeded, registerIfPresent },
+        installTools: { execute: setupTools },
+        syncSettings: activation,
+        version: { get: () => "5.2.2" },
+        detectContext: { execute: detectContext },
+        machineScope: { execute: setupMachineScope },
+      },
+      { plugins: setupPluginsPrompt, tools: setupToolsPrompt },
+      new InitProject(
+        fs,
+        manifestRepositoryLoading(loadManifest),
+        new UpdateGitignore(fs),
+        catalogOf()
+      )
+    ),
+    setAgentModels: { execute: setAgentModel, reset: vi.fn() },
+  };
+});
 
 const { globalSetupHelp, registerSetupCommand } = await import(
   "../../../src/presentation/commands/setup.js"
@@ -117,7 +126,6 @@ describe("aidd setup — the flow a scripted run builds", () => {
       scope: "project",
     });
     expect(setupTools).toHaveBeenCalledWith({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       aiTools: ["claude"],
       ideTools: [],

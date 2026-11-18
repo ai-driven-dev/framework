@@ -67,10 +67,7 @@ export class RunSetup {
     // Resolved before the manifest is initialized: a non-interactive run with no --source must
     // reject before it ever writes .aidd/manifest.json or touches .gitignore, not after.
     const source = await this.steps.registration.resolveSourceIfNeeded(flow);
-    const isNew = await this.initProject.initializeIfAbsent({
-      projectRoot: flow.projectRoot,
-      tools,
-    });
+    const isNew = await this.initProject.initializeIfAbsent({ projectRoot: flow.projectRoot });
     await this.steps.registration.registerIfPresent(flow, source);
     const install = await this.installTools(flow, context, tools);
     if (flow.registerDefaultMarketplace) await this.promptPlugins(flow, tools);
@@ -100,7 +97,6 @@ export class RunSetup {
       ideTools,
       force: flow.force,
       version: this.steps.version.get(),
-      tools,
     });
   }
 

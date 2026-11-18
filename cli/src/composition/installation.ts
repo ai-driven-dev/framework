@@ -149,18 +149,20 @@ export function wireInstallation(base: Base) {
   );
   const detectPluginDriftUseCase = new DetectPluginDrift(fs, tools);
   const updateGitignore = new UpdateGitignore(fs);
-  const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore);
+  const runPostInstallPipeline = new RunPostInstallPipeline(manifestRepo, updateGitignore, tools);
   const trackedConfigFiles = new TrackedConfigFiles(fs, hasher, logger);
   const installRuntimeConfigUseCase = new InstallRuntimeConfig(
     trackedConfigFiles,
     fs,
     assetProvider,
-    runPostInstallPipeline
+    runPostInstallPipeline,
+    tools
   );
   const installIdeConfig = new InstallIdeConfig(
     trackedConfigFiles,
     assetProvider,
-    runPostInstallPipeline
+    runPostInstallPipeline,
+    tools
   );
   const listInstalledRulesUseCase = new ListInstalledRules(fs, process.platform, tools);
   const pluginListUseCase = new ListPlugins(manifestRepo);

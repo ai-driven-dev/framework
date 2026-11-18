@@ -2,6 +2,7 @@ import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "
 import { tmpdir } from "node:os";
 import { basename, join, relative, sep } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import type { HooksDescriptor } from "../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
 import { CLAUDE_HOOKS } from "../../../src/contexts/tools/domain/profiles/claude/hooks.js";
 import { CODEX_HOOKS } from "../../../src/contexts/tools/domain/profiles/codex/hooks.js";
@@ -114,9 +115,13 @@ async function installTool(project: string, toolId: AiToolId): Promise<void> {
   const { InitProject } = await import(
     "../../../src/contexts/installation/application/init-project.js"
   );
-  await new InitProject(wired.fs, wired.manifestRepo).execute({
+  await new InitProject(
+    wired.fs,
+    wired.manifestRepo,
+    new UpdateGitignore(wired.fs),
+    catalogOf()
+  ).execute({
     projectRoot: project,
-    tools: catalogOf(),
   });
   const install = { tools: catalogOf(), toolId, force: false, version: "1.0.0" };
   await wired.installAiToolUseCase.execute({

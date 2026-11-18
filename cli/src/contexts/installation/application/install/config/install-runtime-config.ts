@@ -17,8 +17,6 @@ export interface InstallRuntimeConfigCommand {
   manifest: Manifest;
   force: boolean;
   version: string;
-  /** The profiles the install answers from: the tool's own and every installed one. */
-  tools: ToolCatalog;
   /** Optional per-file gate for the update path. Returns "skip" to leave the file unwritten. Defaults to always-write. */
   onBeforeWriteRegularFile?: BeforeWriteGate;
 }
@@ -36,7 +34,9 @@ export class InstallRuntimeConfig {
     private readonly trackedConfigFiles: TrackedConfigFiles,
     private readonly fs: FileReader & FileWriter,
     private readonly assets: AssetProvider,
-    private readonly runPostInstallPipeline: RunPostInstallPipeline
+    private readonly runPostInstallPipeline: RunPostInstallPipeline,
+    /** The profiles the install answers from: the tool's own and every installed one. */
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: InstallRuntimeConfigCommand): Promise<InstallRuntimeConfigResult> {
@@ -85,14 +85,13 @@ export class InstallRuntimeConfig {
     await this.runPostInstallPipeline.execute({
       projectRoot: options.projectRoot,
       manifest: options.manifest,
-      tools: options.tools,
     });
   }
 
   private async buildConfigFiles(
     options: InstallRuntimeConfigCommand
   ): Promise<InstallationFile[]> {
-    const profile = options.tools.aiProfile(options.toolId);
+    const profile = this.tools.aiProfile(options.toolId);
     const files: InstallationFile[] = [];
     for (const [fileName, outputPath] of Object.entries(profile.configFiles())) {
       const resolvedPath = await this.resolveConfigPath(profile, fileName, outputPath, options);
@@ -146,7 +145,7 @@ export class InstallRuntimeConfig {
 
   private buildStaticSettingsFiles(options: InstallRuntimeConfigCommand): InstallationFile[] {
     const result: InstallationFile[] = [];
-    for (const cap of options.tools.aiProfile(options.toolId).settingsFiles()) {
+    for (const cap of this.tools.aiProfile(options.toolId).settingsFiles()) {
       const file = this.buildStaticSettingsFile(cap, options);
       if (file !== null) result.push(file);
     }

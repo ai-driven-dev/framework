@@ -14,8 +14,6 @@ export interface InstallIdeConfigCommand {
   manifest: Manifest;
   force: boolean;
   version: string;
-  /** The profiles the install answers from: the tool's own and every installed one. */
-  tools: ToolCatalog;
   /** Optional per-file gate for the update path. Returns "skip" to leave the file unwritten. Defaults to always-write. */
   onBeforeWriteRegularFile?: BeforeWriteGate;
 }
@@ -32,7 +30,9 @@ export class InstallIdeConfig {
   constructor(
     private readonly trackedConfigFiles: TrackedConfigFiles,
     private readonly assets: AssetProvider,
-    private readonly runPostInstallPipeline: RunPostInstallPipeline
+    private readonly runPostInstallPipeline: RunPostInstallPipeline,
+    /** The profiles the install answers from: the tool's own and every installed one. */
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(options: InstallIdeConfigCommand): Promise<InstallIdeConfigResult> {
@@ -55,7 +55,6 @@ export class InstallIdeConfig {
     await this.runPostInstallPipeline.execute({
       projectRoot: options.projectRoot,
       manifest,
-      tools: options.tools,
     });
     return {
       toolId,
@@ -69,7 +68,7 @@ export class InstallIdeConfig {
   private async buildSettingsFiles(
     options: InstallIdeConfigCommand
   ): Promise<{ regularFiles: InstallationFile[]; mergeFiles: InstallationFile[] }> {
-    const capabilities = options.tools.ideProfile(options.toolId).settingsFiles();
+    const capabilities = this.tools.ideProfile(options.toolId).settingsFiles();
     const regularFiles: InstallationFile[] = [];
     const mergeFiles: InstallationFile[] = [];
     for (const capability of capabilities) {
