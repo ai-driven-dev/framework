@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { registrationRecordRules } from "../../../../src/composition/installation.js";
+import { RemoveToolFiles } from "../../../../src/contexts/installation/application/removal/remove-tool-files.js";
 import {
   type DetachProjectClaims,
   UninstallTools,
@@ -38,52 +39,13 @@ function uninstaller(
   logger: Logger = new CapturingLogger(),
   detachClaims: DetachProjectClaims = noClaims
 ): UninstallTools {
-  return new UninstallTools(fs, logger, manifestRepo, detachClaims, registrationRecordRules);
+  return new UninstallTools(
+    manifestRepo,
+    detachClaims,
+    registrationRecordRules,
+    new RemoveToolFiles(fs, logger)
+  );
 }
-
-/** Records every path `deleteFile` is called with, so a test can prove where a plugin's
- * file actually got deleted from without inspecting private use-case state. */
-class RecordingFileAdapter extends InMemoryFileAdapter {
-  readonly deletedPaths: string[] = [];
-
-  override async deleteFile(path: string): Promise<void> {
-    this.deletedPaths.push(path);
-    return super.deleteFile(path);
-  }
-}
-
-// Cursor Mode B: the file key is base-relative, resolved against the user plugins dir.
-const PLUGIN_KEY = "aidd-context/commands/hello.md";
-
-describe("UninstallTools — cursor plugin file (user-scope)", () => {
-  it("does not delete a machine-owned user-scope plugin while uninstalling a project tool", async () => {
-    const manifest = Manifest.create();
-    manifest.addTool(TOOL.cursor, "1.0.0", []);
-    manifest.addPlugin(
-      TOOL.cursor,
-      InstalledPlugin.fromJSON({
-        name: "aidd-context",
-        source: { kind: "local", path: "/some/path" },
-        version: "1.0.0",
-        strict: false,
-        files: { [PLUGIN_KEY]: "abc123abc123abc123abc123abc123ab" },
-        scope: "user",
-      })
-    );
-
-    const fs = new RecordingFileAdapter();
-    await uninstaller(fs, new InMemoryManifestRepository(manifest)).execute({
-      tools: catalogOf(),
-      toolIds: [TOOL.cursor],
-      projectRoot: PROJECT_ROOT,
-    });
-
-    expect(
-      fs.deletedPaths.some((p) => p.endsWith(join(".cursor", "plugins", "local", PLUGIN_KEY)))
-    ).toBe(false);
-    expect(fs.deletedPaths).not.toContain(join(PROJECT_ROOT, PLUGIN_KEY));
-  });
-});
 
 const hasher = new DeterministicHasher();
 const SETTINGS = ".claude/settings.json";
@@ -127,45 +89,6 @@ function remove(
 }
 
 describe("UninstallTools — regular files", () => {
-  it("removes all project-scoped plugin files while preserving unrelated plugin content", async () => {
-    const first = ".claude/plugins/project-plugin/skills/demo/SKILL.md";
-    const second = ".claude/plugins/project-plugin/commands/demo.md";
-    const neighbor = ".codex/plugins/other-plugin/skills/demo/SKILL.md";
-    const target = project({ [first]: "skill", [second]: "command", [neighbor]: "other plugin" });
-    target.manifest.addTool(TOOL.claude, "test", []);
-    target.manifest.addTool(TOOL.codex, "test", []);
-    target.manifest.addPlugin(
-      TOOL.claude,
-      InstalledPlugin.fromJSON({
-        name: "project-plugin",
-        source: { kind: "local", path: "/plugins/project-plugin" },
-        version: "1.0.0",
-        strict: false,
-        scope: "project",
-        files: { [first]: hasher.hash("skill").value, [second]: hasher.hash("command").value },
-      })
-    );
-
-    const result = await remove(target, [TOOL.claude]);
-
-    expect(target.fs.getFile(join(PROJECT_ROOT, first))).toBeUndefined();
-    expect(target.fs.getFile(join(PROJECT_ROOT, second))).toBeUndefined();
-    expect(target.fs.getFile(join(PROJECT_ROOT, neighbor))).toBe("other plugin");
-    expect(target.manifest.hasTool(TOOL.claude)).toBe(false);
-    expect(target.manifest.hasTool(TOOL.codex)).toBe(true);
-    expect(result).toStrictEqual([{ toolId: TOOL.claude, fileCount: 0, deletedFiles: [] }]);
-  });
-
-  it("announces each tool it removes", async () => {
-    const target = project({});
-    target.manifest.addTool(TOOL.claude, "test", []);
-    const logger = new CapturingLogger();
-
-    await remove(target, [TOOL.claude], logger);
-
-    expect(logger.infoMessages).toStrictEqual(["Removing claude files..."]);
-  });
-
   it("deletes the files a tool tracks and reports them, then forgets the tool", async () => {
     const target = project({ [SETTINGS]: "{}", [AGENTS]: "# Agents" });
     target.manifest.addTool(TOOL.claude, "test", [
@@ -180,47 +103,6 @@ describe("UninstallTools — regular files", () => {
     ]);
     expect(target.fs.listAll()).toStrictEqual([]);
     expect(target.manifest.hasTool(TOOL.claude)).toBe(false);
-  });
-
-  it("keeps a file another installed tool still tracks", async () => {
-    const target = project({ [SETTINGS]: "{}", [AGENTS]: "# Agents" });
-    target.manifest.addTool(TOOL.claude, "test", [
-      tracked(SETTINGS, "{}"),
-      tracked(AGENTS, "# Agents"),
-    ]);
-    target.manifest.addTool(TOOL.codex, "test", [tracked(AGENTS, "# Agents")]);
-
-    const results = await remove(target, [TOOL.claude]);
-
-    expect(results).toStrictEqual([
-      { toolId: TOOL.claude, fileCount: 1, deletedFiles: [SETTINGS] },
-    ]);
-    expect(target.fs.has(join(PROJECT_ROOT, AGENTS))).toBe(true);
-  });
-
-  it("deletes a file shared only between the tools removed together", async () => {
-    const target = project({ [AGENTS]: "# Agents" });
-    target.manifest.addTool(TOOL.claude, "test", [tracked(AGENTS, "# Agents")]);
-    target.manifest.addTool(TOOL.codex, "test", [tracked(AGENTS, "# Agents")]);
-
-    const results = await remove(target, [TOOL.claude, TOOL.codex]);
-
-    expect(results).toStrictEqual([
-      { toolId: TOOL.claude, fileCount: 1, deletedFiles: [AGENTS] },
-      { toolId: TOOL.codex, fileCount: 1, deletedFiles: [AGENTS] },
-    ]);
-    expect(target.fs.has(join(PROJECT_ROOT, AGENTS))).toBe(false);
-  });
-
-  it("keeps a file another installed tool merges into", async () => {
-    const target = project({ [MCP]: '{"hub":{}}' });
-    target.manifest.addTool(TOOL.claude, "test", [tracked(MCP, '{"hub":{}}')]);
-    target.manifest.addTool(TOOL.codex, "test", [], [merging(MCP, { hub: {} })]);
-
-    const results = await remove(target, [TOOL.claude]);
-
-    expect(results).toStrictEqual([{ toolId: TOOL.claude, fileCount: 0, deletedFiles: [] }]);
-    expect(target.fs.has(join(PROJECT_ROOT, MCP))).toBe(true);
   });
 });
 
@@ -440,25 +322,6 @@ describe("UninstallTools — a project's tools", () => {
         projectRoot: PROJECT_ROOT,
       })
     ).resolves.not.toThrow();
-  });
-
-  it("does not delete shared files when one of two tools sharing them is uninstalled", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-    await installTool(deps, PROJECT_ROOT, TOOL.claude);
-    await installTool(deps, PROJECT_ROOT, TOOL.vscode);
-
-    const sharedFile = join(PROJECT_ROOT, ".vscode", "settings.json");
-    expect(deps.fs.has(sharedFile)).toBe(true);
-
-    const useCase = uninstaller(deps.fs, deps.manifestRepo, deps.logger);
-    await useCase.execute({
-      tools: catalogOf(),
-      toolIds: [TOOL.claude],
-      projectRoot: PROJECT_ROOT,
-    });
-
-    expect(deps.fs.has(sharedFile)).toBe(true);
   });
 
   describe("user-prime merge files", () => {

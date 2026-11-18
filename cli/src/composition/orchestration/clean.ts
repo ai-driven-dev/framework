@@ -7,6 +7,7 @@ import type { MachineStateGuards } from "../../contexts/installation/application
 import { PurgeMachineState } from "../../contexts/installation/application/removal/purge-machine-state.js";
 import { RemoveProjectFiles } from "../../contexts/installation/application/removal/remove-project-files.js";
 import { assertProjectMcpEntriesRemovable } from "../../contexts/installation/application/removal/remove-project-plugin.js";
+import { RemoveToolFiles } from "../../contexts/installation/application/removal/remove-tool-files.js";
 import { UserScopePluginFiles } from "../../contexts/installation/application/removal/user-scope-plugin-files.js";
 import { UninstallTools } from "../../contexts/installation/application/uninstall-tools.js";
 import { detachProjectClaims } from "../../contexts/machine-claims/application/detach-project-claims.js";
@@ -34,11 +35,10 @@ export function wireClean(base: Base, inst: Installation) {
   } = base;
   const { updateGitignore, registrationRecordRules } = inst;
   const uninstallTools = new UninstallTools(
-    fs,
-    logger,
     manifestRepo,
     detachProjectClaims(userManifestRepo, fs),
-    registrationRecordRules
+    registrationRecordRules,
+    new RemoveToolFiles(fs, logger)
   );
   const purgeCache = new PurgeDeclaredCache(fs, logger);
   const claims = {
