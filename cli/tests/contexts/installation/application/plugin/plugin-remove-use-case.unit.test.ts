@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
@@ -9,6 +10,8 @@ import {
   type PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
+import { pluginScriptDir } from "../../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
+import { CURSOR_HOOKS } from "../../../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
@@ -246,6 +249,59 @@ describe("RemovePlugin", () => {
     });
   });
 
+  describe("a tool holding several plugins", () => {
+    it("proves removable only the named plugin's hooks, not another plugin's edited ones", async () => {
+      const script = `${pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, "other")}run.js`;
+      const manifest = Manifest.create();
+      manifest.addTool(TOOL.cursor, "1.0.0", []);
+      manifest.addPlugin(
+        TOOL.cursor,
+        InstalledPlugin.withProjectHooks(
+          InstalledPlugin.fromJSON({
+            name: "other",
+            source: { kind: "local", path: "/other" },
+            version: "1.0.0",
+            strict: false,
+            files: {},
+            scope: "project",
+          }),
+          {
+            entries: [],
+            scripts: new Map([[script, createHash("md5").update("// installed").digest("hex")]]),
+          }
+        )
+      );
+      manifest.addPlugin(
+        TOOL.cursor,
+        InstalledPlugin.fromJSON({
+          name: "target",
+          source: { kind: "local", path: "/target" },
+          version: "1.0.0",
+          strict: false,
+          files: {},
+          scope: "project",
+        })
+      );
+      const fs = new InMemoryFileAdapter();
+      fs.setFile(join(PROJECT_ROOT, script), "// edited");
+      const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
+
+      await removeUseCaseOver(fs, manifestRepo).execute({
+        tools: catalogOf(),
+        pluginName: "target",
+        toolIds: [TOOL.cursor],
+        projectRoot: PROJECT_ROOT,
+      });
+
+      expect(
+        manifestRepo
+          .getCurrent()
+          ?.getPlugins(TOOL.cursor)
+          .map((p) => p.name)
+      ).toEqual(["other"]);
+    });
+  });
+
   describe("MCP entries on removal", () => {
     it("does not rewrite opencode's config when the plugin carries no MCP entries", async () => {
       const fs = new RecordingFileAdapter();
@@ -280,6 +336,26 @@ describe("RemovePlugin", () => {
       });
 
       expect(fs.getFile(mcpFile)).toBe(content);
+    });
+
+    it("removes the plugin's servers from the opencode config the project already owns", async () => {
+      const fs = new InMemoryFileAdapter();
+      const ownedConfig = join(PROJECT_ROOT, "opencode.jsonc");
+      const server = { type: "local" };
+      fs.setFile(ownedConfig, JSON.stringify({ mcp: { srv: server, mine: {} } }));
+      const manifestRepo = manifestHolding(TOOL.opencode, {
+        name: "aidd-context",
+        mcpEntries: { srv: createHash("md5").update(JSON.stringify(server)).digest("hex") },
+      });
+
+      await removeUseCaseOver(fs, manifestRepo).execute({
+        tools: catalogOf(),
+        pluginName: "aidd-context",
+        toolIds: [TOOL.opencode],
+        projectRoot: PROJECT_ROOT,
+      });
+
+      expect(JSON.parse(fs.getFile(ownedConfig) ?? "{}")).toEqual({ mcp: { mine: {} } });
     });
 
     it("propagates a read failure of opencode's config that is not an absence", async () => {

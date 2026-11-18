@@ -216,7 +216,9 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
 
     it("refuses B's live exact claim before contacting the host", async () => {
       const f = fixture({ dependents: ["/B"] });
-      await expect(execute(f.remove, REF)).rejects.toThrow(/active projects.*\/B/);
+      await expect(execute(f.remove, REF)).rejects.toThrow(
+        /user-scope plugin 'test-plugin@real-catalog': active projects.*\/B/
+      );
       expect(f.activator.uninstalledPlugins).toEqual([]);
       expect(
         f.repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims?.[0]?.dependents

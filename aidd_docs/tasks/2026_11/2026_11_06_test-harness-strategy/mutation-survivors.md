@@ -17,6 +17,15 @@ Survivors of the mutation scopes that are closed by a proof instead of a test, w
 
 The duplicate guard in `shared-framework-source.ts` and the equal-path line in `user-scope-containment.ts` were deleted instead of argued: the first re-checked what the method had just narrowed, the second returned `false` for a case `relative` already answers with an empty string.
 
+## installation
+
+| Survivor | Verdict | Proof |
+| --- | --- | --- |
+| `contexts/installation/application/removal/remove-plugin.ts:112`, `ref !== undefined` replaced by `true` | equivalent | The map then holds `[undefined]` for the tool. `detachNativePluginRefs` (`contexts/machine-claims/application/native-plugin-ownership.ts:39`) matches `targeted.has(claim.ref)`, and no claim carries an undefined ref. The only difference is the exclusive access it takes. |
+| `remove-plugin.ts:202`, `"user"` replaced by `""` | equivalent | `deletePluginFilesForTool` reads `scope` only to skip a user-scope plugin it does not own (`contexts/installation/application/plugin/plugin-helpers.ts:50`), and `resolveBaseDirFromRecord` answers the user directory for every scope but `"project"` (`plugin-target-resolution.ts:35`). Both give the same directory. |
+| `remove-plugin.ts:250-251`, `ref !== undefined` and `registrations !== undefined` replaced by `true`, or `&&` by `\|\|` | equivalent | `refOf` answers `undefined` for an undefined record (`contexts/host-registration/domain/registration-record.ts:140-141`), so a defined ref implies defined registrations. With no ref, `withoutRef` filters nothing (same file, line 145) and stores a record equal to the one it replaces. |
+| `remove-plugin.ts:287`, `code === "ENOENT"` replaced by `true` | equivalent | The same file was read first by `assertProjectMcpEntriesRemovable` (`remove-project-plugin.ts:36-43`), which rethrows every error that is not `ENOENT`. Only a file removed between the two reads reaches the catch with another code. |
+
 ## translate
 
 | Survivor | Verdict | Proof |
