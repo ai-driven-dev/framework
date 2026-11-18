@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Review plan input",
+  "description": "What the model collected and judged, written to one JSON file outside the project.",
+  "type": "object",
+  "required": ["account", "threads"],
+  "properties": {
+    "account": {
+      "$ref": "#/$defs/line",
+      "description": "The current account's login, from the same API and in the same form as every author login; on GitHub, GraphQL viewer.login."
+    },
+    "threads": {
+      "type": "array",
+      "description": "Every review thread of the request, resolved ones included.",
+      "items": { "$ref": "#/$defs/thread" }
+    },
+    "classifications": {
+      "type": "array",
+      "description": "The model's judgment per open thread, per comment-kinds.md. A resolved thread the account never replied in stays unclassified.",
+      "items": { "$ref": "#/$defs/classification" }
+    },
+    "decisions": {
+      "type": "array",
+      "description": "Each choice the user stated in the conversation.",
+      "items": { "$ref": "#/$defs/decision" }
+    },
+    "summaries": {
+      "type": "array",
+      "description": "The request's comments, so the planner finds the summary to update.",
+      "items": { "$ref": "#/$defs/comment" }
+    },
+    "summaryChoice": {
+      "$ref": "#/$defs/line",
+      "description": "The comment ID the user picked among the output's candidates, or \"new\" when allowNew was true."
+    },
+    "learnings": {
+      "type": "array",
+      "description": "Feedback worth keeping, per learnings.md; for a legacy summary, its learnings worth keeping.",
+      "items": { "$ref": "#/$defs/learning" }
+    },
+    "labels": {
+      "type": "object",
+      "description": "The summary's visible words, in the replies' language. English for each one omitted.",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "$ref": "#/$defs/line", "description": "The summary heading." },
+        "done": { "$ref": "#/$defs/line", "description": "The count of changes pushed." },
+        "answered": { "$ref": "#/$defs/line", "description": "The count of questions answered." },
+        "decided": { "$ref": "#/$defs/line", "description": "The count of user decisions." },
+        "userCall": { "$ref": "#/$defs/line", "description": "The heading of the questions waiting for the user." },
+        "todo": { "$ref": "#/$defs/line", "description": "The heading of the changes not pushed yet." },
+        "learnings": { "$ref": "#/$defs/line", "description": "The heading of the learnings." },
+        "thread": { "$ref": "#/$defs/line", "description": "The text of each link to a thread." }
+      }
+    }
+  },
+  "$defs": {
+    "line": {
+      "type": "string",
+      "pattern": "^[^\\r\\n]*\\S[^\\r\\n]*$",
+      "description": "Non-empty text on one line."
+    },
+    "thread": {
+      "type": "object",
+      "required": ["id", "url", "resolved", "replyAuthors"],
+      "properties": {
+        "id": { "$ref": "#/$defs/line", "description": "The thread's native ID." },
+        "url": { "$ref": "#/$defs/line", "description": "The thread's link." },
+        "resolved": { "type": "boolean" },
+        "replyAuthors": {
+          "type": "array",
+          "description": "Each reply's author login, the opening comment excluded.",
+          "items": { "$ref": "#/$defs/line" }
+        },
+        "lastReply": { "type": "string", "description": "The last reply's full body, hidden marker included." },
+        "lastReplyId": { "$ref": "#/$defs/line", "description": "The last reply's native ID, so an edited or repeated message is detected." },
+        "newCommit": { "type": "boolean", "description": "A commit was pushed since the last reply, whether or not it fixes the request." }
+      }
+    },
+    "classification": {
+      "type": "object",
+      "required": ["threadId", "kind", "text"],
+      "properties": {
+        "threadId": { "$ref": "#/$defs/line" },
+        "kind": { "enum": ["done", "answer", "user-call", "todo"], "description": "Per comment-kinds.md." },
+        "text": { "type": "string", "pattern": "\\S", "description": "The reply in one or two lines, without its source." },
+        "source": { "$ref": "#/$defs/line", "description": "Required for done, the pushed commit's SHA, and for answer, its evidence." }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": ["threadId", "text", "source"],
+      "properties": {
+        "threadId": { "$ref": "#/$defs/line" },
+        "text": { "type": "string", "pattern": "\\S", "description": "The choice acknowledged in one or two lines, with its decision label." },
+        "source": { "$ref": "#/$defs/line", "description": "The user's message that states it." }
+      }
+    },
+    "comment": {
+      "type": "object",
+      "required": ["id", "author", "body"],
+      "properties": {
+        "id": { "$ref": "#/$defs/line", "description": "The comment's native ID." },
+        "author": { "$ref": "#/$defs/line", "description": "The author's login." },
+        "body": { "type": "string", "pattern": "\\S", "description": "The full body." }
+      }
+    },
+    "learning": {
+      "type": "object",
+      "required": ["text", "url"],
+      "properties": {
+        "text": { "$ref": "#/$defs/line" },
+        "url": { "$ref": "#/$defs/line", "description": "The link to its thread." }
+      }
+    }
+  }
+}

@@ -88,6 +88,8 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | `actions` | [01-answer-comments.md](skills/06-answer-comments/actions/01-answer-comments.md) | - |
 | `references` | [comment-kinds.md](skills/06-answer-comments/references/comment-kinds.md) | - |
 | `references` | [learnings.md](skills/06-answer-comments/references/learnings.md) | - |
+| `references` | [review-input.schema.json](skills/06-answer-comments/references/review-input.schema.json) | - |
+| `references` | [review-output.schema.json](skills/06-answer-comments/references/review-output.schema.json) | - |
 | `references` | [review-plan.md](skills/06-answer-comments/references/review-plan.md) | - |
 | `scripts` | [prepare-review.cjs](skills/06-answer-comments/scripts/prepare-review.cjs) | - |
 | `-` | [SKILL.md](skills/06-answer-comments/SKILL.md) | `Answers PR/MR review comments, resolves settled threads and summarizes pending decisions, proposing learnings without reviewing or fixing code.` |

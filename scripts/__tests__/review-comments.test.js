@@ -11,6 +11,30 @@ const thread = (id = "t1", more = {}) => ({ id, url: `https://example.com/${id}`
 const classification = (kind = "answer", more = {}) => ({ threadId: "t1", kind, text: "The code explains this.", source: "src/code.js", ...more });
 const input = (more = {}) => ({ account: "me", threads: [thread()], classifications: [classification()], ...more });
 const summary = (id = "s1", more = {}) => ({ id, author: "me", body: `## Review comments\n\n${MARKER}\n`, ...more });
+const contract = (name) => JSON.parse(fs.readFileSync(path.resolve(path.dirname(SCRIPT), `../references/${name}.schema.json`), "utf8"));
+const INPUT_SCHEMA = contract("review-input");
+const OUTPUT_SCHEMA = contract("review-output");
+// The subset of JSON Schema the contract uses, enough to hold every run to it.
+function violations(value, node, root, at = "$") {
+  if (node.$ref) return violations(value, root.$defs[node.$ref.split("/").pop()], root, at);
+  if (node.oneOf) {
+    const matches = node.oneOf.filter((option) => !violations(value, option, root, at).length).length;
+    return matches === 1 ? [] : [`${at}: matches ${matches} oneOf options`];
+  }
+  const type = Array.isArray(value) ? "array" : value === null ? "null" : typeof value;
+  if (node.type && node.type !== type) return [`${at}: ${type}, expected ${node.type}`];
+  if ("const" in node && value !== node.const) return [`${at}: expected ${node.const}`];
+  if (node.enum && !node.enum.includes(value)) return [`${at}: ${value} outside its enum`];
+  if (node.pattern && !new RegExp(node.pattern).test(value)) return [`${at}: does not match ${node.pattern}`];
+  if (type === "array") return node.items ? value.flatMap((item, i) => violations(item, node.items, root, `${at}[${i}]`)) : [];
+  if (type !== "object") return [];
+  const properties = node.properties ?? {};
+  const missing = (node.required ?? []).filter((key) => !(key in value)).map((key) => `${at}.${key}: missing`);
+  const extra = Object.entries(value).flatMap(([key, item]) => key in properties
+    ? violations(item, properties[key], root, `${at}.${key}`)
+    : node.additionalProperties === false ? [`${at}.${key}: not in the contract`] : []);
+  return [...missing, ...extra];
+}
 function runner(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "aidd-review-"));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -20,7 +44,10 @@ function runner(t) {
     const before = fs.readdirSync(dir);
     const process = spawnSync(global.process.execPath, [SCRIPT, "--input", file], { cwd: dir, env: { PATH: "" }, encoding: "utf8" });
     assert.deepEqual(fs.readdirSync(dir), before, "preparation writes no files");
-    return { code: process.status, ...JSON.parse(process.stdout) };
+    const output = JSON.parse(process.stdout);
+    assert.deepEqual(violations(output, OUTPUT_SCHEMA, OUTPUT_SCHEMA), [], "every output follows the output contract");
+    if (process.status === 0) assert.deepEqual(violations(value, INPUT_SCHEMA, INPUT_SCHEMA), [], "every accepted input follows the input contract");
+    return { code: process.status, ...output };
   };
 }
 
@@ -270,4 +297,23 @@ test("invalid ids, conflicting entries, source-free answers and malformed prior 
     input({ summaries: [summary("s1", { body: `${MARKER}\n<!-- aidd-answer-comments-state {"version":99} -->` })] }),
   ];
   for (const request of invalid) assert.equal(run(request).code, 1, JSON.stringify(request));
+});
+
+test("the planner refuses what the input contract excludes", (t) => {
+  const run = runner(t);
+  const complete = input({ decisions: [{ threadId: "t1", text: "archive", source: "chat:message-1" }], summaries: [summary()], learnings: [{ text: "Keep docs short.", url: "https://example.com/t1" }] });
+  assert.equal(run(complete).code, 0);
+  const without = (item, key) => Object.fromEntries(Object.entries(item).filter(([name]) => name !== key));
+  const defs = INPUT_SCHEMA.$defs;
+  for (const key of INPUT_SCHEMA.required) assert.equal(run(without(complete, key)).code, 1, key);
+  for (const key of defs.thread.required) assert.equal(run({ ...complete, threads: [without(complete.threads[0], key)] }).code, 1, `thread.${key}`);
+  for (const [list, def] of [["classifications", "classification"], ["decisions", "decision"], ["summaries", "comment"], ["learnings", "learning"]]) {
+    for (const key of defs[def].required) assert.equal(run({ ...complete, [list]: [without(complete[list][0], key)] }).code, 1, `${def}.${key}`);
+  }
+  for (const kind of defs.classification.properties.kind.enum) {
+    assert.equal(run(input({ classifications: [classification(kind, { source: "abc1234" })] })).code, 0, kind);
+  }
+  assert.equal(run(input({ classifications: [classification("maybe")] })).code, 1);
+  for (const key of Object.keys(INPUT_SCHEMA.properties.labels.properties)) assert.equal(run(input({ labels: { [key]: "X" } })).code, 0, key);
+  assert.equal(run(input({ labels: { heading: "X" } })).code, 1);
 });
