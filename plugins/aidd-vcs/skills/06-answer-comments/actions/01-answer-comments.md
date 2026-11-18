@@ -14,7 +14,7 @@ The pull or merge request and any decisions supplied in the conversation.
    - Non-zero exit: quote its error and stop.
    - Summary needs a choice: present its candidates and wait for the user's choice before rerunning with it.
    - Threads are unknown: classify them from their evidence and rerun, leaving unproven ones unknown.
-5. Apply its thread operations, then its summary operation when the summary is ready.
+5. Apply every thread operation it returns, questions and to-dos included, then its summary operation when the summary is ready.
    - An operation's result is lost: refresh the snapshot before retrying it, since a repeated post duplicates it.
 6. Refresh the snapshot and check the threads and the stored summary against the plan.
    - Mismatch: repeat from step 4 until they match.
