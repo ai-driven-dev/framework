@@ -2,12 +2,10 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { describe, it, beforeEach, afterEach } = require("node:test");
-const { UI, PATHS, LIB, makeTmp, removeTmp, engine, engineIn, writeProject, edit, editTokens, put } = require("../fixtures/aidd-ui/project.js");
+const { UI, PATHS, makeTmp, removeTmp, engine, engineIn, writeProject, edit, editTokens, put } = require("../fixtures/aidd-ui/project.js");
 
 // The impact command is driven as a subprocess, as the skill calls it: its refs on the command
 // line, its report as JSON on stdout.
-const { load } = require(path.join(LIB, "project.cjs"));
-const { reached } = require(path.join(LIB, "graph.cjs"));
 
 const { BUTTON } = PATHS;
 
@@ -30,17 +28,6 @@ const BUTTON_AND_THOSE_USING_IT = ["button", "dialog", "old-button", "search-fie
 const RENDERS = ["components/button", "components/dialog", "components/old-button", "components/search-field", "screens/home"].map((name) => `${UI}/${name}.html`);
 
 describe("aidd-ui impact", () => {
-  describe("a write", () => {
-    it("to a platform file reaches everything, as one to a theme file does", () => {
-      assert.equal(reached(load(tmp), [`${UI}/platforms/mobile.json`]), null);
-    });
-
-    it("to a breakpoint file reaches everything, as one to a theme file does", () => {
-      assert.equal(reached(load(tmp), [`${UI}/breakpoints/desktop.json`]), null);
-      assert.equal(reached(load(tmp), [`${UI}/themes/dark.json`]), null);
-    });
-  });
-
   describe("from a token", () => {
     it("reaches the tokens aliasing it, the components declaring them, what uses those, and their renders and code", () => {
       const { code, report, err } = impact("color.brand.primary", "--root", tmp);
@@ -276,6 +263,15 @@ describe("aidd-ui impact", () => {
 
     it("does not take a token group for a token", () => {
       assert.equal(impact("color.brand", "--root", tmp).code, 2);
+    });
+
+    it("exits 2 saying there is no design system, and prints no report, when the root has none", () => {
+      const empty = makeTmp("aidd-ui-impact-empty-");
+      try {
+        assert.deepEqual(impact("button", "--root", empty), { code: 2, report: null, out: "", err: "aidd-ui: no aidd_docs/ui folder at this root. Run from the project root, after writing a record.\n" });
+      } finally {
+        removeTmp(empty);
+      }
     });
 
     it("exits 2 with the usage when no ref is given", () => {

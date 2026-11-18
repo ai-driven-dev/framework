@@ -290,6 +290,12 @@ unset AIDD_OTEL_TOKEN
 run "telemetry otel run (no execution consent)" 1 "Pass --yes to consent" "$P_TEL" -- \
   telemetry otel run --config=codex --tenant=smoke --endpoint=http://127.0.0.1:4318 -- "reply OK"
 export PATH="$SMOKE_ORIGINAL_PATH"
+# The provider lands in the sandboxed $AIDD_USER_CONFIG_DIR, never the real profile's.
+section "setup --provider (sandboxed profile)"
+P_AGENTS=$(new_project)
+SETUP_OC=(setup --source local --path "$FRAMEWORK_FIXTURE" --ide opencode --plugins none --yes)
+run "setup --provider" 0 "Models on mistral" "$P_AGENTS" -- "${SETUP_OC[@]}" --provider mistral
+run "setup --provider none" 0 "run on the IDE's model again" "$P_AGENTS" -- "${SETUP_OC[@]}" --provider none
 
 section "update --check"
 out=$(cd "$ROOT" && node "$CLI" update --check 2>&1); rc=$?

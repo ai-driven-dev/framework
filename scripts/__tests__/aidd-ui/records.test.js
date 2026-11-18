@@ -96,6 +96,11 @@ describe("aidd-ui records and history", () => {
       assert.deepEqual(problems(), [`${JOURNEY}: unknown kind "widget"`]);
     });
 
+    it("names the retired level composition as unknown, listing organism", () => {
+      put(tmp, `${UI}/components/extra.md`, record(["id: extra", "kind: composition", "status: proposed", "version: 1"]));
+      assert.deepEqual(problems(), [`${UI}/components/extra.md: unknown kind "composition"`]);
+    });
+
     it("names a kind that only an object's prototype holds as unknown", () => {
       change(JOURNEY, "kind: journey", "kind: toString");
       assert.deepEqual(problems(), [`${JOURNEY}: unknown kind "toString"`]);
@@ -188,7 +193,7 @@ describe("aidd-ui records and history", () => {
 
     const levels = [
       [OLD, "uses: []", "uses: [search-field]", 'atom cannot use molecule "search-field"'],
-      [SEARCH, "uses: [button, icon-search]", "uses: [button, icon-search, dialog]", 'molecule cannot use composition "dialog"'],
+      [SEARCH, "uses: [button, icon-search]", "uses: [button, icon-search, dialog]", 'molecule cannot use organism "dialog"'],
       [HOME, "uses: [search-field, dialog]", "uses: [search-field, dialog, home]", "uses itself"],
     ];
     for (const [file, from, to, message] of levels) {
@@ -393,6 +398,11 @@ describe("aidd-ui records and history", () => {
     it("names a missing brand heading", () => {
       change(BRAND, "## Users\n\nAnalysts.\n\n", "");
       assert.deepEqual(problems(), [`${BRAND}: lacks "## Users"`]);
+    });
+
+    it("holds no platforms section: system.md alone names them", () => {
+      assert.equal(fs.readFileSync(path.join(tmp, BRAND), "utf8").includes("## Platforms"), false);
+      assert.deepEqual(problems(), []);
     });
   });
 
@@ -769,8 +779,9 @@ const FIXES = [
   "R2 | kind \"atom\" does not belong in constructor/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"atom\" does not belong in screens/ | \"atom\" | move it to the folder of its kind, or change its kind",
   "R2 | kind \"wireframe\" does not belong in screens/ | \"wireframe\" | move it to the folder of its kind, or change its kind",
-  "R2 | unknown kind \"toString\" | \"toString\" | set kind to system, brand, atom, molecule, composition, screen, journey, wireframe, asset or review",
-  "R2 | unknown kind \"widget\" | \"widget\" | set kind to system, brand, atom, molecule, composition, screen, journey, wireframe, asset or review",
+  "R2 | unknown kind \"composition\" | \"composition\" | set kind to system, brand, atom, molecule, organism, screen, journey, wireframe, asset or review",
+  "R2 | unknown kind \"toString\" | \"toString\" | set kind to system, brand, atom, molecule, organism, screen, journey, wireframe, asset or review",
+  "R2 | unknown kind \"widget\" | \"widget\" | set kind to system, brand, atom, molecule, organism, screen, journey, wireframe, asset or review",
   "R3 | missing key \"alt\" | - | add the key \"alt\" to the front matter",
   "R3 | missing key \"format\" | - | add the key \"format\" to the front matter",
   "R3 | missing key \"locales\" | - | add the key \"locales\" to the front matter",
@@ -796,7 +807,7 @@ const FIXES = [
   "R5 | version \"1.0\" of system must be semver, such as 2.0.0 | \"1.0\" | write the version as semver, such as 2.0.0",
   "R5 | version \"v2\" must be an integer from 1 | \"v2\" | set version to an integer from 1",
   "R6 | atom cannot use molecule \"search-field\" | \"search-field\" | use only elements of its own level or lower",
-  "R6 | molecule cannot use composition \"dialog\" | \"dialog\" | use only elements of its own level or lower",
+  "R6 | molecule cannot use organism \"dialog\" | \"dialog\" | use only elements of its own level or lower",
   "R6 | uses \"ghost\", which no record has | \"ghost\" | remove it from uses, or add the record",
   "R6 | uses itself | - | remove its own id from uses",
   "R7 | component lacks state \"default\" | - | add \"default\" to states",

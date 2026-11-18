@@ -12,7 +12,6 @@ const RESOLVER_VERSION = "2025.10";
 const MEDIA_EXTENSION = "dev.ai-driven.media"; // a breakpoint's media query, verbatim: DTCG has no place for one
 const MODIFIERS = ["theme", "platform", "breakpoint"]; // the modifiers a Resolver can hold, weakest first: a context's kind, its modifier's name
 const FOLDERS = { theme: "themes", platform: "platforms", breakpoint: "breakpoints" };
-const CONTEXT_FOLDERS = Object.values(FOLDERS);
 const MIN_THEMES_FOR_MODIFIER = 2;
 const QUERY_COLUMN = "Query";
 
@@ -70,4 +69,4 @@ function writeResolver(project) {
   return true;
 }
 
-module.exports = { MIN_THEMES_FOR_MODIFIER, MODIFIERS, CONTEXT_FOLDERS, resolverOf, resolverOfProject, writeResolver, jsonText, fileOf, orderRef, RESOLVER_VERSION, MEDIA_EXTENSION };
+module.exports = { MIN_THEMES_FOR_MODIFIER, MODIFIERS, resolverOf, resolverOfProject, writeResolver, jsonText, fileOf, orderRef, RESOLVER_VERSION, MEDIA_EXTENSION };

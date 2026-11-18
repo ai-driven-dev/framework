@@ -388,7 +388,7 @@ function primitiveProblems(tree, project) {
   return tokened(project).flatMap((record) =>
     list(record.frontMatter.tokens)
       .filter((name) => isPrimitive(name, groups))
-      .map((name) => ({ file: record.file, message: `token "${name}" is a primitive, use a semantic token`, fix: "cite a semantic token instead", excerpt: name }))
+      .map((name) => ({ file: record.file, message: `token "${name}" is a primitive, use a semantic token`, fix: "cite a semantic token, in a group primitives does not list", excerpt: name }))
   );
 }
 

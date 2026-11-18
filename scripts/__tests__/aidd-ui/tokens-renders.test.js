@@ -1016,7 +1016,7 @@ const FIXES = [
   "T6 | the theme modifier's default must be \"light\", the first theme in system.md | - | run node <engine> tokens",
   "T6 | version must be \"2025.10\" | - | run node <engine> tokens",
   "T7 | token \"space.huge\" is not in tokens.json | \"space.huge\" | remove it from tokens, or add it to tokens.json",
-  "T8 | token \"color.brand.primary\" is a primitive, use a semantic token | \"color.brand.primary\" | cite a semantic token instead",
+  "T8 | token \"color.brand.primary\" is a primitive, use a semantic token | \"color.brand.primary\" | cite a semantic token, in a group primitives does not list",
   "T9 | misc.a: cites --misc-b, which leads back to it | \"misc.a\" | break the loop: cite a token that does not lead back",
   "T9 | misc.a: cites itself, so the browser computes nothing: write a primitive value | \"misc.a\" | write a primitive value that does not cite itself",
   "T9 | misc.b: cites --misc-a, which leads back to it | \"misc.b\" | break the loop: cite a token that does not lead back",

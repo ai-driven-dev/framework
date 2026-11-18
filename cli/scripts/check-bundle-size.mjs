@@ -77,7 +77,11 @@ const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
 // 839 KB: 838.97 KB with Claude token-point effort and merged Antigravity support.
 // 747 KB: 732.4 KB, the machine-wide install of `setup --global` (+12.2 KB over the 720.2 KB
 // above); 2.0% measured headroom.
-// Merged with next: 823.5 KB, within the existing 839 KB budget.
+// Historical next build: 772 KB budget, 756.0 KB; the seven host adapters shipped as product,
+// inlined as text, Antigravity's among them (+23.6 KB over 732.4 KB; 2.1% measured headroom).
+// Historical PR merge with next: 823.5 KB, within the then-existing 839 KB budget.
+// 878 KB: 861.8 KB after merging next's host adapters and agent-model configuration into OTLP;
+// 1.9% measured headroom.
 const budgetKB = pkg.bundleBudgetKB ?? 500;
 const budgetBytes = budgetKB * 1024;
 

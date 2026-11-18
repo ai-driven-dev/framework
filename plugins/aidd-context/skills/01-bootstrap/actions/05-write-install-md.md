@@ -21,7 +21,7 @@ A new `aidd_docs/INSTALL.md` filled from [install-template.md](../assets/install
    - **Folder structure**: the action 04 tree verbatim.
    - **Install steps**: 3 to 7 imperative steps to bring up the empty project (init repo, install runtimes, create cloud accounts, set env vars). A checklist, not a script, with no code generation.
    - **Audit summary**: the action 03 augmented table, keeping verdicts and one-line notes.
-3. **Write.** Write the filled content to `aidd_docs/INSTALL.md` in the project root. When the file already exists, ask before overwriting.
+3. **Write.** Write the filled content to `aidd_docs/INSTALL.md`. When the file already exists, ask before overwriting.
 4. **Report.** Print the written file's relative path and a short summary of the sections filled and total length.
 
 ## Test

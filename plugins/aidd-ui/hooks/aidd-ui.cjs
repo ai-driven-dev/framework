@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// The design system engine every skill and the hook call, one command per job; usage is in `main` and the *_USAGE constants.
+// The design system engine every skill and the hook call, one command per job; `node aidd-ui.cjs help` says what each does.
 const fs = require("node:fs");
 const path = require("node:path");
-const { Refusal, load, unreadable, UI_DIR, WARNING, ERROR, ENGINE_REF } = require("./lib/project.cjs");
+const { Refusal, load, required, unreadable, UI_DIR, WARNING, ERROR, ENGINE_REF } = require("./lib/project.cjs");
 const { formatFindings } = require("./lib/common-rules.cjs");
 const records = require("./lib/records.cjs");
 const history = require("./lib/history.cjs");
@@ -12,7 +12,10 @@ const renders = require("./lib/renders.cjs");
 const code = require("./lib/code.cjs");
 const { usages } = require("./lib/graph.cjs");
 const extraction = require("./lib/extract.cjs");
+const drafts = require("./lib/drafts.cjs");
 const { bump, publish, validate: validateElements } = require("./lib/bump.cjs");
+const { HELP, commandList, helpText } = require("./lib/help.cjs");
+const { ROOT_FLAG, FORCE_FLAG, TASK_FLAG, CHANGE_FLAG, BREAKING_FLAG, CREATED_FLAG, REMOVED_FLAG, IMPACT_USAGE, EXTRACT_USAGE, BUMP_USAGE, PUBLISH_USAGE, COMPARE_USAGE, KEEP_USAGE, HELP_USAGE } = require("./lib/cli.cjs");
 
 const CHECKS = { records, history, tokens, renders, code, extraction };
 const VERDICT_VALID = "VALID";
@@ -63,45 +66,33 @@ function findingsOf(problems) {
 const formatAll = (problems) => formatFindings(PLUGIN, findingsOf(problems), { warningsCap: Infinity });
 
 function validate([root = process.cwd()]) {
-  const project = load(root);
-  if (project === null) return EXIT_VALID;
-  const problems = problemsOf(project);
-  console.log(problems.length ? formatAll(problems) : VERDICT_VALID);
-  return problems.some(isError) ? EXIT_INVALID : EXIT_VALID;
+  return refusing(() => {
+    const problems = problemsOf(required(root));
+    console.log(problems.length ? formatAll(problems) : VERDICT_VALID);
+    return problems.some(isError) ? EXIT_INVALID : EXIT_VALID;
+  });
 }
 
 /** Writes the Resolver from system.md and the context files, then regenerates the stylesheet the
  * renders load. A token with an error, or a composite token with no raw CSS, leaves the stylesheet
  * untouched: the problems are printed instead. */
 function generateTokens([root = process.cwd()]) {
-  const first = load(root);
-  if (first === null) return EXIT_VALID;
-  writeResolver(first);
-  const project = load(root); // read again: the checks below read the Resolver just written
-  const blocked = tokens.blockers(project);
-  const { css, problems } = blocked.length ? { css: null, problems: blocked } : tokens.generate(project);
-  const ruled = problems.map((problem) => ({ rule: TOKENS_RULE, ...problem })); // a composite without raw CSS is T10's
-  if (css === null) {
-    console.log(formatAll(ruled));
-    return EXIT_INVALID;
-  }
-  const file = tokens.cssFileOf(project);
-  fs.writeFileSync(path.join(root, file), css);
-  console.log(file);
-  return EXIT_VALID;
+  return refusing(() => {
+    writeResolver(required(root));
+    const project = load(root); // read again: the checks below read the Resolver just written
+    const blocked = tokens.blockers(project);
+    const { css, problems } = blocked.length ? { css: null, problems: blocked } : tokens.generate(project);
+    const ruled = problems.map((problem) => ({ rule: TOKENS_RULE, ...problem })); // a composite without raw CSS is T10's
+    if (css === null) {
+      console.log(formatAll(ruled));
+      return EXIT_INVALID;
+    }
+    const file = tokens.cssFileOf(project);
+    fs.writeFileSync(path.join(root, file), css);
+    console.log(file);
+    return EXIT_VALID;
+  });
 }
-
-const ROOT_FLAG = "--root";
-const FORCE_FLAG = "--force";
-const IMPACT_USAGE = `node aidd-ui.cjs impact <id or token>… [${ROOT_FLAG} <dir>]`;
-const TASK_FLAG = "--task";
-const CHANGE_FLAG = "--change";
-const BREAKING_FLAG = "--breaking";
-const CREATED_FLAG = "--created";
-const REMOVED_FLAG = "--removed";
-const BUMP_USAGE = `node aidd-ui.cjs bump ${TASK_FLAG} <aidd_docs/tasks/…> (${CHANGE_FLAG} "<text>" [${BREAKING_FLAG}] | ${CREATED_FLAG} | ${REMOVED_FLAG}) <token or id>… [${ROOT_FLAG} <dir>]`;
-const PUBLISH_USAGE = `node aidd-ui.cjs publish ([${BREAKING_FLAG}] | <id>…) [${ROOT_FLAG} <dir>]`;
-const EXTRACT_USAGE = `node aidd-ui.cjs extract [${FORCE_FLAG}] [${ROOT_FLAG} <dir>]`;
 
 /** `args` as `{values, flags, rest}`: `values` holds each of `options` given with its value, `flags`
  * the set of `flags` given, `rest` every other argument in order. An option last on the line has no
@@ -127,15 +118,15 @@ function impact(args) {
     console.error(`usage: ${IMPACT_USAGE}`);
     return EXIT_USAGE;
   }
-  const project = load(values[ROOT_FLAG] ?? process.cwd());
-  if (project === null) return EXIT_VALID;
-  const { unknown, ...report } = usages(project, rest);
-  if (unknown) {
-    for (const ref of unknown) console.error(`aidd-ui: no token or element named "${ref}"`);
-    return EXIT_USAGE;
-  }
-  console.log(JSON.stringify(report, null, 2));
-  return EXIT_VALID;
+  return refusing(() => {
+    const { unknown, ...report } = usages(required(values[ROOT_FLAG] ?? process.cwd()), rest);
+    if (unknown) {
+      for (const ref of unknown) console.error(`aidd-ui: no token or element named "${ref}"`);
+      return EXIT_USAGE;
+    }
+    console.log(JSON.stringify(report, null, 2));
+    return EXIT_VALID;
+  });
 }
 
 /** Runs a command that refuses with a message and an exit code instead of printing a result. */
@@ -195,17 +186,63 @@ function publishSystem(args) {
   });
 }
 
+/** Checks a set of variants: its problems as `validate` prints them, else what the comparison shows. */
+function compareSet(args) {
+  const { values, rest, error } = parse(args, { options: [ROOT_FLAG] });
+  if (error || rest.length !== 1) {
+    console.error(`usage: ${COMPARE_USAGE}`);
+    return EXIT_USAGE;
+  }
+  return refusing(() => {
+    const { problems, ...done } = drafts.compare(values[ROOT_FLAG] ?? process.cwd(), rest[0]);
+    if (problems) {
+      console.log(formatAll(problems));
+      return EXIT_INVALID;
+    }
+    console.log(JSON.stringify(done, null, 2));
+    return EXIT_VALID;
+  });
+}
+
+/** Makes one variant of a set the design system's own, and deletes the set. */
+function keepVariant(args) {
+  const { values, rest, error } = parse(args, { options: [ROOT_FLAG] });
+  if (error || rest.length !== 2) {
+    console.error(`usage: ${KEEP_USAGE}`);
+    return EXIT_USAGE;
+  }
+  return refusing(() => {
+    console.log(JSON.stringify(drafts.keep(values[ROOT_FLAG] ?? process.cwd(), ...rest), null, 2));
+    return EXIT_VALID;
+  });
+}
+
 // The hook needs this file loaded first, for the checks: it is required when it runs.
 const runHook = () => require("./lib/hook.cjs").hook();
 
-const COMMANDS = { validate, tokens: generateTokens, hook: runHook, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem };
-
-function main([command, ...args]) {
-  if (Object.hasOwn(COMMANDS, command)) return COMMANDS[command](args);
-  console.error(`usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs hook < <host event>\n       ${IMPACT_USAGE}\n       ${EXTRACT_USAGE}\n       ${BUMP_USAGE}\n       ${PUBLISH_USAGE}`);
+/** The command list on stderr, under the usage of `help`. */
+function unknownCommand() {
+  console.error(`usage: ${HELP_USAGE}\n${commandList()}`);
   return EXIT_USAGE;
 }
 
-module.exports = { problemsOf, findingOf, isError };
+/** Prints the help of the command named, or the list of commands when none is. */
+function help([name]) {
+  if (name === undefined) {
+    console.log(commandList());
+    return EXIT_VALID;
+  }
+  if (!Object.hasOwn(HELP, name)) return unknownCommand();
+  console.log(helpText(name));
+  return EXIT_VALID;
+}
+
+const COMMANDS = { validate, tokens: generateTokens, hook: runHook, impact, extract: extractTokens, bump: bumpVersions, publish: publishSystem, compare: compareSet, keep: keepVariant, help };
+
+function main([command, ...args]) {
+  return Object.hasOwn(COMMANDS, command) ? COMMANDS[command](args) : unknownCommand();
+}
+
+module.exports = { problemsOf, findingOf, isError, COMMANDS };
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));

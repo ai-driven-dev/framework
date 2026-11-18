@@ -1,28 +1,25 @@
 # 01 - Scope
 
-Frame the skill before any file is touched.
+Frame a new skill before any file is touched.
 
 ## Input
 
-A free-form request to create a skill.
-
-## Output
-
-The confirmed frame, written nowhere, per [scope-frame.md](../references/scope-frame.md).
+A request for a skill that does not exist yet.
 
 ## Process
 
-1. **Detect.** Detect the installed tools per [tool-detect.md](../references/tool-detect.md).
-2. **Fill.** For each field in [scope-frame.md](../references/scope-frame.md), propose a value or ask one question.
-3. **Check.** Check the name per [naming.md](../references/naming.md) and surface any overlap.
-4. **Confirm.** Hand the confirmed frame to plan.
+1. Detect the installed hosts per [tool-detect.md](../references/tool-detect.md).
+2. Fill [scope-frame.md](../assets/scope-frame.md).
+3. Check the name per [naming.md](../references/naming.md).
+4. State any overlap with an installed skill, read from their descriptions, or that none was found.
+5. Present the frame, then end the turn and wait for the user's own answer.
+6. Read [plan](02-plan.md).
 
-## Test
+## Output
 
-| Case | Pass |
-| --- | --- |
-| The action runs to completion | `git status --porcelain` reads the same after as before |
-| A name overlaps an installed skill | the overlap is surfaced before the frame is handed on |
-| No name overlaps | the run states that it found none |
-| A frame field needs the user | one question is asked, and only that one |
-| The frame is handed to plan | its target was confirmed by the user first |
+The confirmed frame.
+
+## Rules
+
+- Write no file.
+- Ask one question at a time, only for a field you cannot propose.

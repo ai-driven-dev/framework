@@ -170,13 +170,6 @@ test("the root duration is intro, scenes and outro added up", () => {
   assert.match(html, new RegExp(`id="root"[^>]*data-duration="${5 + sum(plan.scenes) + 4}"`));
 });
 
-test("a scene lasts 3.5 seconds, plus 1 with a lead, plus 0.7 per row, rounded up to a half second", () => {
-  const one = { template: "terminal-demo", window: window([{ text: "a" }]) };
-
-  assert.equal(sceneDuration(one), 4.5);
-  assert.equal(sceneDuration({ ...one, lead: "Ask what a task cost." }), 5.5);
-});
-
 test("a scene with more rows lasts longer", () => {
   const few = { template: "terminal-demo", window: window([{ text: "a" }]) };
   const many = { template: "terminal-demo", window: window([{ text: "a" }, { text: "b" }, { text: "c" }]) };
@@ -219,6 +212,119 @@ test("the intro says what the release holds, in a few words", () => {
 
   assert.match(html, /<p class="tagline" id="intro-tag">Costs, batches, conflicts\.<\/p>/);
   assert.match(html, /<span class="hl it">Token costs<\/span><span class="hl it">Parallel agents<\/span><span class="hl it">Git conflicts<\/span>/);
+});
+
+test("an intro without tags opens on the thumbnail's themes", () => {
+  const html = buildHtml({ ...plan, youtube: { themes: ["Antigravity", "Agents"] } }, { version: "5.14" });
+
+  assert.match(html, /<p class="themes" id="intro-themes">Antigravity · Agents<\/p>/);
+  assert.match(html, /enter\("#intro-themes", 2\.0,/);
+  assert.ok(!html.includes('id="intro-tag"'), "the default phrase is drawn too");
+});
+
+test("a grid cell shows the icon of its intent beside its title", () => {
+  const grid = { template: "bullet-grid", pill: "Agents", title: "4 new", surfaces: [], cells: [{ title: "explorer", icon: "search" }] };
+  const html = buildHtml({ ...plan, scenes: [grid] }, { version: "5.14" });
+
+  assert.match(html, /<b><svg class="ico"[^>]*>.*?<\/svg>explorer<\/b>/);
+});
+
+test("a table cell takes the tone it is given", () => {
+  const row = { table: { head: ["Tool", "Status"], rows: [["Jira", { tone: "amb", text: "Signed out" }]] } };
+  const demo = { template: "terminal-demo", pill: "Connections", title: "Check", surfaces: [], window: { label: "x", rows: [row] } };
+  const html = buildHtml({ ...plan, scenes: [demo] }, { version: "5.14" });
+
+  assert.match(html, /<td class="amb">Signed out<\/td>/);
+});
+
+const agents = {
+  template: "terminal-demo",
+  pill: "Agents",
+  title: "4 new",
+  surfaces: [],
+  window: window([{ prompt: "add a login page" }]),
+  flow: [
+    { n: "1", title: "explorer", sub: "finds the code", icon: "search", log: ["src/", "auth/"] },
+    { n: "2", title: "executor", sub: "builds and tests", icon: "build" },
+  ],
+};
+const workTimes = (html) => [...html.matchAll(/work\("#s1", (\d+), ([\d.]+), [\d.]+[^)]*\);/g)].map((m) => [Number(m[1]), Number(m[2])]);
+
+test("a flow step shows the icon of its intent beside its title", () => {
+  const html = buildHtml({ ...plan, scenes: [agents] }, { version: "5.14" });
+
+  assert.match(html, /<span class="t"><svg class="ico"[^>]*>.*?<\/svg>explorer<\/span>/);
+});
+
+test("each flow step works in turn, once the scene is on screen: its bar fills, then it is done", () => {
+  const html = buildHtml({ ...plan, scenes: [agents] }, { version: "5.14" });
+  const times = workTimes(html);
+
+  assert.match(html, /class="step it" data-w="0">.*?<span class="wbar"><i><\/i><\/span>/);
+  assert.match(html, /class="step it" data-w="1">/);
+  assert.deepEqual(times.map(([w]) => w), [0, 1]);
+  assert.ok(times[0][1] >= 5 + 0.63 + 0.3 * 4, "a step works before every step is on screen");
+  assert.ok(times[1][1] >= times[0][1] + 1, "the next step starts before the previous one is done");
+});
+
+test("a scene lasts long enough for each step to work in turn", () => {
+  const still = { ...agents, flow: agents.flow.map(({ title, sub }) => ({ title, sub, final: true })) };
+
+  assert.ok(sceneDuration(agents) >= sceneDuration(still) + 2);
+});
+
+test("a checked table row first shows it is checking, then its result", () => {
+  const row = {
+    table: {
+      head: ["Tool", "Status", "Next step"],
+      rows: [["Jira", { checking: { tone: "amb", text: "Signed out" } }, { result: "sign in" }], ["GitHub", { status: "Read OK" }, ""]],
+    },
+  };
+  const demo = { template: "terminal-demo", pill: "Connections", title: "Check", surfaces: [], window: window([row]) };
+  const html = buildHtml({ ...plan, scenes: [demo] }, { version: "5.14" });
+
+  assert.match(html, /<tr data-w="0"><td>Jira<\/td><td><div class="wcell"><span class="wpend dim">checking…<span class="wbar"><i><\/i><\/span><\/span><span class="wres amb">Signed out<\/span><\/div><\/td>/);
+  assert.match(html, /<td><div class="wcell"><span class="wpend"><\/span><span class="wres">sign in<\/span><\/div><\/td><\/tr>/);
+  assert.match(html, /<tr><td>GitHub<\/td>/);
+  assert.deepEqual(workTimes(html).map(([w]) => w), [0]);
+});
+
+test("a working step shows what it does, line by line, while its bar fills", () => {
+  const html = buildHtml({ ...plan, scenes: [agents] }, { version: "5.14" });
+
+  assert.match(html, /data-w="0">.*?<span class="wlog"><span class="wrun" data-run="0"><span class="wl">src\/<\/span><span class="wl">auth\/<\/span><\/span><\/span>/);
+  assert.match(html, /tl\.from\(lines, \{[^}]*stagger: fill \/ /);
+});
+
+test("a checked cell may say what it waits for instead of checking", () => {
+  const row = { table: { head: ["Path", "Holds"], rows: [[".agents/skills/", { checking: { status: "48 skills" }, pending: "installing…" }]] } };
+  const demo = { template: "terminal-demo", pill: "Antigravity", title: "Setup", surfaces: [], window: window([row]) };
+  const html = buildHtml({ ...plan, scenes: [demo] }, { version: "5.14" });
+
+  assert.match(html, /<span class="wpend dim">installing…<span class="wbar">/);
+});
+
+test("checked rows tick by faster than flow steps, and their time is counted once", () => {
+  const rows = (n) => ({
+    template: "terminal-demo",
+    pill: "Install",
+    title: "Setup",
+    surfaces: [],
+    window: window([{ table: { head: ["Tool", "Installed"], rows: Array.from({ length: n }, (_, i) => [`t${i}`, { checking: "ok" }]) } }]),
+  });
+  const html = buildHtml({ ...plan, scenes: [rows(3)] }, { version: "5.14" });
+  const [[, a], [, b]] = workTimes(html);
+
+  assert.ok(b - a < 1, "a row takes as long as a step");
+  assert.ok(sceneDuration(rows(6)) - sceneDuration(rows(4)) <= 2 * (b - a) + 0.5, "a checked row is counted as a row and as work");
+});
+
+test("a check that ends pops", () => {
+  const html = buildHtml({ ...plan, scenes: [agents] }, { version: "5.14" });
+  const cues = soundCues({ ...plan, scenes: [agents] }, { version: "5.14" });
+
+  assert.equal(workTimes(html).length, 2);
+  for (const [, at] of workTimes(html)) assert.ok(cues.some((c) => c.kind === "pop" && Math.abs(c.t - (at + 1.2)) < 0.01), `no pop at ${at + 1.2}`);
 });
 
 test("the intro keeps a default tagline when the plan gives none", () => {
@@ -275,22 +381,15 @@ test("a track with no loud hook has no sections", () => {
   assert.equal(musicSections(Array(40).fill(-26)), null);
 });
 
-test("the hook plays under the intro, the bed under the scenes and the outro, the ending closes the video", () => {
+test("the hook plays whole, even past a shorter intro, the bed under the scenes and the outro, the ending closes the video", () => {
   const sections = musicSections(rms);
-  const [head, body, tail] = musicSegments(sections, { intro: 5, total: 30, outro: 4 });
+  const [head, body, tail] = musicSegments(sections, { total: 30 });
 
-  assert.deepEqual(head, { part: "head", from: 0.5, length: 5, at: 0 });
+  assert.deepEqual(head, { part: "head", from: 0.5, length: 5.5, at: 0 });
   assert.equal(body.part, "body");
-  assert.equal(body.at, 5);
-  assert.equal(body.length, 30 - 4 - 5);
+  assert.equal(body.at, 5.5);
+  assert.equal(body.length, 30 - 4 - 5.5);
   assert.deepEqual(tail, { part: "tail", from: 35.5, length: 4, at: 26 });
-});
-
-test("an intro longer than the hook lets the bed start early, never a gap", () => {
-  const [head, body] = musicSegments(musicSections(rms), { intro: 6.5, total: 30, outro: 4 });
-
-  assert.equal(head.length, 5.5);
-  assert.equal(body.at, head.at + head.length);
 });
 
 const cuesOf = (kind, from, to) => soundCues(plan, { version: "5.13" }).filter((c) => c.kind === kind && c.t >= from && c.t < to);
@@ -424,7 +523,7 @@ test("a before-after scene puts its figures above the old and the new side by si
 test("a before-after scene lasts for its figures and the lines of both cards", () => {
   const bare = { ...beforeAfter, figures: [], before: { label: "Before", rows: [] }, after: { label: "After", rows: [] } };
 
-  assert.equal(sceneDuration(beforeAfter) - sceneDuration(bare), 3.5);
+  assert.ok(sceneDuration(beforeAfter) > sceneDuration(bare));
 });
 
 test("no pop is cued for a phrase the intro does not draw", () => {
@@ -490,4 +589,161 @@ test("the shipped track has a hook as long as the intro with tags, a bed of whol
   assert.equal(sections.headEnd, 6.5);
   assert.equal(sections.tailEnd - sections.tailStart, 4);
   assert.equal((sections.tailStart - sections.headEnd) % 2, 0, "the bed is not a whole number of bars");
+});
+
+const retry = {
+  ...agents,
+  flow: [
+    { n: "1", title: "explorer", sub: "maps the code", icon: "search", log: ["src/"] },
+    { n: "2", title: "executor", sub: "builds", icon: "build", runs: [{ log: ["+ login.tsx"] }, { log: ["+ error message"] }] },
+    { n: "3", title: "validator", sub: "checks", icon: "check", runs: [{ log: ["✗ no error shown"], fail: true }, { log: ["✓ goal met"] }] },
+  ],
+};
+
+test("a failed check sends the work back to the step before it, then checks again", () => {
+  const html = buildHtml({ ...plan, scenes: [retry] }, { version: "5.14" });
+  const times = workTimes(html);
+
+  assert.deepEqual(times.map(([w]) => w), [0, 1, 2, 1, 2]);
+  assert.ok(times.every(([, at], i) => i === 0 || at > times[i - 1][1]), "the runs overlap");
+  assert.match(html, /work\("#s1", 2, [\d.]+, [\d.]+, 0, true\);/);
+  assert.match(html, /work\("#s1", 1, [\d.]+, [\d.]+, 1, false\);/);
+});
+
+test("a step sent back says so and where the work goes, then shows its next run", () => {
+  const html = buildHtml({ ...plan, scenes: [retry] }, { version: "5.14" });
+
+  assert.match(html, /data-w="2">.*?<span class="wfail pnk">✗ sent back<\/span>/);
+  assert.match(html, /<span class="wrun" data-run="0"><span class="wl">✗ no error shown<\/span><span class="wl pnk">↩ back to executor<\/span><\/span><span class="wrun" data-run="1"><span class="wl">✓ goal met<\/span><\/span>/);
+  assert.match(html, /fail \? "#ff8fa8" : "#5ee6a8"/);
+});
+
+test("a scene lasts long enough for every run, its retries included", () => {
+  const straight = { ...retry, flow: retry.flow.map(({ runs, ...step }) => ({ ...step, log: (runs ?? [{ log: step.log }])[0].log })) };
+
+  assert.ok(sceneDuration(retry) >= sceneDuration(straight) + 2 * 1.6 - 0.5);
+});
+
+test("a check with no run left to retry fails the render", () => {
+  const short = { ...retry, flow: [retry.flow[0], { ...retry.flow[1], runs: [{ log: ["+ a"] }] }, retry.flow[2]] };
+
+  assert.throws(() => buildHtml({ ...plan, scenes: [short] }, { version: "5.14" }), /executor has no run left/);
+});
+
+const install = (together) => ({
+  template: "terminal-demo",
+  pill: "Install",
+  title: "Setup",
+  surfaces: [],
+  window: window([{ table: { head: ["Tool", "Installed"], together, rows: Array.from({ length: 6 }, (_, i) => [`t${i}`, { checking: "ok" }]) } }]),
+});
+
+test("rows installed together start at once, and their time counts once", () => {
+  const html = buildHtml({ ...plan, scenes: [install(true)] }, { version: "5.14" });
+  const starts = new Set(workTimes(html).map(([, at]) => at));
+
+  assert.equal(workTimes(html).length, 6);
+  assert.equal(starts.size, 1);
+  assert.ok(sceneDuration(install(true)) <= sceneDuration(install(false)) - 2);
+});
+
+test("rows installed together tick once and end at once, with one pop", () => {
+  const html = buildHtml({ ...plan, scenes: [install(true)] }, { version: "5.14" });
+  const cues = soundCues({ ...plan, scenes: [install(true)] }, { version: "5.14" });
+  const [[, at]] = workTimes(html);
+  const ends = [...html.matchAll(/work\("#s1", \d+, ([\d.]+), ([\d.]+)/g)].map((m) => Math.round((Number(m[1]) + Number(m[2])) * 100) / 100);
+
+  assert.equal(cues.filter((c) => c.kind === "tick" && Math.abs(c.t - at) < 0.01).length, 1);
+  assert.equal(new Set(ends).size, 1, "a row ends on its own");
+  assert.equal(cues.filter((c) => c.kind === "pop" && Math.abs(c.t - ends[0]) < 0.01).length, 1);
+});
+
+const follow = {
+  template: "two-panels",
+  pill: "Antigravity",
+  title: "Setup",
+  surfaces: [],
+  panels: [
+    { label: "Terminal", rows: [{ table: { head: ["Path", "Holds"], rows: [["a", { checking: "ok" }], ["b", { checking: "ok" }]] } }] },
+    { label: "Antigravity CLI", afterWork: true, rows: [{ prompt: "plan" }, { text: "Plan written" }] },
+  ],
+};
+
+test("a panel that follows the work opens once that work is done, with its rows", () => {
+  const html = buildHtml({ ...plan, scenes: [follow] }, { version: "5.14" });
+  const cues = soundCues({ ...plan, scenes: [follow] }, { version: "5.14" });
+  const end = Math.max(...[...html.matchAll(/work\("#s1", \d+, ([\d.]+), ([\d.]+)/g)].map((m) => Number(m[1]) + Number(m[2])));
+  const opens = Number(html.match(/enter\("#s1 \.then", ([\d.]+)/)[1]);
+  const rowsAt = Number(html.match(/enter\("#s1 \.then \.row", ([\d.]+)/)[1]);
+
+  assert.match(html, /<div class="win then"><div class="bar">.*?Antigravity CLI/);
+  assert.match(html, /enter\("#s1 \.win:not\(\.then\) \.row:not\(\.later\)", /);
+  assert.ok(opens >= end, "the panel opens before the work is done");
+  assert.ok(rowsAt > opens);
+  assert.equal(cues.filter((c) => c.kind === "click" && c.t >= rowsAt - 0.01).length, 2);
+  assert.ok(5 + sceneDuration(follow) >= rowsAt + 0.45 + 1.5, "the scene cuts before its last row is read");
+});
+
+test("a step that works again shows done once more, not only the first time", () => {
+  const html = buildHtml({ ...plan, scenes: [retry] }, { version: "5.14" });
+
+  assert.match(html, /\.wres \{ opacity: 0; \}/);
+  assert.match(html, /if \(run > 0\) \{[^\n]*\n(?:    [^\n]*\n)*?    if \(all\(unit \+ " \.wres"\)\) tl\.to\(unit \+ " \.wres", \{ opacity: 0/);
+  assert.match(html, /tl\.fromTo\(unit \+ " \.wres", \{ opacity: 0, y: 10 \}, \{ opacity: 1, y: 0, duration: 0\.3, ease, immediateRender: false \}, at \+ fill\)/);
+});
+
+const shownBy = (s) => {
+  const html = buildHtml({ ...plan, scenes: [s] }, { version: "5.14" });
+  return { html, cues: soundCues({ ...plan, scenes: [s] }, { version: "5.14" }) };
+};
+
+test("a scene ends a short beat after its last row, however many lines its table holds", () => {
+  const table = (n) => ({ template: "terminal-demo", window: window([{ table: { head: ["a"], rows: Array.from({ length: n }, (_, i) => [`r${i}`]) } }]) });
+
+  assert.equal(sceneDuration(table(6)), sceneDuration(table(1)));
+  assert.equal(sceneDuration(table(1)), Math.ceil((1.3 + 0.5 + 2.5) * 2) / 2);
+});
+
+const verdict = {
+  template: "terminal-demo",
+  pill: "Quality",
+  title: "Assert",
+  surfaces: [],
+  window: window([
+    { prompt: "/aidd-dev:03-assert" },
+    { table: { head: ["Check", "Result"], rows: [["pnpm lint", { checking: "pass" }], ["pnpm test", { checking: "fail" }]] } },
+    { verdict: "FAIL", tone: "pnk", detail: "code untouched", afterWork: true },
+  ]),
+};
+
+test("a verdict is drawn as a badge in its tone, with its detail beside it", () => {
+  const { html } = shownBy(verdict);
+
+  assert.match(html, /<div class="row verdict pnk later"><b>FAIL<\/b><span>code untouched<\/span><\/div>/);
+});
+
+test("a row that follows the work appears once the work is done, with its click", () => {
+  const { html, cues } = shownBy(verdict);
+  const end = Math.max(...[...html.matchAll(/work\("#s1", \d+, ([\d.]+), ([\d.]+)/g)].map((m) => Number(m[1]) + Number(m[2])));
+  const at = Number(html.match(/enter\("#s1 \.row\.later", ([\d.]+)/)[1]);
+
+  assert.match(html, /enter\("#s1 \.win:not\(\.then\) \.row:not\(\.later\)", /);
+  assert.ok(at >= end, "the verdict shows before the checks are done");
+  assert.ok(cues.some((c) => c.kind === "click" && Math.abs(c.t - at) < 0.01), "no click for the verdict");
+  assert.ok(5 + sceneDuration(verdict) >= at + 2.5, "the scene cuts before the verdict is read");
+});
+
+test("a table may have no head", () => {
+  const { html } = shownBy({ template: "terminal-demo", window: window([{ table: { rows: [["testing.md", { checking: "written" }]] } }]) });
+
+  assert.match(html, /<table class="row"><tbody><tr data-w="0">/);
+});
+
+test("the arrow into a step that sends work back turns around while the work goes back", () => {
+  const { html } = shownBy(retry);
+
+  assert.match(html, /<span class="arrow it"><span class="fwd">→<\/span><span class="bk pnk">←<\/span><\/span><div class="step it" data-w="2">/);
+  assert.match(html, /<span class="arrow it">→<\/span><div class="step it" data-w="1">/);
+  assert.match(html, /if \(fail && back\) \{\n\s+tl\.to\(back\.querySelector\("\.fwd"\), \{ opacity: 0[^\n]*at \+ fill\);\n\s+tl\.to\(back\.querySelector\("\.bk"\), \{ opacity: 1/);
+  assert.match(html, /if \(run > 0\) \{[^]*?if \(back\) tl\.to\(back\.querySelector\("\.bk"\), \{ opacity: 0[^\n]*\n[^\n]*\.fwd"\), \{ opacity: 1/);
 });

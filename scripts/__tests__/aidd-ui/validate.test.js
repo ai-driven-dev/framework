@@ -204,7 +204,7 @@ describe("aidd-ui validator entries", () => {
   describe("E9 commands", () => {
     it("names the commands and exits 2 on one it does not know", () => {
       const run = spawnSync(process.execPath, [ENGINE, "valdate", tmp], { encoding: "utf8" });
-      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs <validate|tokens> [project-root]\n       node aidd-ui.cjs hook < <host event>\n       node aidd-ui.cjs impact <id or token>… [--root <dir>]\n       node aidd-ui.cjs extract [--force] [--root <dir>]\n       node aidd-ui.cjs bump --task <aidd_docs/tasks/…> (--change \"<text>\" [--breaking] | --created | --removed) <token or id>… [--root <dir>]\n       node aidd-ui.cjs publish ([--breaking] | <id>…) [--root <dir>]\n" });
+      assert.deepEqual({ code: run.status, out: run.stdout, err: run.stderr }, { code: 2, out: "", err: "usage: node aidd-ui.cjs help [<command>]\nvalidate: Check the design system and print its problems.\ntokens: Write the stylesheet from the tokens.\nhook: Answer a host event with the problems it caused.\nimpact: List what a token or element reaches.\nextract: Write the tokens from the code the system names.\nbump: Raise the versions a change reaches, or start a history.\npublish: Publish the system, or validate elements.\ncompare: Check a set of variants and write their comparison page.\nkeep: Make one variant of a set the design system's own.\nhelp: Print a command's usage, effects, output and exit codes.\n" });
     });
   });
 
@@ -309,16 +309,16 @@ describe("aidd-ui validator entries", () => {
       });
     });
 
-    it("prints nothing without aidd_docs/ui/ and writes nothing", () => {
+    it("refuses without aidd_docs/ui/ and writes nothing", () => {
       fs.rmSync(path.join(tmp, UI), { recursive: true });
-      assert.deepEqual(generate(tmp), { code: 0, out: [], err: "", css: null });
+      assert.deepEqual(generate(tmp), { code: 2, out: [], err: "aidd-ui: no aidd_docs/ui folder at this root. Run from the project root, after writing a record.\n", css: null });
     });
   });
 
   describe("E1 no design system", () => {
-    it("prints nothing without aidd_docs/ui/", () => {
+    it("refuses without aidd_docs/ui/", () => {
       fs.rmSync(path.join(tmp, UI), { recursive: true });
-      assert.deepEqual(validate(tmp), { code: 0, out: [], err: "" });
+      assert.deepEqual(validate(tmp), { code: 2, out: [], err: "aidd-ui: no aidd_docs/ui folder at this root. Run from the project root, after writing a record.\n" });
     });
   });
 
@@ -369,7 +369,7 @@ describe("aidd-ui validator entries", () => {
 
     it("tells the error the write left in the record citing the written one, and holds no turn for it", () => {
       begin();
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), claudeFeedback(errorsText([`${UI}/components/search-field.md R6 "button" => use only elements of its own level or lower`])));
       assert.deepEqual(hook(stop()), silent);
     });
@@ -383,18 +383,25 @@ describe("aidd-ui validator entries", () => {
 
     it("tells an error elsewhere once per turn, however many writes leave it", () => {
       begin();
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       hook(postToolUse(path.join(tmp, RECORD)));
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
     });
 
+    it("tells nothing of a draft written in the drafts folder, whatever it holds", () => {
+      const draft = path.join(tmp, UI, "drafts/brand/a/brand.md");
+      fs.mkdirSync(path.dirname(draft), { recursive: true });
+      fs.writeFileSync(draft, "---\nid: brand\nkind: nothing-known\n---\n\n# Draft\n");
+      assert.deepEqual(hook(postToolUse(draft)), silent);
+    });
+
     it("tells nothing elsewhere without a baseline, nothing then proving an error new", () => {
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
     });
 
     it("tells nothing elsewhere the session started with", () => {
-      edit(tmp, RECORD, "kind: atom", "kind: composition");
+      edit(tmp, RECORD, "kind: atom", "kind: organism");
       begin();
       assert.deepEqual(hook(postToolUse(path.join(tmp, RECORD))), silent);
     });
@@ -524,6 +531,20 @@ describe("aidd-ui validator entries", () => {
       assert.deepEqual(hook(stop()), finish(errorsText([literal(28)])));
     });
 
+    it("still holds the turn when the baseline cannot be written", () => {
+      begin();
+      const before = rendered();
+      littering(1, 0);
+      hook(postToolUse(path.join(tmp, RENDER), before));
+      fs.rmSync(`${markPath(sid)}.base`, { force: true });
+      fs.mkdirSync(`${markPath(sid)}.base`);
+      try {
+        assert.deepEqual(hook(stop()), finish(errorsText([literal(28)])));
+      } finally {
+        fs.rmSync(`${markPath(sid)}.base`, { recursive: true, force: true });
+      }
+    });
+
     it("holds with every error of the changed lines, none cut, and no warning", () => {
       begin();
       const before = rendered();
@@ -610,6 +631,16 @@ describe("aidd-ui validator entries", () => {
       breakOnePerFamily();
       hook(postToolUse(path.join(tmp, BRAND)));
       assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), claudeFeedback(errorsText([BRAND_FAILURE])));
+    });
+
+    it("still hands the problems back when the turn's state cannot be written", () => {
+      breakOnePerFamily();
+      fs.mkdirSync(markPath(sid), { recursive: true, mode: 0o700 });
+      try {
+        assert.deepEqual(hook(postToolUse(path.join(tmp, BRAND))), claudeFeedback(errorsText([BRAND_FAILURE])));
+      } finally {
+        fs.rmSync(markPath(sid), { recursive: true, force: true });
+      }
     });
 
     it("still hands the problems back when the turn mark cannot be written", () => {
@@ -920,6 +951,7 @@ describe("aidd-ui validator entries", () => {
       ["runs the engine installed flat", "node .claude/hooks/aidd-ui/aidd-ui.cjs bump --task aidd_docs/tasks/x --change y color.brand.primary"],
       ["extracts the tokens", `node ${ENGINE} extract --force --root ${tmp}`],
       ["publishes the system", `node ${ENGINE} publish --breaking --root ${tmp}`],
+      ["keeps a variant", `node ${ENGINE} keep brand b --root ${tmp}`],
       ["writes after a read", `node ${ENGINE} validate ${tmp} && node ${ENGINE} tokens ${tmp}`],
       ["names aidd_docs/ui/ and writes", "sed -i s/a/b/ aidd_docs/ui/brand.md"],
     ];
@@ -966,6 +998,7 @@ describe("aidd-ui validator entries", () => {
       'grep -n "=>" aidd_docs/ui/brand.md',
       "git rm --cached aidd_docs/ui/brand.md",
       "git reset aidd_docs/ui/brand.md",
+      "node .claude/hooks/aidd-ui/aidd-ui.cjs compare brand",
     ];
     for (const command of READS) {
       it(`does not mark the turn when a command only reads aidd_docs/ui/: ${command}`, () => {
@@ -1071,4 +1104,93 @@ describe("aidd-ui validator entries", () => {
       }
     });
   });
+});
+
+// Every host reaches the engine through its own adapter, so each is dropped in as the plugin's
+// lib/host.cjs and fed that host's recorded payload shape (fixtures/hook-payloads), with the same
+// colour literal added to a design-system project's code.
+describe("aidd-ui on every host adapter", () => {
+  const RUNTIME = path.resolve(__dirname, "../../../cli/assets/hooks-runtime");
+  const PAYLOADS = path.resolve(__dirname, "../fixtures/hook-payloads");
+  const FILE = "src/ui/Button.tsx";
+  const LITERAL = 'const style = "color: #ff0000";';
+  const FINDING = `${FILE}:4 C4 `;
+  const sample = (name, pick = () => true) => JSON.parse(fs.readFileSync(path.join(PAYLOADS, `${name}.json`), "utf8")).samples.map((s) => s.payload).find(pick);
+  const patch = `*** Begin Patch\n*** Update File: ${FILE}\n@@\n+${LITERAL}\n*** End Patch`;
+
+  // Per host: the adapter asset, the session's start and stop, and the write as that host sends it.
+  // `holds` is whether Stop holds the turn on that write: a whole-file write that does not say what it replaced holds nothing.
+  const HOSTS = [
+    {
+      name: "claude", adapter: "host-claude.cjs", holds: true,
+      start: () => ({ ...sample("claude-SessionStart"), cwd: tmp, session_id: sid }),
+      write: (before, after) => ({ ...sample("claude-PostToolUse", (p) => p.tool_name === "Write"), cwd: tmp, session_id: sid, tool_input: { file_path: path.join(tmp, FILE), content: after }, tool_response: { type: "update", originalFile: before } }),
+      stop: () => ({ ...sample("claude-Stop"), cwd: tmp, session_id: sid, stop_hook_active: false }),
+    },
+    {
+      name: "cursor", adapter: "host-cursor.cjs", holds: false,
+      start: () => ({ ...sample("cursor-sessionStart"), session_id: sid, conversation_id: sid, workspace_roots: [tmp] }),
+      write: (_before, after) => ({ ...sample("cursor-postToolUse", (p) => p.tool_name === "Write"), session_id: sid, conversation_id: sid, workspace_roots: [tmp], tool_input: { file_path: path.join(tmp, FILE), content: after } }),
+      stop: () => ({ ...sample("cursor-stop"), session_id: sid, conversation_id: sid, workspace_roots: [tmp] }),
+    },
+    {
+      name: "codex", adapter: "host-codex.cjs", holds: true,
+      start: () => ({ ...sample("codex-SessionStart"), cwd: tmp, session_id: sid }),
+      write: () => ({ ...sample("codex-PostToolUse", (p) => p.tool_name === "apply_patch"), cwd: tmp, session_id: sid, tool_input: { command: patch } }),
+      stop: () => ({ ...sample("codex-Stop"), cwd: tmp, session_id: sid, stop_hook_active: false }),
+    },
+    {
+      name: "copilot", adapter: "host-copilot.cjs", holds: true,
+      start: () => ({ ...sample("copilot-SessionStart"), cwd: tmp, session_id: sid }),
+      write: () => ({ ...sample("copilot-PostToolUse", (p) => p.tool_name === "Edit"), cwd: tmp, session_id: sid, tool_input: `${patch}\n` }),
+      stop: () => ({ ...sample("copilot-Stop"), cwd: tmp, session_id: sid, stop_hook_active: false }),
+    },
+    // OpenCode and Kilo send no stdin: their generated bridge builds this payload from the plugin hook's arguments.
+    ...["opencode", "kilo"].map((name) => ({
+      name, adapter: "host-bridge.cjs", holds: true,
+      start: () => ({ hook_event_name: "SessionStart", session_id: sid, cwd: tmp }),
+      write: () => ({ hook_event_name: "PostToolUse", session_id: sid, cwd: tmp, tool_name: "apply_patch", tool_input: { patchText: patch } }),
+      stop: () => ({ hook_event_name: "Stop", session_id: sid, cwd: tmp }),
+    })),
+  ];
+
+  for (const host of HOSTS) {
+    describe(host.name, () => {
+      let hooks;
+      /** The plugin's hooks with this host's adapter as lib/host.cjs, run on one payload. */
+      const run = (payload) => {
+        const result = spawnSync(process.execPath, [path.join(hooks, "aidd-ui.cjs"), "hook"], { input: JSON.stringify(payload), encoding: "utf8", cwd: tmp });
+        return { code: result.status, out: result.stdout, err: result.stderr };
+      };
+
+      beforeEach(() => {
+        hooks = path.join(tmp, "..", `${path.basename(tmp)}-hooks`);
+        fs.cpSync(HOOKS, hooks, { recursive: true });
+        fs.copyFileSync(path.join(RUNTIME, host.adapter), path.join(hooks, "lib", "host.cjs"));
+      });
+
+      afterEach(() => {
+        fs.rmSync(hooks, { recursive: true, force: true });
+      });
+
+      it("names the colour literal a write added", () => {
+        run(host.start());
+        const before = fs.readFileSync(path.join(tmp, FILE), "utf8");
+        fs.appendFileSync(path.join(tmp, FILE), `${LITERAL}\n`);
+        const answered = run(host.write(before, fs.readFileSync(path.join(tmp, FILE), "utf8")));
+        assert.equal(answered.err, "");
+        assert.ok(answered.out.includes(FINDING), answered.out);
+      });
+
+      it(host.holds ? "holds the turn on that literal at Stop" : "leaves the turn alone at Stop, the write not saying what it replaced", () => {
+        run(host.start());
+        const before = fs.readFileSync(path.join(tmp, FILE), "utf8");
+        fs.appendFileSync(path.join(tmp, FILE), `${LITERAL}\n`);
+        run(host.write(before, fs.readFileSync(path.join(tmp, FILE), "utf8")));
+        const stopped = run(host.stop());
+        if (host.holds) assert.ok(stopped.out.includes(FINDING), stopped.out);
+        else assert.equal(stopped.out, "");
+      });
+    });
+  }
 });

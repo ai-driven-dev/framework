@@ -1,6 +1,6 @@
 # Codebase Map
 
-Where things live. The architecture rules carry no paths on purpose, so this is the single place that says — and `tests/architecture/codebase-map.arch.test.ts` holds it to the tree in both directions.
+Where things live. The architecture rules carry no paths on purpose, so this is the single place that says. `tests/architecture/codebase-map.arch.test.ts` holds it to the tree in both directions.
 
 ```txt
 src/
@@ -13,6 +13,7 @@ src/
 │   │   └── infrastructure/
 │   ├── framework/    # the installation record and everything done to a project
 │   │   ├── application/
+│   │   │   ├── agents/    # which model each host's agents run on
 │   │   │   ├── clean/
 │   │   │   ├── doctor/
 │   │   │   ├── flows/
@@ -39,6 +40,7 @@ src/
 │   │   ├── domain/
 │   │   │   ├── capabilities/
 │   │   │   ├── formats/
+│   │   │   │   └── models/    # provider models for agents and the main session's settings
 │   │   │   ├── models/
 │   │   │   ├── ports/
 │   │   │   └── profiles/    # one directory per tool
@@ -120,7 +122,7 @@ src/
 - `src/runtime/`: services that are not a context — http, git, auth, assets, filesystem, self-update — and the wiring that composes everything.
 - `tests/`: mirrors `src/`, one tier per file extension. `tests/architecture/` holds the ratchets, `tests/golden/` the snapshots, `tests/helpers/ports/` the doubles.
 - `assets/`: configs inlined at build time, schemas copied beside the binary.
-- `scripts/`: bundle budget, mutation runner, smoke harness.
+- `scripts/`: bundle budget, mutation runner, smoke harness, the copy check between tool profiles.
 
 ## Entry points
 

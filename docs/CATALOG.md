@@ -25,10 +25,10 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 | `02-project-memory`    | Give the AI a memory of the project, wired into the tools you use              | `01-scan`, `02-write`, `03-check`, `04-sync`                                                             |
 | `03-context-generate`  | Router that dispatches an artifact-generation request to the dedicated generator below | delegates to `04`–`08` (and plugins / marketplaces)                                            |
 | `04-skill-generate`    | Generate a router-based skill across the host AI tool(s)                       | `01-scope`, `02-plan`, `03-write`, `04-validate`                                                         |
-| `05-rule-generate`     | Generate a coding rule that governs editor and agent behavior                 | `01-capture-rule`, `02-write-rule`                                                                       |
-| `06-agent-generate`    | Generate an agent across the host AI tool(s)                                   | `01-capture-agent`, `02-write-agent`, `03-validate`                                                      |
+| `05-rule-generate`     | Generate a coding rule that governs editor and agent behavior                 | `01-frame`, `02-draft`, `03-plan`, `04-write`                                                            |
+| `06-agent-generate`    | Generate an agent across the host AI tool(s)                                   | `01-frame`, `02-write`, `03-validate`                                                                    |
 | `07-command-generate`  | Generate a flat slash command across the host AI tool(s)                       | `01-capture-command`, `02-write-command`, `03-validate`                                                  |
-| `08-hook-generate`     | Generate a lifecycle hook across the host AI tool(s)                           | `01-capture-hook`, `02-write-hook`, `03-validate`                                                        |
+| `08-hook-generate`     | Generate a lifecycle hook in each host AI tool's native format                 | `01-frame`, `02-plan`, `03-write`, `04-verify`                                                           |
 | `09-mermaid`           | Generate Mermaid diagrams via a plan-validate workflow                        | `01-mermaid`                                                                                             |
 | `10-learn`             | Capture learnings, conventions, and decisions into memory, decisions, rules   | `01-gather`, `02-assess`, `03-write`, `04-sync`                                                          |
 | `11-explore`           | Survey the project across tooling, context, and codebase, then drill into one axis | `01-survey`, `02-drill`                                                                                  |
@@ -41,7 +41,8 @@ Bootstrap, project init, context-artifact generation, diagrams, learning, and ex
 
 | Event | Runs |
 | --- | --- |
-| `SessionStart` | `hooks/update_memory.js` |
+| `SessionStart` | `hooks/memory.cjs` |
+| `Stop` | `hooks/memory.cjs` |
 
 <!--extras-aidd-context:end-->
 
@@ -129,11 +130,14 @@ Runs synchronous feature delivery, optional async issue automation, and the prod
 
 ## 🎨 aidd-ui
 
-🚧 **Alpha — not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently lays and changes the design system.
+🚧 **Alpha, not ready for use.** UI / UX: design, review, and improve frontend interfaces. Currently maps journeys and wireframes, and lays and changes the brand, tokens and components.
 
 | Skill      | Role                                      | Actions    |
 | ---------- | ----------------------------------------- | ---------- |
-| `01-system` | Lay a design system from nothing or from the code, and carry a change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
+| `01-journeys` | Write a persona's journeys and the wireframe of each screen they cross | `01-prepare`, `02-write`, `03-conclude` |
+| `02-brand` | Write a project's brand, from its code or from scratch, or evolve it, by comparing directions | `01-prepare`, `02-propose`, `03-choose`, `04-conclude` |
+| `03-foundations` | Lay the system and tokens, from nothing or from the code, and carry a token change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
+| `04-components` | Write components and assets, from nothing or from the code, and carry a component change through its impact and versions | `01-prepare`, `02-write`, `03-conclude` |
 
 <!--extras-aidd-ui:start-->
 

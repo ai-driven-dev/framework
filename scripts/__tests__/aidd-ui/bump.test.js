@@ -207,9 +207,11 @@ describe("aidd-ui bump", () => {
       for (const args of [...cases, ...created, ...removed]) refused(args, usage);
     });
 
-    it("names a project without a design system", () => {
+    it("names the missing aidd_docs/ui folder and where to run, for a change and for a creation", () => {
       fs.rmSync(path.join(tmp, UI), { recursive: true });
-      refused(["--task", TASK, "--change", "x", "space.md"], "aidd-ui: no design system under aidd_docs/ui\n");
+      const said = "aidd-ui: no aidd_docs/ui folder at this root. Run from the project root, after writing a record.\n";
+      refused(["--task", TASK, "--change", "x", "space.md"], said);
+      refused(["--task", TASK, "--created", "a"], said);
     });
 
     it("names a record it cannot raise: a version that is no integer, no status line, writing nothing", () => {

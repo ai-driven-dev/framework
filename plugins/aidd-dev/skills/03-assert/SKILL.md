@@ -24,5 +24,5 @@ Each box is a file: read it, then do what it says.
 
 - Speak only to ask or to give the final reply; otherwise call tools.
 - Verdict from exit codes only: one non-zero exit is a FAIL.
-- Change nothing but the report: no code, no test, no config.
+- Change nothing but the report and what a check rewrites itself: no code, no test, no config.
 - Do not commit or push.

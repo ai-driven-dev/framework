@@ -34,8 +34,15 @@ describe("buildAntigravityFlatContract", () => {
     expect(hooks.path("aidd-context", "hooks/update_memory.js")).toBe(
       ".agents/hooks/aidd-context/update_memory.js"
     );
-    expect(hooks.hooksMergeDest?.("/out")).toBe("/out/.agents/hooks.json");
-    expect(JSON.parse(hooks.hooksMerge?.(null, incoming, "aidd-context").content ?? "")).toEqual({
+    expect([hooks.hooksFile?.path("aidd-context"), hooks.hooksFile?.shared]).toEqual([
+      ".agents/hooks.json",
+      true,
+    ]);
+    expect(
+      JSON.parse(
+        hooks.hooksFile?.merge(null, incoming, "aidd-context", (path) => path).content ?? ""
+      )
+    ).toEqual({
       "aidd-context": {
         SessionStart: [
           {
@@ -93,6 +100,6 @@ describe("buildAntigravityFlatContract", () => {
     const contract = buildAntigravityFlatContract();
     expect(contract.manifestFileRelative).toBeNull();
     expect(contract.buildMarketplaceCatalog).toBeNull();
-    expect(contract.emitConfigArtifact).toBeUndefined();
+    expect(contract.configArtifact).toBeUndefined();
   });
 });
