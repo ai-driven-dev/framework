@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -55,28 +54,23 @@ async function buildFlat(
   });
 }
 
-async function hashTree(dir: string): Promise<Map<string, string>> {
-  const hashes = new Map<string, string>();
+async function readTree(dir: string): Promise<Map<string, Buffer>> {
+  const contents = new Map<string, Buffer>();
   for (const entry of await readdir(dir, { recursive: true, withFileTypes: true })) {
     if (!entry.isFile()) continue;
     const path = join(entry.parentPath, entry.name);
-    hashes.set(
-      path,
-      createHash("md5")
-        .update(await readFile(path))
-        .digest("hex")
-    );
+    contents.set(path, await readFile(path));
   }
-  return hashes;
+  return contents;
 }
 
 describe("a flat build into a tree a first build already wrote", () => {
   it("is byte-identical when forced, and halts when not", async () => {
     await buildFlat(TOOL.copilot);
-    const first = await hashTree(out);
+    const first = await readTree(out);
 
     await buildFlat(TOOL.copilot, { force: true });
-    const second = await hashTree(out);
+    const second = await readTree(out);
 
     expect(first.size).toBeGreaterThan(0);
     expect(second).toEqual(first);
