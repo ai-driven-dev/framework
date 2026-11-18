@@ -4,7 +4,7 @@ import type { AiToolId } from "../../../../shared/domain/tool.js";
 import type { AssetProvider } from "../../../../shared/ports/asset-provider.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { Hasher } from "../../../../shared/ports/hasher.js";
-import { CONFIG_MCP, type ConfigRef } from "../../../tools/contract/config-refs.js";
+import type { ConfigRef } from "../../../tools/contract/config-refs.js";
 import type { ConfigWrite, SettingsFileAnswers } from "../../../tools/contract/tool-profile.js";
 import type { Platform } from "../../ports/platform.js";
 
@@ -53,7 +53,7 @@ export class InstallConfig {
     if (rawContent === undefined) return null;
     const outputPath = await this.resolveOutputPath(write, projectRoot);
     if (outputPath === null) return null;
-    const content = this.applyTransforms(write, ref.name, rawContent, platformName);
+    const content = this.applyTransforms(write, rawContent, platformName);
     return new InstallationFile({
       relativePath: outputPath,
       content,
@@ -91,15 +91,10 @@ export class InstallConfig {
     return write.capability.outputPath();
   }
 
-  private applyTransforms(
-    write: ConfigWrite,
-    configName: string,
-    rawContent: string,
-    platformName: string
-  ): string {
+  private applyTransforms(write: ConfigWrite, rawContent: string, platformName: string): string {
     if (write.kind !== "mcp") return rawContent;
     const toolContent = write.capability.transform(rawContent);
     const launch = write.capability.launchTransformFor(platformName);
-    return configName === CONFIG_MCP && launch ? launch(toolContent) : toolContent;
+    return launch ? launch(toolContent) : toolContent;
   }
 }

@@ -199,6 +199,23 @@ describe("InstallConfig — MCP config", () => {
     ]);
   });
 
+  // Pins current behaviour, not wanted behaviour: the tool transform runs before the launch rewrite.
+  it("characterizes an npx server on Windows as left untouched by opencode's own format", async () => {
+    const { useCase } = buildUseCase();
+
+    const results = await useCase.execute({
+      writes: [{ kind: "mcp", capability: mcpCapability(TOOL.opencode) }],
+      configRefs: [MCP_REF],
+      contentFiles: new Map([[MCP_REF.path, NPX_SERVER]]),
+      projectRoot: PROJECT_ROOT,
+      platform: win32Platform,
+    });
+
+    expect(results.map((f) => JSON.parse(f.content))).toStrictEqual([
+      { mcp: { docs: { type: "local", command: ["npx", "-y", "docs-server"], enabled: true } } },
+    ]);
+  });
+
   it("honours the merge strategy the MCP capability declares", async () => {
     const { useCase } = buildUseCase();
 
