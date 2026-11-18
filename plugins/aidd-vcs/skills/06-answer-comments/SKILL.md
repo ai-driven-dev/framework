@@ -1,27 +1,24 @@
 ---
 name: 06-answer-comments
-description: Answers pull or merge request review comments, resolves settled threads, and proposes learnings. Use when the user wants review feedback answered or pending decisions summarized. Not for reviewing a diff or fixing code.
-argument-hint: pull request | merge request
+description: Answers PR/MR review comments, resolves settled threads and summarizes pending decisions, proposing learnings without reviewing or fixing code.
+argument-hint: PR/MR URL | number
 ---
 
 # Answer Comments
 
 ```mermaid
 flowchart LR
-  request([pull or merge request]) --> answer-comments --> propose-learnings --> summary([summary updated])
-  summary -.->|new reply or pushed commit| request
+  request([pull or merge request]) --> answer["actions/01-answer-comments.md"]
+  answer -->|"invalid input"| stopped((stopped))
+  answer <-->|"summary to select or adopt"| user((user answers))
+  answer -->|"unclassified history"| withheld((summary withheld))
+  answer -->|"published state mismatch"| answer
+  answer --> done([threads answered, summary updated])
+  done -.->|"new reply or pushed commit"| request
 ```
-
-## Actions
-
-Run the flow above. Read only the next action file.
-
-| Action | Does |
-| --- | --- |
-| answer-comments | answer open review threads and resolve the settled ones |
-| propose-learnings | propose lasting feedback and update the summary |
 
 ## Transversal rules
 
 - Reach the pull or merge request through the VCS tool `aidd_docs/memory/vcs.md` names, else the one the remote points to.
-- Read code and history as evidence; never modify source, commit, push, or merge the request.
+- Read code and history as evidence.
+- Never modify source, write a rule, memory or skill, commit, push, or merge the request.

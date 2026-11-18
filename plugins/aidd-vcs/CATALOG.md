@@ -86,9 +86,11 @@ Auto-generated index of skills, agents, references and assets shipped by the `ai
 | Group | File | Description |
 |-------|------|---|
 | `actions` | [01-answer-comments.md](skills/06-answer-comments/actions/01-answer-comments.md) | - |
-| `actions` | [02-propose-learnings.md](skills/06-answer-comments/actions/02-propose-learnings.md) | - |
-| `assets` | [comments-summary-template.md](skills/06-answer-comments/assets/comments-summary-template.md) | - |
 | `references` | [comment-kinds.md](skills/06-answer-comments/references/comment-kinds.md) | - |
 | `references` | [learnings.md](skills/06-answer-comments/references/learnings.md) | - |
-| `-` | [SKILL.md](skills/06-answer-comments/SKILL.md) | `Answers pull or merge request review comments, resolves settled threads, and proposes learnings. Use when the user wants review feedback answered or pending decisions summarized. Not for reviewing a diff or fixing code.` |
+| `references` | [review-input.schema.json](skills/06-answer-comments/references/review-input.schema.json) | - |
+| `references` | [review-output.schema.json](skills/06-answer-comments/references/review-output.schema.json) | - |
+| `references` | [review-plan.md](skills/06-answer-comments/references/review-plan.md) | - |
+| `scripts` | [prepare-review.cjs](skills/06-answer-comments/scripts/prepare-review.cjs) | - |
+| `-` | [SKILL.md](skills/06-answer-comments/SKILL.md) | `Answers PR/MR review comments, resolves settled threads and summarizes pending decisions, proposing learnings without reviewing or fixing code.` |
 

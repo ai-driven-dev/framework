@@ -1,24 +1,23 @@
 # Comment kinds
 
-The kind each review comment gets, and what its thread receives.
+The judgments and reply drafts the model supplies to the planner.
 
 ## Kinds
 
-| Kind | When | Reply | Thread |
+| Kind | When | Text | Source |
 | --- | --- | --- | --- |
-| `done` | a change it asked for is in a commit pushed after it | what changed, and the short commit sha | resolved |
-| `answer` | a question the code, docs, tests or history answer | the answer, and the file or commit it rests on | resolved |
-| `user-call` | a choice only the user can settle: intent, trade-off, scope, taste | the question in one sentence and any known options, ending `Answer here.` | open |
-| `user-call`, answered | the user has stated their decision, even if implementation remains | `Decision:` and the user's choice | resolved |
-| `todo` | a change asked for, not pushed yet | the change, ending `To do.` | open |
+| `done` | the requested change is in a commit pushed after the comment | what changed | the pushed commit's SHA |
+| `answer` | code, docs, tests or history answer the question | the answer | its file, commit or other evidence |
+| `user-call` | only the user can settle the intent, trade-off, scope or taste | the question, addressed to the user | none |
+| `todo` | the requested change is not pushed yet | the change to make | none |
+
+A decision the user supplied is not a kind: its text acknowledges the choice, with a decision label, and its source is the user's message.
 
 ## Rules
 
 | Rule | Why |
 | --- | --- |
 | Between `answer` and `user-call`, pick `user-call` | a guessed answer reads as decided |
-| Reply in one or two lines, in the comment's language, never quoting it back | the thread stays readable |
-| Keep `Answer here.` and `To do.` verbatim, in English | a later run reads them to know which threads still wait |
+| Write each text in the language the project's instructions set, else the comment's, in one or two lines, never quoting the comment back | the thread stays readable |
+| End no text with its source | the planner appends it |
 | Include every supported option; when none are known, ask an open question without inventing options | avoid imposing a false choice |
-| Check for a decision supplied in the conversation or thread before skipping a waiting `user-call` | a decision outside the thread also settles it |
-| Skip a thread ending `Answer here.` only if no decision was supplied; skip `To do.` only if no commit was pushed since | it still waits, whatever account posted it |

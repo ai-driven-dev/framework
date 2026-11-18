@@ -1,23 +1,30 @@
 # 01 - Answer Comments
 
-Reply to each open review comment on a pull or merge request, and resolve the settled ones.
-
 ## Input
 
-The pull or merge request, and the commits pushed since its comments.
-
-## Output
-
-Each open thread replied to, resolved or left open per its kind, and the `user-call` and `todo` threads named.
+The pull or merge request and any decisions supplied in the conversation.
 
 ## Process
 
-1. **Collect.** Read the open review threads, skipping those still waiting per [comment-kinds.md](../references/comment-kinds.md).
-2. **Sort.** Give each comment one kind per `comment-kinds.md`.
-3. **Reply.** Reply in each thread as its kind says.
-4. **Resolve.** Resolve or leave open each thread as its kind says.
-5. **Hand over.** Name all remaining `user-call` and `todo` threads with their links.
+1. Collect the review snapshot per [review-plan.md](../references/review-plan.md).
+2. Classify each open thread per [comment-kinds.md](../references/comment-kinds.md).
+   - A decision was supplied: associate it with its thread and source.
+3. Select lasting feedback per [learnings.md](../references/learnings.md).
+4. Run the planner per `review-plan.md`.
+   - Non-zero exit: quote its error and stop.
+   - Summary needs a choice: present its candidates and wait for the user's choice before rerunning with it.
+   - Threads are unknown: classify them from their evidence and rerun, leaving unproven ones unknown.
+5. Apply every thread operation it returns, questions and to-dos included, then its summary operation when the summary is ready.
+   - An operation's result is lost: refresh the snapshot before retrying it, since a repeated post duplicates it.
+6. Refresh the snapshot and check the threads and the stored summary against the plan.
+   - Mismatch: repeat from step 4 until they match.
+7. Report the pending decisions and changes with their links, and any thread left unknown.
+8. If learnings exist, offer the skill that captures durable project learnings with the summary as input.
+
+## Output
+
+The applied operations, the summary's status, the linked pending items and the proposed learnings.
 
 ## Rules
 
-- Include skipped waiting threads in the handover, even when no reply was posted.
+- Leave what to resolve, the counts and the summary body to the planner, never work them out by hand.
