@@ -61,23 +61,6 @@ describe("ConfigSection", () => {
       ).toThrow("ConfigSection: set either 'consumes' or 'staticContent', not both.");
     });
 
-    it("accepts staticContentAssetFile without consumes", () => {
-      const cap = new ConfigSection({
-        outputPath: ".vscode/settings.json",
-        mergeStrategy: "framework-prime",
-        staticContentAssetFile: "vscode-settings.json",
-      });
-      const loaded: string[] = [];
-      expect(
-        cap.resolveStaticContent((name) => {
-          loaded.push(name);
-          return "{}";
-        })
-      ).toBe("{}");
-      expect(loaded).toStrictEqual(["vscode-settings.json"]);
-      expect(cap.consumes("mySignal")).toBe(false);
-    });
-
     it("accepts neither consumes nor staticContent (empty capability)", () => {
       const cap = new ConfigSection({
         outputPath: ".vscode/settings.json",
@@ -140,6 +123,18 @@ describe("ConfigSection", () => {
 
     it("writes an asset answered as an object as indented JSON", () => {
       expect(fromAsset.resolveStaticContent(() => ({ a: 1 }))).toBe('{\n  "a": 1\n}');
+    });
+
+    it("keeps an asset answered as text verbatim, with nothing to consume", () => {
+      const loaded: string[] = [];
+      expect(
+        fromAsset.resolveStaticContent((name) => {
+          loaded.push(name);
+          return "{}";
+        })
+      ).toBe("{}");
+      expect(loaded).toStrictEqual(["vscode-settings.json"]);
+      expect(fromAsset.consumes("mySignal")).toBe(false);
     });
 
     it("answers nothing for an asset when no loader is given", () => {

@@ -139,17 +139,6 @@ describe("PropagateAiSettingsToIde", () => {
     expect(replaced.entries).toHaveProperty("a", deps.hasher.hash("1"));
   });
 
-  it("writes an asset answered as text verbatim", async () => {
-    const deps = await buildUnitDeps(PROJECT_ROOT);
-    await initProject(deps, PROJECT_ROOT);
-    await withCopilotRegistered(deps);
-    const assets = new StubAssetProvider({ "copilot/vscode-settings.json": '{"d": 1}' });
-
-    await propagate(deps, assets);
-
-    expect(parsed(deps, ".vscode/settings.json")).toHaveProperty("d", 1);
-  });
-
   it("merges nothing of an asset-backed capability when no asset provider was given", async () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
     await initProject(deps, PROJECT_ROOT);
