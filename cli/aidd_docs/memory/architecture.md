@@ -1,63 +1,45 @@
 # Architecture
 
-The macro shape of this package: the stack, how the pieces fit, and the decisions behind them.
+## Dependencies
 
-## Stack
-
-- TypeScript ESM on Node, bundled by tsup into one file.
-- Six runtime dependencies, capped; a new one needs an ADR: `commander`, `@inquirer/prompts`, `ajv`, `ajv-formats`, `simple-git`, `smol-toml`.
-- vitest, biome, stryker, knip: `testing.md`, `coding-assertions.md`.
-
-## How it fits together
-
-Every edge is a real import direction: the inter-context arrows are exactly `ALLOWED` in `tests/architecture/helpers.ts`, failed over by `context-graph.arch.test.ts`. Reverse edges are `BASELINE` debt in that file, deliberately not drawn.
+Inter-context edges are exactly `ALLOWED` in `tests/architecture/helpers.ts`, held by `context-graph.arch.test.ts`.
 
 ```mermaid
 flowchart LR
-    Presentation["presentation"] --> Distribution["distribution"]
-    Presentation --> Framework["framework"]
-    Presentation --> Recipes["recipes"]
-    Presentation --> Tools["tools"]
-    Presentation --> Translate["translate"]
-    Composition["composition"] --> Distribution
-    Composition --> Framework
-    Composition --> Tools
-    Composition --> Translate
-    Framework --> Translate
-    Framework --> Distribution
-    Framework --> Tools
-    Framework --> Auth["auth"]
-    Framework --> HostRegistration["host-registration"]
-    Distribution --> Auth
-    Translate --> Tools
-    Distribution --> Shared["shared"]
-    Framework --> Shared
-    Tools --> Shared
-    Auth --> Shared
-    HostRegistration --> Shared
-    Update --> Auth
-    Recipes --> Shared
-    Update --> Shared
-    Translate --> Shared
+    Presentation --> Orchestration
+    Presentation --> Contexts
+    Composition --> Orchestration
+    Composition --> Contexts
+    Orchestration --> Contexts
+    subgraph Contexts
+        translate --> tools
+        installation --> tools
+        host-registration --> tools
+        distribution --> auth
+        update --> auth
+    end
+    Contexts --> Shared
+    Orchestration --> Shared
+    Presentation --> Shared
+    Composition --> Shared
 ```
 
-## Key decisions
+## Decisions
 
-- Bounded contexts, never layers. Enforced by `tests/architecture/`, stated in `.claude/rules/00-architecture/0-contexts.md`.
-- Some tools' project config is inert: Codex, Copilot and Claude load a plugin only once their own CLI registered it. A per-tool fact, verified against the real tool.
-- Claude's registration is driven at `--scope local`, so the hashed file keeps a single writer.
-- Two file regimes: what this CLI owns is regenerated; what it co-owns with a person is merged, conflicts reported.
-- The manifest reads one version and refuses the rest, naming the fix. No migration chain.
-- Since v7 each installed plugin records its `scope` (`project` | `user`); base directories are resolved from that record, never the tool's current profile.
-- The `aidd-framework` marketplace is machine-scope, shared by every project: [`framework-source-is-machine-scope.md`](internal/decisions/framework-source-is-machine-scope.md).
-- Plugin enablement carries its own scope to the host CLI: [`plugin-enablement-carries-its-scope.md`](internal/decisions/plugin-enablement-carries-its-scope.md).
-- A launcher runs an external binary, never embeds it. `kanban` broke this and was unwired.
-- `clean` drives the host's own CLI and deletes under `$HOME` only inside a declared, `realpath`-contained root: [`clean-drives-the-host-cli.md`](internal/decisions/clean-drives-the-host-cli.md).
-- Hooks are one descriptor per tool (`profiles/<tool>/hooks.ts`), one merge engine (`formats/hooks-merge.ts`) and one host adapter per tool placed at build time (`assets/hooks-runtime/`); adding a tool is a descriptor and a payload fixture.
-- A marketplace's identity is its declared name plus plugin set, never a path or version: [`marketplace-identity-is-name-plus-plugins.md`](internal/decisions/marketplace-identity-is-name-plus-plugins.md).
+| Decision | Why |
+| --- | --- |
+| Another context is read through its `contract/` only | its `domain/`, `ports/` and `infrastructure/` stay its own; Biome and `context-boundary.arch.test.ts` hold it |
+| A module is shared only with callers in two contexts | `earned-sharing.arch.test.ts`; one caller means the code belongs to it |
+| Record placement: the host record's shape lives in `host-registration/domain/`, the manifest stores it opaque | only host registration knows what it means; the manifest keeps its own claims on refs |
+| Claude registers at `--scope local` | the hashed settings file keeps one writer (`profiles/claude/profile.ts`) |
+| Files this CLI owns are regenerated, co-owned files are merged | `MergeStrategy` in `shared/domain/merge.ts` |
+| The manifest reads one version and refuses the rest | the refusal names the fix; no migration chain |
+| One hooks descriptor per tool, one merge engine, one host adapter per tool in `assets/hooks-runtime/` | adding a tool is a descriptor and a payload fixture |
+
+Decision records in `internal/decisions/`: `framework-source-is-machine-scope`, `plugin-enablement-carries-its-scope`, `clean-drives-the-host-cli`, `marketplace-identity-is-name-plus-plugins`.
 
 ## Gotchas
 
-- Configs are inlined at build time, schemas are not: five JSON files ship beside the binary. Drop them from `files` and the CLI breaks.
-- The build empties its output directory; `AIDD_BUILD_OUT_DIR` accepts two shapes only.
-- `git` exports `GIT_*` into everything it spawns. Strip them before reading a repository.
+- Configs are inlined at build time, schemas are copied beside the binary by `tsup.config.ts`.
+- The build empties its output directory; `AIDD_BUILD_OUT_DIR` accepts `dist` or a directory under `.e2e-build/`.
+- `git` exports `GIT_*` into everything it spawns; strip them before reading a repository.
