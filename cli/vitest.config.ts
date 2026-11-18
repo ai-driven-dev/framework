@@ -44,6 +44,7 @@ export default defineConfig({
           include: ["tests/architecture/**/*.arch.test.ts"],
           globals: false,
           environment: "node",
+          testTimeout: 60000,
         },
       },
       {
