@@ -3,7 +3,7 @@
   "title": "Review plan input",
   "description": "What the model collected and judged, written to one JSON file outside the project.",
   "type": "object",
-  "required": ["account", "threads"],
+  "required": ["account", "threads", "labels"],
   "properties": {
     "account": {
       "$ref": "#/$defs/line",
@@ -40,7 +40,8 @@
     },
     "labels": {
       "type": "object",
-      "description": "The summary's visible words, in the replies' language. English for each one omitted.",
+      "description": "The summary's visible words, in the replies' language.",
+      "required": ["title", "done", "answered", "decided", "userCall", "todo", "learnings", "thread"],
       "additionalProperties": false,
       "properties": {
         "title": { "$ref": "#/$defs/line", "description": "The summary heading." },

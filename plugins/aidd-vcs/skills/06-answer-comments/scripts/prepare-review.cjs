@@ -24,7 +24,7 @@ const CITED_KINDS = ["done", "answer"];
 const SOURCED_KINDS = [...CITED_KINDS, DECIDED];
 const PENDING_SECTIONS = [["user-call", "userCall"], ["todo", "todo"]];
 // Visible summary words; the model replaces any of them in the language it writes in.
-const DEFAULT_LABELS = { title: "Review comments", done: "Done", answered: "Answered", decided: "Decided", userCall: "FAQ: your call", todo: "To do", learnings: "Learnings to keep", thread: "thread" };
+const LABEL_KEYS = ["title", "done", "answered", "decided", "userCall", "todo", "learnings", "thread"];
 
 // Input checks: each returns its value or throws the refusal.
 const fail = (message) => { throw new Error(message); };
@@ -84,11 +84,9 @@ const outOfScope = (thread, account) => thread.resolved && !thread.replyAuthors.
 
 function labelsOf(value) {
   object(value, "labels");
-  for (const [key, label] of Object.entries(value)) {
-    if (!(key in DEFAULT_LABELS)) fail(`Unknown label ${key}.`);
-    line(label, `labels.${key}`);
-  }
-  return { ...DEFAULT_LABELS, ...value };
+  for (const key of Object.keys(value)) if (!LABEL_KEYS.includes(key)) fail(`Unknown label ${key}.`);
+  for (const key of LABEL_KEYS) line(value[key], `labels.${key}`);
+  return value;
 }
 
 function readInput(input) {
@@ -108,7 +106,7 @@ function readInput(input) {
     line(item.source, "decision.source");
     if (!threads.has(item.threadId)) fail(`Unknown decision thread ${item.threadId}.`);
   }
-  return { account, threads, classifications, decisions, learnings: learnings(input.learnings ?? []), labels: labelsOf(input.labels ?? {}) };
+  return { account, threads, classifications, decisions, learnings: learnings(input.learnings ?? []), labels: labelsOf(input.labels) };
 }
 
 // Summary targeting: only the current account's comments are candidates.

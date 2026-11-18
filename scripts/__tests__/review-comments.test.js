@@ -9,7 +9,8 @@ const MARKER = "<!-- aidd-answer-comments-summary -->";
 const posted = (text, kind) => `${text}\n\n<!-- aidd-answer-comments:${kind} -->`;
 const thread = (id = "t1", more = {}) => ({ id, url: `https://example.com/${id}`, resolved: false, replyAuthors: ["me"], ...more });
 const classification = (kind = "answer", more = {}) => ({ threadId: "t1", kind, text: "The code explains this.", source: "src/code.js", ...more });
-const input = (more = {}) => ({ account: "me", threads: [thread()], classifications: [classification()], ...more });
+const LABELS = { title: "Review comments", done: "Done", answered: "Answered", decided: "Decided", userCall: "FAQ: your call", todo: "To do", learnings: "Learnings to keep", thread: "thread" };
+const input = (more = {}) => ({ account: "me", threads: [thread()], classifications: [classification()], labels: LABELS, ...more });
 const summary = (id = "s1", more = {}) => ({ id, author: "me", body: `## Review comments\n\n${MARKER}\n`, ...more });
 const contract = (name) => JSON.parse(fs.readFileSync(path.resolve(path.dirname(SCRIPT), `../references/${name}.schema.json`), "utf8"));
 const INPUT_SCHEMA = contract("review-input");
@@ -164,7 +165,7 @@ test("a waiting thread is recognized by its hidden kind, whatever the visible wo
   assert.deepEqual(run(input({ threads: [visibleOnly] })).threads, [{ threadId: "t1", reply: posted("The code explains this. (src/code.js)", "answer"), resolve: true }]);
 });
 
-test("the summary counts decisions and speaks the labels the model supplies", (t) => {
+test("the summary counts decisions and speaks only the labels the model supplies", (t) => {
   const run = runner(t);
   const decided = { threads: [thread("t1"), thread("t2")], classifications: [classification(), classification("todo", { threadId: "t2", text: "Renommer le titre." })], decisions: [{ threadId: "t1", text: "Décision : archiver.", source: "user message" }] };
   assert.match(run(input(decided)).summary.body, /^## Review comments\n[\s\S]*Done: 0\. Answered: 0\. Decided: 1\.[\s\S]*### To do\n\n- Renommer le titre\. \(\[thread\]/);
@@ -172,8 +173,8 @@ test("the summary counts decisions and speaks the labels the model supplies", (t
   const body = run(input({ ...decided, labels, learnings: [{ text: "Garder les fils courts.", url: "https://example.com/t1" }] })).summary.body;
   assert.match(body, /^## Commentaires de review\n[\s\S]*Faits: 0\. Répondus: 0\. Décidés: 1\.[\s\S]*### À faire\n\n- Renommer le titre\. \(\[fil\]\(https:\/\/example\.com\/t2\)\)[\s\S]*### À retenir\n/);
   assert.doesNotMatch(body, /Done|Answered|To do|Learnings|\[thread\]/);
-  assert.equal(run(input({ labels: { heading: "x" } })).code, 1);
-  assert.equal(run(input({ labels: { todo: "" } })).code, 1);
+  assert.equal(run(input({ labels: { ...LABELS, heading: "x" } })).code, 1);
+  assert.equal(run(input({ labels: { ...LABELS, todo: "" } })).code, 1);
 });
 
 test("an open question gets no fabricated options", (t) => {
@@ -314,6 +315,6 @@ test("the planner refuses what the input contract excludes", (t) => {
     assert.equal(run(input({ classifications: [classification(kind, { source: "abc1234" })] })).code, 0, kind);
   }
   assert.equal(run(input({ classifications: [classification("maybe")] })).code, 1);
-  for (const key of Object.keys(INPUT_SCHEMA.properties.labels.properties)) assert.equal(run(input({ labels: { [key]: "X" } })).code, 0, key);
-  assert.equal(run(input({ labels: { heading: "X" } })).code, 1);
+  for (const key of INPUT_SCHEMA.properties.labels.required) assert.equal(run(input({ labels: without(LABELS, key) })).code, 1, `labels.${key}`);
+  assert.equal(run(input({ labels: { ...LABELS, heading: "X" } })).code, 1);
 });
