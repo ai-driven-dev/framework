@@ -1,11 +1,8 @@
-import { join } from "node:path";
-import type { Environment } from "../../../../shared/ports/environment.js";
 import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { FileWriter } from "../../../../shared/ports/file-writer.js";
-import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import type { AgentModelStore } from "../../ports/agent-model-store.js";
 import type { MainSessionSettings } from "../../ports/main-session-settings.js";
-import type { AgentModelSection } from "../../ports/tool-sections.js";
+import type { MainSessionLocator } from "./main-session-locator.js";
 
 /** A tool whose main session's settings file a run changed, and that file. */
 export interface MainSessionChange {
@@ -37,15 +34,13 @@ export class MainSessionModels {
     private readonly fs: FileReader & FileWriter,
     private readonly store: AgentModelStore,
     private readonly settings: MainSessionSettings,
-    private readonly homedir: () => string,
-    private readonly environment: Environment
+    private readonly mainSessionLocator: Pick<MainSessionLocator, "locate">
   ) {}
 
   /** Points each host's main session at its chosen provider, or restores what it replaced once
    * none is chosen. A settings file it cannot safely rewrite is skipped, never half-written.
    * `dryRun` says what it would change and changes nothing. */
   async apply(
-    tools: ToolCatalog,
     hosts: readonly string[],
     chosen: ReadonlyMap<string, string>,
     dryRun = false
@@ -56,8 +51,7 @@ export class MainSessionModels {
     for (const host of hosts) {
       const provider = chosen.get(host);
       const record = mainModels[host];
-      const profile = this.profileOf(tools, host);
-      const current = profile === null ? undefined : await this.settingsPath(profile);
+      const { models, path: current } = await this.mainSessionLocator.locate(host);
       let path = record?.path ?? current;
       try {
         // Restored where it was written, once unset or once the host reads another file.
@@ -67,7 +61,6 @@ export class MainSessionModels {
           delete mainModels[host];
           if (next !== content) changes.push({ host, path: record.path, content: next });
         }
-        const models = profile?.agentModels() ?? null;
         if (provider === undefined || current === undefined || models === null) continue;
         path = current;
         const plan = this.settings.planInstall(
@@ -96,36 +89,12 @@ export class MainSessionModels {
   }
 
   /** Restores what every main session held before its model was set. */
-  async restoreAll(tools: ToolCatalog, dryRun: boolean): Promise<MainSessionOutcome> {
+  async restoreAll(dryRun: boolean): Promise<MainSessionOutcome> {
     const hosts = Object.keys(await this.store.loadMainModels());
-    return this.apply(tools, hosts, new Map(), dryRun);
-  }
-
-  private profileOf(tools: ToolCatalog, host: string): AgentModelSection | null {
-    const id = tools.aiToolId(host);
-    return id === null ? null : tools.aiProfile(id);
+    return this.apply(hosts, new Map(), dryRun);
   }
 
   private async readIfAny(path: string): Promise<string | null> {
     return (await this.fs.fileExists(path)) ? this.fs.readFile(path) : null;
-  }
-
-  /** The tool's own user settings file; a tool declaring none there reads its main settings
-   * file, a JSONC file that outranks its JSON twin, from the directory a machine-wide install
-   * copies its files into. The twin is used only when it alone exists. Absent where neither
-   * exists, or where aidd leaves the main session alone. */
-  private async settingsPath(profile: AgentModelSection): Promise<string | undefined> {
-    const settings = profile.agentModels()?.mainSettings() ?? null;
-    if (settings === null) return undefined;
-    const home = this.homedir();
-    const own = profile
-      .nativeActivation()
-      ?.userSettingsFile(home, (name) => this.environment.get(name));
-    if (own !== undefined) return own;
-    const globalDir = profile.plugins()?.globalFiles()?.dir(home);
-    if (globalDir === undefined) return undefined;
-    const path = join(globalDir, settings.file);
-    const twin = path.replace(/c$/, "");
-    return !(await this.fs.fileExists(path)) && (await this.fs.fileExists(twin)) ? twin : path;
   }
 }

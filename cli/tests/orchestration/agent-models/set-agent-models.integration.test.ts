@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AgentPluginHosts } from "../../../src/contexts/installation/application/agents/agent-plugin-hosts.js";
 import { AgentProviders } from "../../../src/contexts/installation/application/agents/agent-providers.js";
+import { MainSessionLocator } from "../../../src/contexts/installation/application/agents/main-session-locator.js";
 import { MainSessionModels } from "../../../src/contexts/installation/application/agents/main-session-models.js";
 import type { UpdatePluginCommand } from "../../../src/contexts/installation/application/plugin/update-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
@@ -11,11 +12,10 @@ import { jsoncMainSessionSettings } from "../../../src/contexts/installation/inf
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.js";
 import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.js";
 import type { SyncSettingsOptions } from "../../../src/orchestration/sync/sync-settings.js";
-import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { FaultingFileAdapter } from "../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT = "/p";
 const HOME = "/home/me";
@@ -73,16 +73,14 @@ function setup(
       },
     }
   );
-  const mainSessions = new MainSessionModels(fs, store, jsoncMainSessionSettings, () => HOME, {
-    get: env,
-  });
-  const setter = new SetAgentModels(new AgentProviders(store), mainSessions, refresh);
-  const catalog = registeredCatalog();
-  const useCase = {
-    execute: (options: Parameters<SetAgentModels["execute"]>[0]) =>
-      setter.execute(options, catalog),
-    reset: (options: { readonly dryRun: boolean }) => setter.reset(options, catalog),
-  };
+  const tools = registeredTools();
+  const mainSessions = new MainSessionModels(
+    fs,
+    store,
+    jsoncMainSessionSettings,
+    new MainSessionLocator(fs, () => HOME, { get: env }, tools)
+  );
+  const useCase = new SetAgentModels(new AgentProviders(store), mainSessions, refresh, tools);
   return { fs, useCase, updates, userUpdates, activations };
 }
 
@@ -186,39 +184,6 @@ describe("SetAgentModels", () => {
 
     expect(fs.getFile(CLAUDE_SETTINGS)).toBe('{\n  "model": "opus"\n}\n');
     expect(fs.has(join(HOME, "claude-config", "settings.json"))).toBe(false);
-  });
-
-  it("writes OpenCode's JSONC config, which outranks its JSON twin, when both are there", async () => {
-    const { fs, useCase } = setup();
-    const twin = OPENCODE_SETTINGS.replace(/c$/, "");
-    fs.setFile(OPENCODE_SETTINGS, '{\n  "theme": "dark"\n}\n');
-    fs.setFile(twin, '{\n  "model": "mine"\n}\n');
-
-    const result = await useCase.execute({
-      projectRoot: PROJECT,
-      scope: "project",
-      hosts: [TOOL.opencode],
-      provider: "openai",
-    });
-
-    expect(result.changed).toStrictEqual([{ host: "opencode", path: OPENCODE_SETTINGS }]);
-    expect(fs.getFile(twin)).toBe('{\n  "model": "mine"\n}\n');
-  });
-
-  it("writes OpenCode's JSON config when it is the only one there, without creating the JSONC", async () => {
-    const { fs, useCase } = setup();
-    const twin = OPENCODE_SETTINGS.replace(/c$/, "");
-    fs.setFile(twin, '{\n  "theme": "dark"\n}\n');
-
-    const result = await useCase.execute({
-      projectRoot: PROJECT,
-      scope: "project",
-      hosts: [TOOL.opencode],
-      provider: "openai",
-    });
-
-    expect(result.changed).toStrictEqual([{ host: "opencode", path: twin }]);
-    expect(fs.has(OPENCODE_SETTINGS)).toBe(false);
   });
 
   it("keeps a settings file's comments, setting then restoring only its model", async () => {

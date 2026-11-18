@@ -38,11 +38,12 @@ export class SetAgentModels {
   constructor(
     private readonly providers: Pick<AgentProviders, "record" | "restore" | "forgetAll">,
     private readonly mainSessions: Pick<MainSessionModels, "apply" | "restoreAll">,
-    private readonly refresh: Pick<RefreshAgentPlugins, "execute">
+    private readonly refresh: Pick<RefreshAgentPlugins, "execute">,
+    private readonly tools: ToolCatalog
   ) {}
 
-  async execute(options: SetAgentModelsOptions, tools: ToolCatalog): Promise<SetAgentModelsResult> {
-    const chosen = this.chosenProviders(options, tools);
+  async execute(options: SetAgentModelsOptions): Promise<SetAgentModelsResult> {
+    const chosen = this.chosenProviders(options);
     const before = await this.providers.record(options.hosts, chosen);
     let reinstalled: readonly string[];
     try {
@@ -52,30 +53,26 @@ export class SetAgentModels {
       await this.providers.restore(before);
       throw error;
     }
-    return { reinstalled, ...(await this.mainSessions.apply(tools, options.hosts, chosen)) };
+    return { reinstalled, ...(await this.mainSessions.apply(options.hosts, chosen)) };
   }
 
   /** `clean --global`: forgets every host's provider and gives each main session back what it
    * held before aidd, machine-wide. `dryRun` says what it would restore and changes nothing. */
-  async reset(
-    options: { readonly dryRun: boolean },
-    tools: ToolCatalog
-  ): Promise<ResetAgentModelsResult> {
-    const restored = await this.mainSessions.restoreAll(tools, options.dryRun);
+  async reset(options: { readonly dryRun: boolean }): Promise<ResetAgentModelsResult> {
+    const restored = await this.mainSessions.restoreAll(options.dryRun);
     const providers = await this.providers.forgetAll(options.dryRun);
     return { ...restored, providers };
   }
 
   /** Each host's provider, refused where the host does not run it. */
   private chosenProviders(
-    options: Pick<SetAgentModelsOptions, "hosts" | "provider">,
-    tools: ToolCatalog
+    options: Pick<SetAgentModelsOptions, "hosts" | "provider">
   ): Map<string, string> {
     const chosen = new Map<string, string>();
     const { provider } = options;
     if (provider === undefined) return chosen;
     for (const host of options.hosts) {
-      const models = tools.aiProfile(host).agentModels();
+      const models = this.tools.aiProfile(host).agentModels();
       if (models === null) throw new Error(`No agent provider is supported for "${host}".`);
       chosen.set(host, models.supportedProvider(provider));
     }

@@ -1,5 +1,4 @@
 import type { Command } from "commander";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { Deps, DepsSliceFactory } from "../deps.js";
 import { printProjectCleanOutcome, printUserScopeCleanOutcome } from "../display/clean-display.js";
 import { ErrorHandler } from "../error-handler.js";
@@ -35,8 +34,7 @@ async function runUserScopeClean(
   deps: Pick<Deps, CleanKeys>,
   output: CLIOutput,
   projectRoot: string,
-  cmdOptions: CleanCmdOptions,
-  catalog: ToolCatalog
+  cmdOptions: CleanCmdOptions
 ): Promise<void> {
   const interactive = process.stdout.isTTY === true;
   const result = await deps.cleanUserScopeUseCase.execute({
@@ -49,7 +47,7 @@ async function runUserScopeClean(
 
   // The agents' provider and the main sessions' models are machine-wide choices too, undone
   // exactly when the clean itself ran: --force, or a confirmed prompt.
-  const models = await deps.setAgentModels.reset({ dryRun: result.dryRun }, catalog);
+  const models = await deps.setAgentModels.reset({ dryRun: result.dryRun });
   const verb = result.dryRun ? "would be restored" : "restored";
   for (const { host, path } of models.changed)
     output.info(`${host} main session: ${verb} in ${path}`);
@@ -64,7 +62,6 @@ async function runUserScopeClean(
 
 export function registerCleanCommand(
   program: Command,
-  catalog: ToolCatalog,
   createDeps: DepsSliceFactory<CleanKeys>
 ): void {
   program
@@ -87,7 +84,7 @@ export function registerCleanCommand(
       try {
         const deps = await createDeps(projectRoot, { verbose }, output);
         if (scope === "user") {
-          await runUserScopeClean(deps, output, projectRoot, cmdOptions, catalog);
+          await runUserScopeClean(deps, output, projectRoot, cmdOptions);
         } else {
           await runProjectScopeClean(deps, output, projectRoot, cmdOptions);
         }

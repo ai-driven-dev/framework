@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { AgentPluginHosts } from "../../contexts/installation/application/agents/agent-plugin-hosts.js";
 import { AgentProviders } from "../../contexts/installation/application/agents/agent-providers.js";
+import { MainSessionLocator } from "../../contexts/installation/application/agents/main-session-locator.js";
 import { MainSessionModels } from "../../contexts/installation/application/agents/main-session-models.js";
 import { InitProject } from "../../contexts/installation/application/init-project.js";
 import { jsoncMainSessionSettings } from "../../contexts/installation/infrastructure/jsonc-main-session-settings.js";
@@ -62,8 +63,7 @@ export function wireAgentModels(
     fs,
     agentModelStore,
     jsoncMainSessionSettings,
-    homedir,
-    environment
+    new MainSessionLocator(fs, homedir, environment, base.tools)
   );
   const refresh = new RefreshAgentPlugins(
     new AgentPluginHosts(manifestRepo, userManifestRepo),
@@ -71,7 +71,7 @@ export function wireAgentModels(
     p.userPluginUpdateUseCase,
     m.syncSettingsUseCase
   );
-  return new SetAgentModels(new AgentProviders(agentModelStore), mainSessions, refresh);
+  return new SetAgentModels(new AgentProviders(agentModelStore), mainSessions, refresh, base.tools);
 }
 
 /** `setup`: the questions it asks about plugins and tools, and the scenario that runs them. */

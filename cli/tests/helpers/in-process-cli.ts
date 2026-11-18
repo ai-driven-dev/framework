@@ -76,7 +76,10 @@ const REGISTRATIONS: ReadonlyArray<() => Promise<Register>> = [
     return (program, _tools, createDeps) => registerUpdateCommand(program, createDeps);
   },
   async () => (await import("../../src/presentation/commands/doctor.js")).registerDoctorCommand,
-  async () => (await import("../../src/presentation/commands/clean.js")).registerCleanCommand,
+  async () => {
+    const { registerCleanCommand } = await import("../../src/presentation/commands/clean.js");
+    return (program, _tools, createDeps) => registerCleanCommand(program, createDeps);
+  },
   async () => {
     const { registerTelemetryCommand } = await import(
       "../../src/presentation/commands/telemetry.js"

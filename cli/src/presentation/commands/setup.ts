@@ -305,10 +305,11 @@ export function registerSetupCommand(
         // Once the install has succeeded: the provider and the main session's model hold for
         // every project on the machine, so a failed install leaves both as they were.
         if (cmdOptions.provider !== undefined) {
-          const models = await deps.setAgentModels.execute(
-            { projectRoot, ...agents, scope: scope ?? "project" },
-            catalog
-          );
+          const models = await deps.setAgentModels.execute({
+            projectRoot,
+            ...agents,
+            scope: scope ?? "project",
+          });
           reportAgentModels(output, catalog, agents.provider, agents.hosts, models);
         }
         if (interactive) printNextSteps(output, result.install.results.length > 0);

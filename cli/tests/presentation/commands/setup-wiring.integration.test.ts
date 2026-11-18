@@ -10,10 +10,9 @@ import { InitProject } from "../../../src/contexts/installation/application/init
 import { UpdateGitignore } from "../../../src/contexts/installation/application/update-gitignore.js";
 import { RunSetup } from "../../../src/orchestration/setup/run-setup.js";
 import type { SetupFlow } from "../../../src/orchestration/setup/setup-flow.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { manifestRepositoryLoading } from "../../helpers/ports/index.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const resolveSourceIfNeeded = vi.fn();
 const registerIfPresent = vi.fn();
@@ -43,7 +42,7 @@ const createDeps = vi.fn(async () => {
         fs,
         manifestRepositoryLoading(loadManifest),
         new UpdateGitignore(fs),
-        catalogOf()
+        registeredTools()
       )
     ),
     setAgentModels: { execute: setAgentModel, reset: vi.fn() },
@@ -138,7 +137,7 @@ describe("aidd setup — the flow a scripted run builds", () => {
   it("expands the all keyword to every tool of that category", async () => {
     await run("--ai", "all");
 
-    expect(builtFlow().aiTools).toEqual([...catalogOf().idsInCanonicalOrder("ai")]);
+    expect(builtFlow().aiTools).toEqual([...registeredTools().idsInCanonicalOrder("ai")]);
   });
 
   it("carries a named plugin list, and its mode, into the plugin prompt", async () => {
@@ -189,10 +188,12 @@ describe("aidd setup — the agents' provider", () => {
   it("sets the provider and the main session's model only once the install has succeeded", async () => {
     await run("--ide", "opencode,vscode", "--provider", "mistral");
 
-    expect(setAgentModel).toHaveBeenCalledWith(
-      { projectRoot: PROJECT_ROOT, hosts: ["opencode"], provider: "mistral", scope: "project" },
-      CATALOG
-    );
+    expect(setAgentModel).toHaveBeenCalledWith({
+      projectRoot: PROJECT_ROOT,
+      hosts: ["opencode"],
+      provider: "mistral",
+      scope: "project",
+    });
     expect(setAgentModel.mock.invocationCallOrder[0]).toBeGreaterThan(
       resolveSourceIfNeeded.mock.invocationCallOrder[0]
     );
@@ -236,8 +237,7 @@ describe("aidd setup — the agents' provider", () => {
     const lines = await run("--ide", "opencode", "--provider", "none");
 
     expect(setAgentModel).toHaveBeenCalledWith(
-      expect.objectContaining({ hosts: ["opencode"], provider: undefined }),
-      CATALOG
+      expect.objectContaining({ hosts: ["opencode"], provider: undefined })
     );
     expect(lines).toContain("opencode: the agents run on the IDE's model again.");
     expect(lines).toContain(OTHER_PROJECTS("opencode", "none"));

@@ -48,7 +48,7 @@ registerAuthCommand(program, createDeps);
 registerSyncCommand(program, tools, createDeps);
 registerUpdateCommand(program, createDeps);
 registerDoctorCommand(program, tools, createDeps);
-registerCleanCommand(program, tools, createDeps);
+registerCleanCommand(program, createDeps);
 registerTelemetryCommand(program, createDeps, wireTelemetryRequests());
 
 registerUpdateNoticeHooks(program, createDeps);

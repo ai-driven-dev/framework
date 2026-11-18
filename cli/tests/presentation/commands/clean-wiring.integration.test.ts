@@ -1,6 +1,5 @@
 import { Command } from "commander";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const cleanProject = vi.fn();
@@ -16,7 +15,6 @@ const createDeps = vi.fn(async () => ({
 const { registerCleanCommand } = await import("../../../src/presentation/commands/clean.js");
 
 const PROJECT_ROOT = process.cwd();
-const CATALOG = catalogOf();
 
 const EMPTY_PREVIEW = {
   tools: [{ toolId: TOOL.claude, fileCount: 3 }],
@@ -67,7 +65,7 @@ async function run(...args: string[]): Promise<string[]> {
   const program = new Command();
   program.exitOverride();
   program.option("--verbose");
-  registerCleanCommand(program, CATALOG, createDeps);
+  registerCleanCommand(program, createDeps);
   await program.parseAsync(["node", "aidd", ...args]);
   return written.join("").split("\n").slice(0, -1);
 }
@@ -140,7 +138,7 @@ describe("aidd clean --scope", () => {
 
     const lines = await run("clean", "--global", "--force");
 
-    expect(resetModels).toHaveBeenCalledWith({ dryRun: false }, CATALOG);
+    expect(resetModels).toHaveBeenCalledWith({ dryRun: false });
     expect(lines.slice(-2)).toEqual([
       "claude main session: restored in /home/.claude/settings.json",
       "Agents' provider for claude: forgotten.",
@@ -161,7 +159,7 @@ describe("aidd clean --scope", () => {
 
     const lines = await run("clean", "--global");
 
-    expect(resetModels).toHaveBeenCalledWith({ dryRun: true }, CATALOG);
+    expect(resetModels).toHaveBeenCalledWith({ dryRun: true });
     expect(lines.slice(-2)).toEqual([
       "opencode main session: would be restored in /home/.config/opencode/opencode.json",
       "Agents' provider for opencode: would be forgotten.",
@@ -173,7 +171,7 @@ describe("aidd clean --scope", () => {
 
     await run("clean", "--global");
 
-    expect(resetModels).toHaveBeenCalledWith({ dryRun: false }, CATALOG);
+    expect(resetModels).toHaveBeenCalledWith({ dryRun: false });
   });
 
   it("leaves the machine-wide models alone when cleaning one project", async () => {
@@ -249,7 +247,7 @@ describe("aidd clean — how it builds its graph and reports a failure", () => {
 describe("aidd clean — the help surface", () => {
   function cleanCommand(): Command {
     const program = new Command();
-    registerCleanCommand(program, CATALOG, createDeps);
+    registerCleanCommand(program, createDeps);
     const clean = program.commands.find((command) => command.name() === "clean");
     if (clean === undefined) throw new Error("clean command was not registered");
     return clean;
