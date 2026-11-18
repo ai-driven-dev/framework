@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
@@ -44,17 +45,15 @@ async function makeGithubRegistry(): Promise<FakeMarketplaceRegistry> {
 
 function makeUpdateUseCase(deps: Deps, registry: FakeMarketplaceRegistry): UpdatePlugin {
   return new UpdatePlugin(
-    deps.fs,
     deps.manifestRepo,
     new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-    deps.hasher,
-    {
+    new ReplacePluginFiles(deps.fs, deps.hasher, {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
       platform: process.platform,
       homedir: () => HOME,
       translate: translateDistribution,
-    }
+    })
   );
 }
 

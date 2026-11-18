@@ -4,6 +4,7 @@ import { SearchPlugins } from "../../contexts/distribution/application/plugin-so
 import { TrustPluginSource } from "../../contexts/distribution/application/plugin-source/trust-plugin-source.js";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../contexts/distribution/contract/marketplace.js";
 import { RefreshHostPlugin } from "../../contexts/host-registration/application/refresh-host-plugin.js";
+import { ReplacePluginFiles } from "../../contexts/installation/application/materialize/replace-plugin-files.js";
 import { AddPlugin } from "../../contexts/installation/application/plugin/add-plugin.js";
 import { PlanPluginInstall } from "../../contexts/installation/application/plugin/plan-plugin-install.js";
 import { PluginDistributionLoader } from "../../contexts/installation/application/plugin/plugin-distribution-loader.js";
@@ -144,11 +145,9 @@ export function wirePlugin(base: Base, inst: Installation) {
   );
   const userPluginFileUpdater = withinUserScope(pluginMaterializer);
   const pluginUpdateUseCase = new UpdatePlugin(
-    fs,
     manifestRepo,
     new PluginDistributionLoader(pluginFetcher, pluginDistributionReader),
-    hasher,
-    builtMaterializationDeps,
+    new ReplacePluginFiles(fs, hasher, builtMaterializationDeps),
     installRuntimeConfigUseCase
   );
   const userPluginUpdateUseCase = new UpdateUserPlugin(

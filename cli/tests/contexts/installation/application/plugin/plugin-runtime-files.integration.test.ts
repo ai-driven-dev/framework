@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
@@ -43,11 +44,9 @@ async function legacyProject() {
     deps.installRuntimeConfigUseCase
   );
   const update = new UpdatePlugin(
-    deps.fs,
     deps.manifestRepo,
     new PluginDistributionLoader(deps.pluginFetcher, deps.pluginDistributionReader),
-    deps.hasher,
-    fakeBuiltDeps(),
+    new ReplacePluginFiles(deps.fs, deps.hasher, fakeBuiltDeps()),
     deps.installRuntimeConfigUseCase
   );
   const addPlugin = () =>

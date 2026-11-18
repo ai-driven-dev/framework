@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { InstallTools } from "../../../../../src/contexts/installation/application/install/install-tools.js";
+import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
@@ -63,11 +64,9 @@ async function existingProject(configPath: string) {
       interactive: false,
     });
   const update = new UpdatePlugin(
-    deps.fs,
     deps.manifestRepo,
     distribution,
-    deps.hasher,
-    fakeBuiltDeps(),
+    new ReplacePluginFiles(deps.fs, deps.hasher, fakeBuiltDeps()),
     deps.installRuntimeConfigUseCase
   );
   return { deps, setup, setupOptions, install, update };

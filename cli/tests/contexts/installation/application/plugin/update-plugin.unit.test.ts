@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { ReplacePluginFiles } from "../../../../../src/contexts/installation/application/materialize/replace-plugin-files.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { UpdatePlugin } from "../../../../../src/contexts/installation/application/plugin/update-plugin.js";
@@ -56,11 +57,9 @@ async function setup(
     }
   );
   const updateUseCase = new UpdatePlugin(
-    deps.fs,
     deps.manifestRepo,
     new PluginDistributionLoader(options.fetcher ?? deps.pluginFetcher, reader),
-    deps.hasher,
-    options.builtDeps ?? fakeBuiltDeps()
+    new ReplacePluginFiles(deps.fs, deps.hasher, options.builtDeps ?? fakeBuiltDeps())
   );
   return { addUseCase, updateUseCase };
 }
