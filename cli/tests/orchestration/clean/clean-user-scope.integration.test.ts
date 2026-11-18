@@ -14,7 +14,6 @@ import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { hostRecord } from "../../helpers/host-record-reading.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
@@ -22,6 +21,7 @@ import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manife
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { RecordingPrompter } from "../../helpers/ports/recording-prompter.js";
 import { userScopeCleaner } from "../../helpers/user-scope-cleaner.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const USER_CONFIG_DIR = "/fake-home/.config/aidd";
 const HOME = "/fake-home";

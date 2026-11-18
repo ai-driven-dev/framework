@@ -3,8 +3,8 @@ import {
   printProjectCleanOutcome,
   printUserScopeCleanOutcome,
 } from "../../../src/presentation/display/clean-display.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const NO_PREVIEW = { tools: [], nativeRegistrations: [], totalFileCount: 0 };
 

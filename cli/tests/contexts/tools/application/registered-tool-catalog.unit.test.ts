@@ -9,7 +9,8 @@ import {
   ToolListMismatchError,
   UnregisteredToolError,
 } from "../../../../src/shared/domain/errors.js";
-import { catalogOf, TOOL } from "../testing/catalog-of.js";
+import { TOOL } from "../../../shared/testing/registered-tools.js";
+import { catalogOf } from "../testing/catalog-of.js";
 
 describe("the registered tool catalog", () => {
   it("follows the order its profiles were registered in, not the id order", () => {

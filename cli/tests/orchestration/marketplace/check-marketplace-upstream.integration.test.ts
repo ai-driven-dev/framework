@@ -9,14 +9,13 @@ import { ListPluginSources } from "../../../src/contexts/installation/applicatio
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { CheckMarketplaceUpstream } from "../../../src/orchestration/marketplace/check-marketplace-upstream.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { FixturePluginFetcher } from "../../helpers/ports/fixture-plugin-fetcher.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
-import { registeredTools } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const VALID_FIXTURE = join(process.cwd(), "tests/fixtures/framework/marketplace-sample");
 const PROJECT_ROOT = "/test-project";

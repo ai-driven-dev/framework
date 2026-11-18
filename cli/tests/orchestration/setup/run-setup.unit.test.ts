@@ -28,7 +28,7 @@ import { UserScopeUnavailableError } from "../../../src/shared/domain/errors.js"
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import type { Lock } from "../../../src/shared/ports/lock.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
-import { catalogOf, flowTools, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, flowTools } from "../../contexts/tools/testing/catalog-of.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { buildUnitDeps, initAndInstall, initProject } from "../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -39,6 +39,7 @@ import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marke
 import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { runSetupOf } from "../../helpers/run-setup-of.js";
 import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 function makeNoOpLatestResolver(): ReleaseLister & RepositoryVisibility {
   return {

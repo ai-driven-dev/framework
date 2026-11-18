@@ -4,8 +4,8 @@ import {
   printPluginDrift,
   printScopeReport,
 } from "../../../src/presentation/display/status-display.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 describe("printScopeReport", () => {
   it("says nothing is installed when the scope carries no tool", () => {

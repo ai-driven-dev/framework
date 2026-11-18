@@ -8,13 +8,13 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { removalClaims } from "../../../src/contexts/machine-claims/application/removal-claims.js";
 import type { RemoveProjectMarketplace } from "../../../src/orchestration/marketplace/remove-project-marketplace.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { errnoError, FaultingFileAdapter } from "../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { projectMarketplaceRemover } from "../../helpers/project-marketplace-remover.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const { cursor, codex } = TOOL;
 

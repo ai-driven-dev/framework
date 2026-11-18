@@ -11,10 +11,11 @@ import { jsoncMainSessionSettings } from "../../../src/contexts/installation/inf
 import { RefreshAgentPlugins } from "../../../src/orchestration/agent-models/refresh-agent-plugins.js";
 import { SetAgentModels } from "../../../src/orchestration/agent-models/set-agent-models.js";
 import type { SyncSettingsOptions } from "../../../src/orchestration/sync/sync-settings.js";
-import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { FaultingFileAdapter } from "../../helpers/ports/faulting-file-adapter.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT = "/p";
 const HOME = "/home/me";

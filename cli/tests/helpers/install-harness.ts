@@ -25,8 +25,9 @@ import { CurrentVersionAdapter } from "../../src/shared/infrastructure/current-v
 import { FileAdapter } from "../../src/shared/infrastructure/file-adapter.js";
 import type { Prompter } from "../../src/shared/ports/prompter.js";
 import type { VersionReader } from "../../src/shared/ports/version-reader.js";
-import { catalogOf, resolveRegisteredToolId } from "../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../contexts/translate/testing/registered-manifest-probes.js";
+import { resolveRegisteredToolId } from "../shared/testing/registered-tools.js";
 export const linuxPlatform: Platform = { current: () => "linux" };
 export const win32Platform: Platform = { current: () => "win32" };
 export const OverwritePrompter = SilentPrompterAdapter;

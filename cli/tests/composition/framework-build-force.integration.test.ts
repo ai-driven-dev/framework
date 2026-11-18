@@ -9,10 +9,11 @@ import {
 } from "../../src/composition/translate.js";
 import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";
 import { FlatTargetExistsError } from "../../src/shared/domain/errors.js";
-import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../helpers/ports/seed-from-directory.js";
+import { TOOL } from "../shared/testing/registered-tools.js";
 
 const FIXTURE_DIR = resolve(process.cwd(), "tests/fixtures/framework");
 // Canonical flat destination for the fixture's "aidd-test" plugin agent, under --target copilot.

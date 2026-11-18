@@ -4,7 +4,7 @@ import {
   InstallGlobalPlugins,
   type InstallGlobalPluginsOptions,
 } from "../../../src/orchestration/setup/install-global-plugins.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 function match(name: string, recommended: boolean): PluginSourceMatch {
   return {

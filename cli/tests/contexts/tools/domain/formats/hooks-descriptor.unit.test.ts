@@ -12,7 +12,7 @@ import {
   projectHooksSupport,
 } from "../../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
 import { CapabilityConfigError } from "../../../../../src/shared/domain/errors.js";
-import { TOOL } from "../../testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const SOURCE = { kind: "hooksBundle", jsonPath: "hooks/hooks.json", scriptDir: "hooks" };
 const LOADER = { dir: ".tool/plugin/", baseName: "tool-plugin.js" };

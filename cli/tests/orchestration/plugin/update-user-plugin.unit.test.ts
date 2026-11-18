@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { IsWithinUserScope } from "../../../src/contexts/machine-claims/contract/user-scope-containment.js";
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
-import { registeredAiProfile, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { registeredAiProfile } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 describe("UpdateUserPlugin", () => {
   it("hands the injected containment rule and the host refresh to the file update", async () => {

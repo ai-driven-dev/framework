@@ -9,11 +9,12 @@ import {
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { VersionReader } from "../../../src/shared/ports/version-reader.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { buildCheckRegistration } from "../../helpers/ports/build-check-registration.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 function fakeVersion(value: string): VersionReader {
   return { get: () => value };

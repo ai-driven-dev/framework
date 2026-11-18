@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { SetupToolsPromptUseCase } from "../../../src/presentation/prompts/setup-tools-prompt-use-case.js";
-import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { registeredCatalog } from "../../contexts/tools/testing/catalog-of.js";
 import { ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 describe("SetupToolsPromptUseCase", () => {
   describe("non-interactive mode", () => {

@@ -8,7 +8,7 @@ import {
 } from "../../../../../src/contexts/tools/domain/formats/hooks-descriptor.js";
 import type { HooksInvariant } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
-import { TOOL } from "../../testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const UNSTAMPED = 'const HOST = "unstamped";';
 const OWNER = [TOOL.claude, ".claude/", UNSTAMPED] as const;

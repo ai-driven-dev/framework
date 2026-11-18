@@ -16,10 +16,11 @@ import { RunDoctor } from "../../../src/orchestration/doctor/run-doctor.js";
 import { FileHash } from "../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../src/shared/ports/file-reader.js";
 import type { Hasher } from "../../../src/shared/ports/hasher.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { checkRegistrationOver } from "../../helpers/ports/build-check-registration.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { registeredHostInspector } from "../../helpers/ports/registered-host-inspector.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const EXPECTED_HASH = "abc123abc123abc123abc123abc123ab";
 const DRIFTED_HASH = "def456def456def456def456def456de";

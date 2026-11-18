@@ -12,7 +12,7 @@ import type { AiTool } from "../../../../../src/contexts/tools/domain/profile.js
 import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections/config-section.js";
 import { InvalidToolProfileError } from "../../../../../src/shared/domain/errors.js";
 import { anEmptyContract } from "../../../../shared/testing/empty-build-contract.js";
-import { TOOL } from "../../testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import {
   flatPlugins,
   nativePlugins,

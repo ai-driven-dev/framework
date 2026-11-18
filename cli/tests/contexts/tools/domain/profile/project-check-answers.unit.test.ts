@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { registeredAiProfile, TOOL } from "../../testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
+import { registeredAiProfile } from "../../testing/catalog-of.js";
 
 describe("what a project check asks a tool profile", () => {
   describe("whether enabling a plugin acts on the whole machine", () => {

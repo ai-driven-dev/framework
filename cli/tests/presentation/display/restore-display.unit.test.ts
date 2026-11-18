@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { printNativeActivation } from "../../../src/presentation/display/restore-display.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 describe("printNativeActivation", () => {
   it("prints nothing when every tool's CLI ran", () => {

@@ -16,7 +16,7 @@ import {
 } from "../../../src/shared/domain/errors.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { registeredManifestProbes } from "../../contexts/translate/testing/registered-manifest-probes.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -26,6 +26,7 @@ import type { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-ada
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(

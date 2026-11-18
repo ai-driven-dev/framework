@@ -3,13 +3,13 @@ import { Marketplace } from "../../../src/contexts/distribution/domain/marketpla
 import { RemoveProjectPlugin } from "../../../src/contexts/installation/application/removal/remove-project-plugin.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { projectMarketplaceRemover } from "../../helpers/project-marketplace-remover.js";
 import { REWRITTEN_BINARY, spiedRecordRules } from "../../helpers/spy-record-rules.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const EPOCH = "1970-01-01T00:00:00.000Z";

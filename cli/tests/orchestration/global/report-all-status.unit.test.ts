@@ -5,7 +5,7 @@ import type {
   StatusQuery,
 } from "../../../src/contexts/installation/application/report-status.js";
 import { ReportAllStatus } from "../../../src/orchestration/global/report-all-status.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 

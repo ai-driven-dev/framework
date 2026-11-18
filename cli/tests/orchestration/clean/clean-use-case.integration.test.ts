@@ -7,10 +7,10 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { HasherAdapter } from "../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { projectCleaner } from "../../helpers/project-cleaner.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 let projectRoot: string;
 

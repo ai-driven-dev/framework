@@ -8,7 +8,6 @@ import { FakeHostActions } from "../../contexts/host-registration/testing/fake-h
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
@@ -16,6 +15,7 @@ import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-buil
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const REF = "test-plugin@aidd-framework";
 

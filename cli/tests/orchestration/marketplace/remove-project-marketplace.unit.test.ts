@@ -11,13 +11,13 @@ import {
   InvalidMarketplaceNameError,
   MarketplaceNotFoundError,
 } from "../../../src/shared/domain/errors.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
 import { KeepPrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { projectMarketplaceRemover } from "../../helpers/project-marketplace-remover.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 

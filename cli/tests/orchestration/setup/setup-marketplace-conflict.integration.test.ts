@@ -12,7 +12,7 @@ import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/set
 import type { ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
-import { catalogOf, flowTools, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { catalogOf, flowTools } from "../../contexts/tools/testing/catalog-of.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
@@ -22,6 +22,7 @@ import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marke
 import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 import { runSetupOf } from "../../helpers/run-setup-of.js";
 import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const REGISTRY_LOCATION = "/home/.claude/plugins/known_marketplaces.json";

@@ -5,11 +5,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { wireTools } from "../../src/composition/tools.js";
 import { createFrameworkBuildUseCase } from "../../src/composition/translate.js";
 import { BundledAssetProviderAdapter } from "../../src/contexts/installation/infrastructure/assets/asset-loader.js";
-import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../helpers/ports/in-memory-file-adapter.js";
 import { seedFromDirectory } from "../helpers/ports/seed-from-directory.js";
 import { REPOSITORY_ROOT } from "../helpers/repository-root.js";
+import { TOOL } from "../shared/testing/registered-tools.js";
 
 const FIXTURE_DIR = join(REPOSITORY_ROOT, "cli", "tests", "fixtures", "framework");
 

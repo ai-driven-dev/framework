@@ -5,8 +5,8 @@ import type {
 } from "../../../../../../src/contexts/tools/contract/build-contract.js";
 import { buildKiloFlatContract } from "../../../../../../src/contexts/tools/domain/profiles/kilo/build.js";
 import { KiloDualConfigError } from "../../../../../../src/shared/domain/errors.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.js";
 import { supported } from "../../../testing/build-artifacts.js";
-import { TOOL } from "../../../testing/catalog-of.js";
 
 function configArtifactOf(): ConfigArtifact {
   const step = buildKiloFlatContract().configArtifact;

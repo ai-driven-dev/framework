@@ -5,7 +5,7 @@ import { ConfigSection } from "../../../../../src/contexts/tools/domain/sections
 import { HooksConfigPart } from "../../../../../src/contexts/tools/domain/sections/hooks-section.js";
 import { McpConfigPart } from "../../../../../src/contexts/tools/domain/sections/mcp-section.js";
 import { stubAiTool } from "../../../../helpers/ports/stub-ai-tool.js";
-import { TOOL } from "../../testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const mcp = new McpConfigPart({ outputPath: ".mcp.json", format: "json" });
 const hooks = new HooksConfigPart({ outputPath: ".claude/settings.json" });

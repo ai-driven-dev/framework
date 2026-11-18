@@ -6,13 +6,13 @@ import {
   extractMarkdownLinkTargets,
 } from "../../../src/contexts/installation/domain/markdown-references.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import {
   buildDoctorUseCase,
   buildUnitDeps,
   initAndInstall,
   installTool,
 } from "../../helpers/ports/build-unit-deps.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 

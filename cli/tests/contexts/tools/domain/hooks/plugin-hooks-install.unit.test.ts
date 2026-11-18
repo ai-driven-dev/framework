@@ -7,7 +7,7 @@ import { cursor } from "../../../../../src/contexts/tools/domain/profiles/cursor
 import { opencode } from "../../../../../src/contexts/tools/domain/profiles/opencode/profile.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { nativeOf } from "../../../../shared/testing/native-plugin-answers.js";
-import { TOOL } from "../../testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 import { flatOf, hooksAcceptanceOf } from "../../testing/plugin-mode.js";
 import { translatePlugin } from "../../testing/translate-plugin.js";
 

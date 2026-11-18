@@ -3,13 +3,13 @@ import type { Manifest } from "../../../src/contexts/installation/domain/manifes
 import { InstalledPlugin } from "../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { doctorAll } from "../../../src/orchestration/global/doctor-all.js";
 import type { ToolId } from "../../../src/shared/domain/tool.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import {
   buildDoctorUseCase,
   buildUnitDeps,
   initAndInstall,
   installTool,
 } from "../../helpers/ports/build-unit-deps.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const NO_MANIFEST = "No AIDD manifest found. Run `aidd setup` to initialize your project.";

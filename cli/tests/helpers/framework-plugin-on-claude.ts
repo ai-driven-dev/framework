@@ -1,7 +1,8 @@
 import { ModeAMarketplaceTranslator } from "../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
 import type { Manifest } from "../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../src/shared/domain/plugin/plugin-distribution.js";
-import { registeredAiProfile, TOOL } from "../contexts/tools/testing/catalog-of.js";
+import { registeredAiProfile } from "../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../shared/testing/registered-tools.js";
 
 const { claude } = TOOL;
 const PROJECT_ROOT = "/test-project";

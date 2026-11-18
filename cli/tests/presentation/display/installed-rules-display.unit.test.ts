@@ -3,8 +3,8 @@ import {
   printInstalledRules,
   printInstalledRulesJson,
 } from "../../../src/presentation/display/installed-rules-display.js";
-import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingOutput } from "../../helpers/ports/capturing-output.js";
+import { TOOL } from "../../shared/testing/registered-tools.js";
 
 describe("printInstalledRulesJson", () => {
   it("prints an empty inventory as an empty array, not as nothing", () => {
