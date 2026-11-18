@@ -53,7 +53,7 @@ async function installTool(
   if (catalog.isAiTool(toolId)) {
     await installAiTool(deps, output, projectRoot, toolId, cmdOptions);
   } else {
-    await installIdeTool(deps, output, projectRoot, toolId, cmdOptions, catalog);
+    await installIdeTool(deps, output, projectRoot, toolId, cmdOptions);
   }
 }
 
@@ -88,8 +88,7 @@ async function installIdeTool(
   output: CLIOutput,
   projectRoot: string,
   toolId: IdeToolId,
-  cmdOptions: { force: boolean },
-  catalog: ToolCatalog
+  cmdOptions: { force: boolean }
 ): Promise<void> {
   const manifest = (await deps.manifestRepo.load()) ?? Manifest.create();
   const version = deps.currentVersionProvider.get();
@@ -99,7 +98,6 @@ async function installIdeTool(
     manifest,
     force: cmdOptions.force,
     version,
-    tools: catalog,
   });
   if (result.skipped) {
     printToolAlreadyInstalled(output, result.toolId);

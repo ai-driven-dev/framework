@@ -29,10 +29,6 @@ const BASELINE: readonly { readonly path: string; readonly dependencies: number 
     path: "src/contexts/installation/application/restore/generate-tool-distribution.ts",
     dependencies: 9,
   },
-  {
-    path: "src/contexts/installation/application/install/install-ide-tool.ts",
-    dependencies: 6,
-  },
 ];
 
 const COMMAND_CLASSES = new Set(

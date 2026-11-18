@@ -56,22 +56,15 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
   } = base;
   const {
     assetProvider,
-    runPostInstallPipeline,
     installRuntimeConfigUseCase,
     installIdeConfig,
+    propagateAiSettingsToIde,
     builtMaterializationDeps,
     detectPluginDriftUseCase,
   } = inst;
   const { syncSettingsUseCase, setupMarketplaceRegistration } = m;
   const { pluginInstallFromMarketplaceUseCase, userPluginFileUpdater } = p;
-  const installIdeToolUseCase = new InstallIdeTool(
-    installIdeConfig,
-    manifestRepo,
-    fs,
-    hasher,
-    runPostInstallPipeline,
-    assetProvider
-  );
+  const installIdeToolUseCase = new InstallIdeTool(installIdeConfig, propagateAiSettingsToIde);
   const installAiToolUseCase = new InstallAiTool(
     installRuntimeConfigUseCase,
     manifestRepo,

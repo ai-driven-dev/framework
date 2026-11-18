@@ -153,7 +153,6 @@ describe("aidd framework install", () => {
   it("sends an IDE tool down its own install, with the manifest it loaded", async () => {
     expect(await run("install", "--tool", "vscode")).toEqual(["Installed vscode (2 files)"]);
     expect(installIdeTool).toHaveBeenCalledWith({
-      tools: catalogOf(),
       toolId: TOOL.vscode,
       projectRoot: PROJECT_ROOT,
       manifest: expect.anything(),

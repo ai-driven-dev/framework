@@ -19,6 +19,7 @@ import {
 import { InstallIdeConfig } from "../contexts/installation/application/install/config/install-ide-config.js";
 import { InstallRuntimeConfig } from "../contexts/installation/application/install/config/install-runtime-config.js";
 import { TrackedConfigFiles } from "../contexts/installation/application/install/config/tracked-config-files.js";
+import { PropagateAiSettingsToIde } from "../contexts/installation/application/install/propagate-ai-settings-to-ide.js";
 import { RunPostInstallPipeline } from "../contexts/installation/application/install/run-post-install-pipeline.js";
 import { ListInstalledRules } from "../contexts/installation/application/list-installed-rules.js";
 import { CacheBuiltMarketplace } from "../contexts/installation/application/marketplace/cache-built-marketplace.js";
@@ -164,6 +165,13 @@ export function wireInstallation(base: Base) {
     runPostInstallPipeline,
     tools
   );
+  const propagateAiSettingsToIde = new PropagateAiSettingsToIde(
+    manifestRepo,
+    trackedConfigFiles,
+    runPostInstallPipeline,
+    tools,
+    assetProvider
+  );
   const listInstalledRulesUseCase = new ListInstalledRules(fs, process.platform, tools);
   const pluginListUseCase = new ListPlugins(manifestRepo, tools);
   // Restore re-materializes through the build pipeline, matching what install wrote:
@@ -181,6 +189,7 @@ export function wireInstallation(base: Base) {
     runPostInstallPipeline,
     installRuntimeConfigUseCase,
     installIdeConfig,
+    propagateAiSettingsToIde,
     listInstalledRulesUseCase,
     pluginListUseCase,
     builtMaterializationDeps,

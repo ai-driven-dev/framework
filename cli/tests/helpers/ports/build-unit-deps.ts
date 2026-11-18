@@ -108,6 +108,7 @@ export async function buildUnitDeps(_projectRoot: string) {
     marketplaceRegistry,
     marketplaceSyncSettings,
     nativePluginActivators,
+    trackedConfigFiles,
     installRuntimeConfigUseCase,
     installIdeConfig,
     updateGitignore,
