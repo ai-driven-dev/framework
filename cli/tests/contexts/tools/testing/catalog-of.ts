@@ -55,12 +55,6 @@ export function registeredAiConfig(id: AiToolId): AiTool {
   return config;
 }
 
-export const flowTools = () => ({
-  registeredToolIds: catalogOf().idsInCanonicalOrder(),
-  aiToolIds: catalogOf().idsInCanonicalOrder("ai"),
-  ideToolIds: catalogOf().idsInCanonicalOrder("ide"),
-});
-
 /** The registered ids, minted by the shared kit. Transitional alias: callers move to
  * tests/shared/testing/registered-tools.ts, then this goes. */
 export const TOOL = REGISTERED_TOOL_IDS;

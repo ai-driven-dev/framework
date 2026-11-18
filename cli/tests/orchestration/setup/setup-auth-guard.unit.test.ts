@@ -18,7 +18,6 @@ import type { SyncSettings } from "../../../src/orchestration/sync/sync-settings
 import type { PluginPick } from "../../../src/presentation/prompts/plugin-pick-use-case.js";
 import { SetupPluginsPromptUseCase } from "../../../src/presentation/prompts/setup-plugins-prompt-use-case.js";
 import { CatalogFetchAuthError } from "../../../src/shared/domain/errors.js";
-import { catalogOf, flowTools } from "../../contexts/tools/testing/catalog-of.js";
 import { askMarketplaceSource } from "../../helpers/ask-marketplace-source.js";
 import { buildUnitDeps } from "../../helpers/ports/build-unit-deps.js";
 import { InMemoryEnvironment } from "../../helpers/ports/in-memory-environment.js";
@@ -26,6 +25,7 @@ import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marke
 import { OverwritePrompter } from "../../helpers/ports/scripted-prompter.js";
 import { runSetupOf } from "../../helpers/run-setup-of.js";
 import { setupMarketplaceRegistrar } from "../../helpers/setup-marketplace-registrar.js";
+import { flowTools, registeredTools } from "../../shared/testing/registered-tools.js";
 
 function makeReleaseResolver(isPublic: boolean): ReleaseLister & RepositoryVisibility {
   return {
@@ -140,7 +140,7 @@ describe("RunSetup — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, catalogOf())).rejects.toThrow(CatalogFetchAuthError);
+    await expect(useCase.execute(flow, registeredTools())).rejects.toThrow(CatalogFetchAuthError);
   });
 
   it("proceeds when source is remote, no token, but repo is public", async () => {
@@ -154,7 +154,7 @@ describe("RunSetup — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, catalogOf())).resolves.toBeDefined();
+    await expect(useCase.execute(flow, registeredTools())).resolves.toBeDefined();
   });
 
   it("proceeds without error when source is remote and a token is present", async () => {
@@ -168,7 +168,7 @@ describe("RunSetup — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, catalogOf())).resolves.toBeDefined();
+    await expect(useCase.execute(flow, registeredTools())).resolves.toBeDefined();
   });
 
   it("proceeds without error when source is local (no token required)", async () => {
@@ -182,6 +182,6 @@ describe("RunSetup — auth guard for remote source", () => {
       interactive: false,
     });
 
-    await expect(useCase.execute(flow, catalogOf())).resolves.toBeDefined();
+    await expect(useCase.execute(flow, registeredTools())).resolves.toBeDefined();
   });
 });

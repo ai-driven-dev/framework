@@ -12,7 +12,6 @@ import { RestoreAll } from "../../../src/orchestration/global/restore-all.js";
 import { ManifestUnavailableError } from "../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { restoreAllPluginsOf, restoreOf } from "../../helpers/ports/build-restore.js";
 import {
   buildUnitDeps,
@@ -30,7 +29,7 @@ import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-buil
 import { OverwritePrompter, ScriptedPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -60,7 +59,7 @@ async function installPlugin(
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     },
-    catalogOf()
+    registeredTools()
   ).execute({
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
@@ -78,8 +77,8 @@ function makeRestoreAll(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
-    new DetectPluginDrift(deps.fs, catalogOf()),
-    catalogOf()
+    new DetectPluginDrift(deps.fs, registeredTools()),
+    registeredTools()
   );
   const restoreUseCase = restoreOf({
     ...deps,
@@ -324,7 +323,7 @@ describe("RestoreAll — plugin materialization", () => {
         marketplaceRegistry: deps.marketplaceRegistry,
         ...fakeBuildSources(),
       },
-      catalogOf()
+      registeredTools()
     ).execute({
       source: { kind: "local", path: PLUGIN_FIXTURE },
       toolIds: [TOOL.codex],
@@ -373,8 +372,8 @@ describe("RestoreAll — consent to overwrite", () => {
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDrift(deps.fs, catalogOf()),
-      catalogOf()
+      new DetectPluginDrift(deps.fs, registeredTools()),
+      registeredTools()
     );
     const restoreUseCase = restoreOf({
       ...deps,
@@ -414,8 +413,8 @@ describe("RestoreAll — native-only tools", () => {
       deps.fs,
       deps.manifestRepo,
       deps.hasher,
-      new DetectPluginDrift(deps.fs, catalogOf()),
-      catalogOf()
+      new DetectPluginDrift(deps.fs, registeredTools()),
+      registeredTools()
     );
     const restoreUseCase = restoreOf({
       ...deps,
@@ -464,8 +463,8 @@ function restoreAllDelegatingTo(
     deps.fs,
     deps.manifestRepo,
     deps.hasher,
-    new DetectPluginDrift(deps.fs, catalogOf()),
-    catalogOf()
+    new DetectPluginDrift(deps.fs, registeredTools()),
+    registeredTools()
   );
   const restoreUseCase = restoreOf({
     ...deps,

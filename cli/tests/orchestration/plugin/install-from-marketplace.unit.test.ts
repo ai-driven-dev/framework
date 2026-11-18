@@ -16,7 +16,6 @@ import {
 } from "../../../src/shared/domain/errors.js";
 import type { Logger } from "../../../src/shared/ports/logger.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { ChoosingPrompter } from "../../helpers/ports/choosing-prompter.js";
@@ -26,7 +25,7 @@ import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marke
 import { KeepPrompter } from "../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../helpers/ports/seed-from-directory.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const EXTRA_PLUGIN_FIXTURE = join(
@@ -62,7 +61,7 @@ async function buildUseCase(options: { logger?: Logger | null; prompter?: Prompt
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     },
-    catalogOf()
+    registeredTools()
   );
   const fetchMarketplaceSource = new FetchMarketplaceSource(deps.pluginFetcher);
   const logger = options.logger === null ? undefined : (options.logger ?? deps.logger);

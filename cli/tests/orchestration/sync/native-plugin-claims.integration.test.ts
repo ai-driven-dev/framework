@@ -16,7 +16,6 @@ import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { resolveHomeDir } from "../../../src/shared/infrastructure/home-dir.js";
-import { catalogOf, registeredAiConfig } from "../../contexts/tools/testing/catalog-of.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { pluginRemover } from "../../helpers/plugin-remover.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
@@ -32,7 +31,7 @@ import { userScopeCleaner } from "../../helpers/user-scope-cleaner.js";
 import { userScopeFileGuard } from "../../helpers/user-scope-file-guard.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 for (const [toolId, catalogPath] of [
   [TOOL.codex, ".agents/plugins/marketplace.json"],
@@ -254,7 +253,7 @@ for (const [toolId, catalogPath] of [
           ),
           new CapturingLogger(),
           registrationRecordRules,
-          catalogOf()
+          registeredTools()
         ),
         new RefreshHostPlugin(
           new Map([[toolId, activator]]),
@@ -289,7 +288,7 @@ for (const [toolId, catalogPath] of [
             ),
             new CapturingLogger(),
             registrationRecordRules,
-            catalogOf()
+            registeredTools()
           ),
           new RefreshHostPlugin(
             new Map([[toolId, failed]]),
@@ -368,7 +367,8 @@ for (const [toolId, catalogPath] of [
         []
       );
       const removeFs = new InMemoryFileAdapter();
-      const cacheRoot = registeredAiConfig(toolId)
+      const cacheRoot = registeredTools()
+        .aiProfile(toolId)
         .nativeActivation()
         ?.pluginCacheRoot(resolveHomeDir());
       const cachedBytes =
@@ -386,7 +386,7 @@ for (const [toolId, catalogPath] of [
           nativeMarketplaceSources: sources,
         });
       await remove(a).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/A",
@@ -398,7 +398,7 @@ for (const [toolId, catalogPath] of [
         { ref, dependents: ["/B"] },
       ]);
       await remove(b).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/B",
@@ -408,7 +408,7 @@ for (const [toolId, catalogPath] of [
         { ref, dependents: [] },
       ]);
       await remove(a).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "test-plugin",
         toolIds: [toolId],
         projectRoot: "/A",

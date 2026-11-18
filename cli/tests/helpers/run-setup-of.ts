@@ -8,7 +8,7 @@ import {
 } from "../../src/orchestration/setup/run-setup.js";
 import type { FileReader } from "../../src/shared/ports/file-reader.js";
 import type { FileWriter } from "../../src/shared/ports/file-writer.js";
-import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
+import { registeredTools } from "../shared/testing/registered-tools.js";
 
 /** The setup scenario as composition wires it: the steps and the questions as two bundles, the
  * manifest initialization as a third. */
@@ -21,6 +21,6 @@ export function runSetupOf(
   return new RunSetup(
     steps,
     questions,
-    new InitProject(fs, manifestRepo, new UpdateGitignore(fs), catalogOf())
+    new InitProject(fs, manifestRepo, new UpdateGitignore(fs), registeredTools())
   );
 }

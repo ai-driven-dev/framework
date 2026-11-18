@@ -12,7 +12,6 @@ import { isStrictlyWithinUserScope } from "../../../src/contexts/machine-claims/
 import { UpdateUserPlugin } from "../../../src/orchestration/plugin/update-user-plugin.js";
 import { PluginDistribution } from "../../../src/shared/domain/plugin/plugin-distribution.js";
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { fakeBuiltDeps } from "../../helpers/ports/fake-build-sources.js";
@@ -22,7 +21,7 @@ import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manife
 import { userScopeFileGuard } from "../../helpers/user-scope-file-guard.js";
 import { FakeHostActions } from "../../shared/testing/fake-host-actions.js";
 import { registeredManifestProbes } from "../../shared/testing/registered-manifest-probes.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const { copilot, cursor } = TOOL;
 
@@ -86,7 +85,7 @@ function fixture(
       ),
       logger,
       registrationRecordRules,
-      catalogOf()
+      registeredTools()
     ),
     new RefreshHostPlugin(new Map([[toolId, activator]]), new Map([[toolId, reader]])),
     isStrictlyWithinUserScope
