@@ -3,7 +3,6 @@
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
 import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
-import type { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { UserSourceReferencesAdapter } from "../../../../../src/contexts/machine-claims/infrastructure/user-source-references-adapter.js";
@@ -107,7 +106,7 @@ function buildUseCase(
   marketplaceRegistry: InMemoryMarketplaceRegistry = seedSharedMarketplaceRegistry(),
   userManifestRepo?: InMemoryManifestRepository
 ): {
-  removeUseCase: RemovePlugin;
+  removeUseCase: ReturnType<typeof pluginRemover>;
   manifestRepo: InMemoryManifestRepository;
 } {
   const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);

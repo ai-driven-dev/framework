@@ -110,7 +110,7 @@ export interface Deps {
   logIn: Pick<LogIn, "execute">;
   logOut: Pick<LogOut, "execute">;
   checkStatus: Pick<CheckStatus, "execute">;
-  pluginRemoveUseCase: Pick<RemovePlugin, "execute">;
+  pluginRemoveUseCase: Pick<RemovePlugin<unknown>, "execute">;
   pluginListUseCase: Pick<ListPlugins, "execute">;
   pluginUpdateUseCase: Pick<UpdatePlugin, "execute">;
   userPluginUpdateUseCase: Pick<UpdateUserPlugin, "execute">;

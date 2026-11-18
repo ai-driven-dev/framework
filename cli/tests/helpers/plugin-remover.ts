@@ -32,7 +32,7 @@ export interface PluginRemoverParts {
   records?: RegistrationRecordRules;
 }
 
-export function pluginRemover(parts: PluginRemoverParts): RemovePlugin {
+export function pluginRemover(parts: PluginRemoverParts) {
   const fs = parts.fs ?? new InMemoryFileAdapter();
   const logger = parts.logger ?? new CapturingLogger();
   return new RemovePlugin(

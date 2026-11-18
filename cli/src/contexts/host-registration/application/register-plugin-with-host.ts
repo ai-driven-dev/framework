@@ -38,9 +38,9 @@ import {
 
 /** What a registration says while it runs. The caller's own logger satisfies it. */
 export interface RegistrationLogger {
-  debug(message: string): void;
-  info(message: string): void;
-  warn(message: string): void;
+  readonly debug: (message: string) => void;
+  readonly info: (message: string) => void;
+  readonly warn: (message: string) => void;
 }
 
 /** A marketplace as the host sees it: aidd's own local name and the scope it lives at. */

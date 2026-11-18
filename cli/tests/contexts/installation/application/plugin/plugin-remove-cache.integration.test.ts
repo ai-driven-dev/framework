@@ -6,7 +6,6 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
-import type { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
@@ -74,7 +73,7 @@ function verifiedClaudeRemoval(
   repo: InMemoryManifestRepository,
   logger: CapturingLogger,
   activator: FakeHostActions
-): RemovePlugin {
+): ReturnType<typeof pluginRemover> {
   return pluginRemover({
     fs,
     manifestRepo: repo,

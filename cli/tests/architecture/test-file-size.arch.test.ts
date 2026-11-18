@@ -20,7 +20,7 @@ const BASELINE: Readonly<Record<string, number>> = {
   "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts": 1035,
   "tests/orchestration/sync/marketplace-sync-settings-migration.integration.test.ts": 1507,
   "tests/contexts/installation/application/plugin/add-plugin.unit.test.ts": 1126,
-  "tests/contexts/installation/application/plugin/plugin-remove-native-activation.integration.test.ts": 934,
+  "tests/contexts/installation/application/plugin/plugin-remove-native-activation.integration.test.ts": 933,
   "tests/contexts/installation/application/plugin/plugin-update-built-tree.unit.test.ts": 845,
 };
 

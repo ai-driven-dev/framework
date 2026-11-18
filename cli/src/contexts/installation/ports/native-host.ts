@@ -104,45 +104,42 @@ export interface RegistrationRecordRules {
 
 /** What installation asks of a host to register marketplaces and enable refs. */
 export interface NativeHostRegistration {
-  execute<M extends RegistrationSubject>(
+  readonly execute: <M extends RegistrationSubject>(
     command: RegisterPluginWithHostCommand<M>
-  ): Promise<RegisterPluginWithHostResult>;
+  ) => Promise<RegisterPluginWithHostResult>;
 }
 
-/** The part of a proven ref that `uninstallProven` is handed back. */
-export interface ProvenHostRefHandle {
-  readonly ref: string;
-  readonly scope: MarketplaceScope;
-}
-
-/** What installation asks of a host to remove a plugin. */
-export interface HostWithdrawal {
-  assertProjectSource(command: ProjectSourceCommand): Promise<void>;
-  proveClaimedRef(
+/**
+ * What installation asks of a host to remove a plugin. `Proof` is the host's own proof that a ref
+ * is removable: installation only hands back what `proveClaimedRef` gave it, never reads it.
+ */
+export interface HostWithdrawal<Proof> {
+  readonly assertProjectSource: (command: ProjectSourceCommand) => Promise<void>;
+  readonly proveClaimedRef: (
     registrations: RegistrationRecord,
     claim: ClaimedHostRef,
     projectRoot: string
-  ): Promise<ProvenHostRefHandle>;
-  uninstallProven(proven: ProvenHostRefHandle): void;
+  ) => Promise<Proof>;
+  readonly uninstallProven: (proof: Proof) => void;
   /** `undefined` when nothing was registered, else whether the host confirmed. */
-  execute(command: WithdrawFromHostCommand): Promise<boolean | undefined>;
+  readonly execute: (command: WithdrawFromHostCommand) => Promise<boolean | undefined>;
 }
 
 /** What installation does to a host once a catalogue removal is proven. */
 export interface MarketplaceRemovalActions {
-  uninstallPlugin(pluginRef: string, scope?: MarketplaceScope): void;
-  removeMarketplace(name: string, scope: MarketplaceScope): void;
+  readonly uninstallPlugin: (pluginRef: string, scope?: MarketplaceScope) => void;
+  readonly removeMarketplace: (name: string, scope: MarketplaceScope) => void;
 }
 
 /** What installation asks of a host to plan a catalogue removal. */
 export interface MarketplaceRemovalPlanner {
   /** The claims on the refs come back as given, narrowed to the catalogue. */
-  planMarketplaceRemoval<Claim extends { readonly ref: string }>(
+  readonly planMarketplaceRemoval: <Claim extends { readonly ref: string }>(
     tool: HostRefCountingTool,
     registrations: RegistrationRecord & { readonly pluginClaims?: readonly Claim[] },
     registration: NativeMarketplaceRegistration,
     projectRoot: string
-  ): Promise<{
+  ) => Promise<{
     activator: MarketplaceRemovalActions;
     refs: readonly Claim[];
     scopes: ReadonlyMap<string, "project" | "user" | undefined>;
@@ -151,20 +148,20 @@ export interface MarketplaceRemovalPlanner {
 
 /** Answers the removal asks of whoever keeps the machine-wide claims. */
 interface WithdrawalClaims {
-  isMachineOwned(ref: string): Promise<boolean>;
+  readonly isMachineOwned: (ref: string) => Promise<boolean>;
   /** Why `ref` must stay enabled for another project, when it must. */
-  guardMessage(
+  readonly guardMessage: (
     binary: string,
     ref: string,
     alias: string,
     hostName: string
-  ): Promise<string | undefined>;
+  ) => Promise<string | undefined>;
   /** The path under `cacheRoot` when it stays inside it, else `null`. */
-  resolveCacheCandidate(
+  readonly resolveCacheCandidate: (
     cacheRoot: string,
     relativeSegments: string,
     label: string
-  ): Promise<string | null>;
+  ) => Promise<string | null>;
 }
 
 /** An installed plugin to withdraw, by this project's marketplace alias. */
@@ -216,9 +213,9 @@ export interface UserRegistrationWithdrawal extends RegisteredTool {
 }
 
 interface RegistrationLogger {
-  debug(message: string): void;
-  info(message: string): void;
-  warn(message: string): void;
+  readonly debug: (message: string) => void;
+  readonly info: (message: string) => void;
+  readonly warn: (message: string) => void;
 }
 
 /** What a registration needs of each marketplace it is given. */

@@ -44,11 +44,11 @@ async function planProjectMcpRemoval(
 
 /** The machine claims a removal lets go of, supplied by the composition root. */
 export interface RemovalClaims {
-  detachNativeRefs(
+  readonly detachNativeRefs: (
     projectRoot: string,
     refsByTool: ReadonlyMap<ToolId, readonly string[]>
-  ): Promise<void>;
-  detachUserPlugin(toolId: AiToolId, name: string, projectRoot: string): Promise<void>;
+  ) => Promise<void>;
+  readonly detachUserPlugin: (toolId: AiToolId, name: string, projectRoot: string) => Promise<void>;
 }
 
 export class RemoveProjectPlugin {

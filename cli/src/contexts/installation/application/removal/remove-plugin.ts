@@ -33,24 +33,24 @@ import { assertProjectMcpEntriesRemovable, type RemovalClaims } from "./remove-p
  * plugin's files are provably inside the user scope, and the home directory they are read under. */
 export interface PluginRemovalClaims extends RemovalClaims {
   readonly home: string;
-  isMachineOwned(toolId: ToolId, ref: string): Promise<boolean>;
-  guardMessage(
+  readonly isMachineOwned: (toolId: ToolId, ref: string) => Promise<boolean>;
+  readonly guardMessage: (
     binary: string,
     tool: PluginEnablementReach,
     ref: string,
     marketplaceAlias: string,
     hostName: string,
     projectRoot: string
-  ): Promise<string | undefined>;
-  resolveCacheCandidate(
+  ) => Promise<string | undefined>;
+  readonly resolveCacheCandidate: (
     cacheRoot: string,
     relativeSegments: string,
     label: string
-  ): Promise<string | null>;
-  userFilesSafeToDelete(
+  ) => Promise<string | null>;
+  readonly userFilesSafeToDelete: (
     plugin: InstalledPlugin,
     tool: PluginPlacement
-  ): Promise<ReadonlyMap<string, string>>;
+  ) => Promise<ReadonlyMap<string, string>>;
 }
 
 /** The project manifest, and the machine one a user-scope removal is serialised through. */
@@ -67,11 +67,11 @@ export interface PluginRemoveOptions {
   scope?: "project" | "user";
 }
 
-export class RemovePlugin {
+export class RemovePlugin<Proof> {
   constructor(
     private readonly fs: FileWriter & FileReader,
     private readonly manifests: PluginRemovalManifests,
-    private readonly withdrawFromHost: HostWithdrawal,
+    private readonly withdrawFromHost: HostWithdrawal<Proof>,
     private readonly claims: PluginRemovalClaims,
     private readonly records: RegistrationRecordRules
   ) {}

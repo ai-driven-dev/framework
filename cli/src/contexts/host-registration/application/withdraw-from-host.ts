@@ -28,20 +28,20 @@ import { resolveUninstallScopeOrder } from "./resolve-uninstall-scope.js";
  * may read itself: the caller answers them from where claims live. */
 export interface WithdrawalClaims {
   /** Whether a canonical machine claim owns `ref`. */
-  isMachineOwned(ref: string): Promise<boolean>;
+  readonly isMachineOwned: (ref: string) => Promise<boolean>;
   /** The warning that says why `ref` must stay enabled for another project, if it must. */
-  guardMessage(
+  readonly guardMessage: (
     binary: string,
     ref: string,
     alias: string,
     hostName: string
-  ): Promise<string | undefined>;
+  ) => Promise<string | undefined>;
   /** `<cacheRoot>/<relativeSegments>` once proven to sit inside `cacheRoot`, else `null`. */
-  resolveCacheCandidate(
+  readonly resolveCacheCandidate: (
     cacheRoot: string,
     relativeSegments: string,
     label: string
-  ): Promise<string | null>;
+  ) => Promise<string | null>;
 }
 
 /** One installed plugin the host may have registered, by aidd's own marketplace alias. */
@@ -114,9 +114,9 @@ export interface ProjectCleanFacts {
   /** The alias the framework's own marketplace is registered under. */
   readonly frameworkAlias: string;
   /** The machine-wide claims on `tool`'s refs; `undefined` when no machine record exists. */
-  machineClaims(tool: AiToolId): Promise<readonly DependentClaim[] | undefined>;
+  readonly machineClaims: (tool: AiToolId) => Promise<readonly DependentClaim[] | undefined>;
   /** Runs `action` holding the machine record's lock when there is one to lock. */
-  exclusive<T>(action: () => Promise<T>): Promise<T>;
+  readonly exclusive: <T>(action: () => Promise<T>) => Promise<T>;
   readonly resolveCacheCandidate: CacheCandidateResolver;
 }
 

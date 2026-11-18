@@ -7,7 +7,6 @@ import { Marketplace } from "../../../../../src/contexts/distribution/domain/mar
 import type { HostPluginRegistryReading } from "../../../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
 import { ModeAMarketplaceTranslator } from "../../../../../src/contexts/installation/application/materialize/mode-a-marketplace-translator.js";
-import type { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { UnreadableUserSourceReferencesError } from "../../../../../src/shared/domain/errors.js";
 import {
@@ -34,7 +33,7 @@ function buildRemoveUseCase(
   activator: FakeHostActions,
   logger: CapturingLogger,
   hostScope: "project" | "user" = "project"
-): { removeUseCase: RemovePlugin; manifestRepo: InMemoryManifestRepository } {
+): { removeUseCase: ReturnType<typeof pluginRemover>; manifestRepo: InMemoryManifestRepository } {
   const fs = new InMemoryFileAdapter();
   const manifestRepo = new InMemoryManifestRepository();
   const removeUseCase = pluginRemover({

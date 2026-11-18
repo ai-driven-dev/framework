@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { NativeMarketplaceSource } from "../../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
 import type { HostPluginRegistry } from "../../../../../src/contexts/host-registration/ports/host-plugin-registry.js";
-import type { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import type { RegistrationRecordRules } from "../../../../../src/contexts/installation/ports/native-host.js";
@@ -112,7 +111,7 @@ for (const toolId of [TOOL.codex, TOOL.copilot]) {
       return { machine, repo, fs, activator, remove };
     }
 
-    const execute = (remove: RemovePlugin, pluginName: string) =>
+    const execute = (remove: ReturnType<typeof pluginRemover>, pluginName: string) =>
       remove.execute({
         tools: catalogOf(),
         pluginName,

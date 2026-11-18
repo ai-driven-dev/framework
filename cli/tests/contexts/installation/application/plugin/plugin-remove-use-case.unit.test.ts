@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
-import type { RemovePlugin } from "../../../../../src/contexts/installation/application/removal/remove-plugin.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import {
   InstalledPlugin,
@@ -110,7 +109,7 @@ function manifestHolding(
 function removeUseCaseOver(
   fs: InMemoryFileAdapter,
   manifestRepo: InMemoryManifestRepository
-): RemovePlugin {
+): ReturnType<typeof pluginRemover> {
   return pluginRemover({ fs, manifestRepo });
 }
 

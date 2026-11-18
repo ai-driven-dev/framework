@@ -8,7 +8,6 @@ import type {
 import type {
   ClaimedHostRef as HostClaimedHostRef,
   ProjectSourceCommand as HostProjectSourceCommand,
-  ProvenHostRef as HostProvenHostRef,
   WithdrawFromHostCommand as HostWithdrawFromHostCommand,
 } from "../../src/contexts/host-registration/application/withdraw-from-host.js";
 import type { NativeMarketplaceSource as HostNativeMarketplaceSource } from "../../src/contexts/host-registration/domain/native-marketplace-source.js";
@@ -39,7 +38,6 @@ import type {
   ClaimedHostRef,
   MarketplaceRemovalPlanner,
   ProjectSourceCommand,
-  ProvenHostRefHandle,
   RegisterPluginWithHostCommand,
   RegisterPluginWithHostResult,
   RegistrationRecordRules,
@@ -55,10 +53,6 @@ describe("the withdrawal installation hands over", () => {
     expectTypeOf<WithdrawFromHostCommand>().toExtend<HostWithdrawFromHostCommand>();
     expectTypeOf<ProjectSourceCommand>().toExtend<HostProjectSourceCommand>();
     expectTypeOf<ClaimedHostRef>().toExtend<HostClaimedHostRef>();
-  });
-
-  it("hands back to uninstallProven the ref and scope the host registration proved, no more", () => {
-    expectTypeOf<ProvenHostRefHandle>().toEqualTypeOf<Pick<HostProvenHostRef, "ref" | "scope">>();
   });
 });
 
