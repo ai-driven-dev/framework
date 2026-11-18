@@ -109,6 +109,20 @@ describe("UpdateTools", () => {
     expect(result.errors).toStrictEqual([{ scope: "cursor", message: "cursor update failed" }]);
   });
 
+  it("reports neither an update nor an error for a tool the update skipped", async () => {
+    const deps = await installed(TOOL.claude);
+    const { useCase, updateTool } = build(deps);
+    vi.spyOn(updateTool, "execute").mockResolvedValue({ kind: "skipped" });
+
+    const result = await useCase.execute({
+      tools: catalogOf(),
+      projectRoot: PROJECT_ROOT,
+      ...NO_FORCE_NO_TTY,
+    });
+
+    expect(result).toStrictEqual({ updatedTools: [], errors: [] });
+  });
+
   it("asks once for 'overwrite all' and not again for the next tool", async () => {
     const deps = await installed(TOOL.claude, TOOL.cursor);
     const loaded = await deps.manifestRepo.load();
