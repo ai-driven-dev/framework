@@ -385,7 +385,7 @@ describe("RestoreAll — consent to overwrite", () => {
       prompter,
       statusUseCase,
       new RestoreGlobal(deps.manifestRepo, restoreUseCase)
-    ).execute(PROJECT_ROOT, interactive, force);
+    ).execute(PROJECT_ROOT, force, interactive);
     const asked = seen[0];
     expect(asked).toBeDefined();
     return asked as RestoreCommand;
