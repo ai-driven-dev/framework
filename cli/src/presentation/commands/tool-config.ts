@@ -139,7 +139,6 @@ async function updateTools(
     projectRoot,
     userForce: cmdOptions.force,
     interactive,
-    tools: catalog,
   });
   printUpdateResult(output, result.updatedTools, result.errors);
 }

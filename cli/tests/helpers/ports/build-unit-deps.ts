@@ -171,7 +171,7 @@ export function buildUpdateTool(deps: Awaited<ReturnType<typeof buildUnitDeps>>)
     deps.installIdeConfig,
     deps.resolveSyncConflict,
     deps.manifestRepo,
-    deps.fs
+    registeredTools()
   );
 }
 

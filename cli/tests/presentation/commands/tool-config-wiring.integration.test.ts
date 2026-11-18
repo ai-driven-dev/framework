@@ -239,7 +239,6 @@ describe("aidd framework update", () => {
 
     expect(await run("update")).toEqual(["Updated claude (5 files)", "Updated vscode (2 files)"]);
     expect(updateTools).toHaveBeenCalledWith({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       userForce: false,
       interactive: false,
@@ -255,7 +254,6 @@ describe("aidd framework update", () => {
     await run("update", "--tool", "claude", "--force");
 
     expect(updateTools).toHaveBeenCalledWith({
-      tools: catalogOf(),
       toolArg: "claude",
       projectRoot: PROJECT_ROOT,
       userForce: true,

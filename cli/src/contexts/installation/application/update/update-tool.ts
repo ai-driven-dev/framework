@@ -2,7 +2,6 @@ import { join } from "node:path";
 import { InputRequiredError } from "../../../../shared/domain/errors.js";
 import type { FileHash } from "../../../../shared/domain/file.js";
 import type { ToolId } from "../../../../shared/domain/tool.js";
-import type { FileReader } from "../../../../shared/ports/file-reader.js";
 import type { ToolCatalog } from "../../../tools/contract/tool-catalog.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -15,7 +14,6 @@ export interface UpdateToolCommand {
   toolId: ToolId;
   projectRoot: string;
   version: string;
-  tools: ToolCatalog;
   /** Asked for each file the user changed since the install: true overwrites it, false keeps it. */
   overwriteModified: (relativePath: string) => Promise<boolean>;
 }
@@ -31,7 +29,8 @@ export class UpdateTool {
     private readonly installIdeConfig: InstallIdeConfig,
     private readonly resolveSyncConflict: ResolveSyncConflict,
     private readonly manifestRepo: ManifestRepository,
-    private readonly fs: FileReader
+    /** Tells an AI tool from an IDE tool, the two kinds the update installs differently. */
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: UpdateToolCommand): Promise<UpdateToolResult> {
@@ -55,9 +54,8 @@ export class UpdateTool {
     return async (relativePath: string) => {
       const diskPath = join(command.projectRoot, relativePath);
       const manifestHash = hashes.get(relativePath);
-      const isModified = await this.resolveSyncConflict.isConflict(
+      const isModified = await this.resolveSyncConflict.isConflictOnDisk(
         diskPath,
-        await this.fs.fileExists(diskPath),
         relativePath,
         manifestHash !== undefined ? new Map([[relativePath, manifestHash]]) : new Map()
       );
@@ -71,7 +69,7 @@ export class UpdateTool {
     manifest: Manifest,
     onBeforeWriteRegularFile: BeforeWriteGate
   ): Promise<UpdateToolResult> {
-    const { toolId, projectRoot, version, tools } = command;
+    const { toolId, projectRoot, version } = command;
     const install = {
       projectRoot,
       manifest,
@@ -79,7 +77,7 @@ export class UpdateTool {
       version,
       onBeforeWriteRegularFile,
     };
-    const result = tools.isAiTool(toolId)
+    const result = this.tools.isAiTool(toolId)
       ? await this.installRuntimeConfig.execute({ toolId, ...install })
       : await this.installIdeConfig.execute({ toolId, ...install });
     if (result.skipped) return { kind: "skipped" };

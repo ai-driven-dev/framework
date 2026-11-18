@@ -133,7 +133,7 @@ export function wireGlobal(base: Base, inst: Installation, m: Marketplace, p: Pl
       installIdeConfig,
       new ResolveSyncConflict(fs),
       manifestRepo,
-      fs
+      base.tools
     ),
     new ResolveUpdateDecision(prompter),
     currentVersionProvider

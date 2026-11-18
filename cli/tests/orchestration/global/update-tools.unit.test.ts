@@ -3,14 +3,13 @@ import { ListInstalledTools } from "../../../src/contexts/installation/applicati
 import { ResolveUpdateDecision } from "../../../src/orchestration/global/resolve-update-decision.js";
 import { UpdateTools } from "../../../src/orchestration/global/update-tools.js";
 import type { Prompter } from "../../../src/shared/ports/prompter.js";
-import { catalogOf } from "../../contexts/tools/testing/catalog-of.js";
 import {
   buildUnitDeps,
   buildUpdateTool,
   initProject,
   installTool,
 } from "../../helpers/ports/build-unit-deps.js";
-import { TOOL } from "../../shared/testing/registered-tools.js";
+import { registeredTools, TOOL } from "../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -34,7 +33,7 @@ function promptingWith(answer: "overwrite-all"): { prompter: Prompter; asked: ()
 function build(deps: Deps, prompter: Prompter = promptingWith("overwrite-all").prompter) {
   const updateTool = buildUpdateTool(deps);
   const useCase = new UpdateTools(
-    new ListInstalledTools(deps.manifestRepo, catalogOf()),
+    new ListInstalledTools(deps.manifestRepo, registeredTools()),
     updateTool,
     new ResolveUpdateDecision(prompter),
     deps.currentVersionProvider
@@ -54,7 +53,6 @@ describe("UpdateTools", () => {
     const { useCase } = build(await buildUnitDeps(PROJECT_ROOT));
 
     const result = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       ...NO_FORCE_NO_TTY,
     });
@@ -66,7 +64,6 @@ describe("UpdateTools", () => {
     const deps = await installed(TOOL.vscode, TOOL.claude);
 
     const result = await build(deps).useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       ...NO_FORCE_NO_TTY,
     });
@@ -81,7 +78,6 @@ describe("UpdateTools", () => {
       const deps = await installed(TOOL.claude, TOOL.cursor, TOOL.vscode);
 
       const result = await build(deps).useCase.execute({
-        tools: catalogOf(),
         toolArg,
         projectRoot: PROJECT_ROOT,
         ...NO_FORCE_NO_TTY,
@@ -101,7 +97,6 @@ describe("UpdateTools", () => {
     );
 
     const result = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       ...NO_FORCE_NO_TTY,
     });
@@ -116,7 +111,6 @@ describe("UpdateTools", () => {
     vi.spyOn(updateTool, "execute").mockResolvedValue({ kind: "skipped" });
 
     const result = await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       ...NO_FORCE_NO_TTY,
     });
@@ -134,7 +128,6 @@ describe("UpdateTools", () => {
     const { prompter, asked } = promptingWith("overwrite-all");
 
     await build(deps, prompter).useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       userForce: false,
       interactive: true,

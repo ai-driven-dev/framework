@@ -4,7 +4,21 @@ import type { FileReader } from "../../../shared/ports/file-reader.js";
 export class ResolveSyncConflict {
   constructor(private readonly fs: FileReader) {}
 
-  async isConflict(
+  /** Whether the file on disk was changed since the manifest recorded it; a missing file was not. */
+  async isConflictOnDisk(
+    diskTargetPath: string,
+    targetRelativePath: string,
+    targetManifestMap: Map<string, { value: string }>
+  ): Promise<boolean> {
+    return this.isConflict(
+      diskTargetPath,
+      await this.fs.fileExists(diskTargetPath),
+      targetRelativePath,
+      targetManifestMap
+    );
+  }
+
+  private async isConflict(
     diskTargetPath: string,
     diskTargetExists: boolean,
     targetRelativePath: string,

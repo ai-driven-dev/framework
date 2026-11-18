@@ -1,6 +1,5 @@
 import type { ListInstalledTools } from "../../contexts/installation/application/list-installed-tools.js";
 import type { UpdateTool } from "../../contexts/installation/application/update/update-tool.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { GlobalExecutionError } from "../../shared/domain/errors.js";
 import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
 import type { VersionReader } from "../../shared/ports/version-reader.js";
@@ -14,7 +13,6 @@ export interface UpdateToolsCommand {
   projectRoot: string;
   userForce: boolean;
   interactive: boolean;
-  tools: ToolCatalog;
 }
 
 export interface UpdateToolsResult {
@@ -52,7 +50,7 @@ export class UpdateTools {
     command: UpdateToolsCommand,
     targetIds: ToolId[]
   ): Promise<UpdateToolsResult> {
-    const { projectRoot, userForce, interactive, tools } = command;
+    const { projectRoot, userForce, interactive } = command;
     const version = this.versionReader.get();
     // Scoped to this run only, never a field, so an "overwrite all" choice cannot leak
     // into a later, unrelated update run.
@@ -64,7 +62,6 @@ export class UpdateTools {
         toolId,
         projectRoot,
         version,
-        tools,
         overwriteModified: (relativePath) =>
           this.resolveUpdateDecision.execute({ relativePath, userForce, interactive, bulkState }),
       });

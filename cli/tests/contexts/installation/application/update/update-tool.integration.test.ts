@@ -7,7 +7,7 @@ import {
   buildUpdateTool,
   initAndInstall,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -18,7 +18,6 @@ function commandOf(overwriteModified: UpdateToolCommand["overwriteModified"]): U
     toolId: TOOL.claude,
     projectRoot: PROJECT_ROOT,
     version: "test",
-    tools: registeredTools(),
     overwriteModified,
   };
 }
@@ -42,6 +41,21 @@ describe("UpdateTool integration", () => {
 
     expect(result.kind).toBe("updated");
     expect(ask).not.toHaveBeenCalled();
+  });
+
+  it("writes back a tracked file the user deleted, without asking", async () => {
+    const deps = await buildUnitDeps(PROJECT_ROOT);
+    await initAndInstall(deps, PROJECT_ROOT, TOOL.claude);
+    const first = (await deps.manifestRepo.load())?.getToolFiles(TOOL.claude)[0];
+    if (!first) throw new Error("the installed tool tracks no file");
+    await deps.fs.deleteFile(join(PROJECT_ROOT, first.relativePath));
+    const ask = vi.fn();
+
+    const result = await buildUpdateTool(deps).execute(commandOf(ask));
+
+    expect(result.kind).toBe("updated");
+    expect(ask).not.toHaveBeenCalled();
+    expect(deps.fs.getFile(join(PROJECT_ROOT, first.relativePath))).toBeDefined();
   });
 
   it("overwrites a modified file the answer says to overwrite", async () => {
