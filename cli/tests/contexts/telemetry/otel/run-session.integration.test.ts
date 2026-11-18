@@ -32,7 +32,13 @@ const report = {
 };
 fs.appendFileSync(process.env.AIDD_OTEL_TEST_REPORT, JSON.stringify(report) + "\n");
 if (mode === "fail") process.exit(7);
-if (mode === "wait") { setInterval(() => {}, 1000); return; }
+if (mode === "wait") {
+  setTimeout(() => {
+    fs.writeFileSync(process.env.AIDD_OTEL_TEST_REPORT + ".timeout", "natural exit");
+    process.exit(0);
+  }, 8000);
+  return;
+}
 const text = (key, stringValue) => ({ key, value: { stringValue } });
 const auth = process.env.OTEL_EXPORTER_OTLP_HEADERS.replace(/^Authorization=/i, "");
 const resource = (session) => ({ attributes: [
@@ -282,6 +288,7 @@ describe.skipIf(process.platform === "win32")("isolated OTLP execution", () => {
     );
     expect(received).toHaveLength(0);
     expect(existsSync(dirname(report.settingsPath))).toBe(false);
+    expect(existsSync(join(root, "provider.jsonl.timeout"))).toBe(false);
     await expect(
       fetch(`${report.collector}/claude/v1/metrics`, { method: "POST" })
     ).rejects.toThrow();
