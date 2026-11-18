@@ -4,8 +4,9 @@ import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js"
 import type { GlobalExecutionError } from "../../shared/domain/errors.js";
 import type { ToolCategory, ToolId } from "../../shared/domain/tool.js";
 import type { VersionReader } from "../../shared/ports/version-reader.js";
-import { forEachCategory } from "./for-each-category.js";
 import { BulkConflictState, type ResolveUpdateDecision } from "./resolve-update-decision.js";
+
+const CATEGORIES: readonly ToolCategory[] = ["ai", "ide"];
 
 export interface UpdateToolsCommand {
   toolArg?: ToolId;
@@ -33,33 +34,26 @@ export class UpdateTools {
   ) {}
 
   async execute(command: UpdateToolsCommand): Promise<UpdateToolsResult> {
-    const only: ToolCategory | undefined =
-      command.toolArg === undefined
-        ? undefined
-        : command.tools.isAiTool(command.toolArg)
-          ? "ai"
-          : "ide";
-    const perCategory = await forEachCategory(
-      (category) => this.updateCategory(command, category),
-      only
-    );
+    const { toolArg, tools } = command;
+    if (toolArg !== undefined) return this.updateTools(command, [toolArg]);
+    const perCategory: UpdateToolsResult[] = [];
+    for (const category of CATEGORIES) {
+      const installed = await this.listInstalledTools.execute({ category, tools });
+      perCategory.push(await this.updateTools(command, installed));
+    }
     return {
       updatedTools: perCategory.flatMap((r) => r.updatedTools),
       errors: perCategory.flatMap((r) => r.errors),
     };
   }
 
-  private async updateCategory(
+  private async updateTools(
     command: UpdateToolsCommand,
-    category: ToolCategory
+    targetIds: ToolId[]
   ): Promise<UpdateToolsResult> {
-    const { toolArg, projectRoot, userForce, interactive, tools } = command;
-    const targetIds =
-      toolArg !== undefined
-        ? [toolArg]
-        : await this.listInstalledTools.execute({ category, tools });
+    const { projectRoot, userForce, interactive, tools } = command;
     const version = this.versionReader.get();
-    // Scoped to this category's run only, never a field, so an "overwrite all" choice cannot leak
+    // Scoped to this run only, never a field, so an "overwrite all" choice cannot leak
     // into a later, unrelated update run.
     const bulkState = new BulkConflictState();
     const updatedTools: UpdateToolsResult["updatedTools"] = [];
