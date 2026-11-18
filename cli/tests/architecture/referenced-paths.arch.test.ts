@@ -16,7 +16,9 @@ const FENCED_BLOCK = /```[\s\S]*?```/g;
  * `application/` or `domain/` prefix is deliberately not matched: `application/json` is a
  * media type and `domain/ports` names a fragment, so a wider regex reports more noise than
  * drift. A name that continues a longer path (`application/shared/x.ts`) is that path's own
- * segment, not an area, and so is a hyphenated folder name (`cli-contexts/`).
+ * segment, not an area, and so is a hyphenated folder name (`cli-contexts/`) for the
+ * `contexts/` area. Limit: the `shared/` and `src|tests` branches still match after a hyphen;
+ * no real document holds such a path, so no code is written for it.
  */
 const CITED_PATH =
   /\b(?:src|tests)\/[A-Za-z0-9_./-]+|(?<!-)\b(?:kernel|contexts|presentation|runtime)\/[A-Za-z0-9_./-]+|(?<!\/)\bshared\/[A-Za-z0-9_./-]+/g;
