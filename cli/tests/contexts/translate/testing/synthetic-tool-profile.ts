@@ -11,11 +11,11 @@ export function syntheticToolProfile(answers: ProfileAnswers = {}): AiToolProfil
   return contractToolProfile(registeredTools().aiProfile(TOOL.claude), {
     directory,
     plugins: flatPluginsStub(),
-    sections: { commands: null, agents: null, rules: null, skills: null },
     flatContract: anEmptyContract(),
     flatInstallPath: (section, pluginName, fileName) =>
       `${directory}${section}/${pluginName}/${fileName}`,
     rewriteContent: (content) => content,
     ...answers,
+    sections: { commands: null, agents: null, rules: null, skills: null, ...answers.sections },
   });
 }

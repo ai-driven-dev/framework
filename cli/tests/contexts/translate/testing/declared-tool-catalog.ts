@@ -6,6 +6,7 @@ import type {
 } from "../../../../src/contexts/tools/contract/tool-profile.js";
 import type { AiToolId } from "../../../../src/shared/domain/tool.js";
 import { registeredTools, TOOL } from "../../../shared/testing/registered-tools.js";
+import { ownMembers } from "./contract-tool-profile.js";
 import { buildContractOf } from "./registered-build-contracts.js";
 
 /** What a synthetic tool declares to the code that reads a catalog for probes and build modes. */
@@ -27,11 +28,8 @@ function declaring(declared: DeclaredTool): Built {
       (kind === "manifest" ? declared.manifestPaths : declared.marketplacePaths) ?? [],
     buildContract: (mode) => (declared.buildModes?.includes(mode) ? standInContract() : null),
   } satisfies Pick<AiToolProfile, "distributionPaths" | "buildContract">;
-  // Only defineAiTool brands a profile; the derived value inherits the registered one's brand at runtime, the one untyped seam.
-  return Object.create(
-    registeredTools().aiProfile(declared.id),
-    Object.fromEntries(Object.entries(overrides).map(([name, value]) => [name, { value }]))
-  );
+  // Only defineAiTool brands a profile: the derived value carries the registered one's brand at runtime, which no type can state here.
+  return Object.create(registeredTools().aiProfile(declared.id), ownMembers(overrides));
 }
 
 /** The real catalog over only the given tools: help order is the order given, canonical order the

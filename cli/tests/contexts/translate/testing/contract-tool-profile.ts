@@ -31,12 +31,14 @@ export interface ProfileAnswers {
   readonly rewriteContent?: (content: string) => string;
 }
 
+/** `overrides` as own members of an object derived from another. */
+export function ownMembers(overrides: object): PropertyDescriptorMap {
+  return Object.fromEntries(Object.entries(overrides).map(([name, value]) => [name, { value }]));
+}
+
 /** The base itself, its own members replaced by `overrides`. */
 function derived<Base extends object>(base: Base, overrides: Partial<Base>): Base {
-  const own = Object.fromEntries(
-    Object.entries(overrides).map(([name, value]) => [name, { value }])
-  );
-  return Object.create(base, own);
+  return Object.create(base, ownMembers(overrides));
 }
 
 /** A tool as the contract states it: the base's answers, but for the ones given. */
