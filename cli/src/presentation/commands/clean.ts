@@ -19,12 +19,10 @@ async function runProjectScopeClean(
   deps: Pick<Deps, CleanKeys>,
   output: CLIOutput,
   projectRoot: string,
-  cmdOptions: CleanCmdOptions,
-  catalog: ToolCatalog
+  cmdOptions: CleanCmdOptions
 ): Promise<void> {
   const interactive = process.stdout.isTTY === true;
   const result = await deps.cleanUseCase.execute({
-    tools: catalog,
     projectRoot,
     force: cmdOptions.force,
     interactive,
@@ -42,7 +40,6 @@ async function runUserScopeClean(
 ): Promise<void> {
   const interactive = process.stdout.isTTY === true;
   const result = await deps.cleanUserScopeUseCase.execute({
-    tools: catalog,
     projectRoot,
     force: cmdOptions.force,
     interactive,
@@ -92,7 +89,7 @@ export function registerCleanCommand(
         if (scope === "user") {
           await runUserScopeClean(deps, output, projectRoot, cmdOptions, catalog);
         } else {
-          await runProjectScopeClean(deps, output, projectRoot, cmdOptions, catalog);
+          await runProjectScopeClean(deps, output, projectRoot, cmdOptions);
         }
       } catch (error) {
         errorHandler.handle(error);

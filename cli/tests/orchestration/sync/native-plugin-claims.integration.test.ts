@@ -104,9 +104,9 @@ for (const [toolId, catalogPath] of [
         sources,
         pluginRegistries: hostPlugins,
       });
-      await expect(
-        clean.execute({ tools: catalogOf(), projectRoot: "/B", force: true })
-      ).rejects.toThrow(/active projects.*\/B/);
+      await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
+        /active projects.*\/B/
+      );
       expect(failing.uninstalledPlugins).toEqual([]);
       expect(
         repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims?.[0]?.dependents
@@ -118,9 +118,9 @@ for (const [toolId, catalogPath] of [
         pluginClaims: [{ ref, dependents: [] }],
       });
       await repo.save(machine);
-      await expect(
-        clean.execute({ tools: catalogOf(), projectRoot: "/B", force: true })
-      ).rejects.toThrow(/uninstall.*failed.*claims retained/);
+      await expect(clean.execute({ projectRoot: "/B", force: true })).rejects.toThrow(
+        /uninstall.*failed.*claims retained/
+      );
       expect(repo.getCurrent()?.getNativeRegistrations(toolId)?.pluginClaims).toEqual([
         { ref, dependents: [] },
       ]);
@@ -135,7 +135,7 @@ for (const [toolId, catalogPath] of [
         sources,
         pluginRegistries: hostPlugins,
       });
-      await finish.execute({ tools: catalogOf(), projectRoot: "/B", force: true });
+      await finish.execute({ projectRoot: "/B", force: true });
       expect(working.uninstalledPlugins).toEqual([ref]);
       expect(working.removedMarketplaces).toEqual(["real-catalog"]);
       expect(repo.getCurrent()).toBeNull();

@@ -10,7 +10,6 @@ import { requireManifest } from "./shared/require-manifest.js";
 export interface UninstallToolsCommand {
   toolIds: ToolId[];
   projectRoot: string;
-  tools: ToolCatalog;
 }
 
 export interface UninstallToolsResult {
@@ -38,19 +37,20 @@ export class UninstallTools {
     private readonly manifestRepo: ManifestRepository,
     private readonly detachClaims: DetachProjectClaims,
     private readonly records: RegistrationRecordRules,
-    private readonly removeToolFiles: RemoveToolFiles
+    private readonly removeToolFiles: RemoveToolFiles,
+    private readonly tools: ToolCatalog
   ) {}
 
   async execute(command: UninstallToolsCommand): Promise<UninstallToolsResult[]> {
-    const { toolIds, projectRoot, tools } = command;
+    const { toolIds, projectRoot } = command;
     if (toolIds.length === 0) {
       throw new InputRequiredError(
-        `At least one tool ID is required. Valid tools: ${tools.idsInCanonicalOrder().join(", ")}`
+        `At least one tool ID is required. Valid tools: ${this.tools.idsInCanonicalOrder().join(", ")}`
       );
     }
     const manifest = await this.loadAndValidate(toolIds);
     const userPlugins = toolIds.flatMap((toolId) =>
-      tools.isAiTool(toolId)
+      this.tools.isAiTool(toolId)
         ? manifest
             .getPlugins(toolId)
             .filter((plugin) => plugin.scope === "user")
@@ -66,7 +66,7 @@ export class UninstallTools {
 
     const results: UninstallToolsResult[] = [];
     for (const toolId of toolIds) {
-      results.push(await this.removeOneTool(toolId, toolIds, tools, manifest, projectRoot));
+      results.push(await this.removeOneTool(toolId, toolIds, manifest, projectRoot));
     }
 
     await this.manifestRepo.save(manifest);
@@ -85,14 +85,12 @@ export class UninstallTools {
   private async removeOneTool(
     toolId: ToolId,
     allToolIds: ToolId[],
-    tools: ToolCatalog,
     manifest: Manifest,
     projectRoot: string
   ): Promise<UninstallToolsResult> {
     const deletedFiles = await this.removeToolFiles.remove(
       toolId,
       allToolIds,
-      tools,
       manifest,
       projectRoot
     );

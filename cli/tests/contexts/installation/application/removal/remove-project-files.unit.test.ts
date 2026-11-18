@@ -20,7 +20,7 @@ function removalOver(
   repo = new InMemoryManifestRepository(manifest, ROOT),
   gitignore = new UpdateGitignore(fs)
 ): RemoveProjectFiles {
-  return new RemoveProjectFiles(fs, repo, new CapturingLogger(), gitignore);
+  return new RemoveProjectFiles(fs, repo, new CapturingLogger(), gitignore, catalogOf());
 }
 
 function localPlugin(name: string): InstalledPlugin {
@@ -46,16 +46,14 @@ describe("RemoveProjectFiles.remove", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, "skills", "x.md"), "x");
 
-    const count = await removalOver(manifest, fs).remove(catalogOf(), ROOT, true);
+    const count = await removalOver(manifest, fs).remove(ROOT, true);
 
     expect(fs.has(join(ROOT, "skills", "x.md"))).toBe(false);
     expect(count).toBe(1);
   });
 
   it("removes nothing from a project that installed nothing", async () => {
-    await expect(
-      removalOver(null, new InMemoryFileAdapter()).remove(catalogOf(), ROOT, true)
-    ).resolves.toBe(0);
+    await expect(removalOver(null, new InMemoryFileAdapter()).remove(ROOT, true)).resolves.toBe(0);
   });
 
   it("asks no AI profile of a tool that is not an AI tool", async () => {
@@ -64,7 +62,7 @@ describe("RemoveProjectFiles.remove", () => {
     manifest.addPlugin(TOOL.vscode, localPlugin("ide-plugin"));
 
     await expect(
-      removalOver(manifest, new InMemoryFileAdapter()).remove(catalogOf(), ROOT, false)
+      removalOver(manifest, new InMemoryFileAdapter()).remove(ROOT, false)
     ).resolves.toBe(0);
   });
 
@@ -82,7 +80,7 @@ describe("RemoveProjectFiles.remove", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, script), "// edited");
 
-    await removalOver(manifest, fs).remove(catalogOf(), ROOT, true);
+    await removalOver(manifest, fs).remove(ROOT, true);
 
     expect(fs.has(join(ROOT, script))).toBe(false);
   });
@@ -94,7 +92,7 @@ describe("RemoveProjectFiles.remove", () => {
     const fs = new InMemoryFileAdapter();
     fs.setFile(join(ROOT, ".gitignore"), `node_modules\n.aidd/cache/\n${machineLocal}\n`);
 
-    await removalOver(manifest, fs).remove(catalogOf(), ROOT, true);
+    await removalOver(manifest, fs).remove(ROOT, true);
 
     expect(await fs.readFile(join(ROOT, ".gitignore"))).toBe("node_modules\n");
   });
@@ -110,7 +108,7 @@ describe("RemoveProjectFiles.remove", () => {
       manifestWhenGitignoreIsTouched.push(await repo.load());
     };
 
-    await removalOver(manifest, fs, repo, gitignore).remove(catalogOf(), ROOT, true);
+    await removalOver(manifest, fs, repo, gitignore).remove(ROOT, true);
 
     expect(manifestWhenGitignoreIsTouched).toEqual([null]);
   });

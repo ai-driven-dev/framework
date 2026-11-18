@@ -59,11 +59,12 @@ export class CleanProject {
     private readonly fs: FileReader,
     private readonly manifestRepo: ManifestRepository,
     private readonly asks: ProjectCleanAsks,
-    private readonly removeProjectFiles: RemoveProjectFiles
+    private readonly removeProjectFiles: RemoveProjectFiles,
+    private readonly tools: ToolCatalog
   ) {}
 
   /** `null` when this project installed nothing. */
-  async plan(tools: ToolCatalog): Promise<ProjectCleanPlan | null> {
+  async plan(): Promise<ProjectCleanPlan | null> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return null;
     const home = this.asks.homeDir();
@@ -74,21 +75,21 @@ export class CleanProject {
     return {
       tools: toolFiles,
       totalFileCount: toolFiles.reduce((sum, t) => sum + t.fileCount, 0),
-      nativeRegistrations: this.previewNativeRegistrations(manifest, home, tools),
-      withdrawals: this.projectWithdrawals(manifest, home, tools),
+      nativeRegistrations: this.previewNativeRegistrations(manifest, home),
+      withdrawals: this.projectWithdrawals(manifest, home),
       nativeRefs: this.nativeRefs(manifest),
-      userPlugins: this.userPlugins(manifest, tools),
+      userPlugins: this.userPlugins(manifest),
     };
   }
 
   /** Refuses while a hook or an MCP entry of a tracked plugin could not be removed cleanly. */
-  async assertRemovable(tools: ToolCatalog, projectRoot: string, force: boolean): Promise<void> {
+  async assertRemovable(projectRoot: string, force: boolean): Promise<void> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return;
     for (const toolId of manifest.getInstalledToolIds()) {
-      if (!tools.isAiTool(toolId)) continue;
+      if (!this.tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
-        const tool = tools.aiProfile(toolId);
+        const tool = this.tools.aiProfile(toolId);
         await assertProjectHooksRemovable(this.fs, plugin, tool, projectRoot, {
           overwriteEdited: force,
         });
@@ -98,8 +99,8 @@ export class CleanProject {
   }
 
   /** Deletes what this project installed and returns how many files that was. */
-  remove(tools: ToolCatalog, projectRoot: string, force: boolean): Promise<number> {
-    return this.removeProjectFiles.remove(tools, projectRoot, force);
+  remove(projectRoot: string, force: boolean): Promise<number> {
+    return this.removeProjectFiles.remove(projectRoot, force);
   }
 
   private nativeRefs(manifest: Manifest): ReadonlyMap<ToolId, readonly string[]> {
@@ -112,13 +113,10 @@ export class CleanProject {
     return nativeRefs;
   }
 
-  private userPlugins(
-    manifest: Manifest,
-    tools: ToolCatalog
-  ): Array<{ toolId: AiToolId; name: string }> {
+  private userPlugins(manifest: Manifest): Array<{ toolId: AiToolId; name: string }> {
     const plugins: Array<{ toolId: AiToolId; name: string }> = [];
     for (const toolId of manifest.getInstalledToolIds()) {
-      if (!tools.isAiTool(toolId)) continue;
+      if (!this.tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.scope === "user") plugins.push({ toolId, name: plugin.name });
       }
@@ -126,16 +124,12 @@ export class CleanProject {
     return plugins;
   }
 
-  private projectWithdrawals(
-    manifest: Manifest,
-    home: string,
-    tools: ToolCatalog
-  ): ProjectRegistrationWithdrawal[] {
+  private projectWithdrawals(manifest: Manifest, home: string): ProjectRegistrationWithdrawal[] {
     const withdrawals: ProjectRegistrationWithdrawal[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
       const registrations = manifest.getNativeRegistrations(toolId);
-      if (registrations === undefined || !tools.isAiTool(toolId)) continue;
-      const tool = tools.aiProfile(toolId);
+      if (registrations === undefined || !this.tools.isAiTool(toolId)) continue;
+      const tool = this.tools.aiProfile(toolId);
       const refScopes = new Map<string, MarketplaceScope>();
       for (const plugin of manifest.getPlugins(toolId)) {
         const ref = this.asks.records.refOf(registrations, plugin.name, plugin.marketplace);
@@ -153,15 +147,14 @@ export class CleanProject {
 
   private previewNativeRegistrations(
     manifest: Manifest,
-    home: string,
-    tools: ToolCatalog
+    home: string
   ): CleanNativeRegistrationPreview[] {
     const preview: CleanNativeRegistrationPreview[] = [];
     for (const toolId of manifest.getInstalledToolIds()) {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) continue;
-      const cacheRoot = tools.isAiTool(toolId)
-        ? tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(home)
+      const cacheRoot = this.tools.isAiTool(toolId)
+        ? this.tools.aiProfile(toolId).nativeActivation()?.pluginCacheRoot(home)
         : undefined;
       preview.push({ toolId, ...this.asks.records.registrationPreview(registrations, cacheRoot) });
     }

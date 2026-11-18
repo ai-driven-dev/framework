@@ -26,7 +26,8 @@ function cleanOver(manifest: Manifest | null, fs: InMemoryFileAdapter): CleanPro
       assertMcpRemovable: async () => undefined,
       records: registrationRecordRules,
     },
-    new RemoveProjectFiles(fs, repo, new CapturingLogger(), new UpdateGitignore(fs))
+    new RemoveProjectFiles(fs, repo, new CapturingLogger(), new UpdateGitignore(fs), catalogOf()),
+    catalogOf()
   );
 }
 
@@ -58,10 +59,8 @@ describe("CleanProject.assertRemovable", () => {
     fs.setFile(join(ROOT, script), "// edited");
     const clean = cleanOver(manifest, fs);
 
-    await expect(clean.assertRemovable(catalogOf(), ROOT, false)).rejects.toThrow(
-      "edited after install"
-    );
-    await expect(clean.assertRemovable(catalogOf(), ROOT, true)).resolves.toBeUndefined();
+    await expect(clean.assertRemovable(ROOT, false)).rejects.toThrow("edited after install");
+    await expect(clean.assertRemovable(ROOT, true)).resolves.toBeUndefined();
   });
 });
 
@@ -70,7 +69,7 @@ describe("CleanProject.assertRemovable on a project that installed nothing", () 
     const fs = new InMemoryFileAdapter();
     const clean = cleanOver(null, fs);
 
-    await expect(clean.assertRemovable(catalogOf(), ROOT, false)).resolves.toBeUndefined();
+    await expect(clean.assertRemovable(ROOT, false)).resolves.toBeUndefined();
   });
 });
 
@@ -85,13 +84,13 @@ describe("CleanProject over a tool that is not an AI tool", () => {
   it("asks no AI profile of it when proving removal", async () => {
     const clean = cleanOver(manifestWithIdePlugin("project"), new InMemoryFileAdapter());
 
-    await expect(clean.assertRemovable(catalogOf(), ROOT, false)).resolves.toBeUndefined();
+    await expect(clean.assertRemovable(ROOT, false)).resolves.toBeUndefined();
   });
 
   it("leaves it out of the user plugins a plan lists", async () => {
     const clean = cleanOver(manifestWithIdePlugin("user"), new InMemoryFileAdapter());
 
-    const plan = await clean.plan(catalogOf());
+    const plan = await clean.plan();
 
     expect(plan?.userPlugins).toEqual([]);
   });
@@ -108,7 +107,7 @@ describe("CleanProject.plan registrations", () => {
       pluginRefs: [],
     });
 
-    const plan = await cleanOver(manifest, new InMemoryFileAdapter()).plan(catalogOf());
+    const plan = await cleanOver(manifest, new InMemoryFileAdapter()).plan();
 
     expect(plan?.withdrawals.map((w) => w.refScopes.size)).toEqual([0]);
   });

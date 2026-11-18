@@ -22,10 +22,6 @@ import { deletePluginFilesForTool } from "../plugin/plugin-helpers.js";
 import { type ProjectHooksGuard, removeProjectHooks } from "../shared/remove-project-hooks.js";
 import type { UpdateGitignore } from "../update-gitignore.js";
 
-function machineLocalFilesOf(tools: ToolCatalog, toolId: ToolId): readonly string[] {
-  return tools.profile(toolId).machineLocalFiles();
-}
-
 /**
  * What `aidd clean` deletes from a project: the files each tool installed, the merged keys, the
  * machine-local settings and AIDD's own state, then the gitignore lines the install added.
@@ -35,24 +31,29 @@ export class RemoveProjectFiles {
     private readonly fs: FileReader & FileWriter,
     private readonly manifestRepo: ManifestRepository,
     private readonly logger: Logger,
-    private readonly updateGitignore: UpdateGitignore
+    private readonly updateGitignore: UpdateGitignore,
+    private readonly tools: ToolCatalog
   ) {}
 
   /** Deletes what this project installed and returns how many files that was. */
-  async remove(tools: ToolCatalog, projectRoot: string, force: boolean): Promise<number> {
+  async remove(projectRoot: string, force: boolean): Promise<number> {
     const manifest = await this.manifestRepo.load();
     if (manifest === null) return 0;
-    let deleted = await this.deleteAllToolFiles(manifest, tools, projectRoot);
-    deleted += await this.deleteMachineLocalFiles(manifest, projectRoot, tools, {
+    let deleted = await this.deleteAllToolFiles(manifest, projectRoot);
+    deleted += await this.deleteMachineLocalFiles(manifest, projectRoot, {
       overwriteEdited: force,
     });
     await this.removeAiddState(projectRoot);
     // Exactly what the pipeline added on install, never a subset of it.
     await this.updateGitignore.remove(
       projectRoot,
-      aiddGitignoreEntries(manifest, (toolId) => machineLocalFilesOf(tools, toolId))
+      aiddGitignoreEntries(manifest, (toolId) => this.machineLocalFilesOf(toolId))
     );
     return deleted;
+  }
+
+  private machineLocalFilesOf(toolId: ToolId): readonly string[] {
+    return this.tools.profile(toolId).machineLocalFiles();
   }
 
   // `config.json` is a committed file clean did not write, so clean never
@@ -82,30 +83,22 @@ export class RemoveProjectFiles {
   private async deleteMachineLocalFiles(
     manifest: Manifest,
     projectRoot: string,
-    tools: ToolCatalog,
     hooksGuard: ProjectHooksGuard
   ): Promise<number> {
     let count = 0;
     for (const toolId of manifest.getInstalledToolIds()) {
-      count += await this.deleteMachineLocalSettingsFiles(toolId, projectRoot, tools);
-      count += await this.removeProjectHooksForTool(
-        manifest,
-        toolId,
-        tools,
-        projectRoot,
-        hooksGuard
-      );
+      count += await this.deleteMachineLocalSettingsFiles(toolId, projectRoot);
+      count += await this.removeProjectHooksForTool(manifest, toolId, projectRoot, hooksGuard);
     }
     return count;
   }
 
   private async deleteMachineLocalSettingsFiles(
     toolId: ToolId,
-    projectRoot: string,
-    tools: ToolCatalog
+    projectRoot: string
   ): Promise<number> {
     let count = 0;
-    for (const relativePath of machineLocalFilesOf(tools, toolId)) {
+    for (const relativePath of this.machineLocalFilesOf(toolId)) {
       const fullPath = join(projectRoot, relativePath);
       if (!(await this.fs.fileExists(fullPath))) continue;
       await this.fs.deleteFile(fullPath);
@@ -118,33 +111,38 @@ export class RemoveProjectFiles {
   private async removeProjectHooksForTool(
     manifest: Manifest,
     toolId: ToolId,
-    tools: ToolCatalog,
     projectRoot: string,
     hooksGuard: ProjectHooksGuard
   ): Promise<number> {
-    if (!tools.isAiTool(toolId)) return 0;
+    if (!this.tools.isAiTool(toolId)) return 0;
     let count = 0;
     for (const plugin of manifest.getPlugins(toolId)) {
       if (
-        await removeProjectHooks(this.fs, plugin, tools.aiProfile(toolId), projectRoot, hooksGuard)
+        await removeProjectHooks(
+          this.fs,
+          plugin,
+          this.tools.aiProfile(toolId),
+          projectRoot,
+          hooksGuard
+        )
       )
         count++;
     }
     return count;
   }
 
-  private async deleteAllToolFiles(
-    manifest: Manifest,
-    tools: ToolCatalog,
-    projectRoot: string
-  ): Promise<number> {
+  private async deleteAllToolFiles(manifest: Manifest, projectRoot: string): Promise<number> {
     let deleted = 0;
     for (const toolId of manifest.getInstalledToolIds()) {
       this.logger.info(`Removing ${toolId} files...`);
       deleted += await this.deleteFiles(manifest.getToolFiles(toolId), projectRoot);
       deleted += await this.cleanMergeFileKeys(manifest.getMergeFiles(toolId), projectRoot);
-      if (tools.isAiTool(toolId)) {
-        deleted += await this.deleteToolPluginFiles(manifest, tools.aiProfile(toolId), projectRoot);
+      if (this.tools.isAiTool(toolId)) {
+        deleted += await this.deleteToolPluginFiles(
+          manifest,
+          this.tools.aiProfile(toolId),
+          projectRoot
+        );
       }
     }
     return deleted;

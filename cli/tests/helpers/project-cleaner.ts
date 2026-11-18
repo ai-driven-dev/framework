@@ -10,6 +10,7 @@ import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/applicatio
 import { ReleaseClaims } from "../../src/contexts/machine-claims/application/release-claims.js";
 import { CleanProject } from "../../src/orchestration/clean/clean-project.js";
 import { resolveHomeDir } from "../../src/shared/infrastructure/home-dir.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { InMemoryMarketplaceRegistry } from "./ports/in-memory-marketplace-registry.js";
 
 type Constructed = ConstructorParameters<typeof CleanProject>;
@@ -41,7 +42,14 @@ export function projectCleanerArgs(parts: ProjectCleanerParts): Constructed {
           assertProjectMcpEntriesRemovable(parts.fs, plugin, tool, projectRoot),
         records: registrationRecordRules,
       },
-      new RemoveProjectFiles(parts.fs, parts.manifestRepo, parts.logger, parts.gitignore)
+      new RemoveProjectFiles(
+        parts.fs,
+        parts.manifestRepo,
+        parts.logger,
+        parts.gitignore,
+        catalogOf()
+      ),
+      catalogOf()
     ),
     new WithdrawFromHost(parts.fs, parts.logger, {
       activators: parts.activators ?? new Map(),

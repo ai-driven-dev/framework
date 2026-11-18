@@ -14,7 +14,7 @@ import type { CleanProject } from "../../../src/orchestration/clean/clean-projec
 import type { AiToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
@@ -226,14 +226,12 @@ describe("clean guards a ref another project on this machine still needs", () =>
       if (outcome === "fails")
         await expect(
           useCase.execute({
-            tools: catalogOf(),
             projectRoot: PROJECT_ROOT,
             force: true,
           })
         ).rejects.toThrow("gitignore cleanup failed");
       else
         await useCase.execute({
-          tools: catalogOf(),
           projectRoot: PROJECT_ROOT,
           force: true,
         });
@@ -293,7 +291,6 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -325,7 +322,6 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -356,7 +352,6 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -388,7 +383,6 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -424,7 +418,6 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -455,7 +448,6 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });
@@ -487,7 +479,6 @@ describe("clean guards a ref another project on this machine still needs", () =>
     });
 
     await useCase.execute({
-      tools: catalogOf(),
       projectRoot: PROJECT_ROOT,
       force: true,
     });

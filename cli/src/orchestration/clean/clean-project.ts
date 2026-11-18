@@ -7,7 +7,6 @@ import type {
   CleanNativeRegistrationPreview,
   CleanProject as CleanProjectFiles,
 } from "../../contexts/installation/application/clean-project.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
 import type { CleanClaims } from "./clean-claims.js";
@@ -16,7 +15,6 @@ export interface CleanOptions {
   projectRoot: string;
   force: boolean;
   interactive?: boolean;
-  tools: ToolCatalog;
 }
 
 export interface CleanPreview {
@@ -52,8 +50,8 @@ export class CleanProject {
   ) {}
 
   async execute(options: CleanOptions): Promise<CleanResult> {
-    const { projectRoot, tools } = options;
-    const plan = await this.cleanProject.plan(tools);
+    const { projectRoot } = options;
+    const plan = await this.cleanProject.plan();
     if (plan === null) {
       const emptyPreview: CleanPreview = { tools: [], totalFileCount: 0, nativeRegistrations: [] };
       return { dryRun: false, manifestFound: false, preview: emptyPreview, fileCount: 0 };
@@ -70,7 +68,7 @@ export class CleanProject {
     if (dryRunResult !== null) return dryRunResult;
     const facts = this.cleanFacts(projectRoot, await this.marketplaceScopes(projectRoot));
     await this.withdrawFromHost.assertProjectRegistrationsOwned(plan.withdrawals, facts);
-    await this.cleanProject.assertRemovable(tools, projectRoot, options.force);
+    await this.cleanProject.assertRemovable(projectRoot, options.force);
     // Read the other projects before host cleanup, but keep this project's claim until every
     // local cleanup step succeeds. A failed file or gitignore cleanup must not free the source.
     const sharedSource = await this.claims.release.claim(projectRoot, () =>
@@ -84,7 +82,7 @@ export class CleanProject {
       ...facts,
       sharedSource,
     });
-    const fileCount = await this.cleanProject.remove(tools, projectRoot, options.force);
+    const fileCount = await this.cleanProject.remove(projectRoot, options.force);
     // One project-level decrement, only after the local projection has been cleaned successfully.
     await this.claims.release.drop(sharedSource?.resolvedRoot);
     await this.claims.release.detach(projectRoot, plan.userPlugins, plan.nativeRefs);

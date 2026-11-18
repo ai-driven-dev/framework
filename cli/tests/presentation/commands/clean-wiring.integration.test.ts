@@ -83,7 +83,6 @@ describe("aidd clean — the project this command was run in", () => {
       projectRoot: PROJECT_ROOT,
       force: false,
       interactive: false,
-      tools: catalogOf(),
     });
     expect(cleanUserScope).not.toHaveBeenCalled();
   });
@@ -101,7 +100,6 @@ describe("aidd clean — the project this command was run in", () => {
       projectRoot: PROJECT_ROOT,
       force: true,
       interactive: false,
-      tools: catalogOf(),
     });
   });
 
@@ -114,7 +112,6 @@ describe("aidd clean — the project this command was run in", () => {
       projectRoot: PROJECT_ROOT,
       force: false,
       interactive: true,
-      tools: catalogOf(),
     });
     expect(lines[lines.length - 1]).toBe("No files removed.");
   });
@@ -129,7 +126,6 @@ describe("aidd clean --scope", () => {
       projectRoot: PROJECT_ROOT,
       force: false,
       interactive: false,
-      tools: catalogOf(),
     });
     expect(cleanProject).not.toHaveBeenCalled();
   });
@@ -206,7 +202,6 @@ describe("aidd clean --scope", () => {
       projectRoot: PROJECT_ROOT,
       force: false,
       interactive: true,
-      tools: catalogOf(),
     });
     expect(lines[lines.length - 1]).toBe("No files removed.");
   });

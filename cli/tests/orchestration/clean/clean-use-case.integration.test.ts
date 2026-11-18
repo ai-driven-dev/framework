@@ -7,7 +7,7 @@ import { Manifest } from "../../../src/contexts/installation/domain/manifest.js"
 import { HasherAdapter } from "../../../src/contexts/installation/infrastructure/hasher-adapter.js";
 import type { CleanProject } from "../../../src/orchestration/clean/clean-project.js";
 import { FileAdapter } from "../../../src/shared/infrastructure/file-adapter.js";
-import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { TOOL } from "../../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { projectCleaner } from "../../helpers/project-cleaner.js";
@@ -52,7 +52,6 @@ describe("clean and the .aidd/ directory itself", () => {
     const logger = new CapturingLogger();
 
     await buildUseCase(logger).execute({
-      tools: catalogOf(),
       projectRoot,
       force: true,
     });
@@ -68,7 +67,6 @@ describe("clean and the .aidd/ directory itself", () => {
     const logger = new CapturingLogger();
 
     const result = await buildUseCase(logger).execute({
-      tools: catalogOf(),
       projectRoot,
       force: true,
     });

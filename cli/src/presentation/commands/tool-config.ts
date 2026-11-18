@@ -122,7 +122,6 @@ async function removeTool(
   const results = await deps.uninstallTools.execute({
     toolIds: [toolId],
     projectRoot,
-    tools: catalog,
   });
   const totalFileCount = results.reduce((sum, r) => sum + r.fileCount, 0);
   printToolRemoved(output, results[0].toolId, totalFileCount);

@@ -12,9 +12,9 @@ const MAX_LINES = 800;
 // Limit: raising a count in the same change that grows the file passes; the diff of this list
 // is where that is reviewed.
 const BASELINE: Readonly<Record<string, number>> = {
-  "tests/orchestration/clean/clean-native-cache.integration.test.ts": 1015,
+  "tests/orchestration/clean/clean-native-cache.integration.test.ts": 996,
   "tests/orchestration/clean/clean-use-case.unit.test.ts": 3093,
-  "tests/orchestration/clean/clean-user-scope.integration.test.ts": 1906,
+  "tests/orchestration/clean/clean-user-scope.integration.test.ts": 1874,
   "tests/orchestration/sync/marketplace-sync-native-activation.integration.test.ts": 1028,
   "tests/orchestration/sync/marketplace-sync-settings-migration.integration.test.ts": 1480,
   "tests/contexts/installation/application/plugin/add-plugin.unit.test.ts": 1126,

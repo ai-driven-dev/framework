@@ -9,6 +9,7 @@ import { PurgeDeclaredCache } from "../../src/contexts/machine-claims/applicatio
 import { ReleaseClaims } from "../../src/contexts/machine-claims/application/release-claims.js";
 import { userScopeFilesSafeToDelete } from "../../src/contexts/machine-claims/application/user-scope-plugin-files.js";
 import { CleanUserScope } from "../../src/orchestration/clean/clean-user-scope.js";
+import { catalogOf } from "../contexts/tools/testing/catalog-of.js";
 import { CapturingLogger } from "./ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "./ports/in-memory-file-adapter.js";
 import { InMemoryMarketplaceRegistry } from "./ports/in-memory-marketplace-registry.js";
@@ -50,7 +51,8 @@ export function userScopeCleaner(parts: UserScopeCleanerParts): CleanUserScope {
       homeDir,
       new UserScopePluginFiles(fs, (plugin, tool, home) =>
         userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)
-      )
+      ),
+      catalogOf()
     ),
     new WithdrawFromHost(fs, logger, {
       activators: parts.activators ?? new Map(),

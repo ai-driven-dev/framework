@@ -1,7 +1,6 @@
 import type { WithdrawFromHost } from "../../contexts/host-registration/application/withdraw-from-host.js";
 import type { PurgeUserScopeFiles } from "../../contexts/installation/application/purge-user-scope-files.js";
 import { describeFullRemovalInstruction } from "../../contexts/machine-claims/application/shared-source-reference-support.js";
-import type { ToolCatalog } from "../../contexts/tools/contract/tool-catalog.js";
 import type { ToolId } from "../../shared/domain/tool.js";
 import type { Logger } from "../../shared/ports/logger.js";
 import type { Prompter } from "../../shared/ports/prompter.js";
@@ -12,7 +11,6 @@ export interface CleanUserScopeOptions {
    * project-scope caller it usually serves — discarded by the adapter for scope `"user"`, since
    * this operation has no one project of its own. */
   projectRoot: string;
-  tools: ToolCatalog;
   force: boolean;
   interactive?: boolean;
 }
@@ -57,7 +55,7 @@ export class CleanUserScope {
   }
 
   private async executeLocked(options: CleanUserScopeOptions): Promise<CleanUserScopeResult> {
-    const inspection = await this.purgeFiles.inspect(options.tools, () =>
+    const inspection = await this.purgeFiles.inspect(() =>
       this.claims.release.referencingProjects()
     );
     const { manifestFound, ...preview } = inspection;
@@ -66,7 +64,7 @@ export class CleanUserScope {
     if (dryRunResult !== null) return dryRunResult;
     this.purgeFiles.assertNothingDepends(inspection);
 
-    const withdrawals = await this.purgeFiles.proveWithdrawals(options.tools);
+    const withdrawals = await this.purgeFiles.proveWithdrawals();
     this.withdrawFromHost.assertUserHostsReachable(withdrawals);
     await this.withdrawFromHost.proveUserRegistrations(withdrawals, options.projectRoot);
     // Undoing a host's own registration must happen before any purge: a host's own CLI resolves
@@ -78,7 +76,7 @@ export class CleanUserScope {
       (cacheRoot, relativeSegments, label) =>
         this.claims.purgeCache.resolveCandidate(cacheRoot, relativeSegments, label)
     );
-    await this.purgeFiles.purge(options.tools, options.projectRoot);
+    await this.purgeFiles.purge(options.projectRoot);
 
     return { dryRun: false, manifestFound, preview };
   }

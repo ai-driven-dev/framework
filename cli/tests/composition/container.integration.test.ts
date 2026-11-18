@@ -218,7 +218,7 @@ describe("createDeps", () => {
       manifest.addPlugin(TOOL.cursor, aPlugin("user"));
       await userManifestRepo.save(manifest);
 
-      await cleanUserScopeUseCase.execute({ projectRoot: root, tools, force: true });
+      await cleanUserScopeUseCase.execute({ projectRoot: root, force: true });
 
       expect(existsSync(builtCache)).toBe(false);
     });
@@ -240,7 +240,7 @@ describe("createDeps", () => {
       await userManifestRepo.save(manifest);
 
       await expect(
-        cleanUserScopeUseCase.execute({ projectRoot: root, tools, force: true })
+        cleanUserScopeUseCase.execute({ projectRoot: root, force: true })
       ).rejects.toThrow("User clean refused; canonical claims retained.");
     });
 
@@ -256,7 +256,7 @@ describe("createDeps", () => {
         tools
       );
 
-      await cleanUserScopeUseCase.execute({ projectRoot: root, tools, force: true });
+      await cleanUserScopeUseCase.execute({ projectRoot: root, force: true });
 
       expect(existsSync(join(sources, FRAMEWORK_MARKETPLACE_NAME))).toBe(false);
       expect(existsSync(join(sources, "awesome"))).toBe(true);
@@ -273,7 +273,6 @@ describe("createDeps", () => {
 
       await cleanUserScopeUseCase.execute({
         projectRoot: root,
-        tools,
         force: false,
         interactive: true,
       });
@@ -301,7 +300,7 @@ describe("createDeps", () => {
       await userSourceReferences.addReference("1.0.0", await realpath(root));
       await userSourceReferences.addReference("1.0.0", await realpath(other));
 
-      const result = await cleanUseCase.execute({ projectRoot: root, tools, force: true });
+      const result = await cleanUseCase.execute({ projectRoot: root, force: true });
 
       expect(result.preview.sharedSourceOtherProjects).toEqual([await realpath(other)]);
       expect(await userSourceReferences.listAllReferencingProjects()).toEqual([
@@ -489,9 +488,9 @@ describe("createDeps", () => {
       await manifestRepo.save(manifest);
       await mkdir(join(root, "opencode.json"));
 
-      await expect(
-        cleanUseCase.execute({ projectRoot: root, tools, force: true })
-      ).rejects.toMatchObject({ code: "EISDIR" });
+      await expect(cleanUseCase.execute({ projectRoot: root, force: true })).rejects.toMatchObject({
+        code: "EISDIR",
+      });
       expect(existsSync(join(root, ".aidd", "manifest.json"))).toBe(true);
     });
   });

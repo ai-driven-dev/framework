@@ -30,7 +30,8 @@ export class PurgeUserScopeFiles {
     private readonly purgeMachineState: PurgeMachineState,
     /** The one resolver for the OS home directory a user-scope plugin's files sit under. */
     private readonly homeDir: () => string,
-    private readonly userScopePluginFiles: UserScopePluginFiles
+    private readonly userScopePluginFiles: UserScopePluginFiles,
+    private readonly tools: ToolCatalog
   ) {}
 
   /** Runs `action` holding the user manifest's lock. */
@@ -39,14 +40,13 @@ export class PurgeUserScopeFiles {
   }
 
   async inspect(
-    tools: ToolCatalog,
     referencingProjects: () => Promise<readonly string[]>
   ): Promise<UserScopeInspection> {
     const manifest = await this.userManifestRepo.load();
     return {
       manifestFound: manifest !== null,
       toolIds: manifest?.getInstalledToolIds() ?? [],
-      activePluginDependents: this.activeDependents(manifest, tools),
+      activePluginDependents: this.activeDependents(manifest),
       builtVersions: await this.purgeMachineState.builtVersions(),
       referencingProjects: await referencingProjects(),
     };
@@ -54,16 +54,16 @@ export class PurgeUserScopeFiles {
 
   /** Refuses while a user-scope file escapes its boundary, then answers the host registrations
    * this machine recorded. */
-  async proveWithdrawals(tools: ToolCatalog): Promise<UserRegistrationWithdrawal[]> {
+  async proveWithdrawals(): Promise<UserRegistrationWithdrawal[]> {
     const manifest = await this.userManifestRepo.load();
     if (manifest === null) return [];
-    await this.assertTrackedUserPluginFilesSafe(manifest, tools);
-    return this.withdrawalsOf(manifest, tools);
+    await this.assertTrackedUserPluginFilesSafe(manifest);
+    return this.withdrawalsOf(manifest);
   }
 
-  async purge(tools: ToolCatalog, projectRoot: string): Promise<void> {
+  async purge(projectRoot: string): Promise<void> {
     const manifest = await this.userManifestRepo.load();
-    if (manifest !== null) await this.purgeUserPluginFiles(manifest, tools, projectRoot);
+    if (manifest !== null) await this.purgeUserPluginFiles(manifest, projectRoot);
     await this.purgeMachineState.purge(projectRoot);
     // The manifest's own repository is the single writer of `manifest.json`; deleting through
     // it, never a second path to the same file, is what keeps that true.
@@ -86,11 +86,11 @@ export class PurgeUserScopeFiles {
     }
   }
 
-  private activeDependents(manifest: Manifest | null, tools: ToolCatalog): readonly string[] {
+  private activeDependents(manifest: Manifest | null): readonly string[] {
     return [
       ...new Set(
         manifest?.getInstalledToolIds().flatMap((toolId) =>
-          tools.isAiTool(toolId)
+          this.tools.isAiTool(toolId)
             ? [
                 ...manifest
                   .getPlugins(toolId)
@@ -106,16 +106,17 @@ export class PurgeUserScopeFiles {
     ];
   }
 
-  private async assertTrackedUserPluginFilesSafe(
-    manifest: Manifest,
-    tools: ToolCatalog
-  ): Promise<void> {
+  private async assertTrackedUserPluginFilesSafe(manifest: Manifest): Promise<void> {
     const home = this.homeDir();
     for (const toolId of manifest.getInstalledToolIds()) {
-      if (!tools.isAiTool(toolId)) continue;
+      if (!this.tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.scope !== "user") continue;
-        const safe = await this.userScopePluginFiles.proven(plugin, tools.aiProfile(toolId), home);
+        const safe = await this.userScopePluginFiles.proven(
+          plugin,
+          this.tools.aiProfile(toolId),
+          home
+        );
         if (safe.size !== plugin.files.size) {
           throw new Error(
             `User clean refused: a tracked file of '${plugin.name}' escaped its user-scope boundary; canonical claims retained.`
@@ -128,16 +129,16 @@ export class PurgeUserScopeFiles {
   /** The host registrations this machine recorded, one per tool, each with the refs a canonical
    * machine claim owns. A tool that is not an AI tool never records one, so a manifest naming one
    * is corrupt, not something to guess a host for. */
-  private withdrawalsOf(manifest: Manifest, tools: ToolCatalog): UserRegistrationWithdrawal[] {
+  private withdrawalsOf(manifest: Manifest): UserRegistrationWithdrawal[] {
     const home = this.homeDir();
     return manifest.getInstalledToolIds().flatMap((toolId) => {
       const registrations = manifest.getNativeRegistrations(toolId);
       if (registrations === undefined) return [];
-      if (!tools.isAiTool(toolId))
+      if (!this.tools.isAiTool(toolId))
         throw new Error(
           `${toolId}: native refs lack a canonical catalogue source; user clean refused.`
         );
-      const tool = tools.aiProfile(toolId);
+      const tool = this.tools.aiProfile(toolId);
       return [
         {
           tool,
@@ -153,17 +154,13 @@ export class PurgeUserScopeFiles {
    * own files, listed by the user manifest and never deleted without the containment check a
    * `..` segment a corrupted entry carries, or a plugin directory that became a symlink after
    * install, is left in place and named. */
-  private async purgeUserPluginFiles(
-    manifest: Manifest,
-    tools: ToolCatalog,
-    projectRoot: string
-  ): Promise<void> {
+  private async purgeUserPluginFiles(manifest: Manifest, projectRoot: string): Promise<void> {
     const home = this.homeDir();
     for (const toolId of manifest.getInstalledToolIds()) {
-      if (!tools.isAiTool(toolId)) continue;
+      if (!this.tools.isAiTool(toolId)) continue;
       for (const plugin of manifest.getPlugins(toolId)) {
         if (plugin.scope !== "user") continue;
-        const tool = tools.aiProfile(toolId);
+        const tool = this.tools.aiProfile(toolId);
         const files = await this.userScopePluginFiles.proven(plugin, tool, home);
         await this.userScopePluginFiles.remove(files, tool, projectRoot);
       }

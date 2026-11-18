@@ -43,7 +43,8 @@ function uninstaller(
     manifestRepo,
     detachClaims,
     registrationRecordRules,
-    new RemoveToolFiles(fs, logger)
+    new RemoveToolFiles(fs, logger, catalogOf()),
+    catalogOf()
   );
 }
 
@@ -82,7 +83,6 @@ function remove(
   logger = new CapturingLogger()
 ) {
   return uninstaller(target.fs, new InMemoryManifestRepository(target.manifest), logger).execute({
-    tools: catalogOf(),
     toolIds,
     projectRoot: PROJECT_ROOT,
   });
@@ -259,7 +259,6 @@ describe("UninstallTools — a project's tools", () => {
         deps.logger,
         detachProjectClaims(deps.userManifestRepo, deps.fs)
       ).execute({
-        tools: catalogOf(),
         toolIds: [selected],
         projectRoot: PROJECT_ROOT,
       });
@@ -294,7 +293,6 @@ describe("UninstallTools — a project's tools", () => {
     const saved = deps.manifestRepo.saveCount;
     const useCase = uninstaller(deps.fs, deps.manifestRepo, deps.logger);
     await useCase.execute({
-      tools: catalogOf(),
       toolIds: [TOOL.claude],
       projectRoot: PROJECT_ROOT,
     });
@@ -317,7 +315,6 @@ describe("UninstallTools — a project's tools", () => {
     const useCase = uninstaller(deps.fs, deps.manifestRepo, deps.logger);
     await expect(
       useCase.execute({
-        tools: catalogOf(),
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       })
@@ -335,7 +332,6 @@ describe("UninstallTools — a project's tools", () => {
 
       const useCase = uninstaller(deps.fs, deps.manifestRepo, deps.logger);
       await useCase.execute({
-        tools: catalogOf(),
         toolIds: [TOOL.vscode],
         projectRoot: PROJECT_ROOT,
       });
@@ -353,7 +349,6 @@ describe("UninstallTools — a project's tools", () => {
 
       const useCase = uninstaller(deps.fs, deps.manifestRepo, deps.logger);
       await useCase.execute({
-        tools: catalogOf(),
         toolIds: [TOOL.vscode],
         projectRoot: PROJECT_ROOT,
       });
@@ -370,7 +365,6 @@ describe("UninstallTools — refusals", () => {
 
     await expect(
       uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-        tools: catalogOf(),
         toolIds: [],
         projectRoot: PROJECT_ROOT,
       })
@@ -385,7 +379,7 @@ describe("UninstallTools — refusals", () => {
     const deps = await buildUnitDeps(PROJECT_ROOT);
 
     const failure = await uninstaller(deps.fs, deps.manifestRepo, deps.logger)
-      .execute({ tools: catalogOf(), toolIds: [TOOL.claude], projectRoot: PROJECT_ROOT })
+      .execute({ toolIds: [TOOL.claude], projectRoot: PROJECT_ROOT })
       .catch((e: unknown) => e);
 
     expect(failure).toBeInstanceOf(ManifestUnavailableError);
@@ -398,7 +392,6 @@ describe("UninstallTools — refusals", () => {
 
     await expect(
       uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-        tools: catalogOf(),
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
       })
@@ -420,7 +413,6 @@ describe("UninstallTools, IDE — merge-file entries", () => {
     expect(managedKeys.length).toBeGreaterThan(0);
 
     await uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-      tools: catalogOf(),
       toolIds: [TOOL.vscode],
       projectRoot: PROJECT_ROOT,
     });
@@ -440,7 +432,6 @@ describe("UninstallTools, IDE — merge-file entries", () => {
     await deps.fs.writeFile(SETTINGS_FILE, JSON.stringify(withUserKey, null, 2));
 
     await uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-      tools: catalogOf(),
       toolIds: [TOOL.vscode],
       projectRoot: PROJECT_ROOT,
     });
@@ -457,7 +448,6 @@ describe("UninstallTools, IDE — merge-file entries", () => {
     expect(before.length).toBeGreaterThan(0);
 
     await uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-      tools: catalogOf(),
       toolIds: [TOOL.vscode],
       projectRoot: PROJECT_ROOT,
     });
@@ -474,7 +464,6 @@ describe("UninstallTools, IDE — merge-file entries", () => {
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
     await uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-      tools: catalogOf(),
       toolIds: [TOOL.vscode],
       projectRoot: PROJECT_ROOT,
     });
@@ -491,7 +480,6 @@ describe("UninstallTools, IDE — report", () => {
     await installTool(deps, PROJECT_ROOT, TOOL.vscode);
 
     const result = await uninstaller(deps.fs, deps.manifestRepo, deps.logger).execute({
-      tools: catalogOf(),
       toolIds: [TOOL.vscode],
       projectRoot: PROJECT_ROOT,
     });

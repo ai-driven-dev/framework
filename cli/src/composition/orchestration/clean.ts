@@ -32,13 +32,15 @@ export function wireClean(base: Base, inst: Installation) {
     userSourceReferences,
     marketplaceRegistry,
     withdrawFromHost,
+    tools,
   } = base;
   const { updateGitignore, registrationRecordRules } = inst;
   const uninstallTools = new UninstallTools(
     manifestRepo,
     detachProjectClaims(userManifestRepo, fs),
     registrationRecordRules,
-    new RemoveToolFiles(fs, logger)
+    new RemoveToolFiles(fs, logger, tools),
+    tools
   );
   const purgeCache = new PurgeDeclaredCache(fs, logger);
   const claims = {
@@ -64,7 +66,8 @@ export function wireClean(base: Base, inst: Installation) {
     homedir,
     new UserScopePluginFiles(fs, (plugin, tool, home) =>
       userScopeFilesSafeToDelete(fs, logger, plugin, tool, home)
-    )
+    ),
+    tools
   );
   const cleanUserScopeUseCase = new CleanUserScope(
     purgeUserScopeFiles,
@@ -82,7 +85,8 @@ export function wireClean(base: Base, inst: Installation) {
         assertProjectMcpEntriesRemovable(fs, plugin, tool, projectRoot),
       records: registrationRecordRules,
     },
-    new RemoveProjectFiles(fs, manifestRepo, logger, updateGitignore)
+    new RemoveProjectFiles(fs, manifestRepo, logger, updateGitignore, tools),
+    tools
   );
   const cleanUseCase = new CleanProject(
     cleanProjectFiles,
