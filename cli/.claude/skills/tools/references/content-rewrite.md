@@ -1,67 +1,35 @@
-# Reference: Content Rewrite
+# Content rewrite
+
+`rewriteContent(content: string): string` is declared by `AiTool` in `domain/profile.ts` and implemented in each `domain/profiles/<tool>/profile.ts`. Every file that reaches a tool's tree passes through it.
+
+## Callers
+
+| Path | Caller |
+| --- | --- |
+| install | `contexts/installation/application/install/content/install-content-section.ts` |
+| translate | `contexts/translate/domain/engine.ts` |
 
 ## Contract
 
-```typescript
-rewriteContent(content: string): string;
-```
+- One direction, one argument, per tool; there is no reverse and no shared base helper.
+- The CLI writes owned files from the canonical source and never reads a tool's tree back, so an inverse has no caller.
+- `DOCS_DIR` is a constant in `shared/domain/paths.ts`; a profile that needs it imports it.
 
-One direction, one argument. A tool profile declares it in `contexts/tools/domain/profile.ts`
-and implements it in `contexts/tools/domain/profiles/<tool>/profile.ts`. It is called on the
-install path (`contexts/installation/application/install/content/install-content-section.ts`)
-and on the translate path (`contexts/translate/domain/engine.ts`) — every file that reaches a tool's tree
-passes through it.
+## What a profile does
 
-There is no reverse. The round-trip API that used to live here was deleted once nothing
-produced input for it: the CLI writes owned files from the canonical source, it never reads a
-tool's tree back into canonical form. If you find yourself wanting an inverse, the question to
-answer first is what would call it.
+| Profile | Rewrite |
+| --- | --- |
+| `antigravity` | none, the identity |
+| `claude` | its numbered command directories |
+| `opencode`, `kilo`, `cursor` | command directories, and for `cursor` `.md` rule references to `.mdc` |
+| `codex` | `rewriteCodexContent` |
+| `copilot` | `rewriteCopilotContent` turns `@{{TOOLS}}/` and `@{{DOCS}}/` into markdown links, because Copilot resolves no `@`-include |
 
-There are no base helpers either, and no `docsDir` parameter. `DOCS_DIR` is a constant in
-`shared/domain/paths.ts`; a profile that needs it imports it.
+- `{{TOOLS}}/` without `@` replaces a directory prefix only, for frontmatter and prose.
+- `@{{TOOLS}}/` resolves to a full installed path.
 
-## What a profile actually does
+## The trap
 
-**Nothing, when the tool reads the canonical layout as-is.** `opencode` and `codex` rewrite
-paths for their own directory shapes; `claude` rewrites only its numbered command directories:
-
-```typescript
-rewriteContent(content: string): string {
-  return content.replace(
-    /(@?)\.claude\/commands\/(\d+)[_][^/]+\//g,
-    (_, at, phase) => `${at}${commandsDir(phase)}`
-  );
-},
-```
-
-**Placeholder resolution, when the tool's host cannot follow the canonical references.**
-`copilot` is the one real case: it turns `@{{TOOLS}}/…` and `@{{DOCS}}/…` into markdown links
-with a relative href, because Copilot does not resolve `@`-includes. That profile is the
-example to read before writing a new one — `profiles/copilot/profile.ts`,
-`rewriteCopilotContent`.
-
-Note the two spellings it distinguishes, because a new tool will meet the same choice:
-`{{TOOLS}}/` without `@` replaces a directory prefix only (frontmatter, prose); `@{{TOOLS}}/`
-resolves to a full installed path.
-
-## The trap this reference exists to name
-
-A profile whose `rewriteContent` is the identity is indistinguishable from a profile that
-forgot to implement it — until a placeholder reaches a user's file verbatim. No build
-comparison sees it: the byte-frozen golden cell is `claude`, whose rewrite emits no placeholder,
-and the marketplace build never calls `rewriteContent`.
-
-So: **prove a rewrite on the install path, with a fixture that contains the placeholder.**
-A build comparison cannot see this.
-
-## Test
-
-```typescript
-it("points an agent reference at the installed .agent.md file", () => {
-  const out = copilot.rewriteContent("See @{{TOOLS}}/agents/executor.md for details");
-  expect(out).toContain("(../../.github/agents/executor.agent.md)");
-  expect(out).not.toContain("{{TOOLS}}");
-});
-```
-
-The full case, with the exact rewritten string: `tests/contexts/tools/domain/profiles/copilot/content.unit.test.ts`.
+- An identity rewrite looks the same as one that was forgotten, until a placeholder reaches a user's file verbatim.
+- Prove a rewrite with a fixture that contains the placeholder, and assert the whole rewritten string.
+- `tests/contexts/tools/domain/profiles/copilot/content.unit.test.ts` is the model.

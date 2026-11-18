@@ -4,46 +4,32 @@ paths:
   - "src/contexts/tools/**/*.ts"
   - "src/composition/tools.ts"
   - "tests/contexts/tools/**/*.ts"
-  - "src/contexts/translate/application/**/*.ts"
-  - "src/orchestration/**/*.ts"
-  - "src/contexts/installation/application/**/*.ts"
 ---
 
 # Tools
 
 ## Reason to change
 
-- What a tool the CLI targets declares: where its files land, how it takes plugins, what its own plugin CLI says about itself.
-- Its language is `src/contexts/tools/glossary.md`; a name in the code means what that page says.
-- Its shape follows `reference-context.md`, beside this page, bar the exceptions below. The how-to is the `tools` skill.
+- What a tool declares: where its files land, how it takes plugins, what its own plugin CLI says, what `aidd translate` builds for it.
+- Its language is `src/contexts/tools/glossary.md`; its shape follows `reference-context.md`; the how-to is the `tools` skill.
 
-## Boundary
+## Ports
 
-- Outside callers import `tools/contract/` only. `domain/` and `application/` are the composition root's, held by Biome (`HELD_BY_BIOME`, `APPLICATION_CLOSED` in `tests/architecture/helpers.ts`).
-- Use cases receive a `ToolCatalog`, built once by `wireTools()` in `src/composition/tools.ts`; none reaches a profile by import.
-- A caller asks a profile a question and never reads its structure.
-- Adding a tool is one profile folder under `domain/profiles/` and one line in `REGISTERED_PROFILES`. Its id is written once, in its profile; the conformance suite checks it. The files still in `BASELINE` and `IDENTIFIER_BASELINE` (`tests/architecture/tool-addition-cost.arch.test.ts`) name a tool outside its profile and may need it too; both lists only shrink. A tool that runs hooks also brings its `hooks.ts` descriptor, its host adapter in `assets/hooks-runtime/` and one payload fixture per relayed event, all checked by conformance.
-- Only `src/composition/` reads `domain/`: `tools.ts`, `native-registrations.ts` and `host-registration.ts`.
+- `ToolCatalog` (`contract/tool-catalog.ts`): the registered tools, asked by id or walked in a named order; `wireTools()` in `src/composition/tools.ts` builds the one catalog.
+- `AiToolProfile`, `IdeToolProfile` (`contract/tool-profile.ts`) and `ToolBuildContract` (`contract/build-contract.ts`): the answers a caller asks.
 
-## Exceptions in force
+## Rules
 
-- E-T3: the `.cjs` host adapters in `assets/` keep their own `EVENTS` table, held equal to the descriptor by conformance.
-- E-T4: `domain/formats/toml.ts` is the only domain file that imports a package.
-- E-T7: the native section types stay here as data, in `domain/native-registration/`.
-- E-T8: the generated hooks bridge keeps two property seams no test reads.
-- E-T10: the profile folders keep their `*-paths.ts`, `*-agent.ts` and `build.ts` files.
-- E-T11: each hooks bridge template keeps its own run, stop and answer functions, which differ in bytes.
-- Each E-T exception above is in section 9 of `reference-context.md`, with the line it deviates from and when it goes; the ambiguities this context settled are rows T-A1 to T-A14 there, T-A9 having become E-T11.
-- The catalog reaches a use case in its constructor, never as a method parameter or an options field. Held by `catalog-in-constructor.arch.test.ts`, with an empty baseline.
+- Outside callers import `contract/` only; Biome shuts `domain/` and `application/` (`HELD_BY_BIOME`, `APPLICATION_CLOSED` in `tests/architecture/helpers.ts`).
+- A class takes the catalog in its constructor (`catalog-in-constructor.arch.test.ts`), asks a profile a question and never reads its structure.
+- A tool is one folder under `domain/profiles/` and one line in `REGISTERED_PROFILES`, never a second list; `tool-addition-cost.arch.test.ts` holds that its id appears nowhere else.
+- A tool that runs hooks brings its `hooks.ts`, a host adapter in `assets/hooks-runtime/` and one payload fixture per relayed event; conformance checks them.
+- `src/composition/tools.ts` and `src/composition/host-registration.ts` are the only readers of `domain/`.
+- Exceptions to the context shape are in the exceptions table of `reference-context.md`.
 
 ## Tests
 
-- `tests/contexts/tools/`, mirroring the source, with the profile checks in `testing/` (`profile-conformance.ts`, `profile-file-conformance.ts`).
-- A profile's declared data gets no test of its own: conformance reads it. A rule over what profiles declare is a conformance check, proven once against a profile built to break it.
-- A test over every tool walks `REGISTERED_PROFILES`, never a tool id.
-
-## Never
-
-- Register a tool from anywhere but the list, or hold a second list.
-- Read a profile's structure from a caller, or guard a capability by its presence.
-- Name a tool's fact in a caller: a branch on a tool id is a question the profile should answer.
+- `tests/contexts/tools/` mirrors the source; `profile-conformance.ts` and `profile-file-conformance.ts` in `testing/` hold what every profile must pass.
+- A profile's declared data gets no test of its own; a rule over it is a conformance check, proven against a profile built to break it.
+- `aProfile()` in `testing/profiles.ts` builds a synthetic profile; `registeredTools()` and `TOOL` in `tests/shared/testing/registered-tools.ts` give the registered catalog and ids.
+- `testing/catalog-of.ts` keeps `TOOL` and `resolveRegisteredToolId` as aliases for frozen callers; new tests use the shared kit, and one over every tool walks `REGISTERED_PROFILES`.

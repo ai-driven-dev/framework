@@ -10,34 +10,26 @@ paths:
 
 ## Reason to change
 
-- How a canon plugin is rewritten for one tool, in memory, and how the result is written to disk for `aidd translate`.
-- Its language is `src/contexts/translate/glossary.md`; a name in the code means what that page says.
-- Its shape follows `reference-context.md`, beside this page, bar the exceptions below.
+- How a canon plugin is rewritten for one tool in memory, and how the result is written to disk for `aidd translate`.
+- Its language is `src/contexts/translate/glossary.md`; its shape follows `reference-context.md`, beside this page.
 
-## Boundary
+## Ports
 
-- Outside callers import `translate/contract/` only. `domain/`, `ports/` and `infrastructure/` are the composition root's, held by Biome (`HELD_BY_BIOME` in `tests/architecture/helpers.ts`).
-- `application/` is read by the composition root and the presentation deps that hand the build in; `contract/` carries what presentation names: the build targets and the build. The translation command and its file are `application/` and `domain/`, handed in by the composition root.
-- The engine asks the tool catalog what a tool declares and never names a tool.
-- The engine writes nothing; the sink writes and never rewrites content.
+- `JsonSchemaValidator` (`ports/json-schema-validator.ts`): validates a built manifest or catalog.
+- `contract/build-targets.ts`: the targets and modes presentation names; `application/`'s `BuildNativeTree` (`aidd translate`) is handed in by the composition root.
 
 ## Suppliers
 
-- `tools/contract/`: the profile and its build contract the engine asks.
-- `shared/`: errors, logger and the plugin distribution types.
+- `tools/contract/`: the profile and its `ToolBuildContract`, which `src/composition/translate.ts` picks from the catalog; `shared/`: errors, `Logger`, file ports, plugin types.
 
-## Exceptions in force
+## Rules
 
-- The sink and the engine still differ in bytes on listed paths (`DIVERGENCES` in `tests/contexts/translate/application/translate-distribution-conformance.integration.test.ts`); the list only shrinks, and a change of bytes is a `fix(cli)` of its own.
+- Outside callers import `contract/` and `application/` only; Biome shuts `domain/`, `ports/` and `infrastructure/` (`HELD_BY_BIOME` in `tests/architecture/helpers.ts`).
+- The engine calls each profile's `rewriteContent` and never names a tool: a branch on a tool is a question its profile answers.
+- The engine writes nothing; `DiskSink` writes every artifact kind through the contract and never rewrites content.
+- Sink and engine still differ in bytes on the paths `DIVERGENCES` lists in `translate-distribution-conformance.integration.test.ts`; the list only shrinks.
 
 ## Tests
 
-- `tests/contexts/translate/`, mirroring the source, with the kit in `testing/` (`plugin-content-translator-kit.ts`).
-- A guard ships with the mutation that proves it; the context's mutation scope is `translate` in `mutation-scopes.json`.
-- Stub a tool with `aProfile()` or `withSections`; a real layout stands for the sink.
-
-## Never
-
-- Name a tool id in the engine: a branch on a tool is a question its profile should answer.
-- Write to disk from `domain/`.
-- Import `domain/`, `ports/` or `infrastructure/` from another context.
+- `tests/contexts/translate/` mirrors the source; `testing/` holds the kit (`plugin-content-translator-kit.ts`, `declared-tool-catalog.ts`, `synthetic-tool-profile.ts`); a rewrite is proven on a fixture that carries the marker it rewrites.
+- `tests/golden/framework-build-golden.golden.test.ts` freezes a full build per target; its machine-independence rules are in the `test` skill.

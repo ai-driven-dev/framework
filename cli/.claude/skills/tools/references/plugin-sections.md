@@ -1,47 +1,41 @@
-# Reference: plugin sections
+# Plugin sections
 
-A tool says how it takes plugins with three sections: `layout` (where plugins land; a union on
-`mode`), `manifest` (native only) and `hooks` (how hooks are delivered). `profile/plugin-answers.ts`
-composes them into the answers a caller asks. `define-tool` refuses a profile whose three disagree.
-The params are declared and documented in `sections/layout-section.ts` and
-`sections/manifest-section.ts`. Read them there: this page carries only the decisions a field list
-cannot state, and a copied list would age at every field.
+A tool says how it takes plugins with three sections: `layout` (a union on `mode`), `manifest` (native only) and `hooks` (how hooks are delivered). `domain/profile/plugin-answers.ts` composes them into the answers a caller asks, and `define-tool.ts` refuses a profile whose three disagree. The params are documented in `sections/layout-section.ts`, `sections/manifest-section.ts` and `sections/hooks-section.ts`; read them there.
 
-## Three modes
+## Layout mode
 
-| Mode | When to use |
-|---|---|
-| `"native"` | the tool has a first-class plugin directory structure |
-| `"flat"` | the tool stores plugins as flat files under a name prefix |
-| `"unsupported"` | the tool has no plugin concept |
+| Mode | Declared by | When |
+| --- | --- | --- |
+| `native` | `nativeLayout` | the tool has a plugin directory and, usually, its own plugin CLI |
+| `flat` | `flatPlacement` | the tool loads a plugin's files from its workspace under a name prefix |
+| `unsupported` | `{ mode: "unsupported" }` | the tool has no plugin concept |
 
-## translationMode (manifest section)
+## Agreement
 
-- `"marketplace"` — register a plugin reference in the tool's native config; nothing is
-  materialized on disk.
-- `"flat"` — materialize plugin content as flat files (automatic for `mode: "flat"`).
-- `null` — neutral native; no translation strategy applies.
+| Layout | Manifest | Hooks delivery |
+| --- | --- | --- |
+| `native` | required | `plugin-file`, `project-merge` or `none` |
+| `flat` | refused | `bridge`, `project-merge` with a `flat` part, or `none` |
+| `unsupported` | refused | `none` |
 
-The profile only declares the mode. Routing on it at install time is `framework`'s job
-(`contexts/installation/application/materialize/plugin-translator-factory.ts` — a name that
-predates the `translate` context and should not be confused with it). `translate` itself does the
-author-side `aidd translate` build, a different pipeline reading the same capability.
+## Hooks delivery
 
-## installScope (layout section)
+- A `hooks` section is required whenever a layout is declared.
+- `none` carries the reason the tool runs no plugin hook.
 
-- `"project"` (the default) — plugins land relative to the project root.
-- `"user"` — relative to the user home directory; requires a `userPluginsDir` resolver.
+## Install scope
 
-## nativeActivation (layout section)
+- `project` (the default): plugins land under the project root.
+- `user`: plugins land under the home directory and need a `userPluginsDir` resolver.
 
-Declaring it says the tool writes its own marketplace registration through its own CLI, and the
-marketplace sync stands back: `marketplaceSettings` still says *where* the file is, for the
-gitignore and for `status`, but no longer *who* writes it. Every verb and argument on it was
-measured against the real binary, and the doc comments in the source say what each measurement
-found. Do not add one by analogy with another tool.
+## Native activation
+
+- Declaring `nativeActivation` says the tool writes its own marketplace registration through its own CLI, so the marketplace sync stands back.
+- `marketplaceSettings` still says where the registration file is, for the gitignore and for `status`.
+- Measure every verb and argument against the real binary; the doc comments of `NativeActivationSpec` in `contract/native-registration-spec.ts` say what each measurement found.
+- Never add one by analogy with another tool.
 
 ## MCP namespacing
 
-Every flat MCP merge key-prefixes servers by `<plugin>-`. A tool whose MCP config lives at one
-primary location has no isolation otherwise: two plugins declaring a server of the same name
-collide. The prefix is mandatory for every tool.
+- A flat MCP merge prefixes every server key with the plugin name, through `flatMcpKeyPrefix` in `shared/domain/materialization/flat-paths.ts`.
+- The prefix is mandatory: two plugins that declare a server of the same name would otherwise collide.

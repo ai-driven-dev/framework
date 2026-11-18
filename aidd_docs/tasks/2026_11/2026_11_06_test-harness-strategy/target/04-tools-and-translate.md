@@ -213,7 +213,7 @@ Engine signature (decided): `translate(distribution, profile) -> OutputFile[]`.
 - Pure: reads no disk and no clock; the distribution is already in memory and the profile is data plus named behaviours from `tools`. Output order is sorted (I4).
 - `OutputFile`: today B returns `InstallationFile[]`. The exact shape of `OutputFile` (at least path and content; whether installation's ownership and hash fields belong to it or to the list sink) is to fix. Proposal, not evidenced.
 - Two sinks, same engine output:
-  - Disk sink: writes the list under an output root through the `FileWriter` port and owns what only A does today: output guard (`force`, non-empty folder), manifest, catalogue, schema check. Used by `aidd translate`, `aidd sync`, build for distributions and ensure-built. The canon read from disk (today `translate-source.ts`) produces the `PluginDistribution` that feeds the engine.
+  - Disk sink: writes the list under an output root through the `FileWriter` port and owns what only A does today: output guard (`force`, non-empty folder), manifest, catalogue, schema check. Used by `aidd translate`, `aidd sync`, build for distributions and ensure-built. The canon read from disk (today `build-native-tree.ts`) produces the `PluginDistribution` that feeds the engine.
   - List sink: no code of its own: the list is the result, handed to `installation`, which keeps writing, ownership and drift. Used by install, add, update and restore.
 - What moves where (proposal, sized from the table above):
   - From the profiles' `build.ts` (7, about 1200 lines) and the `artifact-rules` duplicated steps: paths, token, hooks shape, bridge, rename and collision detection become one implementation in the engine, parameterised by profile data.
@@ -226,7 +226,7 @@ Engine signature (decided): `translate(distribution, profile) -> OutputFile[]`.
 
 | Heading | Content |
 | --- | --- |
-| Domain services | reading and validating the source catalogue (`translate-source.ts:57-100`); translating one component (scattered between A and B today, one engine under form 1); collision detection (duplicated today); `@{{TOOLS}}/` guard (`shared-plugin-helpers.ts`) |
+| Domain services | reading and validating the source catalogue (`readSourceMarketplace` in `build-native-tree.ts`); translating one component (scattered between A and B today, one engine under form 1); collision detection (duplicated today); `@{{TOOLS}}/` guard (`shared-plugin-helpers.ts`) |
 | Commands owned | build a native tree from the canon (today `FrameworkBuildUseCase`); translate a distribution into installation files (today `translateWithComponentPaths`); both renamed to the command convention (one file, one class of the same name, public `execute(command)`, no `UseCase` suffix) |
 | Ports owned | `FrameworkBuild`, consumed by `framework` (ensure-built) and `presentation` (`translate` command); target: consumers reach it through `translate`'s `application/` |
 | Ports consumed | `ToolCatalog`, `FileReader`, `FileWriter`, `Hasher`, `Logger`, `JsonSchemaValidator` |
