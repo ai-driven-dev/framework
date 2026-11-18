@@ -1,6 +1,6 @@
 # Coding Assertions
 
-What must be green for `cli/` code to count as done. The repository's own gates are in `aidd_docs/memory/coding-assertions.md`.
+What must be green for `cli/` code to count as done. The repository's own gates are in [`aidd_docs/memory/coding-assertions.md`](../../../aidd_docs/memory/coding-assertions.md).
 
 ## Before commit
 

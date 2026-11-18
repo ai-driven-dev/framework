@@ -13,7 +13,7 @@ How `cli/` is tested. Levels, guards and the review grid: [`cli-tests.md`](../..
 
 | Command | Runs |
 | --- | --- |
-| `pnpm test` | every project, no build |
+| `pnpm test` | every project; e2e and golden build into `.e2e-build/`, never `dist/` |
 | `pnpm test:unit`, `test:contract`, `test:integration`, `test:e2e`, `test:golden`, `test:arch` | one project |
 | `pnpm smoke` | the built binary over `scripts/smoke-tools.sh`, hermetic |
 | `pnpm smoke:full`, `smoke:collision` | the remote fetch; a person's own install left as seeded |
@@ -28,7 +28,7 @@ How `cli/` is tested. Levels, guards and the review grid: [`cli-tests.md`](../..
 ## Fixtures and sandbox
 
 - `tests/fixtures/` is read-only; mutate a copy in a temp directory.
-- A temp directory is `mkdtemp(join(tmpdir(), "aidd-<thing>-"))`; the prefix is what `scripts/sweep-stale-test-dirs.cjs` reclaims.
+- A temp directory is `mkdtemp(join(tmpdir(), "aidd-<thing>-"))`; the prefix is what the repository root's `scripts/sweep-stale-test-dirs.cjs` reclaims, loaded by `tests/helpers/sweep-stale-temp-dirs.ts`.
 - A sandboxed run relocates `HOME`, `XDG_CONFIG_HOME`, `USERPROFILE`, `APPDATA` and `CODEX_HOME` and narrows `PATH` (`tests/e2e/helpers.ts`, held by `sandbox-reaches-no-tool-binary.e2e.test.ts`).
 - Never run `setup`, `marketplace add` or `plugin install` at the repository root: it tracks `.codex/`, `.agents/` and `.claude/`, so use a fresh temp directory.
 - Green unit and integration tests prove output shape, never that a tool consumes it: that is `pnpm smoke`.
