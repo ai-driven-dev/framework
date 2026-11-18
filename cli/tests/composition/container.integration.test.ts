@@ -17,6 +17,7 @@ import { FakeHostActions } from "../contexts/host-registration/testing/fake-host
 import { FakeHostMarketplaceSources } from "../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf, TOOL } from "../contexts/tools/testing/catalog-of.js";
+import { hostRecord } from "../helpers/host-record-reading.js";
 
 describe("createDeps", () => {
   const tools = catalogOf();
@@ -456,7 +457,9 @@ describe("createDeps", () => {
       manifest.addTool(TOOL.claude, "1.0.0", []);
       await base.manifestRepo.save(manifest);
       await syncSettingsUseCase.execute({ projectRoot: root, tools, enablePlugins: ["aidd-test"] });
-      const recorded = (await base.manifestRepo.load())?.getNativeRegistrations(TOOL.claude);
+      const recorded = hostRecord(
+        (await base.manifestRepo.load())?.getNativeRegistrations(TOOL.claude)
+      );
       if (recorded === undefined) throw new Error("the first sync recorded nothing");
       const staled = await base.manifestRepo.load();
       if (staled === null) throw new Error("the first sync saved no manifest");

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { NativeHostRegistrationGate } from "../../../src/contexts/host-registration/application/native-host-registration-gate.js";
 import { RefreshHostPlugin } from "../../../src/contexts/host-registration/application/refresh-host-plugin.js";
 import type { HostPluginRegistryReading } from "../../../src/contexts/host-registration/domain/plugin-registry-reading.js";
+import type { RegistrationRecord } from "../../../src/contexts/host-registration/domain/registration-record.js";
 import type { HostMarketplaceSources } from "../../../src/contexts/host-registration/ports/host-marketplace-sources.js";
 import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
@@ -18,7 +19,7 @@ const HOST = "real-catalog";
 const REF = `test-plugin@${HOST}`;
 const LOCATION = "/host/registry";
 const provenance = { kind: "registry" as const, source: "/owned/source" };
-const registrations: NativeRegistrations = {
+const registrations: NativeRegistrations & RegistrationRecord = {
   binary: "copilot",
   marketplaces: [{ alias: "alias", hostName: HOST, provenance }],
   pluginRefs: [REF],

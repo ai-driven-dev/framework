@@ -15,6 +15,7 @@ import { FakeHostActions } from "../../contexts/host-registration/testing/fake-h
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { hostRecord } from "../../helpers/host-record-reading.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
@@ -1500,7 +1501,7 @@ describe("clean --scope user", () => {
       "refuses an orphan machine %s before uninstalling a proven catalogue's own ref",
       async (placement) => {
         const manifest = manifestWithClaude();
-        const registrations = manifest.getNativeRegistrations(TOOL.claude);
+        const registrations = hostRecord(manifest.getNativeRegistrations(TOOL.claude));
         if (registrations === undefined) throw new Error("fixture missing native registration");
         manifest.setNativeRegistrations(TOOL.claude, {
           ...registrations,
@@ -1541,13 +1542,12 @@ describe("clean --scope user", () => {
 
     it("refuses duplicate host catalogue registrations before uninstall or cache purge", async () => {
       const manifest = manifestWithClaude();
-      const registrations = manifest.getNativeRegistrations(TOOL.claude);
-      if (registrations === undefined) throw new Error("fixture missing native registration");
+      const registrations = hostRecord(manifest.getNativeRegistrations(TOOL.claude));
       manifest.setNativeRegistrations(TOOL.claude, {
         ...registrations,
         marketplaces: [
-          ...registrations.marketplaces,
-          { ...registrations.marketplaces[0], alias: "second-alias" },
+          ...(registrations?.marketplaces ?? []),
+          { ...registrations?.marketplaces[0], alias: "second-alias" },
         ],
       });
       const repo = new InMemoryManifestRepository(manifest);

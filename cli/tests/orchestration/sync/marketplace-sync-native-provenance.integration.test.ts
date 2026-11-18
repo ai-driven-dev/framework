@@ -9,6 +9,7 @@ import { FakeHostActions } from "../../contexts/host-registration/testing/fake-h
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { hostRecord } from "../../helpers/host-record-reading.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
@@ -189,7 +190,7 @@ describe.each([TOOL.codex, TOOL.copilot] as const)("%s native marketplace proven
       const recovered = change.startsWith("recovered proof");
       const sharedAlias = change === "recovered proof with a shared host alias";
       const machine = canonicallyOwned(toolId);
-      const target = machine.getNativeRegistrations(toolId)?.marketplaces[0];
+      const target = hostRecord(machine.getNativeRegistrations(toolId))?.marketplaces[0];
       if (target === undefined) throw new Error("fixture lacks canonical catalogue");
       const otherRef = sharedAlias ? `sibling-plugin@${CATALOG}` : "aidd-dev@other-catalog";
       const staleRef = `obsolete-plugin@${CATALOG}`;

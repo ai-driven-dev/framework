@@ -19,10 +19,14 @@ import {
   type MarketplaceCatalogIdentity,
   pluginSetDifference,
 } from "../domain/marketplace-source-conflict.js";
-import type { NativeMarketplaceSource } from "../domain/native-marketplace-source.js";
 import type {
   NativeMarketplaceRegistration,
-  RegistrationRecord,
+  NativeMarketplaceSource,
+} from "../domain/native-marketplace-source.js";
+import {
+  pluginRefsOf,
+  type RegistrationRecordData,
+  recordedMarketplaces,
 } from "../domain/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
@@ -63,21 +67,20 @@ export interface HostRegistrationOutcome {
 }
 
 /** What the machine-wide record holds for a tool. Read when needed, never ahead of it. */
-export interface MachineRegistrations {
-  readonly marketplaces: readonly RegisteredMarketplace[];
+export type MachineRegistrations = RegistrationRecordData & {
   readonly pluginClaims?: readonly { readonly ref: string }[];
-}
+};
 
 /** What other records say about a tool's registrations, handed over by the caller that owns them. */
 export interface RegistrationClaims {
   /** The registrations this run's own record already holds for the tool. */
-  readonly recorded: RegistrationRecord | undefined;
+  readonly recorded: RegistrationRecordData | undefined;
   /** The machine-wide record, absent when it is empty or not kept. */
   readonly machine: () => Promise<MachineRegistrations | undefined>;
   /** Whether a machine-wide record is kept at all. */
   readonly machineKept: boolean;
   /** The project record as last saved. */
-  readonly persistedProject: () => Promise<RegistrationRecord | undefined>;
+  readonly persistedProject: () => Promise<RegistrationRecordData | undefined>;
 }
 
 export interface RegisterPluginWithHostCommand<M extends RegistrationSubject> {
@@ -180,7 +183,7 @@ export class RegisterPluginWithHost {
     const preservedMarketplaces: RegisteredMarketplace[] = [];
     const catalogClaims: RegisteredMarketplace[] = [];
     const addedHostNames = new Set<string>();
-    const recorded = claims.recorded?.marketplaces;
+    const recorded = recordedMarketplaces(claims.recorded);
     let buildFailed = false;
     for (const marketplace of marketplaces) {
       const builtDir = await command.build(marketplace);
@@ -291,7 +294,7 @@ export class RegisterPluginWithHost {
     const { profile, claims } = run;
     const hostRegistry = this.hosts.pluginRegistries.get(profile.toolId);
     if (hostRegistry === undefined) return { refsToEnable: refs, alreadyOwnedRefs: [] };
-    const ownRefs = claims.recorded?.pluginRefs;
+    const ownRefs = pluginRefsOf(claims.recorded);
     const onHost = (await hostRegistry.read(run.projectRoot)).refs;
     const machineClaims = (await claims.machine())?.pluginClaims ?? [];
     const refsToEnable: string[] = [];
@@ -323,17 +326,18 @@ export class RegisterPluginWithHost {
     fresh?: RegisteredMarketplace
   ): Promise<NativeCatalogProof> {
     const { profile, projectRoot, claims } = run;
-    const registrations = await claims.machine();
-    const project = await claims.persistedProject();
+    const machine = await claims.machine();
+    const machineMarketplaces = recordedMarketplaces(machine);
+    const persisted = await claims.persistedProject();
     const localRegistration = profile.pluginEnablementIsMachineGlobal()
       ? undefined
-      : project?.marketplaces.find((entry) => entry.hostName === hostName);
+      : recordedMarketplaces(persisted).find((entry) => entry.hostName === hostName);
     const canonical =
       fresh !== undefined ||
-      registrations?.marketplaces.some((entry) => entry.hostName === hostName) === true ||
+      machineMarketplaces.some((entry) => entry.hostName === hostName) ||
       localRegistration !== undefined;
     const registration = fresh ??
-      registrations?.marketplaces.find((entry) => entry.hostName === hostName) ??
+      machineMarketplaces.find((entry) => entry.hostName === hostName) ??
       localRegistration ?? {
         alias: hostName,
         hostName,
@@ -356,8 +360,8 @@ export class RegisterPluginWithHost {
     if (reading.refs === undefined)
       return { ...base, hostReadable: false, unreadable: reading.unreadable ?? reading.location };
     const claimed = new Set([
-      ...(registrations?.pluginClaims ?? []).map((claim) => claim.ref),
-      ...(profile.pluginEnablementIsMachineGlobal() ? [] : (project?.pluginRefs ?? [])),
+      ...(machine?.pluginClaims ?? []).map((claim) => claim.ref),
+      ...(profile.pluginEnablementIsMachineGlobal() ? [] : pluginRefsOf(persisted)),
     ]);
     const foreignRef = [...reading.refs].find(
       ([ref, entry]) =>

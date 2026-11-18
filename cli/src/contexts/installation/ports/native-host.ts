@@ -1,9 +1,8 @@
 import type { MarketplaceScope } from "../../../shared/domain/scope.js";
 import type { AiToolId, ToolId } from "../../../shared/domain/tool.js";
 import type {
-  NativeMarketplaceRegistration,
   NativePluginClaim,
-  RegistrationRecord,
+  NativeRegistrations,
 } from "../domain/manifest/native-registrations.js";
 import type { HostRefCountingTool, NativeHostTool } from "./tool-sections.js";
 
@@ -20,7 +19,10 @@ interface RecordedClaim {
   readonly ref: string;
 }
 
-type ClaimedRecord<Claim extends RecordedClaim = RecordedClaim> = RegistrationRecord & {
+type ClaimedRecord<Claim extends RecordedClaim = RecordedClaim> = Omit<
+  NativeRegistrations,
+  "pluginClaims"
+> & {
   readonly pluginClaims?: readonly Claim[];
 };
 
@@ -46,15 +48,15 @@ type WithClaims<R> = R & { readonly pluginClaims: readonly RecordedClaim[] };
 /** What installation asks of the host registration to read or rewrite a record it keeps. */
 export interface RegistrationRecordRules {
   /** The refs recorded on the host, none when nothing was recorded. */
-  readonly pluginRefsOf: (record: RegistrationRecord | undefined) => readonly string[];
+  readonly pluginRefsOf: (record: NativeRegistrations | undefined) => readonly string[];
   /** The registration an alias stands for, `undefined` when it was never registered. */
   readonly marketplaceOf: (
-    record: Pick<RegistrationRecord, "marketplaces">,
+    record: NativeRegistrations,
     alias: string | undefined
-  ) => NativeMarketplaceRegistration | undefined;
+  ) => RegisteredMarketplace | undefined;
   /** The claims on the refs sitting on the host name the alias was registered under. */
   readonly claimsOnMarketplace: <Claim extends RecordedClaim>(
-    record: Pick<RegistrationRecord, "marketplaces"> & { readonly pluginClaims?: readonly Claim[] },
+    record: ClaimedRecord<Claim>,
     alias: string
   ) => readonly Claim[];
   /** Whether a ref sits on one of the host names. */
@@ -67,21 +69,18 @@ export interface RegistrationRecordRules {
   readonly refOnHostName: (plugin: string, hostName: string) => string;
   /** The ref a plugin has on the host, `undefined` when nothing was recorded for the alias. */
   readonly refOf: (
-    record: RegistrationRecord | undefined,
+    record: NativeRegistrations | undefined,
     plugin: string,
     alias: string | undefined
   ) => string | undefined;
   /** The refs, then the claimed refs, that sit on one of the host names. */
-  readonly refsOnHosts: (
-    record: Pick<ClaimedRecord, "pluginRefs" | "pluginClaims">,
-    hostNames: Iterable<string>
-  ) => string[];
+  readonly refsOnHosts: (record: ClaimedRecord, hostNames: Iterable<string>) => string[];
   readonly registrationPreview: (
-    record: RegistrationRecord,
+    record: NativeRegistrations,
     cacheRoot: string | undefined
   ) => RegistrationPreview;
   /** The record without one ref, every other entry untouched. */
-  readonly withoutRef: <R extends RegistrationRecord>(record: R, ref: string) => R;
+  readonly withoutRef: <R extends NativeRegistrations>(record: R, ref: string) => R;
   /** The record without a ref and the claim the manifest keeps on it, claims list always written. */
   readonly withoutClaimedRef: <R extends ClaimedRecord>(record: R, ref: string) => WithClaims<R>;
   /** The record without a marketplace, nor any ref or claim on the host name it was registered under. */
@@ -115,7 +114,7 @@ export interface NativeHostRegistration {
 export interface HostWithdrawal<Proof> {
   readonly assertProjectSource: (command: ProjectSourceCommand) => Promise<void>;
   readonly proveClaimedRef: (
-    registrations: RegistrationRecord,
+    registrations: NativeRegistrations,
     claim: ClaimedHostRef,
     projectRoot: string
   ) => Promise<Proof>;
@@ -135,8 +134,8 @@ export interface MarketplaceRemovalPlanner {
   /** The claims on the refs come back as given, narrowed to the catalogue. */
   readonly planMarketplaceRemoval: <Claim extends { readonly ref: string }>(
     tool: HostRefCountingTool,
-    registrations: RegistrationRecord & { readonly pluginClaims?: readonly Claim[] },
-    registration: NativeMarketplaceRegistration,
+    registrations: ClaimedRecord<Claim>,
+    registration: RegisteredMarketplace,
     projectRoot: string
   ) => Promise<{
     activator: MarketplaceRemovalActions;
@@ -174,7 +173,7 @@ export interface WithdrawFromHostCommand {
   readonly tool: NativeHostTool;
   readonly plugin: WithdrawnPlugin;
   readonly projectRoot: string;
-  readonly registrations: RegistrationRecord | undefined;
+  readonly registrations: NativeRegistrations | undefined;
   readonly claims: WithdrawalClaims;
   /** Absent when the host keeps no plugin cache. */
   readonly pluginCacheRoot: string | undefined;
@@ -197,7 +196,7 @@ export type CacheCandidateResolver = WithdrawalClaims["resolveCacheCandidate"];
 
 interface RegisteredTool {
   readonly tool: NativeHostTool;
-  readonly registrations: RegistrationRecord;
+  readonly registrations: NativeRegistrations;
   readonly cacheRoot: string | undefined;
 }
 
@@ -223,29 +222,32 @@ export interface RegistrationSubject {
   readonly scope: MarketplaceScope;
 }
 
-export type RegisteredMarketplace = NativeMarketplaceRegistration;
+/** A marketplace the host registered: the manifest reads the two names and keeps the rest. */
+export type RegisteredMarketplace = Readonly<Record<string, unknown>> & {
+  readonly alias: string;
+  readonly hostName: string;
+};
 
 /** What the manifest records after one tool's registration. */
-export interface HostRegistrationOutcome {
+export type HostRegistrationOutcome = {
   readonly marketplaces: readonly RegisteredMarketplace[];
   readonly preservedMarketplaces: readonly RegisteredMarketplace[];
   readonly catalogClaims: readonly RegisteredMarketplace[];
   readonly pluginRefs: readonly string[];
   /** True when a build failed, so the host keeps its earlier registration for it. */
   readonly buildFailed: boolean;
-}
+};
 
-interface MachineRegistrations {
-  readonly marketplaces: readonly RegisteredMarketplace[];
+type MachineRegistrations = NativeRegistrations & {
   readonly pluginClaims?: readonly { readonly ref: string }[];
-}
+};
 
 /** The records the caller holds, read only when the registration needs them. */
 export interface RegistrationClaims {
-  readonly recorded: RegistrationRecord | undefined;
+  readonly recorded: NativeRegistrations | undefined;
   readonly machine: () => Promise<MachineRegistrations | undefined>;
   readonly machineKept: boolean;
-  readonly persistedProject: () => Promise<RegistrationRecord | undefined>;
+  readonly persistedProject: () => Promise<NativeRegistrations | undefined>;
 }
 
 export interface RegisterPluginWithHostCommand<M extends RegistrationSubject> {

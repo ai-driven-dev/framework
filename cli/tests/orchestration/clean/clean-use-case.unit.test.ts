@@ -18,6 +18,7 @@ import type { AiToolId, ToolId } from "../../../src/shared/domain/tool.js";
 import { FakeHostActions } from "../../contexts/host-registration/testing/fake-host-actions.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { catalogOf, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { hostRecord } from "../../helpers/host-record-reading.js";
 import { buildUnitDeps, initAndInstall } from "../../helpers/ports/build-unit-deps.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
@@ -438,7 +439,7 @@ describe("clean", () => {
         manifest.setNativeRegistrations(TOOL.codex, {
           binary: BINARY,
           marketplaces: [
-            ...(manifest.getNativeRegistrations(TOOL.codex)?.marketplaces ?? []),
+            ...(hostRecord(manifest.getNativeRegistrations(TOOL.codex))?.marketplaces ?? []),
             {
               alias: "other",
               hostName: "other-host",
@@ -453,11 +454,10 @@ describe("clean", () => {
           pluginRefs: [REF, "unclaimed@other-host"],
         });
         const fs = new InMemoryFileAdapter();
-        for (const root of [PROJECT_ROOT, "/project-b", "/project-c"])
-          fs.setFile(join(root, "marker"), "project");
+        const roots = [PROJECT_ROOT, "/project-b", "/project-c"];
+        for (const root of roots) fs.setFile(join(root, "marker"), "project");
         const references = new UserSourceReferencesAdapter(fs, () => "/fake-home/.config/aidd");
-        for (const root of [PROJECT_ROOT, "/project-b", "/project-c"])
-          await references.addReference("1.0.0", root);
+        for (const root of roots) await references.addReference("1.0.0", root);
         const registry = new InMemoryMarketplaceRegistry();
         await registry.save(
           PROJECT_ROOT,

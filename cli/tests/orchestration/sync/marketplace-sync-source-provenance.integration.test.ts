@@ -11,6 +11,7 @@ import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/te
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { hostRecord } from "../../helpers/host-record-reading.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
@@ -636,7 +637,8 @@ describe("native catalogue source provenance", () => {
     expect(activator.addedMarketplaces).toEqual(["/built/codex"]);
     expect(activator.enabledPlugins).toEqual(["test-plugin@same-name"]);
     expect(
-      machineRepo.getCurrent()?.getNativeRegistrations(codex)?.marketplaces[0].provenance
+      hostRecord(machineRepo.getCurrent()?.getNativeRegistrations(codex))?.marketplaces[0]
+        .provenance
     ).toEqual({
       kind: "effective-list",
       root: "/built/codex",

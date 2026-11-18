@@ -1,58 +1,38 @@
-/** Where the host says a marketplace comes from, kept to tell a stale entry from a current one. */
-export type NativeMarketplaceSource =
-  | { readonly kind: "registry"; readonly source: string }
-  | {
-      readonly kind: "effective-list";
-      readonly root: string;
-      readonly sourceType: string;
-      readonly source: string;
-    };
-
-/** A marketplace as the manifest records it: the project's alias and the host's own name. */
-export interface NativeMarketplaceRegistration {
-  readonly alias: string;
-  readonly hostName: string;
-  /** Absent on older records. */
-  readonly provenance?: NativeMarketplaceSource;
-}
-
-/** The host data the manifest stores for a tool; claims on its refs are kept apart. */
-export interface RegistrationRecord {
-  readonly binary: string;
-  readonly marketplaces: readonly NativeMarketplaceRegistration[];
-  readonly pluginRefs: readonly string[];
-}
-
-export interface NativeRegistrations extends RegistrationRecord {
-  readonly pluginClaims?: readonly NativePluginClaim[];
-}
+import { InvalidManifestDataError } from "../../../../shared/domain/errors.js";
+import { asPlainObject } from "../../../../shared/domain/reading/plain-object.js";
 
 export interface NativePluginClaim {
   readonly ref: string;
   readonly dependents: readonly string[];
 }
 
-export interface NativeRegistrationsData {
-  binary: string;
-  marketplaces: NativeMarketplaceRegistration[];
-  pluginRefs: string[];
-  pluginClaims?: NativePluginClaim[];
-}
+/**
+ * What the manifest stores for a tool's host registration. The host record is opaque here and
+ * travels as it came, since only host registration knows what it means; the claims on its refs
+ * are the manifest's own, so they alone are read.
+ *
+ * Limit: a hand-edited record keeps what the host's rewrites pass through. Every host read goes
+ * through `validProvenance`, so nothing invalid is acted on. A rewrite through the host codec
+ * normalizes: `withoutMarketplace` drops entry-level unknown keys and invalid provenance but keeps
+ * the top-level keys, and `afterActivation` and `mergeCatalogueClaims` drop all of it. A
+ * pass-through rewrite (`withoutRef`) keeps unknown keys and invalid provenance as they came. No
+ * manifest has been seen to hold either.
+ */
+export type NativeRegistrations = Readonly<Record<string, unknown>> & {
+  readonly pluginClaims?: readonly NativePluginClaim[];
+};
 
-export function toNativeRegistrationsData(
+/** The host data as it came, then the claims, which are copied so the manifest owns them. */
+export function serializeNativeRegistrations(
   registrations: NativeRegistrations
-): NativeRegistrationsData {
+): Record<string, unknown> {
+  const { pluginClaims, ...host } = registrations;
   return {
-    binary: registrations.binary,
-    marketplaces: registrations.marketplaces.map((m) => ({
-      ...m,
-      ...(m.provenance === undefined ? {} : { provenance: { ...m.provenance } }),
-    })),
-    pluginRefs: [...registrations.pluginRefs],
-    ...(registrations.pluginClaims === undefined
+    ...host,
+    ...(pluginClaims === undefined
       ? {}
       : {
-          pluginClaims: registrations.pluginClaims.map((claim) => ({
+          pluginClaims: pluginClaims.map((claim) => ({
             ref: claim.ref,
             dependents: [...claim.dependents],
           })),
@@ -60,39 +40,32 @@ export function toNativeRegistrationsData(
   };
 }
 
-export function parseNativeRegistrations(
-  data: NativeRegistrationsData | undefined
-): NativeRegistrations | undefined {
+export function parseNativeRegistrations(data: unknown): NativeRegistrations | undefined {
   if (data === undefined) return undefined;
-  return {
-    binary: data.binary,
-    marketplaces: data.marketplaces.map((m) => ({
-      alias: m.alias,
-      hostName: m.hostName,
-      ...(validProvenance(m.provenance) ? { provenance: { ...m.provenance } } : {}),
-    })),
-    pluginRefs: [...data.pluginRefs],
-    ...(data.pluginClaims === undefined
-      ? {}
-      : {
-          pluginClaims: data.pluginClaims.map((claim) => ({
-            ref: claim.ref,
-            dependents: [...claim.dependents],
-          })),
-        }),
-  };
+  const stored = asPlainObject(data);
+  if (stored === null) {
+    throw new InvalidManifestDataError("nativeRegistrations: expected an object.");
+  }
+  const { pluginClaims, ...host } = stored;
+  return pluginClaims === undefined ? host : { ...host, pluginClaims: readClaims(pluginClaims) };
 }
 
-function validProvenance(value: unknown): value is NativeMarketplaceSource {
-  if (value === null || typeof value !== "object") return false;
-  const data = value as Record<string, unknown>;
-  if (typeof data.source !== "string" || data.source === "") return false;
-  if (data.kind === "registry") return true;
-  return (
-    data.kind === "effective-list" &&
-    typeof data.root === "string" &&
-    data.root !== "" &&
-    typeof data.sourceType === "string" &&
-    data.sourceType !== ""
-  );
+function readClaims(value: unknown): NativePluginClaim[] {
+  if (!Array.isArray(value)) {
+    throw new InvalidManifestDataError("nativeRegistrations.pluginClaims: expected an array.");
+  }
+  return value.map((item) => {
+    const claim = asPlainObject(item);
+    if (
+      claim === null ||
+      typeof claim.ref !== "string" ||
+      !Array.isArray(claim.dependents) ||
+      !claim.dependents.every((dependent) => typeof dependent === "string")
+    ) {
+      throw new InvalidManifestDataError(
+        "nativeRegistrations.pluginClaims: expected a ref and its dependents."
+      );
+    }
+    return { ref: claim.ref, dependents: [...claim.dependents] };
+  });
 }

@@ -1,5 +1,8 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
-import type { RegistrationRecord } from "../domain/registration-record.js";
+import {
+  type RegistrationRecordData,
+  readRegistrationRecord,
+} from "../domain/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
 import type { HostPluginRegistry } from "../ports/host-plugin-registry.js";
@@ -10,7 +13,7 @@ export interface RefreshHostPluginCommand {
   readonly tool: ActivatedTool;
   readonly ref: string;
   readonly projectRoot: string;
-  readonly registrations?: RegistrationRecord;
+  readonly registrations?: RegistrationRecordData;
 }
 
 /** A refresh whose proofs all held: applying it is the only step left, so a caller can prove
@@ -47,7 +50,7 @@ export class RefreshHostPlugin {
         `${toolId}: ref '${ref}' is not provably enabled on the host; update refused.`
       );
     }
-    const registration = registrations?.marketplaces.find((marketplace) =>
+    const registration = readRegistrationRecord(registrations)?.marketplaces.find((marketplace) =>
       ref.endsWith(`@${marketplace.hostName}`)
     );
     if (registration === undefined)

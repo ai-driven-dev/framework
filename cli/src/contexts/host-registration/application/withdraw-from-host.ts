@@ -12,7 +12,13 @@ import {
   type PurgeVerdict,
 } from "../domain/cache-purge-policy.js";
 import type { HostPluginRegistryReading } from "../domain/plugin-registry-reading.js";
-import type { DependentClaim, RegistrationRecord } from "../domain/registration-record.js";
+import {
+  type DependentClaim,
+  type RegistrationRecord,
+  type RegistrationRecordData,
+  readRegistrationRecord,
+  recordedRegistrations,
+} from "../domain/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceRegistry } from "../ports/host-marketplace-registry.js";
 import type { HostPorts } from "../ports/host-ports.js";
@@ -55,7 +61,7 @@ export interface WithdrawFromHostCommand {
   readonly tool: NativeHostTool;
   readonly plugin: WithdrawnPlugin;
   readonly projectRoot: string;
-  readonly registrations: RegistrationRecord | undefined;
+  readonly registrations: RegistrationRecordData | undefined;
   readonly claims: WithdrawalClaims;
   /** Root of the host's own plugin cache; absent when the host keeps none. */
   readonly pluginCacheRoot: string | undefined;
@@ -80,7 +86,7 @@ export type CacheCandidateResolver = WithdrawalClaims["resolveCacheCandidate"];
 /** A tool whose host holds registrations this project or machine made. */
 export interface RegisteredTool {
   readonly tool: NativeHostTool;
-  readonly registrations: RegistrationRecord;
+  readonly registrations: RegistrationRecordData;
   /** Root of the host's own plugin cache; absent when the host keeps none. */
   readonly cacheRoot: string | undefined;
 }
@@ -93,6 +99,13 @@ export interface ProjectRegistrationWithdrawal extends RegisteredTool {
 export interface UserRegistrationWithdrawal extends RegisteredTool {
   /** Every ref a canonical machine claim owns for this tool. */
   readonly claimedRefs: readonly string[];
+}
+
+/** A tool a pass withdrew from, with its record as the host read it and the host names removed. */
+interface RemovedFromHost {
+  readonly withdrawal: RegisteredTool;
+  readonly registrations: RegistrationRecord;
+  readonly removedHostNames: ReadonlySet<string>;
 }
 
 /** A host ref proven removable, held until every proof of the batch has passed. */
@@ -142,7 +155,8 @@ export class WithdrawFromHost {
   }
 
   private async uninstall(command: WithdrawFromHostCommand): Promise<boolean | undefined> {
-    const { tool, plugin, projectRoot, registrations, claims } = command;
+    const { tool, plugin, projectRoot, claims } = command;
+    const registrations = readRegistrationRecord(command.registrations);
     const toolId = tool.toolId;
     const nativeActivation = tool.nativeActivation();
     if (nativeActivation == null) return undefined;
@@ -207,7 +221,8 @@ export class WithdrawFromHost {
 
   /** Refuses, before any change, a removal the host's own state does not prove safe. */
   async assertProjectSource(command: ProjectSourceCommand): Promise<void> {
-    const { tool, plugin, projectRoot, registrations } = command;
+    const { tool, plugin, projectRoot } = command;
+    const registrations = readRegistrationRecord(command.registrations);
     const toolId = tool.toolId;
     const activation = tool.nativeActivation();
     if (activation == null) return;
@@ -265,10 +280,11 @@ export class WithdrawFromHost {
   /** Proves an AIDD-owned ref is still enabled on a reachable host and sits under a catalogue this
    * project owns, so a batch can be refused before the first host change. */
   async proveClaimedRef(
-    registrations: RegistrationRecord,
+    registrationData: RegistrationRecordData,
     claim: ClaimedHostRef,
     projectRoot: string
   ): Promise<ProvenHostRef> {
+    const registrations = recordedRegistrations(registrationData);
     const activator = this.ports.activators.get(registrations.binary);
     const reader = this.ports.pluginRegistries.get(claim.tool);
     if (activator === undefined || !activator.isAvailable() || reader === undefined) {
@@ -345,7 +361,8 @@ export class WithdrawFromHost {
     command: WithdrawFromHostCommand,
     confirmed: boolean
   ): Promise<void> {
-    const { tool, plugin, registrations, claims, pluginCacheRoot } = command;
+    const { tool, plugin, claims, pluginCacheRoot } = command;
+    const registrations = readRegistrationRecord(command.registrations);
     if (pluginCacheRoot === undefined) return;
     const hostName = hostNameFor(registrations, plugin.marketplace);
     if (hostName === undefined) return;
@@ -378,7 +395,9 @@ export class WithdrawFromHost {
     withdrawals: readonly ProjectRegistrationWithdrawal[],
     facts: ProjectCleanFacts
   ): Promise<void> {
-    for (const { tool, registrations } of withdrawals) {
+    for (const withdrawal of withdrawals) {
+      const { tool } = withdrawal;
+      const registrations = recordedRegistrations(withdrawal.registrations);
       const toolId = tool.toolId;
       const activator = this.ports.activators.get(registrations.binary);
       if (activator === undefined || !activator.isAvailable()) continue;
@@ -417,19 +436,22 @@ export class WithdrawFromHost {
     withdrawals: readonly ProjectRegistrationWithdrawal[],
     facts: ProjectCleanFacts
   ): Promise<void> {
-    const removed = new Map<RegisteredTool, ReadonlySet<string>>();
+    const removed: RemovedFromHost[] = [];
     for (const withdrawal of withdrawals) {
-      const removedHostNames = await this.withdrawProjectTool(withdrawal, facts);
-      if (removedHostNames !== undefined) removed.set(withdrawal, removedHostNames);
+      const registrations = recordedRegistrations(withdrawal.registrations);
+      const removedHostNames = await this.withdrawProjectTool(withdrawal, registrations, facts);
+      if (removedHostNames !== undefined) {
+        removed.push({ withdrawal, registrations, removedHostNames });
+      }
     }
     await this.purgeMarketplaceCaches(removed, facts.resolveCacheCandidate);
   }
 
   private async withdrawProjectTool(
     withdrawal: ProjectRegistrationWithdrawal,
+    registrations: RegistrationRecord,
     facts: ProjectCleanFacts
   ): Promise<ReadonlySet<string> | undefined> {
-    const { registrations } = withdrawal;
     const { binary } = registrations;
     const activator = this.ports.activators.get(binary);
     if (activator === undefined || !activator.isAvailable()) {
@@ -443,11 +465,20 @@ export class WithdrawFromHost {
     // declares `forceRemoveArgs`, so Claude and Codex can refuse to remove a
     // marketplace that still has plugins installed from it.
     for (const ref of registrations.pluginRefs) {
-      await this.uninstallProjectRef(activator, withdrawal, ref, facts);
+      await this.uninstallProjectRef(activator, withdrawal, registrations, ref, facts);
     }
     const removedHostNames = new Set<string>();
     for (const { alias, hostName } of registrations.marketplaces) {
-      if (await this.removeProjectMarketplace(activator, withdrawal, alias, hostName, facts))
+      if (
+        await this.removeProjectMarketplace(
+          activator,
+          withdrawal,
+          registrations,
+          alias,
+          hostName,
+          facts
+        )
+      )
         removedHostNames.add(hostName);
     }
     return removedHostNames;
@@ -462,10 +493,11 @@ export class WithdrawFromHost {
   private async uninstallProjectRef(
     activator: HostActions,
     withdrawal: ProjectRegistrationWithdrawal,
+    registrations: RegistrationRecord,
     ref: string,
     facts: ProjectCleanFacts
   ): Promise<void> {
-    const { tool, registrations } = withdrawal;
+    const { tool } = withdrawal;
     const { binary } = registrations;
     const toolId = tool.toolId;
     const claim = (await facts.machineClaims(toolId))?.find((candidate) => candidate.ref === ref);
@@ -539,11 +571,12 @@ export class WithdrawFromHost {
   private async removeProjectMarketplace(
     activator: HostActions,
     withdrawal: ProjectRegistrationWithdrawal,
+    registrations: RegistrationRecord,
     alias: string,
     hostName: string,
     facts: ProjectCleanFacts
   ): Promise<boolean> {
-    const { tool, registrations, cacheRoot } = withdrawal;
+    const { tool, cacheRoot } = withdrawal;
     const { binary } = registrations;
     const scope = facts.marketplaceScopes.get(alias);
     if (scope === undefined) {
@@ -599,14 +632,19 @@ export class WithdrawFromHost {
   /** Refuses, before any change, a user clean whose host CLI cannot be reached: nothing is
    * undone for a tool whose binary is absent, and its canonical claims are kept. */
   assertUserHostsReachable(withdrawals: readonly UserRegistrationWithdrawal[]): void {
-    for (const withdrawal of withdrawals) this.reachableUserActivator(withdrawal);
+    for (const withdrawal of withdrawals) {
+      this.reachableUserActivator(withdrawal, recordedRegistrations(withdrawal.registrations));
+    }
   }
 
-  private reachableUserActivator(withdrawal: UserRegistrationWithdrawal): HostActions {
-    const activator = this.ports.activators.get(withdrawal.registrations.binary);
+  private reachableUserActivator(
+    withdrawal: UserRegistrationWithdrawal,
+    registrations: RegistrationRecord
+  ): HostActions {
+    const activator = this.ports.activators.get(registrations.binary);
     if (activator === undefined || !activator.isAvailable())
       throw new Error(
-        `${describeBinaryAbsent(withdrawal)} User clean refused; canonical claims retained.`
+        `${describeBinaryAbsent(withdrawal, registrations)} User clean refused; canonical claims retained.`
       );
     return activator;
   }
@@ -618,7 +656,9 @@ export class WithdrawFromHost {
     withdrawals: readonly UserRegistrationWithdrawal[],
     projectRoot: string
   ): Promise<void> {
-    for (const { tool, registrations, claimedRefs } of withdrawals) {
+    for (const withdrawal of withdrawals) {
+      const { tool, claimedRefs } = withdrawal;
+      const registrations = recordedRegistrations(withdrawal.registrations);
       const toolId = tool.toolId;
       if (claimedRefs.length > 0 && registrations.marketplaces.length === 0)
         throw new Error(
@@ -684,10 +724,11 @@ export class WithdrawFromHost {
     withdrawals: readonly UserRegistrationWithdrawal[],
     resolveCacheCandidate: CacheCandidateResolver
   ): Promise<void> {
-    const removed = new Map<RegisteredTool, ReadonlySet<string>>();
+    const removed: RemovedFromHost[] = [];
     for (const withdrawal of withdrawals) {
-      const activator = this.reachableUserActivator(withdrawal);
-      const { binary, marketplaces } = withdrawal.registrations;
+      const registrations = recordedRegistrations(withdrawal.registrations);
+      const activator = this.reachableUserActivator(withdrawal, registrations);
+      const { binary, marketplaces } = registrations;
       for (const ref of withdrawal.claimedRefs) {
         const uninstalled = bestEffortNativeCall(
           this.logger,
@@ -712,7 +753,7 @@ export class WithdrawFromHost {
           );
         removedHostNames.add(hostName);
       }
-      removed.set(withdrawal, removedHostNames);
+      removed.push({ withdrawal, registrations, removedHostNames });
     }
     await this.purgeMarketplaceCaches(removed, resolveCacheCandidate);
   }
@@ -721,10 +762,11 @@ export class WithdrawFromHost {
    * whose profile declares no plugin cache is not looked at: no path is invented for a tool that
    * never named one. */
   private async purgeMarketplaceCaches(
-    removed: ReadonlyMap<RegisteredTool, ReadonlySet<string>>,
+    removed: readonly RemovedFromHost[],
     resolveCacheCandidate: CacheCandidateResolver
   ): Promise<void> {
-    for (const [{ tool, registrations, cacheRoot }, removedHostNames] of removed) {
+    for (const { withdrawal, registrations, removedHostNames } of removed) {
+      const { tool, cacheRoot } = withdrawal;
       if (cacheRoot === undefined) continue;
       for (const { hostName } of registrations.marketplaces) {
         await this.purgeMarketplaceCache(
@@ -856,8 +898,11 @@ function describeSharedSourceSurvival(
 
 /** Named so a binary this run cannot reach still tells a person what it left standing: the
  * marketplace and plugin-ref counts, plus the host's own cache path when it keeps one. */
-function describeBinaryAbsent(withdrawal: UserRegistrationWithdrawal): string {
-  const { registrations, cacheRoot, claimedRefs } = withdrawal;
+function describeBinaryAbsent(
+  withdrawal: UserRegistrationWithdrawal,
+  registrations: RegistrationRecord
+): string {
+  const { cacheRoot, claimedRefs } = withdrawal;
   const { binary } = registrations;
   const base =
     `${binary}: registration left in place, the ${binary} CLI is not on the PATH. ` +

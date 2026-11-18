@@ -18,6 +18,7 @@ import {
   resolveRegisteredToolId,
   TOOL,
 } from "../../contexts/tools/testing/catalog-of.js";
+import { hostRecord } from "../../helpers/host-record-reading.js";
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
@@ -432,7 +433,7 @@ for (const toolId of [TOOL.codex]) {
     it("preserves a different canonical host catalogue and its dependent ref", async () => {
       const f = await fixture(enabled());
       const current = f.repo.getCurrent();
-      const registration = current?.getNativeRegistrations(toolId);
+      const registration = hostRecord(current?.getNativeRegistrations(toolId));
       expect(registration).toBeDefined();
       if (current === null || registration === undefined) throw new Error("fixture lacks registry");
       current.setNativeRegistrations(toolId, {

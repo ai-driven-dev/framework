@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   type NativeMarketplaceSource,
+  readMarketplaceRegistration,
   sameNativeMarketplaceSource,
 } from "../../../../src/contexts/host-registration/domain/native-marketplace-source.js";
 
@@ -58,5 +59,58 @@ describe("when two readings name the same marketplace source", () => {
     const recorded = { kind: "registry", source: "acme/market", root: "/old" } as const;
 
     expect(sameNativeMarketplaceSource(recorded, registry("acme/market"))).toBe(true);
+  });
+});
+
+describe("when a recorded marketplace registration is read", () => {
+  it("keeps a registry source without requiring an effective-list root", () => {
+    const entry = {
+      alias: "local",
+      hostName: "declared",
+      provenance: { kind: "registry", source: "/built" },
+    };
+
+    expect(readMarketplaceRegistration(entry)).toStrictEqual(entry);
+  });
+
+  it.each([
+    ["null", null],
+    ["scalar", "registry"],
+    ["unknown kind", { kind: "unknown", source: "/built" }],
+    [
+      "unknown kind with effective-list fields",
+      { kind: "unknown", source: "/built", root: "/host", sourceType: "local" },
+    ],
+    ["missing source", { kind: "registry" }],
+    ["empty source", { kind: "registry", source: "" }],
+    ["non-string source", { kind: "registry", source: 1 }],
+    ["missing root", { kind: "effective-list", source: "/built", sourceType: "local" }],
+    ["empty root", { kind: "effective-list", source: "/built", sourceType: "local", root: "" }],
+    ["non-string root", { kind: "effective-list", source: "/built", sourceType: "local", root: 1 }],
+    ["missing source type", { kind: "effective-list", source: "/built", root: "/host" }],
+    [
+      "empty source type",
+      { kind: "effective-list", source: "/built", root: "/host", sourceType: "" },
+    ],
+    [
+      "non-string source type",
+      { kind: "effective-list", source: "/built", root: "/host", sourceType: 1 },
+    ],
+  ])("leaves %s provenance unproven without dropping the registration", (_name, provenance) => {
+    // A persisted manifest is JSON: its provenance may not satisfy the declared type.
+    expect(
+      readMarketplaceRegistration({ alias: "local", hostName: "declared", provenance })
+    ).toStrictEqual({
+      alias: "local",
+      hostName: "declared",
+    });
+  });
+
+  it.each([
+    ["no alias", { hostName: "declared" }],
+    ["no host name", { alias: "local" }],
+    ["a scalar", "local"],
+  ])("reads no registration from %s", (_name, entry) => {
+    expect(readMarketplaceRegistration(entry)).toBeUndefined();
   });
 });

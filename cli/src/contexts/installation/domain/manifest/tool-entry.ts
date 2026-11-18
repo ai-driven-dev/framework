@@ -10,9 +10,8 @@ import {
 } from "./merge-files.js";
 import {
   type NativeRegistrations,
-  type NativeRegistrationsData,
   parseNativeRegistrations,
-  toNativeRegistrationsData,
+  serializeNativeRegistrations,
 } from "./native-registrations.js";
 import {
   parseTrackedFiles,
@@ -39,7 +38,7 @@ export interface ToolEntryData {
   files: TrackedFileData[];
   mergeFiles?: MergeFileEntryData[];
   plugins?: PluginEntryData[];
-  nativeRegistrations?: NativeRegistrationsData;
+  nativeRegistrations?: unknown;
 }
 
 export function createToolEntry(params: {
@@ -96,7 +95,7 @@ export function serializeToolEntry(entry: ToolEntry): ToolEntryData {
     mergeFiles: toMergeFileEntryData(entry.mergeFiles),
     ...(entry.plugins.length > 0 && { plugins: entry.plugins.map((p) => p.toJSON()) }),
     ...(entry.nativeRegistrations !== undefined && {
-      nativeRegistrations: toNativeRegistrationsData(entry.nativeRegistrations),
+      nativeRegistrations: serializeNativeRegistrations(entry.nativeRegistrations),
     }),
   };
 }

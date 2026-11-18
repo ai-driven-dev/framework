@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Marketplace } from "../../../src/contexts/distribution/domain/marketplace.js";
+import type { RegistrationRecord } from "../../../src/contexts/host-registration/domain/registration-record.js";
 import type { BuiltMarketplaceEnsurer } from "../../../src/contexts/installation/application/shared/ensure-built-marketplace.js";
 import type { NativeRegistrations } from "../../../src/contexts/installation/domain/manifest/native-registrations.js";
 import { Manifest } from "../../../src/contexts/installation/domain/manifest.js";
@@ -13,6 +14,7 @@ import { FakeHostActions } from "../../contexts/host-registration/testing/fake-h
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { FakeHostPluginRegistry } from "../../contexts/host-registration/testing/fake-host-plugin-registry.js";
 import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { hostRecord } from "../../helpers/host-record-reading.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
@@ -193,7 +195,7 @@ function trackedSettingsHash(manifest: Manifest): string | undefined {
     ?.hash.value;
 }
 
-const FRAMEWORK_ONLY: NativeRegistrations = {
+const FRAMEWORK_ONLY: RegistrationRecord = {
   binary: "claude",
   marketplaces: [
     {
@@ -432,7 +434,7 @@ describe("when a recorded registration is replaced", () => {
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)?.marketplaces).toStrictEqual(FRAMEWORK_ONLY.marketplaces);
+    expect(hostRecord(recorded(manifest))?.marketplaces).toStrictEqual(FRAMEWORK_ONLY.marketplaces);
   });
 
   it("keeps a marketplace an earlier run registered when its build now fails", async () => {
@@ -449,7 +451,7 @@ describe("when a recorded registration is replaced", () => {
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)?.marketplaces).toStrictEqual([
+    expect(hostRecord(recorded(manifest))?.marketplaces).toStrictEqual([
       ...FRAMEWORK_ONLY.marketplaces,
       { alias: "broken", hostName: "broken-catalog" },
     ]);
@@ -470,7 +472,7 @@ describe("a marketplace the host refused is not this project's to remove", () =>
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)?.marketplaces).toStrictEqual([]);
+    expect(hostRecord(recorded(manifest))?.marketplaces).toStrictEqual([]);
   });
 
   it("keeps a marketplace an earlier run registered when the host now refuses it", async () => {
@@ -486,7 +488,7 @@ describe("a marketplace the host refused is not this project's to remove", () =>
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)?.marketplaces).toStrictEqual([
+    expect(hostRecord(recorded(manifest))?.marketplaces).toStrictEqual([
       { alias: MARKETPLACE, hostName: MARKETPLACE },
     ]);
   });
@@ -502,7 +504,7 @@ describe("a marketplace the host refused is not this project's to remove", () =>
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)?.marketplaces).toStrictEqual([]);
+    expect(hostRecord(recorded(manifest))?.marketplaces).toStrictEqual([]);
   });
 
   it("records a marketplace this run took back from a dead registration", async () => {
@@ -518,7 +520,7 @@ describe("a marketplace the host refused is not this project's to remove", () =>
 
     await useCase.execute({ tools: registeredCatalog(), projectRoot: PROJECT_ROOT });
 
-    expect(recorded(manifest)?.marketplaces).toStrictEqual(FRAMEWORK_ONLY.marketplaces);
+    expect(hostRecord(recorded(manifest))?.marketplaces).toStrictEqual(FRAMEWORK_ONLY.marketplaces);
   });
 });
 

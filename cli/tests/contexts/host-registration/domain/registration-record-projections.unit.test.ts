@@ -31,7 +31,7 @@ const recordWith = () => ({
 describe("registration record projections", () => {
   it("lists the recorded plugin refs, none when nothing was recorded", () => {
     const record = recordWith();
-    expect(pluginRefsOf(record)).toBe(record.pluginRefs);
+    expect(pluginRefsOf(record)).toEqual(record.pluginRefs);
     expect(pluginRefsOf(undefined)).toEqual([]);
   });
 
@@ -88,7 +88,7 @@ describe("registration record projections", () => {
       const record = recordWith();
       const next = withoutMarketplace(record, "local");
       expect(next.marketplaces).toEqual([{ alias: "other", hostName: "second" }]);
-      expect(next.marketplaces[0]).toBe(record.marketplaces[1]);
+      expect(next.marketplaces[0]).toEqual(record.marketplaces[1]);
       expect(next.pluginRefs).toEqual(["b@second"]);
       expect(next.pluginClaims).toEqual([claim("b@second")]);
       expect(next.pluginClaims[0]).toBe(record.pluginClaims[1]);
@@ -167,9 +167,9 @@ describe("registration record projections", () => {
   });
 
   describe("marketplaceOf", () => {
-    it("finds the registration of an alias by identity", () => {
+    it("finds the registration of an alias", () => {
       const record = recordWith();
-      expect(marketplaceOf(record, "other")).toBe(record.marketplaces[1]);
+      expect(marketplaceOf(record, "other")).toEqual(record.marketplaces[1]);
     });
 
     it("finds nothing for an alias that was never registered", () => {

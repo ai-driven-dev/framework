@@ -1,7 +1,7 @@
 import { PluginNotFoundError } from "../../../../shared/domain/errors.js";
 import type { Lock } from "../../../../shared/ports/lock.js";
 import type { Logger } from "../../../../shared/ports/logger.js";
-import type { RegistrationRecord } from "../../domain/manifest/native-registrations.js";
+import type { NativeRegistrations } from "../../domain/manifest/native-registrations.js";
 import { Manifest } from "../../domain/manifest.js";
 import type { InstalledPlugin } from "../../domain/plugins/installed-plugin.js";
 import type { ManifestRepository } from "../../ports/manifest-repository.js";
@@ -22,7 +22,7 @@ export type RefreshNativeRef = (request: {
   readonly tool: ActivatedTool;
   readonly ref: string;
   readonly projectRoot: string;
-  readonly registrations: RegistrationRecord | undefined;
+  readonly registrations: NativeRegistrations | undefined;
 }) => Promise<ProvenNativeRefresh>;
 
 /** What a machine-scope update needs beyond the plugins it names. */

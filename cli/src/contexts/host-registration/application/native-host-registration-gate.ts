@@ -1,7 +1,8 @@
 import type { AiToolId } from "../../../shared/domain/tool.js";
-import type {
-  NativeMarketplaceRegistration,
-  RegistrationRecord,
+import type { NativeMarketplaceRegistration } from "../domain/native-marketplace-source.js";
+import {
+  type RegistrationRecordData,
+  readRegistrationRecord,
 } from "../domain/registration-record.js";
 import type { HostActions } from "../ports/host-actions.js";
 import type { HostMarketplaceSources } from "../ports/host-marketplace-sources.js";
@@ -23,7 +24,7 @@ export class NativeHostRegistrationGate {
    * their `ref` and hands the claims it kept back as they came. */
   async planMarketplaceRemoval<Claim extends { readonly ref: string }>(
     tool: HostedTool & HostRefCounter,
-    registrations: RegistrationRecord & { readonly pluginClaims?: readonly Claim[] },
+    registrations: RegistrationRecordData & { readonly pluginClaims?: readonly Claim[] },
     registration: NativeMarketplaceRegistration,
     projectRoot: string
   ): Promise<{
@@ -32,11 +33,12 @@ export class NativeHostRegistrationGate {
     scopes: ReadonlyMap<string, "project" | "user" | undefined>;
   }> {
     const { toolId } = tool;
-    const activator = this.activators.get(registrations.binary);
+    const binary = readRegistrationRecord(registrations)?.binary;
+    const activator = binary === undefined ? undefined : this.activators.get(binary);
     const reader = this.registries.get(toolId);
     if (activator === undefined || !activator.isAvailable() || reader === undefined) {
       throw new Error(
-        `Cannot prove/remove AIDD-owned catalogue '${registration.hostName}': ${registrations.binary} CLI or host registry unavailable.`
+        `Cannot prove/remove AIDD-owned catalogue '${registration.hostName}': ${binary} CLI or host registry unavailable.`
       );
     }
     const proof = await inspectNativeMarketplaceSource(

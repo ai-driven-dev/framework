@@ -20,6 +20,7 @@ import { FakeHostActions } from "../../contexts/host-registration/testing/fake-h
 import { FakeHostMarketplaceRegistry } from "../../contexts/host-registration/testing/fake-host-marketplace-registry.js";
 import { FakeHostMarketplaceSources } from "../../contexts/host-registration/testing/fake-host-marketplace-sources.js";
 import { registeredCatalog, TOOL } from "../../contexts/tools/testing/catalog-of.js";
+import { hostRecord } from "../../helpers/host-record-reading.js";
 import { marketplaceSync } from "../../helpers/marketplace-sync.js";
 import { CapturingLogger } from "../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../helpers/ports/deterministic-hasher.js";
@@ -27,6 +28,9 @@ import { fakeEnsureBuiltMarketplace } from "../../helpers/ports/fake-ensure-buil
 import { InMemoryFileAdapter } from "../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../helpers/ports/in-memory-manifest-repository.js";
 import { InMemoryMarketplaceRegistry } from "../../helpers/ports/in-memory-marketplace-registry.js";
+
+const firstSourceOf = (record: Parameters<typeof hostRecord>[0]) =>
+  hostRecord(record)?.marketplaces[0]?.provenance;
 
 /** What a sync reports when every tool ran and nothing went wrong, but for the tools named. */
 const CLEAN_RUN = { binaryMissing: [], warnings: [], errors: [], failed: false };
@@ -293,7 +297,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       expect(result.warnings).toEqual([
         `Native plugin activation — catalogue '${HOST}' host catalogue source is unproven; host registration left untouched. ${ADD_ERROR}`,
       ]);
-      expect(manifest.getNativeRegistrations(TOOL.claude)?.marketplaces[0]?.provenance).toEqual({
+      expect(firstSourceOf(manifest.getNativeRegistrations(TOOL.claude))).toEqual({
         kind: "registry",
         source,
       });
@@ -310,7 +314,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
     ]);
     expect(logger.warnMessages).toEqual(result.warnings);
     expect(result.errors).toEqual([]);
-    expect(manifest.getNativeRegistrations(TOOL.claude)?.marketplaces[0]?.provenance).toEqual({
+    expect(firstSourceOf(manifest.getNativeRegistrations(TOOL.claude))).toEqual({
       kind: "registry",
       source: OLD,
     });
@@ -340,7 +344,7 @@ describe("marketplace sync recovery preserves public ownership and failure outco
       errors: [{ scope: "claude", message: "retry crashed" }],
       failed: true,
     });
-    expect(manifest.getNativeRegistrations(TOOL.claude)?.marketplaces[0]?.provenance).toEqual({
+    expect(firstSourceOf(manifest.getNativeRegistrations(TOOL.claude))).toEqual({
       kind: "registry",
       source: OLD,
     });
@@ -669,17 +673,13 @@ describe("proven native catalogues update declarative settings only when require
     expect(f.activator.addedMarketplaces).toEqual(["/built/codex/first"]);
     expect(f.activator.removedMarketplaces).toEqual([]);
     expect(f.activator.enabledPlugins).toEqual([]);
-    expect(
-      f.projectRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces[0]?.provenance
-    ).toEqual({
+    expect(firstSourceOf(f.projectRepo.getCurrent()?.getNativeRegistrations(TOOL.codex))).toEqual({
       kind: "effective-list",
       root: "/built/codex/first",
       sourceType: "local",
       source: "/built/codex/first",
     });
-    expect(
-      f.machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex)?.marketplaces[0]?.provenance
-    ).toEqual({
+    expect(firstSourceOf(f.machineRepo.getCurrent()?.getNativeRegistrations(TOOL.codex))).toEqual({
       kind: "effective-list",
       root: "/built/codex/first",
       sourceType: "local",
