@@ -1,42 +1,42 @@
 # Review plan
 
-Run `scripts/prepare-review.cjs`, beside the loaded skill, with one JSON input file outside the project.
+Run `scripts/prepare-review.cjs` to turn the snapshot and the classifications into the operations to apply.
 
 ```sh
-node "$script" --input "$review_json"
+node "$planner" --input "$review_json"
 ```
 
-## Input
+- `$planner`: the absolute path of `scripts/prepare-review.cjs`, next to the loaded `SKILL.md`.
+- `$review_json`: a temporary file outside the project holding the fields below, only `account` and `threads` required.
 
 | Field | Value |
 | --- | --- |
-| `account` | The current VCS account's login. |
-| `threads` | Every thread, resolved ones included, as `{id, url, resolved, replyAuthors, lastReply?, lastReplyId?, newCommit?}`. |
-| `classifications` | `{threadId, kind, text, source?}` per [comment-kinds.md](comment-kinds.md). |
-| `decisions` | `{threadId, text, source}` for each choice the user stated. |
-| `summaries` | Existing pull or merge request comments as `{id, author, body}`, full bodies. |
-| `summaryChoice` | The comment ID the user chose, or `"new"` to replace a legacy summary. |
-| `learnings` | `{text, url}`, each URL pointing to its thread. |
-| `labels` | The summary's visible words, in the replies' language: any of `title`, `done`, `answered`, `decided`, `userCall`, `todo`, `learnings`, `thread`. English when omitted. |
+| `account` | The current account's login. |
+| `threads` | Every thread, resolved ones included: `{id, url, resolved, replyAuthors, lastReply?, lastReplyId?, newCommit?}`. |
+| `classifications` | `{threadId, kind, text, source?}` per `comment-kinds.md`. |
+| `decisions` | `{threadId, text, source}` per choice the user stated. |
+| `summaries` | The request's comments as `{id, author, body}`, full bodies. |
+| `summaryChoice` | The comment ID the user chose, or `"new"`. |
+| `learnings` | `{text, url}`, the URL pointing to its thread; for a legacy summary, its learnings worth keeping. |
+| `labels` | The summary's words in the replies' language: any of `title`, `done`, `answered`, `decided`, `userCall`, `todo`, `learnings`, `thread`. |
 
-Only `account` and `threads` are required.
+- `replyAuthors`: each reply's author, the opening comment excluded.
+- Logins: all from one API in one form; on GitHub, GraphQL `viewer.login` and `author.login`.
+- `lastReplyId`: the last reply's native ID, so an edited or repeated message is detected.
+- `newCommit`: a commit was pushed since the last reply, whether or not it fixes the request.
+- A resolved thread the account never replied in stays unclassified.
 
-- `replyAuthors` lists the login of each reply's author, the thread's opening comment excluded.
-- Take every login from the same API in the same form, since the planner only compares them: on GitHub, GraphQL `viewer.login` and `author.login`, never a REST bot login such as `name[bot]`.
-- A resolved thread the current account never replied in is out of scope: leave it unclassified.
-- `lastReplyId` is the last reply's native ID or URL, so an edited or repeated message is detected.
-- `newCommit` says whether a commit was pushed since the last reply, not whether it fixes the request.
-- For a legacy summary without hidden state, pass its learnings worth keeping in `learnings`.
-
-## Output
-
-| Field | Value |
+| Output | Value |
 | --- | --- |
-| `threads` | `{threadId, reply?, resolve?}` operations to apply, whatever the summary's status. |
-| `pending` | Open `user-call` and `todo` entries, with their links. |
-| `summary` | `ready` with `operation` (`create`, `update`, `unchanged`), `targetId` and `body`; `needs-choice` with `candidates` and `allowNew`; or `unknown`. |
-| `unknown` | Thread IDs with neither a classification nor a remembered kind. |
+| `threads` | `{threadId, reply?, resolve?}` to apply. |
+| `pending` | Open `user-call` and `todo` entries with their links. |
+| `summary` | `ready` with `operation`, `targetId`, `body`; `needs-choice` with `candidates` and `allowNew`; or `unknown`. |
+| `unknown` | Threads with neither a classification nor a remembered kind. |
 
-Post each `reply` and the summary `body` exactly as returned, so their hidden markers survive the next run.
+Post each `reply` and `body` exactly as returned, so their hidden markers survive the next run.
 
-Exit 0 prepared, 1 refused, 2 bad usage or unreadable input; `error` explains a non-zero exit. The planner never calls the network or writes a file, and cannot prove the snapshot is complete or a classification is right.
+| Exit | Meaning |
+| --- | --- |
+| 0 | Prepared |
+| 1 | Refused, `error` explains |
+| 2 | Bad usage or unreadable input |
