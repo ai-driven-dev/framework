@@ -9,8 +9,7 @@ import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { FakePlatform } from "../../../../helpers/ports/fake-platform.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { withSections } from "../../../../helpers/ports/stub-ai-tool.js";
-import { registeredAiConfig, registeredConfig, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const MARKDOWN = "---\nname: sample\ndescription: A sample.\n---\n\nBody.\n";
@@ -51,7 +50,7 @@ function generate(
 }
 
 async function pathsFor(toolId: ToolId, assetProvider?: BundledAssetProviderAdapter) {
-  return (await generate(registeredConfig(toolId), assetProvider))
+  return (await generate(registeredTools().profile(toolId), assetProvider))
     .map((f) => f.relativePath)
     .sort();
 }
@@ -71,11 +70,14 @@ describe("GenerateToolDistribution — content sections", () => {
   });
 
   it("skips a section the tool declares no capability for", async () => {
-    const claude = registeredAiConfig(TOOL.claude);
+    const claude = registeredTools().aiProfile(TOOL.claude);
+    const withoutRules = {
+      ...claude,
+      markdownSection: (kind: Parameters<typeof claude.markdownSection>[0]) =>
+        kind === "rules" ? null : claude.markdownSection(kind),
+    };
 
-    const paths = (await generate(withSections(claude, { rules: null })))
-      .map((f) => f.relativePath)
-      .sort();
+    const paths = (await generate(withoutRules)).map((f) => f.relativePath).sort();
 
     expect(paths).toStrictEqual([
       ".claude/agents/reviewer.md",
@@ -87,14 +89,14 @@ describe("GenerateToolDistribution — content sections", () => {
 
 describe("GenerateToolDistribution — a tool's own config assets", () => {
   it("regenerates the shared OpenCode plugin runtime alongside tool configuration", async () => {
-    const files = await generate(registeredConfig(TOOL.opencode), assets);
+    const files = await generate(registeredTools().profile(TOOL.opencode), assets);
     expect(
       files.find((file) => file.relativePath === ".opencode/hooks/opencode-events.js")?.content
     ).toBe(assets.loadConfigAsset(TOOL.opencode, "opencode-events.js"));
   });
 
   it("writes a JSON asset pretty-printed at the path the tool declares", async () => {
-    const files = await generate(registeredConfig(TOOL.claude), assets);
+    const files = await generate(registeredTools().profile(TOOL.claude), assets);
     const content = JSON.stringify(assets.loadConfigAsset(TOOL.claude, "settings.json"), null, 2);
 
     expect(files.find((f) => f.relativePath === ".claude/settings.json")).toStrictEqual(
@@ -107,7 +109,7 @@ describe("GenerateToolDistribution — a tool's own config assets", () => {
   });
 
   it("writes the files the tool's profile answers for its config, wherever the profile keeps them", async () => {
-    const claude = registeredAiConfig(TOOL.claude);
+    const claude = registeredTools().aiProfile(TOOL.claude);
     const relocated = { ...claude, configFiles: () => ({ "settings.json": ".relocated/s.json" }) };
 
     const paths = (await generate(relocated, assets)).map((f) => f.relativePath);
@@ -120,7 +122,7 @@ describe("GenerateToolDistribution — a tool's own config assets", () => {
     const asset = assets.loadConfigAsset(TOOL.codex, "config.toml");
     if (typeof asset !== "string") throw new Error("the codex config asset is text");
 
-    const files = await generate(registeredConfig(TOOL.codex), assets);
+    const files = await generate(registeredTools().profile(TOOL.codex), assets);
 
     expect(files.find((f) => f.relativePath === ".codex/config.toml")?.content).toBe(asset);
   });

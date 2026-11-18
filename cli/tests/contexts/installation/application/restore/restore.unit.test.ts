@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { restoreAllPluginsOf, restoreOf } from "../../../../helpers/ports/build-restore.js";
@@ -21,8 +20,11 @@ import {
   ScriptedPrompter,
 } from "../../../../helpers/ports/scripted-prompter.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, resolveRegisteredToolId, TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+import {
+  registeredTools,
+  resolveRegisteredToolId,
+  TOOL,
+} from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
@@ -32,7 +34,7 @@ async function installPlugin(
   toolId: AiToolId
 ): Promise<void> {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
-  const pluginReader = new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes());
+  const pluginReader = deps.pluginDistributionReader;
   await new AddPlugin(
     { fs: deps.fs, hasher: deps.hasher, logger: deps.logger },
     { project: deps.manifestRepo, user: deps.userManifestRepo },
@@ -42,7 +44,7 @@ async function installPlugin(
       ...fakeBuildSources(),
     }
   ).execute({
-    tools: catalogOf(),
+    tools: registeredTools(),
     source: { kind: "local", path: PLUGIN_FIXTURE },
     toolIds: [toolId],
     projectRoot: PROJECT_ROOT,

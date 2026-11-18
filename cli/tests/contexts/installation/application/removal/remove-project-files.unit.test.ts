@@ -5,12 +5,11 @@ import { RemoveProjectFiles } from "../../../../../src/contexts/installation/app
 import { UpdateGitignore } from "../../../../../src/contexts/installation/application/update-gitignore.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { pluginScriptDir } from "../../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
-import { CURSOR_HOOKS } from "../../../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, registeredProfile, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
 
 const ROOT = "/test-project";
 
@@ -20,7 +19,7 @@ function removalOver(
   repo = new InMemoryManifestRepository(manifest, ROOT),
   gitignore = new UpdateGitignore(fs)
 ): RemoveProjectFiles {
-  return new RemoveProjectFiles(fs, repo, new CapturingLogger(), gitignore, catalogOf());
+  return new RemoveProjectFiles(fs, repo, new CapturingLogger(), gitignore, registeredTools());
 }
 
 function localPlugin(name: string): InstalledPlugin {
@@ -67,7 +66,7 @@ describe("RemoveProjectFiles.remove", () => {
   });
 
   it("removes a hook script edited after install when forced", async () => {
-    const script = `${pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, "aidd-context")}run.js`;
+    const script = `${cursorHookScriptDir("aidd-context")}run.js`;
     const manifest = Manifest.create();
     manifest.addTool(TOOL.cursor, "1.0.0", []);
     manifest.addPlugin(
@@ -86,7 +85,7 @@ describe("RemoveProjectFiles.remove", () => {
   });
 
   it("takes back every machine-local gitignore line the install added", async () => {
-    const [machineLocal] = registeredProfile(TOOL.claude).machineLocalFiles();
+    const [machineLocal] = registeredTools().profile(TOOL.claude).machineLocalFiles();
     const manifest = Manifest.create();
     manifest.addTool(TOOL.claude, "1.0.0", []);
     const fs = new InMemoryFileAdapter();

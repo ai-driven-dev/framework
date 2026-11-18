@@ -4,10 +4,10 @@ import { describe, expect, it } from "vitest";
 import { UserScopePluginFiles } from "../../../../../src/contexts/installation/application/removal/user-scope-plugin-files.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const HOME = "/fake-home";
-const tool = catalogOf().aiProfile(TOOL.cursor);
+const tool = registeredTools().aiProfile(TOOL.cursor);
 const plugin = InstalledPlugin.fromMetadata(
   "aidd-context",
   "1.0.0",

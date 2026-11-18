@@ -5,7 +5,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import type { FileReader } from "../../../../../src/shared/ports/file-reader.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const HASH_A = "abc123abc123abc123abc123abc123ab";
 const HASH_B = "def456def456def456def456def456de";
@@ -47,7 +47,7 @@ describe("DetectPluginDrift — user-scope tool never installed on this machine"
     const files = { "a/one.md": HASH_A, "a/two.md": HASH_B };
     const manifest = cursorManifestWithFiles(files);
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDrift(fs, catalogOf());
+    const useCase = new DetectPluginDrift(fs, registeredTools());
 
     const drifts = await useCase.execute({
       manifest,
@@ -64,7 +64,7 @@ describe("DetectPluginDrift — user-scope tool never installed on this machine"
     const files = { "a/one.md": HASH_A, "a/two.md": HASH_B };
     const manifest = cursorManifestWithFiles(files);
     const fs = makeFs(new Set(["one.md"]));
-    const useCase = new DetectPluginDrift(fs, catalogOf());
+    const useCase = new DetectPluginDrift(fs, registeredTools());
 
     const drifts = await useCase.execute({
       manifest,
@@ -93,7 +93,7 @@ describe("DetectPluginDrift — user-scope tool never installed on this machine"
       })
     );
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDrift(fs, catalogOf());
+    const useCase = new DetectPluginDrift(fs, registeredTools());
 
     const drifts = await useCase.execute({
       manifest,
@@ -137,7 +137,7 @@ describe("DetectPluginDrift — the manifest's recorded scope wins over the prof
       listDirectory: async () => [],
       listFilesRecursive: async () => [],
     };
-    const useCase = new DetectPluginDrift(fs, catalogOf());
+    const useCase = new DetectPluginDrift(fs, registeredTools());
 
     const drifts = await useCase.execute({
       manifest,
@@ -167,7 +167,7 @@ describe("DetectPluginDrift — the manifest's recorded scope wins over the prof
       })
     );
     const fs = makeFs(new Set(["one.md", "two.md"]));
-    const useCase = new DetectPluginDrift(fs, catalogOf());
+    const useCase = new DetectPluginDrift(fs, registeredTools());
 
     const drifts = await useCase.execute({
       manifest,

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { PluginFetcher } from "../../../../../src/contexts/distribution/ports/plugin-fetcher.js";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
 import { Manifest } from "../../../../../src/contexts/installation/domain/manifest.js";
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
+import type { PluginFetcher } from "../../../../../src/contexts/installation/ports/marketplace-sources.js";
 import type { PluginDistributionReader } from "../../../../../src/contexts/installation/ports/plugin/plugin-distribution-reader.js";
 import { FileHash } from "../../../../../src/shared/domain/file.js";
 import { PluginDistribution } from "../../../../../src/shared/domain/plugin/plugin-distribution.js";
@@ -11,7 +11,7 @@ import type { FileWriter } from "../../../../../src/shared/ports/file-writer.js"
 import type { Hasher } from "../../../../../src/shared/ports/hasher.js";
 import { restoreAllPluginsOf } from "../../../../helpers/ports/build-restore.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const noopFs: FileReader & FileWriter = {
   fileExists: async () => false,

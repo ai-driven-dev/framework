@@ -6,7 +6,7 @@ import { Manifest } from "../../../../../src/contexts/installation/domain/manife
 import { InstalledPlugin } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/proj";
 const USER_PLUGINS_DIR = join(homedir(), ".cursor", "plugins", "local");
@@ -39,7 +39,7 @@ describe("DetectPluginDrift", () => {
       "aidd-one": { "aidd-one/a.md": HASH_OF_ONE },
       "aidd-two": { "aidd-two/a.md": HASH_OF_ONE },
     });
-    const useCase = new DetectPluginDrift(new InMemoryFileAdapter({}, HASHER), catalogOf());
+    const useCase = new DetectPluginDrift(new InMemoryFileAdapter({}, HASHER), registeredTools());
 
     const drifts = await useCase.execute({
       manifest,
@@ -61,7 +61,7 @@ describe("DetectPluginDrift", () => {
       { [join(USER_PLUGINS_DIR, "aidd-one", "changed.md")]: "two" },
       HASHER
     );
-    const useCase = new DetectPluginDrift(fs, catalogOf());
+    const useCase = new DetectPluginDrift(fs, registeredTools());
 
     const drifts = await useCase.execute({
       manifest,

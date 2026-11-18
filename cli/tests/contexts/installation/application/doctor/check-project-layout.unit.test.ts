@@ -6,7 +6,7 @@ import { InstallationFile } from "../../../../../src/shared/domain/file.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/project";
 const CLAUDE_COMMAND = ".claude/commands/plan.md";
@@ -33,7 +33,11 @@ async function issuesFor(onDisk: Record<string, string>) {
     ])
   );
   const load = new LoadManifest(new InMemoryManifestRepository(manifestTrackingClaude()));
-  return new CheckProjectLayout(load, new InMemoryFileAdapter(files, hasher), catalogOf()).execute({
+  return new CheckProjectLayout(
+    load,
+    new InMemoryFileAdapter(files, hasher),
+    registeredTools()
+  ).execute({
     projectRoot: PROJECT_ROOT,
   });
 }

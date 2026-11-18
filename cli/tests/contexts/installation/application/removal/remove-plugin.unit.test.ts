@@ -8,9 +8,6 @@ import {
   InstalledPlugin,
   type PluginEntryData,
 } from "../../../../../src/contexts/installation/domain/plugins/installed-plugin.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
-import { pluginScriptDir } from "../../../../../src/contexts/tools/domain/hooks/hooks-merge.js";
-import { CURSOR_HOOKS } from "../../../../../src/contexts/tools/domain/profiles/cursor/hooks.js";
 import { PluginNotFoundError } from "../../../../../src/shared/domain/errors.js";
 import type { AiToolId } from "../../../../../src/shared/domain/tool.js";
 import { pluginRemover } from "../../../../helpers/plugin-remover.js";
@@ -19,8 +16,8 @@ import { fakeBuildSources } from "../../../../helpers/ports/fake-build-sources.j
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
 import { InMemoryManifestRepository } from "../../../../helpers/ports/in-memory-manifest-repository.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { cursorHookScriptDir } from "../../testing/cursor-hook-scripts.js";
 
 class RecordingFileAdapter extends InMemoryFileAdapter {
   readonly deletedPaths: string[] = [];
@@ -71,14 +68,14 @@ async function installPlugin(
     {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+        deps.pluginDistributionReader
       ),
       marketplaceRegistry: deps.marketplaceRegistry,
       ...fakeBuildSources(),
     }
   );
   await addUseCase.execute({
-    tools: catalogOf(),
+    tools: registeredTools(),
     source: { kind: "local", path: fixture },
     toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,
@@ -127,7 +124,7 @@ describe("RemovePlugin", () => {
         activators: deps.nativePluginActivators,
       });
       await removeUseCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "sample-plugin",
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -155,7 +152,7 @@ describe("RemovePlugin", () => {
       });
       await expect(
         removeUseCase.execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           pluginName: "nonexistent-plugin",
           toolIds: [TOOL.claude],
           projectRoot: PROJECT_ROOT,
@@ -186,7 +183,7 @@ describe("RemovePlugin", () => {
       const removeUseCase = pluginRemover({ fs, manifestRepo });
 
       await removeUseCase.execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "aidd-context",
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
@@ -214,7 +211,7 @@ describe("RemovePlugin", () => {
         logger: deps.logger,
         activators: deps.nativePluginActivators,
       }).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "extra-plugin",
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -238,7 +235,7 @@ describe("RemovePlugin", () => {
       });
 
       await removeUseCaseOver(new InMemoryFileAdapter(), manifestRepo).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "aidd-context",
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
@@ -250,7 +247,7 @@ describe("RemovePlugin", () => {
 
   describe("a tool holding several plugins", () => {
     it("proves removable only the named plugin's hooks, not another plugin's edited ones", async () => {
-      const script = `${pluginScriptDir(CURSOR_HOOKS.project.scriptsDir, "other")}run.js`;
+      const script = `${cursorHookScriptDir("other")}run.js`;
       const manifest = Manifest.create();
       manifest.addTool(TOOL.cursor, "1.0.0", []);
       manifest.addPlugin(
@@ -286,7 +283,7 @@ describe("RemovePlugin", () => {
       const manifestRepo = new InMemoryManifestRepository(manifest, PROJECT_ROOT);
 
       await removeUseCaseOver(fs, manifestRepo).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "target",
         toolIds: [TOOL.cursor],
         projectRoot: PROJECT_ROOT,
@@ -308,7 +305,7 @@ describe("RemovePlugin", () => {
       const manifestRepo = manifestHolding(TOOL.opencode, { name: "aidd-context" });
 
       await removeUseCaseOver(fs, manifestRepo).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "aidd-context",
         toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,
@@ -328,7 +325,7 @@ describe("RemovePlugin", () => {
       });
 
       await removeUseCaseOver(fs, manifestRepo).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "aidd-context",
         toolIds: [TOOL.claude],
         projectRoot: PROJECT_ROOT,
@@ -348,7 +345,7 @@ describe("RemovePlugin", () => {
       });
 
       await removeUseCaseOver(fs, manifestRepo).execute({
-        tools: catalogOf(),
+        tools: registeredTools(),
         pluginName: "aidd-context",
         toolIds: [TOOL.opencode],
         projectRoot: PROJECT_ROOT,
@@ -367,7 +364,7 @@ describe("RemovePlugin", () => {
 
       await expect(
         removeUseCaseOver(fs, manifestRepo).execute({
-          tools: catalogOf(),
+          tools: registeredTools(),
           pluginName: "aidd-context",
           toolIds: [TOOL.opencode],
           projectRoot: PROJECT_ROOT,

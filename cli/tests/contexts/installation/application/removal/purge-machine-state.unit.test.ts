@@ -1,7 +1,6 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FRAMEWORK_MARKETPLACE_NAME } from "../../../../../src/contexts/distribution/contract/marketplace.js";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import {
   type MachineStateGuards,
   PurgeMachineState,
@@ -9,12 +8,12 @@ import {
 import { PurgeDeclaredCache } from "../../../../../src/contexts/machine-claims/application/purge-declared-cache.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const CONFIG = "/fake-home/.config/aidd";
 const ROOT = "/project";
 
-function machineOver(fs: InMemoryFileAdapter, registry = new InMemoryMarketplaceRegistry()) {
+function machineOver(fs: InMemoryFileAdapter, registry = new FakeMarketplaceRegistry()) {
   const logger = new CapturingLogger();
   const cache = new PurgeDeclaredCache(fs, logger);
   const guards: MachineStateGuards = {
@@ -64,16 +63,12 @@ describe("PurgeMachineState.purge", () => {
   });
 
   it("withdraws the framework marketplace's user registration", async () => {
-    const registry = new InMemoryMarketplaceRegistry();
-    await registry.save(
-      ROOT,
-      Marketplace.create({
-        name: FRAMEWORK_MARKETPLACE_NAME,
-        source: { kind: "local", path: "/m" },
-        scope: "user",
-        addedAt: "added",
-      })
-    );
+    const registry = new FakeMarketplaceRegistry();
+    registry.seed(ROOT, {
+      name: FRAMEWORK_MARKETPLACE_NAME,
+      source: { kind: "local", path: "/m" },
+      scope: "user",
+    });
 
     await machineOver(new InMemoryFileAdapter(), registry).purge(ROOT);
 

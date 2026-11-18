@@ -9,7 +9,7 @@ import {
 } from "../../../../helpers/ports/build-unit-deps.js";
 import { fakeBuiltDeps } from "../../../../helpers/ports/fake-build-sources.js";
 import { OverwritePrompter } from "../../../../helpers/ports/scripted-prompter.js";
-import { TOOL } from "../../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 

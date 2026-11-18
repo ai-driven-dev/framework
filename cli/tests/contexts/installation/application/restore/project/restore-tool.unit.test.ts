@@ -4,7 +4,7 @@ import type { Restore } from "../../../../../../src/contexts/installation/applic
 import { Manifest } from "../../../../../../src/contexts/installation/domain/manifest.js";
 import { ManifestUnavailableError } from "../../../../../../src/shared/domain/errors.js";
 import { InMemoryManifestRepository } from "../../../../../helpers/ports/in-memory-manifest-repository.js";
-import { TOOL } from "../../../../tools/testing/catalog-of.js";
+import { TOOL } from "../../../../../shared/testing/registered-tools.js";
 
 const CURRENT = "9.9.9";
 const RESTORED: Awaited<ReturnType<Restore["execute"]>> = {

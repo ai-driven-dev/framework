@@ -10,7 +10,7 @@ import type { ToolId } from "../../../../../src/shared/domain/tool.js";
 import { CapturingLogger } from "../../../../helpers/ports/capturing-logger.js";
 import { DeterministicHasher } from "../../../../helpers/ports/deterministic-hasher.js";
 import { InMemoryFileAdapter } from "../../../../helpers/ports/in-memory-file-adapter.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const ROOT = "/test-project";
 const AGENTS = "AGENTS.md";
@@ -42,7 +42,7 @@ function removal(
   allToolIds: ToolId[],
   logger = new CapturingLogger()
 ): Promise<string[]> {
-  return new RemoveToolFiles(target.fs, logger, catalogOf()).remove(
+  return new RemoveToolFiles(target.fs, logger, registeredTools()).remove(
     toolId,
     allToolIds,
     target.manifest,

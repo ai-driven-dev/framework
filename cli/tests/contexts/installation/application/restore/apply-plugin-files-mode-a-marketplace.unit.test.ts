@@ -1,10 +1,8 @@
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { Marketplace } from "../../../../../src/contexts/distribution/domain/marketplace.js";
 import { AddPlugin } from "../../../../../src/contexts/installation/application/plugin/add-plugin.js";
 import { PluginDistributionLoader } from "../../../../../src/contexts/installation/application/plugin/plugin-distribution-loader.js";
 import type { RestoreAllPlugins } from "../../../../../src/contexts/installation/application/restore/restore-all-plugins.js";
-import { PluginDistributionReaderAdapter } from "../../../../../src/contexts/installation/infrastructure/plugin-distribution-reader-adapter.js";
 import { restoreAllPluginsOf } from "../../../../helpers/ports/build-restore.js";
 import { buildUnitDeps, initAndInstall } from "../../../../helpers/ports/build-unit-deps.js";
 import {
@@ -12,10 +10,9 @@ import {
   translateDistribution,
 } from "../../../../helpers/ports/fake-build-sources.js";
 import { fakeEnsureBuiltMarketplace } from "../../../../helpers/ports/fake-ensure-built-marketplace.js";
-import { InMemoryMarketplaceRegistry } from "../../../../helpers/ports/in-memory-marketplace-registry.js";
 import { seedFromDirectory } from "../../../../helpers/ports/seed-from-directory.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
-import { registeredManifestProbes } from "../../../translate/testing/registered-manifest-probes.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
+import { FakeMarketplaceRegistry } from "../../testing/fake-marketplace-registry.js";
 
 const PLUGIN_FIXTURE = join(process.cwd(), "tests/fixtures/plugins/claude-format/sample-plugin");
 const PROJECT_ROOT = "/test-project";
@@ -33,27 +30,19 @@ const PLUGIN_METADATA = { name: "sample-plugin", version: "1.0.0", strict: false
 
 type Deps = Awaited<ReturnType<typeof buildUnitDeps>>;
 
-async function makeGithubRegistry(): Promise<InMemoryMarketplaceRegistry> {
-  const registry = new InMemoryMarketplaceRegistry();
-  await registry.save(
-    PROJECT_ROOT,
-    Marketplace.create({
-      name: "aidd-framework",
-      source: { kind: "github", repo: "ai-driven-dev/framework" },
-      scope: "project",
-      addedAt: "2026-05-01T00:00:00.000Z",
-    })
-  );
+async function makeGithubRegistry(): Promise<FakeMarketplaceRegistry> {
+  const registry = new FakeMarketplaceRegistry();
+  registry.seed(PROJECT_ROOT, {
+    name: "aidd-framework",
+    source: { kind: "github", repo: "ai-driven-dev/framework" },
+    scope: "project",
+  });
   return registry;
 }
 
-function makeRestoreUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): RestoreAllPlugins {
+function makeRestoreUseCase(deps: Deps, registry: FakeMarketplaceRegistry): RestoreAllPlugins {
   return restoreAllPluginsOf({
     ...deps,
-    pluginDistributionReader: new PluginDistributionReaderAdapter(
-      deps.fs,
-      registeredManifestProbes()
-    ),
     builtDeps: {
       ensureBuilt: fakeEnsureBuiltMarketplace(),
       marketplaceRegistry: registry,
@@ -66,10 +55,7 @@ function makeRestoreUseCase(deps: Deps, registry: InMemoryMarketplaceRegistry): 
 
 /** Installs a github-sourced marketplace plugin on claude, so its manifest entry carries
  * both `marketplace` and a non-local `source.kind`. */
-async function installGithubPlugin(
-  deps: Deps,
-  registry: InMemoryMarketplaceRegistry
-): Promise<void> {
+async function installGithubPlugin(deps: Deps, registry: FakeMarketplaceRegistry): Promise<void> {
   await seedFromDirectory(deps.fs, PLUGIN_FIXTURE, { useAbsolutePaths: true });
   deps.pluginFetcher.register(GIT_SUBDIR_SOURCE, PLUGIN_FIXTURE);
 
@@ -79,13 +65,13 @@ async function installGithubPlugin(
     {
       distributionLoader: new PluginDistributionLoader(
         deps.pluginFetcher,
-        new PluginDistributionReaderAdapter(deps.fs, registeredManifestProbes())
+        deps.pluginDistributionReader
       ),
       marketplaceRegistry: registry,
       ...fakeBuildSources(),
     }
   ).execute({
-    tools: catalogOf(),
+    tools: registeredTools(),
     source: GIT_SUBDIR_SOURCE,
     toolIds: [TOOL.claude],
     projectRoot: PROJECT_ROOT,

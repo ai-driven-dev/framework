@@ -7,7 +7,7 @@ import {
   buildUpdateTool,
   initAndInstall,
 } from "../../../../helpers/ports/build-unit-deps.js";
-import { catalogOf, TOOL } from "../../../tools/testing/catalog-of.js";
+import { registeredTools, TOOL } from "../../../../shared/testing/registered-tools.js";
 
 const PROJECT_ROOT = "/test-project";
 
@@ -18,7 +18,7 @@ function commandOf(overwriteModified: UpdateToolCommand["overwriteModified"]): U
     toolId: TOOL.claude,
     projectRoot: PROJECT_ROOT,
     version: "test",
-    tools: catalogOf(),
+    tools: registeredTools(),
     overwriteModified,
   };
 }
